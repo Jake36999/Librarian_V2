@@ -1,102 +1,163 @@
-# Librarian V2 (under construction)
+# Librarian
 
-A second, standalone version of the Resource Library, built to be downloaded and deployed into a
-**new** vault, and to scale with that vault as it grows. It is more general than V1 and does not
-take in V1's data: every V2 vault starts empty and is filled through V2's own intake. The plan is `../PLAN - Librarian V2.md`.
+A personal research library you can actually talk to.
 
-This folder is dot-prefixed on purpose while V2 is built beside V1: V1's index and Obsidian skip
-dot-folders, so V1 keeps working unchanged. At cutover (milestone M6) this becomes the repository
-root and V1 is retired from this branch.
+Librarian is a tool for people who read seriously. You give it sources — papers, repositories, books, articles — and it indexes them into a structured vault. You can then search, consult, and build on what you've read through a chat interface backed by whatever language model you choose. It does not summarise the web or hallucinate citations; it works from what you have actually read and ingested.
+
+---
+
+## What it does
+
+- **Vaults** hold your sources as structured notes — one note per source, with evidence, concepts, patterns and your own assessments of them.
+- **Search** finds sources by meaning, intent, or constraint (license, language, domain).
+- **Chat** lets you ask questions, run research sessions and build new outputs (reports, project plans, offering notes) from what the vault holds.
+- **Sessions** give the model a structured walk: open a thread with a purpose, move through phases (frame → search → synthesise), write a staged draft, promote it to the vault. Every step is gated so the model can only write what the current phase allows.
+- **Intake** ingests new sources from the web, from files in your Inbox, or from PDFs you drop in.
+- **Obsidian** reads and writes the same vault: the notes are plain Markdown with YAML frontmatter, so the whole vault opens natively in Obsidian with bi-directional compatibility.
+
+---
 
 ## Install
 
+Requires Python 3.11+.
+
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev]"          # full install including test suite
+pip install -e ".[mcp]"          # add MCP server support
+pip install -e ".[embed]"        # add semantic embedding for richer search
+pip install -e ".[pdf]"          # add PDF extraction
 ```
 
-If a command below dies with an OpenBLAS "memory allocation still failed after 10 retries"
-error, numpy's backend is fighting the machine for threads; set `OPENBLAS_NUM_THREADS=1` and
-`OMP_NUM_THREADS=1` before running it and it clears up.
+Create a new vault and open the app:
 
 ```bash
-resource-librarian init ~/MyResearch          # a new vault
-resource-librarian --vault ~/MyResearch doctor
-
-cd ~/MyResearch
-resource-librarian index                                   # changed notes only
-resource-librarian search --query "parse SQL lineage" --constraints '{"license_class": "Permissive"}'
-resource-librarian search --query "workflow patterns" --intent in_text
-resource-librarian get_note --name "apache - airflow"
-resource-librarian evaluate                                # .librarian/eval/ questions and scenarios
-
-pytest                 # fast suite
-pytest -m slow -s      # scale: synthetic 1,000 and 5,000-source vaults
+resource-librarian init ~/MyResearch
+resource-librarian --vault ~/MyResearch app --open
 ```
 
-Every command above except `init` and `mcp` is a registered tool, so the MCP server and
-the chat (M5) offer exactly the same set.
+On Windows, `scripts/new-vault.ps1` does both steps in one from a project directory:
 
-## PDF cleanup
-
-`pypdf`'s extraction (V1 used PyMuPDF, AGPL, which can't ship here) is mechanical: broken
-line-wraps, running headers/footers, page numbers, no heading structure - readable by search,
-not by a person. `pdf_to_markdown` (`pdf_markdown.py`, ported from
-`.utility/scripts/pdf_to_markdown.py`, which converted the books under `06-Papers/PDF's/`)
-reformats it into clean markdown, written beside the PDF as its own `.md` file - reflowing,
-stripping the noise, adding headings, never summarising or adding anything not in the source:
-
-```bash
-resource-librarian --vault ~/MyResearch pdf_to_markdown --file "Inbox/some-book.pdf"
+```powershell
+.\scripts\new-vault.ps1          # creates .librarian-app here, opens in browser
 ```
 
-The model is fixed on purpose, not a `[clerk]` setting: always `deepseek-ai/DeepSeek-V4-Flash-0731`
-on DeepInfra, whatever this vault's own clerk route is (which may be a local model) - it already
-proved itself on the original conversion.
+`Librarian.bat` in this directory is a shortcut that opens the app (or the vault-selection page if no vault is configured yet).
 
-## Model catalogues
+---
 
-Profiling a chat model (the model picker's "Profile this model", or `ingest("model:<provider>:<id>")`)
-fetches its listing page and drafts a Source note from it - real work, paid for again by every
-vault that wants the same provider's models. A **standard catalogue**
-(`standard/model_catalog/<provider>.json`) is that work done once and shipped with the package;
-any vault adopts it for free, no network call, the same relationship a lens pack has to its
-lenses:
+## Services
+
+### Web app
+
+The main interface: a chat panel, a staging panel (review and accept drafted sources), and a search panel. Served locally on `127.0.0.1`.
 
 ```bash
-resource-librarian --vault ~/MyResearch model_catalog_status          # what's bundled, what's held
+resource-librarian --vault ~/MyResearch app --open
+```
+
+No Node or build step needed — the front end ships pre-built inside the package. Source is in `ui/` (TypeScript, no framework) if you want to modify it.
+
+**Vault selection:** If you run `resource-librarian app` without specifying a vault, a library-picker page opens in the browser listing your previously opened vaults.
+
+### CLI
+
+Every registered tool is also a CLI subcommand. Output is JSON by default (`--text` gives a human summary where available).
+
+```bash
+resource-librarian --vault ~/MyResearch search --query "parse SQL lineage"
+resource-librarian --vault ~/MyResearch get_note --name "apache - airflow"
+resource-librarian --vault ~/MyResearch ingest --url "https://github.com/..."
+resource-librarian --vault ~/MyResearch doctor   # vault health check
+```
+
+### MCP server
+
+Exposes the same tool registry over the Model Context Protocol (stdio), so any MCP-compatible host (Claude Code, Cursor, etc.) can use it as a research tool.
+
+```bash
+resource-librarian --vault ~/MyResearch mcp                    # consult tier (read-only)
+resource-librarian --vault ~/MyResearch mcp --tier contribute  # contribute tier (sessions + writes)
+```
+
+### Obsidian plugin
+
+`obsidian/` contains a plugin that embeds the Librarian chat panel directly inside Obsidian. The plugin starts the core process and communicates with it over a local port, so the vault you have open in Obsidian is the one the chat uses.
+
+Build: `cd obsidian && npm install && npm run build`, then copy `dist/` to your vault's `.obsidian/plugins/librarian/`.
+
+### Claude Code cowork plugin
+
+`plugin/` is a Cowork plugin (skills and commands) for Claude Code. It gives Claude Code a set of slash commands (`/research`, `/new-project`, `/resume`, etc.) and a `clerk` agent that runs inside a research session, handling description tasks (note writing, synthesis drafts) independently of the main chat model.
+
+---
+
+## Models
+
+Librarian runs three model tiers, each independently configurable:
+
+| Tier | Role | Recommended |
+|------|------|-------------|
+| Tier 1 (lead) | Runs research sessions, chat | Any capable chat model |
+| Tier 2 (scribe) | Writes source notes and drafts | Mid-size, instruction-following |
+| Tier 3 (clerk) | Small background tasks | Fast and cheap |
+
+Supported providers: **DeepInfra**, **OpenAI**, **Anthropic**, **local** (any OpenAI-compatible server such as LM Studio).
+
+A standard model catalogue for DeepInfra ships with the package — adopt it without making any API calls:
+
+```bash
 resource-librarian --vault ~/MyResearch model_catalog_adopt --provider deepinfra
 ```
 
-Also reachable from the app: Settings → Library → **Model catalogues**. Adopting writes each
-model straight in as an accepted source (already reviewed once - see `model_catalog.py`), and
-adopting again only fills in what's missing, never duplicates. To refresh a catalogue after
-profiling more models in some vault, `scripts/export_model_catalog.py --vault <path> --provider
-<name>` re-bundles it from that vault's own accepted `Sources/model/` notes.
+---
 
-## The app
+## Tiers and permission modes
 
-```bash
-resource-librarian --vault ~/MyResearch app --open   # the interface, on 127.0.0.1:8323
+Tools are organised into three tiers controlling what a model can do:
+
+- **consult** — reads and searches only. Safe for MCP connections to untrusted hosts.
+- **contribute** — adds sessions, staging, and research writes. The normal interactive tier.
+- **curate** — full access including vault maintenance. For the person at their own terminal.
+
+The web app adds a permission mode on top: **Plan** (reads only, model proposes), **Ask** (every write pauses for approval), **Auto** (writes within phase and vault settings).
+
+---
+
+## Vault layout
+
+A vault is any folder with a `.librarian/config.toml` inside it. `resource-librarian init` creates the structure; everything else builds from there.
+
+```
+MyResearch/
+├── .librarian/
+│   ├── config.toml      # vault name, clerk route, session settings
+│   ├── sessions/        # append-only research thread logs
+│   └── staging/         # drafted sources awaiting review
+├── Sources/             # one note per ingested source
+├── Concepts/            # concepts extracted from sources
+├── Offerings/           # finished outputs (reports, analyses)
+├── Projects/            # active research threads
+├── Indexes/             # topic indexes
+└── Inbox/              # drop files here for intake
 ```
 
-The interface (`ui/`, TypeScript with no framework) is built into the package, so an install
-needs no Node. To change it: `cd ui && npm install && npm run build`. `ui/smoke.mjs` drives it
-in a real browser against `tests/ui_demo_core.py` (a seeded vault and a scripted model).
+Notes are plain Markdown with YAML frontmatter. The vault opens as-is in Obsidian.
 
-For a vault scoped to whatever project you're standing in rather than a named research
-folder, `scripts/new-vault.ps1` wraps `init` and `app --open` into one step: run it with no
-arguments from that project's own directory and it creates (or, on a later run, reopens)
-`.\.librarian-app` there, titled after the folder, then launches it. `-Name`, `-Port` and
-`-NoLaunch` (set up without launching) cover the rest — see the script's own header.
+---
 
-## The MCP server and the Cowork plugin
+## PDF support
 
 ```bash
-pip install -e ".[mcp]"
-resource-librarian --vault ~/MyResearch mcp                    # a Reader, at consult tier
-resource-librarian --vault ~/MyResearch mcp --tier contribute  # the Librarian
+resource-librarian --vault ~/MyResearch pdf_to_markdown --file "Inbox/some-paper.pdf"
 ```
 
-The server is generated from the same registry: one research thread per connection, each
-result carrying the session envelope. `plugin/` is the Cowork plugin (skills, commands and the
-`clerk` agent) that launches it; see `plugin/README.md`.
+Extracts and reformats a PDF into clean Markdown beside the original — reflowing paragraphs, stripping headers and footers, adding heading structure. Never summarises or adds content not in the source.
+
+---
+
+## Tests
+
+```bash
+pytest                   # fast suite (~40 test files)
+pytest -m slow -s        # scale tests on synthetic 1,000 and 5,000-source vaults
+```
