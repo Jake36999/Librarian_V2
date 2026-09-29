@@ -13,6 +13,7 @@ Librarian is a tool for people who read seriously. You give it sources — paper
 - **Chat** lets you ask questions, run research sessions and build new outputs (reports, project plans, offering notes) from what the vault holds.
 - **Sessions** give the model a structured walk: open a thread with a purpose, move through phases (frame → search → synthesise), write a staged draft, promote it to the vault. Every step is gated so the model can only write what the current phase allows.
 - **Intake** ingests new sources from the web, from files in your Inbox, or from PDFs you drop in.
+- **Lenses** let the vault teach the model how to reason — see below.
 - **Obsidian** reads and writes the same vault: the notes are plain Markdown with YAML frontmatter, so the whole vault opens natively in Obsidian with bi-directional compatibility.
 
 ---
@@ -91,23 +92,79 @@ Build: `cd obsidian && npm install && npm run build`, then copy `dist/` to your 
 
 ---
 
-## Models
+## Models and providers
 
-Librarian runs three model tiers, each independently configurable:
+Librarian uses the OpenAI-compatible chat API, so the same code path works across every provider that speaks it. Three model tiers are independently configurable:
 
 | Tier | Role | Recommended |
 |------|------|-------------|
 | Tier 1 (lead) | Runs research sessions, chat | Any capable chat model |
 | Tier 2 (scribe) | Writes source notes and drafts | Mid-size, instruction-following |
-| Tier 3 (clerk) | Small background tasks | Fast and cheap |
+| Tier 3 (clerk) | Small background tasks, lens extraction | Fast and cheap |
 
-Supported providers: **DeepInfra**, **OpenAI**, **Anthropic**, **local** (any OpenAI-compatible server such as LM Studio).
+**Supported providers:**
 
-A standard model catalogue for DeepInfra ships with the package — adopt it without making any API calls:
+| Provider | Protocol | Key env var |
+|----------|----------|-------------|
+| [DeepInfra](https://deepinfra.com) | OpenAI-compatible | `DEEPINFRA_API_KEY` |
+| [OpenAI](https://platform.openai.com) | OpenAI | `OPENAI_API_KEY` |
+| [Anthropic](https://anthropic.com) | Anthropic Messages API | `ANTHROPIC_API_KEY` |
+| [LM Studio](https://lmstudio.ai) | OpenAI-compatible (local) | none |
+| Any OpenAI-compatible server | OpenAI-compatible | configurable |
+
+Any local server that exposes an OpenAI-compatible `/chat/completions` endpoint — LM Studio, Ollama with the OpenAI adapter, vLLM, llama.cpp server — works without changes to the code. Set the base URL in Settings → Connections → Local server.
+
+A standard model catalogue for DeepInfra ships with the package — adopt it without any API calls:
 
 ```bash
 resource-librarian --vault ~/MyResearch model_catalog_adopt --provider deepinfra
 ```
+
+---
+
+## Web search and external capabilities
+
+The `web_search` tool reaches the open web during research sessions without leaving the app. Backends are tried in order:
+
+| Backend | Key env var | Notes |
+|---------|-------------|-------|
+| [Tavily](https://tavily.com) | `TAVILY_API_KEY` | Best results; free tier available |
+| [Brave Search](https://brave.com/search/api/) | `BRAVE_API_KEY` | Alternative; free tier available |
+| [SearXNG](https://searxng.github.io/) | none (self-hosted) | Set `searxng_url` in vault config |
+| Wikipedia | none | Keyless fallback; always available |
+
+Scholarly search uses **OpenAlex** (keyless, papers and books). Set at least one key to unlock the full web; Wikipedia alone is enough to get started.
+
+Additional capabilities are available by connecting MCP servers in Settings → MCP servers. Curated options that work out of the box:
+
+- **Semantic Scholar** — search papers, citations and authors
+- **Playwright browser** — open and read pages a plain fetch cannot reach
+- **Apify** — web scrapers and the RAG web browser (requires `APIFY_TOKEN`)
+
+---
+
+## Lenses
+
+Lenses are the vault's specialisation mechanism. A lens is a named reasoning stance — a way of reading a particular kind of material — that the vault extracts from your sources and makes available to the model.
+
+**Where they come from.** When you deep-read a source, the pipeline proposes lenses it finds in the text: a stance the passage teaches, with the sentence that grounds it, the conditions it applies in, and questions to probe with. You review each one in the Staging panel — edit, accept or discard. Accepted lenses are stored in the vault, indexed and searchable.
+
+**How they're used.** In a chat session you can adopt a lens for that thread:
+
+```
+/research   →   lens_suggest(material="paper", task="assess")
+             →   [shows matching lenses]
+             →   lens_adopt("lens-id")
+```
+
+Adopting a lens adds its instruction to the session's system prompt. The model then reasons through that stance for the rest of the thread — without you having to explain it. You can adopt multiple lenses and drop any of them mid-session.
+
+**Lens packs.** A domain pack or plugin can ship a set of pre-accepted lenses as a YAML file (a *lens pack*), the same way standard workflows ship with the package. The two that ship in the core:
+
+- `source-assessment` — how to evaluate a source's evidence quality, limits and transferability
+- `tool-choice` — how to choose among tools, avoid unnecessary writes, and read refusal messages
+
+**Adaptive learning.** As you work, the lenses your vault holds grow to reflect what you have actually read. A source on distributed systems contributes stances about distributed systems; one on pedagogy contributes stances about teaching. The vault gradually accumulates a reasoning vocabulary that is specific to your domain — without any fine-tuning or configuration.
 
 ---
 
