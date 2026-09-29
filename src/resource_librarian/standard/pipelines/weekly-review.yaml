@@ -1,0 +1,26 @@
+pipeline: weekly-review
+purpose: gather a pursuit's tasks, cross-session activity and desk, then draft a reflection for the person to review (Co-work Roadmap §2, W3)
+inputs:
+  project: {type: string}
+  since: {type: string, default: "-7d"}
+steps:
+  - id: tasks
+    workflow: gather-agenda
+    args: {project: {from: inputs.project}}
+  - id: work
+    workflow: gather-activity
+    args: {since: {from: inputs.since}, project: {from: inputs.project}}
+  - id: desk
+    workflow: gather-desk
+    args: {project: {from: inputs.project}}
+  - id: draft
+    workflow: draft-reflection
+    args:
+      project: {from: inputs.project}
+      agenda_buckets: {from: steps.tasks.outputs}
+      activity_summary: {from: steps.work.outputs}
+      desk: {from: steps.desk.outputs}
+outputs:
+  draft: {from: steps.draft.outputs.draft}
+  gathered: {from: steps.draft.outputs.gathered}
+  overdue: {from: steps.tasks.outputs.overdue}

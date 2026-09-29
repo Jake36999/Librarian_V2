@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Node / TypeScript
+node_modules/
+ui/dist/
+obsidian/dist/
+
+# Databases and derived state
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db-journal
+.Data/embeddings/
+
+# Vault instance (the .librarian-app/ folder created by init/new-vault.ps1
+# in a project deployment is personal vault content, not application code)
+.librarian-app/
+
+# Credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.token
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Working state
+scratch/
+*.tmp

@@ -1,0 +1,12 @@
+workflow: review-conversation
+purpose: find catalogued sources relevant to a snapshot of a conversation; writes nothing
+inputs:
+  text: {type: string}
+  limit: {type: integer, default: 8}
+steps:
+  - id: found
+    action: search
+    args: {query: {from: inputs.text}, intent: donor, limit: {from: inputs.limit}}
+outputs:
+  results: {from: steps.found.results}
+  verdict: {from: steps.found.verdict}

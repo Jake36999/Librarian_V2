@@ -1,0 +1,11 @@
+workflow: flag-sensitive
+purpose: mark one staged source for a person's review as possibly dual-use
+inputs:
+  item_id: {type: string}
+  reason: {type: string, default: "routed as possibly dual-use"}
+steps:
+  - id: flag
+    action: staging_flag
+    args: {item_id: {from: inputs.item_id}, sensitive: true, reason: {from: inputs.reason}}
+outputs:
+  sensitivity: {from: steps.flag.sensitivity}

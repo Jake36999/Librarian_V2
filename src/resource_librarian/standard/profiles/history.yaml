@@ -1,0 +1,21 @@
+# A domain profile (profiles.py): a library for historical research - primary
+# and secondary sources that say where they came from and whose eyes wrote
+# them (the History domain pack, About/Domain Packs.md), read with the
+# history-sources lens pack.
+profile: history
+description: Historical research - primary and secondary sources, their provenance, and cross-reading.
+content_model:
+  source_kinds:
+    - "| history | Sources/history | a primary or secondary historical source |"
+  tables:
+    - heading: "## Frontmatter — source/history"
+      rows:
+        - "| Field | Requirement |"
+        - "| --- | --- |"
+        - "| provenance | required |"
+        - "| perspective | optional |"
+        - "| date | optional |"
+lens_packs: [history-sources]
+mcp_servers: [semantic-scholar]
+workflows: [deep-read-staged, weekly-review]
+pursuit_kind: research

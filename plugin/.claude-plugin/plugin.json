@@ -1,0 +1,6 @@
+{
+  "name": "librarian",
+  "version": "2.0.0-dev",
+  "description": "A research library over a vault of sources someone has actually read: phased research sessions, staging review and offerings, with the vault's own rules enforced by its MCP server.",
+  "keywords": ["research", "obsidian", "library", "sources", "mcp"]
+}

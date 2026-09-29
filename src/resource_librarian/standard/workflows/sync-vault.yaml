@@ -1,0 +1,17 @@
+workflow: sync-vault
+purpose: keep the vault's ignore rules current, commit what changed, and push it
+inputs:
+  message: {type: string, default: "librarian: sync the vault"}
+steps:
+  - id: ignore
+    action: gitignore_ensure
+    args: {patterns: [".librarian/derived/", ".env", ".env.*"]}
+  - id: commit
+    action: vault_commit
+    args: {message: {from: inputs.message}}
+  - id: push
+    action: vault_push
+    when: {from: steps.commit.committed, is: true}
+outputs:
+  committed: {from: steps.commit.committed}
+  commit: {from: steps.commit.commit}

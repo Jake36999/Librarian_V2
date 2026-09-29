@@ -1,0 +1,25 @@
+pipeline: clear-enrichment-backlog
+purpose: run the intake queue, then route each fetched source to review, a sensitivity flag, or nothing further
+inputs:
+  limit: {type: integer, default: 10}
+steps:
+  - id: intake
+    workflow: run-queue
+    args: {limit: {from: inputs.limit}}
+  - id: next
+    route:
+      each: {from: steps.intake.outputs.results}
+      decide: reason
+      question: What should happen to this source next?
+      options:
+        review:
+          workflow: review-item
+          args: {item_id: {from: item.item}}
+          when_to_choose: its status is staged and it reads as ordinary material
+        flag:
+          workflow: flag-sensitive
+          args: {item_id: {from: item.item}}
+          when_to_choose: its status is staged and its text describes offensive security, surveillance or other dual-use material
+        done:
+          end: true
+          when_to_choose: its status is not staged (already held, screened out or quarantined)

@@ -1,0 +1,100 @@
+# A standard lens pack (lens_packs.py): the eight hand-built lenses in
+# `branch offerings/Library Methodology/Lenses for Source Assessment - A Redo of
+# the NotebookLM Compilation.md`, completed into the full lens shape. Drafted
+# from that note by DeepSeek-V4-Pro on 2026-09-27 and reviewed by hand: probes
+# and failures are the note's own; perspective, weighs/fades, when-not and the
+# instruction are close paraphrases of it. These lenses cite their sources by
+# name, not by a verified quote (see the note's 2026-09-27 addendum), which a
+# pack may do and a staged extraction may not.
+lens_pack: "source-assessment"
+description: "A set of lenses for evaluating software repositories, papers, and documents beyond a generic quality pass, drawn from verified sources on architecture, systems analysis, databases, and program analysis."
+materials: ["repository", "paper", "document"]
+tasks: ["assess"]
+lenses:
+  - name: "The Boundary Lens"
+    source: "Robert C. Martin, Clean Architecture (Prentice Hall, 2017)"
+    perspective: "Examines where a system draws the line between core policy and peripheral details, treating modularity as a testable claim about dependency direction rather than a folder structure."
+    attends_to: ["import direction between modules", "swappability of framework or database", "separation of core logic from delivery mechanisms", "claims of modularity versus actual dependency structure"]
+    deprioritizes: ["feature count", "code style", "test coverage percentage"]
+    probes: ["Where does this repo draw the line between its policy and its details?", "Is the core actually swappable, or does the README's modularity claim not survive a look at what imports what?"]
+    catches: "A repo that claims modularity but has core logic importing framework-specific details, making the boundary a lie."
+    applies_when: "A repository or system claims to be modular, layered, or cleanly architected."
+    not_when: "The artifact is a single-file script or a dataset with no architectural claims."
+    prompt_fragment: "Trace the dependency direction in this codebase. Identify which modules represent core policy and which represent details like frameworks or databases. Check whether the core imports anything from the details layer, and assess whether the claimed modularity holds under that scrutiny."
+
+  - name: "The Cohesion Lens"
+    source: "Robert C. Martin, Clean Architecture (2017), component principles"
+    perspective: "Evaluates whether a system's components change together for a single reason, using release feasibility and change history as evidence of cohesion or its absence."
+    attends_to: ["co-change frequency across files", "single responsibility of modules", "release independence of components", "signs of shotgun surgery in commit history"]
+    deprioritizes: ["code size", "number of modules", "naming conventions"]
+    probes: ["If you had to release one part of this repo separately from the rest, could you?", "Does the commit history suggest one change routinely touches five unrelated files?"]
+    catches: "A repo that looks well-organized by directory but whose commit history reveals shotgun surgery across supposedly independent modules."
+    applies_when: "Assessing a multi-module repository for maintainability or reusability."
+    not_when: "The project is a monolith with no claimed component separation or its history is unavailable."
+    prompt_fragment: "Examine the commit history or module structure. Determine whether a single conceptual change routinely touches files across unrelated directories. Assess whether any component could be released independently without dragging in the rest of the system."
+
+  - name: "The Process/Data Duality Lens"
+    source: "Dennis, Wixom & Roth / Dennis, Wixom & Tegarden, Systems Analysis and Design (5th ed.)"
+    perspective: "Separates the question of what a system does from what it represents or stores, treating process and data as two distinct dimensions that a single summary tends to conflate."
+    attends_to: ["process flows and transformations", "data models and persistent structures", "balance between process-rich and data-rich aspects", "whether the system is stateless or stateful"]
+    deprioritizes: ["overall purpose statement", "technology stack", "user interface description"]
+    probes: ["What does this system do, in terms of process?", "What does it represent or store, in terms of data?", "Is it data-rich and process-poor, or the reverse?"]
+    catches: "A repo that is described as a full system but is actually a dataset with a thin loader, or a stateless transform with no persistent model."
+    applies_when: "A system has both behavioral and persistent aspects that a single description would flatten."
+    not_when: "The artifact is purely a static dataset or a purely stateless utility with no data model."
+    prompt_fragment: "Analyze this system by asking two separate questions. First, what processes or transformations does it perform? Second, what data does it represent or store? Characterize whether it leans more toward process or data, and note if a blended description would miss that distinction."
+
+  - name: "The Elicitation Lens"
+    source: "Dennis, Wixom & Roth / Dennis, Wixom & Tegarden, Systems Analysis and Design (5th ed.)"
+    perspective: "Treats a project's closed issues, merged pull requests, and changelog as a record of elicited requirements, revealing what users actually needed rather than what the README claims."
+    attends_to: ["closed issues and their resolutions", "merged pull requests and their purposes", "changelog entries as evidence of real demand", "gaps between stated purpose and built features"]
+    deprioritizes: ["README description", "marketing language", "star count"]
+    probes: ["What did users actually need, evidenced by what they asked for and what got built?", "How does that differ from what the README claims the project is for?"]
+    catches: "A project whose README describes one purpose but whose issue tracker and PR history show it being used and extended for something else entirely."
+    applies_when: "A repository has a thin or vague README but an active issue tracker and pull request history."
+    not_when: "The repository has no public issue tracker, changelog, or contribution history."
+    prompt_fragment: "Review the closed issues, merged pull requests, and changelog as if they were an elicitation transcript. Identify what users actually requested and what was built in response. Contrast this with the project's stated purpose in its README."
+
+  - name: "The Schema-Layer Lens"
+    source: "Garcia-Molina, Ullman & Widom, Database Systems: The Complete Book; Lewis, CO2209 - ANSI/SPARC architecture"
+    perspective: "Assesses persistent-state systems by separating internal storage, conceptual model, and external API, checking whether the public interface hides or leaks the storage shape."
+    attends_to: ["internal storage schema", "conceptual or logical data model", "external API or interface", "leakage of storage details into the API"]
+    deprioritizes: ["query performance", "database vendor", "API versioning"]
+    probes: ["Does the public interface actually hide the storage engine's shape, or does the API leak it directly?", "Are the internal, conceptual, and external schemas distinguishable and appropriately separated?"]
+    catches: "An API that claims to abstract the database but exposes table names, column types, or storage-specific error messages directly to consumers."
+    applies_when: "Any system with persistent state exposes an API or interface."
+    not_when: "The artifact is a stateless utility or a pure computation with no persistent storage."
+    prompt_fragment: "Identify the internal storage schema, the conceptual data model, and the external API. Check whether the API exposes storage-level details such as table names, column types, or engine-specific error messages. Assess whether the layers are genuinely separate."
+
+  - name: "The Decomposition-and-Validation Lens"
+    source: "Li et al., The Hitchhiker's Guide to Program Analysis (LLift), arXiv 2308.00245"
+    perspective: "Checks LLM-driven systems for the presence or absence of staged task decomposition, progressive information disclosure, and self-validation, treating their absence as a reliability signal backed by measured results."
+    attends_to: ["presence of task decomposition into stages", "progressive disclosure of information to the model", "self-validation of model output against criteria", "baseline versus structured-prompt performance"]
+    deprioritizes: ["model size or name", "prompt length", "output fluency"]
+    probes: ["Does this system decompose large tasks into smaller, staged conversations?", "Does it disclose information progressively rather than dumping full scope upfront?", "Does it include self-validation of its own output against stated criteria?"]
+    catches: "An LLM-driven system that uses a single monolithic prompt and lacks self-validation, producing results that a naive pass might accept but that structured prompting would measurably improve."
+    applies_when: "Evaluating a system that uses LLMs for analysis, generation, or reasoning tasks."
+    not_when: "The system does not involve LLMs or the LLM integration is trivial and non-critical."
+    prompt_fragment: "Examine how this system uses LLMs. Check whether it decomposes large tasks into a sequence of smaller steps, whether it reveals information incrementally rather than all at once, and whether it validates its own outputs against explicit criteria before concluding."
+
+  - name: "The Evaluative-Lenses Lens"
+    source: "Crisan & Hoque, Towards a Holistic Evaluation of LLM Generated Code for Exploratory Visual Analysis"
+    perspective: "Decomposes quality assessment into four distinct failure modes—functional, semantic, contextual, and preferential—so that a system passing one can still be caught failing another."
+    attends_to: ["functional correctness", "semantic accuracy of claims", "contextual fit to intent", "stylistic or preferential match"]
+    deprioritizes: ["overall quality rating", "test pass/fail alone", "user satisfaction score"]
+    probes: ["Does it run correctly (functional)?", "Does it correctly represent what it claims to (semantic)?", "Does it fit the actual intent (contextual)?", "Does it match stylistic expectations (preferential)?"]
+    catches: "A source that passes functional checks but fails semantically—its documented behavior does not match what it actually does."
+    applies_when: "Assessing any generated artifact, code, or document where correctness alone is insufficient."
+    not_when: "The artifact has no behavioral or representational claims to verify beyond mere execution."
+    prompt_fragment: "Evaluate this artifact across four distinct dimensions: functional (does it run?), semantic (does it correctly represent what it claims?), contextual (does it fit the actual intent?), and preferential (does it match stylistic expectations?). Identify any dimension where it passes while another fails."
+
+  - name: "The Soft-Rule Lens"
+    source: "Mangal et al., A User-Guided Approach to Program Analysis (Eugene), ESEC/FSE 2015"
+    perspective: "Frames source-fit assessment as hard disqualifying rules plus soft, weighted preferences that should be tuned over time from recorded outcomes, naming a currently-unbuilt half of a mechanism."
+    attends_to: ["hard disqualifying rules", "soft weighted preferences", "recorded usage outcomes", "tunability of preference weights from feedback"]
+    deprioritizes: ["static rule sets", "one-time relevance scores", "manual curation alone"]
+    probes: ["What are the hard disqualifying rules for this source?", "What soft, weighted preferences should apply, and how would they be tuned from recorded outcomes over time?"]
+    catches: "A source that passes hard filters but would be deprioritized by learned preferences, a distinction a purely rule-based system misses."
+    applies_when: "A system already has hard filtering rules and usage logging but lacks a mechanism to learn preference weights from outcomes."
+    not_when: "No usage data or outcome logging exists to learn from, or the domain has no meaningful soft preferences."
+    prompt_fragment: "Identify the hard disqualifying rules that would exclude a source outright. Then, define soft, weighted preferences that should influence fit, and describe how those weights could be tuned over time from recorded usage outcomes, even if the tuning mechanism is not yet built."

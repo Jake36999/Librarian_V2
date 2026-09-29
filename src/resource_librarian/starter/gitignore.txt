@@ -1,0 +1,5 @@
+# The only thing in a vault that can be deleted and rebuilt.
+.librarian/derived/
+# Never let a key arrive by accident.
+.env
+.env.*

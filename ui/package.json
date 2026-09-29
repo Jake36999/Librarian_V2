@@ -1,0 +1,16 @@
+{
+  "name": "librarian-ui",
+  "private": true,
+  "version": "2.0.0-dev",
+  "description": "The Librarian V2 interface: one bundle, mounted by the website and the Obsidian plugin",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "build": "npm run check && node build.mjs",
+    "smoke": "node run-smoke.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright-core": "1.63.0",
+    "typescript": "^5.6.0"
+  }
+}

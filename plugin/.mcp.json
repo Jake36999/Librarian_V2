@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "librarian": {
+      "command": "resource-librarian",
+      "args": [
+        "mcp",
+        "--tier",
+        "contribute"
+      ]
+    }
+  }
+}

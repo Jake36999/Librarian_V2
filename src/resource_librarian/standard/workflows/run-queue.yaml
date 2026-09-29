@@ -1,0 +1,11 @@
+workflow: run-queue
+purpose: take what is waiting in the intake queue through fetch, evidence, description and staging
+inputs:
+  limit: {type: integer, default: 10}
+steps:
+  - id: intake
+    action: intake_run
+    args: {limit: {from: inputs.limit}}
+outputs:
+  results: {from: steps.intake.results}
+  still_waiting: {from: steps.intake.still_waiting}

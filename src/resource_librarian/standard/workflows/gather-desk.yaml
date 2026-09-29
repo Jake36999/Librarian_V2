@@ -1,0 +1,11 @@
+workflow: gather-desk
+purpose: a pursuit's current working set (W3 weekly-review, step 3)
+inputs:
+  project: {type: string}
+steps:
+  - id: show
+    action: desk_show
+    args: {project: {from: inputs.project}}
+outputs:
+  project: {from: steps.show.project}
+  working_set: {from: steps.show.working_set}

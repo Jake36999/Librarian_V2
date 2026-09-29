@@ -1,0 +1,20 @@
+workflow: draft-reflection
+purpose: draft a short reflection grounded only in a week's own gathered tasks, activity and desk (W3 weekly-review, step 4)
+inputs:
+  project: {type: string}
+  agenda_buckets: {type: object}
+  activity_summary: {type: object}
+  desk: {type: object}
+steps:
+  - id: draft
+    action: reflection_draft
+    args:
+      project: {from: inputs.project}
+      agenda_buckets: {from: inputs.agenda_buckets}
+      activity_summary: {from: inputs.activity_summary}
+      desk: {from: inputs.desk}
+outputs:
+  project: {from: steps.draft.project}
+  gathered: {from: steps.draft.gathered}
+  draft: {from: steps.draft.draft}
+  ok: {from: steps.draft.ok}

@@ -1,0 +1,14 @@
+workflow: gather-agenda
+purpose: every open, dated task across the vault - or one pursuit's, given a project - bucketed by when it falls (W3 weekly-review, step 1)
+inputs:
+  project: {type: string, default: ""}
+steps:
+  - id: scan
+    action: agenda
+    args: {project: {from: inputs.project}}
+outputs:
+  overdue: {from: steps.scan.overdue}
+  today: {from: steps.scan.today}
+  this_week: {from: steps.scan.this_week}
+  later: {from: steps.scan.later}
+  undated: {from: steps.scan.undated}

@@ -1,0 +1,19 @@
+# A domain profile (profiles.py): a library for working through a course -
+# lecture material deep-read and logged, concepts learned with `learn`
+# sessions, assessments tracked as dated milestones.
+profile: course
+description: Working through a course - lectures read and logged, concepts learned, assessments tracked.
+content_model:
+  source_kinds:
+    - "| lecture | Sources/lecture | a lecture's slides, notes, handout or transcript |"
+  tables:
+    - heading: "## Frontmatter — source/lecture"
+      rows:
+        - "| Field | Requirement |"
+        - "| --- | --- |"
+        - "| module | required |"
+        - "| week | optional |"
+        - "| lecturer | optional |"
+mcp_servers: [semantic-scholar]
+workflows: [deep-read-staged, weekly-review]
+pursuit_kind: course

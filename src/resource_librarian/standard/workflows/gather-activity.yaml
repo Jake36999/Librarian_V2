@@ -1,0 +1,13 @@
+workflow: gather-activity
+purpose: what was read and written across every session - or one pursuit's, given a project - since a cutoff (W3 weekly-review, step 2)
+inputs:
+  since: {type: string, default: "-7d"}
+  project: {type: string, default: ""}
+steps:
+  - id: scan
+    action: activity
+    args: {since: {from: inputs.since}, project: {from: inputs.project}}
+outputs:
+  since: {from: steps.scan.since}
+  uses: {from: steps.scan.uses}
+  writes: {from: steps.scan.writes}

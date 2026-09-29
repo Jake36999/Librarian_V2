@@ -1,0 +1,49 @@
+# A standard lens pack (lens_packs.py) for the history profile: four stances
+# of ordinary historical source criticism, hand-written for this library.
+# They cite the method, not a particular book: accepting the pack is the
+# person's judgement that these are the right stances for their work.
+lens_pack: history-sources
+description: Reading historical sources critically - who made them, for whom, and what else says so.
+materials: [history, document]
+tasks: [assess, research]
+lenses:
+  - name: Provenance First
+    source: "Historical source criticism (the provenance question)"
+    perspective: Before weighing what a record says, establish who made it, when, how close they were to the events, and how it survived.
+    attends_to: ["the author's position and access", "the gap between event and record", "how the record came down to us"]
+    deprioritizes: ["how vivid or detailed the account is"]
+    probes: ["Who produced this, and how close were they to what it describes?", "What happened to this record between its making and now?"]
+    catches: Treating a vivid, detailed account as reliable when its author was far from the events or wrote long after.
+    applies_when: Any primary source, or a secondary one leaning on a single primary account.
+    not_when: A modern reference work whose sources are fully cited and checkable.
+    prompt_fragment: "Before using what this record claims, say who made it, when, with what access to the events, and how it survived; let those answers set how much weight it can bear."
+  - name: Written For Whom
+    source: "Historical source criticism (audience and purpose)"
+    perspective: Every record was made for an audience and a purpose; read what it says through what it was for.
+    attends_to: ["the intended audience", "what the author gained by the record", "genre conventions"]
+    deprioritizes: ["the record's claims taken at face value"]
+    probes: ["Who was this written for, and what did its author want them to believe or do?", "What would this author have had reason to leave out?"]
+    catches: Reading a petition, report or memoir as neutral testimony when it was written to persuade.
+    applies_when: Letters, reports, speeches, memoirs, official records, propaganda.
+    not_when: Mechanical records with no persuasive purpose, such as a tide table.
+    prompt_fragment: "Ask who this was written for and what its author needed from them, then read each claim as shaped by that purpose - including what it had reason to omit."
+  - name: Corroborate Before Concluding
+    source: "Historical source criticism (corroboration)"
+    perspective: A claim stands on independent sources agreeing, not on one source repeating itself or copies of it.
+    attends_to: ["independent sources for the same claim", "whether sources share an origin", "silences where a source should speak"]
+    deprioritizes: ["how many times a claim is repeated"]
+    probes: ["Which sources support this claim, and are they independent of each other?", "Where would we expect evidence for this, and is it there?"]
+    catches: Counting several accounts as confirmation when they all derive from one original.
+    applies_when: Any contested or consequential claim, or a narrative built across several sources.
+    not_when: Establishing only what one source itself says, not whether it is true.
+    prompt_fragment: "For each consequential claim, name the independent sources behind it and whether they share an origin; treat repetition as one voice, not many."
+  - name: Then, Not Now
+    source: "Historical source criticism (historical context)"
+    perspective: Words, categories and values meant what they meant at the time; read the source in its own context before judging it by ours.
+    attends_to: ["period meanings of key terms", "the norms and knowledge available then", "what contemporaries took for granted"]
+    deprioritizes: ["present-day categories and hindsight"]
+    probes: ["What did this term or category mean when the source was written?", "What did the author know, and not know, at the time?"]
+    catches: Anachronism - reading modern meanings, categories or hindsight into a past text.
+    applies_when: Older sources, or any source using terms whose meaning has shifted.
+    not_when: Recent material whose context the reader shares.
+    prompt_fragment: "Read key terms and judgements in the source's own time: check what they meant then and what its author could have known, before comparing them to present ideas."

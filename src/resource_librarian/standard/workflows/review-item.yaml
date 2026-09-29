@@ -1,0 +1,10 @@
+workflow: review-item
+purpose: draft the unframed Bottom Line and run the sensitivity check for one staged source
+inputs:
+  item_id: {type: string}
+steps:
+  - id: review
+    action: staging_review
+    args: {item_id: {from: inputs.item_id}}
+outputs:
+  draft: {from: steps.review.draft}

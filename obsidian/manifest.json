@@ -1,0 +1,9 @@
+{
+  "id": "librarian",
+  "name": "Librarian",
+  "version": "2.0.0-dev",
+  "minAppVersion": "1.11.4",
+  "description": "A research library for this vault: phased research sessions, staging review and search, run by the local Librarian core.",
+  "author": "Resource Library",
+  "isDesktopOnly": true
+}

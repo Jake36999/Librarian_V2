@@ -1,0 +1,11 @@
+workflow: review-due
+purpose: open one parked learn session per concept whose review task is due, framed for the review, for the person to resume from Sessions (Co-work Roadmap §2 W4, §4 D4)
+inputs:
+  limit: {type: integer, default: 5}
+steps:
+  - id: open
+    action: review_due_open
+    args: {limit: {from: inputs.limit}}
+outputs:
+  opened: {from: steps.open.opened}
+  already_waiting: {from: steps.open.already_waiting}

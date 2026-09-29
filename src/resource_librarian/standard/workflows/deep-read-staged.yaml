@@ -1,0 +1,16 @@
+workflow: deep-read-staged
+purpose: read the whole text of every staged source, part by part - claims and limits with their pages, terms, and any reasoning stance a text teaches, staged as a lens (V1's lens scan, on the clerk channel)
+inputs:
+  limit: {type: integer, default: 10}
+  max_chunks: {type: integer, default: 12}
+steps:
+  - id: waiting
+    action: staging_list
+    args: {kind: source, status: staged, limit: {from: inputs.limit}}
+  - id: read
+    each: {from: steps.waiting.items}
+    action: deep_read
+    args: {item_id: {from: item.id}, max_chunks: {from: inputs.max_chunks}}
+    on_error: continue
+outputs:
+  read: {from: steps.read.count}

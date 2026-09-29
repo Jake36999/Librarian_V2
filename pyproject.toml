@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# Working name. The published name is an open decision (PLAN - Librarian V2, Decisions Still Open).
+name = "resource-librarian"
+version = "2.0.0.dev0"
+description = "A research library for a vault of sources someone has actually read"
+requires-python = ">=3.11"
+dependencies = ["PyYAML>=6"]
+
+[project.optional-dependencies]
+search = ["numpy>=1.26"]
+embed = ["numpy>=1.26", "model2vec>=0.4"]
+pdf = ["pypdf>=4"]
+mcp = ["mcp>=2.2,<3"]
+dev = ["pytest>=8", "numpy>=1.26", "pypdf>=4", "mcp>=2.2,<3"]
+
+[project.scripts]
+resource-librarian = "resource_librarian.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+resource_librarian = ["starter/**/*", "starter/*", "standard/**/*", "ui/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: scale tests on synthetic vaults (run with -m slow)"]
+addopts = "-m 'not slow'"

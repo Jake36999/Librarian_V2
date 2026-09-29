@@ -1,0 +1,16 @@
+{
+  "name": "librarian-obsidian",
+  "private": true,
+  "version": "2.0.0-dev",
+  "description": "Librarian V2 in Obsidian: starts the local core and mounts the interface in a view",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "build": "npm run check && node build.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "0.28.2",
+    "obsidian": "1.13.1",
+    "typescript": "^5.6.0"
+  }
+}

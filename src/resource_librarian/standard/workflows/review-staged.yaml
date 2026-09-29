@@ -1,0 +1,16 @@
+workflow: review-staged
+purpose: draft the unframed Bottom Line and run the sensitivity check for every staged source that has none yet (V1's draft_staging_promotions, declared)
+inputs:
+  limit: {type: integer, default: 25}
+steps:
+  - id: waiting
+    action: staging_list
+    args: {kind: source, status: staged, limit: {from: inputs.limit}}
+  - id: review
+    each: {from: steps.waiting.items}
+    when: {from: item.reviewed, is: false}
+    action: staging_review
+    args: {item_id: {from: item.id}}
+    on_error: continue
+outputs:
+  reviewed: {from: steps.review.count}

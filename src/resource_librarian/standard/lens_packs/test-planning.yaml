@@ -1,0 +1,73 @@
+# A standard lens pack (lens_packs.py), roadmap §4 G4: how to plan the tests
+# that would show a change works, or that a claimed defect is real. Written
+# 2026-09-28 from what this project measured (G1: model judges of code-review
+# findings; G5: planted defects), plus one idea from the verification ladder of
+# pedrohcgs/claude-code-my-workflow (MIT). The librarian never writes into a
+# project (OBSERVER_WITHOUT_ACTUATION): these lenses shape a *plan*; whether
+# the tests pass is settled only by running them where the code lives.
+# Accepting the pack is a person's decision (lens_pack_accept).
+lens_pack: test-planning
+description: Six lenses for planning the tests that would show a change works or a defect is real.
+materials: [code, change, review]
+tasks: [plan-tests, check-claim]
+lenses:
+  - name: The Failing-Input-First Lens
+    source: "Co-work Roadmap §4 G1 (the overseer evaluation, 2026-09-28)"
+    perspective: A defect claim, or a fix, is only as good as the concrete input that shows the failure; that input, written as a test that fails before the change and passes after, is the plan.
+    attends_to: ["the exact input and the exact wrong output", "whether the test fails on the code before the change"]
+    deprioritizes: ["how confidently the defect or the fix is described"]
+    probes: ["What single input shows the failure, and what does the code return for it today?", "Would this test fail if the change were reverted?"]
+    catches: A fix or a finding accepted on its description, with no input that shows it; in G1 most confidently stated review findings had none that held.
+    applies_when: Planning tests for a change, or deciding whether a reported defect is real.
+    not_when: The change is documentation or configuration with no behaviour to exercise.
+    prompt_fragment: "Plan tests from concrete failing inputs: for each behaviour the change claims to fix or add, name the input, the output today, and the output expected, and check the test would fail without the change."
+  - name: The Reachable-Input Lens
+    source: "Co-work Roadmap §4 G1: the CRLF finding relabelled false (notes.load reads in universal-newline mode)"
+    perspective: A test whose input no caller can actually supply proves a defect nobody can hit; trace the input back to where it enters the system before counting the defect or writing the test.
+    attends_to: ["every caller of the function under test", "what the entry point does to the input first (decoding, normalising, validating)"]
+    deprioritizes: ["inputs that are merely possible for the function in isolation"]
+    probes: ["Which caller passes this input, and does anything upstream already change or refuse it?", "Is the test calling the function directly with an input the real path never produces?"]
+    catches: A defect reproduced by calling a helper directly with an input the real path normalises away, then fixed and tested at great cost for nothing.
+    applies_when: A failing input was found by calling an internal function directly.
+    not_when: The function is itself a public entry point that takes the input as given.
+    prompt_fragment: "For each failing input, trace it from the entry point; test through the real path, and count a defect only if a real caller can deliver that input."
+  - name: The Seed-and-Control Lens
+    source: "claude-code-my-workflow (pedrohcgs, MIT), references/verification-ladder.md, Rung 0: qualify the checker"
+    perspective: A check is trusted only after it fires on a planted instance of the failure it targets and stays quiet on a clean control; an unqualified green is no evidence.
+    attends_to: ["a planted version of the defect the test targets", "the same test on clean code"]
+    deprioritizes: ["a passing run on its own"]
+    probes: ["If I plant the defect this test is for, does it go red?", "Does it stay green on the clean code, or does it fail for another reason?"]
+    catches: A test that passes because it never exercises the path it is named for, found only when the real defect ships.
+    applies_when: Adding a test or a gate that other work will rely on.
+    not_when: A throwaway check during exploration that nothing downstream trusts.
+    prompt_fragment: "For each new test or gate, plan a planted defect it must catch and a clean control it must pass, and run both before relying on it."
+  - name: The Platform-Fact-Is-Tested Lens
+    source: "Co-work Roadmap §4 G1: two model judges assumed os.open(..., 0o600) protects a file on Windows"
+    perspective: Behaviour that depends on the operating system, runtime or file system is tested on that platform, not recalled; confident recall is where platform bugs hide.
+    attends_to: ["permissions, line endings, path rules, locale and encoding", "which platforms the code runs on"]
+    deprioritizes: ["how the behaviour works on the platform the author knows best"]
+    probes: ["Does this behaviour differ between Windows, macOS and Linux?", "Is there a test that runs on each platform the change claims to support?"]
+    catches: A security or correctness property that holds on one platform and is silently absent on another.
+    applies_when: A change touches files, permissions, processes, paths or text encoding.
+    not_when: Pure computation with no platform dependence.
+    prompt_fragment: "Where a change depends on the platform (permissions, paths, line endings, encodings), plan a test that runs on each supported platform rather than reasoning from memory."
+  - name: The Edge-The-Change-Widened Lens
+    source: "Co-work Roadmap §4 G1: the real defects in the P0 patch (custom task statuses, a fence closed by another fence kind, a secret inside a longer argument)"
+    perspective: A change's defects sit at the edges it widened or narrowed; test the neighbouring cases the change did not name, not only the case it was written for.
+    attends_to: ["values next to the one the change handles", "the other variant of each thing matched (fence kinds, status marks, argument forms)"]
+    deprioritizes: ["repeating the case the change was written for"]
+    probes: ["What input is one step outside what the change handles, and what happens to it now?", "If the change matches a pattern, which real inputs look almost like it?"]
+    catches: A fix that handles the reported case and silently mishandles its siblings.
+    applies_when: A change adds or edits a parser, a pattern, a validator or a threshold.
+    not_when: The change removes code with no replacement behaviour.
+    prompt_fragment: "List the cases next to the one the change handles (other variants, one step past each boundary) and plan a test for each."
+  - name: The Intended-Needs-a-Source Lens
+    source: "Co-work Roadmap §4 G1: model judges dismissed real defects as intended behaviour"
+    perspective: Calling a behaviour intended is itself a claim; it stands only where the intent is written down (a docstring, a spec, a test that asserts it), and otherwise the behaviour is untested, not settled.
+    attends_to: ["where the intended behaviour is stated", "a test that asserts it"]
+    deprioritizes: ["how reasonable the behaviour sounds"]
+    probes: ["Where is this behaviour stated as intended?", "Is there a test that would fail if someone changed it?"]
+    catches: A defect waved through as a design choice that nobody made.
+    applies_when: A behaviour is defended as intended during a review or a test plan.
+    not_when: The intent is stated and a test asserts it.
+    prompt_fragment: "When a behaviour is called intended, find where that intent is written or asserted by a test; if neither exists, plan the test that pins the behaviour one way or the other."

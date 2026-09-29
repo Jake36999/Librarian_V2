@@ -1,0 +1,10 @@
+# A domain profile (profiles.py): a library for researching and building
+# software systems - donors, patterns, precedents, and what was learned
+# applying them. The starter Content Model already covers repositories,
+# papers, datasets and models, so this profile adds no rows.
+profile: software-systems
+description: Researching and building software systems - donors, patterns, precedents and applications.
+lens_packs: [source-assessment, tool-choice, test-planning]
+mcp_servers: [semantic-scholar]
+workflows: [deep-read-staged, weekly-review]
+pursuit_kind: project
