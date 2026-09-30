@@ -1,4 +1,4 @@
 @echo off
-REM Start the Librarian app. If a vault was opened before it relaunches there;
-REM if not, it opens the vault-selection page in the browser.
-resource-librarian app --open
+REM Use a free local port so stale app or picker processes cannot shadow this launch.
+REM If a vault was opened before it relaunches there; otherwise it opens the picker.
+resource-librarian app --open --port 0

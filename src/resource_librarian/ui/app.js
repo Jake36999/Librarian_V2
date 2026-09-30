@@ -514,6 +514,7 @@ var Librarian = (() => {
       this.cards = /* @__PURE__ */ new Map();
       // permission request id -> card
       this.working = null;
+      this.outcomeCard = null;
       this.lastUserText = "";
       this.empty();
     }
@@ -706,6 +707,7 @@ var Librarian = (() => {
               )
             ));
           }
+          this.sessionOutcome(event.session ?? null);
           this.hooks.onSession(event.session ?? null);
           break;
         case "error":
@@ -764,6 +766,32 @@ var Librarian = (() => {
           break;
         }
       }
+    }
+    sessionOutcome(session) {
+      if (!session) return;
+      this.outcomeCard?.remove();
+      if (session.status === "closed") {
+        this.outcomeCard = h(
+          "div",
+          { class: "session-outcome closed", role: "status" },
+          h("strong", {}, "Thread closed"),
+          session.summary ? h("div", {}, String(session.summary)) : null,
+          session.gaps ? h("div", { class: "dim" }, `Gaps: ${session.gaps}`) : null
+        );
+        this.append(this.outcomeCard);
+        return;
+      }
+      const openItems = session.open_items ?? [];
+      const parked = session.status === "parked";
+      this.outcomeCard = h(
+        "div",
+        { class: "session-outcome open", role: "status" },
+        h("strong", {}, `${parked ? "Thread parked" : "Thread still open"} \xB7 ${String(session.phase ?? "work in progress")}`),
+        openItems.length ? h("ul", {}, openItems.slice(0, 5).map((item) => h("li", {}, item))) : null,
+        session.next ? h("p", {}, String(session.next)) : null,
+        parked ? h("p", { class: "dim" }, "Reopen this thread from Sessions to continue.") : h("button", { class: "ghost", onclick: () => this.hooks.continueSession() }, "Continue from next step")
+      );
+      this.append(this.outcomeCard);
     }
     permission(event) {
       const args = event.arguments ?? {};
@@ -865,6 +893,12 @@ var Librarian = (() => {
       const phases = session.phases ?? [];
       const current = phases.indexOf(session.phase);
       const questions = (session.questions ?? []).filter((q) => q.answer === null || q.answer === void 0);
+      const libraryItems = session.library_items ?? [];
+      const libraryCounts = session.library_item_counts ?? libraryItems.reduce((counts, item) => {
+        counts[item.status] = (counts[item.status] ?? 0) + 1;
+        return counts;
+      }, {});
+      const libraryItemCount = Number(session.library_item_count ?? libraryItems.length);
       clear(
         this.plan,
         h("h3", {}, "Phases"),
@@ -882,6 +916,14 @@ var Librarian = (() => {
         (session.open_items ?? []).length ? h("ul", {}, session.open_items.map((t) => h("li", {}, t))) : null,
         Object.keys(session.briefs ?? {}).length ? h("h3", {}, "Briefs") : null,
         Object.entries(session.briefs ?? {}).map(([id, b]) => h("p", {}, h("strong", {}, id), ` ${b.need ?? ""}`, b.status === "closed" ? h("span", { class: "dim" }, " \xB7 closed") : null)),
+        libraryItemCount ? h("h3", {}, `Library sources \xB7 ${libraryItemCount}`) : null,
+        libraryItemCount ? h("p", { class: "dim" }, Object.entries(libraryCounts).map(([status, count]) => `${count} ${status}`).join(" \xB7 ")) : null,
+        libraryItems.length ? h("ul", {}, libraryItems.slice(-12).map((item) => h(
+          "li",
+          {},
+          item.path ? link(item.path, String(item.source ?? item.path), this.hooks.openNote) : String(item.source ?? item.id),
+          ` \xB7 ${item.status}`
+        ))) : null,
         (session.checkpoints ?? []).length ? h("h3", {}, `Checkpoint, round ${(session.checkpoints ?? []).length}`) : null,
         (session.checkpoints ?? []).slice(-1).map((c) => h(
           "ul",
@@ -2536,9 +2578,12 @@ var Librarian = (() => {
   var TIERS = ["Tier_1", "Tier_2", "Tier_3"];
   var untag = (s) => s.replace(/_/g, " ");
   var Staging = class {
-    constructor(api, openNote) {
+    constructor(api, openNote, currentSession = () => "", onSessionUpdate = () => {
+    }) {
       this.api = api;
       this.openNote = openNote;
+      this.currentSession = currentSession;
+      this.onSessionUpdate = onSessionUpdate;
       this.el = h("div", { class: "view staging" });
       this.list = h("div", { class: "items", role: "listbox", "aria-label": "Staged items" });
       this.detail = h("div", { class: "detail" });
@@ -2682,6 +2727,7 @@ var Librarian = (() => {
           if (out.error || r.error || r.refused) throw new Error(String(r.detail ?? r.refused ?? out.detail ?? out.error ?? r.error));
           const outcome = decision === "accept" ? r.promotion && !r.promotion.catalogued ? `Accepted: ${r.promotion.status}.` : "Accepted and catalogued." : decision === "reject" ? "Rejected." : "Deferred.";
           this.selected = "";
+          if (r.session && r.session.session === this.currentSession()) this.onSessionUpdate(r.session);
           await this.load();
           this.detailLocked = true;
           clear(this.detail, h("p", { class: "ok", role: "status" }, `${item.name}: ${outcome}`));
@@ -3181,10 +3227,16 @@ var Librarian = (() => {
         effectOf: (tool) => this.effects.get(tool) ?? "write",
         onSession: (s) => this.setSession(s),
         resend: (text) => void this.sendText(text),
+        continueSession: () => void this.sendText("Continue the current research session from its next step. Read session_status first, complete the open work, and report any information you cannot verify as a gap. Do not claim the session or requested work is complete while session_status still shows open items."),
         rewind: (index) => void this.rewindMessage(index),
         branch: (index) => void this.branchMessage(index)
       });
-      this.staging = new Staging(this.api, openNote);
+      this.staging = new Staging(
+        this.api,
+        openNote,
+        () => this.session?.session ?? "",
+        (session) => this.setSession(session)
+      );
       this.search = new Search(this.api, openNote);
       this.pane = new DocPane(
         this.api,
@@ -3440,6 +3492,7 @@ var Librarian = (() => {
           break;
         }
         case "person_acted":
+          if (event.session) this.setSession(event.session);
           if (this.view === "staging") void this.staging.load();
           break;
         case "library_switched":
@@ -3479,7 +3532,8 @@ var Librarian = (() => {
       )));
     }
     setSession(session) {
-      if (session && !session.phases && this.session) session = { ...this.session, ...session };
+      if (session && this.session && session.session === this.session.session)
+        session = { ...this.session, ...session };
       this.session = session;
       this.chat.renderPlan(session);
       if (!session) {

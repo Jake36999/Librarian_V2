@@ -82,10 +82,12 @@ class App {
       effectOf: (tool) => this.effects.get(tool) ?? "write",
       onSession: (s) => this.setSession(s),
       resend: (text) => void this.sendText(text),
+      continueSession: () => void this.sendText("Continue the current research session from its next step. Read session_status first, complete the open work, and report any information you cannot verify as a gap. Do not claim the session or requested work is complete while session_status still shows open items."),
       rewind: (index) => void this.rewindMessage(index),
       branch: (index) => void this.branchMessage(index),
     });
-    this.staging = new Staging(this.api, openNote);
+    this.staging = new Staging(this.api, openNote, () => this.session?.session ?? "",
+      (session) => this.setSession(session));
     this.search = new Search(this.api, openNote);
     this.pane = new DocPane(this.api, this.chat.plan, () => String(this.state.vault ?? ""),
       () => this.showPane(false),
@@ -294,6 +296,7 @@ class App {
         break;
       }
       case "person_acted":
+        if (event.session) this.setSession(event.session);
         if (this.view === "staging") void this.staging.load();
         break;
       case "library_switched":
@@ -327,7 +330,8 @@ class App {
 
   private setSession(session: Session): void {
     // A tool result's envelope is partial; a full view has `phases`.
-    if (session && !session.phases && this.session) session = { ...this.session, ...session };
+    if (session && this.session && session.session === this.session.session)
+      session = { ...this.session, ...session };
     this.session = session;
     this.chat.renderPlan(session);
     if (!session) {

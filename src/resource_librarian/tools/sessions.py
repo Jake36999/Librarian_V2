@@ -629,7 +629,15 @@ def research_round(ctx: Context, queries: list[str], brief: str = "", limit: int
     if brief and brief not in session.briefs:
         raise TypeError(f"no brief {brief!r}; briefs: {sorted(session.briefs)}")
     engine = engine_for(ctx)
-    constraints = session.briefs[brief].constraints if brief else {}
+    constraints = dict(session.briefs[brief].constraints) if brief else {}
+    scope = " ".join([session.question, session.briefs[brief].need if brief else "",
+                      *queries])
+    model_research = re.search(
+        r"\b(?:large language models?|llms?|deepinfra|model providers?|"
+        r"model capabilities|chat models?|inference)\b", scope, re.IGNORECASE)
+    allowed_kinds = engine.permitted_axes("source").get("kind", [])
+    if "kind" not in constraints and "model" in allowed_kinds and not model_research:
+        constraints["kind"] = [kind for kind in allowed_kinds if kind != "model"]
     seen_vocab = {w for r in session.rounds for w in r.get("vocabulary", [])}
     seen_vocab |= {t.lower() for q in queries for t in terms_from(q)}
     for r in session.rounds:

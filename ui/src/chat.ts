@@ -15,6 +15,7 @@ export interface ChatHooks {
   resend(text: string): void;
   rewind(index: number): void;
   branch(index: number): void;
+  continueSession(): void;
 }
 
 /** Small line icons, drawn rather than emoji, so they match the theme. */
@@ -59,6 +60,7 @@ export class Chat {
   private rail = new Map<string, HTMLElement[]>();     // tool -> lines waiting for a result
   private cards = new Map<string, HTMLElement>();      // permission request id -> card
   private working: HTMLElement | null = null;
+  private outcomeCard: HTMLElement | null = null;
   private lastUserText = "";                           // for Retry, after a failed turn
 
   constructor(private api: Api, private hooks: ChatHooks) {
@@ -222,6 +224,7 @@ export class Chat {
               "aria-label": "Retry", onclick: () => this.hooks.resend(this.lastUserText) },
               retryIcon())));
         }
+        this.sessionOutcome((event.session as Session) ?? null);
         this.hooks.onSession((event.session as Session) ?? null);
         break;
       case "error":
@@ -279,6 +282,28 @@ export class Chat {
         break;
       }
     }
+  }
+
+  private sessionOutcome(session: Session): void {
+    if (!session) return;
+    this.outcomeCard?.remove();
+    if (session.status === "closed") {
+      this.outcomeCard = h("div", { class: "session-outcome closed", role: "status" },
+        h("strong", {}, "Thread closed"),
+        session.summary ? h("div", {}, String(session.summary)) : null,
+        session.gaps ? h("div", { class: "dim" }, `Gaps: ${session.gaps}`) : null);
+      this.append(this.outcomeCard);
+      return;
+    }
+    const openItems = (session.open_items ?? []) as string[];
+    const parked = session.status === "parked";
+    this.outcomeCard = h("div", { class: "session-outcome open", role: "status" },
+      h("strong", {}, `${parked ? "Thread parked" : "Thread still open"} · ${String(session.phase ?? "work in progress")}`),
+      openItems.length ? h("ul", {}, openItems.slice(0, 5).map((item) => h("li", {}, item))) : null,
+      session.next ? h("p", {}, String(session.next)) : null,
+      parked ? h("p", { class: "dim" }, "Reopen this thread from Sessions to continue.")
+        : h("button", { class: "ghost", onclick: () => this.hooks.continueSession() }, "Continue from next step"));
+    this.append(this.outcomeCard);
   }
 
   private permission(event: Event): void {
@@ -360,6 +385,12 @@ export class Chat {
     const phases: string[] = session.phases ?? [];
     const current = phases.indexOf(session.phase);
     const questions = (session.questions ?? []).filter((q: any) => q.answer === null || q.answer === undefined);
+    const libraryItems = (session.library_items ?? []) as any[];
+    const libraryCounts = session.library_item_counts ?? libraryItems.reduce((counts: Record<string, number>, item) => {
+      counts[item.status] = (counts[item.status] ?? 0) + 1;
+      return counts;
+    }, {});
+    const libraryItemCount = Number(session.library_item_count ?? libraryItems.length);
     clear(this.plan,
       h("h3", {}, "Phases"),
       h("ul", {}, phases.map((p, i) => h("li", { class: i > current ? "dim" : "" },
@@ -376,6 +407,12 @@ export class Chat {
       Object.keys(session.briefs ?? {}).length ? h("h3", {}, "Briefs") : null,
       Object.entries(session.briefs ?? {}).map(([id, b]: [string, any]) =>
         h("p", {}, h("strong", {}, id), ` ${b.need ?? ""}`, b.status === "closed" ? h("span", { class: "dim" }, " · closed") : null)),
+      libraryItemCount ? h("h3", {}, `Library sources · ${libraryItemCount}`) : null,
+      libraryItemCount ? h("p", { class: "dim" }, Object.entries(libraryCounts)
+        .map(([status, count]) => `${count} ${status}`).join(" · ")) : null,
+      libraryItems.length ? h("ul", {}, libraryItems.slice(-12).map((item) => h("li", {},
+        item.path ? link(item.path, String(item.source ?? item.path), this.hooks.openNote)
+          : String(item.source ?? item.id), ` · ${item.status}`))) : null,
       (session.checkpoints ?? []).length ? h("h3", {}, `Checkpoint, round ${(session.checkpoints ?? []).length}`) : null,
       (session.checkpoints ?? []).slice(-1).map((c: any) => h("ul", {},
         h("li", {}, `Learned: ${c.learned ?? ""}`),

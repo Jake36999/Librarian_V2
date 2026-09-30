@@ -38,6 +38,12 @@ def ingest(ctx: Context, ref: str, brief: str = "") -> dict:
         store = SessionStore(ctx.vault)
         store.append(ctx.session, {"type": "candidate", "source": result.name, "brief": brief,
                                    "staged": result.item, "via": result.status})
+        if result.status in ("staged", "already_held"):
+            store.append(ctx.session, {"type": "library_item",
+                "id": result.item or f"existing:{result.name}", "source": result.name,
+                "status": result.status,
+                "path": result.detail if result.status == "already_held" else "",
+                "brief": brief})
         if result.status == "screened_out":
             store.append(ctx.session, {"type": "decision", "source": result.name,
                                        "disposition": "reject",

@@ -183,13 +183,36 @@ class _PickerHandler(BaseHTTPRequestHandler):
         if not path:
             self._json({"error": "no path given"})
             return
-        cmd = [sys.executable, "-m", "resource_librarian", "app", "--vault", path]
+        # --vault is a top-level CLI option, so argparse requires it before
+        # the `app` subcommand. The picker is still bound to its own port
+        # while this child starts, so ask the OS for a distinct free port.
+        cmd = [sys.executable, "-m", "resource_librarian", "--vault", path,
+               "app", "--port", "0"]
+        proc: subprocess.Popen[str] | None = None
         try:
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                     text=True)
             assert proc.stdout
             line = proc.stdout.readline()
-            data = json.loads(line)
+            if not line:
+                return_code = proc.poll()
+                self._json({
+                    "error": "The library app exited before reporting its address"
+                             + (f" (exit code {return_code})" if return_code is not None else ".")
+                })
+                return
+            try:
+                data = json.loads(line)
+            except json.JSONDecodeError:
+                if proc.poll() is None:
+                    proc.terminate()
+                self._json({"error": "The library app returned an invalid startup response"})
+                return
+            if not isinstance(data, dict):
+                if proc.poll() is None:
+                    proc.terminate()
+                self._json({"error": "The library app returned an invalid startup response"})
+                return
             url = data.get("listening", "")
             if url:
                 self._json({"url": url})
@@ -198,6 +221,8 @@ class _PickerHandler(BaseHTTPRequestHandler):
                 proc.terminate()
                 self._json({"error": "app did not report its URL"})
         except Exception as exc:
+            if proc is not None and proc.poll() is None:
+                proc.terminate()
             self._json({"error": str(exc)})
 
     def _json(self, payload: dict[str, Any]) -> None:

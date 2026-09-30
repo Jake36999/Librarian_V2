@@ -234,6 +234,7 @@ class Session:
     plan: dict[str, Any] = field(default_factory=dict)
     briefs: dict[str, Brief] = field(default_factory=dict)
     candidates: dict[str, Candidate] = field(default_factory=dict)
+    library_items: dict[str, dict[str, Any]] = field(default_factory=dict)
     rounds: list[dict[str, Any]] = field(default_factory=list)
     checkpoints: list[dict[str, Any]] = field(default_factory=list)
     questions: list[dict[str, Any]] = field(default_factory=list)
@@ -342,6 +343,10 @@ class Session:
         elif kind == "candidate":
             self.candidates.setdefault(event["source"], Candidate(
                 event["source"], event.get("brief", ""), 0, ""))
+        elif kind == "library_item":
+            self.library_items[event["id"]] = {
+                k: event[k] for k in ("id", "source", "status", "path", "brief") if k in event
+            }
         elif kind == "checkpoint":
             self.checkpoints.append({k: v for k, v in event.items() if k not in ("type", "t")})
         elif kind == "decision":
@@ -558,16 +563,25 @@ class Session:
         return "everything is done: close_session(summary, gaps)"
 
     def envelope(self, vault: Vault) -> dict[str, Any]:
+        library_items = list(self.library_items.values())
+        library_item_counts: dict[str, int] = {}
+        for item in library_items:
+            status = str(item.get("status", "unknown"))
+            library_item_counts[status] = library_item_counts.get(status, 0) + 1
         return {"session": self.id, "purpose": self.purpose, "project": self.project,
                 "mode": self.mode, "status": self.status, "phase": self.phase,
                 "phases": list(self.phases), "open_items": self.missing(vault),
-                "budget_left": self.budget_left(), "next": self.next_step(vault)}
+                "budget_left": self.budget_left(), "next": self.next_step(vault),
+                "library_item_count": len(library_items),
+                "library_item_counts": library_item_counts,
+                "library_items": library_items[-12:]}
 
     def to_dict(self, vault: Vault) -> dict[str, Any]:
         return {**self.envelope(vault), "project": self.project, "question": self.question,
                 "opened_at": self.opened_at, "plan": self.plan,
                 "briefs": {k: v.__dict__ for k, v in self.briefs.items()},
                 "candidates": [c.__dict__ for c in self.candidates.values()],
+                "library_items": list(self.library_items.values()),
                 "rounds": self.rounds, "checkpoints": self.checkpoints,
                 "questions": self.questions, "uses": self.uses, "writes": self.writes,
                 "offerings": self.offerings, "synthesis": self.synthesis,

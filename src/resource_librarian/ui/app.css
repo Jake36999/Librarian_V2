@@ -81,6 +81,10 @@
 .lib-app .tool.refused { border-left-color: var(--stop-line); color: var(--stop-ink); }
 .lib-app .working { color: var(--muted); font-size: 13px; padding: 4px 0; }
 .lib-app .error { border: 1px solid var(--stop-line); background: var(--stop-bg); color: var(--stop-ink); border-radius: 8px; padding: 8px 11px; margin: 8px 0; max-width: 760px; }
+.lib-app .session-outcome { border: 1px solid var(--warn-line); background: var(--warn-bg); color: var(--warn-ink); border-radius: 9px; padding: 10px 13px; margin: 12px 0; max-width: 760px; }
+.lib-app .session-outcome.closed { border-color: var(--line); background: var(--panel); color: var(--ink); }
+.lib-app .session-outcome ul { margin: 6px 0; padding-left: 22px; }
+.lib-app .session-outcome p { margin: 6px 0 10px; }
 .lib-app .ok { color: var(--ok); } .lib-app .err { color: var(--stop-ink); }
 .lib-app .warn { color: var(--warn-ink); background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 7px; padding: 6px 9px; }
 .lib-app .wl { border-bottom: 1px dotted var(--accent); text-decoration: none; cursor: pointer; }

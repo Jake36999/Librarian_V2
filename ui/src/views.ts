@@ -27,7 +27,9 @@ export class Staging {
   // SSE echo of this same decision, or someone else's) must not wipe it.
   private detailLocked = false;
 
-  constructor(private api: Api, private openNote: (name: string) => void) {
+  constructor(private api: Api, private openNote: (name: string) => void,
+              private currentSession: () => string = () => "",
+              private onSessionUpdate: (session: Record<string, any>) => void = () => {}) {
     const kinds = h("div", { class: "seg", role: "group", "aria-label": "Kind" });
     const paint = () => {
       clear(kinds, [["source", "Sources"], ["lens", "Lenses"], ["concept", "Concepts"]].map(([v, label]) =>
@@ -134,6 +136,7 @@ export class Staging {
           ? (r.promotion && !r.promotion.catalogued ? `Accepted: ${r.promotion.status}.` : "Accepted and catalogued.")
           : decision === "reject" ? "Rejected." : "Deferred.";
         this.selected = "";
+        if (r.session && r.session.session === this.currentSession()) this.onSessionUpdate(r.session);
         await this.load();                                   // the list, without it
         this.detailLocked = true;
         clear(this.detail, h("p", { class: "ok", role: "status" }, `${item.name}: ${outcome}`));

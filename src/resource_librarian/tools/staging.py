@@ -8,6 +8,7 @@ from .. import clerk, concepts, notes, staging
 from .. import deep_read as reading
 from ..lenses import LensStore
 from ..registry import Card, Context, tool
+from ..session import SessionStore
 from ..vault import now_iso
 from .library import engine_for
 
@@ -137,10 +138,42 @@ def staging_decide(ctx: Context, item_ids: list[str],
                    decision: Literal["accept", "reject", "defer"], reason: str = "",
                    bottom_line: str = "", what_it_solves: str = "",
                    fields: dict | None = None) -> dict:
-    results = staging.decide(_store(ctx), engine_for(ctx), item_ids, decision, reason,
+    store = _store(ctx)
+    before = {}
+    for item_id in item_ids:
+        try:
+            before[item_id] = store.load(item_id)
+        except TypeError:
+            pass
+    origins = {str((item.get("found_for") or {}).get("session") or "")
+               for item in before.values() if (item.get("found_for") or {}).get("session")}
+    promotion_session = next(iter(origins)) if len(origins) == 1 else (ctx.session or "")
+    results = staging.decide(store, engine_for(ctx), item_ids, decision, reason,
                              bottom_line, what_it_solves,
                              decided_by="person" if ctx.tier == "curate" else "agent",
-                             session=ctx.session or "", fields=fields)
+                             session=promotion_session, fields=fields)
+    for result in results:
+        if result.get("status") not in ("accepted", "rejected", "deferred"):
+            continue
+        item_id = str(result.get("id") or "")
+        item = before.get(item_id, {})
+        session_id = str((item.get("found_for") or {}).get("session") or ctx.session or "")
+        if not session_id or not item:
+            continue
+        path = ""
+        if result["status"] == "accepted":
+            try:
+                path = store.load(item_id).get("accepted_to", "")
+            except TypeError:
+                pass
+        try:
+            session_store = SessionStore(ctx.vault)
+            session_store.append(session_id, {"type": "library_item", "id": item_id,
+                "source": item["name"], "status": result["status"], "path": path,
+                "brief": (item.get("found_for") or {}).get("brief", "")})
+            result["session"] = session_store.load(session_id).envelope(ctx.vault)
+        except (TypeError, OSError):
+            pass
     return {"results": results,
             "accepted": sum(1 for r in results if r.get("status") == "accepted"),
             "not_findable": [r["id"] for r in results if r.get("promotion")
