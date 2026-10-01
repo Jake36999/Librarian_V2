@@ -35,6 +35,7 @@ def test_activity_crosses_every_session_since_a_cutoff(vault):
     REGISTRY.call("advance", {}, c1)                     # frame -> map
     REGISTRY.call("update_plan", {"fields": {"map": "m"}}, c1)
     REGISTRY.call("advance", {}, c1)                     # map -> need
+    REGISTRY.call("open_brief", {"need": "q", "disqualifiers": ["none"]}, c1)
     REGISTRY.call("advance", {}, c1)                     # need -> search
     used = REGISTRY.call("log_use", {"source": "osquery", "used_for": "testing"}, c1)
     assert "error" not in used

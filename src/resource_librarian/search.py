@@ -34,9 +34,13 @@ import sqlite3
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Sequence
 
-from .index import Index
+from .index import Index, fold
 
-INTENTS = ("orient", "donor", "pattern", "technique", "data", "precedent", "in_text")
+INTENTS = ("orient", "donor", "pattern", "technique", "data", "precedent", "in_text",
+           # P5 (2026-09-30): what the library made - Offerings, Applications, its own notes
+           # (a guide was otherwise unfindable) - and everything at once, grouped by intent
+           "made", "all")
+EVERYTHING = ("orient", "pattern", "made")      # `all`: each still answers in its own shape
 
 STOPWORDS = frozenset("""
 a an and are as at be but by can could do does for from get give has have how i
@@ -45,7 +49,10 @@ there these they this to use used using want was what when where which who why
 will with without would you your our we us e.g eg i.e ie etc also any some such
 """.split())
 
-TOKEN = re.compile(r'"[^"]+"|[A-Za-z0-9_.+#-]{2,}')
+# Unicode letters and digits (`\w`), plus the marks code identifiers carry (`.+#-`): an
+# ASCII-only class cut "café" to "caf" and "Zürich" to "rich" (SM-9, measured 2026-09-30).
+TOKEN = re.compile(r'"[^"]+"|[\w.+#-]{2,}')
+LETTER = r"[^\W_]"                    # a letter or digit, any script; `_` is a boundary
 
 NAME_SHORT_QUERY = 2
 NAME_MIN_QUERY_COVERAGE = 0.5
@@ -90,9 +97,16 @@ class Response:
     next_step: str = ""
     partial: bool = False
     notes: list[str] = field(default_factory=list)
+    # R15: the top candidates the constraints removed, by name - a list, not only a sentence
+    removed_by_filters: list[str] = field(default_factory=list)
+    ran: list[str] = field(default_factory=list)          # `all`: the intents that answered
+    ranking: str = "lexical"                  # or "hybrid (<model>)" when vectors contributed
 
     def to_dict(self) -> dict[str, Any]:
         return {"intent": self.intent, "verdict": self.verdict, "coverage": self.coverage,
+                **({"removed_by_filters": self.removed_by_filters}
+                   if self.removed_by_filters else {}),
+                **({"ran": self.ran} if self.ran else {}), "ranking": self.ranking,
                 "results": [r.to_dict() for r in self.results], "facets": self.facets,
                 "considered": self.considered, "matched": self.matched,
                 "filtered_out": self.filtered_out, "constraints": self.constraints,
@@ -118,7 +132,7 @@ def terms_from(text: str) -> list[str]:
     seen: set[str] = set()
     for match in TOKEN.findall(text or ""):
         token = match.strip('"').strip().strip(".")
-        low = token.lower()
+        low = fold(token)
         if len(token) < 2 or low in seen or (low in STOPWORDS and " " not in token):
             continue
         seen.add(low)
@@ -131,23 +145,24 @@ def _fts_query(terms: Sequence[str]) -> str:
 
 
 def _matched(text: str, terms: Sequence[str]) -> tuple[str, ...]:
-    low = text.lower()
-    return tuple(t for t in terms if t.lower() in low)
+    low = fold(text)
+    return tuple(t for t in terms if fold(t) in low)
 
 
 def _matched_bounded(text: str, terms: Sequence[str]) -> tuple[str, ...]:
     """Whole-token matches only: names are short, so a substring inside an
     unrelated word is a large share of the evidence rather than noise."""
-    low = text.lower()
+    low = fold(text)
     return tuple(t for t in terms
-                 if re.search(rf"(?<![a-z0-9]){re.escape(t.lower())}(?![a-z0-9])", low))
+                 if re.search(rf"(?<!{LETTER}){re.escape(fold(t))}(?!{LETTER})", low))
 
 
 def _excerpt(text: str, terms: Sequence[str], width: int = 220) -> str:
     flat = " ".join((text or "").split())
-    low = flat.lower()
+    folded = fold(flat)
+    low = folded if len(folded) == len(flat) else flat.lower()   # same offsets, or none
     for term in terms:
-        at = low.find(term.lower())
+        at = low.find(fold(term) if low is folded else term.lower())
         if at >= 0:
             start = max(0, at - width // 3)
             return ("..." if start else "") + flat[start:start + width].strip() + \
@@ -205,6 +220,7 @@ class Engine:
         self.index = index
         self.h = {**_DEFAULTS, **(heuristics or {})}
         self.vectors = vectors            # an `embed.VectorSearch`, or None
+        self.vector_intents: list[str] | None = None     # see vectors_for
         self._df: dict[tuple[str, str], float] = {}
 
     @property
@@ -273,8 +289,9 @@ class Engine:
             return []
         clauses, params = [], []
         for term in terms:
-            clauses.append("(name_lower LIKE ? OR aliases LIKE ? OR LOWER(title) LIKE ?)")
-            params += [f"%{term.lower()}%"] * 3
+            clauses.append("(fold(name_lower) LIKE ? OR fold(aliases) LIKE ? "
+                           "OR fold(title) LIKE ?)")
+            params += [f"%{fold(term)}%"] * 3
         marks = ",".join("?" for _ in shapes)
         rows = self.conn.execute(
             f"SELECT name, title, aliases, bottom_line FROM note WHERE ({' OR '.join(clauses)}) "
@@ -286,8 +303,9 @@ class Engine:
             where = "name"
             matched = in_name
             if not matched:
+                aliases = {fold(a) for a in row["aliases"].split("\n")}
                 matched = tuple(t for t in terms if t.lower() in selective
-                                and t.lower() in row["aliases"].split("\n"))
+                                and fold(t) in aliases)
                 where = "alias"
             if not matched or not _name_qualifies(matched, terms, row["name"] if in_name else ""):
                 continue
@@ -324,7 +342,15 @@ class Engine:
                 for i, r in enumerate(rows, 1)]
 
     # -- fusion -------------------------------------------------------------
-    def rank(self, query: str, shapes: Sequence[str] = ("source",), pool: int = 80
+    def vectors_for(self, intent: str) -> bool:
+        """Vectors join an intent's ranking only where a person turned them on after
+        measuring (`[search] vector_intents`); None (the older setting) means every intent."""
+        if self.vectors is None:
+            return False
+        return self.vector_intents is None or intent in self.vector_intents
+
+    def rank(self, query: str, shapes: Sequence[str] = ("source",), pool: int = 80,
+             use_vectors: bool = True
              ) -> tuple[dict[str, float], dict[str, Hit], frozenset[str], int, list[str]]:
         """Returns (scores, best hit per note, selective terms, tier, degraded)."""
         terms = terms_from(query)
@@ -356,7 +382,7 @@ class Engine:
         weights = [float(self.h["name_weight"]), 1.0, float(self.h["coverage_weight"])]
         degraded: list[str] = []
         tier = 3 if text_hits else 1
-        if self.vectors is not None:
+        if self.vectors is not None and use_vectors:
             ordered, reason = self.vectors.search(query, shapes=shapes, limit=pool)
             if reason:
                 degraded.append(reason)
@@ -512,41 +538,83 @@ def _source_fields(engine: Engine, name: str, hit: Hit | None) -> dict[str, Any]
     fm = json.loads(row["frontmatter"])
     fields.update({"kind": row["kind"], "title": row["title"], "topic": row["topic"],
                    "bottom_line": row["bottom_line"][:300], "path": row["path"]})
-    for key in ("canonical_url", "license_class", "status"):
+    for key in ("canonical_url", "license_class", "status", "offering_kind", "outcome"):
         if fm.get(key):
             fields[key] = fm[key]
+    if row["shape"] == "source":
+        # R15: how much of it was read, so a result is never taken as more than it is
+        fields["read_depth"] = str(fm.get("coverage") or "not recorded")
+        if fm.get("not_examined"):
+            fields["not_examined"] = list(fm["not_examined"])[:4]
     return fields
+
+
+def _source_date(fm: dict[str, Any]) -> str:
+    """The source's own date, for `max_age_days`: a repository's last push, a paper's year,
+    else when it was captured."""
+    for key in ("pushed_at", "published", "captured_at"):
+        if fm.get(key):
+            return str(fm[key])[:10]
+    year = str(fm.get("year") or "")
+    return f"{year}-12-31" if year.isdigit() else ""
+
+
+def _within(engine: "Engine", names: set[str], max_age_days: int) -> tuple[set[str], int]:
+    from datetime import date, timedelta
+    cutoff = (date.today() - timedelta(days=max_age_days)).isoformat()
+    keep = set()
+    for name in names:
+        row = engine.index.note_row(name)
+        when = _source_date(json.loads(row["frontmatter"])) if row is not None else ""
+        if when and when >= cutoff:
+            keep.add(name)
+    return keep, len(names) - len(keep)
 
 
 # ----------------------------------------------------------------- intents
 
 def search(engine: Engine, query: str, intent: str = "donor",
            constraints: dict[str, Any] | None = None, limit: int = 10,
-           source: str = "") -> Response:
+           source: str = "", max_age_days: int = 0) -> Response:
     if intent not in INTENTS:
         raise ConstraintError(f"intent {intent!r} is not one of {INTENTS}")
+    if intent == "all":
+        return _everything(engine, query, constraints, limit, max_age_days)
     if intent == "in_text":
         return _in_text(engine, query, limit, source)
     if intent == "technique":
         return _technique(engine, query, limit, source)
     shapes = {"donor": ("source",), "data": ("source",), "orient": ("source",),
-              "pattern": ("concept",), "precedent": ("application",)}[intent]
+              "pattern": ("concept",), "precedent": ("application",),
+              "made": ("offering", "application", "note")}[intent]
     data_shaped = list(engine.h.get("data_shaped") or ["kind=dataset"]) \
         if intent == "data" else None
     bounds = Constraints.of(constraints, engine.permitted_axes(shapes[0])) \
         if shapes == ("source",) else Constraints()
-    scores, best, selective, tier, degraded = engine.rank(query, shapes)
+    use_vectors = engine.vectors_for(intent)
+    scores, best, selective, tier, degraded = engine.rank(query, shapes, use_vectors=use_vectors)
     survivors, eliminated = engine.eligible(bounds, shapes, data_shaped)
+    aged_out = 0
+    if max_age_days and shapes == ("source",):
+        survivors, aged_out = _within(engine, set(survivors), int(max_age_days))
+        eliminated += aged_out
     kept = {n: s for n, s in scores.items() if n in survivors}
     removed_best = [n for n, _ in sorted(scores.items(), key=lambda kv: -kv[1])[:3]
                     if n not in survivors]
     described = bounds.describe()
+    if aged_out:
+        described = " and ".join(x for x in (described, f"dated within {max_age_days} days")
+                                 if x)
     filters_only = not kept and bool(bounds.values) and bool(survivors)
     if filters_only:
         kept = {n: 0.5 for n in sorted(survivors)}
-    kind_label = {"source": "source", "concept": "concept", "application": "application"}[shapes[0]]
+    def kind_label(name: str) -> str:
+        if len(shapes) == 1:
+            return shapes[0]
+        row = engine.index.note_row(name)
+        return (row["shape"] or "note") if row is not None else "note"
     ordered = sorted(kept.items(), key=lambda kv: (-kv[1], kv[0]))
-    results = [Result(kind_label, name,
+    results = [Result(kind_label(name), name,
                       _why(best.get(name), described,
                            "no term matched; listed because it passes the constraints"
                            if filters_only else ""),
@@ -556,12 +624,19 @@ def search(engine: Engine, query: str, intent: str = "donor",
                         matched=len(kept), filtered_out=eliminated,
                         constraints={a: list(v) for a, v in bounds.values.items()},
                         tier_reached=2 if filters_only or not results else tier,
-                        partial=bool(degraded), notes=degraded)
+                        partial=bool(degraded), notes=degraded,
+                        removed_by_filters=removed_best if (bounds.values or aged_out) else [],
+                        # SM req 10: never called hybrid unless vectors really contributed
+                        ranking=f"hybrid ({engine.vectors.model})"
+                        if use_vectors and not degraded else "lexical")
     if shapes == ("source",):
         response.facets = engine.facet_counts(kept)
+        _add_grains(engine, response, query, intent)
+    if intent == "pattern":
+        _add_navigation(engine, response)
     verdict = engine.verdict(selective, results)
     response.verdict, response.coverage = verdict["level"], verdict
-    if removed_best and bounds.values:
+    if removed_best and (bounds.values or aged_out):
         response.advisories.append(
             f"{len(removed_best)} of the highest-ranked candidates were removed by your "
             f"constraints ({described}): {', '.join(removed_best)}. If nothing below fits, the "
@@ -578,6 +653,65 @@ def search(engine: Engine, query: str, intent: str = "donor",
         _add_orientation(engine, response, query, selective)
     response.next_step = _next_step(response, described, eliminated)
     return response
+
+
+def _add_grains(engine: Engine, response: Response, query: str, intent: str) -> None:
+    """Beneath each source that survived: where inside a repository the query matched (at
+    most three addresses each), and a dataset's access points with when each was checked."""
+    from . import components
+    parents = [r.name for r in response.results if r.kind == "source"]
+    for name, hits in components.find(engine.conn, terms_from(query), parents).items():
+        next(r for r in response.results if r.name == name).fields["components"] = hits
+    if intent != "data":
+        return
+    known = None
+    for r in response.results:
+        row = engine.index.note_row(r.name)
+        points = (json.loads(row["frontmatter"]).get("access_points") or []) if row else []
+        if points:
+            known = components.checks(engine.index.vault) if known is None else known
+            r.fields["access_points"] = components.with_status(engine.index.vault,
+                                                               [str(p) for p in points], known)
+
+
+def _add_navigation(engine: Engine, response: Response) -> None:
+    """A pattern's examples (the sources that use it) and its neighbours (the patterns those
+    sources also use): explicit relations to follow, never a score boost (SM-4)."""
+    for r in response.results:
+        key = r.name.lower()
+        r.fields["examples"] = [row["name"] for row in engine.conn.execute(
+            "SELECT DISTINCT n.name FROM link l JOIN note n ON n.path = l.path "
+            "WHERE l.dst = ? AND n.shape = 'source' ORDER BY n.name LIMIT 5", (key,))]
+        r.fields["neighbours"] = [row["name"] for row in engine.conn.execute(
+            "SELECT c.name, COUNT(DISTINCT a.path) AS n FROM link a "
+            "JOIN link b ON b.path = a.path AND b.dst != a.dst "
+            "JOIN note c ON c.name_lower = b.dst AND c.shape = 'concept' "
+            "JOIN note s ON s.path = a.path AND s.shape = 'source' "
+            "WHERE a.dst = ? GROUP BY c.name ORDER BY n DESC, c.name LIMIT 5", (key,))]
+
+
+def _everything(engine: Engine, query: str, constraints: dict[str, Any] | None, limit: int,
+                max_age_days: int) -> Response:
+    """Search everything (SM-5): sources, patterns and what the library made, each through
+    its own intent and answer shape, grouped - never hiding which one ran."""
+    parts = {i: search(engine, query, i, constraints if i == "orient" else None,
+                       limit=limit, max_age_days=max_age_days if i == "orient" else 0)
+             for i in EVERYTHING}
+    lead = parts["orient"]
+    out = Response(intent="all", verdict=lead.verdict, coverage=lead.coverage,
+                   facets=lead.facets, considered=lead.considered, filtered_out=lead.filtered_out,
+                   constraints=lead.constraints, tier_reached=lead.tier_reached,
+                   partial=any(p.partial for p in parts.values()),
+                   removed_by_filters=lead.removed_by_filters, ran=list(EVERYTHING))
+    for intent, part in parts.items():
+        out.results += [Result(r.kind, r.name, r.why, r.rank, {**r.fields, "intent": intent})
+                        for r in part.results]
+        out.matched += part.matched
+        out.notes += part.notes
+    out.advisories = list(dict.fromkeys(a for p in parts.values() for a in p.advisories))
+    out.next_step = ("each group answered its own intent: sources (orient), patterns, and "
+                     "what this library made; search one intent for its full answer")
+    return out
 
 
 def _add_orientation(engine: Engine, response: Response, query: str,

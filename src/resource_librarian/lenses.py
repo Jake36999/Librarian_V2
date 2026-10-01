@@ -28,7 +28,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-from .vault import Vault, now_iso
+from .vault import Vault, jsonl_lines, now_iso
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS lens (
@@ -301,7 +301,7 @@ class LensStore:
         is exactly what its acceptance recorded. Lenses accepted before the
         record existed are counted, not failed."""
         from .session import verify_chain
-        lines = self.log_path.read_text(encoding="utf-8").splitlines() \
+        lines = jsonl_lines(self.log_path.read_text(encoding="utf-8")) \
             if self.log_path.exists() else []
         broken = verify_chain(lines)
         accepted: dict[str, dict[str, Any]] = {}

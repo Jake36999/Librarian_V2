@@ -16,10 +16,16 @@ levels, never summarise or add anything not in the source.
 """
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+from typing import Callable
+
 from .providers import OpenAICompatible, PRESETS
 
 MODEL = "deepseek-ai/DeepSeek-V4-Flash-0731"
 BATCH_CHARS = 6000
+# Parts cleaned at once: one at a time, a 14-part report took about seven minutes with
+# nothing to show for it (owner check O7, 2026-10-01).
+WORKERS = 4
 REASONING_FLOOR = 1800
 
 CLEANUP_SYSTEM = (
@@ -69,11 +75,27 @@ def clean_text(raw: str, ep: OpenAICompatible | None = None) -> str:
     return reply.text.strip()
 
 
-def clean_document(pages: list[str], ep: OpenAICompatible | None = None) -> tuple[str, int]:
+def clean_document(pages: list[str], ep: OpenAICompatible | None = None,
+                   progress: Callable[[str], None] | None = None,
+                   workers: int = WORKERS) -> tuple[str, int]:
     """Every page, batched and cleaned, joined into one markdown document -
     for a person or the model to read whole, the way V1's script wrote a
-    `.md` sibling next to a PDF. Returns (markdown, batches billed)."""
+    `.md` sibling next to a PDF. Returns (markdown, batches billed).
+
+    The parts are cleaned `workers` at a time, kept in page order; `progress` hears
+    "n of N parts" as each one comes back."""
     ep = ep or endpoint()
     batches = batch_pages(pages)
-    cleaned = [clean_text(batch, ep) for batch in batches]
+    done = [0]
+
+    def one(batch: str) -> str:
+        out = clean_text(batch, ep)
+        done[0] += 1
+        if progress:
+            progress(f"cleaning the PDF's text: {done[0]} of {len(batches)} parts")
+        return out
+    if progress:
+        progress(f"cleaning the PDF's text: 0 of {len(batches)} parts")
+    with ThreadPoolExecutor(max_workers=max(1, min(workers, len(batches) or 1))) as pool:
+        cleaned = list(pool.map(one, batches))
     return "\n\n".join(cleaned), len(batches)

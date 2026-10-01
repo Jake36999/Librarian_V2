@@ -69,7 +69,7 @@ def add_project_walk(vault, call):
                                                    "answer": "yes"}, person)
     ok("promote_offering", offering=staged["offering"])
     ok("advance")
-    ok("close_brief", brief="B1", note="answered by osquery")
+    ok("close_brief", brief="B1", coverage="covered", note="answered by osquery")
     ok("close_session", summary="Framed Host Watch; osquery offered.",
        gaps="nothing on fleet-scale performance")
     return session
@@ -78,7 +78,9 @@ def add_project_walk(vault, call):
 STAMP = re.compile(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?"
                    r"|\"(elapsed|seconds|ms|duration)[a-z_]*\": [0-9.]+"
                    # B4's chain hashes cover each event's clock reading, so they differ too
-                   r"|\"h\": \"[0-9a-f]{24}\"")
+                   r"|\"h\": \"[0-9a-f]{24}\""
+                   # R3's trace names the model behind each call: only the loop knows it
+                   r"|\"model\": \"[^\"]*\"")
 
 
 def artefacts(vault, session):

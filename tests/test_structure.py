@@ -65,7 +65,7 @@ def test_the_survey_reads_structure_and_access_points(checkout):
     assert ("go main", "cmd/tail/main.go") in kinds
     assert any(k == "container cmd" for k, _ in kinds)
     routes = {(r["method"], r["path"]) for r in s["routes"]}
-    assert routes == {("GET", "/health"), ("-", "/replay"), ("GET", "/status")}
+    assert routes == {("GET", "/health"), ("POST", "/replay"), ("GET", "/status")}
     assert s["example_routes"] == 1 and "examples/demo.py" not in {n for _, n in kinds}
     env = {e["name"]: e for e in s["environment"]}
     assert "DEMO_API_KEY" not in env
@@ -127,3 +127,86 @@ def test_the_clone_refuses_local_paths(tmp_path, checkout):
     with pytest.raises(structure.CloneError):
         with structure.shallow_clone(checkout.as_uri()):
             pass
+
+
+# Test Directive A3 (2026-10-01): what the reader missed in four real repositories, in
+# miniature - Go routes on any receiver and in `_examples/`, Java and Spring, NestJS's
+# decorators. FastAPI's and Flask's decorators were already read; held here too.
+def test_go_routes_on_any_receiver_and_its_underscored_examples(tmp_path):
+    root = tmp_path / "chi"
+    write(root, "middleware/profiler.go", 'package middleware\n\nfunc Profiler() {\n'
+          '\tr.HandleFunc("/pprof/*", pprof.Index)\n\tr.Get("/vars", expVars)\n}\n')
+    write(root, "gin.go", 'package web\n\nfunc Mount() { e.POST("/login", login) }\n')
+    write(root, "route_headers.go", 'package middleware\n\n// Usage:\n//   r.Get("/long", h)\n'
+          '/*\n *   r.Get("/doc", h)\n */\nfunc RouteHeaders() {}\n')
+    write(root, "_examples/hello/main.go", 'package main\n\nfunc main() {\n'
+          '\tr := chi.NewRouter()\n\tr.Get("/", hello)\n\thttp.Get("https://x.example/")\n}\n')
+    s = structure.survey(root)
+    assert {(r["method"], r["path"]) for r in s["routes"]} == {
+        ("-", "/pprof/*"), ("GET", "/vars"), ("POST", "/login")}
+    assert s["example_routes"] == 1
+    assert not any(e["kind"] == "go main" for e in s["entry_points"])    # an example's main
+
+
+def test_java_and_spring(tmp_path):
+    root = tmp_path / "gs-rest-service"
+    base = "complete/src/main/java/com/example/restservice"
+    write(root, f"{base}/RestServiceApplication.java",
+          "package com.example.restservice;\n\n@SpringBootApplication\n"
+          "public class RestServiceApplication {\n"
+          "    public static void main(String[] args) {\n"
+          "        SpringApplication.run(RestServiceApplication.class, args);\n    }\n}\n")
+    write(root, f"{base}/GreetingController.java",
+          "package com.example.restservice;\n\n@RestController\n@RequestMapping(\"/api\")\n"
+          "public class GreetingController {\n"
+          "    private final String token = System.getenv(\"GREETING_API_TOKEN\");\n"
+          "    @GetMapping(\"/greeting\")\n    public Greeting greeting() { return null; }\n"
+          "    @PostMapping\n    public void make() {}\n"
+          "    @RequestMapping(value = \"/old\", method = RequestMethod.PUT)\n"
+          "    public void old() {}\n}\n")
+    write(root, f"{base}/Tool.java", "public class Tool {\n"
+          "    public static void main(final String... args) {}\n}\n")
+    write(root, "complete/src/main/resources/application.properties",
+          "server.port=8080\nspring.datasource.password=${DB_PASSWORD}\n")
+    write(root, "complete/src/main/resources/application.yml",
+          "greeting:\n  template: 'Hello, %s!'\n")
+    write(root, "complete/src/test/resources/application.properties", "test.only=1\n")
+    write(root, "samples/src/main/java/demo/Demo.java", "public class Demo {\n"
+          "    public static void main(String[] args) {}\n}\n")     # still an example
+    s = structure.survey(root)
+    kinds = {(e["kind"], e["name"]) for e in s["entry_points"]}
+    assert ("Spring Boot application", f"{base}/RestServiceApplication.java") in kinds
+    assert ("java main", f"{base}/Tool.java") in kinds
+    assert {(r["method"], r["path"]) for r in s["routes"]} == {
+        ("GET", "/api/greeting"), ("POST", "/api"), ("PUT", "/api/old")}
+    env = {e["name"]: e for e in s["environment"]}
+    assert env["GREETING_API_TOKEN"]["credential"]
+    assert env["spring.datasource.password"]["credential"] and env["DB_PASSWORD"]["credential"]
+    assert not env["server.port"]["credential"] and "greeting.template" in env
+    assert "test.only" not in env
+    assert "8080" not in json.dumps(s) and "Hello" not in json.dumps(s)   # keys, never values
+    section = structure.access_points_section(s)
+    assert "**Spring Boot application**" in section
+    assert "**Runnable files** (1): `" in section and "Tool.java" in section
+
+
+def test_nestjs_decorators_under_their_controller(tmp_path):
+    root = tmp_path / "typescript-starter"
+    write(root, "src/app.controller.ts", "@Controller()\nexport class AppController {\n"
+          "  @Get()\n  getHello(): string { return 'hi'; }\n}\n")
+    write(root, "src/cats/cats.controller.ts", "@Controller('cats')\n"
+          "export class CatsController {\n  @Get(':id')\n  findOne() {}\n"
+          "  @Post()\n  create() {}\n}\n")
+    s = structure.survey(root)
+    assert {(r["method"], r["path"]) for r in s["routes"]} == {
+        ("GET", "/"), ("GET", "/cats/:id"), ("POST", "/cats")}
+
+
+def test_fastapi_and_flask_decorators_keep_their_verbs(tmp_path):
+    root = tmp_path / "svc"
+    write(root, "svc/api.py", "router = APIRouter()\n\n@router.get('/items/{item_id}')\n"
+          "def item(item_id: int):\n    pass\n\n@bp.route('/ping', methods=['GET', 'HEAD'])\n"
+          "def ping():\n    pass\n")
+    s = structure.survey(root)
+    assert {(r["method"], r["path"]) for r in s["routes"]} == {
+        ("GET", "/items/{item_id}"), ("GET,HEAD", "/ping")}

@@ -23,6 +23,7 @@ def _to_search_phase(vault, c, project: str) -> None:
     REGISTRY.call("advance", {}, c)                                    # frame -> map
     REGISTRY.call("update_plan", {"fields": {"map": "x"}}, c)
     REGISTRY.call("advance", {}, c)                                    # map -> need
+    REGISTRY.call("open_brief", {"need": "q", "disqualifiers": ["none"]}, c)
     REGISTRY.call("advance", {}, c)                                    # need -> search
 
 

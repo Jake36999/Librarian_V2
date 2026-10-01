@@ -14,7 +14,9 @@ def capabilities(ctx: Context) -> dict:
     """Cards only; the exact parameters come from the surface's own schema."""
     return {"tier": ctx.tier, "tools": [
         {"name": t.name, "purpose": t.card.purpose, "use_when": t.card.use_when,
-         "effect": t.effect, "open_world": t.open_world}
+         "effect": t.effect, "open_world": t.open_world,
+         **({"scope": t.scope} if t.scope else {}),
+         **({"phases": sorted(t.phases)} if t.phases else {})}
         for t in sorted(REGISTRY.for_tier(ctx.tier), key=lambda t: t.name)]}
 
 
@@ -74,6 +76,7 @@ def check_notes(ctx: Context, limit: int = 50) -> dict:
         return {"ok": False, "error": f"the content model will not parse: {model.error}"}
     violations = []
     names: dict[str, str] = {}
+    links: dict[str, list[str]] = {}
     for path in notes.iter_paths(ctx.vault.root):
         note = notes.load(path)
         rel = path.relative_to(ctx.vault.root).as_posix()
@@ -82,5 +85,49 @@ def check_notes(ctx: Context, limit: int = 50) -> dict:
                                "detail": f"also at {names[note.name]}", "severity": "error"})
         names[note.name] = rel
         violations += [v.__dict__ for v in model.check(note, ctx.vault.root)]
-    return {"ok": not violations, "total": len(violations), "violations": violations[:limit],
+        links[note.name] = [t.replace("\\", "/").rsplit("/", 1)[-1].removesuffix(".md")
+                            for t in notes.wikilinks(note.body)]
+    # V1's integrity checks, carried over (2026-09-30): a link that names no note, and a
+    # Source or Concept nothing links to (a stale index, or a note filed out of reach).
+    known = {n.casefold() for n in names}
+    files = {p.name.casefold() for p in ctx.vault.root.rglob("*") if p.is_file()}
+    inbound: set[str] = set()
+    for name, targets in links.items():
+        for target in targets:
+            if not target:
+                continue
+            key = target.casefold()
+            inbound.add(key)
+            if key not in known and key not in files:
+                violations.append({"check": "wikilinks_resolve", "note": name,
+                                   "detail": f"[[{target}]] names no note", "severity": "warn"})
+    for name, rel in names.items():
+        if rel.split("/", 1)[0] in ("Sources", "Concepts") and name.casefold() not in inbound:
+            violations.append({"check": "orphan_notes", "note": name,
+                               "detail": f"{rel}: nothing links to it (is the index current?)",
+                               "severity": "info"})
+    # V1's distinct_resource_prose and topic_keys_known (P7): two sources whose Bottom Line
+    # or What It Solves is word for word the same, and a source filed under a topic the
+    # vault has not accepted (About/Topics.md).
+    accepted = set(ctx.vault.topics())
+    seen: dict[tuple[str, str], str] = {}
+    for path in notes.iter_paths(ctx.vault.root):
+        if path.relative_to(ctx.vault.root).parts[0] != "Sources":
+            continue
+        note = notes.load(path)
+        for heading in ("Bottom Line", "What It Solves"):
+            text = " ".join((note.sections().get(heading) or "").split()).lower()
+            if len(text) >= 40:
+                other = seen.setdefault((heading, text), note.name)
+                if other != note.name:
+                    violations.append({"check": "distinct_resource_prose", "note": note.name,
+                                       "detail": f"its {heading} is word for word {other}'s",
+                                       "severity": "warn"})
+        topic = str(note.frontmatter.get("primary_topic") or "")
+        if topic and topic not in accepted:
+            violations.append({"check": "topic_keys_known", "note": note.name,
+                               "detail": f"filed under {topic!r}, which About/Topics.md does "
+                                         f"not list", "severity": "warn"})
+    return {"ok": not [v for v in violations if v.get("severity") != "info"],
+            "total": len(violations), "violations": violations[:limit],
             "model_found": model.found}

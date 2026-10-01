@@ -218,7 +218,10 @@ def test_replay_of_the_recorded_deep_research_trace(vault):
     try:
         for name, args in (("open_session", {"purpose": "explore", "question": "HTN"}),
                            ("advance", {}), ("update_plan", {"fields": {"map": "nothing"}}),
-                           ("advance", {}), ("advance", {})):
+                           ("advance", {}),
+                           ("open_brief", {"need": "hierarchical task networks",
+                                           "disqualifiers": ["none"]}),
+                           ("advance", {})):
             assert "error" not in REGISTRY.call(name, args, c), name
         seen, used = set(), 0
         for r in rounds + [rounds[-1]]:

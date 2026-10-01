@@ -1,0 +1,4 @@
+{
+ "about": "Leads that completed research tasks in the M0 completion suite, under its scripted protocol (docs/M0 Completion Suite - Spec 2026-09-30.md). Requirements Addendum R10: benchmark tiers are screening only; a lead not listed here needs a person's recorded override. Empty until M0 has been run. An entry: {\"provider\", \"model\", \"commit\", \"result\" (e.g. \"2 of 3 runs\"), \"report\"}.",
+ "eligible": []
+}

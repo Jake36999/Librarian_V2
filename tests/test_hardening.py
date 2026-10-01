@@ -271,6 +271,26 @@ def test_doctor_names_an_older_model_missing_the_deep_read_sections(vault):
     assert found and not found[0].ok and "Claims" in found[0].detail
 
 
+def test_an_older_model_without_the_note_shape_is_named_and_write_note_says_so(vault):
+    """M0 pass 2 (2026-10-01): Librarian-Uni's model predates the `note` shape, so a guide
+    written with write_note was indexed with no shape - no search intent returned it - while
+    write_note said `findable: true`. Doctor names the gap; write_note no longer overstates."""
+    from resource_librarian import doctor
+    from resource_librarian.registry import REGISTRY, Context
+    assert not [c for c in doctor.checks(vault) if c.name == "content model: shapes"]
+    c = Context(tier="contribute", vault=vault)
+    fine = REGISTRY.call("write_note", {"folder": "Notes", "name": "Guide A", "body": "x"}, c)
+    assert fine["findable"] is True and "warning" not in fine
+    model = vault.root / "About" / "Note Content Model.md"
+    text = model.read_text(encoding="utf-8")
+    model.write_text(text.replace("| note | Notes | note |\n", ""), encoding="utf-8")
+    found = [c for c in doctor.checks(vault) if c.name == "content model: shapes"]
+    assert found and not found[0].ok and "write_note" in found[0].detail
+    out = REGISTRY.call("write_note", {"folder": "Notes", "name": "Guide B", "body": "x"},
+                        Context(tier="contribute", vault=vault))
+    assert out["findable"] is False and "`note` shape" in out["warning"]
+
+
 def test_a_pursuits_agenda_and_activity_are_its_own(vault):
     """A2: the weekly review is per pursuit - its agenda and activity too."""
     soon = (date.today() + timedelta(days=1)).isoformat()

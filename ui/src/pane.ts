@@ -6,6 +6,7 @@
 import type { Api } from "./api";
 import { clear, h } from "./dom";
 import { render } from "./markdown";
+import { reader, runIcon, speakerIcon } from "./speech";
 
 const RECENT = 8;
 
@@ -15,6 +16,18 @@ export class DocPane {
   private menuButton = h("button", { class: "icon-btn", title: "Plan, recent notes and folders",
     "aria-label": "Documents menu", "aria-haspopup": "true", "aria-expanded": "false" }, "⋮");
   private menu = h("div", { class: "pane-menu", hidden: true, role: "menu" });
+  // Text to speech, mode B: read the open document aloud (slot 5).
+  // A person's run (EXECUTION_SANDBOX_ONLY): only for a script file (.py, .sh) - never a
+  // note or text - in the air-gapped sandbox; what it wrote lands on its own pad.
+  private runButton: HTMLElement = h("button", { class: "icon-btn run", hidden: true,
+    title: "Run this script in the sandbox (no network; it can write only to its landing pad)",
+    "aria-label": "Run this script", onclick: () => void this.runScript() }, runIcon());
+  private runOutput = h("div", { class: "run-output" });
+  private speakButton: HTMLElement = h("button", { class: "icon-btn speak", hidden: true,
+    title: "Read this document", "aria-label": "Read this document",
+    onclick: () => {
+      if (this.current.kind === "doc") void reader.toggle({ path: this.current.path }, this.speakButton);
+    } }, speakerIcon());
   private body = h("div", { class: "pane-body" });
   private recent: { path: string; name: string }[] = [];
   private current: { kind: "plan" } | { kind: "agenda" } | { kind: "doc"; path: string; name: string } = { kind: "plan" };
@@ -31,7 +44,7 @@ export class DocPane {
     this.menuButton.onclick = () => this.toggleMenu();
     this.el.append(
       h("div", { class: "pane-head" }, this.crumbs,
-        h("div", { class: "pane-actions" }, this.menuButton,
+        h("div", { class: "pane-actions" }, this.runButton, this.speakButton, this.menuButton,
           h("button", { class: "icon-btn", title: "Close the pane", "aria-label": "Close the pane",
             onclick: () => this.onClose() }, "✕")),
         this.menu),
@@ -49,6 +62,8 @@ export class DocPane {
 
   showPlan(): void {
     this.current = { kind: "plan" };
+    this.speakButton.hidden = true;
+    this.runButton.hidden = true;
     clear(this.crumbs, h("span", { class: "crumb-here" }, "Plan"),
       h("span", { class: "dim" }, " · the session this chat is working in"));
     clear(this.body, this.plan);
@@ -59,6 +74,8 @@ export class DocPane {
    *  no daemon, nothing kept in sync (Co-work Roadmap 2C). */
   async showAgenda(): Promise<void> {
     this.current = { kind: "agenda" };
+    this.speakButton.hidden = true;
+    this.runButton.hidden = true;
     clear(this.crumbs, h("span", { class: "crumb-here" }, "This week"),
       h("span", { class: "dim" }, " · open, dated tasks across the vault"));
     clear(this.body, h("p", { class: "dim pad" }, "Loading…"));
@@ -97,10 +114,20 @@ export class DocPane {
       return;
     }
     this.current = { kind: "doc", path: doc.path, name: doc.name };
+    this.speakButton.hidden = Boolean(doc.script);         // code is run, not read aloud
+    this.runButton.hidden = !doc.script;
     this.recent = [{ path: doc.path, name: doc.name }, ...this.recent.filter((r) => r.path !== doc.path)].slice(0, RECENT);
     const project = this.currentProject();
     if (project) this.api.tool("desk_touch", { project, note: doc.name }).catch(() => undefined);
     this.paintCrumbs(doc.path);
+    if (doc.script) {
+      // A script is shown as it is - never rendered - with its last run below it.
+      clear(this.runOutput);
+      clear(this.body, h("article", { class: "doc" }, h("h1", { class: "doc-title" }, doc.name),
+        h("pre", { class: "code" }, h("code", {}, doc.text)), this.runOutput));
+      this.body.scrollTop = 0;
+      return;
+    }
     const rendered = render(doc.text, (t) => void this.open(t), { frontmatter: true });
     // A note that opens with its own title heading keeps it as the title.
     const own = Array.from(rendered.children).find((el) => !el.matches("table.props"));
@@ -108,6 +135,34 @@ export class DocPane {
     if (titled) own!.remove();
     clear(this.body, h("article", { class: "doc" }, h("h1", { class: "doc-title" }, doc.name), rendered));
     this.body.scrollTop = 0;
+  }
+
+  /** Run the open script in the sandbox, as the person's own action, and show what came
+   *  back: exit code, output, and what landed on its pad. */
+  private async runScript(): Promise<void> {
+    if (this.current.kind !== "doc") return;
+    const path = this.current.path;
+    (this.runButton as HTMLButtonElement).disabled = true;
+    clear(this.runOutput, h("p", { class: "dim" }, "Running in the sandbox (no network)…"));
+    try {
+      const r = await this.api.post("/api/sandbox/run_file", { path });
+      if (r.error) {
+        clear(this.runOutput, h("p", { class: "error" }, String(r.detail ?? r.error)));
+      } else {
+        const files = (r.files ?? []) as { name: string; bytes: number }[];
+        clear(this.runOutput,
+          h("h4", {}, `Run ${r.run}: exit ${r.exit_code}${r.timed_out ? " (stopped: too long)" : ""}`),
+          r.stdout ? h("pre", { class: "code" }, h("code", {}, r.stdout)) : null,
+          r.stderr ? h("pre", { class: "code err" }, h("code", {}, r.stderr)) : null,
+          h("p", { class: "dim" }, files.length
+            ? `Landed in ${r.landing}: ${files.map((f) => `${f.name} (${f.bytes} bytes)`).join(", ")}. Nothing there is run or imported.`
+            : "Nothing landed."),
+          ...(r.notes ?? []).map((n: string) => h("p", { class: "dim" }, n)));
+      }
+    } catch (e) {
+      clear(this.runOutput, h("p", { class: "error" }, (e as Error).message));
+    }
+    (this.runButton as HTMLButtonElement).disabled = false;
   }
 
   private paintCrumbs(path: string): void {

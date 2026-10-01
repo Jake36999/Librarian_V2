@@ -35,7 +35,8 @@ def desk_show(ctx: Context, project: str, limit: int = 20) -> dict:
             "working_set": desk.DeskStore(ctx.vault).working_set(project, limit)}
 
 
-@tool("desk_pin", tier="contribute", effect="write",
+@tool("desk_pin", tier="contribute", effect="write", scope="session",
+      resolve={"note": "note"},
       returns=("project", "note"),
       card=Card("Pin a note to a pursuit's desk - a pin never decays out of the working set",
                 "a note is central to this pursuit and should always be there"))
@@ -46,7 +47,8 @@ def desk_pin(ctx: Context, project: str, note: str) -> dict:
     return {"project": project, "note": row["name"]}
 
 
-@tool("desk_unpin", tier="contribute", effect="write",
+@tool("desk_unpin", tier="contribute", effect="write", scope="session",
+      resolve={"note": "note"},
       returns=("project", "note", "unpinned"),
       card=Card("Unpin a note from a pursuit's desk - it still shows while it decays",
                 "a note is no longer central to this pursuit"))
@@ -56,7 +58,7 @@ def desk_unpin(ctx: Context, project: str, note: str) -> dict:
     return {"project": project, "note": note, "unpinned": unpinned}
 
 
-@tool("desk_touch", tier="consult", effect="write",
+@tool("desk_touch", tier="consult", effect="write", scope="session",
       returns=("project", "note"),
       card=Card("Record that a note was just used on this pursuit's desk - opened in the "
                 "pane, or attached in a message - so it joins the automatically-recent ones",

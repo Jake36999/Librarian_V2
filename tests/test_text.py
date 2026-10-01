@@ -6,7 +6,7 @@ from resource_librarian.index import Index
 from resource_librarian.search import Engine, search
 from resource_librarian.text import extract, sync_documents
 
-from conftest import add_source
+from conftest import add_source, pdf_bytes
 
 
 def test_text_file_indexed_and_searchable(vault):
@@ -43,13 +43,8 @@ def test_cache_by_content(tmp_path: Path):
 
 
 def test_pdf(tmp_path: Path):
-    canvas = pytest.importorskip("reportlab.pdfgen.canvas")
     pytest.importorskip("pypdf")
     path = tmp_path / "p.pdf"
-    c = canvas.Canvas(str(path))
-    c.drawString(72, 720, "Workflow patterns for control flow")
-    c.showPage()
-    c.showPage()
-    c.save()
+    path.write_bytes(pdf_bytes([["Workflow patterns for control flow"], []]))
     result = extract(path, tmp_path / "cache")
     assert "Workflow patterns" in result.pages[0] and result.empty_pages == 1

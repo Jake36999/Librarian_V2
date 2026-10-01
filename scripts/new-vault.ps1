@@ -51,12 +51,12 @@
     Create (if needed) but don't start the app - just print the command.
 
 .EXAMPLE
-    D:\Resource-Library\.v2\scripts\new-vault.ps1 -Domain Software -Profile software-systems
+    <Librarian folder>\scripts\new-vault.ps1 -Domain Software -Profile software-systems
     (run from D:\Projects\Harness - opens or creates $HOME\Libraries\Software,
     registers "Harness" as a pursuit there, and opens it in the browser)
 
 .EXAMPLE
-    D:\Resource-Library\.v2\scripts\new-vault.ps1
+    <Librarian folder>\scripts\new-vault.ps1
     (run from D:\Projects\Thesis - a one-off vault at D:\Projects\Thesis\.librarian-app)
 #>
 param(
@@ -72,9 +72,15 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-if (-not (Get-Command resource-librarian -ErrorAction SilentlyContinue)) {
-    Write-Error "resource-librarian isn't installed. Run: pip install -e `"D:\Resource-Library\.v2[dev]`""
+# This copy's own environment (Setup.bat makes it), else the command on PATH.
+$copyPython = Join-Path (Split-Path -Parent $PSScriptRoot) ".venv\Scripts\python.exe"
+if (-not (Test-Path $copyPython) -and -not (Get-Command resource-librarian -ErrorAction SilentlyContinue)) {
+    Write-Error "The Librarian isn't set up here: run Setup.bat in $(Split-Path -Parent $PSScriptRoot) first."
     exit 1
+}
+function Invoke-Librarian {
+    if (Test-Path $copyPython) { & $copyPython -m resource_librarian @args }
+    else { & resource-librarian @args }
 }
 
 # Works around an OpenBLAS "memory allocation failed" crash on this machine
@@ -102,7 +108,7 @@ if (Test-Path $configPath) {
     Write-Host "Creating the library at $vaultPath"
     $initArgs = @("init", $vaultPath, "--name", $title)
     if ($Domain -and $Profile) { $initArgs += @("--profile", $Profile) }
-    resource-librarian @initArgs
+    Invoke-Librarian @initArgs
     if ($LASTEXITCODE -ne 0) {
         Write-Error "init failed (exit $LASTEXITCODE)"
         exit $LASTEXITCODE
@@ -123,7 +129,7 @@ if ($Domain -and -not $NoProject -and -not $here.StartsWith($vaultPath, [StringC
             if ($recorded) { $kind = $recorded }
         }
         Write-Host "Registering '$Project' as a $kind in $Domain"
-        resource-librarian --vault $vaultPath create_project --name $Project --stage active `
+        Invoke-Librarian --vault $vaultPath create_project --name $Project --stage active `
             --summary "Registered from $here" --pursuit-kind $kind --repository $here | Out-Null
         if ($LASTEXITCODE -ne 0) {
             Write-Warning "Could not register '$Project' (exit $LASTEXITCODE); the library opens anyway."
@@ -134,8 +140,8 @@ if ($Domain -and -not $NoProject -and -not $here.StartsWith($vaultPath, [StringC
 if ($NoLaunch) {
     Write-Host ""
     Write-Host "Library ready. Launch it later with:"
-    Write-Host "  resource-librarian --vault `"$vaultPath`" app --port $Port --open"
+    Write-Host "  Librarian.bat in this copy's folder, then open `"$vaultPath`" from the picker"
     exit 0
 }
 
-resource-librarian --vault $vaultPath app --port $Port --open
+Invoke-Librarian --vault $vaultPath app --port $Port --open

@@ -54,7 +54,7 @@ def validate_workflow(ctx: Context, yaml_text: str) -> dict:
     return workflows.validate(workflows.parse(yaml_text), _library(ctx))
 
 
-@tool("save_workflow", tier="contribute", effect="write",
+@tool("save_workflow", tier="contribute", effect="write", scope="library",
       card=Card("Save a workflow or pipeline into this vault",
                 "a definition validates and should be kept",
                 "Refused unless valid. Saved by an agent it waits for a person's acceptance "
@@ -63,7 +63,7 @@ def save_workflow(ctx: Context, yaml_text: str) -> dict:
     return _library(ctx).save(yaml_text, accepted_by_person=ctx.tier == "curate")
 
 
-@tool("accept_workflow", tier="curate", effect="write",
+@tool("accept_workflow", tier="curate", effect="write", scope="library",
       card=Card("Accept a saved workflow or pipeline so it may run unattended",
                 "you have read it",
                 "Person-only: an accepted workflow runs without anyone watching each step, so "
@@ -83,7 +83,7 @@ def _run(ctx: Context, name: str, inputs: dict | None, kind: str) -> dict:
     return runner.start(name, inputs or {})
 
 
-@tool("run_workflow", tier="consult", effect="write", open_world=True,
+@tool("run_workflow", tier="consult", effect="write", scope="session", open_world=True,
       returns=("run", "status", "outputs", "steps"),
       card=Card("Run a workflow: a standard set of actions, with no model",
                 "a known sequence of actions should happen",
@@ -92,7 +92,7 @@ def run_workflow(ctx: Context, name: str, inputs: dict | None = None) -> dict:
     return _run(ctx, name, inputs, "workflow")
 
 
-@tool("run_pipeline", tier="consult", effect="write", open_world=True,
+@tool("run_pipeline", tier="consult", effect="write", scope="session", open_world=True,
       returns=("run", "status", "outputs", "steps"),
       card=Card("Run a pipeline: workflows in sequence, routed by declared conditions or by "
                 "a model choosing among fixed options",
@@ -109,7 +109,7 @@ def run_status(ctx: Context, run_id: str) -> dict:
     return workflows.RunStore(ctx.vault).status(run_id)
 
 
-@tool("run_resume", tier="consult", effect="write", open_world=True,
+@tool("run_resume", tier="consult", effect="write", scope="session", open_world=True,
       card=Card("Continue a paused run, optionally with a person's route choices",
                 "a run paused at a routing step",
                 "`choices` maps a paused step key to an option; only a person may give them"))

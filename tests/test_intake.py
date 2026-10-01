@@ -9,7 +9,7 @@ from resource_librarian import clerk, intake, notes, tools  # noqa: F401
 from resource_librarian.evidence import FRAMING_KEYS, EvidenceStore
 from resource_librarian.registry import REGISTRY, Context
 
-from conftest import add_source
+from conftest import add_source, pdf_bytes
 
 REPO_META = {"full_name": "acme/rowstream", "html_url": "https://github.com/acme/rowstream",
              "description": "Change data capture that streams row changes from Postgres",
@@ -230,14 +230,11 @@ def test_model_capture_to_catalogued(library):
 
 
 def test_pdf_in_inbox_to_catalogued(library, tmp_path):
-    canvas = pytest.importorskip("reportlab.pdfgen.canvas")
     pytest.importorskip("pypdf")
     pdf = library.root / "Inbox" / "wal-notes.pdf"
-    c_ = canvas.Canvas(str(pdf))
-    c_.drawString(72, 720, "Write-ahead logging keeps every committed change durable before")
-    c_.drawString(72, 700, "it is applied to the tables, so recovery can replay the log.")
-    c_.showPage()
-    c_.save()
+    pdf.parent.mkdir(parents=True, exist_ok=True)
+    pdf.write_bytes(pdf_bytes([["Write-ahead logging keeps every committed change durable before",
+                                "it is applied to the tables, so recovery can replay the log."]]))
     c = ctx(library)
     staged = REGISTRY.call("ingest", {"ref": "Inbox/wal-notes.pdf"}, c)
     assert staged["status"] == "staged", staged

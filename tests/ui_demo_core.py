@@ -19,6 +19,10 @@ os.environ["LIBRARIAN_CONFIG_DIR"] = str(root.parent / "config")
 vault = library(root)
 REGISTRY.call("ingest", {"ref": "acme/rowstream"}, Context(tier="curate", vault=vault,
               extras={"fetcher": intake.Replay(RESPONSES)}))
+# A second, for the two approvals: approved for ingestion, begun from the banner, then
+# accepted into the library once ingested (Research Pipeline §4.2).
+REGISTRY.call("ingest", {"ref": "arXiv:2405.01234"}, Context(tier="curate", vault=vault,
+              extras={"fetcher": intake.Replay(RESPONSES)}))
 
 # Two already-catalogued sources (osquery, duckdb) both use one term: enough
 # for the "Scan for concepts" button to have a real candidate to stage, rather
@@ -42,6 +46,60 @@ _agenda_ctx = Context(tier="contribute", vault=vault)
 REGISTRY.call("task_add", {"note": "osquery", "text": "check for a new stable release",
                           "due": (date.today() + timedelta(days=2)).isoformat()}, _agenda_ctx)
 REGISTRY.call("task_add", {"note": "duckdb", "text": "review the changelog"}, _agenda_ctx)
+
+# Test Directive A2 (2026-10-01): three more flows the smoke check walks.
+from resource_librarian.staging import StagingStore
+_store = StagingStore(vault)
+# (a) a staged revision of an accepted note: its banner, and Accept merging it
+_store.add({"id": "rev-osquery", "kind": "source", "status": "staged", "source_kind": "repository",
+            "name": "osquery (whole text read)", "revision_of": "Sources/repository/osquery.md",
+            "sections": {"Claims": "- osquery turns the host into SQL tables a fleet can query "
+                                   "(part 1)."},
+            "evidence": [], "history": []})
+# (c) a document-level lens: drawn from the whole text, a probe answered elsewhere in it
+_store.add({"id": "lens-doc-change", "kind": "lens", "status": "staged",
+            "name": "Read the whole system by its changes", "source": "osquery",
+            "source_quote": "osquery turns host instrumentation into queryable SQL tables.",
+            "level": "document",
+            "rests_on": ["tables describe the host's state (part 1)",
+                         "differential queries report what changed (part 3)"],
+            "perspective": "ask what changed across the fleet before what the state is",
+            "attends_to": [{"what": "what changed between two queries",
+                            "because": "differential queries report what changed"}],
+            "probes": [{"question": "what changed since the last scheduled query?",
+                        "because": "differential queries report what changed",
+                        "confirmed_by": {"claim": "the scheduler keeps the previous result",
+                                         "locator": "part 4"}}],
+            "history": []})
+# (d) a concept review that has fallen due: the review-due action opens a parked learn session
+REGISTRY.call("task_add", {"note": "osquery", "text": "Review: host instrumentation",
+                          "due": date.today().isoformat()}, _agenda_ctx)
+# (b) a staged offering its session has asked the person to promote: read in Staging ->
+# Offerings, and promoted from there. Its session is seeded as a log, the way a run that
+# drafted it and asked would have left it.
+from resource_librarian import notes as _notes
+from resource_librarian.session import SessionStore as _Sessions
+_sid = REGISTRY.call("open_session", {"purpose": "explore", "question": "watch our hosts"},
+                     Context(tier="contribute", vault=vault))["session"]["session"]
+_oid = f"{_sid}-host-watch-starter"
+_staged = vault.work("staging") / "offerings" / f"{_oid}.md"
+_staged.parent.mkdir(parents=True, exist_ok=True)
+_staged.write_text(_notes.render(
+    {"type": "offering", "offering_kind": "branch_offering", "status": "draft",
+     "created": date.today().isoformat(), "sources": ["[[osquery]]"], "project": "",
+     "attested_by": "agent", "session": _sid},
+    _notes.compose("Host Watch Starter", [
+        ("Summary", "Start with osquery: it answers questions about the hosts in SQL."),
+        ("Claims", "1. osquery exposes the host as SQL tables.\n"
+                   "   > osquery turns host instrumentation into queryable SQL tables.\n"
+                   "   - [[osquery]] (Bottom Line)"),
+        ("Sources", "- [[osquery]]")])), encoding="utf-8")
+_rel = _staged.relative_to(vault.root).as_posix()
+_Sessions(vault).append(_sid, {"type": "offering", "id": _oid, "title": "Host Watch Starter",
+                               "status": "staged", "path": _rel, "claims": 1})
+_Sessions(vault).append(_sid, {"type": "question", "id": "q1", "kind": "confirm", "ref": _oid,
+                               "question": f"Promote the offering 'Host Watch Starter' ({_rel}) "
+                                           f"into the vault?", "options": ["yes", "no"]})
 
 def model(system, messages, tools):
     last = messages[-1]

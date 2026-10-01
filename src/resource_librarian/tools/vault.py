@@ -32,7 +32,7 @@ def _repo(ctx: Context) -> Path:
     return Path(top).resolve()
 
 
-@tool("gitignore_ensure", tier="contribute", effect="vault_write", returns=("added", "present"),
+@tool("gitignore_ensure", tier="contribute", effect="vault_write", scope="library", returns=("added", "present"),
       card=Card("Make sure the vault's .gitignore holds these patterns",
                 "before committing, so derived files and secrets stay out of history",
                 "Adds only what is missing; never adds a `!` exception"))
@@ -51,7 +51,7 @@ def gitignore_ensure(ctx: Context, patterns: list[str]) -> dict:
     return {"added": added, "present": sorted(present & set(patterns))}
 
 
-@tool("vault_commit", tier="contribute", effect="vault_write",
+@tool("vault_commit", tier="contribute", effect="vault_write", scope="library",
       returns=("committed", "commit", "files"),
       card=Card("Commit every change in the vault", "after a batch of work",
                 "Refuses when a file that looks like a secret would be committed"))
@@ -74,7 +74,7 @@ def vault_commit(ctx: Context, message: str) -> dict:
     return {"committed": True, "commit": sha[:12], "files": len(changed)}
 
 
-@tool("vault_push", tier="contribute", effect="vault_write", open_world=True,
+@tool("vault_push", tier="contribute", effect="vault_write", scope="library", open_world=True,
       returns=("pushed", "branch", "remote"),
       card=Card("Push the vault's commits to its remote",
                 "after committing, to back the vault up",

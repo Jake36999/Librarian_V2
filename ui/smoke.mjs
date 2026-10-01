@@ -41,6 +41,11 @@ await page.waitForSelector("#lib-models .card");
 await Promise.all([
   page.waitForResponse((r) => r.url().endsWith("/api/tiers") && r.request().method() === "POST"),
   page.click("#lib-models section:has-text('Local server') .card")]);
+// R10: no lead has completed the M0 suite yet, so leading asks for a recorded override.
+await page.waitForSelector("#lib-models >> text=has not completed the M0 completion suite");
+await Promise.all([
+  page.waitForResponse((r) => r.url().endsWith("/api/tiers") && r.status() === 200),
+  page.click("#lib-models button:has-text('Use it as lead anyway')")]);
 await page.waitForSelector("#lib-models .slot:first-child >> text=scripted-demo");
 await page.waitForSelector("#lib-models section:has-text('Local server') .card.sel");
 await page.click("#lib-models section:has-text('Local server') .card");
@@ -79,6 +84,9 @@ step("a mode switch releases the waiting write");
 await page.click(".msg .wl:has-text('osquery')");
 await page.waitForSelector(".lib-pane .doc >> text=Exposes the operating system");
 await expect(page.isVisible(".lib-pane .doc table.props >> text=repository"), "frontmatter shows as properties");
+// Text to speech: mode A under a reply, mode B beside ⋮ while a document is open.
+await expect(page.isVisible(".msg-wrap:not(.user) .msg-actions button[aria-label='Read aloud']"), "a reply can be read aloud");
+await expect(page.isVisible(".lib-pane .pane-actions button[aria-label='Read this document']"), "the open document can be read aloud");
 await expect(page.isVisible(".lib-pane .pane-crumbs >> text=osquery.md"), "the path shows as breadcrumbs");
 await page.click(".lib-pane button[aria-label='Documents menu']");
 await page.click(".pane-menu .menuitem.up");
@@ -222,13 +230,82 @@ await page.click("dialog.settings .srv-block button:has-text('Disable')");
 await page.waitForSelector("dialog.settings .srv-block button:has-text('Enable')");
 step("MCP servers: curated skill listed, a hand-added server connects and lists tools, per-tool permission and disable both work");
 
+// Service models (R17, slot 4): chosen with the same model tile, kept with the library.
+await page.click("dialog.settings [role=tab]:has-text('Connections')");
+await page.waitForSelector("dialog.settings .slot-ocr >> text=Qwen/Qwen3.5-397B-A17B");
+await expect(page.isVisible("dialog.settings .slot-ocr >> text=(default)"), "the assigned default is marked");
+await expect(page.isVisible("dialog.settings .slot-tts >> text=hexgrad/Kokoro-82M"), "slot 5 (text to speech) holds its default");
+await expect(page.isVisible("dialog.settings .slot-tts >> text=cap"), "slot 5 says its spend against its cap");
+await expect(page.isVisible("dialog.settings .slot-embeddings >> text=none chosen"), "slot 6 starts empty: nothing is embedded unasked");
+await expect(page.isVisible("dialog.settings .slot-embeddings button:has-text('Use a local model')"), "a local embedding model is one click");
+await page.click("dialog.settings .slot-ocr button:has-text('Choose…')");
+await page.waitForSelector("#lib-models >> text=Choose the OCR model");
+await page.click("#lib-models button:has-text('Show all')");
+await page.click("#lib-models .card:has-text('openai/gpt-oss-20b')");
+await page.waitForSelector("dialog.settings .slot-ocr >> text=openai/gpt-oss-20b");
+step("service slot 4: OCR chosen through the model tile and kept with the library");
+await page.click("dialog.settings .slot-ocr", { button: "right" });
+await page.waitForSelector("dialog.settings .slot-ocr >> text=none chosen");
+step("right-click empties a service slot");
+
+// Research Pipeline §6.1: project access is a person's switch, off by default.
+await page.click("dialog.settings [role=tab]:has-text('Projects')");
+await page.waitForSelector("dialog.settings >> text=Enable project access");
+await expect(page.isChecked("#lib-projects-on").then((on) => !on), "project access starts off");
+await expect(page.isVisible("dialog.settings >> text=No project folders yet."), "no folder is allowed until a person adds one");
+step("settings: project access is off by default and folders are a person's to add");
+
+// Editing is a second, per-folder permission: off when a folder is added.
+const projectDir = mkdtempSync(join(tmpdir(), "librarian-project-"));
+await page.fill("#lib-project-path", projectDir);
+await page.click("dialog.settings button:has-text('Add')");
+await page.waitForSelector("dialog.settings .project-root");
+const editsBox = "dialog.settings .project-root .project-writes input";
+await expect(page.isChecked(editsBox).then((on) => !on), "edits start off for a new folder");
+await page.click(editsBox);
+await page.waitForSelector("dialog.settings >> text=Edits allowed: each one is still asked.");
+await expect(page.isChecked(editsBox), "edits allowed for this folder only");
+await page.click("dialog.settings button:has-text('Remove this project')");
+await page.waitForSelector("dialog.settings >> text=No project folders yet.");
+step("settings: edits are a separate per-folder permission, off until a person ticks it");
+
 await page.click("dialog.settings button:has-text('Close')");
+
+// The effort slider: one control, saved with the app, its meaning in the tooltip.
+await page.$eval(".toolbar .effort input", (el) => {
+  el.value = "8";
+  el.dispatchEvent(new Event("input"));
+  el.dispatchEvent(new Event("change"));
+});
+await page.waitForFunction(() => (document.querySelector(".toolbar .effort")?.getAttribute("title") ?? "").startsWith("Effort 8 of 10"));
+await expect(page.textContent(".toolbar .effort .effort-value").then((t) => t === "8"), "the slider shows its level");
+step("effort slider: saved, and its tooltip says what it allows");
 
 // Search and staging.
 await page.click(".lib-app nav button:has-text('Search')");
 await page.fill(".search input[type=search]", "operating system");
 await page.keyboard.press("Enter");
-await page.waitForSelector(".search .result >> text=osquery");
+// SM-1: everything, grouped by the intent that answered; result-derived facets; tiles that
+// say how much of each source was read; a click opens the note beside it.
+await page.waitForSelector(".search .tile >> text=osquery");
+await expect(page.isVisible(".search .group h3 >> text=Sources"), "everything is grouped by intent");
+await expect(page.isVisible(".search >> text=Ran: orient, pattern, made"), "which intents ran is said");
+await expect(page.isVisible(".search .tile .depth >> text=read:"), "a tile shows its read depth");
+if (await page.locator(".search .facets .chip").count()) {
+  await page.locator(".search .facets .chip").first().click();
+  await page.waitForSelector(".search button:has-text('Clear filters (1)')");
+  await page.click(".search button:has-text('Clear filters')");
+  await page.waitForSelector(".search .tile >> text=osquery");
+}
+await page.click(".search .tile .wl:has-text('osquery')");
+await page.waitForSelector(".lib-pane .doc >> text=Exposes the operating system");
+step("search: everything grouped by intent, facets narrow and clear, a tile opens its note");
+await page.selectOption(".search select[aria-label='Search in']", "staging");
+await page.fill(".search input[type=search]", "rowstream");
+await page.keyboard.press("Enter");
+await page.waitForSelector(".search .tile >> text=acme - rowstream");
+await page.selectOption(".search select[aria-label='Search in']", "library");
+step("search: the work too - a staged source found by name");
 await page.click(".lib-app nav button:has-text('Staging')");
 await page.click(".staging .item");
 await page.waitForSelector(".staging .evidence");
@@ -274,6 +351,31 @@ await page.click(".staging button:has-text('Accept')");
 await page.waitForSelector(".staging >> text=Accepted");
 step("search finds; staging accepts with the person's Bottom Line");
 
+// The two approvals (Research Pipeline §4.2): approving only queues a source; a person
+// begins the batch from the banner; the ingested source comes back to be accepted.
+await page.click(".staging .item:has-text('Lovelace')");
+await page.waitForSelector(".staging .evidence");
+await page.click(".staging button:has-text('Approve for ingestion')");
+await page.waitForSelector(".staging >> text=Approved for ingestion: it waits for the batch");
+await page.waitForSelector(".staging .batch-banner >> text=1 source approved and awaiting ingestion.");
+await page.click(".staging .batch-banner button:has-text('Click here to begin')");
+await page.waitForFunction(() => {
+  const text = document.querySelector(".staging .batch-banner")?.textContent ?? "";
+  return !text.includes("Processing") && !text.includes("awaiting ingestion");
+}, null, { timeout: 30000 });
+// The demo's clerk does not answer the full read, so the batch ends with that stage
+// unfinished: the source is "partial", never "enriched", and its note says so.
+await page.selectOption(".staging select[aria-label='Which sources']", "partial");
+await page.click(".staging .item:has-text('Lovelace')");
+await page.waitForSelector(".staging .detail >> text=/Ingested in batch-.* with gaps: coverage partial/");
+await expect(page.isVisible(".staging .detail >> text=/Not examined: .*waiting for the clerk model/"), "what was not examined is shown");
+await page.fill("#lib-bl", "A paper on streaming rows out of a write-ahead log.");
+await page.fill("#lib-solves", "Reading database changes as a stream.");
+await page.click(".staging button:has-text('Accept with partial coverage')");
+await page.waitForSelector(".staging >> text=/Accepted into the library and catalogued \\(coverage: partial/");
+await page.selectOption(".staging select[aria-label='Which sources']", "staged");
+step("approving queues a source; the banner begins the batch; a partly ingested source is accepted with its coverage stated");
+
 // The concept-candidate flow: a term seen across two sources (seeded in the
 // demo core) is scanned, staged, and shows its quoted usages and sources -
 // then a person's own Definition, never drafted for them, turns it into a
@@ -295,9 +397,12 @@ await page.waitForSelector(".staging >> text=accepted as a Concept note");
 step("a term seen across sources is scanned, staged, and accepted with a person's own Definition");
 await page.click(".staging .seg button:has-text('Sources')");
 
-// Sessions: the thread is listed and can be picked back up.
+// Sessions: the thread is listed and can be picked back up - under the library's own
+// name (its folder is "Demo Vault"; the library is called "Test Vault").
 await page.click(".lib-app nav button:has-text('Chat')");
+await expect(page.isVisible(".lib-switch:has-text('Test Vault')"), "the toolbar names the open library");
 await page.click("header .ghost:has-text('Sessions')");
+await page.waitForSelector("#lib-sessions h4 >> text=Threads in Test Vault");
 await page.waitForSelector("#lib-sessions .menuitem >> text=Host Watch");
 await page.click("#lib-sessions .menuitem:has-text('Host Watch')");
 await page.waitForSelector(".tool >> text=continuing the thread");
@@ -330,6 +435,7 @@ await expect(page.locator("#lib-models .slot").first().innerText().then((t) => t
 await page.click("#lib-models section:has-text('DeepInfra') button.profile-link");
 await page.waitForSelector("#lib-models .toast >> text=staged for review");
 await page.click("#lib-models .card:has-text('openai/gpt-oss-20b')");         // unprofiled: still fine as tier 1
+await page.click("#lib-models button:has-text('Use it as lead anyway')");       // R10: not M0-qualified
 await page.waitForSelector("#lib-models .slot:first-child >> text=openai/gpt-oss-20b");
 await page.click("#lib-models .card:has-text('acme/no-tools-model')");        // now tier 2, no gate on tier 2/3
 await page.waitForSelector("#lib-models .slot:nth-child(2) >> text=acme/no-tools-model");
@@ -350,6 +456,56 @@ await expect(page.isVisible("#lib-models .card:has-text('openai/gpt-oss-20b') >>
   "the accepted model now shows its measured specs in the tile");
 await page.keyboard.press("Escape");
 step("accepting the staged model finishes profiling it; the tile shows the real specs");
+
+// Test Directive A2 (a): a staged revision of an accepted note says so, and Accept merges it.
+await page.click(".lib-app nav button:has-text('Staging')");
+await page.click(".staging .seg button:has-text('Sources')");
+await page.selectOption(".staging select[aria-label='Which sources']", "staged");
+await page.waitForSelector(".staging .item:has-text('osquery (whole text read)')");
+await page.click(".staging .item:has-text('osquery (whole text read)')");
+await page.waitForSelector(".staging .detail >> text=A revision of an accepted note");
+await page.click(".staging .detail button:has-text('Accept')");
+await page.waitForSelector(".staging >> text=/Merged Claims into Sources\\/repository\\/osquery.md/");
+await expect(page.evaluate(async () => {
+  const token = document.querySelector("meta[name=librarian-token]")?.getAttribute("content") ?? "";
+  const r = await fetch("/api/file?path=Sources/repository/osquery.md", { headers: { "X-Librarian-Token": token } });
+  return r.ok && (await r.json()).text.includes("a fleet can query");
+}), "the revision's Claims are in the note");
+step("a staged revision of an accepted note: its banner, and Accept merges it");
+
+// (c) a document-level lens: drawn from the whole text; a probe answered elsewhere in it.
+await page.click(".staging .seg button:has-text('Lenses')");
+await page.waitForSelector(".staging .item:has-text('Read the whole system by its changes')");
+await page.click(".staging .item:has-text('Read the whole system by its changes')");
+await page.waitForSelector(".staging .detail >> text=Drawn from the whole text");
+await expect(page.isVisible(".staging .detail >> text=differential queries report what changed (part 3)"), "the claims it rests on are listed");
+await expect(page.isVisible(".staging .detail >> text=Answered elsewhere in the text"), "a probe answered elsewhere says so");
+step("a document-level lens: drawn from the whole text, a probe answered elsewhere in it");
+
+// (b) a staged offering is read in full before it is promoted, and promoted from there.
+await page.click(".staging .seg button:has-text('Offerings')");
+await page.waitForSelector(".staging .item:has-text('Host Watch Starter') >> text=asked: promote?");
+await page.click(".staging .item:has-text('Host Watch Starter')");
+await page.waitForSelector(".staging .offering-body >> text=osquery turns host instrumentation into queryable SQL tables.");
+await expect(page.isVisible(".staging .detail >> text=The session has asked you to promote this"), "the pending question is named");
+await page.click(".staging .detail button:has-text('Promote into the library')");
+await page.waitForSelector(".staging .detail >> text=/promoted to Offerings\\/Insights\\/Host Watch Starter.md/");
+await expect(page.isVisible(".staging >> text=No offering waits to be promoted."), "the list is empty after promoting");
+step("a staged offering: read in full in Staging -> Offerings, then promoted from there");
+
+// (d) the review-due action opens a parked learn session for the review that fell due.
+await page.click(".lib-app nav button:has-text('Chat')");
+await page.click(".toolbar .tb:has-text('Modes')");
+await page.click("#lib-modes .menuitem:has-text('review-due')");
+await page.waitForFunction(async () => {
+  const token = document.querySelector("meta[name=librarian-token]")?.getAttribute("content") ?? "";
+  const r = await fetch("/api/tool/list_sessions", { method: "POST", headers: { "Content-Type": "application/json",
+    "X-Librarian-Token": token }, body: JSON.stringify({ arguments: {} }) });
+  if (!r.ok) return false;
+  const out = await r.json();
+  return (out.sessions ?? []).some((s) => s.purpose === "learn" && s.status === "parked");
+}, null, { timeout: 20000 });
+step("the review-due action opens a parked learn session");
 
 // Phone width: nothing overflows sideways.
 await page.setViewportSize({ width: 390, height: 800 });

@@ -15,7 +15,8 @@ def reg() -> Registry:
         """Say it back."""
         return {"text": text, "limit": limit, "flag": flag, "items": items, "mode": mode}
 
-    @r.tool("write", tier="curate", effect="vault_write", needs_vault=False, card=Card("Write"))
+    @r.tool("write", tier="curate", effect="vault_write", scope="library", needs_vault=False,
+            card=Card("Write"))
     def write(ctx) -> dict:
         return {"ok": True}
 

@@ -2,6 +2,7 @@
 // #librarian-root and the page token in the page) and by the Obsidian plugin
 // (it calls Librarian.mount with its own options).
 
+import { reader } from "./speech";
 import { Api, type Event, type Options } from "./api";
 export type { Options } from "./api";
 import { AttachPanel } from "./attach";
@@ -70,6 +71,13 @@ class App {
   private msgBox = h("div", { class: "msg-box" });
   private modeButton = h("button", { class: "tb" });
   private modelButton = h("button", { class: "tb" });
+  // The effort slider (owner, 2026-10-01): how much work the person expects - helpers,
+  // steps and time per reply, call budgets, how much is reviewed (effort.py).
+  private effortValue = h("span", { class: "effort-value" }, "4");
+  private effortInput = h("input", { type: "range", min: "1", max: "10", step: "1", value: "4",
+    "aria-label": "Effort" }) as HTMLInputElement;
+  private effortControl = h("label", { class: "effort tb" }, "Effort ", this.effortInput, this.effortValue);
+  private sendButton: HTMLButtonElement;
   private views: Record<View, HTMLElement>;
   private nav: Record<View, HTMLButtonElement>;
   private notice = h("div", { class: "notice", role: "alert", hidden: true });
@@ -77,6 +85,7 @@ class App {
   constructor(root: HTMLElement, opts: Options) {
     this.api = new Api(opts);
     const openNote = (target: string) => void this.openDoc(target);
+    reader.init(this.api, (message) => this.warn(message));
     this.chat = new Chat(this.api, {
       openNote,
       effectOf: (tool) => this.effects.get(tool) ?? "write",
@@ -85,6 +94,7 @@ class App {
       continueSession: () => void this.sendText("Continue the current research session from its next step. Read session_status first, complete the open work, and report any information you cannot verify as a gap. Do not claim the session or requested work is complete while session_status still shows open items."),
       rewind: (index) => void this.rewindMessage(index),
       branch: (index) => void this.branchMessage(index),
+      openOffering: (id) => { this.staging.focusOffering(id); this.show("staging"); },
     });
     this.staging = new Staging(this.api, openNote, () => this.session?.session ?? "",
       (session) => this.setSession(session));
@@ -95,7 +105,8 @@ class App {
       () => this.session?.project ?? "",
       () => this.session?.session ?? "");
     this.opts = opts;
-    this.settings = new Settings(this.api, () => this.state, () => this.refresh(), opts.manageKeys);
+    this.settings = new Settings(this.api, () => this.state, () => this.refresh(), opts.manageKeys,
+      (slot, label) => void this.chooseService(slot, label));
 
     const plus = h("button", { class: "tb icon", title: "Settings", "aria-label": "Settings",
       onclick: () => this.settings.open() }, "+");
@@ -106,7 +117,7 @@ class App {
     this.libraries = new Popover("lib-libraries", "Libraries", this.libraryButton);
     this.libraryButton.onclick = () => {
       this.toggle(this.libraries);
-      if (this.libraries.open) void renderLibraries(this.libraries, this.api, String(this.state.vault ?? "this library"));
+      if (this.libraries.open) void renderLibraries(this.libraries, this.api, this.libraryName());
     };
     this.tile = new ModelTile(this.models, this.api, () => (this.state.tiers ?? []) as Tier[],
       () => Object.fromEntries(((this.state.keys ?? []) as any[]).map((k) => [k.provider, !!k.saved])),
@@ -120,6 +131,7 @@ class App {
 
     this.modeButton.onclick = () => this.toggle(this.modes);
     this.modelButton.onclick = async () => {
+      this.tile.endSlot();                          // the toolbar's own button: the chat tiers
       this.toggle(this.models);
       if (this.models.open) {
         // The state a fast click can race (key status, chosen tiers) must be
@@ -130,7 +142,8 @@ class App {
     };
     sessionsButton.onclick = () => {
       this.toggle(this.sessions);
-      if (this.sessions.open) void renderSessions(this.sessions, this.api, (id) => this.attach(id), () => this.reset());
+      if (this.sessions.open) void renderSessions(this.sessions, this.api, (id) => this.attach(id), () => this.reset(),
+        this.libraryName(), String(this.state.vault_path ?? ""));
     };
     // The website hands over to Obsidian by its URL scheme; the plugin passes its own.
     const elsewhere = h("button", {
@@ -139,7 +152,15 @@ class App {
         window.location.href = `obsidian://open?vault=${encodeURIComponent(String(this.state.vault ?? ""))}`;
       }),
     }, opts.host === "obsidian" ? "↗ Open in browser" : "↗ Open in Obsidian");
-    const send = h("button", { class: "send", onclick: () => this.send() }, "Send");
+    this.sendButton = h("button", { class: "send", onclick: () => this.send() }, "Send") as HTMLButtonElement;
+    this.effortInput.oninput = () => { this.effortValue.textContent = this.effortInput.value; };
+    this.effortInput.onchange = async () => {
+      try {
+        const chosen = await this.api.post("/api/effort", { level: Number(this.effortInput.value) });
+        this.state.effort = chosen;
+        this.paintEffort();
+      } catch (e) { this.warn((e as Error).message); }
+    };
     this.input.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); void this.send(); }
     });
@@ -153,7 +174,7 @@ class App {
 
     clear(this.msgBox, this.attachRow, this.input);
     const composer = h("div", { class: "composer" }, this.chips, this.msgBox,
-      h("div", { class: "toolbar" }, plus, attachButton, this.modeButton, this.modelButton, elsewhere, send),
+      h("div", { class: "toolbar" }, plus, attachButton, this.modeButton, this.modelButton, this.effortControl, elsewhere, this.sendButton),
       this.modes.el, this.models.el, this.attachPop.el);
 
     this.paneButton = h("button", { class: "icon-btn", title: "Plan and notes beside the chat",
@@ -260,8 +281,10 @@ class App {
     const fresh = await this.api.get("/api/state");
     if (this.tiersEpoch !== epoch) fresh.tiers = this.state.tiers;     // newer than this answer
     this.state = fresh;
-    this.libraryButton.textContent = `${String(this.state.vault ?? "Library")} ▾`;
-    this.libraryButton.title = `Switch library - this is ${String(this.state.vault_path ?? this.state.vault ?? "")}`;
+    this.paintSendButton();
+    this.libraryButton.textContent = `${this.libraryName()} ▾`;
+    this.libraryButton.title = `Switch library - this is ${this.libraryName()} (${String(this.state.vault_path ?? "")})`;
+    document.title = `${this.libraryName()} - Librarian`;
     this.setSession(this.state.session ?? null);
     this.paintToolbar();
     this.paintChips();
@@ -284,6 +307,7 @@ class App {
         break;
       case "turn_done": case "error":
         this.state.busy = false;
+        this.paintSendButton();
         break;
       case "action_started": case "action_progress": case "action_done": {
         const actions = (this.state.actions ?? []) as any[];
@@ -308,7 +332,21 @@ class App {
   }
 
   // -- painting ------------------------------------------------------------
+  private paintEffort(): void {
+    const e = this.state.effort;
+    if (!e) return;
+    this.effortInput.value = String(e.level);
+    this.effortValue.textContent = String(e.level);
+    this.effortControl.title = `Effort ${e.level} of 10 - how much work you expect. `
+      + `Helpers at once: ${e.lead_agents} on the lead model, ${e.tier2_agents} on the notes model; `
+      + `small-task calls at once: ${e.tier3_agents}. Up to ${e.turn_steps} steps and `
+      + `${Math.round(e.turn_seconds / 60)} min per reply; call budgets x${e.budget_scale}. `
+      + `Review: ${e.review_replies ? `offerings and up to ${e.review_claims} claims per reply`
+        : e.review_offerings ? "offerings' claims" : "nothing automatic"}.`;
+  }
+
   private paintToolbar(): void {
+    this.paintEffort();
     const mode = MODES.find(([v]) => v === this.state.mode);
     clear(this.modeButton, "Modes: ", h("strong", {}, mode ? mode[1].split(" ")[0] : "?"), " ▾");
     const tier = ((this.state.tiers ?? []) as Tier[])[0];
@@ -335,12 +373,18 @@ class App {
     this.session = session;
     this.chat.renderPlan(session);
     if (!session) {
-      this.title.textContent = String(this.state.vault ?? "Librarian");
+      this.title.textContent = this.libraryName();
       this.crumb.textContent = "no thread";
       return;
     }
-    this.title.textContent = session.project || session.question || String(this.state.vault ?? "Librarian");
+    this.title.textContent = session.project || session.question || this.libraryName();
     this.crumb.textContent = `${session.purpose ?? ""} · phase: ${session.phase ?? ""}${session.status && session.status !== "open" ? ` · ${session.status}` : ""}`;
+  }
+
+  /** The open library by its own name: two libraries made by new-vault.ps1 share the
+   *  folder name `.librarian-app`, so the folder cannot say which one this is. */
+  private libraryName(): string {
+    return String(this.state.vault_name ?? this.state.vault ?? "Librarian");
   }
 
   private show(view: View): void {
@@ -350,6 +394,22 @@ class App {
     this.composer.hidden = view !== "chat";
     if (view === "staging") void this.staging.load(true);
     if (view === "search") this.search.focus();
+  }
+
+  /** R17: Settings' "Choose…" for a service slot opens the model tile to pick one model
+   *  for it; picking (or Cancel) returns to Settings. */
+  private async chooseService(slot: string, label: string,
+                              current?: { provider: string; model: string }): Promise<void> {
+    // After the click that asked for it has finished: that click is still on its way up
+    // to the document, whose click-outside handler would close a popover opened now.
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+    this.tile.startSlot(slot, label, () => {
+      if (this.models.open) this.toggle(this.models);
+      this.settings.open("connections");
+    }, current?.model ? current : undefined);
+    if (!this.models.open) this.toggle(this.models);
+    await this.refresh();
+    await this.tile.refresh();
   }
 
   private toggle(pop: Popover): void {
@@ -403,6 +463,11 @@ class App {
 
   // -- actions ---------------------------------------------------------------
   private async send(): Promise<void> {
+    if (this.state.busy) {
+      try { await this.api.post("/api/chat/cancel", {}); }
+      catch (e) { this.warn((e as Error).message); }
+      return;
+    }
     const text = this.input.value.trim();
     if (!text) return;
     this.input.value = "";
@@ -418,10 +483,18 @@ class App {
     try {
       await this.api.post("/api/chat", { text });
       this.state.busy = true;
+      this.paintSendButton();
     } catch (e) {
       const message = (e as Error).message;
       this.warn(message.includes("tier 1") ? "Choose a chat model first: click Model, then a model (it becomes tier 1)." : message);
     }
+  }
+
+  private paintSendButton(): void {
+    const busy = !!this.state.busy;
+    this.sendButton.textContent = busy ? "Stop" : "Send";
+    this.sendButton.setAttribute("aria-label", busy ? "Stop reply" : "Send message");
+    this.sendButton.title = busy ? "Stop the current reply" : "Send message";
   }
 
   private async attach(id: string): Promise<void> {

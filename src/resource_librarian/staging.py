@@ -43,8 +43,47 @@ from .rules import Refusal
 from .search import Engine
 from .vault import Vault, now_iso
 
-KINDS = ("source", "lens", "concept")
-STATUSES = ("staged", "accepted", "rejected", "deferred")
+KINDS = ("source", "lens", "concept", "topic", "import")
+# One lifecycle for a source (Requirements - Research Pipeline §4.1, Addendum R7/R14):
+# queued (a reference, not yet fetched) -> staged (captured and described) -> approved
+# (a person approved spending processing on it) -> processing (in a batch a person
+# started) -> enriched (every stage complete) or partial (the batch finished, but a stage
+# is unfinished: text it could not read, a clerk that did not answer) -> accepted (a
+# library note). rejected, deferred and failed keep their reason. Approving is not
+# accepting: nothing is published until the separate accept, and every accepted note
+# records how much of the source was read (`coverage_of`).
+STATUSES = ("queued", "staged", "approved", "processing", "enriched", "partial",
+            "accepted", "rejected", "deferred", "failed")
+DECIDABLE = {"accept": ("staged", "deferred", "approved", "enriched", "partial"),
+             # partial or failed: run the batch again; finished stages are not repeated
+             "approve": ("staged", "deferred", "failed", "partial"),
+             "reject": ("staged", "deferred", "approved", "enriched", "partial", "failed"),
+             "defer": ("staged", "approved", "enriched", "partial")}
+CAPTURED = ("accepted as captured: only what intake fetched was read (a page's text, a "
+            "file's opening, a repository's README and tree), not the whole source")
+
+
+def coverage_of(item: dict[str, Any]) -> tuple[str, list[str]]:
+    """How much of a source was read when it is accepted, and what was not examined - kept
+    on its note (Research Pipeline §7): `full`, `partial n/m`, or `captured` for a source
+    accepted without being ingested ("Accept as captured")."""
+    proc = item.get("processing") or {}
+    by_ocr = " (text by OCR)" if item.get("ocr") else ""
+    if item.get("status") in ("enriched", "partial") and proc:
+        return str(proc.get("coverage") or "partial") + by_ocr, \
+            list(proc.get("not_examined") or [])
+    q = (item.get("intake") or {}).get("quality") or {}
+    flagged = [f"capture: {q['reason']}"] if q.get("verdict") in (
+        "needs_ocr", "js_shell", "partial", "no_access_point") else []
+    read = item.get("deep_read") or {}
+    chunks, done = int(read.get("chunks") or 0), len(read.get("read") or {})
+    if chunks and done >= chunks:
+        return "full", ["not reviewed in a batch: the Bottom Line is from capture or a person"
+                        ] + flagged
+    if chunks:
+        return f"partial {done}/{chunks}", [f"read: {chunks - done} of {chunks} parts not "
+                                            f"read"] + flagged
+    return "captured", [CAPTURED] + flagged
 
 
 def _slug(text: str) -> str:
@@ -186,8 +225,8 @@ def decide(store: StagingStore, engine: Engine, item_ids: list[str], decision: s
     key must already be a field of that item's kind, and a closed one must be
     one of its permitted values: it is checked here, before the note exists,
     not left for the findability check to notice afterwards."""
-    if decision not in ("accept", "reject", "defer"):
-        raise TypeError("decision is accept, reject or defer")
+    if decision not in DECIDABLE:
+        raise TypeError("decision is accept, approve, reject or defer")
     if decision in ("reject", "defer") and not reason.strip():
         raise TypeError(f"a {decision} needs its reason")
     if fields and len(item_ids) > 1:
@@ -205,6 +244,48 @@ def decide(store: StagingStore, engine: Engine, item_ids: list[str], decision: s
         except TypeError as exc:
             out.append({"id": item_id, "error": str(exc)})
     return out
+
+
+def preview(store: StagingStore, engine: Engine, item_id: str, decided_by: str,
+            bottom_line: str = "", what_it_solves: str = "",
+            fields: dict[str, Any] | None = None) -> dict[str, Any]:
+    """An accept, rehearsed (V1's promote --dry-run): every check the real accept makes, and
+    what it would write - path, coverage, sections - with nothing written or moved."""
+    from . import dik
+    item = store.load(item_id)
+    problems: list[str] = []
+    mode = str(store.vault.setting("promotion", "mode") or "person")
+    if item["status"] not in DECIDABLE["accept"]:
+        problems.append(f"it is {item['status']}: not acceptable from there")
+    if item.get("sensitivity") != "normal" and decided_by != "person":
+        problems.append("marked sensitive: only a person accepts it")
+    if mode != "agent" and decided_by != "person":
+        problems.append(f"promotion.mode is {mode!r}: a person accepts")
+    if item["kind"] != "source":
+        return {"id": item_id, "kind": item["kind"], "would": "accept", "problems": problems}
+    draft = (item.get("review") or {}).get("draft") or {}
+    if not bottom_line and draft.get("status") != "ok":
+        problems.append("no reviewed draft and no bottom_line given")
+    for name, value in (fields or {}).items():
+        try:
+            _check_field_override(engine.index.model, item.get("source_kind", ""), name, value,
+                                  store.vault.topics())
+        except TypeError as exc:
+            problems.append(str(exc))
+    name = notes.safe_name(item["name"])
+    kind = item.get("source_kind", "repository")
+    if engine.index.note_row(name) is not None:
+        problems.append(f"a note named {name!r} already exists (UNIQUE_NOTE_NAMES)")
+    if kind not in engine.index.model.kinds:
+        problems.append(f"source kind {kind!r} is not in the content model")
+    coverage, not_examined = coverage_of(item)
+    record = dik.load(store.vault, item["name"])
+    sections = sorted({*(item.get("sections") or {}), *dik.sections(record)})
+    return {"id": item_id, "would": "accept", "ok": not problems, "problems": problems,
+            "path": f"Sources/{kind}/{name}.md", "coverage": coverage,
+            "not_examined": not_examined, "sections": sections,
+            **({"file": f"Sources/{kind}/files/{Path(item['file']).name}"}
+               if item.get("file") else {})}
 
 
 def _check_field_override(model, kind: str, name: str, value: Any,
@@ -226,10 +307,21 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
                 decided_by, session, mode, batch, fields: dict[str, Any] | None = None
                 ) -> dict[str, Any]:
     item = store.load(item_id)
-    if item["status"] not in ("staged", "deferred"):
+    if item["status"] == "queued":
+        raise TypeError(f"{item_id} is queued for capture, not yet fetched: intake_run "
+                        f"captures it, queue_remove drops it")
+    if item["status"] == "processing":
+        raise TypeError(f"{item_id} is in batch {item.get('batch', '?')}: decide it once the "
+                        f"batch has enriched it")
+    if item["status"] == "failed" and item.get("ref") and decision != "reject":
+        raise TypeError(f"{item_id} is a capture that failed ({item.get('failure', {})}): "
+                        f"queue_retry it, or reject it")
+    if item["status"] not in DECIDABLE[decision]:
         raise TypeError(f"{item_id} is already {item['status']}")
     entry = {"decision": decision, "by": decided_by, "at": now_iso(), "reason": reason}
     if item.get("revision_of"):
+        if decision == "approve":
+            raise TypeError(f"{item_id} is a revision of an accepted note: accept or reject it")
         return _decide_revision(store, engine, item, decision, entry, decided_by, mode)
     if decision == "reject":
         item["status"] = "rejected"
@@ -244,13 +336,31 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         store.save(item)
         return {"id": item_id, "status": "deferred"}
 
-    # accept
+    # approve or accept: the same people may do either
     if item.get("sensitivity") != "normal" and decided_by != "person":
         raise Refusal("SENSITIVITY_REVIEW", f"{item_id} is marked sensitive; a person "
                                             f"accepts it, whatever the promotion setting")
     if mode != "agent" and decided_by != "person":
         raise Refusal("PERSON_CONFIRMS", f"this vault's promotion.mode is {mode!r}: a "
                                          f"person accepts staged items")
+    if decision == "approve":
+        if item["kind"] != "source":
+            raise TypeError(f"{item_id} is a {item['kind']}: only a source is approved for "
+                            f"ingestion; accept or reject it")
+        item.update(status="approved", approved={"by": decided_by, "at": entry["at"]})
+        item["history"].append(entry)
+        store.save(item)
+        return {"id": item_id, "status": "approved",
+                "next": "waiting for a person to begin the approved batch (Staging)"}
+    if item["kind"] == "topic":
+        # A person may rename it or say what belongs (`fields`); `refile: false` accepts
+        # the topic without filing the proposed members under it.
+        from . import taxonomy
+        done = taxonomy.accept(store.vault, engine, item, decided_by, fields or {})
+        item.update(status="accepted", accepted_to=f"About/Topics.md#{done['topic']}")
+        item["history"].append(entry)
+        store.save(item)
+        return {"id": item_id, "status": "accepted", **done}
     if item["kind"] == "lens":
         # A person may reword the stance or say when it applies before
         # accepting (`lenses.EDITABLE`); the quotes are never editable.
@@ -260,6 +370,21 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         item["history"].append(entry)
         store.save(item)
         return {"id": item_id, "status": "accepted", "lens": lens_id}
+
+    if item["kind"] == "import":
+        target = store.vault.safe_relative(item["target"])
+        if target.exists():
+            raise TypeError(f"{item['target']} already exists: reject this import, or move "
+                            f"that note first")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        front = {**item.get("frontmatter", {}), "evidence": [e["id"] for e in item["evidence"]],
+                 "accepted_by": decided_by}
+        target.write_text(notes.render(front, item.get("body", "")), encoding="utf-8")
+        engine.index.upsert(target)
+        item.update(status="accepted", accepted_to=item["target"])
+        item["history"].append(entry)
+        store.save(item)
+        return {"id": item_id, "status": "accepted", "path": item["target"]}
 
     if item["kind"] == "concept":
         given = fields or {}
@@ -300,10 +425,26 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         fields["drafted_by"] = draft.get("model") or "clerk"
     else:
         attested = decided_by
+    coverage, not_examined = coverage_of(item)
+    fields.setdefault("coverage", coverage)
+    from . import dik                                    # R16: Data and Information, as prose
+    record = dik.load(store.vault, item["name"])
+    if record:
+        item["sections"] = {**(item.get("sections") or {}), **dik.sections(record)}
+        fields.setdefault("dik", dik.path_for(store.vault, item["name"])
+                          .relative_to(store.vault.root).as_posix())
+    if item.get("ocr"):
+        o = item["ocr"]
+        fields.setdefault("text_origin", f"OCR by {o.get('model')}: {o.get('read')} of "
+                                         f"{o.get('needed')} image-only pages")
+    if not_examined:
+        fields.setdefault("not_examined", not_examined)
     if item.get("file"):
         kind = item.get("source_kind", "document")
         fields["file"] = _move_file(store.vault, item,
                                     store.vault.root / "Sources" / kind / "files")
+        if item.get("clean_file"):
+            fields["file_markdown"] = item["clean_file"]
     report = promote(store.vault, engine, Draft(
         name=item["name"], kind=item.get("source_kind", "repository"),
         title=item.get("title", item["name"]), canonical_url=item.get("canonical_url", ""),
@@ -314,10 +455,13 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
     item.update(status="accepted", accepted_to=report.path, promotion=report.to_dict())
     item["history"].append(entry)
     store.save(item)
-    return {"id": item_id, "status": "accepted", "promotion": report.to_dict()}
+    return {"id": item_id, "status": "accepted", "coverage": coverage,
+            "promotion": report.to_dict()}
 
 
-REVISED_SECTIONS = ("Claims", "Evidence & Limits", "Reading Notes")
+REVISED_SECTIONS = ("Claims", "Evidence & Limits", "Reading Notes",
+                    # a D/I/K rebuild of an accepted note (dik_rebuild, 2026-10-01)
+                    "Components", "How It Fits Together", "Chapters", "How The Chapters Relate")
 
 
 def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: dict[str, Any],
@@ -344,14 +488,20 @@ def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: 
     body = note.body
     previous: dict[str, str] = {}
     merged = []
+    from .promote import SECTION_ORIGIN
     for heading in REVISED_SECTIONS:
         text = (item.get("sections") or {}).get(heading)
         if not text:
             continue
         previous[heading] = note.sections().get(heading, "")
+        if heading in SECTION_ORIGIN and not text.lstrip().startswith("*Origin:"):
+            text = f"*Origin: {SECTION_ORIGIN[heading]}.*\n\n{text}"
         body = notes.with_section(body, heading, text)
         merged.append(heading)
-    note.frontmatter["deep_read"] = now_iso()[:10]
+    if item.get("revision_kind") == "dik":
+        note.frontmatter["dik"] = item.get("dik", "")
+    else:
+        note.frontmatter["deep_read"] = now_iso()[:10]
     path.write_text(notes.render(note.frontmatter, body), encoding="utf-8")
     engine.index.upsert(path)
     item.update(status="accepted", accepted_to=item["revision_of"], merged=merged,
@@ -375,6 +525,12 @@ def _move_file(vault: Vault, item: dict[str, Any], folder: Path) -> str:
         n += 1
     source.replace(target)
     item["file"] = target.relative_to(vault.root).as_posix()
+    clean = vault.root / item["clean_file"] if item.get("clean_file") else None
+    if clean is not None and clean.is_file():             # its cleaned copy goes with it
+        moved = target.with_name(f"{target.stem} (clean text).md")
+        if not moved.exists():
+            clean.replace(moved)
+            item["clean_file"] = moved.relative_to(vault.root).as_posix()
     return item["file"]
 
 
@@ -394,10 +550,14 @@ def _write_concept(vault: Vault, engine: Engine, item: dict[str, Any], concept_k
     if related:
         fm["related"] = list(related)
     usages = "\n".join(f"- {u['sentence']} ({u['source']})" for u in item.get("usages") or [])
+    extra = list(((item.get("imported") or {}).get("sections") or {}).items())
     body = notes.compose(safe, [
         ("Definition", definition),
         ("Usages", usages or "None recorded."),
-        ("Related", "\n".join(f"- [[{r}]]" for r in related) or "")])
+        ("Related", "\n".join(f"- [[{r}]]" for r in related) or ""), *extra])
+    if item.get("imported_from"):
+        fm.update(imported_from="V1", v1_path=item["imported_from"].get("path", ""),
+                  evidence=[e["id"] for e in item.get("evidence") or []])
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(notes.render(fm, body), encoding="utf-8")
     engine.index.upsert(path)
@@ -407,7 +567,8 @@ def _write_concept(vault: Vault, engine: Engine, item: dict[str, Any], concept_k
 def summary(item: dict[str, Any]) -> dict[str, Any]:
     """A row for a review list: enough to choose what to open."""
     row = {"id": item["id"], "kind": item["kind"], "status": item["status"],
-           "sensitivity": item.get("sensitivity", "normal")}
+           "sensitivity": item.get("sensitivity", "normal"),
+           **({"from_v1": item["imported_from"]["path"]} if item.get("imported_from") else {})}
     if item["kind"] == "source":
         row.update(name=item["name"], topic=item.get("topic", ""),
                    reviewed=bool(item.get("review")),
@@ -416,9 +577,19 @@ def summary(item: dict[str, Any]) -> dict[str, Any]:
         read = item.get("deep_read")
         if read:
             row["deep_read"] = f"{len(read.get('read') or {})}/{read.get('chunks', 0)}"
+        for key in ("ref", "note", "requested_by", "failure", "batch", "processing"):
+            if item.get(key):
+                row[key] = item[key]
     elif item["kind"] == "concept":
         row.update(name=item.get("name", ""), sources=len(item.get("sources") or []),
                    usages=len(item.get("usages") or []))
+    elif item["kind"] == "import":                 # V1's Applications and branch offerings
+        row.update(name=item.get("name", ""), target=item.get("target", ""))
+    elif item["kind"] == "topic":
+        row.update(name=item.get("name", ""), what_belongs=item.get("what_belongs", ""),
+                   examples=(item.get("members") or [])[:5],
+                   coverage=item.get("coverage", {}), aliases=item.get("aliases", []),
+                   **({"duplicate_of": item["duplicate_of"]} if item.get("duplicate_of") else {}))
     else:
         row.update(name=item.get("name", ""), source=item.get("source", ""),
                    locator=item.get("locator", ""),

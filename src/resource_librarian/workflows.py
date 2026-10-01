@@ -42,7 +42,7 @@ import yaml
 from .evidence import FRAMING_KEYS
 from .registry import REGISTRY, TIERS, Context, _json_type
 from .rules import Refusal
-from .vault import Vault, now_iso
+from .vault import Vault, jsonl_lines, now_iso
 
 REF = re.compile(r"^(inputs|steps|item)(\.[A-Za-z0-9_\-]+)*$")
 CONDITIONS = ("is", "in", "empty")
@@ -470,7 +470,8 @@ def unframed(item: Any) -> Any:
     or anything else that carries framing (`DATA_IS_UNFRAMED`)."""
     if isinstance(item, dict):
         return {k: unframed(v) for k, v in item.items()
-                if str(k).lower() not in FRAMING_KEYS and k not in ("found_for", "history")}
+                if str(k).lower() not in FRAMING_KEYS
+                and k not in ("found_for", "queued", "history")}
     if isinstance(item, list):
         return [unframed(v) for v in item]
     return item
@@ -533,7 +534,7 @@ class RunStore:
         path = self.path(run_id)
         if not path.exists():
             raise DefinitionError(f"no run {run_id!r}")
-        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
+        return [json.loads(line) for line in jsonl_lines(path.read_text(encoding="utf-8"))
                 if line.strip()]
 
     def status(self, run_id: str) -> dict[str, Any]:
@@ -542,7 +543,8 @@ class RunStore:
         last = events[-1]
         done = [e for e in events if e["type"] == "done"]
         return {"run": run_id, "name": start["name"], "kind": start["kind"],
-                "status": last["type"] if last["type"] in ("finished", "paused", "failed")
+                "status": last["type"] if last["type"] in ("finished", "paused", "failed",
+                                                           "cancelled")
                 else "running",
                 "steps_done": len(done), "last": last,
                 "routes": [e for e in events if e["type"] == "routed"]}

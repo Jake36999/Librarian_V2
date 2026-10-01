@@ -26,11 +26,11 @@ from .vault import Vault, now_iso
 # What the screen read (the abstract, the README) is evidence.
 KINDS = ("survey", "metadata", "readme", "abstract", "pdf_text", "page",
          "term_usage", "access_point", "external_link", "model_listing",
-         "code_structure")
+         "code_structure", "access_check", "execution", "v1_note")
 
 # Keys that would carry framing into the data layer.
 FRAMING_KEYS = frozenset({"project", "brief", "brief_id", "session", "session_id",
-                          "need", "disqualifiers", "purpose", "why", "topic"})
+                          "need", "disqualifiers", "purpose", "why", "topic", "framing"})
 
 
 @dataclass(frozen=True)

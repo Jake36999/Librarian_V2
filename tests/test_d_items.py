@@ -60,7 +60,7 @@ def test_notes_linked_in_a_message_join_the_pursuits_desk(served):
                "## Definition\nHow a database orders joins.\n")
     REGISTRY.call("create_project", {"name": "Host Watch", "stage": "active", "summary": "s"},
                   Context(tier="contribute", vault=app.vault))
-    client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "m1"}]})
+    client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "m1"}], "override": "test"})
     model.replies = [Reply(tool_calls=[ToolCall("1", "open_session", {
         "purpose": "explore", "question": "joins", "project": "Host Watch"})]),
         Reply(text="Looking.")]

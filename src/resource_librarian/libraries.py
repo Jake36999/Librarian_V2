@@ -55,9 +55,7 @@ def remember(vault: Vault) -> None:
     """
     with _lock:
         entries = [e for e in _read() if _key(e["path"]) != _key(vault.root)]
-        title = str(vault.config().get("vault", {}).get("name") or "").strip() \
-            or vault.root.name
-        entries.insert(0, {"path": str(vault.root), "name": title,
+        entries.insert(0, {"path": str(vault.root), "name": vault.title,
                            "last_opened": now_iso()})
         _write(entries)
 

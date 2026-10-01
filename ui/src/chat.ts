@@ -5,6 +5,7 @@
 import type { Api, Event } from "./api";
 import { clear, h } from "./dom";
 import { link, render } from "./markdown";
+import { reader, speakerIcon } from "./speech";
 
 export type Session = Record<string, any> | null;
 
@@ -16,6 +17,16 @@ export interface ChatHooks {
   rewind(index: number): void;
   branch(index: number): void;
   continueSession(): void;
+  /** Staging -> Offerings, opened at one staged draft. */
+  openOffering?(id: string): void;
+}
+
+/** The staged offering a promotion question is about, from the path the question
+ *  names (`promote_offering` asks "Promote the offering ... (path)?"). */
+function offeringAsked(q: Record<string, any>): string {
+  if (q.kind !== "confirm") return "";
+  const named = /staging\/offerings\/([^\s()]+)\.md/.exec(String(q.question ?? ""));
+  return named ? named[1] : "";
 }
 
 /** Small line icons, drawn rather than emoji, so they match the theme. */
@@ -98,6 +109,14 @@ export class Chat {
       class: "icon-btn", title: "Copy", "aria-label": "Copy message",
       onclick: () => { void navigator.clipboard.writeText(text).catch(() => undefined); },
     }, copyIcon())];
+    if (role === "assistant") {
+      // Text to speech, mode A: read this reply aloud (slot 5); again to stop.
+      const speak: HTMLElement = h("button", {
+        class: "icon-btn speak", title: "Read aloud", "aria-label": "Read aloud",
+        onclick: () => void reader.toggle({ text }, speak),
+      }, speakerIcon());
+      actions.push(speak);
+    }
     if (opts.canRetry) {
       actions.push(h("button", {
         class: "icon-btn", title: "Retry: send this again", "aria-label": "Retry",
@@ -184,6 +203,12 @@ export class Chat {
         if (result.error) line.classList.add("refused");
         if (!line.isConnected) this.append(line);
         if (result.session) this.hooks.onSession(result.session);
+        // G3: a review's challenge that carries a failing input - only a person runs it.
+        const runnable = (result.runnable ?? []) as { run_id: string; claim: string; input: string }[];
+        if (runnable.length) this.append(h("div", { class: "note reviewed runnable" },
+          "A review challenged these claims with a call that would show them wrong. Nothing has run.",
+          h("ul", {}, runnable.map((r) => h("li", {}, `“${r.claim}” — `, h("code", {}, r.input), " ",
+            this.runButton(r.run_id))))));
         break;
       }
       case "permission_request":
@@ -202,19 +227,27 @@ export class Chat {
         // §4 G3: the verdict on the last reply's note-backed claims, beside it, not in it.
         const challenged = (event.challenged ?? []) as { claim: string; note: string; counter_quote: string; reason: string }[];
         const held = Number(event.held ?? 0), unchecked = Number(event.unchecked ?? 0);
+        const silent = (event.not_extracted ?? []) as string[];
+        const over = Number(event.over_limit ?? 0);
         if (!held && !challenged.length && !unchecked && !event.status) break;
         this.append(h("div", { class: "note reviewed" },
           event.status ? `The review could not run (${event.status}).`
             : `Checked against the notes it cites: ${held} held${unchecked ? `, ${unchecked} unchecked` : ""}${challenged.length ? `, ${challenged.length} challenged` : ""}.`,
-          challenged.length ? h("ul", {}, challenged.map((c) => h("li", {}, `⚑ “${c.claim}” — `,
+          challenged.length ? h("ul", {}, challenged.map((c: any) => h("li", {}, `⚑ “${c.claim}” — `,
             h("span", { class: "dim" }, c.counter_quote ? `${c.reason} [[${c.note}]] says: “${c.counter_quote}”`
-              : `not found in [[${c.note}]]. ${c.reason}`)))) : null,
+              : `not found in [[${c.note}]]. ${c.reason}`),
+            c.run_id ? h("div", {}, "Failing input: ", h("code", {}, String(c.input ?? "")), " ",
+              this.runButton(String(c.run_id))) : null))) : null,
+          silent.length ? h("div", { class: "dim small" }, `Nothing it says about ${silent.map((n) => `[[${n}]]`).join(", ")} was picked out to check.`) : null,
+          over ? h("div", { class: "dim small" }, `${over} more claim${over === 1 ? " was" : "s were"} past the review limit (the effort setting) and not checked.`) : null,
           challenged.length ? h("div", { class: "dim small" }, "The librarian sees these challenges in its next reply.") : null));
         break;
       }
       case "turn_done":
         this.setWorking(false);
-        if (event.stopped === "max_steps") {
+        if (event.stopped === "cancelled") {
+          this.append(h("div", { class: "tool" }, "Reply stopped."));
+        } else if (event.stopped === "max_steps") {
           this.append(h("div", { class: "error" }, "Stopped after the step limit for one turn. ",
             "Say “continue” to carry on, or ask for a summary of where it got to."));
         } else if (event.stopped === "provider_error") {
@@ -284,6 +317,36 @@ export class Chat {
     }
   }
 
+  /** The coverage ledger (R13): each asked topic, its brief and verdict, and what was
+   *  kept for it - context finds counted apart, since they do not answer it. */
+  private coverage(session: Session): HTMLElement | null {
+    const ledger = ((session?.completion?.ledger ?? session?.coverage) ?? []) as any[];
+    if (!ledger.length) return null;
+    const mark: Record<string, string> = { covered: "✓ covered", partial: "◐ partial", gap: "✗ gap",
+      open: "○ open", "no brief": "○ no brief yet" };
+    return h("div", { class: "coverage" }, h("h3", {}, "Coverage"),
+      h("ul", {}, ledger.map((r) => h("li", {}, h("strong", {}, String(r.topic)),
+        ` · ${r.brief || "no brief"} · ${mark[r.verdict] ?? r.verdict}`,
+        (r.kept ?? []).length ? h("span", { class: "dim" }, ` · ${r.kept.length} kept`) : null,
+        (r.context ?? []).length ? h("span", { class: "dim" }, ` · ${r.context.length} context only`) : null))));
+  }
+
+  /** R11: a spent budget with the phase unfinished is the person's to extend. */
+  private extendBudget(session: Session): HTMLElement | null {
+    if (!session?.budget_spent || session.status !== "open") return null;
+    return h("button", { class: "ghost", title: "Give this phase ten more calls",
+      onclick: async (e: globalThis.Event) => {
+        (e.currentTarget as HTMLButtonElement).disabled = true;
+        try {
+          const out = await this.api.tool("extend_budget", { add: 10 }, String(session.session ?? ""));
+          if (out.error) throw new Error(String(out.detail ?? out.error));
+          if (out.session) this.hooks.onSession(out.session as Session);
+        } catch (err) {
+          this.append(h("div", { class: "error" }, `Could not extend the budget: ${(err as Error).message}`));
+        }
+      } }, "Extend budget (+10 calls)");
+  }
+
   private sessionOutcome(session: Session): void {
     if (!session) return;
     this.outcomeCard?.remove();
@@ -291,7 +354,8 @@ export class Chat {
       this.outcomeCard = h("div", { class: "session-outcome closed", role: "status" },
         h("strong", {}, "Thread closed"),
         session.summary ? h("div", {}, String(session.summary)) : null,
-        session.gaps ? h("div", { class: "dim" }, `Gaps: ${session.gaps}`) : null);
+        session.gaps ? h("div", { class: "dim" }, `Gaps: ${session.gaps}`) : null,
+        this.coverage(session));
       this.append(this.outcomeCard);
       return;
     }
@@ -301,14 +365,42 @@ export class Chat {
       h("strong", {}, `${parked ? "Thread parked" : "Thread still open"} · ${String(session.phase ?? "work in progress")}`),
       openItems.length ? h("ul", {}, openItems.slice(0, 5).map((item) => h("li", {}, item))) : null,
       session.next ? h("p", {}, String(session.next)) : null,
+      this.coverage(session),
+      this.extendBudget(session),
       parked ? h("p", { class: "dim" }, "Reopen this thread from Sessions to continue.")
         : h("button", { class: "ghost", onclick: () => this.hooks.continueSession() }, "Continue from next step"));
     this.append(this.outcomeCard);
   }
 
+  /** G3: a person's "Run it" - one function call in a Docker sandbox with no network. The
+   *  verdict (confirmed / not confirmed / could not run) replaces the button. */
+  private runButton(runId: string): HTMLElement {
+    const out = h("span", { class: "run-claim" });
+    const button = h("button", { class: "ghost", title: "Runs this one call in a Docker container with no network and the repository read-only. Needs Docker Desktop running.",
+      onclick: async () => {
+        (button as HTMLButtonElement).disabled = true;
+        clear(out, h("span", { class: "dim" }, "running in the sandbox…"));
+        try {
+          const r = await this.api.post("/api/claims/run", { id: runId });
+          if (r.error) clear(out, h("span", { class: "error" }, String(r.detail ?? r.error)));
+          else clear(out, h("strong", {}, String(r.verdict).replace(/_/g, " ")), ` — ${r.detail} (${r.version})`);
+        } catch (e) {
+          clear(out, h("span", { class: "error" }, (e as Error).message));
+        }
+      } }, "Run it");
+    clear(out, button);
+    return out;
+  }
+
   private permission(event: Event): void {
     const args = (event.arguments ?? {}) as Record<string, string>;
-    const detail = Object.entries(args).slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(" · ");
+    const preview = (event.preview ?? null) as Record<string, string> | null;
+    // A previewed change (project_edit) shows its diff, not its raw arguments.
+    const detail = preview ? `${preview.path ?? ""}` :
+      Object.entries(args).slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(" · ");
+    const diff = preview?.diff ? h("pre", { class: "diff" }, String(preview.diff).split("\n").map((line) =>
+      h("span", { class: line.startsWith("+") && !line.startsWith("+++") ? "add"
+        : line.startsWith("-") && !line.startsWith("---") ? "del" : "" }, line + "\n"))) : null;
     const answer = (value: string) => async () => {
       try {
         await this.api.post("/api/permission", { id: event.id, answer: value });
@@ -320,9 +412,11 @@ export class Chat {
       h("strong", {}, "Permission needed"), " · ", h("code", {}, String(event.tool)),
       ` wants to ${event.effect === "read" ? "run" : "write"}`,
       detail ? h("div", { class: "dim" }, detail) : null,
+      diff,
+      event.always_ask ? h("div", { class: "dim" }, "Asked before every change: allowing it applies this one only.") : null,
       h("div", { class: "row" },
-        h("button", { onclick: answer("allow_once") }, "Allow once"),
-        h("button", { onclick: answer("allow_session") }, "Allow for this session"),
+        h("button", { onclick: answer("allow_once") }, event.always_ask ? "Apply this change" : "Allow once"),
+        event.always_ask ? null : h("button", { onclick: answer("allow_session") }, "Allow for this session"),
         h("button", { onclick: answer("deny") }, "Deny")));
     this.cards.set(String(event.id), card);
     this.append(card);
@@ -366,6 +460,10 @@ export class Chat {
       });
       row.append(input, h("button", { onclick: () => void send(input.value) }, "Answer"));
     }
+    const offering = offeringAsked(event);
+    if (offering && this.hooks.openOffering) {
+      row.append(h("button", { class: "ghost", onclick: () => this.hooks.openOffering!(offering) }, "Read the draft"));
+    }
     const card = h("div", { class: "perm", role: "group", "aria-label": "Question" },
       h("strong", {}, "The librarian is asking"), " · ",
       h("span", { class: "dim" }, String(event.kind ?? "clarify")),
@@ -397,6 +495,7 @@ export class Chat {
         `${i < current ? "☑" : i === current ? "◐" : "○"} ${PHASE_LABEL[p] ?? p}`,
         i === current && session.budget_left !== undefined
           ? h("span", { class: "dim" }, ` · ${session.budget_left} calls left`) : null))),
+      this.extendBudget(session),
       questions.length ? h("h3", {}, "Waiting for you") : null,
       questions.map((q: any) => this.question(session, q)),
       h("h3", {}, "Next"),
@@ -404,6 +503,7 @@ export class Chat {
       (session.open_items ?? []).length ? h("h3", {}, "Open") : null,
       (session.open_items ?? []).length
         ? h("ul", {}, (session.open_items as string[]).map((t) => h("li", {}, t))) : null,
+      this.coverage(session),
       Object.keys(session.briefs ?? {}).length ? h("h3", {}, "Briefs") : null,
       Object.entries(session.briefs ?? {}).map(([id, b]: [string, any]) =>
         h("p", {}, h("strong", {}, id), ` ${b.need ?? ""}`, b.status === "closed" ? h("span", { class: "dim" }, " · closed") : null)),
@@ -434,9 +534,12 @@ export class Chat {
         box.append(h("div", { class: "error" }, (e as Error).message));
       }
     };
+    const offering = offeringAsked(q);
     if ((q.options ?? []).length) {
       box.append(h("div", { class: "row" }, (q.options as string[]).map((o) =>
-        h("button", { onclick: () => send(o) }, o))));
+        h("button", { onclick: () => send(o) }, o)),
+        offering && this.hooks.openOffering
+          ? h("button", { class: "ghost", onclick: () => this.hooks.openOffering!(offering) }, "Read the draft") : null));
     } else {
       const input = h("input", { type: "text", "aria-label": q.question, placeholder: "Your answer" }) as HTMLInputElement;
       box.append(h("div", { class: "row" }, input,

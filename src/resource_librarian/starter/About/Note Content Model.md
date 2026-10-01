@@ -32,6 +32,7 @@ project hopes it does. Framing belongs in Projects, Offerings and Applications.
 | project | Projects | project |
 | offering | Offerings | offering |
 | application | Applications | application |
+| note | Notes | note |
 
 ## Source Kinds
 
@@ -65,6 +66,8 @@ project hopes it does. Framing belongs in Projects, Offerings and Applications.
 | session | optional |
 | catalogued_at | optional |
 | file | optional |
+| coverage | optional |
+| not_examined | optional |
 
 ## Frontmatter — source/repository
 
@@ -168,6 +171,7 @@ end date.
 | stage | required |
 | outcome | required |
 | sources_used | required |
+| unresolved_sources | optional |
 | attested_by | optional |
 | session | optional |
 | date_range | optional |
@@ -266,6 +270,9 @@ not belong here.
 | 2 | What Was Found And Taken | required |
 | 3 | What It Replaced | required |
 | 4 | What The Catalogue Should Learn | required |
+| 5 | Not Yet In The Library | optional |
+| 6 | Project Files | optional |
+| 7 | Changes | optional |
 
 ## Claim Sections And Caveat Sections
 

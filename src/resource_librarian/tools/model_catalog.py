@@ -17,7 +17,7 @@ def model_catalog_status(ctx: Context) -> dict:
     return {"catalogues": model_catalog.status(ctx.vault, engine_for(ctx, refresh=False))}
 
 
-@tool("model_catalog_adopt", tier="curate", effect="vault_write",
+@tool("model_catalog_adopt", tier="curate", effect="vault_write", scope="library",
       returns=("provider", "written", "already_held", "failed"),
       card=Card("Adopt a standard model catalogue: its models join this vault as accepted "
                 "sources, already-reviewed evidence and all",

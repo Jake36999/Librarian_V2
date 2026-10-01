@@ -29,7 +29,8 @@ GOOD_BODY = notes.compose("Example", [("Bottom Line", "b"), ("What It Solves", "
 def test_starter_model_parses(vault):
     model = schema.load(vault.root)
     assert model.found and not model.error
-    assert set(model.shapes) == {"source", "concept", "project", "offering", "application"}
+    assert set(model.shapes) == {"source", "concept", "project", "offering", "application",
+                                 "note"}                          # P5: findable by `made`
     assert "repository" in model.kinds and "model" in model.kinds
 
 

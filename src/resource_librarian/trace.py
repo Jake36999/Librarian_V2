@@ -88,15 +88,18 @@ def record(vault: Vault, path: Path, tool: str) -> dict[str, Any]:
     store = EvidenceStore(vault)
     ids = []
     refs = []
+    from .intake import DOI
     for url in cited_urls(text):
         arxiv = ARXIV.search(url)
-        payload = {"url": url, "cited_by": tool,
-                   "identifier_kind": "arxiv" if arxiv else "",
-                   "identifier": arxiv.group(1) if arxiv else ""}
+        doi = None if arxiv else DOI.search(url)        # doi.org/..., publisher DOI links
+        kind = "arxiv" if arxiv else "doi" if doi else ""
+        identifier = arxiv.group(1) if arxiv else doi.group(1).rstrip(".") if doi else ""
+        payload = {"url": url, "cited_by": tool, "identifier_kind": kind,
+                   "identifier": identifier}
         ids.append(store.put("external_link", url, payload).id)
-        refs.append({"url": url, "identifier_kind": payload["identifier_kind"],
-                     "identifier": payload["identifier"],
-                     "ref": f"arXiv:{payload['identifier']}" if arxiv else url})
+        refs.append({"url": url, "identifier_kind": kind, "identifier": identifier,
+                     "ref": f"arXiv:{identifier}" if arxiv else f"doi:{identifier}" if doi
+                     else url})
     traces = vault.work("eval") / "traces"
     traces.mkdir(parents=True, exist_ok=True)
     name = re.sub(r"[^a-z0-9]+", "-", path.stem.lower()).strip("-")

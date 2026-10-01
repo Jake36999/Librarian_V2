@@ -79,6 +79,9 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("app", help="serve the interface and its local API on 127.0.0.1")
     p.add_argument("--port", type=int, default=8323, help="0 picks a free port")
     p.add_argument("--open", action="store_true", help="open it in the browser")
+    p.add_argument("--pick", action="store_true",
+                   help="start at the library picker, whatever library is near (the "
+                        "desktop shortcut's way in)")
 
     _add_tool_parsers(sub)
     return parser
@@ -105,6 +108,9 @@ def main(argv: list[str] | None = None) -> int:
             return serve(args.vault, args.mcp_tier)
         if args.command == "app":
             from .app import serve as serve_app
+            if args.pick:
+                from .library_picker import serve_picker
+                return serve_picker(args.port, args.open)
             return serve_app(args.vault, args.port, open_browser=args.open)
     except Refusal as refusal:
         _emit({"error": "refused", **refusal.to_dict()})

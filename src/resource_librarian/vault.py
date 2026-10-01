@@ -72,6 +72,12 @@ DEFAULT_CONFIG: dict[str, dict[str, Any]] = {
     # The clerk channel: `provider = "deepinfra"` (or "openai", "lmstudio") is
     # enough; keys are read from the environment, never from this file.
     "clerk": {"provider": ""},
+    # Service models (Requirements Addendum R17): jobs with their own request format,
+    # chosen in Settings -> Connections and kept per library. OCR (slot 4) reads PDF pages
+    # with no text layer - assigned, until a person chooses, the vision-capable model the
+    # owner already runs as tier 3. An empty value means none: never a silent fallback.
+    "services": {"ocr": "deepinfra:Qwen/Qwen3.5-397B-A17B", "ocr_format": "vision_chat",
+                 "tts": "deepinfra:hexgrad/Kokoro-82M"},
     "scribe": {"provider": ""},
 }
 
@@ -154,6 +160,17 @@ class Vault:
     def exists(self) -> bool:
         return self.config_path.is_file()
 
+    @property
+    def title(self) -> str:
+        """The library's own name (`[vault] name`), else its folder's. A library made by
+        `new-vault.ps1` always lives in a folder named `.librarian-app`, so the folder's
+        name alone cannot tell two of them apart."""
+        try:
+            name = str(self.config().get("vault", {}).get("name") or "").strip()
+        except (OSError, ValueError):
+            name = ""
+        return name or self.root.name
+
     @classmethod
     def find(cls, start: Path | str | None = None) -> "Vault":
         """The vault containing `start` (default: the current directory)."""
@@ -215,6 +232,15 @@ def render_config(config: dict[str, dict[str, Any]]) -> str:
         lines += [f"{k} = {value(v)}" for k, v in values.items()]
         lines.append("")
     return "\n".join(lines)
+
+
+def jsonl_lines(text: str) -> list[str]:
+    """The records of a JSON Lines file: only a newline ends one. `json.dumps(...,
+    ensure_ascii=False)` leaves U+2028, U+2029, U+0085 and the control separators inside
+    a string as they are, and `str.splitlines()` splits on all of them - so it cut one event
+    in two (M0, 2026-10-01: a web page's line separator in a research round made the session
+    unloadable)."""
+    return [line[:-1] if line.endswith("\r") else line for line in text.split("\n")]
 
 
 def now_iso() -> str:

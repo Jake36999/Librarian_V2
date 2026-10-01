@@ -92,7 +92,29 @@ def _body(draft: Draft, model: schema.ContentModel) -> str:
     sections[EVIDENCE_HEADING] = "\n".join(lines) or "No fetched evidence is recorded."
     ordered = [(h, sections[h]) for h in order if sections.get(h)]
     ordered += [(h, t) for h, t in sections.items() if h not in order and t]
+    ordered = [(h, f"*Origin: {SECTION_ORIGIN[h]}.*\n\n{t}" if h in SECTION_ORIGIN
+                and not t.lstrip().startswith("*Origin:") else t) for h, t in ordered]
     return notes.compose(draft.title or draft.name, ordered)
+
+
+# Research Pipeline §3.3 / Addendum R16: the note labels where each kind of claim comes from.
+# Project application never appears in a source note (an Offering or Application holds it).
+SECTION_ORIGIN = {
+    "Claims": "source-stated - what the text itself says, part by part",
+    "Reading Notes": "source-stated - what the text says, from reading it in full",
+    "Specs": "source-stated - the provider's own listing, not a measurement",
+    "Architecture & Mechanics": "source-stated - how the source describes its own workings",
+    "Evidence & Limits": "source-stated - the limits the source itself states",
+    "What Is Inside": "structurally observed - read from the source's files or pages",
+    "Components": "structurally observed - one record per component, with its locator",
+    "Access Points": "structurally observed - declared in the source",
+    "How It Fits Together": "derived relation - from the components' static structure, "
+                            "never observed running",
+    "Chapters": "structurally observed divisions, with the claims read from each",
+    "How The Chapters Relate": "derived relation - a model's reading of fully read chapters",
+    "Integration & Use Cases": "potential use - what the source could serve, not a recorded use",
+    "Transferable Capability": "potential use - stated apart from the source's own domain",
+}
 
 
 def _concepts(engine: Engine, text: str) -> list[str]:

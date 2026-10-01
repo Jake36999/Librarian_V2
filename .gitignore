@@ -45,3 +45,6 @@ desktop.ini
 # Working state
 scratch/
 *.tmp
+
+# The sync from the development repo (its bookkeeping, not the system)
+.sync-manifest.json

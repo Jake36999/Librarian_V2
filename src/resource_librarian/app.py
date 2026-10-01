@@ -28,6 +28,7 @@ sequence number, so a page that reconnects misses nothing recent.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import secrets
@@ -53,7 +54,7 @@ from .rules import Refusal
 from .staging import StagingStore
 from .session import SessionStore
 from .tools.sessions import Waiters
-from .vault import Vault
+from .vault import DEFAULT_CONFIG, Vault, now_iso
 
 LOOPBACK = {"127.0.0.1", "localhost", "::1", "[::1]"}
 HOST_ORIGINS = {"app://obsidian.md"}
@@ -63,8 +64,9 @@ QUEUED = ("clear-enrichment-backlog", "deep-read-staged", "review-conversation",
           "weekly-review")
 PROVIDER_LABELS = {"deepinfra": "DeepInfra", "openai": "OpenAI", "anthropic": "Anthropic",
                    "local": "Local server"}
+SCRIPT_SUFFIXES = {".py": "python", ".sh": "shell"}      # what the pane may run (sandbox.py)
 DEFAULTS = {"working_context": "", "reply_length": "long", "stance": "answer", "tiers": [],
-            "mode": "ask", "base_urls": {}}
+            "mode": "ask", "base_urls": {}, "effort": 4}
 
 
 class ApiError(Exception):
@@ -155,6 +157,15 @@ class Action:
                    if self.status == "paused" else {})}
 
 
+def ELIGIBLE_LEADS() -> list[dict[str, Any]]:            # noqa: N802 - a read-only table
+    """The leads M0 found to complete research tasks (standard/eligible_leads.json)."""
+    path = Path(__file__).parent / "standard" / "eligible_leads.json"
+    try:
+        return list(json.loads(path.read_text(encoding="utf-8")).get("eligible") or [])
+    except (OSError, json.JSONDecodeError):
+        return []
+
+
 # --------------------------------------------------------------------- app
 
 class App:
@@ -177,7 +188,9 @@ class App:
         self._provider_for = provider_for or self._configured_provider
         self._lock = threading.Lock()
         self.busy = False
+        self._turn_cancel: threading.Event | None = None
         self.loop: Loop | None = None
+        self._tts_plans: dict[str, tuple[str, list[str]]] = {}   # slot 5's readings
         self.actions: dict[str, Action] = {}
         if mcp is not None:
             # Switching library: outside servers are configured per person, not
@@ -239,14 +252,22 @@ class App:
         return None
 
     def _extras(self) -> dict[str, Any]:
+        from . import effort
         extras: dict[str, Any] = {"broker": self.broker, "waiters": self.waiters,
-                                  "mcp": self.mcp}
+                                  "mcp": self.mcp,
+                                  # the person's effort setting, and the tiers a delegate runs on
+                                  "effort": effort.profile(self.settings.data.get("effort")),
+                                  "agent_provider": self.tier}
         clerk = self.tier(3)
         if clerk is not None:
             extras["clerk_fallback"] = ProviderEndpoint(clerk)
         scribe = self.tier(2)
         if scribe is not None:
             extras["scribe_fallback"] = ProviderEndpoint(scribe)
+        lead = self.lead_status()
+        if lead["status"] != "none":           # carried into every call's trace (R10)
+            extras["lead_status"] = lead["status"] + (f": {lead.get('reason', '')}"
+                                                      if lead["status"] == "override" else "")
         return extras
 
     def _loop(self) -> Loop:
@@ -264,7 +285,29 @@ class App:
             self.loop.reply_length = data["reply_length"]
             self.loop.stance = data["stance"]
             self.loop.ctx.extras.update(self._extras())
+        level = self.loop.ctx.extras["effort"]
+        self.loop.max_steps, self.loop.turn_seconds = level["turn_steps"], level["turn_seconds"]
         return self.loop
+
+    def set_effort(self, level: Any) -> dict[str, Any]:
+        """The effort slider: kept with the app's settings, applied from the next step, and
+        written into an open session so its budgets follow (and the trace shows why)."""
+        from . import effort
+        from .session import SessionStore
+        chosen = effort.profile(level)
+        self.settings.update(effort=chosen["level"])
+        if self.loop is not None:
+            self.loop.ctx.extras["effort"] = chosen
+            self.loop.max_steps, self.loop.turn_seconds = (chosen["turn_steps"],
+                                                           chosen["turn_seconds"])
+            if self.loop.ctx.session:
+                try:
+                    SessionStore(self.vault).append(self.loop.ctx.session, {
+                        "type": "effort", "level": chosen["level"],
+                        "budget_scale": chosen["budget_scale"]})
+                except Exception:                           # noqa: BLE001
+                    pass                                    # a closed or missing session
+        return chosen
 
     # -- chat -------------------------------------------------------------
     def chat(self, text: str) -> dict[str, Any]:
@@ -276,22 +319,33 @@ class App:
                 raise ApiError(409, "the librarian is still answering; wait, or cancel")
             loop = self._loop()
             self.busy = True
+            cancel = threading.Event()
+            self._turn_cancel = cancel
 
         def turn() -> None:
             try:
-                result = loop.send(text)
+                result = loop.send(text, cancel=cancel)
                 self._touch_desk(text)
                 event = {"type": "turn_done", **result.to_dict(), "session": self.session_view()}
             except Exception as exc:                        # noqa: BLE001
                 event = {"type": "error", "error": f"{type(exc).__name__}: {exc}"}
             # Free before announcing: a person who sends the moment the reply
             # lands must not be told the librarian is still answering.
-            self.busy = False
+            with self._lock:
+                self.busy = False
+                self._turn_cancel = None
             self.hub.publish(event)
             if event["type"] == "turn_done" and event.get("reply"):
                 self._review_reply(loop, str(event["reply"]))
         threading.Thread(target=turn, daemon=True, name="librarian-turn").start()
         return {"accepted": True}
+
+    def cancel_turn(self) -> dict[str, Any]:
+        with self._lock:
+            if not self.busy or self._turn_cancel is None:
+                return {"cancelling": False}
+            self._turn_cancel.set()
+        return {"cancelling": True}
 
     WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
 
@@ -299,15 +353,17 @@ class App:
         """§4 G3 on chat replies (`reply_review`): after the reply, never
         before it; the verdict is its own event, and a challenge waits for the
         lead model's next prompt."""
-        from . import reply_review
-        if not reply_review.enabled(self.vault):
+        from . import effort, reply_review
+        level = effort.profile(self.settings.data.get("effort"))
+        if not (reply_review.enabled(self.vault) or level["review_replies"]):
             return
         from .tools.staging import clerk_endpoint
         ctx = Context(tier="contribute", vault=self.vault, extras=self._extras())
 
         def run() -> None:
             try:
-                out = reply_review.review_reply(self.vault, reply, clerk_endpoint(ctx))
+                out = reply_review.review_reply(self.vault, reply, clerk_endpoint(ctx),
+                                                max_claims=max(1, level["review_claims"]))
             except Exception as exc:                        # noqa: BLE001
                 out = {"status": f"error: {type(exc).__name__}", "held": 0, "unchecked": 0,
                        "challenged": []}
@@ -387,6 +443,17 @@ class App:
             # in-memory context still has to forget the same messages, or the
             # very next turn would answer as if nothing had been discarded.
             self.loop.rewind_to(result["rewound_to"])
+        return result
+
+    def decide_offering(self, offering: str, decision: str) -> dict[str, Any]:
+        from .tools.sessions import decide_offering
+        ctx = Context(tier="curate", vault=self.vault,
+                      extras={k: v for k, v in self._extras().items() if k != "broker"})
+        try:
+            result = decide_offering(ctx, offering, decision)
+        except TypeError as exc:
+            return {"error": "invalid_arguments", "detail": str(exc)}
+        self.hub.publish({"type": "person_acted", "tool": "promote_offering"})
         return result
 
     # -- queued actions -----------------------------------------------------
@@ -514,7 +581,8 @@ class App:
 
     # -- settings pages ------------------------------------------------------
     def save_key(self, provider: str, key: str, overwrite: bool = False) -> dict[str, Any]:
-        if provider not in PRESETS:
+        from .keys import SEARCH_KEYS
+        if provider not in PRESETS and provider not in SEARCH_KEYS:
             raise ApiError(400, f"unknown provider {provider!r}")
         before = self.keys.status(provider)
         if before.get("saved") and not overwrite:
@@ -551,6 +619,14 @@ class App:
         return out
 
     def check(self, provider: str) -> dict[str, Any]:
+        from .keys import SEARCH_KEYS
+        if provider in SEARCH_KEYS:
+            # Not called out to: a test search would spend one of the key's searches.
+            from . import websearch
+            used = websearch.backend(self.vault)
+            return {"ok": True, "status": f"Saved. Web search now uses {used.capitalize()}"
+                                          + ("" if used == provider else
+                                             " (Brave is used first when both are set)")}
         try:
             made = self._provider_for({"provider": provider})
         except ProviderError as exc:
@@ -622,7 +698,7 @@ class App:
             out.append(entry)
         return {"provider": provider, "status": "ready", "models": out}
 
-    def set_tiers(self, tiers: list[dict[str, Any]]) -> dict[str, Any]:
+    def set_tiers(self, tiers: list[dict[str, Any]], override: str = "") -> dict[str, Any]:
         if not isinstance(tiers, list) or len(tiers) > 3:
             raise ApiError(400, "tiers is a list of up to three {provider, model}")
         clean = []
@@ -630,9 +706,34 @@ class App:
             if not isinstance(t, dict) or t.get("provider") not in PRESETS or not t.get("model"):
                 raise ApiError(400, "each tier needs a known provider and a model id")
             clean.append({"provider": t["provider"], "model": str(t["model"])})
+        # Requirements Addendum R10: benchmark tiers screen; completing tasks (M0) qualifies.
+        # A lead that has not is taken only on a person's recorded override.
+        lead = self.lead_status(clean)
+        if lead["status"] == "ineligible":
+            if not override.strip():
+                raise ApiError(409, f"{lead['model']} has not completed the M0 completion suite "
+                                    f"as a lead, so it is not known to finish research tasks. "
+                                    f"Use it anyway only as a recorded choice.",
+                               needs_override=True, lead=lead["model"])
+            overrides = dict(self.settings.data.get("lead_overrides") or {})
+            overrides[lead["model"]] = {"reason": override.strip()[:300], "at": now_iso()}
+            self.settings.update(lead_overrides=overrides)
         self.settings.update(tiers=clean)
         self.hub.publish({"type": "tiers_changed", "tiers": clean})
-        return {"tiers": clean}
+        return {"tiers": clean, "lead": self.lead_status(clean)}
+
+    def lead_status(self, tiers: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+        tiers = self.settings.data.get("tiers") or [] if tiers is None else tiers
+        if not tiers:
+            return {"status": "none"}
+        key = f"{tiers[0]['provider']}/{tiers[0]['model']}"
+        listed = {f"{e.get('provider')}/{e.get('model')}": e for e in ELIGIBLE_LEADS()}
+        if key in listed:
+            return {"status": "eligible", "model": key, "result": listed[key].get("result", "")}
+        override = (self.settings.data.get("lead_overrides") or {}).get(key)
+        if override:
+            return {"status": "override", "model": key, **override}
+        return {"status": "ineligible", "model": key}
 
     def set_context(self, working_context: str | None = None,
                     reply_length: str | None = None, stance: str | None = None
@@ -665,10 +766,246 @@ class App:
                 "search": config.get("search", {}),
                 "doctor": [c.to_dict() for c in doctor.checks(self.vault, self.mcp)]}
 
-    def set_library(self, promotion_mode: str) -> dict[str, Any]:
-        if promotion_mode not in ("person", "agent"):
-            raise ApiError(400, "promotion mode is 'person' or 'agent'")
-        self.vault.set_setting("promotion", "mode", promotion_mode)
+    # -- service models (Requirements Addendum R17): slots 4-6, kept per library ----
+    SERVICE_SLOTS = (("ocr", 4, "OCR", "reads PDF pages that have no text layer"),
+                     ("tts", 5, "Text to speech", "reads a note or a reply aloud"),
+                     ("embeddings", 6, "Embeddings", "the vectors search uses"))
+
+    def services(self) -> dict[str, Any]:
+        from . import ocr
+        import tomllib
+        own: dict[str, Any] = {}
+        if self.vault.config_path.is_file():
+            with self.vault.config_path.open("rb") as handle:
+                own = tomllib.load(handle).get("services") or {}
+        chosen = ocr.choice(self.vault)
+        slots = []
+        for name, number, label, job in self.SERVICE_SLOTS:
+            row: dict[str, Any] = {"slot": name, "number": number, "label": label, "job": job}
+            if name == "ocr":
+                # `default`: still the value a new library starts with (init writes it)
+                row.update(chosen or {"provider": "", "model": ""}, built=True,
+                           default=own.get("ocr", DEFAULT_CONFIG["services"]["ocr"]) ==
+                           DEFAULT_CONFIG["services"]["ocr"])
+            elif name == "embeddings":
+                row.update(self._embeddings_status(), built=True)
+            elif name == "tts":
+                from . import tts
+                row.update(tts.choice(self.vault) or {"provider": "", "model": ""}, built=True,
+                           default=own.get("tts", tts.DEFAULT) == tts.DEFAULT,
+                           spent_usd=round(tts.spent(), 4), cap_usd=tts.CAP_USD)
+            else:
+                row.update(provider="", model="", built=False)       # planned (P4b)
+            slots.append(row)
+        return {"slots": slots}
+
+    def _embeddings_status(self) -> dict[str, Any]:
+        """Slot 6: the model, how much of the library it has embedded, what the rest would
+        take, which intents use it, and the last lexical-vs-hybrid measurement."""
+        from . import embed
+        from .index import Index
+        spec = embed.spec_for(self.vault)
+        out: dict[str, Any] = {"provider": "", "model": "", "spec": spec,
+                               "vector_intents": self.vault.setting("search", "vector_intents")}
+        if not spec:
+            return out
+        kind, _, rest = spec.partition(":")
+        provider, model = (rest.split(":", 1) if kind == "api" else (kind, rest))
+        out.update(provider=provider, model=model,
+                   legacy=not self.vault.setting("services", "embeddings"))
+        name = f"hash:{int(rest or 256)}" if kind == "hash" else spec   # as embed stores it
+        index = Index(self.vault)
+        index.refresh()                                   # count what is there now
+        price = None
+        if kind == "api":
+            profile = self._model_sources().get((provider, model.lower())) or {}
+            price = profile.get("price_input_per_1m")
+        out["chunks"] = int(index.conn.execute(
+            "SELECT COUNT(DISTINCT hash) FROM chunk WHERE role != 'document'").fetchone()[0])
+        out["embedded"] = int(index.conn.execute(
+            "SELECT COUNT(*) FROM embedding WHERE model = ?", (name,)).fetchone()[0])
+        out["estimate"] = embed.estimate(index, name, price)
+        out["hosted"] = kind == "api"
+        compared = self.vault.work("eval") / "vectors.json"
+        if compared.is_file():
+            try:
+                out["comparison"] = json.loads(compared.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                pass
+        return out
+
+    def set_service(self, slot: str, provider: str, model: str) -> dict[str, Any]:
+        from . import embed
+        if slot == "embeddings":
+            local = provider in embed.LOCAL_KINDS
+            if model and not local and (provider not in PRESETS or
+                                        PRESETS[provider].get("protocol") != "openai"):
+                raise ApiError(400, "embeddings come from a local encoder (model2vec, "
+                                    "fastembed) or an OpenAI-compatible /embeddings provider")
+            # a new model starts with no intents using it: a person turns them on after
+            # measuring (SM-8), and nothing is embedded until they start it (R17)
+            self.vault.set_setting("services", "embeddings", f"{provider}:{model}" if model else "")
+            self.vault.set_setting("search", "vector_intents", [])
+            return self.services()
+        if slot == "tts":
+            from . import tts
+            if model and (provider != "deepinfra" or model not in tts.PRICES):
+                raise ApiError(400, f"text to speech runs on DeepInfra with a model whose price "
+                                    f"is known, so its ${tts.CAP_USD:.2f} cap holds: "
+                                    f"{', '.join(sorted(tts.PRICES))}")
+            self.vault.set_setting("services", "tts", f"{provider}:{model}" if model else "")
+            return self.services()
+        if slot != "ocr":
+            raise ApiError(400, f"slot {slot!r} is not built yet")
+        if model and (provider not in PRESETS or PRESETS[provider].get("protocol") != "openai"):
+            raise ApiError(400, "OCR needs an OpenAI-compatible provider (a vision chat model)")
+        self.vault.set_setting("services", "ocr", f"{provider}:{model}" if model else "")
+        return self.services()
+
+    def set_vector_intents(self, intents: list[str]) -> dict[str, Any]:
+        from .search import INTENTS
+        unknown = [i for i in intents if i not in INTENTS]
+        if unknown:
+            raise ApiError(400, f"not search intents: {unknown}")
+        self.vault.set_setting("search", "vector_intents", list(dict.fromkeys(intents)))
+        return self.services()
+
+    def test_service(self, slot: str) -> dict[str, Any]:
+        """One small, real call: the OCR model reads a sample line (R17's Test action)."""
+        from . import ocr
+        if slot == "embeddings":
+            return self._test_embeddings()
+        if slot == "tts":
+            from . import tts
+            try:
+                out = tts.speak(self.vault, "Testing the read-aloud voice.", "test")
+            except tts.TtsError as exc:
+                return {"ok": False, "error": str(exc)[:300]}
+            return {"ok": True, "read": "Testing the read-aloud voice.", "audio": out["audio"],
+                    "cost_usd": out["cost_usd"]}
+        if slot != "ocr":
+            raise ApiError(400, f"slot {slot!r} is not built yet")
+        try:
+            reader = ocr.endpoint(self.vault)
+            if reader is None:
+                return {"ok": False, "error": "no OCR model is chosen"}
+            got = reader.page_text(ocr.sample_png())
+        except (ocr.OcrError, ProviderError) as exc:
+            return {"ok": False, "error": str(exc)[:300]}
+        return {"ok": "librarian reads this page" in got.lower(), "read": got[:300],
+                "model": getattr(reader, "name", "")}
+
+    # -- text to speech (slot 5): a reply (mode A) or the open document (mode B) ------
+    def tts_plan(self, text: str = "", path: str = "") -> dict[str, Any]:
+        """Cut a reply, or the note at `path`, into the chunks it will be read in; nothing
+        is spoken (or spent) until a chunk is asked for."""
+        from . import tts
+        if path:
+            text, mode = self.read_file(path)["text"], "document"
+        else:
+            mode = "message"
+        if not text.strip():
+            raise ApiError(400, "nothing to read")
+        chosen = tts.choice(self.vault)
+        planned = tts.plan(text, chosen.get("model", ""))
+        if not planned["chunks"]:
+            raise ApiError(400, "nothing speakable in it")
+        plan_id = hashlib.sha256(("\n".join(planned["chunks"]) + mode).encode()
+                                 ).hexdigest()[:16]
+        self._tts_plans[plan_id] = (mode, planned["chunks"])
+        while len(self._tts_plans) > 20:
+            self._tts_plans.pop(next(iter(self._tts_plans)))
+        return {"plan": plan_id, "mode": mode, "count": len(planned["chunks"]),
+                **{k: planned[k] for k in ("chars", "estimate_usd", "spent_usd", "cap_usd")}}
+
+    def tts_chunk(self, plan_id: str, index: int) -> dict[str, Any]:
+        from . import tts
+        if plan_id not in self._tts_plans:
+            raise ApiError(404, "that reading has expired: start it again")
+        mode, parts = self._tts_plans[plan_id]
+        if not 0 <= index < len(parts):
+            raise ApiError(400, f"chunk {index} is not one of 0-{len(parts) - 1}")
+        try:
+            out = tts.speak(self.vault, parts[index], mode)
+        except tts.TtsError as exc:
+            raise ApiError(402 if "cap" in str(exc) else 400, str(exc)) from exc
+        return {"index": index, "count": len(parts), **out}
+
+    def _test_embeddings(self) -> dict[str, Any]:
+        """Slot 6's Test: two close sentences and a far one, embedded - the dimension, and
+        whether the close pair is closer than the far one."""
+        from . import embed
+        spec = embed.spec_for(self.vault)
+        if not spec:
+            return {"ok": False, "error": "no embedding model is chosen"}
+        try:
+            import numpy as np
+            _, encode = embed.load_encoder(spec)
+            vectors = np.asarray(encode(["a cat sat on the mat", "a kitten sat on a mat",
+                                         "quarterly tax filing deadlines"]), dtype="float32")
+        except Exception as exc:                            # noqa: BLE001 - key, network, lib
+            return {"ok": False, "error": str(exc)[:300]}
+        unit = vectors / (np.linalg.norm(vectors, axis=1, keepdims=True) + 1e-9)
+        near, far = float(unit[0] @ unit[1]), float(unit[0] @ unit[2])
+        return {"ok": near > far, "dimension": int(vectors.shape[1]),
+                "read": f"close pair {near:.2f}, far pair {far:.2f}", "model": spec}
+
+    # -- project access (Research Pipeline §6): a person's controls, never the model's --
+    def projects(self) -> dict[str, Any]:
+        from . import projects
+        data = projects.state(self.vault)
+        for r in data["roots"]:
+            r["exists"] = Path(r["path"]).is_dir()
+        return data
+
+    def set_projects_enabled(self, on: bool) -> dict[str, Any]:
+        from . import projects
+        projects.set_enabled(self.vault, on)
+        return self.projects()
+
+    def add_project_root(self, path: str, project: str) -> dict[str, Any]:
+        from . import projects
+        try:
+            projects.add_root(self.vault, path, project)
+        except TypeError as exc:
+            raise ApiError(400, str(exc)) from exc
+        return self.projects()
+
+    def set_project_writes(self, root_id: str, allowed: bool) -> dict[str, Any]:
+        from . import projects
+        try:
+            projects.set_writes(self.vault, root_id, allowed)
+        except TypeError as exc:
+            raise ApiError(404, str(exc)) from exc
+        return self.projects()
+
+    def remove_project_root(self, root_id: str) -> dict[str, Any]:
+        from . import projects
+        projects.remove_root(self.vault, root_id)
+        return self.projects()
+
+    def scan_project_root(self, root_id: str) -> dict[str, Any]:
+        from . import projects
+        entry = next((r for r in projects.state(self.vault)["roots"] if r["id"] == root_id), None)
+        if entry is None:
+            raise ApiError(404, f"no project root {root_id!r}")
+        if not Path(entry["path"]).is_dir():
+            raise ApiError(409, f"{entry['path']} has moved or gone: add it again")
+        out = projects.scan(self.vault, Path(entry["path"]), entry.get("project") or "")
+        return {**self.projects(), "scanned": out}
+
+    def set_library(self, promotion_mode: str = "",
+                    review: dict[str, bool] | None = None) -> dict[str, Any]:
+        """Settings -> Library: the promotion mode, and the review gate (§4 G3) on replies
+        and on drafted offerings - `review_replies` / `review_offerings` under [clerk]."""
+        if promotion_mode:
+            if promotion_mode not in ("person", "agent"):
+                raise ApiError(400, "promotion mode is 'person' or 'agent'")
+            self.vault.set_setting("promotion", "mode", promotion_mode)
+        for key, on in (review or {}).items():
+            if key not in ("review_replies", "review_offerings"):
+                raise ApiError(400, f"no review setting {key!r}")
+            self.vault.set_setting("clerk", key, bool(on))
         return self.library()
 
     # -- the document pane: the vault's own notes, read-only ---------------
@@ -693,6 +1030,9 @@ class App:
             elif child.suffix.lower() == ".md":
                 entries.append({"name": child.stem, "kind": "file",
                                 "path": child.resolve().relative_to(root).as_posix()})
+            elif child.suffix.lower() in SCRIPT_SUFFIXES:     # opened as code; runnable
+                entries.append({"name": child.name, "kind": "file", "script": True,
+                                "path": child.resolve().relative_to(root).as_posix()})
         here = folder.relative_to(root).as_posix()
         return {"dir": "" if here == "." else here, "entries": entries}
 
@@ -700,6 +1040,19 @@ class App:
         """A note by vault path (with or without `.md`), or by bare name when
         the name is unique enough to find: what a [[link]] in the chat holds."""
         rel = (rel or "").strip()
+        if Path(rel).suffix.lower() in SCRIPT_SUFFIXES:
+            # A script is shown as code, never rendered - and only a script can be run
+            # (the pane's Run button, EXECUTION_SANDBOX_ONLY).
+            target = self._visible(rel)
+            if not target.is_file():
+                raise ApiError(404, f"no file {rel!r}")
+            if target.stat().st_size > 2_000_000:
+                raise ApiError(413, "that file is too large to show here")
+            root = self.vault.root.resolve()
+            return {"path": target.resolve().relative_to(root).as_posix(), "name": target.name,
+                    "text": target.read_text(encoding="utf-8", errors="replace"),
+                    "script": SCRIPT_SUFFIXES[target.suffix.lower()],
+                    "modified": round(target.stat().st_mtime)}
         candidates = [rel if rel.lower().endswith(".md") else f"{rel}.md"]
         path = None
         for candidate in candidates:
@@ -745,17 +1098,23 @@ class App:
     def state(self) -> dict[str, Any]:
         data = self.settings.data
         return {"version": __version__, "vault": self.vault.root.name,
-                "vault_path": str(self.vault.root),
+                "vault_name": self.vault.title, "vault_path": str(self.vault.root),
                 "mode": self.broker.mode, "pending": self.broker.pending(),
                 "tool_settings": dict(self.broker.settings),
                 "busy": self.busy, "tiers": data.get("tiers") or [],
+                "lead": self.lead_status(),
                 "working_context": data["working_context"],
                 "reply_length": data["reply_length"], "stance": data["stance"],
+                "effort": self._effort_view(),
                 "keys": self.keys.all(), "key_backend": self.keys.backend,
                 "session": self.session_view(),
                 "actions": [a.public() for a in self.actions.values()],
                 "queued_actions": list(QUEUED), "queued_inputs": self.queued_inputs(),
                 "last_event": self.hub.last()}
+
+    def _effort_view(self) -> dict[str, Any]:
+        from . import effort
+        return effort.profile(self.settings.data.get("effort"))
 
     def queued_inputs(self) -> dict[str, dict[str, Any]]:
         """For each one-click action, the inputs a person must give before it
@@ -885,6 +1244,23 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                     return self._json(200, app.models((query.get("provider") or [""])[0]))
                 if url.path == "/api/library":
                     return self._json(200, app.library())
+                if url.path == "/api/services":
+                    return self._json(200, app.services())
+                if url.path == "/api/projects":
+                    return self._json(200, app.projects())
+                if url.path == "/api/offerings/staged":
+                    from .tools.sessions import staged_offering, staged_offerings
+                    wanted = (query.get("id") or [""])[0]
+                    if wanted:
+                        try:
+                            return self._json(200, staged_offering(app.vault, wanted))
+                        except TypeError as exc:
+                            raise ApiError(404, str(exc)) from exc
+                    return self._json(200, {"offerings": staged_offerings(app.vault)})
+                if url.path == "/api/claims/runs":
+                    from . import claim_run
+                    return self._json(200, {"runs": claim_run.RunnableStore(app.vault).list(),
+                                            "docker": claim_run.docker_status()[1]})
                 if url.path == "/api/libraries":
                     from . import libraries
                     return self._json(200, {"libraries": libraries.known(app.vault),
@@ -946,6 +1322,8 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
         def _post(self, path: str, body: dict[str, Any]) -> Any:
             if path == "/api/chat":
                 return app.chat(str(body.get("text") or ""))
+            if path == "/api/chat/cancel":
+                return app.cancel_turn()
             if path == "/api/chat/reset":
                 return app.reset()
             if path == "/api/chat/attach":
@@ -997,12 +1375,49 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
             if path == "/api/mcp/remove":
                 return app.mcp_remove_server(str(body.get("name") or ""))
             if path == "/api/tiers":
-                return app.set_tiers(body.get("tiers") or [])
+                return app.set_tiers(body.get("tiers") or [], str(body.get("override") or ""))
+            if path == "/api/sandbox/run_file":
+                # A person's "Run this script" (EXECUTION_SANDBOX_ONLY): their own call
+                return app.person_call("sandbox_run_file", {"path": str(body.get("path") or "")})
+            if path == "/api/tts/plan":
+                return app.tts_plan(str(body.get("text") or ""), str(body.get("path") or ""))
+            if path == "/api/tts/chunk":
+                return app.tts_chunk(str(body.get("plan") or ""), int(body.get("index") or 0))
+            if path == "/api/effort":
+                return app.set_effort(body.get("level"))
             if path == "/api/context":
                 return app.set_context(body.get("working_context"), body.get("reply_length"),
                                        body.get("stance"))
             if path == "/api/library":
-                return app.set_library(str(body.get("promotion_mode") or ""))
+                review = body.get("review")
+                return app.set_library(str(body.get("promotion_mode") or ""),
+                                       review if isinstance(review, dict) else None)
+            if path == "/api/services":
+                return app.set_service(str(body.get("slot") or ""), str(body.get("provider") or ""),
+                                       str(body.get("model") or ""))
+            if path == "/api/services/test":
+                return app.test_service(str(body.get("slot") or ""))
+            if path == "/api/projects/enable":
+                return app.set_projects_enabled(bool(body.get("enabled")))
+            if path == "/api/projects/add":
+                return app.add_project_root(str(body.get("path") or ""),
+                                            str(body.get("project") or ""))
+            if path == "/api/offerings/decide":
+                # The person's Promote / Decline on a staged offering (Staging -> Offerings)
+                return app.decide_offering(str(body.get("id") or ""),
+                                           str(body.get("decision") or ""))
+            if path == "/api/claims/run":
+                # A person's "Run it" (EXECUTION_SANDBOX_ONLY): the curate-tier tool, through
+                # the person's own call - never the model's
+                return app.person_call("run_claim_input", {"run_id": str(body.get("id") or "")})
+            if path == "/api/projects/writes":
+                return app.set_project_writes(str(body.get("id") or ""), bool(body.get("allowed")))
+            if path == "/api/projects/remove":
+                return app.remove_project_root(str(body.get("id") or ""))
+            if path == "/api/projects/scan":
+                return app.scan_project_root(str(body.get("id") or ""))
+            if path == "/api/services/vector_intents":
+                return app.set_vector_intents([str(i) for i in body.get("intents") or []])
             if path == "/api/library/switch":
                 return self.server.board.switch(str(body.get("path") or ""),  # type: ignore[attr-defined]
                                                 force=bool(body.get("force")))
@@ -1099,10 +1514,10 @@ class Switchboard:
         with self._lock:
             old = self.app
             if vault.root == old.vault.root:
-                return {"switched": False, "vault": vault.root.name, "reason": "already open"}
+                return {"switched": False, "vault": vault.title, "reason": "already open"}
             running = old.running()
             if running and not force:
-                raise ApiError(409, f"{old.vault.root.name} still has work in progress; "
+                raise ApiError(409, f"{old.vault.title} still has work in progress; "
                                     f"switch anyway and let it finish in the background?",
                                running=running)
             own = getattr(old._provider_for, "__self__", None) is old
@@ -1113,14 +1528,14 @@ class Switchboard:
             self.app = new
         libraries.remember(old.vault)          # so it can always be switched back to
         libraries.remember(vault)
-        old.hub.publish({"type": "library_switched", "to": vault.root.name})
+        old.hub.publish({"type": "library_switched", "to": vault.title})
         self.retiring.append(old)
 
         def retire() -> None:
             old.retire()
             self.retiring.remove(old)
         threading.Thread(target=retire, daemon=True, name="library-retire").start()
-        return {"switched": True, "vault": vault.root.name, "from": old.vault.root.name,
+        return {"switched": True, "vault": vault.title, "from": old.vault.title,
                 "finishing_in_background": running}
 
 

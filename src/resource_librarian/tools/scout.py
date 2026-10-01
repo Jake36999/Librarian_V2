@@ -8,7 +8,7 @@ from .library import engine_for
 from .staging import clerk_endpoint
 
 
-@tool("scout_discover", tier="contribute", effect="write", open_world=True,
+@tool("scout_discover", tier="contribute", effect="write", phases=("search",), open_world=True,
       returns=("added", "corroborated", "already_held", "errors"),
       card=Card("Search GitHub with the domain register's seed queries for candidates",
                 "the vault is thin somewhere and you want what nobody has named yet",
@@ -17,7 +17,7 @@ def scout_discover(ctx: Context, domain: str = "", per_query: int = 15) -> dict:
     return scout.discover(ctx.vault, _fetcher(ctx), domain, per_query)
 
 
-@tool("scout_expand", tier="contribute", effect="write", open_world=True,
+@tool("scout_expand", tier="contribute", effect="write", phases=("search",), open_world=True,
       card=Card("Read catalogued curated lists (container: true) into candidates",
                 "the vault holds awesome-lists or other curated indexes"))
 def scout_expand(ctx: Context) -> dict:
@@ -37,14 +37,14 @@ def scout_rank(ctx: Context, limit: int = 20) -> dict:
                       "archived_unstarred_unlicensed_scores": scout.audit(role, posture)}}
 
 
-@tool("cohort_freeze", tier="contribute", effect="write",
+@tool("cohort_freeze", tier="contribute", effect="write", phases=("search",),
       card=Card("Freeze the top candidates into a cohort and write it to a visible note",
                 "before a sweep: the cohort is the reviewable unit"))
 def cohort_freeze(ctx: Context, size: int = 20) -> dict:
     return scout.freeze_cohort(ctx.vault, size)
 
 
-@tool("cohort_reviewed", tier="curate", effect="write",
+@tool("cohort_reviewed", tier="curate", effect="write", scope="library",
       card=Card("Mark a cohort as read by a person", "you have read the cohort note",
                 "Person-only: the next sweep waits for this, and a model marking its own "
                 "sweep read would let scouting run unattended without anyone reading it"))
@@ -52,7 +52,7 @@ def cohort_reviewed(ctx: Context, cohort_id: str) -> dict:
     return scout.mark_reviewed(ctx.vault, cohort_id, "person")
 
 
-@tool("sweep", tier="contribute", effect="write", open_world=True,
+@tool("sweep", tier="contribute", effect="write", phases=("search",), open_world=True,
       returns=("cohort", "results", "stopped", "staged"),
       card=Card("Ingest the next members of the current cohort, unattended, into staging",
                 "retrieval has passed its eval and the last cohort was read",
@@ -62,7 +62,7 @@ def sweep(ctx: Context, limit: int = 10) -> dict:
     return scout.sweep(ctx.vault, engine_for(ctx), clerk_endpoint(ctx), _fetcher(ctx), limit)
 
 
-@tool("record_trace", tier="contribute", effect="write",
+@tool("record_trace", tier="contribute", effect="write", scope="session",
       returns=("rounds", "checkpoints", "sources_in_rounds", "cited_links", "trace", "refs"),
       card=Card("Record another tool's research process (a Deep Research trace) as evidence "
                 "and as a replayable trace", "the person brings a report from another tool",

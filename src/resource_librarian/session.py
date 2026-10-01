@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import secrets
 import os
 import threading
@@ -36,11 +37,12 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+from collections.abc import Mapping
 from typing import Any, Iterator
 
 from . import agenda, notes
 from .rules import Refusal
-from .vault import Vault, now_iso
+from .vault import Vault, jsonl_lines, now_iso
 
 PURPOSES: dict[str, tuple[str, ...]] = {
     "add_project": ("frame", "ingest", "map", "need", "search", "judge", "synthesise",
@@ -66,27 +68,28 @@ MODE = {"add_project": "librarian", "explore": "librarian", "suggest": "libraria
         "apply": "reader", "start_pursuit": "librarian", "learn": "librarian",
         "add_capability": "librarian"}
 
-# The writes each phase unlocks. A tool named here is refused in any other
-# phase. Reads are never gated.
-WRITES: dict[str, frozenset[str]] = {
-    "create_project": frozenset({"frame"}),
-    "open_brief": frozenset({"need", "map"}),
-    "research_round": frozenset({"search"}),
-    "checkpoint": frozenset({"search"}),
-    "log_use": frozenset({"search", "judge", "find"}),
-    "add_candidate": frozenset({"search", "judge"}),
-    "decide": frozenset({"judge"}),
-    "staging_decide": frozenset({"judge"}),
-    "ingest": frozenset({"ingest", "search", "seed", "assess"}),
-    "capability_propose": frozenset({"propose"}),
-    "capability_install": frozenset({"install"}),
-    "record_synthesis": frozenset({"synthesise"}),
-    "draft_offering": frozenset({"synthesise"}),
-    "promote_offering": frozenset({"synthesise"}),
-    "close_brief": frozenset({"judge", "synthesise", "check_out"}),
-    "record_application": frozenset({"check_out"}),
-    "close_session": frozenset({"check_out", "next"}),
-}
+class _PhaseGates(Mapping[str, frozenset]):
+    """The writes each phase unlocks: a tool named here is refused in any other phase.
+    Reads are never gated. Read off each tool's own declaration (`@tool(phases=...)`,
+    2026-09-30) rather than kept as a second list here, which let 19 writes go
+    unclassified without anyone deciding they should be."""
+
+    def __getitem__(self, name: str) -> frozenset:
+        from .registry import REGISTRY
+        spec = REGISTRY.get(name) if name in REGISTRY else None
+        if spec is None or spec.scope != "phase":
+            raise KeyError(name)
+        return spec.phases
+
+    def __iter__(self) -> Iterator[str]:
+        from .registry import REGISTRY
+        return iter([n for n in REGISTRY.names() if REGISTRY.get(n).scope == "phase"])
+
+    def __len__(self) -> int:
+        return sum(1 for _ in self)
+
+
+WRITES: Mapping[str, frozenset] = _PhaseGates()
 # The harness itself: never gated, never charged to a budget.
 HARNESS = frozenset({"open_session", "session_status", "update_plan", "ask_user", "answer",
                      "advance", "park_session", "resume_session", "list_sessions",
@@ -119,6 +122,12 @@ DEFAULT_BUDGETS = {"frame": 24, "ingest": 20, "map": 20, "need": 18, "search": 4
                    "goal": 12, "baseline": 14, "focus": 18, "practice": 30, "consolidate": 16,
                    "next": 14}
 
+# Search is sized for one brief. Each further brief - a topic the request asked about -
+# adds to it, up to a ceiling: a six-topic request parked in Search, its briefs open, in
+# every M0 pass (2026-10-01). The effort setting's scale applies on top.
+SEARCH_PER_BRIEF = 12
+SEARCH_EXTRA_MAX = 60
+
 ASKS = {
     "frame": "Which project is this for, what stage is it at, and what is fixed?",
     "ingest": "What does the person already have (repositories, papers, notes) that belongs "
@@ -129,7 +138,7 @@ ASKS = {
               "the next named target?",
     "judge": "What role would each candidate play? A rejection needs its reason.",
     "synthesise": "Which sources together; at what cost; what is unknown; what to open "
-                  "first? Every claim carries an evidence_quote.",
+                  "first? Every claim carries its source and a verbatim quote.",
     "check_out": "What did the library fail to answer?",
     "check_in": "What are you working on, and what do you need from the library?",
     "find": "Find, qualify, open, extract: which sources did you use, and for what?",
@@ -205,7 +214,9 @@ class Candidate:
     brief: str
     found_in: int                  # round number, 0 when added by hand
     query: str = ""
-    disposition: str = "undecided"   # undecided | keep | reject | defer
+    # keep: it answers the need, in `role`; context: kept as background only, never
+    # counted as answering it (SP-7, the Cyprus listing); reject; defer
+    disposition: str = "undecided"   # undecided | keep | context | reject | defer
     reason: str = ""
     role: str = ""
 
@@ -219,6 +230,8 @@ class Brief:
     verdict: str = ""
     status: str = "open"            # open | closed
     closing_note: str = ""
+    topic: str = ""                 # the asked topic it answers (R13: one brief per topic)
+    coverage: str = ""              # at close: covered | partial | gap
 
 
 @dataclass
@@ -248,11 +261,14 @@ class Session:
     messages: list[dict[str, Any]] = field(default_factory=list)  # the chat transcript itself
     min_rewind_index: int = 0      # see `to_dict`'s `min_rewind_index`
     budgets: dict[str, int] = field(default_factory=dict)
+    budget_scale: float = 1.0       # the effort setting's share (effort.py)
     visits: dict[str, int] = field(default_factory=dict)
     lenses: list[str] = field(default_factory=list)      # adopted by a person, in order
     called: dict[str, int] = field(default_factory=dict)  # successful calls, by tool
     capabilities: dict[str, dict[str, Any]] = field(default_factory=dict)  # F2 proposals
     assumptions: list[dict[str, Any]] = field(default_factory=list)       # §4 G2
+    recent: list[tuple[str, bool]] = field(default_factory=list)          # last calls, R3
+    extended: dict[str, int] = field(default_factory=dict)  # calls a person added, R11
 
     # -- identity -------------------------------------------------------------
     @property
@@ -267,8 +283,24 @@ class Session:
         """Each visit to a phase halves what it gets: going back to redo a
         phase is allowed, but it can never be used to reset a spent budget
         indefinitely (20, 10, 5, 2, 1, then nothing)."""
-        base = self.budgets.get(self.phase, 20) >> max(0, self.visits.get(self.phase, 1) - 1)
-        return max(0, base - self.phase_calls)
+        budget = self.budgets.get(self.phase, 20)
+        if self.phase == "search":
+            budget += min(SEARCH_EXTRA_MAX, SEARCH_PER_BRIEF * max(0, len(self.briefs) - 1))
+        full = int(round(budget * self.budget_scale))
+        base = full >> max(0, self.visits.get(self.phase, 1) - 1)
+        return max(0, base + self.extended.get(self.phase, 0) - self.phase_calls)
+
+    def retries(self, tool: str) -> int:
+        """How many times `tool` failed since it last succeeded, within the recent calls:
+        the call being recorded now is retry number n."""
+        n = 0
+        for name, ok in reversed(self.recent):
+            if name != tool:
+                continue
+            if ok:
+                break
+            n += 1
+        return n
 
     def open_questions(self) -> list[dict[str, Any]]:
         return [q for q in self.questions if q.get("answer") is None]
@@ -289,7 +321,10 @@ class Session:
             self.budgets = {**DEFAULT_BUDGETS, **event.get("budgets", {})}
             self.visits = {self.phase: 1}
             self.history.append(self.phase)
+        elif kind == "effort":                       # the person's effort setting (effort.py)
+            self.budget_scale = float(event.get("budget_scale") or 1.0)
         elif kind == "call":
+            self.recent = (self.recent + [(event["tool"], bool(event.get("ok", True)))])[-20:]
             if event.get("charged"):
                 self.phase_calls += 1
             if event.get("ok", True):
@@ -302,6 +337,9 @@ class Session:
                 if event.get("effect") in ("write", "vault_write") and \
                         event.get("tool") not in ("rewind_session", "branch_session"):
                     self.min_rewind_index = len(self.messages)
+        elif kind == "budget":
+            self.extended[event["phase"]] = self.extended.get(event["phase"], 0) + \
+                int(event.get("add", 0))
         elif kind == "phase":
             self.phase = event["to"]
             self.phase_calls = 0
@@ -329,10 +367,12 @@ class Session:
             self.briefs[event["id"]] = Brief(event["id"], event["need"],
                                              list(event["disqualifiers"]),
                                              event.get("constraints") or {},
-                                             event.get("verdict", ""))
+                                             event.get("verdict", ""),
+                                             topic=event.get("topic", ""))
         elif kind == "brief_closed":
             brief = self.briefs[event["id"]]
             brief.status, brief.closing_note = "closed", event.get("note", "")
+            brief.coverage = event.get("coverage", "")
         elif kind == "round":
             self.rounds.append({k: event[k] for k in ("n", "queries", "new", "vocabulary",
                                                       "outside", "outside_found")
@@ -413,9 +453,20 @@ class Session:
                 out.append("record the orientation: search with intent 'orient', then "
                            "update_plan(map=...)")
             if self.purpose == "suggest" and "project_read" not in self.plan:
-                out.append("read the project's own files: read_project")
+                from .projects import root_for
+                try:
+                    root_for(vault, self.project, "")
+                    out.append("read the project's own files: read_project")
+                except Refusal:
+                    pass            # access is off: the suggestion rests on the Project note
         elif p == "need":
-            if self.purpose == "add_project" and not self.briefs:
+            # R13: one brief per asked topic, so every topic ends with a coverage verdict
+            unbriefed = [r["topic"] for r in self.coverage() if not r["brief"]]
+            if unbriefed:
+                out.append(f"open a brief for each asked topic still without one: "
+                           f"{', '.join(unbriefed[:8])} - open_brief(need, disqualifiers, "
+                           f"topic=...)")
+            elif not self.briefs:
                 out.append("open at least one brief: open_brief(need, disqualifiers)")
         elif p == "search":
             if not self._search_done():
@@ -433,6 +484,14 @@ class Session:
             elif self.synthesis.get("outcome") == "offering" and not any(
                     o.get("status") in ("staged", "promoted") for o in self.offerings):
                 out.append("draft the offering: draft_offering")
+            else:
+                # Staged is not delivered (M0 pass 2: a guide was drafted, then left in
+                # staging): promote it - the person is asked under promotion.mode "person" -
+                # or the person declines it.
+                staged = [o["id"] for o in self.offerings if o.get("status") == "staged"]
+                if staged and not any(o.get("status") == "promoted" for o in self.offerings):
+                    out.append(f"promote the staged offering: promote_offering(offering="
+                               f"'{staged[-1]}') - it is not in the vault until promoted")
         elif p == "check_in" and not (self.question or self.project):
             out.append("say what you are working on: update_plan(question=..., project=...)")
         elif p == "find" and not self.uses and "nothing_found" not in self.plan:
@@ -546,8 +605,9 @@ class Session:
             return (f"two rounds found nothing new: widen the vocabulary. "
                     f"advance(target='{target}') and restate the need in the field's own words")
         if self.budget_left() == 0 and missing:
-            return (f"the {self.phase} budget is spent: advance if you can, park_session, or "
-                    f"ask_user how to proceed")
+            return (f"the {self.phase} budget is spent with this still needed: "
+                    f"{missing[0]}. Advance if you can, park_session, or ask_user - the person "
+                    f"can extend the budget (Extend budget, in the Plan pane)")
         if missing:
             return f"{ASKS.get(self.phase, '')} Still needed: {missing[0]}"
         position = self.phases.index(self.phase)
@@ -562,6 +622,46 @@ class Session:
             return f"{self.phase} is complete: advance to {self.phases[position + 1]}{spent}"
         return "everything is done: close_session(summary, gaps)"
 
+    def topics(self) -> list[str]:
+        raw = self.plan.get("topics") or []
+        raw = [raw] if isinstance(raw, str) else raw
+        return [str(t).strip() for t in raw if str(t).strip()]
+
+    def coverage(self) -> list[dict[str, Any]]:
+        """The coverage ledger (R13): each asked topic, the brief that answers it, and its
+        verdict - `covered`, `partial` or `gap` once closed - with what was kept for it."""
+        rows: list[dict[str, Any]] = []
+        only = len(self.briefs) == 1
+        for b in self.briefs.values():
+            mine = [c for c in self.candidates.values() if c.brief == b.id or
+                    (not c.brief and only)]
+            rows.append({"topic": b.topic or b.need, "brief": b.id,
+                         "verdict": b.coverage or ("open" if b.status == "open"
+                                                   else "closed without a verdict"),
+                         "kept": [c.source for c in mine if c.disposition == "keep"],
+                         "context": [c.source for c in mine if c.disposition == "context"],
+                         "undecided": sum(1 for c in mine if c.disposition == "undecided"),
+                         **({"note": b.closing_note} if b.closing_note else {})})
+        seen = {r["topic"].casefold() for r in rows}
+        rows += [{"topic": t, "brief": "", "verdict": "no brief", "kept": [], "context": [],
+                  "undecided": 0} for t in self.topics() if t.casefold() not in seen]
+        return rows
+
+    def completion(self) -> dict[str, Any]:
+        """Is the research done (R13)? Every brief has a coverage verdict, nothing waits to
+        be judged, and what the session made is listed with its path - gaps stated."""
+        ledger = self.coverage()
+        verdicts = ("covered", "partial", "gap")
+        return {"complete": bool(ledger) and all(r["verdict"] in verdicts for r in ledger)
+                and not any(r["undecided"] for r in ledger),
+                "ledger": ledger,
+                "gaps": [f"{r['topic']} ({r['verdict']})" for r in ledger
+                         if r["verdict"] not in ("covered",)],
+                "made": [{"offering": o.get("title", o["id"]), "status": o.get("status"),
+                          "path": o.get("path", "")} for o in self.offerings] +
+                        [{"note": w["path"], "tool": w["tool"]} for w in self.writes
+                         if w.get("tool") in ("write_note", "record_application")]}
+
     def envelope(self, vault: Vault) -> dict[str, Any]:
         library_items = list(self.library_items.values())
         library_item_counts: dict[str, int] = {}
@@ -572,6 +672,11 @@ class Session:
                 "mode": self.mode, "status": self.status, "phase": self.phase,
                 "phases": list(self.phases), "open_items": self.missing(vault),
                 "budget_left": self.budget_left(), "next": self.next_step(vault),
+                # R11: spent with the phase unfinished - the person may extend it
+                **({"budget_spent": True} if self.budget_left() == 0 and self.missing(vault)
+                   else {}),
+                **({"coverage": [{k: r[k] for k in ("topic", "brief", "verdict")}
+                                 for r in self.coverage()]} if self.coverage() else {}),
                 "library_item_count": len(library_items),
                 "library_item_counts": library_item_counts,
                 "library_items": library_items[-12:]}
@@ -588,6 +693,7 @@ class Session:
                 "summary": self.summary, "gaps": self.gaps, "history": self.history,
                 "lenses": self.lenses, "capabilities": list(self.capabilities.values()),
                 "assumptions": self.assumptions,
+                "completion": self.completion(),
                 "messages": [{"index": i, **m} for i, m in enumerate(self.messages)],
                 # Rewinding to a message discards it and everything after it in
                 # the log, including any vault write in between - so it is only
@@ -629,7 +735,7 @@ class SessionStore:
         `"message"` event (0-indexed) - the shared primitive for `rewind` (this
         session, in place) and `branch` (a copy, under a new id): both are
         "the log as it stood right after that message was said"."""
-        lines = self.path(session_id).read_text(encoding="utf-8").splitlines()
+        lines = jsonl_lines(self.path(session_id).read_text(encoding="utf-8"))
         seen = -1
         for n, line in enumerate(lines):
             if not line.strip():
@@ -680,7 +786,7 @@ class SessionStore:
                                               f"what exists")
         session = Session(id=session_id, purpose="explore")
         text = path.read_text(encoding="utf-8")
-        lines = text.splitlines()
+        lines = jsonl_lines(text)
         for n, line in enumerate(lines):
             if not line.strip():
                 continue
@@ -702,7 +808,7 @@ class SessionStore:
         event on; removing events from the *end* of a log is not detectable."""
         broken = []
         for path in sorted(self.folder.glob("*.jsonl")):
-            where = verify_chain(path.read_text(encoding="utf-8").splitlines())
+            where = verify_chain(jsonl_lines(path.read_text(encoding="utf-8")))
             if where:
                 broken.append(f"{path.stem}: {where}")
         return broken
@@ -779,7 +885,7 @@ def _last_hash(path: Path) -> str:
         size = handle.tell()
         handle.seek(max(0, size - 65536))
         tail = handle.read().decode("utf-8", errors="replace")
-    for line in reversed(tail.splitlines()):
+    for line in reversed(jsonl_lines(tail)):
         if line.strip():
             try:
                 return str(json.loads(line).get("h") or "")
@@ -846,15 +952,68 @@ def _is_person(ctx: Any) -> bool:
 
 
 def after_call(tool_name: str, arguments: dict[str, Any], result: dict[str, Any],
-               ctx: Any, effect: str = "") -> dict[str, Any]:
+               ctx: Any, effect: str = "", permission: str = "",
+               normalised: dict[str, Any] | None = None) -> dict[str, Any]:
     """Record the call and hand the walk back with the result. `effect` (the
     tool's own declared "read"/"write"/"vault_write") is recorded too, so a
     fold can tell whether anything after a message actually changed the vault
     - which is what gates whether that message can still be rewound to."""
     store = SessionStore(ctx.vault)
     charged = tool_name not in HARNESS and "error" not in result and not _is_person(ctx)
-    store.append(ctx.session, {"type": "call", "tool": tool_name, "charged": charged,
-                               "ok": "error" not in result, "effect": effect,
-                               "args": {k: (v if len(str(v)) < 200 else str(v)[:200] + "...")
-                                        for k, v in arguments.items()}})
+    before = store.load(ctx.session)
+    event = {"type": "call", "tool": tool_name, "charged": charged,
+             "ok": "error" not in result, "effect": effect,
+             "args": {k: _trace_value(k, v) for k, v in arguments.items()},
+             # Requirements Addendum R3: who called, where, and what really happened.
+             "model": str((getattr(ctx, "extras", None) or {}).get("model") or ""),
+             "tier": getattr(ctx, "tier", ""), "phase": before.phase,
+             **({"lead": str(ctx.extras["lead_status"])[:120]}
+                if (getattr(ctx, "extras", None) or {}).get("lead_status") else {}),
+             "budget_before": before.budget_left(),
+             "budget_after": max(0, before.budget_left() - (1 if charged else 0)),
+             "permission": "person" if _is_person(ctx) and permission in ("", "no broker")
+                           else permission or "no broker",
+             # this tool's failed calls since it last succeeded, among the recent ones
+             "retry": before.retries(tool_name)}
+    if normalised is not None:
+        shown = {k: _trace_value(k, v) for k, v in normalised.items()}
+        if shown != event["args"]:
+            event["normalised"] = shown
+    for key in ("refused", "error"):
+        if key in result:
+            event[key] = str(result[key])[:80]
+    if "error" in result and result.get("detail"):
+        event["detail"] = str(result["detail"])[:200]
+    if result.get("adjusted_arguments"):
+        event["adjusted"] = [str(a)[:120] for a in result["adjusted_arguments"]][:6]
+    if result.get("outcome"):
+        event["outcome"] = result["outcome"]
+        event["items"] = [_trace_item(i) for i in result.get("results", [])[:20]
+                          if isinstance(i, dict)]
+    store.append(ctx.session, event)
     return {**result, "session": store.load(ctx.session).envelope(ctx.vault)}
+
+
+def _trace_item(item: dict[str, Any]) -> dict[str, Any]:
+    """One item of a multi-item result, as the trace keeps it: what happened to it and why,
+    not just its id."""
+    out = {"id": str(item.get("id", ""))[:80],
+           "status": str(item.get("status") or ("refused" if "refused" in item else
+                                                "error" if "error" in item else ""))[:40]}
+    for key in ("refused", "error", "detail", "reason", "path", "state"):
+        if item.get(key):
+            out[key] = str(item[key])[:160]
+    promotion = item.get("promotion")
+    if isinstance(promotion, dict) and promotion.get("path"):
+        out["path"] = str(promotion["path"])[:160]
+    return out
+
+
+_SECRET_NAME = re.compile(r"(?:^|_)(?:key|token|secret|password|passwd|auth)(?:$|_)", re.I)
+
+
+def _trace_value(name: str, value: Any) -> Any:
+    """An argument as the trace keeps it: clipped, and masked when its name says secret."""
+    if _SECRET_NAME.search(name):
+        return "••••"
+    return value if len(str(value)) < 200 else str(value)[:200] + "..."

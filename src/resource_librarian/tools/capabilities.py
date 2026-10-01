@@ -84,7 +84,7 @@ def _problems(name: str, command: str, args: list[str], env: dict[str, str]) -> 
     return out
 
 
-@tool("capability_propose", tier="contribute", effect="write",
+@tool("capability_propose", tier="contribute", effect="write", phases=("propose",),
       returns=("proposed",),
       card=Card("Propose one exact, pinned definition for an outside server",
                 "an add_capability session's propose phase, after the candidate was assessed",
@@ -107,7 +107,7 @@ def capability_propose(ctx: Context, name: str, command: str, why: str,
     return {"proposed": name, "definition": definition}
 
 
-@tool("capability_install", tier="contribute", effect="write",
+@tool("capability_install", tier="contribute", effect="write", phases=("install",),
       returns=("installed",),
       card=Card("Install a proposed outside server - only once the person says yes",
                 "an add_capability session's install phase",

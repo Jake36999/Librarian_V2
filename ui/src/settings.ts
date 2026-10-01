@@ -8,7 +8,7 @@ import { clear, h } from "./dom";
 import { PROVIDERS } from "./panels";
 
 const PAGES = [["connections", "Connections"], ["context", "Working context"],
-               ["mcp", "MCP servers"], ["library", "Library"]] as const;
+               ["mcp", "MCP servers"], ["library", "Library"], ["projects", "Projects"]] as const;
 
 // Curated MCP servers, evaluated for fit with a research vault (Co-work
 // Roadmap §3): stdio, no separate install step (uvx/npx -y fetch on first
@@ -36,7 +36,9 @@ export class Settings {
   private tabs = h("div", { class: "tabs", role: "tablist" });
 
   constructor(private api: Api, private state: () => Record<string, any>,
-              private refresh: () => Promise<void>, private manageKeys?: () => void) {
+              private refresh: () => Promise<void>, private manageKeys?: () => void,
+              private chooseService?: (slot: string, label: string,
+                                       current?: { provider: string; model: string }) => void) {
     this.dialog.append(
       h("div", { class: "dlg-head" }, h("strong", {}, "Settings"),
         h("button", { class: "ghost push", onclick: () => this.dialog.close() }, "Close")),
@@ -55,7 +57,8 @@ export class Settings {
       onclick: () => { this.page = id; this.render(); },
     }, label)));
     const page = { connections: () => this.connections(), context: () => this.context(),
-                   mcp: () => this.mcp(), library: () => this.library() }[this.page];
+                   mcp: () => this.mcp(), library: () => this.library(),
+                   projects: () => this.projectsPage() }[this.page];
     clear(this.body, page ? page() : null);
   }
 
@@ -72,10 +75,15 @@ export class Settings {
           `${PROVIDERS[k.provider] ?? k.provider}: `, k.saved ? `•••• ${k.last4}` : "no key")),
         h("div", { class: "row2" }, h("button", { class: "primary", onclick: () => { this.dialog.close(); this.manageKeys?.(); } },
           "Choose keys in the plugin's settings")),
-        h("p", { class: "note" }, "After changing a key, the plugin restarts the core so it takes effect."));
+        h("p", { class: "note" }, "After changing a key, the plugin restarts the core so it takes effect."),
+        this.serviceModels());
     }
+    // Model providers, then the web search backends (keys.SEARCH_KEYS): web_search uses
+    // Brave, else Tavily, else a SearXNG instance, else Wikipedia only.
+    const LABELS: Record<string, string> = { ...PROVIDERS, tavily: "Tavily (web search)",
+      brave: "Brave Search (web search)" };
     const select = h("select", { id: "lib-provider" },
-      Object.entries(PROVIDERS).map(([id, label]) => h("option", { value: id }, label))) as HTMLSelectElement;
+      Object.entries(LABELS).map(([id, label]) => h("option", { value: id }, label))) as HTMLSelectElement;
     const input = h("input", { type: "password", id: "lib-key", autocomplete: "off", placeholder: "Paste a key" }) as HTMLInputElement;
     const status = h("span", { class: "note inline", role: "status" });
     const confirmBox = h("div");
@@ -111,7 +119,8 @@ export class Settings {
         status.textContent = "No key needed. The local server must be running.";
         return;
       }
-      input.disabled = false; save.hidden = false; checkUsage.hidden = false;
+      input.disabled = false; save.hidden = false;
+      checkUsage.hidden = select.value === "tavily" || select.value === "brave";
       remove.hidden = !k.saved;
       save.textContent = k.saved ? "Overwrite key" : "Save key";
       input.placeholder = k.saved ? `•••• ${k.last4} · ${k.source === "host" ? "from Obsidian" : "saved"}` : "Paste a key";
@@ -144,7 +153,7 @@ export class Settings {
     };
     save.onclick = () => submit(false);
     remove.onclick = () => clear(confirmBox, h("div", { class: "confirm" },
-      `Remove the saved ${PROVIDERS[select.value]} key? It can't be recovered from here.`,
+      `Remove the saved ${LABELS[select.value]} key? It can't be recovered from here.`,
       h("div", { class: "row2" },
         h("button", { class: "ghost", onclick: () => clear(confirmBox) }, "Cancel"),
         h("button", { class: "primary", onclick: async () => {
@@ -162,9 +171,180 @@ export class Settings {
       h("p", { class: "note" }, `Keys are kept by the core (${this.state().key_backend ?? "securely"}), never in the vault. `,
         "They never come back to this page: only whether one is saved, and its last four characters."),
       h("label", { class: "f" }, "Usage & billing"),
-      h("div", { class: "row2" }, checkUsage), usageBox);
+      h("div", { class: "row2" }, checkUsage), usageBox,
+      this.serviceModels());
     show();
     return page;
+  }
+
+  /** Research Pipeline §6.1: project access - off by default, folders a person chooses, each
+   *  with its librarian-app/ sidecar. The core refuses project tools while it is off; this
+   *  page is where a person turns it on, never the model. */
+  private projectsPage(): HTMLElement {
+    const host = h("div", {}, h("p", { class: "dim" }, "Loading…"));
+    const status = h("span", { class: "note inline", role: "status" });
+    const paint = (data: any) => {
+      const toggle = h("input", { type: "checkbox", id: "lib-projects-on", checked: !!data.enabled,
+        onchange: async (e: globalThis.Event) => {
+          try { paint(await this.api.post("/api/projects/enable", { enabled: (e.target as HTMLInputElement).checked })); }
+          catch (err) { status.textContent = (err as Error).message; }
+        } }) as HTMLInputElement;
+      const path = h("input", { type: "text", class: "f", id: "lib-project-path",
+        placeholder: "Full path to the project folder, e.g. D:\\code\\my-app" }) as HTMLInputElement;
+      const project = h("input", { type: "text", "aria-label": "Project note",
+        placeholder: "Its Project note's name (optional)" }) as HTMLInputElement;
+      const act = (url: string, body: Record<string, unknown>, done = "") => async () => {
+        status.textContent = "";
+        try {
+          const out = await this.api.post(url, body);
+          paint(out);
+          if (done) status.textContent = done;
+        } catch (err) { status.textContent = (err as Error).message; }
+      };
+      clear(host,
+        h("label", { class: "opt" }, toggle, h("span", {}, h("strong", {}, "Enable project access"),
+          h("small", {}, "Off by default. While off, no project folder is read and the librarian's project tools are unavailable - checked by the core, not only this page."))),
+        h("label", { class: "f" }, "Project folders"),
+        (data.roots ?? []).length ? (data.roots as any[]).map((r) => h("div", { class: "srv project-root" },
+          h("span", { class: `dot ${r.exists ? "" : "off"}` }),
+          h("span", {}, h("code", {}, r.path),
+            h("span", { class: "dim" }, [r.project ? ` · ${r.project}` : " · no Project note linked",
+              ` · librarian-app/ ${r.scaffold?.state ?? "?"}`,
+              r.last_scan ? ` · scanned ${String(r.last_scan.at).slice(0, 10)} at ${String(r.last_scan.revision).slice(0, 10)} (${r.last_scan.components} components)` : " · not scanned",
+              r.exists ? "" : " · moved or gone: add it again"].join(""))),
+          data.enabled && r.exists ? h("button", { class: "ghost", onclick: act("/api/projects/scan", { id: r.id }, "Scanned.") }, "Scan") : null,
+          h("label", { class: "inline project-writes", title: "Separate from reading: the librarian may then propose one change at a time (a snippet replaced or a new file), shown as a diff; you approve each one, and each is logged with a backup in librarian-app/logs/." },
+            h("input", { type: "checkbox", checked: !!r.writes, "aria-label": `Allow edits in ${r.path}`,
+              onchange: (e: globalThis.Event) => act("/api/projects/writes",
+                { id: r.id, allowed: (e.target as HTMLInputElement).checked },
+                (e.target as HTMLInputElement).checked ? "Edits allowed: each one is still asked." : "Edits withdrawn.")() }),
+            " Allow edits"),
+          h("button", { class: "ghost", onclick: act("/api/projects/remove", { id: r.id }) }, "Remove this project")))
+          : h("p", { class: "dim" }, "No project folders yet."),
+        h("label", { class: "f", for: "lib-project-path" }, "Add a project folder"), path,
+        h("div", { class: "row2 tight" }, project,
+          h("button", { class: "primary", onclick: () => act("/api/projects/add",
+            { path: path.value.trim(), project: project.value.trim() }, "Added: its librarian-app/ is ready.")() }, "Add"),
+          status),
+        h("p", { class: "note" }, "Adding a folder creates librarian-app/ inside it (manifest, README, data, information, sessions, applications, index, logs), never overwriting a file already there, and never touching the project's own .gitignore. The librarian reads the project. It changes a project file only in a folder where you ticked Allow edits, and asks you before every change, whatever the permission mode; each change is logged with a backup in librarian-app/logs/ so it can be undone."));
+    };
+    this.api.get("/api/projects").then(paint)
+      .catch((e) => clear(host, h("p", { class: "error" }, (e as Error).message)));
+    return host;
+  }
+
+  /** Slot 6 (R17, SM-8): what embedding the library takes before anything is sent, a
+   *  person's own start, the lexical-vs-hybrid measurement, and the intents a person turns
+   *  vectors on for after reading it. */
+  private embeddingsBlock(s: any, reload: () => void): HTMLElement {
+    const status = h("span", { class: "note inline", role: "status" });
+    const confirm = h("div");
+    const est = s.estimate ?? {};
+    const local = h("button", { class: "ghost", title: "A small static model on this machine: no key, no cost",
+      onclick: async () => {
+        await this.api.post("/api/services", { slot: "embeddings", provider: "model2vec", model: "minishlab/potion-base-8M" });
+        reload();
+      } }, "Use a local model");
+    const embedAll = h("button", { class: "primary", onclick: () => clear(confirm, h("div", { class: "confirm" },
+      `This embeds ${est.chunks} text chunks (about ${est.tokens_est} tokens) with ${s.spec}` +
+        (s.hosted ? (est.cost_est_usd !== undefined ? `, about $${est.cost_est_usd}.` : ". Its price is unknown here: see the provider's page.")
+          : ", on this machine."),
+      h("div", { class: "row2" },
+        h("button", { class: "ghost", onclick: () => clear(confirm) }, "Cancel"),
+        h("button", { class: "primary", onclick: async () => {
+          clear(confirm);
+          status.textContent = "Embedding…";
+          try {
+            const out = await this.api.tool("embed_index", {});
+            if (out.error) throw new Error(String(out.detail ?? out.error));
+            reload();
+          } catch (e) { status.textContent = (e as Error).message; }
+        } }, "Embed")))) }, "Embed the library");
+    const measure = h("button", { class: "ghost", onclick: async () => {
+      status.textContent = "Measuring lexical against hybrid on this library's questions…";
+      try {
+        const out = await this.api.tool("evaluate", { compare_vectors: true });
+        if (out.error) throw new Error(String(out.detail ?? out.error));
+        reload();
+      } catch (e) { status.textContent = (e as Error).message; }
+    } }, "Measure (lexical vs hybrid)");
+    const using = new Set<string>((s.vector_intents ?? []) as string[]);
+    const rows = Object.entries((s.comparison?.by_intent ?? {}) as Record<string, any>);
+    const table = rows.length ? h("table", { class: "compare" },
+      h("tr", {}, ["intent", "questions", "lexical hit", "hybrid hit", "Δ", "use vectors"].map((t) => h("th", {}, t))),
+      rows.map(([intent, r]) => h("tr", {}, h("td", {}, intent), h("td", {}, String(r.n)),
+        h("td", {}, String(r.lexical_hit)), h("td", {}, String(r.hybrid_hit)),
+        h("td", { class: r.delta_hit > 0 ? "ok" : r.delta_hit < 0 ? "err" : "" }, String(r.delta_hit)),
+        h("td", {}, h("input", { type: "checkbox", checked: using.has(intent), "aria-label": `use vectors for ${intent}`,
+          onchange: (e: globalThis.Event) => { if ((e.target as HTMLInputElement).checked) using.add(intent); else using.delete(intent); } }))))) : null;
+    const save = rows.length ? h("button", { class: "ghost", onclick: async () => {
+      await this.api.post("/api/services/vector_intents", { intents: [...using] });
+      reload();
+    } }, "Save intents") : null;
+    return h("div", { class: "embeddings" },
+      s.model ? h("p", { class: "dim" }, `${s.embedded ?? 0} of ${s.chunks ?? 0} text chunks embedded` +
+        (s.vector_intents?.length ? ` · vectors used for: ${s.vector_intents.join(", ")}` : " · vectors used for no intent yet")) : null,
+      h("div", { class: "row2 tight" }, local, s.model && est.chunks ? embedAll : null, s.model ? measure : null, status),
+      confirm, table, save,
+      s.comparison ? h("p", { class: "note" }, `Measured ${String(s.comparison.at ?? "").slice(0, 10)} on ${s.comparison.questions} questions; vectors joined ${s.comparison.vectors_contributed} answers. Turn them on only where they help.`) : null);
+  }
+
+  /** Requirements Addendum R17: service models, slots 4-6 - each one kind of job with its
+   *  own request format, chosen with the same tile as the chat models and kept with this
+   *  library. Test makes one small real call. */
+  private serviceModels(): HTMLElement {
+    const host = h("div", { class: "services" }, h("p", { class: "dim" }, "Loading…"));
+    void (async () => {
+      let out: any;
+      try {
+        out = await this.api.get("/api/services");
+      } catch (e) {
+        clear(host, h("p", { class: "error" }, (e as Error).message));
+        return;
+      }
+      clear(host, h("label", { class: "f" }, "Service models"),
+        (out.slots ?? []).map((s: any) => {
+          const status = h("span", { class: "note inline", role: "status" });
+          const current = s.model
+            ? `${s.model} · ${PROVIDERS[s.provider] ?? s.provider}${s.default ? " (default)" : ""}`
+            : s.built ? "none chosen" : "planned";
+          const test = async () => {
+            status.className = "note inline";
+            status.textContent = "Testing: one small call…";
+            try {
+              const t = await this.api.post("/api/services/test", { slot: s.slot });
+              status.textContent = t.ok ? `Works: it read “${t.read}”.`
+                : `Not working: ${t.error ?? `it read “${t.read}”`}`;
+              if (t.ok && t.audio) void new Audio(t.audio).play().catch(() => undefined);
+              status.className = `note inline ${t.ok ? "ok" : "err"}`;
+            } catch (e) {
+              status.textContent = (e as Error).message;
+            }
+          };
+          return h("div", { class: `srv service slot-${s.slot}`,
+            title: s.built && s.model ? "Right-click to empty this slot" : "",
+            oncontextmenu: async (e: Event) => {
+              if (!s.built || !s.model) return;
+              e.preventDefault();
+              try {
+                await this.api.post("/api/services", { slot: s.slot, provider: "", model: "" });
+                this.render();
+              } catch (err) { status.textContent = (err as Error).message; }
+            } },
+            h("span", { class: "badge" }, String(s.number)),
+            h("span", {}, h("strong", {}, s.label), ` · ${current}`, h("span", { class: "dim" }, ` · ${s.job}`),
+              s.cap_usd !== undefined ? h("span", { class: "dim" }, ` · spent $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null),
+            s.built && this.chooseService ? h("button", { class: "ghost", onclick: () => {
+              this.dialog.close();
+              this.chooseService!(s.slot, s.label, { provider: s.provider, model: s.model });
+            } }, "Choose…") : null,
+            s.built && s.model ? h("button", { class: "ghost", onclick: test }, "Test") : null,
+            status,
+            s.slot === "embeddings" ? this.embeddingsBlock(s, () => this.render()) : null);
+        }),
+        h("p", { class: "note" }, "Each does one kind of job with its own request format, and is kept with this library. An empty slot is never filled by a chat model."));
+    })();
+    return host;
   }
 
   // -- page 2 --------------------------------------------------------------
@@ -385,6 +565,7 @@ export class Settings {
     const packs = h("div", { class: "lens-packs" }, h("p", { class: "dim" }, "Loading…"));
     const catalogs = h("div", { class: "model-catalogs" }, h("p", { class: "dim" }, "Loading…"));
     const profile = h("div", { class: "library-profile" });
+    const topics = h("div", { class: "topics" }, h("p", { class: "dim" }, "Loading…"));
     this.api.get("/api/library").then((lib) => {
       const promo = h("select", { id: "lib-promo" },
         [["person", "person (default): a person accepts every promotion"], ["agent", "agent: the librarian may promote, except sensitive material"]]
@@ -394,8 +575,30 @@ export class Settings {
         try { await this.api.post("/api/library", { promotion_mode: promo.value }); status.textContent = "Saved to the vault's config."; }
         catch (e) { status.textContent = (e as Error).message; }
       };
+      // §4 G3: a second model checks claims against the notes they cite (O4, O5).
+      const reviewStatus = h("span", { class: "note inline", role: "status" });
+      const reviewBox = (key: string, label: string, hint: string) => {
+        const box = h("input", { type: "checkbox", id: `lib-${key}` }) as HTMLInputElement;
+        box.checked = !!lib.clerk?.[key];
+        box.onchange = async () => {
+          try {
+            await this.api.post("/api/library", { review: { [key]: box.checked } });
+            reviewStatus.textContent = "Saved to the library's config.";
+          } catch (e) {
+            box.checked = !box.checked;
+            reviewStatus.textContent = (e as Error).message;
+          }
+        };
+        return h("div", { class: "srv" }, box, h("label", { for: `lib-${key}` }, h("strong", {}, label), h("span", { class: "dim" }, ` · ${hint}`)));
+      };
       clear(host,
         h("label", { class: "f", for: "lib-promo" }, "Promotion"), h("div", { class: "row2 tight" }, promo, status),
+        h("label", { class: "f" }, "Review"),
+        reviewBox("review_replies", "Check replies",
+          "the claims a reply makes about the notes it links are checked against those notes; the verdict shows under the reply"),
+        reviewBox("review_offerings", "Check drafted offerings",
+          "each claim is checked before the draft is staged; a challenged claim kept by the librarian needs you to promote it"),
+        h("p", { class: "note" }, "Run by the small-tasks model (tier 3), or `route_review` under [clerk]. A high effort setting also turns these on for its turns. ", reviewStatus),
         h("label", { class: "f" }, "Distribution posture"),
         h("p", {}, String(lib.usage?.distribution_posture ?? "private"), h("span", { class: "dim" }, " · set in the vault's config")),
         h("label", { class: "f" }, "Clerk route"),
@@ -405,15 +608,71 @@ export class Settings {
           h("span", { class: `dot ${c.ok ? "" : c.required ? "off" : "nokey"}` }),
           h("span", {}, h("strong", {}, c.name), ` · ${c.detail ?? ""}`))),
         profile,
+        h("label", { class: "f" }, "Topics"),
+        topics,
         h("label", { class: "f" }, "Lens packs"),
         packs,
         h("label", { class: "f" }, "Model catalogues"),
         catalogs);
+      void this.paintTopics(topics);
       void this.paintPacks(packs);
       void this.paintModelCatalogs(catalogs);
       void this.paintProfile(profile);
     }).catch((e) => clear(host, h("p", { class: "error" }, (e as Error).message)));
     return host;
+  }
+
+  /** The closed topic list (About/Topics.md) and the topics proposed for it (R8): only
+   *  here does a proposal join the list - accepted as proposed, renamed, or rejected. */
+  private async paintTopics(host: HTMLElement): Promise<void> {
+    const status = h("span", { class: "note inline", role: "status" });
+    const reload = () => void this.paintTopics(host);
+    let out: any;
+    try {
+      out = await this.api.tool("topics_list", {});
+      if (out.error) throw new Error(String(out.detail ?? out.error));
+    } catch (e) {
+      clear(host, h("p", { class: "error" }, (e as Error).message));
+      return;
+    }
+    const propose = h("button", { class: "ghost", onclick: async () => {
+      status.textContent = "Asking the clerk to group the sources…";
+      try {
+        const r = await this.api.tool("topic_propose", { only_unfiled: false });
+        if (r.error) throw new Error(String(r.detail ?? r.error));
+        status.textContent = r.detail ? String(r.detail) : `${(r.proposed ?? []).length} proposed.`;
+        reload();
+      } catch (e) { status.textContent = (e as Error).message; }
+    } }, "Propose topics");
+    const refresh = h("button", { class: "ghost", title: "Rewrite the topic indexes and the Master Index from the notes",
+      onclick: async () => {
+        try { await this.api.tool("views_refresh", {}); status.textContent = "Indexes rewritten."; }
+        catch (e) { status.textContent = (e as Error).message; }
+      } }, "Rewrite indexes");
+    const proposal = (p: any) => {
+      const name = h("input", { type: "text", value: p.name, "aria-label": "Topic name" }) as HTMLInputElement;
+      const file = h("input", { type: "checkbox", checked: true }) as HTMLInputElement;
+      const accept = h("button", { class: "primary", onclick: async () => {
+        try {
+          const r = await this.api.tool("staging_decide", { item_ids: [p.id], decision: "accept",
+            fields: { name: name.value, refile: file.checked } });
+          const one = (r.results ?? [])[0] ?? r;
+          if (r.error || one.error || one.refused) throw new Error(String(one.detail ?? one.error ?? r.detail ?? r.error));
+          status.textContent = `${one.topic} added; ${(one.refiled ?? []).filter((x: any) => x.topic && !x.unchanged).length} source(s) filed under it.`;
+          reload();
+        } catch (e) { status.textContent = (e as Error).message; }
+      } }, "Accept");
+      return h("div", { class: "srv" }, name,
+        h("label", { class: "note inline" }, file, ` file its ${p.sources} source${p.sources === 1 ? "" : "s"} under it`),
+        p.duplicate_of ? h("span", { class: "warn" }, `close to ${p.duplicate_of}`) : null, accept);
+    };
+    clear(host,
+      h("p", {}, (out.topics ?? []).map((t: any) => `${t.topic} (${t.sources})`).join(" · ")),
+      out.unfiled ? h("p", { class: "note" }, `${out.unfiled} source${out.unfiled === 1 ? "" : "s"} Unfiled.`) : null,
+      (out.not_accepted ?? []).length ? h("p", { class: "warn" }, `Filed under topics not in the list: ${(out.not_accepted as string[]).join(", ")}.`) : null,
+      (out.proposed ?? []).length ? h("p", { class: "note" }, "Proposed from the library's own sources (details in Staging → Topics):") : null,
+      (out.proposed ?? []).map(proposal),
+      h("div", { class: "row2 tight" }, propose, refresh, status));
   }
 
   /** The domain profile this library was created with (profiles.py): what it

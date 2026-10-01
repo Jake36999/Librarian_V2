@@ -31,7 +31,7 @@ def lens_suggest(ctx: Context, material: str = "", task: str = "", query: str = 
     return {"lenses": LensStore(ctx.vault).suggest(material, task, query, limit)}
 
 
-@tool("lens_adopt", tier="curate", effect="write",
+@tool("lens_adopt", tier="curate", effect="write", scope="session",
       returns=("adopted", "lenses"),
       card=Card("Adopt an accepted lens for this thread: its instruction joins the "
                 "model's system prompt until dropped",
@@ -52,7 +52,7 @@ def lens_adopt(ctx: Context, lens_id: str) -> dict:
     return {"adopted": lens_id, "lenses": _session(ctx).lenses}
 
 
-@tool("lens_drop", tier="consult", effect="write",
+@tool("lens_drop", tier="consult", effect="write", scope="session",
       returns=("dropped", "lenses"),
       card=Card("Stop using an adopted lens in this thread",
                 "a lens no longer fits the work, or the person asks"))
@@ -85,7 +85,7 @@ def lens_packs(ctx: Context) -> dict:
     return {"packs": PackLibrary(ctx.vault).status()}
 
 
-@tool("lens_pack_accept", tier="curate", effect="write",
+@tool("lens_pack_accept", tier="curate", effect="write", scope="library",
       returns=("pack", "lenses"),
       card=Card("Accept a lens pack's exact text: its lenses join the lens store",
                 "the person has read a pack and wants its lenses available",

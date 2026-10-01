@@ -168,6 +168,18 @@ def checks(vault: Vault | None = None, mcp: Any = None) -> list[Check]:
     else:
         out.append(Check("content model", not model.error, model.error or
                          f"{len(model.shapes)} shapes, {len(model.kinds)} source kinds"))
+        # Shapes the app's own tools write: a model from before them indexes what they write
+        # with no shape, and no search intent returns it (M0, 2026-10-01: a guide written
+        # with write_note was not findable in Librarian-Uni).
+        writers = {"note": "write_note", "offering": "promote_offering",
+                   "application": "record_application"}
+        missing = [s for s in writers if s not in model.shapes]
+        if not model.error and model.shapes and missing:
+            out.append(Check("content model: shapes", False,
+                             f"no {', '.join(missing)} shape: what "
+                             f"{', '.join(writers[s] for s in missing)} write is indexed with no "
+                             f"shape, so search cannot return it. Copy the rows from the "
+                             f"starter Note Content Model's `## Shapes` table"))
         if not model.error and not model.kinds:
             out.append(Check("content model: kinds", False,
                              "no `## Source Kinds` table: nothing can be promoted to Sources/. "

@@ -8,6 +8,9 @@ After a turn, when a library turns it on (`review_replies = true` under
 2. Each claim goes to the `review` task with that note's own text - never the
    reply around it (Chain-of-Verification) - and a `fails` counts only with a
    counter-quote found in the note.
+3. Nothing is dropped in silence (Test Directive A5): a linked note no claim was
+   listed about, and a claim past the limit, are each counted as unchecked, and
+   the notes are named.
 
 The verdict is shown to the person as one line under the reply, not woven
 into it. A challenged claim is handed to the lead model in its next prompt
@@ -36,7 +39,8 @@ def _key(name: str) -> str:
     return name.strip().rsplit("/", 1)[-1].removesuffix(".md").casefold()
 
 
-def review_reply(vault: Vault, reply: str, endpoint: clerk.Endpoint | None) -> dict[str, Any] | None:
+def review_reply(vault: Vault, reply: str, endpoint: clerk.Endpoint | None,
+                 max_claims: int = MAX_CLAIMS) -> dict[str, Any] | None:
     """The verdicts on a reply's note-backed claims, or None when it links no note."""
     raw_links = WIKILINK.findall(reply or "")
     if not raw_links:
@@ -60,12 +64,20 @@ def review_reply(vault: Vault, reply: str, endpoint: clerk.Endpoint | None) -> d
         return {**out, "status": listed.status}
     out["model"] = listed.model
     paths = {k: v for k, v in existing.items() if k in linked}
+    # Only claims about a note the reply links and that exists; then the limit.
+    usable = [item for item in listed.value.get("claims") or []
+              if _key(str(item.get("note") or "")) in paths]
+    claimed = {_key(str(item.get("note") or "")) for item in usable}
+    silent = sorted(path.stem for key, path in paths.items() if key not in claimed)
+    if silent:
+        out["not_extracted"] = silent
+        out["unchecked"] += len(silent)
+    if len(usable) > max_claims:
+        out["over_limit"] = len(usable) - max_claims
+        out["unchecked"] += out["over_limit"]
     checks: list[tuple[str, str, clerk.Task]] = []
-    for item in (listed.value.get("claims") or [])[:MAX_CLAIMS]:
-        name = str(item.get("note") or "")
-        path = paths.get(_key(name))
-        if path is None:
-            continue                                  # not linked by the reply, or no such note
+    for item in usable[:max_claims]:
+        path = paths[_key(str(item.get("note") or ""))]
         body = notes.load(path).body
         checks.append((str(item.get("claim") or ""), path.stem,
                        clerk.review(str(item.get("claim") or ""), "", body[:NOTE_CHARS])))
@@ -77,9 +89,20 @@ def review_reply(vault: Vault, reply: str, endpoint: clerk.Endpoint | None) -> d
         elif verdict in ("fails", "unsupported"):
             # `unsupported`: the note is silent on it - no quote can show that,
             # so it is said as "not found in the note", never as a contradiction.
-            out["challenged"].append({"claim": claim, "note": note, "verdict": verdict,
-                                      "counter_quote": result.value.get("counter_quote", ""),
-                                      "reason": result.value.get("reason", "")})
+            row = {"claim": claim, "note": note, "verdict": verdict,
+                   "counter_quote": result.value.get("counter_quote", ""),
+                   "reason": result.value.get("reason", "")}
+            fi = result.value.get("failing_input")
+            if fi:
+                from . import claim_run
+                try:
+                    claim_run.repository_of(vault, note)
+                    row["run_id"] = claim_run.RunnableStore(vault).add(
+                        claim, note, fi, "reply", reason=row["reason"])
+                    row["input"] = claim_run.shown(fi)
+                except TypeError:
+                    pass                      # not a repository: there is no code to run
+            out["challenged"].append(row)
         else:
             out["unchecked"] += 1
     return out

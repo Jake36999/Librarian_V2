@@ -28,12 +28,15 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
 
+import yaml
+
 MAX_FILES = 600               # source files read, most shallow first
 MAX_FILE_BYTES = 300_000
 MAX_REPO_KB = 200_000         # GitHub's `size`; larger repositories are not cloned
 CLONE_TIMEOUT = 120
 SKIP_DIRS = frozenset({".git", "node_modules", "vendor", "third_party", "dist", "build",
-                       ".venv", "venv", "__pycache__", "site-packages", ".tox", "target"})
+                       ".venv", "venv", "__pycache__", "site-packages", ".tox", "target",
+                       "librarian-app"})          # the librarian's own sidecar (P6)
 LANGUAGES = {".py": "python", ".js": "javascript", ".mjs": "javascript", ".cjs": "javascript",
              ".jsx": "javascript", ".ts": "typescript", ".tsx": "typescript", ".go": "go",
              ".rs": "rust", ".java": "java", ".kt": "kotlin", ".rb": "ruby", ".cs": "csharp",
@@ -41,8 +44,17 @@ LANGUAGES = {".py": "python", ".js": "javascript", ".mjs": "javascript", ".cjs":
              ".swift": "swift"}
 # Examples, docs and scripts show how a project is used; they are read after
 # its own code, and their routes, mains and settings are kept apart.
-EXAMPLE = re.compile(r"(^|/)(examples?|samples?|docs?|docs_src|demos?|scripts|benchmarks?|"
+EXAMPLE = re.compile(r"(^|/)_?(examples?|samples?|docs?|docs_src|demos?|scripts|benchmarks?|"
                      r"tutorials?|playground)/", re.I)
+# A JVM package path is not a folder of examples: `src/main/java/com/example/` is the
+# package `com.example`, which nearly every Spring guide uses (A3: it hid all of one).
+PACKAGE_PATH = re.compile(r"(^|/)src/(main|test)/(java|kotlin|scala|groovy)/.*$")
+
+
+def _is_example(rel: str) -> bool:
+    return bool(EXAMPLE.search(PACKAGE_PATH.sub(r"\1src/", rel)))
+
+
 TEST_FILE = re.compile(r"(^|/)(tests?|__tests__|spec)/|(^|/)test_[^/]+\.py$|_test\.(py|go)$|"
                        r"\.(test|spec)\.[jt]sx?$")
 
@@ -62,17 +74,51 @@ SYMBOLS = {
 SYMBOLS["typescript"] = re.compile(SYMBOLS["javascript"].pattern.replace(
     r"class|const|", r"class|const|interface|type|enum|"), re.M)
 ROUTE = re.compile(
-    r"""@(?:\w+\.)?(?:route|get|post|put|patch|delete|websocket|api_route)\(\s*['"]([^'"]+)['"]"""
+    r"""@(?:\w+\.)?(route|get|post|put|patch|delete|websocket|api_route)\(\s*['"]([^'"]+)['"]"""
     r"""(?:[^)]*methods\s*=\s*\[([^\]]*)\])?"""
     r"""|\b(?:app|router|server)\.(get|post|put|patch|delete|use|all)\(\s*['"`](/[^'"`]*)['"`]"""
     r"""|\bHandleFunc\(\s*"([^"]+)\"""")
+# Routes declared other ways (A3, 2026-10-01), each read only in its own language:
+# Go routers called on any receiver (chi `r.Get`, gin and echo `r.GET`); Spring's
+# `@GetMapping` family under a class's `@RequestMapping`; NestJS's `@Get()` under a
+# class's `@Controller`. A path is a string literal; a computed one is not guessed at.
+GO_ROUTE = re.compile(r"""\b\w+\.(Get|Post|Put|Patch|Delete|Head|Options|GET|POST|PUT|PATCH|"""
+                      r"""DELETE|HEAD|OPTIONS|Any)\(\s*"(/[^"]*)\"""")
+SPRING_ROUTE = re.compile(
+    r"""@(Get|Post|Put|Patch|Delete|Request)Mapping\b(?:\s*\(([^)]*)\))?""")
+SPRING_PATH = re.compile(r"""^\s*(?:(?:value|path)\s*=\s*)?\{?\s*"([^"]*)"|"""
+                         r"""\b(?:value|path)\s*=\s*\{?\s*"([^"]*)\"""")
+SPRING_METHOD = re.compile(r"RequestMethod\.([A-Z]+)")
+NEST_ROUTE = re.compile(r"""@(Get|Post|Put|Patch|Delete|All|Head|Options)\(\s*"""
+                        r"""(?:['"`]([^'"`]*)['"`])?\s*\)""")
+NEST_CONTROLLER = re.compile(r"""@Controller\(\s*(?:\{[^}]*?path\s*:\s*)?(?:['"`]([^'"`]*)['"`])?""")
+CLASS = re.compile(r"^\s*(?:public\s+|export\s+|abstract\s+|final\s+|open\s+)*class\s", re.M)
+JAVA_MAIN = re.compile(r"\bpublic\s+static\s+void\s+main\s*\(\s*(?:final\s+)?String"
+                       r"|^fun\s+main\s*\(", re.M)
+# Spring's own settings files: their keys, never their values.
+SPRING_SETTINGS = re.compile(r"(^|/)(application|bootstrap)(-[\w-]+)?\.(properties|ya?ml)$")
+PLACEHOLDER = re.compile(r"\$\{([A-Z][A-Z0-9_]{2,})(?::[^}]*)?\}")
+MAX_SETTINGS_KEYS = 30          # per settings file
 ENV = re.compile(r"""os\.environ(?:\.get)?[\[(]\s*['"]([A-Z][A-Z0-9_]{2,})['"]"""
                  r"""|os\.getenv\(\s*['"]([A-Z][A-Z0-9_]{2,})['"]"""
                  r"""|process\.env\.([A-Z][A-Z0-9_]{2,})"""
                  r"""|process\.env\[\s*['"]([A-Z][A-Z0-9_]{2,})['"]"""
                  r"""|os\.Getenv\(\s*"([A-Z][A-Z0-9_]{2,})"\)"""
-                 r"""|std::env::var\(\s*"([A-Z][A-Z0-9_]{2,})"\)""")
+                 r"""|std::env::var\(\s*"([A-Z][A-Z0-9_]{2,})"\)"""
+                 r"""|System\.getenv\(\s*"([A-Z][A-Z0-9_]{2,})"\)""")
 SECRET = re.compile(r"KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH", re.I)
+# What a file imports, per language (P6, Research Pipeline §3.1): static text only.
+IMPORTS = {
+    "javascript": re.compile(r"""(?:^|\s)import\s+(?:[^'"]*?\sfrom\s+)?['"]([^'"]+)['"]"""
+                             r"""|\brequire\(\s*['"]([^'"]+)['"]\s*\)""", re.M),
+    "go": re.compile(r'^\s*(?:import\s+)?(?:\w+\s+)?"([\w./-]+)"\s*$', re.M),
+    "rust": re.compile(r"^\s*(?:pub\s+)?use\s+([\w:]+)", re.M),
+    "java": re.compile(r"^\s*import\s+(?:static\s+)?([\w.]+)\s*;", re.M),
+    "kotlin": re.compile(r"^\s*import\s+([\w.]+)", re.M),
+    "csharp": re.compile(r"^\s*using\s+([\w.]+)\s*;", re.M),
+}
+IMPORTS["typescript"] = IMPORTS["javascript"]
+MAX_IMPORTS = 40                # per file
 MCP_TOOL = re.compile(r"""@(?:\w+\.)?tool\(|\.tool\(\s*['"]([\w-]+)['"]|server\.tool\(""")
 
 
@@ -121,7 +167,7 @@ def _files(root: Path) -> list[str]:
         dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS and not d.startswith("."))
         rel = Path(current).relative_to(root)
         out += [(rel / n).as_posix() for n in sorted(names)]
-    return sorted(out, key=lambda p: (bool(EXAMPLE.search(p)), p.count("/"), p))
+    return sorted(out, key=lambda p: (_is_example(p), p.count("/"), p))
 
 
 def _read(root: Path, rel: str) -> str:
@@ -149,6 +195,111 @@ def _python(source: str) -> tuple[list[str], bool]:
         elif isinstance(node, ast.If) and "__main__" in ast.unparse(node.test):
             main = True
     return names, main
+
+
+def _python_imports(source: str) -> list[str]:
+    """Modules a Python file imports; a relative import keeps its dots (`.util`, `..core`)."""
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError):
+        return []
+    out: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            out += [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            base = "." * (node.level or 0) + (node.module or "")
+            out.append(base if node.module else base + (node.names[0].name if node.names else ""))
+    return list(dict.fromkeys(out))[:MAX_IMPORTS]
+
+
+def _imports(lang: str, source: str) -> list[str]:
+    if lang == "python":
+        return _python_imports(source)
+    pattern = IMPORTS.get(lang)
+    if pattern is None:
+        return []
+    found = [next((g for g in m.groups() if g), "") for m in pattern.finditer(source)]
+    return list(dict.fromkeys(f for f in found if f))[:MAX_IMPORTS]
+
+
+def _join(*parts: str) -> str:
+    joined = "/".join(p.strip("/") for p in parts if p and p.strip("/"))
+    return "/" + joined
+
+
+COMMENT_LINE = re.compile(r"\s*(//|/\*|\*|#)")
+
+
+def _commented(source: str, at: int) -> bool:
+    """Whether position `at` is on a comment line: a usage example in a doc comment
+    (`//   r.Get("/", h)`) is not a route the code declares."""
+    return bool(COMMENT_LINE.match(source, source.rfind("\n", 0, at) + 1))
+
+
+def _routes(lang: str, source: str, rel: str) -> list[dict[str, str]]:
+    """The HTTP routes a file declares, as written: method, path, file."""
+    out: list[dict[str, str]] = []
+    for m in ROUTE.finditer(source):
+        if _commented(source, m.start()):
+            continue
+        g = m.groups()
+        if g[1]:                                   # a decorator: Flask, FastAPI and the like
+            methods = ",".join(re.findall(r"[A-Z]+", g[2] or "")) or                 (g[0].upper() if g[0] in ("get", "post", "put", "patch", "delete") else "-")
+            out.append({"path": g[1], "method": methods, "file": rel})
+        elif g[4]:
+            out.append({"path": g[4], "method": g[3].upper(), "file": rel})
+        else:
+            out.append({"path": g[5], "method": "-", "file": rel})
+    if lang == "go":
+        out += [{"path": m.group(2), "method": m.group(1).upper(), "file": rel}
+                for m in GO_ROUTE.finditer(source) if not _commented(source, m.start())]
+    elif lang in ("java", "kotlin"):
+        first_class = CLASS.search(source)
+        prefix = ""
+        for m in SPRING_ROUTE.finditer(source):
+            if _commented(source, m.start()):
+                continue
+            args = m.group(2) or ""
+            found = SPRING_PATH.search(args)
+            path = next((g for g in found.groups() if g is not None), "") if found else ""
+            if first_class and m.start() < first_class.start():
+                if m.group(1) == "Request":          # the class's own prefix
+                    prefix = path
+                continue
+            method = m.group(1).upper() if m.group(1) != "Request" else \
+                (",".join(SPRING_METHOD.findall(args)) or "-")
+            out.append({"path": _join(prefix, path), "method": method, "file": rel})
+    elif lang in ("typescript", "javascript"):
+        controller = NEST_CONTROLLER.search(source)
+        prefix = (controller.group(1) or "") if controller else ""
+        out += [{"path": _join(prefix, m.group(2) or ""), "method": m.group(1).upper(),
+                 "file": rel} for m in NEST_ROUTE.finditer(source)
+                if not _commented(source, m.start())]
+    return out
+
+
+def _settings_keys(root: Path, rel: str) -> tuple[list[str], list[str]]:
+    """A Spring settings file's keys (`server.port`), and the environment variables its
+    values name (`${DB_PASSWORD}`). Values are never kept: they may be secrets."""
+    text = _read(root, rel)
+    if rel.endswith(".properties"):
+        keys = re.findall(r"^\s*([A-Za-z][\w.\-\[\]]*)\s*[=:]", text, re.M)
+    else:
+        try:
+            data = yaml.safe_load(text)
+        except yaml.YAMLError:
+            data = None
+        keys = []
+
+        def walk(node: Any, prefix: str) -> None:
+            if isinstance(node, dict):
+                for k, v in node.items():
+                    walk(v, f"{prefix}.{k}" if prefix else str(k))
+            elif prefix:
+                keys.append(prefix)
+        walk(data, "")
+    return list(dict.fromkeys(keys))[:MAX_SETTINGS_KEYS], PLACEHOLDER.findall(text)
 
 
 def _manifest_entries(root: Path, files: set[str]) -> list[dict[str, str]]:
@@ -228,6 +379,7 @@ def survey(root: Path) -> dict[str, Any]:
     example_routes: list[dict[str, str]] = []
     env: dict[str, str] = {}
     mcp_files: list[str] = []
+    imports: list[dict[str, Any]] = []
     read = 0
     for rel in files:
         lang = LANGUAGES.get(Path(rel).suffix.lower())
@@ -239,7 +391,7 @@ def survey(root: Path) -> dict[str, Any]:
         if not source:
             continue
         read += 1
-        example = bool(EXAMPLE.search(rel))
+        example = _is_example(rel)
         if lang == "python":
             names, main = _python(source)
             if main and not example:
@@ -251,18 +403,19 @@ def survey(root: Path) -> dict[str, Any]:
             if not example and lang == "go" and re.search(r"^package main\b", source, re.M) \
                     and re.search(r"^func main\(\)", source, re.M):
                 entry.append({"kind": "go main", "name": rel, "target": rel, "file": rel})
+            if not example and lang in ("java", "kotlin") and JAVA_MAIN.search(source):
+                if "@SpringBootApplication" in source:
+                    entry.append({"kind": "Spring Boot application", "name": rel,
+                                  "target": rel, "file": rel})
+                else:
+                    entry.append({"kind": f"{lang} main", "name": rel, "target": rel,
+                                  "file": rel})
         if names:
             modules.append({"file": rel, "symbols": list(dict.fromkeys(names))[:25]})
-        for m in ROUTE.finditer(source):
-            g = m.groups()
-            if g[0]:
-                methods = ",".join(re.findall(r"[A-Z]+", g[1] or "")) or "-"
-                route = {"path": g[0], "method": methods, "file": rel}
-            elif g[3]:
-                route = {"path": g[3], "method": g[2].upper(), "file": rel}
-            else:
-                route = {"path": g[4], "method": "-", "file": rel}
-            (example_routes if example else routes).append(route)
+        found = _imports(lang, source)
+        if found and not example:
+            imports.append({"file": rel, "imports": found})
+        (example_routes if example else routes).extend(_routes(lang, source, rel))
         if example:
             continue
         for m in ENV.finditer(source):
@@ -273,6 +426,11 @@ def survey(root: Path) -> dict[str, Any]:
     for rel in files:                           # documented settings, e.g. `.env.example`
         if Path(rel).name in (".env.example", ".env.sample", "env.example", ".env.template"):
             for name in re.findall(r"^\s*([A-Z][A-Z0-9_]{2,})\s*=", _read(root, rel), re.M):
+                env.setdefault(name, rel)
+        elif SPRING_SETTINGS.search(rel) and not _is_example(rel) \
+                and not TEST_FILE.search(rel):
+            keys, named = _settings_keys(root, rel)
+            for name in keys + named:
                 env.setdefault(name, rel)
     unique_routes = list({(r["method"], r["path"]): r for r in routes}.values())
     return {
@@ -286,6 +444,7 @@ def survey(root: Path) -> dict[str, Any]:
         "environment": [{"name": n, "file": f, "credential": bool(SECRET.search(n))}
                         for n, f in sorted(env.items())][:60],
         "mcp_server_files": mcp_files[:10],
+        "imports": imports[:300],
         "limited": read >= MAX_FILES,
     }
 
@@ -303,11 +462,13 @@ def structure_text(s: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+RUNNABLE_KINDS = ("__main__ block", "go main", "java main", "kotlin main")
+
+
 def access_points_section(s: dict[str, Any]) -> str:
     """Written by code: each bullet names the file it was read from."""
     lines: list[str] = []
-    declared = [e for e in s.get("entry_points", []) if e["kind"] not in ("__main__ block",
-                                                                         "go main")]
+    declared = [e for e in s.get("entry_points", []) if e["kind"] not in RUNNABLE_KINDS]
     for e in declared[:10]:
         target = f" → `{e['target']}`" if e["target"] and e["target"] != e["name"] else ""
         where = f" ({e['file']})" if e["file"] != e["name"] else ""

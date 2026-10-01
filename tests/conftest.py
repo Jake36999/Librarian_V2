@@ -8,6 +8,17 @@ from resource_librarian.init import init
 from resource_librarian.vault import Vault
 
 
+@pytest.fixture(autouse=True)
+def no_live_search(monkeypatch):
+    """Tests never reach a live search engine: a real key in the owner's environment
+    (TAVILY_API_KEY was set 2026-09-30) made research rounds call Tavily, so every
+    round found something new and the stopping rule could never fire. Nor a paid model:
+    the batch's PDF cleanup (P3b) calls DeepInfra whenever its key is in the environment."""
+    for name in ("TAVILY_API_KEY", "BRAVE_API_KEY", "APIFY_TOKEN", "DEEPINFRA_API_KEY",
+                 "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"):
+        monkeypatch.delenv(name, raising=False)
+
+
 @pytest.fixture
 def vault(tmp_path: Path) -> Vault:
     """A fresh starter vault."""
@@ -68,3 +79,33 @@ def blind_answer(payload: dict, teaches: str, quote: str) -> dict:
     return {"judgements": [{"option": letter, "teaches": bool(teaches) and name == teaches,
                             "quote": quote if teaches and name == teaches else ""}
                            for letter, name in options]}
+
+
+def pdf_bytes(pages: list[list[str]]) -> bytes:
+    """A small text PDF, one list of lines per page (an empty list: a page with no text
+    layer, as a scan reads) - so PDF tests need only pypdf, not a PDF-writing library."""
+    def text(value: str) -> str:
+        return value.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+    objects = ["<< /Type /Catalog /Pages 2 0 R >>", "",
+               "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
+    kids = []
+    for lines in pages:
+        ops = "".join(f"({text(line)}) Tj T* " for line in lines)
+        stream = f"BT /F1 12 Tf 14 TL 72 760 Td {ops}ET" if lines else ""
+        objects.append(f"<< /Length {len(stream.encode('latin-1'))} >>\nstream\n{stream}\n"
+                       f"endstream")
+        objects.append(f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources "
+                       f"<< /Font << /F1 3 0 R >> >> /Contents {len(objects)} 0 R >>")
+        kids.append(f"{len(objects)} 0 R")
+    objects[1] = f"<< /Type /Pages /Kids [{' '.join(kids)}] /Count {len(kids)} >>"
+    out, offsets = b"%PDF-1.4\n", []
+    for n, body in enumerate(objects, 1):
+        offsets.append(len(out))
+        out += f"{n} 0 obj\n{body}\nendobj\n".encode("latin-1")
+    xref = len(out)
+    out += f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n".encode()
+    out += "".join(f"{o:010d} 00000 n \n" for o in offsets).encode()
+    out += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n" \
+        .encode()
+    return out

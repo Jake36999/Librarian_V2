@@ -37,11 +37,22 @@ def config_dir() -> Path:
     return Path(base) / SERVICE
 
 
+# Keys that are not a model provider's: the web search backends (websearch.py reads
+# them from the environment). Kept and shown like the model keys (owner, 2026-10-01).
+SEARCH_KEYS = {"tavily": "TAVILY_API_KEY", "brave": "BRAVE_API_KEY"}
+
+
 def key_env(provider: str) -> str:
+    if provider in SEARCH_KEYS:
+        return SEARCH_KEYS[provider]
     preset = PRESETS.get(provider)
     if preset is None:
         raise KeyError(f"unknown provider {provider!r}")
     return preset["key_env"]
+
+
+def _key_names() -> list[str]:
+    return [p["key_env"] for p in PRESETS.values() if p["key_env"]] + list(SEARCH_KEYS.values())
 
 
 def _keyring() -> Any:
@@ -92,8 +103,7 @@ class KeyStore:
         self._lock = threading.Lock()
         self._keyring = _keyring() if use_keyring else None
         self.path = config_dir() / ".env"
-        self._host = {n for n in (p["key_env"] for p in PRESETS.values())
-                      if n and os.environ.get(n)}                # handed in at start
+        self._host = {n for n in _key_names() if os.environ.get(n)}   # handed in at start
         self._saved: dict[str, str] = self._read()
         for name, value in self._saved.items():
             os.environ.setdefault(name, value)
@@ -105,7 +115,7 @@ class KeyStore:
     # -- storage -------------------------------------------------------------
     def _read(self) -> dict[str, str]:
         out: dict[str, str] = {}
-        names = [p["key_env"] for p in PRESETS.values() if p["key_env"]]
+        names = _key_names()
         if self._keyring is not None:
             for name in names:
                 value = self._keyring.get_password(SERVICE, name)
@@ -151,7 +161,7 @@ class KeyStore:
                 "source": source}
 
     def all(self) -> list[dict[str, Any]]:
-        return [self.status(p) for p in PRESETS]
+        return [self.status(p) for p in [*PRESETS, *SEARCH_KEYS]]
 
     def save(self, provider: str, key: str) -> dict[str, Any]:
         name = key_env(provider)

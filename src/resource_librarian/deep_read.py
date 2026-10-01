@@ -118,8 +118,10 @@ def source_units(vault: Vault, item: dict[str, Any]) -> list[tuple[int, str]]:
     item's own `sections` - those may already carry an agent's own writing,
     and a lens is mined from the source, not from a machine's account of it
     (E8)."""
-    if item.get("file"):
-        path = vault.root / item["file"]
+    for key in ("clean_file", "file"):                  # a cleaned copy first (P3b)
+        if not item.get(key):
+            continue
+        path = vault.root / item[key]
         if path.is_file():
             result = text.extract(path, vault.derived / "text")
             if not result.error:
@@ -221,7 +223,7 @@ def deep_read(vault: Vault, item_id: str, endpoint: clerk.Endpoint | None, *,
     item = store.load(item_id)
     if item["kind"] != "source":
         raise TypeError(f"{item_id} is a {item['kind']}; only a staged source is deep-read")
-    if item["status"] not in ("staged", "deferred"):
+    if item["status"] not in ("staged", "deferred", "approved", "processing"):
         raise TypeError(f"{item_id} is already {item['status']}")
     local = clerk.is_local(endpoint)
     if local:

@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -42,6 +43,12 @@ You are the librarian of a research vault: Sources someone has read, with their 
 and the Concepts, Projects and Offerings built from them. You work through the tools you are
 given, and only through them.
 - Open a session (`open_session`) before doing more than one search toward a purpose.
+- A brief is named by its ID, as `open_brief` returned it: `brief="B1"`, never its sentence.
+  Capturing a source (`ingest`) needs no brief: leave it out until a brief is open.
+- Choose the purpose by what is asked. Finding, adding or collecting sources - and a guide
+  written from them - is `explore` (or `add_project` / `suggest` for a project): it opens a
+  brief per topic and reports what each found. `learn` is for studying something with the
+  person (goal, baseline, practice); it opens no briefs.
 - Every result inside a session carries an envelope: phase, open items, budget left, next.
   Follow `next`.
 - A refused result names its rule and what to do instead. Do not work around a refusal.
@@ -53,6 +60,39 @@ given, and only through them.
 - Only report a result after the tool that produced it has actually run in this turn. Saying
   you will search, queue or ingest something is not the same as calling the tool - never
   describe a count, a title or an outcome you did not just get back from a real call.
+- If the person asks you to save research as a note, carry the session through its phases:
+  judge the staged sources, advance to Synthesise, record_synthesis, draft_offering, then
+  promote_offering. A staged draft is not yet a library note; if promotion asks the person,
+  wait for their answer. For source notes, report them as added only after staging_decide
+  accepts them and returns the written path.
+- A file exists only when a write tool returns its path. Never claim a note, report, project
+  file or other artifact was created from a plan, a draft that is still staged, or a chat
+  response. If the available tools cannot create the requested artifact, say that plainly.
+- Where you write: `write_note` and `edit_note` for your own notes (a study plan, a checklist,
+  a summary for the person) in Notes/ or Projects/<project>/; `update_project` for a project's
+  stage, goal and constraints. Sources, Concepts and Offerings are written only by staging and
+  promotion. A guide whose claims cite sources is an Offering (`draft_offering` with
+  kind='insight_report'), not a free note. A project's own files outside the vault are
+  read-only unless the person allowed edits for that folder; then `project_edit` changes one
+  file at a time - preview it with dry_run=true, then apply, and the person is asked first.
+- When the person asks about several things, record each as a topic in Frame
+  (`update_plan(fields={'topics': [...]})`). Need opens one brief per topic, and each brief
+  is closed with its coverage - covered, partial or gap - and what is missing. A find that
+  only gives background is decided `context`, never `keep`. Report the gaps plainly.
+- `read_url` and `read_file` let you look at a page or file before deciding to `ingest` it;
+  looking keeps nothing.
+- After completing a phase's work, call advance and follow the returned `next` until the
+  requested deliverable is written or the system reports a concrete blocker. Do not end a
+  research session in search or judge with a completion claim.
+- A source a person accepts into the library joins this session as an undecided candidate
+  under its catalogued name. Accepting it is not deciding it answers the need: judge it with
+  `decide`. If `record_synthesis` says nothing was kept, go back to Judge and decide the
+  accepted notes; never record outcome `nothing` over them.
+- Approving a source for ingestion is not accepting it: a person begins the approved batch
+  from Staging, and each source comes back to be accepted.
+- For `draft_offering`, every `claims` item must have exactly these useful fields: `text`,
+  `source` (the exact catalogued note name), and `quote` (verbatim passage from that source).
+  Do not substitute `evidence_quote` for `quote`; a draft without all three is refused.
 - A question for the person (`ask_user`) is answered by the person, never by you.
 - When you mention a note, a report, a plan or a source, link it by its vault path without
   `.md`, e.g. [[Offerings/Host Watch/Host Watch Starter]] or [[Sources/repository/osquery]].
@@ -62,6 +102,26 @@ given, and only through them.
 LENGTHS = {"long": "Replies may be as long as the content needs.",
            "short": "Keep chat replies short: the result, then what comes next."}
 RESULT_CHARS = 16_000
+# What the model is sent of older work (M0, 2026-10-01: prompts averaged 42,000 tokens and
+# reached 74,000 - the history, not the instructions). The last KEEP_RESULTS tool results go
+# whole; older ones lose the session envelope (only the newest is current) and are clipped
+# to OLD_RESULT_CHARS, as are long string arguments of older tool calls. The log keeps
+# everything; only the view sent to the model is compacted.
+KEEP_RESULTS = 6
+OLD_RESULT_CHARS = 700
+OLD_ARGUMENT_CHARS = 300
+# Upkeep tools: offered outside a session and in its last phase, not while it is working -
+# none was called in any M0 run, and together they are a quarter of the tool list.
+# `capabilities` still names every tool.
+UPKEEP_TOOLS = frozenset({
+    "vault_commit", "vault_push", "gitignore_ensure", "save_workflow", "validate_workflow",
+    "show_workflow", "run_pipeline", "run_resume", "run_status", "run_list",
+    "model_catalog_status", "doctor", "index", "index_status", "views_refresh", "check_notes",
+    "rules", "evaluate", "freshness_check", "duplicate_report", "provenance_check",
+    "dik_rebuild", "refile_source", "topic_propose", "concept_candidates", "lens_packs",
+    "library_profile", "capability_candidates", "verify_access", "scout_rank",
+    "search_feedback", "list_claim_runs", "note_move", "desk_unpin", "desk_show",
+    "desk_touch", "filters", "reflection_draft"})
 
 # Co-work Roadmap §2, W2 "learn": a stance setting beside reply length.
 # Coach is the default for a learn session specifically (Loop.system_prompt
@@ -143,17 +203,74 @@ ADOPTED_LENSES = (
 LENS_CHARS = 800
 
 
-def narrowed(tier: str, phase: str = "") -> list[ToolSpec]:
-    """The tools shown to the model for this tier and phase."""
+def _compact_result(content: str) -> str:
+    """An older tool result: its session envelope dropped, the rest clipped."""
+    try:
+        value = json.loads(content)
+    except ValueError:
+        value = None
+    if isinstance(value, dict):
+        value.pop("session", None)
+        content = json.dumps(value, ensure_ascii=False, default=str)
+    if len(content) > OLD_RESULT_CHARS:
+        content = (content[:OLD_RESULT_CHARS] + f"... [older result, {len(content)} chars, "
+                   f"trimmed: call the tool again if you need it]")
+    return content
+
+
+def _compact_call(call: dict[str, Any]) -> dict[str, Any]:
+    """An older tool call: long string arguments clipped, the call itself intact."""
+    def clip(value: Any) -> Any:
+        if isinstance(value, str) and len(value) > OLD_ARGUMENT_CHARS:
+            return value[:OLD_ARGUMENT_CHARS] + f"... [{len(value)} chars]"
+        if isinstance(value, dict):
+            return {k: clip(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [clip(v) for v in value]
+        return value
+    return {**call, "arguments": clip(call.get("arguments"))}
+
+
+def narrowed(tier: str, phase: str = "", projects_on: bool = True,
+             working: bool = False) -> list[ToolSpec]:
+    """The tools shown to the model for this tier and phase (project tools only while this
+    library's project access is on; upkeep tools not while a session is working)."""
     shown = []
     for spec in sorted(REGISTRY.for_tier(tier), key=lambda s: s.name):
-        if spec.sessionless:
+        if spec.sessionless or (spec.needs_projects and not projects_on):
+            continue
+        if working and spec.name in UPKEEP_TOOLS:
             continue
         phases = WRITES.get(spec.name)
         if phase and phases is not None and phase not in phases:
             continue
         shown.append(spec)
     return shown
+
+
+def _projects_on(vault: Any) -> bool:
+    from .projects import allowed
+    return allowed(vault)
+
+
+def locked_here(tier: str, phase: str, phases: tuple[str, ...]) -> str:
+    """One line naming the tools this phase hides and where each unlocks
+    (Requirements Addendum R4), so a model advances instead of discovering the gate
+    by retrying. Only phases of the current purpose are named."""
+    if not phase:
+        return ""
+    items = []
+    for spec in sorted(REGISTRY.for_tier(tier), key=lambda s: s.name):
+        gate = WRITES.get(spec.name)
+        if spec.sessionless or gate is None or phase in gate:
+            continue
+        where = [p for p in phases if p in gate]
+        if where:
+            items.append(f"{spec.name} ({'/'.join(where)})")
+    if not items:
+        return ""
+    return ("Not available in this phase, and where each unlocks (advance to reach it): "
+            + ", ".join(items) + ".")
 
 
 def tool_def(spec: ToolSpec) -> ToolDef:
@@ -214,6 +331,10 @@ class Loop:
         self.reply_length = reply_length
         self.stance = stance
         self.max_steps = max_steps
+        self.turn_seconds: float | None = None       # the effort setting's time limit
+        # A helper agent's allowlist (tools/delegate.py): only these are offered, and a call
+        # to anything else is refused here, not merely hidden.
+        self.only: frozenset[str] | None = None
         self.on_event = on_event or (lambda event: None)
         self.messages: list[dict[str, Any]] = []
         # A brand-new thread's first message (and the reply that opens it) is
@@ -257,7 +378,11 @@ class Loop:
         lenses = self.adopted_lenses()
         if lenses:
             parts.append(ADOPTED_LENSES + "\n" + "\n".join(lenses))
-        shown = narrowed(self.ctx.tier, self.phase())
+        shown = narrowed(self.ctx.tier, self.phase(), _projects_on(self.ctx.vault))
+        session = self._session()
+        locked = locked_here(self.ctx.tier, self.phase(), session.phases) if session else ""
+        if locked:
+            parts.append(locked)
         if any(spec.external for spec in shown):
             parts.append(EXTERNAL_TOOLS_ADDENDUM)
             parts.append(TOOL_CHOICE_NOTES["outside"])
@@ -359,7 +484,28 @@ class Loop:
             return []
 
     def tools(self) -> list[ToolDef]:
-        return [tool_def(s) for s in narrowed(self.ctx.tier, self.phase())]
+        if self.only is not None:
+            return [tool_def(REGISTRY.get(n)) for n in sorted(self.only) if n in REGISTRY]
+        session = self._session()
+        working = session is not None and session.status == "open" and \
+            session.phase != session.phases[-1]
+        return [tool_def(s) for s in narrowed(self.ctx.tier, self.phase(),
+                                              _projects_on(self.ctx.vault), working)]
+
+    def view(self) -> list[dict[str, Any]]:
+        """The conversation as the model is sent it: older tool results and arguments
+        compacted (KEEP_RESULTS), everything else as it is."""
+        tool_at = [i for i, m in enumerate(self.messages) if m.get("role") == "tool"]
+        keep = set(tool_at[-KEEP_RESULTS:])
+        cutoff = tool_at[-KEEP_RESULTS] if len(tool_at) > KEEP_RESULTS else 0
+        out: list[dict[str, Any]] = []
+        for i, m in enumerate(self.messages):
+            if m.get("role") == "tool" and i not in keep:
+                m = {**m, "content": _compact_result(str(m.get("content") or ""))}
+            elif m.get("role") == "assistant" and m.get("tool_calls") and i < cutoff:
+                m = {**m, "tool_calls": [_compact_call(c) for c in m["tool_calls"]]}
+            out.append(m)
+        return out
 
     # -- the transcript --------------------------------------------------------
     def _persist(self, role: str, text: str) -> None:
@@ -409,19 +555,33 @@ class Loop:
         self._pending_messages = []
 
     # -- a turn --------------------------------------------------------------
-    def send(self, text: str) -> Turn:
+    def send(self, text: str, cancel: threading.Event | None = None) -> Turn:
         self._answering, self.challenges = self.challenges, []    # this turn answers them
         self.messages.append({"role": "user", "content": text})
         self.on_event({"type": "user", "text": text})
         self._persist("user", text)
         turn = Turn()
+        started = time.monotonic()
         while turn.steps < self.max_steps:
+            if self.turn_seconds and turn.steps and \
+                    time.monotonic() - started > self.turn_seconds:
+                turn.stopped = "time_limit"
+                self.on_event({"type": "stopped", "reason": "time_limit"})
+                return turn
+            if cancel is not None and cancel.is_set():
+                turn.stopped = "cancelled"
+                self.on_event({"type": "stopped", "reason": "cancelled"})
+                return turn
             turn.steps += 1
             try:
-                reply = self.provider.chat(self.system_prompt(), self.messages, self.tools())
+                reply = self.provider.chat(self.system_prompt(), self.view(), self.tools())
             except ProviderError as exc:
                 turn.stopped, turn.error = "provider_error", str(exc)[:400]
                 self.on_event({"type": "error", "error": turn.error})
+                return turn
+            if cancel is not None and cancel.is_set():
+                turn.stopped = "cancelled"
+                self.on_event({"type": "stopped", "reason": "cancelled"})
                 return turn
             self.messages.append(reply.message())
             if reply.text:
@@ -431,7 +591,13 @@ class Loop:
                 turn.reply = reply.text
                 return turn
             self.refused_last_step = False
+            # The trace names the model behind each call (Requirements Addendum R3).
+            self.ctx.extras["model"] = reply.model or getattr(self.provider, "name", "")
             for call in reply.tool_calls:
+                if cancel is not None and cancel.is_set():
+                    turn.stopped = "cancelled"
+                    self.on_event({"type": "stopped", "reason": "cancelled"})
+                    return turn
                 self.on_event({"type": "tool_call", "tool": call.name,
                                "arguments": call.arguments})
                 result = self.call(call.name, call.arguments)
@@ -453,6 +619,11 @@ class Loop:
     def call(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """One tool call, as a surface makes it: the loop's thread in, and the
         thread the call opened, resumed or closed out."""
+        if self.only is not None and name not in self.only:
+            refusal = Refusal("TIER_REFUSED", f"{name!r} is not one of this helper's tools "
+                                              f"({', '.join(sorted(self.only))}): helpers "
+                                              f"only read")
+            return {"error": "refused", **refusal.to_dict()}
         if name in REGISTRY and REGISTRY.get(name).sessionless:
             refusal = Refusal("DATA_IS_UNFRAMED", f"{name!r} is the clerk's; an answer "
                                                   f"written inside the research conversation "

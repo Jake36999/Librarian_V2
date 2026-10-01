@@ -47,6 +47,7 @@ class Request:
     session: str
     created: float
     open_world: bool = False
+    preview: dict[str, Any] | None = None
     event: threading.Event = field(default_factory=threading.Event)
     outcome: str = ""               # allowed | denied | expired
     reason: str = ""
@@ -54,7 +55,17 @@ class Request:
     def public(self) -> dict[str, Any]:
         return {"id": self.id, "tool": self.tool, "effect": self.effect,
                 "arguments": self.summary, "session": self.session,
-                "waiting_seconds": round(time.monotonic() - self.created, 1)}
+                "waiting_seconds": round(time.monotonic() - self.created, 1),
+                **({"preview": self.preview} if self.preview else {}),
+                **({"always_ask": True} if self.tool in ALWAYS_ASK else {})}
+
+
+# Tools a person is asked about before every applied call, in any mode and whatever was
+# granted for the session, unless that tool itself is set to Allow (Research Pipeline §6.1:
+# project writes pass the broker, Ask/Allow/Deny). Their request carries the arguments in
+# full (to ASK_SHOWN characters each), so the person sees the change they are approving.
+ALWAYS_ASK = frozenset({"project_edit"})
+ASK_SHOWN = 4000
 
 
 class Broker:
@@ -133,25 +144,34 @@ class Broker:
             return "ask"
         if not writes:
             return "allow"
+        if tool in ALWAYS_ASK and setting != "allow":
+            return "ask"
         if (session, tool) in self._session_grants:
             return "allow"
         if self._mode == "auto" or setting == "allow":
             return "allow"
         return "ask"
 
-    def check(self, spec: ToolSpec, arguments: dict[str, Any], ctx: Any) -> None:
-        """Allow, refuse, or wait for a person. Called by `Registry.call`."""
+    def check(self, spec: ToolSpec, arguments: dict[str, Any], ctx: Any,
+              preview: dict[str, Any] | None = None) -> str:
+        """Allow, refuse, or wait for a person. Called by `Registry.call`; returns how it
+        was allowed (the trace records it, Requirements Addendum R3)."""
         session = str(getattr(ctx, "session", "") or "")
-        verdict = self._policy(spec.name, spec.effect, spec.open_world, session)
+        # A dry run writes nothing (staging_decide, project_edit): it is decided as a read, so
+        # Plan mode can show the diff it would propose.
+        effect = "read" if (arguments or {}).get("dry_run") is True else spec.effect
+        verdict = self._policy(spec.name, effect, spec.open_world, session)
         if verdict == "allow":
-            return
+            return f"allowed ({self._mode} mode)" if effect != "read" else "allowed (read)"
         if verdict == "deny":
             why = ("the tool is set to Deny" if self.settings.get(spec.name) == "deny" else
                    "Plan mode proposes and does not write; switch to Ask or Auto")
             raise Refusal("PERMISSION_DENIED", f"{spec.name}: {why}")
+        shown = ASK_SHOWN if spec.name in ALWAYS_ASK else 120
         request = Request(secrets.token_hex(4), spec.name, spec.effect,
-                          {k: clip(v, 120) for k, v in (arguments or {}).items()},
-                          session, time.monotonic(), spec.open_world)
+                          {k: clip(v, shown) for k, v in (arguments or {}).items()},
+                          session, time.monotonic(), spec.open_world,
+                          {k: clip(v, 20_000) for k, v in preview.items()} if preview else None)
         with self._lock:
             self._pending[request.id] = request
         self._emit({"type": "permission_request", **request.public()})
@@ -160,7 +180,7 @@ class Broker:
                 if not request.event.is_set():
                     self._finish(request, "expired", "nobody answered")
         if request.outcome == "allowed":
-            return
+            return f"asked: {request.reason}"
         if request.outcome == "expired":
             if session and getattr(ctx, "vault", None) is not None:
                 from .session import SessionStore
@@ -179,7 +199,8 @@ class Broker:
             request = self._pending.get(request_id)
             if request is None:
                 raise LookupError(f"no pending request {request_id!r}")
-            if answer == "allow_session" and request.session:
+            if answer == "allow_session" and request.session and \
+                    request.tool not in ALWAYS_ASK:
                 self._session_grants.add((request.session, request.tool))
             self._finish(request, "denied" if answer == "deny" else "allowed",
                          "denied by a person" if answer == "deny" else

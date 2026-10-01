@@ -29,6 +29,12 @@ from .rules import Refusal
 
 TIERS = ("consult", "contribute", "curate")
 EFFECTS = ("read", "write", "vault_write")
+# Where a tool that changes something may run inside a session (Deeper Audit, "phase
+# routing is only explicit for a subset of writes"): every write says which, so none is
+# left open by being forgotten. "phase": only in its declared `phases`; "session":
+# bookkeeping in any phase (a note, a task, the desk); "library": maintenance that is not
+# a step of the research method, in any phase.
+SCOPES = ("phase", "session", "library")
 
 MAX_TEXT = 20_000
 MAX_ECHO = 160
@@ -79,6 +85,20 @@ class ToolSpec:
     # to read off `fn` (a generic bridge, not a typed Python function) -
     # `json_schema()` and `coerce()` use this directly when it is set.
     schema: dict[str, Any] | None = None
+    # Arguments that name something the vault or session holds, and how to
+    # resolve what a model writes into the exact reference (Requirements
+    # Addendum R2): {"source": "note", "brief": "brief", "target": "phase"}.
+    resolve: dict[str, str] = field(default_factory=dict)
+    # Research Pipeline §6: reaches a project's own files; refused at the core, and left out
+    # of the model's tools, while this library's project access is off.
+    needs_projects: bool = False
+    # See SCOPES. A read has neither; `phases` is set exactly when scope is "phase".
+    scope: str = ""
+    phases: frozenset[str] = frozenset()
+    # The tool previews itself: before a broker asks about an applied call, it runs with
+    # dry_run=True - a refusal stops the call before anyone is asked, and its result (a diff)
+    # goes in the request, so the person sees exactly what they approve.
+    previews: bool = False
 
     # -- parameters, read from the function itself ---------------------------
     def parameters(self) -> list[inspect.Parameter]:
@@ -161,11 +181,20 @@ class Registry:
     def tool(self, name: str, *, tier: str, effect: str, card: Card,
              open_world: bool = False, needs_vault: bool = True,
              idempotent: bool | None = None, returns: tuple[str, ...] = (),
-             sessionless: bool = False) -> Callable:
+             sessionless: bool = False, resolve: dict[str, str] | None = None,
+             scope: str = "", phases: tuple[str, ...] = (),
+             needs_projects: bool = False, previews: bool = False) -> Callable:
+        if phases:
+            scope = scope or "phase"
         if tier not in TIERS:
             raise ValueError(f"tier {tier!r} not in {TIERS}")
         if effect not in EFFECTS:
             raise ValueError(f"effect {effect!r} not in {EFFECTS}")
+        if effect != "read" and not sessionless and scope not in SCOPES:
+            raise ValueError(f"{name!r} changes something: declare scope= one of {SCOPES}, "
+                             f"or phases=(...)")
+        if (scope == "phase") != bool(phases):
+            raise ValueError(f"{name!r}: phases=(...) goes with scope 'phase', and only with it")
 
         def register(fn: Callable[..., Any]) -> Callable[..., Any]:
             if name in self._tools:
@@ -177,7 +206,9 @@ class Registry:
                 name=name, fn=fn, tier=tier, effect=effect, card=card,
                 open_world=open_world, needs_vault=needs_vault,
                 idempotent=(effect == "read") if idempotent is None else idempotent,
-                returns=tuple(returns), sessionless=sessionless)
+                returns=tuple(returns), sessionless=sessionless, resolve=dict(resolve or {}),
+                scope=scope, phases=frozenset(phases), needs_projects=needs_projects,
+                previews=previews)
             return fn
         return register
 
@@ -242,20 +273,31 @@ class Registry:
         if hooks and name in self._tools and self._tools[name].sessionless:
             hooks = None
         adjusted: list[str] = []
+        permission, kwargs = "no broker", None
         try:
             spec = self.check(name, ctx.tier)
             if spec.needs_vault and ctx.vault is None:
                 raise Refusal("VAULT_REQUIRED", f"{name!r} needs a vault")
+            if spec.needs_projects:
+                from .projects import allowed
+                if not allowed(ctx.vault):
+                    raise Refusal("PROJECT_ACCESS_OFF", f"{name}: project access is off for "
+                                                        f"this library (Settings -> Projects)")
             kwargs, adjusted = coerce(spec, arguments or {})
+            adjusted += resolve_references(spec, kwargs, ctx)
             if hooks:
                 hooks[0](name, spec.effect, ctx)
             broker = ctx.extras.get("broker")
             if broker is not None:
                 # The surface's permission mode, decided as the action runs;
                 # after the phase gate, so nobody is asked about a refused write.
-                broker.check(spec, kwargs, ctx)
+                preview = spec.fn(ctx, **{**kwargs, "dry_run": True}) \
+                    if spec.previews and not kwargs.get("dry_run") else None
+                permission = broker.check(spec, kwargs, ctx, preview=preview) or "allowed"
             result = spec.fn(ctx, **kwargs)
         except Refusal as refusal:
+            if refusal.code.startswith("PERMISSION_"):
+                permission = refusal.code.lower()
             result = {"error": "refused", **refusal.to_dict()}
         except TypeError as exc:
             result = {"error": "invalid_arguments", "tool": name, "detail": clip(exc, 400)}
@@ -266,12 +308,56 @@ class Registry:
             result = {"result": result}
         if adjusted:
             result = {**result, "adjusted_arguments": adjusted}
+        outcome = outcome_of(result)
+        if outcome:              # its own key: a tool's `status` (e.g. "staged") stays its own
+            result = {**result, "outcome": outcome}
         if hooks and name in self._tools and ctx.session:
             try:
-                result = hooks[1](name, arguments or {}, result, ctx, self._tools[name].effect)
+                result = hooks[1](name, arguments or {}, result, ctx, self._tools[name].effect,
+                                  permission=permission, normalised=kwargs)
             except Refusal as refusal:
                 result = {**result, "session_error": refusal.to_dict()}
         return result
+
+
+# Resolvers for `ToolSpec.resolve`, registered by the tools package (it knows
+# the index and the session; this module must not import them). Each takes
+# (ctx, value) and returns the exact reference, raising TypeError - with the
+# candidates, never a guess - when the value names nothing or more than one.
+RESOLVERS: dict[str, Callable[[Context, str], str]] = {}
+
+
+def resolve_references(spec: ToolSpec, kwargs: dict[str, Any], ctx: Context) -> list[str]:
+    """Turn what a model wrote (`[[Name]]`, `Sources/page/Name.md`, `b1`, `Synthesise`)
+    into the exact name, brief ID or phase the tool expects, and say so."""
+    notes: list[str] = []
+    for arg, kind in spec.resolve.items():
+        resolver = RESOLVERS.get(kind)
+        value = kwargs.get(arg)
+        if resolver is None or value in (None, "", []):
+            continue
+        items = value if isinstance(value, list) else [value]
+        resolved = [resolver(ctx, str(item)) if isinstance(item, str) and item.strip() else item
+                    for item in items]
+        for before, after in zip(items, resolved):
+            if after != before:
+                notes.append(f"{arg} {clip(before, 60)!r} read as {clip(after, 60)!r}")
+        kwargs[arg] = resolved if isinstance(value, list) else resolved[0]
+    return notes
+
+
+def outcome_of(result: dict[str, Any]) -> str:
+    """ok / partial / refused for a multi-item result (Requirements Addendum R3): a
+    call that completed but refused some items must never read as a plain success."""
+    if "error" in result:
+        return ""
+    items = result.get("results")
+    if not isinstance(items, list) or not items or not all(isinstance(i, dict) for i in items):
+        return ""
+    failed = [i for i in items if "refused" in i or "error" in i]
+    if not failed:
+        return "ok"
+    return "refused" if len(failed) == len(items) else "partial"
 
 
 def coerce(spec: ToolSpec, arguments: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
@@ -351,9 +437,19 @@ def coerce(spec: ToolSpec, arguments: dict[str, Any]) -> tuple[dict[str, Any], l
                 text = text[:MAX_TEXT]
             text = "".join(c for c in text if c >= " " or c in "\n\t")
             if "enum" in schema and text not in schema["enum"]:
-                raise TypeError(f"{key}={clip(text, 60)!r} is not one of {schema['enum']}")
+                # Case and spacing are not a choice: `Synthesise`, `branch-offering`.
+                wanted = _enum_key(text)
+                matches = [v for v in schema["enum"] if _enum_key(str(v)) == wanted]
+                if len(matches) != 1:
+                    raise TypeError(f"{key}={clip(text, 60)!r} is not one of {schema['enum']}")
+                changed.append(f"{key} {clip(text, 40)!r} read as {matches[0]!r}")
+                text = matches[0]
             out[key] = text
     return out, changed
+
+
+def _enum_key(text: str) -> str:
+    return "".join(c for c in text.casefold() if c.isalnum())
 
 
 REGISTRY = Registry()

@@ -29,6 +29,7 @@ import json
 import re
 import sqlite3
 import threading
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
@@ -36,7 +37,7 @@ from typing import Any, Iterable
 from . import notes, schema
 from .vault import Vault, now_iso
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2          # 2: repository components (P5.3)
 TARGET_CHARS = 1200
 MIN_CHARS = 80
 
@@ -86,6 +87,16 @@ CREATE TABLE IF NOT EXISTS facet (
 );
 CREATE INDEX IF NOT EXISTS idx_facet_axis ON facet(axis, value);
 CREATE INDEX IF NOT EXISTS idx_facet_path ON facet(path);
+
+CREATE TABLE IF NOT EXISTS component (
+  path     TEXT NOT NULL,              -- the repository note's own path
+  note     TEXT NOT NULL,
+  address  TEXT NOT NULL,              -- a surveyed file, directory, module or entry point
+  revision TEXT NOT NULL,              -- the tree or push it was read at
+  evidence TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_component_note ON component(note);
+CREATE INDEX IF NOT EXISTS idx_component_path ON component(path);
 
 CREATE TABLE IF NOT EXISTS link (
   path  TEXT NOT NULL,
@@ -183,6 +194,14 @@ def _title(note: notes.Note) -> str:
     return match.group(1).strip() if match else note.name
 
 
+def fold(text: Any) -> str:
+    """Lower case without accents - "Zürich" -> "zurich", "café" -> "cafe" - the way the
+    FTS index's own tokenizer (unicode61, remove_diacritics) already reads text, so the
+    Python-side checks and name lookups agree with it (Search Methods SM-9)."""
+    decomposed = unicodedata.normalize("NFKD", str(text or ""))
+    return "".join(c for c in decomposed if not unicodedata.combining(c)).lower()
+
+
 def _as_list(value: Any) -> list[str]:
     if value in (None, ""):
         return []
@@ -210,6 +229,7 @@ class Index:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             conn = sqlite3.connect(self.path, timeout=30)
             conn.row_factory = sqlite3.Row
+            conn.create_function("fold", 1, fold, deterministic=True)
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA synchronous=NORMAL")
             conn.executescript(SCHEMA)
@@ -304,6 +324,12 @@ class Index:
                 targets.update(notes.wikilinks(item))
         self.conn.executemany("INSERT INTO link(path, src, dst) VALUES (?, ?, ?)",
                               [(rel, note.name, t.lower()) for t in sorted(targets)])
+        if shape == "source" and kind == "repository" and not error:
+            from .components import addresses
+            self.conn.executemany(
+                "INSERT INTO component(path, note, address, revision, evidence) "
+                "VALUES (?, ?, ?, ?, ?)",
+                [(rel, note.name, a, r, e) for a, r, e in addresses(self.vault, fm)])
         if commit:
             self.conn.commit()
         return True
@@ -351,7 +377,7 @@ class Index:
         ids = [r["id"] for r in self.conn.execute(
             f"SELECT id FROM chunk WHERE path = ?{role_clause}", (rel,))]
         self._delete_chunk_ids(ids)
-        for table in ("note", "facet", "link"):
+        for table in ("note", "facet", "link", "component"):
             self.conn.execute(f"DELETE FROM {table} WHERE path = ?", (rel,))
 
     # -- writes: many notes ---------------------------------------------------

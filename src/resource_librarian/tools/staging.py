@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import PurePosixPath
 from typing import Literal
 
 from .. import clerk, concepts, notes, staging
@@ -20,11 +21,14 @@ def _store(ctx: Context) -> staging.StagingStore:
 def clerk_endpoint(ctx: Context) -> clerk.Endpoint | None:
     """The surface's endpoint, else the vault's configured one, else the
     surface's fallback (MCP sampling), else None and the tasks queue."""
+    from .. import effort
     endpoint = ctx.extras.get("clerk")
     if endpoint is None:
         endpoint = clerk.from_config(ctx.vault.config().get("clerk") or {})
     if endpoint is None:
         endpoint = ctx.extras.get("clerk_fallback")
+    if "effort" in ctx.extras:                 # the person's effort: the clerk's parallel calls
+        effort.apply_concurrency(endpoint, effort.of(ctx)["tier3_agents"])
     return endpoint
 
 
@@ -39,6 +43,9 @@ def scribe_endpoint(ctx: Context) -> clerk.Endpoint | None:
             endpoint = None
     if endpoint is None:
         endpoint = ctx.extras.get("scribe_fallback") or ctx.extras.get("clerk_fallback")
+    if "effort" in ctx.extras:
+        from .. import effort
+        effort.apply_concurrency(endpoint, effort.of(ctx)["tier2_agents"])
     return endpoint
 
 
@@ -46,8 +53,10 @@ def scribe_endpoint(ctx: Context) -> clerk.Endpoint | None:
       returns=("counts", "total", "items"),
       card=Card("What waits in staging: counts, and a page of items",
                 "reviewing the airlock", "Sensitive items are marked"))
-def staging_list(ctx: Context, kind: Literal["", "source", "lens", "concept"] = "",
-                 status: Literal["", "staged", "deferred", "accepted"] = "staged",
+def staging_list(ctx: Context, kind: Literal["", "source", "lens", "concept", "topic",
+                                             "import"] = "",
+                 status: Literal["", "queued", "staged", "approved", "processing", "enriched",
+                                 "partial", "deferred", "accepted", "failed"] = "staged",
                  limit: int = 25, offset: int = 0) -> dict:
     store = _store(ctx)
     rows = [staging.summary(i) for i in store.items(kind, status)]
@@ -62,7 +71,7 @@ def staging_show(ctx: Context, item_id: str) -> dict:
     return staging.show(_store(ctx).load(item_id))
 
 
-@tool("staging_review", tier="contribute", effect="write", open_world=True,
+@tool("staging_review", tier="contribute", effect="write", scope="session", open_world=True,
       returns=("id", "draft", "reviewed_at"),
       card=Card("Assisted review: an unframed Bottom Line draft from the evidence alone, "
                 "a sensitivity check, and (given a need) a framed fit judgement with its "
@@ -73,7 +82,7 @@ def staging_review(ctx: Context, item_id: str, need: str = "",
     return staging.review(_store(ctx), item_id, clerk_endpoint(ctx), need, disqualifiers)
 
 
-@tool("deep_read", tier="contribute", effect="write", open_world=True,
+@tool("deep_read", tier="contribute", effect="write", scope="session", open_world=True,
       returns=("chunks", "read", "remaining", "lenses_staged"),
       card=Card("Read a staged source's whole text chunk by chunk: its claims and limits with "
                 "the pages they came from, its terms, and any reasoning stance it teaches "
@@ -90,7 +99,8 @@ def deep_read_tool(ctx: Context, item_id: str, max_chunks: int = reading.MAX_CHU
                              lenses=lenses, sections_of=sections)
 
 
-@tool("deep_read_note", tier="contribute", effect="write", open_world=True,
+@tool("deep_read_note", tier="contribute", effect="write", scope="session", open_world=True,
+      resolve={"note": "note"},
       returns=("revision", "chunks", "read", "remaining", "lenses_staged"),
       card=Card("Deep-read a source that is already accepted: its whole text, staged as a "
                 "revision of its note",
@@ -127,18 +137,29 @@ def deep_read_note(ctx: Context, note: str, max_chunks: int = reading.MAX_CHUNKS
     return {"revision": open_revision["id"], "of": row["path"], **out}
 
 
-@tool("staging_decide", tier="contribute", effect="vault_write",
+@tool("staging_decide", tier="contribute", effect="vault_write", phases=("judge", "ingest", "seed", "assess"),
       returns=("results", "accepted", "not_findable", "refused"),
-      card=Card("Accept, reject or defer staged items, one or a batch",
+      card=Card("Accept, approve, reject or defer staged items, one or a batch",
                 "an item has been reviewed",
                 "Accepting a source runs the six-step promotion and reports whether it is "
-                "findable. Under promotion.mode 'person', and for anything sensitive, only a "
-                "person accepts. Rejections go to quarantine with their reason"))
+                "findable. Approving a source puts it in the batch a person begins from "
+                "Staging (read in full, reviewed, then back for acceptance) - it does not "
+                "publish it. Under promotion.mode 'person', and for anything sensitive, only "
+                "a person accepts or approves. Rejections go to quarantine with their reason"))
 def staging_decide(ctx: Context, item_ids: list[str],
-                   decision: Literal["accept", "reject", "defer"], reason: str = "",
+                   decision: Literal["accept", "approve", "reject", "defer"], reason: str = "",
                    bottom_line: str = "", what_it_solves: str = "",
-                   fields: dict | None = None) -> dict:
+                   fields: dict | None = None, dry_run: bool = False) -> dict:
     store = _store(ctx)
+    if dry_run:
+        # an accept rehearsed: every check, what would be written, nothing changed
+        if decision != "accept":
+            raise TypeError("dry_run rehearses an accept")
+        decided_by = "person" if ctx.tier == "curate" else "agent"
+        results = [staging.preview(store, engine_for(ctx), i, decided_by, bottom_line,
+                                   what_it_solves, fields) for i in item_ids]
+        return {"dry_run": True, "results": results,
+                "would_accept": sum(1 for r in results if r.get("ok"))}
     before = {}
     for item_id in item_ids:
         try:
@@ -153,7 +174,7 @@ def staging_decide(ctx: Context, item_ids: list[str],
                              decided_by="person" if ctx.tier == "curate" else "agent",
                              session=promotion_session, fields=fields)
     for result in results:
-        if result.get("status") not in ("accepted", "rejected", "deferred"):
+        if result.get("status") not in ("accepted", "approved", "rejected", "deferred"):
             continue
         item_id = str(result.get("id") or "")
         item = before.get(item_id, {})
@@ -166,11 +187,26 @@ def staging_decide(ctx: Context, item_ids: list[str],
                 path = store.load(item_id).get("accepted_to", "")
             except TypeError:
                 pass
+        brief = (item.get("found_for") or {}).get("brief", "")
         try:
             session_store = SessionStore(ctx.vault)
             session_store.append(session_id, {"type": "library_item", "id": item_id,
                 "source": item["name"], "status": result["status"], "path": path,
-                "brief": (item.get("found_for") or {}).get("brief", "")})
+                "brief": brief})
+            # Deeper Audit DA-3: accepting a source into the library is not deciding it
+            # answers this session's need. It joins the session as an undecided candidate
+            # under its catalogued name - never kept automatically - with the exact next
+            # step, so "accepted, but nothing was kept" is no longer a dead end.
+            if path:
+                note = PurePosixPath(path).stem
+                session = session_store.load(session_id)
+                if session.status != "closed" and not {note, item["name"]} & set(
+                        session.candidates):
+                    session_store.append(session_id, {"type": "candidate", "source": note,
+                                                      "brief": brief, "via": "accepted"})
+                result["handoff"] = {"note": note, "path": path, "candidate": "undecided",
+                                     "next": f"in judge: decide(source={note!r}, "
+                                             f"disposition=keep|reject, role=...)"}
             result["session"] = session_store.load(session_id).envelope(ctx.vault)
         except (TypeError, OSError):
             pass
@@ -181,7 +217,7 @@ def staging_decide(ctx: Context, item_ids: list[str],
             "refused": sum(1 for r in results if "refused" in r or "error" in r)}
 
 
-@tool("staging_flag", tier="contribute", effect="write",
+@tool("staging_flag", tier="contribute", effect="write", scope="session",
       returns=("id", "sensitivity"),
       card=Card("Mark a staged item sensitive (or clear the mark, as a person)",
                 "an item is dual-use: offensive security, surveillance"))
@@ -214,7 +250,7 @@ def lens_show(ctx: Context, lens_id: str) -> dict:
     return lens or {"found": False, "lens_id": lens_id}
 
 
-@tool("concept_candidates", tier="contribute", effect="write",
+@tool("concept_candidates", tier="contribute", effect="write", scope="session",
       returns=("scanned", "staged"),
       card=Card("Scan recorded term usages and stage a concept candidate for each term "
                 "seen across several sources",

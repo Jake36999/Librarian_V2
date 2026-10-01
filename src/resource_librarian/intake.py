@@ -41,15 +41,23 @@ from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable
 
-from . import clerk, facts, notes, structure, text
+from . import clerk, facts, notes, quality, structure, text
 from .evidence import EvidenceStore
 from .search import Engine
 from .staging import StagingStore
-from .vault import Vault, now_iso
+from .vault import Vault, jsonl_lines, now_iso
 
 GITHUB = re.compile(r"^(?:https?://github\.com/)?([A-Za-z0-9][\w.-]*)/([\w.-]+?)(?:\.git)?/?$")
 ARXIV = re.compile(r"(?:arxiv\.org/(?:abs|pdf|html)/|arxiv:\s*)?(\d{4}\.\d{4,5})(?:v\d+)?", re.I)
 DOI = re.compile(r"\b(10\.\d{4,9}/[-._;()/:a-z0-9]+)\b", re.I)
+# A dataset's landing page, on a host that publishes data: captured as a dataset, with the
+# files and APIs it offers as access points (Research Pipeline §3.1; plan P3b).
+DATASET_HOSTS = re.compile(
+    r"^https?://(?:www\.)?(?:kaggle\.com/datasets/|huggingface\.co/datasets/|zenodo\.org/"
+    r"(?:records?|doi)/|data\.gov(?:\.uk)?/dataset|catalog\.data\.gov/dataset|figshare\.com/"
+    r"articles/dataset|datadryad\.org/|dataverse\.|archive\.ics\.uci\.edu/dataset)", re.I)
+DATA_FILE = re.compile(r"\.(csv|tsv|json|jsonl|parquet|xlsx?|zip|gz|tar|h5|hdf5|nc|sqlite|"
+                       r"arrow|feather|xml)(?:[?#]|$)", re.I)
 USER_AGENT = "resource-librarian/2 (+https://github.com; research catalogue)"
 ARXIV_INTERVAL = 3.0
 README_CHARS = 20_000
@@ -73,7 +81,7 @@ AXIS_QUESTIONS = {
 
 @dataclass(frozen=True)
 class Reference:
-    kind: str          # github | arxiv | doi | page | file
+    kind: str          # github | arxiv | doi | dataset | page | file
     key: str           # owner/repo, arXiv id, DOI, URL or vault-relative path
     original: str
 
@@ -92,6 +100,8 @@ def capture(ref: str, vault: Vault | None = None) -> Reference:
         return Reference("model", raw[len("model:"):].strip(), raw)
     if (m := GITHUB.match(raw)) and ("github.com" in raw or not raw.startswith("http")):
         return Reference("github", f"{m.group(1)}/{m.group(2)}", raw)
+    if raw.startswith(("http://", "https://")) and DATASET_HOSTS.search(raw):
+        return Reference("dataset", raw, raw)
     if raw.startswith(("http://", "https://")):
         return Reference("page", raw, raw)
     raise ValueError(f"cannot tell what {ref!r} is: give a URL, owner/repo, an arXiv id, a "
@@ -185,6 +195,8 @@ class Fetched:
     evidence: list[dict[str, Any]] = field(default_factory=list)
     file: str = ""
     notes: list[str] = field(default_factory=list)     # what could not be read, and why
+    quality: dict[str, Any] = field(default_factory=dict)      # quality.py's verdict
+    digest: str = ""                   # of the content itself, for duplicates under new names
 
 
 def _record(store: EvidenceStore, fetched: Fetched, kind: str, source: str,
@@ -224,7 +236,8 @@ def fetch_github(key: str, fetcher: Fetcher, store: EvidenceStore) -> Fetched:
         tree = json.loads(fetcher.get(f"{api}/git/trees/{meta.get('default_branch') or 'HEAD'}"
                                       f"?recursive=1"))
         paths = [t["path"] for t in tree.get("tree", []) if t.get("type") == "blob"][:TREE_PATHS]
-        survey = survey_of(paths, truncated=bool(tree.get("truncated")))
+        survey = {**survey_of(paths, truncated=bool(tree.get("truncated"))),
+                  **({"tree_sha": str(tree["sha"])} if tree.get("sha") else {})}
         _record(store, fetched, "survey", f"{api}/git/trees", survey)
     except FetchError:
         survey = {}
@@ -241,7 +254,8 @@ def fetch_github(key: str, fetcher: Fetcher, store: EvidenceStore) -> Fetched:
     if code:
         _record(store, fetched, "code_structure", f"{fetched.canonical_url} (shallow clone)",
                 {k: code[k] for k in ("files", "source_files_read", "languages",
-                                      "test_files", "modules", "limited")})
+                                      "test_files", "modules", "imports", "limited")
+                 if k in code})
         _record(store, fetched, "access_point", f"{fetched.canonical_url} (shallow clone)",
                 {k: code[k] for k in ("entry_points", "routes", "environment",
                                       "mcp_server_files")})
@@ -255,6 +269,7 @@ def fetch_github(key: str, fetcher: Fetcher, store: EvidenceStore) -> Fetched:
                      "description": meta.get("description") or ""}
     fetched.fields["_derive"] = {"meta": {**facts_meta, "pushed_at": meta.get("pushed_at")},
                                  "survey": survey, "paths": paths, "licence": licence_text}
+    fetched.quality = quality.repository(readme, bool(survey.get("truncated")))
     return fetched
 
 
@@ -302,6 +317,7 @@ def fetch_arxiv(identifier: str, fetcher: Fetcher, store: EvidenceStore) -> Fetc
                       "authors": authors, "year": int(year) if year.isdigit() else year,
                       "paper_kind": "preprint"}
     fetched.texts = {"abstract": abstract, "documentation": f"{title}\n\n{abstract}"}
+    fetched.quality = quality.paper(abstract, f"https://arxiv.org/pdf/{identifier}")
     return fetched
 
 
@@ -328,6 +344,9 @@ def fetch_doi(identifier: str, fetcher: Fetcher, store: EvidenceStore) -> Fetche
                       "venue": (message.get("container-title") or [""])[0],
                       "paper_kind": "published"}
     fetched.texts = {"abstract": abstract, "documentation": f"{title}\n\n{abstract}"}
+    pdf = next((str(link.get("URL")) for link in message.get("link") or []
+                if "pdf" in str(link.get("content-type", "")).lower() and link.get("URL")), "")
+    fetched.quality = quality.paper(abstract, pdf)
     return fetched
 
 
@@ -373,11 +392,45 @@ def fetch_page(url: str, fetcher: Fetcher, store: EvidenceStore) -> Fetched:
     title = html.unescape(re.search(r"<title[^>]*>(.*?)</title>", raw, re.S | re.I).group(1)
                           if re.search(r"<title[^>]*>(.*?)</title>", raw, re.S | re.I)
                           else url).strip()
-    body = " ".join(html.unescape(TAG.sub(" ", raw)).split())[:README_CHARS]
+    scripts = len(re.findall(r"(?i)<script\b", raw))
+    visible = re.sub(r"(?is)<(script|style|noscript)\b.*?</\1>", " ", raw)
+    body = " ".join(html.unescape(TAG.sub(" ", visible)).split())[:README_CHARS]
     fetched = Fetched("page", notes.safe_name(title)[:120] or notes.safe_name(url)[:120],
                       title, url)
     _record(store, fetched, "page", url, {"title": title, "text": body})
     fetched.texts = {"documentation": body}
+    fetched.quality = quality.page(body, scripts)
+    fetched.digest = hashlib.sha256(body.encode()).hexdigest()[:24] if len(body) > 200 else ""
+    if fetched.quality["verdict"] == "js_shell":
+        fetched.notes.append(fetched.quality["reason"])
+    return fetched
+
+
+def fetch_dataset(url: str, fetcher: Fetcher, store: EvidenceStore) -> Fetched:
+    """A dataset's landing page, read for what it offers: the files and APIs it links."""
+    raw = fetcher.get(url, "text/html").decode("utf-8", "replace")
+    found = re.search(r"<title[^>]*>(.*?)</title>", raw, re.S | re.I)
+    title = html.unescape(found.group(1)).strip() if found else url
+    visible = re.sub(r"(?is)<(script|style|noscript)\b.*?</\1>", " ", raw)
+    body = " ".join(html.unescape(TAG.sub(" ", visible)).split())[:README_CHARS]
+    points, seen = [], set()
+    for href in re.findall(r"""href=["']([^"'#]+)["']""", raw, re.I):
+        target = urllib.parse.urljoin(url, html.unescape(href))
+        fmt = DATA_FILE.search(target)
+        is_api = "/api/" in target.lower() and target.startswith("http")
+        if (fmt or is_api) and target not in seen:
+            seen.add(target)
+            points.append({"url": target, "format": fmt.group(1).lower() if fmt else "api"})
+    fetched = Fetched("dataset", notes.safe_name(title)[:120] or notes.safe_name(url)[:120],
+                      title, url)
+    _record(store, fetched, "page", url, {"title": title, "text": body})
+    if points:
+        _record(store, fetched, "access_point", url, {"access_points": points[:50]})
+    fetched.fields = {"access_points": [p["url"] for p in points[:20]]}
+    fetched.texts = {"documentation": body,
+                     "access_points": "\n".join(f"- {p['format']}: {p['url']}"
+                                                for p in points[:20])}
+    fetched.quality = quality.dataset(points)
     return fetched
 
 
@@ -397,10 +450,16 @@ def fetch_file(rel: str, vault: Vault, store: EvidenceStore) -> Fetched:
     fetched.texts = {"documentation": body[:README_CHARS]}
     if result.empty_pages:
         fetched.fields["pages_without_text"] = result.empty_pages
+    fetched.quality = quality.document(result.pages, result.empty_pages,
+                                       is_pdf=path.suffix.lower() == ".pdf")
+    fetched.digest = hashlib.sha256(path.read_bytes()).hexdigest()[:24]
+    if fetched.quality["verdict"] == "needs_ocr":
+        fetched.notes.append(fetched.quality["reason"])
     return fetched
 
 
 FETCHERS: dict[str, Callable[..., Fetched]] = {"github": fetch_github, "arxiv": fetch_arxiv,
+                                               "dataset": fetch_dataset,
                                                "doi": fetch_doi, "page": fetch_page,
                                                "model": fetch_model}
 
@@ -415,9 +474,40 @@ class IntakeResult:
     name: str = ""
     detail: Any = ""
     screen: dict[str, Any] = field(default_factory=dict)
+    quality: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return {k: v for k, v in self.__dict__.items() if v not in ("", {}, None)}
+        """With the lifecycle state reached and the next action (Addendum R12)."""
+        out = {k: v for k, v in self.__dict__.items() if v not in ("", {}, None)}
+        return {**out, **lifecycle(self)}
+
+
+def lifecycle(result: "IntakeResult") -> dict[str, str]:
+    if result.status == "staged":
+        q = result.quality.get("verdict", "usable")
+        return {"state": "staged", "next": "a person reviews it in Staging: approve it for "
+                "ingestion (read in full), or accept it as captured" +
+                ("" if q == "usable" else f". Capture found: {result.quality.get('reason')}")}
+    if result.status == "already_held":
+        where = str(result.detail)
+        return ({"state": "waiting in staging", "next": f"decide the staged item {result.item}"}
+                if result.item else {"state": "in the library",
+                                     "next": f"use it: get_note({result.name!r}) - {where}"})
+    if result.status == "screened_out":
+        return {"state": "rejected by the screen",
+                "next": "nothing: the screen's reason is kept on the session's candidate"}
+    if result.status == "queued":
+        return {"state": "queued", "next": "intake_run captures it (the run-queue action)"}
+    return {"state": "failed", "next": "queue_list shows it with the reason; queue_retry once "
+            "the reference is fixed, or queue_remove"}
+
+
+def _normal_title(text: str) -> str:
+    """For spotting the same work under another name: case, punctuation, a file extension
+    and copy/version markers aside."""
+    t = re.sub(r"\.(pdf|docx?|pptx?|odt|odp|html?|md|txt)$", "", text.casefold().strip())
+    t = re.sub(r"\((\d+|copy)\)|\b(copy|final|v\d+|draft)\b", " ", t)
+    return " ".join(re.sub(r"[^a-z0-9]+", " ", t).split())
 
 
 def ingest(vault: Vault, engine: Engine, ref: str, *, endpoint: clerk.Endpoint | None,
@@ -447,11 +537,33 @@ def ingest(vault: Vault, engine: Engine, ref: str, *, endpoint: clerk.Endpoint |
     # already held.
     if held is not None and not (reference.kind == "file" and held["path"] == reference.key):
         return IntakeResult(ref, "already_held", name=fetched.name, detail=held["path"])
+    live = ("staged", "deferred", "approved", "processing", "enriched", "partial")
+    near = ""
     for item in staging.items("source"):
-        if item.get("canonical_url") == fetched.canonical_url and item["status"] in (
-                "staged", "deferred"):
+        if item.get("ref") and not item.get("evidence"):
+            continue                                   # a queued reference, not a capture
+        if item.get("canonical_url") == fetched.canonical_url and item["status"] in live:
             return IntakeResult(ref, "already_held", item["id"], fetched.name,
-                                "already waiting in staging")
+                                f"already waiting in staging as {item.get('name')}" +
+                                (" (the same content)" if reference.kind == "file" else ""))
+        if fetched.digest and item.get("digest") == fetched.digest and \
+                item["status"] in live + ("accepted",):
+            if item["status"] == "accepted":
+                return IntakeResult(ref, "already_held", name=item.get("name", ""),
+                                    detail=f"the same content is already in the library: "
+                                           f"{item.get('accepted_to', '')}")
+            return IntakeResult(ref, "already_held", item["id"], item.get("name", ""),
+                                f"the same content is already waiting in staging as "
+                                f"{item.get('name')}")
+        if not near and item["status"] in live + ("accepted",) and _normal_title(
+                str(item.get("title") or item.get("name", ""))) == _normal_title(fetched.title):
+            near = f"{item.get('name')} ({item['status']})"
+    if not near:
+        title_key = _normal_title(fetched.title)
+        for row in engine.index.conn.execute("SELECT name FROM note WHERE shape = 'source'"):
+            if _normal_title(row["name"]) == title_key and title_key:
+                near = f"{row['name']} (in the library)"
+                break
 
     documentation = fetched.texts.get("documentation", "")
     screen: dict[str, Any] = {}
@@ -475,6 +587,11 @@ def ingest(vault: Vault, engine: Engine, ref: str, *, endpoint: clerk.Endpoint |
                                     detail="the abstract does not engage with the stated need")
 
     fields, sections, review, sensitivity = describe(vault, fetched, endpoint, store)
+    # The stage ledger (R12): what capture did, each step's outcome.
+    ledger = {"capture": "complete", "fetch": "complete",
+              "quality": (fetched.quality or {}).get("verdict", "usable"),
+              "screen": screen.get("status", "not framed") if need else "not framed",
+              "describe": (review.get("draft") or {}).get("status", "")}
     item_id = f"{re.sub(r'[^a-z0-9]+', '-', fetched.name.lower()).strip('-')[:50]}-" \
               f"{hashlib.sha256(fetched.canonical_url.encode()).hexdigest()[:6]}"
     staging.add({"id": item_id, "kind": "source", "source_kind": fetched.kind,
@@ -486,11 +603,19 @@ def ingest(vault: Vault, engine: Engine, ref: str, *, endpoint: clerk.Endpoint |
                  "captured_at": now_iso()[:10], "file": fetched.file,
                  "found_for": found_by or {}, "proposed_by": "intake",
                  "sensitivity": sensitivity, "review": review,
+                 "intake": {"stages": ledger, "quality": fetched.quality or
+                            quality.verdict("usable", "captured", "nothing")},
+                 **({"digest": fetched.digest} if fetched.digest else {}),
+                 **({"possible_duplicate_of": near} if near else {}),
+                 # the fit judgement, kept apart from the neutral description (§4.4)
+                 **({"fit_screen": screen} if screen else {}),
                  **({"intake_notes": fetched.notes} if fetched.notes else {}),
                  "readiness": readiness(engine, fetched.kind, fields)})
     return IntakeResult(ref, "staged", item_id, fetched.name, screen=screen,
                         detail={"sensitivity": sensitivity,
-                                "draft": review["draft"].get("status")})
+                                "draft": review["draft"].get("status"),
+                                **({"possible_duplicate_of": near} if near else {})},
+                        quality=fetched.quality)
 
 
 def describe(vault: Vault, fetched: Fetched, endpoint: clerk.Endpoint | None,
@@ -663,37 +788,122 @@ def _quarantine(vault: Vault, ref: str, stage: str, reason: str) -> IntakeResult
 
 
 # ------------------------------------------------------------------ the queue
+#
+# A queued reference is a staging item in state `queued` (Addendum R7): one store and one
+# lifecycle with everything captured, instead of a separate log that lost who asked for
+# it and why (Deeper Audit: `queue_source` -> `intake_run` dropped the session and brief).
+# It keeps the reference, the reason, who asked, and the session and brief it was found
+# for; capture restores that framing where the brief is still open.
 
 def queue_path(vault: Vault) -> Path:
+    """The pre-2026-09-30 queue log, read once and migrated (`_migrate`)."""
     return vault.work("queue") / "sources.jsonl"
 
 
-def enqueue(vault: Vault, ref: str, note: str = "", logged_by: str = "") -> dict[str, Any]:
-    entry = {"ref": ref.strip(), "note": note, "logged_by": logged_by, "at": now_iso()}
-    path = queue_path(vault)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
-    return entry
+def queue_id(ref: str) -> str:
+    return "queued-" + hashlib.sha256(ref.strip().encode()).hexdigest()[:10]
 
 
-def pending(vault: Vault) -> list[dict[str, Any]]:
+def _migrate(vault: Vault) -> None:
     path = queue_path(vault)
     if not path.exists():
-        return []
-    entries = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
+        return
+    entries = [json.loads(line) for line in jsonl_lines(path.read_text(encoding="utf-8"))
                if line.strip()]
     done = {e["ref"] for e in entries if e.get("done")}
-    seen: set[str] = set()
-    out = []
     for e in entries:
-        if not e.get("done") and e["ref"] not in done and e["ref"] not in seen:
-            seen.add(e["ref"])
-            out.append(e)
-    return out
+        if not e.get("done") and e["ref"] not in done:
+            _put(vault, e["ref"], e.get("note", ""), e.get("logged_by", ""), {}, e.get("at"))
+    path.rename(path.with_suffix(".jsonl.migrated"))
+
+
+def _put(vault: Vault, ref: str, note: str, logged_by: str, found_for: dict[str, Any],
+         at: str | None = None) -> dict[str, Any]:
+    store = StagingStore(vault)
+    item_id = queue_id(ref)
+    try:
+        existing = store.load(item_id)
+    except TypeError:
+        existing = None
+    if existing is not None and existing["status"] == "queued":
+        return existing                                  # already waiting: once is enough
+    item = {"id": item_id, "kind": "source", "status": "queued", "ref": ref.strip(),
+            "name": ref.strip(), "note": note, "requested_by": logged_by,
+            "found_for": {k: v for k, v in found_for.items() if v},
+            "queued_at": at or now_iso(), "history": (existing or {}).get("history", [])}
+    if existing is None:
+        return store.add(item)
+    store.save({**existing, **item})                     # a failed capture, queued again
+    return item
+
+
+def enqueue(vault: Vault, ref: str, note: str = "", logged_by: str = "",
+            session: str = "", brief: str = "") -> dict[str, Any]:
+    _migrate(vault)
+    item = _put(vault, ref, note, logged_by, {"session": session, "brief": brief})
+    return {"id": item["id"], "ref": item["ref"], "note": item["note"],
+            "logged_by": item["requested_by"], "at": item["queued_at"],
+            **({"found_for": item["found_for"]} if item["found_for"] else {})}
+
+
+def pending(vault: Vault, status: str = "queued") -> list[dict[str, Any]]:
+    """Queued references, oldest first (`status="failed"`: captures that failed)."""
+    _migrate(vault)
+    items = [i for i in StagingStore(vault).items("source", status) if i.get("ref")]
+    return sorted(items, key=lambda i: i.get("queued_at", ""))
+
+
+def settle(vault: Vault, item_id: str, result: IntakeResult) -> dict[str, Any]:
+    """What capturing a queued reference made of it. Staged: the queued item becomes the
+    staged one, carrying who asked and why. Already held or screened out: it leaves the
+    queue for quarantine with that reason. A failed capture stays, marked `failed` with
+    its stage and reason, to be retried or removed."""
+    store = StagingStore(vault)
+    queued = store.load(item_id)
+    asked = {"note": queued.get("note", ""), "requested_by": queued.get("requested_by", ""),
+             "queued_at": queued.get("queued_at", "")}
+    if result.status == "staged":
+        staged = store.load(result.item)
+        staged["queued"] = asked
+        staged.setdefault("history", []).append({"decision": "captured", "at": now_iso(),
+                                                 "from": item_id})
+        store.save(staged)
+        store.path(item_id).unlink()
+        return {"state": "staged", "item": result.item}
+    if result.status in ("already_held", "screened_out"):
+        reason = f"{result.status}: {result.detail}"
+        store.quarantine({**queued, "status": "rejected"}, reason)
+        return {"state": "rejected", "reason": reason}
+    queued.update(status="failed", failure={"stage": "capture", "reason": str(result.detail),
+                                            "at": now_iso()})
+    store.save(queued)
+    return {"state": "failed", "reason": str(result.detail)}
+
+
+def remove(vault: Vault, item_id: str, reason: str) -> None:
+    """A queued or failed reference leaves the queue for quarantine, with its reason."""
+    store = StagingStore(vault)
+    item = store.load(item_id)
+    if item["status"] not in ("queued", "failed") or not item.get("ref"):
+        raise TypeError(f"{item_id} is {item['status']}, not a queued reference")
+    store.quarantine({**item, "status": "rejected"}, reason)
+
+
+def retry(vault: Vault, item_id: str) -> dict[str, Any]:
+    store = StagingStore(vault)
+    item = store.load(item_id)
+    if item["status"] != "failed" or not item.get("ref"):
+        raise TypeError(f"{item_id} is {item['status']}; only a failed capture is retried")
+    item["history"].append({"decision": "retry", "at": now_iso(),
+                            "failure": item.pop("failure", {})})
+    item["status"] = "queued"
+    store.save(item)
+    return item
 
 
 def mark_done(vault: Vault, ref: str, outcome: str) -> None:
-    with queue_path(vault).open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps({"ref": ref, "done": True, "outcome": outcome,
-                                 "at": now_iso()}) + "\n")
+    """Kept for callers that drain by reference: the queued reference leaves the queue."""
+    try:
+        remove(vault, queue_id(ref), outcome)
+    except TypeError:
+        pass

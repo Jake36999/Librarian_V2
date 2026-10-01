@@ -67,8 +67,9 @@ def test_plan_accepts_no_dates_as_an_alternative(m):
     assert m.ok("advance")["moved"] == "seed"
 
 
-def test_ingest_is_gated_to_its_own_phases_plus_seed(m):
+def test_capture_is_allowed_in_any_phase(m):
+    # Requirements Addendum R12 (2026-09-30) reversed the old seed-only gate: capture is
+    # allowed anywhere; only a fit claim needs a framed need.
     m.ok("open_session", purpose="start_pursuit", project="A Job")
-    refused = m("ingest", ref="https://example.org/x")
-    assert refused["refused"] == "PHASE_GATE"
-    assert "unlocked in seed" in refused["detail"]
+    out = m.ok("ingest", ref="https://example.org/x", defer=True)
+    assert out["state"] == "queued" and m.ok("session_status")["phase"] == "frame"

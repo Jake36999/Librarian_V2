@@ -38,7 +38,7 @@ from . import notes
 from .facts import license_class
 from .intake import ATOM, Fetcher, FetchError
 from .rules import Refusal
-from .vault import Vault, now_iso
+from .vault import Vault, jsonl_lines, now_iso
 
 GITHUB_URL = re.compile(r"https?://(?:www\.)?github\.com/([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+)")
 MD_LINK = re.compile(r"\[([^\]]{1,120})\]\((https?://[^\s)]+)\)")
@@ -181,7 +181,7 @@ class CandidateStore:
     def all(self) -> dict[str, dict[str, Any]]:
         out: dict[str, dict[str, Any]] = {}
         if self.path.exists():
-            for line in self.path.read_text(encoding="utf-8").splitlines():
+            for line in jsonl_lines(self.path.read_text(encoding="utf-8")):
                 if line.strip():
                     row = json.loads(line)
                     out[row["key"]] = {**out.get(row["key"], {}), **row}

@@ -90,3 +90,29 @@ def test_pdf_to_markdown_tool_refuses_outside_the_vault(vault):
     ctx = Context(tier="contribute", vault=vault)
     result = REGISTRY.call("pdf_to_markdown", {"file": "../../etc/passwd"}, ctx)
     assert "error" in result
+
+
+def test_parts_are_cleaned_at_once_in_page_order_and_say_how_far_they_are():
+    """Owner check O7 (2026-10-01): a 14-part report sat on 'parse' for minutes."""
+    fake = FakeEndpoint()
+    pages = [f"page {i} " + "x" * 6000 for i in range(5)]
+    heard = []
+    markdown, batches = pdf_markdown.clean_document(pages, fake, progress=heard.append)
+    assert batches == 5 and len(fake.calls) == 5
+    assert [markdown.index(f"page {i}") for i in range(5)] == sorted(
+        markdown.index(f"page {i}") for i in range(5))
+    assert heard[0] == "cleaning the PDF's text: 0 of 5 parts"
+    assert heard[-1] == "cleaning the PDF's text: 5 of 5 parts" and len(heard) == 6
+
+
+def test_the_batch_banner_shows_a_steps_progress(vault, monkeypatch):
+    from resource_librarian import batch
+    from resource_librarian.workflows import RunStore
+    runs = RunStore(vault)
+    runs.append("batch-x", {"type": "started", "items": ["a"]})
+    runs.append("batch-x", {"type": "stage", "item": "a", "stage": "parse"})
+    runs.append("batch-x", {"type": "progress", "item": "a", "stage": "parse",
+                            "detail": "cleaning the PDF's text: 3 of 9 parts"})
+    monkeypatch.setattr(batch, "live", lambda v: "batch-x")
+    assert batch.status(vault, "batch-x")["current"] == {
+        "item": "a", "stage": "parse", "detail": "cleaning the PDF's text: 3 of 9 parts"}

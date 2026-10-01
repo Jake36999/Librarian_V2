@@ -113,8 +113,13 @@ def test_the_boundary(served):
 def test_a_chat_turn_runs_the_loop_and_streams_events(served):
     app, client, model = served
     assert client.post("/api/chat", {"text": "hi"})[0] == 409     # no model chosen yet
-    assert client.post("/api/tiers", {"tiers": [{"provider": "deepinfra",
-                                                  "model": "m1"}]})[0] == 200
+    # R10: a lead M0 has not qualified needs a person's recorded override
+    status, body = client.post("/api/tiers", {"tiers": [{"provider": "deepinfra",
+                                                          "model": "m1"}]})
+    assert status == 409 and body["needs_override"] and body["lead"] == "deepinfra/m1"
+    assert client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "m1"}],
+                                      "override": "trying it out"})[0] == 200
+    assert client.get("/api/state")[1]["lead"]["reason"] == "trying it out"
     model.replies = [Reply(tool_calls=[ToolCall("1", "open_session", {"purpose": "explore",
                                                                        "question": "hosts"})]),
                      Reply(text="Opened a thread on hosts.")]
@@ -135,7 +140,7 @@ def test_a_chat_turn_runs_the_loop_and_streams_events(served):
 
 def test_ask_mode_waits_for_the_person_and_a_mode_switch_releases_it(served):
     app, client, model = served
-    client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "m1"}]})
+    client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "m1"}], "override": "test"})
     client.post("/api/mode", {"mode": "ask"})
     model.replies = [Reply(tool_calls=[ToolCall("1", "create_project", {
         "name": "Host Watch", "stage": "idea", "summary": "Watch hosts."})]),
@@ -151,7 +156,7 @@ def test_ask_mode_waits_for_the_person_and_a_mode_switch_releases_it(served):
 
 def test_a_denied_request_reaches_the_model_as_a_refusal(served):
     app, client, model = served
-    client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "m1"}]})
+    client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "m1"}], "override": "test"})
     model.replies = [Reply(tool_calls=[ToolCall("1", "create_project", {
         "name": "Nope", "stage": "idea", "summary": "x"})]), Reply(text="Understood.")]
     client.post("/api/chat", {"text": "make it"})
@@ -170,7 +175,7 @@ def test_answering_a_question_wakes_the_waiting_turn(served):
     same handshake a permission gate already uses, so the model sees the
     real answer and finishes the SAME turn - no second message needed."""
     app, client, model = served
-    client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "m1"}]})
+    client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "m1"}], "override": "test"})
     model.replies = [
         Reply(tool_calls=[ToolCall("1", "open_session", {"purpose": "explore",
                                                           "question": "hosts"})]),
@@ -231,7 +236,7 @@ def test_the_persons_own_calls_and_settings(served):
 
 def test_tiers_fall_back_upward(served):
     app, client, model = served
-    client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "big"}]})
+    client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "big"}], "override": "test"})
     assert app.tier(3) is model.provider                           # tier 3 -> 2 -> 1
     client.post("/api/tiers", {"tiers": []})                       # clear selection
     assert app.tier(1) is None
@@ -518,3 +523,22 @@ def test_api_mcp_registry_proxies_the_search_server_side(served, monkeypatch):
     monkeypatch.setattr(mcp_client, "REGISTRY_SEARCH_URL", "http://127.0.0.1:1/v0/servers")
     status, out = client.get("/api/mcp/registry?q=semantic")
     assert status == 200 and out["servers"] == [] and "error" in out
+
+
+
+def test_settings_turn_the_review_gate_on_and_save_a_search_key(served):
+    """Owner checks O4/O5 and O3b (2026-10-01): no switch for the review gate, and no
+    place for a web search key."""
+    app, client, _ = served
+    status, lib = client.post("/api/library", {"review": {"review_replies": True,
+                                                          "review_offerings": True}})
+    assert status == 200 and lib["clerk"]["review_replies"] is True
+    assert app.vault.config()["clerk"]["review_offerings"] is True
+    assert client.post("/api/library", {"review": {"review_everything": True}})[0] == 400
+    assert client.post("/api/library", {"promotion_mode": "agent"})[1]["promotion"]["mode"] == "agent"
+    status, out = client.post("/api/keys", {"provider": "tavily", "key": "tvly-test-0123456789"})
+    assert status == 200 and out["saved"] and out["check"]["ok"]
+    assert "Tavily" in out["check"]["status"]
+    keys = {k["provider"]: k for k in client.get("/api/keys")[1]["keys"]}
+    assert keys["tavily"]["saved"] and keys["tavily"]["last4"] == "6789"
+    assert not keys["brave"]["saved"]

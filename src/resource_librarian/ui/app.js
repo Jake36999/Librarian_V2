@@ -24,6 +24,103 @@ var Librarian = (() => {
     mount: () => mount
   });
 
+  // src/speech.ts
+  var NS = "http://www.w3.org/2000/svg";
+  function icon(paths, size = 13) {
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 16 16");
+    svg.setAttribute("width", String(size));
+    svg.setAttribute("height", String(size));
+    svg.setAttribute("aria-hidden", "true");
+    for (const [tag, attrs] of paths) {
+      const el = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+      el.setAttribute("fill", "none");
+      el.setAttribute("stroke", "currentColor");
+      el.setAttribute("stroke-width", "1.3");
+      svg.append(el);
+    }
+    return svg;
+  }
+  var speakerIcon = (size = 13) => icon([
+    ["path", { d: "M2.5 6h2.3L8 3.2v9.6L4.8 10H2.5z" }],
+    ["path", { d: "M10.4 5.6a3.2 3.2 0 0 1 0 4.8" }],
+    ["path", { d: "M12.2 3.8a5.8 5.8 0 0 1 0 8.4" }]
+  ], size);
+  var stopIcon = (size = 13) => icon([
+    ["rect", { x: "4", y: "4", width: "8", height: "8", rx: "1" }]
+  ], size);
+  var runIcon = (size = 13) => icon([["path", { d: "M5 3.2v9.6L12.6 8z" }]], size);
+  var Reader = class {
+    constructor() {
+      this.api = null;
+      this.warn = () => void 0;
+      this.audio = null;
+      this.button = null;
+      this.title = "";
+      this.run = 0;
+    }
+    init(api, warn) {
+      this.api = api;
+      this.warn = warn;
+    }
+    /** Start reading `source` with `button` showing it; the same button again stops it. */
+    async toggle(source, button, size = 13) {
+      if (this.button === button) {
+        this.stop();
+        return;
+      }
+      this.stop();
+      const run = ++this.run;
+      this.button = button;
+      this.title = button.title;
+      button.classList.add("speaking");
+      button.replaceChildren(stopIcon(size));
+      try {
+        const plan = await this.api.post("/api/tts/plan", source);
+        let next = this.api.post("/api/tts/chunk", { plan: plan.plan, index: 0 });
+        for (let i = 0; i < plan.count && run === this.run; i++) {
+          const got = await next;
+          if (run !== this.run) break;
+          if (i + 1 < plan.count) next = this.api.post("/api/tts/chunk", { plan: plan.plan, index: i + 1 });
+          button.title = `Reading part ${i + 1} of ${plan.count} - click to stop`;
+          await this.play(got.audio, run);
+        }
+      } catch (e) {
+        if (run === this.run) this.warn(`Read aloud: ${e.message}`);
+      }
+      if (run === this.run) this.reset(size);
+    }
+    play(src, run) {
+      return new Promise((resolve) => {
+        if (run !== this.run) {
+          resolve();
+          return;
+        }
+        const audio = new Audio(src);
+        this.audio = audio;
+        audio.onended = () => resolve();
+        audio.onerror = () => resolve();
+        audio.play().catch(() => resolve());
+      });
+    }
+    stop() {
+      this.run++;
+      this.audio?.pause();
+      this.audio = null;
+      this.reset();
+    }
+    reset(size = 13) {
+      if (this.button) {
+        this.button.classList.remove("speaking");
+        this.button.replaceChildren(speakerIcon(size));
+        this.button.title = this.title;
+      }
+      this.button = null;
+    }
+  };
+  var reader = new Reader();
+
   // src/api.ts
   var ApiError = class extends Error {
     constructor(status, body) {
@@ -454,7 +551,12 @@ var Librarian = (() => {
   }
 
   // src/chat.ts
-  function icon(paths) {
+  function offeringAsked(q) {
+    if (q.kind !== "confirm") return "";
+    const named = /staging\/offerings\/([^\s()]+)\.md/.exec(String(q.question ?? ""));
+    return named ? named[1] : "";
+  }
+  function icon2(paths) {
     const ns = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(ns, "svg");
     svg.setAttribute("viewBox", "0 0 16 16");
@@ -471,19 +573,19 @@ var Librarian = (() => {
     }
     return svg;
   }
-  var copyIcon = () => icon([
+  var copyIcon = () => icon2([
     ["rect", { x: "3", y: "4.5", width: "8", height: "9.5", rx: "1.3" }],
     ["path", { d: "M6 4.5V3a1.3 1.3 0 0 1 1.3-1.3H12A1.3 1.3 0 0 1 13.3 3v8A1.3 1.3 0 0 1 12 12.3h-1" }]
   ]);
-  var retryIcon = () => icon([
+  var retryIcon = () => icon2([
     ["path", { d: "M3 8a5 5 0 1 1 1.7 3.75" }],
     ["path", { d: "M3 11.8V8.1h3.7" }]
   ]);
-  var rewindIcon = () => icon([
+  var rewindIcon = () => icon2([
     ["path", { d: "M8.5 3 3.3 8l5.2 5" }],
     ["path", { d: "M13 3v10" }]
   ]);
-  var branchIcon = () => icon([
+  var branchIcon = () => icon2([
     ["circle", { cx: "3.6", cy: "3.6", r: "1.5" }],
     ["circle", { cx: "3.6", cy: "12.4", r: "1.5" }],
     ["circle", { cx: "12.4", cy: "8", r: "1.5" }],
@@ -550,6 +652,15 @@ var Librarian = (() => {
           void navigator.clipboard.writeText(text).catch(() => void 0);
         }
       }, copyIcon())];
+      if (role === "assistant") {
+        const speak = h("button", {
+          class: "icon-btn speak",
+          title: "Read aloud",
+          "aria-label": "Read aloud",
+          onclick: () => void reader.toggle({ text }, speak)
+        }, speakerIcon());
+        actions.push(speak);
+      }
       if (opts.canRetry) {
         actions.push(h("button", {
           class: "icon-btn",
@@ -647,6 +758,20 @@ var Librarian = (() => {
           if (result.error) line.classList.add("refused");
           if (!line.isConnected) this.append(line);
           if (result.session) this.hooks.onSession(result.session);
+          const runnable = result.runnable ?? [];
+          if (runnable.length) this.append(h(
+            "div",
+            { class: "note reviewed runnable" },
+            "A review challenged these claims with a call that would show them wrong. Nothing has run.",
+            h("ul", {}, runnable.map((r) => h(
+              "li",
+              {},
+              `\u201C${r.claim}\u201D \u2014 `,
+              h("code", {}, r.input),
+              " ",
+              this.runButton(r.run_id)
+            )))
+          ));
           break;
         }
         case "permission_request":
@@ -664,6 +789,8 @@ var Librarian = (() => {
         case "reply_reviewed": {
           const challenged = event.challenged ?? [];
           const held = Number(event.held ?? 0), unchecked = Number(event.unchecked ?? 0);
+          const silent = event.not_extracted ?? [];
+          const over = Number(event.over_limit ?? 0);
           if (!held && !challenged.length && !unchecked && !event.status) break;
           this.append(h(
             "div",
@@ -673,15 +800,27 @@ var Librarian = (() => {
               "li",
               {},
               `\u2691 \u201C${c.claim}\u201D \u2014 `,
-              h("span", { class: "dim" }, c.counter_quote ? `${c.reason} [[${c.note}]] says: \u201C${c.counter_quote}\u201D` : `not found in [[${c.note}]]. ${c.reason}`)
+              h("span", { class: "dim" }, c.counter_quote ? `${c.reason} [[${c.note}]] says: \u201C${c.counter_quote}\u201D` : `not found in [[${c.note}]]. ${c.reason}`),
+              c.run_id ? h(
+                "div",
+                {},
+                "Failing input: ",
+                h("code", {}, String(c.input ?? "")),
+                " ",
+                this.runButton(String(c.run_id))
+              ) : null
             ))) : null,
+            silent.length ? h("div", { class: "dim small" }, `Nothing it says about ${silent.map((n) => `[[${n}]]`).join(", ")} was picked out to check.`) : null,
+            over ? h("div", { class: "dim small" }, `${over} more claim${over === 1 ? " was" : "s were"} past the review limit (the effort setting) and not checked.`) : null,
             challenged.length ? h("div", { class: "dim small" }, "The librarian sees these challenges in its next reply.") : null
           ));
           break;
         }
         case "turn_done":
           this.setWorking(false);
-          if (event.stopped === "max_steps") {
+          if (event.stopped === "cancelled") {
+            this.append(h("div", { class: "tool" }, "Reply stopped."));
+          } else if (event.stopped === "max_steps") {
             this.append(h(
               "div",
               { class: "error" },
@@ -767,6 +906,50 @@ var Librarian = (() => {
         }
       }
     }
+    /** The coverage ledger (R13): each asked topic, its brief and verdict, and what was
+     *  kept for it - context finds counted apart, since they do not answer it. */
+    coverage(session) {
+      const ledger = session?.completion?.ledger ?? session?.coverage ?? [];
+      if (!ledger.length) return null;
+      const mark = {
+        covered: "\u2713 covered",
+        partial: "\u25D0 partial",
+        gap: "\u2717 gap",
+        open: "\u25CB open",
+        "no brief": "\u25CB no brief yet"
+      };
+      return h(
+        "div",
+        { class: "coverage" },
+        h("h3", {}, "Coverage"),
+        h("ul", {}, ledger.map((r) => h(
+          "li",
+          {},
+          h("strong", {}, String(r.topic)),
+          ` \xB7 ${r.brief || "no brief"} \xB7 ${mark[r.verdict] ?? r.verdict}`,
+          (r.kept ?? []).length ? h("span", { class: "dim" }, ` \xB7 ${r.kept.length} kept`) : null,
+          (r.context ?? []).length ? h("span", { class: "dim" }, ` \xB7 ${r.context.length} context only`) : null
+        )))
+      );
+    }
+    /** R11: a spent budget with the phase unfinished is the person's to extend. */
+    extendBudget(session) {
+      if (!session?.budget_spent || session.status !== "open") return null;
+      return h("button", {
+        class: "ghost",
+        title: "Give this phase ten more calls",
+        onclick: async (e) => {
+          e.currentTarget.disabled = true;
+          try {
+            const out = await this.api.tool("extend_budget", { add: 10 }, String(session.session ?? ""));
+            if (out.error) throw new Error(String(out.detail ?? out.error));
+            if (out.session) this.hooks.onSession(out.session);
+          } catch (err) {
+            this.append(h("div", { class: "error" }, `Could not extend the budget: ${err.message}`));
+          }
+        }
+      }, "Extend budget (+10 calls)");
+    }
     sessionOutcome(session) {
       if (!session) return;
       this.outcomeCard?.remove();
@@ -776,7 +959,8 @@ var Librarian = (() => {
           { class: "session-outcome closed", role: "status" },
           h("strong", {}, "Thread closed"),
           session.summary ? h("div", {}, String(session.summary)) : null,
-          session.gaps ? h("div", { class: "dim" }, `Gaps: ${session.gaps}`) : null
+          session.gaps ? h("div", { class: "dim" }, `Gaps: ${session.gaps}`) : null,
+          this.coverage(session)
         );
         this.append(this.outcomeCard);
         return;
@@ -789,13 +973,39 @@ var Librarian = (() => {
         h("strong", {}, `${parked ? "Thread parked" : "Thread still open"} \xB7 ${String(session.phase ?? "work in progress")}`),
         openItems.length ? h("ul", {}, openItems.slice(0, 5).map((item) => h("li", {}, item))) : null,
         session.next ? h("p", {}, String(session.next)) : null,
+        this.coverage(session),
+        this.extendBudget(session),
         parked ? h("p", { class: "dim" }, "Reopen this thread from Sessions to continue.") : h("button", { class: "ghost", onclick: () => this.hooks.continueSession() }, "Continue from next step")
       );
       this.append(this.outcomeCard);
     }
+    /** G3: a person's "Run it" - one function call in a Docker sandbox with no network. The
+     *  verdict (confirmed / not confirmed / could not run) replaces the button. */
+    runButton(runId) {
+      const out = h("span", { class: "run-claim" });
+      const button = h("button", {
+        class: "ghost",
+        title: "Runs this one call in a Docker container with no network and the repository read-only. Needs Docker Desktop running.",
+        onclick: async () => {
+          button.disabled = true;
+          clear(out, h("span", { class: "dim" }, "running in the sandbox\u2026"));
+          try {
+            const r = await this.api.post("/api/claims/run", { id: runId });
+            if (r.error) clear(out, h("span", { class: "error" }, String(r.detail ?? r.error)));
+            else clear(out, h("strong", {}, String(r.verdict).replace(/_/g, " ")), ` \u2014 ${r.detail} (${r.version})`);
+          } catch (e) {
+            clear(out, h("span", { class: "error" }, e.message));
+          }
+        }
+      }, "Run it");
+      clear(out, button);
+      return out;
+    }
     permission(event) {
       const args = event.arguments ?? {};
-      const detail = Object.entries(args).slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(" \xB7 ");
+      const preview = event.preview ?? null;
+      const detail = preview ? `${preview.path ?? ""}` : Object.entries(args).slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(" \xB7 ");
+      const diff = preview?.diff ? h("pre", { class: "diff" }, String(preview.diff).split("\n").map((line) => h("span", { class: line.startsWith("+") && !line.startsWith("+++") ? "add" : line.startsWith("-") && !line.startsWith("---") ? "del" : "" }, line + "\n"))) : null;
       const answer = (value) => async () => {
         try {
           await this.api.post("/api/permission", { id: event.id, answer: value });
@@ -811,11 +1021,13 @@ var Librarian = (() => {
         h("code", {}, String(event.tool)),
         ` wants to ${event.effect === "read" ? "run" : "write"}`,
         detail ? h("div", { class: "dim" }, detail) : null,
+        diff,
+        event.always_ask ? h("div", { class: "dim" }, "Asked before every change: allowing it applies this one only.") : null,
         h(
           "div",
           { class: "row" },
-          h("button", { onclick: answer("allow_once") }, "Allow once"),
-          h("button", { onclick: answer("allow_session") }, "Allow for this session"),
+          h("button", { onclick: answer("allow_once") }, event.always_ask ? "Apply this change" : "Allow once"),
+          event.always_ask ? null : h("button", { onclick: answer("allow_session") }, "Allow for this session"),
           h("button", { onclick: answer("deny") }, "Deny")
         )
       );
@@ -868,6 +1080,10 @@ var Librarian = (() => {
         });
         row.append(input, h("button", { onclick: () => void send(input.value) }, "Answer"));
       }
+      const offering = offeringAsked(event);
+      if (offering && this.hooks.openOffering) {
+        row.append(h("button", { class: "ghost", onclick: () => this.hooks.openOffering(offering) }, "Read the draft"));
+      }
       const card = h(
         "div",
         { class: "perm", role: "group", "aria-label": "Question" },
@@ -908,12 +1124,14 @@ var Librarian = (() => {
           `${i < current ? "\u2611" : i === current ? "\u25D0" : "\u25CB"} ${PHASE_LABEL[p] ?? p}`,
           i === current && session.budget_left !== void 0 ? h("span", { class: "dim" }, ` \xB7 ${session.budget_left} calls left`) : null
         ))),
+        this.extendBudget(session),
         questions.length ? h("h3", {}, "Waiting for you") : null,
         questions.map((q) => this.question(session, q)),
         h("h3", {}, "Next"),
         h("p", {}, String(session.next ?? "")),
         (session.open_items ?? []).length ? h("h3", {}, "Open") : null,
         (session.open_items ?? []).length ? h("ul", {}, session.open_items.map((t) => h("li", {}, t))) : null,
+        this.coverage(session),
         Object.keys(session.briefs ?? {}).length ? h("h3", {}, "Briefs") : null,
         Object.entries(session.briefs ?? {}).map(([id, b]) => h("p", {}, h("strong", {}, id), ` ${b.need ?? ""}`, b.status === "closed" ? h("span", { class: "dim" }, " \xB7 closed") : null)),
         libraryItemCount ? h("h3", {}, `Library sources \xB7 ${libraryItemCount}`) : null,
@@ -947,8 +1165,14 @@ var Librarian = (() => {
           box.append(h("div", { class: "error" }, e.message));
         }
       };
+      const offering = offeringAsked(q);
       if ((q.options ?? []).length) {
-        box.append(h("div", { class: "row" }, q.options.map((o) => h("button", { onclick: () => send(o) }, o))));
+        box.append(h(
+          "div",
+          { class: "row" },
+          q.options.map((o) => h("button", { onclick: () => send(o) }, o)),
+          offering && this.hooks.openOffering ? h("button", { class: "ghost", onclick: () => this.hooks.openOffering(offering) }, "Read the draft") : null
+        ));
       } else {
         const input = h("input", { type: "text", "aria-label": q.question, placeholder: "Your answer" });
         box.append(h(
@@ -1138,6 +1362,13 @@ var Librarian = (() => {
       extra.map((name) => h("button", { class: "menuitem", onclick: start(name) }, name))
     );
   }
+  var VISION = /(-vl\b|vl-|vision|ocr|gemma-[34]|qwen3\.[5-9]|llama-4|pixtral|llava|inkling|glimmer)/i;
+  var EMBED = /(bge|embed|e5-|gte-|nomic|minilm|mpnet|potion|jina|arctic)/i;
+  var SLOT_KIND = {
+    ocr: { label: "Vision models", fits: (m) => m.profile?.modality === "Image_To_Text" || VISION.test(String(m.id)) },
+    embeddings: { label: "Embedding models", fits: (m) => m.profile?.modality === "Embeddings" || EMBED.test(String(m.id)) },
+    tts: { label: "Speech models", fits: (m) => m.profile?.modality === "Text_To_Speech" || /tts|kokoro|chatterbox|orpheus|speech|higgs/i.test(String(m.id)) }
+  };
   var ModelTile = class {
     constructor(pop, api, tiers, keysSaved, setTiers = () => {
     }) {
@@ -1149,6 +1380,45 @@ var Librarian = (() => {
       this.listings = /* @__PURE__ */ new Map();
       this.filter = "";
       this.toast = "";
+      // R10: a lead the completion suite (M0) has not qualified waits here for the person's
+      // recorded "use it anyway", instead of being taken silently.
+      this.pendingLead = null;
+      // R17: the same tile, choosing one service model (slot 4 OCR, ...) instead of the tiers.
+      this.slot = null;
+      this.showAll = false;
+    }
+    startSlot(name, label, done, current) {
+      this.slot = { name, label, done, current };
+      this.showAll = false;
+      this.filter = "";
+      this.toast = "";
+    }
+    endSlot() {
+      this.slot = null;
+    }
+    /** Right-click on the slot's own model: the slot is emptied (never filled by a chat
+     *  model - R17). */
+    async clearSlot() {
+      const slot = this.slot;
+      try {
+        await this.api.post("/api/services", { slot: slot.name, provider: "", model: "" });
+        this.slot = null;
+        slot.done();
+      } catch (e) {
+        this.toast = e.message;
+        this.render();
+      }
+    }
+    async pickSlot(provider, model) {
+      const slot = this.slot;
+      try {
+        await this.api.post("/api/services", { slot: slot.name, provider, model });
+        this.slot = null;
+        slot.done();
+      } catch (e) {
+        this.toast = e.message;
+        this.render();
+      }
     }
     async refresh() {
       const saved = this.keysSaved();
@@ -1165,13 +1435,45 @@ var Librarian = (() => {
       }));
       this.render();
     }
-    async save(tiers) {
+    async save(tiers, override = "") {
       try {
-        await this.api.post("/api/tiers", { tiers });
+        await this.api.post("/api/tiers", { tiers, ...override ? { override } : {} });
+        this.pendingLead = null;
         this.setTiers(tiers);
       } catch (e) {
+        const body = e.body ?? {};
+        if (body.needs_override) this.pendingLead = { tiers, lead: String(body.lead ?? "") };
         this.toast = e.message;
       }
+    }
+    overridePrompt() {
+      const pending = this.pendingLead;
+      if (!pending) return null;
+      const reason = h("input", {
+        type: "text",
+        "aria-label": "Why use it anyway",
+        value: "chosen before the completion suite had run"
+      });
+      return h(
+        "div",
+        { class: "warn", role: "alert" },
+        h("p", {}, this.toast),
+        h(
+          "div",
+          { class: "row2 tight" },
+          reason,
+          h("button", { class: "primary", onclick: async () => {
+            this.toast = "";
+            await this.save(pending.tiers, reason.value.trim() || "chosen by the person");
+            this.render();
+          } }, "Use it as lead anyway"),
+          h("button", { class: "ghost", onclick: () => {
+            this.pendingLead = null;
+            this.toast = "";
+            this.render();
+          } }, "Choose another")
+        )
+      );
     }
     async clearAll() {
       this.toast = "Selection cleared. Click models in order again.";
@@ -1179,6 +1481,7 @@ var Librarian = (() => {
       this.render();
     }
     async pick(provider, model) {
+      if (this.slot) return this.pickSlot(provider, model);
       const tiers = this.tiers();
       const at = tiers.findIndex((t) => t.provider === provider && t.model === model);
       const entry = (this.listings.get(provider)?.models ?? []).find((m) => m.id === model);
@@ -1214,7 +1517,16 @@ var Librarian = (() => {
         const fallback = !t && i > 0 && tiers.length ? `uses tier ${Math.min(i, tiers.length)}` : "not chosen";
         return h(
           "span",
-          { class: "slot" },
+          {
+            class: "slot",
+            title: t ? "Right-click to clear the chosen models" : "",
+            oncontextmenu: (e) => {
+              if (tiers.length) {
+                e.preventDefault();
+                void this.clearAll();
+              }
+            }
+          },
           h("span", { class: "badge" }, String(i + 1)),
           t ? `${t.model} \xB7 ${PROVIDERS[t.provider] ?? t.provider}` : h("span", { class: "dim" }, fallback),
           h("span", { class: "dim" }, ` \xB7 ${ROLES[i]}`)
@@ -1231,13 +1543,43 @@ var Librarian = (() => {
         }
       });
       const grids = h("div", {});
+      if (this.slot) {
+        const slot = this.slot;
+        clear(
+          this.pop.el,
+          h(
+            "div",
+            { class: "tierbar" },
+            h("strong", {}, `Choose the ${slot.label} model`),
+            h("span", { class: "dim" }, this.showAll ? "Every model is listed. Click one." : `${SLOT_KIND[slot.name]?.label ?? "Matching models"} are listed (by profile, or by name). Click one.`),
+            h(
+              "button",
+              { class: "ghost", onclick: () => {
+                this.showAll = !this.showAll;
+                this.render();
+              } },
+              this.showAll ? `${SLOT_KIND[slot.name]?.label ?? "Matching models"} only` : "Show all"
+            ),
+            h("button", { class: "ghost", onclick: () => {
+              this.slot = null;
+              slot.done();
+            } }, "Cancel")
+          ),
+          slot.current?.model ? h("p", { class: "dim" }, `Now: ${slot.current.model}. Right-click it to empty the slot.`) : null,
+          this.toast ? h("div", { class: "toast", role: "status" }, this.toast) : null,
+          filter,
+          grids
+        );
+        this.renderGrids(grids);
+        return;
+      }
       clear(
         this.pop.el,
         h(
           "div",
           { class: "tierbar" },
           h("strong", {}, "Chat models"),
-          h("span", { class: "dim" }, "Click in order: 1 leads, 2 writes notes, 3 does small tasks. Right-click a chosen model to clear all.")
+          h("span", { class: "dim" }, "Click in order: 1 leads, 2 writes notes, 3 does small tasks. Right-click a chosen model, or a tier, to clear all.")
         ),
         h(
           "div",
@@ -1245,11 +1587,11 @@ var Librarian = (() => {
           slots,
           tiers.length ? h("button", { class: "ghost", onclick: () => this.clearAll() }, "Clear selection") : null
         ),
-        this.toast ? h("div", { class: "toast", role: "status" }, this.toast) : null,
+        this.pendingLead ? this.overridePrompt() : this.toast ? h("div", { class: "toast", role: "status" }, this.toast) : null,
         filter,
         grids,
-        h("h4", {}, "Embeddings \xB7 Speech to text \xB7 Text to speech"),
-        h("p", { class: "note locked" }, "\u{1F512} These need their own single-choice pickers (with the re-embedding cost shown first for Embeddings). They arrive with catalogue upkeep (M4b)."),
+        h("h4", {}, "OCR \xB7 Text to speech \xB7 Embeddings"),
+        h("p", { class: "note locked" }, "These have their own slots (4 OCR, 5 Text to speech, 6 Embeddings) in Settings \u2192 Connections, each chosen with this same tile and kept with the library."),
         h("p", { class: "note" }, "Models come from each provider's live listing. A profiled model (a Source of kind model) shows its suggested tier and best-for tags (a first guess to confirm or correct), plus context, price and tool calling; an unprofiled one can be profiled, which stages it for your review like any other source.")
       );
       this.renderGrids(grids);
@@ -1259,36 +1601,38 @@ var Librarian = (() => {
       const needle = this.filter.toLowerCase();
       clear(host, Object.entries(PROVIDERS).map(([p, label]) => {
         const listing = this.listings.get(p) ?? { status: "\u2026", models: [] };
-        const models = listing.models.filter((m) => !needle || String(m.id).toLowerCase().includes(needle));
+        const models = listing.models.filter((m) => !needle || String(m.id).toLowerCase().includes(needle)).filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true));
         const status = listing.status === "ready" ? `${listing.models.length} model${listing.models.length === 1 ? "" : "s"}` : listing.status === "no key" ? "no key saved (+ \u2192 Connections)" : listing.status === "offline" ? "offline: the local server is not running" : listing.error ? `error: ${listing.error}` : listing.status;
         return h(
           "section",
           { class: "provider" },
           h("h4", {}, h("span", { class: `dot ${listing.status === "ready" ? "" : listing.status === "no key" ? "nokey" : "off"}` }), `${label} \xB7 ${status}`),
           models.length ? h("div", { class: "grid" }, models.slice(0, 60).map((m) => {
-            const at = tiers.findIndex((t) => t.provider === p && t.model === m.id);
+            const inSlot = this.slot?.current?.provider === p && this.slot?.current?.model === m.id;
+            const at = this.slot ? inSlot ? 0 : -1 : tiers.findIndex((t) => t.provider === p && t.model === m.id);
+            const clear2 = () => this.slot ? this.clearSlot() : this.clearAll();
             const card = h(
               "button",
               {
                 class: `card${at >= 0 ? " sel" : ""}`,
                 "aria-pressed": at >= 0 ? "true" : "false",
-                title: m.profile && m.profile.tool_calling === false ? "Profiled as not supporting tool calling: can still lead as tier 2 or 3" : "",
+                title: at >= 0 ? this.slot ? "Right-click (or Delete) to empty this slot" : "Right-click (or Delete) to clear the chosen models" : m.profile && m.profile.tool_calling === false ? "Profiled as not supporting tool calling: can still lead as tier 2 or 3" : "",
                 onclick: () => this.pick(p, m.id),
                 oncontextmenu: (e) => {
                   if (at >= 0) {
                     e.preventDefault();
-                    this.clearAll();
+                    void clear2();
                   }
                 },
                 onkeydown: (e) => {
-                  if (at >= 0 && e.key === "Delete") this.clearAll();
+                  if (at >= 0 && e.key === "Delete") void clear2();
                 },
                 ontouchstart: () => {
-                  if (at >= 0) this.press = window.setTimeout(() => this.clearAll(), 600);
+                  if (at >= 0) this.press = window.setTimeout(() => void clear2(), 600);
                 },
                 ontouchend: () => window.clearTimeout(this.press)
               },
-              at >= 0 ? h("span", { class: "badge" }, String(at + 1)) : null,
+              at >= 0 && !this.slot ? h("span", { class: "badge" }, String(at + 1)) : null,
               h("div", { class: "name" }, m.id),
               h("div", { class: "meta" }, profileMeta(m))
             );
@@ -1390,7 +1734,7 @@ var Librarian = (() => {
       clear(pop.el, h("p", { class: "error" }, `Could not list libraries: ${e.message}`));
     }
   }
-  async function renderSessions(pop, api, attach, reset) {
+  async function renderSessions(pop, api, attach, reset, library = "this library", libraryPath = "") {
     clear(pop.el, h("p", { class: "dim" }, "Loading threads\u2026"));
     try {
       const out = await api.tool("list_sessions");
@@ -1406,7 +1750,7 @@ var Librarian = (() => {
           "New conversation",
           h("small", {}, "The librarian opens a thread when it needs one.")
         ),
-        h("h4", { class: "gap" }, "Threads"),
+        h("h4", { class: "gap", title: libraryPath ? `Kept in ${libraryPath}` : "" }, `Threads in ${library}`),
         rows.length ? rows.map((s) => h(
           "button",
           {
@@ -1418,7 +1762,8 @@ var Librarian = (() => {
           },
           `${s.project || s.question || s.purpose}`,
           h("small", {}, `${s.purpose} \xB7 ${s.status} \xB7 ${s.phase} \xB7 ${when(s.opened_at)}`)
-        )) : h("p", { class: "dim" }, "No threads yet.")
+        )) : h("p", { class: "dim" }, "No threads in this library yet."),
+        h("small", { class: "dim" }, "Another library's threads are under that library: switch to it from the library menu.")
       );
     } catch (e) {
       clear(pop.el, h("p", { class: "error" }, `Could not list threads: ${e.message}`));
@@ -1430,7 +1775,8 @@ var Librarian = (() => {
     ["connections", "Connections"],
     ["context", "Working context"],
     ["mcp", "MCP servers"],
-    ["library", "Library"]
+    ["library", "Library"],
+    ["projects", "Projects"]
   ];
   var CURATED_SKILLS = [
     {
@@ -1460,11 +1806,12 @@ var Librarian = (() => {
     }
   ];
   var Settings = class {
-    constructor(api, state, refresh, manageKeys) {
+    constructor(api, state, refresh, manageKeys, chooseService) {
       this.api = api;
       this.state = state;
       this.refresh = refresh;
       this.manageKeys = manageKeys;
+      this.chooseService = chooseService;
       this.dialog = h("dialog", { class: "settings", "aria-label": "Settings" });
       this.page = "connections";
       this.body = h("section", { class: "page" });
@@ -1498,7 +1845,8 @@ var Librarian = (() => {
         connections: () => this.connections(),
         context: () => this.context(),
         mcp: () => this.mcp(),
-        library: () => this.library()
+        library: () => this.library(),
+        projects: () => this.projectsPage()
       }[this.page];
       clear(this.body, page ? page() : null);
     }
@@ -1525,13 +1873,19 @@ var Librarian = (() => {
             } },
             "Choose keys in the plugin's settings"
           )),
-          h("p", { class: "note" }, "After changing a key, the plugin restarts the core so it takes effect.")
+          h("p", { class: "note" }, "After changing a key, the plugin restarts the core so it takes effect."),
+          this.serviceModels()
         );
       }
+      const LABELS = {
+        ...PROVIDERS,
+        tavily: "Tavily (web search)",
+        brave: "Brave Search (web search)"
+      };
       const select = h(
         "select",
         { id: "lib-provider" },
-        Object.entries(PROVIDERS).map(([id, label]) => h("option", { value: id }, label))
+        Object.entries(LABELS).map(([id, label]) => h("option", { value: id }, label))
       );
       const input = h("input", { type: "password", id: "lib-key", autocomplete: "off", placeholder: "Paste a key" });
       const status = h("span", { class: "note inline", role: "status" });
@@ -1582,7 +1936,7 @@ var Librarian = (() => {
         }
         input.disabled = false;
         save.hidden = false;
-        checkUsage.hidden = false;
+        checkUsage.hidden = select.value === "tavily" || select.value === "brave";
         remove.hidden = !k.saved;
         save.textContent = k.saved ? "Overwrite key" : "Save key";
         input.placeholder = k.saved ? `\u2022\u2022\u2022\u2022 ${k.last4} \xB7 ${k.source === "host" ? "from Obsidian" : "saved"}` : "Paste a key";
@@ -1624,7 +1978,7 @@ var Librarian = (() => {
       remove.onclick = () => clear(confirmBox, h(
         "div",
         { class: "confirm" },
-        `Remove the saved ${PROVIDERS[select.value]} key? It can't be recovered from here.`,
+        `Remove the saved ${LABELS[select.value]} key? It can't be recovered from here.`,
         h(
           "div",
           { class: "row2" },
@@ -1658,10 +2012,268 @@ var Librarian = (() => {
         ),
         h("label", { class: "f" }, "Usage & billing"),
         h("div", { class: "row2" }, checkUsage),
-        usageBox
+        usageBox,
+        this.serviceModels()
       );
       show();
       return page;
+    }
+    /** Research Pipeline §6.1: project access - off by default, folders a person chooses, each
+     *  with its librarian-app/ sidecar. The core refuses project tools while it is off; this
+     *  page is where a person turns it on, never the model. */
+    projectsPage() {
+      const host = h("div", {}, h("p", { class: "dim" }, "Loading\u2026"));
+      const status = h("span", { class: "note inline", role: "status" });
+      const paint = (data) => {
+        const toggle = h("input", {
+          type: "checkbox",
+          id: "lib-projects-on",
+          checked: !!data.enabled,
+          onchange: async (e) => {
+            try {
+              paint(await this.api.post("/api/projects/enable", { enabled: e.target.checked }));
+            } catch (err) {
+              status.textContent = err.message;
+            }
+          }
+        });
+        const path = h("input", {
+          type: "text",
+          class: "f",
+          id: "lib-project-path",
+          placeholder: "Full path to the project folder, e.g. D:\\code\\my-app"
+        });
+        const project = h("input", {
+          type: "text",
+          "aria-label": "Project note",
+          placeholder: "Its Project note's name (optional)"
+        });
+        const act = (url, body, done = "") => async () => {
+          status.textContent = "";
+          try {
+            const out = await this.api.post(url, body);
+            paint(out);
+            if (done) status.textContent = done;
+          } catch (err) {
+            status.textContent = err.message;
+          }
+        };
+        clear(
+          host,
+          h("label", { class: "opt" }, toggle, h(
+            "span",
+            {},
+            h("strong", {}, "Enable project access"),
+            h("small", {}, "Off by default. While off, no project folder is read and the librarian's project tools are unavailable - checked by the core, not only this page.")
+          )),
+          h("label", { class: "f" }, "Project folders"),
+          (data.roots ?? []).length ? data.roots.map((r) => h(
+            "div",
+            { class: "srv project-root" },
+            h("span", { class: `dot ${r.exists ? "" : "off"}` }),
+            h(
+              "span",
+              {},
+              h("code", {}, r.path),
+              h("span", { class: "dim" }, [
+                r.project ? ` \xB7 ${r.project}` : " \xB7 no Project note linked",
+                ` \xB7 librarian-app/ ${r.scaffold?.state ?? "?"}`,
+                r.last_scan ? ` \xB7 scanned ${String(r.last_scan.at).slice(0, 10)} at ${String(r.last_scan.revision).slice(0, 10)} (${r.last_scan.components} components)` : " \xB7 not scanned",
+                r.exists ? "" : " \xB7 moved or gone: add it again"
+              ].join(""))
+            ),
+            data.enabled && r.exists ? h("button", { class: "ghost", onclick: act("/api/projects/scan", { id: r.id }, "Scanned.") }, "Scan") : null,
+            h(
+              "label",
+              { class: "inline project-writes", title: "Separate from reading: the librarian may then propose one change at a time (a snippet replaced or a new file), shown as a diff; you approve each one, and each is logged with a backup in librarian-app/logs/." },
+              h("input", {
+                type: "checkbox",
+                checked: !!r.writes,
+                "aria-label": `Allow edits in ${r.path}`,
+                onchange: (e) => act(
+                  "/api/projects/writes",
+                  { id: r.id, allowed: e.target.checked },
+                  e.target.checked ? "Edits allowed: each one is still asked." : "Edits withdrawn."
+                )()
+              }),
+              " Allow edits"
+            ),
+            h("button", { class: "ghost", onclick: act("/api/projects/remove", { id: r.id }) }, "Remove this project")
+          )) : h("p", { class: "dim" }, "No project folders yet."),
+          h("label", { class: "f", for: "lib-project-path" }, "Add a project folder"),
+          path,
+          h(
+            "div",
+            { class: "row2 tight" },
+            project,
+            h("button", { class: "primary", onclick: () => act(
+              "/api/projects/add",
+              { path: path.value.trim(), project: project.value.trim() },
+              "Added: its librarian-app/ is ready."
+            )() }, "Add"),
+            status
+          ),
+          h("p", { class: "note" }, "Adding a folder creates librarian-app/ inside it (manifest, README, data, information, sessions, applications, index, logs), never overwriting a file already there, and never touching the project's own .gitignore. The librarian reads the project. It changes a project file only in a folder where you ticked Allow edits, and asks you before every change, whatever the permission mode; each change is logged with a backup in librarian-app/logs/ so it can be undone.")
+        );
+      };
+      this.api.get("/api/projects").then(paint).catch((e) => clear(host, h("p", { class: "error" }, e.message)));
+      return host;
+    }
+    /** Slot 6 (R17, SM-8): what embedding the library takes before anything is sent, a
+     *  person's own start, the lexical-vs-hybrid measurement, and the intents a person turns
+     *  vectors on for after reading it. */
+    embeddingsBlock(s, reload) {
+      const status = h("span", { class: "note inline", role: "status" });
+      const confirm2 = h("div");
+      const est = s.estimate ?? {};
+      const local = h("button", {
+        class: "ghost",
+        title: "A small static model on this machine: no key, no cost",
+        onclick: async () => {
+          await this.api.post("/api/services", { slot: "embeddings", provider: "model2vec", model: "minishlab/potion-base-8M" });
+          reload();
+        }
+      }, "Use a local model");
+      const embedAll = h("button", { class: "primary", onclick: () => clear(confirm2, h(
+        "div",
+        { class: "confirm" },
+        `This embeds ${est.chunks} text chunks (about ${est.tokens_est} tokens) with ${s.spec}` + (s.hosted ? est.cost_est_usd !== void 0 ? `, about $${est.cost_est_usd}.` : ". Its price is unknown here: see the provider's page." : ", on this machine."),
+        h(
+          "div",
+          { class: "row2" },
+          h("button", { class: "ghost", onclick: () => clear(confirm2) }, "Cancel"),
+          h("button", { class: "primary", onclick: async () => {
+            clear(confirm2);
+            status.textContent = "Embedding\u2026";
+            try {
+              const out = await this.api.tool("embed_index", {});
+              if (out.error) throw new Error(String(out.detail ?? out.error));
+              reload();
+            } catch (e) {
+              status.textContent = e.message;
+            }
+          } }, "Embed")
+        )
+      )) }, "Embed the library");
+      const measure = h("button", { class: "ghost", onclick: async () => {
+        status.textContent = "Measuring lexical against hybrid on this library's questions\u2026";
+        try {
+          const out = await this.api.tool("evaluate", { compare_vectors: true });
+          if (out.error) throw new Error(String(out.detail ?? out.error));
+          reload();
+        } catch (e) {
+          status.textContent = e.message;
+        }
+      } }, "Measure (lexical vs hybrid)");
+      const using = new Set(s.vector_intents ?? []);
+      const rows = Object.entries(s.comparison?.by_intent ?? {});
+      const table2 = rows.length ? h(
+        "table",
+        { class: "compare" },
+        h("tr", {}, ["intent", "questions", "lexical hit", "hybrid hit", "\u0394", "use vectors"].map((t) => h("th", {}, t))),
+        rows.map(([intent, r]) => h(
+          "tr",
+          {},
+          h("td", {}, intent),
+          h("td", {}, String(r.n)),
+          h("td", {}, String(r.lexical_hit)),
+          h("td", {}, String(r.hybrid_hit)),
+          h("td", { class: r.delta_hit > 0 ? "ok" : r.delta_hit < 0 ? "err" : "" }, String(r.delta_hit)),
+          h("td", {}, h("input", {
+            type: "checkbox",
+            checked: using.has(intent),
+            "aria-label": `use vectors for ${intent}`,
+            onchange: (e) => {
+              if (e.target.checked) using.add(intent);
+              else using.delete(intent);
+            }
+          }))
+        ))
+      ) : null;
+      const save = rows.length ? h("button", { class: "ghost", onclick: async () => {
+        await this.api.post("/api/services/vector_intents", { intents: [...using] });
+        reload();
+      } }, "Save intents") : null;
+      return h(
+        "div",
+        { class: "embeddings" },
+        s.model ? h("p", { class: "dim" }, `${s.embedded ?? 0} of ${s.chunks ?? 0} text chunks embedded` + (s.vector_intents?.length ? ` \xB7 vectors used for: ${s.vector_intents.join(", ")}` : " \xB7 vectors used for no intent yet")) : null,
+        h("div", { class: "row2 tight" }, local, s.model && est.chunks ? embedAll : null, s.model ? measure : null, status),
+        confirm2,
+        table2,
+        save,
+        s.comparison ? h("p", { class: "note" }, `Measured ${String(s.comparison.at ?? "").slice(0, 10)} on ${s.comparison.questions} questions; vectors joined ${s.comparison.vectors_contributed} answers. Turn them on only where they help.`) : null
+      );
+    }
+    /** Requirements Addendum R17: service models, slots 4-6 - each one kind of job with its
+     *  own request format, chosen with the same tile as the chat models and kept with this
+     *  library. Test makes one small real call. */
+    serviceModels() {
+      const host = h("div", { class: "services" }, h("p", { class: "dim" }, "Loading\u2026"));
+      void (async () => {
+        let out;
+        try {
+          out = await this.api.get("/api/services");
+        } catch (e) {
+          clear(host, h("p", { class: "error" }, e.message));
+          return;
+        }
+        clear(
+          host,
+          h("label", { class: "f" }, "Service models"),
+          (out.slots ?? []).map((s) => {
+            const status = h("span", { class: "note inline", role: "status" });
+            const current = s.model ? `${s.model} \xB7 ${PROVIDERS[s.provider] ?? s.provider}${s.default ? " (default)" : ""}` : s.built ? "none chosen" : "planned";
+            const test = async () => {
+              status.className = "note inline";
+              status.textContent = "Testing: one small call\u2026";
+              try {
+                const t = await this.api.post("/api/services/test", { slot: s.slot });
+                status.textContent = t.ok ? `Works: it read \u201C${t.read}\u201D.` : `Not working: ${t.error ?? `it read \u201C${t.read}\u201D`}`;
+                if (t.ok && t.audio) void new Audio(t.audio).play().catch(() => void 0);
+                status.className = `note inline ${t.ok ? "ok" : "err"}`;
+              } catch (e) {
+                status.textContent = e.message;
+              }
+            };
+            return h(
+              "div",
+              {
+                class: `srv service slot-${s.slot}`,
+                title: s.built && s.model ? "Right-click to empty this slot" : "",
+                oncontextmenu: async (e) => {
+                  if (!s.built || !s.model) return;
+                  e.preventDefault();
+                  try {
+                    await this.api.post("/api/services", { slot: s.slot, provider: "", model: "" });
+                    this.render();
+                  } catch (err) {
+                    status.textContent = err.message;
+                  }
+                }
+              },
+              h("span", { class: "badge" }, String(s.number)),
+              h(
+                "span",
+                {},
+                h("strong", {}, s.label),
+                ` \xB7 ${current}`,
+                h("span", { class: "dim" }, ` \xB7 ${s.job}`),
+                s.cap_usd !== void 0 ? h("span", { class: "dim" }, ` \xB7 spent $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null
+              ),
+              s.built && this.chooseService ? h("button", { class: "ghost", onclick: () => {
+                this.dialog.close();
+                this.chooseService(s.slot, s.label, { provider: s.provider, model: s.model });
+              } }, "Choose\u2026") : null,
+              s.built && s.model ? h("button", { class: "ghost", onclick: test }, "Test") : null,
+              status,
+              s.slot === "embeddings" ? this.embeddingsBlock(s, () => this.render()) : null
+            );
+          }),
+          h("p", { class: "note" }, "Each does one kind of job with its own request format, and is kept with this library. An empty slot is never filled by a chat model.")
+        );
+      })();
+      return host;
     }
     // -- page 2 --------------------------------------------------------------
     context() {
@@ -1970,6 +2582,7 @@ var Librarian = (() => {
       const packs = h("div", { class: "lens-packs" }, h("p", { class: "dim" }, "Loading\u2026"));
       const catalogs = h("div", { class: "model-catalogs" }, h("p", { class: "dim" }, "Loading\u2026"));
       const profile = h("div", { class: "library-profile" });
+      const topics = h("div", { class: "topics" }, h("p", { class: "dim" }, "Loading\u2026"));
       this.api.get("/api/library").then((lib) => {
         const promo = h(
           "select",
@@ -1985,10 +2598,37 @@ var Librarian = (() => {
             status.textContent = e.message;
           }
         };
+        const reviewStatus = h("span", { class: "note inline", role: "status" });
+        const reviewBox = (key, label, hint) => {
+          const box = h("input", { type: "checkbox", id: `lib-${key}` });
+          box.checked = !!lib.clerk?.[key];
+          box.onchange = async () => {
+            try {
+              await this.api.post("/api/library", { review: { [key]: box.checked } });
+              reviewStatus.textContent = "Saved to the library's config.";
+            } catch (e) {
+              box.checked = !box.checked;
+              reviewStatus.textContent = e.message;
+            }
+          };
+          return h("div", { class: "srv" }, box, h("label", { for: `lib-${key}` }, h("strong", {}, label), h("span", { class: "dim" }, ` \xB7 ${hint}`)));
+        };
         clear(
           host,
           h("label", { class: "f", for: "lib-promo" }, "Promotion"),
           h("div", { class: "row2 tight" }, promo, status),
+          h("label", { class: "f" }, "Review"),
+          reviewBox(
+            "review_replies",
+            "Check replies",
+            "the claims a reply makes about the notes it links are checked against those notes; the verdict shows under the reply"
+          ),
+          reviewBox(
+            "review_offerings",
+            "Check drafted offerings",
+            "each claim is checked before the draft is staged; a challenged claim kept by the librarian needs you to promote it"
+          ),
+          h("p", { class: "note" }, "Run by the small-tasks model (tier 3), or `route_review` under [clerk]. A high effort setting also turns these on for its turns. ", reviewStatus),
           h("label", { class: "f" }, "Distribution posture"),
           h("p", {}, String(lib.usage?.distribution_posture ?? "private"), h("span", { class: "dim" }, " \xB7 set in the vault's config")),
           h("label", { class: "f" }, "Clerk route"),
@@ -2001,16 +2641,92 @@ var Librarian = (() => {
             h("span", {}, h("strong", {}, c.name), ` \xB7 ${c.detail ?? ""}`)
           )),
           profile,
+          h("label", { class: "f" }, "Topics"),
+          topics,
           h("label", { class: "f" }, "Lens packs"),
           packs,
           h("label", { class: "f" }, "Model catalogues"),
           catalogs
         );
+        void this.paintTopics(topics);
         void this.paintPacks(packs);
         void this.paintModelCatalogs(catalogs);
         void this.paintProfile(profile);
       }).catch((e) => clear(host, h("p", { class: "error" }, e.message)));
       return host;
+    }
+    /** The closed topic list (About/Topics.md) and the topics proposed for it (R8): only
+     *  here does a proposal join the list - accepted as proposed, renamed, or rejected. */
+    async paintTopics(host) {
+      const status = h("span", { class: "note inline", role: "status" });
+      const reload = () => void this.paintTopics(host);
+      let out;
+      try {
+        out = await this.api.tool("topics_list", {});
+        if (out.error) throw new Error(String(out.detail ?? out.error));
+      } catch (e) {
+        clear(host, h("p", { class: "error" }, e.message));
+        return;
+      }
+      const propose = h("button", { class: "ghost", onclick: async () => {
+        status.textContent = "Asking the clerk to group the sources\u2026";
+        try {
+          const r = await this.api.tool("topic_propose", { only_unfiled: false });
+          if (r.error) throw new Error(String(r.detail ?? r.error));
+          status.textContent = r.detail ? String(r.detail) : `${(r.proposed ?? []).length} proposed.`;
+          reload();
+        } catch (e) {
+          status.textContent = e.message;
+        }
+      } }, "Propose topics");
+      const refresh = h("button", {
+        class: "ghost",
+        title: "Rewrite the topic indexes and the Master Index from the notes",
+        onclick: async () => {
+          try {
+            await this.api.tool("views_refresh", {});
+            status.textContent = "Indexes rewritten.";
+          } catch (e) {
+            status.textContent = e.message;
+          }
+        }
+      }, "Rewrite indexes");
+      const proposal = (p) => {
+        const name = h("input", { type: "text", value: p.name, "aria-label": "Topic name" });
+        const file = h("input", { type: "checkbox", checked: true });
+        const accept = h("button", { class: "primary", onclick: async () => {
+          try {
+            const r = await this.api.tool("staging_decide", {
+              item_ids: [p.id],
+              decision: "accept",
+              fields: { name: name.value, refile: file.checked }
+            });
+            const one = (r.results ?? [])[0] ?? r;
+            if (r.error || one.error || one.refused) throw new Error(String(one.detail ?? one.error ?? r.detail ?? r.error));
+            status.textContent = `${one.topic} added; ${(one.refiled ?? []).filter((x) => x.topic && !x.unchanged).length} source(s) filed under it.`;
+            reload();
+          } catch (e) {
+            status.textContent = e.message;
+          }
+        } }, "Accept");
+        return h(
+          "div",
+          { class: "srv" },
+          name,
+          h("label", { class: "note inline" }, file, ` file its ${p.sources} source${p.sources === 1 ? "" : "s"} under it`),
+          p.duplicate_of ? h("span", { class: "warn" }, `close to ${p.duplicate_of}`) : null,
+          accept
+        );
+      };
+      clear(
+        host,
+        h("p", {}, (out.topics ?? []).map((t) => `${t.topic} (${t.sources})`).join(" \xB7 ")),
+        out.unfiled ? h("p", { class: "note" }, `${out.unfiled} source${out.unfiled === 1 ? "" : "s"} Unfiled.`) : null,
+        (out.not_accepted ?? []).length ? h("p", { class: "warn" }, `Filed under topics not in the list: ${out.not_accepted.join(", ")}.`) : null,
+        (out.proposed ?? []).length ? h("p", { class: "note" }, "Proposed from the library's own sources (details in Staging \u2192 Topics):") : null,
+        (out.proposed ?? []).map(proposal),
+        h("div", { class: "row2 tight" }, propose, refresh, status)
+      );
     }
     /** The domain profile this library was created with (profiles.py): what it
      *  suggests and where each item stands. Suggestions only - each is taken up
@@ -2144,6 +2860,26 @@ var Librarian = (() => {
         "aria-expanded": "false"
       }, "\u22EE");
       this.menu = h("div", { class: "pane-menu", hidden: true, role: "menu" });
+      // Text to speech, mode B: read the open document aloud (slot 5).
+      // A person's run (EXECUTION_SANDBOX_ONLY): only for a script file (.py, .sh) - never a
+      // note or text - in the air-gapped sandbox; what it wrote lands on its own pad.
+      this.runButton = h("button", {
+        class: "icon-btn run",
+        hidden: true,
+        title: "Run this script in the sandbox (no network; it can write only to its landing pad)",
+        "aria-label": "Run this script",
+        onclick: () => void this.runScript()
+      }, runIcon());
+      this.runOutput = h("div", { class: "run-output" });
+      this.speakButton = h("button", {
+        class: "icon-btn speak",
+        hidden: true,
+        title: "Read this document",
+        "aria-label": "Read this document",
+        onclick: () => {
+          if (this.current.kind === "doc") void reader.toggle({ path: this.current.path }, this.speakButton);
+        }
+      }, speakerIcon());
       this.body = h("div", { class: "pane-body" });
       this.recent = [];
       this.current = { kind: "plan" };
@@ -2157,6 +2893,8 @@ var Librarian = (() => {
           h(
             "div",
             { class: "pane-actions" },
+            this.runButton,
+            this.speakButton,
             this.menuButton,
             h("button", {
               class: "icon-btn",
@@ -2184,6 +2922,8 @@ var Librarian = (() => {
     }
     showPlan() {
       this.current = { kind: "plan" };
+      this.speakButton.hidden = true;
+      this.runButton.hidden = true;
       clear(
         this.crumbs,
         h("span", { class: "crumb-here" }, "Plan"),
@@ -2196,6 +2936,8 @@ var Librarian = (() => {
      *  no daemon, nothing kept in sync (Co-work Roadmap 2C). */
     async showAgenda() {
       this.current = { kind: "agenda" };
+      this.speakButton.hidden = true;
+      this.runButton.hidden = true;
       clear(
         this.crumbs,
         h("span", { class: "crumb-here" }, "This week"),
@@ -2255,16 +2997,57 @@ var Librarian = (() => {
         return;
       }
       this.current = { kind: "doc", path: doc.path, name: doc.name };
+      this.speakButton.hidden = Boolean(doc.script);
+      this.runButton.hidden = !doc.script;
       this.recent = [{ path: doc.path, name: doc.name }, ...this.recent.filter((r) => r.path !== doc.path)].slice(0, RECENT);
       const project = this.currentProject();
       if (project) this.api.tool("desk_touch", { project, note: doc.name }).catch(() => void 0);
       this.paintCrumbs(doc.path);
+      if (doc.script) {
+        clear(this.runOutput);
+        clear(this.body, h(
+          "article",
+          { class: "doc" },
+          h("h1", { class: "doc-title" }, doc.name),
+          h("pre", { class: "code" }, h("code", {}, doc.text)),
+          this.runOutput
+        ));
+        this.body.scrollTop = 0;
+        return;
+      }
       const rendered = render(doc.text, (t) => void this.open(t), { frontmatter: true });
       const own = Array.from(rendered.children).find((el) => !el.matches("table.props"));
       const titled = own?.tagName === "H2" && own.textContent?.trim().toLowerCase() === String(doc.name).toLowerCase();
       if (titled) own.remove();
       clear(this.body, h("article", { class: "doc" }, h("h1", { class: "doc-title" }, doc.name), rendered));
       this.body.scrollTop = 0;
+    }
+    /** Run the open script in the sandbox, as the person's own action, and show what came
+     *  back: exit code, output, and what landed on its pad. */
+    async runScript() {
+      if (this.current.kind !== "doc") return;
+      const path = this.current.path;
+      this.runButton.disabled = true;
+      clear(this.runOutput, h("p", { class: "dim" }, "Running in the sandbox (no network)\u2026"));
+      try {
+        const r = await this.api.post("/api/sandbox/run_file", { path });
+        if (r.error) {
+          clear(this.runOutput, h("p", { class: "error" }, String(r.detail ?? r.error)));
+        } else {
+          const files = r.files ?? [];
+          clear(
+            this.runOutput,
+            h("h4", {}, `Run ${r.run}: exit ${r.exit_code}${r.timed_out ? " (stopped: too long)" : ""}`),
+            r.stdout ? h("pre", { class: "code" }, h("code", {}, r.stdout)) : null,
+            r.stderr ? h("pre", { class: "code err" }, h("code", {}, r.stderr)) : null,
+            h("p", { class: "dim" }, files.length ? `Landed in ${r.landing}: ${files.map((f) => `${f.name} (${f.bytes} bytes)`).join(", ")}. Nothing there is run or imported.` : "Nothing landed."),
+            ...(r.notes ?? []).map((n) => h("p", { class: "dim" }, n))
+          );
+        }
+      } catch (e) {
+        clear(this.runOutput, h("p", { class: "error" }, e.message));
+      }
+      this.runButton.disabled = false;
     }
     paintCrumbs(path) {
       const parts = path.split("/");
@@ -2578,6 +3361,7 @@ var Librarian = (() => {
   var TIERS = ["Tier_1", "Tier_2", "Tier_3"];
   var untag = (s) => s.replace(/_/g, " ");
   var Staging = class {
+    // an offering to open once the list loads
     constructor(api, openNote, currentSession = () => "", onSessionUpdate = () => {
     }) {
       this.api = api;
@@ -2588,20 +3372,61 @@ var Librarian = (() => {
       this.list = h("div", { class: "items", role: "listbox", "aria-label": "Staged items" });
       this.detail = h("div", { class: "detail" });
       this.kind = "source";
+      this.status = "staged";
+      // sources only: which part of their lifecycle
       this.selected = "";
+      // Research Pipeline §4.2: shown on every kind while approved sources wait, and while a
+      // batch runs; polled only while one runs.
+      this.banner = h("div", { class: "batch-banner", role: "status" });
+      this.poll = 0;
+      this.wasRunning = false;
       // True right after a decision's outcome message is shown, until the person
       // opens something else or explicitly refreshes: an automatic reload (the
       // SSE echo of this same decision, or someone else's) must not wipe it.
       this.detailLocked = false;
+      this.paintKinds = () => {
+      };
+      this.pending = "";
       const kinds = h("div", { class: "seg", role: "group", "aria-label": "Kind" });
+      const statuses = h("select", { "aria-label": "Which sources", onchange: () => {
+        this.status = statuses.value;
+        this.selected = "";
+        void this.load(true);
+      } }, [
+        ["staged", "Captured, to review"],
+        ["approved", "Approved, awaiting ingestion"],
+        ["enriched", "Ingested, ready to accept"],
+        ["partial", "Ingested with gaps"],
+        ["queued", "Queued for capture"],
+        ["failed", "Failed"],
+        ["deferred", "Deferred"]
+      ].map(([v, label]) => h("option", { value: v }, label)));
       const paint = () => {
-        clear(kinds, [["source", "Sources"], ["lens", "Lenses"], ["concept", "Concepts"]].map(([v, label]) => h("button", { "aria-pressed": String(this.kind === v), onclick: () => {
+        clear(kinds, [["source", "Sources"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) => h("button", { "aria-pressed": String(this.kind === v), onclick: () => {
           this.kind = v;
           paint();
           void this.load(true);
         } }, label)));
         scan.style.display = this.kind === "concept" ? "" : "none";
+        propose.style.display = this.kind === "topic" ? "" : "none";
+        statuses.style.display = this.kind === "source" ? "" : "none";
       };
+      const propose = h("button", {
+        class: "ghost",
+        title: "Group the library's sources into topics, staged here for you to accept",
+        onclick: async () => {
+          clear(this.list, h("p", { class: "dim" }, "Asking the clerk to group the sources\u2026"));
+          try {
+            const out = await this.api.tool("topic_propose", {});
+            if (out.error) throw new Error(String(out.detail ?? out.error));
+            await this.load(true);
+            const n = (out.proposed ?? []).length;
+            this.list.prepend(h("p", { class: "note" }, out.detail ? String(out.detail) : `${n} topic${n === 1 ? "" : "s"} proposed from ${out.considered} sources.` + ((out.refile ?? []).length ? ` ${out.refile.length} source(s) fit a topic you already have.` : "")));
+          } catch (e) {
+            clear(this.list, h("p", { class: "error" }, e.message));
+          }
+        }
+      }, "Propose topics");
       const scan = h("button", {
         class: "ghost",
         title: "Scan recorded term usages for a term seen across several sources",
@@ -2618,15 +3443,19 @@ var Librarian = (() => {
         }
       }, "Scan for concepts");
       paint();
+      this.paintKinds = paint;
       this.el.append(
         h(
           "div",
           { class: "view-head" },
           h("strong", {}, "Staging review"),
           kinds,
+          statuses,
           h("button", { class: "ghost", onclick: () => void this.load(true) }, "Refresh"),
-          scan
+          scan,
+          propose
         ),
+        this.banner,
         h("div", { class: "split" }, this.list, this.detail)
       );
     }
@@ -2637,12 +3466,14 @@ var Librarian = (() => {
     async load(reset = false) {
       if (reset) this.detailLocked = false;
       clear(this.list, h("p", { class: "dim" }, "Loading\u2026"));
+      if (this.kind === "offering") return this.loadOfferings();
       try {
-        const out = await this.api.tool("staging_list", { kind: this.kind, status: "staged", limit: 50 });
+        const status = this.kind === "source" ? this.status : "staged";
+        const out = await this.api.tool("staging_list", { kind: this.kind, status, limit: 50 });
         const items = out.items ?? [];
         clear(
           this.list,
-          h("p", { class: "dim" }, `${out.total ?? items.length} waiting`),
+          h("p", { class: "dim" }, `${out.total ?? items.length} ${status === "staged" ? "waiting" : status}`),
           items.length ? items.map((item) => h(
             "button",
             {
@@ -2653,13 +3484,13 @@ var Librarian = (() => {
             },
             item.sensitivity === "review" ? h("span", { class: "flag", title: "sensitive: a person decides" }, "\u2691 ") : null,
             item.name || item.id,
-            h("small", {}, (item.kind === "lens" ? [item.source ? `from ${item.source}` : "", item.locator] : item.kind === "concept" ? [`${item.sources ?? 0} source${item.sources === 1 ? "" : "s"}`, `${item.usages ?? 0} usage${item.usages === 1 ? "" : "s"}`] : [
+            h("small", {}, (item.kind === "lens" ? [item.source ? `from ${item.source}` : "", item.locator] : item.kind === "concept" ? [`${item.sources ?? 0} source${item.sources === 1 ? "" : "s"}`, `${item.usages ?? 0} usage${item.usages === 1 ? "" : "s"}`] : item.kind === "topic" ? [`${item.coverage?.sources ?? 0} of ${item.coverage?.of ?? 0} sources`, item.duplicate_of ? `close to ${item.duplicate_of}` : ""] : item.ref ? [item.failure ? `failed: ${item.failure.stage}` : "not yet fetched", item.note] : item.status === "enriched" || item.status === "partial" ? [item.topic, `coverage ${item.processing?.coverage ?? "?"}`] : item.status === "failed" ? [`failed at ${item.failure?.stage ?? "?"}`] : [
               item.topic,
               item.drafted ? "drafted" : item.reviewed ? "draft queued" : "no draft yet",
               item.deep_read ? `read ${item.deep_read}` : "",
               item.fit
             ]).filter(Boolean).join(" \xB7 "))
-          )) : h("p", { class: "dim" }, "Nothing waiting.")
+          )) : h("p", { class: "dim" }, "Nothing here.")
         );
         if (!this.selected && !this.detailLocked) {
           clear(this.detail, h("p", { class: "dim" }, "Choose an item to see its draft beside its evidence."));
@@ -2667,6 +3498,180 @@ var Librarian = (() => {
       } catch (e) {
         clear(this.list, h("p", { class: "error" }, e.message));
       }
+      void this.paintBanner();
+    }
+    /** Open one staged offering here (the chat's "Read the draft" on a promotion question). */
+    focusOffering(id) {
+      this.kind = "offering";
+      this.selected = id;
+      this.pending = id;
+      this.paintKinds();
+    }
+    /** Offering drafts wait in staging/offerings/ until promoted: listed here so a person
+     * reads one before answering "promote it?" (Test Report A2 b). Not staging items -
+     * each belongs to the session that drafted it, and its decision is recorded there. */
+    async loadOfferings() {
+      try {
+        const out = await this.api.get("/api/offerings/staged");
+        const rows = out.offerings ?? [];
+        const waiting = rows.filter((r) => r.status !== "declined").length;
+        clear(
+          this.list,
+          h("p", { class: "dim" }, `${waiting} waiting${rows.length > waiting ? ` \xB7 ${rows.length - waiting} declined` : ""}`),
+          rows.length ? rows.map((r) => h(
+            "button",
+            {
+              class: `item${r.offering === this.selected ? " sel" : ""}`,
+              role: "option",
+              "aria-selected": String(r.offering === this.selected),
+              onclick: () => void this.showOffering(r.offering)
+            },
+            r.challenged ? h("span", { class: "flag", title: "a claim the review challenged was kept: yours to weigh" }, "\u2691 ") : null,
+            r.title,
+            h("small", {}, [
+              r.project || "Insights",
+              `${r.claims} claim${r.claims === 1 ? "" : "s"}`,
+              r.question ? "asked: promote?" : r.status === "declined" ? "declined" : "",
+              r.session_status === "closed" ? "session closed" : ""
+            ].filter(Boolean).join(" \xB7 "))
+          )) : h("p", { class: "dim" }, "No offering waits to be promoted.")
+        );
+        if (this.pending) {
+          const id = this.pending;
+          this.pending = "";
+          return this.showOffering(id);
+        }
+        if (!this.selected && !this.detailLocked) {
+          clear(this.detail, h("p", { class: "dim" }, "Choose an offering to read it before deciding."));
+        }
+      } catch (e) {
+        clear(this.list, h("p", { class: "error" }, e.message));
+      }
+      void this.paintBanner();
+    }
+    async showOffering(id) {
+      this.selected = id;
+      this.detailLocked = false;
+      this.list.querySelectorAll(".item").forEach((b) => b.classList.remove("sel"));
+      clear(this.detail, h("p", { class: "dim" }, "Loading\u2026"));
+      let r;
+      try {
+        r = await this.api.get(`/api/offerings/staged?id=${encodeURIComponent(id)}`);
+      } catch (e) {
+        clear(this.detail, h("p", { class: "error" }, e.message));
+        return;
+      }
+      const status = h("div", { role: "status" });
+      const decide = (d) => async () => {
+        try {
+          const out = await this.api.post("/api/offerings/decide", { id, decision: d });
+          if (out.error) throw new Error(String(out.detail ?? out.error));
+          this.selected = "";
+          await this.load();
+          this.detailLocked = true;
+          clear(this.detail, h(
+            "p",
+            { class: "ok", role: "status" },
+            out.resumed ? `${r.title}: answered - the session carries on and ${d === "promote" ? "promotes" : "declines"} it.` : out.promoted ? [`${r.title}: promoted to `, h("a", { href: "#", onclick: (e) => {
+              e.preventDefault();
+              this.openNote(String(out.promoted));
+            } }, String(out.promoted)), out.findable === false ? " (not yet found by search)" : "", "."] : `${r.title}: declined. It stays here, and can still be promoted.`
+          ));
+        } catch (e) {
+          clear(status, h("p", { class: "error" }, e.message));
+        }
+      };
+      const review = r.review ?? {};
+      const reviewed = ["holds", "unchecked", "queued"].filter((k) => review[k]).map((k) => `${review[k]} ${k}`);
+      clear(
+        this.detail,
+        h("div", { class: "view-head" }, h("strong", {}, r.title)),
+        h("p", { class: "dim" }, [
+          r.kind.replace(/_/g, " "),
+          r.created,
+          `for ${r.project || "Insights"}`,
+          `${r.claims} claim${r.claims === 1 ? "" : "s"}, each quote found in its source`,
+          reviewed.length ? `review: ${reviewed.join(", ")}${review.by ? ` (${review.by})` : ""}` : "",
+          `session ${r.session} (${r.session_status})`
+        ].filter(Boolean).join(" \xB7 ")),
+        r.challenged ? h("p", { class: "warn" }, `\u2691 ${r.challenged} claim${r.challenged === 1 ? "" : "s"} the review challenged ${r.challenged === 1 ? "was" : "were"} kept by the agent, with its reason - read ${r.challenged === 1 ? "it" : "them"} before promoting.`) : null,
+        h("p", { class: "note" }, r.question ? "The session has asked you to promote this. Your choice here answers it." : r.status === "declined" ? "You declined this. It stays in staging; promoting it now still moves it into the library." : "The session has not asked yet. Promoting moves it into the library now."),
+        h("div", { class: "offering-body" }, render(String(r.text ?? ""), this.openNote, { frontmatter: true })),
+        h(
+          "div",
+          { class: "row2 tight" },
+          h("button", { class: "primary", onclick: decide("promote") }, "Promote into the library"),
+          r.status === "declined" ? null : h("button", { class: "ghost", onclick: decide("decline") }, "Decline")
+        ),
+        status
+      );
+    }
+    /** Approving a source only queues it: a person begins the batch here, and nothing
+     * else starts it (Research Pipeline §4.2). The count is the approved set not yet
+     * started; while a batch runs, later approvals are counted apart, for the next run. */
+    async paintBanner() {
+      let b;
+      try {
+        b = await this.api.tool("batch_status", {});
+      } catch {
+        clear(this.banner);
+        return;
+      }
+      const waiting = Number(b.waiting ?? 0);
+      const running = b.status === "running";
+      const start = (label, args, cls = "primary") => h("button", { class: cls, onclick: async (e) => {
+        e.currentTarget.disabled = true;
+        try {
+          const out = await this.api.tool("process_approved", { ...args, background: true });
+          if (out.error || out.refused) throw new Error(String(out.detail ?? out.refused ?? out.error));
+        } catch (err) {
+          this.banner.append(h("p", { class: "error" }, err.message));
+          return;
+        }
+        void this.paintBanner();
+      } }, label);
+      const rows = [];
+      if (running) {
+        const cur = b.current ?? {};
+        rows.push(h(
+          "div",
+          { class: "row2 tight" },
+          h(
+            "span",
+            {},
+            h("strong", {}, `Processing ${b.processed ?? 0} of ${b.total ?? 0}`),
+            cur.item ? ` \xB7 ${cur.item}: ${cur.stage}${cur.detail ? ` - ${cur.detail}` : ""}` : ""
+          ),
+          h("button", { class: "ghost", onclick: async () => {
+            await this.api.tool("batch_cancel", {});
+            void this.paintBanner();
+          } }, "Stop after this stage")
+        ));
+        if (waiting) rows.push(h("p", { class: "note inline" }, `${waiting} more approved, waiting for the next run.`));
+      } else {
+        const unfinished = (b.items ?? []).some((i) => i.status === "processing");
+        if (unfinished && (b.status === "interrupted" || b.status === "cancelled")) {
+          rows.push(h(
+            "div",
+            { class: "row2 tight" },
+            h("span", {}, `The last batch stopped${b.detail ? ` (${b.detail})` : ""} with sources unfinished.`),
+            start("Resume it", { resume: b.run }, "ghost")
+          ));
+        }
+        if (waiting) {
+          rows.push(h(
+            "div",
+            { class: "row2 tight" },
+            h("strong", {}, waiting === 1 ? "1 source approved and awaiting ingestion." : `${waiting} sources approved and awaiting ingestion.`),
+            start("Click here to begin", {})
+          ));
+        }
+      }
+      clear(this.banner, rows.length ? h("div", { class: "warn" }, rows) : null);
+      window.clearTimeout(this.poll);
+      if (running) this.poll = window.setTimeout(() => void this.paintBanner(), 2e3);
+      else if (this.wasRunning && this.kind === "source") void this.load();
+      this.wasRunning = running;
     }
     async show(id) {
       this.selected = id;
@@ -2683,6 +3688,9 @@ var Librarian = (() => {
       }
       if (item.kind === "lens") return this.showLens(item);
       if (item.kind === "concept") return this.showConcept(item);
+      if (item.kind === "topic") return this.showTopic(item);
+      if (item.kind === "import") return this.showImport(item);
+      if (item.ref && (item.status === "queued" || item.status === "failed")) return this.showQueued(item);
       const draft = item.review?.draft ?? {};
       const bottom = h("textarea", { class: "f", id: "lib-bl", placeholder: "One or two sentences: what this is, from the evidence." });
       bottom.value = draft.bottom_line ?? "";
@@ -2694,16 +3702,16 @@ var Librarian = (() => {
       const bestFor = new Set(item.fields?.best_for ?? []);
       let suggestedTier = item.fields?.suggested_tier ?? "";
       const bestForButtons = BEST_FOR_TAGS.map((tag) => {
-        const btn = h("button", {
+        const btn2 = h("button", {
           type: "button",
           "aria-pressed": String(bestFor.has(tag)),
           onclick: () => {
             if (bestFor.has(tag)) bestFor.delete(tag);
             else bestFor.add(tag);
-            btn.setAttribute("aria-pressed", String(bestFor.has(tag)));
+            btn2.setAttribute("aria-pressed", String(bestFor.has(tag)));
           }
         }, untag(tag));
-        return btn;
+        return btn2;
       });
       const tierButtons = TIERS.map((t) => h("button", {
         type: "button",
@@ -2725,7 +3733,7 @@ var Librarian = (() => {
           });
           const r = (out.results ?? [])[0] ?? out;
           if (out.error || r.error || r.refused) throw new Error(String(r.detail ?? r.refused ?? out.detail ?? out.error ?? r.error));
-          const outcome = decision === "accept" ? r.promotion && !r.promotion.catalogued ? `Accepted: ${r.promotion.status}.` : "Accepted and catalogued." : decision === "reject" ? "Rejected." : "Deferred.";
+          const outcome = decision === "accept" ? (r.merged_into ? `Merged ${(r.sections ?? []).join(", ") || "its sections"} into ${r.merged_into}; the previous text is kept on this item.` : r.promotion && !r.promotion.catalogued ? `Accepted: ${r.promotion.status}.` : `Accepted into the library and catalogued (coverage: ${r.coverage ?? "unknown"}).`) + (r.handoff ? " It joins your session as an undecided candidate." : "") : decision === "approve" ? "Approved for ingestion: it waits for the batch above. Nothing is in the library yet." : decision === "reject" ? "Rejected." : "Deferred.";
           this.selected = "";
           if (r.session && r.session.session === this.currentSession()) this.onSessionUpdate(r.session);
           await this.load();
@@ -2770,6 +3778,45 @@ var Librarian = (() => {
       const sections = Object.entries(item.sections ?? {}).filter(([, t]) => t);
       const queued = item.review?.queued ?? [];
       const missing = item.readiness ?? [];
+      const st = String(item.status ?? "staged");
+      const btn = (label, d, cls = "ghost", title = "") => h("button", { class: cls, onclick: decide(d), ...title ? { title } : {} }, label);
+      const proc = item.processing ?? {};
+      const buttons = item.revision_of ? [btn("Accept", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : st === "enriched" ? [btn("Accept into library", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : st === "partial" ? [
+        btn("Approve for ingestion again", "approve", "primary", "Runs only the unfinished stages; finished ones are kept"),
+        btn("Accept with partial coverage", "accept", "ghost", "The note records its coverage and what was not examined"),
+        btn("Reject", "reject"),
+        btn("Defer", "defer")
+      ] : st === "approved" ? [btn("Reject", "reject"), btn("Defer", "defer", "ghost", "Take it out of the waiting batch")] : st === "processing" ? [] : st === "failed" ? [btn("Approve for ingestion again", "approve", "primary"), btn("Reject", "reject")] : [
+        btn("Approve for ingestion", "approve", "primary", "Read it in full and review it in the next batch, then accept it"),
+        btn("Reject", "reject"),
+        btn("Defer", "defer"),
+        btn("Accept as captured", "accept", "ghost", "Catalogue it now from what capture read, without ingesting it; the note records coverage: captured")
+      ];
+      const stage = st === "approved" ? h("p", { class: "note" }, "Approved for ingestion: it waits for the batch (the banner above). Nothing is in the library yet.") : st === "processing" ? h("p", { class: "note" }, `Being ingested in ${item.batch ?? "a batch"}.`) : st === "enriched" || st === "partial" ? h(
+        "div",
+        {},
+        h("p", { class: "note" }, st === "enriched" ? `Ingested in ${proc.run ?? "a batch"}: every stage complete, coverage ${proc.coverage ?? "unknown"}.` : `Ingested in ${proc.run ?? "a batch"} with gaps: coverage ${proc.coverage ?? "unknown"}. Approve it again to run only what is unfinished, or accept it as it is - its note will say what was not examined.`),
+        (proc.not_examined ?? []).length ? h("p", { class: "warn" }, `Not examined: ${proc.not_examined.join("; ")}.`) : null
+      ) : st === "staged" || st === "deferred" ? h("p", { class: "note" }, "Captured: only what intake fetched has been read.") : st === "failed" && item.failure ? h("p", { class: "warn" }, `Ingestion failed at ${item.failure.stage}: ${item.failure.reason}`) : null;
+      const intakeInfo = item.intake ?? {};
+      const q = intakeInfo.quality ?? {};
+      const ledger = (stages) => Object.entries(stages ?? {}).map(([k, v]) => `${k}: ${v}`).join(" \xB7 ");
+      const capture = h(
+        "div",
+        {},
+        Object.keys(intakeInfo.stages ?? {}).length ? h("p", { class: "dim" }, `Capture \u2014 ${ledger(intakeInfo.stages)}`) : null,
+        Object.keys(proc.stages ?? {}).length ? h("p", { class: "dim" }, `Batch \u2014 ${ledger(proc.stages)}`) : null,
+        q.verdict && q.verdict !== "usable" ? h("p", { class: "warn" }, `${q.reason}. Next: ${q.next}.`) : null,
+        item.possible_duplicate_of ? h("p", { class: "warn" }, `Possibly the same work as ${item.possible_duplicate_of}.`) : null,
+        item.fit_screen ? h(
+          "p",
+          { class: "note" },
+          `Screened against ${item.found_for?.brief ?? "its brief"}: `,
+          h("strong", {}, String(item.fit_screen.verdict ?? item.fit_screen.status ?? "")),
+          item.fit_screen.reason ? ` \u2014 ${item.fit_screen.reason}` : "",
+          " (a fit judgement, kept apart from the description)"
+        ) : null
+      );
       clear(
         this.detail,
         h(
@@ -2779,6 +3826,8 @@ var Librarian = (() => {
           item.canonical_url ? h("a", { href: item.canonical_url, target: "_blank", rel: "noreferrer noopener" }, "source \u2197") : null
         ),
         item.sensitivity === "review" ? h("p", { class: "warn" }, "\u2691 Marked sensitive: only a person accepts it, and only a person clears the mark.") : null,
+        stage,
+        capture,
         item.revision_of ? h(
           "p",
           { class: "note" },
@@ -2787,7 +3836,7 @@ var Librarian = (() => {
             e.preventDefault();
             this.openNote(item.revision_of);
           } }, item.revision_of),
-          ": its whole text read. Accepting merges its Claims and Evidence & Limits into that note (the previous text is kept on this item); rejecting leaves the note as it is."
+          item.revision_kind === "dik" ? `: its Data and Information records rebuilt. Accepting adds ${Object.keys(item.sections ?? {}).join(", ")} to that note, each labelled with where its claims come from; the note's own prose is untouched (the previous text is kept on this item). Rejecting leaves the note as it is.` : ": its whole text read. Accepting merges its Claims and Evidence & Limits into that note (the previous text is kept on this item); rejecting leaves the note as it is."
         ) : null,
         queued.length ? h(
           "p",
@@ -2820,16 +3869,14 @@ var Librarian = (() => {
             h(
               "div",
               { class: "row2" },
-              h("button", { class: "primary", onclick: decide("accept") }, "Accept"),
-              h("button", { class: "ghost", onclick: decide("reject") }, "Reject"),
-              h("button", { class: "ghost", onclick: decide("defer") }, "Defer"),
-              h("button", { class: "ghost push", onclick: draftIt }, draft.bottom_line ? "Redraft" : "Draft with the clerk")
+              buttons,
+              st === "processing" ? null : h("button", { class: "ghost push", onclick: draftIt }, draft.bottom_line ? "Redraft" : "Draft with the clerk")
             ),
             h(
               "div",
               { class: "row2" },
               h("span", { class: "note inline" }, readLine),
-              !dr || readCount < dr.chunks ? h(
+              st !== "processing" && (!dr || readCount < dr.chunks) ? h(
                 "button",
                 { class: "ghost", onclick: readIt, title: "Claims and limits from every part, with pages; terms; and any reasoning stance the text teaches, staged as a lens" },
                 dr ? "Continue deep read" : "Deep read"
@@ -3028,6 +4075,7 @@ var Librarian = (() => {
         h("option", { value: "term" }, "term"),
         h("option", { value: "pattern" }, "pattern")
       );
+      const imported = item.imported;
       const aliases = h("input", {
         type: "text",
         placeholder: "Aliases, comma-separated (optional)",
@@ -3045,6 +4093,12 @@ var Librarian = (() => {
       });
       const status = h("div", { role: "status" });
       const split = (v) => v.split(",").map((s) => s.trim()).filter(Boolean);
+      if (imported) {
+        definition.value = imported.definition ?? "";
+        kindSel.value = imported.concept_kind ?? "term";
+        aliases.value = (imported.aliases ?? []).join(", ");
+        related.value = (imported.related ?? []).join(", ");
+      }
       const decide = (d) => async () => {
         if (d === "accept" && !definition.value.trim()) {
           clear(status, h("p", { class: "error" }, "A Definition, in your own words, is needed to accept a concept."));
@@ -3117,67 +4171,383 @@ var Librarian = (() => {
         status
       );
     }
+    /** A proposed topic, as the library's own sources suggest it (R8). It is reviewed here;
+     * accepting, renaming or merging it into the taxonomy is done in Settings → Library. */
+    /** V1's Applications and branch offerings: the note as V1 wrote it, into its V2 folder. */
+    showImport(item) {
+      const reason = h("input", {
+        type: "text",
+        placeholder: "Reason (for a rejection or deferral)",
+        "aria-label": "Reason"
+      });
+      const status = h("div", { role: "status" });
+      const decide = (d) => async () => {
+        try {
+          const out = await this.api.tool("staging_decide", { item_ids: [item.id], decision: d, reason: reason.value });
+          const r = (out.results ?? [])[0] ?? out;
+          if (out.error || r.error || r.refused) throw new Error(String(r.detail ?? r.refused ?? out.detail ?? out.error ?? r.error));
+          this.selected = "";
+          await this.load();
+          this.detailLocked = true;
+          clear(this.detail, h(
+            "p",
+            { class: "ok", role: "status" },
+            `${item.name}: ${d === "accept" ? `written to ${item.target}` : d === "reject" ? "rejected" : "deferred"}.`
+          ));
+        } catch (e) {
+          clear(status, h("p", { class: "error" }, e.message));
+        }
+      };
+      clear(
+        this.detail,
+        h("div", { class: "view-head" }, h("strong", {}, item.name ?? item.id)),
+        h("p", { class: "dim" }, `From V1 ${item.imported_from?.path ?? ""} - accepting writes it to ${item.target}, as V1 wrote it. V1's whole note is also kept as evidence.`),
+        h("pre", { class: "import-body" }, String(item.body ?? "").slice(0, 4e3)),
+        reason,
+        h(
+          "div",
+          { class: "row2 tight" },
+          h("button", { class: "primary", onclick: decide("accept") }, "Accept"),
+          h("button", { class: "ghost", onclick: decide("defer") }, "Defer"),
+          h("button", { class: "ghost", onclick: decide("reject") }, "Reject")
+        ),
+        status
+      );
+    }
+    showTopic(item) {
+      const reason = h("input", {
+        type: "text",
+        placeholder: "Reason (for a rejection or deferral)",
+        "aria-label": "Reason"
+      });
+      const status = h("div", { role: "status" });
+      const decide = (d) => async () => {
+        try {
+          const out = await this.api.tool("staging_decide", { item_ids: [item.id], decision: d, reason: reason.value });
+          const r = (out.results ?? [])[0] ?? out;
+          if (out.error || r.error || r.refused) throw new Error(String(r.detail ?? r.error ?? out.detail ?? out.error));
+          this.selected = "";
+          await this.load();
+          this.detailLocked = true;
+          clear(this.detail, h("p", { class: "ok", role: "status" }, `${item.name}: ${d === "reject" ? "rejected" : "deferred"}.`));
+        } catch (e) {
+          clear(status, h("p", { class: "error" }, e.message));
+        }
+      };
+      const members = item.members ?? [];
+      clear(
+        this.detail,
+        h("div", { class: "view-head" }, h("strong", {}, item.name)),
+        h("p", {}, item.what_belongs ?? ""),
+        item.duplicate_of ? h("p", { class: "warn" }, `Close to a topic you already have: ${item.duplicate_of}. Merge rather than add?`) : null,
+        h("p", { class: "dim" }, `${item.coverage?.sources ?? members.length} of the ${item.coverage?.of ?? "?"} sources considered \xB7 proposed by ${item.proposed_by ?? "the clerk"}`),
+        (item.aliases ?? []).length ? h("p", {}, h("strong", {}, "Also called: "), item.aliases.join(", ")) : null,
+        h("h4", {}, "Sources it would hold"),
+        h("p", {}, members.flatMap((s, i) => [i ? ", " : "", h("a", {
+          class: "wl",
+          href: "#",
+          onclick: (e) => {
+            e.preventDefault();
+            this.openNote(s);
+          }
+        }, s)])),
+        h("p", { class: "note" }, "A proposal only: the topic list changes when you accept, rename or merge it in Settings \u2192 Library."),
+        reason,
+        h(
+          "div",
+          { class: "row2" },
+          h("button", { class: "ghost", onclick: decide("reject") }, "Reject"),
+          h("button", { class: "ghost", onclick: decide("defer") }, "Defer")
+        ),
+        status
+      );
+    }
+    /** A reference in the intake queue, not yet fetched, or whose capture failed (R7). */
+    showQueued(item) {
+      const reason = h("input", { type: "text", placeholder: "Why remove it", "aria-label": "Reason" });
+      const status = h("div", { role: "status" });
+      const act = (tool, args, done) => async () => {
+        try {
+          const out = await this.api.tool(tool, args);
+          const r = (out.results ?? [])[0] ?? out;
+          if (out.error || r.error) throw new Error(String(r.error ?? out.detail ?? out.error));
+          this.selected = "";
+          await this.load();
+          this.detailLocked = true;
+          clear(this.detail, h("p", { class: "ok", role: "status" }, `${item.ref}: ${done}`));
+        } catch (e) {
+          clear(status, h("p", { class: "error" }, e.message));
+        }
+      };
+      const remove = () => reason.value.trim() ? act("queue_remove", { item_ids: [item.id], reason: reason.value }, "removed; kept in quarantine with your reason.")() : clear(status, h("p", { class: "error" }, "Say why it is removed."));
+      const f = item.found_for ?? {};
+      clear(
+        this.detail,
+        h("div", { class: "view-head" }, h("strong", {}, item.ref)),
+        h("p", {}, item.status === "failed" ? "Its capture failed: nothing was fetched." : "Queued for capture: not yet fetched."),
+        item.failure ? h("p", { class: "warn" }, `${item.failure.stage}: ${item.failure.reason}`) : null,
+        item.note ? h("p", {}, h("strong", {}, "Why: "), item.note) : null,
+        h("p", { class: "dim" }, [
+          item.requested_by ? `asked by ${item.requested_by}` : "",
+          f.session ? `for ${f.session}${f.brief ? ` / ${f.brief}` : ""}` : "",
+          item.queued_at ? `queued ${String(item.queued_at).slice(0, 10)}` : ""
+        ].filter(Boolean).join(" \xB7 ")),
+        reason,
+        h(
+          "div",
+          { class: "row2" },
+          item.status === "failed" ? h("button", { class: "primary", onclick: act("queue_retry", { item_ids: [item.id] }, "queued again.") }, "Retry capture") : null,
+          h("button", { class: "ghost", onclick: remove }, "Remove from queue")
+        ),
+        status
+      );
+    }
   };
   var INTENTS = [
+    ["all", "everything, grouped"],
     ["donor", "something to reuse"],
     ["orient", "where the catalogue holds a topic"],
     ["pattern", "a design pattern"],
     ["technique", "a technique"],
     ["data", "a dataset"],
     ["precedent", "prior work"],
+    ["made", "what this library made"],
     ["in_text", "text inside documents"]
   ];
+  var FILTERED = /* @__PURE__ */ new Set(["all", "donor", "orient", "data"]);
+  var GROUP_LABEL = {
+    orient: "Sources",
+    pattern: "Patterns",
+    made: "What this library made"
+  };
   var Search = class {
     constructor(api, openNote) {
       this.api = api;
       this.openNote = openNote;
       this.el = h("div", { class: "view search" });
+      this.facets = h("div", { class: "facets", "aria-label": "Filters" });
       this.results = h("div", { class: "results", "aria-live": "polite" });
+      this.chosen = {};
+      this.last = { query: "", intent: "all", age: 0 };
+      // The library, or the library's work: staging, the threads, what was used and written
+      this.scope = "library";
       const query = h("input", { type: "search", placeholder: "What are you looking for?", "aria-label": "Search query" });
       const intent = h(
         "select",
         { "aria-label": "Intent" },
         INTENTS.map(([v, label]) => h("option", { value: v }, `${v} \xB7 ${label}`))
       );
-      const run = () => this.run(query.value, intent.value);
+      const age = h(
+        "select",
+        { "aria-label": "Source date" },
+        [["0", "any date"], ["365", "within a year"], ["1095", "within 3 years"]].map(([v, label]) => h("option", { value: v }, label))
+      );
+      const scope = h("select", { "aria-label": "Search in", onchange: () => {
+        this.scope = scope.value;
+        intent.style.display = age.style.display = this.scope === "library" ? "" : "none";
+      } }, [
+        ["library", "the library"],
+        ["staging", "staging"],
+        ["sessions", "sessions"],
+        ["activity", "activity"]
+      ].map(([v, label]) => h("option", { value: v }, label)));
+      const run = () => this.scope === "library" ? this.run(query.value, intent.value, Number(age.value)) : this.runWork(query.value);
       query.onkeydown = (e) => {
         if (e.key === "Enter") run();
       };
       this.el.append(
         h("div", { class: "view-head" }, h("strong", {}, "Search")),
-        h("div", { class: "row2 tight" }, query, intent, h("button", { class: "primary", onclick: run }, "Search")),
-        this.results
+        h("div", { class: "row2 tight" }, query, scope, intent, age, h("button", { class: "primary", onclick: run }, "Search")),
+        h("div", { class: "split" }, this.facets, this.results)
       );
     }
     focus() {
       this.el.querySelector("input")?.focus();
     }
-    async run(query, intent) {
+    /** Staging, sessions or activity (search_work): where was that seen? */
+    async runWork(query) {
       if (!query.trim()) return;
+      clear(this.facets);
       clear(this.results, h("p", { class: "dim" }, "Searching\u2026"));
       try {
-        const out = await this.api.tool("search", { query, intent, limit: 20 });
+        const out = await this.api.tool("search_work", { query, scope: this.scope });
         if (out.error) throw new Error(String(out.detail ?? out.error));
         const rows = out.results ?? [];
-        clear(
-          this.results,
-          h("p", { class: "verdict" }, String(out.coverage?.sentence ?? out.verdict ?? "")),
-          rows.length ? rows.map((r) => h(
-            "div",
-            { class: "result" },
-            h("a", { class: "wl", href: "#", onclick: (e) => {
-              e.preventDefault();
-              this.openNote(r.fields?.path ?? r.name);
-            } }, r.name),
-            h("span", { class: "dim" }, ` \xB7 ${r.fields?.kind ?? r.kind} \xB7 ${r.fields?.topic ?? ""}`),
-            r.fields?.bottom_line ? h("p", {}, r.fields.bottom_line) : null,
-            h("small", { class: "dim" }, r.why ?? "")
-          )) : h("p", { class: "dim" }, "Nothing held matches."),
-          out.next_step ? h("p", { class: "note" }, String(out.next_step)) : null
+        const when2 = (w) => String(w ?? "").slice(0, 10);
+        const row = (r) => this.scope === "staging" ? h(
+          "div",
+          { class: "tile" },
+          h("strong", {}, r.name || r.id),
+          h("span", { class: "dim" }, ` \xB7 ${r.kind} \xB7 ${r.status} \xB7 ${when2(r.when)}`)
+        ) : this.scope === "sessions" ? h(
+          "div",
+          { class: "tile" },
+          h("strong", {}, r.question || r.session),
+          h("span", { class: "dim" }, ` \xB7 ${r.purpose} \xB7 ${r.status} in ${r.phase} \xB7 ${when2(r.when)} \xB7 ${r.session}`)
+        ) : h(
+          "div",
+          { class: "tile" },
+          `${r.what} `,
+          h("a", { class: "wl", href: "#", onclick: (e) => {
+            e.preventDefault();
+            this.openNote(r.target);
+          } }, r.target),
+          h("span", { class: "dim" }, `${r.detail && r.detail !== r.target ? ` \xB7 ${r.detail}` : ""} \xB7 ${when2(r.when)} \xB7 ${r.session}`)
         );
+        clear(this.results, rows.length ? rows.map(row) : h("p", { class: "dim" }, `Nothing in ${this.scope} matches.`));
       } catch (e) {
         clear(this.results, h("p", { class: "error" }, e.message));
       }
+    }
+    async run(query, intent, age = this.last.age) {
+      if (!query.trim()) return;
+      if (query !== this.last.query || intent !== this.last.intent) this.chosen = {};
+      this.last = { query, intent, age };
+      clear(this.results, h("p", { class: "dim" }, "Searching\u2026"));
+      const constraints = FILTERED.has(intent) ? this.chosen : {};
+      try {
+        const out = await this.api.tool("search", {
+          query,
+          intent,
+          limit: 20,
+          constraints,
+          ...age ? { max_age_days: age } : {}
+        });
+        if (out.error) throw new Error(String(out.detail ?? out.error));
+        this.paintFacets(out, intent);
+        this.paintResults(out, query, intent);
+      } catch (e) {
+        clear(this.results, h("p", { class: "error" }, e.message));
+      }
+    }
+    paintFacets(out, intent) {
+      const axes = Object.entries(out.facets ?? {});
+      const picked = Object.values(this.chosen).reduce((n, v) => n + v.length, 0);
+      const toggle = (axis, value) => () => {
+        const now = new Set(this.chosen[axis] ?? []);
+        if (now.has(value)) now.delete(value);
+        else now.add(value);
+        this.chosen = { ...this.chosen, [axis]: [...now] };
+        if (!now.size) delete this.chosen[axis];
+        void this.run(this.last.query, this.last.intent);
+      };
+      clear(
+        this.facets,
+        !FILTERED.has(intent) ? h("p", { class: "dim" }, "Filters apply to sources: choose everything, donor, orient or data.") : axes.length || picked ? null : h("p", { class: "dim" }, "Filters appear here from what the search returns."),
+        picked ? h(
+          "button",
+          { class: "ghost", onclick: () => {
+            this.chosen = {};
+            void this.run(this.last.query, this.last.intent);
+          } },
+          `Clear filters (${picked})`
+        ) : null,
+        // A chosen value stays listed even when it now matches nothing, so it can be cleared.
+        Object.entries(this.chosen).filter(([axis]) => !axes.some(([a]) => a === axis)).map(([axis, values]) => h(
+          "div",
+          { class: "facet" },
+          h("h4", {}, axis.replace(/_/g, " ")),
+          values.map((v) => h("button", { class: "chip", "aria-pressed": "true", onclick: toggle(axis, v) }, `${v} \u2715`))
+        )),
+        axes.map(([axis, values]) => h(
+          "div",
+          { class: "facet" },
+          h("h4", {}, axis.replace(/_/g, " ")),
+          values.slice(0, 12).map((v) => h("button", {
+            class: "chip",
+            "aria-pressed": String((this.chosen[axis] ?? []).includes(v.value)),
+            onclick: toggle(axis, v.value)
+          }, `${v.value} `, h("span", { class: "dim" }, String(v.count))))
+        ))
+      );
+    }
+    paintResults(out, query, intent) {
+      const rows = out.results ?? [];
+      const feedback = (r, verdict, rank) => this.api.tool("search_feedback", { query, note: r.name, verdict, intent: r.fields?.intent ?? intent, rank }).catch(() => void 0);
+      const tile = (r, rank) => {
+        const f = r.fields ?? {};
+        const card = h(
+          "div",
+          { class: "tile" },
+          h(
+            "div",
+            { class: "tile-head" },
+            h("a", { class: "wl", href: "#", onclick: (e) => {
+              e.preventDefault();
+              void feedback(r, "opened", rank);
+              this.openNote(f.path ?? f.note ?? r.name);
+            } }, r.name),
+            h("span", { class: "dim" }, [r.kind, f.kind && f.kind !== r.kind ? f.kind : "", f.topic].filter(Boolean).join(" \xB7 ")),
+            f.read_depth ? h("span", {
+              class: `depth ${String(f.read_depth).split(" ")[0]}`,
+              title: (f.not_examined ?? []).join("; ") || "how much of the source was read"
+            }, `read: ${f.read_depth}`) : null
+          ),
+          f.bottom_line ? h("p", {}, f.bottom_line) : f.excerpt ? h("p", {}, f.excerpt) : null,
+          h("small", { class: "dim" }, r.why ?? ""),
+          // The grains beneath a source (SM-2/3/4): where inside it, how to reach it, what
+          // it relates to - shown beside the result, never folded into its rank.
+          (f.components ?? []).length ? h(
+            "p",
+            { class: "inside" },
+            "Inside: ",
+            f.components.map((c, i) => h(
+              "span",
+              {},
+              i ? " \xB7 " : "",
+              h("code", {}, c.address),
+              h("span", { class: "dim" }, ` (${(c.matched ?? []).join(", ")})`)
+            ))
+          ) : null,
+          (f.access_points ?? []).length ? h(
+            "div",
+            { class: "access" },
+            f.access_points.map((p) => h("div", {}, h("code", {}, p.url), h(
+              "span",
+              { class: "dim" },
+              p.checked_at === "never" ? " \xB7 not checked" : ` \xB7 ${p.reachable ? "answered" : "did not answer"} (${p.status}) \xB7 checked ${String(p.checked_at).slice(0, 10)}`
+            ))),
+            h("button", { class: "ghost", onclick: async () => {
+              await this.api.tool("verify_access", { source: r.name });
+              void this.run(this.last.query, this.last.intent);
+            } }, "Check access")
+          ) : null,
+          (f.examples ?? []).length || (f.neighbours ?? []).length ? h(
+            "p",
+            { class: "dim" },
+            (f.examples ?? []).length ? "Used by: " : "",
+            (f.examples ?? []).flatMap((n, i) => [i ? ", " : "", h("a", { class: "wl", href: "#", onclick: (e) => {
+              e.preventDefault();
+              this.openNote(n);
+            } }, n)]),
+            (f.neighbours ?? []).length ? `${(f.examples ?? []).length ? " \xB7 " : ""}Near: ${f.neighbours.join(", ")}` : ""
+          ) : null,
+          h(
+            "div",
+            { class: "row2 tight" },
+            h("button", { class: "ghost", title: "Logged only: it never changes ranking", onclick: () => {
+              void feedback(r, "dismissed", rank);
+              card.classList.add("dismissed");
+            } }, "Not relevant")
+          )
+        );
+        return card;
+      };
+      const groups = intent === "all" ? (out.ran ?? []).map((i) => [i, rows.filter((r) => r.fields?.intent === i)]) : [["", rows]];
+      const removed = out.removed_by_filters ?? [];
+      clear(
+        this.results,
+        h("p", { class: "verdict" }, String(out.coverage?.sentence ?? out.verdict ?? "")),
+        removed.length ? h("p", { class: "warn" }, `Your filters removed these top candidates: ${removed.join(", ")}.`) : null,
+        out.ran ? h("p", { class: "dim" }, `Ran: ${out.ran.join(", ")} \u2014 each answers in its own shape.`) : null,
+        rows.length ? groups.map(([i, rs]) => h(
+          "section",
+          { class: "group" },
+          i ? h("h3", {}, `${GROUP_LABEL[i] ?? i} \xB7 ${rs.length}`) : null,
+          rs.length ? rs.map((r, n) => tile(r, n + 1)) : h("p", { class: "dim" }, "Nothing here.")
+        )) : h("p", { class: "dim" }, "Nothing held matches."),
+        out.next_step ? h("p", { class: "note" }, String(out.next_step)) : null
+      );
     }
   };
 
@@ -3218,10 +4588,23 @@ var Librarian = (() => {
       this.msgBox = h("div", { class: "msg-box" });
       this.modeButton = h("button", { class: "tb" });
       this.modelButton = h("button", { class: "tb" });
+      // The effort slider (owner, 2026-10-01): how much work the person expects - helpers,
+      // steps and time per reply, call budgets, how much is reviewed (effort.py).
+      this.effortValue = h("span", { class: "effort-value" }, "4");
+      this.effortInput = h("input", {
+        type: "range",
+        min: "1",
+        max: "10",
+        step: "1",
+        value: "4",
+        "aria-label": "Effort"
+      });
+      this.effortControl = h("label", { class: "effort tb" }, "Effort ", this.effortInput, this.effortValue);
       this.notice = h("div", { class: "notice", role: "alert", hidden: true });
       this.paneOpen = true;
       this.api = new Api(opts);
       const openNote = (target) => void this.openDoc(target);
+      reader.init(this.api, (message) => this.warn(message));
       this.chat = new Chat(this.api, {
         openNote,
         effectOf: (tool) => this.effects.get(tool) ?? "write",
@@ -3229,7 +4612,11 @@ var Librarian = (() => {
         resend: (text) => void this.sendText(text),
         continueSession: () => void this.sendText("Continue the current research session from its next step. Read session_status first, complete the open work, and report any information you cannot verify as a gap. Do not claim the session or requested work is complete while session_status still shows open items."),
         rewind: (index) => void this.rewindMessage(index),
-        branch: (index) => void this.branchMessage(index)
+        branch: (index) => void this.branchMessage(index),
+        openOffering: (id) => {
+          this.staging.focusOffering(id);
+          this.show("staging");
+        }
       });
       this.staging = new Staging(
         this.api,
@@ -3248,7 +4635,13 @@ var Librarian = (() => {
         () => this.session?.session ?? ""
       );
       this.opts = opts;
-      this.settings = new Settings(this.api, () => this.state, () => this.refresh(), opts.manageKeys);
+      this.settings = new Settings(
+        this.api,
+        () => this.state,
+        () => this.refresh(),
+        opts.manageKeys,
+        (slot, label) => void this.chooseService(slot, label)
+      );
       const plus = h("button", {
         class: "tb icon",
         title: "Settings",
@@ -3262,7 +4655,7 @@ var Librarian = (() => {
       this.libraries = new Popover("lib-libraries", "Libraries", this.libraryButton);
       this.libraryButton.onclick = () => {
         this.toggle(this.libraries);
-        if (this.libraries.open) void renderLibraries(this.libraries, this.api, String(this.state.vault ?? "this library"));
+        if (this.libraries.open) void renderLibraries(this.libraries, this.api, this.libraryName());
       };
       this.tile = new ModelTile(
         this.models,
@@ -3292,6 +4685,7 @@ var Librarian = (() => {
       };
       this.modeButton.onclick = () => this.toggle(this.modes);
       this.modelButton.onclick = async () => {
+        this.tile.endSlot();
         this.toggle(this.models);
         if (this.models.open) {
           await this.refresh();
@@ -3300,7 +4694,14 @@ var Librarian = (() => {
       };
       sessionsButton.onclick = () => {
         this.toggle(this.sessions);
-        if (this.sessions.open) void renderSessions(this.sessions, this.api, (id) => this.attach(id), () => this.reset());
+        if (this.sessions.open) void renderSessions(
+          this.sessions,
+          this.api,
+          (id) => this.attach(id),
+          () => this.reset(),
+          this.libraryName(),
+          String(this.state.vault_path ?? "")
+        );
       };
       const elsewhere = h("button", {
         class: "tb",
@@ -3309,7 +4710,19 @@ var Librarian = (() => {
           window.location.href = `obsidian://open?vault=${encodeURIComponent(String(this.state.vault ?? ""))}`;
         })
       }, opts.host === "obsidian" ? "\u2197 Open in browser" : "\u2197 Open in Obsidian");
-      const send = h("button", { class: "send", onclick: () => this.send() }, "Send");
+      this.sendButton = h("button", { class: "send", onclick: () => this.send() }, "Send");
+      this.effortInput.oninput = () => {
+        this.effortValue.textContent = this.effortInput.value;
+      };
+      this.effortInput.onchange = async () => {
+        try {
+          const chosen = await this.api.post("/api/effort", { level: Number(this.effortInput.value) });
+          this.state.effort = chosen;
+          this.paintEffort();
+        } catch (e) {
+          this.warn(e.message);
+        }
+      };
       this.input.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
           e.preventDefault();
@@ -3333,7 +4746,7 @@ var Librarian = (() => {
         { class: "composer" },
         this.chips,
         this.msgBox,
-        h("div", { class: "toolbar" }, plus, attachButton, this.modeButton, this.modelButton, elsewhere, send),
+        h("div", { class: "toolbar" }, plus, attachButton, this.modeButton, this.modelButton, this.effortControl, elsewhere, this.sendButton),
         this.modes.el,
         this.models.el,
         this.attachPop.el
@@ -3453,8 +4866,10 @@ var Librarian = (() => {
       const fresh = await this.api.get("/api/state");
       if (this.tiersEpoch !== epoch) fresh.tiers = this.state.tiers;
       this.state = fresh;
-      this.libraryButton.textContent = `${String(this.state.vault ?? "Library")} \u25BE`;
-      this.libraryButton.title = `Switch library - this is ${String(this.state.vault_path ?? this.state.vault ?? "")}`;
+      this.paintSendButton();
+      this.libraryButton.textContent = `${this.libraryName()} \u25BE`;
+      this.libraryButton.title = `Switch library - this is ${this.libraryName()} (${String(this.state.vault_path ?? "")})`;
+      document.title = `${this.libraryName()} - Librarian`;
       this.setSession(this.state.session ?? null);
       this.paintToolbar();
       this.paintChips();
@@ -3477,6 +4892,7 @@ var Librarian = (() => {
         case "turn_done":
         case "error":
           this.state.busy = false;
+          this.paintSendButton();
           break;
         case "action_started":
         case "action_progress":
@@ -3501,7 +4917,15 @@ var Librarian = (() => {
       }
     }
     // -- painting ------------------------------------------------------------
+    paintEffort() {
+      const e = this.state.effort;
+      if (!e) return;
+      this.effortInput.value = String(e.level);
+      this.effortValue.textContent = String(e.level);
+      this.effortControl.title = `Effort ${e.level} of 10 - how much work you expect. Helpers at once: ${e.lead_agents} on the lead model, ${e.tier2_agents} on the notes model; small-task calls at once: ${e.tier3_agents}. Up to ${e.turn_steps} steps and ${Math.round(e.turn_seconds / 60)} min per reply; call budgets x${e.budget_scale}. Review: ${e.review_replies ? `offerings and up to ${e.review_claims} claims per reply` : e.review_offerings ? "offerings' claims" : "nothing automatic"}.`;
+    }
     paintToolbar() {
+      this.paintEffort();
       const mode = MODES.find(([v]) => v === this.state.mode);
       clear(this.modeButton, "Modes: ", h("strong", {}, mode ? mode[1].split(" ")[0] : "?"), " \u25BE");
       const tier = (this.state.tiers ?? [])[0];
@@ -3537,12 +4961,17 @@ var Librarian = (() => {
       this.session = session;
       this.chat.renderPlan(session);
       if (!session) {
-        this.title.textContent = String(this.state.vault ?? "Librarian");
+        this.title.textContent = this.libraryName();
         this.crumb.textContent = "no thread";
         return;
       }
-      this.title.textContent = session.project || session.question || String(this.state.vault ?? "Librarian");
+      this.title.textContent = session.project || session.question || this.libraryName();
       this.crumb.textContent = `${session.purpose ?? ""} \xB7 phase: ${session.phase ?? ""}${session.status && session.status !== "open" ? ` \xB7 ${session.status}` : ""}`;
+    }
+    /** The open library by its own name: two libraries made by new-vault.ps1 share the
+     *  folder name `.librarian-app`, so the folder cannot say which one this is. */
+    libraryName() {
+      return String(this.state.vault_name ?? this.state.vault ?? "Librarian");
     }
     show(view) {
       this.view = view;
@@ -3551,6 +4980,18 @@ var Librarian = (() => {
       this.composer.hidden = view !== "chat";
       if (view === "staging") void this.staging.load(true);
       if (view === "search") this.search.focus();
+    }
+    /** R17: Settings' "Choose…" for a service slot opens the model tile to pick one model
+     *  for it; picking (or Cancel) returns to Settings. */
+    async chooseService(slot, label, current) {
+      await new Promise((resolve) => window.setTimeout(resolve, 0));
+      this.tile.startSlot(slot, label, () => {
+        if (this.models.open) this.toggle(this.models);
+        this.settings.open("connections");
+      }, current?.model ? current : void 0);
+      if (!this.models.open) this.toggle(this.models);
+      await this.refresh();
+      await this.tile.refresh();
     }
     toggle(pop) {
       const open = !pop.open;
@@ -3609,6 +5050,14 @@ var Librarian = (() => {
     }
     // -- actions ---------------------------------------------------------------
     async send() {
+      if (this.state.busy) {
+        try {
+          await this.api.post("/api/chat/cancel", {});
+        } catch (e) {
+          this.warn(e.message);
+        }
+        return;
+      }
       const text = this.input.value.trim();
       if (!text) return;
       this.input.value = "";
@@ -3623,10 +5072,17 @@ var Librarian = (() => {
       try {
         await this.api.post("/api/chat", { text });
         this.state.busy = true;
+        this.paintSendButton();
       } catch (e) {
         const message = e.message;
         this.warn(message.includes("tier 1") ? "Choose a chat model first: click Model, then a model (it becomes tier 1)." : message);
       }
+    }
+    paintSendButton() {
+      const busy = !!this.state.busy;
+      this.sendButton.textContent = busy ? "Stop" : "Send";
+      this.sendButton.setAttribute("aria-label", busy ? "Stop reply" : "Send message");
+      this.sendButton.title = busy ? "Stop the current reply" : "Send message";
     }
     async attach(id) {
       try {

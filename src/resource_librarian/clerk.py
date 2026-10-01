@@ -120,6 +120,34 @@ KINDS: dict[str, Kind] = {k.name: k for k in (
              "verdict": {"type": "string", "enum": ["keep", "reject", "unclear"]},
              "reason": {"type": "string", "maxLength": 250}}},
          max_tokens=300, chunk_chars=3000),
+    # Requirements Addendum R8: topics are drawn from what the library actually holds,
+    # proposed for a person to accept - never written into the taxonomy from here.
+    # Research Pipeline §3.2 (P6): how a document's fully read chapters relate, from the
+    # claims each one makes. Ids are checked by code; unread chapters are never offered.
+    Kind("chapter_relations", "say how the chapters of one document relate to each other",
+         {"type": "object", "required": ["relations"], "properties": {
+             "relations": {"type": "array", "maxItems": 20, "items": {
+                 "type": "object", "required": ["from", "to", "type"],
+                 "properties": {
+                     "from": {"type": "string", "maxLength": 60},
+                     "to": {"type": "string", "maxLength": 60},
+                     "type": {"type": "string", "enum": ["continues", "contrasts",
+                                                         "depends_on", "prepares",
+                                                         "qualifies"]},
+                     "why": {"type": "string", "maxLength": 200}}}}}},
+         max_tokens=1500, chunk_chars=12000),
+    Kind("topics", "propose the topics a list of sources falls into",
+         {"type": "object", "required": ["topics"], "properties": {
+             "topics": {"type": "array", "maxItems": 12, "items": {
+                 "type": "object", "required": ["name", "what_belongs", "members"],
+                 "properties": {
+                     "name": {"type": "string", "maxLength": 60},
+                     "what_belongs": {"type": "string", "maxLength": 200},
+                     "members": {"type": "array", "maxItems": 80,
+                                 "items": {"type": "string", "maxLength": 160}},
+                     "aliases": {"type": "array", "maxItems": 5,
+                                 "items": {"type": "string", "maxLength": 60}}}}}}},
+         max_tokens=3000, chunk_chars=24000),
     Kind("sensitivity", "say whether material is dual-use",
          {"type": "object", "required": ["sensitivity", "reason"], "properties": {
              "sensitivity": {"type": "string", "enum": ["normal", "review_required"]},
@@ -235,11 +263,19 @@ KINDS: dict[str, Kind] = {k.name: k for k in (
     # with a counter-quote found in the passage (else `unchecked`); G1 found
     # judges rarely wave a false claim through but often dismiss a sound one,
     # so a `fails` goes back to the lead model as a challenge, not a veto.
+    # A challenge to a claim about what a repository's code does may carry a failing input
+    # (owner, 2026-10-01): strings only, so strict-schema providers accept it; code decodes
+    # and validates it (`claim_run.validate`), and only a person ever runs it.
     Kind("review", "check whether a passage supports a claim made from it",
          {"type": "object", "required": ["verdict", "reason"], "properties": {
              "verdict": {"type": "string", "enum": ["holds", "fails", "unsupported"]},
              "counter_quote": {"type": "string", "maxLength": 400},
-             "reason": {"type": "string", "maxLength": 300}}},
+             "reason": {"type": "string", "maxLength": 300},
+             "failing_input": {"type": "object", "properties": {
+                 "call": {"type": "string", "maxLength": 200},
+                 "arguments": {"type": "string", "maxLength": 2000},
+                 "expect": {"type": "string", "enum": ["none", "raises", "returns"]},
+                 "value": {"type": "string", "maxLength": 500}}}}},
          max_tokens=1500, chunk_chars=5000, quote_fields=("counter_quote",)),
     # Roadmap §4 C4: the document-level pass over a fully read source. Which
     # claims each stance rests on is checked by code (they must exist and
@@ -432,6 +468,31 @@ def relevance(abstract: str, topic: str) -> Task:
         "else.\n- 'unclear' if you cannot tell from the abstract alone."))
 
 
+def chapter_relations(listing: str) -> Task:
+    return Task(KINDS["chapter_relations"], listing, (
+        "Below are the chapters of one document, one per line: an id, a title, then the claims "
+        "that chapter makes. Say how chapters relate, using the ids exactly as listed:\n"
+        "- continues: carries the other's argument or topic further;\n"
+        "- contrasts: takes a different or opposing position;\n"
+        "- depends_on: needs the other chapter's material to be understood;\n"
+        "- prepares: sets up something the other chapter develops;\n"
+        "- qualifies: limits or corrects a claim the other makes.\n"
+        "Only relations the claims themselves show; leave out any you would have to guess."))
+
+
+def topics(corpus: str, existing: Sequence[str]) -> Task:
+    """Unframed: grouping by what the sources are, never by who wanted them."""
+    return Task(KINDS["topics"], corpus, (
+        "Below is a list of sources, one per line: a name, then what it is. Group them into "
+        "the fewest topics someone would browse this library by.\n"
+        f"Topics that already exist: {', '.join(existing) or 'none'}. Put a source that fits "
+        "one of those under that exact name; propose a new topic only for the rest.\n"
+        "- `members`: source names copied exactly as listed. A new topic needs at least two.\n"
+        "- `what_belongs`: one line on what a source must be about to belong.\n"
+        "- `aliases`: other names a person might look for this topic under.\n"
+        "Leave out a source that fits no topic rather than forcing it into one."))
+
+
 def sensitivity(text: str) -> Task:
     return Task(KINDS["sensitivity"], text, (
         "Read the text below. Is this offensive security tooling (exploitation, "
@@ -580,7 +641,31 @@ def reply_claims(reply: str) -> Task:
         "links as [[Note Name]] - what the note says, holds or shows - at most five, each "
         "with the linked note's name exactly as written inside the brackets.\n"
         "- Only claims about a linked note's content; not advice, plans or opinions.\n"
+        "- A denial or a restriction is a claim too: 'X is not queried with GraphQL', "
+        "'X runs only on Windows'. List it as written.\n"
         "- If there are none, return an empty list. That is a normal answer."))
+
+
+def failing_input(fi: dict[str, Any]) -> dict[str, Any]:
+    """The review's string-encoded failing input, decoded and checked (`claim_run.validate`)."""
+    from .claim_run import validate
+    try:
+        arguments = json.loads(str(fi.get("arguments") or "{}"))
+    except json.JSONDecodeError:
+        raise TypeError("arguments is not JSON") from None
+    if isinstance(arguments, list):
+        arguments = {"args": arguments}
+    if not isinstance(arguments, dict):
+        raise TypeError("arguments is {\"args\": [...], \"kwargs\": {...}}")
+    value: Any = str(fi.get("value") or "")
+    if fi.get("expect") == "returns":
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError:
+            raise TypeError("a 'returns' value is JSON") from None
+    return validate({"call": fi.get("call"), "args": arguments.get("args", []),
+                     "kwargs": arguments.get("kwargs", {}), "expect": fi.get("expect"),
+                     "value": value})
 
 
 def review(claim: str, quote: str, passage: str) -> Task:
@@ -594,7 +679,14 @@ def review(claim: str, quote: str, passage: str) -> Task:
         "out of its context. Copy into `counter_quote` the exact words from the passage "
         "that show it; the quote is checked, and a 'fails' without one is not counted.\n"
         "- 'unsupported': the passage says nothing either way about what the claim asserts.\n"
-        "`reason`: one sentence."))
+        "`reason`: one sentence.\n"
+        "`failing_input`: only when the claim is about what one function in a code "
+        "repository does, the passage shows that function, and one call to it would show "
+        "the claim wrong. `call` is 'package.module:function' as imported from the "
+        "repository's root; `arguments` is JSON, {\"args\": [...], \"kwargs\": {...}}, plain "
+        "values only; `expect` is 'raises' with the exception's class name in `value`, or "
+        "'returns' with the JSON it returns in `value`. Otherwise `expect` is 'none' and the "
+        "rest empty. Nothing is run unless a person chooses to."))
 
 
 def lens_discriminate(chunk: str, candidates: Sequence[tuple[str, str]]) -> Task:
@@ -915,6 +1007,14 @@ def verify(task: Task, value: dict[str, Any]) -> tuple[str, dict[str, Any], list
             not value.get("counter_quote"):
         value["verdict"] = "unchecked"
         value["reason"] = f"[no verifiable counter-quote; was 'fails'] {value.get('reason', '')}"
+    if task.kind.name == "review" and "failing_input" in value:
+        fi = value.pop("failing_input")
+        if isinstance(fi, dict) and fi.get("expect") in ("raises", "returns") and \
+                value.get("verdict") != "holds":
+            try:
+                value["failing_input"] = failing_input(fi)
+            except TypeError as exc:
+                dropped.append(f"failing_input: {exc}")
     if task.kind.name == "bottom_line" and not value.get("bottom_line"):
         return "not_confident", value, dropped
     if task.kind.name == "terms":

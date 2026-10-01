@@ -120,11 +120,62 @@ export function renderModes(pop: Popover, api: Api, mode: string, queued: string
 
 export interface Tier { provider: string; model: string }
 
+// Vision-capable by name, for models not yet profiled (a profile's modality wins).
+const VISION = /(-vl\b|vl-|vision|ocr|gemma-[34]|qwen3\.[5-9]|llama-4|pixtral|llava|inkling|glimmer)/i;
+// Embedding models by name (the catalogue profiles none yet).
+const EMBED = /(bge|embed|e5-|gte-|nomic|minilm|mpnet|potion|jina|arctic)/i;
+const SLOT_KIND: Record<string, { label: string; fits: (m: any) => boolean }> = {
+  ocr: { label: "Vision models", fits: (m) => m.profile?.modality === "Image_To_Text" || VISION.test(String(m.id)) },
+  embeddings: { label: "Embedding models", fits: (m) => m.profile?.modality === "Embeddings" || EMBED.test(String(m.id)) },
+  tts: { label: "Speech models", fits: (m) => m.profile?.modality === "Text_To_Speech" || /tts|kokoro|chatterbox|orpheus|speech|higgs/i.test(String(m.id)) },
+};
+
 export class ModelTile {
   private listings = new Map<string, any>();
   private filter = "";
   private toast = "";
   private press: number | undefined;
+  // R10: a lead the completion suite (M0) has not qualified waits here for the person's
+  // recorded "use it anyway", instead of being taken silently.
+  private pendingLead: { tiers: Tier[]; lead: string } | null = null;
+  // R17: the same tile, choosing one service model (slot 4 OCR, ...) instead of the tiers.
+  private slot: { name: string; label: string; done: () => void; current?: Tier } | null = null;
+  private showAll = false;
+
+  startSlot(name: string, label: string, done: () => void, current?: Tier): void {
+    this.slot = { name, label, done, current };
+    this.showAll = false;
+    this.filter = "";
+    this.toast = "";
+  }
+
+  endSlot(): void { this.slot = null; }
+
+  /** Right-click on the slot's own model: the slot is emptied (never filled by a chat
+   *  model - R17). */
+  private async clearSlot(): Promise<void> {
+    const slot = this.slot!;
+    try {
+      await this.api.post("/api/services", { slot: slot.name, provider: "", model: "" });
+      this.slot = null;
+      slot.done();
+    } catch (e) {
+      this.toast = (e as Error).message;
+      this.render();
+    }
+  }
+
+  private async pickSlot(provider: string, model: string): Promise<void> {
+    const slot = this.slot!;
+    try {
+      await this.api.post("/api/services", { slot: slot.name, provider, model });
+      this.slot = null;
+      slot.done();
+    } catch (e) {
+      this.toast = (e as Error).message;
+      this.render();
+    }
+  }
 
   constructor(private pop: Popover, private api: Api, private tiers: () => Tier[],
               private keysSaved: () => Record<string, boolean>,
@@ -143,9 +194,10 @@ export class ModelTile {
     this.render();
   }
 
-  private async save(tiers: Tier[]): Promise<void> {
+  private async save(tiers: Tier[], override = ""): Promise<void> {
     try {
-      await this.api.post("/api/tiers", { tiers });
+      await this.api.post("/api/tiers", { tiers, ...(override ? { override } : {}) });
+      this.pendingLead = null;
       // Update local state immediately rather than waiting on the
       // `tiers_changed` broadcast to echo back: that event exists to sync
       // *other* tabs, and this tab's own render must not depend on a round
@@ -153,7 +205,31 @@ export class ModelTile {
       // `render()` runs, or a picked model can briefly (or, under load,
       // not-so-briefly) look unpicked to this same click's own next step.
       this.setTiers(tiers);
-    } catch (e) { this.toast = (e as Error).message; }
+    } catch (e) {
+      const body = ((e as ApiError).body ?? {}) as Record<string, unknown>;
+      if (body.needs_override) this.pendingLead = { tiers, lead: String(body.lead ?? "") };
+      this.toast = (e as Error).message;
+    }
+  }
+
+  private overridePrompt(): HTMLElement | null {
+    const pending = this.pendingLead;
+    if (!pending) return null;
+    const reason = h("input", { type: "text", "aria-label": "Why use it anyway",
+      value: "chosen before the completion suite had run" }) as HTMLInputElement;
+    return h("div", { class: "warn", role: "alert" },
+      h("p", {}, this.toast),
+      h("div", { class: "row2 tight" }, reason,
+        h("button", { class: "primary", onclick: async () => {
+          this.toast = "";
+          await this.save(pending.tiers, reason.value.trim() || "chosen by the person");
+          this.render();
+        } }, "Use it as lead anyway"),
+        h("button", { class: "ghost", onclick: () => {
+          this.pendingLead = null;
+          this.toast = "";
+          this.render();
+        } }, "Choose another")));
   }
 
   private async clearAll(): Promise<void> {
@@ -163,6 +239,7 @@ export class ModelTile {
   }
 
   private async pick(provider: string, model: string): Promise<void> {
+    if (this.slot) return this.pickSlot(provider, model);
     const tiers = this.tiers();
     const at = tiers.findIndex((t) => t.provider === provider && t.model === model);
     const entry = ((this.listings.get(provider)?.models ?? []) as any[]).find((m) => m.id === model);
@@ -203,7 +280,9 @@ export class ModelTile {
     const slots = [0, 1, 2].map((i) => {
       const t = tiers[i];
       const fallback = !t && i > 0 && tiers.length ? `uses tier ${Math.min(i, tiers.length)}` : "not chosen";
-      return h("span", { class: "slot" }, h("span", { class: "badge" }, String(i + 1)),
+      return h("span", { class: "slot", title: t ? "Right-click to clear the chosen models" : "",
+        oncontextmenu: (e: Event) => { if (tiers.length) { e.preventDefault(); void this.clearAll(); } } },
+        h("span", { class: "badge" }, String(i + 1)),
         t ? `${t.model} · ${PROVIDERS[t.provider] ?? t.provider}` : h("span", { class: "dim" }, fallback),
         h("span", { class: "dim" }, ` · ${ROLES[i]}`));
     });
@@ -212,15 +291,31 @@ export class ModelTile {
       oninput: (e: Event) => { this.filter = (e.target as HTMLInputElement).value; this.renderGrids(grids); },
     });
     const grids = h("div", {});
+    if (this.slot) {
+      const slot = this.slot;
+      clear(this.pop.el,
+        h("div", { class: "tierbar" }, h("strong", {}, `Choose the ${slot.label} model`),
+          h("span", { class: "dim" }, this.showAll ? "Every model is listed. Click one."
+            : `${SLOT_KIND[slot.name]?.label ?? "Matching models"} are listed (by profile, or by name). Click one.`),
+          h("button", { class: "ghost", onclick: () => { this.showAll = !this.showAll; this.render(); } },
+            this.showAll ? `${SLOT_KIND[slot.name]?.label ?? "Matching models"} only` : "Show all"),
+          h("button", { class: "ghost", onclick: () => { this.slot = null; slot.done(); } }, "Cancel")),
+        slot.current?.model ? h("p", { class: "dim" }, `Now: ${slot.current.model}. Right-click it to empty the slot.`) : null,
+        this.toast ? h("div", { class: "toast", role: "status" }, this.toast) : null,
+        filter, grids);
+      this.renderGrids(grids);
+      return;
+    }
     clear(this.pop.el,
       h("div", { class: "tierbar" }, h("strong", {}, "Chat models"),
-        h("span", { class: "dim" }, "Click in order: 1 leads, 2 writes notes, 3 does small tasks. Right-click a chosen model to clear all.")),
+        h("span", { class: "dim" }, "Click in order: 1 leads, 2 writes notes, 3 does small tasks. Right-click a chosen model, or a tier, to clear all.")),
       h("div", { class: "tierbar" }, slots,
         tiers.length ? h("button", { class: "ghost", onclick: () => this.clearAll() }, "Clear selection") : null),
-      this.toast ? h("div", { class: "toast", role: "status" }, this.toast) : null,
+      this.pendingLead ? this.overridePrompt()
+        : this.toast ? h("div", { class: "toast", role: "status" }, this.toast) : null,
       filter, grids,
-      h("h4", {}, "Embeddings · Speech to text · Text to speech"),
-      h("p", { class: "note locked" }, "🔒 These need their own single-choice pickers (with the re-embedding cost shown first for Embeddings). They arrive with catalogue upkeep (M4b)."),
+      h("h4", {}, "OCR · Text to speech · Embeddings"),
+      h("p", { class: "note locked" }, "These have their own slots (4 OCR, 5 Text to speech, 6 Embeddings) in Settings → Connections, each chosen with this same tile and kept with the library."),
       h("p", { class: "note" }, "Models come from each provider's live listing. A profiled model (a Source of kind model) shows its suggested tier and best-for tags (a first guess to confirm or correct), plus context, price and tool calling; an unprofiled one can be profiled, which stages it for your review like any other source."));
     this.renderGrids(grids);
   }
@@ -230,7 +325,8 @@ export class ModelTile {
     const needle = this.filter.toLowerCase();
     clear(host, Object.entries(PROVIDERS).map(([p, label]) => {
       const listing = this.listings.get(p) ?? { status: "…", models: [] };
-      const models = (listing.models as any[]).filter((m) => !needle || String(m.id).toLowerCase().includes(needle));
+      const models = (listing.models as any[]).filter((m) => !needle || String(m.id).toLowerCase().includes(needle))
+        .filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true));
       const status = listing.status === "ready" ? `${listing.models.length} model${listing.models.length === 1 ? "" : "s"}`
         : listing.status === "no key" ? "no key saved (+ → Connections)"
         : listing.status === "offline" ? "offline: the local server is not running"
@@ -238,18 +334,24 @@ export class ModelTile {
       return h("section", { class: "provider" },
         h("h4", {}, h("span", { class: `dot ${listing.status === "ready" ? "" : listing.status === "no key" ? "nokey" : "off"}` }), `${label} · ${status}`),
         models.length ? h("div", { class: "grid" }, models.slice(0, 60).map((m) => {
-          const at = tiers.findIndex((t) => t.provider === p && t.model === m.id);
+          // In a service slot, "chosen" is the slot's own model; otherwise its tier.
+          const inSlot = this.slot?.current?.provider === p && this.slot?.current?.model === m.id;
+          const at = this.slot ? (inSlot ? 0 : -1)
+            : tiers.findIndex((t) => t.provider === p && t.model === m.id);
+          const clear = () => (this.slot ? this.clearSlot() : this.clearAll());
           const card = h("button", {
             class: `card${at >= 0 ? " sel" : ""}`, "aria-pressed": at >= 0 ? "true" : "false",
-            title: m.profile && m.profile.tool_calling === false
+            title: at >= 0 ? (this.slot ? "Right-click (or Delete) to empty this slot"
+              : "Right-click (or Delete) to clear the chosen models")
+              : m.profile && m.profile.tool_calling === false
               ? "Profiled as not supporting tool calling: can still lead as tier 2 or 3" : "",
             onclick: () => this.pick(p, m.id),
-            oncontextmenu: (e: Event) => { if (at >= 0) { e.preventDefault(); this.clearAll(); } },
-            onkeydown: (e: Event) => { if (at >= 0 && (e as KeyboardEvent).key === "Delete") this.clearAll(); },
-            ontouchstart: () => { if (at >= 0) this.press = window.setTimeout(() => this.clearAll(), 600); },
+            oncontextmenu: (e: Event) => { if (at >= 0) { e.preventDefault(); void clear(); } },
+            onkeydown: (e: Event) => { if (at >= 0 && (e as KeyboardEvent).key === "Delete") void clear(); },
+            ontouchstart: () => { if (at >= 0) this.press = window.setTimeout(() => void clear(), 600); },
             ontouchend: () => window.clearTimeout(this.press),
           },
-          at >= 0 ? h("span", { class: "badge" }, String(at + 1)) : null,
+          at >= 0 && !this.slot ? h("span", { class: "badge" }, String(at + 1)) : null,
           h("div", { class: "name" }, m.id), h("div", { class: "meta" }, profileMeta(m)));
           return h("div", { class: "card-wrap" }, card,
             // "local" has no public listing page to profile from (see MODEL_PAGES
@@ -323,8 +425,12 @@ export async function renderLibraries(pop: Popover, api: Api, current: string): 
   }
 }
 
+/** The open library's threads. Each library keeps its own (`.librarian/sessions` in its
+ *  folder), so the heading names the library: another library's threads are opened by
+ *  switching to it. */
 export async function renderSessions(pop: Popover, api: Api, attach: (id: string) => void,
-                                     reset: () => void): Promise<void> {
+                                     reset: () => void, library = "this library",
+                                     libraryPath = ""): Promise<void> {
   clear(pop.el, h("p", { class: "dim" }, "Loading threads…"));
   try {
     const out = await api.tool("list_sessions");
@@ -332,12 +438,13 @@ export async function renderSessions(pop: Popover, api: Api, attach: (id: string
     clear(pop.el,
       h("button", { class: "menuitem", onclick: () => { pop.show(false); reset(); } },
         "New conversation", h("small", {}, "The librarian opens a thread when it needs one.")),
-      h("h4", { class: "gap" }, "Threads"),
+      h("h4", { class: "gap", title: libraryPath ? `Kept in ${libraryPath}` : "" }, `Threads in ${library}`),
       rows.length ? rows.map((s) => h("button", {
         class: "menuitem", onclick: () => { pop.show(false); attach(s.id); },
       }, `${s.project || s.question || s.purpose}`,
         h("small", {}, `${s.purpose} · ${s.status} · ${s.phase} · ${when(s.opened_at)}`)))
-        : h("p", { class: "dim" }, "No threads yet."));
+        : h("p", { class: "dim" }, "No threads in this library yet."),
+      h("small", { class: "dim" }, "Another library's threads are under that library: switch to it from the library menu."));
   } catch (e) {
     clear(pop.el, h("p", { class: "error" }, `Could not list threads: ${(e as Error).message}`));
   }

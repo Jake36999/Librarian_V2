@@ -121,12 +121,13 @@ def test_add_project_walk(library):
     promoted = m.ok("promote_offering", offering=staged["offering"])
     note = notes.load(library.root / promoted["promoted"])
     assert promoted["promoted"] == "Offerings/Host Watch/Host Watch Starter.md"
+    assert promoted["findable"]                              # R13: indexed, found by title
     assert note.frontmatter["session"] == m.ctx.session and note.frontmatter["status"] == "active"
     assert "> exposes the operating system" in note.body
 
     m.ok("advance")
     assert m.ok("close_session", summary="s", gaps="g")["closed"] is False
-    m.ok("close_brief", brief="B1", note="answered by osquery")
+    m.ok("close_brief", brief="B1", coverage="covered", note="answered by osquery")
     assert m.ok("close_session", summary="Framed Host Watch; osquery offered.",
                 gaps="nothing on fleet-scale performance")["closed"]
     reopened = m.ok("resume_session", session_id=m.ctx.session)
@@ -185,11 +186,20 @@ def test_suggest_reads_the_project_and_never_writes_it(library, tmp_path):
          disqualifiers=["requires a GPU"], repository=str(project))
     m.ok("open_session", purpose="suggest", project="HostWatch")
     m.ok("advance")
+    # Research Pipeline §6: off by default - the model is refused, and Map does not ask for it
+    assert m("read_project")["refused"] == "PROJECT_ACCESS_OFF"
+    assert "read_project" not in " ".join(m.ok("session_status")["open_items"])
+    from resource_librarian import projects                   # the person allows the folder
+    projects.set_enabled(library, True)
+    added = projects.add_root(library, str(project), project="HostWatch")
+    assert added["scaffold"]["state"] == "created"
     assert "read_project" in " ".join(m.ok("session_status")["open_items"])
     listing = m.ok("read_project")
     assert listing["files"] == ["README.md"]
     assert m("read_project", path="../../etc/passwd")["error"] == "invalid_arguments"
     m.ok("read_project", path="README.md")
+    logged = (project / "librarian-app" / "logs" / "access.jsonl").read_text(encoding="utf-8")
+    assert '"path": "README.md"' in logged
     m.ok("update_plan", fields={"map": "the project scripts what osquery does"})
     m.ok("advance")
     m.run_rounds(["collect process lists from servers"])
@@ -211,7 +221,8 @@ def test_suggest_reads_the_project_and_never_writes_it(library, tmp_path):
     body = (library.root / promoted["promoted"]).read_text()
     assert "`project:README.md`" in body and "[[osquery]]" in body
     assert hashlib.sha256((project / "README.md").read_bytes()).hexdigest() == before
-    assert sorted(p.name for p in project.iterdir()) == ["README.md"]
+    # the project's own files untouched; only the sidecar the person's "add" created
+    assert sorted(p.name for p in project.iterdir()) == ["README.md", "librarian-app"]
 
 
 def test_budget_is_enforced_and_harness_is_free(library):

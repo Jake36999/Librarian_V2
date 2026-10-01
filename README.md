@@ -22,6 +22,42 @@ Librarian is a tool for people who read seriously. You give it sources — paper
 
 Requires Python 3.11+.
 
+### Windows: Setup.bat
+
+Double-click **`Setup.bat`** in this folder. It sets up this copy in one go:
+
+- a Python environment of its own (`.venv` here), so this copy runs its own code;
+- the Librarian, with the MCP server, PDF text and semantic search;
+- a check that it starts;
+- a desktop shortcut, **Librarian**, that opens the library picker.
+
+It is safe to run again, for example after updating. The options pass through:
+
+```bat
+Setup.bat -Extras "mcp,pdf,embed,dev"    REM also the test suite
+Setup.bat -NoShortcut                    REM no desktop shortcut
+Setup.bat -BuildUI                       REM rebuild the interface from ui\src (needs Node.js)
+```
+
+### The library picker
+
+The shortcut opens a page before any library, like Obsidian's vault picker. From it
+you can:
+
+- open a library you have opened before;
+- **create a new library**, by name and place, optionally with a domain profile
+  (software systems, a course, history);
+- **open a folder as a library**. A folder inside a library opens that library. Any
+  other folder becomes a library only if you agree, and only what is missing is
+  added: nothing already in it changes;
+- forget a library from the list. The folder itself is left alone.
+
+`Librarian.bat --pick` opens the same page. `Librarian.bat` on its own opens the library
+at or above the folder it runs in, or the picker if there is none. Its window is the
+Librarian's server: closing it stops the Librarian.
+
+### By hand (any platform)
+
 ```bash
 pip install -e ".[dev]"          # full install including test suite
 pip install -e ".[mcp]"          # add MCP server support
@@ -29,20 +65,21 @@ pip install -e ".[embed]"        # add semantic embedding for richer search
 pip install -e ".[pdf]"          # add PDF extraction
 ```
 
-Create a new vault and open the app:
+Create a library and open the app, or start at the picker:
 
 ```bash
-resource-librarian init ~/MyResearch
+resource-librarian init ~/MyResearch --profile software-systems
 resource-librarian --vault ~/MyResearch app --open
+resource-librarian app --pick --open
 ```
 
-On Windows, `scripts/new-vault.ps1` does both steps in one from a project directory:
+On Windows, `scripts/new-vault.ps1` opens or creates a domain library from inside a
+project folder, and registers the project in it:
 
 ```powershell
-.\scripts\new-vault.ps1          # creates .librarian-app here, opens in browser
+.\scripts\new-vault.ps1 -Domain Software -Profile software-systems
+.\scripts\new-vault.ps1          # a one-off library at .\.librarian-app
 ```
-
-`Librarian.bat` in this directory is a shortcut that opens the app (or the vault-selection page if no vault is configured yet).
 
 ---
 

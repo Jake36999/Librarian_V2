@@ -34,7 +34,7 @@ _RULES = [
          "Evidence is kept exactly as it was fetched. A new fetch is a new "
          "record; an old one is never rewritten."),
     Rule("EVIDENCE_QUOTE_VERIFIED", "truth",
-         "Every claim in an offering carries an evidence_quote: the exact text it rests "
+         "Every claim in an offering carries a quote: the exact text it rests "
          "on, found in the cited Source, its evidence, or the project file. A quote that "
          "cannot be found refuses the whole draft."),
     Rule("REVIEW_CHALLENGED", "truth",
@@ -95,6 +95,14 @@ _RULES = [
     Rule("SESSION_REQUIRED", "sessions",
          "The operation needs an open session. open_session starts one; resume_session "
          "reopens a parked or closed one."),
+    Rule("PROJECT_ACCESS_OFF", "sessions",
+         "A project's own files are read only where a person allowed it: project access on "
+         "for this library, and the folder added in Settings -> Projects. The model never "
+         "names a project path; nothing was read."),
+    Rule("PROJECT_WRITES_OFF", "sessions",
+         "Reading a project is not editing it: edits are allowed per folder by a person, "
+         "separately from project access, and every applied edit is asked for. Nothing was "
+         "changed."),
     Rule("PERMISSION_DENIED", "sessions",
          "The permission mode or the tool's own setting denied this action; nothing was "
          "done. Plan mode proposes and never writes."),
@@ -122,7 +130,14 @@ _RULES = [
     Rule("TIER_REFUSED", "boundaries",
          "A tool outside the caller's tier is refused by name, with the tier "
          "that grants it."),
-    Rule("NO_ARBITRARY_SHELL", "boundaries",
+    Rule("EXECUTION_SANDBOX_ONLY", "boundaries",
+         "Code runs only in a fresh Docker container of its own: no network, no credentials, "
+         "a read-only root, removed afterwards - never on this machine itself. The agent runs "
+         "code it wrote (asked like any write); a person runs a script file or a claim's "
+         "failing input. A run writes outside its container only to its own landing pad, and "
+         "nothing that lands is ever run, imported or moved by the app. Without a running "
+         "Docker there is no run."),
+    Rule("NO_ARBITRARY_SHELL", "boundaries",  # code a model writes runs only in the sandbox
          "No command line is built from model output. Models emit parameters; "
          "code builds commands."),
     Rule("STAGING_BEFORE_VAULT", "boundaries",
@@ -132,8 +147,9 @@ _RULES = [
          "Dual-use material goes to a person for review and is never promoted "
          "automatically, whatever the promotion setting."),
     Rule("OBSERVER_WITHOUT_ACTUATION", "boundaries",
-         "The librarian reads projects and never writes into a project's "
-         "repository."),
+         "The librarian reads projects and never writes into a project's repository, except "
+         "through project_edit: in a folder where a person allowed edits, one asked-for, "
+         "diffed, logged and backed-up change at a time. It never runs a project's code."),
     Rule("SWEEP_GATED", "boundaries",
          "An unattended sweep waits until the vault's retrieval has passed its own eval "
          "and a person has read the previous cohort: volume into unproven search hides "
@@ -151,16 +167,17 @@ RULES: dict[str, Rule] = {rule.code: rule for rule in _RULES}
 class Refusal(Exception):
     """A decision, not a crash: which rule refused, and what to do instead."""
 
-    def __init__(self, code: str, detail: str):
+    def __init__(self, code: str, detail: str, extra: dict | None = None):
         if code not in RULES:
             raise KeyError(f"unknown rule code {code!r}")
         self.code = code
         self.detail = detail
+        self.extra = dict(extra or {})
         super().__init__(f"{code}: {detail}")
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> dict:
         return {"refused": self.code, "rule": RULES[self.code].statement,
-                "detail": self.detail}
+                "detail": self.detail, **self.extra}
 
 
 def render_markdown() -> str:

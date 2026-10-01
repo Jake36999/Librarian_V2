@@ -1,5 +1,5 @@
 workflow: ingest-cited
-purpose: record an external research report's cited links as evidence, then fetch and stage every cited arXiv paper (V1's ingest_resolved_links, declared)
+purpose: record an external research report's cited links as evidence, then fetch and stage every cited arXiv or DOI paper (V1's ingest_resolved_links, declared)
 inputs:
   path: {type: string}
   tool_name: {type: string, default: "external research tool"}
@@ -9,7 +9,7 @@ steps:
     args: {path: {from: inputs.path}, tool_name: {from: inputs.tool_name}}
   - id: papers
     each: {from: steps.trace.refs}
-    when: {from: item.identifier_kind, is: arxiv}
+    when: {from: item.identifier_kind, in: [arxiv, doi]}
     action: ingest
     args: {ref: {from: item.ref}}
     on_error: continue
