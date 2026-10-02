@@ -192,6 +192,14 @@ await page.click("dialog.settings [role=tab]:has-text('Library')");
 await page.waitForSelector("dialog.settings .srv");
 step("settings: key saved and confirmed, usage falls back to a dashboard link, context and library shown");
 
+// A key row in the capability list opens a box under the list to set that key in place.
+await page.click("dialog.settings .srv button.link:has-text('key: Brave Search')");
+await page.fill("dialog.settings .key-entry input[type=password]", "brave-test-key-0123");
+await page.click("dialog.settings .key-entry button:has-text('Save key')");
+await page.waitForSelector("dialog.settings .key-entry >> text=Saved. Web search now uses Brave");
+await page.waitForSelector("dialog.settings .srv:has-text('key: Brave Search') >> text=saved in this computer's key store");
+step("settings: a key row opens a box to set that key in place");
+
 // Lens packs (roadmap §4 C3): a standard pack is listed, not accepted; Accept
 // installs its lenses, and the pack then shows as accepted.
 await page.waitForSelector("dialog.settings .lens-packs .srv:has-text('tool-choice')");

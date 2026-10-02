@@ -1880,7 +1880,8 @@ var Librarian = (() => {
       const LABELS = {
         ...PROVIDERS,
         tavily: "Tavily (web search)",
-        brave: "Brave Search (web search)"
+        brave: "Brave Search (web search)",
+        github: "GitHub (repository intake)"
       };
       const select = h(
         "select",
@@ -1936,7 +1937,7 @@ var Librarian = (() => {
         }
         input.disabled = false;
         save.hidden = false;
-        checkUsage.hidden = select.value === "tavily" || select.value === "brave";
+        checkUsage.hidden = ["tavily", "brave", "github"].includes(select.value);
         remove.hidden = !k.saved;
         save.textContent = k.saved ? "Overwrite key" : "Save key";
         input.placeholder = k.saved ? `\u2022\u2022\u2022\u2022 ${k.last4} \xB7 ${k.source === "host" ? "from Obsidian" : "saved"}` : "Paste a key";
@@ -2598,6 +2599,62 @@ var Librarian = (() => {
             status.textContent = e.message;
           }
         };
+        const keyBox = h("div", { class: "key-entry" });
+        let opened = null;
+        const keyEntry = (c, row) => {
+          opened?.setAttribute("aria-expanded", "false");
+          if (opened === row) {
+            opened = null;
+            clear(keyBox);
+            return;
+          }
+          opened = row;
+          row.setAttribute("aria-expanded", "true");
+          const label = String(c.name).replace(/^key: /, "");
+          const input = h("input", {
+            type: "password",
+            autocomplete: "off",
+            "aria-label": `${label} key`,
+            placeholder: c.ok ? `Replace the key (${c.detail})` : `Paste the ${label} key`
+          });
+          const said = h("span", { class: "note inline", role: "status" });
+          const save = async () => {
+            if (!input.value.trim()) return;
+            said.textContent = "Saving\u2026";
+            try {
+              const out = await this.api.post("/api/keys", { provider: c.key, key: input.value.trim(), overwrite: true });
+              input.value = "";
+              said.textContent = out.check?.ok ? out.check.status : `Saved, but the provider said: ${out.check?.error ?? "no answer"}`;
+              said.className = `note inline ${out.check?.ok ? "ok" : "err"}`;
+              await this.refresh();
+              const line = row.closest(".srv");
+              line?.querySelector(".dot")?.setAttribute("class", "dot");
+              const detail = line?.querySelector(".key-detail");
+              if (detail) detail.textContent = " \xB7 saved in this computer's key store";
+            } catch (e) {
+              said.textContent = e.message;
+              said.className = "note inline err";
+            }
+          };
+          input.onkeydown = (e) => {
+            if (e.key === "Enter") void save();
+          };
+          clear(keyBox, h(
+            "div",
+            { class: "confirm" },
+            h("label", { class: "f" }, `${label} key`),
+            h(
+              "div",
+              { class: "row2 tight" },
+              input,
+              h("button", { class: "primary", onclick: () => void save() }, "Save key"),
+              h("button", { class: "ghost", onclick: () => keyEntry(c, row) }, "Cancel")
+            ),
+            said,
+            h("small", { class: "dim" }, "Kept in this computer's key store, never in a library. Settings -> Connections lists every key.")
+          ));
+          input.focus();
+        };
         const reviewStatus = h("span", { class: "note inline", role: "status" });
         const reviewBox = (key, label, hint) => {
           const box = h("input", { type: "checkbox", id: `lib-${key}` });
@@ -2638,8 +2695,18 @@ var Librarian = (() => {
             "div",
             { class: "srv" },
             h("span", { class: `dot ${c.ok ? "" : c.required ? "off" : "nokey"}` }),
-            h("span", {}, h("strong", {}, c.name), ` \xB7 ${c.detail ?? ""}`)
+            h("span", {}, c.key ? h(
+              "button",
+              {
+                class: "link",
+                title: `${c.ok ? "Replace" : "Add"} this key`,
+                "aria-expanded": "false",
+                onclick: (e) => keyEntry(c, e.currentTarget)
+              },
+              h("strong", {}, c.name)
+            ) : h("strong", {}, c.name), h("span", { class: "key-detail" }, ` \xB7 ${c.detail ?? ""}`))
           )),
+          keyBox,
           profile,
           h("label", { class: "f" }, "Topics"),
           topics,

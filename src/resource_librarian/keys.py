@@ -37,9 +37,10 @@ def config_dir() -> Path:
     return Path(base) / SERVICE
 
 
-# Keys that are not a model provider's: the web search backends (websearch.py reads
-# them from the environment). Kept and shown like the model keys (owner, 2026-10-01).
-SEARCH_KEYS = {"tavily": "TAVILY_API_KEY", "brave": "BRAVE_API_KEY"}
+# Keys that are not a model provider's: the web search backends (websearch.py) and
+# GitHub's API for repository intake (intake.py), read from the environment. Kept and
+# shown like the model keys (owner, 2026-10-01).
+SEARCH_KEYS = {"tavily": "TAVILY_API_KEY", "brave": "BRAVE_API_KEY", "github": "GITHUB_TOKEN"}
 
 
 def key_env(provider: str) -> str:

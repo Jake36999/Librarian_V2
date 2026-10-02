@@ -620,6 +620,9 @@ class App:
 
     def check(self, provider: str) -> dict[str, Any]:
         from .keys import SEARCH_KEYS
+        if provider == "github":
+            return {"ok": True, "status": "Saved. Repository intake now reads GitHub's API "
+                                          "with it (a much higher rate limit)"}
         if provider in SEARCH_KEYS:
             # Not called out to: a test search would spend one of the key's searches.
             from . import websearch

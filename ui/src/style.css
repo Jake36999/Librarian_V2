@@ -313,3 +313,8 @@ dialog .confirm { margin-top: 10px; border: 1px solid var(--stop-line); backgrou
 
 /* Staging -> Offerings: a staged draft read in full before deciding */
 .lib-app .offering-body { border: 1px solid var(--line); border-radius: 7px; padding: 4px 12px; margin: 8px 0; max-height: 60vh; overflow: auto; }
+
+/* Settings -> Library: a key row is a link that opens a box under the list to set it */
+.lib-app button.link, dialog button.link { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.lib-app button.link:hover, dialog button.link:hover, dialog button.link[aria-expanded="true"] { color: var(--accent); }
+dialog .key-entry .confirm { margin-top: 8px; }

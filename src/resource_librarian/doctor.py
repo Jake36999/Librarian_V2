@@ -33,6 +33,10 @@ RECOMMENDED_PLUGINS = {
     "obsidian-zotero-desktop-connector": "Zotero Integration",
 }
 
+# The key store's name for each (keys.py), so Settings can offer to set one in place.
+KEY_PROVIDERS = {"DeepInfra": "deepinfra", "OpenAI": "openai", "Anthropic": "anthropic",
+                 "GitHub": "github", "Tavily (web search)": "tavily", "Brave Search": "brave"}
+
 KEY_VARIABLES = {
     "DeepInfra": ("DEEPINFRA_API_KEY", "DEEPINFRA_TOKEN"),
     "OpenAI": ("OPENAI_API_KEY",),
@@ -50,10 +54,11 @@ class Check:
     ok: bool
     detail: str
     required: bool = False
+    key: str = ""                      # a key check: the key store's provider name
 
     def to_dict(self) -> dict[str, Any]:
         return {"name": self.name, "ok": self.ok, "detail": self.detail,
-                "required": self.required}
+                "required": self.required, **({"key": self.key} if self.key else {})}
 
 
 def _version(package: str) -> str | None:
@@ -156,7 +161,8 @@ def checks(vault: Vault | None = None, mcp: Any = None) -> list[Check]:
     for provider, variables in KEY_VARIABLES.items():
         present = next((v for v in variables if os.environ.get(v)), "")
         out.append(Check(f"key: {provider}", bool(present),
-                         f"set in {present}" if present else "not set"))
+                         f"set in {present}" if present else "not set",
+                         key=KEY_PROVIDERS.get(provider, "")))
     if vault is None:
         out.append(Check("vault", False, "no vault here: run `init <folder>`"))
         return out

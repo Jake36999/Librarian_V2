@@ -81,7 +81,7 @@ export class Settings {
     // Model providers, then the web search backends (keys.SEARCH_KEYS): web_search uses
     // Brave, else Tavily, else a SearXNG instance, else Wikipedia only.
     const LABELS: Record<string, string> = { ...PROVIDERS, tavily: "Tavily (web search)",
-      brave: "Brave Search (web search)" };
+      brave: "Brave Search (web search)", github: "GitHub (repository intake)" };
     const select = h("select", { id: "lib-provider" },
       Object.entries(LABELS).map(([id, label]) => h("option", { value: id }, label))) as HTMLSelectElement;
     const input = h("input", { type: "password", id: "lib-key", autocomplete: "off", placeholder: "Paste a key" }) as HTMLInputElement;
@@ -120,7 +120,7 @@ export class Settings {
         return;
       }
       input.disabled = false; save.hidden = false;
-      checkUsage.hidden = select.value === "tavily" || select.value === "brave";
+      checkUsage.hidden = ["tavily", "brave", "github"].includes(select.value);
       remove.hidden = !k.saved;
       save.textContent = k.saved ? "Overwrite key" : "Save key";
       input.placeholder = k.saved ? `•••• ${k.last4} · ${k.source === "host" ? "from Obsidian" : "saved"}` : "Paste a key";
@@ -575,6 +575,48 @@ export class Settings {
         try { await this.api.post("/api/library", { promotion_mode: promo.value }); status.textContent = "Saved to the vault's config."; }
         catch (e) { status.textContent = (e as Error).message; }
       };
+      // A key row in the list below opens a box under the list to set that key in place
+      // (owner, 2026-10-02): the same key store as Settings -> Connections.
+      const keyBox = h("div", { class: "key-entry" });
+      let opened: HTMLElement | null = null;
+      const keyEntry = (c: any, row: HTMLElement) => {
+        opened?.setAttribute("aria-expanded", "false");
+        if (opened === row) { opened = null; clear(keyBox); return; }
+        opened = row;
+        row.setAttribute("aria-expanded", "true");
+        const label = String(c.name).replace(/^key: /, "");
+        const input = h("input", { type: "password", autocomplete: "off", "aria-label": `${label} key`,
+          placeholder: c.ok ? `Replace the key (${c.detail})` : `Paste the ${label} key` }) as HTMLInputElement;
+        const said = h("span", { class: "note inline", role: "status" });
+        const save = async () => {
+          if (!input.value.trim()) return;
+          said.textContent = "Saving…";
+          try {
+            const out = await this.api.post("/api/keys", { provider: c.key, key: input.value.trim(), overwrite: true });
+            input.value = "";
+            said.textContent = out.check?.ok ? out.check.status : `Saved, but the provider said: ${out.check?.error ?? "no answer"}`;
+            said.className = `note inline ${out.check?.ok ? "ok" : "err"}`;
+            await this.refresh();
+            // The row says so at once: its dot goes green and its detail names the store.
+            const line = row.closest(".srv");
+            line?.querySelector(".dot")?.setAttribute("class", "dot");
+            const detail = line?.querySelector(".key-detail");
+            if (detail) detail.textContent = " · saved in this computer's key store";
+          } catch (e) {
+            said.textContent = (e as Error).message;
+            said.className = "note inline err";
+          }
+        };
+        input.onkeydown = (e) => { if (e.key === "Enter") void save(); };
+        clear(keyBox, h("div", { class: "confirm" },
+          h("label", { class: "f" }, `${label} key`),
+          h("div", { class: "row2 tight" }, input,
+            h("button", { class: "primary", onclick: () => void save() }, "Save key"),
+            h("button", { class: "ghost", onclick: () => keyEntry(c, row) }, "Cancel")),
+          said,
+          h("small", { class: "dim" }, "Kept in this computer's key store, never in a library. Settings -> Connections lists every key.")));
+        input.focus();
+      };
       // §4 G3: a second model checks claims against the notes they cite (O4, O5).
       const reviewStatus = h("span", { class: "note inline", role: "status" });
       const reviewBox = (key: string, label: string, hint: string) => {
@@ -606,7 +648,12 @@ export class Settings {
         h("label", { class: "f" }, "Capabilities on this install"),
         (lib.doctor ?? []).map((c: any) => h("div", { class: "srv" },
           h("span", { class: `dot ${c.ok ? "" : c.required ? "off" : "nokey"}` }),
-          h("span", {}, h("strong", {}, c.name), ` · ${c.detail ?? ""}`))),
+          h("span", {}, c.key
+            ? h("button", { class: "link", title: `${c.ok ? "Replace" : "Add"} this key`,
+                "aria-expanded": "false", onclick: (e: Event) => keyEntry(c, e.currentTarget as HTMLElement) },
+                h("strong", {}, c.name))
+            : h("strong", {}, c.name), h("span", { class: "key-detail" }, ` · ${c.detail ?? ""}`)))),
+        keyBox,
         profile,
         h("label", { class: "f" }, "Topics"),
         topics,

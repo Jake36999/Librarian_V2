@@ -542,3 +542,17 @@ def test_settings_turn_the_review_gate_on_and_save_a_search_key(served):
     keys = {k["provider"]: k for k in client.get("/api/keys")[1]["keys"]}
     assert keys["tavily"]["saved"] and keys["tavily"]["last4"] == "6789"
     assert not keys["brave"]["saved"]
+
+
+
+def test_the_capability_list_names_each_keys_store_entry(served):
+    """A key row in Settings -> Library opens a box to set that key (owner, 2026-10-02)."""
+    app, client, _ = served
+    rows = {c["name"]: c for c in client.get("/api/library")[1]["doctor"]}
+    assert rows["key: Tavily (web search)"]["key"] == "tavily"
+    assert rows["key: GitHub"]["key"] == "github" and rows["key: DeepInfra"]["key"] == "deepinfra"
+    assert "key" not in rows["pyyaml"]
+    status, out = client.post("/api/keys", {"provider": "github", "key": "ghp_test0123456789"})
+    assert status == 200 and out["saved"] and "Repository intake" in out["check"]["status"]
+    rows = {c["name"]: c for c in client.get("/api/library")[1]["doctor"]}
+    assert rows["key: GitHub"]["ok"]
