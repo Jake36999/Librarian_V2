@@ -287,7 +287,8 @@ export class ModelTile {
         h("span", { class: "dim" }, ` · ${ROLES[i]}`));
     });
     const filter = h("input", {
-      type: "search", placeholder: "Filter models", "aria-label": "Filter models", value: this.filter,
+      type: "search", placeholder: "Filter by name or description, e.g. tool calling, long horizon, 1m ctx",
+      "aria-label": "Filter models", value: this.filter,
       oninput: (e: Event) => { this.filter = (e.target as HTMLInputElement).value; this.renderGrids(grids); },
     });
     const grids = h("div", {});
@@ -311,6 +312,8 @@ export class ModelTile {
         h("span", { class: "dim" }, "Click in order: 1 leads, 2 writes notes, 3 does small tasks. Right-click a chosen model, or a tier, to clear all.")),
       h("div", { class: "tierbar" }, slots,
         tiers.length ? h("button", { class: "ghost", onclick: () => this.clearAll() }, "Clear selection") : null),
+      tiers.length < 3 ? h("p", { class: "note" }, `Choosing slot ${tiers.length + 1} (${ROLES[tiers.length]}): `
+        + `models whose profile recommends them for it are listed first.`) : null,
       this.pendingLead ? this.overridePrompt()
         : this.toast ? h("div", { class: "toast", role: "status" }, this.toast) : null,
       filter, grids,
@@ -322,11 +325,23 @@ export class ModelTile {
 
   private renderGrids(host: HTMLElement): void {
     const tiers = this.tiers();
-    const needle = this.filter.toLowerCase();
+    // Every word must appear in the card: its id and what its profile says (tier, best-for
+    // tags, context, price, tool calling) - "long horizon tool calling" narrows by both.
+    const words = this.filter.toLowerCase().split(/\s+/).filter(Boolean);
+    const matches = (m: any) => {
+      const text = `${m.id} ${profileMeta(m)}`.toLowerCase().replace(/_/g, " ");
+      return words.every((w) => text.includes(w));
+    };
+    // The slot being chosen next (1 leads, 2 notes, 3 small tasks): its recommended models
+    // first, each marked (the profile's suggested tier).
+    const next = this.slot || tiers.length >= 3 ? 0 : tiers.length + 1;
+    const recommended = (m: any) => next > 0 && String(m.profile?.suggested_tier ?? "") === `Tier_${next}`;
     clear(host, Object.entries(PROVIDERS).map(([p, label]) => {
       const listing = this.listings.get(p) ?? { status: "…", models: [] };
-      const models = (listing.models as any[]).filter((m) => !needle || String(m.id).toLowerCase().includes(needle))
-        .filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true));
+      const models = (listing.models as any[]).filter(matches)
+        .filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true))
+        .map((m, i) => ({ m, i })).sort((a, b) => Number(recommended(b.m)) - Number(recommended(a.m)) || a.i - b.i)
+        .map(({ m }) => m);
       const status = listing.status === "ready" ? `${listing.models.length} model${listing.models.length === 1 ? "" : "s"}`
         : listing.status === "no key" ? "no key saved (+ → Connections)"
         : listing.status === "offline" ? "offline: the local server is not running"
@@ -339,8 +354,9 @@ export class ModelTile {
           const at = this.slot ? (inSlot ? 0 : -1)
             : tiers.findIndex((t) => t.provider === p && t.model === m.id);
           const clear = () => (this.slot ? this.clearSlot() : this.clearAll());
+          const rec = at < 0 && recommended(m);
           const card = h("button", {
-            class: `card${at >= 0 ? " sel" : ""}`, "aria-pressed": at >= 0 ? "true" : "false",
+            class: `card${at >= 0 ? " sel" : ""}${rec ? " rec" : ""}`, "aria-pressed": at >= 0 ? "true" : "false",
             title: at >= 0 ? (this.slot ? "Right-click (or Delete) to empty this slot"
               : "Right-click (or Delete) to clear the chosen models")
               : m.profile && m.profile.tool_calling === false
@@ -352,7 +368,8 @@ export class ModelTile {
             ontouchend: () => window.clearTimeout(this.press),
           },
           at >= 0 && !this.slot ? h("span", { class: "badge" }, String(at + 1)) : null,
-          h("div", { class: "name" }, m.id), h("div", { class: "meta" }, profileMeta(m)));
+          h("div", { class: "name" }, m.id), h("div", { class: "meta" }, profileMeta(m)),
+          rec ? h("div", { class: "rec-label" }, `Recommended for slot ${next}`) : null);
           return h("div", { class: "card-wrap" }, card,
             // "local" has no public listing page to profile from (see MODEL_PAGES
             // server-side); offering the action there would only fail loudly.

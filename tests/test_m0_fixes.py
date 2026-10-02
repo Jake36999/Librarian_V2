@@ -201,3 +201,15 @@ def test_the_desk_finds_the_project_beside_a_note_of_the_same_name(library):
     (library.root / "Notes" / "Host Watch.md").write_text("# Host Watch\n\nA plain note.\n",
                                                           encoding="utf-8")
     assert "error" not in m("desk_show", project="Host Watch")
+
+
+def test_a_model_that_never_answers_in_time_is_called_slow_not_unreachable(monkeypatch):
+    import urllib.error
+    import pytest
+    from resource_librarian import providers
+
+    def slow(request, timeout):
+        raise urllib.error.URLError(TimeoutError("The read operation timed out"))
+    monkeypatch.setattr(providers.urllib.request, "urlopen", slow)
+    with pytest.raises(providers.ProviderError, match="did not answer within 120 seconds"):
+        providers._request("POST", "https://example.invalid/v1", {}, {}, sleep=lambda s: None)

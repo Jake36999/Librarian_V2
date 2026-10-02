@@ -828,11 +828,12 @@ var Librarian = (() => {
               "Say \u201Ccontinue\u201D to carry on, or ask for a summary of where it got to."
             ));
           } else if (event.stopped === "provider_error") {
+            const slow = /did not answer within|busy|HTTP (429|50[234])/.test(String(event.error));
             this.append(h(
               "div",
               { class: "error" },
               `The model could not answer: ${event.error}. `,
-              "Check the key and the model under + \u2192 Connections, then retry.",
+              slow ? "Nothing is wrong with your setup: retry in a moment, or choose a faster model for slot 1." : "Check the key and the model under + \u2192 Connections, then retry.",
               " ",
               h(
                 "button",
@@ -1534,7 +1535,7 @@ var Librarian = (() => {
       });
       const filter = h("input", {
         type: "search",
-        placeholder: "Filter models",
+        placeholder: "Filter by name or description, e.g. tool calling, long horizon, 1m ctx",
         "aria-label": "Filter models",
         value: this.filter,
         oninput: (e) => {
@@ -1587,6 +1588,7 @@ var Librarian = (() => {
           slots,
           tiers.length ? h("button", { class: "ghost", onclick: () => this.clearAll() }, "Clear selection") : null
         ),
+        tiers.length < 3 ? h("p", { class: "note" }, `Choosing slot ${tiers.length + 1} (${ROLES[tiers.length]}): models whose profile recommends them for it are listed first.`) : null,
         this.pendingLead ? this.overridePrompt() : this.toast ? h("div", { class: "toast", role: "status" }, this.toast) : null,
         filter,
         grids,
@@ -1598,10 +1600,16 @@ var Librarian = (() => {
     }
     renderGrids(host) {
       const tiers = this.tiers();
-      const needle = this.filter.toLowerCase();
+      const words = this.filter.toLowerCase().split(/\s+/).filter(Boolean);
+      const matches = (m) => {
+        const text = `${m.id} ${profileMeta(m)}`.toLowerCase().replace(/_/g, " ");
+        return words.every((w) => text.includes(w));
+      };
+      const next = this.slot || tiers.length >= 3 ? 0 : tiers.length + 1;
+      const recommended = (m) => next > 0 && String(m.profile?.suggested_tier ?? "") === `Tier_${next}`;
       clear(host, Object.entries(PROVIDERS).map(([p, label]) => {
         const listing = this.listings.get(p) ?? { status: "\u2026", models: [] };
-        const models = listing.models.filter((m) => !needle || String(m.id).toLowerCase().includes(needle)).filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true));
+        const models = listing.models.filter(matches).filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true)).map((m, i) => ({ m, i })).sort((a, b) => Number(recommended(b.m)) - Number(recommended(a.m)) || a.i - b.i).map(({ m }) => m);
         const status = listing.status === "ready" ? `${listing.models.length} model${listing.models.length === 1 ? "" : "s"}` : listing.status === "no key" ? "no key saved (+ \u2192 Connections)" : listing.status === "offline" ? "offline: the local server is not running" : listing.error ? `error: ${listing.error}` : listing.status;
         return h(
           "section",
@@ -1611,10 +1619,11 @@ var Librarian = (() => {
             const inSlot = this.slot?.current?.provider === p && this.slot?.current?.model === m.id;
             const at = this.slot ? inSlot ? 0 : -1 : tiers.findIndex((t) => t.provider === p && t.model === m.id);
             const clear2 = () => this.slot ? this.clearSlot() : this.clearAll();
+            const rec = at < 0 && recommended(m);
             const card = h(
               "button",
               {
-                class: `card${at >= 0 ? " sel" : ""}`,
+                class: `card${at >= 0 ? " sel" : ""}${rec ? " rec" : ""}`,
                 "aria-pressed": at >= 0 ? "true" : "false",
                 title: at >= 0 ? this.slot ? "Right-click (or Delete) to empty this slot" : "Right-click (or Delete) to clear the chosen models" : m.profile && m.profile.tool_calling === false ? "Profiled as not supporting tool calling: can still lead as tier 2 or 3" : "",
                 onclick: () => this.pick(p, m.id),
@@ -1634,7 +1643,8 @@ var Librarian = (() => {
               },
               at >= 0 && !this.slot ? h("span", { class: "badge" }, String(at + 1)) : null,
               h("div", { class: "name" }, m.id),
-              h("div", { class: "meta" }, profileMeta(m))
+              h("div", { class: "meta" }, profileMeta(m)),
+              rec ? h("div", { class: "rec-label" }, `Recommended for slot ${next}`) : null
             );
             return h(
               "div",

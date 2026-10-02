@@ -156,8 +156,14 @@ def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
                                               ConnectionAbortedError)):
                 (sleep or time.sleep)(pauses.pop(0))
                 continue
-            raise ProviderError(f"{url} is not reachable after "
-                                f"{len(TRANSIENT_RETRIES) + 1} tries: {exc}") from exc
+            if isinstance(reason, TimeoutError):
+                # Reached, but slow (2026-10-02): "not reachable" sent the person to check
+                # their key when the model was simply busy.
+                raise ProviderError(f"the model did not answer within {int(timeout)} seconds "
+                                    f"({len(TRANSIENT_RETRIES) + 1} tries): the provider is slow "
+                                    f"or busy right now - try again shortly, or choose another "
+                                    f"model") from exc
+            raise ProviderError(f"{url} is not reachable: {exc}") from exc
 
 
 def _key(key_env: str) -> str:

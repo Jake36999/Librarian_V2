@@ -318,3 +318,7 @@ dialog .confirm { margin-top: 10px; border: 1px solid var(--stop-line); backgrou
 .lib-app button.link, dialog button.link { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
 .lib-app button.link:hover, dialog button.link:hover, dialog button.link[aria-expanded="true"] { color: var(--accent); }
 dialog .key-entry .confirm { margin-top: 8px; }
+
+/* The model tile: models recommended for the slot being chosen come first, marked */
+.lib-app .card.rec { border-color: var(--ok); }
+.lib-app .card .rec-label { color: var(--ok); font-size: 11.5px; font-weight: 600; margin-top: 3px; }

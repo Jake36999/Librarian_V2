@@ -251,8 +251,10 @@ export class Chat {
           this.append(h("div", { class: "error" }, "Stopped after the step limit for one turn. ",
             "Say “continue” to carry on, or ask for a summary of where it got to."));
         } else if (event.stopped === "provider_error") {
+          const slow = /did not answer within|busy|HTTP (429|50[234])/.test(String(event.error));
           this.append(h("div", { class: "error" }, `The model could not answer: ${event.error}. `,
-            "Check the key and the model under + → Connections, then retry.", " ",
+            slow ? "Nothing is wrong with your setup: retry in a moment, or choose a faster model for slot 1."
+              : "Check the key and the model under + → Connections, then retry.", " ",
             h("button", { class: "icon-btn", title: "Retry: send this again",
               "aria-label": "Retry", onclick: () => this.hooks.resend(this.lastUserText) },
               retryIcon())));
