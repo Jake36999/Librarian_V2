@@ -161,3 +161,43 @@ def test_a_checkpoint_naming_too_many_subthreads_keeps_four(library):
     out = m("checkpoint", learned="x", subthreads=["a", "b", "c", "d", "e", "f"],
             next_targets=["t"], vocabulary=["v"])
     assert "error" not in out and "first 4 are kept" in out.get("note", "")
+
+
+def test_a_model_call_that_times_out_is_tried_again(monkeypatch):
+    """2026-10-02: one DeepInfra read timeout ended the owner's turn."""
+    import io
+    import urllib.error
+    from resource_librarian import providers
+    calls, pauses = [], []
+
+    def flaky(request, timeout):
+        calls.append(1)
+        if len(calls) == 1:
+            raise urllib.error.URLError(TimeoutError("The read operation timed out"))
+        if len(calls) == 2:
+            raise urllib.error.HTTPError(request.full_url, 503, "busy", {}, io.BytesIO(b"{}"))
+        return io.BytesIO(b'{"ok": true}')
+    monkeypatch.setattr(providers.urllib.request, "urlopen", flaky)
+    assert providers._request("POST", "https://example.invalid/v1", {}, {},
+                              sleep=pauses.append) == {"ok": True}
+    assert pauses == list(providers.TRANSIENT_RETRIES)
+
+    def refused(request, timeout):
+        calls.append(1)
+        raise urllib.error.URLError(ConnectionRefusedError("refused"))
+    calls.clear()
+    monkeypatch.setattr(providers.urllib.request, "urlopen", refused)
+    import pytest
+    with pytest.raises(providers.ProviderError):
+        providers._request("GET", "http://127.0.0.1:1/v1", {}, sleep=pauses.append)
+    assert len(calls) == 1                    # a server that is not running: no waiting
+
+
+def test_the_desk_finds_the_project_beside_a_note_of_the_same_name(library):
+    m = Model(library)
+    m.ok("open_session", purpose="add_project")
+    m.ok("create_project", name="Host Watch", stage="planning", summary="Watch our hosts.")
+    (library.root / "Notes").mkdir(exist_ok=True)
+    (library.root / "Notes" / "Host Watch.md").write_text("# Host Watch\n\nA plain note.\n",
+                                                          encoding="utf-8")
+    assert "error" not in m("desk_show", project="Host Watch")

@@ -1735,7 +1735,7 @@ def reflection_accept(ctx: Context, project: str, text: str) -> dict:
     if not text.strip():
         raise TypeError("a reflection needs text")
     engine = engine_for(ctx)
-    row = engine.index.note_row(project)
+    row = engine.index.note_row(project, shape="project")
     if row is None or row["shape"] != "project":
         raise TypeError(f"no pursuit named {project!r}; create_project first")
     path = ctx.vault.root / row["path"]

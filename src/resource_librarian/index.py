@@ -456,7 +456,15 @@ class Index:
         return [r["name"] for r in self.conn.execute(
             "SELECT name FROM note GROUP BY name HAVING COUNT(*) > 1 ORDER BY name")]
 
-    def note_row(self, name: str) -> sqlite3.Row | None:
+    def note_row(self, name: str, shape: str = "") -> sqlite3.Row | None:
+        """The note by name. `shape` prefers that shape when two notes share a name (seen
+        2026-10-02: a plain note `Notes/X` beside the Project `Projects/X` hid the project
+        from the desk)."""
+        if shape:
+            row = self.conn.execute("SELECT * FROM note WHERE name_lower = ? AND shape = ?",
+                                    (name.lower(), shape)).fetchone()
+            if row is not None:
+                return row
         row = self.conn.execute("SELECT * FROM note WHERE name = ?", (name,)).fetchone()
         if row is None:
             row = self.conn.execute("SELECT * FROM note WHERE name_lower = ?",

@@ -123,19 +123,41 @@ class Provider:
 
 # ------------------------------------------------------------------- HTTP
 
+# A model call that times out, cannot connect, or is told the model is busy is tried
+# again after these pauses before the turn gives up (2026-10-02: one read timeout on
+# DeepInfra ended the owner's turn, and the next call answered in under two seconds).
+TRANSIENT_RETRIES = (3.0, 10.0)
+TRANSIENT_HTTP = (429, 502, 503, 504)
+
+
 def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
-             timeout: float = 120) -> dict[str, Any]:
+             timeout: float = 120, sleep: Any = None) -> dict[str, Any]:
+    import time
     data = json.dumps(body).encode("utf-8") if body is not None else None
-    request = urllib.request.Request(url, data=data, method=method,
-                                     headers={"Content-Type": "application/json", **headers})
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            return json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", "replace")[:400]
-        raise ProviderError(f"HTTP {exc.code} from {url}: {detail}") from exc
-    except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
-        raise ProviderError(f"{url} is not reachable: {exc}") from exc
+    pauses = list(TRANSIENT_RETRIES)
+    while True:
+        request = urllib.request.Request(url, data=data, method=method,
+                                         headers={"Content-Type": "application/json",
+                                                  **headers})
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", "replace")[:400]
+            if exc.code in TRANSIENT_HTTP and pauses:
+                (sleep or time.sleep)(pauses.pop(0))
+                continue
+            raise ProviderError(f"HTTP {exc.code} from {url}: {detail}") from exc
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+            # A refused connection is a server that is not running (a local model): asking
+            # again only waits. A timeout or a dropped connection is worth another try.
+            reason = getattr(exc, "reason", exc)
+            if pauses and isinstance(reason, (TimeoutError, ConnectionResetError,
+                                              ConnectionAbortedError)):
+                (sleep or time.sleep)(pauses.pop(0))
+                continue
+            raise ProviderError(f"{url} is not reachable after "
+                                f"{len(TRANSIENT_RETRIES) + 1} tries: {exc}") from exc
 
 
 def _key(key_env: str) -> str:

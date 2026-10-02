@@ -8,7 +8,7 @@ from .library import engine_for
 
 
 def _project_row(ctx: Context, project: str) -> dict:
-    row = engine_for(ctx).index.note_row(project)
+    row = engine_for(ctx).index.note_row(project, shape="project")
     if row is None or row["shape"] != "project":
         raise TypeError(f"no pursuit named {project!r}; create_project first")
     return row
