@@ -153,6 +153,19 @@ def open_session(ctx: Context, purpose: Purpose, project: str = "", question: st
                                       f"'contribute'; a Reader opens an 'apply' session")
     if project:
         ctx.vault.project_note(project)       # a plain name, or refused: it becomes a path
+    # 2026-10-02: a model opened a second thread over the one the person was talking in,
+    # which stayed open and empty behind it. The thread being left is parked, and the
+    # reply says so, so it can be resumed or closed rather than lie open.
+    left = ""
+    if ctx.session:
+        try:
+            previous = _store(ctx).load(ctx.session)
+        except Refusal:
+            previous = None
+        if previous is not None and previous.status == "open":
+            _store(ctx).append(previous.id, {"type": "status", "status": "parked",
+                                             "note": "left for a new thread"})
+            left = previous.id
     session = _store(ctx).new(purpose, project, question)
     ctx.session = session.id
     level = ctx.extras.get("effort")
@@ -161,7 +174,9 @@ def open_session(ctx: Context, purpose: Purpose, project: str = "", question: st
                                         "budget_scale": level["budget_scale"]})
         session = _store(ctx).load(session.id)
     out = {"opened": session.id, "phases": list(PURPOSES[purpose]),
-           **{"session": session.envelope(ctx.vault)}}
+           **{"session": session.envelope(ctx.vault)},
+           **({"parked": f"the thread this conversation had open ({left}) is parked: "
+                         f"resume_session({left!r}) to go back to it"} if left else {})}
     if purpose == "learn" and RESEARCH_ASK.search(question) and SOURCES_ASKED.search(question):
         # M0 pass 2: a "find and add sources" request opened as learn, which has no briefs,
         # so its coverage ledger said "no brief" for every topic. Said, not refused: learning
@@ -726,8 +741,10 @@ def open_brief(ctx: Context, need: str, disqualifiers: list[str] | None = None,
             # A session can name a project whose note was never written (seen
             # 2026-09-30): say so, with the remedy, rather than crash.
             raise TypeError(f"this session's project {session.project!r} has no Project note "
-                            f"yet: create_project(name={session.project!r}, ...) first, or "
-                            f"update_plan(fields={{'project': <an existing project>}})")
+                            f"yet. create_project is offered in Frame: "
+                            f"advance(target='frame'), create_project(name={session.project!r}, "
+                            f"...), then advance back - or update_plan(fields={{'project': ''}}) "
+                            f"to work without one")
         project_fm = notes.load(path).frontmatter
     merged = {**(project_fm.get("constraints") or {}), **(constraints or {})}
     bounds = Constraints.of(merged, engine.permitted_axes("source"))
@@ -1006,9 +1023,16 @@ def checkpoint(ctx: Context, learned: str, subthreads: list[str] | None = None,
     stop = not last.get("new") and not last.get("outside_found") and not last.get("vocabulary")
     subthreads = [s for s in subthreads or [] if s.strip()]
     targets = [t for t in next_targets or [] if t.strip()]
+    kept_note = ""
+    if len(subthreads) > 4:
+        # More named than asked for is not a reason to lose the step (2026-10-02, the last
+        # step of a turn): the first four are kept, and the reply says so.
+        kept_note = f"named {len(subthreads)} sub-threads; the first 4 are kept"
+        subthreads = subthreads[:4]
     if not stop:
-        if not 2 <= len(subthreads) <= 4:
-            raise TypeError("name 2-4 open sub-threads (the stopping rule has not fired)")
+        if len(subthreads) < 2:
+            raise TypeError(f"name 2-4 open sub-threads (the stopping rule has not fired; "
+                            f"{len(subthreads)} named)")
         if not targets:
             raise TypeError("name the next specific target: the next round starts from it")
     _event(ctx, {"type": "checkpoint", "round": last["n"], "learned": learned,
@@ -1016,7 +1040,7 @@ def checkpoint(ctx: Context, learned: str, subthreads: list[str] | None = None,
                  "next_targets": targets, "stop": stop,
                  "stop_reason": "the last round added no new candidates and no new "
                                 "vocabulary" if stop else ""})
-    return {"round": last["n"], "stop": stop}
+    return {"round": last["n"], "stop": stop, **({"note": kept_note} if kept_note else {})}
 
 
 @tool("add_candidate", tier="contribute", effect="write", phases=("search", "judge"),

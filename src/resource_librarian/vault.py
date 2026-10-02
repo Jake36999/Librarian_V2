@@ -141,7 +141,10 @@ class Vault:
         `../../x` walks out of the vault."""
         name = str(name or "").strip()
         if not name or name != PROJECT_NAME.sub("", name).strip(" .") or name.startswith("."):
-            raise Refusal("VAULT_REQUIRED", f"{name!r} is not a project name")
+            plain = name.replace("\\", "/").rsplit("/", 1)[-1].removesuffix(".md").strip(" .")
+            raise Refusal("VAULT_REQUIRED", f"{name!r} is not a project name: a Project is "
+                          f"named by its plain name, never a path"
+                          + (f" - {plain!r}" if plain and plain != name else ""))
         return self.root / "Projects" / f"{name}.md"
 
     def topics(self) -> list[str]:

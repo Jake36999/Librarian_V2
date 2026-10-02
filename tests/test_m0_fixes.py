@@ -111,3 +111,53 @@ def test_the_search_budget_grows_with_the_topics_asked(library):
     assert with_briefs(12) == base + sessions.SEARCH_EXTRA_MAX        # a ceiling
     store.append(c.session, {"type": "effort", "level": 1, "budget_scale": 0.5})
     assert store.load(c.session).budget_left() == round((base + sessions.SEARCH_EXTRA_MAX) * 0.5)
+
+
+# ---- 2026-10-02: an explore thread on the owner's library (Seed-2.0-mini as lead) ----
+
+def test_a_project_without_a_note_is_settled_in_frame(library):
+    m = Model(library)
+    m.ok("open_session", purpose="explore", project="BSc Computer Science at UCLan",
+         question="sources for my course")
+    held = m("advance")
+    assert held["moved"] is False
+    assert any("create_project(name='BSc Computer Science at UCLan'" in x for x in held["missing"])
+    bad = m("update_plan", fields={"project": "Notes/BSc Computer Science at UCLan"})
+    assert "a Project is named by its plain name" in bad["detail"]
+    assert "'BSc Computer Science at UCLan'" in bad["detail"]
+    m.ok("create_project", name="BSc Computer Science at UCLan", stage="active",
+         summary="My first year.")
+    assert m.ok("advance")["moved"]
+
+
+def test_opening_a_second_thread_parks_the_first(library):
+    from resource_librarian.session import SessionStore
+    m = Model(library)
+    first = m.ok("open_session", purpose="explore", question="q")["opened"]
+    second = m.ok("open_session", purpose="explore", question="q again")
+    assert first in second["parked"] and m.ctx.session == second["opened"]
+    assert SessionStore(library).load(first).status == "parked"
+
+
+def test_lists_and_objects_written_as_text_are_read_as_themselves(library):
+    m = Model(library)
+    m.ok("open_session", purpose="explore", question="q")
+    out = m.ok("update_plan", fields="{'question': 'sources for my course'}")
+    assert any("object written as text" in a for a in out["adjusted_arguments"])
+    from resource_librarian.registry import coerce
+    spec = REGISTRY.check("checkpoint", "contribute")
+    args, notes = coerce(spec, {"learned": "x", "subthreads": "['a', 'b', 'c']",
+                                "next_targets": '["t"]'})
+    assert args["subthreads"] == ["a", "b", "c"] and args["next_targets"] == ["t"]
+    assert coerce(spec, {"learned": "x", "subthreads": "[not a list"})[0]["subthreads"] == \
+        ["[not a list"]
+
+
+def test_a_checkpoint_naming_too_many_subthreads_keeps_four(library):
+    m = Model(library)
+    from test_mvp_fixes import to_search
+    to_search(m)
+    m.ok("research_round", queries=["operating system state database"], brief="B1")
+    out = m("checkpoint", learned="x", subthreads=["a", "b", "c", "d", "e", "f"],
+            next_targets=["t"], vocabulary=["v"])
+    assert "error" not in out and "first 4 are kept" in out.get("note", "")

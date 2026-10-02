@@ -410,10 +410,14 @@ def coerce(spec: ToolSpec, arguments: dict[str, Any]) -> tuple[dict[str, Any], l
                 out[key] = 0.0
                 changed.append(f"{key} was not a number")
         elif kind == "array":
+            parsed = _literal(value, list)
             if isinstance(value, list):
                 items = value
             elif value is None:
                 items = []
+            elif parsed is not None:
+                items = parsed
+                changed.append(f"{key} was a list written as text, read as the list")
             elif isinstance(value, str):
                 items = [value]
                 changed.append(f"{key} was text, read as a one-item list")
@@ -425,9 +429,14 @@ def coerce(spec: ToolSpec, arguments: dict[str, Any]) -> tuple[dict[str, Any], l
                 items = items[:MAX_ITEMS]
             out[key] = [m[:MAX_ITEM_TEXT] if isinstance(m, str) else m for m in items]
         elif kind == "object":
-            out[key] = value if isinstance(value, dict) else {}
-            if value is not None and not isinstance(value, dict):
-                changed.append(f"{key} was not an object")
+            parsed = _literal(value, dict)
+            if parsed is not None:
+                out[key] = parsed
+                changed.append(f"{key} was an object written as text, read as the object")
+            else:
+                out[key] = value if isinstance(value, dict) else {}
+                if value is not None and not isinstance(value, dict):
+                    changed.append(f"{key} was not an object")
         else:
             text = "" if value is None else str(value)
             if not isinstance(value, str) and value is not None:
@@ -446,6 +455,26 @@ def coerce(spec: ToolSpec, arguments: dict[str, Any]) -> tuple[dict[str, Any], l
                 text = matches[0]
             out[key] = text
     return out, changed
+
+
+def _literal(value: Any, kind: type) -> Any:
+    """A list or object a model wrote as text - JSON, or a Python literal with single
+    quotes (seen 2026-10-02: `"['a', 'b']"`) - read back as itself; else None."""
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    if not text or text[0] != ("[" if kind is list else "{"):
+        return None
+    import ast
+    import json
+    for read in (json.loads, ast.literal_eval):
+        try:
+            found = read(text)
+        except (ValueError, SyntaxError, TypeError, MemoryError, RecursionError):
+            continue
+        if isinstance(found, kind):
+            return found
+    return None
 
 
 def _enum_key(text: str) -> str:

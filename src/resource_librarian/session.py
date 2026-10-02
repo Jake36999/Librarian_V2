@@ -443,8 +443,16 @@ class Session:
                     out.append("no project set: update_plan(project=...) or create_project")
                 elif not vault.project_note(self.project).exists():
                     out.append(f"no Project note for {self.project!r}: create_project")
-            elif not (self.question or self.project):
-                out.append("no question set: update_plan(question=...)")
+            else:
+                if not (self.question or self.project):
+                    out.append("no question set: update_plan(question=...)")
+                if self.project and not vault.project_note(self.project).exists():
+                    # 2026-10-02: an explore thread named a project that had no note, left
+                    # Frame, and spent a dozen calls in Need where create_project is not
+                    # offered. It is settled here, where it is.
+                    out.append(f"no Project note for {self.project!r} yet: "
+                               f"create_project(name={self.project!r}, ...) now, or "
+                               f"update_plan(fields={{'project': ''}}) to work without one")
         elif p == "ingest" and not _filled(self.plan.get("ingested")):
             out.append("record what the person already has: update_plan(ingested=...) "
                        "(a list, or 'none')")
