@@ -263,3 +263,38 @@ def test_the_person_grants_more_budget_by_answering_the_request(library):
     REGISTRY.call("answer", {"question_id": no["question_id"], "answer": "Not now"},
                   Context(tier="curate", vault=library, session=m.ctx.session))
     assert m.ok("session_status")["budget_left"] == before + 12
+
+
+# ---- 2026-10-03: the same question asked again and again ----
+
+def test_what_a_source_must_not_assume_is_asked_once_per_thread(library):
+    m = Model(library)
+    m.ok("open_session", purpose="explore", question="uk social contracts")
+    m.ok("advance")
+    m.ok("update_plan", fields={"map": "uk politics"})
+    m.ok("advance")
+    asked = m.ok("open_brief", need="prime ministers' social contract proposals")
+    assert asked["brief_opened"] is False and asked["kind"] == "disqualifier"
+    REGISTRY.call("answer", {"question_id": asked["question_id"],
+                             "answer": "articles are opinion, not fact"},
+                  Context(tier="curate", vault=library, session=m.ctx.session))
+    first = m.ok("open_brief", need="prime ministers' social contract proposals")
+    second = m.ok("open_brief", need="uk government financial plans by period")
+    assert second["disqualifiers_from"] == "the person's earlier answer in this thread"
+    from resource_librarian.session import SessionStore
+    briefs = SessionStore(library).load(m.ctx.session).briefs
+    assert briefs[second["brief"]].disqualifiers == ["articles are opinion, not fact"]
+    assert first["brief"] != second["brief"]
+
+
+def test_a_question_already_answered_in_the_thread_is_not_asked_again(library):
+    m = Model(library)
+    m.ok("open_session", purpose="explore", question="q")
+    asked = m.ok("ask_user", question="For the need 'X': what must a candidate not assume?")
+    REGISTRY.call("answer", {"question_id": asked["question_id"], "answer": "opinion is not fact"},
+                  Context(tier="curate", vault=library, session=m.ctx.session))
+    again = m.ok("ask_user", question="For the need 'X': what must a candidate not assume? "
+                                      "(This is q1 that is blocking progress)")
+    assert again["answered_earlier"] and again["answer"] == "opinion is not fact"
+    from resource_librarian.session import SessionStore
+    assert len(SessionStore(library).load(m.ctx.session).questions) == 1

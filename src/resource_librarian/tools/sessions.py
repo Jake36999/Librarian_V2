@@ -357,7 +357,37 @@ def _settled_by(by: str, session, answered: set[str], harness) -> str:
                 "a phase needs a decision, a fixed constraint, or a disqualifier you do not "
                 "know", "The question blocks advancing until it is answered"))
 def ask_user(ctx: Context, question: str, options: list[str] | None = None) -> dict:
+    # A question the person already answered in this thread is not asked again
+    # (2026-10-03: the same question, asked six times): their answer comes back at once.
+    session = _session(ctx)
+    wanted = _question_key(question)
+    earlier = next((q for q in reversed(session.questions) if q.get("answer") is not None
+                    and _question_key(q["question"]) == wanted), None)
+    if earlier is not None:
+        return {"question_id": earlier["id"], "question": question,
+                "answer": earlier["answer"], "answered_earlier": True}
     return _ask(ctx, question, "clarify", "", options)
+
+
+def _question_key(text: str) -> str:
+    """A question as asked, without its asides ("(BRIEF_REQUIRED)", "(this is q1)")."""
+    text = re.sub(r"\([^)]*\)", " ", str(text or "").lower())
+    return " ".join(re.sub(r"[^a-z0-9 ]+", " ", text).split())
+
+
+def _thread_disqualifiers(session) -> list[str]:
+    """What the person has said a candidate must not assume, in this thread."""
+    out: list[str] = []
+    for q in session.questions:
+        if q.get("kind") == "disqualifier" or "must a candidate not assume" in q["question"]:
+            answer = str(q.get("answer") or "").strip()
+            if answer and answer.lower() not in ("none", "no", "n/a") and answer not in out:
+                out.append(answer)
+    for brief in session.briefs.values():
+        for d in brief.disqualifiers:
+            if d and d not in out:
+                out.append(d)
+    return out
 
 
 @tool("answer", tier="curate", effect="write", scope="session",
@@ -773,10 +803,18 @@ def open_brief(ctx: Context, need: str, disqualifiers: list[str] | None = None,
     bounds = Constraints.of(merged, engine.permitted_axes("source"))
     standing = [d for d in project_fm.get("disqualifiers") or [] if d]
     stated = [d.strip() for d in disqualifiers or [] if d.strip()]
+    applied = ""
     if not stated and not standing:
-        return {**_ask(ctx, f"For the need {need!r}: what must a candidate not assume, "
-                            f"require or depend on? (BRIEF_REQUIRED)", "disqualifier"),
-                "brief_opened": False}
+        # Asked once per thread, not once per brief (2026-10-03: five briefs, five times
+        # the same question, the same answer): what the person said earlier in this thread
+        # - an answered disqualifier question, or an earlier brief's disqualifiers - holds.
+        earlier = _thread_disqualifiers(session)
+        if earlier:
+            stated, applied = earlier, "the person's earlier answer in this thread"
+        else:
+            return {**_ask(ctx, f"For the need {need!r}: what must a candidate not assume, "
+                                f"require or depend on? (BRIEF_REQUIRED)", "disqualifier"),
+                    "brief_opened": False}
     verdict = search(engine, need, "donor", merged, limit=5)
     # A person's own wording rarely matches the field's vocabulary; let the
     # clerk translate it once, up front, so the first research_round has
@@ -793,6 +831,7 @@ def open_brief(ctx: Context, need: str, disqualifiers: list[str] | None = None,
                  "constraints": {a: list(v) for a, v in bounds.values.items()},
                  "verdict": verdict.verdict, "suggested_queries": suggested})
     return {"brief": brief_id, "topic": topic, "verdict": verdict.verdict,
+            **({"disqualifiers_from": applied} if applied else {}),
             "already_held": [r.name for r in verdict.results[:5]],
             "coverage": verdict.coverage.get("sentence", ""),
             "suggested_queries": suggested}

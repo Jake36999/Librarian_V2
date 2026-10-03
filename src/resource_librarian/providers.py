@@ -127,7 +127,7 @@ class Provider:
 # again after these pauses before the turn gives up (2026-10-02: one read timeout on
 # DeepInfra ended the owner's turn, and the next call answered in under two seconds).
 TRANSIENT_RETRIES = (3.0, 10.0)
-TRANSIENT_HTTP = (429, 502, 503, 504)
+TRANSIENT_HTTP = (429, 500, 502, 503, 504)   # 500: "Response payload is not completed"
 
 
 def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
