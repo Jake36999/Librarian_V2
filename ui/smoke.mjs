@@ -285,7 +285,7 @@ await page.$eval(".toolbar .effort input", (el) => {
   el.dispatchEvent(new Event("input"));
   el.dispatchEvent(new Event("change"));
 });
-await page.waitForFunction(() => (document.querySelector(".toolbar .effort")?.getAttribute("title") ?? "").startsWith("Effort 8 of 10"));
+await page.waitForFunction(() => (document.querySelector(".toolbar .effort")?.getAttribute("title") ?? "").startsWith("Effort up to 8 of 10"));
 await expect(page.textContent(".toolbar .effort .effort-value").then((t) => t === "8"), "the slider shows its level");
 step("effort slider: saved, and its tooltip says what it allows");
 

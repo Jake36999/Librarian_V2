@@ -286,6 +286,13 @@ def waiting(vault: Vault) -> list[str]:
     return [i["id"] for i in StagingStore(vault).items("source", "approved")]
 
 
+def waiting_on_model(vault: Vault) -> list[str]:
+    """Sources a batch left partial because a step was queued for a model (2026-10-03:
+    a new library's 284 sources, read before any model was chosen there)."""
+    return [i["id"] for i in StagingStore(vault).items("source", "partial")
+            if "queued" in ((i.get("processing") or {}).get("stages") or {}).values()]
+
+
 def live(vault: Vault) -> str:
     """The batch running in this process for this vault, or ""."""
     with _GUARD:
@@ -306,7 +313,8 @@ def latest(vault: Vault) -> str:
 def status(vault: Vault, run_id: str = "") -> dict[str, Any]:
     """The banner's view: what runs, where it is, and what waits for the next run."""
     run_id = run_id or latest(vault)
-    out: dict[str, Any] = {"waiting": len(waiting(vault)), "running": live(vault)}
+    out: dict[str, Any] = {"waiting": len(waiting(vault)), "running": live(vault),
+                           "waiting_on_model": len(waiting_on_model(vault))}
     if not run_id:
         return out
     events = RunStore(vault).events(run_id)
@@ -332,15 +340,25 @@ def status(vault: Vault, run_id: str = "") -> dict[str, Any]:
 
 
 def start(ctx: Context, requested_by: str, resume: str = "",
-          background: bool = False) -> dict[str, Any]:
+          background: bool = False, retry_waiting: bool = False) -> dict[str, Any]:
     """Begin the approved batch, or resume an interrupted one. Idempotent: while one runs,
-    another start reports it and does nothing."""
+    another start reports it and does nothing. `retry_waiting` first puts back the sources
+    whose steps waited for a model: their finished steps carry over, so only the waiting
+    ones run."""
     vault = ctx.vault
     runs = RunStore(vault)
     with _GUARD:
         running = live(vault)
         if running:
             return {"started": False, "already_running": running, **status(vault, running)}
+        if retry_waiting and not resume:
+            store = StagingStore(vault)
+            for item_id in waiting_on_model(vault):
+                item = store.load(item_id)
+                item["status"] = "approved"
+                item.setdefault("history", []).append(
+                    {"decision": "retry_waiting", "by": requested_by, "at": now_iso()})
+                store.save(item)
         if resume:
             events = runs.events(resume)
             if events[-1]["type"] in ("finished", "cancelled") and not _unfinished(vault, resume):

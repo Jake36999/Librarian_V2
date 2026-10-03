@@ -93,6 +93,7 @@ WRITES: Mapping[str, frozenset] = _PhaseGates()
 # The harness itself: never gated, never charged to a budget.
 HARNESS = frozenset({"open_session", "session_status", "update_plan", "ask_user", "answer",
                      "advance", "park_session", "resume_session", "list_sessions",
+                     "set_effort",
                      # a person choosing how the thread reasons is not the model's work
                      "lens_adopt", "lens_drop",
                      # a check on the model's own reasoning; charging it would make it a cost

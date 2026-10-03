@@ -9,6 +9,14 @@ from resource_librarian.vault import Vault
 
 
 @pytest.fixture(autouse=True)
+def own_config_dir(tmp_path_factory, monkeypatch):
+    """Every test has a config directory of its own: the app keeps the person's model
+    choices and shared model profiles there, and a test must neither read nor change
+    the owner's real ones. A test that sets its own still wins (it sets it later)."""
+    monkeypatch.setenv("LIBRARIAN_CONFIG_DIR", str(tmp_path_factory.mktemp("config")))
+
+
+@pytest.fixture(autouse=True)
 def no_live_search(monkeypatch):
     """Tests never reach a live search engine: a real key in the owner's environment
     (TAVILY_API_KEY was set 2026-09-30) made research rounds call Tavily, so every

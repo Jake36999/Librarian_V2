@@ -1246,7 +1246,7 @@ var Librarian = (() => {
     if (m.profiling === "queued") return "profiling: awaiting your review in Staging";
     const p = m.profile;
     if (!p) return "unprofiled";
-    const parts = [];
+    const parts = p.shared ? ["shared profile"] : [];
     if (p.suggested_tier) parts.push(String(p.suggested_tier).replace(/_/g, " "));
     const bestFor = p.best_for ?? [];
     if (bestFor.length) parts.push(bestFor.map((t) => String(t).replace(/_/g, " ")).join(", "));
@@ -3743,6 +3743,15 @@ var Librarian = (() => {
             start("Click here to begin", {})
           ));
         }
+        const onModel = Number(b.waiting_on_model ?? 0);
+        if (onModel) {
+          rows.push(h(
+            "div",
+            { class: "row2 tight" },
+            h("span", {}, `${onModel} source${onModel === 1 ? " has" : "s have"} reading steps that waited for a model. With models chosen (Choose models), run just those steps:`),
+            start("Run the waiting steps", { retry_waiting: true }, "ghost")
+          ));
+        }
       }
       clear(this.banner, rows.length ? h("div", { class: "warn" }, rows) : null);
       window.clearTimeout(this.poll);
@@ -4999,7 +5008,7 @@ var Librarian = (() => {
       if (!e) return;
       this.effortInput.value = String(e.level);
       this.effortValue.textContent = String(e.level);
-      this.effortControl.title = `Effort ${e.level} of 10 - how much work you expect. Helpers at once: ${e.lead_agents} on the lead model, ${e.tier2_agents} on the notes model; small-task calls at once: ${e.tier3_agents}. Up to ${e.turn_steps} steps and ${Math.round(e.turn_seconds / 60)} min per reply; call budgets x${e.budget_scale}. Review: ${e.review_replies ? `offerings and up to ${e.review_claims} claims per reply` : e.review_offerings ? "offerings' claims" : "nothing automatic"}.`;
+      this.effortControl.title = `Effort up to ${e.level} of 10 - the most work you allow. The librarian chooses less for a small request (one link, one file, a quick answer). At ${e.level}: Helpers at once: ${e.lead_agents} on the lead model, ${e.tier2_agents} on the notes model; small-task calls at once: ${e.tier3_agents}. Up to ${e.turn_steps} steps and ${Math.round(e.turn_seconds / 60)} min per reply; call budgets x${e.budget_scale}. Review: ${e.review_replies ? `offerings and up to ${e.review_claims} claims per reply` : e.review_offerings ? "offerings' claims" : "nothing automatic"}.`;
     }
     paintToolbar() {
       this.paintEffort();

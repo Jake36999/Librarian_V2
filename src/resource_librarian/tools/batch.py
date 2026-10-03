@@ -14,8 +14,10 @@ from ..registry import Card, Context, tool
                 "Takes exactly the sources approved at this moment. While a batch runs, "
                 "another start reports it and does nothing; `resume` continues an "
                 "interrupted or cancelled run without repeating a finished stage"))
-def process_approved(ctx: Context, resume: str = "", background: bool = False) -> dict:
-    return batch.start(ctx, requested_by=ctx.tier, resume=resume, background=background)
+def process_approved(ctx: Context, resume: str = "", background: bool = False,
+                     retry_waiting: bool = False) -> dict:
+    return batch.start(ctx, requested_by=ctx.tier, resume=resume, background=background,
+                       retry_waiting=retry_waiting)
 
 
 @tool("batch_status", tier="consult", effect="read",

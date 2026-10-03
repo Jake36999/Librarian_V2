@@ -27,7 +27,7 @@ function profileMeta(m: any): string {
   if (m.profiling === "queued") return "profiling: awaiting your review in Staging";
   const p = m.profile;
   if (!p) return "unprofiled";
-  const parts: string[] = [];
+  const parts: string[] = p.shared ? ["shared profile"] : [];
   if (p.suggested_tier) parts.push(String(p.suggested_tier).replace(/_/g, " "));
   const bestFor = (p.best_for ?? []) as string[];
   if (bestFor.length) parts.push(bestFor.map((t: string) => String(t).replace(/_/g, " ")).join(", "));

@@ -42,7 +42,14 @@ BASE = """\
 You are the librarian of a research vault: Sources someone has read, with their evidence,
 and the Concepts, Projects and Offerings built from them. You work through the tools you are
 given, and only through them.
-- Open a session (`open_session`) before doing more than one search toward a purpose.
+- Fit the effort to the request. The person's effort setting is a ceiling: call
+  `set_effort` (1-3 for one link, file or quick answer; higher for a survey across many
+  sources) when a request needs less than the setting allows. A link or file the person
+  gives you to look at or keep is one step - `read_url`/`read_file` to look, `ingest` to
+  keep it - never a research cycle. A question the library can answer is a search and an
+  answer.
+- Open a session (`open_session`) before doing more than one search toward a purpose: when
+  asked to find, gather or build something across several sources.
 - A brief is named by its ID, as `open_brief` returned it: `brief="B1"`, never its sentence.
   Capturing a source (`ingest`) needs no brief: leave it out until a brief is open.
 - Choose the purpose by what is asked. Finding, adding or collecting sources - and a guide
@@ -632,4 +639,7 @@ class Loop:
         result = REGISTRY.call(name, arguments, self.ctx)
         if "error" not in result and name == "close_session" and result.get("closed"):
             self.ctx.session = None
+        limits = self.ctx.extras.pop("turn_limits", None)
+        if limits:                      # set_effort: this reply's own step and time limits
+            self.max_steps, self.turn_seconds = limits
         return result

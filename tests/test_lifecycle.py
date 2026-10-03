@@ -133,7 +133,8 @@ def test_approving_starts_nothing_and_only_a_person_begins_the_batch(library):
     out = call(ctx(library), "staging_decide", item_ids=["doc-a"], decision="approve")
     assert out["results"][0]["status"] == "approved"
     assert store.load("doc-a")["status"] == "approved"
-    assert call(ctx(library), "batch_status") == {"waiting": 1, "running": ""}
+    assert call(ctx(library), "batch_status") == {"waiting": 1, "running": "",
+                                                  "waiting_on_model": 0}
     refused = call(ctx(library, tier="contribute"), "process_approved")
     assert refused["refused"] == "TIER_REFUSED"
 
@@ -152,7 +153,8 @@ def test_restarting_the_app_never_starts_an_approved_batch(library, tmp_path, mo
                   provider_for=lambda choice: None)
         time.sleep(0.3)                                   # anything started would show by now
         assert store.load("doc-a")["status"] == "approved"
-        assert call(ctx(library), "batch_status") == {"waiting": 1, "running": ""}
+        assert call(ctx(library), "batch_status") == {"waiting": 1, "running": "",
+                                                  "waiting_on_model": 0}
         if app.mcp is not None:
             app.mcp.stop()
 
@@ -322,3 +324,19 @@ def test_one_item_failing_keeps_the_others_work(library, monkeypatch):
     assert ("doc-a", "c") not in stages.calls
     again = call(c, "staging_decide", item_ids=["doc-a"], decision="approve")
     assert again["results"][0]["status"] == "approved"               # can be tried again
+
+
+def test_steps_that_waited_for_a_model_are_run_once_one_is_chosen(library):
+    """2026-10-03: a new library's 284 sources were read before it had any model."""
+    bare = Context(tier="curate", vault=library, extras={"fetcher": intake.Replay(RESPONSES)})
+    item = call(bare, "ingest", ref="acme/rowstream")["item"]
+    call(bare, "staging_decide", item_ids=[item], decision="approve")
+    call(bare, "process_approved")
+    assert StagingStore(library).load(item)["status"] == "partial"
+    assert call(bare, "batch_status")["waiting_on_model"] == 1
+    out = call(ctx(library), "process_approved", retry_waiting=True)      # a model now
+    assert out["started"]
+    done = StagingStore(library).load(item)
+    assert done["processing"]["stages"]["read"] == "complete"
+    assert any(h.get("decision") == "retry_waiting" for h in done["history"])
+    assert call(ctx(library), "batch_status")["waiting_on_model"] == 0

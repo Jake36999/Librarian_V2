@@ -337,7 +337,8 @@ class App {
     if (!e) return;
     this.effortInput.value = String(e.level);
     this.effortValue.textContent = String(e.level);
-    this.effortControl.title = `Effort ${e.level} of 10 - how much work you expect. `
+    this.effortControl.title = `Effort up to ${e.level} of 10 - the most work you allow. The librarian `
+      + `chooses less for a small request (one link, one file, a quick answer). At ${e.level}: `
       + `Helpers at once: ${e.lead_agents} on the lead model, ${e.tier2_agents} on the notes model; `
       + `small-task calls at once: ${e.tier3_agents}. Up to ${e.turn_steps} steps and `
       + `${Math.round(e.turn_seconds / 60)} min per reply; call budgets x${e.budget_scale}. `

@@ -123,21 +123,54 @@ class Hub:
 
 class Settings:
     """The interface's own settings, in `.librarian/app.json`: the working
-    context, reply length, model tiers and mode. Never a key."""
+    context, reply length, model tiers and mode. Never a key.
+
+    The model choices (`SHARED`) are the person's, not one library's (owner, 2026-10-03:
+    a new library had no models, so its ingest queued everything for a clerk that was
+    never chosen). Each change is also kept in the user's config directory, and a library
+    that has not chosen its own starts from them."""
+
+    SHARED = ("tiers", "lead_overrides", "effort")
 
     def __init__(self, vault: Vault):
         self.path = vault.librarian / "app.json"
         self.data = dict(DEFAULTS)
+        own: dict[str, Any] = {}
         if self.path.is_file():
             try:
-                self.data.update(json.loads(self.path.read_text(encoding="utf-8")))
+                own = json.loads(self.path.read_text(encoding="utf-8"))
             except json.JSONDecodeError:
-                pass
+                own = {}
+        shared = self._shared()
+        self.data.update({k: v for k, v in shared.items() if k in self.SHARED and k not in own})
+        self.data.update(own)
+        self.inherited = sorted(k for k in shared if k in self.SHARED and k not in own)
+
+    @staticmethod
+    def _shared_path() -> Path:
+        from .keys import config_dir
+        return config_dir() / "app-defaults.json"
+
+    def _shared(self) -> dict[str, Any]:
+        try:
+            data = json.loads(self._shared_path().read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        return data if isinstance(data, dict) else {}
 
     def update(self, **changes: Any) -> None:
         self.data.update(changes)
         self.path.write_text(json.dumps(self.data, indent=1, ensure_ascii=False),
                              encoding="utf-8")
+        mine = {k: v for k, v in changes.items() if k in self.SHARED}
+        if mine:
+            try:
+                path = self._shared_path()
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps({**self._shared(), **mine}, indent=1,
+                                           ensure_ascii=False), encoding="utf-8")
+            except OSError:
+                pass                    # a read-only config dir never stops a choice
 
 
 @dataclass
@@ -155,6 +188,56 @@ class Action:
                 "steps": self.steps, "run": self.run,
                 **({"at": self.result.get("at"), "reason": self.result.get("reason")}
                    if self.status == "paused" else {})}
+
+
+PROFILE_FIELDS = ("modality", "best_for", "license_class", "suggested_tier", "context_length",
+                  "price_input_per_1m", "price_output_per_1m", "tool_calling", "reasoning")
+
+
+def _shipped_profiles() -> dict[tuple[str, str], dict[str, Any]]:
+    """The model catalogues shipped with the package (standard/model_catalog/*.json)."""
+    out: dict[tuple[str, str], dict[str, Any]] = {}
+    for path in sorted((Path(__file__).parent / "standard" / "model_catalog").glob("*.json")):
+        try:
+            rows = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        for row in rows if isinstance(rows, list) else []:
+            fields = (row or {}).get("fields") or {}
+            key = (str(fields.get("provider") or "").lower(), str(fields.get("model_id") or "").lower())
+            if key[1]:
+                out[key] = {k: fields.get(k) for k in PROFILE_FIELDS}
+    return out
+
+
+def _profiles_path() -> Path:
+    from .keys import config_dir
+    return config_dir() / "model-profiles.json"
+
+
+def _remembered_profiles() -> dict[tuple[str, str], dict[str, Any]]:
+    try:
+        data = json.loads(_profiles_path().read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return {tuple(k.split("|", 1)): v for k, v in data.items()
+            if isinstance(v, dict) and "|" in k}
+
+
+def _remember_profiles(own: dict[tuple[str, str], dict[str, Any]]) -> None:
+    """Keep this library's model profiles where every library can see them."""
+    if not own:
+        return
+    known = {f"{p}|{m}": v for (p, m), v in _remembered_profiles().items()}
+    fresh = {f"{p}|{m}": {k: v.get(k) for k in PROFILE_FIELDS} for (p, m), v in own.items()}
+    if all(known.get(k) == v for k, v in fresh.items()):
+        return
+    try:
+        path = _profiles_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({**known, **fresh}, indent=0, default=str), encoding="utf-8")
+    except OSError:
+        pass
 
 
 def ELIGIBLE_LEADS() -> list[dict[str, Any]]:            # noqa: N802 - a read-only table
@@ -253,10 +336,12 @@ class App:
 
     def _extras(self) -> dict[str, Any]:
         from . import effort
+        level = effort.profile(self.settings.data.get("effort"))
         extras: dict[str, Any] = {"broker": self.broker, "waiters": self.waiters,
                                   "mcp": self.mcp,
                                   # the person's effort setting, and the tiers a delegate runs on
-                                  "effort": effort.profile(self.settings.data.get("effort")),
+                                  # (a ceiling: the lead may choose less with set_effort)
+                                  "effort": level, "effort_ceiling": level,
                                   "agent_provider": self.tier}
         clerk = self.tier(3)
         if clerk is not None:
@@ -679,7 +764,12 @@ class App:
         chosen = {(t or {}).get("model"): i + 1
                   for i, t in enumerate(self.settings.data.get("tiers") or [])
                   if (t or {}).get("provider") == provider}
-        profiles = self._model_sources()
+        own = self._model_sources()
+        # A profile is knowledge about a model, not about a library (owner, 2026-10-03):
+        # this library's own notes, else what any library has profiled (kept in the user's
+        # config directory), else the catalogue shipped with the package.
+        _remember_profiles(own)
+        profiles = {**_shipped_profiles(), **_remembered_profiles(), **own}
         pending = self._pending_models()
         out = []
         for m in listed:
@@ -687,7 +777,8 @@ class App:
             profile = profiles.get((provider, m.lower()))
             if profile:
                 entry["profile"] = {
-                    "path": profile["_path"], "modality": profile.get("modality"),
+                    "path": profile.get("_path", ""), "modality": profile.get("modality"),
+                    "shared": not profile.get("_path"),
                     "best_for": profile.get("best_for") or [],
                     "license_class": profile.get("license_class"),
                     "suggested_tier": profile.get("suggested_tier"),

@@ -226,7 +226,8 @@ function hint() {
   var name = document.getElementById('new-name').value.trim();
   var parent = document.getElementById('new-parent').value.trim();
   document.getElementById('new-hint').textContent = name && parent
-    ? 'It will be made at ' + parent.replace(/[\\\\/]+$/, '') + (parent.indexOf('/') >= 0 && parent.indexOf('\\\\') < 0 ? '/' : '\\\\') + name
+    ? 'A new, empty folder will be made: ' + parent.replace(/[\\\\/]+$/, '') + (parent.indexOf('/') >= 0 && parent.indexOf('\\\\') < 0 ? '/' : '\\\\') + name
+      + '. To make a folder that already holds your work the library, use "Open a folder as a library" below.'
     : '';
 }
 document.getElementById('new-name').addEventListener('input', hint);
@@ -374,6 +375,14 @@ def create(name: str = "", parent: str = "", folder: str = "", profile: str = ""
         if not base.is_absolute():
             raise PickerError("give the parent folder's full path")
         target = base / title
+        # 2026-10-03: "Timeline-mapping" created in D:\Timeline-mapping made a library at
+        # D:\Timeline-mapping\Timeline-mapping, beside the person's own work and blind to it.
+        # Naming the folder the work is in means that folder should be the library.
+        if base.name.casefold() == title.casefold() and base.is_dir() and any(base.iterdir()) \
+                and not target.exists():
+            raise PickerError(f"this would make a new, empty library inside {base}, apart from "
+                              f"what is already there. To make {base} itself the library, "
+                              f"open it under \"Open a folder as a library\"")
         if target.is_file():
             raise PickerError(f"{target} is a file")
         if target.is_dir() and any(target.iterdir()):

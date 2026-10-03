@@ -270,6 +270,13 @@ export class Staging {
             : `${waiting} sources approved and awaiting ingestion.`),
           start("Click here to begin", {})));
       }
+      const onModel = Number(b.waiting_on_model ?? 0);
+      if (onModel) {
+        rows.push(h("div", { class: "row2 tight" },
+          h("span", {}, `${onModel} source${onModel === 1 ? " has" : "s have"} reading steps that waited for a model. `
+            + "With models chosen (Choose models), run just those steps:"),
+          start("Run the waiting steps", { retry_waiting: true }, "ghost")));
+      }
     }
     clear(this.banner, rows.length ? h("div", { class: "warn" }, rows) : null);
     window.clearTimeout(this.poll);

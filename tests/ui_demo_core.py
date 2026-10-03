@@ -17,6 +17,10 @@ root = Path(tempfile.mkdtemp()) / "Demo Vault"
 # ~/.config/resource-librarian/.env and contaminates every run after it.
 os.environ["LIBRARIAN_CONFIG_DIR"] = str(root.parent / "config")
 vault = library(root)
+# The demo walks a model from unprofiled to profiled: the catalogue shipped with the package
+# (which already profiles openai/gpt-oss-20b) is left out here; test_shared_models covers it.
+import resource_librarian.app as _app_module
+_app_module._shipped_profiles = lambda: {}
 REGISTRY.call("ingest", {"ref": "acme/rowstream"}, Context(tier="curate", vault=vault,
               extras={"fetcher": intake.Replay(RESPONSES)}))
 # A second, for the two approvals: approved for ingestion, begun from the banner, then
