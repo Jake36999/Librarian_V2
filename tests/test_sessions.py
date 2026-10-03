@@ -252,7 +252,8 @@ def test_park_resume_and_log_replay(library):
     m.ok("open_session", purpose="explore", question="q")
     session_id = m.ctx.session
     m.ok("park_session", note="lunch")
-    assert m("search", query="x")["refused"] == "SESSION_REQUIRED"
+    assert "error" not in m("search", query="x")              # still reads (2026-10-03)
+    assert m("write_note", folder="Notes", name="x", body="y")["refused"] == "SESSION_REQUIRED"
     other = Model(library)
     state = other.ok("resume_session", session_id=session_id)
     assert state["status"] == "open" and state["question"] == "q"

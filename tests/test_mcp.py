@@ -75,7 +75,7 @@ def test_a_connection_carries_its_session(vault, mode):
         status = call("session_status")
         gated = call("draft_offering", title="x", summary="x", claims=[])
         call("park_session", note="later")
-        parked = call("search", query="anything")
+        parked = call("write_note", folder="Notes", name="x", body="y")
         resumed = call("resume_session", session_id=opened["opened"])
         return opened, status, gated, parked, resumed
     opened, status, gated, parked, resumed = run(server, script, mode)
@@ -83,7 +83,7 @@ def test_a_connection_carries_its_session(vault, mode):
     assert status["session"]["phase"] == "frame"
     assert gated["refused"] == "PHASE_GATE"
     assert gated["session"]["session"] == opened["opened"]        # the envelope on refusals
-    assert parked["refused"] == "SESSION_REQUIRED"
+    assert parked["refused"] == "SESSION_REQUIRED"            # a parked thread writes nothing
     assert resumed["status"] == "open"
 
 

@@ -142,7 +142,7 @@ def test_a_spent_budget_is_not_a_dead_end(library):
         out = m("vault_status")
         if out.get("refused") == "BUDGET_SPENT":
             break
-    assert out["refused"] == "BUDGET_SPENT" and "Extend budget" in out["detail"]
+    assert out["refused"] == "BUDGET_SPENT" and "Extend budget" in out["detail"] and "request_budget" in out["detail"]
     status = m.ok("session_status")
     assert status["budget_spent"] and status["budget_left"] == 0
     assert m("extend_budget", add=5)["refused"] == "TIER_REFUSED"      # never the model's own

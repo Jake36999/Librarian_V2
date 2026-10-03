@@ -93,7 +93,7 @@ WRITES: Mapping[str, frozenset] = _PhaseGates()
 # The harness itself: never gated, never charged to a budget.
 HARNESS = frozenset({"open_session", "session_status", "update_plan", "ask_user", "answer",
                      "advance", "park_session", "resume_session", "list_sessions",
-                     "set_effort",
+                     "set_effort", "request_budget",
                      # a person choosing how the thread reasons is not the model's work
                      "lens_adopt", "lens_drop",
                      # a check on the model's own reasoning; charging it would make it a cost
@@ -304,7 +304,10 @@ class Session:
         return n
 
     def open_questions(self) -> list[dict[str, Any]]:
-        return [q for q in self.questions if q.get("answer") is None]
+        """Asked and still waiting. A question that timed out is not: it blocked a thread
+        for good once (2026-10-03, q1 asked again as q2-q6, each answered, q1 never), so
+        it expires, and whatever needed it asks again."""
+        return [q for q in self.questions if q.get("answer") is None and not q.get("expired")]
 
     def answered(self, kind: str, ref: str) -> dict[str, Any] | None:
         return next((q for q in reversed(self.questions) if q["kind"] == kind
@@ -364,6 +367,10 @@ class Session:
                 if q["id"] == event["id"]:
                     q["answer"] = event["answer"]
                     q["answered_by"] = event.get("by", "")
+        elif kind == "question_expired":
+            for q in self.questions:
+                if q["id"] == event["id"]:
+                    q["expired"] = True
         elif kind == "brief":
             self.briefs[event["id"]] = Brief(event["id"], event["need"],
                                              list(event["disqualifiers"]),
@@ -427,6 +434,13 @@ class Session:
             self.messages.append({"role": event["role"], "text": event["text"], "t": event["t"]})
         elif kind == "status":
             self.status = event["status"]
+            note = str(event.get("note", ""))
+            if note.endswith(" went unanswered"):
+                # before question_expired existed, a timeout was recorded only as this park
+                # note ("question q1 went unanswered"): that question expired all the same
+                for q in self.questions:
+                    if note == f"question {q['id']} went unanswered" and q.get("answer") is None:
+                        q["expired"] = True
         elif kind == "closed":
             self.status = "closed"
             self.summary, self.gaps = event.get("summary", ""), event.get("gaps", "")
@@ -615,8 +629,9 @@ class Session:
                     f"advance(target='{target}') and restate the need in the field's own words")
         if self.budget_left() == 0 and missing:
             return (f"the {self.phase} budget is spent with this still needed: "
-                    f"{missing[0]}. Advance if you can, park_session, or ask_user - the person "
-                    f"can extend the budget (Extend budget, in the Plan pane)")
+                    f"{missing[0]}. Advance if you can, park_session, or "
+                    f"request_budget(reason=...) to ask the person for more calls - they can "
+                    f"also Extend budget in the Plan pane")
         if missing:
             return f"{ASKS.get(self.phase, '')} Still needed: {missing[0]}"
         position = self.phases.index(self.phase)
@@ -938,6 +953,8 @@ def before_call(tool_name: str, effect: str, ctx: Any) -> None:
         return
     store = SessionStore(ctx.vault)
     session = store.load(ctx.session)
+    if session.status != "open" and effect == "read":
+        return              # looking is never refused: a parked thread still sees its library
     if session.status != "open":
         raise Refusal("SESSION_REQUIRED", f"session {session.id} is {session.status}; "
                                           f"resume_session first")

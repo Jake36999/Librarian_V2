@@ -213,3 +213,53 @@ def test_a_model_that_never_answers_in_time_is_called_slow_not_unreachable(monke
     monkeypatch.setattr(providers.urllib.request, "urlopen", slow)
     with pytest.raises(providers.ProviderError, match="did not answer within 120 seconds"):
         providers._request("POST", "https://example.invalid/v1", {}, {}, sleep=lambda s: None)
+
+
+# ---- 2026-10-03: a thread stuck on a question that had timed out ----
+
+def test_a_question_that_timed_out_no_longer_blocks_the_phase(library):
+    from resource_librarian.session import SessionStore
+    from resource_librarian.tools.sessions import Waiters
+    m = Model(library)
+    m.ctx.extras["waiters"] = Waiters(timeout=0.05)
+    m.ok("open_session", purpose="explore", question="q")
+    out = m("ask_user", question="what must a source not assume?")
+    assert out["refused"] == "PERMISSION_UNANSWERED"
+    session = SessionStore(library).load(m.ctx.session)
+    assert session.status == "parked" and session.open_questions() == []
+    assert [q["expired"] for q in session.questions] == [True]
+
+
+def test_a_timeout_recorded_before_the_fix_also_expires(library):
+    from resource_librarian.session import SessionStore
+    m = Model(library)
+    m.ok("open_session", purpose="explore", question="q")
+    store = SessionStore(library)
+    store.append(m.ctx.session, {"type": "question", "id": "q1", "question": "x?",
+                                 "kind": "disqualifier"})
+    store.append(m.ctx.session, {"type": "status", "status": "parked",
+                                 "note": "question q1 went unanswered"})
+    assert store.load(m.ctx.session).open_questions() == []
+
+
+def test_a_parked_thread_still_reads(library):
+    m = Model(library)
+    m.ok("open_session", purpose="explore", question="q")
+    m.ok("park_session")
+    assert "error" not in m("search", query="osquery")
+    assert m("write_note", folder="Notes", name="x", body="y")["refused"] == "SESSION_REQUIRED"
+
+
+def test_the_person_grants_more_budget_by_answering_the_request(library):
+    m = Model(library)
+    m.ok("open_session", purpose="explore", question="q")
+    before = m.ok("session_status")["budget_left"]
+    asked = m.ok("request_budget", reason="The offering still needs drafting.", add=12)
+    assert asked["needs_person"] and asked["options"][0] == "Extend by 12 calls"
+    REGISTRY.call("answer", {"question_id": asked["question_id"], "answer": "Extend by 12 calls"},
+                  Context(tier="curate", vault=library, session=m.ctx.session))
+    assert m.ok("session_status")["budget_left"] == before + 12
+    no = m.ok("request_budget", reason="Again.")
+    REGISTRY.call("answer", {"question_id": no["question_id"], "answer": "Not now"},
+                  Context(tier="curate", vault=library, session=m.ctx.session))
+    assert m.ok("session_status")["budget_left"] == before + 12

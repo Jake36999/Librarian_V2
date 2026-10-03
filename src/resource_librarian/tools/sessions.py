@@ -132,6 +132,7 @@ def _ask(ctx: Context, question: str, kind: str = "clarify", ref: str = "",
     answer_text = waiters.wait(_waiter_key(ctx, qid), session=ctx.session, question_id=qid,
                                question=question, kind=kind, options=options)
     if answer_text is None:
+        _event(ctx, {"type": "question_expired", "id": qid})
         _event(ctx, {"type": "status", "status": "parked",
                      "note": f"question {qid} went unanswered"})
         raise Refusal("PERMISSION_UNANSWERED", f"{qid} waited {waiters.timeout:.0f}s for a "
@@ -369,6 +370,14 @@ def answer(ctx: Context, question_id: str, answer: str) -> dict:
     if not any(q["id"] == question_id for q in session.questions):
         raise TypeError(f"no question {question_id!r} in this session")
     _event(ctx, {"type": "answer", "id": question_id, "answer": answer, "by": ctx.tier})
+    asked = next(q for q in session.questions if q["id"] == question_id)
+    if asked["kind"] == "budget" and str(answer).strip().lower().startswith(("extend", "yes")):
+        # The person granted it: their answer is the extension (request_budget)
+        found = re.search(r"[0-9]+", str((asked.get("options") or [""])[0]))
+        add = int(found.group()) if found else 10
+        _event(ctx, {"type": "budget", "phase": asked.get("ref") or session.phase,
+                     "add": max(1, min(add, 50)), "reason": "granted by the person",
+                     "by": ctx.tier})
     waiters: Waiters | None = ctx.extras.get("waiters")
     resumed = bool(waiters and waiters.answer(_waiter_key(ctx, question_id), answer))
     return {"answered": question_id, "resumed": resumed}
@@ -433,6 +442,20 @@ def close_session(ctx: Context, summary: str, gaps: str) -> dict:
             path.write_text(notes.render(loaded.frontmatter, body), encoding="utf-8")
             engine_for(ctx).index.upsert(path)
     return {"closed": session.id, "completion": done}
+
+
+@tool("request_budget", tier="contribute", effect="write", scope="session",
+      card=Card("Ask the person for more calls for this phase, with a one-click answer",
+                "the phase's budget is spent with its work unfinished",
+                "The person's 'Extend' answer adds the calls; 'Not now' leaves the phase as it "
+                "is. Never ask with ask_user for this: only this question extends anything"))
+def request_budget(ctx: Context, reason: str, add: int = 10) -> dict:
+    session = _session(ctx)
+    add = max(1, min(int(add), 50))
+    out = _ask(ctx, f"The {session.phase} budget is spent. {reason.strip()} Extend it by "
+                    f"{add} calls?", "budget", session.phase, [f"Extend by {add} calls", "Not now"])
+    left = _session(ctx).budget_left()
+    return {**out, "budget_left": left}
 
 
 @tool("extend_budget", tier="curate", effect="write", scope="session",
