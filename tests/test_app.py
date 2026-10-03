@@ -107,6 +107,8 @@ def test_the_boundary(served):
     with urllib.request.urlopen(req) as response:
         assert response.status == 200 and "javascript" in response.headers["Content-Type"]
         assert "default-src 'self'" in response.headers["Content-Security-Policy"]
+        # read-aloud audio arrives as data: URIs; without media-src none of it could play
+        assert "media-src 'self' data: blob:" in response.headers["Content-Security-Policy"]
     assert client.get("/../keys.py", token=False)[0] == 404
 
 

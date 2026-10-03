@@ -119,3 +119,36 @@ def test_a_busy_model_is_retried_then_said_plainly(monkeypatch):
     with pytest.raises(tts.TtsError, match="busy at DeepInfra"):
         tts._post("https://example.invalid/u", {}, "k", sleep=pauses.append)
     assert len(calls) == 4 and pauses == list(tts.BUSY_RETRIES)
+
+
+def test_each_model_is_sent_its_own_field_and_raw_pcm_becomes_wav(vault, ledger):
+    """2026-10-03: Qwen3-TTS answered 422 'input: Field required', and HiggsAudio returns raw
+    PCM a browser cannot play."""
+    import struct
+    pcm = struct.pack("<4h", 0, 1000, -1000, 0)
+    sent = []
+
+    def higgs(url, body, key):
+        sent.append(dict(body))
+        return {"audio": "data:audio/pcm;rate=24000;base64," + base64.b64encode(pcm).decode()}
+    vault.set_setting("services", "tts", "deepinfra:bosonai/HiggsAudioV2.5")
+    out = tts.speak(vault, "Hello.", "message", post=higgs)
+    assert sent[0]["input"] == "Hello." and "text" not in sent[0]
+    head, _, data = out["audio"].partition(",")
+    raw = base64.b64decode(data)
+    assert head == "data:audio/wav;base64" and raw[:4] == b"RIFF" and raw.endswith(pcm)
+    assert struct.unpack("<I", raw[24:28])[0] == 24000
+    assert tts.speak(vault, "Hello.", "message", post=higgs)["cached"]      # kept as .wav
+
+
+def test_a_model_that_asks_for_the_other_field_is_asked_again(vault, ledger):
+    calls = []
+
+    def wants_input(url, body, key):
+        calls.append(dict(body))
+        if "input" not in body:
+            raise tts.TtsError('HTTP 422: {"detail":[{"type":"missing","loc":["input"]}]}')
+        return {"audio": "data:audio/wav;base64," + base64.b64encode(b"RIFFxxxx").decode()}
+    vault.set_setting("services", "tts", "deepinfra:ResembleAI/chatterbox-turbo")
+    assert tts.speak(vault, "Hi there.", "message", post=wants_input)["audio"].startswith("data:audio/wav")
+    assert [sorted(c) for c in calls] == [["output_format", "text"], ["input", "output_format"]]

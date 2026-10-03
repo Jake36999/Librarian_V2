@@ -1542,7 +1542,10 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 data = data.replace(b"__LIBRARIAN_TOKEN__", app.token.encode())
             kind = TYPES.get(Path(name).suffix, "application/octet-stream")
             self._send(200, data, kind, {
+                # media-src: read-aloud audio arrives as data: URIs; without it the policy
+                # fell back to 'self' and every clip was refused unplayed (2026-10-03)
                 "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; "
+                                           "media-src 'self' data: blob:; "
                                            "style-src 'self' 'unsafe-inline'; "
                                            "frame-ancestors 'none'",
                 "Referrer-Policy": "no-referrer"})

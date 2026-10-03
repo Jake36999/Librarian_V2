@@ -42,6 +42,13 @@ PRICES = {"hexgrad/Kokoro-82M": 0.62, "ResembleAI/chatterbox-turbo": 1.00,
           "ResembleAI/chatterbox-multilingual": 1.00, "Audio8/Audio8-TTS-Preview-0.6b": 5.00,
           "Qwen/Qwen3-TTS": 20.00, "bosonai/HiggsAudioV2.5": 20.00}
 BASE = "https://api.deepinfra.com/v1/inference"
+# What each model is sent and gives back, probed 2026-10-03 (a few characters each):
+# Kokoro takes `text` and returns mp3 with its cost; Chatterbox and Audio8 take `text` and
+# always return wav; Qwen3-TTS takes `input` and returns wav; HiggsAudio takes `input` and
+# returns raw 16-bit PCM at 24 kHz, which a browser cannot play until it is wrapped as wav.
+INPUT_FIELD = {"Qwen/Qwen3-TTS": "input", "bosonai/HiggsAudioV2.5": "input"}
+AUDIO_EXT = {"audio/mp3": "mp3", "audio/mpeg": "mp3", "audio/wav": "wav", "audio/x-wav": "wav",
+             "audio/ogg": "ogg", "audio/flac": "flac", "audio/opus": "opus"}
 
 
 class TtsError(RuntimeError):
@@ -128,6 +135,34 @@ def estimate(text: str, model: str) -> float:
     return len(text) * PRICES[model] / 1_000_000
 
 
+# ------------------------------------------------------------------ the audio
+
+def _wav(pcm: bytes, rate: int, channels: int = 1, width: int = 2) -> bytes:
+    """Raw little-endian PCM wrapped in a WAV header, so a browser can play it."""
+    import struct
+    size = len(pcm)
+    return (b"RIFF" + struct.pack("<I", 36 + size) + b"WAVEfmt " +
+            struct.pack("<IHHIIHH", 16, 1, channels, rate, rate * channels * width,
+                        channels * width, width * 8) + b"data" + struct.pack("<I", size) + pcm)
+
+
+def _playable(audio: str) -> tuple[str, bytes]:
+    """A model's `data:audio/...;base64,...` as (mime type, bytes) a browser plays."""
+    head, _, data = audio.partition(",")
+    raw = base64.b64decode(data)
+    params = head[len("data:"):].split(";")
+    mime = params[0].lower()
+    if mime in ("audio/pcm", "audio/l16", "audio/raw"):
+        rate = next((int(p.split("=", 1)[1]) for p in params[1:] if p.startswith("rate=")),
+                    24000)
+        return "audio/wav", _wav(raw, rate)
+    return mime, raw
+
+
+def _data_uri(mime: str, raw: bytes) -> str:
+    return f"data:{mime};base64," + base64.b64encode(raw).decode()
+
+
 # ------------------------------------------------------------------ the call
 
 # DeepInfra answers 429 "Model busy, retry later" when a shared model is saturated (seen on
@@ -174,10 +209,13 @@ def speak(vault: Vault, text: str, mode: str = "message",
     model = chosen["model"]
     voice = VOICE if model == "hexgrad/Kokoro-82M" else ""
     digest = hashlib.sha256(f"{model}|{voice}|{text}".encode("utf-8")).hexdigest()[:24]
-    cache = vault.derived / "tts" / f"{digest}.mp3"
-    if cache.is_file():
-        return {"audio": "data:audio/mp3;base64," + base64.b64encode(cache.read_bytes()).decode(),
-                "cost_usd": 0.0, "cached": True, "spent_usd": round(spent(), 6), "cap_usd": CAP_USD}
+    folder = vault.derived / "tts"
+    for ext, mime in (("mp3", "audio/mp3"), ("wav", "audio/wav"), ("ogg", "audio/ogg"),
+                      ("flac", "audio/flac"), ("opus", "audio/opus")):
+        cache = folder / f"{digest}.{ext}"
+        if cache.is_file():
+            return {"audio": _data_uri(mime, cache.read_bytes()), "cost_usd": 0.0,
+                    "cached": True, "spent_usd": round(spent(), 6), "cap_usd": CAP_USD}
     cost = estimate(text, model)
     so_far = spent()
     if so_far + cost > CAP_USD:
@@ -186,18 +224,29 @@ def speak(vault: Vault, text: str, mode: str = "message",
     key = os.environ.get("DEEPINFRA_API_KEY", "")
     if not key:
         raise TtsError("DEEPINFRA_API_KEY is not set (Settings -> Connections)")
-    body: dict[str, Any] = {"text": text, "output_format": "mp3"}
+    field = INPUT_FIELD.get(model, "text")
+    body: dict[str, Any] = {field: text, "output_format": "mp3"}
     if voice:
         body["preset_voice"] = voice
-    out = (post or _post)(f"{BASE}/{model}", body, key)
+    try:
+        out = (post or _post)(f"{BASE}/{model}", body, key)
+    except TtsError as exc:
+        # A model whose field is not in INPUT_FIELD says which it wanted: asked once more.
+        other = "input" if field == "text" else "text"
+        if "HTTP 422" not in str(exc) or f'"{other}"' not in str(exc):
+            raise
+        body[other] = body.pop(field)
+        out = (post or _post)(f"{BASE}/{model}", body, key)
     audio = str(out.get("audio") or "")
     if not audio.startswith("data:audio"):
         raise TtsError(f"the model returned no audio ({str(out)[:200]})")
+    mime, raw = _playable(audio)
+    # Only Kokoro reports its cost; for the rest the register's price is what is recorded.
     actual = float((out.get("inference_status") or {}).get("cost") or cost)
     _record(actual, len(text), model, mode)
-    cache.parent.mkdir(parents=True, exist_ok=True)
-    cache.write_bytes(base64.b64decode(audio.split(",", 1)[1]))
-    return {"audio": audio, "cost_usd": actual, "cached": False,
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / f"{digest}.{AUDIO_EXT.get(mime, 'bin')}").write_bytes(raw)
+    return {"audio": _data_uri(mime, raw), "cost_usd": actual, "cached": False,
             "spent_usd": round(so_far + actual, 6), "cap_usd": CAP_USD}
 
 

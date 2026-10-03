@@ -77,14 +77,18 @@ class Reader {
     if (run === this.run) this.reset(size);
   }
 
+  /** Plays one part. A part that cannot play is said, never passed over in silence (a
+   *  refused source once made every reading end at once with no sound and no message). */
   private play(src: string, run: number): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       if (run !== this.run) { resolve(); return; }
       const audio = new Audio(src);
       this.audio = audio;
       audio.onended = () => resolve();
-      audio.onerror = () => resolve();
-      audio.play().catch(() => resolve());
+      audio.onerror = () => reject(new Error("the audio could not be played in this browser"));
+      audio.play().catch((e: Error) => reject(new Error(
+        e.name === "NotAllowedError" ? "the browser blocked playback - click the speaker again"
+          : `the audio could not be played (${e.message})`)));
     });
   }
 
