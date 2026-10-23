@@ -35,6 +35,7 @@ from typing import Any
 
 import yaml
 
+from .coordination import atomic_write_text
 from .vault import Vault, now_iso
 
 NAME = re.compile(r"[a-z0-9][a-z0-9\-]{1,40}")
@@ -160,13 +161,13 @@ def apply_at_creation(vault: Vault, profile: Profile) -> dict[str, Any]:
             continue                                     # never overwrite a table
         text = text.rstrip("\n") + f"\n\n{heading}\n\n" + "\n".join(rows) + "\n"
         added.append(heading.removeprefix("## "))
-    model.write_text(text, encoding="utf-8")
+    atomic_write_text(model, text)
     record = {"name": profile.name, "digest": profile.digest, "applied_at": now_iso(),
               "content_model_added": added,
               "suggests": {"lens_packs": profile.lens_packs, "mcp_servers": profile.mcp_servers,
                            "workflows": profile.workflows},
               "pursuit_kind": profile.pursuit_kind}
-    (vault.librarian / FILE).write_text(json.dumps(record, indent=1), encoding="utf-8")
+    atomic_write_text(vault.librarian / FILE, json.dumps(record, indent=1))
     return record
 
 

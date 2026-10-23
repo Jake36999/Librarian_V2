@@ -21,6 +21,7 @@ import re
 from typing import Any
 
 from . import clerk, notes
+from .coordination import atomic_write_text
 from .promote import UNFILED, write_master_index, write_topic_index
 from .rules import Refusal
 from .search import Engine
@@ -130,7 +131,7 @@ def add_topic(vault: Vault, name: str, what_belongs: str, aliases: list[str]) ->
                default=len(lines) - 1)
     lines.insert(last + 1, row)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    atomic_write_text(path, "\n".join(lines) + "\n")
     return name
 
 
@@ -163,7 +164,7 @@ def refile(vault: Vault, engine: Engine, names: list[str], topic: str) -> list[d
             out.append({"source": name, "topic": topic, "unchanged": True})
             continue
         fm = dict(note.frontmatter, primary_topic=topic)
-        path.write_text(notes.render(fm, note.body), encoding="utf-8")
+        atomic_write_text(path, notes.render(fm, note.body))
         engine.index.upsert(path)
         touched.add(before)
         out.append({"source": name, "from": before, "topic": topic})

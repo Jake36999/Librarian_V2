@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Any
 
 from . import notes
+from .coordination import atomic_write_text
 from .facts import license_class
 from .intake import ATOM, Fetcher, FetchError
 from .rules import Refusal
@@ -372,8 +373,8 @@ def freeze_cohort(vault: Vault, size: int = 20) -> dict[str, Any]:
                            "outcome": ""} for r in ranked]}
     folder = cohort_folder(vault)
     folder.mkdir(parents=True, exist_ok=True)
-    (folder / f"{cohort['id']}.json").write_text(json.dumps(cohort, indent=1,
-                                                            ensure_ascii=False), encoding="utf-8")
+    atomic_write_text(folder / f"{cohort['id']}.json",
+                      json.dumps(cohort, indent=1, ensure_ascii=False))
     store = CandidateStore(vault)
     for r in ranked:
         store.write({"key": r["key"], "status": cohort["id"]})
@@ -383,7 +384,7 @@ def freeze_cohort(vault: Vault, size: int = 20) -> dict[str, Any]:
                      for i, m in enumerate(cohort["members"], 1))
     note = vault.root / "Indexes" / "Cohorts" / f"{cohort['id']}.md"
     note.parent.mkdir(parents=True, exist_ok=True)
-    note.write_text(notes.render(
+    atomic_write_text(note, notes.render(
         {"type": "index", "status": "active", "generated": True, "cohort": cohort["id"]},
         notes.compose(f"Cohort {number:03d}", [
             ("About This Cohort", "Frozen before any deep work, so the batch that was chosen "
@@ -391,7 +392,7 @@ def freeze_cohort(vault: Vault, size: int = 20) -> dict[str, Any]:
                                   "stored signals; they order the work and select nothing. "
                                   "A person reads this cohort before the next one runs."),
             ("Members", "| # | Candidate | Score | Domain | Its own description |\n"
-                        "| --- | --- | --- | --- | --- |\n" + rows)])), encoding="utf-8")
+                        "| --- | --- | --- | --- | --- |\n" + rows)])))
     return {"cohort": cohort["id"], "members": len(ranked),
             "note": note.relative_to(vault.root).as_posix()}
 
@@ -402,7 +403,7 @@ def mark_reviewed(vault: Vault, cohort_id: str, by: str) -> dict[str, Any]:
         raise TypeError(f"no cohort {cohort_id!r}")
     cohort = json.loads(path.read_text(encoding="utf-8"))
     cohort["reviewed_by"], cohort["reviewed_at"] = by, now_iso()
-    path.write_text(json.dumps(cohort, indent=1, ensure_ascii=False), encoding="utf-8")
+    atomic_write_text(path, json.dumps(cohort, indent=1, ensure_ascii=False))
     return {"cohort": cohort_id, "reviewed_by": by}
 
 
@@ -450,7 +451,7 @@ def sweep(vault: Vault, engine: Any, endpoint: Any, fetcher: Fetcher,
             report["stopped"] = (f"{barren} consecutive candidates brought nothing new: this "
                                  f"vein looks exhausted")
             break
-    (cohort_folder(vault) / f"{current['id']}.json").write_text(
-        json.dumps(current, indent=1, ensure_ascii=False), encoding="utf-8")
+    atomic_write_text(cohort_folder(vault) / f"{current['id']}.json",
+                      json.dumps(current, indent=1, ensure_ascii=False))
     report["staged"] = sum(1 for r in report["results"] if r["status"] == "staged")
     return report

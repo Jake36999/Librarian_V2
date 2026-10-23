@@ -40,6 +40,7 @@ from typing import Any
 
 import anyio.from_thread
 
+from .coordination import atomic_write_text
 from .registry import REGISTRY, Card, ToolSpec, clip
 
 CALL_TIMEOUT = 30.0
@@ -259,7 +260,7 @@ class McpManager:
         else:
             chosen.pop(name, None)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(chosen, indent=1, sort_keys=True), encoding="utf-8")
+        atomic_write_text(path, json.dumps(chosen, indent=1, sort_keys=True))
 
     def attach_broker(self, broker: Any) -> None:
         """Hand the running servers to another library's permission broker (a
@@ -283,8 +284,7 @@ class McpManager:
 
     def save_config(self, config: dict[str, Any]) -> None:
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
-        self.config_path.write_text(json.dumps(config, indent=1, ensure_ascii=False),
-                                    encoding="utf-8")
+        atomic_write_text(self.config_path, json.dumps(config, indent=1, ensure_ascii=False))
 
     def servers(self) -> dict[str, dict[str, Any]]:
         return self.load_config()["mcpServers"]
@@ -336,7 +336,7 @@ class McpManager:
 
     def _save_accepted(self, accepted: dict[str, str]) -> None:
         self.accepted_path.parent.mkdir(parents=True, exist_ok=True)
-        self.accepted_path.write_text(json.dumps(accepted, indent=1), encoding="utf-8")
+        atomic_write_text(self.accepted_path, json.dumps(accepted, indent=1))
 
     def is_accepted(self, name: str, definition: dict[str, Any]) -> bool:
         return self._accepted().get(name) == digest(definition)

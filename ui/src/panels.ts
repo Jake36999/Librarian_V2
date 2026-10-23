@@ -132,6 +132,16 @@ const SLOT_KIND: Record<string, { label: string; fits: (m: any) => boolean }> = 
 
 export class ModelTile {
   private listings = new Map<string, any>();
+  /**
+   * Route evidence is deliberately separate from the provider listings.  A
+   * listing says what an endpoint returned; readiness says whether the Core
+   * can safely use that exact route for the current profile.  Older Cores do
+   * not expose this endpoint, so its absence must not make the picker fail.
+   */
+  private readiness = new Map<string, any>();
+  private readinessAvailable = false;
+  private coreReadiness: any = null;
+  private readinessEpoch = 0;
   private filter = "";
   private toast = "";
   private press: number | undefined;
@@ -192,6 +202,70 @@ export class ModelTile {
       catch (e) { this.listings.set(p, { status: "error", error: (e as Error).message, models: [] }); }
     }));
     this.render();
+    const epoch = ++this.readinessEpoch;
+    void this.refreshReadiness(epoch);
+  }
+
+  private async refreshReadiness(epoch: number): Promise<void> {
+    const readiness = await this.api.get("/api/routes/readiness").catch(() => null);
+    if (epoch !== this.readinessEpoch) return;
+    this.readiness.clear();
+    this.readinessAvailable = !!readiness;
+    this.coreReadiness = readiness?.core ?? readiness?.workflow ?? null;
+    const routes = Array.isArray(readiness?.routes) ? readiness.routes : [];
+    for (const row of routes) {
+      if (!row || typeof row !== "object") continue;
+      const provider = String(row.host_id ?? row.provider ?? row.host ?? "");
+      const model = String(row.model ?? row.model_id ?? "");
+      if (provider && model) this.readiness.set(`${provider}\u0000${model}`, row);
+    }
+    if (this.pop.open) this.render();
+  }
+
+  private routeReadiness(provider: string, model: string): any {
+    return this.readiness.get(`${provider}\u0000${model}`) ?? null;
+  }
+
+  private readinessText(value: unknown, good: string, bad: string, pending: string): string {
+    const state = value && typeof value === "object"
+      ? (value as Record<string, unknown>).ok ?? (value as Record<string, unknown>).status ?? (value as Record<string, unknown>).state
+      : value;
+    if (state === true || state === "pass" || state === "ready" || state === "passed") return good;
+    if (state === false || state === "fail" || state === "blocked" || state === "error") return bad;
+    return pending;
+  }
+
+  private readinessChips(provider: string, model: string): HTMLElement | null {
+    const row = this.routeReadiness(provider, model);
+    if (!row) return null;
+    const qualification = row.qualification && typeof row.qualification === "object"
+      ? row.qualification.status : (row.qualification ?? row.status ?? "");
+    const workflow = row.core_workflow ?? row.workflow_ready ?? row.workflow;
+    const fixture = row.fixture_preflight ?? row.fixture_ready;
+    const health = row.host_health && typeof row.host_health === "object"
+      ? row.host_health.status : (row.host_health ?? row.health);
+    const labels = [
+      qualification ? String(qualification).replace(/_/g, " ") : "evidence pending",
+      this.readinessText(workflow, "walk ready", "walk blocked", "walk unchecked"),
+      this.readinessText(fixture, "fixtures ready", "fixture issue", "fixtures unchecked"),
+      this.readinessText(health, "host ready", "host issue", "host unchecked"),
+    ];
+    const detail = String(row.detail ?? row.reason ?? row.advisory ?? "");
+    return h("div", { class: "readiness", title: detail },
+      labels.filter((value, index, all) => all.indexOf(value) === index)
+        .map((value) => h("span", { class: `readiness-chip ${/blocked|issue|experimental|unavailable|stale/i.test(value) ? "warn" : ""}` }, value)));
+  }
+
+  private readinessSummary(): HTMLElement | null {
+    if (!this.readinessAvailable) return null;
+    const value = this.coreReadiness;
+    const status = value && typeof value === "object" ? (value.ok ?? value.status ?? value.state) : value;
+    const good = status === true || status === "pass" || status === "ready" || status === "passed";
+    const label = good ? "Core workflow checks ready" : status ? `Core workflow: ${String(status).replace(/_/g, " ")}`
+      : "Core workflow evidence available";
+    const detail = value && typeof value === "object" ? String(value.detail ?? value.reason ?? "") : "";
+    return h("p", { class: `route-summary${good ? "" : " warn"}`, title: detail }, label,
+      detail ? h("span", { class: "dim" }, ` · ${detail}`) : null);
   }
 
   private async save(tiers: Tier[], override = ""): Promise<void> {
@@ -312,6 +386,7 @@ export class ModelTile {
         h("span", { class: "dim" }, "Click in order: 1 leads, 2 writes notes, 3 does small tasks. Right-click a chosen model, or a tier, to clear all.")),
       h("div", { class: "tierbar" }, slots,
         tiers.length ? h("button", { class: "ghost", onclick: () => this.clearAll() }, "Clear selection") : null),
+      this.readinessSummary(),
       tiers.length < 3 ? h("p", { class: "note" }, `Choosing slot ${tiers.length + 1} (${ROLES[tiers.length]}): `
         + `models whose profile recommends them for it are listed first.`) : null,
       this.pendingLead ? this.overridePrompt()
@@ -355,6 +430,7 @@ export class ModelTile {
             : tiers.findIndex((t) => t.provider === p && t.model === m.id);
           const clear = () => (this.slot ? this.clearSlot() : this.clearAll());
           const rec = at < 0 && recommended(m);
+          const readiness = this.readinessChips(p, String(m.id));
           const card = h("button", {
             class: `card${at >= 0 ? " sel" : ""}${rec ? " rec" : ""}`, "aria-pressed": at >= 0 ? "true" : "false",
             title: at >= 0 ? (this.slot ? "Right-click (or Delete) to empty this slot"
@@ -369,6 +445,7 @@ export class ModelTile {
           },
           at >= 0 && !this.slot ? h("span", { class: "badge" }, String(at + 1)) : null,
           h("div", { class: "name" }, m.id), h("div", { class: "meta" }, profileMeta(m)),
+          readiness,
           rec ? h("div", { class: "rec-label" }, `Recommended for slot ${next}`) : null);
           return h("div", { class: "card-wrap" }, card,
             // "local" has no public listing page to profile from (see MODEL_PAGES

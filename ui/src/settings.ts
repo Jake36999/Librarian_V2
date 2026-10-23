@@ -76,7 +76,7 @@ export class Settings {
         h("div", { class: "row2" }, h("button", { class: "primary", onclick: () => { this.dialog.close(); this.manageKeys?.(); } },
           "Choose keys in the plugin's settings")),
         h("p", { class: "note" }, "After changing a key, the plugin restarts the core so it takes effect."),
-        this.serviceModels());
+        this.serviceModels(), this.releaseLeadSetup(), this.agentProfiles(), this.hostRegistry());
     }
     // Model providers, then the web search backends (keys.SEARCH_KEYS): web_search uses
     // Brave, else Tavily, else a SearXNG instance, else Wikipedia only.
@@ -164,17 +164,203 @@ export class Settings {
         } }, "Remove"))));
     select.onchange = show;
     input.onkeydown = (e) => { if (e.key === "Enter") submit(false); };
+    const keyMigration = h("div");
+    if (this.state().key_backend === "config file" || this.state().key_migration_pending) {
+      const migrationStatus = h("span", { class: "note inline", role: "status" });
+      const migrate = h("button", { class: "ghost", onclick: () => clear(keyMigration,
+        h("div", { class: "confirm" },
+          "Move the saved fallback-file credentials into this computer's operating-system keychain? No key value is displayed or sent back to this page.",
+          h("div", { class: "row2" },
+            h("button", { class: "ghost", onclick: () => { this.render(); } }, "Cancel"),
+            h("button", { class: "primary", onclick: async () => {
+              migrationStatus.textContent = "Migrating…";
+              try {
+                const out = await this.api.post("/api/keys/migrate", { confirm: true });
+                await this.refresh();
+                if (out.available === false) {
+                  migrationStatus.textContent = String(out.detail ?? "No operating-system keychain is available yet.");
+                  migrationStatus.className = "note inline err";
+                } else if (out.fallback_retained) {
+                  migrationStatus.textContent = String(out.detail ?? "Migrated, but the old fallback file remains.");
+                  migrationStatus.className = "note inline err";
+                } else {
+                  migrationStatus.textContent = out.already_secure ? "Keys are already in the operating-system keychain." : "Saved keys moved to the operating-system keychain.";
+                  migrationStatus.className = "note inline ok";
+                }
+              } catch (e) {
+                migrationStatus.textContent = (e as Error).message;
+                migrationStatus.className = "note inline err";
+              }
+            } }, "Migrate")))) }, "Move fallback keys to keychain") as HTMLButtonElement;
+      clear(keyMigration, h("p", { class: "note" },
+        this.state().key_migration_pending
+          ? "A protected fallback key file from an earlier installation still needs explicit migration into this computer's keychain."
+          : "This installation is using the protected file fallback. Once the operating-system keychain is available, move saved keys explicitly."),
+      h("div", { class: "row2" }, migrate, migrationStatus));
+    }
     const page = h("div", {},
       h("label", { class: "f", for: "lib-provider" }, "Provider"), select,
       h("label", { class: "f", for: "lib-key" }, "Connect API key"), input,
       h("div", { class: "row2" }, save, remove, status), confirmBox,
       h("p", { class: "note" }, `Keys are kept by the core (${this.state().key_backend ?? "securely"}), never in the vault. `,
         "They never come back to this page: only whether one is saved, and its last four characters."),
+      keyMigration,
       h("label", { class: "f" }, "Usage & billing"),
       h("div", { class: "row2" }, checkUsage), usageBox,
-      this.serviceModels());
+      this.serviceModels(), this.releaseLeadSetup(), this.agentProfiles(), this.hostRegistry());
     show();
     return page;
+  }
+
+  /** The chosen profile narrows an agent; it cannot expand a person's tools
+   * or silently change its route.  Keeping the selector beside hosts makes
+   * the connection between a model choice and its policy visible. */
+  private agentProfiles(): HTMLElement {
+    const root = h("section", { class: "agent-profiles" }, h("p", { class: "dim" }, "Loading agent profiles…"));
+    const reload = async () => {
+      try {
+        const out = await this.api.get("/api/profiles");
+        const profiles = (out.profiles ?? []) as any[];
+        const selected = String(out.selected ?? this.state().agent_profile ?? "lead");
+        const status = h("span", { class: "note inline", role: "status" });
+        const select = h("select", { "aria-label": "Agent profile" }, profiles.map((profile) =>
+          h("option", { value: String(profile.id), selected: String(profile.id) === selected },
+            `${profile.id} r${profile.revision ?? 1} · ${profile.role} · ${profile.permission_ceiling}`))) as HTMLSelectElement;
+        select.onchange = async () => {
+          status.textContent = "Applying profile…";
+          try {
+            await this.api.post("/api/agent-profile", { id: select.value });
+            await this.refresh();
+            status.textContent = "Applied to subsequent agent turns.";
+            status.className = "note inline ok";
+          } catch (e) {
+            select.value = selected;
+            status.textContent = (e as Error).message;
+            status.className = "note inline err";
+          }
+        };
+        const active = out.active ?? {};
+        const editor = h("div", { class: "profile-editor" });
+        const split = (value: string) => value.split(",").map((part) => part.trim()).filter(Boolean);
+        const showEditor = (base: any, creating = false) => {
+          const route = base.route_policy ?? {};
+          const rates = route.rate_card ?? {};
+          const id = h("input", { type: "text", value: creating ? "" : String(base.id ?? ""),
+            placeholder: "profile id", "aria-label": "Profile id" }) as HTMLInputElement;
+          const role = h("input", { type: "text", value: String(base.role ?? "lead"),
+            "aria-label": "Profile role" }) as HTMLInputElement;
+          const ceiling = h("select", { "aria-label": "Permission ceiling" },
+            ["consult", "contribute", "curate"].map((value) => h("option", { value,
+              selected: value === String(base.permission_ceiling ?? "contribute") }, value))) as HTMLSelectElement;
+          const qualification = h("select", { "aria-label": "Required qualification" },
+            ["experimental", "screened", "verified_local", "verified_release"].map((value) => h("option", { value,
+              selected: value === String(base.required_qualification ?? "screened") }, value))) as HTMLSelectElement;
+          const bundles = h("input", { type: "text", value: (base.allowed_bundles ?? []).join(", "),
+            placeholder: "session, research", "aria-label": "Allowed tool bundles" }) as HTMLInputElement;
+          const hosts = h("input", { type: "text", value: (route.host_ids ?? []).join(", "),
+            placeholder: "optional host ids", "aria-label": "Allowed host ids" }) as HTMLInputElement;
+           const providers = h("input", { type: "text", value: (route.providers ?? []).join(", "),
+             placeholder: "optional legacy providers", "aria-label": "Allowed legacy providers" }) as HTMLInputElement;
+          const models = h("input", { type: "text", value: (route.model_ids ?? []).join(", "),
+            placeholder: "optional model ids", "aria-label": "Allowed model ids" }) as HTMLInputElement;
+           const validation = h("input", { type: "text", value: (base.validation_rules ?? []).join(", "),
+             placeholder: "grounded, cite evidence", "aria-label": "Validation focus rules" }) as HTMLInputElement;
+          const token = h("input", { type: "number", min: 0, value: String(base.token_budget ?? 0),
+            "aria-label": "Token budget per agent turn" }) as HTMLInputElement;
+          const output = h("input", { type: "number", min: 1, value: String(base.output_budget ?? 4096),
+            "aria-label": "Maximum output tokens" }) as HTMLInputElement;
+          const cost = h("input", { type: "number", min: 0, step: "0.01", value: String(base.cost_budget_usd ?? 0),
+            "aria-label": "Cost budget USD per agent turn" }) as HTMLInputElement;
+          const seconds = h("input", { type: "number", min: 0, value: String(base.time_budget_seconds ?? 0),
+            "aria-label": "Time budget seconds" }) as HTMLInputElement;
+          const concurrent = h("input", { type: "number", min: 1, max: 32, value: String(base.concurrency_limit ?? 1),
+            "aria-label": "Concurrent runs" }) as HTMLInputElement;
+          const inputRate = h("input", { type: "number", min: 0, step: "0.001",
+            value: String(rates.input_per_1m ?? rates.price_input_per_1m ?? ""),
+            placeholder: "input $/1M", "aria-label": "Input USD per million tokens" }) as HTMLInputElement;
+          const outputRate = h("input", { type: "number", min: 0, step: "0.001",
+            value: String(rates.output_per_1m ?? rates.price_output_per_1m ?? ""),
+            placeholder: "output $/1M", "aria-label": "Output USD per million tokens" }) as HTMLInputElement;
+          const retry = h("select", { "aria-label": "Retry policy" }, ["bounded", "none"].map((value) =>
+            h("option", { value, selected: value === String(base.retry_policy ?? "bounded") }, value))) as HTMLSelectElement;
+          const failover = h("select", { "aria-label": "Failover policy" }, ["ask", "never"].map((value) =>
+            h("option", { value, selected: value === String(base.failover_policy ?? "ask") }, value))) as HTMLSelectElement;
+          const editorStatus = h("span", { class: "note inline", role: "status" });
+          const save = async () => {
+            const rateCard: Record<string, number> = {};
+            if (inputRate.value.trim() || outputRate.value.trim()) {
+              rateCard.input_per_1m = Number(inputRate.value || 0);
+              rateCard.output_per_1m = Number(outputRate.value || 0);
+            }
+            const profile = { ...base, id: id.value.trim(), role: role.value.trim(),
+              permission_ceiling: ceiling.value, required_qualification: qualification.value,
+              allowed_bundles: split(bundles.value), token_budget: Number(token.value || 0),
+              output_budget: Number(output.value || 4096), cost_budget_usd: Number(cost.value || 0),
+              time_budget_seconds: Number(seconds.value || 0), concurrency_limit: Number(concurrent.value || 1),
+              retry_policy: retry.value, failover_policy: failover.value,
+               validation_rules: split(validation.value),
+              route_policy: { ...route, host_ids: split(hosts.value), model_ids: split(models.value),
+                 providers: split(providers.value),
+                ...(Object.keys(rateCard).length ? { rate_card: rateCard } : {}) } };
+            editorStatus.textContent = "Saving profile…";
+            try {
+              await this.api.post("/api/profiles", { profile });
+              editorStatus.textContent = "Saved as a new profile revision.";
+              editorStatus.className = "note inline ok";
+              await reload();
+            } catch (e) {
+              editorStatus.textContent = (e as Error).message;
+              editorStatus.className = "note inline err";
+            }
+          };
+          clear(editor,
+            h("div", { class: "confirm" },
+              h("strong", {}, creating ? "New agent profile" : `Edit ${base.id}`),
+              h("div", { class: "row2 tight" }, id, role, ceiling, qualification),
+              h("label", { class: "f" }, "Tool bundles (comma-separated)"), bundles,
+              h("label", { class: "f" }, "Route allow-lists (blank means unrestricted)"),
+               h("div", { class: "row2 tight" }, hosts, providers, models),
+               h("label", { class: "f" }, "Validation focus (comma-separated, guidance only; platform gates still apply)"), validation,
+              h("label", { class: "f" }, "Turn budgets"),
+              h("div", { class: "row2 tight" }, token, output, cost, seconds, concurrent),
+              h("p", { class: "note" }, "A non-zero cost cap needs both rate fields; otherwise Core refuses before a paid provider call."),
+              h("div", { class: "row2 tight" }, inputRate, outputRate, retry, failover),
+              h("div", { class: "row2" }, h("button", { class: "ghost", onclick: () => clear(editor) }, "Cancel"),
+                h("button", { class: "primary", onclick: () => void save() }, "Save profile"), editorStatus)));
+        };
+        const chosen = profiles.find((profile) => String(profile.id) === selected) ?? profiles[0] ?? {};
+         const history = h("div", { class: "profile-history" });
+         const showHistory = async () => {
+           try {
+             const out = await this.api.get(`/api/profiles/history?id=${encodeURIComponent(String(chosen.id ?? ""))}`);
+             const rows = (out.history ?? []) as any[];
+             clear(history, rows.length ? h("div", { class: "confirm" }, h("strong", {}, "Saved profile revisions"),
+               rows.slice(0, 12).map((row) => h("p", { class: "note" },
+                 `r${row.revision ?? row.profile?.revision ?? "?"} · ${String(row.at ?? "").replace("T", " ").slice(0, 19)} · ` +
+                 `${row.profile?.role ?? ""}, ${row.profile?.permission_ceiling ?? ""}, output ${row.profile?.output_budget ?? ""}`)),
+               h("button", { class: "ghost", onclick: () => clear(history) }, "Hide history"))
+               : h("p", { class: "note" }, "No vault-specific revisions yet. Editing a shipped default creates revision 2."));
+           } catch (e) { clear(history, h("p", { class: "error" }, (e as Error).message)); }
+         };
+        clear(root,
+          h("label", { class: "f" }, "Agent profile"),
+          h("div", { class: "row2 tight" }, select,
+            h("button", { class: "ghost", onclick: () => showEditor(chosen) }, "Edit…"),
+            h("button", { class: "ghost", onclick: () => showEditor({ id: "", role: "research_helper",
+              permission_ceiling: "consult", required_qualification: "screened", allowed_bundles: ["read"],
+              route_policy: {}, output_budget: 1024, retry_policy: "bounded", failover_policy: "ask",
+               concurrency_limit: 1 }, true) }, "New…"),
+             h("button", { class: "ghost", onclick: () => void showHistory() }, "History…"), status),
+          h("p", { class: "note" }, "Profiles set tool bundles, permission ceilings, route allow-lists, budgets and concurrency. " +
+            "They narrow the selected agent only; they never grant it a new host or bypass a checkpoint."),
+          Object.keys(active).length ? h("p", { class: "note" }, `Active profile runs: ${Object.entries(active).map(([id, n]) => `${id} (${n})`).join(", ")}.`) : null,
+           editor, history);
+      } catch (e) {
+        clear(root, h("p", { class: "error" }, (e as Error).message));
+      }
+    };
+    void reload();
+    return root;
   }
 
   /** Research Pipeline §6.1: project access - off by default, folders a person chooses, each
@@ -345,6 +531,250 @@ export class Settings {
         h("p", { class: "note" }, "Each does one kind of job with its own request format, and is kept with this library. An empty slot is never filled by a chat model."));
     })();
     return host;
+  }
+
+  /** Personal endpoints are configuration, not vault data.  This deliberately
+   * keeps endpoint/key binding, discovery, health probes and local limits in
+   * the same visible place rather than making a model infer policy from a URL. */
+  private hostRegistry(): HTMLElement {
+    const root = h("section", { class: "host-registry" }, h("p", { class: "dim" }, "Loading personal hosts…"));
+    const reload = async () => {
+      try {
+        const data = await this.api.get("/api/hosts");
+        const hosts = (data.hosts ?? []) as any[];
+        clear(root,
+          h("label", { class: "f" }, "Personal model hosts"),
+          h("p", { class: "note" }, "Hosts contain endpoints and rate limits, never credentials. " +
+            "A custom endpoint is OpenAI-compatible in V2; test it before assigning it to an agent profile."),
+          hosts.map((row) => this.hostCard(row, reload)),
+          this.newHostCard(reload));
+      } catch (e) {
+        clear(root, h("p", { class: "error" }, (e as Error).message));
+      }
+    };
+    void reload();
+    return root;
+  }
+
+  private hostCard(row: any, reload: () => Promise<void>): HTMLElement {
+    const title = h("strong", {}, String(row.display_name ?? row.id));
+    const status = h("span", { class: "note inline", role: "status" });
+    const detail = row.health?.detail ? ` · ${row.health.detail}` : "";
+    const health = h("span", { class: `note inline ${row.health?.status === "ready" ? "ok" : row.health?.status === "error" ? "err" : ""}` },
+      row.health?.status ? `${row.health.status}${detail}` : "not tested");
+    const model = h("input", { type: "text", placeholder: "Model id for test or lead selection", "aria-label": `Model on ${row.display_name ?? row.id}` }) as HTMLInputElement;
+    // An unavailable/deleted selected profile is represented as an empty role
+    // by Core.  Treat that as absent here so an L1 probe never submits an
+    // invalid blank role; the Core will still enforce the chosen profile when
+    // a real agent turn starts.
+    const probeRole = String(this.state().agent_profile_role || this.state().agent_profile || "lead");
+    const discovered = h("div", { class: "row2 tight" });
+    const enabled = h("input", { type: "checkbox", checked: !!row.enabled, "aria-label": `Enable ${row.display_name ?? row.id}` }) as HTMLInputElement;
+    const name = h("input", { type: "text", value: String(row.display_name ?? ""), "aria-label": "Host display name" }) as HTMLInputElement;
+    const protocol = h("select", { "aria-label": "Host protocol", disabled: !!row.seeded },
+      h("option", { value: "openai", selected: row.protocol === "openai" }, "OpenAI-compatible"),
+      h("option", { value: "anthropic", selected: row.protocol === "anthropic" }, "Anthropic")) as HTMLSelectElement;
+    const base = h("input", { type: "text", value: String(row.base_url ?? ""), "aria-label": "Base URL", disabled: !!row.seeded }) as HTMLInputElement;
+    const authRef = h("input", { type: "text", value: String(row.auth_ref ?? ""), "aria-label": "Credential reference", disabled: !!row.seeded }) as HTMLInputElement;
+    const timeout = h("input", { type: "number", value: String(row.timeout ?? 120), min: 1, max: 3600, "aria-label": "Timeout seconds" }) as HTMLInputElement;
+    const concurrency = h("input", { type: "number", value: String(row.concurrency_limit ?? 1), min: 1, max: 32, "aria-label": "Concurrent calls" }) as HTMLInputElement;
+    const rate = h("input", { type: "number", value: String(row.rate_limit ?? 0), min: 0, "aria-label": "Calls per minute" }) as HTMLInputElement;
+    const key = h("input", { type: "password", autocomplete: "off", placeholder: row.needs_key ? "Paste key for this host" : "No key configured", disabled: !row.needs_key,
+      "aria-label": `Key for ${row.display_name ?? row.id}` }) as HTMLInputElement;
+    const confirm = h("div");
+
+    const save = async () => {
+      status.textContent = "Saving host…";
+      try {
+        await this.api.post("/api/hosts", { host: {
+          id: row.id, display_name: name.value.trim(), protocol: protocol.value,
+          base_url: base.value.trim(), auth_ref: authRef.value.trim(), enabled: enabled.checked,
+          timeout: Number(timeout.value || 120), concurrency_limit: Number(concurrency.value || 1),
+          rate_limit: Number(rate.value || 0),
+        } });
+        status.textContent = "Saved.";
+        await reload();
+      } catch (e) { status.textContent = (e as Error).message; status.className = "note inline err"; }
+    };
+    const setKey = async (overwrite = false) => {
+      try {
+        const out = await this.api.post("/api/hosts/key", { host_id: row.id, key: key.value, overwrite });
+        key.value = "";
+        status.textContent = out.saved ? "Key saved." : "Key status updated.";
+        clear(confirm);
+      } catch (e) {
+        const body = ((e as ApiError).body ?? {}) as Record<string, unknown>;
+        if (body.confirm) {
+          clear(confirm, h("div", { class: "confirm" }, String(body.confirm), h("div", { class: "row2" },
+            h("button", { class: "ghost", onclick: () => clear(confirm) }, "Cancel"),
+            h("button", { class: "primary", onclick: () => void setKey(true) }, "Replace key"))));
+        } else status.textContent = (e as Error).message;
+      }
+    };
+    const discover = async () => {
+      status.textContent = "Discovering models…";
+      try {
+        const out = await this.api.get(`/api/models?provider=${encodeURIComponent(String(row.id))}`);
+        const models = (out.models ?? []) as any[];
+        clear(discovered, models.length ? models.slice(0, 40).map((entry) => h("button", { class: "ghost", onclick: () => { model.value = String(entry.id); } }, String(entry.id)))
+          : h("span", { class: "note inline" }, out.error ?? "No models returned."));
+        status.textContent = models.length ? `${models.length} models discovered.` : "No models returned.";
+      } catch (e) { status.textContent = (e as Error).message; status.className = "note inline err"; }
+    };
+    const test = async () => {
+      status.textContent = "Testing host…";
+      try {
+        const out = await this.api.post("/api/hosts/test", { host_id: row.id, model: model.value.trim() });
+        const check = out.check ?? {};
+        const category = String(check.failure_category ?? "");
+        status.textContent = check.ok ? "Connection and model listing work."
+          : category === "local_environment"
+            ? "Local network policy blocked the Core — this is not a model result."
+            : String(check.error ?? "Host test failed.");
+        status.className = `note inline ${check.ok ? "ok" : "err"}`;
+        await reload();
+      } catch (e) { status.textContent = (e as Error).message; status.className = "note inline err"; }
+    };
+    const probe = async (checkpointId = "") => {
+      if (!model.value.trim()) { status.textContent = "Enter or discover a model id first."; return; }
+      status.textContent = "Preparing a one-call tool probe…";
+      try {
+        const out = await this.api.post("/api/qualification/run", {
+          host_id: row.id, model: model.value.trim(), role: probeRole, level: "L1", checkpoint_id: checkpointId,
+        });
+        const run = out.run ?? {};
+        status.textContent = run.outcome === "pass" ? `L1 tool-call probe passed for ${probeRole} (Screened).`
+          : `L1 probe: ${run.detail ?? run.outcome ?? "did not pass"}`;
+        status.className = `note inline ${run.outcome === "pass" ? "ok" : "err"}`;
+        clear(confirm);
+        await reload();
+      } catch (e) {
+        const body = ((e as ApiError).body ?? {}) as Record<string, any>;
+        const checkpoint = body.checkpoint_record;
+        if (checkpoint?.id) {
+          status.textContent = "Approve this small paid account probe to run it.";
+          clear(confirm, h("div", { class: "confirm" }, "This L1 probe makes one real tool-call request to this host.",
+            h("div", { class: "row2" }, h("button", { class: "ghost", onclick: () => clear(confirm) }, "Cancel"),
+              h("button", { class: "primary", onclick: async () => {
+                await this.api.post("/api/checkpoints/resolve", { id: checkpoint.id, choice: "approve" });
+                await probe(checkpoint.id);
+              } }, "Approve probe"))));
+        } else { status.textContent = (e as Error).message; status.className = "note inline err"; }
+      }
+    };
+    const chooseLead = async (checkpointId = "", override = "") => {
+      if (!model.value.trim()) { status.textContent = "Enter or discover a model id first."; return; }
+      try {
+        await this.api.post("/api/tiers", { tiers: [{ host_id: row.id, model: model.value.trim() }],
+          ...(checkpointId ? { checkpoint_id: checkpointId } : {}), ...(override ? { override } : {}) });
+        status.textContent = `${model.value} is the selected lead route.`;
+        clear(confirm);
+        await this.refresh();
+      } catch (e) {
+        const body = ((e as ApiError).body ?? {}) as Record<string, any>;
+        const checkpoint = body.checkpoint_record;
+        if (checkpoint?.id) {
+          clear(confirm, h("div", { class: "confirm" }, (e as Error).message,
+            h("p", { class: "note" }, "This route remains experimental. Approving records your route choice; it does not mark the model verified."),
+            h("div", { class: "row2" }, h("button", { class: "ghost", onclick: () => clear(confirm) }, "Cancel"),
+              h("button", { class: "primary", onclick: async () => {
+                await this.api.post("/api/checkpoints/resolve", { id: checkpoint.id, choice: "approve" });
+                await chooseLead(checkpoint.id);
+              } }, "Use experimental lead"))));
+        } else if (body.needs_override) {
+          // Compatibility for a Core older than the checkpointed route API.
+          const reason = h("input", { type: "text", value: "chosen by the person for this host", "aria-label": "Why use this unqualified lead" }) as HTMLInputElement;
+          clear(confirm, h("div", { class: "confirm" }, (e as Error).message,
+            h("p", { class: "note" }, "This records an explicit experimental-route choice; it does not mark the model verified."),
+            reason, h("div", { class: "row2" }, h("button", { class: "ghost", onclick: () => clear(confirm) }, "Cancel"),
+              h("button", { class: "primary", onclick: () => void chooseLead("", reason.value.trim() || "chosen by the person") }, "Use experimental lead"))));
+        } else status.textContent = (e as Error).message;
+      }
+    };
+    const remove = async () => {
+      try { await this.api.post("/api/hosts/remove", { host_id: row.id }); await reload(); }
+      catch (e) { status.textContent = (e as Error).message; }
+    };
+    return h("div", { class: "host-card" },
+      h("div", { class: "row2 tight" }, h("span", { class: `dot ${row.enabled ? "" : "off"}` }), title,
+        h("code", {}, String(row.id)), row.seeded ? h("span", { class: "dim" }, "preset") : null, health),
+      h("div", { class: "host-grid" },
+        h("label", { class: "f" }, "Display name", name), h("label", { class: "f" }, "Protocol", protocol),
+        h("label", { class: "f" }, "Base URL", base), h("label", { class: "f" }, "Credential reference", authRef),
+        h("label", { class: "f" }, "Timeout (s)", timeout), h("label", { class: "f" }, "Concurrent calls", concurrency),
+        h("label", { class: "f" }, "Calls/minute (0 = no local cap)", rate)),
+      h("label", { class: "opt" }, enabled, h("span", {}, "Enable this host")),
+      h("div", { class: "row2" }, h("button", { class: "ghost", onclick: () => void save() }, "Save host"),
+        !row.seeded ? h("button", { class: "ghost", onclick: () => void remove() }, "Remove") : null, status),
+      row.needs_key ? h("div", { class: "row2" }, key, h("button", { class: "ghost", onclick: () => void setKey() }, "Save key")) : null,
+      confirm,
+      h("div", { class: "row2" }, model, h("button", { class: "ghost", onclick: () => void discover() }, "Discover models"),
+        h("button", { class: "ghost", onclick: () => void test() }, "Test"),
+         h("button", { class: "ghost", onclick: () => void probe() }, `L1 probe (${probeRole})`),
+        h("button", { class: "primary", onclick: () => void chooseLead() }, "Use as lead")), discovered);
+  }
+
+  private newHostCard(reload: () => Promise<void>): HTMLElement {
+    const id = h("input", { type: "text", placeholder: "e.g. studio-lan", "aria-label": "New host id" }) as HTMLInputElement;
+    const label = h("input", { type: "text", placeholder: "Display name", "aria-label": "New host display name" }) as HTMLInputElement;
+    const base = h("input", { type: "text", placeholder: "http://127.0.0.1:1234/v1", "aria-label": "New host base URL" }) as HTMLInputElement;
+    const auth = h("input", { type: "text", placeholder: "Optional env/key reference", "aria-label": "New host credential reference" }) as HTMLInputElement;
+    const status = h("span", { class: "note inline", role: "status" });
+    const add = async () => {
+      try {
+        await this.api.post("/api/hosts", { host: { id: id.value.trim(), display_name: label.value.trim(),
+          protocol: "openai", base_url: base.value.trim(), auth_ref: auth.value.trim(), enabled: true,
+          timeout: 120, concurrency_limit: 1, rate_limit: 0 } });
+        await reload();
+      } catch (e) { status.textContent = (e as Error).message; status.className = "note inline err"; }
+    };
+    return h("div", { class: "host-card new-host" }, h("strong", {}, "Add OpenAI-compatible host"),
+      h("div", { class: "host-grid" }, h("label", { class: "f" }, "Id", id), h("label", { class: "f" }, "Name", label),
+        h("label", { class: "f" }, "Base URL", base), h("label", { class: "f" }, "Credential reference", auth)),
+      h("div", { class: "row2" }, h("button", { class: "primary", onclick: () => void add() }, "Add host"), status));
+  }
+
+  /** A stable release can ship two L3-qualified candidates, but an account
+   * tool probe and its spend decision still belong to the person. */
+  private releaseLeadSetup(): HTMLElement {
+    const root = h("section", { class: "release-leads" });
+    void this.api.get("/api/release-leads").then((data) => {
+      const choices = (data.choices ?? []) as any[];
+      if (!choices.length) { clear(root); return; }
+      clear(root, h("label", { class: "f" }, "First-run verified leads"),
+        choices.map((choice) => {
+          const key = h("input", { type: "password", autocomplete: "off", placeholder: choice.key?.saved ? "Key already available" : "Provider key", disabled: !choice.available || !!choice.key?.saved,
+            "aria-label": `Key for ${choice.model}` }) as HTMLInputElement;
+          const status = h("span", { class: "note inline", role: "status" });
+          let keySaved = !!choice.key?.saved;
+          const pick = async (checkpointId = "") => {
+            try {
+              const out = await this.api.post("/api/release-leads/select", { id: choice.id,
+                key: keySaved ? "" : key.value, checkpoint_id: checkpointId });
+              keySaved = true;
+              status.textContent = out.selected ? `${choice.model} is ready as lead.` : String(out.reason ?? "Probe did not pass.");
+              if (out.selected) await this.refresh();
+            } catch (e) {
+              const body = ((e as ApiError).body ?? {}) as Record<string, any>;
+              const checkpoint = body.checkpoint_record;
+              if (checkpoint?.id) {
+                status.textContent = "Approve the small account probe to continue.";
+                clear(actions, h("button", { class: "primary", onclick: async () => {
+                  await this.api.post("/api/checkpoints/resolve", { id: checkpoint.id, choice: "approve" });
+                  await pick(checkpoint.id);
+                } }, "Approve account probe"));
+              } else status.textContent = (e as Error).message;
+            }
+          };
+          const actions = h("div", { class: "row2" });
+          const label = choice.available ? "Connect and probe" : "Awaiting release qualification";
+          clear(actions, choice.available ? h("button", { class: "primary", onclick: () => void pick() }, label) : null);
+          return h("div", { class: "host-card release-lead" }, h("strong", {}, `${choice.provider} · ${choice.model}`),
+            h("p", { class: "note" }, choice.available ? (choice.reason ?? "") : `Unavailable: ${choice.reason ?? choice.qualification}`),
+            choice.available && !keySaved ? key : null, actions, status);
+        }));
+    }).catch((e) => clear(root, h("p", { class: "error" }, (e as Error).message)));
+    return root;
   }
 
   // -- page 2 --------------------------------------------------------------

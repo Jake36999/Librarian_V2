@@ -9,6 +9,7 @@ import re
 import subprocess
 from pathlib import Path
 
+from ..coordination import atomic_write_text
 from ..registry import Card, Context, tool
 from ..rules import Refusal
 
@@ -46,8 +47,7 @@ def gitignore_ensure(ctx: Context, patterns: list[str]) -> dict:
     added = [p for p in dict.fromkeys(patterns) if p not in present]
     if added:
         text = "\n".join(lines).rstrip("\n")
-        path.write_text((text + "\n" if text else "") + "\n".join(added) + "\n",
-                        encoding="utf-8")
+        atomic_write_text(path, (text + "\n" if text else "") + "\n".join(added) + "\n")
     return {"added": added, "present": sorted(present & set(patterns))}
 
 

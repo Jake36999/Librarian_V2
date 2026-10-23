@@ -12,6 +12,7 @@ import pytest
 
 from resource_librarian import keys, providers
 from resource_librarian.app import App, build
+from resource_librarian.hosts import L1_PROBE_CONTRACT_VERSION
 from resource_librarian.keys import KeyStore
 from resource_librarian.providers import Reply, ToolCall
 
@@ -140,6 +141,309 @@ def test_a_chat_turn_runs_the_loop_and_streams_events(served):
     wait_for(app, "turn_done", after=done["seq"])
 
 
+def test_selected_profile_requires_its_own_fresh_role_qualification(served):
+    """A screened Lead is not silently evidence for a different agent role."""
+    app, client, model = served
+    assert client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "m1"}],
+                                       "override": "test profile policy"})[0] == 200
+    assert client.post("/api/agent-profile", {"id": "research_helper"})[0] == 200
+
+    blocked, body = client.post("/api/chat", {"text": "help me inspect this"})
+    assert blocked == 409
+    assert "requires screened qualification" in body["error"]
+    assert body["plan"]["role"] == "research_helper"
+
+    fingerprints = app._qualification_fingerprints("deepinfra", "m1", "research_helper")
+    app.qualifications.record(host_id="deepinfra", model_id="m1", role="research_helper",
+                              level="L1", outcome="pass",
+                              compatibility_fingerprint=fingerprints["compatibility"],
+                              behavior_fingerprint=fingerprints["behavior"],
+                              detail="role-specific smoke probe",
+                              probe_validation={"contract_version": L1_PROBE_CONTRACT_VERSION,
+                                                "passed": True})
+    model.replies = [Reply(text="I can help with the supplied read-only profile.")]
+    assert client.post("/api/chat", {"text": "help me inspect this"}) == (200, {"accepted": True})
+    assert wait_for(app, "turn_done")["reply"] == "I can help with the supplied read-only profile."
+
+
+def test_experimental_lead_selection_uses_a_route_scoped_ui_checkpoint(served):
+    """The compatibility override is now an auditable UI decision, not prompt prose."""
+    app, client, _ = served
+    route = [{"provider": "deepinfra", "model": "checkpoint-model"}]
+
+    status, waiting = client.post("/api/tiers", {"tiers": route})
+    assert status == 409 and waiting["needs_override"]
+    checkpoint = waiting["checkpoint_record"]
+    assert checkpoint["type"] == "host_model_override"
+    assert checkpoint["resolution"] == ""
+    assert app.checkpoint_resolve(checkpoint["id"], "approve")["resolution"] == "approve"
+
+    status, selected = client.post("/api/tiers", {"tiers": route, "checkpoint_id": checkpoint["id"]})
+    assert status == 200, selected
+    assert selected["lead"]["status"] == "override"
+    assert app.checkpoint_list()["checkpoints"][-1]["scope"] == checkpoint["scope"]
+
+
+def test_verified_release_lead_first_run_requires_a_visible_l1_checkpoint_then_selects(served, monkeypatch):
+    """A release result is not silently trusted or silently made chargeable."""
+    import resource_librarian.app as app_module
+    import resource_librarian.hosts as hosts_module
+    from resource_librarian.hosts import (RELEASE_PROMPT_CONTRACT_VERSION,
+                                          RELEASE_TOOL_CONTRACT_VERSION, digest,
+                                          endpoint_fingerprint)
+
+    app, client, _ = served
+    route = app._release_contract("preset-openai")
+    endpoint = route["endpoint"]
+    model_id = "release-model-2026-10-01"
+    lead = {
+        "id": "release-openai-test", "provider": "openai", "host_id": "preset-openai",
+        "model": model_id, "model_version": model_id, "role": "lead",
+        "qualification": "verified_release",
+        "model_fingerprint": digest({"provider": "openai", "model": model_id,
+                                      "model_version": model_id}),
+        "endpoint": endpoint, "endpoint_fingerprint": endpoint_fingerprint(endpoint),
+        "l3_runs": 5, "tested_at": "2026-10-01T00:00:00+00:00",
+        "expires_at": "2027-01-01T00:00:00+00:00",
+        "qualification_artifacts": [{"id": "ci://golden/openai", "sha256": "b" * 64}],
+    }
+    manifest = {
+        "schema_version": 2, "release_status": "stable", "release_version": "2.1.0",
+        "signing": {"status": "signed", "verification": {
+            "id": "ci-signature", "verified_at": "2026-10-01T01:00:00+00:00"}},
+        "contract": {"protocol_version": route["protocol_version"],
+                     "tool_contract_version": RELEASE_TOOL_CONTRACT_VERSION,
+                     "prompt_contract_version": RELEASE_PROMPT_CONTRACT_VERSION,
+                     "core_version_range": ">=2.1.0,<2.2.0"}, "leads": [lead],
+    }
+    manifest["integrity"] = digest(manifest)
+    from resource_librarian.hosts import release_leads
+    path = app.vault.librarian / "test-release-leads.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    monkeypatch.setattr(app_module, "release_leads", lambda: release_leads(path))
+    # ``lead_status`` intentionally rechecks the same bundled file before
+    # accepting the tier, so model its production source rather than only the
+    # first-run UI reader.
+    monkeypatch.setattr(hosts_module, "release_leads", lambda: release_leads(path))
+    probe_provider = providers.Scripted(
+        lambda *_: Reply(tool_calls=[ToolCall("probe", "librarian_probe", {"ok": True})],
+                         model=model_id), name=model_id)
+    monkeypatch.setattr(app, "_configured_provider", lambda _choice: probe_provider)
+
+    status, waiting = client.post("/api/release-leads/select", {
+        "id": "release-openai-test", "key": "test-secret"})
+    assert status == 409
+    checkpoint = waiting["checkpoint_record"]
+    assert checkpoint["type"] == "evaluation_spend"
+    assert app.checkpoint_resolve(checkpoint["id"], "approve")["resolution"] == "approve"
+
+    status, selected = client.post("/api/release-leads/select", {
+        "id": "release-openai-test", "checkpoint_id": checkpoint["id"]})
+    assert status == 200, selected
+    assert selected["selected"] is True, json.dumps(selected, indent=2)
+    assert selected["tiers"] == [{"host_id": "preset-openai", "provider": "preset-openai",
+                                   "model": model_id}]
+    assert selected["lead_status"]["result"] == "verified_release"
+    # The account probe is evidence for this exact bundled lead rather than
+    # an indistinguishable default smoke test.
+    assert selected["probe"]["run"]["scenario"] == "release:release-openai-test"
+
+
+@pytest.mark.parametrize(("reply", "failure"), [
+    (Reply(model="m1"), "tool_call_count"),
+    (Reply(tool_calls=[ToolCall("probe", "wrong_probe", {"ok": True})], model="m1"), "tool_name"),
+    (Reply(tool_calls=[ToolCall("probe", "librarian_probe", {"ok": "true"})], model="m1"),
+     "tool_arguments"),
+    (Reply(tool_calls=[ToolCall("probe", "librarian_probe", {"ok": True, "extra": 1})], model="m1"),
+     "tool_arguments"),
+    (Reply(tool_calls=[ToolCall("one", "librarian_probe", {"ok": True}),
+                       ToolCall("two", "librarian_probe", {"ok": True})], model="m1"), "tool_call_count"),
+    (Reply(tool_calls=[ToolCall("probe", "librarian_probe", {"ok": True})]), "returned_model_missing"),
+    (Reply(tool_calls=[ToolCall("probe", "librarian_probe", {"ok": True})], model="other-model"),
+     "returned_model_mismatch"),
+])
+def test_l1_rejects_any_non_strict_tool_or_route_contract(served, monkeypatch, reply, failure):
+    """A reachable route is not screened until its full L1 contract passes."""
+    app, _, _ = served
+    provider = providers.Scripted(lambda *_: reply, name="m1")
+    monkeypatch.setattr(app, "_configured_provider", lambda _choice: provider)
+
+    result = app.run_qualification("preset-deepinfra", "m1", "lead", "L1", True)
+
+    run = result["run"]
+    assert run["outcome"] == "fail"
+    assert run["probe_validation"]["contract_version"] == L1_PROBE_CONTRACT_VERSION
+    assert run["probe_validation"]["passed"] is False
+    assert failure in run["probe_validation"]["failure_codes"]
+    assert result["status"]["qualification"]["status"] == "experimental"
+
+
+def test_l1_records_strict_route_and_tool_evidence(served, monkeypatch):
+    app, _, _ = served
+    provider = providers.Scripted(
+        lambda *_: Reply(tool_calls=[ToolCall("probe", "librarian_probe", {"ok": True})], model="m1"),
+        name="m1",
+    )
+    monkeypatch.setattr(app, "_configured_provider", lambda _choice: provider)
+
+    result = app.run_qualification("preset-deepinfra", "m1", "lead", "L1", True)
+
+    run = result["run"]
+    assert run["outcome"] == "pass"
+    assert run["probe_validation"] == {
+        "contract_version": L1_PROBE_CONTRACT_VERSION,
+        "passed": True,
+        "checks": {"exactly_one_call": True, "tool_name": True,
+                   "arguments": True, "returned_model": True},
+        "failure_codes": [], "requested_model": "m1", "observed_model": "m1",
+    }
+    assert result["status"]["qualification"]["status"] == "screened"
+
+
+def test_host_controls_have_an_explicit_partial_update_contract(served):
+    app, client, _ = served
+    app.hosts.mark_health("preset-deepinfra", ok=True, detail="previous check", model="m1")
+    before = app.hosts.get("preset-deepinfra")
+    identity = (before.protocol, before.base_url, before.auth_ref, before.endpoint_fingerprint)
+    history = list(before.health_history)
+
+    status, body = client.post("/api/hosts", {"host": {"id": "preset-deepinfra", "timeout": 30}})
+    assert status == 400
+    assert body["error"] == "host_requires_full_record"
+    assert set(body["missing_fields"]) == {"display_name", "protocol"}
+
+    status, saved = client.post("/api/hosts/controls", {
+        "host_id": "preset-deepinfra", "timeout": 30, "concurrency_limit": 2, "rate_limit": 8,
+    })
+    assert status == 200
+    assert (saved["timeout"], saved["concurrency_limit"], saved["rate_limit"]) == (30, 2, 8)
+    assert (saved["protocol"], saved["base_url"], saved["auth_ref"], saved["endpoint_fingerprint"]) == identity
+    assert saved["health_history"] == history
+
+    status, refused = client.post("/api/hosts/controls", {
+        "host_id": "preset-deepinfra", "auth_ref": "other-key",
+    })
+    assert status == 400 and "host_controls_only_accept" in refused["error"]
+
+
+def test_route_readiness_reuses_seeded_host_evidence_without_probe_spend(served):
+    app, client, _ = served
+    app.settings.update(tiers=[{"host_id": "preset-deepinfra", "provider": "preset-deepinfra",
+                                "model": "m1"}])
+
+    status, readiness = client.get("/api/routes/readiness")
+
+    assert status == 200
+    assert readiness["core"]["ok"] is True
+    route = next(row for row in readiness["routes"]
+                 if row["host_id"] == "preset-deepinfra" and row["model"] == "m1")
+    assert route["qualification"]["status"] == "experimental"
+    assert route["core_workflow"]["ok"] is True
+    assert route["fixture_preflight"]["status"] == "not_run"
+    # Legacy model cards retain their provider key while persisted tiers use
+    # the seeded registry id, so the response deliberately has this alias.
+    assert any(row["host_id"] == "deepinfra" and row["model"] == "m1"
+               for row in readiness["routes"])
+
+
+def test_route_readiness_is_passive_and_does_not_refresh_qualification(served, monkeypatch):
+    """Opening the existing picker must not queue or spend evaluation work."""
+    app, client, _ = served
+    app.settings.update(tiers=[{"host_id": "preset-deepinfra", "provider": "preset-deepinfra",
+                                "model": "m1"}])
+
+    def qualification_read_would_mutate(*_args, **_kwargs):
+        raise AssertionError("route readiness must not refresh qualification evidence")
+
+    monkeypatch.setattr(app, "qualification_status", qualification_read_would_mutate)
+    status, readiness = client.get("/api/routes/readiness")
+
+    assert status == 200
+    assert readiness["core"]["ok"] is True
+
+
+def test_route_readiness_keeps_the_existing_picker_available_if_its_self_check_fails(
+        served, monkeypatch):
+    """Diagnostic readiness must not turn a recoverable Core check into a UI outage."""
+    app, client, _ = served
+    app.settings.update(tiers=[{"host_id": "preset-deepinfra", "provider": "preset-deepinfra",
+                                "model": "m1"}])
+    monkeypatch.setattr(app, "_l0_contract_check",
+                        lambda: (_ for _ in ()).throw(RuntimeError("test-only fault")))
+
+    status, readiness = client.get("/api/routes/readiness")
+
+    assert status == 200
+    assert readiness["core"] == {
+        "ok": False,
+        "status": "error",
+        "detail": "Core workflow self-check is unavailable; route selection remains available.",
+        "profile": "lead",
+        "session": "",
+    }
+    assert any(row["model"] == "m1" for row in readiness["routes"])
+
+
+def test_route_readiness_flags_a_selected_profile_that_cannot_lead_project_walks(served):
+    """The existing picker must not report a read-only Lead surface as ready."""
+    app, client, _ = served
+    status, saved = client.post("/api/profiles", {"profile": {
+        "id": "restricted-lead", "role": "lead", "permission_ceiling": "consult",
+        "allowed_bundles": ["read"],
+    }})
+    assert status == 200 and saved["id"] == "restricted-lead"
+    assert client.post("/api/agent-profile", {"id": "restricted-lead"})[0] == 200
+
+    status, readiness = client.get("/api/routes/readiness")
+
+    assert status == 200
+    assert readiness["core"]["ok"] is False
+    assert readiness["core"]["status"] == "blocked"
+    assert readiness["core"]["profile"] == "restricted-lead"
+    assert "create_project" in readiness["core"]["detail"]
+
+
+def test_route_readiness_uses_the_selected_profiles_runtime_role_for_evidence(served, monkeypatch):
+    """A custom profile id must not fork the Lead qualification namespace."""
+    app, _, _ = served
+    app.profile_save({"id": "field-lead", "role": "lead", "permission_ceiling": "contribute",
+                      "allowed_bundles": ["session", "research"]})
+    observed_roles = []
+    original = app._qualification_fingerprints
+
+    def capture(host_id, model, role):
+        observed_roles.append(role)
+        return original(host_id, model, role)
+
+    monkeypatch.setattr(app, "_qualification_fingerprints", capture)
+    readiness = app.route_readiness("field-lead")
+
+    assert readiness["core"]["profile"] == "field-lead"
+    assert observed_roles and set(observed_roles) == {"lead"}
+
+
+def test_custom_host_model_discovery_routes_by_registry_id(served, monkeypatch):
+    app, client, _ = served
+    status, saved = client.post("/api/hosts", {"host": {
+        "id": "studio-lan", "display_name": "Studio LAN", "protocol": "openai",
+        "base_url": "http://127.0.0.1:1234/v1", "auth_ref": "", "enabled": True,
+        "timeout": 30, "concurrency_limit": 2, "rate_limit": 12,
+    }})
+    assert status == 200 and saved["id"] == "studio-lan"
+    calls = []
+    custom = providers.Scripted(lambda *_: Reply(), name="local-tool-model")
+
+    def configured(choice):
+        calls.append(choice)
+        return custom
+
+    monkeypatch.setattr(app, "_provider_for", configured)
+    status, listing = client.get("/api/models?provider=studio-lan")
+    assert status == 200
+    assert listing["models"][0]["id"] == "local-tool-model"
+    assert calls == [{"host_id": "studio-lan"}]
+
+
 def test_ask_mode_waits_for_the_person_and_a_mode_switch_releases_it(served):
     app, client, model = served
     client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "m1"}], "override": "test"})
@@ -242,6 +546,30 @@ def test_tiers_fall_back_upward(served):
     assert app.tier(3) is model.provider                           # tier 3 -> 2 -> 1
     client.post("/api/tiers", {"tiers": []})                       # clear selection
     assert app.tier(1) is None
+
+
+def test_existing_provider_tiers_migrate_to_explicit_seeded_or_custom_hosts(vault, tmp_path, monkeypatch):
+    """Old global base URLs become visible host records without losing their route."""
+    monkeypatch.setenv("LIBRARIAN_CONFIG_DIR", str(tmp_path / "config"))
+    app_state = vault.librarian / "app.json"
+    state = json.loads(app_state.read_text(encoding="utf-8")) if app_state.is_file() else {}
+    state.update({
+        "tiers": [{"provider": "deepinfra", "model": "legacy-default"},
+                  {"provider": "local", "model": "legacy-local"}],
+        "base_urls": {"local": "http://127.0.0.1:11999/v1"},
+    })
+    app_state.write_text(json.dumps(state), encoding="utf-8")
+    app = App(vault, keys=KeyStore(use_keyring=False), provider_for=lambda _choice: None)
+    try:
+        first, second = app.settings.data["tiers"]
+        assert first == {"host_id": "preset-deepinfra", "provider": "preset-deepinfra",
+                         "model": "legacy-default"}
+        assert second["host_id"].startswith("legacy-local-")
+        assert second["provider"] == second["host_id"] and second["model"] == "legacy-local"
+        assert app.hosts.get(second["host_id"]).base_url == "http://127.0.0.1:11999/v1"
+        assert app.settings.data["host_route_migration"] == 1
+    finally:
+        app.close_runtime()
 
 
 def test_a_queued_action_asks_in_ask_mode_and_can_be_cancelled(served):

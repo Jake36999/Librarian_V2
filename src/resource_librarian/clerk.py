@@ -49,6 +49,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Sequence
 
+from .coordination import atomic_write_text
+
 MAX_BULLETS = 6
 BULLET_CHARS = 160
 REPAIR_ATTEMPTS = 1
@@ -1453,8 +1455,8 @@ def _queue(task: Task, queue_dir: Path | None, why: str) -> Result:
     if queue_dir is not None:
         queue_dir.mkdir(parents=True, exist_ok=True)
         payload = task.payload()
-        (queue_dir / f"{task_key(payload)}.json").write_text(
-            json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+        atomic_write_text(queue_dir / f"{task_key(payload)}.json",
+                          json.dumps(payload, ensure_ascii=False))
     return Result(task.kind.name, task.id, "queued", problems=why)
 
 
@@ -1506,8 +1508,8 @@ def submit(queue_dir: Path, key: str, answer: dict[str, Any], by: str = "") -> d
         return {"accepted": False, "key": key, "problems": problems[:10]}
     answers = queue_dir / "answers"
     answers.mkdir(parents=True, exist_ok=True)
-    (answers / f"{key}.json").write_text(json.dumps({"answer": answer, "by": by},
-                                                    ensure_ascii=False), encoding="utf-8")
+    atomic_write_text(answers / f"{key}.json", json.dumps({"answer": answer, "by": by},
+                                                            ensure_ascii=False))
     path.unlink()
     return {"accepted": True, "key": key,
             "waiting": len(list(queue_dir.glob("*.json")))}

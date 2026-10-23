@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import sqlite3
 from pathlib import Path
@@ -295,6 +296,11 @@ class LensStore:
             record["h"] = chain_hash(_last_hash(path), record)
             with path.open("a", encoding="utf-8") as handle:
                 handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+                handle.flush()
+                try:
+                    os.fsync(handle.fileno())
+                except OSError:
+                    pass
 
     def verify(self) -> dict[str, Any]:
         """Whether the record's chain holds, and whether every lens in the store

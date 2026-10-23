@@ -52,8 +52,118 @@ DASHBOARDS: dict[str, str] = {"deepinfra": "https://deepinfra.com/dash",
 _DEEPINFRA_BALANCE = "https://api.deepinfra.com/payment/checklist?compute_owed=true"
 
 
+PROVIDER_FAILURE_CATEGORIES = (
+    "local_environment",
+    "credentials",
+    "route_configuration",
+    "provider_rate_limited",
+    "provider_transient",
+    "provider_transport",
+    "provider_rejected",
+    "unknown",
+)
+
+
 class ProviderError(RuntimeError):
-    """The provider could not answer: unreachable, no key, or its own error."""
+    """A selected route could not answer, with an optional typed cause.
+
+    The message remains safe, concise, and useful to a person.  ``category``
+    is deliberately separate from the message so a Windows socket policy or a
+    missing key cannot be reported as evidence that a model is unreliable.
+    Older/custom adapters may still construct this with only a message; the
+    classifier below gives those errors a conservative category at the Core
+    boundary.
+    """
+
+    def __init__(self, message: str, *, category: str = "") -> None:
+        super().__init__(message)
+        self.category = category if category in PROVIDER_FAILURE_CATEGORIES else ""
+
+
+def provider_failure_category(error: BaseException | str) -> str:
+    """Return a stable, user-facing category for a route failure.
+
+    This is intentionally a small taxonomy: it distinguishes failures a
+    person can repair locally from provider behaviour without claiming that a
+    generic network error says anything about model quality.  Explicit adapter
+    categories win; the text fallback preserves compatibility for custom and
+    historical adapters that raised the old message-only ``ProviderError``.
+    """
+    explicit = str(getattr(error, "category", ""))
+    if explicit in PROVIDER_FAILURE_CATEGORIES:
+        return explicit
+
+    # A real OS exception is useful evidence.  Do not infer the same result
+    # from the bare words "permission denied": provider responses and custom
+    # adapters can use that wording for an account or policy rejection.
+    if isinstance(error, PermissionError) or getattr(error, "winerror", None) == 10013:
+        return "local_environment"
+
+    detail = str(error).casefold()
+    # Setup/identity precedes local-permission matching: an HTTP 403 whose
+    # provider happens to say "permission denied" is a provider credential
+    # problem, not a Windows socket-policy failure.
+    if any(token in detail for token in (
+        "no model chosen", "no anthropic model chosen", "not configured",
+        "unknown provider", "host is disabled", "model not found", "http 404",
+    )):
+        return "route_configuration"
+    if any(token in detail for token in (
+        "api_key", "api key", "is not set", "authentication", "unauthorized",
+        "invalid key", "http 401", "http 403",
+    )):
+        return "credentials"
+    if any(token in detail for token in (
+        "winerror 10013", "socket in a way forbidden", "network access is disabled",
+        "blocked by local policy", "socket access forbidden",
+    )):
+        return "local_environment"
+    if any(token in detail for token in ("http 429", "rate limit", "rate-limited")):
+        return "provider_rate_limited"
+    if any(token in detail for token in (
+        "http 500", "http 502", "http 503", "http 504", "timed out",
+        "timeout", "provider is slow", "provider busy", "service unavailable",
+        "overloaded", "connection reset", "connection aborted",
+    )):
+        return "provider_transient"
+    if any(token in detail for token in (
+        "is not reachable", "connection refused", "name or service not known",
+        "temporary failure in name resolution", "dns", "network is unreachable",
+    )):
+        return "provider_transport"
+    if "http " in detail:
+        return "provider_rejected"
+    return "unknown"
+
+
+def _http_failure_category(status: int) -> str:
+    if status in (401, 403):
+        return "credentials"
+    if status == 404:
+        return "route_configuration"
+    if status == 429:
+        return "provider_rate_limited"
+    if status in (500, 502, 503, 504):
+        return "provider_transient"
+    return "provider_rejected"
+
+
+def _transport_failure_category(reason: Any) -> str:
+    """Classify an OS transport error without treating it as model evidence."""
+    seen: set[int] = set()
+    current = reason
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, PermissionError) or getattr(current, "winerror", None) == 10013:
+            return "local_environment"
+        detail = str(current).casefold()
+        if any(token in detail for token in (
+            "winerror 10013", "socket in a way forbidden", "network access is disabled",
+            "blocked by local policy", "operation not permitted",
+        )):
+            return "local_environment"
+        current = getattr(current, "__cause__", None) or getattr(current, "__context__", None)
+    return "provider_transport"
 
 
 @dataclass
@@ -116,7 +226,8 @@ class Provider:
         try:
             listed = self.models()
         except ProviderError as exc:
-            return {**out, "ok": False, "error": str(exc)[:300]}
+            return {**out, "ok": False, "error": str(exc)[:300],
+                    "failure_category": provider_failure_category(exc)}
         return {**out, "ok": True, "models": len(listed),
                 "status": f"Connected: {len(listed)} models available"}
 
@@ -147,7 +258,8 @@ def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
             if exc.code in TRANSIENT_HTTP and pauses:
                 (sleep or time.sleep)(pauses.pop(0))
                 continue
-            raise ProviderError(f"HTTP {exc.code} from {url}: {detail}") from exc
+            raise ProviderError(f"HTTP {exc.code} from {url}: {detail}",
+                                category=_http_failure_category(exc.code)) from exc
         except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
             # A refused connection is a server that is not running (a local model): asking
             # again only waits. A timeout or a dropped connection is worth another try.
@@ -162,8 +274,9 @@ def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
                 raise ProviderError(f"the model did not answer within {int(timeout)} seconds "
                                     f"({len(TRANSIENT_RETRIES) + 1} tries): the provider is slow "
                                     f"or busy right now - try again shortly, or choose another "
-                                    f"model") from exc
-            raise ProviderError(f"{url} is not reachable: {exc}") from exc
+                                    f"model", category="provider_transient") from exc
+            raise ProviderError(f"{url} is not reachable: {exc}",
+                                category=_transport_failure_category(reason)) from exc
 
 
 def _key(key_env: str) -> str:
@@ -171,7 +284,7 @@ def _key(key_env: str) -> str:
         return ""
     key = os.environ.get(key_env, "")
     if not key:
-        raise ProviderError(f"{key_env} is not set")
+        raise ProviderError(f"{key_env} is not set", category="credentials")
     return key
 
 
@@ -220,7 +333,7 @@ class OpenAICompatible(Provider):
     def chat(self, system: str, messages: list[dict[str, Any]], tools: list[ToolDef],
              max_tokens: int = 4096, temperature: float | None = None) -> Reply:
         if not self.model:
-            raise ProviderError(f"no model chosen for {self.name}")
+            raise ProviderError(f"no model chosen for {self.name}", category="route_configuration")
         body: dict[str, Any] = {"model": self.model, "max_tokens": max_tokens,
                                 "messages": self.wire_messages(system, messages)}
         if temperature is not None:
@@ -297,7 +410,7 @@ class Anthropic(Provider):
     def chat(self, system: str, messages: list[dict[str, Any]], tools: list[ToolDef],
              max_tokens: int = 4096, temperature: float | None = None) -> Reply:
         if not self.model:
-            raise ProviderError("no Anthropic model chosen")
+            raise ProviderError("no Anthropic model chosen", category="route_configuration")
         body: dict[str, Any] = {"model": self.model, "max_tokens": max_tokens,
                                 "messages": self.wire_messages(messages)}
         if system:
@@ -351,10 +464,14 @@ def from_settings(settings: dict[str, Any]) -> Provider | None:
         return None
     if provider not in PRESETS and not settings.get("base_url"):
         raise ProviderError(f"unknown provider {provider!r}; one of {sorted(PRESETS)}, "
-                            f"or give a base_url")
+                            f"or give a base_url", category="route_configuration")
     base = {**PRESETS.get(provider, {"protocol": "openai"}),
             **{k: v for k, v in settings.items() if k in ("base_url", "key_env", "protocol")}}
+    try:
+        timeout = max(1.0, min(float(settings.get("timeout") or 120), 3600.0))
+    except (TypeError, ValueError):
+        timeout = 120.0
     model = str(settings.get("model") or "")
     if base["protocol"] == "anthropic":
-        return Anthropic(model, base["key_env"], base["base_url"], provider)
-    return OpenAICompatible(base["base_url"], model, base["key_env"], provider)
+        return Anthropic(model, base["key_env"], base["base_url"], provider, timeout=timeout)
+    return OpenAICompatible(base["base_url"], model, base["key_env"], provider, timeout=timeout)

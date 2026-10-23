@@ -20,6 +20,8 @@ ignored or deleted.
 from __future__ import annotations
 
 import re
+import os
+import secrets
 import tomllib
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -215,7 +217,22 @@ class Vault:
                 lines.insert(start + 1, rendered)
             else:
                 lines[found] = rendered
-        self.config_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        self.config_path.parent.mkdir(parents=True, exist_ok=True)
+        temp = self.config_path.with_name(f".{self.config_path.name}.{secrets.token_hex(6)}.tmp")
+        try:
+            with temp.open("w", encoding="utf-8", newline="") as handle:
+                handle.write("\n".join(lines) + "\n")
+                handle.flush()
+                try:
+                    os.fsync(handle.fileno())
+                except OSError:
+                    pass
+            os.replace(temp, self.config_path)
+        finally:
+            try:
+                temp.unlink()
+            except OSError:
+                pass
 
 
 def render_config(config: dict[str, dict[str, Any]]) -> str:

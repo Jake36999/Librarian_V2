@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Literal
+from typing import Any, Callable, Literal, TypeVar
 
 from .. import agenda, desk, evaluation, notes, text
+from ..coordination import atomic_write_text
 from ..index import Index
 from ..registry import Card, Context, tool
 from ..search import INTENTS, Engine, search
@@ -14,6 +15,8 @@ from ..vault import now_iso
 Intent = Literal["orient", "donor", "pattern", "technique", "data", "precedent", "in_text",
                  "made", "all"]
 assert set(Intent.__args__) == set(INTENTS)                  # type: ignore[attr-defined]
+
+R = TypeVar("R")
 
 
 def engine_for(ctx: Context, refresh: bool = True) -> Engine:
@@ -33,8 +36,14 @@ def engine_for(ctx: Context, refresh: bool = True) -> Engine:
     return cached
 
 
-def _build_engine(ctx: Context) -> Engine:
-    index = Index(ctx.vault)
+def _build_engine(ctx: Context, index: Index | None = None) -> Engine:
+    """Make an Engine around an already-owned index when Core supplies one.
+
+    The compatibility path deliberately still creates an Index for direct
+    library/test calls.  An App context supplies ``index_service`` instead,
+    and all work below is then performed on its one SQLite worker.
+    """
+    index = index or Index(ctx.vault)
     vectors = None
     from ..embed import VectorSearch, spec_for
     spec = spec_for(ctx.vault)
@@ -43,6 +52,14 @@ def _build_engine(ctx: Context) -> Engine:
     config = ctx.vault.config()
     heuristics = {**config.get("heuristics", {}),
                   "data_shaped": config.get("search", {}).get("data_shaped")}
+    # A selected personal ranking candidate can adjust retrieval weights only.
+    # It is vault-scoped, versioned and picked manually; it never influences
+    # host routing, permissions, promotion or any control-plane decision.
+    try:
+        from .. import ranking
+        heuristics.update(ranking.active_overrides(ctx.vault))
+    except Exception:                                      # a missing/old experiment never breaks search
+        pass
     engine = Engine(index, heuristics, vectors)
     # Slot 6: vectors only for the intents a person turned on after measuring; the older
     # [search] vectors setting (no slot choice, no list) keeps them on every intent.
@@ -50,6 +67,41 @@ def _build_engine(ctx: Context) -> Engine:
     slot = str(ctx.vault.setting("services", "embeddings") or "")
     engine.vector_intents = list(listed) if listed is not None else ([] if slot else None)
     return engine
+
+
+def _prepared_engine(ctx: Context, index: Index, refresh: bool) -> Engine:
+    """Build and, when requested, refresh an engine inside the index owner."""
+    engine = _build_engine(ctx, index)
+    if refresh:
+        report = index.refresh()
+        documents = text.sync_documents(index)
+        if report.upserted or report.removed or report.rebuilt or documents["indexed"]:
+            engine.forget()
+    return engine
+
+
+def with_engine(ctx: Context, operation: Callable[[Engine], R], *, refresh: bool = True) -> R:
+    """Run a bounded retrieval/index operation through the active Core.
+
+    A generic registry-level lock is intentionally not used: some tools wait
+    for a person or orchestrate other tools.  Library operations are short
+    and self-contained, so their complete SQLite interaction can safely run
+    on :class:`IndexService`'s worker.  Direct callers retain V1-compatible
+    local behaviour when no service has been installed in their Context.
+    """
+    service = ctx.extras.get("index_service")
+    if service is not None:
+        return service.run(lambda index: operation(_prepared_engine(ctx, index, refresh)))
+    return operation(engine_for(ctx, refresh=refresh))
+
+
+def with_index(ctx: Context, operation: Callable[[Index], R]) -> R:
+    """Run a short direct-index operation through Core when available."""
+    service = ctx.extras.get("index_service")
+    if service is not None:
+        return service.run(operation)
+    with Index(ctx.vault) as index:
+        return operation(index)
 
 
 @tool("index", tier="contribute", effect="write", scope="library",
@@ -60,7 +112,7 @@ def _build_engine(ctx: Context) -> Engine:
                 "changed or `rebuild` is set"))
 def index_tool(ctx: Context, rebuild: bool = False) -> dict:
     """The index is derived and disposable; this never touches a note."""
-    with Index(ctx.vault) as index:
+    def rebuild_index(index: Index) -> dict:
         report = index.rebuild() if rebuild else index.refresh()
         documents = text.sync_documents(index)
         out = {**report.to_dict(), "documents": documents}
@@ -71,14 +123,14 @@ def index_tool(ctx: Context, rebuild: bool = False) -> dict:
             out["vectors"] = ({"model": vectors.model, "embedded": vectors.sync()}
                               if not vectors.unavailable else {"error": vectors.unavailable})
         return {**out, "stats": index.stats()}
+    return with_index(ctx, rebuild_index)
 
 
 @tool("index_status", tier="consult", effect="read",
       card=Card("How big the index is and whether it is current",
                 "before trusting a search about coverage"))
 def index_status(ctx: Context) -> dict:
-    with Index(ctx.vault) as index:
-        return index.stats()
+    return with_index(ctx, lambda index: index.stats())
 
 
 @tool("search", tier="consult", effect="read",
@@ -97,8 +149,8 @@ def search_tool(ctx: Context, query: str, intent: Intent = "donor",
                 constraints: dict | None = None, limit: int = 10, source: str = "",
                 max_age_days: int = 0) -> dict:
     """`rank` is a position within this answer; `verdict` says whether to trust it."""
-    return search(engine_for(ctx), query, intent, constraints, limit, source,
-                  max_age_days).to_dict()
+    return with_engine(ctx, lambda engine: search(engine, query, intent, constraints, limit, source,
+                                                   max_age_days).to_dict())
 
 
 @tool("search_feedback", tier="consult", effect="write", scope="session",
@@ -114,8 +166,16 @@ def search_feedback(ctx: Context, query: str, note: str,
     from ..vault import now_iso
     path = ctx.vault.work("eval") / "feedback.jsonl"
     path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        from .. import ranking
+        ranking_state = ranking.status(ctx.vault)
+        ranking_config = ranking_state.get("active", "current")
+        ranking_mode = "Candidate" if ranking_config != "current" else "Current"
+    except Exception:                                      # feedback remains append-only if an experiment file is old
+        ranking_config, ranking_mode = "current", "Current"
     event = {"t": now_iso(), "query": query[:300], "intent": intent, "note": note,
              "rank": int(rank), "verdict": verdict, "by": ctx.tier,
+             "ranking_config": ranking_config, "ranking_mode": ranking_mode,
              **({"session": ctx.session} if ctx.session else {})}
     with path.open("a", encoding="utf-8") as handle:
         handle.write(_json.dumps(event, ensure_ascii=False) + "\n")
@@ -166,7 +226,7 @@ def _compare_vectors(ctx: Context, engine: Engine, folder, k: int) -> dict:
            "by_intent": evaluation.compare(lexical, hybrid),
            # SM req 10: how many answers vectors really joined (0: unavailable, not embedded)
            "vectors_contributed": hybrid.get("vectors_contributed", 0), "at": now_iso()}
-    (folder / "vectors.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
+    atomic_write_text(folder / "vectors.json", json.dumps(out, indent=1))
     return out
 
 
@@ -177,14 +237,15 @@ def _compare_vectors(ctx: Context, engine: Engine, folder, k: int) -> dict:
                 "A person's action only: a hosted model is paid per token. After this, new "
                 "text is embedded as it arrives"))
 def embed_index(ctx: Context) -> dict:
-    engine = engine_for(ctx)
-    if engine.vectors is None:
-        raise TypeError("no embedding model is chosen: Settings -> Connections, slot 6")
-    if engine.vectors.encode is None:
-        raise TypeError(engine.vectors.unavailable)
-    added = engine.vectors.sync()
-    return {"model": engine.vectors.model, "embedded": added,
-            "total": engine.vectors.embedded()}
+    def embed(engine: Engine) -> dict:
+        if engine.vectors is None:
+            raise TypeError("no embedding model is chosen: Settings -> Connections, slot 6")
+        if engine.vectors.encode is None:
+            raise TypeError(engine.vectors.unavailable)
+        added = engine.vectors.sync()
+        return {"model": engine.vectors.model, "embedded": added,
+                "total": engine.vectors.embedded()}
+    return with_engine(ctx, embed)
 
 
 @tool("verify_access", tier="contribute", effect="write", scope="library", open_world=True,
@@ -197,7 +258,8 @@ def embed_index(ctx: Context) -> dict:
 def verify_access(ctx: Context, source: str) -> dict:
     import json as _json
     from .. import components
-    row = engine_for(ctx, refresh=False).index.note_row(source)
+    row = with_engine(ctx, lambda engine: (dict(found) if (found := engine.index.note_row(source))
+                                           is not None else None), refresh=False)
     if row is None or row["shape"] != "source":
         raise TypeError(f"no source note named {source!r}")
     points = [str(p) for p in _json.loads(row["frontmatter"]).get("access_points") or []]
@@ -212,7 +274,8 @@ def verify_access(ctx: Context, source: str) -> dict:
       card=Card("The axes a search can filter on and their permitted values",
                 "before passing `constraints` to search"))
 def filters_tool(ctx: Context) -> dict:
-    return {"axes": engine_for(ctx, refresh=False).permitted_axes("source")}
+    return {"axes": with_engine(ctx, lambda engine: engine.permitted_axes("source"),
+                                 refresh=False)}
 
 
 @tool("get_note", tier="consult", effect="read",
@@ -221,19 +284,20 @@ def filters_tool(ctx: Context) -> dict:
                 "a search result is worth reading in full"))
 def get_note(ctx: Context, name: str, sections: list[str] | None = None) -> dict:
     """Section text is returned whole; ask for specific sections to keep it short."""
-    engine = engine_for(ctx)
-    row = engine.index.note_row(name)
-    if row is None:
-        return {"found": False, "name": name,
-                "next_step": "search for it; names are exact, including owner prefixes"}
-    note = notes.load(ctx.vault.root / row["path"])
-    body = note.sections()
-    wanted = {s.lower() for s in sections or []}
-    return {"found": True, "name": row["name"], "path": row["path"], "shape": row["shape"],
-            "kind": row["kind"], "frontmatter": json.loads(row["frontmatter"]),
-            "sections": {h or "opening": t for h, t in body.items()
-                         if not wanted or h.lower() in wanted},
-            "linked_from": engine.index.linked_from(row["name"])[:50]}
+    def load(engine: Engine) -> dict:
+        row = engine.index.note_row(name)
+        if row is None:
+            return {"found": False, "name": name,
+                    "next_step": "search for it; names are exact, including owner prefixes"}
+        note = notes.load(ctx.vault.root / row["path"])
+        body = note.sections()
+        wanted = {s.lower() for s in sections or []}
+        return {"found": True, "name": row["name"], "path": row["path"], "shape": row["shape"],
+                "kind": row["kind"], "frontmatter": json.loads(row["frontmatter"]),
+                "sections": {h or "opening": t for h, t in body.items()
+                             if not wanted or h.lower() in wanted},
+                "linked_from": engine.index.linked_from(row["name"])[:50]}
+    return with_engine(ctx, load)
 
 
 @tool("note_move", tier="contribute", effect="vault_write", scope="library",
@@ -247,8 +311,8 @@ def get_note(ctx: Context, name: str, sections: list[str] | None = None) -> dict
 def note_move(ctx: Context, name: str, new_name: str = "", new_folder: str = "") -> dict:
     if not new_name and not new_folder:
         raise TypeError("give a new_name, a new_folder, or both")
-    engine = engine_for(ctx)
-    row = engine.index.note_row(name)
+    row = with_engine(ctx, lambda engine: (dict(found) if (found := engine.index.note_row(name))
+                                           is not None else None))
     if row is None:
         raise TypeError(f"no note named {name!r}; names are exact, including owner prefixes")
     source = ctx.vault.root / row["path"]
@@ -275,12 +339,14 @@ def note_move(ctx: Context, name: str, new_name: str = "", new_folder: str = "")
             text = note_path.read_text(encoding="utf-8", errors="replace")
             rewritten, changed = notes.rewrite_wikilinks(text, old_name, target_name)
             if changed:
-                note_path.write_text(rewritten, encoding="utf-8")
+                atomic_write_text(note_path, rewritten)
                 updated.append(note_path.relative_to(ctx.vault.root).as_posix())
-    engine.index.remove(row["path"])
-    engine.index.upsert(target)
-    for rel in updated:
-        engine.index.upsert(ctx.vault.root / rel, force=True)
+    def refresh_moved(index: Index) -> None:
+        index.remove(row["path"])
+        index.upsert(target)
+        for rel in updated:
+            index.upsert(ctx.vault.root / rel, force=True)
+    with_index(ctx, refresh_moved)
     return {"path": target.relative_to(ctx.vault.root).as_posix(), "updated_links": updated}
 
 
@@ -305,16 +371,16 @@ def task_add(ctx: Context, note: str, text: str, due: str = "", heading: str = "
                         "goes in `due`")
     if due and not DUE_DATE.match(due):
         raise TypeError("due is a date, YYYY-MM-DD")
-    engine = engine_for(ctx)
-    row = engine.index.note_row(note)
+    row = with_engine(ctx, lambda engine: (dict(found) if (found := engine.index.note_row(note))
+                                           is not None else None))
     if row is None:
         raise TypeError(f"no note named {note!r}; names are exact, including owner prefixes")
     path = ctx.vault.root / row["path"]
     loaded = notes.load(path)
     line = f"- [ ] {text}" + (f" 📅 {due}" if due else "")
     body = notes.append_to_section(loaded.body, heading, line)
-    path.write_text(notes.render(loaded.frontmatter, body), encoding="utf-8")
-    engine.index.upsert(path)
+    atomic_write_text(path, notes.render(loaded.frontmatter, body))
+    with_index(ctx, lambda index: index.upsert(path))
     return {"note": row["name"], "task": line}
 
 
@@ -324,8 +390,8 @@ def task_add(ctx: Context, note: str, text: str, due: str = "", heading: str = "
       card=Card("Check off an open task on a note, matched by its text",
                 "a milestone or task is finished"))
 def task_done(ctx: Context, note: str, text: str) -> dict:
-    engine = engine_for(ctx)
-    row = engine.index.note_row(note)
+    row = with_engine(ctx, lambda engine: (dict(found) if (found := engine.index.note_row(note))
+                                           is not None else None))
     if row is None:
         raise TypeError(f"no note named {note!r}; names are exact, including owner prefixes")
     path = ctx.vault.root / row["path"]
@@ -334,8 +400,8 @@ def task_done(ctx: Context, note: str, text: str) -> dict:
     if task is None:
         raise TypeError(f"no open task {text!r} on {note!r}")
     body = loaded.body[:task.mark_at] + "x" + loaded.body[task.mark_at + 1:]
-    path.write_text(notes.render(loaded.frontmatter, body), encoding="utf-8")
-    engine.index.upsert(path)
+    atomic_write_text(path, notes.render(loaded.frontmatter, body))
+    with_index(ctx, lambda index: index.upsert(path))
     return {"note": row["name"], "done": text.strip()}
 
 
@@ -362,18 +428,18 @@ def agenda_tool(ctx: Context, project: str = "") -> dict:
                 "Reads .librarian/eval/questions.json and scenarios.json; reported per slice"))
 def evaluate(ctx: Context, k: int = 5, compare_vectors: bool = False,
              candidate: dict | None = None) -> dict:
-    engine = engine_for(ctx)
     folder = ctx.vault.work("eval")
-    if compare_vectors:
-        return _compare_vectors(ctx, engine, folder, k)
-    if candidate:
-        return _compare_config(engine, folder, k, candidate)
-    out = {"questions": evaluation.run_questions(engine, folder / "questions.json", k),
-           "scenarios": evaluation.run_scenarios(engine, folder / "scenarios.json", k)}
-    # The sweep gate reads this: retrieval before volume.
-    q = out["questions"]
-    (folder / "last.json").write_text(json.dumps(
-        {"at": now_iso(), "k": k, "total": q["total"], "hit": q.get("hit", 0.0),
-         "mrr": q.get("mrr", 0.0), "scenarios_useful": out["scenarios"].get("useful", 0.0)}),
-        encoding="utf-8")
-    return out
+    def run(engine: Engine) -> dict:
+        if compare_vectors:
+            return _compare_vectors(ctx, engine, folder, k)
+        if candidate:
+            return _compare_config(engine, folder, k, candidate)
+        out = {"questions": evaluation.run_questions(engine, folder / "questions.json", k),
+               "scenarios": evaluation.run_scenarios(engine, folder / "scenarios.json", k)}
+        # The sweep gate reads this: retrieval before volume.
+        q = out["questions"]
+        atomic_write_text(folder / "last.json", json.dumps(
+            {"at": now_iso(), "k": k, "total": q["total"], "hit": q.get("hit", 0.0),
+             "mrr": q.get("mrr", 0.0), "scenarios_useful": out["scenarios"].get("useful", 0.0)}))
+        return out
+    return with_engine(ctx, run)

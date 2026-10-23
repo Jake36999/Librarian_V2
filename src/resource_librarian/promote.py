@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any
 
 from . import notes, schema
+from .coordination import atomic_write_text
 from .index import Index
 from .rules import Refusal
 from .search import Engine, search
@@ -161,8 +162,8 @@ def write_topic_index(index: Index, topic: str) -> Path:
                              "topic. Edits here are overwritten."),
         ("Sources", "\n".join(lines) or "None yet.")])
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(notes.render({"type": "index", "status": "active", "generated": True,
-                                  "topic": topic}, body), encoding="utf-8")
+    atomic_write_text(path, notes.render({"type": "index", "status": "active", "generated": True,
+                                          "topic": topic}, body))
     index.upsert(path)
     return path
 
@@ -189,7 +190,7 @@ def write_concept_sources(index: Index, concept: str) -> Path | None:
     preamble = note.sections().get("", "")
     body = (preamble + "\n\n" if preamble else "") + "\n".join(
         f"## {h}\n{t}\n" for h, t in sections) + f"\n## {CONCEPT_SOURCES}\n{marker}\n\n{listing}\n"
-    path.write_text(notes.render(note.frontmatter, body), encoding="utf-8")
+    atomic_write_text(path, notes.render(note.frontmatter, body))
     index.upsert(path)
     return path
 
@@ -211,8 +212,8 @@ def write_master_index(index: Index) -> Path:
         ("Sources By Kind", "\n".join(f"- {r['kind']}: {r['n']}" for r in kinds) or
          "No sources yet.")])
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(notes.render({"type": "index", "status": "active", "generated": True},
-                                 body), encoding="utf-8")
+    atomic_write_text(path, notes.render({"type": "index", "status": "active", "generated": True},
+                                         body))
     index.upsert(path)
     return path
 
@@ -264,7 +265,7 @@ def promote(vault: Vault, engine: Engine, draft: Draft) -> Report:
     if linked:
         fm["concepts"] = [f"[[{c}]]" for c in linked]
     folder.mkdir(parents=True, exist_ok=True)
-    path.write_text(notes.render(fm, body), encoding="utf-8")
+    atomic_write_text(path, notes.render(fm, body))
     rel = path.relative_to(vault.root).as_posix()
     report.path = rel
     violations = index.model.check(notes.load(path), vault.root)
@@ -294,7 +295,7 @@ def promote(vault: Vault, engine: Engine, draft: Draft) -> Report:
     if missed:
         note = notes.load(path)
         note.frontmatter["needs_attention"] = f"not findable: {'; '.join(missed)}"
-        path.write_text(notes.render(note.frontmatter, note.body), encoding="utf-8")
+        atomic_write_text(path, notes.render(note.frontmatter, note.body))
         index.upsert(path)
     report.step("findability", not missed, {"missed": missed})
     report.catalogued = not missed

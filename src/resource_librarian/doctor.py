@@ -11,6 +11,8 @@ import importlib
 import importlib.metadata as metadata
 import json
 import os
+import shutil
+import subprocess
 import sys
 from dataclasses import dataclass
 from typing import Any
@@ -139,6 +141,49 @@ def _recommended_plugin_checks(vault: Vault | None) -> list[Check]:
     return [Check("obsidian plugins", True, ", ".join(present))]
 
 
+def _workbench_checks() -> list[Check]:
+    """Fast, non-mutating Docker/WSL readiness for the source workbench."""
+    if shutil.which("docker") is None:
+        return [Check("Docker workbench", False,
+                      "Docker is not installed: inspect-only or explicitly-labelled non_isolated_host_exec are available")]
+    try:
+        info = subprocess.run(["docker", "info", "--format", "{{.ServerVersion}}"],
+                              capture_output=True, text=True, timeout=5)
+        docker_ok = info.returncode == 0
+        detail = f"Docker {info.stdout.strip()}" if docker_ok else "Docker is installed but its daemon is not ready"
+    except (OSError, subprocess.SubprocessError):
+        docker_ok, detail = False, "Docker did not answer within 5 seconds"
+    out = [Check("Docker workbench", docker_ok, detail)]
+    if os.name == "nt":
+        try:
+            wsl = subprocess.run(["wsl", "--status"], capture_output=True, text=True, timeout=5)
+            out.append(Check("WSL2 backend", wsl.returncode == 0,
+                             "WSL status available" if wsl.returncode == 0 else
+                             "Docker Desktop should use a working WSL2 backend"))
+        except (OSError, subprocess.SubprocessError):
+            out.append(Check("WSL2 backend", False, "could not confirm WSL2 readiness"))
+        # Local LLMs compete with Docker Desktop for RAM.  Do not prescribe a
+        # threshold without knowing the selected model; make the capacity
+        # visible instead.
+        try:
+            import ctypes
+            class MemoryStatus(ctypes.Structure):
+                _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong),
+                           ("ullTotalPhys", ctypes.c_ulonglong), ("ullAvailPhys", ctypes.c_ulonglong),
+                           ("ullTotalPageFile", ctypes.c_ulonglong), ("ullAvailPageFile", ctypes.c_ulonglong),
+                           ("ullTotalVirtual", ctypes.c_ulonglong), ("ullAvailVirtual", ctypes.c_ulonglong),
+                           ("ullAvailExtendedVirtual", ctypes.c_ulonglong)]
+            state = MemoryStatus()
+            state.dwLength = ctypes.sizeof(MemoryStatus)
+            ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(state))
+            available = state.ullAvailPhys // (1024 ** 3)
+            out.append(Check("local memory", available >= 8,
+                             f"{available} GiB available; Docker and local inference share this memory"))
+        except Exception:                                  # noqa: BLE001
+            out.append(Check("local memory", True, "memory pressure could not be measured"))
+    return out
+
+
 def checks(vault: Vault | None = None, mcp: Any = None) -> list[Check]:
     out = [Check("python", sys.version_info >= (3, 11),
                  f"{sys.version.split()[0]} (3.11 or later required)", required=True),
@@ -158,6 +203,7 @@ def checks(vault: Vault | None = None, mcp: Any = None) -> list[Check]:
     out.append(Check("embeddings", _module("model2vec"),
                      "model2vec installed" if _module("model2vec")
                      else "model2vec not installed: search is lexical only"))
+    out.extend(_workbench_checks())
     for provider, variables in KEY_VARIABLES.items():
         present = next((v for v in variables if os.environ.get(v)), "")
         out.append(Check(f"key: {provider}", bool(present),

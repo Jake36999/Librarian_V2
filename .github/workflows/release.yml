@@ -1,0 +1,100 @@
+name: Release bundle
+
+on:
+  workflow_dispatch:
+    inputs:
+      stable_release:
+        description: Build the protected stable bundle using reviewed release inputs and signing secrets
+        required: true
+        type: boolean
+        default: false
+      release_leads_path:
+        description: Repository-relative reviewed stable release-leads.json path
+        required: false
+        type: string
+        default: release-inputs/release-leads.json
+      requirements_lock_path:
+        description: Repository-relative pip-compile --generate-hashes lock path
+        required: false
+        type: string
+        default: release-inputs/requirements.release.lock
+      wheelhouse_path:
+        description: Repository-relative offline wheelhouse path
+        required: false
+        type: string
+        default: release-inputs/wheelhouse
+  push:
+    tags: ["v*"]
+
+jobs:
+  candidate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install release build tools
+        run: python -m pip install -e ".[dev]" build pip-tools
+      - name: Build all release artifacts
+        shell: pwsh
+        run: ./scripts/build-release.ps1 -Python python -OutDir release-out
+      - name: Upload non-installable candidate bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: librarian-candidate-${{ github.ref_name }}
+          path: release-out
+
+  stable:
+    # A tag produces a reviewable candidate.  Stable publication is an
+    # explicitly approved dispatch with actual L3 evidence, a hash lock,
+    # wheelhouse, and a protected signing certificate; it cannot accidentally
+    # treat checked-in candidate data as a production release.
+    if: github.event_name == 'workflow_dispatch' && inputs.stable_release
+    needs: candidate
+    runs-on: windows-latest
+    environment: stable-release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install release build tools
+        run: python -m pip install -e ".[dev]" build
+      - name: Build evidence-backed stable bundle
+        shell: pwsh
+        run: >
+          ./scripts/build-release.ps1 -Python python -OutDir release-out -Stable
+          -ReleaseLeads "${{ inputs.release_leads_path }}"
+          -RequirementsLock "${{ inputs.requirements_lock_path }}"
+          -Wheelhouse "${{ inputs.wheelhouse_path }}"
+      - name: Import protected signing certificate
+        id: signing
+        shell: pwsh
+        env:
+          LIBRARIAN_RELEASE_PFX_BASE64: ${{ secrets.LIBRARIAN_RELEASE_PFX_BASE64 }}
+          LIBRARIAN_RELEASE_PFX_PASSWORD: ${{ secrets.LIBRARIAN_RELEASE_PFX_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:LIBRARIAN_RELEASE_PFX_BASE64)) {
+            throw "The protected stable-release PFX secret is required."
+          }
+          $pfxPath = Join-Path $env:RUNNER_TEMP "librarian-release.pfx"
+          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:LIBRARIAN_RELEASE_PFX_BASE64))
+          try {
+            $certificate = Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\CurrentUser\My `
+              -Password (ConvertTo-SecureString $env:LIBRARIAN_RELEASE_PFX_PASSWORD -AsPlainText -Force)
+            if (-not $certificate -or -not $certificate.HasPrivateKey) { throw "The release certificate has no private key." }
+            "thumbprint=$($certificate.Thumbprint)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          } finally {
+            Remove-Item -LiteralPath $pfxPath -Force -ErrorAction SilentlyContinue
+          }
+      - name: Sign and verify stable bundle
+        shell: pwsh
+        run: |
+          ./scripts/sign-release.ps1 -ReleaseRoot release-out -CertificateThumbprint "${{ steps.signing.outputs.thumbprint }}"
+          ./scripts/verify-release.ps1 -ReleaseRoot release-out
+      - name: Upload verified stable bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: librarian-release-${{ github.ref_name }}
+          path: release-out

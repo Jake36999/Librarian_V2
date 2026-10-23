@@ -26,6 +26,7 @@ import threading
 from typing import Any, Callable
 
 from . import deep_read as reading
+from .coordination import atomic_write_bytes
 from .registry import REGISTRY, Context
 from .staging import StagingStore
 from .vault import Vault, now_iso
@@ -141,7 +142,7 @@ def _fetch_full_text(ctx: Context, item: dict[str, Any], url: str) -> dict[str, 
     folder = ctx.vault.work("staging") / "files"
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / f"{item['id']}.pdf"
-    path.write_bytes(raw)
+    atomic_write_bytes(path, raw)
     got = text.extract(path, ctx.vault.derived / "text")
     store = StagingStore(ctx.vault)
     fresh = store.load(item["id"])

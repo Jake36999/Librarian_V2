@@ -84,6 +84,12 @@ _RULES = [
     # --- failure -----------------------------------------------------------
     Rule("FAILURE_MUST_BE_LOUD", "failure",
          "An operation that can fail must be unable to fail silently."),
+    Rule("DOCUMENT_ACTIVE", "failure",
+         "Librarian never replaces a note while a connected editor reports it focused and dirty; "
+         "the affected operation waits for a document-level person decision."),
+    Rule("PINNED_REVISION_REQUIRED", "failure",
+         "Capability extraction and execution use a catalogued source at a pinned revision; "
+         "an unpinned current branch is not treated as reproducible evidence."),
     Rule("THRESHOLD_CARRIES_ITS_DISTRIBUTION", "failure",
          "A corpus-relative constant ships with the function that re-derives it."),
     # --- sessions ----------------------------------------------------------
@@ -130,13 +136,17 @@ _RULES = [
     Rule("TIER_REFUSED", "boundaries",
          "A tool outside the caller's tier is refused by name, with the tier "
          "that grants it."),
+    Rule("TOOL_BUNDLE_REFUSED", "boundaries",
+         "An agent may invoke only the task-sized tool bundle Core offered for "
+         "that turn. An audited, person-approved macro is the sole expansion "
+         "path; a hidden or replayed tool call never broadens the agent's surface."),
     Rule("EXECUTION_SANDBOX_ONLY", "boundaries",
-         "Code runs only in a fresh Docker container of its own: no network, no credentials, "
-         "a read-only root, removed afterwards - never on this machine itself. The agent runs "
-         "code it wrote (asked like any write); a person runs a script file or a claim's "
-         "failing input. A run writes outside its container only to its own landing pad, and "
-         "nothing that lands is ever run, imported or moved by the app. Without a running "
-         "Docker there is no run."),
+         "Code the librarian labels isolated runs only in a fresh Docker container: no network, "
+         "credentials or vault bind mount, a read-only source and controlled output volume. A "
+         "person may explicitly choose a source-bound non_isolated_host_exec fallback, but it is "
+         "never called sandboxed or network-isolated and may have network/loopback access. "
+         "Agents never start either execution mode; anything that lands is never run, imported "
+         "or moved by the app automatically."),
     Rule("NO_ARBITRARY_SHELL", "boundaries",  # code a model writes runs only in the sandbox
          "No command line is built from model output. Models emit parameters; "
          "code builds commands."),

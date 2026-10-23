@@ -1,0 +1,5 @@
+# Input only.  Stable releases generate requirements.release.lock with
+# pip-compile --generate-hashes and ship its matching wheelhouse.  Do not use
+# this unpinned file with the production bootstrapper.
+PyYAML>=6
+keyring>=25,<27

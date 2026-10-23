@@ -3,6 +3,8 @@ is staged for a person, nothing V1 did not ingest is taken, nothing is lost, V1 
 import hashlib
 from pathlib import Path
 
+import pytest
+
 from resource_librarian import notes, staging, v1_export
 from resource_librarian.evidence import EvidenceStore
 from resource_librarian.index import Index
@@ -98,6 +100,25 @@ def test_a_note_already_held_is_not_staged_again(vault, tmp_path):
     add_source(vault.root, "acme - rowstream", "Already here.")
     held = {r["v1_path"]: r["action"] for r in v1_export.plan(v1, vault)["rows"]}
     assert held["01-Resources/acme - rowstream.md"] == "already held"
+
+
+def test_v1_import_binds_one_root_and_accepts_an_explicit_subset(vault, tmp_path):
+    first = v1_tree(tmp_path / "first")
+    selected = "02-Glossary/Glossary - Abstract Syntax Tree.md"
+    assert v1_export.plan(first, vault)["source_binding"] == "unbound"
+
+    staged = v1_export.stage(first, vault, paths=[selected])
+
+    assert staged["staged"] == 1
+    manifest = v1_export.import_status(vault)["manifest"]
+    assert manifest["selected_paths"] == [selected]
+    assert v1_export.plan(first, vault)["source_binding"] == "same_root"
+
+    other = v1_tree(tmp_path / "other")
+    preview = v1_export.plan(other, vault)
+    assert preview["source_binding"] == "different_root"
+    with pytest.raises(TypeError, match="already bound"):
+        v1_export.stage(other, vault)
 
 
 def test_accepted_notes_keep_everything_v1_had(vault, tmp_path):

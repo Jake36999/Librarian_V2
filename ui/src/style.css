@@ -152,9 +152,18 @@
 .lib-app .card .name { font-weight: 620; font-size: 13px; padding-right: 22px; overflow-wrap: anywhere; }
 .lib-app .card .meta { color: var(--muted); }
 .lib-app .card .badge { position: absolute; top: 7px; right: 7px; }
+.lib-app .readiness { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; }
+.lib-app .readiness-chip { border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 10.5px; line-height: 1.25; padding: 1px 5px; text-transform: capitalize; }
+.lib-app .readiness-chip.warn { border-color: var(--warn-line); color: var(--warn-ink); background: var(--warn-bg); }
+.lib-app .route-summary { margin: 0 0 8px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); font-size: 12px; }
+.lib-app .route-summary.warn { border-color: var(--warn-line); color: var(--warn-ink); background: var(--warn-bg); }
 .lib-app .dot, dialog .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: var(--ok); vertical-align: 1px; }
 .lib-app .dot.nokey, dialog .dot.nokey { background: var(--warn-line); } .lib-app .dot.off, dialog .dot.off { background: var(--stop-line); }
 .lib-app .toast { font-size: 12.5px; color: var(--warn-ink); background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 7px; padding: 5px 9px; margin-bottom: 8px; }
+.lib-app .checkpoint { border-top: 1px solid var(--line); padding: 10px 0; }
+.lib-app .checkpoint:first-of-type { border-top: 0; padding-top: 2px; }
+.lib-app .checkpoint p { margin: 4px 0; color: var(--muted); overflow-wrap: anywhere; }
+.lib-app .checkpoint-evidence { margin: 7px 0; padding: 7px; max-height: 180px; overflow: auto; white-space: pre-wrap; font: 11.5px/1.4 var(--mono); border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
 .lib-app .locked, dialog .locked { color: var(--muted); }
 
 /* views beside the chat */
@@ -230,6 +239,12 @@ dialog .page .pre { white-space: pre-wrap; }
 dialog .ok { color: var(--ok); } dialog .err, dialog .error { color: var(--stop-ink); }
 dialog .srv { display: flex; gap: 10px; align-items: center; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--line); }
 dialog .confirm { margin-top: 10px; border: 1px solid var(--stop-line); background: var(--stop-bg); color: var(--stop-ink); border-radius: 8px; padding: 10px; }
+dialog .host-card { margin-top: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--panel); }
+dialog .host-card.new-host { background: var(--accent-soft); }
+dialog .host-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 10px; }
+dialog .host-card input[type=number] { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--ink); font: inherit; }
+dialog .host-card code { color: var(--muted); font: 11px var(--mono); }
+@media (max-width: 540px) { dialog .host-grid { grid-template-columns: 1fr; } }
 .lib-app .msg code, .lib-app .plan code { font-family: var(--mono); font-size: .92em; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
 .lib-app .msg pre code { border: 0; padding: 0; background: transparent; }
 .lib-app header .ghost { white-space: nowrap; }

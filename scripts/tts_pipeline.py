@@ -16,8 +16,9 @@ import os
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / ".v2" / "src"))
+# V2 is this checkout; a deployed tool must not assume a sibling `.v2` tree.
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
 from resource_librarian import tts  # noqa: E402
 from resource_librarian.vault import Vault  # noqa: E402
 

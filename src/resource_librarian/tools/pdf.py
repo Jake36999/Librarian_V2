@@ -6,6 +6,7 @@ having decided it should)."""
 from __future__ import annotations
 
 from .. import ocr, pdf_markdown, text
+from ..coordination import atomic_write_text
 from ..registry import Card, Context, tool
 
 
@@ -42,7 +43,7 @@ def pdf_to_markdown_tool(ctx: Context, file: str, staged_item: str = "") -> dict
         out_path.parent.mkdir(parents=True, exist_ok=True)
     else:
         out_path = path.with_suffix(".md")
-    out_path.write_text(markdown, encoding="utf-8")
+    atomic_write_text(out_path, markdown)
     return {"path": str(out_path.relative_to(ctx.vault.root)).replace("\\", "/"),
             "pages": len(result.pages), "batches": batches}
 
@@ -72,5 +73,5 @@ def ocr_pdf_tool(ctx: Context, file: str, staged_item: str = "",
         out_path.parent.mkdir(parents=True, exist_ok=True)
     else:
         out_path = path.with_suffix(".md")
-    out_path.write_text(got.pop("markdown"), encoding="utf-8")
+    atomic_write_text(out_path, got.pop("markdown"))
     return {"path": out_path.relative_to(ctx.vault.root).as_posix(), **got}

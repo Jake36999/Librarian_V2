@@ -17,6 +17,8 @@ export interface ChatHooks {
   rewind(index: number): void;
   branch(index: number): void;
   continueSession(): void;
+  /** Opens the existing model picker; it never changes a route on its own. */
+  openModelPicker?(): void;
   /** Staging -> Offerings, opened at one staged draft. */
   openOffering?(id: string): void;
 }
@@ -64,6 +66,43 @@ const PHASE_LABEL: Record<string, string> = {
   judge: "Judge", synthesise: "Synthesise", check_out: "Check out", check_in: "Check in",
   find: "Find",
 };
+
+/** The Core classifies route failures before they reach the UI.  Keep the
+ * fallback for an older Core during an adapter upgrade, but never turn a
+ * local socket-policy failure into a statement about a model's quality. */
+function providerFailureCopy(event: Event): { heading: string; advice: string } {
+  const category = String(event.failure_category ?? "");
+  switch (category) {
+    case "local_environment":
+      return { heading: "The Core could not make its local network connection",
+        advice: "This is a Windows or local security-environment issue, not a model-quality result. Check Host status or local network policy, then retry." };
+    case "credentials":
+      return { heading: "The selected route rejected its credentials",
+        advice: "Check the key and host under + → Connections, then retry." };
+    case "route_configuration":
+      return { heading: "The selected route needs attention",
+        advice: "Check the host, exact model, and qualification status in the Model Tile, then retry." };
+    case "provider_rate_limited":
+      return { heading: "The provider or host is rate limited",
+        advice: "Nothing was switched. Retry shortly, or choose another route yourself." };
+    case "provider_transient":
+      return { heading: "The provider is temporarily unavailable",
+        advice: "Nothing was switched. Retry shortly, or choose another route yourself." };
+    case "provider_transport":
+      return { heading: "The Core could not reach the selected host",
+        advice: "Check the host URL and network access; this does not assess model quality." };
+    case "provider_rejected":
+      return { heading: "The provider rejected this request",
+        advice: "Check the selected host and model under + → Connections, then retry." };
+    default: {
+      const slow = /did not answer within|busy|HTTP (429|50[234])/.test(String(event.error));
+      return { heading: "The selected route could not answer",
+        advice: slow
+          ? "Nothing was switched. Retry in a moment, or choose a faster model for slot 1 yourself."
+          : "Check the key and the model under + → Connections, then retry." };
+    }
+  }
+}
 
 export class Chat {
   readonly log = h("div", { class: "log", "aria-live": "polite", role: "log" });
@@ -243,6 +282,16 @@ export class Chat {
           challenged.length ? h("div", { class: "dim small" }, "The librarian sees these challenges in its next reply.") : null));
         break;
       }
+      case "workflow_preflight": {
+        const action = String(event.required_next_action ?? "the required task action");
+        this.append(h("div", { class: "error" },
+          "This thread was paused before another model call because the Core cannot currently offer ",
+          h("code", {}, action), ". No model was blamed or switched. Repair the workflow surface, then retry. ",
+          this.hooks.openModelPicker ? h("button", {
+            class: "ghost", onclick: () => this.hooks.openModelPicker?.(),
+          }, "Open model status") : null));
+        break;
+      }
       case "turn_done":
         this.setWorking(false);
         if (event.stopped === "cancelled") {
@@ -251,20 +300,27 @@ export class Chat {
           this.append(h("div", { class: "error" }, "Stopped after the step limit for one turn. ",
             "Say “continue” to carry on, or ask for a summary of where it got to."));
         } else if (event.stopped === "provider_error") {
-          const slow = /did not answer within|busy|HTTP (429|50[234])/.test(String(event.error));
-          this.append(h("div", { class: "error" }, `The model could not answer: ${event.error}. `,
-            slow ? "Nothing is wrong with your setup: retry in a moment, or choose a faster model for slot 1."
-              : "Check the key and the model under + → Connections, then retry.", " ",
+          const copy = providerFailureCopy(event);
+          this.append(h("div", { class: "error" }, `${copy.heading}: ${event.error}. `,
+            copy.advice, " ",
             h("button", { class: "icon-btn", title: "Retry: send this again",
               "aria-label": "Retry", onclick: () => this.hooks.resend(this.lastUserText) },
-              retryIcon())));
+              retryIcon()),
+            this.hooks.openModelPicker ? h("button", { class: "ghost",
+              onclick: () => this.hooks.openModelPicker?.(),
+            }, "Choose another route") : null));
         }
         this.sessionOutcome((event.session as Session) ?? null);
         this.hooks.onSession((event.session as Session) ?? null);
         break;
       case "error":
         this.setWorking(false);
-        this.append(h("div", { class: "error" }, String(event.error)));
+        if (event.failure_category === "local_environment") {
+          this.append(h("div", { class: "error" }, "Local environment issue (not a model result): ",
+            String(event.error)));
+        } else {
+          this.append(h("div", { class: "error" }, String(event.error)));
+        }
         break;
       case "conversation_reset":
         this.rail.clear();

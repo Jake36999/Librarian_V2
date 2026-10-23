@@ -21,8 +21,7 @@
     through the py launcher, else python on PATH.
 
 .PARAMETER ShortcutName
-    The desktop shortcut's name. Default: "Librarian", or "Librarian (dev)" for the
-    dev copy (a folder named .v2).
+    The desktop shortcut's name. Default: "Librarian".
 
 .PARAMETER NoShortcut
     Don't create the desktop shortcut.
@@ -179,7 +178,6 @@ if (-not $NoShortcut) {
     Step "Desktop shortcut"
     if (-not $ShortcutName) {
         $ShortcutName = "Librarian"
-        if ((Split-Path -Leaf $Root) -eq ".v2") { $ShortcutName = "Librarian (dev)" }
     }
     $desktop = [Environment]::GetFolderPath("Desktop")
     $link = Join-Path $desktop "$ShortcutName.lnk"
@@ -188,7 +186,7 @@ if (-not $NoShortcut) {
     $shortcut.TargetPath = Join-Path $Root "Librarian.bat"
     $shortcut.Arguments = "--pick"
     $shortcut.WorkingDirectory = $Root
-    $shortcut.WindowStyle = 7                  # minimised: its window is the server; closing it stops the Librarian
+    $shortcut.WindowStyle = 7                  # direct developer launcher; production Host lifecycle is explicit
     $shortcut.Description = "Open the Librarian: choose, create or open a library ($Root)"
     $icon = Join-Path $Root "scripts\librarian.ico"
     if (Test-Path $icon) { $shortcut.IconLocation = "$icon,0" }

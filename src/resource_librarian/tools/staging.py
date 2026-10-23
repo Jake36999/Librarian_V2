@@ -18,6 +18,20 @@ def _store(ctx: Context) -> staging.StagingStore:
     return staging.StagingStore(ctx.vault)
 
 
+def _profile_endpoint(ctx: Context, role: str, endpoint: clerk.Endpoint | None,
+                      tier: int) -> clerk.Endpoint | None:
+    """Apply the Core's role profile to a background endpoint when available.
+
+    Standalone CLI/test contexts deliberately retain the established endpoint
+    contract.  An active Core supplies the factory, which makes Clerk/Scribe
+    calls use the same vault-scoped profile constraints as chat and helpers.
+    """
+    factory = ctx.extras.get("background_profile_endpoint")
+    if endpoint is not None and callable(factory):
+        return factory(role, endpoint, tier)
+    return endpoint
+
+
 def clerk_endpoint(ctx: Context) -> clerk.Endpoint | None:
     """The surface's endpoint, else the vault's configured one, else the
     surface's fallback (MCP sampling), else None and the tasks queue."""
@@ -29,7 +43,7 @@ def clerk_endpoint(ctx: Context) -> clerk.Endpoint | None:
         endpoint = ctx.extras.get("clerk_fallback")
     if "effort" in ctx.extras:                 # the person's effort: the clerk's parallel calls
         effort.apply_concurrency(endpoint, effort.of(ctx)["tier3_agents"])
-    return endpoint
+    return _profile_endpoint(ctx, "clerk", endpoint, 3)
 
 
 def scribe_endpoint(ctx: Context) -> clerk.Endpoint | None:
@@ -46,7 +60,7 @@ def scribe_endpoint(ctx: Context) -> clerk.Endpoint | None:
     if "effort" in ctx.extras:
         from .. import effort
         effort.apply_concurrency(endpoint, effort.of(ctx)["tier2_agents"])
-    return endpoint
+    return _profile_endpoint(ctx, "scribe", endpoint, 2)
 
 
 @tool("staging_list", tier="consult", effect="read",

@@ -53,7 +53,9 @@ class App {
   private models: Popover;
   private sessions: Popover;
   private libraries: Popover;
+  private checkpoints: Popover;
   private libraryButton = h("button", { class: "ghost lib-switch", title: "Switch library" }, "Library ▾");
+  private checkpointButton = h("button", { class: "ghost", title: "Decisions waiting for you" }, "Checkpoints ▾");
   private attachPop: Popover;
   private attachPanel: AttachPanel;
   private tile: ModelTile;
@@ -92,6 +94,10 @@ class App {
       onSession: (s) => this.setSession(s),
       resend: (text) => void this.sendText(text),
       continueSession: () => void this.sendText("Continue the current research session from its next step. Read session_status first, complete the open work, and report any information you cannot verify as a gap. Do not claim the session or requested work is complete while session_status still shows open items."),
+      openModelPicker: () => {
+        this.toggle(this.models);
+        if (this.models.open) void this.tile.refresh();
+      },
       rewind: (index) => void this.rewindMessage(index),
       branch: (index) => void this.branchMessage(index),
       openOffering: (id) => { this.staging.focusOffering(id); this.show("staging"); },
@@ -115,6 +121,7 @@ class App {
     const sessionsButton = h("button", { class: "ghost" }, "Sessions ▾");
     this.sessions = new Popover("lib-sessions", "Sessions", sessionsButton);
     this.libraries = new Popover("lib-libraries", "Libraries", this.libraryButton);
+    this.checkpoints = new Popover("lib-checkpoints", "Checkpoints", this.checkpointButton);
     this.libraryButton.onclick = () => {
       this.toggle(this.libraries);
       if (this.libraries.open) void renderLibraries(this.libraries, this.api, this.libraryName());
@@ -144,6 +151,10 @@ class App {
       this.toggle(this.sessions);
       if (this.sessions.open) void renderSessions(this.sessions, this.api, (id) => this.attach(id), () => this.reset(),
         this.libraryName(), String(this.state.vault_path ?? ""));
+    };
+    this.checkpointButton.onclick = () => {
+      this.toggle(this.checkpoints);
+      if (this.checkpoints.open) void this.refreshCheckpoints();
     };
     // The website hands over to Obsidian by its URL scheme; the plugin passes its own.
     const elsewhere = h("button", {
@@ -189,6 +200,7 @@ class App {
       h("div", { class: `lib-app host-${opts.host}` },
         h("header", {}, h("div", { class: "anchor" }, this.libraryButton, this.libraries.el),
           h("div", { class: "anchor" }, sessionsButton, this.sessions.el),
+          h("div", { class: "anchor" }, this.checkpointButton, this.checkpoints.el),
           this.title, this.crumb,
           h("nav", { role: "tablist", "aria-label": "Views" }, Object.values(this.nav)), this.live,
           this.paneButton),
@@ -196,17 +208,8 @@ class App {
       this.settings.dialog);
     this.composer = composer;
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") [this.modes, this.models, this.sessions, this.libraries, this.attachPop].forEach((p) => p.show(false));
-    });
-    document.addEventListener("click", (e) => {
-      // The dispatch path, not `contains`: a click that re-renders the popover
-      // detaches its own target, which is still inside.
-      const path = e.composedPath();
-      for (const p of [this.modes, this.models, this.sessions, this.libraries, this.attachPop]) {
-        if (p.open && !path.includes(p.el) && !path.includes(p.button)) p.show(false);
-      }
-    });
+    document.addEventListener("keydown", this.onDocumentKey);
+    document.addEventListener("click", this.onDocumentClick);
     this.show("chat");
     const width = recall("pane-w");
     if (width) this.body.style.setProperty("--pane-w", width);
@@ -218,6 +221,19 @@ class App {
   private composer: HTMLElement;
   private opts: Options;
   private paneOpen = true;
+  private stopEvents: (() => void) | null = null;
+  private readonly onDocumentKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop]
+      .forEach((p) => p.show(false));
+  };
+  private readonly onDocumentClick = (e: MouseEvent) => {
+    // The dispatch path, not `contains`: a click that re-renders the popover
+    // detaches its own target, which is still inside.
+    const path = e.composedPath();
+    for (const p of [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop]) {
+      if (p.open && !path.includes(p.el) && !path.includes(p.button)) p.show(false);
+    }
+  };
 
   // -- the document pane -------------------------------------------------------
   /** A [[link]]: in Obsidian the real note opens; elsewhere it opens beside the chat. */
@@ -268,7 +284,7 @@ class App {
       this.warn(`The core did not answer: ${(e as Error).message}. Is \`resource-librarian app\` running?`);
       return;
     }
-    this.api.events((event) => this.onEvent(event), (live) => {
+    this.stopEvents = this.api.events((event) => this.onEvent(event), (live) => {
       this.live.className = `live ${live ? "on" : "off"}`;
       this.live.textContent = live ? "●" : "○ reconnecting";
       if (live) void this.refresh();
@@ -323,6 +339,16 @@ class App {
         if (event.session) this.setSession(event.session);
         if (this.view === "staging") void this.staging.load();
         break;
+      case "checkpoint_created": case "checkpoint_resolved":
+        void this.refreshCheckpoints();
+        break;
+      case "route_health_changed": case "workflow_preflight":
+        // Route evidence is deliberately refreshed only when the picker is
+        // visible.  This keeps normal chat turns free of incidental route
+        // requests while ensuring an open Model Tile never presents stale
+        // safety state.
+        if (this.models.open) void this.tile.refresh();
+        break;
       case "library_switched":
         // Another tab (or this one) switched library: this page belongs to
         // the one that was left, so load the new one.
@@ -356,6 +382,46 @@ class App {
       : "Choose models", " ▾");
     renderModes(this.modes, this.api, this.state.mode, this.state.queued_actions ?? [], this.pipelines,
       (msg) => this.warn(msg), this.state.queued_inputs ?? {});
+    const pending = ((this.state.pending_checkpoints ?? []) as any[]).length;
+    this.checkpointButton.textContent = pending ? `Checkpoints (${pending}) ▾` : "Checkpoints ▾";
+    if (this.checkpoints.open) this.renderCheckpoints();
+  }
+
+  /** Policy choices live here, not in a prose prompt.  A blocked operation
+   * leaves its evidence and available, explicit choices in this small panel;
+   * resolving one does not silently unblock unrelated work. */
+  private async refreshCheckpoints(): Promise<void> {
+    try {
+      const out = await this.api.get("/api/checkpoints?pending=1");
+      this.state.pending_checkpoints = out.checkpoints ?? [];
+      this.renderCheckpoints();
+      this.paintToolbar();
+    } catch (e) { this.warn((e as Error).message); }
+  }
+
+  private renderCheckpoints(): void {
+    const rows = (this.state.pending_checkpoints ?? []) as any[];
+    const card = (row: any) => {
+      const evidence = row.evidence && Object.keys(row.evidence).length
+        ? h("pre", { class: "checkpoint-evidence" }, JSON.stringify(row.evidence, null, 2)) : null;
+      const resolve = async (choice: string) => {
+        try {
+          await this.api.post("/api/checkpoints/resolve", { id: row.id, choice });
+          await this.refreshCheckpoints();
+        } catch (e) { this.warn((e as Error).message); }
+      };
+      return h("section", { class: "checkpoint" },
+        h("strong", {}, String(row.type ?? "Decision").replace(/_/g, " ")),
+        h("p", {}, String(row.scope ?? "")),
+        evidence,
+        h("div", { class: "row2" }, ...(Array.isArray(row.choices) ? row.choices : []).map((choice: string) =>
+          // The Core declares the safe default.  Array order is presentation
+          // history, not an instruction to make an approval action primary.
+          h("button", { class: choice === row.default ? "primary" : "ghost", onclick: () => void resolve(choice) }, choice.replace(/_/g, " ")))));
+    };
+    clear(this.checkpoints.el,
+      h("h4", {}, "Decisions waiting for you"),
+      rows.length ? rows.map(card) : h("p", { class: "dim" }, "No decisions are waiting. Agents can continue work on other notes."));
   }
 
   private paintChips(): void {
@@ -415,7 +481,8 @@ class App {
 
   private toggle(pop: Popover): void {
     const open = !pop.open;
-    [this.modes, this.models, this.sessions, this.attachPop].forEach((p) => p.show(false));
+    [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop]
+      .forEach((p) => p.show(false));
     pop.show(open);
   }
 
@@ -534,6 +601,13 @@ class App {
     this.input.focus();
   }
 
+  dispose(): void {
+    this.stopEvents?.();
+    this.stopEvents = null;
+    document.removeEventListener("keydown", this.onDocumentKey);
+    document.removeEventListener("click", this.onDocumentClick);
+  }
+
   private async reset(): Promise<void> {
     try { await this.api.post("/api/chat/reset"); } catch (e) { this.warn((e as Error).message); }
   }
@@ -591,13 +665,13 @@ function recall(key: string): string {
   try { return localStorage.getItem(`librarian:${key}`) ?? ""; } catch { return ""; }
 }
 
-export interface Mounted { insert(text: string): void }
+export interface Mounted { insert(text: string): void; dispose(): void }
 
 export function mount(root: HTMLElement, opts: Options): Mounted {
   root.classList.add("librarian-root", `host-${opts.host}`);
   const app = new App(root, opts);
   void app.start();
-  return { insert: (text) => app.insert(text) };
+  return { insert: (text) => app.insert(text), dispose: () => app.dispose() };
 }
 
 // The website: the core serves the page with its token in a meta tag.

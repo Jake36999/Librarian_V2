@@ -42,13 +42,24 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import parse_qs, urlparse
 
-from . import __version__, doctor, notes, workflows
+from . import ADAPTER_PROTOCOL_RANGE, PROTOCOL_VERSION, __version__, doctor, notes, workflows
 from . import tools  # noqa: F401  (registers the tools)
+from .agent_runtime import (ProfileCapacityError, ProfileRunGate, ProfiledEndpoint,
+                            route_permitted)
 from .broker import ANSWERS, MODES, Broker
-from .index import Index
+from .checkpoints import CheckpointStore
+from . import connection
+from .coordination import (DocumentLeases, LeaseHeldError, StaleLeaseError,
+                           VaultCoordinator, VaultWatcher, VaultWriter, atomic_write_bytes, atomic_write_text)
+from .hosts import (EVALUATION_LEVELS, RELEASE_PROMPT_CONTRACT_VERSION,
+                    RELEASE_TOOL_CONTRACT_VERSION, L1_PROBE_CONTRACT_VERSION,
+                    EvaluationJobStore, Host, HostFullRecordError, HostLimiter, HostRegistry,
+                    LimitedProvider, QualificationStore, endpoint_fingerprint, fingerprints,
+                    release_lead_for_route, release_leads, validate_l1_probe)
+from .index import IndexService
 from .keys import KeyStore, config_dir
 from .loop import LENGTHS, STANCES, Loop, ProviderEndpoint
-from .providers import DASHBOARDS, PRESETS, Provider, ProviderError, from_settings
+from .providers import DASHBOARDS, PRESETS, Provider, ProviderError, ToolDef, from_settings
 from .registry import REGISTRY, Context
 from .rules import Refusal
 from .staging import StagingStore
@@ -66,7 +77,7 @@ PROVIDER_LABELS = {"deepinfra": "DeepInfra", "openai": "OpenAI", "anthropic": "A
                    "local": "Local server"}
 SCRIPT_SUFFIXES = {".py": "python", ".sh": "shell"}      # what the pane may run (sandbox.py)
 DEFAULTS = {"working_context": "", "reply_length": "long", "stance": "answer", "tiers": [],
-            "mode": "ask", "base_urls": {}, "effort": 4}
+            "mode": "ask", "base_urls": {}, "effort": 4, "agent_profile": "lead"}
 
 
 class ApiError(Exception):
@@ -132,8 +143,9 @@ class Settings:
 
     SHARED = ("tiers", "lead_overrides", "effort")
 
-    def __init__(self, vault: Vault):
+    def __init__(self, vault: Vault, writer: VaultWriter | None = None):
         self.path = vault.librarian / "app.json"
+        self.writer = writer
         self.data = dict(DEFAULTS)
         own: dict[str, Any] = {}
         if self.path.is_file():
@@ -159,18 +171,23 @@ class Settings:
         return data if isinstance(data, dict) else {}
 
     def update(self, **changes: Any) -> None:
-        self.data.update(changes)
-        self.path.write_text(json.dumps(self.data, indent=1, ensure_ascii=False),
-                             encoding="utf-8")
-        mine = {k: v for k, v in changes.items() if k in self.SHARED}
-        if mine:
-            try:
-                path = self._shared_path()
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(json.dumps({**self._shared(), **mine}, indent=1,
-                                           ensure_ascii=False), encoding="utf-8")
-            except OSError:
-                pass                    # a read-only config dir never stops a choice
+        def persist() -> None:
+            self.data.update(changes)
+            atomic_write_text(self.path, json.dumps(self.data, indent=1, ensure_ascii=False) + "\n")
+            mine = {k: v for k, v in changes.items() if k in self.SHARED}
+            if mine:
+                try:
+                    path = self._shared_path()
+                    atomic_write_text(path, json.dumps({**self._shared(), **mine}, indent=1,
+                                                       ensure_ascii=False) + "\n")
+                except OSError:
+                    pass                # a read-only config dir never stops a choice
+        if self.writer is not None:
+            # Document leases protect human-editable Markdown only.  Internal
+            # state is still serialised by the writer but has no Obsidian path.
+            self.writer.submit(persist, caller="settings")
+        else:
+            persist()
 
 
 @dataclass
@@ -235,7 +252,7 @@ def _remember_profiles(own: dict[tuple[str, str], dict[str, Any]]) -> None:
     try:
         path = _profiles_path()
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({**known, **fresh}, indent=0, default=str), encoding="utf-8")
+        atomic_write_text(path, json.dumps({**known, **fresh}, indent=0, default=str))
     except OSError:
         pass
 
@@ -255,12 +272,51 @@ class App:
     def __init__(self, vault: Vault, token: str = "", keys: KeyStore | None = None,
                  provider_for: Callable[[dict[str, Any]], Provider | None] | None = None,
                  allowed_origins: set[str] | None = None, broker_timeout: float = 600.0,
-                 mcp: Any = None):
+                 mcp: Any = None, *, coordinate: bool = False, takeover: bool = False,
+                 secret_source: str = "desktop", host_managed: bool = False):
         self.vault = vault
         self.broker_timeout = broker_timeout
         self.token = token or secrets.token_urlsafe(24)
-        self.keys = keys or KeyStore()
-        self.settings = Settings(vault)
+        self.coordinated = bool(coordinate)
+        self.secret_source = secret_source if secret_source in ("desktop", "obsidian") else "desktop"
+        # Only a trusted local lifecycle owner (the per-user Host or an
+        # adapter-owned Core performing an explicit SecretStorage rotation)
+        # asks a Core to stop over loopback.  A regular browser cannot
+        # accidentally acquire a lifecycle control surface merely by knowing
+        # the page token.
+        self.host_managed = bool(host_managed)
+        self.coordinator: VaultCoordinator | None = None
+        self.document_leases = DocumentLeases(vault)
+        self.watcher: VaultWatcher | None = None
+        self.writer: VaultWriter | None = None
+        self._closed = False
+        if coordinate:
+            self.coordinator = VaultCoordinator(vault, protocol_version=PROTOCOL_VERSION)
+            self.coordinator.acquire(takeover=takeover)
+            self.writer = VaultWriter(vault, self.document_leases)
+            self.watcher = VaultWatcher(vault, self.document_leases)
+            self.watcher.start()
+        self.keys = keys or KeyStore(obsidian_managed=self.secret_source == "obsidian")
+        self.settings = Settings(vault, self.writer)
+        self.index_service = IndexService(vault)
+        self.hosts = HostRegistry()
+        self.host_limiter = HostLimiter()
+        for row in self.hosts.all():
+            # Public rows deliberately omit auth_ref; seed and custom entries
+            # are registered below through their private record only.
+            try:
+                auth_ref = self.hosts.get(str(row["id"])).auth_ref
+                if auth_ref:
+                    self.keys.register_ref(auth_ref)
+            except (KeyError, AttributeError):
+                continue
+        self._migrate_legacy_host_routes()
+        self.qualifications = QualificationStore()
+        self.evaluation_jobs = EvaluationJobStore()
+        from .agent_runtime import ProfileStore
+        self.profiles = ProfileStore(vault)
+        self.profile_gate = ProfileRunGate()
+        self.checkpoints = CheckpointStore(vault)
         self.hub = Hub()
         self.broker = Broker(mode=self.settings.data.get("mode", "ask"),
                              timeout=broker_timeout)
@@ -317,14 +373,1267 @@ class App:
         if self.loop is not None:
             self.loop.messages.clear()
             self.loop.ctx.session = None
+        self.close_runtime()
+
+    def close_runtime(self) -> None:
+        """Flush mutable state and release this vault's process lease once.
+
+        A tray/adapter calls this only for an explicit stop or after a switch
+        has allowed work to finish.  It deliberately does not implement an
+        idle timer or browser-client reference counting.
+        """
+        if self._closed:
+            return
+        self._closed = True
+        # Stop observing first: a final atomic replacement from the writer
+        # must not be reclassified as a direct human edit while shutdown is
+        # draining the queue.
+        if self.watcher is not None:
+            self.watcher.close()
+        if self.writer is not None:
+            self.writer.flush(timeout=10.0)
+            self.writer.close(timeout=10.0)
+        self.index_service.close()
+        if self.coordinator is not None:
+            self.coordinator.release()
+
+    def request_host_stop(self, *, force: bool = False) -> dict[str, Any]:
+        """Validate an explicit Host stop before its server is shut down.
+
+        There is intentionally no idle/client-count path here.  If useful
+        work is active the Host must show it and ask the person to resolve or
+        stop it; a background Core is never silently killed because a tab
+        closed.  ``force`` is retained for an explicit tray confirmation and
+        is recorded in the response for a caller to surface.
+        """
+        if not self.host_managed:
+            raise ApiError(404, "this Core is not managed by Librarian Host")
+        active = self.running()
+        if active and not force:
+            raise ApiError(409, "Core has active work; resolve it or explicitly force Quit",
+                           active=active, checkpoint="forced_engagement_close")
+        return {"stopping": True, "forced": bool(force), "active": active}
+
+    def _serialized(self, caller: str, fn: Callable[[], Any]) -> Any:
+        """Run an App-owned mutation through the same vault writer as tools."""
+        return self.writer.submit(fn, caller=caller) if self.writer is not None else fn()
 
     # -- models -----------------------------------------------------------
+    def _migrate_legacy_host_routes(self) -> None:
+        """Move pre-registry tier choices onto explicit Host records once.
+
+        Older 2.x settings used ``provider`` plus a global ``base_urls`` map.
+        Keep accepting that shape at API boundaries, but migrate existing
+        persisted choices into a seeded host (or a deterministic custom host)
+        at Core start.  A host record contains no key value, and preserving the
+        old base URL means this is an identity-preserving upgrade rather than
+        a quiet route substitution.
+        """
+        try:
+            marker = int(self.settings.data.get("host_route_migration") or 0)
+        except (TypeError, ValueError):
+            marker = 0
+        if marker >= 1:
+            return
+        raw_tiers = self.settings.data.get("tiers")
+        if not isinstance(raw_tiers, list):
+            self.settings.update(host_route_migration=1)
+            return
+        base_urls = self.settings.data.get("base_urls") or {}
+        base_urls = base_urls if isinstance(base_urls, dict) else {}
+        converted: list[Any] = []
+        changed = False
+        for raw in raw_tiers:
+            if not isinstance(raw, dict) or raw.get("host_id") or not raw.get("model"):
+                converted.append(raw)
+                continue
+            provider = str(raw.get("provider") or "").strip().casefold()
+            preset = PRESETS.get(provider)
+            if preset is None:
+                converted.append(raw)
+                continue
+            seeded_id = f"preset-{provider}"
+            try:
+                seeded = self.hosts.get(seeded_id)
+            except KeyError:
+                # A malformed local host registry should not make an existing
+                # legacy route disappear. Leave that row for the normal 2.x
+                # compatibility path and retry after the registry is repaired.
+                converted.append(raw)
+                continue
+            requested_base = str(base_urls.get(provider) or raw.get("base_url") or "").strip().rstrip("/")
+            host_id = seeded.id
+            if requested_base and requested_base != seeded.base_url.rstrip("/"):
+                suffix = hashlib.sha256(f"{provider}\n{requested_base}".encode("utf-8")).hexdigest()[:12]
+                host_id = f"legacy-{provider}-{suffix}"
+                try:
+                    self.hosts.get(host_id)
+                except KeyError:
+                    try:
+                        self.hosts.upsert({
+                            "id": host_id,
+                            "display_name": f"Migrated {provider} route",
+                            "protocol": str(preset.get("protocol") or seeded.protocol),
+                            "base_url": requested_base,
+                            "auth_ref": str(preset.get("key_env") or seeded.auth_ref),
+                        })
+                    except (OSError, TypeError, ValueError):
+                        # Keep the original route intact when personal host
+                        # storage is unavailable; this migration must never
+                        # turn a recoverable settings upgrade into data loss.
+                        converted.append(raw)
+                        continue
+            retained = {key: value for key, value in raw.items()
+                        if key not in {"provider", "host_id", "base_url"}}
+            converted.append({"host_id": host_id, "provider": host_id, **retained})
+            changed = True
+        self.settings.update(tiers=converted if changed else raw_tiers,
+                             host_route_migration=1)
+
     def _configured_provider(self, choice: dict[str, Any]) -> Provider | None:
         settings = dict(choice)
+        host_id = str(settings.get("host_id") or "")
+        configured_host: Host | None = None
+        if host_id:
+            try:
+                host = self.hosts.get(host_id)
+            except KeyError as exc:
+                raise ProviderError(str(exc)) from exc
+            if not host.enabled:
+                raise ProviderError(f"host {host.display_name!r} is disabled")
+            settings = {**settings, "provider": host.id, "protocol": host.protocol,
+                        "base_url": host.base_url, "key_env": host.auth_ref,
+                        "timeout": host.timeout}
+            configured_host = host
         base = self.settings.data.get("base_urls", {}).get(choice.get("provider", ""))
         if base and not settings.get("base_url"):
             settings["base_url"] = base
-        return from_settings(settings)
+        provider = from_settings(settings)
+        return LimitedProvider(provider, configured_host, self.host_limiter) \
+            if provider is not None and configured_host is not None else provider
+
+    def meta(self) -> dict[str, Any]:
+        """Non-secret Core/adapter handshake and operational health contract."""
+        lease = self.coordinator.status() if self.coordinator is not None else {}
+        return {
+            "core_version": __version__, "protocol_version": PROTOCOL_VERSION,
+            "ui_build_id": "development" if __version__.endswith(".dev0") else __version__,
+            "compatible_adapter_range": ADAPTER_PROTOCOL_RANGE,
+            "enabled_features": ["vault_coordinator", "vault_writer", "document_leases",
+                                 "host_registry", "qualification", "agent_profiles",
+                                 "tool_bundles", "audited_macros", "checkpoints",
+                                 "v1_migration", "internal_packs"],
+            "non_secret_health": {
+                "vault_lease": "held" if self.coordinator is not None and self.coordinator.held
+                else "not_coordinated",
+                "lease": lease,
+                "writer": "ready" if self.writer is not None else "not_coordinated",
+                "index": "ready",
+                "secret_source": "obsidian_managed" if self.secret_source == "obsidian" else self.keys.backend,
+            },
+        }
+
+    # -- document-aware coordination -------------------------------------
+    def document_heartbeat(self, path: str, *, editor: str = "Obsidian", dirty: bool = True,
+                           baseline: str = "") -> dict[str, Any]:
+        try:
+            return self.document_leases.heartbeat(path, editor=editor, dirty=dirty,
+                                                  baseline=baseline)
+        except (ValueError, OSError) as exc:
+            raise ApiError(400, str(exc)) from exc
+
+    def document_release(self, path: str, *, editor: str = "") -> dict[str, Any]:
+        try:
+            self.document_leases.release(path, editor=editor)
+            return self.document_leases.view(path)
+        except (ValueError, OSError) as exc:
+            raise ApiError(400, str(exc)) from exc
+
+    def document_changed(self, path: str) -> dict[str, Any]:
+        try:
+            self.document_leases.observe_change(path)
+            return {"observed": path, "debounce_seconds": 1}
+        except (ValueError, OSError) as exc:
+            raise ApiError(400, str(exc)) from exc
+
+    def documents(self) -> dict[str, Any]:
+        return self.document_leases.view()
+
+    # -- personal host registry -------------------------------------------
+    def host_list(self) -> dict[str, Any]:
+        return {"hosts": self.hosts.all()}
+
+    def _workflow_readiness(self, profile_id: str) -> tuple[str, str]:
+        """Check the compact surface a selected interactive profile can use.
+
+        The generic L0 contract proves that the registry, macros, and default
+        compact bundles agree.  The Model Tile must also expose when the
+        *selected* profile intentionally narrows that surface too far to lead
+        a normal project walk; otherwise the UI says ``walk ready`` and the
+        first provider request discovers the mismatch.
+
+        This is diagnostic only: it never broadens a profile, changes a
+        session, or writes qualification evidence.  Non-lead profiles remain
+        valid for their delegated roles, but are not interactive Lead
+        surfaces.
+        """
+        outcome, detail = self._l0_contract_check()
+        try:
+            profile = self.profiles.get(profile_id)
+        except (KeyError, ValueError):
+            return "blocked", (f"selected agent profile {profile_id!r} is unavailable; "
+                               "choose a Lead profile before starting a walk")
+        if profile.role != "lead":
+            return "blocked", (f"profile {profile.id!r} has role {profile.role!r}; "
+                               "choose a Lead profile for an interactive research walk")
+        from .agent_runtime import PROJECT_BOOTSTRAP_PURPOSES, required_bundle_actions, select_bundle
+        for purpose in sorted(PROJECT_BOOTSTRAP_PURPOSES):
+            required = required_bundle_actions("frame", purpose=purpose,
+                                               project="", project_exists=False)
+            offered = {spec.name for spec in select_bundle(
+                "contribute", "frame", purpose=purpose, project="", project_exists=False,
+                profile=profile)}
+            missing = [name for name in required if name not in offered]
+            if missing:
+                return "blocked", (f"profile {profile.id!r} hides required Frame action "
+                                   f"{missing[0]!r}; repair its allowed bundles or permission "
+                                   "ceiling before starting a project walk")
+        return outcome, detail
+
+    def route_readiness(self, profile_id: str = "", session_id: str = "") -> dict[str, Any]:
+        """Return compact, non-secret route evidence for the existing picker.
+
+        This endpoint deliberately does not discover models or run probes: a
+        tile opening must not make an endpoint request or a paid call.  It
+        reflects only routes already selected, previously qualified, or
+        shipped as release-lead candidates.  Model listing remains the host
+        card's existing explicit action.
+        """
+        # Readiness enriches the existing picker; it must never make model
+        # selection disappear because an internal diagnostic itself is
+        # temporarily unavailable.  Qualification still fails closed through
+        # the explicit L0 path, while the picker can show an honest warning
+        # and let the person inspect or choose a different already-known
+        # route.
+        selected_profile = profile_id or str(self.settings.data.get("agent_profile") or "lead")
+        try:
+            outcome, detail = self._workflow_readiness(selected_profile)
+        except Exception:  # noqa: BLE001 - diagnostic boundary, not execution
+            outcome, detail = (
+                "error",
+                "Core workflow self-check is unavailable; route selection remains available.",
+            )
+        core = {"ok": outcome == "pass", "status": outcome, "detail": detail,
+                "profile": selected_profile,
+                "session": session_id}
+        # Qualification evidence is role-specific at the runtime boundary
+        # (``_require_profile_qualification`` uses ``profile.role``), not
+        # keyed to a person-created profile id.  Keep readiness aligned with
+        # that same lookup so a custom Lead profile does not incorrectly show
+        # its already-qualified Lead route as experimental.
+        try:
+            qualification_role = self.profiles.get(selected_profile).role
+        except (KeyError, ValueError):
+            qualification_role = selected_profile
+        candidates: dict[tuple[str, str], dict[str, str]] = {}
+
+        def add_route(host_id: Any, model: Any, provider: Any = "") -> None:
+            wanted_host, wanted_model = str(host_id or "").strip(), str(model or "").strip()
+            if not wanted_host or not wanted_model:
+                return
+            candidates[(wanted_host, wanted_model)] = {
+                "host_id": wanted_host, "model": wanted_model,
+                "provider": str(provider or wanted_host),
+            }
+
+        for route in self.settings.data.get("tiers") or []:
+            if isinstance(route, dict):
+                add_route(route.get("host_id") or route.get("provider"), route.get("model"),
+                          route.get("provider") or route.get("host_id"))
+        for row in self.qualifications.runs.values():
+            add_route(row.host_id, row.model_id, row.host_id)
+        for raw in release_leads().get("leads", []):
+            if isinstance(raw, dict):
+                add_route(raw.get("host_id") or raw.get("provider"), raw.get("model"), raw.get("provider"))
+
+        routes: list[dict[str, Any]] = []
+        for host_id, model in sorted(candidates):
+            try:
+                host = self.hosts.get(host_id)
+                health = dict(host.health) if isinstance(host.health, dict) else {}
+            except KeyError:
+                host = None
+                health = {"status": "unknown", "detail": "Host record is unavailable"}
+            # A picker opening is a read, not a qualification operation.  In
+            # particular, do not call ``qualification_status`` here: that
+            # method intentionally refreshes stale evidence, runs L0, and
+            # may queue L2/L3 work.  Surface a prospective stale state
+            # instead; the normal explicit qualification action remains the
+            # only path which mutates evidence or creates paid-work plans.
+            role = qualification_role
+            current = self._qualification_fingerprints(host_id, model, role)
+            existing = self.qualifications.get(host_id, model, role)
+            change = self.qualifications.route_change_kind(
+                host_id=host_id, model_id=model, role=role,
+                compatibility_fingerprint=current["compatibility"],
+                behavior_fingerprint=current["behavior"])
+            if existing is None:
+                qualification = {"status": "experimental", "freshness": "missing", "fresh": False,
+                                 "invalidation": ""}
+            else:
+                freshness = "current" if existing.fresh() else "expired_or_missing"
+                status_value = existing.status
+                invalidation = existing.invalidation
+                if change == "hard":
+                    status_value, freshness = "stale", "hard_incompatible"
+                    invalidation = "hard compatibility fingerprint changed; run L0 then requalify"
+                elif change == "soft":
+                    freshness = "advisory_stale"
+                    invalidation = "advisory stale behavior fingerprint; review before release use"
+                qualification = {"host_id": existing.host_id, "model_id": existing.model_id,
+                                 "role": existing.role, "status": status_value,
+                                 "updated_at": existing.updated_at, "expires_at": existing.expires_at,
+                                 "invalidation": invalidation, "evidence_runs": existing.evidence_runs,
+                                 "fresh": existing.fresh() and change != "hard",
+                                 "freshness": freshness}
+            route_detail = str(qualification.get("invalidation") or health.get("detail") or "")
+            row = {
+                "host_id": host_id, "provider": host_id, "model": model,
+                "qualification": qualification,
+                "freshness": qualification.get("freshness", "missing"),
+                "host_health": health or {"status": "unknown", "detail": "Host has not been tested"},
+                "core_workflow": {"ok": core["ok"], "status": core["status"], "detail": core["detail"]},
+                # The live fixture preflight is intentionally owned by the
+                # evaluator.  Never claim it passed merely because the model
+                # picker opened; the UI renders this honestly as unchecked.
+                "fixture_preflight": {"ok": None, "status": "not_run",
+                                        "detail": "Run an evaluation fixture preflight before paid walks."},
+                "detail": route_detail,
+            }
+            routes.append(row)
+            # The chat picker retains legacy provider keys while settings and
+            # stored tiers use the seeded Host id.  Include an alias row so
+            # existing cards receive readiness without changing selection.
+            if host_id.startswith("preset-"):
+                routes.append({**row, "host_id": host_id[len("preset-"):],
+                               "provider": host_id[len("preset-"):]})
+        return {"core": core, "routes": routes}
+
+    def _release_contract(self, host_id: str) -> dict[str, Any]:
+        """The public route facts a bundled L3 result is allowed to cover.
+
+        Secret source and a user's key are intentionally not part of this
+        release comparison.  Their account is tested separately by L1; the
+        release record instead proves an exact provider endpoint/model and
+        Core/tool/prompt contract.
+        """
+        try:
+            host = self.hosts.get(host_id)
+            endpoint = {"protocol": host.protocol, "base_url": host.base_url,
+                        "auth_ref": host.auth_ref}
+            fingerprint = host.endpoint_fingerprint
+        except KeyError:
+            preset = PRESETS.get(host_id, {})
+            endpoint = {"protocol": str(preset.get("protocol") or ""),
+                        "base_url": str(preset.get("base_url") or ""),
+                        "auth_ref": str(preset.get("key_env") or "")}
+            fingerprint = endpoint_fingerprint(endpoint)
+        return {"core_version": __version__, "protocol_version": PROTOCOL_VERSION,
+                "tool_contract_version": RELEASE_TOOL_CONTRACT_VERSION,
+                "prompt_contract_version": RELEASE_PROMPT_CONTRACT_VERSION,
+                "endpoint": endpoint, "endpoint_fingerprint": fingerprint}
+
+    def release_lead_options(self) -> dict[str, Any]:
+        """First-run choices and their next safe action, never provider keys.
+
+        Stable releases return two `verified_release` candidates.  A source
+        checkout can honestly show pending candidates too, but labels them
+        unavailable rather than implying a fictional qualification.
+        """
+        manifest = release_leads()
+        options: list[dict[str, Any]] = []
+        for raw in manifest.get("leads", []):
+            if not isinstance(raw, dict):
+                continue
+            host_id = str(raw.get("host_id") or raw.get("provider") or "")
+            model = str(raw.get("model") or "")
+            contract = self._release_contract(host_id)
+            lead, reason = release_lead_for_route(host_id, model, contract=contract,
+                                                   role="lead", manifest=manifest)
+            probe = None
+            if lead is not None:
+                current = self._qualification_fingerprints(host_id, model, "lead")
+                self._refresh_qualification_route(host_id, model, "lead", current)
+                probe = self.qualifications.matching_l1_probe(
+                    host_id=host_id, model_id=model, role="lead",
+                    compatibility_fingerprint=current["compatibility"],
+                    observed_model=str(lead.get("model_version") or ""),
+                )
+            try:
+                key = self.host_key_status(host_id)
+            except ApiError:
+                key = {"needed": True, "saved": False}
+            try:
+                l1_plan = self.qualification_plan(host_id, model, "lead", "L1") \
+                    if host_id and model else None
+            except ApiError:
+                l1_plan = None
+            options.append({"id": raw.get("id", ""), "provider": raw.get("provider", ""),
+                            "host_id": host_id, "model": model,
+                            "qualification": "verified_release" if lead is not None and probe is not None
+                            else ("release_probe_required" if lead is not None
+                                  else str(raw.get("qualification") or "pending_release_ci")),
+                            "release_qualified": lead is not None,
+                            "available": lead is not None,
+                            "account_probe": None if probe is None else {
+                                "id": probe.id, "at": probe.at, "observed_model": probe.observed_model},
+                            "reason": reason or ("run the account L1 probe after entering your key"
+                                                  if probe is None and lead is not None
+                                                  else "account L1 probe passed" if lead is not None else ""),
+                            "key": key,
+                            "l1_plan": l1_plan})
+        return {"integrity_valid": bool(manifest.get("integrity_valid")),
+                "setup_required": not bool(self.settings.data.get("tiers")) and bool(options),
+                "choices": options}
+
+    def select_release_lead(self, lead_id: str, *, key: str = "", overwrite: bool = False,
+                            checkpoint_id: str = "") -> dict[str, Any]:
+        """Complete the explicit first-run hosted-lead path.
+
+        The bundled L3 record is only a release claim; it does not grant a
+        person's account access.  This method therefore verifies the exact
+        signed row before saving an optional personal key, creates/reuses the
+        visible L1-spend checkpoint, and selects the route only after that
+        account's tool-call probe observes the expected exact model.  Pending
+        development candidates cannot pass this path.
+        """
+        wanted = str(lead_id or "").strip()
+        manifest = release_leads()
+        raw = next((row for row in manifest.get("leads", [])
+                    if isinstance(row, dict) and str(row.get("id") or "") == wanted), None)
+        if raw is None:
+            raise ApiError(404, "no bundled release lead has that id")
+        host_id = str(raw.get("host_id") or raw.get("provider") or "")
+        model = str(raw.get("model") or "")
+        if not host_id or not model:
+            raise ApiError(409, "bundled release lead has no usable route")
+        contract = self._release_contract(host_id)
+        lead, reason = release_lead_for_route(host_id, model, contract=contract,
+                                               role="lead", manifest=manifest)
+        if lead is None or str(lead.get("id") or "") != wanted:
+            raise ApiError(409, "bundled lead is not currently verified release evidence",
+                           reason=reason or "release lead is unavailable")
+        try:
+            host = self.hosts.get(host_id)
+        except KeyError as exc:
+            raise ApiError(409, f"bundled lead refers to an unavailable host: {host_id}") from exc
+        if key.strip():
+            self.host_save_key(host_id, key, overwrite=overwrite)
+        elif self.host_key_status(host_id).get("needed") and not self.host_key_status(host_id).get("saved"):
+            raise ApiError(409, f"enter a key for {host.display_name} before the account probe")
+
+        # L1 is deliberately not auto-approved: first-run selection shows
+        # its cost/endpoint consequence in a real checkpoint.  The browser
+        # resolves that row and repeats this id with its checkpoint id.
+        probe = self.run_qualification(host_id, model, "lead", "L1", False,
+                                       scenario=f"release:{wanted}", checkpoint_id=checkpoint_id)
+        if probe.get("run", {}).get("outcome") != "pass":
+            return {"selected": False, "lead": wanted, "probe": probe,
+                    "reason": "the account L1 tool-call probe did not pass; no route was selected"}
+        status = self.lead_status([{"host_id": host_id, "model": model}])
+        if status.get("status") != "eligible":
+            return {"selected": False, "lead": wanted, "probe": probe, "lead_status": status,
+                    "reason": "the account probe did not match current release evidence"}
+        selected = self.set_tiers([{"host_id": host_id, "model": model}])
+        self.hub.publish({"type": "release_lead_selected", "lead": wanted,
+                          "host_id": host_id, "model": model})
+        return {"selected": True, "lead": wanted, "probe": probe, "tiers": selected["tiers"],
+                "lead_status": selected["lead"]}
+
+    def host_upsert(self, row: Any) -> dict[str, Any]:
+        if not isinstance(row, dict):
+            raise ApiError(400, "host is a JSON object")
+        try:
+            saved = self.hosts.upsert(row)
+            auth_ref = self.hosts.get(str(saved["id"])).auth_ref
+            if auth_ref:
+                self.keys.register_ref(auth_ref)
+            return saved
+        except HostFullRecordError as exc:
+            raise ApiError(400, "host_requires_full_record", missing_fields=exc.missing_fields,
+                           detail=str(exc)) from exc
+        except (ValueError, TypeError) as exc:
+            raise ApiError(400, str(exc)) from exc
+
+    def host_update_controls(self, row: Any) -> dict[str, Any]:
+        """Apply the small, non-identity host control surface.
+
+        ``POST /api/hosts`` remains a complete-record replacement for
+        compatibility.  This separate route is intentionally the only place
+        a popup/control can send a partial host row.
+        """
+        if not isinstance(row, dict):
+            raise ApiError(400, "host controls are a JSON object")
+        try:
+            return self.hosts.update_controls(row)
+        except KeyError as exc:
+            raise ApiError(404, str(exc)) from exc
+        except (ValueError, TypeError) as exc:
+            raise ApiError(400, str(exc)) from exc
+
+    def host_remove(self, host_id: str) -> dict[str, Any]:
+        try:
+            self.hosts.remove(host_id)
+            return {"removed": host_id}
+        except (KeyError, ValueError) as exc:
+            raise ApiError(400, str(exc)) from exc
+
+    def host_key_status(self, host_id: str) -> dict[str, Any]:
+        try:
+            host = self.hosts.get(host_id)
+        except KeyError as exc:
+            raise ApiError(404, str(exc)) from exc
+        return self.keys.status_ref(host.auth_ref, label=host.display_name)
+
+    def host_save_key(self, host_id: str, key: str, overwrite: bool = False) -> dict[str, Any]:
+        try:
+            host = self.hosts.get(host_id)
+        except KeyError as exc:
+            raise ApiError(404, str(exc)) from exc
+        if not host.auth_ref:
+            raise ApiError(400, "this host does not require a key")
+        before = self.keys.status_ref(host.auth_ref, label=host.display_name)
+        if before.get("saved") and not overwrite:
+            raise ApiError(409, "a key is already saved", confirm=(
+                f"Replace the saved key for {host.display_name}?"))
+        try:
+            return self.keys.save_ref(host.auth_ref, key, label=host.display_name)
+        except ValueError as exc:
+            raise ApiError(400, str(exc)) from exc
+        except PermissionError as exc:
+            raise ApiError(409, str(exc), managed_by="obsidian") from exc
+        except OSError as exc:
+            raise ApiError(503, f"could not save the key: {exc}") from exc
+
+    def host_test(self, host_id: str, model: str = "") -> dict[str, Any]:
+        try:
+            host = self.hosts.get(host_id)
+            provider = self._configured_provider({"host_id": host_id, "model": model})
+            if provider is None:
+                raise ProviderError("not configured")
+            checked = provider.check()
+            health = self.hosts.mark_health(host_id, ok=bool(checked.get("ok")),
+                                            detail=str(checked.get("error") or checked.get("status") or ""),
+                                            model=model)
+            self.hub.publish({"type": "route_health_changed", "host_id": host_id,
+                              "model": model, "health": health.get("health", {})})
+            return {"host": host.public(), "check": checked}
+        except (KeyError, ProviderError) as exc:
+            try:
+                self.hosts.mark_health(host_id, ok=False, detail=str(exc), model=model)
+            except (KeyError, OSError):
+                pass
+            raise ApiError(400, str(exc)) from exc
+
+    # -- tiered qualification ----------------------------------------------
+    def _qualification_fingerprints(self, host_id: str, model: str, role: str) -> dict[str, str]:
+        """Dependency evidence for a route, split into hard and soft inputs."""
+        from .agent_runtime import BUNDLES, MACROS
+        try:
+            host = self.hosts.get(host_id)
+            endpoint = {"protocol": host.protocol, "fingerprint": host.endpoint_fingerprint}
+        except KeyError:
+            # Legacy provider routes remain supported through 2.x; their
+            # preset is a stable endpoint dependency too.
+            preset = PRESETS.get(host_id, {})
+            endpoint = {"protocol": preset.get("protocol", ""), "base_url": preset.get("base_url", "")}
+        try:
+            profile = self.profiles.get(role).public()
+        except (KeyError, ValueError):
+            profile = {"id": role}
+        schemas = [{"name": spec.name, "tier": spec.tier, "effect": spec.effect,
+                    "schema": spec.json_schema()}
+                   for spec in sorted(REGISTRY.for_tier("curate"), key=lambda x: x.name)]
+        return fingerprints(
+            protocol=PROTOCOL_VERSION, tool_schema=schemas,
+            response_contract={
+                "tool_call_id": "string", "arguments": "object",
+                "l1_probe": {
+                    "version": L1_PROBE_CONTRACT_VERSION,
+                    "calls": "exactly_one:librarian_probe",
+                    "arguments": {"ok": True},
+                    "returned_model": "exact_requested_model",
+                },
+            },
+            endpoint=endpoint, model=model,
+            security_policy={"registry": "closed", "no_silent_failover": True,
+                             "secret_source": self.secret_source},
+            prompt_bundle={"loop_base": "v2", "reply_length": self.settings.data.get("reply_length", "")},
+            profile=profile,
+            bundle={name: list(row.names) for name, row in BUNDLES.items()},
+            macros={name: {"version": row.version, "steps": [step.tool for step in row.steps]}
+                    for name, row in MACROS.items()})
+
+    @staticmethod
+    def _l0_contract_check() -> tuple[str, str]:
+        """Run the deterministic side of qualification without a model call."""
+        from .agent_runtime import (MACROS, PROJECT_BOOTSTRAP_PURPOSES,
+                                    required_bundle_actions, select_bundle)
+        failures = [spec.name for spec in REGISTRY.for_tier("curate")
+                    if spec.json_schema().get("type") != "object"]
+        failures += [f"macro:{macro.id}:{step.tool}" for macro in MACROS.values()
+                     for step in macro.steps if step.tool not in REGISTRY]
+        # Exercise the same state-aware overlay that a serial model turn sees.
+        # The static bundle table alone is not enough: ``open_session`` moves
+        # an add-project walk into Frame before its next model request.
+        for purpose in sorted(PROJECT_BOOTSTRAP_PURPOSES):
+            required = required_bundle_actions("frame", purpose=purpose,
+                                               project="", project_exists=False)
+            offered = {spec.name for spec in select_bundle(
+                "contribute", "frame", purpose=purpose, project="", project_exists=False)}
+            failures += [f"bundle:{purpose}:frame:{name}" for name in required if name not in offered]
+        return (("pass", "deterministic registry and macro contract checks passed")
+                if not failures else ("fail", ", ".join(failures)))
+
+    def _record_l0(self, host_id: str, model: str, role: str, fingerprints_row: dict[str, str],
+                   *, scenario: str = "default") -> dict[str, Any]:
+        """Persist one deterministic run for a specific dependency fingerprint."""
+        if self.qualifications.has_run(
+                host_id=host_id, model_id=model, role=role, level="L0",
+                compatibility_fingerprint=fingerprints_row["compatibility"],
+                behavior_fingerprint=fingerprints_row["behavior"], scenario=scenario):
+            rows = [row for row in self.qualifications.runs.values()
+                    if (row.host_id, row.model_id, row.role, row.level, row.scenario,
+                        row.compatibility_fingerprint, row.behavior_fingerprint) ==
+                    (host_id, model, role, "L0", scenario,
+                     fingerprints_row["compatibility"], fingerprints_row["behavior"])]
+            return max(rows, key=lambda row: row.at).__dict__
+        outcome, detail = self._l0_contract_check()
+        run = self.qualifications.record(
+            host_id=host_id, model_id=model, role=role, level="L0", outcome=outcome,
+            compatibility_fingerprint=fingerprints_row["compatibility"],
+            behavior_fingerprint=fingerprints_row["behavior"], detail=detail, scenario=scenario)
+        return run.__dict__
+
+    def _refresh_qualification_route(self, host_id: str, model: str, role: str,
+                                     fingerprints_row: dict[str, str] | None = None) -> tuple[Any, dict[str, Any] | None]:
+        """Invalidate a route and make the resulting requalification actionable.
+
+        Hard protocol/schema/endpoint/model/security changes immediately
+        remove verified selection, run L0, and create dormant L2/L3 plans.
+        Soft prompt/macro/profile changes retain selectability with an
+        advisory marker, run L0, and queue the cheaper L2 review.  Queuing is
+        not execution: paid work still requires the UI spend checkpoint and
+        an artifact-bearing evaluator result.
+        """
+        current = fingerprints_row or self._qualification_fingerprints(host_id, model, role)
+        kind = self.qualifications.route_change_kind(
+            host_id=host_id, model_id=model, role=role,
+            compatibility_fingerprint=current["compatibility"],
+            behavior_fingerprint=current["behavior"])
+        q = self.qualifications.invalidate_route(
+            host_id=host_id, model_id=model, role=role,
+            compatibility_fingerprint=current["compatibility"],
+            behavior_fingerprint=current["behavior"])
+        self.evaluation_jobs.invalidate_route(
+            host_id=host_id, model_id=model, role=role,
+            compatibility_fingerprint=current["compatibility"],
+            behavior_fingerprint=current["behavior"])
+        if not kind or q is None:
+            return q, None
+
+        scenario = f"invalidation:{kind}:{current['compatibility'][:10]}:{current['behavior'][:10]}"
+        l0 = self._record_l0(host_id, model, role, current, scenario=scenario)
+        levels = ("L1", "L2", "L3") if kind == "hard" else ("L2",)
+        queued: list[dict[str, Any]] = []
+        for level in levels:
+            if level == "L1":
+                # An L1 is a provider call, so it remains an explicit
+                # checkpointed action rather than a background cost.
+                continue
+            plan = self.qualification_plan(host_id, model, role, level)
+            existing = self.evaluation_jobs.pending_for(
+                host_id=host_id, model_id=model, role=role, level=level,
+                compatibility_fingerprint=current["compatibility"],
+                behavior_fingerprint=current["behavior"], scenario=scenario)
+            job = existing or self.evaluation_jobs.create(plan, scenario=scenario)
+            if existing is None:
+                job = self.evaluation_jobs.mark_automatic(job, kind=kind)
+            queued.append(job.public())
+
+        # ``record`` derives a new Qualification row from the L0 result.  Put
+        # the reason back on that current row so every adapter sees the
+        # actionable distinction rather than a mysterious status downgrade.
+        refreshed = self.qualifications.get(host_id, model, role)
+        if refreshed is not None:
+            q = self.qualifications.annotate_route(
+                host_id=host_id, model_id=model, role=role, invalidation=(
+                f"{'hard compatibility' if kind == 'hard' else 'advisory_stale: behavior'} "
+                f"fingerprint changed; L0 {l0.get('outcome')}; "
+                f"{'L1–L3' if kind == 'hard' else 'L2'} requalification queued"))
+        event = {"kind": kind, "l0": l0, "required_levels": list(levels),
+                 "queued_jobs": queued,
+                 "paid_work": "not started; approve a spend checkpoint before evaluation"}
+        self.hub.publish({"type": "qualification_requalification_queued", "host_id": host_id,
+                          "model": model, "role": role, **event})
+        return q, event
+
+    def qualification_plan(self, host_id: str, model: str, role: str = "lead",
+                           level: str = "L1") -> dict[str, Any]:
+        if level not in EVALUATION_LEVELS:
+            raise ApiError(400, f"level is one of {EVALUATION_LEVELS}")
+        try:
+            host = self.hosts.get(host_id)
+        except KeyError as exc:
+            # Legacy tiers still name provider presets directly through 2.x.
+            # They are not editable HostRegistry records, but their stable
+            # endpoint is sufficient for a transparent qualification plan.
+            preset = PRESETS.get(host_id)
+            if preset is None:
+                raise ApiError(404, str(exc)) from exc
+            try:
+                host = Host(id=host_id, display_name=host_id.capitalize(),
+                            protocol=str(preset.get("protocol") or "openai"),
+                            base_url=str(preset.get("base_url") or "https://api.openai.com/v1"),
+                            auth_ref=str(preset.get("key_env") or ""), seeded=True).normalise()
+            except ValueError as host_error:
+                raise ApiError(400, str(host_error)) from host_error
+        if not model.strip():
+            raise ApiError(400, "model is required")
+        counts = {"L0": 1, "L1": 1, "L2": 3, "L3": 5}
+        # This is deliberately an estimate, not invented pricing.  Providers
+        # differ and can change pricing; a host may later supply a rate card.
+        return {"host_id": host_id, "model": model, "role": role, "level": level,
+                "runs": counts[level], "estimated_minutes": {"L0": 0, "L1": 1,
+                                                                 "L2": 8, "L3": 90}[level],
+                "estimated_cost_usd": None,
+                "requires_spend_confirmation": level != "L0",
+                "resumable": level in ("L2", "L3"),
+                "host": host.public(), "fingerprints": self._qualification_fingerprints(host_id, model, role)}
+
+    def qualification_status(self, host_id: str, model: str, role: str = "lead") -> dict[str, Any]:
+        current = self._qualification_fingerprints(host_id, model, role)
+        q, requalification = self._refresh_qualification_route(host_id, model, role, current)
+        rows = [r for r in self.qualifications.runs.values()
+                if (r.host_id, r.model_id, r.role) == (host_id, model, role)]
+        return {"qualification": None if q is None else {
+                    "host_id": q.host_id, "model_id": q.model_id, "role": q.role,
+                    "status": q.status, "updated_at": q.updated_at,
+                    "expires_at": q.expires_at, "invalidation": q.invalidation,
+                    "evidence_runs": q.evidence_runs,
+                    "fresh": q.fresh(),
+                    "freshness": "current" if q.fresh() else "expired_or_missing"},
+                "runs": [r.__dict__ for r in sorted(rows, key=lambda r: r.at, reverse=True)],
+                "jobs": self.evaluation_jobs.list(host_id=host_id, model_id=model, role=role),
+                "requalification": requalification,
+                "fingerprints": current}
+
+    def _evaluation_spend_checkpoint(self, plan: dict[str, Any], *, confirm_spend: bool,
+                                     checkpoint_id: str = "") -> None:
+        """Turn paid-evaluation consent into a durable UI decision.
+
+        The old ``confirm_spend`` bool remains a 2.x compatibility shim for
+        scripts and older adapters. It now writes the same approved checkpoint
+        that Browser/Obsidian UI resolves explicitly, rather than leaving a
+        policy sentence for a model or caller to infer.
+        """
+        fingerprint = str((plan.get("fingerprints") or {}).get("compatibility") or "")
+        scope = "evaluation:" + hashlib.sha256(json.dumps({
+            "host": plan.get("host_id"), "model": plan.get("model"), "role": plan.get("role"),
+            "level": plan.get("level"), "compatibility": fingerprint,
+        }, sort_keys=True).encode("utf-8")).hexdigest()[:20]
+        approved = False
+        if checkpoint_id:
+            try:
+                row = self.checkpoints.get(checkpoint_id)
+                approved = row.get("type") == "evaluation_spend" and row.get("scope") == scope and \
+                    row.get("resolution") == "approve" and not row.get("expired")
+            except (KeyError, ValueError):
+                approved = False
+        if approved:
+            return
+        create = lambda: self.checkpoints.ensure(
+            "evaluation_spend", scope,
+            evidence={"plan": {key: value for key, value in plan.items() if key != "host"},
+                      "consequence": "This may make paid provider calls; the run remains resumable."},
+            choices=["approve", "cancel"], default="cancel", requester="person")
+        row = self._serialized("evaluation-spend", create)
+        if confirm_spend:
+            # A legacy explicit confirmation is a person action too. Persist
+            # it as an ordinary resolution so audit/UI tools see the decision.
+            if not row.get("resolution"):
+                row = self._serialized("evaluation-spend",
+                                       lambda: self.checkpoints.resolve(row["id"], "approve"))
+            self.hub.publish({"type": "checkpoint_resolved", "checkpoint": row})
+            return
+        self.hub.publish({"type": "checkpoint_created", "checkpoint": row})
+        raise ApiError(409, "confirm evaluation spend", plan=plan,
+                       checkpoint="evaluation_spend", checkpoint_record=row)
+
+    def run_qualification(self, host_id: str, model: str, role: str = "lead",
+                          level: str = "L0", confirm_spend: bool = False,
+                          scenario: str = "default", checkpoint_id: str = "") -> dict[str, Any]:
+        """Run the low-cost qualification tiers synchronously.
+
+        L0 is deterministic and suitable for every CI change.  L1 is one real
+        endpoint/tool probe and needs an explicit spend choice.  L2/L3 create
+        a durable, budget-confirmed plan rather than hiding a long paid walk
+        behind an HTTP request.  A local evaluator or release CI advances the
+        plan only by submitting an artifact-backed observed result.
+        """
+        plan = self.qualification_plan(host_id, model, role, level)
+        if level in ("L2", "L3"):
+            self._evaluation_spend_checkpoint(plan, confirm_spend=confirm_spend,
+                                              checkpoint_id=checkpoint_id)
+            try:
+                job = self.evaluation_jobs.create(plan, scenario=scenario)
+            except ValueError as exc:
+                raise ApiError(400, str(exc)) from exc
+            result = {"queued": True, "status": "queued", "plan": plan, "job": job.public(),
+                      "detail": "No model call has started. Submit each artifact-backed evaluator "
+                                "result to advance this resumable job."}
+            self.hub.publish({"type": "qualification_job_queued", "job": job.public()})
+            return result
+        if level != "L0":
+            self._evaluation_spend_checkpoint(plan, confirm_spend=confirm_spend,
+                                              checkpoint_id=checkpoint_id)
+        fps = plan["fingerprints"]
+        if level == "L0":
+            run = self._record_l0(host_id, model, role, fps)
+            return {"run": run, "status": self.qualification_status(host_id, model, role)}
+        started = time.monotonic()
+        observed_model = ""
+        probe_validation: dict[str, Any] = {
+            "contract_version": L1_PROBE_CONTRACT_VERSION,
+            "passed": False,
+            "checks": {},
+            "failure_codes": ["not_run"],
+            "requested_model": model,
+            "observed_model": "",
+        }
+        try:
+            provider = self._configured_provider({"host_id": host_id, "model": model})
+            if provider is None:
+                raise ProviderError("host is not configured")
+            reply = provider.chat("You are a qualification probe.",
+                                  [{"role": "user", "content":
+                                    "Call librarian_probe with {\"ok\": true}."}],
+                                  [ToolDef("librarian_probe", "Return a small probe object.",
+                                           {"type": "object", "properties": {"ok": {"type": "boolean"}},
+                                            "required": ["ok"], "additionalProperties": False})],
+                                  max_tokens=64, temperature=0)
+            observed_model = str(reply.model or "")
+            probe_validation = validate_l1_probe(reply, model)
+            good = bool(probe_validation["passed"])
+            outcome = "pass" if good else "fail"
+            detail = ("strict tool-call smoke probe passed" if good else
+                      "strict tool-call probe failed: " + ", ".join(probe_validation["failure_codes"]))
+            health = self.hosts.mark_health(host_id, ok=good, detail=detail, model=model)
+            self.hub.publish({"type": "route_health_changed", "host_id": host_id,
+                              "model": model, "health": health.get("health", {})})
+        except ProviderError as exc:
+            outcome, detail = "unavailable", str(exc)[:500]
+            probe_validation = {
+                "contract_version": L1_PROBE_CONTRACT_VERSION,
+                "passed": False,
+                "checks": {},
+                "failure_codes": ["provider_unavailable"],
+                "requested_model": model,
+                "observed_model": observed_model,
+            }
+            try:
+                health = self.hosts.mark_health(host_id, ok=False, detail=detail, model=model)
+                self.hub.publish({"type": "route_health_changed", "host_id": host_id,
+                                  "model": model, "health": health.get("health", {})})
+            except (KeyError, OSError):
+                pass
+        run = self.qualifications.record(host_id=host_id, model_id=model, role=role, level="L1",
+                                         outcome=outcome, compatibility_fingerprint=fps["compatibility"],
+                                         behavior_fingerprint=fps["behavior"],
+                                         duration_ms=round((time.monotonic() - started) * 1000),
+                                         detail=detail, observed_model=observed_model,
+                                         probe_validation=probe_validation, scenario=scenario)
+        return {"run": run.__dict__, "status": self.qualification_status(host_id, model, role)}
+
+    def qualification_jobs(self, host_id: str = "", model: str = "", role: str = "") -> dict[str, Any]:
+        return {"jobs": self.evaluation_jobs.list(host_id=host_id, model_id=model, role=role)}
+
+    def _qualification_job_current(self, job_id: str) -> tuple[Any, dict[str, str]]:
+        """Load a job and reject it if the current hard contract changed."""
+        try:
+            job = self.evaluation_jobs.get(job_id)
+        except KeyError as exc:
+            raise ApiError(404, str(exc)) from exc
+        current = self._qualification_fingerprints(job.host_id, job.model_id, job.role)
+        self._refresh_qualification_route(job.host_id, job.model_id, job.role, current)
+        return job, current
+
+    def pause_qualification_job(self, job_id: str, reason: str = "") -> dict[str, Any]:
+        self._qualification_job_current(job_id)
+        try:
+            job = self.evaluation_jobs.pause(job_id, reason or "paused by person")
+        except ValueError as exc:
+            raise ApiError(409, str(exc)) from exc
+        self.hub.publish({"type": "qualification_job_paused", "job": job.public()})
+        return {"job": job.public()}
+
+    def resume_qualification_job(self, job_id: str) -> dict[str, Any]:
+        self._qualification_job_current(job_id)
+        try:
+            job = self.evaluation_jobs.resume(job_id)
+        except ValueError as exc:
+            raise ApiError(409, str(exc)) from exc
+        self.hub.publish({"type": "qualification_job_resumed", "job": job.public()})
+        return {"job": job.public()}
+
+    def cancel_qualification_job(self, job_id: str, reason: str = "") -> dict[str, Any]:
+        try:
+            job = self.evaluation_jobs.cancel(job_id, reason or "cancelled by person")
+        except KeyError as exc:
+            raise ApiError(404, str(exc)) from exc
+        except ValueError as exc:
+            raise ApiError(409, str(exc)) from exc
+        self.hub.publish({"type": "qualification_job_cancelled", "job": job.public()})
+        return {"job": job.public()}
+
+    def record_qualification_job_result(self, job_id: str, *, outcome: str, artifact: str,
+                                         detail: str = "", duration_ms: int = 0,
+                                         cost_usd: float = 0.0) -> dict[str, Any]:
+        """Attach one real L2/L3 evaluator outcome to a queued job.
+
+        This endpoint does not execute or simulate a golden walk.  It is the
+        hand-off from a local evaluator/CI harness after it has produced a
+        durable artifact.  Passing and failing results need an artifact so a
+        future qualification review can inspect the observed work.
+        """
+        if outcome not in ("pass", "fail", "unavailable", "cancelled"):
+            raise ApiError(400, "outcome is pass, fail, unavailable or cancelled")
+        if outcome in ("pass", "fail") and not str(artifact).strip():
+            raise ApiError(400, "pass/fail evaluator results require an artifact reference")
+        job, current = self._qualification_job_current(job_id)
+        try:
+            job = self.evaluation_jobs.begin_result(
+                job_id, compatibility_fingerprint=current["compatibility"])
+        except ValueError as exc:
+            raise ApiError(409, str(exc)) from exc
+        try:
+            run = self.qualifications.record(
+                host_id=job.host_id, model_id=job.model_id, role=job.role, level=job.level,
+                outcome=outcome, compatibility_fingerprint=job.compatibility_fingerprint,
+                behavior_fingerprint=job.behavior_fingerprint, scenario=job.scenario,
+                duration_ms=duration_ms, cost_usd=cost_usd, detail=detail, artifact=artifact)
+            job = self.evaluation_jobs.finish_result(job_id, run.id, outcome=outcome,
+                                                      detail=detail or f"{outcome} result recorded")
+        except (OSError, ValueError) as exc:
+            # The result slot is intentionally made resumable after a local
+            # persistence error instead of looking as though it completed.
+            try:
+                self.evaluation_jobs.pause(job_id, f"could not persist evaluator result: {exc}")
+            except (KeyError, ValueError):
+                pass
+            raise ApiError(503, f"could not persist evaluator result: {exc}") from exc
+        status = self.qualification_status(job.host_id, job.model_id, job.role)
+        self.hub.publish({"type": "qualification_job_result", "job": job.public(),
+                          "run": run.__dict__})
+        return {"job": job.public(), "run": run.__dict__, "status": status}
+
+    # -- profiles and UI checkpoints --------------------------------------
+    def _active_agent_profile(self) -> Any:
+        """Return the vault's selected agent profile or fail closed.
+
+        Settings can be edited outside the browser, so a missing/deleted
+        profile is not silently replaced with the broader legacy behaviour.
+        A person can pick ``lead`` explicitly to recover it through the
+        ordinary settings endpoint.
+        """
+        profile_id = str(self.settings.data.get("agent_profile") or "lead")
+        try:
+            return self.profiles.get(profile_id)
+        except (KeyError, ValueError) as exc:
+            raise ApiError(409, f"selected agent profile {profile_id!r} is unavailable; choose a profile",
+                           agent_profile=profile_id) from exc
+
+    def _tier_choice(self, n: int) -> dict[str, Any] | None:
+        """The actual configured route used by ``tier(n)``, including fallback."""
+        tiers = self.settings.data.get("tiers") or []
+        for i in range(min(n, len(tiers)) - 1, -1, -1):
+            if isinstance(tiers[i], dict) and tiers[i]:
+                return dict(tiers[i])
+        return None
+
+    def _route_rate_card(self, route: dict[str, Any] | None, profile: Any) -> dict[str, Any] | None:
+        """Find an auditable price card for conservative profile cost caps.
+
+        A profile-supplied card is intentional for a personal/custom endpoint.
+        For a known preset, reuse a catalogued model profile only when both
+        input and output prices are present.  Unknown prices never become a
+        guessed zero: a non-zero cost budget then stops before the call.
+        """
+        policy = getattr(profile, "route_policy", {}) or {}
+        direct = policy.get("rate_card") if isinstance(policy, dict) else None
+        if isinstance(direct, dict):
+            return direct
+        if not route:
+            return None
+        provider = str(route.get("provider") or "").casefold()
+        model = str(route.get("model") or "").casefold()
+        if not provider or not model:
+            return None
+        catalogues = {**_shipped_profiles(), **_remembered_profiles(), **self._model_sources()}
+        known = catalogues.get((provider, model)) or {}
+        incoming, outgoing = known.get("price_input_per_1m"), known.get("price_output_per_1m")
+        if incoming is None or outgoing is None:
+            return None
+        return {"price_input_per_1m": incoming, "price_output_per_1m": outgoing}
+
+    def _background_endpoint_route(self, endpoint: Any,
+                                   fallback_route: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Recover the actual non-secret route used by a Clerk/Scribe task.
+
+        ``ProviderEndpoint`` wraps the modern host-registry provider, while a
+        2.x ``[clerk]`` route is a plain Clerk endpoint.  Both can be matched
+        to a registered host by its public endpoint identity.  A route that
+        cannot be identified is deliberately not treated as qualified: the
+        person can add the host record and keep using the same model rather
+        than allowing an invisible configuration escape hatch.
+        """
+        carrier = getattr(endpoint, "provider", None)
+        host = getattr(carrier, "host", None) if carrier is not None else None
+        provider = getattr(carrier, "provider", carrier) if carrier is not None else endpoint
+        model = str(getattr(provider, "model", "") or getattr(endpoint, "model", "") or "")
+        if host is not None:
+            return {"host_id": str(host.id), "provider": str(host.id), "model": model}
+        if isinstance(endpoint, ProviderEndpoint) and fallback_route:
+            return dict(fallback_route)
+        base_url = str(getattr(provider, "base_url", "") or
+                       getattr(endpoint, "base_url", "") or "").rstrip("/")
+        matches = [row for row in self.hosts.all()
+                   if base_url and str(row.get("base_url") or "").rstrip("/") == base_url]
+        if len(matches) == 1:
+            return {"host_id": str(matches[0]["id"]), "provider": str(matches[0]["id"]),
+                    "model": model}
+        return {"provider": "", "model": model, "base_url": base_url}
+
+    def _background_profile_guard(self, profile: Any, endpoint: Any,
+                                  fallback_route: dict[str, Any] | None = None) -> dict[str, Any] | None:
+        """Apply the Clerk/Scribe profile before each single-shot model call."""
+        route = self._background_endpoint_route(endpoint, fallback_route)
+        if not str(route.get("host_id") or route.get("provider") or "") or not route.get("model"):
+            raise ValueError("bind this legacy Clerk/Scribe endpoint to a Host Registry record before "
+                             "using a screened or verified profile")
+        permitted, reason = route_permitted(profile, route)
+        if not permitted:
+            raise ValueError(reason)
+        # A host-backed ProviderEndpoint retains its bounded retry/circuit
+        # behaviour, but its policy comes from the role profile rather than
+        # the selected lead profile.
+        provider = getattr(endpoint, "provider", None)
+        if isinstance(provider, LimitedProvider):
+            provider.retry_policy = str(getattr(profile, "retry_policy", "bounded"))
+        self._require_profile_qualification(profile, route, {})
+        return self._route_rate_card(route, profile)
+
+    def _background_profile_endpoint(self, role: str, endpoint: Any, tier: int) -> Any:
+        """Wrap one configured background endpoint in its fixed role profile.
+
+        The ``tier`` argument is a compatibility bridge for a ProviderEndpoint
+        with a legacy preset route; it is never a privilege selector.  Profile
+        role, route allow-list and qualification remain the authority.
+        """
+        if isinstance(endpoint, ProfiledEndpoint):
+            return endpoint
+        try:
+            profile = self.profiles.get(role)
+        except (KeyError, ValueError) as exc:
+            raise ValueError(f"the vault's {role} profile is unavailable") from exc
+        fallback_route = self._tier_choice(tier)
+        return ProfiledEndpoint(
+            endpoint, profile, gate=self.profile_gate,
+            route_guard=lambda current, target: self._background_profile_guard(
+                current, target, fallback_route),
+            rate_card=self._route_rate_card(fallback_route, profile),
+        )
+
+    def _helper_profile_guard(self, profile: Any, tier: int) -> dict[str, Any] | None:
+        """Check the fixed read-only helper profile against its actual route.
+
+        Delegation chooses tier 2 when available and falls back to tier 1, so
+        the guard receives the *resolved* tier rather than trusting the model's
+        requested label.  It keeps helper runs under the same route allow-list,
+        role-qualification and cost-card policy as an interactive agent turn.
+        """
+        route = self._tier_choice(tier)
+        if route is None:
+            raise ValueError(f"no route is configured for helper tier {tier}")
+        permitted, reason = route_permitted(profile, route)
+        if not permitted:
+            raise ValueError(reason)
+        lead = self.lead_status() if str(getattr(profile, "role", "")) == "lead" else {}
+        self._require_profile_qualification(profile, route, lead)
+        return self._route_rate_card(route, profile)
+
+    @staticmethod
+    def _qualification_rank(status: str) -> int:
+        return {"experimental": 0, "unavailable": 0, "screened": 1,
+                "verified_local": 2, "verified_release": 2}.get(status, 0)
+
+    def _require_profile_qualification(self, profile: Any, route: dict[str, Any],
+                                       lead: dict[str, Any]) -> None:
+        """Enforce an AgentProfile's qualification floor at the call boundary.
+
+        The profile file is vault-scoped policy, so merely displaying its
+        ``required_qualification`` in Settings is insufficient.  This check
+        runs immediately before a model can receive a prompt.  Lead routes
+        retain their stricter release/M0 policy; other roles use their own
+        role-specific evidence so a screened lead cannot accidentally stand
+        in for an untested Clerk or Scribe walk.
+
+        A 2.x legacy lead override remains a deliberate person decision.  It
+        is recorded by ``set_tiers`` and is never mistaken for qualification
+        evidence, but preserves the established compatibility escape hatch.
+        """
+        required = str(getattr(profile, "required_qualification", "screened") or "screened")
+        if self._qualification_rank(required) == 0:
+            return
+        role = str(getattr(profile, "role", "lead") or "lead")
+        if role == "lead":
+            if lead.get("status") == "override":
+                return
+            observed = str(lead.get("result") or "")
+            # Older M0 eligible-lead records predate L0–L3 labels.  They are
+            # still a stronger lead screen than no evidence, but they cannot
+            # meet a profile that explicitly requires L3-level evidence.
+            if lead.get("status") == "eligible" and not self._qualification_rank(observed):
+                observed = "screened"
+            if lead.get("status") == "eligible" and \
+                    self._qualification_rank(observed) >= self._qualification_rank(required):
+                return
+            host_id = str(route.get("host_id") or route.get("provider") or "")
+            model = str(route.get("model") or "")
+            plan: dict[str, Any] | None = None
+            if host_id and model:
+                try:
+                    level = "L1" if self._qualification_rank(required) <= 1 else "L3"
+                    plan = self.qualification_plan(host_id, model, "lead", level)
+                except ApiError:
+                    pass
+            raise ApiError(409,
+                           f"agent profile {getattr(profile, 'id', role)!r} requires {required} "
+                           f"lead qualification; this route is {observed or 'experimental'}",
+                           profile=profile.public(), qualification=lead, plan=plan)
+
+        host_id = str(route.get("host_id") or route.get("provider") or "")
+        model = str(route.get("model") or "")
+        if not host_id or not model:
+            raise ApiError(409, "the selected route has no host/model qualification identity",
+                           profile=profile.public(), route=route)
+        status = self.qualification_status(host_id, model, role)
+        row = status.get("qualification") or {}
+        observed = str(row.get("status") or "experimental")
+        fresh = bool(row.get("fresh"))
+        if fresh and self._qualification_rank(observed) >= self._qualification_rank(required):
+            return
+        try:
+            level = "L1" if self._qualification_rank(required) <= 1 else "L3"
+            plan = self.qualification_plan(host_id, model, role, level)
+        except ApiError:
+            plan = None
+        freshness = "expired" if row and not fresh else "missing"
+        raise ApiError(409,
+                       f"agent profile {getattr(profile, 'id', role)!r} requires {required} "
+                       f"qualification for role {role!r}; this route is {observed} ({freshness})",
+                       profile=profile.public(), qualification=status, plan=plan)
+
+    def set_agent_profile(self, profile_id: str) -> dict[str, Any]:
+        """Select the agent policy used for subsequent chat turns.
+
+        Switching an active run would make its trace ambiguous, so it is a
+        short, explicit idle-time choice.  It remains vault-scoped and never
+        changes a host, credential, or person-initiated tool permission.
+        """
+        wanted = str(profile_id or "").strip()
+        if not wanted:
+            raise ApiError(400, "agent profile id is required")
+        try:
+            profile = self.profiles.get(wanted)
+        except (KeyError, ValueError) as exc:
+            raise ApiError(404, f"no agent profile {wanted!r}") from exc
+        if self.busy:
+            raise ApiError(409, "wait for the active agent turn before changing its profile")
+        self.settings.update(agent_profile=profile.id)
+        if self.loop is not None:
+            self.loop.ctx.extras["agent_profile"] = profile.id
+            self.loop.configure_profile(profile, rate_card=self._route_rate_card(self._tier_choice(1), profile))
+            level = self.loop.ctx.extras.get("effort") or {}
+            self.loop.turn_seconds = self.loop.cap_turn_seconds(level.get("turn_seconds"))
+        self.hub.publish({"type": "agent_profile_changed", "profile": profile.public()})
+        return {"agent_profile": profile.public()}
+
+    def profile_list(self) -> dict[str, Any]:
+        selected = str(self.settings.data.get("agent_profile") or "lead")
+        return {"profiles": self.profiles.all(), "selected": selected,
+                "active": self.profile_gate.status()}
+
+    def profile_history(self, profile_id: str) -> dict[str, Any]:
+        wanted = str(profile_id or "").strip()
+        if not wanted:
+            raise ApiError(400, "agent profile id is required")
+        try:
+            # Do not expose a history for an arbitrary misspelled file key.
+            self.profiles.get(wanted)
+        except (KeyError, ValueError) as exc:
+            raise ApiError(404, f"no agent profile {wanted!r}") from exc
+        return {"id": wanted, "history": self.profiles.history(wanted)}
+
+    def packs(self) -> dict[str, Any]:
+        from .packs import all_packs, compatible
+        from .packs import PACKS
+        return {"packs": [{**row, "compatible": compatible(PACKS[row["id"]])}
+                          for row in all_packs()]}
+
+    def profile_save(self, row: Any) -> dict[str, Any]:
+        from .agent_runtime import AgentProfile
+        if not isinstance(row, dict):
+            raise ApiError(400, "profile is a JSON object")
+        try:
+            allowed = {key: value for key, value in row.items()
+                       if key in AgentProfile.__dataclass_fields__}
+            if "id" not in allowed or "role" not in allowed:
+                raise ValueError("profile needs id and role")
+            profile = AgentProfile(**allowed)
+            save = lambda: self.profiles.save(profile)
+            return self.writer.submit(save, caller="profile-settings") if self.writer is not None else save()
+        except (TypeError, ValueError) as exc:
+            raise ApiError(400, str(exc)) from exc
+
+    def checkpoint_list(self, pending_only: bool = False) -> dict[str, Any]:
+        return {"checkpoints": self.checkpoints.all(pending_only=pending_only)}
+
+    def checkpoint_create(self, type: str, scope: str, evidence: Any = None,
+                          choices: Any = None, requester: str = "person") -> dict[str, Any]:
+        if not type or not scope:
+            raise ApiError(400, "checkpoint type and scope are required")
+        if evidence is not None and not isinstance(evidence, dict):
+            raise ApiError(400, "checkpoint evidence is an object")
+        if choices is not None and (not isinstance(choices, list) or
+                                    not all(isinstance(choice, str) for choice in choices)):
+            raise ApiError(400, "checkpoint choices is a list of strings")
+        create = lambda: self.checkpoints.create(type, scope, evidence=evidence or {},
+                                                  choices=choices or [], requester=requester)
+        row = self.writer.submit(create, caller="checkpoint") if self.writer is not None else create()
+        self.hub.publish({"type": "checkpoint_created", "checkpoint": row})
+        return row
+
+    def checkpoint_resolve(self, checkpoint_id: str, choice: str) -> dict[str, Any]:
+        try:
+            resolve = lambda: self.checkpoints.resolve(checkpoint_id, choice)
+            row = self.writer.submit(resolve, caller="checkpoint") if self.writer is not None else resolve()
+            self.hub.publish({"type": "checkpoint_resolved", "checkpoint": row})
+            return row
+        except KeyError as exc:
+            raise ApiError(404, str(exc)) from exc
+        except ValueError as exc:
+            raise ApiError(400, str(exc)) from exc
 
     def tier(self, n: int) -> Provider | None:
         """Tier n, falling back to the one above it when empty."""
@@ -337,18 +1646,42 @@ class App:
     def _extras(self) -> dict[str, Any]:
         from . import effort
         level = effort.profile(self.settings.data.get("effort"))
+        # Preserve a corrupt hand-edited setting for the explicit runtime
+        # error in ``_active_agent_profile``.  Non-agent screens still need
+        # to render enough state for the person to repair it.
+        profile_id = str(self.settings.data.get("agent_profile") or "lead")
         extras: dict[str, Any] = {"broker": self.broker, "waiters": self.waiters,
                                   "mcp": self.mcp,
                                   # the person's effort setting, and the tiers a delegate runs on
                                   # (a ceiling: the lead may choose less with set_effort)
                                   "effort": level, "effort_ceiling": level,
-                                  "agent_provider": self.tier}
+                                  "agent_provider": self.tier,
+                                  "caller": "core",
+                                  "document_leases": self.document_leases,
+                                  # The registry uses this narrow executor for
+                                  # every non-orchestrating tool call.  It is
+                                  # the only route by which an app-backed
+                                  # browser/Obsidian/Cowork request can touch
+                                  # the derived SQLite index.
+                                  "index_service": self.index_service,
+                                  "checkpoints": self.checkpoints,
+                                  "profile_store": self.profiles,
+                                  "agent_profile": profile_id,
+                                  "profile_gate": self.profile_gate,
+                                  "helper_profile_guard": self._helper_profile_guard,
+                                   "background_profile_endpoint": self._background_profile_endpoint,
+                                  "use_tool_bundles": True}
+        if self.writer is not None:
+            extras["vault_writer"] = self.writer
         clerk = self.tier(3)
         if clerk is not None:
-            extras["clerk_fallback"] = ProviderEndpoint(clerk)
+            # A registered route is the person's current Clerk assignment. It
+            # takes precedence over a retained 2.x ``[clerk]`` block, whose
+            # syntax is still used when no Host Registry route is assigned.
+            extras["clerk"] = ProviderEndpoint(clerk)
         scribe = self.tier(2)
         if scribe is not None:
-            extras["scribe_fallback"] = ProviderEndpoint(scribe)
+            extras["scribe"] = ProviderEndpoint(scribe)
         lead = self.lead_status()
         if lead["status"] != "none":           # carried into every call's trace (R10)
             extras["lead_status"] = lead["status"] + (f": {lead.get('reason', '')}"
@@ -356,9 +1689,20 @@ class App:
         return extras
 
     def _loop(self) -> Loop:
+        profile = self._active_agent_profile()
+        route = self._tier_choice(1)
+        if route is not None:
+            permitted, reason = route_permitted(profile, route)
+            if not permitted:
+                raise ApiError(409, reason, profile=profile.public(), route=route)
         provider = self.tier(1)
         if provider is None:
             raise ApiError(409, "choose a chat model first (Model: tier 1)")
+        lead = self.lead_status()
+        if lead["status"] == "release_probe_required":
+            raise ApiError(409, "run the selected route's L1 connectivity/tool probe before starting a lead session",
+                           lead=lead.get("model"), qualification=lead)
+        self._require_profile_qualification(profile, route or {}, lead)
         data = self.settings.data
         if self.loop is None:
             self.loop = Loop(self.vault, provider, working_context=data["working_context"],
@@ -371,7 +1715,14 @@ class App:
             self.loop.stance = data["stance"]
             self.loop.ctx.extras.update(self._extras())
         level = self.loop.ctx.extras["effort"]
-        self.loop.max_steps, self.loop.turn_seconds = level["turn_steps"], level["turn_seconds"]
+        self.loop.configure_profile(profile, rate_card=self._route_rate_card(route, profile))
+        # The provider layer itself never silently swaps models.  A bounded
+        # retry policy is carried only by the host wrapper, if this route has
+        # one; an unwrapped legacy provider retains its established behaviour.
+        if isinstance(provider, LimitedProvider):
+            provider.retry_policy = profile.retry_policy
+        self.loop.max_steps = level["turn_steps"]
+        self.loop.turn_seconds = self.loop.cap_turn_seconds(level["turn_seconds"])
         return self.loop
 
     def set_effort(self, level: Any) -> dict[str, Any]:
@@ -384,7 +1735,7 @@ class App:
         if self.loop is not None:
             self.loop.ctx.extras["effort"] = chosen
             self.loop.max_steps, self.loop.turn_seconds = (chosen["turn_steps"],
-                                                           chosen["turn_seconds"])
+                                                           self.loop.cap_turn_seconds(chosen["turn_seconds"]))
             if self.loop.ctx.session:
                 try:
                     SessionStore(self.vault).append(self.loop.ctx.session, {
@@ -403,6 +1754,11 @@ class App:
             if self.busy:
                 raise ApiError(409, "the librarian is still answering; wait, or cancel")
             loop = self._loop()
+            try:
+                profile = self._active_agent_profile()
+                release_profile_slot = self.profile_gate.acquire(profile)
+            except ProfileCapacityError as exc:
+                raise ApiError(409, str(exc), profile=profile.public()) from exc
             self.busy = True
             cancel = threading.Event()
             self._turn_cancel = cancel
@@ -414,11 +1770,16 @@ class App:
                 event = {"type": "turn_done", **result.to_dict(), "session": self.session_view()}
             except Exception as exc:                        # noqa: BLE001
                 event = {"type": "error", "error": f"{type(exc).__name__}: {exc}"}
-            # Free before announcing: a person who sends the moment the reply
-            # lands must not be told the librarian is still answering.
-            with self._lock:
-                self.busy = False
-                self._turn_cancel = None
+            finally:
+                # Free before announcing: a person who sends the moment the
+                # reply lands must not be told the librarian is still
+                # answering.  The profile gate is released on every error or
+                # cancellation path too, so a failed provider never strands
+                # a profile's only concurrency slot.
+                release_profile_slot()
+                with self._lock:
+                    self.busy = False
+                    self._turn_cancel = None
             self.hub.publish(event)
             if event["type"] == "turn_done" and event.get("reply"):
                 self._review_reply(loop, str(event["reply"]))
@@ -517,9 +1878,28 @@ class App:
     # -- the person's own calls ---------------------------------------------
     def person_call(self, name: str, arguments: dict[str, Any], session: str = ""
                     ) -> dict[str, Any]:
-        ctx = Context(tier="curate", vault=self.vault, session=session or None,
-                      extras={k: v for k, v in self._extras().items() if k != "broker"})
+        extras = {k: v for k, v in self._extras().items() if k != "broker"}
+        # A profile can only narrow an *agent*.  A person's explicit UI/CLI
+        # action remains their curate-tier authority, never accidentally
+        # inherited from the lead profile used by the chat loop.
+        extras.pop("agent_profile", None)
+        extras.pop("profile_store", None)
+        extras["caller_kind"] = "person"
+        ctx = Context(tier="curate", vault=self.vault, session=session or None, extras=extras)
         result = REGISTRY.call(name, arguments, ctx)
+        if result.get("refused") == "DOCUMENT_ACTIVE" and "checkpoint" not in result:
+            checkpoint = self._serialized("document-conflict-checkpoint", lambda: self.checkpoints.create(
+                "write_conflict", str(result.get("detail") or name),
+                evidence={"tool": name, "arguments": arguments,
+                          "leases": self.document_leases.view().get("leases", [])},
+                choices=["wait", "retry_after_review", "cancel"], requester="person"))
+            result = {**result, "checkpoint": checkpoint}
+            self.hub.publish({"type": "checkpoint_created", "checkpoint": checkpoint})
+        elif isinstance(result.get("checkpoint"), dict):
+            # Registry-owned refusals and audited macros can make an explicit
+            # UI checkpoint too.  Surface it immediately rather than relying
+            # on a later page refresh.
+            self.hub.publish({"type": "checkpoint_created", "checkpoint": result["checkpoint"]})
         if name in ("answer", "staging_decide", "promote_offering") and "error" not in result:
             self.hub.publish({"type": "person_acted", "tool": name})
         if name == "rewind_session" and "error" not in result and self.loop is not None \
@@ -535,7 +1915,9 @@ class App:
         ctx = Context(tier="curate", vault=self.vault,
                       extras={k: v for k, v in self._extras().items() if k != "broker"})
         try:
-            result = decide_offering(ctx, offering, decision)
+            action = lambda: decide_offering(ctx, offering, decision)
+            result = self.writer.submit(action, caller="browser-promotion") \
+                if self.writer is not None else action()
         except TypeError as exc:
             return {"error": "invalid_arguments", "detail": str(exc)}
         self.hub.publish({"type": "person_acted", "tool": "promote_offering"})
@@ -679,7 +2061,24 @@ class App:
             status = self.keys.save(provider, key)
         except ValueError as exc:
             raise ApiError(400, str(exc)) from exc
+        except PermissionError as exc:
+            raise ApiError(409, str(exc), managed_by="obsidian") from exc
+        except OSError as exc:
+            raise ApiError(503, f"could not save the key: {exc}") from exc
         return {**status, "check": self.check(provider)}
+
+    def migrate_keys_to_keychain(self, *, confirm: bool = False) -> dict[str, Any]:
+        """Perform the person's explicit fallback-key migration request."""
+        if not confirm:
+            raise ApiError(409, "confirm keychain migration", confirm=(
+                "Move all saved fallback-file credentials into this Windows user's credential store? "
+                "No credential values will be shown or sent to the browser."))
+        try:
+            return self.keys.migrate_to_keychain()
+        except PermissionError as exc:
+            raise ApiError(409, str(exc), managed_by="obsidian") from exc
+        except OSError as exc:
+            raise ApiError(503, f"could not migrate credentials to the operating-system keychain: {exc}") from exc
 
     def usage(self, provider: str) -> dict[str, Any]:
         """One best-effort read of account balance/usage, and the provider's
@@ -727,9 +2126,8 @@ class App:
         """Every catalogued model Source, keyed by (provider, model_id), both
         lowercased so a live listing's id matches regardless of case."""
         try:
-            index = Index(self.vault)
-            rows = list(index.conn.execute(
-                "SELECT path, frontmatter FROM note WHERE shape = 'source' AND kind = 'model'"))
+            rows = self.index_service.run(lambda index: list(index.conn.execute(
+                "SELECT path, frontmatter FROM note WHERE shape = 'source' AND kind = 'model'")))
         except Exception:                                   # noqa: BLE001 - no index yet
             return {}
         out: dict[tuple[str, str], dict[str, Any]] = {}
@@ -754,7 +2152,16 @@ class App:
 
     def models(self, provider: str) -> dict[str, Any]:
         try:
-            made = self._provider_for({"provider": provider})
+            # A custom host is addressed by its registry id.  Legacy callers
+            # still pass a provider preset, so this remains source-compatible
+            # with the existing model tile while allowing Settings to discover
+            # any OpenAI-compatible personal host.
+            try:
+                self.hosts.get(provider)
+                choice = {"host_id": provider}
+            except KeyError:
+                choice = {"provider": provider}
+            made = self._provider_for(choice)
             listed = made.models() if made is not None else []
         except ProviderError as exc:
             status = "offline" if provider == "local" else \
@@ -792,25 +2199,92 @@ class App:
             out.append(entry)
         return {"provider": provider, "status": "ready", "models": out}
 
-    def set_tiers(self, tiers: list[dict[str, Any]], override: str = "") -> dict[str, Any]:
+    @staticmethod
+    def _host_model_override_scope(tiers: list[dict[str, Any]]) -> str:
+        """Bind a route-override choice to these exact normalized routes."""
+        canonical = json.dumps(tiers, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return "host-model-override:" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:20]
+
+    def _host_model_override_checkpoint(self, tiers: list[dict[str, Any]], lead: dict[str, Any],
+                                        *, checkpoint_id: str = "", reason: str = "") -> dict[str, Any]:
+        """Require a durable UI decision before selecting an experimental lead.
+
+        ``override`` was a free-text compatibility parameter in early 2.x.
+        Keep it as a direct, person-originated approval path, but record the
+        same structured checkpoint as Browser and Obsidian.  An agent cannot
+        supply either route selection or a checkpoint id through this method.
+        """
+        scope = self._host_model_override_scope(tiers)
+        if checkpoint_id:
+            try:
+                row = self.checkpoints.get(checkpoint_id)
+            except KeyError as exc:
+                raise ApiError(404, str(exc)) from exc
+            if row.get("type") == "host_model_override" and row.get("scope") == scope and \
+                    row.get("resolution") == "approve" and not row.get("expired"):
+                return row
+            raise ApiError(409, "approve the matching host/model override checkpoint before selecting this route",
+                           checkpoint_record=row, checkpoint="host_model_override")
+
+        create = lambda: self.checkpoints.ensure(
+            "host_model_override", scope,
+            evidence={"tiers": tiers, "lead": lead,
+                      "consequence": "This route is experimental or no longer has current lead evidence. "
+                                     "It will not be labelled verified."},
+            choices=["approve", "cancel"], default="cancel", requester="person")
+        row = self._serialized("host-model-override", create)
+        self.hub.publish({"type": "checkpoint_created", "checkpoint": row})
+        if reason.strip():
+            # A compatibility caller has already made the explicit choice in
+            # its own UI/CLI.  Persist that choice as a normal resolution so
+            # it is auditable and never a magic bypass.
+            if not row.get("resolution"):
+                row = self._serialized("host-model-override",
+                                       lambda: self.checkpoints.resolve(row["id"], "approve"))
+                self.hub.publish({"type": "checkpoint_resolved", "checkpoint": row})
+            if row.get("resolution") == "approve":
+                return row
+        if row.get("resolution") == "approve":
+            return row
+        raise ApiError(409,
+                       f"{lead.get('model') or 'this route'} has not completed the lead qualification suite, "
+                       "so it is not known to finish research tasks. Review the route consequences and choose "
+                       "Approve only to use it experimentally.",
+                       needs_override=True, lead=lead.get("model", ""), checkpoint="host_model_override",
+                       checkpoint_record=row)
+
+    def set_tiers(self, tiers: list[dict[str, Any]], override: str = "",
+                  checkpoint_id: str = "") -> dict[str, Any]:
         if not isinstance(tiers, list) or len(tiers) > 3:
-            raise ApiError(400, "tiers is a list of up to three {provider, model}")
+            raise ApiError(400, "tiers is a list of up to three {provider|host_id, model}")
         clean = []
         for t in tiers:
-            if not isinstance(t, dict) or t.get("provider") not in PRESETS or not t.get("model"):
-                raise ApiError(400, "each tier needs a known provider and a model id")
-            clean.append({"provider": t["provider"], "model": str(t["model"])})
+            if not isinstance(t, dict) or not t.get("model"):
+                raise ApiError(400, "each tier needs a provider or host id and a model id")
+            host_id = str(t.get("host_id") or "")
+            if host_id:
+                try:
+                    host = self.hosts.get(host_id)
+                except KeyError as exc:
+                    raise ApiError(400, str(exc)) from exc
+                if not host.enabled:
+                    raise ApiError(400, f"host {host.display_name!r} is disabled")
+                clean.append({"host_id": host.id, "provider": host.id,
+                              "model": str(t["model"])})
+            elif t.get("provider") in PRESETS:
+                clean.append({"provider": str(t["provider"]), "model": str(t["model"])})
+            else:
+                raise ApiError(400, "each tier needs a known provider or enabled host id and a model id")
         # Requirements Addendum R10: benchmark tiers screen; completing tasks (M0) qualifies.
         # A lead that has not is taken only on a person's recorded override.
         lead = self.lead_status(clean)
         if lead["status"] == "ineligible":
-            if not override.strip():
-                raise ApiError(409, f"{lead['model']} has not completed the M0 completion suite "
-                                    f"as a lead, so it is not known to finish research tasks. "
-                                    f"Use it anyway only as a recorded choice.",
-                               needs_override=True, lead=lead["model"])
+            self._host_model_override_checkpoint(clean, lead, checkpoint_id=checkpoint_id,
+                                                 reason=override)
             overrides = dict(self.settings.data.get("lead_overrides") or {})
-            overrides[lead["model"]] = {"reason": override.strip()[:300], "at": now_iso()}
+            overrides[lead["model"]] = {"reason": (override.strip() or
+                                                  "approved via host/model override checkpoint")[:300],
+                                       "at": now_iso()}
             self.settings.update(lead_overrides=overrides)
         self.settings.update(tiers=clean)
         self.hub.publish({"type": "tiers_changed", "tiers": clean})
@@ -820,7 +2294,53 @@ class App:
         tiers = self.settings.data.get("tiers") or [] if tiers is None else tiers
         if not tiers:
             return {"status": "none"}
-        key = f"{tiers[0]['provider']}/{tiers[0]['model']}"
+        route = tiers[0]
+        host_id = str(route.get("host_id") or route.get("provider") or "")
+        key = f"{host_id}/{route['model']}"
+        model = str(route["model"])
+        current = self._qualification_fingerprints(host_id, model, "lead")
+        qualification, _ = self._refresh_qualification_route(host_id, model, "lead", current)
+        # Local L3 remains valid independently of a bundled release record.
+        # A persisted ``verified_release`` marker cannot bypass the manifest
+        # and account-probe checks below.
+        if qualification is not None and qualification.status == "verified_local" and qualification.fresh():
+            return {"status": "eligible", "model": key, "result": qualification.status,
+                    "evidence": qualification.evidence_runs,
+                    "advisory": qualification.invalidation}
+        # Release L3 evidence only applies if this Core/endpoint contract is
+        # still compatible and this person's account has a fresh matching L1
+        # probe.  A development template, expiry or integrity failure is not
+        # a convincing-looking default lead.
+        contract = self._release_contract(host_id)
+        release_lead, release_reason = release_lead_for_route(host_id, model, contract=contract)
+        if release_lead is not None:
+            probe = self.qualifications.matching_l1_probe(
+                host_id=host_id, model_id=model, role="lead",
+                compatibility_fingerprint=current["compatibility"],
+                observed_model=str(release_lead.get("model_version") or ""),
+            )
+            if probe is not None:
+                return {"status": "eligible", "model": key, "result": "verified_release",
+                        "release_lead": release_lead.get("id"),
+                        "evidence": release_lead.get("qualification_artifacts", []),
+                        "account_probe": probe.id,
+                        "advisory": qualification.invalidation if qualification is not None else ""}
+            return {"status": "release_probe_required", "model": key,
+                    "result": "verified_release", "release_lead": release_lead.get("id"),
+                    "reason": "bundled release evidence is valid; run the matching account L1 probe",
+                    "l1_plan": self.qualification_plan(host_id, model, "lead", "L1")}
+        if release_reason:
+            override = (self.settings.data.get("lead_overrides") or {}).get(key)
+            if override:
+                return {"status": "override", "model": key, "release_reason": release_reason, **override}
+            return {"status": "ineligible", "model": key, "reason": release_reason,
+                    "result": qualification.status if qualification is not None else "experimental",
+                    "evidence": qualification.evidence_runs if qualification is not None else []}
+        if qualification is not None and qualification.status in ("verified_local", "verified_release"):
+            return {"status": "ineligible", "model": key,
+                    "reason": "qualification evidence is expired or missing its freshness date",
+                    "result": qualification.status, "evidence": qualification.evidence_runs,
+                    "advisory": qualification.invalidation}
         listed = {f"{e.get('provider')}/{e.get('model')}": e for e in ELIGIBLE_LEADS()}
         if key in listed:
             return {"status": "eligible", "model": key, "result": listed[key].get("result", "")}
@@ -897,7 +2417,6 @@ class App:
         """Slot 6: the model, how much of the library it has embedded, what the rest would
         take, which intents use it, and the last lexical-vs-hybrid measurement."""
         from . import embed
-        from .index import Index
         spec = embed.spec_for(self.vault)
         out: dict[str, Any] = {"provider": "", "model": "", "spec": spec,
                                "vector_intents": self.vault.setting("search", "vector_intents")}
@@ -908,17 +2427,18 @@ class App:
         out.update(provider=provider, model=model,
                    legacy=not self.vault.setting("services", "embeddings"))
         name = f"hash:{int(rest or 256)}" if kind == "hash" else spec   # as embed stores it
-        index = Index(self.vault)
-        index.refresh()                                   # count what is there now
         price = None
         if kind == "api":
             profile = self._model_sources().get((provider, model.lower())) or {}
             price = profile.get("price_input_per_1m")
-        out["chunks"] = int(index.conn.execute(
-            "SELECT COUNT(DISTINCT hash) FROM chunk WHERE role != 'document'").fetchone()[0])
-        out["embedded"] = int(index.conn.execute(
-            "SELECT COUNT(*) FROM embedding WHERE model = ?", (name,)).fetchone()[0])
-        out["estimate"] = embed.estimate(index, name, price)
+        def measure(index: Any) -> dict[str, Any]:
+            index.refresh()                               # count what is there now
+            return {"chunks": int(index.conn.execute(
+                        "SELECT COUNT(DISTINCT hash) FROM chunk WHERE role != 'document'").fetchone()[0]),
+                    "embedded": int(index.conn.execute(
+                        "SELECT COUNT(*) FROM embedding WHERE model = ?", (name,)).fetchone()[0]),
+                    "estimate": embed.estimate(index, name, price)}
+        out.update(self.index_service.run(measure))
         out["hosted"] = kind == "api"
         compared = self.vault.work("eval") / "vectors.json"
         if compared.is_file():
@@ -938,31 +2458,36 @@ class App:
                                     "fastembed) or an OpenAI-compatible /embeddings provider")
             # a new model starts with no intents using it: a person turns them on after
             # measuring (SM-8), and nothing is embedded until they start it (R17)
-            self.vault.set_setting("services", "embeddings", f"{provider}:{model}" if model else "")
-            self.vault.set_setting("search", "vector_intents", [])
-            return self.services()
+            def set_embeddings() -> dict[str, Any]:
+                self.vault.set_setting("services", "embeddings", f"{provider}:{model}" if model else "")
+                self.vault.set_setting("search", "vector_intents", [])
+                return self.services()
+            return self._serialized("service-settings", set_embeddings)
         if slot == "tts":
             from . import tts
             if model and (provider != "deepinfra" or model not in tts.PRICES):
                 raise ApiError(400, f"text to speech runs on DeepInfra with a model whose price "
                                     f"is known, so its ${tts.CAP_USD:.2f} cap holds: "
                                     f"{', '.join(sorted(tts.PRICES))}")
-            self.vault.set_setting("services", "tts", f"{provider}:{model}" if model else "")
-            return self.services()
+            return self._serialized("service-settings", lambda: (
+                self.vault.set_setting("services", "tts", f"{provider}:{model}" if model else ""),
+                self.services())[1])
         if slot != "ocr":
             raise ApiError(400, f"slot {slot!r} is not built yet")
         if model and (provider not in PRESETS or PRESETS[provider].get("protocol") != "openai"):
             raise ApiError(400, "OCR needs an OpenAI-compatible provider (a vision chat model)")
-        self.vault.set_setting("services", "ocr", f"{provider}:{model}" if model else "")
-        return self.services()
+        return self._serialized("service-settings", lambda: (
+            self.vault.set_setting("services", "ocr", f"{provider}:{model}" if model else ""),
+            self.services())[1])
 
     def set_vector_intents(self, intents: list[str]) -> dict[str, Any]:
         from .search import INTENTS
         unknown = [i for i in intents if i not in INTENTS]
         if unknown:
             raise ApiError(400, f"not search intents: {unknown}")
-        self.vault.set_setting("search", "vector_intents", list(dict.fromkeys(intents)))
-        return self.services()
+        return self._serialized("service-settings", lambda: (
+            self.vault.set_setting("search", "vector_intents", list(dict.fromkeys(intents))),
+            self.services())[1])
 
     def test_service(self, slot: str) -> dict[str, Any]:
         """One small, real call: the OCR model reads a sample line (R17's Test action)."""
@@ -1054,29 +2579,29 @@ class App:
 
     def set_projects_enabled(self, on: bool) -> dict[str, Any]:
         from . import projects
-        projects.set_enabled(self.vault, on)
-        return self.projects()
+        return self._serialized("project-settings", lambda: (
+            projects.set_enabled(self.vault, on), self.projects())[1])
 
     def add_project_root(self, path: str, project: str) -> dict[str, Any]:
         from . import projects
         try:
-            projects.add_root(self.vault, path, project)
+            return self._serialized("project-settings", lambda: (
+                projects.add_root(self.vault, path, project), self.projects())[1])
         except TypeError as exc:
             raise ApiError(400, str(exc)) from exc
-        return self.projects()
 
     def set_project_writes(self, root_id: str, allowed: bool) -> dict[str, Any]:
         from . import projects
         try:
-            projects.set_writes(self.vault, root_id, allowed)
+            return self._serialized("project-settings", lambda: (
+                projects.set_writes(self.vault, root_id, allowed), self.projects())[1])
         except TypeError as exc:
             raise ApiError(404, str(exc)) from exc
-        return self.projects()
 
     def remove_project_root(self, root_id: str) -> dict[str, Any]:
         from . import projects
-        projects.remove_root(self.vault, root_id)
-        return self.projects()
+        return self._serialized("project-settings", lambda: (
+            projects.remove_root(self.vault, root_id), self.projects())[1])
 
     def scan_project_root(self, root_id: str) -> dict[str, Any]:
         from . import projects
@@ -1085,22 +2610,28 @@ class App:
             raise ApiError(404, f"no project root {root_id!r}")
         if not Path(entry["path"]).is_dir():
             raise ApiError(409, f"{entry['path']} has moved or gone: add it again")
-        out = projects.scan(self.vault, Path(entry["path"]), entry.get("project") or "")
-        return {**self.projects(), "scanned": out}
+        def scan() -> dict[str, Any]:
+            out = projects.scan(self.vault, Path(entry["path"]), entry.get("project") or "")
+            return {**self.projects(), "scanned": out}
+        return self._serialized("project-scan", scan)
 
     def set_library(self, promotion_mode: str = "",
                     review: dict[str, bool] | None = None) -> dict[str, Any]:
         """Settings -> Library: the promotion mode, and the review gate (§4 G3) on replies
         and on drafted offerings - `review_replies` / `review_offerings` under [clerk]."""
+        def apply() -> dict[str, Any]:
+            if promotion_mode:
+                self.vault.set_setting("promotion", "mode", promotion_mode)
+            for key, on in (review or {}).items():
+                self.vault.set_setting("clerk", key, bool(on))
+            return self.library()
         if promotion_mode:
             if promotion_mode not in ("person", "agent"):
                 raise ApiError(400, "promotion mode is 'person' or 'agent'")
-            self.vault.set_setting("promotion", "mode", promotion_mode)
         for key, on in (review or {}).items():
             if key not in ("review_replies", "review_offerings"):
                 raise ApiError(400, f"no review setting {key!r}")
-            self.vault.set_setting("clerk", key, bool(on))
-        return self.library()
+        return self._serialized("library-settings", apply)
 
     # -- the document pane: the vault's own notes, read-only ---------------
     def _visible(self, rel: str) -> Path:
@@ -1176,31 +2707,55 @@ class App:
         saved into the vault (Inbox/ unless they chose to browse elsewhere) so
         `ingest` can reach it by the same vault-relative path a person dropping
         it in by hand would use."""
-        folder = self._visible(dir_rel or "Inbox")
-        folder.mkdir(parents=True, exist_ok=True)
-        name = notes.safe_name(filename) or "attachment"
-        target = folder / name
-        stem, suffix = target.stem, target.suffix
-        n = 1
-        while target.exists():
-            target = folder / f"{stem} ({n}){suffix}"
-            n += 1
-        target.write_bytes(data)
-        root = self.vault.root.resolve()
-        return {"path": target.resolve().relative_to(root).as_posix(), "name": target.name}
+        def persist() -> dict[str, Any]:
+            folder = self._visible(dir_rel or "Inbox")
+            folder.mkdir(parents=True, exist_ok=True)
+            name = notes.safe_name(filename) or "attachment"
+            target = folder / name
+            stem, suffix = target.stem, target.suffix
+            n = 1
+            while target.exists():
+                target = folder / f"{stem} ({n}){suffix}"
+                n += 1
+            atomic_write_bytes(target, data)
+            root = self.vault.root.resolve()
+            return {"path": target.resolve().relative_to(root).as_posix(), "name": target.name}
+        if self.writer is not None:
+            # Folder paths are visible vault paths, so an active note lease
+            # can only block a same-name replacement (we choose a new name).
+            return self.writer.submit(persist, caller="browser-upload")
+        return persist()
 
     def state(self) -> dict[str, Any]:
         data = self.settings.data
+        selected_profile: Any | None = None
+        try:
+            selected_profile = self._active_agent_profile()
+        except ApiError:
+            # A manually removed selected profile must leave the browser able
+            # to repair settings; chat itself still fails closed.
+            pass
         return {"version": __version__, "vault": self.vault.root.name,
                 "vault_name": self.vault.title, "vault_path": str(self.vault.root),
                 "mode": self.broker.mode, "pending": self.broker.pending(),
                 "tool_settings": dict(self.broker.settings),
                 "busy": self.busy, "tiers": data.get("tiers") or [],
                 "lead": self.lead_status(),
+                "release_leads": self.release_lead_options(),
                 "working_context": data["working_context"],
                 "reply_length": data["reply_length"], "stance": data["stance"],
                 "effort": self._effort_view(),
                 "keys": self.keys.all(), "key_backend": self.keys.backend,
+                "key_migration_pending": self.keys.migration_pending,
+                "secret_source": "obsidian_managed" if self.secret_source == "obsidian" else self.keys.backend,
+                "vault_lease": self.coordinator.status() if self.coordinator is not None else {},
+                "profiles": self.profiles.all(),
+                "agent_profile": str(data.get("agent_profile") or "lead"),
+                 "agent_profile_role": getattr(selected_profile, "role", ""),
+                 "agent_profile_required_qualification": getattr(
+                     selected_profile, "required_qualification", ""),
+                "active_profile_runs": self.profile_gate.status(),
+                "pending_checkpoints": self.checkpoints.all(pending_only=True),
                 "session": self.session_view(),
                 "actions": [a.public() for a in self.actions.values()],
                 "queued_actions": list(QUEUED), "queued_inputs": self.queued_inputs(),
@@ -1327,6 +2882,8 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
             try:
                 if url.path == "/api/events":
                     return self._events(int((query.get("since") or ["0"])[0] or 0))
+                if url.path == "/api/meta":
+                    return self._json(200, app.meta())
                 if url.path == "/api/state":
                     return self._json(200, app.state())
                 if url.path == "/api/tools":
@@ -1336,6 +2893,38 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                         for s in sorted(REGISTRY.for_tier("curate"), key=lambda s: s.name)]})
                 if url.path == "/api/models":
                     return self._json(200, app.models((query.get("provider") or [""])[0]))
+                if url.path == "/api/hosts":
+                    return self._json(200, app.host_list())
+                if url.path == "/api/routes/readiness":
+                    return self._json(200, app.route_readiness(
+                        (query.get("profile") or [""])[0], (query.get("session") or [""])[0]))
+                if url.path == "/api/hosts/key":
+                    return self._json(200, app.host_key_status((query.get("host_id") or [""])[0]))
+                if url.path == "/api/qualification":
+                    return self._json(200, app.qualification_status(
+                        (query.get("host_id") or [""])[0], (query.get("model") or [""])[0],
+                        (query.get("role") or ["lead"])[0]))
+                if url.path == "/api/qualification/plan":
+                    return self._json(200, app.qualification_plan(
+                        (query.get("host_id") or [""])[0], (query.get("model") or [""])[0],
+                        (query.get("role") or ["lead"])[0], (query.get("level") or ["L1"])[0]))
+                if url.path == "/api/qualification/jobs":
+                    return self._json(200, app.qualification_jobs(
+                        (query.get("host_id") or [""])[0], (query.get("model") or [""])[0],
+                        (query.get("role") or [""])[0]))
+                if url.path == "/api/release-leads":
+                    return self._json(200, app.release_lead_options())
+                if url.path == "/api/profiles":
+                    return self._json(200, app.profile_list())
+                if url.path == "/api/profiles/history":
+                    return self._json(200, app.profile_history((query.get("id") or [""])[0]))
+                if url.path == "/api/packs":
+                    return self._json(200, app.packs())
+                if url.path == "/api/checkpoints":
+                    return self._json(200, app.checkpoint_list(
+                        bool((query.get("pending") or [""])[0])))
+                if url.path == "/api/documents":
+                    return self._json(200, app.documents())
                 if url.path == "/api/library":
                     return self._json(200, app.library())
                 if url.path == "/api/services":
@@ -1414,6 +3003,14 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
             return self._json(200, app.upload_file(folder, name, data))
 
         def _post(self, path: str, body: dict[str, Any]) -> Any:
+            if path == "/api/host/stop":
+                out = app.request_host_stop(force=bool(body.get("force")))
+                # Send the confirmation before stopping the serving thread;
+                # HostManager then waits for the process to disappear instead
+                # of relying on client reference counts or a console window.
+                threading.Thread(target=self.server.shutdown, daemon=True,
+                                 name="librarian-host-stop").start()
+                return out
             if path == "/api/chat":
                 return app.chat(str(body.get("text") or ""))
             if path == "/api/chat/cancel":
@@ -1452,9 +3049,75 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 if not body.get("confirm"):
                     raise ApiError(409, "confirm removal", confirm=(
                         "Remove the saved key? It can't be recovered from here."))
-                return app.keys.remove(str(body.get("provider") or ""))
+                try:
+                    return app.keys.remove(str(body.get("provider") or ""))
+                except PermissionError as exc:
+                    raise ApiError(409, str(exc), managed_by="obsidian") from exc
+                except OSError as exc:
+                    raise ApiError(503, f"could not update key storage: {exc}") from exc
+            if path == "/api/keys/migrate":
+                return app.migrate_keys_to_keychain(confirm=bool(body.get("confirm")))
             if path == "/api/keys/check":
                 return app.check(str(body.get("provider") or ""))
+            if path == "/api/hosts":
+                return app.host_upsert(body.get("host"))
+            if path == "/api/hosts/controls":
+                return app.host_update_controls(body)
+            if path == "/api/hosts/remove":
+                return app.host_remove(str(body.get("host_id") or ""))
+            if path == "/api/hosts/key":
+                return app.host_save_key(str(body.get("host_id") or ""), str(body.get("key") or ""),
+                                         bool(body.get("overwrite")))
+            if path == "/api/hosts/test":
+                return app.host_test(str(body.get("host_id") or ""), str(body.get("model") or ""))
+            if path == "/api/release-leads/select":
+                return app.select_release_lead(str(body.get("id") or ""), key=str(body.get("key") or ""),
+                                               overwrite=bool(body.get("overwrite")),
+                                               checkpoint_id=str(body.get("checkpoint_id") or ""))
+            if path == "/api/qualification/run":
+                return app.run_qualification(str(body.get("host_id") or ""), str(body.get("model") or ""),
+                                             str(body.get("role") or "lead"), str(body.get("level") or "L0"),
+                                             bool(body.get("confirm_spend")),
+                                             str(body.get("scenario") or "default"),
+                                             str(body.get("checkpoint_id") or ""))
+            if path == "/api/qualification/jobs/pause":
+                return app.pause_qualification_job(str(body.get("id") or ""),
+                                                   str(body.get("reason") or ""))
+            if path == "/api/qualification/jobs/resume":
+                return app.resume_qualification_job(str(body.get("id") or ""))
+            if path == "/api/qualification/jobs/cancel":
+                return app.cancel_qualification_job(str(body.get("id") or ""),
+                                                    str(body.get("reason") or ""))
+            if path == "/api/qualification/jobs/result":
+                try:
+                    duration_ms = int(body.get("duration_ms") or 0)
+                    cost_usd = float(body.get("cost_usd") or 0.0)
+                except (TypeError, ValueError) as exc:
+                    raise ApiError(400, "duration_ms and cost_usd must be numbers") from exc
+                return app.record_qualification_job_result(
+                    str(body.get("id") or ""), outcome=str(body.get("outcome") or ""),
+                    artifact=str(body.get("artifact") or ""), detail=str(body.get("detail") or ""),
+                    duration_ms=duration_ms, cost_usd=cost_usd)
+            if path == "/api/profiles":
+                return app.profile_save(body.get("profile"))
+            if path == "/api/agent-profile":
+                return app.set_agent_profile(str(body.get("id") or ""))
+            if path == "/api/checkpoints":
+                return app.checkpoint_create(str(body.get("type") or ""), str(body.get("scope") or ""),
+                                             body.get("evidence"), body.get("choices"),
+                                             str(body.get("requester") or "person"))
+            if path == "/api/checkpoints/resolve":
+                return app.checkpoint_resolve(str(body.get("id") or ""), str(body.get("choice") or ""))
+            if path == "/api/documents/heartbeat":
+                return app.document_heartbeat(str(body.get("path") or ""),
+                                              editor=str(body.get("editor") or "Obsidian"),
+                                              dirty=bool(body.get("dirty", True)),
+                                              baseline=str(body.get("baseline") or ""))
+            if path == "/api/documents/release":
+                return app.document_release(str(body.get("path") or ""),
+                                            editor=str(body.get("editor") or ""))
+            if path == "/api/documents/changed":
+                return app.document_changed(str(body.get("path") or ""))
             if path == "/api/mcp/config":
                 return app.mcp_save_config(body.get("mcpServers"))
             if path == "/api/mcp/accept":
@@ -1469,7 +3132,8 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
             if path == "/api/mcp/remove":
                 return app.mcp_remove_server(str(body.get("name") or ""))
             if path == "/api/tiers":
-                return app.set_tiers(body.get("tiers") or [], str(body.get("override") or ""))
+                return app.set_tiers(body.get("tiers") or [], str(body.get("override") or ""),
+                                     str(body.get("checkpoint_id") or ""))
             if path == "/api/sandbox/run_file":
                 # A person's "Run this script" (EXECUTION_SANDBOX_ONLY): their own call
                 return app.person_call("sandbox_run_file", {"path": str(body.get("path") or "")})
@@ -1621,7 +3285,8 @@ class Switchboard:
             new = App(vault, token=old.token, keys=old.keys,
                       provider_for=None if own else old._provider_for,
                       allowed_origins=old.allowed_origins,
-                      broker_timeout=old.broker_timeout, mcp=old.mcp)
+                      broker_timeout=old.broker_timeout, mcp=old.mcp,
+                      coordinate=old.coordinated, secret_source=old.secret_source)
             self.app = new
         libraries.remember(old.vault)          # so it can always be switched back to
         libraries.remember(vault)
@@ -1668,15 +3333,27 @@ def build(app: App, port: int = 0) -> Server:
 
 
 def serve(vault_path: str | None, port: int = 8323, token: str = "",
-          open_browser: bool = False) -> int:
+          open_browser: bool = False, *, takeover: bool = False) -> int:
     import os
-    import sys
     try:
         vault = Vault.find(vault_path or os.environ.get("LIBRARIAN_VAULT") or None)
     except Refusal:
         from .library_picker import serve_picker
         return serve_picker(port, open_browser)
-    app = App(vault, token=token or os.environ.get("LIBRARIAN_TOKEN", ""))
+    try:
+        app = App(vault, token=token or os.environ.get("LIBRARIAN_TOKEN", ""), coordinate=True,
+                  takeover=takeover or os.environ.get("LIBRARIAN_VAULT_TAKEOVER") == "1",
+                  secret_source="obsidian" if os.environ.get("LIBRARIAN_SECRET_SOURCE") == "obsidian"
+                  else "desktop",
+                  host_managed=os.environ.get("LIBRARIAN_HOST_MANAGED") == "1")
+    except StaleLeaseError as exc:
+        print(json.dumps({"error": "stale_vault_lease", "detail": str(exc),
+                          "takeover": "rerun Librarian app with --takeover after checking the old Core"}),
+              flush=True)
+        return 2
+    except LeaseHeldError as exc:
+        print(json.dumps({"error": "vault_in_use", "detail": str(exc)}), flush=True)
+        return 2
     from . import libraries
     try:
         libraries.remember(vault)
@@ -1684,19 +3361,19 @@ def serve(vault_path: str | None, port: int = 8323, token: str = "",
         pass                                  # a read-only config dir never stops the app
     server = build(app, port)
     url = f"http://127.0.0.1:{server.server_address[1]}/"
+    # This is separate from the vault lease: the lease remains diagnostic
+    # metadata only.  The owner-only record lets Obsidian/Cowork attach to an
+    # already-running Core instead of attempting a second mutable Core for
+    # the same vault.  If private storage is unavailable, normal startup is
+    # still safe; adapters simply get the ordinary lease-held response.
+    connection.publish(vault.root, url=url, token=app.token, pid=os.getpid(),
+                       protocol_version=PROTOCOL_VERSION, secret_source=app.secret_source)
     # The host that started the core reads this line to find the port.
-    print(json.dumps({"listening": url, "vault": str(vault.root)}), flush=True)
+    started = {"listening": url, "vault": str(vault.root)}
+    print(json.dumps(started), flush=True)
     if open_browser:
         import webbrowser
         webbrowser.open(url)
-    if os.environ.get("LIBRARIAN_EXIT_WITH_STDIN"):
-        # A host that started the core (the Obsidian plugin) holds stdin open;
-        # when the host goes, even by crashing, the core goes with it.
-        def watch() -> None:
-            sys.stdin.read()
-            server.closing = True
-            threading.Thread(target=server.shutdown, daemon=True).start()
-        threading.Thread(target=watch, daemon=True, name="host-watch").start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -1706,4 +3383,7 @@ def serve(vault_path: str | None, port: int = 8323, token: str = "",
         server.server_close()
         if server.board.app.mcp is not None:
             server.board.app.mcp.stop()
+        for closing_app in [server.board.app, *server.board.retiring]:
+            closing_app.close_runtime()
+        connection.remove(vault.root, pid=os.getpid(), token=app.token)
     return 0

@@ -36,6 +36,7 @@ from typing import Any
 import yaml
 
 from .clerk import INJECTION_MARKERS
+from .coordination import atomic_write_text
 from .lenses import LensStore, tags
 from .vault import Vault, now_iso
 
@@ -208,6 +209,6 @@ class PackLibrary:
                           "by": accepted_by, "lenses": ids}
         path = self._accepted_path()
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(accepted, indent=1), encoding="utf-8")
+        atomic_write_text(path, json.dumps(accepted, indent=1))
         return {"pack": name, "accepted": True, "digest": pack.digest, "lenses": ids,
                 "replaced": replaced}

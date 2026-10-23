@@ -42,7 +42,6 @@ MAX_LIMIT = 50
 MAX_ITEMS = 100
 MAX_ITEM_TEXT = 2_000
 
-
 @dataclass(frozen=True)
 class Card:
     """What a tool is for, in a few dozen tokens: enough to choose by."""
@@ -58,6 +57,34 @@ class Context:
     vault: Any = None                 # a `vault.Vault`, when the tool needs one
     session: Any = None               # filled in by the session harness (M3)
     extras: dict[str, Any] = field(default_factory=dict)
+
+
+def _profile_tier(ctx: Context) -> str:
+    """Apply an explicitly selected agent profile as a privilege ceiling.
+
+    A profile is an affordance and budget policy, not a way to promote a
+    caller.  Person-initiated curate calls omit ``agent_profile`` (or set
+    ``enforce_agent_profile`` false) and therefore retain their existing
+    interactive authority.
+    """
+    requested = ctx.tier
+    profile_id = ctx.extras.get("agent_profile")
+    if not profile_id or ctx.extras.get("caller_kind") == "person" or \
+            ctx.extras.get("enforce_agent_profile", True) is False:
+        return requested
+    store = ctx.extras.get("profile_store")
+    if store is None:
+        # The profile selector exists but its store vanished: fail closed for
+        # an agent rather than silently falling back to a broader tier.
+        return "consult" if requested in TIERS else requested
+    try:
+        profile = store.get(str(profile_id))
+        ceiling = getattr(profile, "permission_ceiling", "consult")
+    except Exception:  # a deleted/corrupt selected profile must not broaden a live session
+        return "consult" if requested in TIERS else requested
+    if requested not in TIERS or ceiling not in TIERS:
+        return requested
+    return TIERS[min(TIERS.index(requested), TIERS.index(ceiling))]
 
 
 @dataclass(frozen=True)
@@ -275,7 +302,27 @@ class Registry:
         adjusted: list[str] = []
         permission, kwargs = "no broker", None
         try:
-            spec = self.check(name, ctx.tier)
+            effective = _profile_tier(ctx)
+            spec = self.check(name, effective)
+            if effective != ctx.tier:
+                adjusted.append(f"agent profile capped tier {ctx.tier} to {effective}")
+            # A provider should only be able to invoke the small schema surface
+            # it was sent for this turn.  Native tool-calling APIs normally
+            # enforce that already, but this closes the gap for permissive
+            # OpenAI-compatible servers and malformed/replayed responses.
+            # Audited macros are the one deliberate expansion path: their
+            # fixed, traced inner calls mark themselves below rather than
+            # silently reopening the whole registry to the model.
+            active_bundle = ctx.extras.get("active_bundle")
+            if ctx.extras.get("enforce_active_bundle") and \
+                    ctx.extras.get("caller_kind") != "person" and \
+                    not ctx.extras.get("macro_expansion_depth"):
+                allowed = set(active_bundle) if isinstance(active_bundle, (set, frozenset, list, tuple)) else set()
+                if name not in allowed:
+                    offered = ", ".join(sorted(allowed)) or "no tools"
+                    raise Refusal("TOOL_BUNDLE_REFUSED",
+                                  f"{name!r} is not in this turn's task-sized tool bundle "
+                                  f"({offered}); use macro_plan/macro_run for an audited expansion")
             if spec.needs_vault and ctx.vault is None:
                 raise Refusal("VAULT_REQUIRED", f"{name!r} needs a vault")
             if spec.needs_projects:
@@ -283,22 +330,59 @@ class Registry:
                 if not allowed(ctx.vault):
                     raise Refusal("PROJECT_ACCESS_OFF", f"{name}: project access is off for "
                                                         f"this library (Settings -> Projects)")
-            kwargs, adjusted = coerce(spec, arguments or {})
+            kwargs, coerced = coerce(spec, arguments or {})
+            adjusted += coerced
             adjusted += resolve_references(spec, kwargs, ctx)
             if hooks:
                 hooks[0](name, spec.effect, ctx)
             broker = ctx.extras.get("broker")
+            def invoke() -> Any:
+                # Some tools intentionally block while waiting for a person
+                # (`ask_user`) or orchestrate nested tool calls.  Holding an
+                # index mutex around a whole tool would deadlock those paths.
+                # SQLite-owning implementation code uses the Core's
+                # IndexService explicitly for its short transaction instead.
+                return spec.fn(ctx, **kwargs)
+
             if broker is not None:
                 # The surface's permission mode, decided as the action runs;
                 # after the phase gate, so nobody is asked about a refused write.
-                preview = spec.fn(ctx, **{**kwargs, "dry_run": True}) \
-                    if spec.previews and not kwargs.get("dry_run") else None
+                if spec.previews and not kwargs.get("dry_run"):
+                    preview_call = lambda: spec.fn(ctx, **{**kwargs, "dry_run": True})
+                    preview = preview_call()
+                else:
+                    preview = None
                 permission = broker.check(spec, kwargs, ctx, preview=preview) or "allowed"
-            result = spec.fn(ctx, **kwargs)
+            # A local app can provide one VaultWriter for all Librarian-originated
+            # mutations.  CLI/tests without one retain the direct, backwards
+            # compatible path.  The registry remains the enforcement boundary;
+            # the writer only serialises the already-authorised function call.
+            writer = ctx.extras.get("vault_writer") if spec.effect != "read" else None
+            if writer is not None:
+                targets = _write_targets(name, kwargs, ctx)
+                result = writer.submit(invoke,
+                                       caller=str(ctx.extras.get("caller") or "registry"),
+                                       targets=targets)
+            else:
+                result = invoke()
         except Refusal as refusal:
             if refusal.code.startswith("PERMISSION_"):
                 permission = refusal.code.lower()
             result = {"error": "refused", **refusal.to_dict()}
+            if refusal.code == "DOCUMENT_ACTIVE":
+                checkpoints = ctx.extras.get("checkpoints")
+                if checkpoints is not None:
+                    try:
+                        create = lambda: checkpoints.create(
+                            "write_conflict", str(refusal.detail),
+                            evidence={"tool": name, "arguments": arguments or {}},
+                            choices=["wait", "retry_after_review", "cancel"],
+                            requester=str(ctx.extras.get("caller") or "agent"))
+                        writer = ctx.extras.get("vault_writer")
+                        result["checkpoint"] = writer.submit(
+                            create, caller="document-conflict-checkpoint") if writer is not None else create()
+                    except Exception:                       # checkpoint logging must not hide refusal
+                        pass
         except TypeError as exc:
             result = {"error": "invalid_arguments", "tool": name, "detail": clip(exc, 400)}
         except Exception as exc:                            # noqa: BLE001
@@ -318,6 +402,51 @@ class Registry:
             except Refusal as refusal:
                 result = {**result, "session_error": refusal.to_dict()}
         return result
+
+
+def _write_targets(name: str, kwargs: dict[str, Any], ctx: Context) -> list[str]:
+    """Best-effort document targets for the writer's human-edit guard.
+
+    Tools that know their exact note path may supply ``write_targets`` in the
+    context.  Generic registry calls also recognise explicit relative paths;
+    ambiguous note titles are deliberately not guessed here.
+    """
+    explicit = ctx.extras.get("write_targets")
+    candidates = list(explicit) if isinstance(explicit, (list, tuple)) else []
+    for key in ("path", "note_path", "target_path"):
+        value = kwargs.get(key)
+        if isinstance(value, str) and ("/" in value or value.endswith(".md")):
+            candidates.append(value)
+    # Common Markdown writers use a note name rather than an explicit path.
+    # Resolve only deterministic cases; an ambiguous name is left to the
+    # tool's own validation instead of accidentally locking the wrong note.
+    if name == "write_note" and isinstance(kwargs.get("folder"), str) and \
+            isinstance(kwargs.get("name"), str):
+        candidates.append(f"{kwargs['folder'].strip('/')}/{kwargs['name'].removesuffix('.md')}.md")
+    elif name in {"create_project", "update_project"} and isinstance(kwargs.get("name"), str):
+        candidates.append(f"Projects/{kwargs['name'].removesuffix('.md')}.md")
+    elif isinstance(kwargs.get("note"), str) and ctx.vault is not None:
+        try:
+            from . import notes
+            wanted = str(kwargs["note"]).replace("\\", "/").rsplit("/", 1)[-1].removesuffix(".md")
+            matches = [path for path in notes.iter_paths(ctx.vault.root)
+                       if path.stem.casefold() == wanted.casefold()]
+            if len(matches) == 1:
+                candidates.append(matches[0].relative_to(ctx.vault.root).as_posix())
+        except Exception:  # only the exact resolved note is useful here
+            pass
+    vault = ctx.vault
+    out: list[str] = []
+    if vault is None:
+        return out
+    for value in candidates:
+        if not isinstance(value, str):
+            continue
+        try:
+            out.append(vault.safe_relative(value).relative_to(vault.root).as_posix())
+        except Exception:  # an unknown argument must not turn into a guessed path
+            continue
+    return list(dict.fromkeys(out))
 
 
 # Resolvers for `ToolSpec.resolve`, registered by the tools package (it knows

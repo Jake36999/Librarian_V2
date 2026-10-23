@@ -26,13 +26,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import queue
 import re
 import sqlite3
 import threading
 import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable, TypeVar
 
 from . import notes, schema
 from .vault import Vault, now_iso
@@ -40,6 +41,8 @@ from .vault import Vault, now_iso
 SCHEMA_VERSION = 2          # 2: repository components (P5.3)
 TARGET_CHARS = 1200
 MIN_CHARS = 80
+
+T = TypeVar("T")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS note (
@@ -227,11 +230,19 @@ class Index:
         conn = getattr(self._local, "conn", None)
         if conn is None:
             self.path.parent.mkdir(parents=True, exist_ok=True)
-            conn = sqlite3.connect(self.path, timeout=30)
+            # Keep Python's connection-level timeout aligned with the explicit
+            # SQLite busy handler below.  A 30-second constructor default can
+            # otherwise obscure the bounded five-second Core contract on a
+            # Windows WAL contention path.
+            conn = sqlite3.connect(self.path, timeout=5)
             conn.row_factory = sqlite3.Row
             conn.create_function("fold", 1, fold, deterministic=True)
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA synchronous=NORMAL")
+            # Windows can transiently hold a WAL reader during a checkpoint.
+            # Bounded waiting makes the Core retryable without an indefinite
+            # UI hang; adapters never open this file themselves.
+            conn.execute("PRAGMA busy_timeout=5000")
             conn.executescript(SCHEMA)
             self._local.conn = conn
             self._all.append(conn)
@@ -474,6 +485,119 @@ class Index:
     def linked_from(self, name: str) -> list[str]:
         return [r["src"] for r in self.conn.execute(
             "SELECT DISTINCT src FROM link WHERE dst = ? ORDER BY src", (name.lower(),))]
+
+
+class IndexService:
+    """The Core-owned gateway to a vault's disposable SQLite index.
+
+    Browser, Obsidian and Cowork clients use Core APIs and never receive an
+    index path.  Core code that needs a short transaction calls ``run`` so a
+    Windows WAL checkpoint cannot interleave with another Core operation.
+    The underlying :class:`Index` stays an implementation detail here.
+    """
+
+    def __init__(self, vault: Vault) -> None:
+        self.vault = vault
+        # SQLite connections are thread-affine by default.  A mutex around a
+        # thread-local Index still permits one connection per HTTP request and
+        # leaves Windows WAL checkpoint behaviour dependent on request timing.
+        # Keep the *one* Index, and therefore every SQLite connection it
+        # opens, on a dedicated Core worker instead.  The public ``run``
+        # boundary is also what adapters and registry calls use; they never
+        # receive a database path or connection.
+        self._index = Index(vault)
+        self._queue: queue.Queue[tuple[Callable[[Index], Any], threading.Event, list[Any]] | None] = \
+            queue.Queue()
+        # Closing must first stop new callers, then drain work that was
+        # accepted before the boundary, then close SQLite on its owning
+        # worker.  Without this small lifecycle lock a request could be
+        # enqueued after ``Index.close`` and recreate a connection just before
+        # the sentinel stopped the worker.
+        self._lifecycle = threading.RLock()
+        self._accepting = True
+        self._closing = threading.Event()
+        self._closed = threading.Event()
+        self._thread = threading.Thread(target=self._run, daemon=True,
+                                        name=f"librarian-index-{vault.root.name}")
+        self._thread.start()
+
+    def _run(self) -> None:
+        while True:
+            item = self._queue.get()
+            if item is None:
+                self._queue.task_done()
+                return
+            operation, done, box = item
+            try:
+                box.append(("ok", operation(self._index)))
+            except BaseException as exc:  # preserve operational errors for the caller
+                box.append(("error", exc))
+            finally:
+                done.set()
+                self._queue.task_done()
+
+    def run(self, operation: Callable[[Index], T], *, timeout: float | None = None) -> T:
+        """Run an index transaction/function in the Core's sole SQLite thread.
+
+        Re-entrant calls originate from an already-running registry tool on
+        this worker and must execute inline; queueing them would wait on
+        ourselves.  Callers otherwise wait for their own result, so reads and
+        mutations have normal synchronous API semantics without ever opening
+        SQLite in browser, Obsidian, Cowork, or request threads.
+        """
+        if threading.current_thread() is self._thread:
+            return operation(self._index)
+        done, box = threading.Event(), []
+        with self._lifecycle:
+            if not self._accepting:
+                raise RuntimeError("index service is closed")
+            self._queue.put((operation, done, box))
+        if not done.wait(timeout):
+            raise TimeoutError("index operation did not finish")
+        kind, value = box[0]
+        if kind == "error":
+            raise value
+        return value
+
+    def refresh(self, rebuild: bool = False) -> RefreshReport:
+        return self.run(lambda index: index.rebuild() if rebuild else index.refresh())
+
+    def stats(self) -> dict[str, Any]:
+        return self.run(lambda index: index.stats())
+
+    def checkpoint(self) -> None:
+        """A bounded passive checkpoint, invoked only by the Core."""
+        def do(index: Index) -> None:
+            index.conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
+        self.run(do)
+
+    def health(self) -> dict[str, Any]:
+        return self.run(lambda index: {"path": str(index.path), "wal": True,
+                                       "busy_timeout_ms": 5000, "stats": index.stats()})
+
+    def close(self) -> None:
+        with self._lifecycle:
+            if self._closed.is_set():
+                return
+            if self._closing.is_set():
+                wait_for_other_close = True
+            else:
+                self._accepting = False
+                self._closing.set()
+                wait_for_other_close = False
+        if wait_for_other_close:
+            self._closed.wait(5.0)
+            return
+        # Do not route this through ``run``: the lifecycle boundary has
+        # intentionally made ordinary requests unavailable.  Existing queued
+        # requests retain FIFO ordering and finish before this close request.
+        done, box = threading.Event(), []
+        self._queue.put((lambda index: index.close(), done, box))
+        if not done.wait(5.0):
+            raise TimeoutError("index service did not close its SQLite connection")
+        self._closed.set()
+        self._queue.put(None)
+        self._thread.join(5.0)
 
 
 def open_index(vault: Vault, refresh: bool = True) -> tuple[Index, RefreshReport | None]:

@@ -37,6 +37,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from . import clerk, notes
+from .coordination import atomic_write_text
 from .lenses import LensStore
 from .promote import Draft, promote
 from .rules import Refusal
@@ -116,8 +117,8 @@ class StagingStore:
     def save(self, item: dict[str, Any]) -> None:
         folder = self.folder(item["kind"])
         folder.mkdir(parents=True, exist_ok=True)
-        (folder / f"{item['id']}.json").write_text(
-            json.dumps(item, ensure_ascii=False, indent=1), encoding="utf-8")
+        atomic_write_text(folder / f"{item['id']}.json",
+                          json.dumps(item, ensure_ascii=False, indent=1))
 
     def add(self, item: dict[str, Any]) -> dict[str, Any]:
         item.setdefault("status", "staged")
@@ -149,9 +150,9 @@ class StagingStore:
     def quarantine(self, item: dict[str, Any], reason: str) -> None:
         folder = self.vault.work("quarantine") / "staging"
         folder.mkdir(parents=True, exist_ok=True)
-        (folder / f"{item['id']}.json").write_text(
-            json.dumps({**item, "quarantined_at": now_iso(), "reason": reason},
-                       ensure_ascii=False, indent=1), encoding="utf-8")
+        atomic_write_text(folder / f"{item['id']}.json",
+                          json.dumps({**item, "quarantined_at": now_iso(), "reason": reason},
+                                     ensure_ascii=False, indent=1))
         self.path(item["id"]).unlink()
 
 
@@ -379,7 +380,7 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         target.parent.mkdir(parents=True, exist_ok=True)
         front = {**item.get("frontmatter", {}), "evidence": [e["id"] for e in item["evidence"]],
                  "accepted_by": decided_by}
-        target.write_text(notes.render(front, item.get("body", "")), encoding="utf-8")
+        atomic_write_text(target, notes.render(front, item.get("body", "")))
         engine.index.upsert(target)
         item.update(status="accepted", accepted_to=item["target"])
         item["history"].append(entry)
@@ -502,7 +503,7 @@ def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: 
         note.frontmatter["dik"] = item.get("dik", "")
     else:
         note.frontmatter["deep_read"] = now_iso()[:10]
-    path.write_text(notes.render(note.frontmatter, body), encoding="utf-8")
+    atomic_write_text(path, notes.render(note.frontmatter, body))
     engine.index.upsert(path)
     item.update(status="accepted", accepted_to=item["revision_of"], merged=merged,
                 previous_sections=previous)
@@ -559,7 +560,7 @@ def _write_concept(vault: Vault, engine: Engine, item: dict[str, Any], concept_k
         fm.update(imported_from="V1", v1_path=item["imported_from"].get("path", ""),
                   evidence=[e["id"] for e in item.get("evidence") or []])
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(notes.render(fm, body), encoding="utf-8")
+    atomic_write_text(path, notes.render(fm, body))
     engine.index.upsert(path)
     return f"Concepts/{safe}.md"
 

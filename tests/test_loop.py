@@ -138,8 +138,12 @@ def test_a_turn_calls_tools_until_the_model_answers(vault):
 def test_a_provider_failure_ends_the_turn_loudly(vault):
     def fail(system, messages, tools):
         raise providers.ProviderError("HTTP 401: bad key")
-    turn = Loop(vault, providers.Scripted(fail)).send("hello")
+    events = []
+    turn = Loop(vault, providers.Scripted(fail), on_event=events.append).send("hello")
     assert turn.stopped == "provider_error" and "401" in turn.error
+    assert turn.failure_category == "credentials"
+    assert events[-1] == {"type": "error", "error": turn.error,
+                          "failure_category": "credentials"}
 
 
 def test_the_working_context_shapes_the_loop_prompt(vault):
@@ -327,6 +331,95 @@ def test_rewind_is_blocked_past_a_vault_write(vault):
     person = Context(tier="curate", vault=vault, session=loop.ctx.session)
     refused = REGISTRY.call("rewind_session", {"to_index": 1}, person)
     assert refused.get("error") == "refused" and refused["refused"] == "REWIND_BLOCKED"
+
+
+def test_compact_bundle_keeps_the_required_project_bootstrap_action(vault):
+    """A serial project walk must not lose create_project after open_session.
+
+    The production App enables task-sized bundles, so this covers the exact
+    two-provider-turn path rather than the older direct-registry walk.
+    """
+    provider = scripted(
+        Reply(tool_calls=[ToolCall("1", "open_session", {"purpose": "add_project"})]),
+        Reply(tool_calls=[ToolCall("2", "create_project", {
+            "name": "Host Watch", "stage": "planning", "summary": "Watch hosts."})]),
+        Reply(text="The project is ready."))
+    loop = Loop(vault, provider, extras={"use_tool_bundles": True})
+
+    turn = loop.send("Start a Host Watch project")
+
+    assert turn.reply == "The project is ready."
+    assert [call["tool"] for call in turn.calls] == ["open_session", "create_project"]
+    assert not any(call.get("refused") == "TOOL_BUNDLE_REFUSED" for call in turn.calls)
+    assert "create_project" in provider.calls[1]["tools"]
+    assert loop.ctx.extras["bundle_required_actions"] == ()
+
+
+def test_compact_frame_bundle_does_not_offer_project_creation_for_explore(vault):
+    """The bootstrap repair stays scoped to a project-oriented Frame walk."""
+    provider = scripted(
+        Reply(tool_calls=[ToolCall("1", "open_session", {
+            "purpose": "explore", "question": "What is host monitoring?"})]),
+        Reply(text="The question is framed."))
+    loop = Loop(vault, provider, extras={"use_tool_bundles": True})
+
+    turn = loop.send("Explore host monitoring")
+
+    assert turn.reply == "The question is framed."
+    assert "create_project" not in provider.calls[1]["tools"]
+    assert loop.ctx.extras["bundle_required_actions"] == ()
+
+
+def test_workflow_preflight_stops_before_provider_for_a_missing_required_action(vault, monkeypatch):
+    """A broken compact bundle is Core evidence, never a paid model failure."""
+    import resource_librarian.agent_runtime as runtime
+
+    original = runtime.select_bundle
+
+    def omit_project_bootstrap(*args, **kwargs):
+        return [spec for spec in original(*args, **kwargs) if spec.name != "create_project"]
+
+    monkeypatch.setattr(runtime, "select_bundle", omit_project_bootstrap)
+    opened = REGISTRY.call("open_session", {"purpose": "add_project"},
+                           Context(tier="contribute", vault=vault))
+    events = []
+    provider = scripted(Reply(text="This must not be called."))
+    loop = Loop(vault, provider, extras={"use_tool_bundles": True}, on_event=events.append)
+    loop.ctx.session = opened["opened"]
+
+    turn = loop.send("Create the project")
+
+    assert turn.stopped == "workflow_preflight"
+    assert "create_project" in turn.error
+    assert provider.calls == []
+    preflight = next(row for row in events if row["type"] == "workflow_preflight")
+    assert preflight["purpose"] == "add_project"
+    assert preflight["phase"] == "frame"
+    assert preflight["required_next_action"] == "create_project"
+    assert "create_project" not in preflight["offered_actions"]
+    assert preflight["safe_repair"] == "repair_bundle_contract_then_retry"
+
+
+def test_workflow_preflight_rechecks_immediately_after_a_state_changing_tool(vault, monkeypatch):
+    """Opening a session cannot spend a second completion on a broken Frame surface."""
+    import resource_librarian.agent_runtime as runtime
+
+    original = runtime.select_bundle
+
+    def omit_project_bootstrap(*args, **kwargs):
+        return [spec for spec in original(*args, **kwargs) if spec.name != "create_project"]
+
+    monkeypatch.setattr(runtime, "select_bundle", omit_project_bootstrap)
+    events = []
+    provider = scripted(Reply(tool_calls=[ToolCall("1", "open_session", {"purpose": "add_project"})]))
+    loop = Loop(vault, provider, extras={"use_tool_bundles": True}, on_event=events.append)
+
+    turn = loop.send("Start a project")
+
+    assert [call["tool"] for call in turn.calls] == ["open_session"]
+    assert turn.stopped == "workflow_preflight"
+    assert len(provider.calls) == 1
+    assert any(row["type"] == "workflow_preflight" for row in events)
 
 
 def test_rewind_truncates_the_log_and_the_loops_own_context(vault):

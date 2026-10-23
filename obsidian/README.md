@@ -5,7 +5,9 @@ it starts the local core for this vault and mounts the same interface the websit
 
 ## Install
 
-1. Install the core, so `resource-librarian` exists: `pip install -e '.v2[mcp]'`.
+1. Install the core, so `librarian` (or the compatibility alias
+   `resource-librarian`) exists: `pip install -e '.[mcp]'` from the
+   `Librarian_V2` checkout, or install a signed Librarian release bundle.
 2. Copy `dist/main.js`, `dist/manifest.json` and `dist/styles.css` into
    `<vault>/.obsidian/plugins/librarian/`, then enable **Librarian** under Community plugins.
 3. If the view says the core can't be found, set its full path under the plugin's settings.
@@ -16,12 +18,12 @@ it starts the local core for this vault and mounts the same interface the websit
 
 ## How it runs
 
-- The plugin starts `resource-librarian --vault <this vault> app --port 0` with a fresh page
-  token.
+- The plugin discovers a compatible Core for this vault before starting
+  `librarian --vault <this vault> app --port 0` with a fresh page token.
   - Keys are passed in the child's environment: in memory, never written to `data.json`, a note
     or a log.
-  - The core exits when Obsidian closes, crashes included, because it watches the pipe the
-    plugin holds.
+  - A Core managed by the Librarian Host remains alive until an explicit Stop or Quit.  A
+    plugin-owned child is restarted cleanly when its Obsidian-managed secrets rotate.
 - The view talks to the core over loopback. Only Obsidian's own origin (`app://obsidian.md`) is
   allowed to read across origins, and every request carries the token.
 - **In the view:**
@@ -39,4 +41,4 @@ it starts the local core for this vault and mounts the same interface the websit
 - the plugin starts the core, and the view mounts;
 - a key chosen from secret storage reaches the core (Settings → Connections in the view shows
   `•••• last4`);
-- the core stops when Obsidian quits.
+- the plugin disposes its mounted UI and document heartbeats when the view closes.

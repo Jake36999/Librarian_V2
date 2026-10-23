@@ -43,6 +43,7 @@ from pathlib import Path
 from typing import Any
 
 from . import notes
+from .coordination import atomic_write_text
 from .evidence import EvidenceStore
 from .staging import StagingStore
 from .vault import Vault, jsonl_lines, now_iso
@@ -171,7 +172,17 @@ def plan(v1_root: Path, vault: Vault, with_drafts: bool = False) -> dict[str, An
     for row in rows:
         key = row["action"] if row["action"] != "stage" else f"stage {row['shape']}/{row['kind']}"
         counts[key] = counts.get(key, 0) + 1
-    return {"from": str(v1_root), "to": str(vault.root), "counts": counts, "rows": rows}
+    exclusions = {row["v1_path"]: row.get("why", "") for row in rows if row["action"] == "left out"}
+    collisions = {row["v1_path"]: row["action"] for row in rows
+                  if row["action"] in ("already staged", "already held")}
+    bound = _bound_root(vault)
+    binding = "unbound" if bound is None else "same_root" if bound == v1_root.resolve() else "different_root"
+    return {"from": str(v1_root), "to": str(vault.root), "source_fingerprint": _source_fingerprint(v1_root),
+            "counts": counts, "rows": rows, "exclusions": exclusions, "collisions": collisions,
+            "source_binding": binding, **({"bound_root": str(bound)} if bound is not None else {}),
+            "defaults": {"included": ["active/published sources", "concepts", "applications", "offerings"],
+                         "excluded": ["drafts", "canvases", "generated hubs/indexes/queues", "workflows",
+                                      "untyped notes", "derived caches"]}}
 
 
 def _target_name(row: dict[str, Any], fm: dict[str, Any]) -> str:
@@ -180,17 +191,89 @@ def _target_name(row: dict[str, Any], fm: dict[str, Any]) -> str:
     return row["name"]
 
 
+def _source_fingerprint(v1_root: Path) -> str:
+    """A stable, inexpensive root identity for repeatable import reports."""
+    digest = hashlib.sha256()
+    for path in sorted(v1_root.rglob("*.md")):
+        try:
+            stat = path.stat()
+        except OSError:
+            continue
+        digest.update(path.relative_to(v1_root).as_posix().encode("utf-8"))
+        digest.update(f"{stat.st_size}:{stat.st_mtime_ns}".encode("ascii"))
+    return digest.hexdigest()[:24]
+
+
+def _import_manifest_path(vault: Vault) -> Path:
+    return vault.librarian / "imports" / "v1-import.json"
+
+
+def _bound_root(vault: Vault) -> Path | None:
+    """Return the single V1 root this vault has already begun importing."""
+    try:
+        data = json.loads(_import_manifest_path(vault).read_text(encoding="utf-8"))
+        source = str(data.get("source") or "") if isinstance(data, dict) else ""
+        return Path(source).expanduser().resolve() if source else None
+    except (OSError, ValueError):
+        return None
+
+
+def import_status(vault: Vault) -> dict[str, Any]:
+    """The durable, non-secret state of a guided V1 migration."""
+    manifest = _import_manifest_path(vault)
+    log = vault.librarian / "v1_export.jsonl"
+    rows = []
+    if log.is_file():
+        for line in jsonl_lines(log.read_text(encoding="utf-8")):
+            try:
+                rows.append(json.loads(line))
+            except ValueError:
+                continue
+    try:
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        data = {}
+    history_path = vault.librarian / "imports" / "v1-import.jsonl"
+    history = []
+    if history_path.is_file():
+        for line in jsonl_lines(history_path.read_text(encoding="utf-8")):
+            try:
+                history.append(json.loads(line))
+            except ValueError:
+                continue
+    return {"manifest": data, "staged": len(rows), "recent": rows[-20:], "history": history[-20:]}
+
+
 def stage(v1_root: Path, vault: Vault, limit: int = 0,
-          with_drafts: bool = False) -> dict[str, Any]:
+          with_drafts: bool = False, shapes: list[str] | None = None,
+          paths: list[str] | None = None) -> dict[str, Any]:
     """Stage what `plan` says to stage (up to `limit`; 0 is all)."""
+    v1_root = v1_root.resolve()
+    bound = _bound_root(vault)
+    if bound is not None and bound != v1_root:
+        raise TypeError("this vault is already bound to one V1 import root "
+                        f"({bound}); inspect its migration status rather than mixing V1 roots")
     planned = plan(v1_root, vault, with_drafts)
     store = StagingStore(vault)
     evidence = EvidenceStore(vault)
     log = vault.librarian / "v1_export.jsonl"
     log.parent.mkdir(parents=True, exist_ok=True)
     staged: list[str] = []
+    wanted = set(shapes or ("source", "concept", "import"))
+    unknown = wanted - {"source", "concept", "import"}
+    if unknown:
+        raise TypeError(f"shapes are source, concept or import; not {sorted(unknown)}")
+    selected = {str(path).replace("\\", "/").lstrip("/") for path in paths or []}
+    known_paths = {str(row.get("v1_path") or "") for row in planned["rows"]}
+    unknown_paths = selected - known_paths
+    if unknown_paths:
+        raise TypeError("selected V1 paths are not in this import plan: " + ", ".join(sorted(unknown_paths)))
     for row in planned["rows"]:
         if row["action"] != "stage" or (limit and len(staged) >= limit):
+            continue
+        if row.get("shape") not in wanted:
+            continue
+        if selected and row["v1_path"] not in selected:
             continue
         path = v1_root / row["v1_path"]
         raw = path.read_text(encoding="utf-8")
@@ -204,8 +287,31 @@ def stage(v1_root: Path, vault: Vault, limit: int = 0,
             handle.write(json.dumps({"t": now_iso(), "v1_path": row["v1_path"],
                                      "item": item["id"], "shape": row["shape"]}) + "\n")
         staged.append(item["id"])
+    manifest = _import_manifest_path(vault)
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    collisions = {row["v1_path"]: row["action"] for row in planned["rows"]
+                  if row["action"] in ("already staged", "already held")}
+    skipped = {row["v1_path"]: row.get("why", row["action"]) for row in planned["rows"]
+               if row["action"] != "stage"}
+    payload = {"schema_version": 1, "system": "Resource Library V1", "source": str(v1_root),
+               "source_fingerprint": _source_fingerprint(v1_root), "with_drafts": with_drafts,
+               "shapes": sorted(wanted), "selected_paths": sorted(selected),
+               "last_stage_at": now_iso(), "staged_ids": staged,
+               "counts": planned["counts"], "collision_mappings": collisions,
+               "skip_reasons": skipped,
+               "promotion_state": {item_id: "staged" for item_id in staged}}
+    atomic_write_text(manifest, json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
+    history = manifest.with_suffix(".jsonl")
+    with history.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps({"at": now_iso(), "event": "stage", "source": str(v1_root),
+                                 "source_fingerprint": payload["source_fingerprint"],
+                                 "filters": {"shapes": sorted(wanted), "with_drafts": with_drafts,
+                                             "selected_paths": sorted(selected)},
+                                 "staged_ids": staged, "collision_mappings": collisions,
+                                 "skip_reasons": skipped, "promotion_state": payload["promotion_state"]},
+                                ensure_ascii=False) + "\n")
     return {**{k: planned[k] for k in ("from", "to")}, "counts": planned["counts"],
-            "staged": len(staged), "items": staged[:50]}
+            "staged": len(staged), "items": staged[:50], "manifest": str(manifest)}
 
 
 def _item(row: dict[str, Any], note: notes.Note, evidence_id: str) -> dict[str, Any]:

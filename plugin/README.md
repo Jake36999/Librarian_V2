@@ -6,8 +6,9 @@ the plugin supplies the skills, the commands and the clerk agent.
 
 ## Install
 
-1. Install the package with its MCP extra, so `resource-librarian` is on the path:
-   `pip install -e '.v2[mcp]'`.
+1. Install the package with its MCP extra, so `librarian` (or the compatibility
+   alias `resource-librarian`) is on the path: `pip install -e '.[mcp]'` from
+   the `Librarian_V2` checkout, or install a Librarian release bundle.
 2. Create a vault if you have none: `resource-librarian init <folder>`.
 3. Set `LIBRARIAN_VAULT` to the vault's folder in the environment the host launches servers
    from (or launch the host from inside the vault).

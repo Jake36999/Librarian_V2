@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator
 
+from .coordination import atomic_write_text
 from .rules import Refusal
 from .vault import Vault, now_iso
 
@@ -90,10 +91,7 @@ class EvidenceStore:
         record = Record(record_id, kind, source, fetched_at, payload)
         if not path.exists():
             path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_suffix(".tmp")
-            tmp.write_text(json.dumps(record.to_dict(), ensure_ascii=False, indent=1),
-                           encoding="utf-8")
-            tmp.replace(path)
+            atomic_write_text(path, json.dumps(record.to_dict(), ensure_ascii=False, indent=1))
         return record
 
     def get(self, record_id: str) -> Record | None:

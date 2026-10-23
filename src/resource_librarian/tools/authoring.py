@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from .. import notes
+from ..coordination import atomic_write_text
 from ..registry import Card, Context, tool
 from ..rules import Refusal
 from ..vault import now_iso
@@ -143,7 +144,7 @@ def write_note(ctx: Context, folder: str, name: str, body: str,
         fm.setdefault("session", ctx.session)
     path.parent.mkdir(parents=True, exist_ok=True)
     rendered = notes.render(fm, text_body)
-    path.write_text(rendered, encoding="utf-8")
+    atomic_write_text(path, rendered)
     engine = engine_for(ctx, refresh=False)
     engine.index.upsert(path)
     _record(ctx, "write_note", rel)
@@ -200,7 +201,7 @@ def edit_note(ctx: Context, note: str, section: str = "", text: str = "",
             fm.get("librarian_digest") == _digest(current.body):
         fm["librarian_digest"] = _digest(body)
     rendered = notes.render(fm, body)
-    path.write_text(rendered, encoding="utf-8")
+    atomic_write_text(path, rendered)
     engine_for(ctx, refresh=False).index.upsert(path)
     rel = path.relative_to(ctx.vault.root).as_posix()
     _record(ctx, "edit_note", rel)
@@ -246,7 +247,7 @@ def update_project(ctx: Context, name: str, stage: str = "", goal: str = "", sum
     rendered = notes.render(fm, body)
     if rendered == before:
         return {"updated": path.relative_to(ctx.vault.root).as_posix(), "diff": ""}
-    path.write_text(rendered, encoding="utf-8")
+    atomic_write_text(path, rendered)
     engine.index.upsert(path)
     rel = path.relative_to(ctx.vault.root).as_posix()
     _record(ctx, "update_project", rel)
@@ -280,7 +281,7 @@ def archive_note(ctx: Context, note: str, reason: str) -> dict:
           "archived_reason": reason.strip()}
     dest = ctx.vault.root / "Archive" / rel
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(notes.render(fm, current.body), encoding="utf-8")
+    atomic_write_text(dest, notes.render(fm, current.body))
     path.unlink()
     engine = engine_for(ctx, refresh=False)
     engine.index.remove(rel.as_posix())

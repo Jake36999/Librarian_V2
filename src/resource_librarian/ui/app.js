@@ -220,7 +220,11 @@ var Librarian = (() => {
     "action_progress",
     "action_done",
     "library_switched",
-    "reply_reviewed"
+    "reply_reviewed",
+    "checkpoint_created",
+    "checkpoint_resolved",
+    "route_health_changed",
+    "workflow_preflight"
   ];
 
   // src/dom.ts
@@ -608,6 +612,53 @@ var Librarian = (() => {
     check_in: "Check in",
     find: "Find"
   };
+  function providerFailureCopy(event) {
+    const category = String(event.failure_category ?? "");
+    switch (category) {
+      case "local_environment":
+        return {
+          heading: "The Core could not make its local network connection",
+          advice: "This is a Windows or local security-environment issue, not a model-quality result. Check Host status or local network policy, then retry."
+        };
+      case "credentials":
+        return {
+          heading: "The selected route rejected its credentials",
+          advice: "Check the key and host under + \u2192 Connections, then retry."
+        };
+      case "route_configuration":
+        return {
+          heading: "The selected route needs attention",
+          advice: "Check the host, exact model, and qualification status in the Model Tile, then retry."
+        };
+      case "provider_rate_limited":
+        return {
+          heading: "The provider or host is rate limited",
+          advice: "Nothing was switched. Retry shortly, or choose another route yourself."
+        };
+      case "provider_transient":
+        return {
+          heading: "The provider is temporarily unavailable",
+          advice: "Nothing was switched. Retry shortly, or choose another route yourself."
+        };
+      case "provider_transport":
+        return {
+          heading: "The Core could not reach the selected host",
+          advice: "Check the host URL and network access; this does not assess model quality."
+        };
+      case "provider_rejected":
+        return {
+          heading: "The provider rejected this request",
+          advice: "Check the selected host and model under + \u2192 Connections, then retry."
+        };
+      default: {
+        const slow = /did not answer within|busy|HTTP (429|50[234])/.test(String(event.error));
+        return {
+          heading: "The selected route could not answer",
+          advice: slow ? "Nothing was switched. Retry in a moment, or choose a faster model for slot 1 yourself." : "Check the key and the model under + \u2192 Connections, then retry."
+        };
+      }
+    }
+  }
   var Chat = class {
     // for Retry, after a failed turn
     constructor(api, hooks) {
@@ -820,6 +871,21 @@ var Librarian = (() => {
           ));
           break;
         }
+        case "workflow_preflight": {
+          const action = String(event.required_next_action ?? "the required task action");
+          this.append(h(
+            "div",
+            { class: "error" },
+            "This thread was paused before another model call because the Core cannot currently offer ",
+            h("code", {}, action),
+            ". No model was blamed or switched. Repair the workflow surface, then retry. ",
+            this.hooks.openModelPicker ? h("button", {
+              class: "ghost",
+              onclick: () => this.hooks.openModelPicker?.()
+            }, "Open model status") : null
+          ));
+          break;
+        }
         case "turn_done":
           this.setWorking(false);
           if (event.stopped === "cancelled") {
@@ -832,12 +898,12 @@ var Librarian = (() => {
               "Say \u201Ccontinue\u201D to carry on, or ask for a summary of where it got to."
             ));
           } else if (event.stopped === "provider_error") {
-            const slow = /did not answer within|busy|HTTP (429|50[234])/.test(String(event.error));
+            const copy = providerFailureCopy(event);
             this.append(h(
               "div",
               { class: "error" },
-              `The model could not answer: ${event.error}. `,
-              slow ? "Nothing is wrong with your setup: retry in a moment, or choose a faster model for slot 1." : "Check the key and the model under + \u2192 Connections, then retry.",
+              `${copy.heading}: ${event.error}. `,
+              copy.advice,
               " ",
               h(
                 "button",
@@ -848,7 +914,11 @@ var Librarian = (() => {
                   onclick: () => this.hooks.resend(this.lastUserText)
                 },
                 retryIcon()
-              )
+              ),
+              this.hooks.openModelPicker ? h("button", {
+                class: "ghost",
+                onclick: () => this.hooks.openModelPicker?.()
+              }, "Choose another route") : null
             ));
           }
           this.sessionOutcome(event.session ?? null);
@@ -856,7 +926,16 @@ var Librarian = (() => {
           break;
         case "error":
           this.setWorking(false);
-          this.append(h("div", { class: "error" }, String(event.error)));
+          if (event.failure_category === "local_environment") {
+            this.append(h(
+              "div",
+              { class: "error" },
+              "Local environment issue (not a model result): ",
+              String(event.error)
+            ));
+          } else {
+            this.append(h("div", { class: "error" }, String(event.error)));
+          }
           break;
         case "conversation_reset":
           this.rail.clear();
@@ -1383,6 +1462,16 @@ var Librarian = (() => {
       this.keysSaved = keysSaved;
       this.setTiers = setTiers;
       this.listings = /* @__PURE__ */ new Map();
+      /**
+       * Route evidence is deliberately separate from the provider listings.  A
+       * listing says what an endpoint returned; readiness says whether the Core
+       * can safely use that exact route for the current profile.  Older Cores do
+       * not expose this endpoint, so its absence must not make the picker fail.
+       */
+      this.readiness = /* @__PURE__ */ new Map();
+      this.readinessAvailable = false;
+      this.coreReadiness = null;
+      this.readinessEpoch = 0;
       this.filter = "";
       this.toast = "";
       // R10: a lead the completion suite (M0) has not qualified waits here for the person's
@@ -1439,6 +1528,66 @@ var Librarian = (() => {
         }
       }));
       this.render();
+      const epoch = ++this.readinessEpoch;
+      void this.refreshReadiness(epoch);
+    }
+    async refreshReadiness(epoch) {
+      const readiness = await this.api.get("/api/routes/readiness").catch(() => null);
+      if (epoch !== this.readinessEpoch) return;
+      this.readiness.clear();
+      this.readinessAvailable = !!readiness;
+      this.coreReadiness = readiness?.core ?? readiness?.workflow ?? null;
+      const routes = Array.isArray(readiness?.routes) ? readiness.routes : [];
+      for (const row of routes) {
+        if (!row || typeof row !== "object") continue;
+        const provider = String(row.host_id ?? row.provider ?? row.host ?? "");
+        const model = String(row.model ?? row.model_id ?? "");
+        if (provider && model) this.readiness.set(`${provider}\0${model}`, row);
+      }
+      if (this.pop.open) this.render();
+    }
+    routeReadiness(provider, model) {
+      return this.readiness.get(`${provider}\0${model}`) ?? null;
+    }
+    readinessText(value, good, bad, pending) {
+      const state = value && typeof value === "object" ? value.ok ?? value.status ?? value.state : value;
+      if (state === true || state === "pass" || state === "ready" || state === "passed") return good;
+      if (state === false || state === "fail" || state === "blocked" || state === "error") return bad;
+      return pending;
+    }
+    readinessChips(provider, model) {
+      const row = this.routeReadiness(provider, model);
+      if (!row) return null;
+      const qualification = row.qualification && typeof row.qualification === "object" ? row.qualification.status : row.qualification ?? row.status ?? "";
+      const workflow = row.core_workflow ?? row.workflow_ready ?? row.workflow;
+      const fixture = row.fixture_preflight ?? row.fixture_ready;
+      const health = row.host_health && typeof row.host_health === "object" ? row.host_health.status : row.host_health ?? row.health;
+      const labels = [
+        qualification ? String(qualification).replace(/_/g, " ") : "evidence pending",
+        this.readinessText(workflow, "walk ready", "walk blocked", "walk unchecked"),
+        this.readinessText(fixture, "fixtures ready", "fixture issue", "fixtures unchecked"),
+        this.readinessText(health, "host ready", "host issue", "host unchecked")
+      ];
+      const detail = String(row.detail ?? row.reason ?? row.advisory ?? "");
+      return h(
+        "div",
+        { class: "readiness", title: detail },
+        labels.filter((value, index, all) => all.indexOf(value) === index).map((value) => h("span", { class: `readiness-chip ${/blocked|issue|experimental|unavailable|stale/i.test(value) ? "warn" : ""}` }, value))
+      );
+    }
+    readinessSummary() {
+      if (!this.readinessAvailable) return null;
+      const value = this.coreReadiness;
+      const status = value && typeof value === "object" ? value.ok ?? value.status ?? value.state : value;
+      const good = status === true || status === "pass" || status === "ready" || status === "passed";
+      const label = good ? "Core workflow checks ready" : status ? `Core workflow: ${String(status).replace(/_/g, " ")}` : "Core workflow evidence available";
+      const detail = value && typeof value === "object" ? String(value.detail ?? value.reason ?? "") : "";
+      return h(
+        "p",
+        { class: `route-summary${good ? "" : " warn"}`, title: detail },
+        label,
+        detail ? h("span", { class: "dim" }, ` \xB7 ${detail}`) : null
+      );
     }
     async save(tiers, override = "") {
       try {
@@ -1592,6 +1741,7 @@ var Librarian = (() => {
           slots,
           tiers.length ? h("button", { class: "ghost", onclick: () => this.clearAll() }, "Clear selection") : null
         ),
+        this.readinessSummary(),
         tiers.length < 3 ? h("p", { class: "note" }, `Choosing slot ${tiers.length + 1} (${ROLES[tiers.length]}): models whose profile recommends them for it are listed first.`) : null,
         this.pendingLead ? this.overridePrompt() : this.toast ? h("div", { class: "toast", role: "status" }, this.toast) : null,
         filter,
@@ -1624,6 +1774,7 @@ var Librarian = (() => {
             const at = this.slot ? inSlot ? 0 : -1 : tiers.findIndex((t) => t.provider === p && t.model === m.id);
             const clear2 = () => this.slot ? this.clearSlot() : this.clearAll();
             const rec = at < 0 && recommended(m);
+            const readiness = this.readinessChips(p, String(m.id));
             const card = h(
               "button",
               {
@@ -1648,6 +1799,7 @@ var Librarian = (() => {
               at >= 0 && !this.slot ? h("span", { class: "badge" }, String(at + 1)) : null,
               h("div", { class: "name" }, m.id),
               h("div", { class: "meta" }, profileMeta(m)),
+              readiness,
               rec ? h("div", { class: "rec-label" }, `Recommended for slot ${next}`) : null
             );
             return h(
@@ -1888,7 +2040,10 @@ var Librarian = (() => {
             "Choose keys in the plugin's settings"
           )),
           h("p", { class: "note" }, "After changing a key, the plugin restarts the core so it takes effect."),
-          this.serviceModels()
+          this.serviceModels(),
+          this.releaseLeadSetup(),
+          this.agentProfiles(),
+          this.hostRegistry()
         );
       }
       const LABELS = {
@@ -2010,6 +2165,54 @@ var Librarian = (() => {
       input.onkeydown = (e) => {
         if (e.key === "Enter") submit(false);
       };
+      const keyMigration = h("div");
+      if (this.state().key_backend === "config file" || this.state().key_migration_pending) {
+        const migrationStatus = h("span", { class: "note inline", role: "status" });
+        const migrate = h("button", { class: "ghost", onclick: () => clear(
+          keyMigration,
+          h(
+            "div",
+            { class: "confirm" },
+            "Move the saved fallback-file credentials into this computer's operating-system keychain? No key value is displayed or sent back to this page.",
+            h(
+              "div",
+              { class: "row2" },
+              h("button", { class: "ghost", onclick: () => {
+                this.render();
+              } }, "Cancel"),
+              h("button", { class: "primary", onclick: async () => {
+                migrationStatus.textContent = "Migrating\u2026";
+                try {
+                  const out = await this.api.post("/api/keys/migrate", { confirm: true });
+                  await this.refresh();
+                  if (out.available === false) {
+                    migrationStatus.textContent = String(out.detail ?? "No operating-system keychain is available yet.");
+                    migrationStatus.className = "note inline err";
+                  } else if (out.fallback_retained) {
+                    migrationStatus.textContent = String(out.detail ?? "Migrated, but the old fallback file remains.");
+                    migrationStatus.className = "note inline err";
+                  } else {
+                    migrationStatus.textContent = out.already_secure ? "Keys are already in the operating-system keychain." : "Saved keys moved to the operating-system keychain.";
+                    migrationStatus.className = "note inline ok";
+                  }
+                } catch (e) {
+                  migrationStatus.textContent = e.message;
+                  migrationStatus.className = "note inline err";
+                }
+              } }, "Migrate")
+            )
+          )
+        ) }, "Move fallback keys to keychain");
+        clear(
+          keyMigration,
+          h(
+            "p",
+            { class: "note" },
+            this.state().key_migration_pending ? "A protected fallback key file from an earlier installation still needs explicit migration into this computer's keychain." : "This installation is using the protected file fallback. Once the operating-system keychain is available, move saved keys explicitly."
+          ),
+          h("div", { class: "row2" }, migrate, migrationStatus)
+        );
+      }
       const page = h(
         "div",
         {},
@@ -2025,13 +2228,283 @@ var Librarian = (() => {
           `Keys are kept by the core (${this.state().key_backend ?? "securely"}), never in the vault. `,
           "They never come back to this page: only whether one is saved, and its last four characters."
         ),
+        keyMigration,
         h("label", { class: "f" }, "Usage & billing"),
         h("div", { class: "row2" }, checkUsage),
         usageBox,
-        this.serviceModels()
+        this.serviceModels(),
+        this.releaseLeadSetup(),
+        this.agentProfiles(),
+        this.hostRegistry()
       );
       show();
       return page;
+    }
+    /** The chosen profile narrows an agent; it cannot expand a person's tools
+     * or silently change its route.  Keeping the selector beside hosts makes
+     * the connection between a model choice and its policy visible. */
+    agentProfiles() {
+      const root = h("section", { class: "agent-profiles" }, h("p", { class: "dim" }, "Loading agent profiles\u2026"));
+      const reload = async () => {
+        try {
+          const out = await this.api.get("/api/profiles");
+          const profiles = out.profiles ?? [];
+          const selected = String(out.selected ?? this.state().agent_profile ?? "lead");
+          const status = h("span", { class: "note inline", role: "status" });
+          const select = h("select", { "aria-label": "Agent profile" }, profiles.map((profile) => h(
+            "option",
+            { value: String(profile.id), selected: String(profile.id) === selected },
+            `${profile.id} r${profile.revision ?? 1} \xB7 ${profile.role} \xB7 ${profile.permission_ceiling}`
+          )));
+          select.onchange = async () => {
+            status.textContent = "Applying profile\u2026";
+            try {
+              await this.api.post("/api/agent-profile", { id: select.value });
+              await this.refresh();
+              status.textContent = "Applied to subsequent agent turns.";
+              status.className = "note inline ok";
+            } catch (e) {
+              select.value = selected;
+              status.textContent = e.message;
+              status.className = "note inline err";
+            }
+          };
+          const active = out.active ?? {};
+          const editor = h("div", { class: "profile-editor" });
+          const split = (value) => value.split(",").map((part) => part.trim()).filter(Boolean);
+          const showEditor = (base, creating = false) => {
+            const route = base.route_policy ?? {};
+            const rates = route.rate_card ?? {};
+            const id = h("input", {
+              type: "text",
+              value: creating ? "" : String(base.id ?? ""),
+              placeholder: "profile id",
+              "aria-label": "Profile id"
+            });
+            const role = h("input", {
+              type: "text",
+              value: String(base.role ?? "lead"),
+              "aria-label": "Profile role"
+            });
+            const ceiling = h(
+              "select",
+              { "aria-label": "Permission ceiling" },
+              ["consult", "contribute", "curate"].map((value) => h("option", {
+                value,
+                selected: value === String(base.permission_ceiling ?? "contribute")
+              }, value))
+            );
+            const qualification = h(
+              "select",
+              { "aria-label": "Required qualification" },
+              ["experimental", "screened", "verified_local", "verified_release"].map((value) => h("option", {
+                value,
+                selected: value === String(base.required_qualification ?? "screened")
+              }, value))
+            );
+            const bundles = h("input", {
+              type: "text",
+              value: (base.allowed_bundles ?? []).join(", "),
+              placeholder: "session, research",
+              "aria-label": "Allowed tool bundles"
+            });
+            const hosts = h("input", {
+              type: "text",
+              value: (route.host_ids ?? []).join(", "),
+              placeholder: "optional host ids",
+              "aria-label": "Allowed host ids"
+            });
+            const providers = h("input", {
+              type: "text",
+              value: (route.providers ?? []).join(", "),
+              placeholder: "optional legacy providers",
+              "aria-label": "Allowed legacy providers"
+            });
+            const models = h("input", {
+              type: "text",
+              value: (route.model_ids ?? []).join(", "),
+              placeholder: "optional model ids",
+              "aria-label": "Allowed model ids"
+            });
+            const validation = h("input", {
+              type: "text",
+              value: (base.validation_rules ?? []).join(", "),
+              placeholder: "grounded, cite evidence",
+              "aria-label": "Validation focus rules"
+            });
+            const token2 = h("input", {
+              type: "number",
+              min: 0,
+              value: String(base.token_budget ?? 0),
+              "aria-label": "Token budget per agent turn"
+            });
+            const output = h("input", {
+              type: "number",
+              min: 1,
+              value: String(base.output_budget ?? 4096),
+              "aria-label": "Maximum output tokens"
+            });
+            const cost = h("input", {
+              type: "number",
+              min: 0,
+              step: "0.01",
+              value: String(base.cost_budget_usd ?? 0),
+              "aria-label": "Cost budget USD per agent turn"
+            });
+            const seconds = h("input", {
+              type: "number",
+              min: 0,
+              value: String(base.time_budget_seconds ?? 0),
+              "aria-label": "Time budget seconds"
+            });
+            const concurrent = h("input", {
+              type: "number",
+              min: 1,
+              max: 32,
+              value: String(base.concurrency_limit ?? 1),
+              "aria-label": "Concurrent runs"
+            });
+            const inputRate = h("input", {
+              type: "number",
+              min: 0,
+              step: "0.001",
+              value: String(rates.input_per_1m ?? rates.price_input_per_1m ?? ""),
+              placeholder: "input $/1M",
+              "aria-label": "Input USD per million tokens"
+            });
+            const outputRate = h("input", {
+              type: "number",
+              min: 0,
+              step: "0.001",
+              value: String(rates.output_per_1m ?? rates.price_output_per_1m ?? ""),
+              placeholder: "output $/1M",
+              "aria-label": "Output USD per million tokens"
+            });
+            const retry = h("select", { "aria-label": "Retry policy" }, ["bounded", "none"].map((value) => h("option", { value, selected: value === String(base.retry_policy ?? "bounded") }, value)));
+            const failover = h("select", { "aria-label": "Failover policy" }, ["ask", "never"].map((value) => h("option", { value, selected: value === String(base.failover_policy ?? "ask") }, value)));
+            const editorStatus = h("span", { class: "note inline", role: "status" });
+            const save = async () => {
+              const rateCard = {};
+              if (inputRate.value.trim() || outputRate.value.trim()) {
+                rateCard.input_per_1m = Number(inputRate.value || 0);
+                rateCard.output_per_1m = Number(outputRate.value || 0);
+              }
+              const profile = {
+                ...base,
+                id: id.value.trim(),
+                role: role.value.trim(),
+                permission_ceiling: ceiling.value,
+                required_qualification: qualification.value,
+                allowed_bundles: split(bundles.value),
+                token_budget: Number(token2.value || 0),
+                output_budget: Number(output.value || 4096),
+                cost_budget_usd: Number(cost.value || 0),
+                time_budget_seconds: Number(seconds.value || 0),
+                concurrency_limit: Number(concurrent.value || 1),
+                retry_policy: retry.value,
+                failover_policy: failover.value,
+                validation_rules: split(validation.value),
+                route_policy: {
+                  ...route,
+                  host_ids: split(hosts.value),
+                  model_ids: split(models.value),
+                  providers: split(providers.value),
+                  ...Object.keys(rateCard).length ? { rate_card: rateCard } : {}
+                }
+              };
+              editorStatus.textContent = "Saving profile\u2026";
+              try {
+                await this.api.post("/api/profiles", { profile });
+                editorStatus.textContent = "Saved as a new profile revision.";
+                editorStatus.className = "note inline ok";
+                await reload();
+              } catch (e) {
+                editorStatus.textContent = e.message;
+                editorStatus.className = "note inline err";
+              }
+            };
+            clear(
+              editor,
+              h(
+                "div",
+                { class: "confirm" },
+                h("strong", {}, creating ? "New agent profile" : `Edit ${base.id}`),
+                h("div", { class: "row2 tight" }, id, role, ceiling, qualification),
+                h("label", { class: "f" }, "Tool bundles (comma-separated)"),
+                bundles,
+                h("label", { class: "f" }, "Route allow-lists (blank means unrestricted)"),
+                h("div", { class: "row2 tight" }, hosts, providers, models),
+                h("label", { class: "f" }, "Validation focus (comma-separated, guidance only; platform gates still apply)"),
+                validation,
+                h("label", { class: "f" }, "Turn budgets"),
+                h("div", { class: "row2 tight" }, token2, output, cost, seconds, concurrent),
+                h("p", { class: "note" }, "A non-zero cost cap needs both rate fields; otherwise Core refuses before a paid provider call."),
+                h("div", { class: "row2 tight" }, inputRate, outputRate, retry, failover),
+                h(
+                  "div",
+                  { class: "row2" },
+                  h("button", { class: "ghost", onclick: () => clear(editor) }, "Cancel"),
+                  h("button", { class: "primary", onclick: () => void save() }, "Save profile"),
+                  editorStatus
+                )
+              )
+            );
+          };
+          const chosen = profiles.find((profile) => String(profile.id) === selected) ?? profiles[0] ?? {};
+          const history = h("div", { class: "profile-history" });
+          const showHistory = async () => {
+            try {
+              const out2 = await this.api.get(`/api/profiles/history?id=${encodeURIComponent(String(chosen.id ?? ""))}`);
+              const rows = out2.history ?? [];
+              clear(history, rows.length ? h(
+                "div",
+                { class: "confirm" },
+                h("strong", {}, "Saved profile revisions"),
+                rows.slice(0, 12).map((row) => h(
+                  "p",
+                  { class: "note" },
+                  `r${row.revision ?? row.profile?.revision ?? "?"} \xB7 ${String(row.at ?? "").replace("T", " ").slice(0, 19)} \xB7 ${row.profile?.role ?? ""}, ${row.profile?.permission_ceiling ?? ""}, output ${row.profile?.output_budget ?? ""}`
+                )),
+                h("button", { class: "ghost", onclick: () => clear(history) }, "Hide history")
+              ) : h("p", { class: "note" }, "No vault-specific revisions yet. Editing a shipped default creates revision 2."));
+            } catch (e) {
+              clear(history, h("p", { class: "error" }, e.message));
+            }
+          };
+          clear(
+            root,
+            h("label", { class: "f" }, "Agent profile"),
+            h(
+              "div",
+              { class: "row2 tight" },
+              select,
+              h("button", { class: "ghost", onclick: () => showEditor(chosen) }, "Edit\u2026"),
+              h("button", { class: "ghost", onclick: () => showEditor({
+                id: "",
+                role: "research_helper",
+                permission_ceiling: "consult",
+                required_qualification: "screened",
+                allowed_bundles: ["read"],
+                route_policy: {},
+                output_budget: 1024,
+                retry_policy: "bounded",
+                failover_policy: "ask",
+                concurrency_limit: 1
+              }, true) }, "New\u2026"),
+              h("button", { class: "ghost", onclick: () => void showHistory() }, "History\u2026"),
+              status
+            ),
+            h("p", { class: "note" }, "Profiles set tool bundles, permission ceilings, route allow-lists, budgets and concurrency. They narrow the selected agent only; they never grant it a new host or bypass a checkpoint."),
+            Object.keys(active).length ? h("p", { class: "note" }, `Active profile runs: ${Object.entries(active).map(([id, n]) => `${id} (${n})`).join(", ")}.`) : null,
+            editor,
+            history
+          );
+        } catch (e) {
+          clear(root, h("p", { class: "error" }, e.message));
+        }
+      };
+      void reload();
+      return root;
     }
     /** Research Pipeline §6.1: project access - off by default, folders a person chooses, each
      *  with its librarian-app/ sidecar. The core refuses project tools while it is off; this
@@ -2289,6 +2762,379 @@ var Librarian = (() => {
         );
       })();
       return host;
+    }
+    /** Personal endpoints are configuration, not vault data.  This deliberately
+     * keeps endpoint/key binding, discovery, health probes and local limits in
+     * the same visible place rather than making a model infer policy from a URL. */
+    hostRegistry() {
+      const root = h("section", { class: "host-registry" }, h("p", { class: "dim" }, "Loading personal hosts\u2026"));
+      const reload = async () => {
+        try {
+          const data = await this.api.get("/api/hosts");
+          const hosts = data.hosts ?? [];
+          clear(
+            root,
+            h("label", { class: "f" }, "Personal model hosts"),
+            h("p", { class: "note" }, "Hosts contain endpoints and rate limits, never credentials. A custom endpoint is OpenAI-compatible in V2; test it before assigning it to an agent profile."),
+            hosts.map((row) => this.hostCard(row, reload)),
+            this.newHostCard(reload)
+          );
+        } catch (e) {
+          clear(root, h("p", { class: "error" }, e.message));
+        }
+      };
+      void reload();
+      return root;
+    }
+    hostCard(row, reload) {
+      const title = h("strong", {}, String(row.display_name ?? row.id));
+      const status = h("span", { class: "note inline", role: "status" });
+      const detail = row.health?.detail ? ` \xB7 ${row.health.detail}` : "";
+      const health = h(
+        "span",
+        { class: `note inline ${row.health?.status === "ready" ? "ok" : row.health?.status === "error" ? "err" : ""}` },
+        row.health?.status ? `${row.health.status}${detail}` : "not tested"
+      );
+      const model = h("input", { type: "text", placeholder: "Model id for test or lead selection", "aria-label": `Model on ${row.display_name ?? row.id}` });
+      const probeRole = String(this.state().agent_profile_role || this.state().agent_profile || "lead");
+      const discovered = h("div", { class: "row2 tight" });
+      const enabled = h("input", { type: "checkbox", checked: !!row.enabled, "aria-label": `Enable ${row.display_name ?? row.id}` });
+      const name = h("input", { type: "text", value: String(row.display_name ?? ""), "aria-label": "Host display name" });
+      const protocol = h(
+        "select",
+        { "aria-label": "Host protocol", disabled: !!row.seeded },
+        h("option", { value: "openai", selected: row.protocol === "openai" }, "OpenAI-compatible"),
+        h("option", { value: "anthropic", selected: row.protocol === "anthropic" }, "Anthropic")
+      );
+      const base = h("input", { type: "text", value: String(row.base_url ?? ""), "aria-label": "Base URL", disabled: !!row.seeded });
+      const authRef = h("input", { type: "text", value: String(row.auth_ref ?? ""), "aria-label": "Credential reference", disabled: !!row.seeded });
+      const timeout = h("input", { type: "number", value: String(row.timeout ?? 120), min: 1, max: 3600, "aria-label": "Timeout seconds" });
+      const concurrency = h("input", { type: "number", value: String(row.concurrency_limit ?? 1), min: 1, max: 32, "aria-label": "Concurrent calls" });
+      const rate = h("input", { type: "number", value: String(row.rate_limit ?? 0), min: 0, "aria-label": "Calls per minute" });
+      const key = h("input", {
+        type: "password",
+        autocomplete: "off",
+        placeholder: row.needs_key ? "Paste key for this host" : "No key configured",
+        disabled: !row.needs_key,
+        "aria-label": `Key for ${row.display_name ?? row.id}`
+      });
+      const confirm2 = h("div");
+      const save = async () => {
+        status.textContent = "Saving host\u2026";
+        try {
+          await this.api.post("/api/hosts", { host: {
+            id: row.id,
+            display_name: name.value.trim(),
+            protocol: protocol.value,
+            base_url: base.value.trim(),
+            auth_ref: authRef.value.trim(),
+            enabled: enabled.checked,
+            timeout: Number(timeout.value || 120),
+            concurrency_limit: Number(concurrency.value || 1),
+            rate_limit: Number(rate.value || 0)
+          } });
+          status.textContent = "Saved.";
+          await reload();
+        } catch (e) {
+          status.textContent = e.message;
+          status.className = "note inline err";
+        }
+      };
+      const setKey = async (overwrite = false) => {
+        try {
+          const out = await this.api.post("/api/hosts/key", { host_id: row.id, key: key.value, overwrite });
+          key.value = "";
+          status.textContent = out.saved ? "Key saved." : "Key status updated.";
+          clear(confirm2);
+        } catch (e) {
+          const body = e.body ?? {};
+          if (body.confirm) {
+            clear(confirm2, h("div", { class: "confirm" }, String(body.confirm), h(
+              "div",
+              { class: "row2" },
+              h("button", { class: "ghost", onclick: () => clear(confirm2) }, "Cancel"),
+              h("button", { class: "primary", onclick: () => void setKey(true) }, "Replace key")
+            )));
+          } else status.textContent = e.message;
+        }
+      };
+      const discover = async () => {
+        status.textContent = "Discovering models\u2026";
+        try {
+          const out = await this.api.get(`/api/models?provider=${encodeURIComponent(String(row.id))}`);
+          const models = out.models ?? [];
+          clear(discovered, models.length ? models.slice(0, 40).map((entry) => h("button", { class: "ghost", onclick: () => {
+            model.value = String(entry.id);
+          } }, String(entry.id))) : h("span", { class: "note inline" }, out.error ?? "No models returned."));
+          status.textContent = models.length ? `${models.length} models discovered.` : "No models returned.";
+        } catch (e) {
+          status.textContent = e.message;
+          status.className = "note inline err";
+        }
+      };
+      const test = async () => {
+        status.textContent = "Testing host\u2026";
+        try {
+          const out = await this.api.post("/api/hosts/test", { host_id: row.id, model: model.value.trim() });
+          const check = out.check ?? {};
+          const category = String(check.failure_category ?? "");
+          status.textContent = check.ok ? "Connection and model listing work." : category === "local_environment" ? "Local network policy blocked the Core \u2014 this is not a model result." : String(check.error ?? "Host test failed.");
+          status.className = `note inline ${check.ok ? "ok" : "err"}`;
+          await reload();
+        } catch (e) {
+          status.textContent = e.message;
+          status.className = "note inline err";
+        }
+      };
+      const probe = async (checkpointId = "") => {
+        if (!model.value.trim()) {
+          status.textContent = "Enter or discover a model id first.";
+          return;
+        }
+        status.textContent = "Preparing a one-call tool probe\u2026";
+        try {
+          const out = await this.api.post("/api/qualification/run", {
+            host_id: row.id,
+            model: model.value.trim(),
+            role: probeRole,
+            level: "L1",
+            checkpoint_id: checkpointId
+          });
+          const run = out.run ?? {};
+          status.textContent = run.outcome === "pass" ? `L1 tool-call probe passed for ${probeRole} (Screened).` : `L1 probe: ${run.detail ?? run.outcome ?? "did not pass"}`;
+          status.className = `note inline ${run.outcome === "pass" ? "ok" : "err"}`;
+          clear(confirm2);
+          await reload();
+        } catch (e) {
+          const body = e.body ?? {};
+          const checkpoint = body.checkpoint_record;
+          if (checkpoint?.id) {
+            status.textContent = "Approve this small paid account probe to run it.";
+            clear(confirm2, h(
+              "div",
+              { class: "confirm" },
+              "This L1 probe makes one real tool-call request to this host.",
+              h(
+                "div",
+                { class: "row2" },
+                h("button", { class: "ghost", onclick: () => clear(confirm2) }, "Cancel"),
+                h("button", { class: "primary", onclick: async () => {
+                  await this.api.post("/api/checkpoints/resolve", { id: checkpoint.id, choice: "approve" });
+                  await probe(checkpoint.id);
+                } }, "Approve probe")
+              )
+            ));
+          } else {
+            status.textContent = e.message;
+            status.className = "note inline err";
+          }
+        }
+      };
+      const chooseLead = async (checkpointId = "", override = "") => {
+        if (!model.value.trim()) {
+          status.textContent = "Enter or discover a model id first.";
+          return;
+        }
+        try {
+          await this.api.post("/api/tiers", {
+            tiers: [{ host_id: row.id, model: model.value.trim() }],
+            ...checkpointId ? { checkpoint_id: checkpointId } : {},
+            ...override ? { override } : {}
+          });
+          status.textContent = `${model.value} is the selected lead route.`;
+          clear(confirm2);
+          await this.refresh();
+        } catch (e) {
+          const body = e.body ?? {};
+          const checkpoint = body.checkpoint_record;
+          if (checkpoint?.id) {
+            clear(confirm2, h(
+              "div",
+              { class: "confirm" },
+              e.message,
+              h("p", { class: "note" }, "This route remains experimental. Approving records your route choice; it does not mark the model verified."),
+              h(
+                "div",
+                { class: "row2" },
+                h("button", { class: "ghost", onclick: () => clear(confirm2) }, "Cancel"),
+                h("button", { class: "primary", onclick: async () => {
+                  await this.api.post("/api/checkpoints/resolve", { id: checkpoint.id, choice: "approve" });
+                  await chooseLead(checkpoint.id);
+                } }, "Use experimental lead")
+              )
+            ));
+          } else if (body.needs_override) {
+            const reason = h("input", { type: "text", value: "chosen by the person for this host", "aria-label": "Why use this unqualified lead" });
+            clear(confirm2, h(
+              "div",
+              { class: "confirm" },
+              e.message,
+              h("p", { class: "note" }, "This records an explicit experimental-route choice; it does not mark the model verified."),
+              reason,
+              h(
+                "div",
+                { class: "row2" },
+                h("button", { class: "ghost", onclick: () => clear(confirm2) }, "Cancel"),
+                h("button", { class: "primary", onclick: () => void chooseLead("", reason.value.trim() || "chosen by the person") }, "Use experimental lead")
+              )
+            ));
+          } else status.textContent = e.message;
+        }
+      };
+      const remove = async () => {
+        try {
+          await this.api.post("/api/hosts/remove", { host_id: row.id });
+          await reload();
+        } catch (e) {
+          status.textContent = e.message;
+        }
+      };
+      return h(
+        "div",
+        { class: "host-card" },
+        h(
+          "div",
+          { class: "row2 tight" },
+          h("span", { class: `dot ${row.enabled ? "" : "off"}` }),
+          title,
+          h("code", {}, String(row.id)),
+          row.seeded ? h("span", { class: "dim" }, "preset") : null,
+          health
+        ),
+        h(
+          "div",
+          { class: "host-grid" },
+          h("label", { class: "f" }, "Display name", name),
+          h("label", { class: "f" }, "Protocol", protocol),
+          h("label", { class: "f" }, "Base URL", base),
+          h("label", { class: "f" }, "Credential reference", authRef),
+          h("label", { class: "f" }, "Timeout (s)", timeout),
+          h("label", { class: "f" }, "Concurrent calls", concurrency),
+          h("label", { class: "f" }, "Calls/minute (0 = no local cap)", rate)
+        ),
+        h("label", { class: "opt" }, enabled, h("span", {}, "Enable this host")),
+        h(
+          "div",
+          { class: "row2" },
+          h("button", { class: "ghost", onclick: () => void save() }, "Save host"),
+          !row.seeded ? h("button", { class: "ghost", onclick: () => void remove() }, "Remove") : null,
+          status
+        ),
+        row.needs_key ? h("div", { class: "row2" }, key, h("button", { class: "ghost", onclick: () => void setKey() }, "Save key")) : null,
+        confirm2,
+        h(
+          "div",
+          { class: "row2" },
+          model,
+          h("button", { class: "ghost", onclick: () => void discover() }, "Discover models"),
+          h("button", { class: "ghost", onclick: () => void test() }, "Test"),
+          h("button", { class: "ghost", onclick: () => void probe() }, `L1 probe (${probeRole})`),
+          h("button", { class: "primary", onclick: () => void chooseLead() }, "Use as lead")
+        ),
+        discovered
+      );
+    }
+    newHostCard(reload) {
+      const id = h("input", { type: "text", placeholder: "e.g. studio-lan", "aria-label": "New host id" });
+      const label = h("input", { type: "text", placeholder: "Display name", "aria-label": "New host display name" });
+      const base = h("input", { type: "text", placeholder: "http://127.0.0.1:1234/v1", "aria-label": "New host base URL" });
+      const auth = h("input", { type: "text", placeholder: "Optional env/key reference", "aria-label": "New host credential reference" });
+      const status = h("span", { class: "note inline", role: "status" });
+      const add = async () => {
+        try {
+          await this.api.post("/api/hosts", { host: {
+            id: id.value.trim(),
+            display_name: label.value.trim(),
+            protocol: "openai",
+            base_url: base.value.trim(),
+            auth_ref: auth.value.trim(),
+            enabled: true,
+            timeout: 120,
+            concurrency_limit: 1,
+            rate_limit: 0
+          } });
+          await reload();
+        } catch (e) {
+          status.textContent = e.message;
+          status.className = "note inline err";
+        }
+      };
+      return h(
+        "div",
+        { class: "host-card new-host" },
+        h("strong", {}, "Add OpenAI-compatible host"),
+        h(
+          "div",
+          { class: "host-grid" },
+          h("label", { class: "f" }, "Id", id),
+          h("label", { class: "f" }, "Name", label),
+          h("label", { class: "f" }, "Base URL", base),
+          h("label", { class: "f" }, "Credential reference", auth)
+        ),
+        h("div", { class: "row2" }, h("button", { class: "primary", onclick: () => void add() }, "Add host"), status)
+      );
+    }
+    /** A stable release can ship two L3-qualified candidates, but an account
+     * tool probe and its spend decision still belong to the person. */
+    releaseLeadSetup() {
+      const root = h("section", { class: "release-leads" });
+      void this.api.get("/api/release-leads").then((data) => {
+        const choices = data.choices ?? [];
+        if (!choices.length) {
+          clear(root);
+          return;
+        }
+        clear(
+          root,
+          h("label", { class: "f" }, "First-run verified leads"),
+          choices.map((choice) => {
+            const key = h("input", {
+              type: "password",
+              autocomplete: "off",
+              placeholder: choice.key?.saved ? "Key already available" : "Provider key",
+              disabled: !choice.available || !!choice.key?.saved,
+              "aria-label": `Key for ${choice.model}`
+            });
+            const status = h("span", { class: "note inline", role: "status" });
+            let keySaved = !!choice.key?.saved;
+            const pick = async (checkpointId = "") => {
+              try {
+                const out = await this.api.post("/api/release-leads/select", {
+                  id: choice.id,
+                  key: keySaved ? "" : key.value,
+                  checkpoint_id: checkpointId
+                });
+                keySaved = true;
+                status.textContent = out.selected ? `${choice.model} is ready as lead.` : String(out.reason ?? "Probe did not pass.");
+                if (out.selected) await this.refresh();
+              } catch (e) {
+                const body = e.body ?? {};
+                const checkpoint = body.checkpoint_record;
+                if (checkpoint?.id) {
+                  status.textContent = "Approve the small account probe to continue.";
+                  clear(actions, h("button", { class: "primary", onclick: async () => {
+                    await this.api.post("/api/checkpoints/resolve", { id: checkpoint.id, choice: "approve" });
+                    await pick(checkpoint.id);
+                  } }, "Approve account probe"));
+                } else status.textContent = e.message;
+              }
+            };
+            const actions = h("div", { class: "row2" });
+            const label = choice.available ? "Connect and probe" : "Awaiting release qualification";
+            clear(actions, choice.available ? h("button", { class: "primary", onclick: () => void pick() }, label) : null);
+            return h(
+              "div",
+              { class: "host-card release-lead" },
+              h("strong", {}, `${choice.provider} \xB7 ${choice.model}`),
+              h("p", { class: "note" }, choice.available ? choice.reason ?? "" : `Unavailable: ${choice.reason ?? choice.qualification}`),
+              choice.available && !keySaved ? key : null,
+              actions,
+              status
+            );
+          })
+        );
+      }).catch((e) => clear(root, h("p", { class: "error" }, e.message)));
+      return root;
     }
     // -- page 2 --------------------------------------------------------------
     context() {
@@ -4664,6 +5510,7 @@ var Librarian = (() => {
       this.session = null;
       this.view = "chat";
       this.libraryButton = h("button", { class: "ghost lib-switch", title: "Switch library" }, "Library \u25BE");
+      this.checkpointButton = h("button", { class: "ghost", title: "Decisions waiting for you" }, "Checkpoints \u25BE");
       this.title = h("span", { class: "title" }, "Librarian");
       this.crumb = h("span", { class: "crumb" });
       this.live = h("span", { class: "live", role: "status", title: "Connection to the core" });
@@ -4692,6 +5539,16 @@ var Librarian = (() => {
       this.effortControl = h("label", { class: "effort tb" }, "Effort ", this.effortInput, this.effortValue);
       this.notice = h("div", { class: "notice", role: "alert", hidden: true });
       this.paneOpen = true;
+      this.stopEvents = null;
+      this.onDocumentKey = (e) => {
+        if (e.key === "Escape") [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop].forEach((p) => p.show(false));
+      };
+      this.onDocumentClick = (e) => {
+        const path = e.composedPath();
+        for (const p of [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop]) {
+          if (p.open && !path.includes(p.el) && !path.includes(p.button)) p.show(false);
+        }
+      };
       this.api = new Api(opts);
       const openNote = (target) => void this.openDoc(target);
       reader.init(this.api, (message) => this.warn(message));
@@ -4701,6 +5558,10 @@ var Librarian = (() => {
         onSession: (s) => this.setSession(s),
         resend: (text) => void this.sendText(text),
         continueSession: () => void this.sendText("Continue the current research session from its next step. Read session_status first, complete the open work, and report any information you cannot verify as a gap. Do not claim the session or requested work is complete while session_status still shows open items."),
+        openModelPicker: () => {
+          this.toggle(this.models);
+          if (this.models.open) void this.tile.refresh();
+        },
         rewind: (index) => void this.rewindMessage(index),
         branch: (index) => void this.branchMessage(index),
         openOffering: (id) => {
@@ -4743,6 +5604,7 @@ var Librarian = (() => {
       const sessionsButton = h("button", { class: "ghost" }, "Sessions \u25BE");
       this.sessions = new Popover("lib-sessions", "Sessions", sessionsButton);
       this.libraries = new Popover("lib-libraries", "Libraries", this.libraryButton);
+      this.checkpoints = new Popover("lib-checkpoints", "Checkpoints", this.checkpointButton);
       this.libraryButton.onclick = () => {
         this.toggle(this.libraries);
         if (this.libraries.open) void renderLibraries(this.libraries, this.api, this.libraryName());
@@ -4792,6 +5654,10 @@ var Librarian = (() => {
           this.libraryName(),
           String(this.state.vault_path ?? "")
         );
+      };
+      this.checkpointButton.onclick = () => {
+        this.toggle(this.checkpoints);
+        if (this.checkpoints.open) void this.refreshCheckpoints();
       };
       const elsewhere = h("button", {
         class: "tb",
@@ -4871,6 +5737,7 @@ var Librarian = (() => {
             {},
             h("div", { class: "anchor" }, this.libraryButton, this.libraries.el),
             h("div", { class: "anchor" }, sessionsButton, this.sessions.el),
+            h("div", { class: "anchor" }, this.checkpointButton, this.checkpoints.el),
             this.title,
             this.crumb,
             h("nav", { role: "tablist", "aria-label": "Views" }, Object.values(this.nav)),
@@ -4882,15 +5749,8 @@ var Librarian = (() => {
         this.settings.dialog
       );
       this.composer = composer;
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") [this.modes, this.models, this.sessions, this.libraries, this.attachPop].forEach((p) => p.show(false));
-      });
-      document.addEventListener("click", (e) => {
-        const path = e.composedPath();
-        for (const p of [this.modes, this.models, this.sessions, this.libraries, this.attachPop]) {
-          if (p.open && !path.includes(p.el) && !path.includes(p.button)) p.show(false);
-        }
-      });
+      document.addEventListener("keydown", this.onDocumentKey);
+      document.addEventListener("click", this.onDocumentClick);
       this.show("chat");
       const width = recall("pane-w");
       if (width) this.body.style.setProperty("--pane-w", width);
@@ -4944,7 +5804,7 @@ var Librarian = (() => {
         this.warn(`The core did not answer: ${e.message}. Is \`resource-librarian app\` running?`);
         return;
       }
-      this.api.events((event) => this.onEvent(event), (live) => {
+      this.stopEvents = this.api.events((event) => this.onEvent(event), (live) => {
         this.live.className = `live ${live ? "on" : "off"}`;
         this.live.textContent = live ? "\u25CF" : "\u25CB reconnecting";
         if (live) void this.refresh();
@@ -5001,6 +5861,14 @@ var Librarian = (() => {
           if (event.session) this.setSession(event.session);
           if (this.view === "staging") void this.staging.load();
           break;
+        case "checkpoint_created":
+        case "checkpoint_resolved":
+          void this.refreshCheckpoints();
+          break;
+        case "route_health_changed":
+        case "workflow_preflight":
+          if (this.models.open) void this.tile.refresh();
+          break;
         case "library_switched":
           window.location.reload();
           break;
@@ -5028,6 +5896,53 @@ var Librarian = (() => {
         this.pipelines,
         (msg) => this.warn(msg),
         this.state.queued_inputs ?? {}
+      );
+      const pending = (this.state.pending_checkpoints ?? []).length;
+      this.checkpointButton.textContent = pending ? `Checkpoints (${pending}) \u25BE` : "Checkpoints \u25BE";
+      if (this.checkpoints.open) this.renderCheckpoints();
+    }
+    /** Policy choices live here, not in a prose prompt.  A blocked operation
+     * leaves its evidence and available, explicit choices in this small panel;
+     * resolving one does not silently unblock unrelated work. */
+    async refreshCheckpoints() {
+      try {
+        const out = await this.api.get("/api/checkpoints?pending=1");
+        this.state.pending_checkpoints = out.checkpoints ?? [];
+        this.renderCheckpoints();
+        this.paintToolbar();
+      } catch (e) {
+        this.warn(e.message);
+      }
+    }
+    renderCheckpoints() {
+      const rows = this.state.pending_checkpoints ?? [];
+      const card = (row) => {
+        const evidence = row.evidence && Object.keys(row.evidence).length ? h("pre", { class: "checkpoint-evidence" }, JSON.stringify(row.evidence, null, 2)) : null;
+        const resolve = async (choice) => {
+          try {
+            await this.api.post("/api/checkpoints/resolve", { id: row.id, choice });
+            await this.refreshCheckpoints();
+          } catch (e) {
+            this.warn(e.message);
+          }
+        };
+        return h(
+          "section",
+          { class: "checkpoint" },
+          h("strong", {}, String(row.type ?? "Decision").replace(/_/g, " ")),
+          h("p", {}, String(row.scope ?? "")),
+          evidence,
+          h("div", { class: "row2" }, ...(Array.isArray(row.choices) ? row.choices : []).map((choice) => (
+            // The Core declares the safe default.  Array order is presentation
+            // history, not an instruction to make an approval action primary.
+            h("button", { class: choice === row.default ? "primary" : "ghost", onclick: () => void resolve(choice) }, choice.replace(/_/g, " "))
+          )))
+        );
+      };
+      clear(
+        this.checkpoints.el,
+        h("h4", {}, "Decisions waiting for you"),
+        rows.length ? rows.map(card) : h("p", { class: "dim" }, "No decisions are waiting. Agents can continue work on other notes.")
       );
     }
     paintChips() {
@@ -5085,7 +6000,7 @@ var Librarian = (() => {
     }
     toggle(pop) {
       const open = !pop.open;
-      [this.modes, this.models, this.sessions, this.attachPop].forEach((p) => p.show(false));
+      [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop].forEach((p) => p.show(false));
       pop.show(open);
     }
     /** A file just attached: a chip above the composer, its icon standing for
@@ -5220,6 +6135,12 @@ var Librarian = (() => {
       this.input.value += gap + text;
       this.input.focus();
     }
+    dispose() {
+      this.stopEvents?.();
+      this.stopEvents = null;
+      document.removeEventListener("keydown", this.onDocumentKey);
+      document.removeEventListener("click", this.onDocumentClick);
+    }
     async reset() {
       try {
         await this.api.post("/api/chat/reset");
@@ -5286,7 +6207,7 @@ var Librarian = (() => {
     root.classList.add("librarian-root", `host-${opts.host}`);
     const app = new App(root, opts);
     void app.start();
-    return { insert: (text) => app.insert(text) };
+    return { insert: (text) => app.insert(text), dispose: () => app.dispose() };
   }
   var auto = typeof document !== "undefined" ? document.getElementById("librarian-root") : null;
   if (auto) {

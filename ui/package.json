@@ -1,7 +1,7 @@
 {
   "name": "librarian-ui",
   "private": true,
-  "version": "2.0.0-dev",
+  "version": "2.1.0-dev",
   "description": "The Librarian V2 interface: one bundle, mounted by the website and the Obsidian plugin",
   "scripts": {
     "check": "tsc --noEmit",

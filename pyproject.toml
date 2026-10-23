@@ -3,21 +3,30 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-# Working name. The published name is an open decision (PLAN - Librarian V2, Decisions Still Open).
+# Product name: Librarian.  `resource-librarian` remains the distribution and
+# CLI compatibility alias through the V2 line.
 name = "resource-librarian"
-version = "2.0.0.dev0"
-description = "A research library for a vault of sources someone has actually read"
-requires-python = ">=3.11"
-dependencies = ["PyYAML>=6"]
+version = "2.1.0.dev0"
+description = "Librarian: a Windows-local research and agentic co-work Core"
+requires-python = ">=3.11,<3.14"
+# keyring selects Windows Credential Manager on supported Windows hosts.  It
+# is a runtime dependency rather than an optional extra so the secure default
+# is actually present in a production Core; KeyStore still reports a
+# structured fallback only when the OS/backend is unavailable.
+dependencies = ["PyYAML>=6", "keyring>=25,<27"]
 
 [project.optional-dependencies]
 search = ["numpy>=1.26"]
 embed = ["numpy>=1.26", "model2vec>=0.4"]
 pdf = ["pypdf>=4"]
 mcp = ["mcp>=2.2,<3"]
-dev = ["pytest>=8", "numpy>=1.26", "pypdf>=4", "mcp>=2.2,<3"]
+# `build` keeps the source-install developer workflow able to exercise the
+# same wheel path as release CI; it is not a runtime dependency in a shipped
+# hash-locked wheelhouse.
+dev = ["pytest>=8", "numpy>=1.26", "pypdf>=4", "mcp>=2.2,<3", "build>=1.2"]
 
 [project.scripts]
+librarian = "resource_librarian.cli:main"
 resource-librarian = "resource_librarian.cli:main"
 
 [tool.setuptools.packages.find]

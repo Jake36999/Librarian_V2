@@ -1,0 +1,36 @@
+name: Core CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  core:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install Core and tests
+        run: python -m pip install -e ".[dev]"
+      - name: Run L0/Core suite
+        run: python -m pytest
+  adapters:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build browser UI from lockfile
+        working-directory: ui
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Build Obsidian adapter from lockfile
+        working-directory: obsidian
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build

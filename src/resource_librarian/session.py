@@ -41,6 +41,7 @@ from collections.abc import Mapping
 from typing import Any, Iterator
 
 from . import agenda, notes
+from .coordination import atomic_write_text
 from .rules import Refusal
 from .vault import Vault, jsonl_lines, now_iso
 
@@ -777,7 +778,7 @@ class SessionStore:
         path = self.path(session_id)
         with _append_lock(path):
             kept = self._lines_through(session_id, message_index)
-            path.write_text("\n".join(kept) + "\n", encoding="utf-8")
+            atomic_write_text(path, "\n".join(kept) + "\n")
 
     def copy_through(self, session_id: str, message_index: int) -> str:
         """Branch: a new session whose log is `session_id`'s up to and
@@ -789,7 +790,7 @@ class SessionStore:
         new_id = self._new_id()
         new_path = self.path(new_id)
         new_path.parent.mkdir(parents=True, exist_ok=True)
-        new_path.write_text("\n".join(kept) + "\n", encoding="utf-8")
+        atomic_write_text(new_path, "\n".join(kept) + "\n")
         return new_id
 
     def append(self, session_id: str, event: dict[str, Any]) -> None:
@@ -802,6 +803,11 @@ class SessionStore:
             event["h"] = chain_hash(_last_hash(path), event)
             with path.open("a", encoding="utf-8") as handle:
                 handle.write(json.dumps(event, ensure_ascii=False, default=str) + "\n")
+                handle.flush()
+                try:
+                    os.fsync(handle.fileno())
+                except OSError:
+                    pass
 
     def load(self, session_id: str) -> Session:
         path = self.path(session_id)

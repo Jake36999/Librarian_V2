@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any
 
 from . import clerk
+from .coordination import atomic_write_text
 from .evidence import EvidenceStore
 from .vault import Vault, now_iso
 
@@ -57,7 +58,7 @@ def load(vault: Vault, source: str) -> dict[str, Any]:
 def save(vault: Vault, record: dict[str, Any]) -> Path:
     path = path_for(vault, record["source"])
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(record, ensure_ascii=False, indent=1), encoding="utf-8")
+    atomic_write_text(path, json.dumps(record, ensure_ascii=False, indent=1))
     return path
 
 

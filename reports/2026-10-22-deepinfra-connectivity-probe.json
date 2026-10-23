@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "title": "Librarian V2 current-system DeepInfra delta validation",
+  "started_at": "2026-10-22T00:38:07.378135Z",
+  "ended_at": "2026-10-22T00:38:10.072634Z",
+  "scope": {
+    "live_provider": "DeepInfra OpenAI-compatible API",
+    "credential_source": "transient file injection",
+    "cap_usd": 0.1,
+    "host_timeout_seconds": 10,
+    "l1_repeats": 1,
+    "tests": [
+      "l1"
+    ],
+    "fixtures": "local disposable Markdown only; no web search or user-vault writes",
+    "qualification_claim": "This is an L1 plus focused agent-walk validation. It does not grant verified_local or verified_release status, and L2/L3 remain artifact-backed qualification work."
+  },
+  "rate_cards": {
+    "XiaomiMiMo/MiMo-V2.6-Flash": {
+      "input_per_1m": 0.133,
+      "output_per_1m": 0.266,
+      "source": "https://deepinfra.com/XiaomiMiMo/MiMo-V2.6-Flash/api",
+      "as_of": "2026-10-22"
+    },
+    "deepseek-ai/DeepSeek-V4.1-Flash": {
+      "input_per_1m": 0.14,
+      "output_per_1m": 0.42,
+      "source": "https://deepinfra.com/blog/deepseek-v4-1-flash-model-overview-integration",
+      "as_of": "2026-10-22"
+    },
+    "zai-org/GLM-5.3-Flash": {
+      "input_per_1m": 0.075,
+      "output_per_1m": 0.25,
+      "source": "https://deepinfra.com/blog/glm-5-3-flash-documentation-integration-guide",
+      "as_of": "2026-10-22"
+    }
+  },
+  "availability": {
+    "listing_ok": true,
+    "model_count": 177,
+    "candidates": {
+      "XiaomiMiMo/MiMo-V2.6-Flash": true
+    }
+  },
+  "cases": [
+    {
+      "id": "XiaomiMiMo--MiMo-V2-6-Flash-l1_probe-1-1",
+      "model": "XiaomiMiMo/MiMo-V2.6-Flash",
+      "test": "l1_probe",
+      "run": 1,
+      "status": "pass",
+      "classification": "pass",
+      "duration_ms": 1592,
+      "provider_request_indices": [
+        2
+      ],
+      "provider_requests": 1,
+      "provider_failures": 0,
+      "detail": {
+        "core_l1_outcome": "pass",
+        "core_l1_detail": "tool-call smoke probe passed",
+        "observed_model": "XiaomiMiMo/MiMo-V2.6-Flash",
+        "core_duration_ms": 1360,
+        "strict_probe_arguments_ok": true,
+        "qualification_status_after": {
+          "qualification": {
+            "host_id": "preset-deepinfra",
+            "model_id": "XiaomiMiMo/MiMo-V2.6-Flash",
+            "role": "lead",
+            "status": "screened",
+            "updated_at": "2026-10-22T00:38:09+00:00",
+            "expires_at": "2027-01-20T00:38:09+00:00",
+            "invalidation": "",
+            "evidence_runs": [
+              "f04395828f7f2724128a"
+            ],
+            "fresh": true,
+            "freshness": "current"
+          },
+          "runs": [
+            {
+              "id": "f04395828f7f2724128a",
+              "host_id": "preset-deepinfra",
+              "model_id": "XiaomiMiMo/MiMo-V2.6-Flash",
+              "role": "lead",
+              "level": "L1",
+              "outcome": "pass",
+              "compatibility_fingerprint": "44400a3d2a9dc41740810d0e",
+              "behavior_fingerprint": "a634212ade566958461f890f",
+              "at": "2026-10-22T00:38:09+00:00",
+              "scenario": "current-delta-l1-1",
+              "duration_ms": 1360,
+              "cost_usd": 0.0,
+              "detail": "tool-call smoke probe passed",
+              "artifact": "",
+              "observed_model": "XiaomiMiMo/MiMo-V2.6-Flash"
+            }
+          ],
+          "jobs": [],
+          "requalification": null,
+          "fingerprints": {
+            "compatibility": "44400a3d2a9dc41740810d0e",
+            "behavior": "a634212ade566958461f890f"
+          }
+        }
+      }
+    }
+  ],
+  "provider_requests": [
+    {
+      "case_id": "model-discovery",
+      "test": "model_discovery",
+      "request_index": 1,
+      "method": "GET",
+      "endpoint": "/models",
+      "model_requested": "",
+      "tool_count": 0,
+      "max_tokens": 0,
+      "estimated_preflight_reserve_usd": 0.0,
+      "ok": true,
+      "latency_ms": 1091,
+      "model_returned": "",
+      "finish_reason": "",
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "total_tokens": null,
+      "usage_present": false,
+      "estimated_cost_usd": null,
+      "tool_calls": [],
+      "l1_probe_schema_ok": null
+    },
+    {
+      "case_id": "XiaomiMiMo--MiMo-V2-6-Flash-l1_probe-1-1",
+      "model": "XiaomiMiMo/MiMo-V2.6-Flash",
+      "test": "l1_probe",
+      "run": 1,
+      "request_index": 2,
+      "method": "POST",
+      "endpoint": "/chat/completions",
+      "model_requested": "XiaomiMiMo/MiMo-V2.6-Flash",
+      "tool_count": 1,
+      "max_tokens": 64,
+      "estimated_preflight_reserve_usd": 3.525e-05,
+      "ok": true,
+      "latency_ms": 1358,
+      "model_returned": "XiaomiMiMo/MiMo-V2.6-Flash",
+      "finish_reason": "tool_calls",
+      "prompt_tokens": 106,
+      "completion_tokens": 33,
+      "total_tokens": 139,
+      "usage_present": true,
+      "estimated_cost_usd": 2.288e-05,
+      "tool_calls": [
+        "librarian_probe"
+      ],
+      "l1_probe_schema_ok": true
+    }
+  ],
+  "summary": {
+    "cases_passed": 1,
+    "cases_total": 1,
+    "case_pass_rate": 1.0,
+    "provider_requests": 2,
+    "provider_failures": 0,
+    "chat_requests": 1,
+    "chat_latency_p50_ms": 1358.0,
+    "chat_latency_p95_ms": 1358.0,
+    "prompt_tokens": 106,
+    "completion_tokens": 33,
+    "usage_coverage": 0.5,
+    "estimated_cost_usd": 2.288e-05,
+    "by_model": {
+      "XiaomiMiMo/MiMo-V2.6-Flash": {
+        "cases_passed": 1,
+        "cases_total": 1,
+        "l1_name_conformant": 1,
+        "l1_total": 1,
+        "strict_l1_arguments_ok": 1,
+        "agent_walks_passed": 0,
+        "agent_walks_total": 0,
+        "provider_requests": 1,
+        "provider_failures": 0,
+        "chat_latency_p50_ms": 1358.0,
+        "chat_latency_p95_ms": 1358.0,
+        "prompt_tokens": 106,
+        "completion_tokens": 33,
+        "estimated_cost_usd": 2.288e-05
+      }
+    },
+    "meter_actual_estimated_cost_usd": 2.288e-05
+  },
+  "environment": {
+    "python": "3.11.3",
+    "script_sha256": "3039a4dd6d1e21ab37d00402d979e8765677a16b4535e31bfdec58bba84b6984",
+    "app_sha256": "3a25464d238713c26837a993e292691dccbef86dbf8e796807c2596b2f6b25ab",
+    "loop_sha256": "63574e8ebb528693098ae63fe1b12f775be8ef85d1166dd8c3740953a6cec22c",
+    "agent_runtime_sha256": "8c8109f9efac0ef4c2936a4d7994f85413c720dae9562b0a02271410393ec929"
+  }
+}

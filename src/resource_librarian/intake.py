@@ -42,6 +42,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Callable
 
 from . import clerk, facts, notes, quality, structure, text
+from .coordination import atomic_write_text
 from .evidence import EvidenceStore
 from .search import Engine
 from .staging import StagingStore
@@ -781,9 +782,8 @@ def _quarantine(vault: Vault, ref: str, stage: str, reason: str) -> IntakeResult
     folder = vault.work("quarantine") / "intake"
     folder.mkdir(parents=True, exist_ok=True)
     name = f"{hashlib.sha256(ref.encode()).hexdigest()[:12]}.json"
-    (folder / name).write_text(json.dumps({"ref": ref, "stage": stage, "reason": reason,
-                                           "at": now_iso()}, ensure_ascii=False, indent=1),
-                               encoding="utf-8")
+    atomic_write_text(folder / name, json.dumps({"ref": ref, "stage": stage, "reason": reason,
+                                                   "at": now_iso()}, ensure_ascii=False, indent=1))
     return IntakeResult(ref, "quarantined", detail=f"{stage}: {reason}")
 
 

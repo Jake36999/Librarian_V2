@@ -15,6 +15,7 @@ from typing import Any, Callable, Literal
 
 from .. import agenda as _agenda, clerk, notes, registry, scribe
 from .. import intake as _intake
+from ..coordination import atomic_write_text
 from ..evidence import EvidenceStore
 from ..registry import REGISTRY, Card, Context, tool
 from ..rules import Refusal
@@ -469,7 +470,7 @@ def close_session(ctx: Context, summary: str, gaps: str) -> dict:
         if path.is_file():
             loaded = notes.load(path)
             body = notes.with_section(loaded.body, "Current Focus", summary.strip())
-            path.write_text(notes.render(loaded.frontmatter, body), encoding="utf-8")
+            atomic_write_text(path, notes.render(loaded.frontmatter, body))
             engine_for(ctx).index.upsert(path)
     return {"closed": session.id, "completion": done}
 
@@ -568,7 +569,7 @@ def create_project(ctx: Context, name: str, stage: str, summary: str,
         ("Decisions", "None recorded."),
         ("Reflections", "None yet.")])
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(notes.render(fm, body), encoding="utf-8")
+    atomic_write_text(path, notes.render(fm, body))
     engine.index.upsert(path)
     if ctx.session:
         _event(ctx, {"type": "plan", "fields": {"project": safe}})
@@ -627,7 +628,7 @@ def understanding_record(ctx: Context, concept: str, own_words: str,
     entry = (f"- {date.today().isoformat()} (confidence: {confidence}): "
              f"{notes.one_line(own_words, 'own_words')}")
     body = notes.append_to_section(loaded.body, "Understanding", entry)
-    path.write_text(notes.render(loaded.frontmatter, body), encoding="utf-8")
+    atomic_write_text(path, notes.render(loaded.frontmatter, body))
     engine.index.upsert(path)
     if ctx.session:
         _event(ctx, {"type": "write", "tool": "understanding_record", "concept": row["name"],
@@ -1397,7 +1398,7 @@ def draft_offering(ctx: Context, title: str, summary: str, claims: list[dict],
     staging = ctx.vault.work("staging") / "offerings"
     staging.mkdir(parents=True, exist_ok=True)
     path = staging / f"{offering_id}.md"
-    path.write_text(notes.render(fm, body), encoding="utf-8")
+    atomic_write_text(path, notes.render(fm, body))
     rel = path.relative_to(ctx.vault.root).as_posix()
     _event(ctx, {"type": "offering", "id": offering_id, "title": slug, "status": "staged",
                  "path": rel, "claims": len(checked), **({"challenged": kept} if kept else {})})
@@ -1517,7 +1518,7 @@ def _promote_staged(ctx: Context, session, record: dict) -> dict:
     note = notes.load(source)
     note.frontmatter["status"] = "active"
     destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(notes.render(note.frontmatter, note.body), encoding="utf-8")
+    atomic_write_text(destination, notes.render(note.frontmatter, note.body))
     source.unlink()
     rel = destination.relative_to(ctx.vault.root).as_posix()
     engine = engine_for(ctx, refresh=False)
@@ -1676,7 +1677,7 @@ def record_application(ctx: Context, title: str, stage: str, outcome: str,
         sections.append(("Changes", "\n".join(rows)))
     body = notes.compose(name, sections)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(notes.render(fm, body), encoding="utf-8")
+    atomic_write_text(path, notes.render(fm, body))
     engine.index.upsert(path)
     rel = path.relative_to(ctx.vault.root).as_posix()
     _event(ctx, {"type": "write", "tool": "record_application", "path": rel})
@@ -1804,7 +1805,7 @@ def reflection_accept(ctx: Context, project: str, text: str) -> dict:
     loaded = notes.load(path)
     entry = f"- {date.today().isoformat()}: {notes.one_line(text, 'a reflection')}"
     body = notes.append_to_section(loaded.body, "Reflections", entry)
-    path.write_text(notes.render(loaded.frontmatter, body), encoding="utf-8")
+    atomic_write_text(path, notes.render(loaded.frontmatter, body))
     engine.index.upsert(path)
     return {"project": row["name"], "recorded": entry}
 
@@ -1841,6 +1842,6 @@ def task_route(ctx: Context, note: str, text: str,
         line = (_agenda.DUE.sub(f"📅 {new_due}", task.line, count=1)
                 if _agenda.DUE.search(task.line) else f"{task.line} 📅 {new_due}")
         body = loaded.body[:task.start] + line + loaded.body[task.end:]
-    path.write_text(notes.render(loaded.frontmatter, body), encoding="utf-8")
+    atomic_write_text(path, notes.render(loaded.frontmatter, body))
     engine.index.upsert(path)
     return {"note": row["name"], "task": text, "action": action}

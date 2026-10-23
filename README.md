@@ -20,18 +20,21 @@ Librarian is a tool for people who read seriously. You give it sources — paper
 
 ## Install
 
-Requires Python 3.11+.
+Supported release Pythons are 3.11–3.13.
 
 ### Windows: Setup.bat
 
-Double-click **`Setup.bat`** in this folder. It sets up this copy in one go:
+Double-click **`Setup.bat`** in this folder for a developer/source install. It
+sets up this copy in one go:
 
 - a Python environment of its own (`.venv` here), so this copy runs its own code;
 - the Librarian, with the MCP server, PDF text and semantic search;
 - a check that it starts;
 - a desktop shortcut, **Librarian**, that opens the library picker.
 
-It is safe to run again, for example after updating. The options pass through:
+It is safe to run again while working from this checkout. It deliberately uses
+an editable install, so it is not the production release path. The options pass
+through:
 
 ```bat
 Setup.bat -Extras "mcp,pdf,embed,dev"    REM also the test suite
@@ -53,8 +56,18 @@ you can:
 - forget a library from the list. The folder itself is left alone.
 
 `Librarian.bat --pick` opens the same page. `Librarian.bat` on its own opens the library
-at or above the folder it runs in, or the picker if there is none. Its window is the
-Librarian's server: closing it stops the Librarian.
+at or above the folder it runs in, or the picker if there is none. It is a
+developer convenience launcher; use the explicit Host lifecycle below for a
+longer-running local Core.
+
+### Windows release bundle
+
+Stable releases are installed with `scripts/bootstrapper.ps1` against a signed
+release bundle. It verifies the bundle's artifact hashes and uses its
+hash-locked wheelhouse without falling back to a package index. The checked-in
+manifest is deliberately a development template, so it cannot be used as a
+release installer until CI supplies real artifact hashes, signature evidence,
+and model-qualification records.
 
 ### By hand (any platform)
 
@@ -84,6 +97,24 @@ project folder, and registers the project in it:
 ---
 
 ## Services
+
+### Host lifecycle
+
+Librarian has one mutable Core per vault. The lightweight per-user Host is
+explicitly controlled; it has no browser-tab reference counting or idle
+shutdown. Closing a browser tab does not stop research work.
+
+```powershell
+librarian host start --vault D:\Research --open
+librarian host status
+librarian host doctor
+librarian host restart --vault D:\Research
+librarian host stop
+```
+
+`resource-librarian` remains an equivalent compatibility command throughout
+2.x. A write-capable CLI refuses to race an active Core; it either obtains the
+vault lease or asks you to use/stop the active Core.
 
 ### Web app
 
@@ -119,9 +150,9 @@ resource-librarian --vault ~/MyResearch mcp --tier contribute  # contribute tier
 
 ### Obsidian plugin
 
-`obsidian/` contains a plugin that embeds the Librarian chat panel directly inside Obsidian. The plugin starts the core process and communicates with it over a local port, so the vault you have open in Obsidian is the one the chat uses.
+`obsidian/` contains a plugin that embeds the Librarian chat panel directly inside Obsidian. It discovers a compatible active Core before starting one and communicates over a local port, so the vault you have open in Obsidian is the one the chat uses. Direct human Markdown editing remains possible: active dirty notes receive document-scoped heartbeats, while a Core write to that note becomes a visible conflict checkpoint rather than a silent overwrite.
 
-Build: `cd obsidian && npm install && npm run build`, then copy `dist/` to your vault's `.obsidian/plugins/librarian/`.
+Build: `cd obsidian && npm ci && npm run build`, then copy `dist/` to your vault's `.obsidian/plugins/librarian/`.
 
 ### Claude Code cowork plugin
 
@@ -131,7 +162,14 @@ Build: `cd obsidian && npm install && npm run build`, then copy `dist/` to your 
 
 ## Models and providers
 
-Librarian uses the OpenAI-compatible chat API, so the same code path works across every provider that speaks it. Three model tiers are independently configurable:
+Librarian uses curated provider adapters plus OpenAI-compatible endpoints, so
+you can choose personal hosts without placing credentials in a vault. A host
+record carries non-secret URL, timeouts, health, discovery and
+rate/concurrency controls; its key stays in Windows Credential Manager (or
+Obsidian SecretStorage for an Obsidian-managed Core).
+
+Three legacy model tiers remain independently configurable and map to the
+default versioned profiles through 2.x:
 
 | Tier | Role | Recommended |
 |------|------|-------------|
@@ -150,6 +188,23 @@ Librarian uses the OpenAI-compatible chat API, so the same code path works acros
 | Any OpenAI-compatible server | OpenAI-compatible | configurable |
 
 Any local server that exposes an OpenAI-compatible `/chat/completions` endpoint — LM Studio, Ollama with the OpenAI adapter, vLLM, llama.cpp server — works without changes to the code. Set the base URL in Settings → Connections → Local server.
+
+Profiles replace positional routing for new workflows. The built-in `lead`,
+`scribe`, `clerk`, and `research_helper` profiles combine a route policy,
+qualification requirement, small task-sized tool bundles, budgets,
+checkpoints, retry/failover behavior, and concurrency limits. A profile can
+narrow permissions but cannot expand a session, caller, project, or registry
+permission. Select the profile in Settings → Connections before a turn; its
+host/model allow-list, concurrent-run cap, output limit, and conservative
+token/cost reservation are enforced by Core rather than being prompt advice.
+
+Model evidence is tiered: L0 is deterministic and runs in CI; L1 is a cheap
+real connectivity/tool-call probe; L2 runs short role walks; L3 repeats full
+golden walks. Hard protocol/schema/model/endpoint changes invalidate evidence;
+prompt and macro changes become advisory-stale unless they fail a safety or
+contract check. The source tree ships candidate OpenAI and Anthropic release
+leads, not fictional verified results: a stable wheel can call them verified
+only once release CI includes their real L3 artifacts.
 
 A standard model catalogue for DeepInfra ships with the package — adopt it without any API calls:
 
@@ -215,6 +270,21 @@ Tools are organised into three tiers controlling what a model can do:
 
 The web app adds a permission mode on top: **Plan** (reads only, model proposes), **Ask** (every write pauses for approval), **Auto** (writes within phase and vault settings).
 
+## Audited agent work
+
+Normal agent turns receive a compact, versioned tool bundle rather than the
+entire registry. Common safe paths use auditable composite macros:
+`inspect_map_source`, `search_and_judge`, `intake_to_stage`,
+`evidence_to_claim_check`, and `review_staged_candidate`. A macro expands only
+to registered calls, shows its planned effects before its first write, records
+every intermediate result, and stops at phase, sensitivity, budget, approval,
+promotion, or write-conflict gates.
+
+Known human choices are structured UI checkpoints—such as staging/promotion,
+sensitive sources, model overrides/failover, evaluation spend, macro expansion,
+document conflicts, and Docker/non-isolated execution—rather than long policy
+prose a model must interpret.
+
 ---
 
 ## Vault layout
@@ -255,3 +325,13 @@ Extracts and reformats a PDF into clean Markdown beside the original — reflowi
 pytest                   # fast suite (~40 test files)
 pytest -m slow -s        # scale tests on synthetic 1,000 and 5,000-source vaults
 ```
+
+## Operational guides
+
+- [Product contract](docs/product-contract.md)
+- [V1 capability matrix](docs/capability-matrix.md)
+- [Operator, update, and secret guide](docs/operator-guide.md)
+- [Host qualification and release leads](docs/qualification.md)
+- [Safe V1 migration](docs/migration.md)
+- [Docker workbench and manual ranking experiments](docs/workbench.md)
+- [Browser, Obsidian, and Cowork adapter contract](docs/adapter-contract.md)

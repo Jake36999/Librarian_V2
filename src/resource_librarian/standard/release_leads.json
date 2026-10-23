@@ -1,0 +1,49 @@
+{
+  "schema_version": 2,
+  "release_status": "development_template",
+  "release_version": "2.1.0.dev0",
+  "signing": {
+    "status": "not_signed",
+    "verification": null
+  },
+  "contract": {
+    "core_version_range": ">=2.1.0,<2.2.0",
+    "protocol_version": "2",
+    "tool_contract_version": "3",
+    "prompt_contract_version": "2"
+  },
+  "about": "Release-lead candidates. The release pipeline replaces this development template with an integrity-checked, signed stable manifest containing exact, version-pinned L3 evidence. Pending data is deliberately not eligible at runtime.",
+  "leads": [
+    {
+      "id": "release-openai-lead",
+      "provider": "openai",
+      "host_id": "preset-openai",
+      "model": "gpt-4.1",
+      "endpoint": {
+        "protocol": "openai",
+        "base_url": "https://api.openai.com/v1",
+        "auth_ref": "OPENAI_API_KEY"
+      },
+      "endpoint_fingerprint": "81a732d5049c166a10598c29",
+      "qualification": "pending_release_ci",
+      "role": "lead",
+      "evidence": "not yet published"
+    },
+    {
+      "id": "release-anthropic-lead",
+      "provider": "anthropic",
+      "host_id": "preset-anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "endpoint": {
+        "protocol": "anthropic",
+        "base_url": "https://api.anthropic.com/v1",
+        "auth_ref": "ANTHROPIC_API_KEY"
+      },
+      "endpoint_fingerprint": "7faac054bac0ee6722e32baa",
+      "qualification": "pending_release_ci",
+      "role": "lead",
+      "evidence": "not yet published"
+    }
+  ],
+  "integrity": "ee3b89c128d0acab6bed3863"
+}

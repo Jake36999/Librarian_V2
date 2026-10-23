@@ -29,6 +29,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 import re
 import secrets
 from dataclasses import dataclass, field
@@ -39,6 +40,7 @@ from typing import Any, Callable
 
 import yaml
 
+from .coordination import atomic_write_text
 from .evidence import FRAMING_KEYS
 from .registry import REGISTRY, TIERS, Context, _json_type
 from .rules import Refusal
@@ -160,7 +162,7 @@ class Library:
         accepted[name] = d.digest
         path = self._accepted_path()
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(accepted, indent=1), encoding="utf-8")
+        atomic_write_text(path, json.dumps(accepted, indent=1))
         return {"name": name, "accepted": True, "digest": d.digest}
 
     def save(self, text: str, accepted_by_person: bool) -> dict[str, Any]:
@@ -173,7 +175,7 @@ class Library:
             raise DefinitionError("not saved: " + "; ".join(report["errors"]))
         path = self.folder(d.kind) / f"{d.name}.yaml"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(text, encoding="utf-8")
+        atomic_write_text(path, text)
         d.origin = "vault"
         if accepted_by_person:
             self.accept(d.name)
@@ -529,6 +531,11 @@ class RunStore:
         with self.path(run_id).open("a", encoding="utf-8") as handle:
             handle.write(json.dumps({"t": now_iso(), **event}, ensure_ascii=False,
                                     default=str) + "\n")
+            handle.flush()
+            try:
+                os.fsync(handle.fileno())
+            except OSError:
+                pass
 
     def events(self, run_id: str) -> list[dict[str, Any]]:
         path = self.path(run_id)

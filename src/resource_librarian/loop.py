@@ -33,7 +33,7 @@ from . import tools  # noqa: F401  (registers the tools)
 from .clerk import ClerkUnavailable, Endpoint
 from .desk import DeskStore
 from .lenses import LensStore
-from .providers import Provider, ProviderError, ToolDef
+from .providers import Provider, ProviderError, ToolDef, provider_failure_category
 from .registry import REGISTRY, Context, ToolSpec
 from .rules import Refusal
 from .session import WRITES, SessionStore
@@ -294,6 +294,13 @@ class ProviderEndpoint(Endpoint):
     def __init__(self, provider: Provider):
         self.provider = provider
         self.name = f"provider:{provider.name}"
+        # A HostRegistry route is already guarded by LimitedProvider.  Carry
+        # its declared per-host concurrency into the Clerk/Scribe endpoint so
+        # task pools respect the same personal host limit; effort and the role
+        # profile may narrow this further, never broaden it.
+        host = getattr(provider, "host", None)
+        self.concurrency_ceiling = max(1, int(getattr(host, "concurrency_limit", 1) or 1))
+        self.concurrency = self.concurrency_ceiling
         self.payloads: list[dict[str, Any]] = []
 
     def complete(self, payload: dict[str, Any], repair: str = "") -> tuple[str, str]:
@@ -317,8 +324,12 @@ class Turn:
     reply: str = ""
     steps: int = 0
     calls: list[dict[str, Any]] = field(default_factory=list)
-    stopped: str = ""                 # "" | "max_steps" | "provider_error"
+    stopped: str = ""                 # "" | "max_steps" | "provider_error" | profile budget reason
     error: str = ""
+    # A typed cause is distinct from the safe display message.  In particular,
+    # local Windows/network policy faults must not become model reliability
+    # evidence or trigger an implied route change in the UI.
+    failure_category: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {k: v for k, v in self.__dict__.items() if v or k in ("reply", "steps")}
@@ -341,6 +352,20 @@ class Loop:
         self.stance = stance
         self.max_steps = max_steps
         self.turn_seconds: float | None = None       # the effort setting's time limit
+        # Profile budgets constrain an individual model walk in addition to
+        # the person's effort ceiling.  Providers do not expose a universal
+        # token/cost usage contract, so reservations are deliberately
+        # conservative: each model request reserves its prompt plus the
+        # requested maximum output before it is sent.
+        self.profile_id = ""
+        self.profile_token_budget = 0
+        self.profile_output_budget = 4096
+        self.profile_cost_budget_usd = 0.0
+        self.profile_time_budget_seconds = 0.0
+        self.profile_rate_card: dict[str, float] | None = None
+        self.profile_validation_rules: tuple[str, ...] = ()
+        self._turn_reserved_tokens = 0
+        self._turn_reserved_cost = 0.0
         # A helper agent's allowlist (tools/delegate.py): only these are offered, and a call
         # to anything else is refused here, not merely hidden.
         self.only: frozenset[str] | None = None
@@ -363,6 +388,86 @@ class Loop:
         self.challenges: list[dict[str, Any]] = []
         self._answering: list[dict[str, Any]] = []
 
+    # -- profile runtime limits ---------------------------------------------
+    def configure_profile(self, profile: Any, *, rate_card: dict[str, Any] | None = None) -> None:
+        """Apply a validated profile's runtime budgets to subsequent turns.
+
+        ``AgentProfile`` lives in ``agent_runtime`` and imports this module
+        for tool-bundle selection, so the loop intentionally accepts the
+        small structural interface instead of importing it at module load.
+        """
+        self.profile_id = str(getattr(profile, "id", "") or "")
+        self.profile_token_budget = max(0, int(getattr(profile, "token_budget", 0) or 0))
+        self.profile_output_budget = max(1, int(getattr(profile, "output_budget", 4096) or 4096))
+        self.profile_cost_budget_usd = max(0.0, float(getattr(profile, "cost_budget_usd", 0.0) or 0.0))
+        self.profile_time_budget_seconds = max(
+            0.0, float(getattr(profile, "time_budget_seconds", 0) or 0))
+        rules = getattr(profile, "validation_rules", []) or []
+        self.profile_validation_rules = tuple(str(rule).strip()[:120] for rule in rules
+                                              if isinstance(rule, str) and rule.strip())[:12]
+        policy = getattr(profile, "route_policy", {}) or {}
+        card = rate_card if isinstance(rate_card, dict) else \
+            (policy.get("rate_card") if isinstance(policy, dict) else None)
+        if isinstance(card, dict):
+            input_value = card.get("input_per_1m", card.get("price_input_per_1m"))
+            output_value = card.get("output_per_1m", card.get("price_output_per_1m"))
+        else:
+            input_value = output_value = None
+        if input_value is not None and output_value is not None:
+            try:
+                input_price = max(0.0, float(input_value))
+                output_price = max(0.0, float(output_value))
+            except (TypeError, ValueError):
+                self.profile_rate_card = None
+            else:
+                self.profile_rate_card = {"input_per_1m": input_price,
+                                          "output_per_1m": output_price}
+        else:
+            self.profile_rate_card = None
+
+    def cap_turn_seconds(self, requested: float | int | None) -> float | None:
+        """Apply the profile time cap without loosening an effort cap."""
+        choices = [float(value) for value in (requested, self.profile_time_budget_seconds)
+                   if value is not None and float(value) > 0]
+        return min(choices) if choices else None
+
+    @staticmethod
+    def _token_estimate(value: Any) -> int:
+        """A stable, provider-neutral upper-bound approximation for a request."""
+        try:
+            text = json.dumps(value, ensure_ascii=False, default=str, separators=(",", ":"))
+        except (TypeError, ValueError):
+            text = str(value)
+        # Four characters is intentionally conservative enough to make a
+        # budget a protection across the common hosted tokenizers.  Add one
+        # token so a short request cannot round down to zero.
+        return max(1, (len(text) + 3) // 4)
+
+    def _reserve_profile_budget(self, system: str, messages: list[dict[str, Any]],
+                                tools: list[ToolDef]) -> tuple[bool, str]:
+        """Reserve the worst-case cost of one provider call before sending it."""
+        prompt_tokens = self._token_estimate({"system": system, "messages": messages,
+                                              "tools": [t.__dict__ for t in tools]})
+        reserved_tokens = prompt_tokens + self.profile_output_budget
+        if self.profile_token_budget and \
+                self._turn_reserved_tokens + reserved_tokens > self.profile_token_budget:
+            return False, (f"profile token budget ({self.profile_token_budget}) would be exceeded "
+                           f"by the next model request")
+        reserved_cost = 0.0
+        if self.profile_cost_budget_usd:
+            if self.profile_rate_card is None:
+                return False, ("profile has a cost budget but no input/output rate card; "
+                               "add route_policy.rate_card before starting paid work")
+            reserved_cost = ((prompt_tokens * self.profile_rate_card["input_per_1m"] +
+                              self.profile_output_budget * self.profile_rate_card["output_per_1m"]) /
+                             1_000_000)
+            if self._turn_reserved_cost + reserved_cost > self.profile_cost_budget_usd + 1e-12:
+                return False, (f"profile cost budget (${self.profile_cost_budget_usd:.4f}) would be "
+                               "exceeded by the next model request")
+        self._turn_reserved_tokens += reserved_tokens
+        self._turn_reserved_cost += reserved_cost
+        return True, ""
+
     # -- what the model sees -------------------------------------------------
     def system_prompt(self) -> str:
         parts = [BASE]
@@ -379,6 +484,10 @@ class Loop:
         coaching = STANCES.get(stance, "")
         if coaching:
             parts.append(coaching)
+        if self.profile_validation_rules:
+            parts.append("Profile validation focus (apply these to your reasoning, but never treat them as "
+                         "permission to bypass registry, budget, phase, or UI approval gates):\n" +
+                         "\n".join(f"- {rule}" for rule in self.profile_validation_rules))
         titles = self.desk_titles()
         if titles:
             parts.append("On the desk for this pursuit right now (titles only, so you know "
@@ -498,8 +607,104 @@ class Loop:
         session = self._session()
         working = session is not None and session.status == "open" and \
             session.phase != session.phases[-1]
+        if self.ctx.extras.get("use_tool_bundles"):
+            from .agent_runtime import DEFAULT_PROFILES, required_bundle_actions, select_bundle
+            profile_id = str(self.ctx.extras.get("agent_profile") or "lead")
+            store = self.ctx.extras.get("profile_store")
+            try:
+                profile = store.get(profile_id) if store is not None else DEFAULT_PROFILES.get(profile_id)
+            except (KeyError, ValueError, TypeError):
+                profile = DEFAULT_PROFILES.get(profile_id)
+            project = str(getattr(session, "project", "") or "")
+            project_exists = False
+            if project and self.ctx.vault is not None:
+                try:
+                    project_exists = self.ctx.vault.project_note(project).exists()
+                except (OSError, TypeError, ValueError):
+                    # Treat an unreadable/non-existent project as absent.  The
+                    # registry will still validate the create_project call and
+                    # its path; this only preserves its legitimate Frame
+                    # affordance rather than guessing from model text.
+                    project_exists = False
+            purpose = str(getattr(session, "purpose", "") or "")
+            selected = select_bundle(self.ctx.tier, self.phase(),
+                                     projects_on=_projects_on(self.ctx.vault), working=working,
+                                     profile=profile, purpose=purpose, project=project,
+                                     project_exists=project_exists)
+            self.ctx.extras["active_bundle"] = frozenset(s.name for s in selected)
+            self.ctx.extras["bundle_tool_count"] = len(selected)
+            self.ctx.extras["bundle_required_actions"] = required_bundle_actions(
+                self.phase(), purpose=purpose, project=project, project_exists=project_exists)
+            # The schema list is not merely a prompt optimisation.  Keep the
+            # exact offered names in Context so Registry.call can refuse a
+            # permissive provider's invented/replayed hidden tool call.
+            self.ctx.extras["enforce_active_bundle"] = True
+            return [tool_def(s) for s in selected]
+        self.ctx.extras.pop("active_bundle", None)
+        self.ctx.extras.pop("bundle_tool_count", None)
+        self.ctx.extras.pop("bundle_required_actions", None)
+        self.ctx.extras.pop("enforce_active_bundle", None)
         return [tool_def(s) for s in narrowed(self.ctx.tier, self.phase(),
                                               _projects_on(self.ctx.vault), working)]
+
+    def _workflow_preflight(self, tools: list[ToolDef]) -> dict[str, Any] | None:
+        """Refuse an internally inconsistent compact surface before a model uses it.
+
+        A task-sized bundle is an execution boundary, not merely prompt
+        decoration.  ``tools()`` stores the session-aware actions that must
+        remain reachable in ``bundle_required_actions``.  If a future bundle
+        edit, profile constraint, or adapter regression omits one, pause this
+        one turn before another provider request can turn the Core defect into
+        apparent model unreliability.
+
+        This is intentionally diagnostic rather than an expansion mechanism:
+        it never adds a tool, changes a profile, or mutates the session.  The
+        normal registry boundary remains authoritative.
+        """
+        if self.only is not None or not self.ctx.extras.get("use_tool_bundles"):
+            return None
+        required = tuple(str(name) for name in self.ctx.extras.get("bundle_required_actions") or ()
+                         if isinstance(name, str) and name)
+        offered = tuple(sorted({tool.name for tool in tools}))
+        missing = tuple(name for name in required if name not in offered)
+        if not missing:
+            self.ctx.extras.pop("workflow_preflight", None)
+            return None
+        phase = self.phase()
+        phase_id = phase.strip().lower().replace("_", "-")
+        bundle_id = phase_id or "session"
+        session = self._session()
+        event: dict[str, Any] = {
+            "type": "workflow_preflight",
+            "session": str(self.ctx.session or ""),
+            "purpose": str(getattr(session, "purpose", "") or ""),
+            "phase": phase,
+            "profile": str(self.ctx.extras.get("agent_profile") or self.profile_id or "lead"),
+            "bundle_id": bundle_id,
+            "required_next_action": missing[0],
+            "required_actions": list(missing),
+            "offered_actions": list(offered),
+            "blocked_reason": "required action is not in the active task-sized tool bundle",
+            "safe_repair": "repair_bundle_contract_then_retry",
+        }
+        self.ctx.extras["workflow_preflight"] = event
+        self.on_event(event)
+        return event
+
+    @staticmethod
+    def _state_changing_tool(name: str, result: dict[str, Any]) -> bool:
+        """Whether a successful call could have changed phase/session state."""
+        if "error" in result or name not in REGISTRY:
+            return False
+        return REGISTRY.get(name).effect != "read"
+
+    def _stop_for_workflow_preflight(self, turn: Turn, preflight: dict[str, Any]) -> Turn:
+        missing = ", ".join(preflight.get("required_actions") or [])
+        turn.stopped = "workflow_preflight"
+        turn.error = f"required task action unavailable: {missing}"
+        self.on_event({"type": "stopped", "reason": "workflow_preflight",
+                       "error": turn.error, "preflight": preflight})
+        return turn
 
     def view(self) -> list[dict[str, Any]]:
         """The conversation as the model is sent it: older tool results and arguments
@@ -566,6 +771,8 @@ class Loop:
     # -- a turn --------------------------------------------------------------
     def send(self, text: str, cancel: threading.Event | None = None) -> Turn:
         self._answering, self.challenges = self.challenges, []    # this turn answers them
+        self._turn_reserved_tokens = 0
+        self._turn_reserved_cost = 0.0
         self.messages.append({"role": "user", "content": text})
         self.on_event({"type": "user", "text": text})
         self._persist("user", text)
@@ -582,11 +789,23 @@ class Loop:
                 self.on_event({"type": "stopped", "reason": "cancelled"})
                 return turn
             turn.steps += 1
+            system, view, tools = self.system_prompt(), self.view(), self.tools()
+            preflight = self._workflow_preflight(tools)
+            if preflight is not None:
+                return self._stop_for_workflow_preflight(turn, preflight)
+            allowed, reason = self._reserve_profile_budget(system, view, tools)
+            if not allowed:
+                turn.stopped, turn.error = "profile_budget", reason
+                self.on_event({"type": "stopped", "reason": "profile_budget", "error": reason,
+                               "profile": self.profile_id})
+                return turn
             try:
-                reply = self.provider.chat(self.system_prompt(), self.view(), self.tools())
+                reply = self.provider.chat(system, view, tools, max_tokens=self.profile_output_budget)
             except ProviderError as exc:
                 turn.stopped, turn.error = "provider_error", str(exc)[:400]
-                self.on_event({"type": "error", "error": turn.error})
+                turn.failure_category = provider_failure_category(exc)
+                self.on_event({"type": "error", "error": turn.error,
+                               "failure_category": turn.failure_category})
                 return turn
             if cancel is not None and cancel.is_set():
                 turn.stopped = "cancelled"
@@ -621,6 +840,15 @@ class Loop:
                     content = content[:RESULT_CHARS] + f"... [{len(content)} chars]"
                 self.messages.append({"role": "tool", "tool_call_id": call.id,
                                       "name": call.name, "content": content})
+                # A successful session/write tool can have moved the phase or
+                # opened a session.  Recompute the compact surface now rather
+                # than spending a second model completion only to discover a
+                # required action was accidentally hidden by a bundle edit.
+                if self._state_changing_tool(call.name, result):
+                    refreshed = self.tools()
+                    preflight = self._workflow_preflight(refreshed)
+                    if preflight is not None:
+                        return self._stop_for_workflow_preflight(turn, preflight)
         turn.stopped = "max_steps"
         self.on_event({"type": "stopped", "reason": "max_steps"})
         return turn
@@ -643,5 +871,5 @@ class Loop:
             self.ctx.session = None
         limits = self.ctx.extras.pop("turn_limits", None)
         if limits:                      # set_effort: this reply's own step and time limits
-            self.max_steps, self.turn_seconds = limits
+            self.max_steps, self.turn_seconds = limits[0], self.cap_turn_seconds(limits[1])
         return result

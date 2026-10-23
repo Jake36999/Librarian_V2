@@ -26,6 +26,7 @@ import secrets
 from pathlib import Path
 from typing import Any
 
+from .coordination import atomic_write_text
 from .rules import Refusal
 from .vault import Vault, now_iso
 
@@ -64,7 +65,7 @@ def state(vault: Vault) -> dict[str, Any]:
 
 def _save(vault: Vault, data: dict[str, Any]) -> None:
     _path(vault).parent.mkdir(parents=True, exist_ok=True)
-    _path(vault).write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
+    atomic_write_text(_path(vault), json.dumps(data, indent=1, ensure_ascii=False))
 
 
 def set_enabled(vault: Vault, on: bool) -> dict[str, Any]:

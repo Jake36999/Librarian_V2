@@ -28,12 +28,12 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / ".v2" / "src"))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
 from resource_librarian import lens_gold  # noqa: E402
 from resource_librarian.vault import Vault  # noqa: E402
 
-GOLD_PATH = ROOT / ".v2" / "docs" / "lens-gold" / "gold.json"
+GOLD_PATH = ROOT / "docs" / "lens-gold" / "gold.json"
 SHOW = 1500
 
 
