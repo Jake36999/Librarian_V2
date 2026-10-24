@@ -777,9 +777,29 @@ class SessionStore:
     def _through_core(self, fn: Callable[[], T], caller: str) -> T:
         """Run a log mutation through the active Core's writer when one holds
         this vault (CORE-03), so session events are ordered with the writes
-        they describe; offline tools with no Core write directly."""
-        writer = core_writer(self.vault)
-        return writer.submit(fn, caller=caller) if writer is not None else fn()
+        they describe.
+
+        Without one here a direct write is safe only offline: this process
+        holds the vault lease itself (a direct CLI call), or no Core holds it.
+        After this process's Core stopped, or while another process's Core
+        holds the vault, a write is refused - a straggling thread never writes
+        beside whichever Core holds the vault now (review, 2026-10-24).  What
+        remains is a process with no Core writing just as one starts
+        elsewhere: the append lock is cross-process, so the log's chain stays
+        whole, and the order is that of any two offline writers.
+        """
+        writer, stopped = _core_writer_state(self.vault)
+        if writer is not None:
+            return writer.submit(fn, caller=caller)
+        from .coordination import VaultCoordinator
+        if not VaultCoordinator.held_here(self.vault):
+            if stopped:
+                raise Refusal("CORE_REQUIRED", "this library's Core has stopped, so the thread "
+                                               "was not written to; start it and resume the thread")
+            if VaultCoordinator.held_elsewhere(self.vault):
+                raise Refusal("CORE_REQUIRED", "another process's Core holds this library; "
+                                               "make the call through it")
+        return fn()
 
     def truncate_to(self, session_id: str, message_index: int) -> None:
         """Rewind: discard this message's log line and everything after it -
@@ -875,8 +895,10 @@ class SessionStore:
 
 # While a Core holds a vault's lease it registers its writer here, and every
 # SessionStore for that vault appends through it - whichever module made the
-# store.  Offline tooling (no Core in this process) keeps the direct path.
+# store.  A vault whose Core stopped in this process stays marked until a new
+# Core attaches, so a late write is refused instead of written directly.
 _CORE_WRITERS: dict[str, Any] = {}
+_STOPPED_CORES: set[str] = set()
 _CORE_WRITERS_GUARD = threading.Lock()
 
 
@@ -887,6 +909,7 @@ def _vault_key(vault: Vault) -> str:
 def attach_core_writer(vault: Vault, writer: Any) -> None:
     with _CORE_WRITERS_GUARD:
         _CORE_WRITERS[_vault_key(vault)] = writer
+        _STOPPED_CORES.discard(_vault_key(vault))
 
 
 def detach_core_writer(vault: Vault, writer: Any) -> None:
@@ -894,11 +917,19 @@ def detach_core_writer(vault: Vault, writer: Any) -> None:
     with _CORE_WRITERS_GUARD:
         if _CORE_WRITERS.get(_vault_key(vault)) is writer:
             _CORE_WRITERS.pop(_vault_key(vault), None)
+            _STOPPED_CORES.add(_vault_key(vault))
 
 
 def core_writer(vault: Vault) -> Any:
     with _CORE_WRITERS_GUARD:
         return _CORE_WRITERS.get(_vault_key(vault))
+
+
+def _core_writer_state(vault: Vault) -> tuple[Any, bool]:
+    """This vault's attached writer, and whether a Core here has stopped."""
+    with _CORE_WRITERS_GUARD:
+        key = _vault_key(vault)
+        return _CORE_WRITERS.get(key), key in _STOPPED_CORES
 
 
 # ------------------------------------------------------ the hash chain (B4)

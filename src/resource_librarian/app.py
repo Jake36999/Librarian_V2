@@ -28,6 +28,7 @@ sequence number, so a page that reconnects misses nothing recent.
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import re
@@ -39,7 +40,7 @@ from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib import resources
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Iterator
 from urllib.parse import parse_qs, urlparse
 
 from . import ADAPTER_PROTOCOL_RANGE, PROTOCOL_VERSION, __version__, doctor, notes, workflows
@@ -304,7 +305,9 @@ class App:
         # begins, and each phase is recorded for the Host and the tray.
         self._admitting = True
         self.shutdown_phases: list[dict[str, Any]] = []
-        self._mcp_calls = 0                  # MCP tool calls running here (CORE-04A)
+        # Synchronous calls running here - a person's own and an MCP client's
+        # (CORE-04A) - so a stop waits for them rather than closing under them.
+        self._calls = {"person": 0, "mcp": 0}
         if coordinate:
             self.coordinator = VaultCoordinator(vault, protocol_version=PROTOCOL_VERSION)
             self.coordinator.acquire(takeover=takeover)
@@ -379,7 +382,8 @@ class App:
         from: a chat turn, workflows mid-run, questions waiting on a person."""
         actions = [a.public() for a in self.actions.values() if a.status == "running"]
         return {k: v for k, v in {"turn": self.busy, "actions": actions,
-                                  "mcp_calls": self._mcp_calls,
+                                  "mcp_calls": self._calls["mcp"],
+                                  "person_calls": self._calls["person"],
                                   "waiting_on_person": len(self.broker.pending())}.items() if v}
 
     def retire(self, patience: float = 3600.0, poll: float = 2.0) -> None:
@@ -408,6 +412,20 @@ class App:
     def _admit(self, what: str) -> None:
         if not self._admitting:
             raise ApiError(503, f"the Core is stopping; {what} was not started")
+
+    @contextlib.contextmanager
+    def _counted_call(self, kind: str, what: str) -> Iterator[None]:
+        """Admit one synchronous call under the lock admission closes under,
+        and count it until it returns: close_runtime either sees it and waits
+        for it within its grace, or refuses it."""
+        with self._lock:
+            self._admit(what)
+            self._calls[kind] += 1
+        try:
+            yield
+        finally:
+            with self._lock:
+                self._calls[kind] -= 1
 
     def close_runtime(self) -> None:
         """Flush mutable state and release this vault's process lease once.
@@ -439,7 +457,9 @@ class App:
             turn.set()
         # A question or permission request waiting for a person would hold its
         # call (and, for a question, the writer) until it timed out.
-        released = self.waiters.release_all() + self.broker.expire_pending("the Core is stopping")
+        # Both are terminal: a question or permission asked after this point
+        # is refused at once instead of waiting for a person nobody will see.
+        released = self.waiters.release_all() + self.broker.close("the Core is stopping")
         cancelled: dict[str, Action] = {}
         deadline = time.monotonic() + self.STOP_GRACE_SECONDS
         while True:
@@ -449,14 +469,18 @@ class App:
                 if action.status == "running" and action.id not in cancelled:
                     action.cancel.set()
                     cancelled[action.id] = action
-            if not (self.busy or any(a.status == "running" for a in cancelled.values())) or \
-                    time.monotonic() >= deadline:
+            with self._lock:
+                calls = sum(self._calls.values())
+            if not (self.busy or calls or any(a.status == "running" for a in cancelled.values())) \
+                    or time.monotonic() >= deadline:
                 break
             time.sleep(0.05)
+        with self._lock:
+            calls_left = {kind: n for kind, n in self._calls.items() if n}
         phase("work_cancelled",
               turn="none" if turn is None else "still_running" if self.busy else "stopped",
               actions={action.id: action.status for action in cancelled.values()},
-              released_waits=released)
+              released_waits=released, calls_still_running=calls_left)
         # A thread whose turn this stop cut off is parked, durably and through
         # the writer that is still open, so it reopens as interrupted with its
         # committed work intact; resume_session picks it back up (CORE-02B).
@@ -2030,6 +2054,11 @@ class App:
     # -- the person's own calls ---------------------------------------------
     def person_call(self, name: str, arguments: dict[str, Any], session: str = ""
                     ) -> dict[str, Any]:
+        with self._counted_call("person", f"the call {name!r}"):
+            return self._person_call(name, arguments, session)
+
+    def _person_call(self, name: str, arguments: dict[str, Any], session: str
+                     ) -> dict[str, Any]:
         extras = {k: v for k, v in self._extras().items() if k != "broker"}
         # A profile can only narrow an *agent*.  A person's explicit UI/CLI
         # action remains their curate-tier authority, never accidentally
@@ -2088,10 +2117,7 @@ class App:
         if not isinstance(arguments, dict):
             raise ApiError(400, "arguments is a JSON object")
         granted = TIERS[min(TIERS.index(tier), TIERS.index(self.MCP_TIER_CEILING))]
-        with self._lock:
-            self._admit(f"the MCP call {name!r}")
-            self._mcp_calls += 1
-        try:
+        with self._counted_call("mcp", f"the MCP call {name!r}"):
             extras = {**self._extras(), "caller_kind": "mcp", "caller": "mcp"}
             # A question for the person does not block an MCP call: it returns
             # the question (needs_person, question_id) as MCP always has; the
@@ -2100,9 +2126,6 @@ class App:
             ctx = Context(tier=granted, vault=self.vault, session=session or None, extras=extras)
             result = self._surface_checkpoint(REGISTRY.call(name, arguments, ctx), name, arguments,
                                               requester="mcp")
-        finally:
-            with self._lock:
-                self._mcp_calls -= 1
         return {"result": result, "session": ctx.session or "", "tier": granted}
 
     def decide_offering(self, offering: str, decision: str) -> dict[str, Any]:
@@ -3629,7 +3652,7 @@ def serve(vault_path: str | None, port: int = 8323, token: str = "",
     # still safe; adapters simply get the ordinary lease-held response.
     from . import process_identity
     connection.publish(vault.root, url=url, token=app.token, pid=os.getpid(),
-                       process_started=process_identity.process_started_at(os.getpid()),
+                       process_start=process_identity.process_start(os.getpid()),
                        protocol_version=PROTOCOL_VERSION, secret_source=app.secret_source)
     # The host that started the core reads this line to find the port.
     started = {"listening": url, "vault": str(vault.root)}

@@ -50,7 +50,7 @@ def _call_active_core(vault: Vault, tool: str, arguments: dict[str, Any],
     if record is None:
         return False, {}
     pid = int(record.get("pid") or 0)
-    if not process_identity.is_alive(pid, record.get("process_started")):
+    if not process_identity.is_alive(pid, record.get("process_start")):
         # Only remove the exact record we just found; a new Core cannot lose
         # its discovery data in the tiny race between this check and cleanup.
         connection.remove(vault.root, pid=pid, token=str(record.get("token") or ""))

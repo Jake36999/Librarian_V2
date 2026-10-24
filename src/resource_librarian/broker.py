@@ -80,6 +80,7 @@ class Broker:
         self.timeout = timeout
         self._lock = threading.RLock()
         self._pending: dict[str, Request] = {}
+        self._closed: str | None = None     # why every request is refused (close)
         self._session_grants: set[tuple[str, str]] = set()
         self._listeners: list[Callable[[dict[str, Any]], None]] = []
         if harness is None:
@@ -173,12 +174,18 @@ class Broker:
                           session, time.monotonic(), spec.open_world,
                           {k: clip(v, 20_000) for k, v in preview.items()} if preview else None)
         with self._lock:
-            self._pending[request.id] = request
-        self._emit({"type": "permission_request", **request.public()})
-        if not request.event.wait(self.timeout):
-            with self._lock:
-                if not request.event.is_set():
-                    self._finish(request, "expired", "nobody answered")
+            closed = self._closed
+            if closed is None:
+                self._pending[request.id] = request
+        if closed is not None:
+            # The Core is stopping: nobody is left to approve it.
+            request.outcome, request.reason = "expired", closed
+        else:
+            self._emit({"type": "permission_request", **request.public()})
+            if not request.event.wait(self.timeout):
+                with self._lock:
+                    if not request.event.is_set():
+                        self._finish(request, "expired", "nobody answered")
         if request.outcome == "allowed":
             return f"asked: {request.reason}"
         if request.outcome == "expired":
@@ -226,6 +233,13 @@ class Broker:
             for request in waiting:
                 self._finish(request, "expired", reason)
         return len(waiting)
+
+    def close(self, reason: str) -> int:
+        """Expire every waiting request and refuse every later one the same
+        way (terminal, for a Core stop); returns how many were waiting."""
+        with self._lock:
+            self._closed = reason
+        return self.expire_pending(reason)
 
     def state(self) -> dict[str, Any]:
         return {"mode": self._mode, "tool_settings": dict(self.settings),

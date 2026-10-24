@@ -41,6 +41,10 @@ MAX_ECHO = 160
 MAX_LIMIT = 50
 MAX_ITEMS = 100
 MAX_ITEM_TEXT = 2_000
+# A result key, never sent anywhere: a question recorded inside a vault-writer
+# operation carries the wait for its answer out of the operation, and `call`
+# finishes it once the writer is free (coordination.on_writer_thread).
+PERSON_WAIT = "_person_wait"
 
 @dataclass(frozen=True)
 class Card:
@@ -365,6 +369,16 @@ class Registry:
                                        targets=targets)
             else:
                 result = invoke()
+            wait = result.pop(PERSON_WAIT, None) if isinstance(result, dict) else None
+            if wait is not None:
+                from .coordination import on_writer_thread
+                if on_writer_thread():
+                    # Nested in an operation (an audited macro): the writer
+                    # is still held, so the question stays open for the
+                    # person to answer and the caller to come back to.
+                    wait.abandon()
+                else:
+                    result = wait.finish(result)
         except Refusal as refusal:
             if refusal.code.startswith("PERMISSION_"):
                 permission = refusal.code.lower()

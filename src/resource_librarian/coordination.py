@@ -90,9 +90,9 @@ class LeaseInfo:
     protocol_version: str
     core_version: str
     vault: str
-    # Creation time of the lease holder, so a later takeover check cannot
-    # mistake a recycled PID for the original Core.
-    process_started: float | None = None
+    # Exact start identity of the lease holder, so a later takeover check
+    # cannot mistake a recycled PID for the original Core.
+    process_start: str | None = None
 
 
 class VaultCoordinator:
@@ -114,7 +114,7 @@ class VaultCoordinator:
         self._file: Any = None
         self.info = LeaseInfo(secrets.token_hex(12), os.getpid(), now_iso(), protocol_version,
                               __version__, str(vault.root),
-                              process_identity.process_started_at(os.getpid()))
+                              process_identity.process_start(os.getpid()))
 
     def acquire(self, *, takeover: bool = False) -> LeaseInfo:
         if self._file is not None:
@@ -160,8 +160,8 @@ class VaultCoordinator:
                 # Our PID alone is not enough: a crashed Core whose PID was
                 # recycled to us is a stale lease, which needs a takeover.
                 same_process_recovery = pid == os.getpid() and \
-                    self._pid_alive(pid, previous.get("process_started"))
-                if self._pid_alive(pid, previous.get("process_started")) and not same_process_recovery:
+                    self._pid_alive(pid, previous.get("process_start"))
+                if self._pid_alive(pid, previous.get("process_start")) and not same_process_recovery:
                     raise LeaseHeldError(self._held_message())
                 if not same_process_recovery and not takeover:
                     raise StaleLeaseError("a prior Librarian Core appears to have stopped "
@@ -182,12 +182,35 @@ class VaultCoordinator:
             handle.close()
             raise
 
+    @classmethod
+    def held_here(cls, vault: Vault) -> bool:
+        """Whether a coordinator in this process holds this vault's lease."""
+        canonical = str((vault.librarian / "runtime" / "vault.lock").resolve()).casefold()
+        with cls._process_guard:
+            return canonical in cls._process_paths
+
+    @classmethod
+    def held_elsewhere(cls, vault: Vault) -> bool:
+        """Whether another live process holds this vault's lease, read from its
+        diagnostic row (pinned to that process's identity, so a stale row or a
+        recycled PID is not mistaken for a running Core).  It never touches
+        the lock itself: probing it could make a starting Core fail to acquire."""
+        try:
+            data = json.loads((vault.librarian / "runtime" / "vault.lease.json")
+                              .read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return False
+        pid = int(data.get("pid") or 0) if isinstance(data, dict) else 0
+        if pid <= 0 or pid == os.getpid():
+            return False
+        return cls._pid_alive(pid, data.get("process_start"))
+
     @staticmethod
-    def _pid_alive(pid: int, started: float | None = None) -> bool:
+    def _pid_alive(pid: int, start: str | None = None) -> bool:
         # The shared platform-aware check: on Windows `os.kill(pid, 0)` reports
         # an exited process as alive while any handle to it is open.  An
         # inaccessible process still counts as alive, so takeover stays explicit.
-        return process_identity.is_alive(pid, started)
+        return process_identity.is_alive(pid, start)
 
     def _held_message(self) -> str:
         current = self.status()
@@ -480,21 +503,24 @@ class Operation:
     detail: str = ""
 
 
-# Writer threads, so a wait for a person on one keeps serving its queue.
+# Writer threads, so code that must never block one (a wait for a person) can
+# tell it is running on one.
 _WRITER_THREADS: dict[threading.Thread, "VaultWriter"] = {}
 _WRITER_THREADS_GUARD = threading.Lock()
 
 
-def wait_for_person(event: threading.Event, timeout: float | None) -> bool:
-    """Wait for a person's answer; on a vault writer's thread, keep serving it.
+def on_writer_thread() -> bool:
+    """True inside a vault-writer operation.
 
-    Before this, a question asked inside a writer operation held the writer,
-    so the person's answer - also a write - waited behind it until the
-    question timed out, and the thread was parked unanswered.
+    An operation is linear: its revision checks, its mutation and its audit
+    record happen with nothing else in between.  Waiting for a person there
+    would either hold every other write for as long as they take or, if the
+    queue were served meanwhile, let unrelated writes land inside an
+    operation that had already checked its revisions.  So a question is
+    recorded inside the operation and waited on after it (registry).
     """
     with _WRITER_THREADS_GUARD:
-        writer = _WRITER_THREADS.get(threading.current_thread())
-    return writer.serve_until(event, timeout) if writer is not None else event.wait(timeout)
+        return threading.current_thread() in _WRITER_THREADS
 
 
 class VaultWriter:
@@ -591,27 +617,6 @@ class VaultWriter:
             finally:
                 done.set()
                 self._queue.task_done()
-
-    def serve_until(self, event: threading.Event, timeout: float | None) -> bool:
-        """Wait for `event` on the writer thread while still serving the queue.
-
-        An operation that asks a person (ask_user, a promotion confirmation)
-        runs here, and the person's answer is itself a write: blocking this
-        thread would queue the answer behind the question until it timed out.
-        Queued operations run one at a time on this same thread, so writes stay
-        serial and ordered while the asking operation waits at its question.
-        """
-        deadline = None if timeout is None else time.monotonic() + timeout
-        while not event.is_set():
-            remaining = None if deadline is None else deadline - time.monotonic()
-            if remaining is not None and remaining <= 0:
-                return False
-            try:
-                item = self._queue.get(timeout=0.05 if remaining is None else min(0.05, remaining))
-            except queue.Empty:
-                continue
-            self._serve(item)
-        return True
 
     def _invoke(self, op: Operation, fn: Callable[[], T]) -> T:
         """Run one serialized mutation with revision and audit protection."""

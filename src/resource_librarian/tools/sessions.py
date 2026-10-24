@@ -15,9 +15,9 @@ from typing import Any, Callable, Literal
 
 from .. import agenda as _agenda, clerk, notes, registry, scribe
 from .. import intake as _intake
-from ..coordination import atomic_write_text, wait_for_person
+from ..coordination import atomic_write_text, on_writer_thread
 from ..evidence import EvidenceStore
-from ..registry import REGISTRY, Card, Context, tool
+from ..registry import PERSON_WAIT, REGISTRY, Card, Context, tool
 from ..rules import Refusal
 from ..search import Constraints, search, terms_from
 from ..session import PURPOSES, SessionStore, after_call, before_call
@@ -74,6 +74,7 @@ class Waiters:
         self._pending: dict[str, threading.Event] = {}
         self._answers: dict[str, str] = {}
         self._listeners: list[Callable[[dict[str, Any]], None]] = []
+        self._released = False
 
     def subscribe(self, listener: Callable[[dict[str, Any]], None]) -> Callable[[], None]:
         with self._lock:
@@ -87,16 +88,33 @@ class Waiters:
             except Exception:                               # noqa: BLE001
                 pass                                        # a broken listener never blocks
 
-    def wait(self, key: str, **event: Any) -> str | None:
-        """Blocks until `answer()` is called with this key, or the timeout
-        passes. Returns the answer text, or None if nobody answered in time."""
+    def register(self, key: str) -> threading.Event:
+        """Start listening for `key` before its question is recorded, so an
+        answer that lands in between still finds it. After `release_all` (a
+        Core stop) nothing new waits: the event comes back already set."""
         done = threading.Event()
         with self._lock:
-            self._pending[key] = done
+            if self._released:
+                done.set()
+            else:
+                self._pending[key] = done
+        return done
+
+    def discard(self, key: str) -> None:
+        with self._lock:
+            self._pending.pop(key, None)
+            self._answers.pop(key, None)
+
+    def wait(self, key: str, done: threading.Event | None = None, **event: Any) -> str | None:
+        """Blocks until `answer()` is called with this key, or the timeout
+        passes. Returns the answer text, or None if nobody answered in time."""
+        if on_writer_thread():
+            # It would hold every other write for as long as the person took.
+            raise RuntimeError("a question is never waited on inside a vault-writer operation")
+        if done is None:
+            done = self.register(key)
         self._emit({"type": "question_asked", **event})
-        # On the vault writer's thread this keeps serving the writer, so the
-        # person's answer (itself a write) is not queued behind the question.
-        wait_for_person(done, self.timeout)
+        done.wait(self.timeout)
         with self._lock:
             self._pending.pop(key, None)
             answer = self._answers.pop(key, None)
@@ -104,24 +122,66 @@ class Waiters:
         return answer
 
     def release_all(self) -> int:
-        """Stop waiting for every pending question, unanswered (a Core stop):
-        each ask returns as if it timed out, so its thread is parked."""
+        """Stop waiting for every pending question, for good (a Core stop):
+        each ask returns as if it timed out, so its thread is parked, and an
+        answer arriving afterwards wakes nothing. An answer delivered before
+        the stop is kept for the ask it woke (delegate review, GLM-5.3)."""
         with self._lock:
+            self._released = True
             pending = list(self._pending.values())
+            self._pending.clear()
         for done in pending:
             done.set()
         return len(pending)
 
     def answer(self, key: str, text: str) -> bool:
         """True when a call was actually waiting on this key; False when it
-        already gave up (timed out) or nothing was ever waiting on it."""
+        already gave up (timed out), nothing was ever waiting on it, or the
+        Core is stopping."""
         with self._lock:
             done = self._pending.get(key)
-            if done is None:
+            if done is None or self._released:
                 return False
             self._answers[key] = text
             done.set()
             return True
+
+
+class PersonWait:
+    """A question recorded inside a vault-writer operation, waited on after it.
+
+    Every asking tool returns straight after its question is answered, so the
+    wait can move out of the operation without changing what the tool does:
+    the registry finishes it once the writer is free (`PERSON_WAIT`).
+    """
+
+    def __init__(self, ctx: Context, waiters: Waiters, key: str, done: threading.Event,
+                 asked: dict[str, Any], refresh: Callable[[], dict[str, Any]] | None = None):
+        self.ctx, self.waiters, self.key, self.done = ctx, waiters, key, done
+        self.asked, self.refresh = asked, refresh
+
+    def finish(self, result: dict[str, Any]) -> dict[str, Any]:
+        asked = self.asked
+        answer_text = self.waiters.wait(self.key, self.done, session=self.ctx.session,
+                                        question_id=asked["question_id"],
+                                        question=asked["question"], kind=asked["kind"],
+                                        options=asked["options"])
+        if answer_text is None:
+            _event(self.ctx, {"type": "question_expired", "id": asked["question_id"]})
+            _event(self.ctx, {"type": "status", "status": "parked",
+                              "note": f"question {asked['question_id']} went unanswered"})
+            raise Refusal("PERMISSION_UNANSWERED",
+                          f"{asked['question_id']} waited {self.waiters.timeout:.0f}s for a "
+                          f"person; the session is parked")
+        out = {k: v for k, v in result.items() if k not in ("needs_person", "options", "kind")}
+        out.update(question_id=asked["question_id"], question=asked["question"],
+                   answer=answer_text)
+        return {**out, **(self.refresh() if self.refresh is not None else {})}
+
+    def abandon(self) -> None:
+        """Nobody will wait here (the writer is still held): the question
+        stays open in the thread for the person and the caller to come back to."""
+        self.waiters.discard(self.key)
 
 
 def _waiter_key(ctx: Context, question_id: str) -> str:
@@ -129,27 +189,32 @@ def _waiter_key(ctx: Context, question_id: str) -> str:
 
 
 def _ask(ctx: Context, question: str, kind: str = "clarify", ref: str = "",
-         options: list[str] | None = None) -> dict[str, Any]:
+         options: list[str] | None = None,
+         refresh: Callable[[], dict[str, Any]] | None = None) -> dict[str, Any]:
     session = _session(ctx)
     qid = f"q{len(session.questions) + 1}"
-    _event(ctx, {"type": "question", "id": qid, "question": question, "kind": kind,
-                 "ref": ref, "options": options})
     waiters: Waiters | None = ctx.extras.get("waiters")
+    key = _waiter_key(ctx, qid)
+    done = waiters.register(key) if waiters is not None else None
+    try:
+        _event(ctx, {"type": "question", "id": qid, "question": question, "kind": kind,
+                     "ref": ref, "options": options})
+    except BaseException:
+        if waiters is not None:
+            waiters.discard(key)
+        raise
+    asked = {"needs_person": True, "question_id": qid, "question": question,
+             "options": options, "kind": kind}
     if waiters is None:
         # No one able to signal back (e.g. a scripted test with no App
         # behind it): the old, non-blocking shape, unanswered until a
         # caller comes back with `answer` on its own.
-        return {"needs_person": True, "question_id": qid, "question": question,
-                "options": options, "kind": kind}
-    answer_text = waiters.wait(_waiter_key(ctx, qid), session=ctx.session, question_id=qid,
-                               question=question, kind=kind, options=options)
-    if answer_text is None:
-        _event(ctx, {"type": "question_expired", "id": qid})
-        _event(ctx, {"type": "status", "status": "parked",
-                     "note": f"question {qid} went unanswered"})
-        raise Refusal("PERMISSION_UNANSWERED", f"{qid} waited {waiters.timeout:.0f}s for a "
-                                               f"person; the session is parked")
-    return {"question_id": qid, "question": question, "answer": answer_text}
+        return asked
+    wait = PersonWait(ctx, waiters, key, done, asked, refresh)
+    if on_writer_thread():
+        # Inside a writer operation: the registry waits once it has returned.
+        return {**asked, PERSON_WAIT: wait}
+    return wait.finish(asked)
 
 
 # ------------------------------------------------------------------ the thread
@@ -494,10 +559,12 @@ def close_session(ctx: Context, summary: str, gaps: str) -> dict:
 def request_budget(ctx: Context, reason: str, add: int = 10) -> dict:
     session = _session(ctx)
     add = max(1, min(int(add), 50))
+    # What is left once the person has answered: their "Extend" adds to it.
+    left = lambda: {"budget_left": _session(ctx).budget_left()}
     out = _ask(ctx, f"The {session.phase} budget is spent. {reason.strip()} Extend it by "
-                    f"{add} calls?", "budget", session.phase, [f"Extend by {add} calls", "Not now"])
-    left = _session(ctx).budget_left()
-    return {**out, "budget_left": left}
+                    f"{add} calls?", "budget", session.phase, [f"Extend by {add} calls", "Not now"],
+               refresh=left)
+    return {**left(), **out}
 
 
 @tool("extend_budget", tier="curate", effect="write", scope="session",

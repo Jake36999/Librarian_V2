@@ -52,7 +52,7 @@ def run(server, script, mode="legacy", **client):
 def _publish(root, url, pid, token="t"):
     assert connection.publish(root, url=url, token=token, pid=pid, protocol_version=PROTOCOL_VERSION,
                               secret_source="desktop",
-                              process_started=process_identity.process_started_at(pid))
+                              process_start=process_identity.process_start(pid))
 
 
 @pytest.fixture

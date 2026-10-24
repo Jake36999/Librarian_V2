@@ -87,6 +87,26 @@ def test_host_start_attaches_to_existing_core_for_same_vault(vault, tmp_path, mo
     assert "page-secret" not in repr(result)
 
 
+def test_host_start_ignores_its_own_row_once_the_pid_is_recycled(vault, tmp_path, monkeypatch):
+    """Review (2026-10-24): this start path checked the Host's own row by PID
+    alone, so a recycled PID read as "already running" and nothing started."""
+    from resource_librarian import host as host_module, process_identity
+    if process_identity.process_start(os.getpid()) is None:
+        pytest.skip("this platform does not expose a process start identity")
+    monkeypatch.setenv("LIBRARIAN_CONFIG_DIR", str(tmp_path / "config"))
+    host_module._save({"pid": os.getpid(), "vault": str(vault.root.resolve()),
+                       "process_start": "win:1", "status": "running"})
+
+    class Launched(Exception):
+        pass
+
+    def popen(*args, **kwargs):
+        raise Launched
+    monkeypatch.setattr(host_module.subprocess, "Popen", popen)
+    with pytest.raises(Launched):                    # it went on to start a Core
+        HostManager().start(str(vault.root))
+
+
 def test_host_managed_core_starts_and_stops_cleanly(vault, tmp_path, monkeypatch):
     """A real child is important here: the Host must use its protected
     handoff record and authenticated endpoint rather than a console or kill.

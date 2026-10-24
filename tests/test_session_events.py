@@ -107,3 +107,57 @@ def test_a_stopped_core_detaches_only_its_own_writer(vault):
         assert session_module.core_writer(vault) is successor.writer
     finally:
         successor.close_runtime()
+
+
+# -- no direct write beside a Core (review, 2026-10-24) -----------------------
+
+def test_a_write_after_this_process_core_stopped_is_refused(vault):
+    first = App(vault, coordinate=True)
+    opened = SessionStore(vault).new("explore", question="q")
+    first.close_runtime()
+    with pytest.raises(session_module.Refusal) as refused:
+        SessionStore(vault).append(opened.id, {"type": "message", "role": "user", "text": "late"})
+    assert refused.value.code == "CORE_REQUIRED"
+    successor = App(vault, coordinate=True)             # a new Core clears the mark
+    try:
+        SessionStore(vault).append(opened.id, {"type": "message", "role": "user", "text": "ok"})
+    finally:
+        successor.close_runtime()
+
+
+def _lease_row(vault, pid, started):
+    runtime = vault.librarian / "runtime"
+    runtime.mkdir(parents=True, exist_ok=True)
+    (runtime / "vault.lease.json").write_text(json.dumps(
+        {"instance_id": "other", "pid": pid, "process_start": started}), encoding="utf-8")
+
+
+def test_a_write_beside_another_process_core_is_refused(vault):
+    import subprocess
+    import sys
+    from resource_librarian import process_identity
+    opened = SessionStore(vault).new("explore", question="q")
+    child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+    try:
+        _lease_row(vault, child.pid, process_identity.process_start(child.pid))
+        with pytest.raises(session_module.Refusal) as refused:
+            SessionStore(vault).append(opened.id, {"type": "message", "role": "user", "text": "x"})
+        assert refused.value.code == "CORE_REQUIRED"
+    finally:
+        child.kill()
+        child.wait()
+    # The same row once its process is gone is stale, not a Core: offline again.
+    SessionStore(vault).append(opened.id, {"type": "message", "role": "user", "text": "y"})
+
+
+def test_the_lease_holding_process_writes_directly(vault):
+    """A direct CLI call holds the vault lease without a Core writer."""
+    from resource_librarian.coordination import VaultCoordinator
+    opened = SessionStore(vault).new("explore", question="q")
+    lease = VaultCoordinator(vault)
+    lease.acquire()
+    try:
+        SessionStore(vault).append(opened.id, {"type": "message", "role": "user", "text": "cli"})
+    finally:
+        lease.release()
+    assert verify_chain(_lines(SessionStore(vault), opened.id)) == ""

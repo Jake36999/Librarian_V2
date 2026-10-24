@@ -200,3 +200,49 @@ def test_an_idle_open_thread_is_left_open(core, vault):
     core.close_runtime()                       # no turn was running
     assert SessionStore(vault).load(opened.id).status == "open"
     assert "session_parked" not in [p["phase"] for p in core.shutdown_phases]
+
+
+# -- late work against a stopping Core (review, 2026-10-24) -------------------
+
+def test_a_person_call_after_the_stop_is_refused(core):
+    core.close_runtime()
+    with pytest.raises(ApiError) as refused:
+        core.person_call("session_status", {})
+    assert refused.value.status == 503
+
+
+def test_a_permission_asked_after_the_stop_is_refused_at_once(core, vault):
+    """The broker is terminal: a call admitted just before the stop that only
+    now reaches its permission check is not left waiting for nobody."""
+    from resource_librarian.registry import REGISTRY, Context
+    core.broker.set_mode("ask")
+    core.broker.close("the Core is stopping")
+    ctx = Context(tier="contribute", vault=vault,
+                  extras={"broker": core.broker, "vault_writer": core.writer})
+    started = time.monotonic()
+    result = REGISTRY.call("gitignore_ensure", {"patterns": ["scratch/"]}, ctx)
+    assert time.monotonic() - started < 2
+    assert result.get("refused") == "PERMISSION_UNANSWERED", result
+
+
+def test_an_mcp_call_waiting_on_a_permission_drains_before_the_writer_closes(core, vault):
+    """An admitted MCP call holds no writer while it waits on the broker; the
+    stop expires its request and waits for the call to return before closing
+    the writer under it."""
+    core.broker.set_mode("ask")
+    out = {}
+    thread = threading.Thread(target=lambda: out.setdefault(
+        "call", core.mcp_call("gitignore_ensure", {"patterns": ["scratch/"]},
+                              tier="contribute")))
+    thread.start()
+    deadline = time.monotonic() + 5
+    while not core.broker.pending() and time.monotonic() < deadline:
+        time.sleep(0.02)
+    assert core.broker.pending(), "the MCP call never reached its permission check"
+    assert core.running().get("mcp_calls") == 1
+    core.close_runtime()
+    thread.join(5)
+    assert not thread.is_alive()
+    assert out["call"]["result"]["refused"] == "PERMISSION_UNANSWERED"
+    assert _phase(core, "work_cancelled")["calls_still_running"] == {}
+    assert _phase(core, "work_cancelled")["released_waits"] >= 1

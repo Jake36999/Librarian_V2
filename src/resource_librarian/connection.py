@@ -92,7 +92,7 @@ def _private_write(path: Path, payload: str) -> bool:
 
 def publish(vault_path: str | Path, *, url: str, token: str, pid: int,
             protocol_version: str, secret_source: str,
-            process_started: float | None = None) -> bool:
+            process_start: str | None = None) -> bool:
     """Publish an adapter attachment record.  ``token`` is deliberately only
     written into this owner-only, per-user location.
     """
@@ -105,10 +105,10 @@ def publish(vault_path: str | Path, *, url: str, token: str, pid: int,
         "protocol_version": str(protocol_version),
         "secret_source": secret_source,
     }
-    if process_started is not None:
-        # Creation time pins the record to the process that wrote it, so a
-        # recycled PID is not read as a live Core; older readers ignore it.
-        payload["process_started"] = float(process_started)
+    if process_start:
+        # The start identity pins the record to the process that wrote it, so
+        # a recycled PID is not read as a live Core; older readers ignore it.
+        payload["process_start"] = str(process_start)
     return _private_write(path_for(vault_path), json.dumps(payload, separators=(",", ":")) + "\n")
 
 
@@ -129,12 +129,11 @@ def load(vault_path: str | Path) -> dict[str, Any] | None:
         row["pid"] = int(row["pid"])
     except (OSError, TypeError, ValueError):
         return None
-    # Identity metadata, not a required field: keep a number, drop anything else.
-    started = row.get("process_started")
-    if isinstance(started, (int, float)) and not isinstance(started, bool):
-        row["process_started"] = float(started)
-    else:
-        row.pop("process_started", None)
+    # Identity metadata, not a required field: keep a string, drop anything else.
+    start = row.get("process_start")
+    if not (isinstance(start, str) and start):
+        row.pop("process_start", None)
+    row.pop("process_started", None)        # this branch's earlier float form
     return row
 
 

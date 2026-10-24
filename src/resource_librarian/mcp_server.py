@@ -126,7 +126,7 @@ def call_core(root: Path | None, payload: dict[str, Any], *,
     record = connection.load(root)
     if record is None:
         return _core_required(f"no Librarian Core is running for {root}")
-    if not process_identity.is_alive(int(record.get("pid") or 0), record.get("process_started")):
+    if not process_identity.is_alive(int(record.get("pid") or 0), record.get("process_start")):
         return _core_required(f"the Core recorded for {root} is no longer running")
     url = str(record.get("url") or "").rstrip("/")
     parsed = urllib.parse.urlparse(url)
