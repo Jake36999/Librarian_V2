@@ -1,6 +1,6 @@
 """Typed, evidence-backed adapters for non-chat model services.
 
-Agent chat is deliberately handled by :mod:\`model_invocation\`.  OCR, text to
+Agent chat is deliberately handled by :mod:`model_invocation`.  OCR, text to
 speech, speech to text and embeddings have different request/response
 contracts, so treating their model cards as if they were chat prompts was both
 misleading and unsafe.  This module is the small, declarative service boundary:
