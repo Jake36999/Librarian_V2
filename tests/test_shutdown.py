@@ -9,6 +9,7 @@ import time
 
 import pytest
 
+from resource_librarian import connection
 from resource_librarian.app import Action, ApiError, App
 from resource_librarian.coordination import VaultCoordinator
 
@@ -32,8 +33,10 @@ def test_an_idle_stop_records_every_phase_and_releases_the_lease(core, vault):
     assert [p["phase"] for p in core.shutdown_phases] == PHASES
     assert _phase(core, "work_cancelled")["turn"] == "none"
     assert _phase(core, "writer_drained")["drained"] is True
-    record = json.loads((vault.librarian / "runtime" / "shutdown.json").read_text(encoding="utf-8"))
+    # Per-user Host state, not the vault: it is written after the lease is gone.
+    record = json.loads(connection.shutdown_path(vault.root).read_text(encoding="utf-8"))
     assert [p["phase"] for p in record["phases"]] == PHASES
+    assert not (vault.librarian / "runtime" / "shutdown.json").exists()
     # The lease is really gone: a new Core takes the vault without a takeover.
     successor = VaultCoordinator(vault)
     successor.acquire()
@@ -85,17 +88,68 @@ def test_running_actions_are_cancelled_and_new_ones_refused(core):
     assert refused.value.status == 503
 
 
-def test_a_busy_writer_drains_before_the_index_and_lease_close(core):
-    done = []
+def test_a_busy_writer_drains_before_the_index_and_lease_close(core, monkeypatch):
+    order = []
 
     def slow():
         time.sleep(0.3)
-        done.append(True)
+        order.append("write finished")
+    closing_index = core.index_service.close
+    monkeypatch.setattr(core.index_service, "close",
+                        lambda *a, **k: (order.append("index closed"), closing_index(*a, **k)))
+    closing_lease = core.coordinator.release
+    monkeypatch.setattr(core.coordinator, "release",
+                        lambda *a, **k: (order.append("lease released"), closing_lease(*a, **k)))
     threading.Thread(target=lambda: core.writer.submit(slow, caller="test"), daemon=True).start()
     time.sleep(0.05)
     core.close_runtime()
-    assert done == [True]
+    assert order == ["write finished", "index closed", "lease released"]
     assert _phase(core, "writer_drained")["drained"] is True
+
+
+def test_an_action_registered_as_the_stop_begins_is_still_cancelled(core):
+    """Reviewer finding (GLM-5.3, CORE-02A): a single snapshot of running
+    actions missed one registered just before admission closed."""
+    late = Action("late", "demo")
+
+    def register_then_run():
+        time.sleep(0.1)
+        core.actions[late.id] = late
+        late.cancel.wait(5)
+        late.status = "cancelled"
+    blocker = threading.Event()
+    with core._lock:
+        core.busy, core._turn_cancel = True, blocker
+
+    def turn():
+        blocker.wait(5)
+        time.sleep(0.3)                # still busy while the late action appears
+        with core._lock:
+            core.busy = False
+    threading.Thread(target=register_then_run, daemon=True).start()
+    threading.Thread(target=turn, daemon=True).start()
+    core.close_runtime()
+    assert late.cancel.is_set()
+    assert _phase(core, "work_cancelled")["actions"] == {"late": "cancelled"}
+
+
+def test_the_outside_server_manager_is_stopped_by_its_owner_only(vault):
+    class Manager:
+        stopped = 0
+
+        def attach_broker(self, broker): ...
+        def use_library(self, path): ...
+        def sync(self): ...
+
+        def stop(self):
+            Manager.stopped += 1
+    shared = Manager()
+    retiring = App(vault, mcp=shared)       # a library switch hands the manager on
+    successor = App(vault, mcp=shared)
+    retiring.close_runtime()
+    assert Manager.stopped == 0             # the successor still uses it
+    successor.close_runtime()
+    assert Manager.stopped == 1
 
 
 def test_a_second_close_is_a_no_op(core):

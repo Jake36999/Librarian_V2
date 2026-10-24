@@ -349,6 +349,7 @@ class App:
             # globally - so the running manager carries over, and only the new
             # library's own broker is seeded with their default (Ask).
             self.mcp = mcp
+            mcp.owner = self                       # the retiring library no longer stops it
             mcp.attach_broker(self.broker)
             mcp.use_library(vault.librarian)       # this library's own choices
             threading.Thread(target=mcp.sync, daemon=True, name="mcp-sync").start()
@@ -359,6 +360,7 @@ class App:
             self.mcp = None                  # needs `pip install resource-librarian[mcp]`
         else:
             self.mcp = McpManager(config_dir(), broker=self.broker)
+            self.mcp.owner = self
             self.mcp.use_library(vault.librarian)
             threading.Thread(target=self.mcp.sync, daemon=True, name="mcp-sync").start()
 
@@ -413,24 +415,34 @@ class App:
         def phase(name: str, **detail: Any) -> None:
             phases.append({"phase": name, "at": now_iso(), **detail})
 
-        self._admitting = False
-        phase("admission_closed")
-        # Cancel before closing shared resources: a turn or action stops at
-        # its next step boundary instead of writing into a closed writer.
+        # Admission closes under the same lock chat() and start_action() admit
+        # under, so nothing is admitted after this point unseen.
         with self._lock:
+            self._admitting = False
             turn = self._turn_cancel
+        phase("admission_closed")
+        # Cancel before closing shared resources.  The loop checks its cancel
+        # event before every step and tool call, so a turn still inside a
+        # provider request when the grace ends stops when that request
+        # returns; a write it attempted after that would meet a closed writer.
         if turn is not None:
             turn.set()
-        running = [action for action in self.actions.values() if action.status == "running"]
-        for action in running:
-            action.cancel.set()
+        cancelled: dict[str, Action] = {}
         deadline = time.monotonic() + self.STOP_GRACE_SECONDS
-        while (self.busy or any(a.status == "running" for a in running)) and \
-                time.monotonic() < deadline:
+        while True:
+            # Re-scan each pass: an action registered just before admission
+            # closed may only now be visible as running.
+            for action in list(self.actions.values()):
+                if action.status == "running" and action.id not in cancelled:
+                    action.cancel.set()
+                    cancelled[action.id] = action
+            if not (self.busy or any(a.status == "running" for a in cancelled.values())) or \
+                    time.monotonic() >= deadline:
+                break
             time.sleep(0.05)
         phase("work_cancelled",
               turn="none" if turn is None else "still_running" if self.busy else "stopped",
-              actions={action.id: action.status for action in running})
+              actions={action.id: action.status for action in cancelled.values()})
         # Stop observing first: a final atomic replacement from the writer
         # must not be reclassified as a direct human edit while shutdown is
         # draining the queue.
@@ -449,11 +461,18 @@ class App:
             # Detached last: until now a straggling session append meets the
             # closed writer and fails, rather than writing beside the lease.
             detach_core_writer(self.vault, self.writer)
+        # This App created (or took over) the outside-server manager: stop its
+        # background portal too, or it outlives the library it served.
+        if self.mcp is not None and getattr(self.mcp, "owner", None) is self:
+            try:
+                self.mcp.stop()
+            except Exception:                               # noqa: BLE001
+                pass
         if self.coordinator is not None:
             try:
-                atomic_write_text(self.vault.librarian / "runtime" / "shutdown.json",
+                atomic_write_text(connection.shutdown_path(self.vault.root),
                                   json.dumps({"phases": phases}, indent=2) + "\n")
-            except OSError:
+            except Exception:                               # noqa: BLE001
                 pass                  # diagnostics never block a stop
 
     def request_host_stop(self, *, force: bool = False) -> dict[str, Any]:
@@ -2029,7 +2048,7 @@ class App:
     # -- queued actions -----------------------------------------------------
     def start_action(self, name: str, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
         from .tools.workflows import _library, _router
-        self._admit(f"the action {name!r}")
+        self._admit(f"the action {name!r}")                # fail fast; re-checked below
         action = Action(secrets.token_hex(4), name)
         extras = {**self._extras(), "cancel": action.cancel}
 
@@ -2041,7 +2060,11 @@ class App:
         ctx = Context(tier="contribute", vault=self.vault, extras=extras)
         library = _library(ctx)
         library.get(name)                                   # unknown names fail now, loudly
-        self.actions[action.id] = action
+        # Admit and register together, under the lock close_runtime closes
+        # admission under: it either sees this action or refuses it.
+        with self._lock:
+            self._admit(f"the action {name!r}")
+            self.actions[action.id] = action
 
         def run() -> None:
             try:

@@ -85,8 +85,7 @@ def _shutdown_phases(vault: str) -> list[dict[str, Any]]:
     """The phases a stopped Core recorded (CORE-02A), so the tray can say
     what happened rather than a generic "still draining"."""
     try:
-        row = json.loads((Path(vault) / ".librarian" / "runtime" / "shutdown.json")
-                         .read_text(encoding="utf-8"))
+        row = json.loads(connection.shutdown_path(vault).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return []
     phases = row.get("phases") if isinstance(row, dict) else None

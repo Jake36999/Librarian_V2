@@ -41,6 +41,16 @@ def path_for(vault_path: str | Path) -> Path:
     return directory() / f"{_key(vault_path)}.json"
 
 
+def shutdown_path(vault_path: str | Path) -> Path:
+    """Where a stopping Core records its shutdown phases (CORE-02A).
+
+    Per-user Host state, not vault state: it is written after the vault lease
+    is released, when a successor Core may already own the vault.  A
+    subfolder, so `records()` never mistakes it for an attachment record.
+    """
+    return directory() / "stops" / f"{_key(vault_path)}.json"
+
+
 def _private_write(path: Path, payload: str) -> bool:
     """Atomically write a record without ever leaving secret text in a broad
     Windows ACL.  On a platform where the ACL cannot be made owner-only, fail
