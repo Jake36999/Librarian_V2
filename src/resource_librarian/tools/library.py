@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 import re
+import sqlite3
+from pathlib import Path
 from typing import Any, Callable, Literal, TypeVar
 
 from .. import agenda, desk, evaluation, notes, revisions, text
@@ -17,6 +19,70 @@ Intent = Literal["orient", "donor", "pattern", "technique", "data", "precedent",
 assert set(Intent.__args__) == set(INTENTS)                  # type: ignore[attr-defined]
 
 R = TypeVar("R")
+# Keep the concrete class for gateway escape checks.  Tests and compatibility
+# code may replace the module-level ``Index`` constructor to prove a request
+# does not create a second database; that must not turn ``isinstance`` into a
+# call against a non-type.
+_INDEX_TYPE = Index
+
+
+class IndexGateway:
+    """Callback-only access to the Core-owned search/index worker.
+
+    Some legacy workflows need a quick index lookup, then spend time on a
+    network request or a Clerk call.  Passing an :class:`Engine` across that
+    boundary would leak its thread-affine SQLite connection out of
+    :class:`~resource_librarian.index.IndexService`.  This gateway deliberately
+    exposes only ``run(callback)``: the callback runs while the index worker
+    owns the engine and must return copied, ordinary data before it leaves.
+
+    The first callback refreshes the derived index when the caller asked for
+    it; later callbacks in the same invocation reuse that fresh snapshot.  It
+    is intentionally not a transparent ``Engine`` or ``Index`` proxy.
+    """
+
+    def __init__(self, ctx: Context, *, refresh: bool = True):
+        self._ctx = ctx
+        self._refresh = refresh
+        self._first = True
+
+    def run(self, operation: Callable[[Engine], R]) -> R:
+        refresh = self._refresh and self._first
+        # Copy/reject inside the callback itself.  Validating after
+        # ``with_engine`` returned would already have handed a worker-owned
+        # Row/connection/Engine to the caller's thread.
+        value = with_engine(self._ctx, lambda engine: _plain_index_value(operation(engine)),
+                            refresh=refresh)
+        # A failed first lookup must not suppress the required refresh for a
+        # later retry in the same invocation.
+        self._first = False
+        return value
+
+
+def _plain_index_value(value: R) -> R:
+    """Reject worker-owned objects before they can cross the gateway.
+
+    SQLite rows are copied to dictionaries because callers commonly need their
+    named fields.  All other allowed containers are rebuilt recursively.  The
+    narrow rule catches the tempting but unsafe ``lambda engine: engine`` and
+    connection/cursor escapes at the call site where they occur.
+    """
+    if value is None or isinstance(value, (str, int, float, bool, bytes, Path)):
+        return value
+    if isinstance(value, sqlite3.Row):
+        return {key: _plain_index_value(value[key]) for key in value.keys()}  # type: ignore[return-value]
+    if isinstance(value, (Engine, _INDEX_TYPE, sqlite3.Connection, sqlite3.Cursor)):
+        raise TypeError("an IndexGateway callback must return copied plain data, not an index object")
+    if isinstance(value, dict):
+        return {_plain_index_value(key): _plain_index_value(item)
+                for key, item in value.items()}  # type: ignore[return-value]
+    if isinstance(value, list):
+        return [_plain_index_value(item) for item in value]  # type: ignore[return-value]
+    if isinstance(value, tuple):
+        return tuple(_plain_index_value(item) for item in value)  # type: ignore[return-value]
+    if isinstance(value, set):
+        return {_plain_index_value(item) for item in value}  # type: ignore[return-value]
+    raise TypeError(f"an IndexGateway callback returned non-plain {type(value).__name__}")
 
 
 def engine_for(ctx: Context, refresh: bool = True) -> Engine:

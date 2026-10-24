@@ -19,19 +19,17 @@ INFRASTRUCTURE = {
 }
 # Separate SQLite stores, not the vault index.  Reviewed under INDEX-05.
 OTHER_STORES = {("desk.py", "sqlite3.connect"): 1, ("lenses.py", "sqlite3.connect"): 1}
-# Serving paths still opening the vault index directly (2026-10-24: 43; 39 after INDEX-02a).
+# Serving paths still opening the vault index directly (2026-10-24: 43; 39 after INDEX-02a;
+# 33 after INDEX-03's callback-gateway migration).
 DEBT = {
     ("batch.py", "engine_for"): 2,
     ("communities.py", "Index"): 1,
     ("extract.py", "Index"): 1,
     ("tools/authoring.py", "engine_for"): 4,
-    ("tools/intake.py", "engine_for"): 2,
     ("tools/model_catalog.py", "engine_for"): 2,
-    ("tools/ranking.py", "engine_for"): 2,
-    ("tools/scout.py", "engine_for"): 1,
     ("tools/sessions.py", "engine_for"): 12,
     ("tools/staging.py", "engine_for"): 4,
-    ("tools/taxonomy.py", "engine_for"): 3,
+    ("tools/taxonomy.py", "engine_for"): 2,
     ("tools/upkeep.py", "engine_for"): 5,
 }
 

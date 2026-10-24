@@ -4,7 +4,7 @@ from __future__ import annotations
 from .. import ranking
 from ..registry import Card, Context, REGISTRY
 from ..rules import Refusal
-from .library import engine_for, with_engine
+from .library import with_engine
 
 
 def _require_person(ctx: Context, action: str) -> None:
@@ -35,7 +35,10 @@ def ranking_candidate_generate(ctx: Context) -> dict:
                          "No traffic split or automatic adoption occurs"),
                returns=("quality", "coverage", "safety"))
 def ranking_benchmark(ctx: Context, candidate_id: str, k: int = 5) -> dict:
-    return ranking.benchmark(ctx.vault, engine_for(ctx), candidate_id, k)
+    candidate = ranking._candidate(ctx.vault, candidate_id)
+    report = with_engine(ctx, lambda engine: ranking.benchmark_measure(ctx.vault, engine,
+                                                                         candidate, k))
+    return ranking.record_benchmark(ctx.vault, candidate_id, report)
 
 
 @REGISTRY.tool("ranking_compare", tier="consult", effect="read",
@@ -44,7 +47,8 @@ def ranking_benchmark(ctx: Context, candidate_id: str, k: int = 5) -> dict:
                returns=("current", "candidate_result"))
 def ranking_compare(ctx: Context, query: str, intent: str = "donor", limit: int = 10,
                     candidate_id: str = "") -> dict:
-    return ranking.compare(ctx.vault, engine_for(ctx), query, intent, limit, candidate_id)
+    return with_engine(ctx, lambda engine: ranking.compare(ctx.vault, engine, query, intent,
+                                                            limit, candidate_id))
 
 
 @REGISTRY.tool("ranking_select", tier="curate", effect="write", scope="library",

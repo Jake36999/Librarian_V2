@@ -18,7 +18,7 @@ or under Unfiled, and nothing grows the list on its own. This is how it grows:
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, Callable
 
 from . import clerk, notes
 from .coordination import atomic_write_text
@@ -53,9 +53,16 @@ def sources(engine: Engine, only_unfiled: bool = False) -> list[dict[str, Any]]:
     return out
 
 
-def propose(vault: Vault, engine: Engine, endpoint: clerk.Endpoint | None,
-            only_unfiled: bool = True) -> dict[str, Any]:
-    pool = sources(engine, only_unfiled)[:MAX_SOURCES]
+def propose(vault: Vault, engine: Engine | None, endpoint: clerk.Endpoint | None,
+            only_unfiled: bool = True, *,
+            index_call: Callable[[Callable[[Engine], Any]], Any] | None = None) -> dict[str, Any]:
+    """Stage taxonomy proposals without holding the SQLite worker for Clerk I/O."""
+    if index_call is not None:
+        pool = index_call(lambda active: sources(active, only_unfiled))[:MAX_SOURCES]
+    elif engine is not None:
+        pool = sources(engine, only_unfiled)[:MAX_SOURCES]
+    else:
+        raise TypeError("propose needs an Engine or callback-only index access")
     accepted = [t for t in vault.topics() if t != UNFILED]
     if len(pool) < 2:
         return {"proposed": [], "refile": [], "considered": len(pool),

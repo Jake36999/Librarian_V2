@@ -4,7 +4,7 @@ from __future__ import annotations
 from .. import intake
 from ..registry import Card, Context, tool
 from ..session import SessionStore
-from .library import engine_for
+from .library import IndexGateway
 from .staging import clerk_endpoint
 
 
@@ -61,9 +61,9 @@ def ingest(ctx: Context, ref: str, brief: str = "", defer: bool = False,
             need = session.briefs[brief].need
             disqualifiers = session.briefs[brief].disqualifiers
             found_by["brief"] = brief
-    result = intake.ingest(ctx.vault, engine_for(ctx), ref, endpoint=clerk_endpoint(ctx),
+    result = intake.ingest(ctx.vault, None, ref, endpoint=clerk_endpoint(ctx),
                            fetcher=_fetcher(ctx), need=need, disqualifiers=disqualifiers,
-                           found_by=found_by)
+                           found_by=found_by, index_call=IndexGateway(ctx).run)
     if ctx.session:
         _attach(ctx, ctx.session, brief, result)
     out = result.to_dict()
@@ -130,13 +130,13 @@ def _framing(ctx: Context, entry: dict) -> tuple[str, str, list[str], dict, str]
                 "queued for while that brief is open, and joins its session as an undecided "
                 "candidate; each outcome says where the reference went"))
 def intake_run(ctx: Context, limit: int = 10) -> dict:
-    engine = engine_for(ctx)
+    index_gateway = IndexGateway(ctx)
     results = []
     for entry in intake.pending(ctx.vault)[:limit]:
         session_id, need, disqualifiers, found_by, framing = _framing(ctx, entry)
-        result = intake.ingest(ctx.vault, engine, entry["ref"], endpoint=clerk_endpoint(ctx),
+        result = intake.ingest(ctx.vault, None, entry["ref"], endpoint=clerk_endpoint(ctx),
                                fetcher=_fetcher(ctx), need=need, disqualifiers=disqualifiers,
-                               found_by=found_by)
+                               found_by=found_by, index_call=index_gateway.run)
         settled = intake.settle(ctx.vault, entry["id"], result)
         if session_id:
             _attach(ctx, session_id, found_by.get("brief", ""), result)

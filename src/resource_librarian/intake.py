@@ -511,12 +511,29 @@ def _normal_title(text: str) -> str:
     return " ".join(re.sub(r"[^a-z0-9]+", " ", t).split())
 
 
-def ingest(vault: Vault, engine: Engine, ref: str, *, endpoint: clerk.Endpoint | None,
+def ingest(vault: Vault, engine: Engine | None, ref: str, *, endpoint: clerk.Endpoint | None,
            fetcher: Fetcher | None = None, need: str = "",
-           disqualifiers: list[str] | None = None, found_by: dict[str, Any] | None = None
+           disqualifiers: list[str] | None = None, found_by: dict[str, Any] | None = None,
+           index_call: Callable[[Callable[[Engine], Any]], Any] | None = None
            ) -> IntakeResult:
     """One reference, through to staging. `found_by` (a session and brief id)
     is kept on the staged item for provenance and never reaches a clerk."""
+    if index_call is None:
+        if engine is None:
+            raise TypeError("ingest needs an Engine or callback-only index access")
+
+        def direct_index_call(operation: Callable[[Engine], Any]) -> Any:
+            return operation(engine)
+        index_access = direct_index_call
+    else:
+        index_access = index_call
+
+    # Preserve the old admission order: `engine_for(ctx)` refreshed and
+    # validated index ownership before a fetch or evidence write could begin.
+    # The Core gateway must fail at the same boundary, but it returns before
+    # the long network/Clerk phases so it never holds the SQLite worker there.
+    index_access(lambda _engine: None)
+
     fetcher = fetcher or Fetcher()
     store = EvidenceStore(vault)
     staging = StagingStore(vault)
@@ -532,12 +549,15 @@ def ingest(vault: Vault, engine: Engine, ref: str, *, endpoint: clerk.Endpoint |
     except (FetchError, ET.ParseError, ValueError, KeyError) as exc:
         return _quarantine(vault, ref, "fetch", str(exc))
 
-    held = engine.index.note_row(fetched.name)
+    # This is the only SQLite work before the Clerk/network phase.  A
+    # Core-backed caller supplies a callback gateway, so no Engine can escape
+    # onto the long-running intake thread.
+    held_path = index_access(lambda active: _held_path(active, fetched.name))
     # A Markdown file dropped into Inbox/ (a converted PDF, say) is indexed as
     # a note under its own name: that is the file being ingested, not a copy
     # already held.
-    if held is not None and not (reference.kind == "file" and held["path"] == reference.key):
-        return IntakeResult(ref, "already_held", name=fetched.name, detail=held["path"])
+    if held_path and not (reference.kind == "file" and held_path == reference.key):
+        return IntakeResult(ref, "already_held", name=fetched.name, detail=held_path)
     live = ("staged", "deferred", "approved", "processing", "enriched", "partial")
     near = ""
     for item in staging.items("source"):
@@ -560,11 +580,7 @@ def ingest(vault: Vault, engine: Engine, ref: str, *, endpoint: clerk.Endpoint |
                 str(item.get("title") or item.get("name", ""))) == _normal_title(fetched.title):
             near = f"{item.get('name')} ({item['status']})"
     if not near:
-        title_key = _normal_title(fetched.title)
-        for row in engine.index.conn.execute("SELECT name FROM note WHERE shape = 'source'"):
-            if _normal_title(row["name"]) == title_key and title_key:
-                near = f"{row['name']} (in the library)"
-                break
+        near = index_access(lambda active: _near_library_title(active, fetched.title))
 
     documentation = fetched.texts.get("documentation", "")
     screen: dict[str, Any] = {}
@@ -611,12 +627,27 @@ def ingest(vault: Vault, engine: Engine, ref: str, *, endpoint: clerk.Endpoint |
                  # the fit judgement, kept apart from the neutral description (§4.4)
                  **({"fit_screen": screen} if screen else {}),
                  **({"intake_notes": fetched.notes} if fetched.notes else {}),
-                 "readiness": readiness(engine, fetched.kind, fields)})
+                 "readiness": index_access(lambda active: readiness(active, fetched.kind, fields))})
     return IntakeResult(ref, "staged", item_id, fetched.name, screen=screen,
                         detail={"sensitivity": sensitivity,
                                 "draft": review["draft"].get("status"),
                                 **({"possible_duplicate_of": near} if near else {})},
                         quality=fetched.quality)
+
+
+def _held_path(engine: Engine, name: str) -> str:
+    row = engine.index.note_row(name)
+    return str(row["path"]) if row is not None else ""
+
+
+def _near_library_title(engine: Engine, title: str) -> str:
+    title_key = _normal_title(title)
+    if not title_key:
+        return ""
+    for row in engine.index.conn.execute("SELECT name FROM note WHERE shape = 'source'"):
+        if _normal_title(row["name"]) == title_key:
+            return f"{row['name']} (in the library)"
+    return ""
 
 
 def describe(vault: Vault, fetched: Fetched, endpoint: clerk.Endpoint | None,

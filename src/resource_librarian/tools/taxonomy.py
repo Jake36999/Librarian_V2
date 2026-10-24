@@ -5,7 +5,7 @@ from __future__ import annotations
 from .. import taxonomy
 from ..promote import UNFILED
 from ..registry import Card, Context, tool
-from .library import engine_for, with_engine
+from .library import IndexGateway, engine_for, with_engine
 from .staging import clerk_endpoint
 
 
@@ -37,7 +37,8 @@ def topics_list(ctx: Context) -> dict:
                 "Sources that fit an accepted topic come back as refile suggestions. Runs on "
                 "the clerk channel"))
 def topic_propose(ctx: Context, only_unfiled: bool = True) -> dict:
-    return taxonomy.propose(ctx.vault, engine_for(ctx), clerk_endpoint(ctx), only_unfiled)
+    return taxonomy.propose(ctx.vault, None, clerk_endpoint(ctx), only_unfiled,
+                            index_call=IndexGateway(ctx).run)
 
 
 @tool("refile_source", tier="contribute", effect="vault_write", scope="library",
