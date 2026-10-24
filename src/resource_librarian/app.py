@@ -451,6 +451,22 @@ class App:
         phase("work_cancelled",
               turn="none" if turn is None else "still_running" if self.busy else "stopped",
               actions={action.id: action.status for action in cancelled.values()})
+        # A thread whose turn this stop cut off is parked, durably and through
+        # the writer that is still open, so it reopens as interrupted with its
+        # committed work intact; resume_session picks it back up (CORE-02B).
+        session_id = getattr(getattr(self.loop, "ctx", None), "session", None) if turn is not None else None
+        if session_id:
+            try:
+                store = SessionStore(self.vault)
+                if store.load(session_id).status == "open":
+                    store.append(session_id, {
+                        "type": "status", "status": "parked",
+                        "note": "interrupted: the Core stopped while a turn was running; "
+                                "resume this thread to continue"})
+                    phase("session_parked", session=session_id)
+                    self.hub.publish({"type": "session_interrupted", "session": session_id})
+            except Exception:                               # noqa: BLE001
+                pass                  # a missing or unreadable log never blocks a stop
         # Stop observing first: a final atomic replacement from the writer
         # must not be reclassified as a direct human edit while shutdown is
         # draining the queue.

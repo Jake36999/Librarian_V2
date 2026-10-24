@@ -157,3 +157,46 @@ def test_a_second_close_is_a_no_op(core):
     phases = list(core.shutdown_phases)
     core.close_runtime()
     assert core.shutdown_phases == phases
+
+
+def test_a_thread_cut_off_by_the_stop_reopens_parked_and_resumable(vault):
+    """CORE-02B: the interrupted state is durable, and resume_session continues it."""
+    from types import SimpleNamespace
+    from resource_librarian.registry import REGISTRY, Context
+    from resource_librarian.session import SessionStore
+    core = App(vault, coordinate=True)
+    opened = SessionStore(vault).new("explore", question="q")
+    SessionStore(vault).append(opened.id, {"type": "message", "role": "user", "text": "work so far"})
+    core.loop = SimpleNamespace(ctx=SimpleNamespace(session=opened.id))
+    cancel = threading.Event()
+    with core._lock:
+        core.busy, core._turn_cancel = True, cancel
+
+    def turn():
+        cancel.wait(5)
+        with core._lock:
+            core.busy = False
+    threading.Thread(target=turn, daemon=True).start()
+    core.close_runtime()
+    assert _phase(core, "session_parked")["session"] == opened.id
+    parked = SessionStore(vault).load(opened.id)
+    assert parked.status == "parked"
+    assert [m["text"] for m in parked.messages] == ["work so far"]     # committed work intact
+    successor = App(vault, coordinate=True)
+    try:
+        ctx = Context(tier="consult", vault=vault, extras=successor._extras())
+        resumed = REGISTRY.call("resume_session", {"session_id": opened.id}, ctx)
+        assert "error" not in resumed, resumed
+        assert SessionStore(vault).load(opened.id).status == "open"
+    finally:
+        successor.close_runtime()
+
+
+def test_an_idle_open_thread_is_left_open(core, vault):
+    from types import SimpleNamespace
+    from resource_librarian.session import SessionStore
+    opened = SessionStore(vault).new("explore", question="q")
+    core.loop = SimpleNamespace(ctx=SimpleNamespace(session=opened.id))
+    core.close_runtime()                       # no turn was running
+    assert SessionStore(vault).load(opened.id).status == "open"
+    assert "session_parked" not in [p["phase"] for p in core.shutdown_phases]
