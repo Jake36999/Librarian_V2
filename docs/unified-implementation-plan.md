@@ -624,6 +624,10 @@ with its primary model and reviewer (§3.2).
 | (review) four P1 gaps | implemented | `8a34cc7` | From ChatGPT's 2026-10-24 review of this branch; each finding was reproduced in code before it was fixed. **Session bypass:** without an attached writer a session write is direct only offline (this process holds the lease, or no live Core does); after this process's Core stopped, or beside another process's live lease row, it is refused with `CORE_REQUIRED`. **Writer linearity:** no operation waits for a person; `_ask` registers its waiter, records the question, and the registry finishes the wait after the writer returns (`PERSON_WAIT`); an ask nested in a macro leaves its question open. **Late work at shutdown:** person and MCP calls are admitted and counted under the admission lock and drained within the grace; waiters and the broker are terminal after a stop. **PID reuse:** the identity is exact (raw Windows FILETIME; Linux boot id and start ticks), and the Host start path that used the PID alone now passes it. Reviewed by GLM-5.3 and Qwen3.5: one finding fixed (a stop dropped an answer delivered just before it); a remaining offline-writer race is documented in `SessionStore._through_core`. |
 | CORE-05A | implemented | `119ded6` | `revisions.py`: a `WriteIntent` (targets, the note it replaces, files that must still be missing) resolved and canonicalised before the broker asks, and opaque HMAC-signed revision tokens bound to vault, canonical path, session, caller kind and fingerprint. `get_note` issues one for the exact bytes it read; each write returns the next, minted inside the writer operation. Agent and MCP callers must bring one to replace an existing note (`REVISION_REQUIRED`); one issued for anything else is refused (`REVISION_REFUSED`); a person's own action needs none. Inventory below. |
 | CORE-05B | implemented | `119ded6` | `edit_note`, `write_note(mode="replace")` and `update_project` pass their revision as the writer's precondition; an edit made since the read raises `PreconditionChangedError` and becomes a `write_conflict` checkpoint, offline too. `archive_note` and `promote_offering` declare their targets. Reviewed by DeepSeek-V4-Pro: one finding fixed (a replace on a note missing at resolution needed no revision, so a note another write made in between was replaced unread; it now carries a still-missing precondition). |
+| ADAPT-01 | implemented | `48b61a8` | Provider replies now preserve only safe observed-model metadata, usage/request IDs where present, finish reason, and ephemeral reasoning continuation for a live tool-result continuation. The metadata is redacted before tracing or persistence; an empty `length` reply is a typed output-budget failure. |
+| CORE-06 | implemented | `c264b9a` | Core startup scans the writer log before admitting mutation, creates an idempotent recovery checkpoint for a start-only operation, handles a partial crash tail safely, and fails closed on a malformed complete record. |
+| CORE-07 | implemented | `5708c39` | The Hub stamps events with a Core epoch and authoritative sequence/timestamp. A stale/missing epoch, expired replay, or cursor ahead emits one `resync_required`; the browser refreshes canonical state rather than replaying an action. |
+| INDEX-03 (batch 1) | partial | `2e95158` | A callback-only `IndexGateway` keeps SQLite-owned objects inside `IndexService`; intake, queued intake, taxonomy proposal, Scout sweep, and ranking compare/benchmark now release the index worker before Clerk/network/durable-file phases. Static debt shrank 39 → 33. Core-backed regression cases cover the gateway, admission order, Clerk release, proposal, sweep, comparison, and benchmark persistence. |
 
 **CORE-05 write inventory.** CAS coverage is claimed only where a token is
 checked:
@@ -663,9 +667,12 @@ yet:
   on the server's route and readiness path (ROUTE-03).
 - INDEX-02: commit real-Core context tests for the batch-1 migrations before
   expanding the batch.
-- G1 (Core lifecycle) stays open: the review's P1s are fixed, but CORE-06/07
-  remain, and concurrency interleavings need the race tests added here kept
-  green.
+- G1 (Core lifecycle) has its known P1s, recovery, and event-resynchronization
+  slices implemented. It remains unclosed until INDEX-04 and the planned
+  Windows concurrency/WAL stress fixture prove the remaining direct index
+  callers cannot bypass ownership.
 
-Full suite under the repository venv after CORE-05: 959 passed, 2 skipped, 1 deselected. **Next in
-§18 order:** ADAPT-01, CORE-06/07, the INDEX-03 engine proxy, then ROUTE-03–05.
+Full suite under the repository venv after CORE-05: 959 passed, 2 skipped, 1 deselected.
+Focused CORE-06/07 and INDEX-03 commands are recorded in the regression manifest; the
+full suite was also re-run after INDEX-03. **Next in §18 order:** ROUTE-03–05, then
+the remaining INDEX-03/04 batches and adapter request-shaping work.
