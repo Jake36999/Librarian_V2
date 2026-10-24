@@ -3469,7 +3469,9 @@ def serve(vault_path: str | None, port: int = 8323, token: str = "",
     # already-running Core instead of attempting a second mutable Core for
     # the same vault.  If private storage is unavailable, normal startup is
     # still safe; adapters simply get the ordinary lease-held response.
+    from . import process_identity
     connection.publish(vault.root, url=url, token=app.token, pid=os.getpid(),
+                       process_started=process_identity.process_started_at(os.getpid()),
                        protocol_version=PROTOCOL_VERSION, secret_source=app.secret_source)
     # The host that started the core reads this line to find the port.
     started = {"listening": url, "vault": str(vault.root)}

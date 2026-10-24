@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 import urllib.error
 import urllib.parse
@@ -21,7 +20,7 @@ from typing import Any
 from . import tools  # noqa: F401  (registers the tools)
 from .coordination import LeaseHeldError, VaultCoordinator, VaultWriter
 from .index import IndexService
-from . import connection
+from . import connection, process_identity
 from .checkpoints import CheckpointStore
 from .init import init
 from .registry import REGISTRY, TIERS, Context, _json_type
@@ -51,17 +50,7 @@ def _call_active_core(vault: Vault, tool: str, arguments: dict[str, Any],
     if record is None:
         return False, {}
     pid = int(record.get("pid") or 0)
-    try:
-        alive = pid > 0
-        if alive:
-            os.kill(pid, 0)
-    except ProcessLookupError:
-        alive = False
-    except PermissionError:
-        alive = True
-    except OSError:
-        alive = False
-    if not alive:
+    if not process_identity.is_alive(pid, record.get("process_started")):
         # Only remove the exact record we just found; a new Core cannot lose
         # its discovery data in the tiny race between this check and cleanup.
         connection.remove(vault.root, pid=pid, token=str(record.get("token") or ""))

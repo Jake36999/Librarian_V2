@@ -27,7 +27,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, TypeVar
 
-from . import __version__
+from . import __version__, process_identity
 from .rules import Refusal
 from .vault import Vault, now_iso
 
@@ -90,6 +90,9 @@ class LeaseInfo:
     protocol_version: str
     core_version: str
     vault: str
+    # Creation time of the lease holder, so a later takeover check cannot
+    # mistake a recycled PID for the original Core.
+    process_started: float | None = None
 
 
 class VaultCoordinator:
@@ -110,7 +113,8 @@ class VaultCoordinator:
         self.info_path = self.runtime / "vault.lease.json"
         self._file: Any = None
         self.info = LeaseInfo(secrets.token_hex(12), os.getpid(), now_iso(), protocol_version,
-                              __version__, str(vault.root))
+                              __version__, str(vault.root),
+                              process_identity.process_started_at(os.getpid()))
 
     def acquire(self, *, takeover: bool = False) -> LeaseInfo:
         if self._file is not None:
@@ -153,8 +157,11 @@ class VaultCoordinator:
                 # happens after a normal in-process switch if the prior
                 # sidecar could not be deleted (for example a transient AV
                 # lock), and it is safe to replace once the OS lock is ours.
-                same_process_recovery = pid == os.getpid()
-                if self._pid_alive(pid) and not same_process_recovery:
+                # Our PID alone is not enough: a crashed Core whose PID was
+                # recycled to us is a stale lease, which needs a takeover.
+                same_process_recovery = pid == os.getpid() and \
+                    self._pid_alive(pid, previous.get("process_started"))
+                if self._pid_alive(pid, previous.get("process_started")) and not same_process_recovery:
                     raise LeaseHeldError(self._held_message())
                 if not same_process_recovery and not takeover:
                     raise StaleLeaseError("a prior Librarian Core appears to have stopped "
@@ -176,23 +183,11 @@ class VaultCoordinator:
             raise
 
     @staticmethod
-    def _pid_alive(pid: int) -> bool:
-        if pid <= 0:
-            return False
-        if pid == os.getpid():
-            return True
-        try:
-            # `os.kill(pid, 0)` works on supported Windows Python builds and
-            # POSIX.  AccessDenied means the process exists, which is enough
-            # to avoid a risky automatic takeover.
-            os.kill(pid, 0)
-        except ProcessLookupError:
-            return False
-        except PermissionError:
-            return True
-        except OSError:
-            return False
-        return True
+    def _pid_alive(pid: int, started: float | None = None) -> bool:
+        # The shared platform-aware check: on Windows `os.kill(pid, 0)` reports
+        # an exited process as alive while any handle to it is open.  An
+        # inaccessible process still counts as alive, so takeover stays explicit.
+        return process_identity.is_alive(pid, started)
 
     def _held_message(self) -> str:
         current = self.status()
