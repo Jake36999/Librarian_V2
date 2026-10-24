@@ -23,9 +23,11 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import secrets
 import urllib.error
 import urllib.request
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -61,6 +63,7 @@ PROVIDER_FAILURE_CATEGORIES = (
     "provider_transient",
     "provider_transport",
     "provider_rejected",
+    "output_budget",
     "unknown",
 )
 
@@ -79,6 +82,109 @@ class ProviderError(RuntimeError):
     def __init__(self, message: str, *, category: str = "") -> None:
         super().__init__(message)
         self.category = category if category in PROVIDER_FAILURE_CATEGORIES else ""
+
+
+def _safe_token_count(value: Any) -> int | None:
+    """Accept only non-negative integral token counts from a provider reply."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int) and value >= 0:
+        return value
+    if isinstance(value, float) and value >= 0 and value.is_integer():
+        return int(value)
+    return None
+
+
+def _safe_usage(value: Any) -> dict[str, int]:
+    """Normalize the small non-secret usage subset shared by supported APIs.
+
+    Provider payloads often grow product-specific nested accounting fields. A
+    runtime trace needs only the response's input/output/total token counts;
+    keeping the whole object would make it an accidental raw-provider-payload
+    store. Invalid, negative, boolean, and unknown values are ignored.
+    """
+    if not isinstance(value, Mapping):
+        return {}
+
+    def first(*names: str) -> int | None:
+        for name in names:
+            token_count = _safe_token_count(value.get(name))
+            if token_count is not None:
+                return token_count
+        return None
+
+    usage: dict[str, int] = {}
+    input_tokens = first("input_tokens", "prompt_tokens")
+    output_tokens = first("output_tokens", "completion_tokens")
+    total_tokens = first("total_tokens")
+    if input_tokens is not None:
+        usage["input_tokens"] = input_tokens
+    if output_tokens is not None:
+        usage["output_tokens"] = output_tokens
+    if total_tokens is None and input_tokens is not None and output_tokens is not None:
+        total_tokens = input_tokens + output_tokens
+    if total_tokens is not None:
+        usage["total_tokens"] = total_tokens
+    return usage
+
+
+_SAFE_REQUEST_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,199}")
+
+
+def _safe_request_id(value: Any) -> str:
+    """Return a bounded diagnostic request ID, never an arbitrary header value."""
+    if not isinstance(value, str):
+        return ""
+    candidate = value.strip()
+    return candidate if _SAFE_REQUEST_ID.fullmatch(candidate) else ""
+
+
+def _response_request_id(headers: Any) -> str:
+    """Extract an explicitly named provider request header, if one is safe.
+
+    The response JSON's ``id`` is a completion identifier, not an HTTP request
+    ID; it deliberately never flows into this diagnostic field.
+    """
+    try:
+        items = headers.items()
+    except (AttributeError, TypeError):
+        return ""
+    for name, value in items:
+        if str(name).casefold() in {"x-request-id", "request-id", "anthropic-request-id"}:
+            request_id = _safe_request_id(value)
+            if request_id:
+                return request_id
+    return ""
+
+
+class _ResponsePayload(dict):
+    """A normal decoded response object with optional safe HTTP metadata.
+
+    Keeping this a ``dict`` subclass preserves every existing monkeypatch and
+    caller that expects the historical decoded-body return shape from
+    :func:`_request`.
+    """
+
+    __slots__ = ("request_id",)
+
+    def __init__(self, body: dict[str, Any], request_id: str = "") -> None:
+        super().__init__(body)
+        self.request_id = _safe_request_id(request_id)
+
+
+class OutputBudgetError(ProviderError):
+    """A response ended for length before it yielded text or a tool proposal."""
+
+    def __init__(self, *, observed_model: Any = "", stop_reason: Any = "",
+                 usage: Any = None, request_id: Any = "") -> None:
+        super().__init__(
+            "the model reached its output budget before returning text or a tool call",
+            category="output_budget",
+        )
+        self.observed_model = str(observed_model or "")[:300]
+        self.stop_reason = str(stop_reason or "")[:160]
+        self.usage = _safe_usage(usage)
+        self.request_id = _safe_request_id(request_id)
 
 
 def provider_failure_category(error: BaseException | str) -> str:
@@ -194,11 +300,20 @@ class Reply:
     tool_calls: list[ToolCall] = field(default_factory=list)
     model: str = ""
     stop: str = ""
+    usage: dict[str, int] = field(default_factory=dict)
+    request_id: str = ""
+    reasoning_content: str = ""
 
     def message(self) -> dict[str, Any]:
         out: dict[str, Any] = {"role": "assistant", "content": self.text}
         if self.tool_calls:
             out["tool_calls"] = [c.to_dict() for c in self.tool_calls]
+            # Some thinking-capable OpenAI-compatible routes require their
+            # reasoning continuation to accompany a later tool-result turn.
+            # It is deliberately held only in this in-memory model history:
+            # Session persistence records person-visible text, never it.
+            if self.reasoning_content:
+                out["reasoning_content"] = self.reasoning_content
         return out
 
 
@@ -264,7 +379,11 @@ def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
                                                   **headers})
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
-                return json.loads(response.read().decode("utf-8"))
+                decoded = json.loads(response.read().decode("utf-8"))
+                if isinstance(decoded, dict):
+                    return _ResponsePayload(decoded, _response_request_id(
+                        getattr(response, "headers", None)))
+                return decoded
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", "replace")[:400]
             if exc.code in TRANSIENT_HTTP and pauses:
@@ -330,11 +449,17 @@ class OpenAICompatible(Provider):
         out: list[dict[str, Any]] = [{"role": "system", "content": system}] if system else []
         for m in messages:
             if m["role"] == "assistant" and m.get("tool_calls"):
-                out.append({"role": "assistant", "content": m.get("content") or None,
-                            "tool_calls": [{"id": c["id"], "type": "function",
-                                            "function": {"name": c["name"],
-                                                         "arguments": json.dumps(c["arguments"])}}
-                                           for c in m["tool_calls"]]})
+                assistant = {"role": "assistant", "content": m.get("content") or None,
+                             "tool_calls": [{"id": c["id"], "type": "function",
+                                             "function": {"name": c["name"],
+                                                          "arguments": json.dumps(c["arguments"])}}
+                                            for c in m["tool_calls"]]}
+                # ``reasoning_content`` is a provider continuation field, not
+                # generic system context. Render it only on the exact
+                # assistant tool-call message that produced it.
+                if isinstance(m.get("reasoning_content"), str) and m["reasoning_content"]:
+                    assistant["reasoning_content"] = m["reasoning_content"]
+                out.append(assistant)
             elif m["role"] == "tool":
                 out.append({"role": "tool", "tool_call_id": m["tool_call_id"],
                             "content": m["content"]})
@@ -368,8 +493,17 @@ class OpenAICompatible(Provider):
             calls.append(ToolCall(str(call.get("id") or synthetic_call_id()),
                                   str(function.get("name") or ""),
                                   arguments if isinstance(arguments, dict) else {}))
-        return Reply(message.get("content") or "", calls, reply.get("model", self.model),
-                     choice.get("finish_reason") or "")
+        text = message.get("content") if isinstance(message.get("content"), str) else ""
+        observed_model = str(reply.get("model", self.model) or self.model)
+        stop = str(choice.get("finish_reason") or "")
+        usage = _safe_usage(reply.get("usage"))
+        request_id = _safe_request_id(getattr(reply, "request_id", ""))
+        if not text and not calls and stop == "length":
+            raise OutputBudgetError(observed_model=observed_model, stop_reason=stop,
+                                    usage=usage, request_id=request_id)
+        reasoning = message.get("reasoning_content")
+        return Reply(text, calls, observed_model, stop, usage, request_id,
+                     reasoning if calls and isinstance(reasoning, str) else "")
 
 
 # ------------------------------------------------------------------ Anthropic
@@ -441,8 +575,15 @@ class Anthropic(Provider):
             elif block.get("type") == "tool_use":
                 calls.append(ToolCall(str(block.get("id") or synthetic_call_id()),
                                       str(block.get("name")), block.get("input") or {}))
-        return Reply("".join(text), calls, reply.get("model", self.model),
-                     reply.get("stop_reason") or "")
+        rendered_text = "".join(text)
+        observed_model = str(reply.get("model", self.model) or self.model)
+        stop = str(reply.get("stop_reason") or "")
+        usage = _safe_usage(reply.get("usage"))
+        request_id = _safe_request_id(getattr(reply, "request_id", ""))
+        if not rendered_text and not calls and stop == "max_tokens":
+            raise OutputBudgetError(observed_model=observed_model, stop_reason=stop,
+                                    usage=usage, request_id=request_id)
+        return Reply(rendered_text, calls, observed_model, stop, usage, request_id)
 
 
 # ------------------------------------------------------------------ scripted

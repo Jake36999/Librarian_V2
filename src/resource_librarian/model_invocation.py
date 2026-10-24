@@ -36,7 +36,8 @@ from importlib import resources
 from typing import Any, Callable, Iterator, Mapping
 
 from .providers import (Anthropic, OpenAICompatible, Provider, ProviderError,
-                        Reply, ToolDef, provider_failure_category)
+                        Reply, ToolDef, _safe_request_id, _safe_usage,
+                        provider_failure_category)
 
 
 ADAPTER_ABI_VERSION = 1
@@ -723,6 +724,7 @@ class AdapterFailure:
             "provider_transient": "the provider is temporarily unavailable",
             "provider_transport": "the provider endpoint could not be reached",
             "provider_rejected": "the provider rejected this request",
+            "output_budget": "the model reached its output budget before returning a usable result",
             "local_environment": "the local environment blocked this provider request",
             "unknown": "the provider request failed",
         }
@@ -744,11 +746,15 @@ class InvocationResult:
     elapsed_ms: int
     tool_calls: tuple[NormalizedToolCall, ...] = ()
     failure: AdapterFailure | None = None
+    usage: dict[str, int] = field(default_factory=dict)
+    request_id: str = ""
 
     def __post_init__(self) -> None:
         if self.outcome not in OUTCOMES:
             raise ValueError(f"unknown invocation outcome {self.outcome!r}")
         object.__setattr__(self, "elapsed_ms", max(0, int(self.elapsed_ms)))
+        object.__setattr__(self, "usage", _safe_usage(self.usage))
+        object.__setattr__(self, "request_id", _safe_request_id(self.request_id))
 
     def trace(self) -> dict[str, Any]:
         row: dict[str, Any] = {
@@ -758,10 +764,11 @@ class InvocationResult:
             "outcome": self.outcome, "stop_reason": self.stop_reason,
             "elapsed_ms": self.elapsed_ms,
             "tool_calls": [call.trace() for call in self.tool_calls],
-            # The legacy Provider boundary does not expose request IDs, usage,
-            # raw stop details, or inner retry counts.  State this explicitly
-            # rather than estimating values from a response body we do not keep.
-            "telemetry": {"usage": "unavailable", "request_id": "unavailable",
+            # The bounded, normalized fields below are the only response
+            # telemetry retained. Prompts, raw provider bodies, and hidden
+            # reasoning continuations never enter this trace.
+            "telemetry": {"usage": dict(self.usage) if self.usage else "unavailable",
+                          "request_id": self.request_id or "unavailable",
                           "inner_attempts": "unavailable"},
         }
         if self.failure is not None:
@@ -812,7 +819,11 @@ class LegacyProviderAdapter(ProtocolAdapter):
             failure = AdapterFailure.from_error(error)
             result = InvocationResult(
                 plan.plan_id, plan.config_hash, plan.adapter_id, plan.adapter_version,
-                plan.model_id, "", "failed", "", round((time.monotonic() - started) * 1_000),
+                plan.model_id, _bounded(getattr(error, "observed_model", ""), 300),
+                "failed", _bounded(getattr(error, "stop_reason", ""), 160),
+                round((time.monotonic() - started) * 1_000),
+                usage=_safe_usage(getattr(error, "usage", {})),
+                request_id=_safe_request_id(getattr(error, "request_id", "")),
                 failure=failure,
             )
             # Preserve the original error/message/category for current UX and
@@ -830,6 +841,7 @@ class LegacyProviderAdapter(ProtocolAdapter):
             plan.model_id, _bounded(reply.model, 300),
             "tool_calls" if calls else "completed", _bounded(reply.stop, 160),
             round((time.monotonic() - started) * 1_000), calls,
+            usage=_safe_usage(reply.usage), request_id=_safe_request_id(reply.request_id),
         )
         return reply, result
 

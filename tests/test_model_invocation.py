@@ -10,6 +10,7 @@ import json
 
 import pytest
 
+from resource_librarian import providers
 from resource_librarian.loop import Loop
 from resource_librarian.hosts import Host, HostLimiter, LimitedProvider
 from resource_librarian.model_invocation import (
@@ -178,6 +179,48 @@ def test_provider_failure_keeps_its_category_but_trace_redacts_message():
     assert "sk-never-store-me" not in trace
     assert "API key" not in trace
     assert runtime.recent()[0]["result"]["failure"]["category"] == "credentials"
+
+
+def test_usage_and_request_metadata_are_safe_but_reasoning_never_reaches_the_trace():
+    runtime = InvocationRuntime()
+    provider = FourArgumentProvider(Reply(
+        tool_calls=[ToolCall("call-1", "search", {"query": "q"})],
+        model="four-argument-model", stop="tool_calls",
+        usage={"prompt_tokens": 7, "completion_tokens": 4, "raw_detail": 999},
+        request_id="req_123:okay", reasoning_content="HIDDEN-REASONING"))
+
+    runtime.invoke(provider, payload(tools=[ToolDef("search", "Search.", {"type": "object"})]))
+
+    trace = runtime.recent()[0]["result"]
+    assert trace["telemetry"] == {
+        "usage": {"input_tokens": 7, "output_tokens": 4, "total_tokens": 11},
+        "request_id": "req_123:okay", "inner_attempts": "unavailable"}
+    rendered = json.dumps(trace)
+    assert "HIDDEN-REASONING" not in rendered and "raw_detail" not in rendered
+
+
+def test_length_limited_empty_reply_is_a_typed_non_retryable_output_budget_failure(monkeypatch):
+    response = {"id": "chatcmpl-not-a-request-id", "model": "exact-model",
+                "usage": {"prompt_tokens": 5, "completion_tokens": 9},
+                "choices": [{"finish_reason": "length", "message": {"content": None}}]}
+    monkeypatch.setattr(providers, "_request", lambda *args, **kwargs: response)
+    runtime = InvocationRuntime()
+    provider = OpenAICompatible("https://example.invalid/v1", model="exact-model")
+
+    with pytest.raises(ProviderError) as raised:
+        runtime.invoke(provider, payload())
+
+    assert raised.value.category == "output_budget"
+    result = runtime.recent()[0]["result"]
+    assert result["outcome"] == "failed"
+    assert result["observed_model"] == "exact-model"
+    assert result["stop_reason"] == "length"
+    assert result["failure"] == {
+        "category": "output_budget", "retryable": False,
+        "message": "the model reached its output budget before returning a usable result"}
+    assert result["telemetry"]["usage"] == {"input_tokens": 5, "output_tokens": 9,
+                                                 "total_tokens": 14}
+    assert result["telemetry"]["request_id"] == "unavailable"
 
 
 def test_optional_provider_facade_can_replace_a_route_explicitly():

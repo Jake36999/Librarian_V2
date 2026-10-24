@@ -59,6 +59,41 @@ def test_openai_protocol(wire, monkeypatch):
     assert reply.tool_calls == [ToolCall("c9", "search", {"query": "x"})]
 
 
+def test_openai_reasoning_continuation_is_replayed_for_tools_but_never_persisted(vault, monkeypatch):
+    """DeepSeek-style thinking belongs to the live provider continuation only."""
+    sent = []
+    hidden = "HIDDEN-REASONING-MUST-NOT-REACH-THE-SESSION"
+    responses = iter([
+        {"model": "deepseek-test", "usage": {"prompt_tokens": 7, "completion_tokens": 4},
+         "choices": [{"finish_reason": "tool_calls", "message": {
+             "content": None, "reasoning_content": hidden,
+             "tool_calls": [{"id": "open-1", "type": "function", "function": {
+                 "name": "open_session", "arguments": '{"purpose":"explore"}'}}]}}]},
+        {"model": "deepseek-test", "choices": [{"finish_reason": "stop", "message": {
+             "content": "The session is open.", "reasoning_content": "DO-NOT-REPLAY"}}]},
+    ])
+
+    def fake(method, url, headers, body=None, timeout=120):
+        sent.append({"method": method, "url": url, "body": body})
+        return next(responses)
+
+    monkeypatch.setattr(providers, "_request", fake)
+    provider = providers.OpenAICompatible("https://example.invalid/v1", model="deepseek-test")
+    loop = Loop(vault, provider, on_event=lambda event: None)
+
+    turn = loop.send("Start an exploratory session")
+
+    assert turn.reply == "The session is open."
+    second_request = sent[1]["body"]["messages"]
+    assistant_tool_turn = next(message for message in second_request
+                               if message["role"] == "assistant")
+    assert assistant_tool_turn["reasoning_content"] == hidden
+    assert loop.messages[-1].get("reasoning_content") is None
+    session = SessionStore(vault).load(loop.ctx.session)
+    assert hidden not in json.dumps(session.messages)
+    assert "DO-NOT-REPLAY" not in json.dumps(session.messages)
+
+
 def test_anthropic_protocol(wire, monkeypatch):
     fake, sent = wire
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-secret")
@@ -77,6 +112,20 @@ def test_anthropic_protocol(wire, monkeypatch):
                                                   "name": "search", "input": {"query": "sql"}}
     assert body["tools"][0]["input_schema"] == TOOLS[0].parameters
     assert reply.text == "Searching." and reply.tool_calls[0].arguments == {"query": "y"}
+
+
+def test_anthropic_empty_max_tokens_reply_is_an_output_budget_failure(wire, monkeypatch):
+    fake, _sent = wire
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-secret")
+    fake.reply = {"model": "claude-x", "stop_reason": "max_tokens", "content": []}
+    provider = providers.from_settings({"provider": "anthropic", "model": "claude-x"})
+
+    with pytest.raises(providers.OutputBudgetError) as raised:
+        provider.chat("SYSTEM", [], TOOLS)
+
+    assert raised.value.category == "output_budget"
+    assert raised.value.observed_model == "claude-x"
+    assert raised.value.stop_reason == "max_tokens"
 
 
 def test_check_reports_the_listing_never_the_key(wire, monkeypatch):
