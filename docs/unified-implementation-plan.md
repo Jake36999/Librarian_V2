@@ -242,7 +242,7 @@ purpose.
 | --- | --- | --- | --- | --- | --- |
 | INDEX-01 | Small | Add an AST/static architecture test with a narrow documented allowlist. It rejects direct Index or engine_for construction in Core-serving tool paths outside IndexService compatibility code. | BASE-05 | Core and state | The test identifies the current direct callers and prevents newly introduced ones without blocking legitimate offline/migration code. |
 | INDEX-02 | Medium | Migrate the first behaviorally coherent batch of direct engine_for callers to with_engine or with_index, keeping transaction and error behavior unchanged. | INDEX-01 | Core and state | The batch's unit and integration tests pass; no call in the selected modules remains on the allowlist. |
-| INDEX-03 | Medium | Migrate the next bounded batch of serving tools, selected by shared target domain rather than line count. | INDEX-02 | Core and state | The AST allowlist shrinks and the selected workflows preserve output/approval semantics. |
+| INDEX-03 | Medium | Migrate the next bounded batch of serving tools, selected by shared target domain rather than line count. Most remaining callers hand an Engine to a domain function that also calls the clerk or the network (`taxonomy.propose`, `scout.sweep`, `ranking.benchmark`). Such calls can neither run whole on the index worker nor take the engine out of it, so first add an engine proxy that runs each engine call on the IndexService worker. Never use `with_engine(ctx, lambda e: e)`. | INDEX-02 | Core and state | The AST allowlist shrinks and the selected workflows preserve output/approval semantics. |
 | INDEX-04 | Medium | Migrate remaining serving paths, remove the runtime direct fallback where Core is active, and document any intentionally offline-only exceptions. | INDEX-03 | Core and state | The static guard is green with no serving-path exceptions; offline tooling has an explicit non-Core mode. |
 | INDEX-05 | Medium | Add Windows-oriented concurrent read/write/WAL stress fixtures for browser, Obsidian, Cowork, agent, refresh, checkpoint, and writer activity. | INDEX-04, CORE-02 | Core and state | No SQLITE_BUSY, cross-thread use, lost write, or false lease state occurs under repeated stress; checkpoints occur only through IndexService. |
 
@@ -588,3 +588,27 @@ another's files.
 
 G1 is green only when steps 1–6, CORE-06, and INDEX-04 are merged with their
 acceptance tests passing on the owner's Windows host.
+
+## 19. Progress log
+
+Branch `v2-unified-plan`. Each row is merged only after its tests pass under
+the repository venv on the owner's Windows host. Delegated work is recorded
+with its primary model and reviewer (§3.2).
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| BASE-01 | implemented | `ad02715`, `f213fc6`, `1fd49c3` | Baseline in three groups; [manifest](../reports/2026-10-24-baseline-manifest.md). Found and fixed: ChatGPT's UI changes existed only in the built bundle, not in `ui/src`. |
+| BASE-02 | implemented | `a467710` | `doctor` source-identity check; the test run refuses a stale checkout. |
+| ROUTE-01 | implemented | `77315cc` | `POST /api/lead` keeps positions 2–3. Reviewed by Qwen3.5: no defects. |
+| CORE-01 | implemented | `f014b2f` | `process_identity`; **the real-child Host stop test passes**. Drafted with GLM-5.3, reviewed by Qwen3.5 (one finding fixed: a recycled own-PID lease row skipped the stale-lease safeguard). |
+| CORE-02A | implemented | `1a8adf6`, `4cfc6eb` | Shutdown phases; the real-child test runs under the venv redirector. Reviewed by GLM-5.3 (admission race and post-lease write fixed). Also fixed a pre-existing hang: the App never stopped the MCP manager it created, so a failing test with an App hung pytest at exit. |
+| CORE-03 | implemented | `4873894` | Session appends, rewinds and branches go through the Core writer; direct mode kept offline. |
+| ROUTE-02 | implemented (display) | `7a48f0c` | Tri-state tool support; seeded-host aliases compared as one in the tile. Server-side identity rewrite moved to ROUTE-03, because lead overrides are keyed by host id. |
+| CORE-02B | implemented | `3015bc2` | A thread cut off by a stop is parked with an "interrupted" note; `resume_session` continues it. |
+| INDEX-01 | implemented | `557126c` | AST guard; the debt list only shrinks. |
+| INDEX-02 (batch 1) | partial | `8ccce9b` | 4 call sites migrated (43 → 39). Drafted with DeepSeek-V4-Pro and narrowed in review; see INDEX-03 for the engine proxy the rest need. |
+
+Full suite under the repository venv after CORE-02A: 910 passed, 2 skipped,
+1 deselected. **Next in §18 order:** CORE-04A (MCP constrained Core RPC),
+CORE-05A/B, ADAPT-01, CORE-06/07, the INDEX-03 engine proxy, then
+ROUTE-03–05.
