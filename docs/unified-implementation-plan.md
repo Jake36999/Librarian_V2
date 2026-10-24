@@ -607,17 +607,54 @@ with its primary model and reviewer (§3.2).
 | CORE-02B | implemented | `3015bc2` | A thread cut off by a stop is parked with an "interrupted" note; `resume_session` continues it. |
 | INDEX-01 | implemented | `557126c` | AST guard; the debt list only shrinks. |
 | INDEX-02 (batch 1) | partial | `8ccce9b` | 4 call sites migrated (43 → 39). Drafted with DeepSeek-V4-Pro and narrowed in review; see INDEX-03 for the engine proxy the rest need. |
-| (found) writer wait | implemented | `6b02142` | Pre-existing, reproduced on master: in a coordinated Core a question asked inside a writer operation held the writer, so the person's answer queued behind it until the 600 s timeout. The writer now serves its queue while it waits; a stop releases waiting questions and permission requests. |
+| (found) writer wait | superseded | `6b02142` → `8a34cc7` | Pre-existing, reproduced on master: in a coordinated Core a question asked inside a writer operation held the writer, so the person's answer queued behind it until the 600 s timeout. `6b02142` served the queue during the wait, which broke linearity (review P1, below). `8a34cc7` replaces it: the question is recorded inside the operation and waited on after it. |
 | CORE-04A | implemented | `d177d55` | `mcp_server` holds no vault state and forwards every call to `POST /api/mcp/call`. The Core runs it as an agent: tier capped at `contribute`, broker kept, `caller_kind="mcp"`, questions returned rather than awaited. No, stopped, unreachable or non-loopback Core gives `CORE_REQUIRED`. Security review by DeepSeek-V4-Pro: its token/origin concern was already covered by `do_POST`'s checks and is now pinned by a test; its session concern is not an escalation, because `resume_session` already attaches any session. |
 
-**Behaviour changes in CORE-04A, for the owner to confirm:**
+| (review) four P1 gaps | implemented | `8a34cc7` | From ChatGPT's 2026-10-24 review of this branch; each finding was reproduced in code before it was fixed. **Session bypass:** without an attached writer a session write is direct only offline (this process holds the lease, or no live Core does); after this process's Core stopped, or beside another process's live lease row, it is refused with `CORE_REQUIRED`. **Writer linearity:** no operation waits for a person; `_ask` registers its waiter, records the question, and the registry finishes the wait after the writer returns (`PERSON_WAIT`); an ask nested in a macro leaves its question open. **Late work at shutdown:** person and MCP calls are admitted and counted under the admission lock and drained within the grace; waiters and the broker are terminal after a stop. **PID reuse:** the identity is exact (raw Windows FILETIME; Linux boot id and start ticks), and the Host start path that used the PID alone now passes it. Reviewed by GLM-5.3 and Qwen3.5: one finding fixed (a stop dropped an answer delivered just before it); a remaining offline-writer race is documented in `SessionStore._through_core`. |
+| CORE-05A | implemented | `119ded6` | `revisions.py`: a `WriteIntent` (targets, the note it replaces, files that must still be missing) resolved and canonicalised before the broker asks, and opaque HMAC-signed revision tokens bound to vault, canonical path, session, caller kind and fingerprint. `get_note` issues one for the exact bytes it read; each write returns the next, minted inside the writer operation. Agent and MCP callers must bring one to replace an existing note (`REVISION_REQUIRED`); one issued for anything else is refused (`REVISION_REFUSED`); a person's own action needs none. Inventory below. |
+| CORE-05B | implemented | `119ded6` | `edit_note`, `write_note(mode="replace")` and `update_project` pass their revision as the writer's precondition; an edit made since the read raises `PreconditionChangedError` and becomes a `write_conflict` checkpoint, offline too. `archive_note` and `promote_offering` declare their targets. Reviewed by DeepSeek-V4-Pro: one finding fixed (a replace on a note missing at resolution needed no revision, so a note another write made in between was replaced unread; it now carries a still-missing precondition). |
 
-- In Ask mode, an MCP write now waits for a person in the Librarian window.
-  Choose Auto to rely on the MCP host's own approval prompts.
-- MCP sampling is no longer used for clerk tasks. The Core's clerk, or the
-  plugin's clerk agent (`clerk_next`/`clerk_submit`), answers them.
-  **CORE-04C (planned):** a Core-to-host sampling callback, only if wanted.
+**CORE-05 write inventory.** CAS coverage is claimed only where a token is
+checked:
 
-Full suite under the repository venv after CORE-02A: 910 passed, 2 skipped,
-1 deselected. **Next in §18 order:** CORE-05A/B, ADAPT-01, CORE-06/07, the
-INDEX-03 engine proxy, then ROUTE-03–05.
+| Write | Targets declared | Revision checked | Notes |
+| --- | --- | --- | --- |
+| `edit_note`, `update_project` | the note | yes | Always replace an existing note. |
+| `write_note` | the note | when it replaces | A new note needs none, but must still be missing when the write runs. |
+| `archive_note` | the note and its `Archive/` place | no | A move of the librarian's own note; nothing is rewritten in place. |
+| `promote_offering` | the `Offerings/` destination | no | Creates only; the staged draft is the librarian's own state under `.librarian/`. |
+| `staging_decide` | not yet | no | **Not covered.** A batch across item kinds: sources and imports create notes, `topic` rewrites `About/Topics.md`, `lens` writes SQLite. Each kind needs its own resolution (follow-up). |
+| `create_project`, other writers | registry best-effort | no | Unchanged. |
+
+**Behaviour change in CORE-05:** an agent or MCP client must read a note
+(`get_note`) before replacing it, and pass back the `revision`; the
+refusal says so. Tool cards for the three tools say it too.
+
+**CORE-04A behaviour changes, confirmed by the owner (2026-10-24):** Ask-mode
+MCP writes wait for a person in the Librarian window, and MCP sampling is no
+longer used for clerk tasks. Options ChatGPT's review raised, not adopted
+yet:
+
+- Return a structured `approval_pending` result with a resume token in Ask
+  mode, instead of holding the MCP call for up to ten minutes.
+- Either build **CORE-04C** (a Core-to-host sampling callback) or show a
+  visible "Core clerk required; MCP sampling unavailable" state in the plugin.
+- Give `CORE_REQUIRED` a one-click "open or start Librarian for this vault"
+  recovery path in the plugin.
+
+**Known limits and follow-ups from the review:**
+
+- A macro step's permission check in Ask mode still waits inside the macro's
+  writer operation. It holds the writer without interleaving (linearity
+  holds), and it already did on master. Fix with the macro checkpoint
+  approval standing in for its steps' permissions.
+- ROUTE-02 fixed the tile; legacy and provider aliases are not yet canonical
+  on the server's route and readiness path (ROUTE-03).
+- INDEX-02: commit real-Core context tests for the batch-1 migrations before
+  expanding the batch.
+- G1 (Core lifecycle) stays open: the review's P1s are fixed, but CORE-06/07
+  remain, and concurrency interleavings need the race tests added here kept
+  green.
+
+Full suite under the repository venv after CORE-05: 959 passed, 2 skipped, 1 deselected. **Next in
+§18 order:** ADAPT-01, CORE-06/07, the INDEX-03 engine proxy, then ROUTE-03–05.
