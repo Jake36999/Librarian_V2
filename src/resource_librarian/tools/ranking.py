@@ -4,7 +4,7 @@ from __future__ import annotations
 from .. import ranking
 from ..registry import Card, Context, REGISTRY
 from ..rules import Refusal
-from .library import engine_for
+from .library import engine_for, with_engine
 
 
 def _require_person(ctx: Context, action: str) -> None:
@@ -26,7 +26,7 @@ def ranking_status(ctx: Context) -> dict:
                          "It changes no live ranking; a benchmark and a person's selection still follow"),
                returns=("generated", "candidate"))
 def ranking_candidate_generate(ctx: Context) -> dict:
-    return ranking.generate(ctx.vault, engine_for(ctx).h)
+    return ranking.generate(ctx.vault, with_engine(ctx, lambda engine: dict(engine.h)))
 
 
 @REGISTRY.tool("ranking_benchmark", tier="contribute", effect="write", scope="library",

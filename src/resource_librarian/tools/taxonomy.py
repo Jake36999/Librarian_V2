@@ -5,7 +5,7 @@ from __future__ import annotations
 from .. import taxonomy
 from ..promote import UNFILED
 from ..registry import Card, Context, tool
-from .library import engine_for
+from .library import engine_for, with_engine
 from .staging import clerk_endpoint
 
 
@@ -17,7 +17,7 @@ from .staging import clerk_endpoint
 def topics_list(ctx: Context) -> dict:
     from ..staging import StagingStore
     counts: dict[str, int] = {}
-    for s in taxonomy.sources(engine_for(ctx)):
+    for s in with_engine(ctx, taxonomy.sources):
         counts[s["topic"]] = counts.get(s["topic"], 0) + 1
     return {"topics": [{"topic": t, "sources": counts.get(t, 0)} for t in ctx.vault.topics()],
             "unfiled": counts.get(UNFILED, 0),
