@@ -169,13 +169,14 @@ var Librarian = (() => {
     tool(name, args = {}, session = "") {
       return this.post(`/api/tool/${encodeURIComponent(name)}`, { arguments: args, session });
     }
-    /** The event stream. Reconnects from the last sequence number seen. */
-    events(onEvent, onStatus) {
-      let last = 0;
+    /** The event stream. Reconnects from an epoch-bound sequence cursor. */
+    events(cursor, onEvent, onStatus) {
+      let last = Number.isInteger(cursor?.last_seq) && (cursor?.last_seq ?? -1) >= 0 ? Number(cursor?.last_seq) : 0;
+      let epoch = typeof cursor?.epoch === "string" ? cursor.epoch : "";
       let source = null;
       let closed = false;
       const open = () => {
-        const url = `${this.opts.base}/api/events?token=${encodeURIComponent(this.opts.token)}&since=${last}`;
+        const url = `${this.opts.base}/api/events?token=${encodeURIComponent(this.opts.token)}&since=${last}&epoch=${encodeURIComponent(epoch)}`;
         source = new EventSource(url);
         source.onopen = () => onStatus(true);
         source.onmessage = () => void 0;
@@ -186,7 +187,14 @@ var Librarian = (() => {
         };
         const handle = (message) => {
           const event = JSON.parse(message.data);
+          if (event.type === "resync_required") {
+            if (typeof event.epoch === "string") epoch = event.epoch;
+            if (Number.isInteger(event.seq) && event.seq >= 0) last = event.seq;
+            onEvent(event);
+            return;
+          }
           if (event.seq <= last) return;
+          if (typeof event.epoch === "string" && event.epoch) epoch = event.epoch;
           last = event.seq;
           onEvent(event);
         };
@@ -224,7 +232,8 @@ var Librarian = (() => {
     "checkpoint_created",
     "checkpoint_resolved",
     "route_health_changed",
-    "workflow_preflight"
+    "workflow_preflight",
+    "resync_required"
   ];
 
   // src/dom.ts
@@ -5830,7 +5839,7 @@ var Librarian = (() => {
         this.warn(`The core did not answer: ${e.message}. Is \`resource-librarian app\` running?`);
         return;
       }
-      this.stopEvents = this.api.events((event) => this.onEvent(event), (live) => {
+      this.stopEvents = this.api.events(this.state.event_stream, (event) => this.onEvent(event), (live) => {
         this.live.className = `live ${live ? "on" : "off"}`;
         this.live.textContent = live ? "\u25CF" : "\u25CB reconnecting";
         if (live) void this.refresh();
@@ -5853,6 +5862,10 @@ var Librarian = (() => {
       for (const request of this.state.pending ?? []) this.chat.handle({ seq: 0, type: "permission_request", ...request });
     }
     onEvent(event) {
+      if (event.type === "resync_required") {
+        void this.refresh().catch((error) => this.warn(error.message));
+        return;
+      }
       this.chat.handle(event);
       switch (event.type) {
         case "mode_changed":

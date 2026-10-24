@@ -94,10 +94,17 @@ class ApiError(Exception):
 # ------------------------------------------------------------------- events
 
 class Hub:
-    """Fan-out of events to every open stream, with a short memory."""
+    """Fan-out of epoch-bound events to every open stream, with short memory.
+
+    Sequence numbers are process-local. A fresh Core can begin again at one,
+    so an event-stream cursor is meaningful only with this Hub's random epoch.
+    Session logs remain the durable source for session state; this class never
+    attempts to reconstruct actions from its bounded in-memory event list.
+    """
 
     def __init__(self, keep: int = 500):
         self._lock = threading.Lock()
+        self._epoch = secrets.token_urlsafe(12)
         self._seq = 0
         self._recent: deque[dict[str, Any]] = deque(maxlen=keep)
         self._listeners: list[Callable[[dict[str, Any]], None]] = []
@@ -105,7 +112,10 @@ class Hub:
     def publish(self, event: dict[str, Any]) -> dict[str, Any]:
         with self._lock:
             self._seq += 1
-            stamped = {"seq": self._seq, "at": round(time.time(), 3), **event}
+            # The Core owns stream identity. A tool/event producer cannot
+            # forge a sequence, timestamp, or epoch through its payload.
+            stamped = {**event, "seq": self._seq, "at": round(time.time(), 3),
+                       "epoch": self._epoch}
             self._recent.append(stamped)
             listeners = list(self._listeners)
         for listener in listeners:
@@ -119,9 +129,44 @@ class Hub:
         with self._lock:
             return self._seq
 
+    def cursor(self) -> dict[str, Any]:
+        """The only cursor a client may use to reconnect to this Core."""
+        with self._lock:
+            return {"epoch": self._epoch, "last_seq": self._seq}
+
     def since(self, seq: int) -> list[dict[str, Any]]:
         with self._lock:
             return [e for e in self._recent if e["seq"] > seq]
+
+    def resume(self, since: int, epoch: str = "") -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+        """Return replayable events or one synthetic instruction to refresh.
+
+        The instruction is deliberately not published: it must not advance the
+        shared sequence or look like a durable action. The browser fetches
+        ``/api/state`` after it, preserving the distinction between Hub events
+        and canonical Core/session state.
+        """
+        with self._lock:
+            current = {"epoch": self._epoch, "last_seq": self._seq}
+            reason = ""
+            if epoch and epoch != self._epoch:
+                reason = "epoch_changed"
+            elif since > 0 and not epoch:
+                reason = "epoch_required"
+            elif since > self._seq:
+                reason = "cursor_ahead"
+            # A zero-sized retention window is useful in constrained hosts;
+            # it must also report a gap rather than silently pretending that
+            # an event it discarded never happened.
+            elif since < self._seq and (not self._recent or since < self._recent[0]["seq"] - 1):
+                reason = "history_expired"
+            if reason:
+                return [], {
+                    "type": "resync_required", "seq": current["last_seq"],
+                    "epoch": current["epoch"], "reason": reason,
+                    "state_url": "/api/state", "instruction": "refresh_state",
+                }
+            return [dict(event) for event in self._recent if event["seq"] > since], None
 
     def subscribe(self, listener: Callable[[dict[str, Any]], None]) -> Callable[[], None]:
         with self._lock:
@@ -3108,7 +3153,7 @@ class App:
                 "session": self.session_view(),
                 "actions": [a.public() for a in self.actions.values()],
                 "queued_actions": list(QUEUED), "queued_inputs": self.queued_inputs(),
-                "last_event": self.hub.last()}
+                "last_event": self.hub.last(), "event_stream": self.hub.cursor()}
 
     def _effort_view(self) -> dict[str, Any]:
         from . import effort
@@ -3230,7 +3275,14 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                                                  "reload the page"})
             try:
                 if url.path == "/api/events":
-                    return self._events(int((query.get("since") or ["0"])[0] or 0))
+                    raw_since = (query.get("since") or ["0"])[0]
+                    try:
+                        since = int(raw_since or 0)
+                    except (TypeError, ValueError) as exc:
+                        raise ApiError(400, "since is a non-negative integer") from exc
+                    if since < 0:
+                        raise ApiError(400, "since is a non-negative integer")
+                    return self._events(since, str((query.get("epoch") or [""])[0] or ""))
                 if url.path == "/api/meta":
                     return self._json(200, app.meta())
                 if url.path == "/api/state":
@@ -3571,14 +3623,18 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                                            "frame-ancestors 'none'",
                 "Referrer-Policy": "no-referrer"})
 
-        def _events(self, since: int) -> None:
+        def _events(self, since: int, epoch: str = "") -> None:
             waiting: deque[dict[str, Any]] = deque()
             ready = threading.Event()
 
             def listener(event: dict[str, Any]) -> None:
                 waiting.append(event)
                 ready.set()
+            # Subscribe before taking the replay snapshot. A concurrent event
+            # can appear in both queues, but the sequence-aware browser safely
+            # de-duplicates it; taking the snapshot first could lose it.
             stop = app.hub.subscribe(listener)
+            replay, resync = app.hub.resume(since, epoch)
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream")
             self.send_header("Cache-Control", "no-store")
@@ -3587,7 +3643,9 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
             self.send_header("Connection", "keep-alive")
             self.end_headers()
             try:
-                for event in app.hub.since(since):
+                if resync is not None:
+                    self._event(resync)
+                for event in replay:
                     self._event(event)
                 while not self.server.closing:                  # type: ignore[attr-defined]
                     if not ready.wait(15):

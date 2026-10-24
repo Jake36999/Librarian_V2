@@ -16,7 +16,8 @@ export class ApiError extends Error {
   }
 }
 
-export type Event = { seq: number; type: string; [key: string]: unknown };
+export type Event = { seq: number; type: string; epoch?: string; [key: string]: unknown };
+export type EventCursor = { epoch?: string; last_seq?: number };
 
 export class Api {
   constructor(private opts: Options) {}
@@ -51,13 +52,17 @@ export class Api {
     return this.post(`/api/tool/${encodeURIComponent(name)}`, { arguments: args, session });
   }
 
-  /** The event stream. Reconnects from the last sequence number seen. */
-  events(onEvent: (e: Event) => void, onStatus: (live: boolean) => void): () => void {
-    let last = 0;
+  /** The event stream. Reconnects from an epoch-bound sequence cursor. */
+  events(cursor: EventCursor | undefined, onEvent: (e: Event) => void,
+         onStatus: (live: boolean) => void): () => void {
+    let last = Number.isInteger(cursor?.last_seq) && (cursor?.last_seq ?? -1) >= 0
+      ? Number(cursor?.last_seq) : 0;
+    let epoch = typeof cursor?.epoch === "string" ? cursor.epoch : "";
     let source: EventSource | null = null;
     let closed = false;
     const open = () => {
-      const url = `${this.opts.base}/api/events?token=${encodeURIComponent(this.opts.token)}&since=${last}`;
+      const url = `${this.opts.base}/api/events?token=${encodeURIComponent(this.opts.token)}` +
+        `&since=${last}&epoch=${encodeURIComponent(epoch)}`;
       source = new EventSource(url);
       source.onopen = () => onStatus(true);
       source.onmessage = () => undefined;
@@ -68,7 +73,17 @@ export class Api {
       };
       const handle = (message: MessageEvent) => {
         const event = JSON.parse(message.data) as Event;
+        // A Core restart can reuse low sequence numbers. Its resync marker
+        // must be handled before the normal de-duplication check, otherwise a
+        // browser silently discards the instruction to refresh canonical state.
+        if (event.type === "resync_required") {
+          if (typeof event.epoch === "string") epoch = event.epoch;
+          if (Number.isInteger(event.seq) && event.seq >= 0) last = event.seq;
+          onEvent(event);
+          return;
+        }
         if (event.seq <= last) return;
+        if (typeof event.epoch === "string" && event.epoch) epoch = event.epoch;
         last = event.seq;
         onEvent(event);
       };
@@ -86,5 +101,5 @@ export const EVENT_TYPES = [
   "question_asked", "question_answered",
   "action_started", "action_progress", "action_done", "library_switched", "reply_reviewed",
   "checkpoint_created", "checkpoint_resolved",
-  "route_health_changed", "workflow_preflight",
+  "route_health_changed", "workflow_preflight", "resync_required",
 ];
