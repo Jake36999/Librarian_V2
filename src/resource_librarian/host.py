@@ -81,6 +81,18 @@ def _alive(pid: int, started: Any = None) -> bool:
     return process_identity.is_alive(pid, started)
 
 
+def _shutdown_phases(vault: str) -> list[dict[str, Any]]:
+    """The phases a stopped Core recorded (CORE-02A), so the tray can say
+    what happened rather than a generic "still draining"."""
+    try:
+        row = json.loads((Path(vault) / ".librarian" / "runtime" / "shutdown.json")
+                         .read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    phases = row.get("phases") if isinstance(row, dict) else None
+    return [p for p in phases if isinstance(p, dict)] if isinstance(phases, list) else []
+
+
 class HostManager:
     @staticmethod
     def _same_vault(left: str, right: str) -> bool:
@@ -257,7 +269,7 @@ class HostManager:
         if data:
             _save({**data, "status": "stopped", "stopped_at": time.time()})
         connection.remove(chosen_vault, pid=pid, token=str(record.get("token") or ""))
-        return {"stopped": True, "pid": pid, "reply": reply}
+        return {"stopped": True, "pid": pid, "reply": reply, "phases": _shutdown_phases(chosen_vault)}
 
     def restart(self, vault: str = "", *, open_browser: bool = False) -> dict[str, Any]:
         before = _load()

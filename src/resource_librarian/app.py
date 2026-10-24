@@ -292,6 +292,10 @@ class App:
         self.watcher: VaultWatcher | None = None
         self.writer: VaultWriter | None = None
         self._closed = False
+        # Shutdown is observable (CORE-02A): new work is refused once it
+        # begins, and each phase is recorded for the Host and the tray.
+        self._admitting = True
+        self.shutdown_phases: list[dict[str, Any]] = []
         if coordinate:
             self.coordinator = VaultCoordinator(vault, protocol_version=PROTOCOL_VERSION)
             self.coordinator.acquire(takeover=takeover)
@@ -381,27 +385,69 @@ class App:
             self.loop.ctx.session = None
         self.close_runtime()
 
+    #: How long shutdown waits for a cancelled chat turn or action to stop.  A
+    #: turn blocked inside a provider request sees its cancel event only when
+    #: that request returns (ADAPT-04B makes it abortable), so this bounds the
+    #: wait; it is not a stop-latency promise.
+    STOP_GRACE_SECONDS = 5.0
+
+    def _admit(self, what: str) -> None:
+        if not self._admitting:
+            raise ApiError(503, f"the Core is stopping; {what} was not started")
+
     def close_runtime(self) -> None:
         """Flush mutable state and release this vault's process lease once.
 
         A tray/adapter calls this only for an explicit stop or after a switch
         has allowed work to finish.  It deliberately does not implement an
-        idle timer or browser-client reference counting.
+        idle timer or browser-client reference counting.  The phases are
+        recorded in order (CORE-02A) in ``.librarian/runtime/shutdown.json``.
         """
         if self._closed:
             return
         self._closed = True
+        phases = self.shutdown_phases
+
+        def phase(name: str, **detail: Any) -> None:
+            phases.append({"phase": name, "at": now_iso(), **detail})
+
+        self._admitting = False
+        phase("admission_closed")
+        # Cancel before closing shared resources: a turn or action stops at
+        # its next step boundary instead of writing into a closed writer.
+        with self._lock:
+            turn = self._turn_cancel
+        if turn is not None:
+            turn.set()
+        running = [action for action in self.actions.values() if action.status == "running"]
+        for action in running:
+            action.cancel.set()
+        deadline = time.monotonic() + self.STOP_GRACE_SECONDS
+        while (self.busy or any(a.status == "running" for a in running)) and \
+                time.monotonic() < deadline:
+            time.sleep(0.05)
+        phase("work_cancelled",
+              turn="none" if turn is None else "still_running" if self.busy else "stopped",
+              actions={action.id: action.status for action in running})
         # Stop observing first: a final atomic replacement from the writer
         # must not be reclassified as a direct human edit while shutdown is
         # draining the queue.
         if self.watcher is not None:
             self.watcher.close()
         if self.writer is not None:
-            self.writer.flush(timeout=10.0)
+            drained = self.writer.flush(timeout=10.0)
             self.writer.close(timeout=10.0)
+            phase("writer_drained", drained=bool(drained))
         self.index_service.close()
+        phase("index_closed")
         if self.coordinator is not None:
             self.coordinator.release()
+            phase("lease_released")
+            try:
+                atomic_write_text(self.vault.librarian / "runtime" / "shutdown.json",
+                                  json.dumps({"phases": phases}, indent=2) + "\n")
+            except OSError:
+                pass                  # diagnostics never block a stop
 
     def request_host_stop(self, *, force: bool = False) -> dict[str, Any]:
         """Validate an explicit Host stop before its server is shut down.
@@ -1800,6 +1846,7 @@ class App:
         if not text:
             raise ApiError(400, "an empty message")
         with self._lock:
+            self._admit("this message")
             if self.busy:
                 raise ApiError(409, "the librarian is still answering; wait, or cancel")
             loop = self._loop()
@@ -1975,6 +2022,7 @@ class App:
     # -- queued actions -----------------------------------------------------
     def start_action(self, name: str, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
         from .tools.workflows import _library, _router
+        self._admit(f"the action {name!r}")
         action = Action(secrets.token_hex(4), name)
         extras = {**self._extras(), "cancel": action.cancel}
 

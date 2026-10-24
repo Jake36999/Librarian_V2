@@ -44,8 +44,16 @@ def test_windows_tray_companion_is_explicit_and_release_hashed():
 def _child_pid_is_reliable() -> bool:
     """Some restricted Windows runners virtualise process IDs across a
     shell boundary.  The Host quite correctly uses OS PIDs, so an end-to-end
-    lifecycle assertion cannot be meaningful on those runners."""
-    child = subprocess.Popen([sys.executable, "-c", "import os; print(os.getpid())"],
+    lifecycle assertion cannot be meaningful on those runners.
+
+    Probe with the *base* interpreter: a venv's python.exe is a redirector
+    that starts the base interpreter as a child, so its Popen PID never
+    matches.  That is the launch path Librarian.bat and the Host use, and the
+    Host follows the Core's published PID for it - so it must be tested, not
+    skipped (CORE-02A).
+    """
+    child = subprocess.Popen([getattr(sys, "_base_executable", sys.executable), "-c",
+                              "import os; print(os.getpid())"],
                              stdout=subprocess.PIPE, text=True)
     stdout, _ = child.communicate(timeout=10)
     return child.pid == int(stdout.strip())
@@ -94,6 +102,10 @@ def test_host_managed_core_starts_and_stops_cleanly(vault, tmp_path, monkeypatch
         stopped = manager.stop(str(vault.root))
         assert stopped["stopped"] is True
         assert manager.status()["status"] == "stopped"
+        # The Core recorded its shutdown in order (CORE-02A).
+        assert [p["phase"] for p in stopped["phases"]] == [
+            "admission_closed", "work_cancelled", "writer_drained", "index_closed",
+            "lease_released"]
     finally:
         # The normal assertion path already stopped it.  This second explicit
         # request is harmless and avoids leaving a child if a diagnostic
