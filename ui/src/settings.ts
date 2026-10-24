@@ -671,7 +671,8 @@ export class Settings {
     const chooseLead = async (checkpointId = "", override = "") => {
       if (!model.value.trim()) { status.textContent = "Enter or discover a model id first."; return; }
       try {
-        await this.api.post("/api/tiers", { tiers: [{ host_id: row.id, model: model.value.trim() }],
+        // Position 1 only: the Scribe and Clerk positions are kept (ROUTE-01).
+        await this.api.post("/api/lead", { route: { host_id: row.id, model: model.value.trim() },
           ...(checkpointId ? { checkpoint_id: checkpointId } : {}), ...(override ? { override } : {}) });
         status.textContent = `${model.value} is the selected lead route.`;
         clear(confirm);

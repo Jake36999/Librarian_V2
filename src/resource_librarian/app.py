@@ -853,7 +853,7 @@ class App:
         if status.get("status") != "eligible":
             return {"selected": False, "lead": wanted, "probe": probe, "lead_status": status,
                     "reason": "the account probe did not match current release evidence"}
-        selected = self.set_tiers([{"host_id": host_id, "model": model}])
+        selected = self.set_lead({"host_id": host_id, "model": model})
         self.hub.publish({"type": "release_lead_selected", "lead": wanted,
                           "host_id": host_id, "model": model})
         return {"selected": True, "lead": wanted, "probe": probe, "tiers": selected["tiers"],
@@ -2343,6 +2343,18 @@ class App:
         self.hub.publish({"type": "tiers_changed", "tiers": clean})
         return {"tiers": clean, "lead": self.lead_status(clean)}
 
+    def set_lead(self, route: Any, override: str = "", checkpoint_id: str = "") -> dict[str, Any]:
+        """Assign position 1 only (ROUTE-01).
+
+        "Use as lead" and the release-lead selection used to send a one-item
+        tier list, which silently removed the Scribe and Clerk positions.  The
+        stored positions 2-3 pass through the same validation unchanged.
+        """
+        if not isinstance(route, dict):
+            raise ApiError(400, "lead is one {provider|host_id, model}")
+        kept = [dict(t) for t in (self.settings.data.get("tiers") or [])[1:3] if isinstance(t, dict)]
+        return self.set_tiers([route, *kept], override, checkpoint_id)
+
     def lead_status(self, tiers: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         tiers = self.settings.data.get("tiers") or [] if tiers is None else tiers
         if not tiers:
@@ -3222,6 +3234,9 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
             if path == "/api/tiers":
                 return app.set_tiers(body.get("tiers") or [], str(body.get("override") or ""),
                                      str(body.get("checkpoint_id") or ""))
+            if path == "/api/lead":
+                return app.set_lead(body.get("route"), str(body.get("override") or ""),
+                                    str(body.get("checkpoint_id") or ""))
             if path == "/api/sandbox/run_file":
                 # A person's "Run this script" (EXECUTION_SANDBOX_ONLY): their own call
                 return app.person_call("sandbox_run_file", {"path": str(body.get("path") or "")})

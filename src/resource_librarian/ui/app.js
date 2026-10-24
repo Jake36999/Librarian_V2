@@ -2954,8 +2954,8 @@ var Librarian = (() => {
           return;
         }
         try {
-          await this.api.post("/api/tiers", {
-            tiers: [{ host_id: row.id, model: model.value.trim() }],
+          await this.api.post("/api/lead", {
+            route: { host_id: row.id, model: model.value.trim() },
             ...checkpointId ? { checkpoint_id: checkpointId } : {},
             ...override ? { override } : {}
           });

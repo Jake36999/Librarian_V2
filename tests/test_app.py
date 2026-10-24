@@ -540,6 +540,28 @@ def test_the_persons_own_calls_and_settings(served):
     assert client.post("/api/tiers", {"tiers": [{"provider": "nope", "model": "x"}]})[0] == 400
 
 
+def test_choosing_a_lead_keeps_the_scribe_and_clerk_positions(served, vault):
+    """ROUTE-01: "Use as lead" used to send a one-item tier list and silently
+    drop positions 2-3."""
+    from resource_librarian.app import Settings
+    app, client, model = served
+    three = [{"provider": "deepinfra", "model": "lead-a"},
+             {"provider": "deepinfra", "model": "scribe-b"},
+             {"provider": "deepinfra", "model": "clerk-c"}]
+    assert client.post("/api/tiers", {"tiers": three, "override": "test"})[0] == 200
+    status, body = client.post("/api/lead", {"route": {"provider": "deepinfra", "model": "lead-z"},
+                                             "override": "test"})
+    assert status == 200
+    assert [t["model"] for t in body["tiers"]] == ["lead-z", "scribe-b", "clerk-c"]
+    # Reopen: the saved settings carry all three positions.
+    assert [t["model"] for t in Settings(vault).data["tiers"]] == ["lead-z", "scribe-b", "clerk-c"]
+    # With only a lead chosen, choosing another adds no phantom positions.
+    client.post("/api/tiers", {"tiers": three[:1], "override": "test"})
+    assert [t["model"] for t in client.post("/api/lead", {"route": three[1], "override": "test"})[1]["tiers"]] \
+        == ["scribe-b"]
+    assert client.post("/api/lead", {"route": "not-a-route"})[0] == 400
+
+
 def test_tiers_fall_back_upward(served):
     app, client, model = served
     client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "big"}], "override": "test"})
