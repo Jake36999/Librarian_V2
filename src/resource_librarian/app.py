@@ -213,6 +213,14 @@ PROFILE_FIELDS = ("modality", "best_for", "license_class", "suggested_tier", "co
                   "price_input_per_1m", "price_output_per_1m", "tool_calling", "reasoning")
 
 
+def _tri_state(value: Any) -> bool | None:
+    """True, False, or None for "not yet assessed" - never a guessed False."""
+    if isinstance(value, bool):
+        return value
+    text = str(value).strip().casefold() if value is not None else ""
+    return True if text == "true" else False if text == "false" else None
+
+
 def _shipped_profiles() -> dict[tuple[str, str], dict[str, Any]]:
     """The model catalogues shipped with the package (standard/model_catalog/*.json)."""
     out: dict[tuple[str, str], dict[str, Any]] = {}
@@ -2323,8 +2331,10 @@ class App:
                     "context_length": profile.get("context_length"),
                     "price_input_per_1m": profile.get("price_input_per_1m"),
                     "price_output_per_1m": profile.get("price_output_per_1m"),
-                    "tool_calling": bool(profile.get("tool_calling")),
-                    "reasoning": bool(profile.get("reasoning"))}
+                    # Tri-state (ROUTE-02): an unassessed capability is None, not
+                    # False - only an explicit "no" may block a lead placement.
+                    "tool_calling": _tri_state(profile.get("tool_calling")),
+                    "reasoning": _tri_state(profile.get("reasoning"))}
             elif (provider, m.lower()) in pending:
                 entry["profiling"] = "queued"
             out.append(entry)

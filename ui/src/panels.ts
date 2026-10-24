@@ -35,8 +35,21 @@ function profileMeta(m: any): string {
   if (p.price_input_per_1m || p.price_output_per_1m) {
     parts.push(`$${p.price_input_per_1m ?? 0} / $${p.price_output_per_1m ?? 0} per 1M`);
   }
-  parts.push(p.tool_calling ? "tool calling" : "no tool calling");
+  // Tri-state (ROUTE-02): unknown is not "no", and only an explicit "no" blocks leading.
+  parts.push(p.tool_calling === true ? "tool calling"
+    : p.tool_calling === false ? "no tool calling" : "tool calling unknown");
   return parts.filter(Boolean).join(" · ");
+}
+
+// Seeded hosts have two names: the picker lists `deepinfra`, while stored and
+// migrated routes use the registry id `preset-deepinfra`.  Compare them as one.
+const SEEDED = new Set(["deepinfra", "openai", "anthropic", "local"]);
+function sameHost(a: unknown, b: unknown): boolean {
+  const norm = (v: unknown) => {
+    const s = String(v ?? "");
+    return s.startsWith("preset-") && SEEDED.has(s.slice("preset-".length)) ? s.slice("preset-".length) : s;
+  };
+  return norm(a) === norm(b);
 }
 
 // The adapter line is protocol evidence from the Core, not a reliability verdict.
@@ -330,7 +343,7 @@ export class ModelTile {
   private async pick(provider: string, model: string): Promise<void> {
     if (this.slot) return this.pickSlot(provider, model);
     const tiers = this.tiers();
-    const at = tiers.findIndex((t) => t.provider === provider && t.model === model);
+    const at = tiers.findIndex((t) => sameHost(t.provider, provider) && t.model === model);
     const entry = ((this.listings.get(provider)?.models ?? []) as any[]).find((m) => m.id === model);
     if (at >= 0) {
       this.toast = `${model} is tier ${at + 1}. Right-click it, press Delete, or use Clear selection to start again.`;
@@ -440,9 +453,9 @@ export class ModelTile {
         h("h4", {}, h("span", { class: `dot ${listing.status === "ready" ? "" : listing.status === "no key" ? "nokey" : "off"}` }), `${label} · ${status}`),
         models.length ? h("div", { class: "grid" }, models.slice(0, 60).map((m) => {
           // In a service slot, "chosen" is the slot's own model; otherwise its tier.
-          const inSlot = this.slot?.current?.provider === p && this.slot?.current?.model === m.id;
+          const inSlot = sameHost(this.slot?.current?.provider, p) && this.slot?.current?.model === m.id;
           const at = this.slot ? (inSlot ? 0 : -1)
-            : tiers.findIndex((t) => t.provider === p && t.model === m.id);
+            : tiers.findIndex((t) => sameHost(t.provider, p) && t.model === m.id);
           const clear = () => (this.slot ? this.clearSlot() : this.clearAll());
           const rec = at < 0 && recommended(m);
           const readiness = this.readinessChips(p, String(m.id));

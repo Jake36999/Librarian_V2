@@ -731,6 +731,23 @@ def test_models_shows_profiled_queued_and_unprofiled(served, monkeypatch):
         "profiling" not in by_id["acme/still-unprofiled"]
 
 
+def test_unassessed_tool_calling_is_unknown_not_false(served, monkeypatch):
+    """ROUTE-02: `bool(None)` used to turn "not yet assessed" into "no", and the
+    tile blocks an explicit "no" from leading."""
+    from resource_librarian import app as app_module
+    app, client, model = served
+    model.provider.models = lambda: ["acme/yes", "acme/no", "acme/unassessed"]
+    shipped = {("deepinfra", "acme/yes"): {"tool_calling": True},
+               ("deepinfra", "acme/no"): {"tool_calling": "false"},
+               ("deepinfra", "acme/unassessed"): {"modality": "Text_Generation"}}
+    monkeypatch.setattr(app_module, "_shipped_profiles", lambda: shipped)
+    by_id = {m["id"]: m for m in client.get("/api/models?provider=deepinfra")[1]["models"]}
+    assert by_id["acme/yes"]["profile"]["tool_calling"] is True
+    assert by_id["acme/no"]["profile"]["tool_calling"] is False
+    assert by_id["acme/unassessed"]["profile"]["tool_calling"] is None
+    assert by_id["acme/unassessed"]["profile"]["reasoning"] is None
+
+
 def REGISTRY_CALL(ctx, name, **arguments):
     from resource_librarian.registry import REGISTRY
     result = REGISTRY.call(name, arguments, ctx)
