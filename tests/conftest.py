@@ -4,8 +4,24 @@ from pathlib import Path
 
 import pytest
 
+import resource_librarian
 from resource_librarian.init import init
 from resource_librarian.vault import Vault
+
+CHECKOUT_SRC = Path(__file__).resolve().parents[1] / "src"
+
+
+def pytest_configure(config):
+    """Refuse to test another checkout's code (BASE-02).
+
+    A stale editable install elsewhere on the machine made bare `pytest` import
+    a sibling clone (2026-10-24), so its results described different code.
+    """
+    imported = Path(resource_librarian.__file__).resolve()
+    if CHECKOUT_SRC not in imported.parents:
+        pytest.exit(f"tests imported resource_librarian from {imported.parent}, not this "
+                    f"checkout's {CHECKOUT_SRC}. Run `.venv\\Scripts\\python.exe -m pytest`, or "
+                    f"set PYTHONPATH=src.", returncode=4)
 
 
 @pytest.fixture(autouse=True)
