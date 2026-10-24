@@ -480,6 +480,23 @@ class Operation:
     detail: str = ""
 
 
+# Writer threads, so a wait for a person on one keeps serving its queue.
+_WRITER_THREADS: dict[threading.Thread, "VaultWriter"] = {}
+_WRITER_THREADS_GUARD = threading.Lock()
+
+
+def wait_for_person(event: threading.Event, timeout: float | None) -> bool:
+    """Wait for a person's answer; on a vault writer's thread, keep serving it.
+
+    Before this, a question asked inside a writer operation held the writer,
+    so the person's answer - also a write - waited behind it until the
+    question timed out, and the thread was parked unanswered.
+    """
+    with _WRITER_THREADS_GUARD:
+        writer = _WRITER_THREADS.get(threading.current_thread())
+    return writer.serve_until(event, timeout) if writer is not None else event.wait(timeout)
+
+
 class VaultWriter:
     """One serial worker for Librarian-originated mutations in a vault."""
 
@@ -491,6 +508,8 @@ class VaultWriter:
         self._thread = threading.Thread(target=self._run, daemon=True,
                                         name=f"librarian-writer-{vault.root.name}")
         self._thread.start()
+        with _WRITER_THREADS_GUARD:
+            _WRITER_THREADS[self._thread] = self
 
     @property
     def log_path(self) -> Path:
@@ -540,34 +559,59 @@ class VaultWriter:
     def _run(self) -> None:
         while not self._closed.is_set() or not self._queue.empty():
             try:
-                op, fn, done, box = self._queue.get(timeout=0.1)
+                item = self._queue.get(timeout=0.1)
             except queue.Empty:
                 continue
+            self._serve(item)
+
+    def _serve(self, item: tuple[Operation, Callable[[], Any], threading.Event, list[Any]]) -> None:
+        op, fn, done, box = item
+        try:
+            value = self._invoke(op, fn)
+            box.append(("ok", value))
+        except Exception as exc:  # preserve the exact domain refusal for callers
+            op.status = "failed"
+            op.detail = f"{type(exc).__name__}: {str(exc)[:300]}"
+            op.result = _operation_error(exc)
+            box.append(("error", exc))
+        finally:
+            op.finished_at = now_iso()
             try:
-                value = self._invoke(op, fn)
-                box.append(("ok", value))
-            except Exception as exc:  # preserve the exact domain refusal for callers
-                op.status = "failed"
-                op.detail = f"{type(exc).__name__}: {str(exc)[:300]}"
-                op.result = _operation_error(exc)
-                box.append(("error", exc))
+                self._record(op)
+            except Exception as audit_error:  # never strand a waiting caller
+                # A completed mutation with a failed final audit write is
+                # not safe to report as a normal success.  The first
+                # record is deliberately written before the mutation, so
+                # this rare case remains diagnosable without hanging the
+                # UI or killing the actor thread.
+                if not box or box[-1][0] == "ok":
+                    box[:] = [("error", RuntimeError(
+                        f"vault operation {op.id} completed but its audit event could not be written: "
+                        f"{type(audit_error).__name__}"))]
             finally:
-                op.finished_at = now_iso()
-                try:
-                    self._record(op)
-                except Exception as audit_error:  # never strand a waiting caller
-                    # A completed mutation with a failed final audit write is
-                    # not safe to report as a normal success.  The first
-                    # record is deliberately written before the mutation, so
-                    # this rare case remains diagnosable without hanging the
-                    # UI or killing the actor thread.
-                    if not box or box[-1][0] == "ok":
-                        box[:] = [("error", RuntimeError(
-                            f"vault operation {op.id} completed but its audit event could not be written: "
-                            f"{type(audit_error).__name__}"))]
-                finally:
-                    done.set()
-                    self._queue.task_done()
+                done.set()
+                self._queue.task_done()
+
+    def serve_until(self, event: threading.Event, timeout: float | None) -> bool:
+        """Wait for `event` on the writer thread while still serving the queue.
+
+        An operation that asks a person (ask_user, a promotion confirmation)
+        runs here, and the person's answer is itself a write: blocking this
+        thread would queue the answer behind the question until it timed out.
+        Queued operations run one at a time on this same thread, so writes stay
+        serial and ordered while the asking operation waits at its question.
+        """
+        deadline = None if timeout is None else time.monotonic() + timeout
+        while not event.is_set():
+            remaining = None if deadline is None else deadline - time.monotonic()
+            if remaining is not None and remaining <= 0:
+                return False
+            try:
+                item = self._queue.get(timeout=0.05 if remaining is None else min(0.05, remaining))
+            except queue.Empty:
+                continue
+            self._serve(item)
+        return True
 
     def _invoke(self, op: Operation, fn: Callable[[], T]) -> T:
         """Run one serialized mutation with revision and audit protection."""
@@ -620,6 +664,8 @@ class VaultWriter:
         self.flush(timeout)
         self._closed.set()
         self._thread.join(timeout)
+        with _WRITER_THREADS_GUARD:
+            _WRITER_THREADS.pop(self._thread, None)
 
 
 def _operation_result(value: Any) -> dict[str, Any]:

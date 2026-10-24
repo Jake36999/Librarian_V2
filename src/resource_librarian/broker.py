@@ -218,6 +218,15 @@ class Broker:
         with self._lock:
             return [r.public() for r in self._pending.values()]
 
+    def expire_pending(self, reason: str) -> int:
+        """Answer every waiting request as expired (a Core stop): nobody is
+        left to approve it, so the waiting call is refused, never allowed."""
+        with self._lock:
+            waiting = list(self._pending.values())
+            for request in waiting:
+                self._finish(request, "expired", reason)
+        return len(waiting)
+
     def state(self) -> dict[str, Any]:
         return {"mode": self._mode, "tool_settings": dict(self.settings),
                 "pending": self.pending()}

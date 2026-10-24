@@ -435,6 +435,9 @@ class App:
         # returns; a write it attempted after that would meet a closed writer.
         if turn is not None:
             turn.set()
+        # A question or permission request waiting for a person would hold its
+        # call (and, for a question, the writer) until it timed out.
+        released = self.waiters.release_all() + self.broker.expire_pending("the Core is stopping")
         cancelled: dict[str, Action] = {}
         deadline = time.monotonic() + self.STOP_GRACE_SECONDS
         while True:
@@ -450,7 +453,8 @@ class App:
             time.sleep(0.05)
         phase("work_cancelled",
               turn="none" if turn is None else "still_running" if self.busy else "stopped",
-              actions={action.id: action.status for action in cancelled.values()})
+              actions={action.id: action.status for action in cancelled.values()},
+              released_waits=released)
         # A thread whose turn this stop cut off is parked, durably and through
         # the writer that is still open, so it reopens as interrupted with its
         # committed work intact; resume_session picks it back up (CORE-02B).

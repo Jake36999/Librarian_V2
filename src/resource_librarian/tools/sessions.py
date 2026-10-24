@@ -15,7 +15,7 @@ from typing import Any, Callable, Literal
 
 from .. import agenda as _agenda, clerk, notes, registry, scribe
 from .. import intake as _intake
-from ..coordination import atomic_write_text
+from ..coordination import atomic_write_text, wait_for_person
 from ..evidence import EvidenceStore
 from ..registry import REGISTRY, Card, Context, tool
 from ..rules import Refusal
@@ -94,12 +94,23 @@ class Waiters:
         with self._lock:
             self._pending[key] = done
         self._emit({"type": "question_asked", **event})
-        done.wait(self.timeout)
+        # On the vault writer's thread this keeps serving the writer, so the
+        # person's answer (itself a write) is not queued behind the question.
+        wait_for_person(done, self.timeout)
         with self._lock:
             self._pending.pop(key, None)
             answer = self._answers.pop(key, None)
         self._emit({"type": "question_answered", "answered": answer is not None, **event})
         return answer
+
+    def release_all(self) -> int:
+        """Stop waiting for every pending question, unanswered (a Core stop):
+        each ask returns as if it timed out, so its thread is parked."""
+        with self._lock:
+            pending = list(self._pending.values())
+        for done in pending:
+            done.set()
+        return len(pending)
 
     def answer(self, key: str, text: str) -> bool:
         """True when a call was actually waiting on this key; False when it
