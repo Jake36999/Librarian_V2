@@ -38,12 +38,14 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from collections.abc import Mapping
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator, TypeVar
 
 from . import agenda, notes
 from .coordination import atomic_write_text
 from .rules import Refusal
 from .vault import Vault, jsonl_lines, now_iso
+
+T = TypeVar("T")
 
 PURPOSES: dict[str, tuple[str, ...]] = {
     "add_project": ("frame", "ingest", "map", "need", "search", "judge", "synthesise",
@@ -772,13 +774,23 @@ class SessionStore:
         raise Refusal("MESSAGE_NOT_FOUND",
                       f"session {session_id} has no message at index {message_index}")
 
+    def _through_core(self, fn: Callable[[], T], caller: str) -> T:
+        """Run a log mutation through the active Core's writer when one holds
+        this vault (CORE-03), so session events are ordered with the writes
+        they describe; offline tools with no Core write directly."""
+        writer = core_writer(self.vault)
+        return writer.submit(fn, caller=caller) if writer is not None else fn()
+
     def truncate_to(self, session_id: str, message_index: int) -> None:
         """Rewind: discard this message's log line and everything after it -
         in place, so `session_id` still means the same thread."""
         path = self.path(session_id)
-        with _append_lock(path):
-            kept = self._lines_through(session_id, message_index)
-            atomic_write_text(path, "\n".join(kept) + "\n")
+
+        def rewrite() -> None:
+            with _append_lock(path):
+                kept = self._lines_through(session_id, message_index)
+                atomic_write_text(path, "\n".join(kept) + "\n")
+        self._through_core(rewrite, "session-rewind")
 
     def copy_through(self, session_id: str, message_index: int) -> str:
         """Branch: a new session whose log is `session_id`'s up to and
@@ -789,14 +801,20 @@ class SessionStore:
             kept = self._lines_through(session_id, message_index)
         new_id = self._new_id()
         new_path = self.path(new_id)
-        new_path.parent.mkdir(parents=True, exist_ok=True)
-        atomic_write_text(new_path, "\n".join(kept) + "\n")
+
+        def write() -> None:
+            new_path.parent.mkdir(parents=True, exist_ok=True)
+            atomic_write_text(new_path, "\n".join(kept) + "\n")
+        self._through_core(write, "session-branch")
         return new_id
 
     def append(self, session_id: str, event: dict[str, Any]) -> None:
         """Each event carries `h`, a hash of itself chained to the event
         before it (roadmap §4 B4): editing or removing an event in the middle
         of a log breaks every hash after it, and `verify` says where."""
+        self._through_core(lambda: self._append_now(session_id, event), "session-event")
+
+    def _append_now(self, session_id: str, event: dict[str, Any]) -> None:
         event = {"t": now_iso(), **{k: v for k, v in event.items() if k != "h"}}
         path = self.path(session_id)
         with _append_lock(path):
@@ -851,6 +869,36 @@ class SessionStore:
                         "question": s.question, "status": s.status, "phase": s.phase,
                         "opened_at": s.opened_at})
         return out
+
+
+# ------------------------------------------- the Core-owned append path (CORE-03)
+
+# While a Core holds a vault's lease it registers its writer here, and every
+# SessionStore for that vault appends through it - whichever module made the
+# store.  Offline tooling (no Core in this process) keeps the direct path.
+_CORE_WRITERS: dict[str, Any] = {}
+_CORE_WRITERS_GUARD = threading.Lock()
+
+
+def _vault_key(vault: Vault) -> str:
+    return str(Path(vault.root).resolve()).casefold()
+
+
+def attach_core_writer(vault: Vault, writer: Any) -> None:
+    with _CORE_WRITERS_GUARD:
+        _CORE_WRITERS[_vault_key(vault)] = writer
+
+
+def detach_core_writer(vault: Vault, writer: Any) -> None:
+    """Detach only the writer that attached: a successor Core's stays."""
+    with _CORE_WRITERS_GUARD:
+        if _CORE_WRITERS.get(_vault_key(vault)) is writer:
+            _CORE_WRITERS.pop(_vault_key(vault), None)
+
+
+def core_writer(vault: Vault) -> Any:
+    with _CORE_WRITERS_GUARD:
+        return _CORE_WRITERS.get(_vault_key(vault))
 
 
 # ------------------------------------------------------ the hash chain (B4)

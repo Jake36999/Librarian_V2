@@ -65,7 +65,7 @@ from .providers import DASHBOARDS, PRESETS, Provider, ProviderError, ToolDef, fr
 from .registry import REGISTRY, Context
 from .rules import Refusal
 from .staging import StagingStore
-from .session import SessionStore
+from .session import SessionStore, attach_core_writer, detach_core_writer
 from .tools.sessions import Waiters
 from .vault import DEFAULT_CONFIG, Vault, now_iso
 
@@ -300,6 +300,8 @@ class App:
             self.coordinator = VaultCoordinator(vault, protocol_version=PROTOCOL_VERSION)
             self.coordinator.acquire(takeover=takeover)
             self.writer = VaultWriter(vault, self.document_leases)
+            # Session events from any module go through this writer (CORE-03).
+            attach_core_writer(vault, self.writer)
             self.watcher = VaultWatcher(vault, self.document_leases)
             self.watcher.start()
         self.keys = keys or KeyStore(obsidian_managed=self.secret_source == "obsidian")
@@ -443,6 +445,11 @@ class App:
         if self.coordinator is not None:
             self.coordinator.release()
             phase("lease_released")
+        if self.writer is not None:
+            # Detached last: until now a straggling session append meets the
+            # closed writer and fails, rather than writing beside the lease.
+            detach_core_writer(self.vault, self.writer)
+        if self.coordinator is not None:
             try:
                 atomic_write_text(self.vault.librarian / "runtime" / "shutdown.json",
                                   json.dumps({"phases": phases}, indent=2) + "\n")
