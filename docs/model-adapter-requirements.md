@@ -1,6 +1,9 @@
 # Model protocol-adapter requirements
 
-Status: implemented foundation, 2026-10-23.
+**Status:** Partial. The compatibility/observability foundation exists; real
+protocol render/parse shaping, cancellation, and route evidence remain
+planned in ADAPT-01+ of the [unified implementation plan](unified-implementation-plan.md).
+**Terms:** [Librarian terminology](terminology.md).
 
 This is the research record and acceptance boundary for Librarian's model
 adapter layer. It supplements the broader

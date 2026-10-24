@@ -1,5 +1,10 @@
 # Model expectations registry
 
+**Status:** Design and operating contract. A baseline pack exists, but no
+route-native behaviour is enabled merely by this registry; implementation and
+qualification status are governed by the [unified implementation plan](unified-implementation-plan.md).
+**Terms:** [Librarian terminology](terminology.md).
+
 ## Purpose
 
 Librarian should make model configuration more reliable without turning

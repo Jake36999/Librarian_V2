@@ -1,5 +1,8 @@
 # Model-adapter cohort: research and implementation record
 
+**Status:** Evidence record, not a qualification or reliability ranking. Exact
+route/role behaviour remains subject to L0–L3 evidence in the
+[unified implementation plan](unified-implementation-plan.md).
 **Date:** 2026-10-23  
 **Scope:** the curated V1 model register, V2's live role slots, and V2
 service slots. This is an evidence record, not a provider-quality ranking.

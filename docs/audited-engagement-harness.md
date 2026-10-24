@@ -1,6 +1,10 @@
 # Librarian V2 audited-engagement harness and evidence-control specification
 
-**Status:** Proposed implementation specification
+**Status:** Proposed implementation specification. It is not implemented;
+the [unified implementation plan](unified-implementation-plan.md) supersedes
+this document's rollout sequencing. AuditedEngagement reuses Session and the
+Core-owned append path rather than introducing a parallel event store or
+reducer.
 **Version:** 1.0
 **Date:** 2026-10-24
 **Audience:** Core, runtime, model-routing, vault, Obsidian, browser, Cowork,

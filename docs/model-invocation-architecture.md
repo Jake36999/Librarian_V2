@@ -1,6 +1,8 @@
 # Model Invocation Architecture
 
-**Status:** Design specification; compatibility-first foundation implemented  
+**Status:** Partial. Compatibility-first foundation is implemented; trusted
+request shaping and route-specific behaviour remain planned in ADAPT-01+
+of the [unified implementation plan](unified-implementation-plan.md).
 **Version:** 1.0 draft  
 **Audience:** Core, UI, Obsidian, Cowork, release, and model-qualification
 maintainers
@@ -34,7 +36,9 @@ that document describes client/UI adapters, while this document uses
 
 The implementation boundary, primary-source research, and deliberately
 deferred protocol work are recorded in
-[Model protocol-adapter requirements](model-adapter-requirements.md).
+[Model protocol-adapter requirements](model-adapter-requirements.md). This
+document supplies detailed requirements; the unified plan is the sequencing
+and delivery-status authority. Terms follow [Librarian terminology](terminology.md).
 
 ## 2. Goals and non-goals
 

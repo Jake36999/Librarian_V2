@@ -1,6 +1,7 @@
 # Librarian V2 unified implementation plan
 
-**Status:** Proposed sequencing authority
+**Status:** Living sequencing authority; partially implemented. The progress
+log in §19 is the source-backed delivery record.
 **Version:** 1.2.1
 **Prepared:** 2026-10-24. Amended the same day after source checks of v1.0
 and v1.1, including the [blind-spot verification](../reports/2026-10-24-architecture-blindspot-verification.md).
@@ -10,6 +11,11 @@ list of first tasks.
 remediation plan, the 2026-10-23 system review, the model-adapter work, the
 AuditedEngagement specification, the two 2026-10-24 reviews, and current
 source inspection.
+
+**Shared references:** [terminology](terminology.md) defines product and
+delivery terms used here. The [regression manifest](regression-manifest.md)
+records the checkout, command, fixture class, and expected invariant for each
+work packet.
 
 ## 1. Executive decision
 
@@ -55,12 +61,17 @@ This document supersedes the sequencing portions of:
 - Phases A–F of docs/audited-engagement-harness.md; and
 - Phases A–E of docs/model-invocation-architecture.md.
 
-Those documents remain the detailed requirements sources until their status
-headers and cross-links are reconciled by task BASE-03.
+Those documents remain the detailed requirements sources. Their status headers
+and cross-links were reconciled by BASE-03; later task-specific changes must
+keep them consistent with this plan and the regression manifest.
 
 ## 2. Evidence, current baseline, and planning rules
 
-### 2.1 What is confirmed now
+### 2.1 Evidence at plan creation (2026-10-24)
+
+This table is the source-inspection baseline that informed the plan. It is not
+the live delivery status; consult §19 and the regression manifest for later
+implementation evidence.
 
 | Area | Current evidence | Planning consequence |
 | --- | --- | --- |
