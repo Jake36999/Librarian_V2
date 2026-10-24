@@ -470,12 +470,13 @@ export class Settings {
     return h("div", { class: "embeddings" },
       s.model ? h("p", { class: "dim" }, `${s.embedded ?? 0} of ${s.chunks ?? 0} text chunks embedded` +
         (s.vector_intents?.length ? ` · vectors used for: ${s.vector_intents.join(", ")}` : " · vectors used for no intent yet")) : null,
+      s.representation_stale ? h("p", { class: "note locked" }, "Embedding representation changed; existing vectors are not used. Choose Embed all to build the reviewed representation.") : null,
       h("div", { class: "row2 tight" }, local, s.model && est.chunks ? embedAll : null, s.model ? measure : null, status),
       confirm, table, save,
       s.comparison ? h("p", { class: "note" }, `Measured ${String(s.comparison.at ?? "").slice(0, 10)} on ${s.comparison.questions} questions; vectors joined ${s.comparison.vectors_contributed} answers. Turn them on only where they help.`) : null);
   }
 
-  /** Requirements Addendum R17: service models, slots 4-6 - each one kind of job with its
+  /** Requirements Addendum R17: service models, slots 4-7 - each one kind of job with its
    *  own request format, chosen with the same tile as the chat models and kept with this
    *  library. Test makes one small real call. */
   private serviceModels(): HTMLElement {
@@ -494,13 +495,17 @@ export class Settings {
           const current = s.model
             ? `${s.model} · ${PROVIDERS[s.provider] ?? s.provider}${s.default ? " (default)" : ""}`
             : s.built ? "none chosen" : "planned";
+          const contract = s.adapter && typeof s.adapter === "object" ? s.adapter : {};
+          const contractLabel = !s.model ? "" : contract.adapter?.id
+            ? ` · ${String(contract.adapter.id).replace(/_/g, " ")} · ${contract.status ?? "unreviewed"}`
+            : " · no reviewed service contract";
           const test = async () => {
             status.className = "note inline";
             status.textContent = "Testing: one small call…";
             try {
               const t = await this.api.post("/api/services/test", { slot: s.slot });
-              status.textContent = t.ok ? `Works: it read “${t.read}”.`
-                : `Not working: ${t.error ?? `it read “${t.read}”`}`;
+              status.textContent = t.summary ?? (t.ok ? `Works: it read “${t.read}”.`
+                : `Not working: ${t.error ?? `it read “${t.read}”`}`);
               if (t.ok && t.audio) void new Audio(t.audio).play().catch(() => undefined);
               status.className = `note inline ${t.ok ? "ok" : "err"}`;
             } catch (e) {
@@ -519,6 +524,7 @@ export class Settings {
             } },
             h("span", { class: "badge" }, String(s.number)),
             h("span", {}, h("strong", {}, s.label), ` · ${current}`, h("span", { class: "dim" }, ` · ${s.job}`),
+              contractLabel ? h("span", { class: "dim" }, contractLabel) : null,
               s.cap_usd !== undefined ? h("span", { class: "dim" }, ` · spent $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null),
             s.built && this.chooseService ? h("button", { class: "ghost", onclick: () => {
               this.dialog.close();

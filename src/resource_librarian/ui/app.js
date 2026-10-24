@@ -1340,6 +1340,18 @@ var Librarian = (() => {
     parts.push(p.tool_calling ? "tool calling" : "no tool calling");
     return parts.filter(Boolean).join(" \xB7 ");
   }
+  function adapterMeta(m) {
+    const adapter = m.adapter;
+    if (!adapter || typeof adapter !== "object") return "";
+    const expectation = adapter.expectation && typeof adapter.expectation === "object" ? adapter.expectation : {};
+    const capabilities = adapter.capabilities && typeof adapter.capabilities === "object" ? adapter.capabilities : {};
+    const parts = [`adapter: ${String(adapter.id ?? "unknown").replace(/_/g, " ")}`];
+    if (!expectation.id) parts.push("no model expectation yet");
+    else if (capabilities.tool_use === "unknown") parts.push("tool behaviour unverified");
+    else if (capabilities.tool_use === "false") parts.push("tool use unsupported");
+    else parts.push(`expectation: ${String(expectation.status ?? "reviewed")}`);
+    return parts.join(" \xB7 ");
+  }
   var Popover = class {
     constructor(id, label, button) {
       this.button = button;
@@ -1451,7 +1463,8 @@ var Librarian = (() => {
   var SLOT_KIND = {
     ocr: { label: "Vision models", fits: (m) => m.profile?.modality === "Image_To_Text" || VISION.test(String(m.id)) },
     embeddings: { label: "Embedding models", fits: (m) => m.profile?.modality === "Embeddings" || EMBED.test(String(m.id)) },
-    tts: { label: "Speech models", fits: (m) => m.profile?.modality === "Text_To_Speech" || /tts|kokoro|chatterbox|orpheus|speech|higgs/i.test(String(m.id)) }
+    tts: { label: "Speech models", fits: (m) => m.profile?.modality === "Text_To_Speech" || /tts|kokoro|chatterbox|orpheus|speech|higgs/i.test(String(m.id)) },
+    stt: { label: "Speech-recognition models", fits: (m) => m.profile?.modality === "Speech_To_Text" || /asr|whisper|voxtral|speech[ _-]?recognition|transcrib/i.test(String(m.id)) }
   };
   var ModelTile = class {
     constructor(pop, api, tiers, keysSaved, setTiers = () => {
@@ -1746,9 +1759,9 @@ var Librarian = (() => {
         this.pendingLead ? this.overridePrompt() : this.toast ? h("div", { class: "toast", role: "status" }, this.toast) : null,
         filter,
         grids,
-        h("h4", {}, "OCR \xB7 Text to speech \xB7 Embeddings"),
-        h("p", { class: "note locked" }, "These have their own slots (4 OCR, 5 Text to speech, 6 Embeddings) in Settings \u2192 Connections, each chosen with this same tile and kept with the library."),
-        h("p", { class: "note" }, "Models come from each provider's live listing. A profiled model (a Source of kind model) shows its suggested tier and best-for tags (a first guess to confirm or correct), plus context, price and tool calling; an unprofiled one can be profiled, which stages it for your review like any other source.")
+        h("h4", {}, "OCR \xB7 Text to speech \xB7 Embeddings \xB7 Speech to text"),
+        h("p", { class: "note locked" }, "These have their own slots (4 OCR, 5 Text to speech, 6 Embeddings, 7 Speech to text) in Settings \u2192 Connections, each chosen with this same tile and kept with the library."),
+        h("p", { class: "note" }, "Models come from each provider's live listing. A profiled model (a Source of kind model) shows its suggested tier and best-for tags (a first guess to confirm or correct), plus context, price and tool calling; an unprofiled one can be profiled, which stages it for your review like any other source. The adapter line is protocol evidence, not a reliability verdict: run the route probe before treating an unverified tool path as ready.")
       );
       this.renderGrids(grids);
     }
@@ -1756,7 +1769,7 @@ var Librarian = (() => {
       const tiers = this.tiers();
       const words = this.filter.toLowerCase().split(/\s+/).filter(Boolean);
       const matches = (m) => {
-        const text = `${m.id} ${profileMeta(m)}`.toLowerCase().replace(/_/g, " ");
+        const text = `${m.id} ${profileMeta(m)} ${adapterMeta(m)}`.toLowerCase().replace(/_/g, " ");
         return words.every((w) => text.includes(w));
       };
       const next = this.slot || tiers.length >= 3 ? 0 : tiers.length + 1;
@@ -1799,6 +1812,7 @@ var Librarian = (() => {
               at >= 0 && !this.slot ? h("span", { class: "badge" }, String(at + 1)) : null,
               h("div", { class: "name" }, m.id),
               h("div", { class: "meta" }, profileMeta(m)),
+              adapterMeta(m) ? h("div", { class: "meta" }, adapterMeta(m)) : null,
               readiness,
               rec ? h("div", { class: "rec-label" }, `Recommended for slot ${next}`) : null
             );
@@ -2686,6 +2700,7 @@ var Librarian = (() => {
         "div",
         { class: "embeddings" },
         s.model ? h("p", { class: "dim" }, `${s.embedded ?? 0} of ${s.chunks ?? 0} text chunks embedded` + (s.vector_intents?.length ? ` \xB7 vectors used for: ${s.vector_intents.join(", ")}` : " \xB7 vectors used for no intent yet")) : null,
+        s.representation_stale ? h("p", { class: "note locked" }, "Embedding representation changed; existing vectors are not used. Choose Embed all to build the reviewed representation.") : null,
         h("div", { class: "row2 tight" }, local, s.model && est.chunks ? embedAll : null, s.model ? measure : null, status),
         confirm2,
         table2,
@@ -2693,7 +2708,7 @@ var Librarian = (() => {
         s.comparison ? h("p", { class: "note" }, `Measured ${String(s.comparison.at ?? "").slice(0, 10)} on ${s.comparison.questions} questions; vectors joined ${s.comparison.vectors_contributed} answers. Turn them on only where they help.`) : null
       );
     }
-    /** Requirements Addendum R17: service models, slots 4-6 - each one kind of job with its
+    /** Requirements Addendum R17: service models, slots 4-7 - each one kind of job with its
      *  own request format, chosen with the same tile as the chat models and kept with this
      *  library. Test makes one small real call. */
     serviceModels() {
@@ -2712,12 +2727,14 @@ var Librarian = (() => {
           (out.slots ?? []).map((s) => {
             const status = h("span", { class: "note inline", role: "status" });
             const current = s.model ? `${s.model} \xB7 ${PROVIDERS[s.provider] ?? s.provider}${s.default ? " (default)" : ""}` : s.built ? "none chosen" : "planned";
+            const contract = s.adapter && typeof s.adapter === "object" ? s.adapter : {};
+            const contractLabel = !s.model ? "" : contract.adapter?.id ? ` \xB7 ${String(contract.adapter.id).replace(/_/g, " ")} \xB7 ${contract.status ?? "unreviewed"}` : " \xB7 no reviewed service contract";
             const test = async () => {
               status.className = "note inline";
               status.textContent = "Testing: one small call\u2026";
               try {
                 const t = await this.api.post("/api/services/test", { slot: s.slot });
-                status.textContent = t.ok ? `Works: it read \u201C${t.read}\u201D.` : `Not working: ${t.error ?? `it read \u201C${t.read}\u201D`}`;
+                status.textContent = t.summary ?? (t.ok ? `Works: it read \u201C${t.read}\u201D.` : `Not working: ${t.error ?? `it read \u201C${t.read}\u201D`}`);
                 if (t.ok && t.audio) void new Audio(t.audio).play().catch(() => void 0);
                 status.className = `note inline ${t.ok ? "ok" : "err"}`;
               } catch (e) {
@@ -2747,6 +2764,7 @@ var Librarian = (() => {
                 h("strong", {}, s.label),
                 ` \xB7 ${current}`,
                 h("span", { class: "dim" }, ` \xB7 ${s.job}`),
+                contractLabel ? h("span", { class: "dim" }, contractLabel) : null,
                 s.cap_usd !== void 0 ? h("span", { class: "dim" }, ` \xB7 spent $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null
               ),
               s.built && this.chooseService ? h("button", { class: "ghost", onclick: () => {

@@ -147,6 +147,19 @@ def test_openai_compatible_endpoint(fake_server, monkeypatch):
     assert "response_format" in first["body"] and "response_format" not in second["body"]
 
 
+def test_known_schema_rejection_skips_speculative_strict_attempt(fake_server, monkeypatch):
+    """A negative model contract must save both a failed request and a retry."""
+    monkeypatch.setenv("TEST_KEY", "secret")
+    endpoint = clerk.from_config({
+        "provider": "deepinfra", "base_url": fake_server, "key_env": "TEST_KEY",
+        "model": "ByteDance/Seed-2.0-code",
+    })
+    result = clerk.run_one(clerk.uses(README), endpoint)
+    assert result.ok
+    assert len(_Fake.seen) == 1
+    assert "response_format" not in _Fake.seen[0]["body"]
+
+
 def test_missing_key_queues(fake_server, monkeypatch, tmp_path):
     monkeypatch.delenv("TEST_KEY", raising=False)
     endpoint = clerk.from_config({"provider": "custom", "base_url": fake_server,

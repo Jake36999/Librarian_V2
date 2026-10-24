@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import os
+import secrets
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
@@ -164,6 +165,17 @@ def _transport_failure_category(reason: Any) -> str:
             return "local_environment"
         current = getattr(current, "__cause__", None) or getattr(current, "__context__", None)
     return "provider_transport"
+
+
+def synthetic_call_id() -> str:
+    """An id for a tool call the server returned without one.
+
+    A positional ``call_{i}`` repeats on every turn, so a walk's history held
+    several calls named ``call_0`` and a tool result could pair with the wrong
+    proposal.  A random id is unique within any walk; it is alphanumeric
+    after the prefix, which the stricter tool-call id formats accept.
+    """
+    return "call_" + secrets.token_hex(8)
 
 
 @dataclass
@@ -347,13 +359,13 @@ class OpenAICompatible(Provider):
         choice = (reply.get("choices") or [{}])[0]
         message = choice.get("message") or {}
         calls = []
-        for i, call in enumerate(message.get("tool_calls") or []):
+        for call in message.get("tool_calls") or []:
             function = call.get("function") or {}
             try:
                 arguments = json.loads(function.get("arguments") or "{}")
             except json.JSONDecodeError:
                 arguments = {"_unparsed": function.get("arguments")}
-            calls.append(ToolCall(str(call.get("id") or f"call_{i}"),
+            calls.append(ToolCall(str(call.get("id") or synthetic_call_id()),
                                   str(function.get("name") or ""),
                                   arguments if isinstance(arguments, dict) else {}))
         return Reply(message.get("content") or "", calls, reply.get("model", self.model),
@@ -427,8 +439,8 @@ class Anthropic(Provider):
             if block.get("type") == "text":
                 text.append(block.get("text") or "")
             elif block.get("type") == "tool_use":
-                calls.append(ToolCall(str(block.get("id")), str(block.get("name")),
-                                      block.get("input") or {}))
+                calls.append(ToolCall(str(block.get("id") or synthetic_call_id()),
+                                      str(block.get("name")), block.get("input") or {}))
         return Reply("".join(text), calls, reply.get("model", self.model),
                      reply.get("stop_reason") or "")
 

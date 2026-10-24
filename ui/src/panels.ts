@@ -39,6 +39,20 @@ function profileMeta(m: any): string {
   return parts.filter(Boolean).join(" · ");
 }
 
+// The adapter line is protocol evidence from the Core, not a reliability verdict.
+function adapterMeta(m: any): string {
+  const adapter = m.adapter;
+  if (!adapter || typeof adapter !== "object") return "";
+  const expectation = adapter.expectation && typeof adapter.expectation === "object" ? adapter.expectation : {};
+  const capabilities = adapter.capabilities && typeof adapter.capabilities === "object" ? adapter.capabilities : {};
+  const parts = [`adapter: ${String(adapter.id ?? "unknown").replace(/_/g, " ")}`];
+  if (!expectation.id) parts.push("no model expectation yet");
+  else if (capabilities.tool_use === "unknown") parts.push("tool behaviour unverified");
+  else if (capabilities.tool_use === "false") parts.push("tool use unsupported");
+  else parts.push(`expectation: ${String(expectation.status ?? "reviewed")}`);
+  return parts.join(" · ");
+}
+
 export class Popover {
   readonly el: HTMLElement;
   constructor(id: string, label: string, readonly button: HTMLElement) {
@@ -128,6 +142,7 @@ const SLOT_KIND: Record<string, { label: string; fits: (m: any) => boolean }> = 
   ocr: { label: "Vision models", fits: (m) => m.profile?.modality === "Image_To_Text" || VISION.test(String(m.id)) },
   embeddings: { label: "Embedding models", fits: (m) => m.profile?.modality === "Embeddings" || EMBED.test(String(m.id)) },
   tts: { label: "Speech models", fits: (m) => m.profile?.modality === "Text_To_Speech" || /tts|kokoro|chatterbox|orpheus|speech|higgs/i.test(String(m.id)) },
+  stt: { label: "Speech-recognition models", fits: (m) => m.profile?.modality === "Speech_To_Text" || /asr|whisper|voxtral|speech[ _-]?recognition|transcrib/i.test(String(m.id)) },
 };
 
 export class ModelTile {
@@ -392,9 +407,9 @@ export class ModelTile {
       this.pendingLead ? this.overridePrompt()
         : this.toast ? h("div", { class: "toast", role: "status" }, this.toast) : null,
       filter, grids,
-      h("h4", {}, "OCR · Text to speech · Embeddings"),
-      h("p", { class: "note locked" }, "These have their own slots (4 OCR, 5 Text to speech, 6 Embeddings) in Settings → Connections, each chosen with this same tile and kept with the library."),
-      h("p", { class: "note" }, "Models come from each provider's live listing. A profiled model (a Source of kind model) shows its suggested tier and best-for tags (a first guess to confirm or correct), plus context, price and tool calling; an unprofiled one can be profiled, which stages it for your review like any other source."));
+      h("h4", {}, "OCR · Text to speech · Embeddings · Speech to text"),
+      h("p", { class: "note locked" }, "These have their own slots (4 OCR, 5 Text to speech, 6 Embeddings, 7 Speech to text) in Settings → Connections, each chosen with this same tile and kept with the library."),
+      h("p", { class: "note" }, "Models come from each provider's live listing. A profiled model (a Source of kind model) shows its suggested tier and best-for tags (a first guess to confirm or correct), plus context, price and tool calling; an unprofiled one can be profiled, which stages it for your review like any other source. The adapter line is protocol evidence, not a reliability verdict: run the route probe before treating an unverified tool path as ready."));
     this.renderGrids(grids);
   }
 
@@ -404,7 +419,7 @@ export class ModelTile {
     // tags, context, price, tool calling) - "long horizon tool calling" narrows by both.
     const words = this.filter.toLowerCase().split(/\s+/).filter(Boolean);
     const matches = (m: any) => {
-      const text = `${m.id} ${profileMeta(m)}`.toLowerCase().replace(/_/g, " ");
+      const text = `${m.id} ${profileMeta(m)} ${adapterMeta(m)}`.toLowerCase().replace(/_/g, " ");
       return words.every((w) => text.includes(w));
     };
     // The slot being chosen next (1 leads, 2 notes, 3 small tasks): its recommended models
@@ -445,6 +460,7 @@ export class ModelTile {
           },
           at >= 0 && !this.slot ? h("span", { class: "badge" }, String(at + 1)) : null,
           h("div", { class: "name" }, m.id), h("div", { class: "meta" }, profileMeta(m)),
+          adapterMeta(m) ? h("div", { class: "meta" }, adapterMeta(m)) : null,
           readiness,
           rec ? h("div", { class: "rec-label" }, `Recommended for slot ${next}`) : null);
           return h("div", { class: "card-wrap" }, card,

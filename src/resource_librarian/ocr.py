@@ -27,6 +27,7 @@ from typing import Any
 
 from . import text
 from .providers import PRESETS, ProviderError, _key
+from .service_adapters import ServiceContractError, ocr_request
 from .vault import Vault
 
 FORMATS = ("vision_chat",)
@@ -58,16 +59,17 @@ class VisionChat:
         if provider not in PRESETS or PRESETS[provider].get("protocol") != "openai":
             raise OcrError(f"{provider!r} is not an OpenAI-compatible provider")
         self.url = PRESETS[provider]["base_url"].rstrip("/") + "/chat/completions"
+        self.provider = provider
         self.key_env, self.model, self.timeout = PRESETS[provider]["key_env"], model, timeout
         self.name = f"{provider}:{model}"
 
     def page_text(self, png: bytes) -> str:
         key = _key(self.key_env)                           # ProviderError when no key is set
         image = "data:image/png;base64," + base64.b64encode(png).decode()
-        body = {"model": self.model, "temperature": 0, "max_tokens": 4000,
-                "messages": [{"role": "user", "content": [
-                    {"type": "text", "text": PROMPT},
-                    {"type": "image_url", "image_url": {"url": image}}]}]}
+        try:
+            body, _binding = ocr_request(self.provider, self.model, PROMPT, image)
+        except ServiceContractError as exc:
+            raise OcrError(f"{self.name}: {exc}") from exc
         request = urllib.request.Request(
             self.url, data=json.dumps(body).encode(), method="POST",
             headers={"Content-Type": "application/json",

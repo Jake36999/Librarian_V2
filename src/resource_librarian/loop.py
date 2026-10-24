@@ -33,6 +33,8 @@ from . import tools  # noqa: F401  (registers the tools)
 from .clerk import ClerkUnavailable, Endpoint
 from .desk import DeskStore
 from .lenses import LensStore
+from .model_invocation import (InvocationPayload, InvocationRuntime,
+                               InvocationScope, TaskContract)
 from .providers import Provider, ProviderError, ToolDef, provider_failure_category
 from .registry import REGISTRY, Context, ToolSpec
 from .rules import Refusal
@@ -291,8 +293,11 @@ class ProviderEndpoint(Endpoint):
     a surface chooses): a fresh call, the task's own prompt, no tools, no
     conversation."""
 
-    def __init__(self, provider: Provider):
+    def __init__(self, provider: Provider, *, invocation_runtime: InvocationRuntime | None = None,
+                 role: str = "scribe"):
         self.provider = provider
+        self.invocation_runtime = invocation_runtime
+        self.role = role
         self.name = f"provider:{provider.name}"
         # A HostRegistry route is already guarded by LimitedProvider.  Carry
         # its declared per-host concurrency into the Clerk/Scribe endpoint so
@@ -311,9 +316,20 @@ class ProviderEndpoint(Endpoint):
                              f"That did not match the required shape: {repair}\n"
                              f"Return only the JSON object, corrected."})
         try:
-            reply = self.provider.chat(payload["system"], messages, [],
-                                       max_tokens=int(payload["max_tokens"]),
-                                       temperature=payload["temperature"])
+            if self.invocation_runtime is None:
+                reply = self.provider.chat(payload["system"], messages, [],
+                                           max_tokens=int(payload["max_tokens"]),
+                                           temperature=payload["temperature"])
+            else:
+                task = TaskContract(
+                    id="background-completion", kind=str(payload.get("task") or "completion"),
+                    interaction="single_turn", output_contract="prompted_json")
+                scope = InvocationScope(role=self.role, task=task,
+                                        behavior_mode="provider_default")
+                invocation = InvocationPayload.from_legacy(
+                    payload["system"], messages, [], max_tokens=int(payload["max_tokens"]),
+                    temperature=payload["temperature"])
+                reply = self.invocation_runtime.invoke(self.provider, invocation, scope=scope)
         except ProviderError as exc:
             raise ClerkUnavailable(str(exc)) from exc
         return reply.text, reply.model or self.provider.name
@@ -344,7 +360,9 @@ class Loop:
         self.provider = provider
         self.ctx = Context(tier=tier, vault=vault, extras=dict(extras or {}))
         if scribe == "provider":
-            self.ctx.extras.setdefault("scribe_fallback", ProviderEndpoint(provider))
+            self.ctx.extras.setdefault(
+                "scribe_fallback", ProviderEndpoint(
+                    provider, invocation_runtime=self.ctx.extras.get("invocation_runtime"), role="scribe"))
         elif scribe is not None:
             self.ctx.extras["scribe"] = scribe
         self.working_context = working_context
@@ -358,6 +376,7 @@ class Loop:
         # conservative: each model request reserves its prompt plus the
         # requested maximum output before it is sent.
         self.profile_id = ""
+        self.profile_role = ""
         self.profile_token_budget = 0
         self.profile_output_budget = 4096
         self.profile_cost_budget_usd = 0.0
@@ -397,6 +416,7 @@ class Loop:
         small structural interface instead of importing it at module load.
         """
         self.profile_id = str(getattr(profile, "id", "") or "")
+        self.profile_role = str(getattr(profile, "role", "") or self.profile_id)
         self.profile_token_budget = max(0, int(getattr(profile, "token_budget", 0) or 0))
         self.profile_output_budget = max(1, int(getattr(profile, "output_budget", 4096) or 4096))
         self.profile_cost_budget_usd = max(0.0, float(getattr(profile, "cost_budget_usd", 0.0) or 0.0))
@@ -778,6 +798,14 @@ class Loop:
         self._persist("user", text)
         turn = Turn()
         started = time.monotonic()
+        # Pin a route/adaptor/expectation snapshot for this walk.  App only
+        # changes ``self.provider`` between turns, but this also protects a
+        # long tool loop from a concurrent settings refresh silently changing
+        # the selected model between a proposal and its tool result.
+        walk_provider = self.provider
+        runtime = self.ctx.extras.get("invocation_runtime")
+        runtime = runtime if isinstance(runtime, InvocationRuntime) else None
+        binding = runtime.binding_for(walk_provider) if runtime is not None else None
         while turn.steps < self.max_steps:
             if self.turn_seconds and turn.steps and \
                     time.monotonic() - started > self.turn_seconds:
@@ -800,7 +828,24 @@ class Loop:
                                "profile": self.profile_id})
                 return turn
             try:
-                reply = self.provider.chat(system, view, tools, max_tokens=self.profile_output_budget)
+                if runtime is None:
+                    # Preserve the historical interactive call shape: custom
+                    # Providers are not required to accept temperature=None.
+                    reply = walk_provider.chat(system, view, tools,
+                                               max_tokens=self.profile_output_budget)
+                else:
+                    task = TaskContract(
+                        id="agent-walk", kind=self.purpose() or "research",
+                        interaction="tool_loop" if tools else "single_turn",
+                        required_capabilities=frozenset({"tool_use"}) if tools else frozenset(),
+                        output_contract="text")
+                    scope = InvocationScope(
+                        role=self.profile_role or self.profile_id or "lead", task=task,
+                        phase=self.phase(), session_id=self.ctx.session or "",
+                        behavior_mode="provider_default")
+                    invocation = InvocationPayload.from_legacy(
+                        system, view, tools, max_tokens=self.profile_output_budget)
+                    reply = runtime.invoke(walk_provider, invocation, scope=scope, binding=binding)
             except ProviderError as exc:
                 turn.stopped, turn.error = "provider_error", str(exc)[:400]
                 turn.failure_category = provider_failure_category(exc)
@@ -820,7 +865,7 @@ class Loop:
                 return turn
             self.refused_last_step = False
             # The trace names the model behind each call (Requirements Addendum R3).
-            self.ctx.extras["model"] = reply.model or getattr(self.provider, "name", "")
+            self.ctx.extras["model"] = reply.model or getattr(walk_provider, "name", "")
             for call in reply.tool_calls:
                 if cancel is not None and cancel.is_set():
                     turn.stopped = "cancelled"

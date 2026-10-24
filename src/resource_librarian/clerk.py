@@ -50,6 +50,7 @@ from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from .coordination import atomic_write_text
+from .model_invocation import legacy_structured_output_policy
 
 MAX_BULLETS = 6
 BULLET_CHARS = 160
@@ -1212,7 +1213,8 @@ class OpenAICompatible(Endpoint):
     library only. The key is read from the environment, never from config."""
 
     def __init__(self, base_url: str, model: str, key_env: str = "", concurrency: int = 1,
-                 min_tokens: int = 0, timeout: int = 120, models: dict[str, str] | None = None):
+                 min_tokens: int = 0, timeout: int = 120, models: dict[str, str] | None = None,
+                 provider_id: str = ""):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.key_env = key_env
@@ -1220,6 +1222,11 @@ class OpenAICompatible(Endpoint):
         self.min_tokens = int(min_tokens)
         self.timeout = timeout
         self.models = models or {}
+        # The legacy clerk config calls a provider ``deepinfra`` while the
+        # normal route registry calls it ``preset-deepinfra``.  Keep this
+        # identifier declarative: it selects a policy record, never a key or
+        # raw provider parameter.
+        self.provider_id = str(provider_id or "").strip().lower()
         self.name = self.base_url
 
     def _post(self, body: dict[str, Any]) -> dict[str, Any]:
@@ -1250,15 +1257,19 @@ class OpenAICompatible(Endpoint):
                              f"That did not match the required shape: {repair}\n"
                              f"Return only the JSON object, corrected."})
         safe = re.sub(r"[^a-zA-Z0-9_-]", "_", payload["task"]) or "task"
+        policy = legacy_structured_output_policy(
+            model, provider_id=self.provider_id, base_url=self.base_url)
         body: dict[str, Any] = {
             "model": model, "messages": messages, "temperature": payload["temperature"],
-            "max_tokens": max(payload["max_tokens"], self.min_tokens),
-            "response_format": {"type": "json_schema", "json_schema": {
-                "name": safe, "strict": True, "schema": _strict(payload["schema"])}}}
+            "max_tokens": max(payload["max_tokens"], self.min_tokens)}
+        if policy["strict_attempt"]:
+            body["response_format"] = {"type": "json_schema", "json_schema": {
+                "name": safe, "strict": True, "schema": _strict(payload["schema"])}}
         try:
             reply = self._post(body)
         except RuntimeError as exc:
-            if "response_format" not in str(exc) and "json_schema" not in str(exc):
+            schema_rejection = "response_format" in str(exc) or "json_schema" in str(exc)
+            if not schema_rejection or not policy["fallback_on_rejection"]:
                 raise
             body.pop("response_format")         # the model refuses constrained output
             reply = self._post(body)
@@ -1298,7 +1309,7 @@ def _endpoint(provider: str, settings: dict[str, Any]) -> OpenAICompatible:
         raise ClerkUnavailable(f"clerk provider {provider!r} needs a base_url")
     models = {k[len("model_"):]: str(v) for k, v in settings.items()
               if k.startswith("model_") and v}
-    return OpenAICompatible(models=models, **base)
+    return OpenAICompatible(models=models, provider_id=provider, **base)
 
 
 def from_config(settings: dict[str, Any]) -> Endpoint | None:

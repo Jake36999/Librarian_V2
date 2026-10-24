@@ -79,7 +79,7 @@ DEFAULT_CONFIG: dict[str, dict[str, Any]] = {
     # with no text layer - assigned, until a person chooses, the vision-capable model the
     # owner already runs as tier 3. An empty value means none: never a silent fallback.
     "services": {"ocr": "deepinfra:Qwen/Qwen3.5-397B-A17B", "ocr_format": "vision_chat",
-                 "tts": "deepinfra:hexgrad/Kokoro-82M"},
+                 "tts": "deepinfra:hexgrad/Kokoro-82M", "stt": ""},
     "scribe": {"provider": ""},
 }
 

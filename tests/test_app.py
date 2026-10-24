@@ -700,6 +700,10 @@ def test_models_shows_profiled_queued_and_unprofiled(served, monkeypatch):
     assert done["profile"]["best_for"] == ["Small_Coding_Tasks"]
     assert done["profile"]["context_length"] == 131072
     assert done["profile"]["path"].startswith("Sources/model/")
+    # Adapter data is passive picker evidence: it must not turn a descriptive
+    # catalogue flag into a claimed, model-specific tool guarantee.
+    assert done["adapter"]["id"] == "legacy_provider_chat"
+    assert done["adapter"]["capabilities"]["tool_use"] == "unknown"
     assert by_id["acme/queued-model"].get("profiling") == "queued"
     assert "profile" not in by_id["acme/still-unprofiled"] and \
         "profiling" not in by_id["acme/still-unprofiled"]

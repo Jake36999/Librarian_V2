@@ -59,6 +59,8 @@ from .hosts import (EVALUATION_LEVELS, RELEASE_PROMPT_CONTRACT_VERSION,
 from .index import IndexService
 from .keys import KeyStore, config_dir
 from .loop import LENGTHS, STANCES, Loop, ProviderEndpoint
+from .model_invocation import (InvocationPayload, InvocationRuntime,
+                               InvocationScope, TaskContract)
 from .providers import DASHBOARDS, PRESETS, Provider, ProviderError, ToolDef, from_settings
 from .registry import REGISTRY, Context
 from .rules import Refusal
@@ -318,6 +320,10 @@ class App:
         self.profile_gate = ProfileRunGate()
         self.checkpoints = CheckpointStore(vault)
         self.hub = Hub()
+        # Redacted invocation diagnostics live only in process memory for the
+        # first adapter slice.  Do not turn model prompts or responses into a
+        # new vault artefact merely by adding a protocol translation seam.
+        self.invocation_runtime = InvocationRuntime()
         self.broker = Broker(mode=self.settings.data.get("mode", "ask"),
                              timeout=broker_timeout)
         self.broker.subscribe(self.hub.publish)
@@ -717,7 +723,10 @@ class App:
             if host_id.startswith("preset-"):
                 routes.append({**row, "host_id": host_id[len("preset-"):],
                                "provider": host_id[len("preset-"):]})
-        return {"core": core, "routes": routes}
+        # A pack that failed to load leaves every route ``unknown``; say why
+        # here rather than letting reviewed routes quietly look unreviewed.
+        return {"core": core, "routes": routes,
+                "expectation_pack": self.invocation_runtime.expectations.status()}
 
     def _release_contract(self, host_id: str) -> dict[str, Any]:
         """The public route facts a bundled L3 result is allowed to cover.
@@ -954,10 +963,40 @@ class App:
         schemas = [{"name": spec.name, "tier": spec.tier, "effect": spec.effect,
                     "schema": spec.json_schema()}
                    for spec in sorted(REGISTRY.for_tier("curate"), key=lambda x: x.name)]
+        # The adapter and the exact model expectation are part of the wire /
+        # parser contract, not presentation metadata.  A changed adapter ABI,
+        # protocol renderer, endpoint identity, or exact capability record
+        # therefore produces a hard qualification fingerprint.  Do this
+        # passively: constructing a configured provider reads no secret and
+        # does not discover models or make a paid probe.
+        adapter_contract: dict[str, Any] = {
+            "id": "unresolved", "version": "", "abi": 0, "protocol": "",
+            "expectation_id": "", "expectation_fingerprint": "", "expectation_status": "unreviewed",
+        }
+        try:
+            provider = self._configured_provider({"host_id": host_id, "model": model})
+            if provider is not None:
+                summary = self.invocation_runtime.adapter_summary(provider, model_id=model)
+                expected = summary.get("expectation") if isinstance(summary.get("expectation"), dict) else {}
+                adapter_contract = {
+                    "id": str(summary.get("id") or ""),
+                    "version": str(summary.get("version") or ""),
+                    "abi": int(summary.get("abi") or 0),
+                    "protocol": str(summary.get("protocol") or ""),
+                    "expectation_id": str(expected.get("id") or ""),
+                    "expectation_fingerprint": str(expected.get("fingerprint") or ""),
+                    "expectation_status": str(expected.get("status") or "unreviewed"),
+                }
+        except (KeyError, ProviderError, ValueError):
+            # Legacy/malformed routes are still fingerprinted from their
+            # endpoint/model below.  Their unresolved adapter state cannot
+            # masquerade as compatible evidence.
+            pass
         return fingerprints(
             protocol=PROTOCOL_VERSION, tool_schema=schemas,
             response_contract={
                 "tool_call_id": "string", "arguments": "object",
+                "adapter_contract": adapter_contract,
                 "l1_probe": {
                     "version": L1_PROBE_CONTRACT_VERSION,
                     "calls": "exactly_one:librarian_probe",
@@ -1215,13 +1254,20 @@ class App:
             provider = self._configured_provider({"host_id": host_id, "model": model})
             if provider is None:
                 raise ProviderError("host is not configured")
-            reply = provider.chat("You are a qualification probe.",
-                                  [{"role": "user", "content":
-                                    "Call librarian_probe with {\"ok\": true}."}],
-                                  [ToolDef("librarian_probe", "Return a small probe object.",
-                                           {"type": "object", "properties": {"ok": {"type": "boolean"}},
-                                            "required": ["ok"], "additionalProperties": False})],
-                                  max_tokens=64, temperature=0)
+            probe_tools = [ToolDef("librarian_probe", "Return a small probe object.",
+                                   {"type": "object", "properties": {"ok": {"type": "boolean"}},
+                                    "required": ["ok"], "additionalProperties": False})]
+            probe_payload = InvocationPayload.from_legacy(
+                "You are a qualification probe.",
+                [{"role": "user", "content": "Call librarian_probe with {\"ok\": true}."}],
+                probe_tools, max_tokens=64, temperature=0)
+            probe_scope = InvocationScope(
+                role=role,
+                task=TaskContract(id="l1-tool-probe", kind="qualification",
+                                  interaction="qualification_probe",
+                                  required_capabilities=frozenset({"tool_use"})),
+                behavior_mode="provider_default")
+            reply = self.invocation_runtime.invoke(provider, probe_payload, scope=probe_scope)
             observed_model = str(reply.model or "")
             probe_validation = validate_l1_probe(reply, model)
             good = bool(probe_validation["passed"])
@@ -1670,6 +1716,7 @@ class App:
                                   "profile_gate": self.profile_gate,
                                   "helper_profile_guard": self._helper_profile_guard,
                                    "background_profile_endpoint": self._background_profile_endpoint,
+                                  "invocation_runtime": self.invocation_runtime,
                                   "use_tool_bundles": True}
         if self.writer is not None:
             extras["vault_writer"] = self.writer
@@ -1678,10 +1725,12 @@ class App:
             # A registered route is the person's current Clerk assignment. It
             # takes precedence over a retained 2.x ``[clerk]`` block, whose
             # syntax is still used when no Host Registry route is assigned.
-            extras["clerk"] = ProviderEndpoint(clerk)
+            extras["clerk"] = ProviderEndpoint(clerk, invocation_runtime=self.invocation_runtime,
+                                                role="clerk")
         scribe = self.tier(2)
         if scribe is not None:
-            extras["scribe"] = ProviderEndpoint(scribe)
+            extras["scribe"] = ProviderEndpoint(scribe, invocation_runtime=self.invocation_runtime,
+                                                 role="scribe")
         lead = self.lead_status()
         if lead["status"] != "none":           # carried into every call's trace (R10)
             extras["lead_status"] = lead["status"] + (f": {lead.get('reason', '')}"
@@ -2181,6 +2230,10 @@ class App:
         out = []
         for m in listed:
             entry: dict[str, Any] = {"id": m, "tier": chosen.get(m)}
+            # Passive adapter evidence for the existing model picker.  This
+            # does not run discovery/probes or change a selected model; the
+            # current UI may ignore it until its compact status row lands.
+            entry["adapter"] = self.invocation_runtime.adapter_summary(made, model_id=m)
             profile = profiles.get((provider, m.lower()))
             if profile:
                 entry["profile"] = {
@@ -2380,13 +2433,15 @@ class App:
                 "search": config.get("search", {}),
                 "doctor": [c.to_dict() for c in doctor.checks(self.vault, self.mcp)]}
 
-    # -- service models (Requirements Addendum R17): slots 4-6, kept per library ----
+    # -- service models (Requirements Addendum R17): slots 4-7, kept per library ----
     SERVICE_SLOTS = (("ocr", 4, "OCR", "reads PDF pages that have no text layer"),
                      ("tts", 5, "Text to speech", "reads a note or a reply aloud"),
-                     ("embeddings", 6, "Embeddings", "the vectors search uses"))
+                     ("embeddings", 6, "Embeddings", "the vectors search uses"),
+                     ("stt", 7, "Speech to text", "turns an audio recording into text"))
 
     def services(self) -> dict[str, Any]:
         from . import ocr
+        from .service_adapters import binding as service_binding
         import tomllib
         own: dict[str, Any] = {}
         if self.vault.config_path.is_file():
@@ -2408,8 +2463,22 @@ class App:
                 row.update(tts.choice(self.vault) or {"provider": "", "model": ""}, built=True,
                            default=own.get("tts", tts.DEFAULT) == tts.DEFAULT,
                            spent_usd=round(tts.spent(), 4), cap_usd=tts.CAP_USD)
+            elif name == "stt":
+                from . import stt
+                row.update(stt.choice(self.vault) or {"provider": "", "model": ""}, built=True,
+                           default=False)
             else:
                 row.update(provider="", model="", built=False)       # planned (P4b)
+            # Service contracts are independent of agent-chat expectations.
+            # This is passive selection evidence only: it never probes,
+            # changes a configured model, or upgrades qualification.
+            if row.get("model"):
+                if name == "embeddings":
+                    from . import embed
+                    row["adapter"] = embed.adapter_summary(str(row.get("spec") or ""))
+                else:
+                    row["adapter"] = service_binding(name, str(row.get("provider") or ""),
+                                                     str(row.get("model") or "")).summary()
             slots.append(row)
         return {"slots": slots}
 
@@ -2426,17 +2495,20 @@ class App:
         provider, model = (rest.split(":", 1) if kind == "api" else (kind, rest))
         out.update(provider=provider, model=model,
                    legacy=not self.vault.setting("services", "embeddings"))
-        name = f"hash:{int(rest or 256)}" if kind == "hash" else spec   # as embed stores it
+        name = embed.storage_model(spec)       # as VectorSearch stores it
         price = None
         if kind == "api":
             profile = self._model_sources().get((provider, model.lower())) or {}
             price = profile.get("price_input_per_1m")
         def measure(index: Any) -> dict[str, Any]:
             index.refresh()                               # count what is there now
+            representation_ok = embed.representation_current(index, spec)
             return {"chunks": int(index.conn.execute(
                         "SELECT COUNT(DISTINCT hash) FROM chunk WHERE role != 'document'").fetchone()[0]),
                     "embedded": int(index.conn.execute(
-                        "SELECT COUNT(*) FROM embedding WHERE model = ?", (name,)).fetchone()[0]),
+                        "SELECT COUNT(*) FROM embedding WHERE model = ?", (name,)).fetchone()[0])
+                    if representation_ok else 0,
+                    "representation_stale": not representation_ok,
                     "estimate": embed.estimate(index, name, price)}
         out.update(self.index_service.run(measure))
         out["hosted"] = kind == "api"
@@ -2472,6 +2544,16 @@ class App:
             return self._serialized("service-settings", lambda: (
                 self.vault.set_setting("services", "tts", f"{provider}:{model}" if model else ""),
                 self.services())[1])
+        if slot == "stt":
+            from . import stt
+            if model:
+                try:
+                    stt.validate_choice(provider, model)
+                except stt.SttError as exc:
+                    raise ApiError(400, str(exc)) from exc
+            return self._serialized("service-settings", lambda: (
+                self.vault.set_setting("services", "stt", f"{provider}:{model}" if model else ""),
+                self.services())[1])
         if slot != "ocr":
             raise ApiError(400, f"slot {slot!r} is not built yet")
         if model and (provider not in PRESETS or PRESETS[provider].get("protocol") != "openai"):
@@ -2502,6 +2584,12 @@ class App:
                 return {"ok": False, "error": str(exc)[:300]}
             return {"ok": True, "read": "Testing the read-aloud voice.", "audio": out["audio"],
                     "cost_usd": out["cost_usd"]}
+        if slot == "stt":
+            from . import stt
+            try:
+                return stt.probe(self.vault)
+            except stt.SttError as exc:
+                return {"ok": False, "error": str(exc)[:300]}
         if slot != "ocr":
             raise ApiError(400, f"slot {slot!r} is not built yet")
         try:

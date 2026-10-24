@@ -16,7 +16,7 @@ MP3 = "data:audio/mp3;base64," + base64.b64encode(b"ID3fake-audio").decode()
 def fake_post(log):
     def post(url, body, key):
         log.append((url, body))
-        return {"audio": MP3, "inference_status": {"cost": len(body["text"]) * 0.62 / 1e6}}
+        return {"audio": MP3, "inference_status": {"cost": len(body["text"]) * 0.99 / 1e6}}
     return post
 
 
@@ -47,7 +47,7 @@ def test_a_chunk_is_spoken_once_kept_and_its_real_cost_recorded(vault, ledger):
     assert log[0][1] == {"text": "Hello, reader.", "output_format": "mp3",
                          "preset_voice": "af_bella"}
     rows = [json.loads(line) for line in ledger.read_text().splitlines()]
-    assert len(rows) == 1 and rows[0]["cost_usd"] == pytest.approx(14 * 0.62 / 1e6)
+    assert len(rows) == 1 and rows[0]["cost_usd"] == pytest.approx(14 * 0.99 / 1e6)
 
 
 def test_the_cap_refuses_before_anything_is_sent(vault, ledger):
@@ -141,7 +141,7 @@ def test_each_model_is_sent_its_own_field_and_raw_pcm_becomes_wav(vault, ledger)
     assert tts.speak(vault, "Hello.", "message", post=higgs)["cached"]      # kept as .wav
 
 
-def test_a_model_that_asks_for_the_other_field_is_asked_again(vault, ledger):
+def test_a_model_that_rejects_its_reviewed_field_is_not_retried_with_a_guess(vault, ledger):
     calls = []
 
     def wants_input(url, body, key):
@@ -150,5 +150,6 @@ def test_a_model_that_asks_for_the_other_field_is_asked_again(vault, ledger):
             raise tts.TtsError('HTTP 422: {"detail":[{"type":"missing","loc":["input"]}]}')
         return {"audio": "data:audio/wav;base64," + base64.b64encode(b"RIFFxxxx").decode()}
     vault.set_setting("services", "tts", "deepinfra:ResembleAI/chatterbox-turbo")
-    assert tts.speak(vault, "Hi there.", "message", post=wants_input)["audio"].startswith("data:audio/wav")
-    assert [sorted(c) for c in calls] == [["output_format", "text"], ["input", "output_format"]]
+    with pytest.raises(tts.TtsError, match="HTTP 422"):
+        tts.speak(vault, "Hi there.", "message", post=wants_input)
+    assert [sorted(c) for c in calls] == [["output_format", "text"]]

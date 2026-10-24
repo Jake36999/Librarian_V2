@@ -203,6 +203,13 @@ def checks(vault: Vault | None = None, mcp: Any = None) -> list[Check]:
     out.append(Check("embeddings", _module("model2vec"),
                      "model2vec installed" if _module("model2vec")
                      else "model2vec not installed: search is lexical only"))
+    # A pack that fails to load leaves every model route unreviewed; say so
+    # instead of letting reviewed routes quietly read as unknown.
+    from .model_invocation import ExpectationRegistry
+    pack = ExpectationRegistry.bundled().status()
+    out.append(Check("model expectations", pack["ok"],
+                     f"{pack['pack_id']}: {pack['records']} record(s)" if pack["ok"]
+                     else pack["error"]))
     out.extend(_workbench_checks())
     for provider, variables in KEY_VARIABLES.items():
         present = next((v for v in variables if os.environ.get(v)), "")
