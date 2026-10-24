@@ -18,6 +18,7 @@ from .. import intake as _intake
 from ..coordination import atomic_write_text, on_writer_thread
 from ..evidence import EvidenceStore
 from ..registry import PERSON_WAIT, REGISTRY, Card, Context, tool
+from ..revisions import WriteIntent
 from ..rules import Refusal
 from ..search import Constraints, search, terms_from
 from ..session import PURPOSES, SessionStore, after_call, before_call
@@ -1553,7 +1554,24 @@ def _cite(source: str) -> str:
     return f"`{source}`" if source.startswith("project:") else f"[[{source}]]"
 
 
+def _promote_offering_intent(ctx: Context, kwargs: dict[str, Any]) -> WriteIntent:
+    """A promotion writes the offering into Offerings/, declared before it is
+    queued (CORE-05A).  It replaces no note a caller read - the destination
+    must not exist - so it brings no revision.  The staged draft it removes
+    is the librarian's own state under .librarian/, not a document a person
+    edits, so it is no target for the document guard."""
+    if not ctx.session:
+        return WriteIntent(())
+    session = _session(ctx)
+    record = next((o for o in session.offerings if o["id"] == kwargs.get("offering")), None)
+    if record is None or not record.get("path"):
+        return WriteIntent(())                    # the tool refuses it in its own words
+    folder = notes.safe_name(session.project or "Insights")
+    return WriteIntent((f"Offerings/{folder}/{record['title']}.md",))
+
+
 @tool("promote_offering", tier="contribute", effect="vault_write", phases=("synthesise",),
+      intent=_promote_offering_intent,
       card=Card("Move a staged offering into the vault, as the vault's promotion setting "
                 "allows", "the offering is drafted",
                 "Under promotion.mode = 'person' this asks the person first"))

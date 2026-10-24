@@ -152,7 +152,7 @@ def test_vault_writer_rejects_a_changed_expected_document_revision(vault):
     atomic_write_text(path, "human revision")
     writer = VaultWriter(vault)
     try:
-        with pytest.raises(DocumentBusyError, match="changed after this operation"):
+        with pytest.raises(DocumentBusyError, match="changed after it was read"):
             writer.submit(lambda: atomic_write_text(path, "agent overwrite"),
                           targets=["Notes/revision.md"],
                           preconditions={"Notes/revision.md": expected})

@@ -130,6 +130,10 @@ class ToolSpec:
     # dry_run=True - a refusal stops the call before anyone is asked, and its result (a diff)
     # goes in the request, so the person sees exactly what they approve.
     previews: bool = False
+    # A replace-existing or multi-target write resolves what it will touch
+    # before it is queued (CORE-05A): `intent(ctx, kwargs)` returns a
+    # revisions.WriteIntent, and a note it cannot resolve is refused first.
+    intent: Callable[[Any, dict[str, Any]], Any] | None = None
 
     # -- parameters, read from the function itself ---------------------------
     def parameters(self) -> list[inspect.Parameter]:
@@ -214,7 +218,8 @@ class Registry:
              idempotent: bool | None = None, returns: tuple[str, ...] = (),
              sessionless: bool = False, resolve: dict[str, str] | None = None,
              scope: str = "", phases: tuple[str, ...] = (),
-             needs_projects: bool = False, previews: bool = False) -> Callable:
+             needs_projects: bool = False, previews: bool = False,
+             intent: Callable[[Any, dict[str, Any]], Any] | None = None) -> Callable:
         if phases:
             scope = scope or "phase"
         if tier not in TIERS:
@@ -239,7 +244,7 @@ class Registry:
                 idempotent=(effect == "read") if idempotent is None else idempotent,
                 returns=tuple(returns), sessionless=sessionless, resolve=dict(resolve or {}),
                 scope=scope, phases=frozenset(phases), needs_projects=needs_projects,
-                previews=previews)
+                previews=previews, intent=intent)
             return fn
         return register
 
@@ -339,6 +344,14 @@ class Registry:
             adjusted += resolve_references(spec, kwargs, ctx)
             if hooks:
                 hooks[0](name, spec.effect, ctx)
+            # What the write touches and which revision it replaces, settled
+            # before anyone is asked to approve it (CORE-05).
+            intent = spec.intent(ctx, kwargs) if spec.intent is not None else None
+            expected: dict[str, str] = {}
+            if intent is not None:
+                from . import revisions
+                intent = revisions.canonical_intent(ctx.vault, intent)
+                expected = revisions.preconditions(ctx, intent, str(kwargs.get("revision") or ""))
             broker = ctx.extras.get("broker")
             def invoke() -> Any:
                 # Some tools intentionally block while waiting for a person
@@ -346,7 +359,12 @@ class Registry:
                 # index mutex around a whole tool would deadlock those paths.
                 # SQLite-owning implementation code uses the Core's
                 # IndexService explicitly for its short transaction instead.
-                return spec.fn(ctx, **kwargs)
+                out = spec.fn(ctx, **kwargs)
+                if intent is not None and intent.note and isinstance(out, dict):
+                    # Issued inside the operation, so it vouches for exactly
+                    # what this call wrote and nothing written after it.
+                    out = {**out, "revision": revisions.issue_current(ctx, intent.note)}
+                return out
 
             if broker is not None:
                 # The surface's permission mode, decided as the action runs;
@@ -363,11 +381,14 @@ class Registry:
             # the writer only serialises the already-authorised function call.
             writer = ctx.extras.get("vault_writer") if spec.effect != "read" else None
             if writer is not None:
-                targets = _write_targets(name, kwargs, ctx)
+                targets = list(intent.targets) if intent is not None else \
+                    _write_targets(name, kwargs, ctx)
                 result = writer.submit(invoke,
                                        caller=str(ctx.extras.get("caller") or "registry"),
-                                       targets=targets)
+                                       targets=targets, preconditions=expected)
             else:
+                if expected:
+                    revisions.check_now(ctx, expected)
                 result = invoke()
             wait = result.pop(PERSON_WAIT, None) if isinstance(result, dict) else None
             if wait is not None:

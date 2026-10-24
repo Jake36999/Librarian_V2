@@ -38,11 +38,11 @@ def test_only_notes_and_project_folders_are_writable(vault):
 
 
 def test_an_existing_note_is_not_overwritten_without_replace(vault):
-    call(vault, "write_note", folder="Notes", name="Plan", body="first")
+    first = call(vault, "write_note", folder="Notes", name="Plan", body="first")
     again = call(vault, "write_note", folder="Notes", name="Plan", body="second")
     assert again["error"] == "invalid_arguments" and "mode='replace'" in again["detail"]
     replaced = call(vault, "write_note", folder="Notes", name="Plan", body="second",
-                    mode="replace")
+                    mode="replace", revision=first["revision"])
     assert not replaced["created"] and "+second" in replaced["diff"].replace(" ", "")
 
 
@@ -50,7 +50,12 @@ def test_a_note_a_person_edited_is_never_replaced(vault):
     out = call(vault, "write_note", folder="Notes", name="Plan", body="first")
     path = vault.root / out["written"]
     path.write_text(path.read_text(encoding="utf-8") + "\nMy own addition.\n", encoding="utf-8")
-    refused = call(vault, "write_note", folder="Notes", name="Plan", body="new", mode="replace")
+    stale = call(vault, "write_note", folder="Notes", name="Plan", body="new", mode="replace",
+                 revision=out["revision"])
+    assert stale["refused"] == "DOCUMENT_ACTIVE"               # changed since it was read
+    read = call(vault, "get_note", name="Plan")
+    refused = call(vault, "write_note", folder="Notes", name="Plan", body="new", mode="replace",
+                   revision=read["revision"])
     assert refused["refused"] == "PERSON_CONFIRMS"
     assert "My own addition." in path.read_text(encoding="utf-8")
 
@@ -76,31 +81,34 @@ def test_writes_wait_for_the_broker_in_the_core(vault):
 
 
 def test_edit_appends_or_replaces_a_section_and_sets_fields(vault):
-    call(vault, "write_note", folder="Notes", name="Plan", body="# Plan\n\n## Monday\nRead.\n")
-    out = call(vault, "edit_note", note="[[Plan]]", section="Monday", text="Then practise.")
+    written = call(vault, "write_note", folder="Notes", name="Plan",
+                   body="# Plan\n\n## Monday\nRead.\n")
+    out = call(vault, "edit_note", note="[[Plan]]", section="Monday", text="Then practise.",
+               revision=written["revision"])
     assert "+Then practise." in out["diff"]
-    call(vault, "edit_note", note="Plan", section="Tuesday", text="Stand-up.", mode="replace",
-         fields={"aliases": ["Study plan"]})
+    again = call(vault, "edit_note", note="Plan", section="Tuesday", text="Stand-up.",
+                 mode="replace", fields={"aliases": ["Study plan"]}, revision=out["revision"])
     note = notes.load(vault.root / "Notes" / "Plan.md")
     assert "Stand-up." in note.body and note.frontmatter["aliases"] == ["Study plan"]
     # still the librarian's own, unedited by a person: replace is still allowed
     assert "written" in call(vault, "write_note", folder="Notes", name="Plan", body="x",
-                             mode="replace")
+                             mode="replace", revision=again["revision"])
 
 
 def test_edit_refuses_typed_library_notes_and_protected_fields(vault):
     add_source(vault.root, "osquery", "Exposes the OS as SQL tables.")
     assert call(vault, "edit_note", note="osquery", section="Bottom Line",
                 text="x")["error"] == "invalid_arguments"
-    call(vault, "write_note", folder="Notes", name="Plan", body="b")
-    assert call(vault, "edit_note", note="Plan", fields={"written_by": "person"})["error"] \
-        == "invalid_arguments"
+    written = call(vault, "write_note", folder="Notes", name="Plan", body="b")
+    assert call(vault, "edit_note", note="Plan", fields={"written_by": "person"},
+                revision=written["revision"])["error"] == "invalid_arguments"
 
 
 def test_update_project_changes_stage_goal_and_disqualifiers(vault):
     a_project(vault)
     out = call(vault, "update_project", name="Uni", stage="Active", goal="Pass year one.",
-               disqualifiers=["paywalled"])
+               disqualifiers=["paywalled"],
+               revision=call(vault, "get_note", name="Uni")["revision"])
     note = notes.load(vault.root / "Projects" / "Uni.md")
     assert note.frontmatter["stage"] == "active" and note.frontmatter["disqualifiers"] == \
         ["paywalled"]

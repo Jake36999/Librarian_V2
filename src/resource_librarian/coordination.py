@@ -72,14 +72,24 @@ class PreconditionChangedError(DocumentBusyError):
     """
 
     def __init__(self, path: str) -> None:
-        super().__init__(path, "a document that changed after this operation was queued")
+        Refusal.__init__(self, "DOCUMENT_ACTIVE",
+                         f"{path} changed after it was read (an edit made outside this call), "
+                         "so it was not overwritten: read it again and reapply the change, or "
+                         "resolve the write-conflict checkpoint")
+
+
+MISSING = "missing"                      # the fingerprint of a file that does not exist
+
+
+def fingerprint_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()[:20]
 
 
 def fingerprint(path: Path) -> str:
     """A cheap content fingerprint used as a write precondition."""
     if not path.is_file():
-        return "missing"
-    return hashlib.sha256(path.read_bytes()).hexdigest()[:20]
+        return MISSING
+    return fingerprint_bytes(path.read_bytes())
 
 
 @dataclass(frozen=True)

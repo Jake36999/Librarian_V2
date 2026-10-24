@@ -26,6 +26,7 @@ from typing import Any, Literal
 from .. import notes
 from ..coordination import atomic_write_text
 from ..registry import Card, Context, tool
+from ..revisions import WriteIntent
 from ..rules import Refusal
 from ..vault import now_iso
 from .library import engine_for
@@ -76,6 +77,54 @@ def _existing(ctx: Context, name: str) -> list[Path]:
     return [p for p in notes.iter_paths(ctx.vault.root) if p.stem.casefold() == name.casefold()]
 
 
+def _one_note(ctx: Context, note: str) -> Path:
+    matches = _existing(ctx, notes.safe_name(note) or note)
+    if len(matches) != 1:
+        raise TypeError(f"no single note named {note!r}" if not matches else
+                        f"{note!r} could be any of "
+                        f"{[p.relative_to(ctx.vault.root).as_posix() for p in matches]}")
+    return matches[0]
+
+
+def _rel(ctx: Context, path: Path) -> str:
+    return path.relative_to(ctx.vault.root).as_posix()
+
+
+# -- write intents (CORE-05A): what each write touches, resolved before it is
+# queued, with the note it replaces needing the revision its caller read.
+
+def _write_note_intent(ctx: Context, kwargs: dict[str, Any]) -> WriteIntent:
+    path = _folder(ctx, str(kwargs.get("folder", ""))) / f"{_note_name(str(kwargs.get('name', '')))}.md"
+    rel = _rel(ctx, path)
+    if not path.exists():
+        # A new note - unless another write makes it first, which this one
+        # must then not replace unread (delegate review, DeepSeek-V4-Pro).
+        return WriteIntent((rel,), note=rel, absent=(rel,))
+    replacing = kwargs.get("mode") == "replace"
+    return WriteIntent((rel,), replaces=rel if replacing else "", note=rel)
+
+
+def _edit_note_intent(ctx: Context, kwargs: dict[str, Any]) -> WriteIntent:
+    path = _one_note(ctx, str(kwargs.get("note", "")))
+    _editable(ctx, path, str(kwargs.get("note", "")))
+    rel = _rel(ctx, path)
+    return WriteIntent((rel,), replaces=rel, note=rel)
+
+
+def _update_project_intent(ctx: Context, kwargs: dict[str, Any]) -> WriteIntent:
+    path = ctx.vault.project_note(str(kwargs.get("name", "")))
+    if not path.exists():
+        raise TypeError(f"no Project note {kwargs.get('name')!r}: create_project first")
+    rel = _rel(ctx, path)
+    return WriteIntent((rel,), replaces=rel, note=rel)
+
+
+def _archive_note_intent(ctx: Context, kwargs: dict[str, Any]) -> WriteIntent:
+    """A move: the note and its place in Archive/, declared, not replaced."""
+    rel = _rel(ctx, _one_note(ctx, str(kwargs.get("note", ""))))
+    return WriteIntent((rel, f"Archive/{rel}"))
+
+
 def _record(ctx: Context, tool_name: str, rel: str) -> None:
     if ctx.session:
         from .sessions import _event
@@ -97,8 +146,18 @@ def _writable(ctx: Context, path: Path) -> None:
                         f"librarian's own notes (Notes/ or Projects/)")
 
 
+def _editable(ctx: Context, path: Path, note: str) -> notes.Note:
+    """edit_note's target checks: one of the librarian's own notes, untyped."""
+    _writable(ctx, path)
+    current = notes.load(path)
+    if str(current.frontmatter.get("type", "")) in TYPED_SHAPES - {"project"}:
+        raise TypeError(f"{note!r} is a {current.frontmatter['type']} note: it has its own tools")
+    return current
+
+
 @tool("write_note", tier="contribute", effect="vault_write", scope="session",
-      returns=("written", "path", "created", "diff", "findable"),
+      intent=_write_note_intent,
+      returns=("written", "path", "created", "diff", "findable", "revision"),
       card=Card("Write one of your own notes for the person - a study plan, a reading list, "
                 "a guide to what you found - in Notes/ or Projects/<project>/",
                 "the person asks for a note, plan, list or guide to be saved in the library",
@@ -106,10 +165,12 @@ def _writable(ctx: Context, path: Path) -> None:
                 "(create_project first). Returns the path: only say a note exists once this "
                 "returns it. A research guide whose claims cite sources is an Offering "
                 "(draft_offering), not this. mode=replace rewrites only a note you wrote that "
-                "nobody has edited since - the way to rewrite a whole note"))
+                "nobody has edited since - the way to rewrite a whole note, with the "
+                "`revision` you read it at"))
 def write_note(ctx: Context, folder: str, name: str, body: str,
                frontmatter: dict | None = None,
-               mode: Literal["create", "replace"] = "create") -> dict:
+               mode: Literal["create", "replace"] = "create", revision: str = "") -> dict:
+    # `revision` is checked by the registry against this call's intent (CORE-05).
     target = _folder(ctx, folder)
     safe = _note_name(name)
     path = target / f"{safe}.md"
@@ -162,7 +223,8 @@ def write_note(ctx: Context, folder: str, name: str, body: str,
 
 
 @tool("edit_note", tier="contribute", effect="vault_write", scope="session",
-      resolve={"note": "note"}, returns=("edited", "path", "diff"),
+      resolve={"note": "note"}, intent=_edit_note_intent,
+      returns=("edited", "path", "diff", "revision"),
       card=Card("Add to or replace one section of a note in Notes/ or Projects/, or set its "
                 "frontmatter fields (aliases, related, status...)",
                 "a note of yours, or a project's working note, needs a section added or "
@@ -170,19 +232,13 @@ def write_note(ctx: Context, folder: str, name: str, body: str,
                 "Always name the `section` (its heading) and give `text`: append adds to the "
                 "end of it (creating it if missing), replace swaps its text. To rewrite a whole "
                 "note you wrote, use write_note(mode='replace'). Sources, Concepts, Offerings "
-                "and Applications have their own tools"))
+                "and Applications have their own tools. A note that already exists is replaced only with the `revision` you read it at (get_note returns it, and every write returns the next): one changed since is not overwritten"))
 def edit_note(ctx: Context, note: str, section: str = "", text: str = "",
-              mode: Literal["append", "replace"] = "append", fields: dict | None = None) -> dict:
-    matches = _existing(ctx, notes.safe_name(note) or note)
-    if len(matches) != 1:
-        raise TypeError(f"no single note named {note!r}" if not matches else
-                        f"{note!r} could be any of "
-                        f"{[p.relative_to(ctx.vault.root).as_posix() for p in matches]}")
-    path = matches[0]
-    _writable(ctx, path)
-    current = notes.load(path)
-    if str(current.frontmatter.get("type", "")) in TYPED_SHAPES - {"project"}:
-        raise TypeError(f"{note!r} is a {current.frontmatter['type']} note: it has its own tools")
+              mode: Literal["append", "replace"] = "append", fields: dict | None = None,
+              revision: str = "") -> dict:
+    # `revision` is checked by the registry against this call's intent (CORE-05).
+    path = _one_note(ctx, note)
+    current = _editable(ctx, path, note)
     if not section and not fields:
         raise TypeError("give a section and text to add or replace, or fields to set")
     before = path.read_text(encoding="utf-8")
@@ -209,14 +265,16 @@ def edit_note(ctx: Context, note: str, section: str = "", text: str = "",
 
 
 @tool("update_project", tier="contribute", effect="vault_write", scope="session",
-      resolve={"name": "note"}, returns=("updated", "path", "diff"),
+      resolve={"name": "note"}, intent=_update_project_intent,
+      returns=("updated", "path", "diff", "revision"),
       card=Card("Change a Project note after it was created: its stage, goal, summary, "
                 "horizon, disqualifiers or fixed constraints",
                 "a pursuit's stage or goal has changed, or it was created with too little",
-                "Values are checked against the vault's content model"))
+                "Values are checked against the vault's content model. A note that already exists is replaced only with the `revision` you read it at (get_note returns it, and every write returns the next): one changed since is not overwritten"))
 def update_project(ctx: Context, name: str, stage: str = "", goal: str = "", summary: str = "",
                    horizon: str = "", disqualifiers: list[str] | None = None,
-                   constraints: dict | None = None) -> dict:
+                   constraints: dict | None = None, revision: str = "") -> dict:
+    # `revision` is checked by the registry against this call's intent (CORE-05).
     from ..search import Constraints
     from .sessions import _axis_value
     path = ctx.vault.project_note(name)
@@ -255,7 +313,8 @@ def update_project(ctx: Context, name: str, stage: str = "", goal: str = "", sum
 
 
 @tool("archive_note", tier="contribute", effect="vault_write", scope="session",
-      resolve={"note": "note"}, returns=("archived", "path", "from"),
+      resolve={"note": "note"}, intent=_archive_note_intent,
+      returns=("archived", "path", "from"),
       card=Card("Move a note out of the way into Archive/, keeping it (nothing is deleted)",
                 "a note of yours is obsolete or was written in error",
                 "Only your own notes (Notes/, a project's working notes) - never a Source, "
@@ -263,10 +322,7 @@ def update_project(ctx: Context, name: str, stage: str = "", goal: str = "", sum
                 "rejected there (staging_decide), an accepted one is the person's to archive. "
                 "Links by name keep resolving"))
 def archive_note(ctx: Context, note: str, reason: str) -> dict:
-    matches = _existing(ctx, notes.safe_name(note) or note)
-    if len(matches) != 1:
-        raise TypeError(f"no single note named {note!r}")
-    path = matches[0]
+    path = _one_note(ctx, note)
     rel = path.relative_to(ctx.vault.root)
     if rel.parts[0] == "Archive":
         raise TypeError(f"{rel.as_posix()} is already archived")

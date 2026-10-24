@@ -5,8 +5,8 @@ import json
 import re
 from typing import Any, Callable, Literal, TypeVar
 
-from .. import agenda, desk, evaluation, notes, text
-from ..coordination import atomic_write_text
+from .. import agenda, desk, evaluation, notes, revisions, text
+from ..coordination import atomic_write_text, fingerprint_bytes
 from ..index import Index
 from ..registry import Card, Context, tool
 from ..search import INTENTS, Engine, search
@@ -289,14 +289,22 @@ def get_note(ctx: Context, name: str, sections: list[str] | None = None) -> dict
         if row is None:
             return {"found": False, "name": name,
                     "next_step": "search for it; names are exact, including owner prefixes"}
-        note = notes.load(ctx.vault.root / row["path"])
+        path = ctx.vault.root / row["path"]
+        data = path.read_bytes()
+        frontmatter, text, error = notes.parse(data.decode("utf-8", errors="replace"))
+        note = notes.Note(name=path.stem, path=path, frontmatter=frontmatter, body=text,
+                          parse_error=error)
         body = note.sections()
         wanted = {s.lower() for s in sections or []}
         return {"found": True, "name": row["name"], "path": row["path"], "shape": row["shape"],
                 "kind": row["kind"], "frontmatter": json.loads(row["frontmatter"]),
                 "sections": {h or "opening": t for h, t in body.items()
                              if not wanted or h.lower() in wanted},
-                "linked_from": engine.index.linked_from(row["name"])[:50]}
+                "linked_from": engine.index.linked_from(row["name"])[:50],
+                # What a replace-existing write must bring back (CORE-05):
+                # this note as these exact bytes, to this session and caller.
+                "revision": revisions.issue(ctx, revisions.canonical(ctx.vault, row["path"]),
+                                            fingerprint_bytes(data))}
     return with_engine(ctx, load)
 
 

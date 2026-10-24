@@ -81,9 +81,12 @@ given, and only through them.
   response. If the available tools cannot create the requested artifact, say that plainly.
 - Where you write: `write_note` and `edit_note` for your own notes (a study plan, a checklist,
   a summary for the person) in Notes/ or Projects/<project>/; `update_project` for a project's
-  stage, goal and constraints. Sources, Concepts and Offerings are written only by staging and
-  promotion. A guide whose claims cite sources is an Offering (`draft_offering` with
-  kind='insight_report'), not a free note. A project's own files outside the vault are
+  stage, goal and constraints. To change a note that already exists, read it first
+  (`get_note`) and pass its `revision`; each write returns the next one. A note changed
+  since you read it is not overwritten - read it again. Sources, Concepts and Offerings
+  are written only by staging and promotion. A guide whose claims cite sources is an
+  Offering (`draft_offering` with kind='insight_report'), not a free note. A project's own
+  files outside the vault are
   read-only unless the person allowed edits for that folder; then `project_edit` changes one
   file at a time - preview it with dry_run=true, then apply, and the person is asked first.
 - When the person asks about several things, record each as a topic in Frame

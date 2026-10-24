@@ -219,8 +219,10 @@ def test_an_mcp_write_to_a_note_being_edited_becomes_a_conflict_checkpoint(vault
     server.call("open_session", {"purpose": "add_project"}, state)
     made = server.call("create_project", {"name": "Host Watch", "stage": "planning",
                                           "summary": "Watch our hosts."}, state)
+    read = server.call("get_note", {"name": "Host Watch"}, state)
     core.document_heartbeat(made["created"], editor="Obsidian", dirty=True)
-    refused = server.call("update_project", {"name": "Host Watch", "summary": "Changed."}, state)
+    refused = server.call("update_project", {"name": "Host Watch", "summary": "Changed.",
+                                             "revision": read["revision"]}, state)
     assert refused["refused"] == "DOCUMENT_ACTIVE"
     assert refused["checkpoint"]["requester"] == "mcp"
     assert "Watch our hosts." in (vault.root / made["created"]).read_text(encoding="utf-8")

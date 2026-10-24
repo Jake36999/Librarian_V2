@@ -87,6 +87,13 @@ _RULES = [
     Rule("DOCUMENT_ACTIVE", "failure",
          "Librarian never replaces a note while a connected editor reports it focused and dirty; "
          "the affected operation waits for a document-level person decision."),
+    Rule("REVISION_REQUIRED", "failure",
+         "A write that replaces an existing note brings the revision its caller read (get_note "
+         "returns it; every write returns the next one), so a change made since is never "
+         "overwritten. A new note needs none."),
+    Rule("REVISION_REFUSED", "failure",
+         "A revision is bound to one note, the session and caller that read it, and the Core "
+         "that issued it; one issued for anything else authorises nothing. Read the note again."),
     Rule("PINNED_REVISION_REQUIRED", "failure",
          "Capability extraction and execution use a catalogued source at a pinned revision; "
          "an unpinned current branch is not treated as reproducible evidence."),
