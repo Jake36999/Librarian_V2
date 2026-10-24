@@ -18,6 +18,12 @@ says whether the route actually works in Librarian.
 This document is a design and operating contract. It does not enable a
 provider parameter or modify an active prompt by itself.
 
+The companion [Model Invocation Architecture](model-invocation-architecture.md)
+specifies how an expectation record is resolved with task, role,
+collaboration, and route policy into a provider call and model walk.
+The corresponding evidence and implementation requirements are in
+[Model protocol-adapter requirements](model-adapter-requirements.md).
+
 ## Why the registry is needed
 
 The current catalog is a useful discovery and display layer. Its profile
