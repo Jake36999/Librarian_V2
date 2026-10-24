@@ -78,6 +78,10 @@ class PreconditionChangedError(DocumentBusyError):
                          "resolve the write-conflict checkpoint")
 
 
+class OperationLogUnreadableError(RuntimeError):
+    """The Core cannot safely admit mutation without reading its audit log."""
+
+
 MISSING = "missing"                      # the fingerprint of a file that does not exist
 
 
@@ -551,6 +555,66 @@ class VaultWriter:
     def log_path(self) -> Path:
         return self.vault.librarian / "runtime" / "operations.jsonl"
 
+    def interrupted_operations(self) -> list[dict[str, Any]]:
+        """Return safe diagnostics for operations without a durable outcome.
+
+        The writer records ``running`` before a mutation and a second, terminal
+        record after it.  A process crash or final-audit failure can leave only
+        the former.  Startup recovery must surface that ambiguity without
+        replaying, repairing, or exposing an operation's result/detail (either
+        can contain document text).  The caller turns these rows into durable
+        human checkpoints.
+
+        A truncated final JSONL record is the normal crash artefact and is
+        ignored.  A malformed complete record is instead returned as a
+        minimal integrity diagnostic, so corruption cannot disappear silently.
+        """
+        try:
+            raw = self.log_path.read_bytes()
+        except FileNotFoundError:
+            return []
+        except OSError as exc:
+            # Treating an unreadable operation log as an empty one would let
+            # the Core overwrite state without first surfacing a possibly
+            # interrupted mutation. The caller releases its lease and refuses
+            # startup rather than admitting writes on unknown evidence.
+            raise OperationLogUnreadableError(
+                "the vault operation log cannot be read; mutation admission is refused") from exc
+        lines = raw.splitlines(keepends=True)
+        latest: dict[str, dict[str, Any]] = {}
+        diagnostics: list[dict[str, Any]] = []
+        for index, raw_line in enumerate(lines):
+            terminated = raw_line.endswith((b"\n", b"\r"))
+            line = raw_line.rstrip(b"\r\n")
+            if not line.strip():
+                continue
+            try:
+                decoded = line.decode("utf-8")
+                row = json.loads(decoded)
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                if index == len(lines) - 1 and not terminated:
+                    # The final append may have been cut off between write and
+                    # flush.  The preceding durable record still tells us the
+                    # real state, if any.
+                    continue
+                diagnostics.append(_operation_integrity_diagnostic(
+                    index + 1, line, "invalid UTF-8 or JSON record"))
+                continue
+            record, error = _operation_recovery_record(row)
+            if error:
+                diagnostics.append(_operation_integrity_diagnostic(index + 1, line, error))
+                continue
+            assert record is not None  # narrows for type checkers and readers
+            latest[record["operation_id"]] = record
+
+        interrupted = [record for record in latest.values()
+                       if record["caller"] != "operation-recovery"
+                       and record["status"] in {"queued", "running"}
+                       and not record["finished_at"]]
+        return sorted([*diagnostics, *interrupted],
+                      key=lambda record: (str(record.get("started_at") or ""),
+                                          str(record.get("operation_id") or "")))
+
     def submit(self, fn: Callable[[], T], *, caller: str = "core",
                targets: list[str] | tuple[str, ...] = (),
                preconditions: dict[str, str] | None = None,
@@ -658,10 +722,38 @@ class VaultWriter:
 
     def _record(self, op: Operation) -> None:
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
-        line = json.dumps(asdict(op), ensure_ascii=False) + "\n"
+        line = (json.dumps(asdict(op), ensure_ascii=False) + "\n").encode("utf-8")
         # The writer is the only local producer, so append is serial and no
         # separate file lock is needed inside this process.
-        with self.log_path.open("a", encoding="utf-8") as handle:
+        with self.log_path.open("a+b") as handle:
+            # A previous process can die during its final JSONL append.  Do
+            # not glue this new record to that partial tail: a later startup
+            # would mistake the concatenation for a complete corrupt row.  A
+            # complete no-newline JSON object is preserved; an incomplete one
+            # was never a durable operation record and is safely discarded.
+            handle.seek(0, os.SEEK_END)
+            length = handle.tell()
+            if length:
+                handle.seek(0)
+                previous = handle.read()
+                if not previous.endswith((b"\n", b"\r")):
+                    boundary = max(previous.rfind(b"\n"), previous.rfind(b"\r")) + 1
+                    tail = previous[boundary:]
+                    try:
+                        parsed_tail = json.loads(tail.decode("utf-8"))
+                    except (UnicodeDecodeError, json.JSONDecodeError):
+                        handle.seek(boundary)
+                        handle.truncate()
+                    else:
+                        # JSONL requires a delimiter even if a prior producer
+                        # crashed between its complete object and newline.
+                        if isinstance(parsed_tail, dict):
+                            handle.seek(0, os.SEEK_END)
+                            handle.write(b"\n")
+                        else:
+                            handle.seek(boundary)
+                            handle.truncate()
+            handle.seek(0, os.SEEK_END)
             handle.write(line)
             handle.flush()
             with contextlib.suppress(OSError):
@@ -681,6 +773,70 @@ class VaultWriter:
         self._thread.join(timeout)
         with _WRITER_THREADS_GUARD:
             _WRITER_THREADS.pop(self._thread, None)
+
+
+def _operation_recovery_record(row: Any) -> tuple[dict[str, Any] | None, str]:
+    """Reduce one audit-log row to the non-secret state recovery may show."""
+    if not isinstance(row, dict):
+        return None, "record is not an object"
+    operation_id = _operation_text(row.get("id"), 160)
+    if not operation_id:
+        return None, "record has no operation id"
+    status = _operation_text(row.get("status"), 40)
+    if status not in {"queued", "running", "done", "failed"}:
+        return None, "record has an invalid status"
+    raw_targets = row.get("targets", [])
+    if not isinstance(raw_targets, list) or not all(isinstance(path, str) for path in raw_targets):
+        return None, "record has invalid targets"
+    preconditions = _operation_fingerprints(row.get("precondition_fingerprints", {}))
+    observed = _operation_fingerprints(row.get("observed_fingerprints", {}))
+    if preconditions is None or observed is None:
+        return None, "record has invalid fingerprints"
+    return {
+        "operation_id": operation_id,
+        "caller": _operation_text(row.get("caller"), 80) or "unknown",
+        "started_at": _operation_text(row.get("started_at"), 80),
+        "targets": [_operation_text(path, 400) for path in raw_targets[:200]],
+        "precondition_fingerprints": preconditions,
+        "observed_fingerprints": observed,
+        "finished_at": _operation_text(row.get("finished_at"), 80),
+        "status": status,
+    }, ""
+
+
+def _operation_text(value: Any, limit: int) -> str:
+    """Bound an audit identifier without carrying arbitrary nested payloads."""
+    return str(value or "").replace("\x00", "").replace("\r", " ").replace("\n", " ").strip()[:limit]
+
+
+def _operation_fingerprints(value: Any) -> dict[str, str] | None:
+    if not isinstance(value, dict):
+        return None
+    if len(value) > 200:
+        return None
+    out: dict[str, str] = {}
+    for path, digest in value.items():
+        if not isinstance(path, str) or not isinstance(digest, str):
+            return None
+        out[_operation_text(path, 400)] = _operation_text(digest, 160)
+    return out
+
+
+def _operation_integrity_diagnostic(line_number: int, raw: str | bytes, reason: str) -> dict[str, Any]:
+    """Make a stable, safe recovery item for a malformed complete log row."""
+    payload = raw if isinstance(raw, bytes) else raw.encode("utf-8", "replace")
+    marker = hashlib.sha256(f"{line_number}:".encode("utf-8") + payload).hexdigest()[:16]
+    return {
+        "operation_id": f"operation-log-integrity-{marker}",
+        "caller": "operation-log",
+        "started_at": "",
+        "targets": [],
+        "precondition_fingerprints": {},
+        "observed_fingerprints": {},
+        "finished_at": "",
+        "status": "running",
+        "integrity_error": f"operation log integrity issue at record {line_number}: {reason}",
+    }
 
 
 def _operation_result(value: Any) -> dict[str, Any]:

@@ -51,7 +51,8 @@ from .broker import ANSWERS, MODES, Broker
 from .checkpoints import CheckpointStore
 from . import connection
 from .coordination import (DocumentLeases, LeaseHeldError, StaleLeaseError,
-                           VaultCoordinator, VaultWatcher, VaultWriter, atomic_write_bytes, atomic_write_text)
+                           VaultCoordinator, VaultWatcher, VaultWriter, atomic_write_bytes, atomic_write_text,
+                           fingerprint)
 from .hosts import (EVALUATION_LEVELS, RELEASE_PROMPT_CONTRACT_VERSION,
                     RELEASE_TOOL_CONTRACT_VERSION, L1_PROBE_CONTRACT_VERSION,
                     EvaluationJobStore, Host, HostFullRecordError, HostLimiter, HostRegistry,
@@ -314,8 +315,24 @@ class App:
             self.writer = VaultWriter(vault, self.document_leases)
             # Session events from any module go through this writer (CORE-03).
             attach_core_writer(vault, self.writer)
-            self.watcher = VaultWatcher(vault, self.document_leases)
-            self.watcher.start()
+        # Recovery must precede *any* App-owned write (including settings
+        # migration): otherwise a truncated final JSONL line could be joined
+        # to that first append and turn a recoverable crash tail into a new
+        # corrupt record.  Checkpoints and Hub need no settings/broker state.
+        self.checkpoints = CheckpointStore(vault)
+        self.hub = Hub()
+        try:
+            self.operation_recoveries = self._reconcile_interrupted_operations()
+        except Exception:
+            # A failed startup must not strand the process-local session sink
+            # or vault lease. In particular, an unreadable operation log is a
+            # fail-closed condition rather than permission to mutate blindly.
+            if self.writer is not None:
+                detach_core_writer(vault, self.writer)
+                self.writer.close()
+            if self.coordinator is not None:
+                self.coordinator.release()
+            raise
         self.keys = keys or KeyStore(obsidian_managed=self.secret_source == "obsidian")
         self.settings = Settings(vault, self.writer)
         self.index_service = IndexService(vault)
@@ -336,8 +353,13 @@ class App:
         from .agent_runtime import ProfileStore
         self.profiles = ProfileStore(vault)
         self.profile_gate = ProfileRunGate()
-        self.checkpoints = CheckpointStore(vault)
-        self.hub = Hub()
+        # A start-only writer record means a prior process may have mutated
+        # some, all, or none of its targets.  It has already been surfaced
+        # before App-owned writes and before the watcher begins; recovery
+        # never replays or repairs it.
+        if self.writer is not None:
+            self.watcher = VaultWatcher(vault, self.document_leases)
+            self.watcher.start()
         # Redacted invocation diagnostics live only in process memory for the
         # first adapter slice.  Do not turn model prompts or responses into a
         # new vault artefact merely by adding a protocol translation seam.
@@ -549,6 +571,57 @@ class App:
     def _serialized(self, caller: str, fn: Callable[[], Any]) -> Any:
         """Run an App-owned mutation through the same vault writer as tools."""
         return self.writer.submit(fn, caller=caller) if self.writer is not None else fn()
+
+    def _reconcile_interrupted_operations(self) -> list[dict[str, Any]]:
+        """Turn ambiguous pre-crash writes into one durable review card each.
+
+        This intentionally runs only for the mutable, coordinated Core.  An
+        offline App owns neither the lease nor the writer and must not inspect
+        or mutate another Core's recovery state.  The writer log is evidence,
+        not an instruction queue: we make no repair or replay here.
+        """
+        if self.writer is None:
+            return []
+        interrupted = self.writer.interrupted_operations()
+        if not interrupted:
+            return []
+
+        def reconcile() -> list[dict[str, Any]]:
+            recovered: list[dict[str, Any]] = []
+            for record in interrupted:
+                current: dict[str, str] = {}
+                for target in record["targets"]:
+                    try:
+                        current[target] = fingerprint(self.vault.safe_relative(target))
+                    except (OSError, ValueError, Refusal):
+                        current[target] = "unreadable"
+                identity = json.dumps({
+                    "operation_id": record["operation_id"],
+                    "caller": record["caller"],
+                    "targets": record["targets"],
+                }, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+                scope = "operation-recovery:" + record["operation_id"][:100] + ":" + \
+                    hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
+                evidence = {
+                    "operation_id": record["operation_id"],
+                    "caller": record["caller"],
+                    "started_at": record["started_at"],
+                    "targets": list(record["targets"]),
+                    "precondition_fingerprints": dict(record["precondition_fingerprints"]),
+                    "observed_fingerprints": dict(record["observed_fingerprints"]),
+                    "current_fingerprints": current,
+                    "consequence": ("The operation may have partially applied. "
+                                    "Librarian made no repair or replay."),
+                }
+                if record.get("integrity_error"):
+                    evidence["integrity_error"] = str(record["integrity_error"])
+                recovered.append(self.checkpoints.ensure_historical(
+                    "operation_recovery", scope, evidence=evidence,
+                    choices=["acknowledge"], default="acknowledge",
+                    requester="operation-recovery"))
+            return recovered
+
+        return self.writer.submit(reconcile, caller="operation-recovery")
 
     # -- models -----------------------------------------------------------
     def _migrate_legacy_host_routes(self) -> None:
