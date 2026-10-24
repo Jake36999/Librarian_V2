@@ -62,7 +62,7 @@ from .loop import LENGTHS, STANCES, Loop, ProviderEndpoint
 from .model_invocation import (InvocationPayload, InvocationRuntime,
                                InvocationScope, TaskContract)
 from .providers import DASHBOARDS, PRESETS, Provider, ProviderError, ToolDef, from_settings
-from .registry import REGISTRY, Context
+from .registry import REGISTRY, TIERS, Context
 from .rules import Refusal
 from .staging import StagingStore
 from .session import SessionStore, attach_core_writer, detach_core_writer
@@ -304,6 +304,7 @@ class App:
         # begins, and each phase is recorded for the Host and the tray.
         self._admitting = True
         self.shutdown_phases: list[dict[str, Any]] = []
+        self._mcp_calls = 0                  # MCP tool calls running here (CORE-04A)
         if coordinate:
             self.coordinator = VaultCoordinator(vault, protocol_version=PROTOCOL_VERSION)
             self.coordinator.acquire(takeover=takeover)
@@ -378,6 +379,7 @@ class App:
         from: a chat turn, workflows mid-run, questions waiting on a person."""
         actions = [a.public() for a in self.actions.values() if a.status == "running"]
         return {k: v for k, v in {"turn": self.busy, "actions": actions,
+                                  "mcp_calls": self._mcp_calls,
                                   "waiting_on_person": len(self.broker.pending())}.items() if v}
 
     def retire(self, patience: float = 3600.0, poll: float = 2.0) -> None:
@@ -2036,20 +2038,8 @@ class App:
         extras.pop("profile_store", None)
         extras["caller_kind"] = "person"
         ctx = Context(tier="curate", vault=self.vault, session=session or None, extras=extras)
-        result = REGISTRY.call(name, arguments, ctx)
-        if result.get("refused") == "DOCUMENT_ACTIVE" and "checkpoint" not in result:
-            checkpoint = self._serialized("document-conflict-checkpoint", lambda: self.checkpoints.create(
-                "write_conflict", str(result.get("detail") or name),
-                evidence={"tool": name, "arguments": arguments,
-                          "leases": self.document_leases.view().get("leases", [])},
-                choices=["wait", "retry_after_review", "cancel"], requester="person"))
-            result = {**result, "checkpoint": checkpoint}
-            self.hub.publish({"type": "checkpoint_created", "checkpoint": checkpoint})
-        elif isinstance(result.get("checkpoint"), dict):
-            # Registry-owned refusals and audited macros can make an explicit
-            # UI checkpoint too.  Surface it immediately rather than relying
-            # on a later page refresh.
-            self.hub.publish({"type": "checkpoint_created", "checkpoint": result["checkpoint"]})
+        result = self._surface_checkpoint(REGISTRY.call(name, arguments, ctx), name, arguments,
+                                          requester="person")
         if name in ("answer", "staging_decide", "promote_offering") and "error" not in result:
             self.hub.publish({"type": "person_acted", "tool": name})
         if name == "rewind_session" and "error" not in result and self.loop is not None \
@@ -2059,6 +2049,61 @@ class App:
             # very next turn would answer as if nothing had been discarded.
             self.loop.rewind_to(result["rewound_to"])
         return result
+
+    def _surface_checkpoint(self, result: dict[str, Any], name: str, arguments: dict[str, Any],
+                            *, requester: str) -> dict[str, Any]:
+        """A refused write to a note being edited becomes a visible conflict
+        checkpoint, and any checkpoint a call made reaches the UI at once."""
+        if result.get("refused") == "DOCUMENT_ACTIVE" and "checkpoint" not in result:
+            checkpoint = self._serialized("document-conflict-checkpoint", lambda: self.checkpoints.create(
+                "write_conflict", str(result.get("detail") or name),
+                evidence={"tool": name, "arguments": arguments,
+                          "leases": self.document_leases.view().get("leases", [])},
+                choices=["wait", "retry_after_review", "cancel"], requester=requester))
+            result = {**result, "checkpoint": checkpoint}
+            self.hub.publish({"type": "checkpoint_created", "checkpoint": checkpoint})
+        elif isinstance(result.get("checkpoint"), dict):
+            # Registry-owned refusals and audited macros can make an explicit
+            # UI checkpoint too.  Surface it immediately rather than relying
+            # on a later page refresh.
+            self.hub.publish({"type": "checkpoint_created", "checkpoint": result["checkpoint"]})
+        return result
+
+    #: An MCP client is an agent, never a person: it may hold consult or
+    #: contribute.  `curate` is a person's own authority (person_call).
+    MCP_TIER_CEILING = "contribute"
+
+    def mcp_call(self, name: str, arguments: Any, session: str = "",
+                 tier: str = "consult") -> dict[str, Any]:
+        """One tool call from an MCP connection (CORE-04A).
+
+        The MCP process holds no vault state: it forwards each call here, and
+        the Core runs it as an agent - the connection's tier capped at
+        contribute, the permission broker attached, and the same writer,
+        index service, document leases and checkpoints as every Core call.
+        Returns the tool's result and the session the call left attached.
+        """
+        if tier not in TIERS:
+            raise ApiError(400, f"tier is one of {list(TIERS)}")
+        if not isinstance(arguments, dict):
+            raise ApiError(400, "arguments is a JSON object")
+        granted = TIERS[min(TIERS.index(tier), TIERS.index(self.MCP_TIER_CEILING))]
+        with self._lock:
+            self._admit(f"the MCP call {name!r}")
+            self._mcp_calls += 1
+        try:
+            extras = {**self._extras(), "caller_kind": "mcp", "caller": "mcp"}
+            # A question for the person does not block an MCP call: it returns
+            # the question (needs_person, question_id) as MCP always has; the
+            # person answers in Librarian and the client calls again.
+            extras.pop("waiters", None)
+            ctx = Context(tier=granted, vault=self.vault, session=session or None, extras=extras)
+            result = self._surface_checkpoint(REGISTRY.call(name, arguments, ctx), name, arguments,
+                                              requester="mcp")
+        finally:
+            with self._lock:
+                self._mcp_calls -= 1
+        return {"result": result, "session": ctx.session or "", "tier": granted}
 
     def decide_offering(self, offering: str, decision: str) -> dict[str, Any]:
         from .tools.sessions import decide_offering
@@ -3342,6 +3387,11 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
             if path == "/api/tiers":
                 return app.set_tiers(body.get("tiers") or [], str(body.get("override") or ""),
                                      str(body.get("checkpoint_id") or ""))
+            if path == "/api/mcp/call":
+                # The MCP server's only way into this vault (CORE-04A).  It
+                # authenticates with the owner-only connection record's token.
+                return app.mcp_call(str(body.get("tool") or ""), body.get("arguments") or {},
+                                    str(body.get("session") or ""), str(body.get("tier") or "consult"))
             if path == "/api/lead":
                 return app.set_lead(body.get("route"), str(body.get("override") or ""),
                                     str(body.get("checkpoint_id") or ""))

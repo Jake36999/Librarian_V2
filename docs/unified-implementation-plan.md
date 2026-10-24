@@ -607,8 +607,17 @@ with its primary model and reviewer (§3.2).
 | CORE-02B | implemented | `3015bc2` | A thread cut off by a stop is parked with an "interrupted" note; `resume_session` continues it. |
 | INDEX-01 | implemented | `557126c` | AST guard; the debt list only shrinks. |
 | INDEX-02 (batch 1) | partial | `8ccce9b` | 4 call sites migrated (43 → 39). Drafted with DeepSeek-V4-Pro and narrowed in review; see INDEX-03 for the engine proxy the rest need. |
+| (found) writer wait | implemented | `6b02142` | Pre-existing, reproduced on master: in a coordinated Core a question asked inside a writer operation held the writer, so the person's answer queued behind it until the 600 s timeout. The writer now serves its queue while it waits; a stop releases waiting questions and permission requests. |
+| CORE-04A | implemented | see log | `mcp_server` holds no vault state and forwards every call to `POST /api/mcp/call`. The Core runs it as an agent: tier capped at `contribute`, broker kept, `caller_kind="mcp"`, questions returned rather than awaited. No, stopped, unreachable or non-loopback Core gives `CORE_REQUIRED`. Security review by DeepSeek-V4-Pro: its token/origin concern was already covered by `do_POST`'s checks and is now pinned by a test; its session concern is not an escalation, because `resume_session` already attaches any session. |
+
+**Behaviour changes in CORE-04A, for the owner to confirm:**
+
+- In Ask mode, an MCP write now waits for a person in the Librarian window.
+  Choose Auto to rely on the MCP host's own approval prompts.
+- MCP sampling is no longer used for clerk tasks. The Core's clerk, or the
+  plugin's clerk agent (`clerk_next`/`clerk_submit`), answers them.
+  **CORE-04C (planned):** a Core-to-host sampling callback, only if wanted.
 
 Full suite under the repository venv after CORE-02A: 910 passed, 2 skipped,
-1 deselected. **Next in §18 order:** CORE-04A (MCP constrained Core RPC),
-CORE-05A/B, ADAPT-01, CORE-06/07, the INDEX-03 engine proxy, then
-ROUTE-03–05.
+1 deselected. **Next in §18 order:** CORE-05A/B, ADAPT-01, CORE-06/07, the
+INDEX-03 engine proxy, then ROUTE-03–05.

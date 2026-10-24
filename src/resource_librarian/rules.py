@@ -164,6 +164,10 @@ _RULES = [
          "An unattended sweep waits until the vault's retrieval has passed its own eval "
          "and a person has read the previous cohort: volume into unproven search hides "
          "the problem instead of exposing it."),
+    Rule("CORE_REQUIRED", "boundaries",
+         "An MCP connection reaches a vault only through that vault's running Librarian "
+         "Core; it never opens the vault, its index or its writer itself. Open Librarian "
+         "for this vault (or start it from the tray), then retry."),
     Rule("VAULT_EXISTS", "boundaries",
          "A folder that is already a vault is never initialised again."),
     Rule("VAULT_REQUIRED", "boundaries",
