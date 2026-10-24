@@ -65,6 +65,7 @@ from .model_invocation import (InvocationPayload, InvocationRuntime,
                                InvocationScope, TaskContract)
 from .providers import DASHBOARDS, PRESETS, Provider, ProviderError, ToolDef, from_settings
 from .registry import REGISTRY, TIERS, Context
+from .role_routes import CHAT_ROLES, RoleRouteBinding, RoleRouteStore
 from .rules import Refusal
 from .staging import StagingStore
 from .session import SessionStore, attach_core_writer, detach_core_writer
@@ -219,18 +220,23 @@ class Settings:
             return {}
         return data if isinstance(data, dict) else {}
 
+    def update_in_operation(self, **changes: Any) -> None:
+        """Persist inside an already serialized App operation."""
+        updated = {**self.data, **changes}
+        atomic_write_text(self.path, json.dumps(updated, indent=1, ensure_ascii=False) + "\n")
+        self.data.update(changes)
+        mine = {k: v for k, v in changes.items() if k in self.SHARED}
+        if mine:
+            try:
+                path = self._shared_path()
+                atomic_write_text(path, json.dumps({**self._shared(), **mine}, indent=1,
+                                                   ensure_ascii=False) + "\n")
+            except OSError:
+                pass                # a read-only config dir never stops a choice
+
     def update(self, **changes: Any) -> None:
         def persist() -> None:
-            self.data.update(changes)
-            atomic_write_text(self.path, json.dumps(self.data, indent=1, ensure_ascii=False) + "\n")
-            mine = {k: v for k, v in changes.items() if k in self.SHARED}
-            if mine:
-                try:
-                    path = self._shared_path()
-                    atomic_write_text(path, json.dumps({**self._shared(), **mine}, indent=1,
-                                                       ensure_ascii=False) + "\n")
-                except OSError:
-                    pass                # a read-only config dir never stops a choice
+            self.update_in_operation(**changes)
         if self.writer is not None:
             # Document leases protect human-editable Markdown only.  Internal
             # state is still serialised by the writer but has no Obsidian path.
@@ -393,6 +399,17 @@ class App:
             except (KeyError, AttributeError):
                 continue
         self._migrate_legacy_host_routes()
+        self.role_routes = RoleRouteStore(vault)
+        try:
+            self._migrate_legacy_role_routes()
+        except Exception:
+            self.index_service.close()
+            if self.writer is not None:
+                detach_core_writer(vault, self.writer)
+                self.writer.close()
+            if self.coordinator is not None:
+                self.coordinator.release()
+            raise
         self.qualifications = QualificationStore()
         self.evaluation_jobs = EvaluationJobStore()
         from .agent_runtime import ProfileStore
@@ -739,6 +756,87 @@ class App:
             changed = True
         self.settings.update(tiers=converted if changed else raw_tiers,
                              host_route_migration=1)
+
+    def _binding_for_route(self, role: str, route: dict[str, Any], *,
+                           source: str = "explicit") -> RoleRouteBinding:
+        host_id = str(route.get("host_id") or route.get("provider") or "")
+        if host_id in PRESETS:
+            host_id = "preset-" + host_id
+        try:
+            host = self.hosts.get(host_id)
+        except KeyError:
+            # Keep the unavailable identity visible; execution refuses it.
+            host = None
+        protocol = host.protocol if host is not None else ""
+        return RoleRouteBinding(
+            role=role, host_id=host_id, model_id=str(route.get("model") or ""),
+            protocol=protocol,
+            endpoint_fingerprint=host.endpoint_fingerprint if host is not None else "",
+            adapter_id=("legacy_anthropic_messages" if protocol == "anthropic" else
+                        "legacy_openai_chat") if role in CHAT_ROLES else "",
+            evidence_kind="chat_qualification" if role in CHAT_ROLES else "service_contract",
+            source=source, updated_at=now_iso())
+
+    def _legacy_chat_bindings(self, tiers: Any) -> dict[str, RoleRouteBinding]:
+        rows: dict[str, RoleRouteBinding] = {}
+        for position, role in enumerate(("lead", "scribe", "clerk")):
+            route = tiers[position] if isinstance(tiers, list) and position < len(tiers) else None
+            if isinstance(route, dict) and route.get("model"):
+                rows[role] = self._binding_for_route(role, route, source="legacy_tier")
+            elif position and (parent := ("lead", "scribe")[position - 1]) in rows:
+                rows[role] = RoleRouteBinding(role=role, inherits_from=parent,
+                                             source="inherited", updated_at=now_iso())
+        if "scribe" in rows:
+            rows["research_helper"] = RoleRouteBinding(
+                role="research_helper", inherits_from="scribe", source="inherited", updated_at=now_iso())
+        return rows
+
+    def _service_binding(self, slot: str, provider: str, model: str) -> RoleRouteBinding:
+        from .embed import LOCAL_KINDS
+        if not model:
+            return RoleRouteBinding(role=slot, source="unconfigured", updated_at=now_iso())
+        if slot == "embeddings" and provider in LOCAL_KINDS:
+            return RoleRouteBinding(role=slot, host_id=f"local-{provider}", model_id=model,
+                                     protocol="local", evidence_kind="local_service",
+                                     source="legacy_service", updated_at=now_iso())
+        return self._binding_for_route(slot, {"provider": provider, "model": model},
+                                       source="legacy_service")
+
+    def _migrate_legacy_role_routes(self) -> None:
+        def migrate() -> None:
+            if self.role_routes.exists():
+                self.role_routes.raw()  # Invalid state is never silently regenerated.
+                return
+            rows = self._legacy_chat_bindings(self.settings.data.get("tiers"))
+            for slot in ("ocr", "tts", "stt", "embeddings"):
+                value = str(self.vault.setting("services", slot) or "")
+                if slot == "embeddings" and value.startswith("api:"):
+                    value = value[4:]
+                provider, _, model = value.partition(":")
+                rows[slot] = self._service_binding(slot, provider, model)
+            self.role_routes.initialize_if_absent(rows)
+        self._serialized("role-route-migration", migrate)
+
+    def _chat_bindings_for_tiers(self, tiers: list[dict[str, Any]]) -> dict[str, RoleRouteBinding]:
+        rows = self.role_routes.raw()
+        previous = dict(rows)
+        for role in CHAT_ROLES:
+            rows.pop(role, None)
+        for role, binding in self._legacy_chat_bindings(tiers).items():
+            rows[role] = self._revised_binding(previous.get(role), binding)
+        return rows
+
+    @staticmethod
+    def _revised_binding(previous: RoleRouteBinding | None,
+                         binding: RoleRouteBinding) -> RoleRouteBinding:
+        from dataclasses import replace
+        return replace(binding, revision=previous.revision + 1 if previous else 1,
+                       updated_at=now_iso())
+
+    def _save_service_binding(self, slot: str, provider: str, model: str) -> None:
+        rows = self.role_routes.raw()
+        rows[slot] = self._revised_binding(rows.get(slot), self._service_binding(slot, provider, model))
+        self.role_routes.save(rows)
 
     def _configured_provider(self, choice: dict[str, Any]) -> Provider | None:
         settings = dict(choice)
@@ -2600,8 +2698,7 @@ class App:
                        needs_override=True, lead=lead.get("model", ""), checkpoint="host_model_override",
                        checkpoint_record=row)
 
-    def set_tiers(self, tiers: list[dict[str, Any]], override: str = "",
-                  checkpoint_id: str = "") -> dict[str, Any]:
+    def _clean_tiers(self, tiers: list[dict[str, Any]]) -> list[dict[str, Any]]:
         if not isinstance(tiers, list) or len(tiers) > 3:
             raise ApiError(400, "tiers is a list of up to three {provider|host_id, model}")
         clean = []
@@ -2622,9 +2719,18 @@ class App:
                 clean.append({"provider": str(t["provider"]), "model": str(t["model"])})
             else:
                 raise ApiError(400, "each tier needs a known provider or enabled host id and a model id")
+        return clean
+
+    def set_tiers(self, tiers: list[dict[str, Any]], override: str = "",
+                  checkpoint_id: str = "") -> dict[str, Any]:
+        return self._select_tiers(self._clean_tiers(tiers), override, checkpoint_id)
+
+    def _select_tiers(self, clean: list[dict[str, Any]], override: str,
+                      checkpoint_id: str, *, lead_only: bool = False) -> dict[str, Any]:
         # Requirements Addendum R10: benchmark tiers screen; completing tasks (M0) qualifies.
         # A lead that has not is taken only on a person's recorded override.
         lead = self.lead_status(clean)
+        changes: dict[str, Any] = {"tiers": clean}
         if lead["status"] == "ineligible":
             self._host_model_override_checkpoint(clean, lead, checkpoint_id=checkpoint_id,
                                                  reason=override)
@@ -2632,8 +2738,23 @@ class App:
             overrides[lead["model"]] = {"reason": (override.strip() or
                                                   "approved via host/model override checkpoint")[:300],
                                        "at": now_iso()}
-            self.settings.update(lead_overrides=overrides)
-        self.settings.update(tiers=clean)
+            changes["lead_overrides"] = overrides
+
+        def persist() -> None:
+            if lead_only:
+                rows = self.role_routes.raw()
+                rows["lead"] = self._revised_binding(
+                    rows.get("lead"), self._binding_for_route("lead", clean[0]))
+                # A fresh Lead selection also creates the normal inherited
+                # defaults if this vault previously had no chat selection.
+                for role, binding in self._legacy_chat_bindings(clean[:1]).items():
+                    rows.setdefault(role, binding)
+            else:
+                rows = self._chat_bindings_for_tiers(clean)
+            self.role_routes.save(rows)
+            self.settings.update_in_operation(**changes)
+
+        self._serialized("role-route-settings", persist)
         self.hub.publish({"type": "tiers_changed", "tiers": clean})
         return {"tiers": clean, "lead": self.lead_status(clean)}
 
@@ -2647,7 +2768,11 @@ class App:
         if not isinstance(route, dict):
             raise ApiError(400, "lead is one {provider|host_id, model}")
         kept = [dict(t) for t in (self.settings.data.get("tiers") or [])[1:3] if isinstance(t, dict)]
-        return self.set_tiers([route, *kept], override, checkpoint_id)
+        # Validate through the same API boundary, then patch only the Lead
+        # binding. Inherited roles retain their references rather than being
+        # frozen into copies of the prior route.
+        clean = self._clean_tiers([route])[0]
+        return self._select_tiers([clean, *kept], override, checkpoint_id, lead_only=True)
 
     def lead_status(self, tiers: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         tiers = self.settings.data.get("tiers") or [] if tiers is None else tiers
@@ -2839,6 +2964,7 @@ class App:
             def set_embeddings() -> dict[str, Any]:
                 self.vault.set_setting("services", "embeddings", f"{provider}:{model}" if model else "")
                 self.vault.set_setting("search", "vector_intents", [])
+                self._save_service_binding(slot, provider, model)
                 return self.services()
             return self._serialized("service-settings", set_embeddings)
         if slot == "tts":
@@ -2849,7 +2975,8 @@ class App:
                                     f"{', '.join(sorted(tts.PRICES))}")
             return self._serialized("service-settings", lambda: (
                 self.vault.set_setting("services", "tts", f"{provider}:{model}" if model else ""),
-                self.services())[1])
+                self._save_service_binding(slot, provider, model),
+                self.services())[-1])
         if slot == "stt":
             from . import stt
             if model:
@@ -2859,14 +2986,16 @@ class App:
                     raise ApiError(400, str(exc)) from exc
             return self._serialized("service-settings", lambda: (
                 self.vault.set_setting("services", "stt", f"{provider}:{model}" if model else ""),
-                self.services())[1])
+                self._save_service_binding(slot, provider, model),
+                self.services())[-1])
         if slot != "ocr":
             raise ApiError(400, f"slot {slot!r} is not built yet")
         if model and (provider not in PRESETS or PRESETS[provider].get("protocol") != "openai"):
             raise ApiError(400, "OCR needs an OpenAI-compatible provider (a vision chat model)")
         return self._serialized("service-settings", lambda: (
             self.vault.set_setting("services", "ocr", f"{provider}:{model}" if model else ""),
-            self.services())[1])
+            self._save_service_binding(slot, provider, model),
+            self.services())[-1])
 
     def set_vector_intents(self, intents: list[str]) -> dict[str, Any]:
         from .search import INTENTS
@@ -3134,6 +3263,7 @@ class App:
                 "mode": self.broker.mode, "pending": self.broker.pending(),
                 "tool_settings": dict(self.broker.settings),
                 "busy": self.busy, "tiers": data.get("tiers") or [],
+                "role_routes": {role: binding.public() for role, binding in self.role_routes.raw().items()},
                 "lead": self.lead_status(),
                 "release_leads": self.release_lead_options(),
                 "working_context": data["working_context"],
