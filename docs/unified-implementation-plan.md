@@ -1059,3 +1059,73 @@ Implementation: `c48e6a0`. The final frozen-source full run passed **1,188 tests
 2 skipped, 1 deselected in 439.18s**. Local output:
 `tmp/source-batch-full-2026-10-25-02.log`; exact verification commands and scope
 are in `regression-manifest.md`. No broader release-gate closure is claimed.
+
+### Mixed-kind/multi-topic acceptance, 2026-10-25
+
+Registered staging acceptance now uses Core callbacks for every kind, removing
+its last direct-engine call. Mixed calls compile a bounded pre-approval file
+footprint, including future source/import member paths, then execute in caller
+order. Each item replans derived text against the ledger of known Core writes,
+not arbitrary fresh external bytes. Requests/prose remain fixed; new target or
+dependency discovery pauses for another review. Later topic rows and source
+refiling preserve earlier accepted rows, revisions and concept definitions.
+
+Sources in mixed calls retain original attachments and their reserved copy
+destinations. A source/import/revision note partially written by a failed item
+cannot be modified by a later item before individual review. Caught topic
+failure progress is item-local, does not overwrite an outside staged edit, and
+can be explicitly resumed after restart when its recorded row remains intact.
+The staging-only progress CAS cannot write policies. Topic names with colliding
+Windows-safe view filenames now refuse before the later row is written.
+
+Mixed previews preserve source coverage/sections/copy fields and revision merge
+wording while declaring ordered replanning; they are not an exact future-state
+simulation. Existing single-item failure shapes and person/agent permission
+boundaries remain compatible. No UI or model-selection flow was redesigned.
+Separate lens-store writes remain an explicit INDEX-05 concern, not part of a
+new cross-resource transaction or automatic replay guarantee.
+
+**185 focused tests passed**, including **27 new checks**, plus UI build/smoke.
+The source/topic order and revision/refiling cases also passed nine targeted
+repeats after two non-reproduced development acceptance failures. Their cause
+was not established; no automatic retry or release guarantee was inferred.
+The static direct-index debt falls **3 → 2** (graph/extract's explicit offline
+branches). G1, INDEX-04 runtime enforcement and INDEX-05 Windows/desk/lens stress
+remain open. Next: enforce/measure the remaining ownership boundary and staging
+quarantine behavior, then adapter completion, adoption/dedupe, Session harness
+and integrated release acceptance. Large-footprint rehash costs and encoder
+writer occupancy remain limitations. No paid calls or route qualification were
+performed, and nothing was pushed.
+
+Implementation: `87e2460`. Final frozen-source full verification: **1,215
+passed, 2 skipped, 1 deselected in 458.38s**, with no warnings; local output
+`tmp/mixed-acceptance-full-2026-10-25-02.log`. The earlier development `01`
+run is not final evidence: it started before the last preview compatibility
+fix and exposed a distinct watcher thread PermissionError. That warning
+prompted the narrowly scoped watcher continuation, not a claim to have
+explained the two unreproduced acceptance failures.
+
+### Watcher read-failure recovery, 2026-10-25
+
+The polling watcher no longer terminates on a caught filesystem read failure.
+It preserves failed observations for retry, blocks only an unreadable note,
+and reports bounded non-secret watcher health through `/api/meta`. Heartbeats
+keep their editor lease during a read lock; completed writes are not reported
+failed merely because their post-write fingerprint cannot be read. Known
+Core bytes clear a false edit on rescan; mismatching/unknown recovered bytes
+remain subject to normal debounce. Human edits immediately after a Core save
+cannot be hidden by its old suppression window. Partial directory scans do
+not turn unseen known files into deletion events. Programming errors remain
+visible rather than being retried forever.
+
+This is not global watcher/adoption redesign, a new UI alert, automatic
+mutation retry, runtime ownership enforcement, or Windows stress completion.
+The two earlier non-reproduced acceptance failures remain unexplained. The
+remaining order and gates above are unchanged.
+
+Focused verification: **210 passed**, including **17 new watcher checks**;
+thread-exception warnings were errors. UI build and full browser smoke passed
+without a picker/staging redesign. Implementation: `89e609d`. Final frozen-source
+full verification passed **1,232 tests, 2 skipped, 1 deselected in 422.29s**,
+with thread-exception warnings treated as errors and no warnings reported.
+Local output: `tmp/watcher-recovery-full-2026-10-25-01.log`.

@@ -56,9 +56,9 @@ ID/kind must match the loaded file.
 | Lens | Separate lens store, plus staged lifecycle record | Staged dependency; serialized acceptance | Separate SQLite store; INDEX-05 review remains |
 | Single new source | Source note, managed attachment copies, concept backlinks, topic/master indexes, optional vectors, staged record | Reviewed staged bytes; complete target/dependency plan; per-write CAS/leases; explicit interrupted-acceptance progress | Core callback |
 | Source-only new-source batches | Source notes, managed attachment copies, shared concept backlinks and topic/master views, staged records | Complete bounded pre-approval plan; one shared own-write guard; reserved copy destinations; per-item progress/results | Core callback |
-| New sources in mixed-kind batches | Same promotion effects, legacy attachment relocation | Staged dispatch dependency only; **multi-target protection unfinished** | Legacy engine path |
+| New sources in mixed-kind batches | Source note, managed attachment copies, views/concept backlinks, staged records | Bounded pre-approved footprint; ordered replanning; own-write hashes; unknown scope refuses | Core callback |
 | Single topic acceptance | `About/Topics.md`, optional source refiling, topic/master indexes, staged record | Staged review token; prepared target/dependency CAS; per-write guards; retained partial progress | Core callback |
-| Topic acceptance in mixed/multi-item batches | Same taxonomy effects | Staged dispatch dependency; per-write domain guards, but **pre-approval multi-target inventory unfinished** | Legacy engine path |
+| Topic acceptance in mixed/multi-item batches | Topic rows, source refiling, topic/master views, staged records | Same bounded footprint; fresh derived text preserves earlier rows/prose; partial-primary targets blocked | Core callback |
 | `refile_source` | Changed source frontmatter and old/new topic/master indexes | Prepared note bytes and target/dependency CAS; per-write guards | Core callback |
 | `views_refresh` | Planned generated topic/master indexes | Prepared output inventory/CAS; changed topic inventory requires replanning | Core callback |
 
@@ -205,8 +205,8 @@ already-written Source or claiming complete findability.
 
 This catalogue packet initially applied the new shared boundary to **catalogue
 adoption only**. The single-source and source-only batch continuations below
-also use it; mixed-kind and multi-topic acceptance still retain a legacy
-serving path. Catalogue encoder IO releases SQLite, but
+also use it; the mixed-kind/multi-topic continuation below closes staging's
+last direct-engine path. Catalogue encoder IO releases SQLite, but
 still runs within that entry's writer operation; transport cancellation and
 writer-release restructuring remain separate work. File/index/evidence writes
 are not one cross-resource transaction, and partial work requires explicit
@@ -235,8 +235,9 @@ attachments into `Sources/<kind>/files/`. Original project/Inbox/staging files
 remain in place. Existing destination files are never reused for a first
 acceptance, even if identical; a numbered destination is selected instead.
 This is source-preservation behavior, not the future deployment/dedupe system.
-It deliberately differs from mixed-kind and offline legacy relocation, which
-are still debt. No background cleanup of retained originals is performed.
+It deliberately differed from the initial mixed-kind legacy path, now migrated
+below. Offline domain relocation remains legacy. No background cleanup of
+retained originals is performed.
 
 Copies stream through a same-directory temporary file, check the input digest
 and all preconditions before publication, and atomically replace the prepared
@@ -290,24 +291,22 @@ the exact command, final UI-only verification ordering and local full-run log.
 
 ## Remaining limits
 
-- Mixed-kind and multi-topic promotion need a resolved mutation plan
-  including attachment destinations, generated views and linked concept notes.
-  Do not wrap the complete promotion in an index callback: it writes files and
-  may run vector IO. Legacy mixed-kind/offline attachment movement remains debt.
+- Mixed-kind plans now have bounded footprints and guarded effects, but are
+  not simulations of all future outcomes. Newly discovered dependencies need
+  another review. Offline domain attachment relocation remains legacy.
 - Rejecting a fresh, non-partial source still uses the legacy quarantine/move
-  path. The originals-retained guarantee above applies to single-source accept
+  path. The originals-retained guarantee above applies to registered source acceptance
   and subsequent partial-work decisions, not every ingestion/rejection path.
 - Per-item batch results remain, but a dispatch-level fingerprint conflict
   refuses the whole call before mutation. This is safer than accepting an
   unseen partial batch; no automatic resolution or merge is performed.
 - CAS, per-write checks and editor heartbeats are not an OS lock on Obsidian.
   A narrow check-to-replacement race remains possible with external writers.
-  Mixed-kind/multi-topic promotion still needs the guarded interruption boundaries.
 - Filesystem/index updates are not a multi-resource transaction. Interrupted
   operations use existing recovery checkpoints, not automatic replay or a
   promise of exactly-once acceptance.
 - Staging review/deep-read provider waits are not claimed to be eliminated by
-  this slice. Multi-item promotion, lens-store ownership and the Windows WAL stress
+  this slice. Runtime enforcement, lens-store ownership and the Windows WAL stress
   gate remain open.
 
 Verification: `tests/test_staging_safety.py` exercises a coordinated Core,
@@ -386,3 +385,100 @@ staging flows and checking explicit finish plus the missing-session warning.
 Implementation: `c48e6a0`. Frozen-source full suite: **1,188 passed, 2 skipped,
 1 deselected in 439.18s**. Exact command and local final log are recorded in
 `regression-manifest.md`. No live/paid provider evaluation was performed.
+
+## Mixed-kind and multi-topic acceptance
+
+Registered staging acceptance no longer calls `engine_for`, including mixed
+source/import/revision/lens batches and multiple topics. Each call resolves a
+bounded file footprint before approval. It includes staged records, source and
+copy destinations, topic/master views, concept backlinks, configuration and
+schema dependencies, plus known future source/import member paths that a later
+topic may refile. The complete footprint must fit the existing 200-file bound.
+
+Execution preserves caller order. Before each mixed item it checks the shared
+hash ledger, then replans derived text against earlier verified Core writes.
+Source prose/request hashes and topic wording/rows remain the approved ones.
+A fresh plan's writes and dependencies must remain within the footprint, with
+fingerprints equal to known current ledger values. It cannot adopt arbitrary
+outside edits as its baseline or discover a new file and silently authorize it.
+Undeclared scope returns a normal write-conflict checkpoint with completed
+paths/results and asks for another review.
+
+This prevents later topic plans replacing an earlier table row or overwriting
+earlier revised prose while refiling. A topic later in the list can file a
+source or typed source import accepted earlier in that call. A topic earlier
+in the list does not defer/retry missing members automatically; its result
+still reports them as unavailable at that step. Concept imports remain
+explicitly reviewed imports; ordinary concept acceptance still needs its own
+person-authored definition. Agents do not gain taxonomy authority or multi-note
+revision-token privileges by composing a batch.
+
+Staged state commits advance the same ledger. Caught source/topic failures
+retain item-local progress when the staged record remains unchanged. Progress
+recording has a narrow staging-record-only CAS; it cannot write policy files
+or bypass a stale staged edit. Later items cannot modify a primary note left
+partially written by an earlier failed item: finish/reconcile it individually
+first, preserving its recovery fingerprint. A failed final progress save or a
+hard crash can still require manual operation-log reconciliation; resumability
+is not guaranteed for every failure. Imported files/revisions and the separate
+lens store do not acquire a new cross-resource transaction or automatic repair.
+
+Distinct topic names with the same Windows-safe index filename are refused
+before the later topic row is written. A later legitimate topic cannot erase
+an earlier index just because their normalized filenames coincide.
+
+Mixed dry-run responses retain source coverage/sections/copy information and
+revision `would: merge` wording, and declare `ordered_replanning: true`.
+They are a read-only footprint/initial-feasibility preview, not an exact
+simulation of later SQL outcomes after preceding items. No approval or file
+mutation is performed by preview; normal derived-index refresh can occur.
+The shared UI, picker, existing single-item APIs and explicit review controls
+are unchanged. No new event store, permission path or implicit promotion exists.
+
+The static direct-index debt falls **3 → 2**: graph/extract's explicit offline
+branches remain. This does not close INDEX-04 runtime fallback enforcement,
+INDEX-05 Windows/desk/lens concurrency stress, or G1. Fresh-item quarantine
+relocation, whole-footprint rehashing cost and writer occupancy during encoder
+IO remain documented limits. Adoption/dedupe, adapters, Session harness and
+integrated release acceptance remain separate work.
+
+Verification of mixed acceptance: implementation `87e2460` passed **185
+focused tests** (27 new), UI build/browser smoke, nine extra targeted ordering
+and refiling executions, and a frozen-source full run of **1,215 passed,
+2 skipped, 1 deselected in 458.38s**. Final local log:
+`tmp/mixed-acceptance-full-2026-10-25-02.log`. Two development acceptance
+failures did not reproduce; their cause remains unestablished. The earlier
+development full run also exposed a distinct watcher PermissionError/thread
+crash warning. The final mixed run had no warning, but absence of a warning
+does not fix that separate failure path; see the watcher continuation below.
+
+## Watcher read-failure recovery
+
+The polling watcher retries failed filesystem observations without consuming
+the pending event. A locked/unreadable note blocks only that document until a
+successful rescan; passing the one-second quiet window or expiring an editor
+heartbeat cannot clear an unresolved read failure. Exact known Core bytes do
+not create a false human-edit conflict on recovery. Unknown/mismatching bytes
+use normal debounce, including a human save immediately after a Core save.
+
+Read failures during an editor heartbeat preserve the active editor lease.
+A post-commit fingerprint read failure does not retroactively turn a durable
+write into a failed mutation: it pauses that note for a conservative rescan
+instead. Partial directory walks retain known entries rather than interpreting
+unobserved files as deletions. Unexpected programming errors are not swallowed.
+
+`/api/meta.non_secret_health.watcher` reports ready/degraded/failed/stopped
+states, a pending-read count, and bounded relative-path/error-class diagnostics.
+It does not expose raw exception messages or provider/source text. This is
+operational health evidence, not a new UI alert or automatic overwrite/replay.
+The poller still scans visible Markdown in its current vault scope; adopted
+root scoping/large-tree budgeting remains DEPLOY work. This packet is not
+proof that the earlier two development acceptance failures shared this cause.
+
+Focused verification passed **210 tests**, including **17 new watcher
+regressions**, with `PytestUnhandledThreadExceptionWarning` promoted to an
+error. UI TypeScript/build and the complete browser smoke passed, including
+the existing model-selection and interrupted-staging UX. Implementation:
+`89e609d`. Frozen-source full verification passed **1,232 tests, 2 skipped,
+1 deselected in 422.29s**, with thread warnings treated as errors and no
+warnings reported. Exact command/log: `regression-manifest.md`.

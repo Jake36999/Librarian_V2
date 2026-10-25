@@ -36,6 +36,8 @@ and expected boundary explicit.
 | INDEX-03 | partial | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_core_index_service.py tests/test_sqlite_ownership.py tests/test_authoring.py tests/test_sessions.py tests/test_review_gate.py tests/test_offering_view.py tests/test_learn.py tests/test_start_pursuit.py tests/test_weekly_review.py tests/test_pursuits.py` | Interleaved work receives copied data only from Core-owned SQLite; Markdown/session mutations remain on writer; Clerk/Scribe IO releases index worker; changed schemas refresh before validation. | Serving-path debt 33 → 17; further promotion batches and Windows stress remain. | `2e95158`, `86941d3`; final combined suite 1,039 passed, 2 skipped, 1 deselected. |
 | Macro writer-wait follow-up | implemented | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_macro_permissions.py tests/test_person_waits.py tests/test_registry.py`; full browser smoke | Ask-mode waits never own the writer; explicit Deny/Plan still hold; partial work stays durable; external tools cannot opt out of writer serialization. | Automatic macro resume is not claimed. | `5b3be1f`; expanded focused group: 116 passed; final combined suite: 1,039 passed, 2 skipped, 1 deselected; browser smoke passed. |
 | INDEX-04/05 | planned | Focused module batch plus `tests/test_core_index_service.py` and Windows stress fixture | No serving path constructs a direct SQLite engine; WAL reads/writes remain safe. | Windows host. | — |
+| CORE-05 / INDEX-03/04 mixed acceptance | partial | `tests/test_core_mixed_acceptance.py` plus source/staging/taxonomy/revisions/ownership/recovery fixtures; UI build/smoke | Approved footprint bounds ordered replanning; earlier rows/prose survive; interrupted primaries cannot be modified; no direct staging engine. | Runtime enforcement, Windows/desk/lens stress, quarantine and rehash costs remain open. | `87e2460`; 185 focused passed, 27 new checks; UI build/smoke passed; full: 1,215 passed, 2 skipped, 1 deselected; static debt 3 → 2. |
+| Watcher read-failure recovery | implemented | `tests/test_watcher_recovery.py` plus coordinated staging/index/lease/shutdown/Host fixtures, with thread warnings treated as errors | Failed observations retry without unlocking unreadable notes or stopping the watcher; diagnostics are bounded and non-secret. | Adopted-root scoping and full Windows multi-client stress remain separate. | `89e609d`; 210 focused passed, 17 new checks; UI build/smoke passed; full: 1,232 passed, 2 skipped, 1 deselected. |
 | CORE-05 / INDEX-03/04 source-only batches | partial | `tests/test_core_source_batch.py` plus single-source/staging/catalogue/taxonomy/ingestion/revision/index fixtures; UI build/browser smoke | Copy destinations and all dependencies precede approval; own-write hashes preserve shared views; partial results/provenance survive faults without replay. | Mixed-kind/multi-topic staging, rehash IO costs, cancellation and full ownership enforcement/stress remain open. | `c48e6a0`; 204 focused passed; 22 new checks; browser build/smoke passed; full: 1,188 passed, 2 skipped, 1 deselected. |
 | CORE-05 / INDEX-03/04 single-source acceptance | partial | `tests/test_core_source_promotion.py` plus staging, catalogue/taxonomy, revisions, ingestion/intake, upkeep and index-ownership fixtures; UI build/browser smoke | Complete single-source plan precedes approval; copies preserve inputs; Core owns SQL; partial outcomes survive explicit review/restart without overwriting changed work. | Multi-item promotion, fresh-item quarantine relocation, provider cancellation, runtime enforcement and Windows stress remain open. | `870f2e5`; 182 focused passed; browser build/smoke passed; full: 1,166 passed, 2 skipped, 1 deselected. |
 | INDEX-03/04 catalogue promotion | partial | `tests/test_core_catalog.py` plus model catalogue/staging/embed/ownership/recovery fixtures; UI build/browser smoke | Catalogue SQL stays on Core; per-entry effects are declared/guarded; partial notes remain visible; vector IO releases SQLite and stale/invalid batches refuse or roll back. | Three construction sites, staging attachments/new-source promotion, full cancellation and Windows stress remain. | `508959a`; 113 focused passed; UI build/smoke passed; full: 1,125 passed, 2 skipped, 1 deselected. |
@@ -159,3 +161,55 @@ during this final run. The earlier `01` development run began before the
 cross-kind duplicate-name correction/new regression and is not the final
 verification record. No paid model calls, new qualification, throughput
 benchmark, Windows multi-client stress or stable-release gate closure is implied.
+
+Mixed-kind/multi-topic acceptance on 2026-10-25 passed **185 focused tests**,
+including **27 new checks**:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest tests/test_core_mixed_acceptance.py tests/test_staging.py tests/test_core_source_promotion.py tests/test_core_source_batch.py tests/test_core_taxonomy.py tests/test_sqlite_ownership.py tests/test_staging_safety.py tests/test_revisions.py tests/test_core_index_service.py tests/test_operation_recovery.py -q -x -o faulthandler_timeout=60
+```
+
+UI `npm.cmd run build` and `npm.cmd run smoke` passed against this checkout.
+The source/topic ordering and revision/refiling checks passed three repeated
+three-case runs (nine executions) after two non-reproduced development acceptance
+failures. Their cause was not established. Structured mixed failure messages retain the cause class without
+raw exception text. No blanket retry was introduced; a successful repeat is not
+evidence that transient Windows IO or the full concurrency release gate is solved.
+
+Implementation: `87e2460`. Frozen-source full command:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q -o faulthandler_timeout=60
+```
+
+Final result: **1,215 passed, 2 skipped, 1 deselected in 458.38s**, no warnings.
+Output: `tmp/mixed-acceptance-full-2026-10-25-02.log`. The earlier development
+`01` run began before the final preview compatibility fix and contained a
+watcher-thread PermissionError warning. It is not the final mixed verification
+snapshot. A separate deterministic watcher regression now exercises that
+read-failure path; it does not establish the cause of the two other failures.
+
+Watcher read-failure recovery uses thread-exception warnings as failures:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest tests/test_watcher_recovery.py tests/test_v2_remediation.py tests/test_core_index_service.py tests/test_core_source_promotion.py tests/test_core_mixed_acceptance.py tests/test_core_source_batch.py tests/test_shutdown.py tests/test_app.py tests/test_host_lifecycle.py tests/test_revisions.py -q -x -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=60
+```
+
+New fixtures cover exact-Core/hash-mismatch recovery, unchanged-stat retries,
+new/deleted observations, per-note blocking, locked heartbeats, post-commit
+read failure, partial directory/stat failures, real polling-thread recovery,
+visible programming errors, alias refusals, bounded diagnostics and `/api/meta`.
+
+Focused result: **210 passed in 144.85s**, including **17 new watcher checks**.
+UI `npm.cmd run build` and full `npm.cmd run smoke` passed. Frozen-source full
+verification command (no product/test source edits during the run):
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=60
+```
+
+Output: `tmp/watcher-recovery-full-2026-10-25-01.log` (local generated log).
+Implementation: `89e609d`. Final result: **1,232 passed, 2 skipped, 1 deselected
+in 422.29s**, no warnings. No product/test source changed during this run.
+No paid qualification or broader release-gate closure is claimed by this
+read-failure recovery packet.
