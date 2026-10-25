@@ -230,3 +230,137 @@ def test_core_backed_sweep_uses_callback_index_access(vault, monkeypatch):
 
     assert result["staged"] == 1
     assert result["results"][0]["name"] == "acme - rowstream"
+
+
+def test_authoring_and_project_writes_keep_sqlite_on_core_and_markdown_on_writer(vault, monkeypatch):
+    from resource_librarian.app import App
+    from resource_librarian.coordination import on_writer_thread
+    from resource_librarian.index import Index
+    from resource_librarian.keys import KeyStore
+    from resource_librarian.tools import authoring, sessions
+
+    app = App(vault, coordinate=True, keys=KeyStore(use_keyring=False))
+    index_threads, write_threads, event_threads = [], [], []
+    original_upsert = Index.upsert
+    original_atomic = authoring.atomic_write_text
+    original_event = sessions._event
+    def upsert(index, *args, **kwargs):
+        index_threads.append(threading.current_thread())
+        return original_upsert(index, *args, **kwargs)
+    def write(*args, **kwargs):
+        write_threads.append(on_writer_thread())
+        return original_atomic(*args, **kwargs)
+    def event(*args, **kwargs):
+        event_threads.append(on_writer_thread())
+        return original_event(*args, **kwargs)
+    try:
+        monkeypatch.setattr(library, "Index", _no_direct_index)
+        monkeypatch.setattr(Index, "upsert", upsert)
+        monkeypatch.setattr(authoring, "atomic_write_text", write)
+        monkeypatch.setattr(sessions, "atomic_write_text", write)
+        monkeypatch.setattr(sessions, "_event", event)
+        sid = app.person_call("open_session", {"purpose": "add_project", "question": "Map notes"})["opened"]
+        def call(tool_name, **arguments):
+            result = app.person_call(tool_name, arguments, sid)
+            assert "error" not in result, result
+            return result
+        call("create_project", name="Map", summary="A project", pursuit_kind="research", stage="planning")
+        call("update_project", name="Map", summary="Updated summary", stage="active")
+        call("reflection_accept", project="Map", text="The map is useful.")
+        call("write_note", folder="Projects/Map", name="Plan", body="## Tasks\n- [ ] Read first 📅 2026-01-01\n")
+        call("edit_note", note="Plan", section="Next", text="Compare alternatives.")
+        call("task_route", note="Plan", text="Read first", action="reschedule", new_due="2027-01-01")
+        archived = call("archive_note", note="Plan", reason="Replaced by the project summary")
+        assert archived["path"] == "Archive/Projects/Map/Plan.md"
+        assert app.index_service.run(lambda index: index.note_row("Map")["shape"]) == "project"
+        assert index_threads and set(index_threads) == {app.index_service._thread}
+        assert write_threads and all(write_threads)
+        assert event_threads and all(event_threads)
+    finally:
+        app.close_runtime()
+
+
+def test_closed_index_refuses_note_creation_before_markdown_changes(vault):
+    from resource_librarian.tools import authoring
+    service = IndexService(vault)
+    service.close()
+    ctx = Context(tier="curate", vault=vault, extras={"index_service": service})
+    with pytest.raises(RuntimeError, match="closed"):
+        authoring.write_note(ctx, "Notes", "Must not exist", "No write")
+    assert not (vault.root / "Notes" / "Must not exist.md").exists()
+
+
+def test_open_brief_releases_core_index_before_clerk_request(vault, monkeypatch):
+    from resource_librarian.session import SessionStore
+    from resource_librarian.tools import sessions
+    service = IndexService(vault)
+    store = SessionStore(vault)
+    session = store.new("explore", "", "How do we inspect an operating system?")
+    def answer(payload):
+        # A call back to the index from this thread would block if the Clerk
+        # were accidentally running on the index worker under a parent wait.
+        assert threading.current_thread() is not service._thread
+        assert service.stats()["notes"] >= 0
+        return {"queries": ["operating system monitoring"]}
+    ctx = Context(tier="contribute", vault=vault, session=session.id,
+                  extras={"index_service": service, "clerk": clerk.Scripted(answer)})
+    try:
+        monkeypatch.setattr(library, "Index", _no_direct_index)
+        result = sessions.open_brief(ctx, "Monitor a host", ["must not require SaaS"])
+        assert result["suggested_queries"] == ["operating system monitoring"]
+        assert store.load(session.id).briefs["B1"].need == "Monitor a host"
+    finally:
+        service.close()
+
+
+def test_session_offering_walk_uses_core_index_without_holding_it_during_review(vault, monkeypatch):
+    from resource_librarian.app import App
+    from resource_librarian.keys import KeyStore
+    from test_review_gate import CLAIM, SUMMARY, to_synthesise
+    from test_sessions import OSQUERY_LINE, Model
+    add_source(vault.root, "osquery", OSQUERY_LINE,
+               "Query operating system state such as processes and open sockets.")
+    vault.set_setting("clerk", "review_offerings", True)
+    app = App(vault, coordinate=True, keys=KeyStore(use_keyring=False))
+    reviewed = []
+    def answer(payload):
+        assert threading.current_thread() is not app.index_service._thread
+        assert app.index_service.stats()["notes"] >= 1
+        if payload["task"] == "review":
+            reviewed.append(payload)
+            return {"verdict": "holds", "counter_quote": "", "reason": "checked"}
+        return {"queries": ["operating system state database"]}
+    model = Model(vault)
+    model.ctx.extras.update(index_service=app.index_service, vault_writer=app.writer,
+                            clerk=clerk.Scripted(answer))
+    try:
+        monkeypatch.setattr(library, "Index", _no_direct_index)
+        to_synthesise(model)
+        drafted = model.ok("draft_offering", title="Host Plan", summary=SUMMARY, claims=[CLAIM])
+        assert reviewed and OSQUERY_LINE in reviewed[0]["user"]
+        asked = model.ok("promote_offering", offering=drafted["offering"])
+        model.person(asked["question_id"], "yes")
+        promoted = model.ok("promote_offering", offering=drafted["offering"])
+        assert promoted["findable"] and (vault.root / promoted["path"]).is_file()
+    finally:
+        app.close_runtime()
+
+
+def test_project_validation_refreshes_a_changed_content_model_on_core(vault):
+    from resource_librarian.app import App
+    from resource_librarian.keys import KeyStore
+    from resource_librarian.schema import MODEL_PATH
+    app = App(vault, coordinate=True, keys=KeyStore(use_keyring=False))
+    try:
+        app.index_service.refresh()
+        path = vault.root / MODEL_PATH
+        original = path.read_text(encoding="utf-8")
+        changed = original.replace("| stage | idea, planning, active, paused, done, dropped |",
+                                   "| stage | idea, planning, active, paused, done, dropped, incubating |")
+        assert original != changed
+        path.write_text(changed, encoding="utf-8")  # A direct human model edit.
+        created = app.person_call("create_project", {"name": "New model", "stage": "incubating",
+                                                     "summary": "Validate the updated schema"})
+        assert "created" in created, created
+    finally:
+        app.close_runtime()

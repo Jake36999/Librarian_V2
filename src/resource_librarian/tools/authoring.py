@@ -29,7 +29,7 @@ from ..registry import Card, Context, tool
 from ..revisions import WriteIntent
 from ..rules import Refusal
 from ..vault import now_iso
-from .library import engine_for
+from .library import IndexGateway, with_index
 
 RESERVED = re.compile(r"^(con|prn|aux|nul|com\d|lpt\d)$", re.I)
 TYPED_SHAPES = frozenset({"source", "concept", "offering", "application", "project", "about"})
@@ -203,13 +203,18 @@ def write_note(ctx: Context, folder: str, name: str, body: str,
           "librarian_digest": _digest(text_body)}
     if ctx.session:
         fm.setdefault("session", ctx.session)
+    # Fail before touching Markdown if the owning Core index is already shut
+    # down. Registry callers keep the surrounding write on VaultWriter.
+    IndexGateway(ctx).run(lambda engine: None)
     path.parent.mkdir(parents=True, exist_ok=True)
     rendered = notes.render(fm, text_body)
     atomic_write_text(path, rendered)
-    engine = engine_for(ctx, refresh=False)
-    engine.index.upsert(path)
+    def reindex(index):
+        index.upsert(path)
+        row = index.note_row(safe)
+        return dict(row) if row is not None else None
+    row = with_index(ctx, reindex)
     _record(ctx, "write_note", rel)
-    row = engine.index.note_row(safe)
     out = {"written": rel, "path": rel, "created": not before,
            "diff": _diff(before, rendered, rel),
            # findable by search, not merely indexed: a note with no shape is in no intent
@@ -257,8 +262,9 @@ def edit_note(ctx: Context, note: str, section: str = "", text: str = "",
             fm.get("librarian_digest") == _digest(current.body):
         fm["librarian_digest"] = _digest(body)
     rendered = notes.render(fm, body)
+    IndexGateway(ctx).run(lambda engine: None)
     atomic_write_text(path, rendered)
-    engine_for(ctx, refresh=False).index.upsert(path)
+    with_index(ctx, lambda index: index.upsert(path))
     rel = path.relative_to(ctx.vault.root).as_posix()
     _record(ctx, "edit_note", rel)
     return {"edited": rel, "path": rel, "diff": _diff(before, rendered, rel)}
@@ -283,9 +289,12 @@ def update_project(ctx: Context, name: str, stage: str = "", goal: str = "", sum
     current = notes.load(path)
     before = path.read_text(encoding="utf-8")
     fm, body = dict(current.frontmatter), current.body
-    engine = engine_for(ctx, refresh=False)
+    checked_stage, bounds = IndexGateway(ctx).run(lambda engine: (
+        _axis_value(engine.index.model, "project", "stage", stage) if stage else "",
+        Constraints.of(constraints, engine.permitted_axes("source")).values
+        if constraints is not None else None))
     if stage:
-        fm["stage"] = _axis_value(engine.index.model, "project", "stage", stage)
+        fm["stage"] = checked_stage
     if horizon:
         fm["horizon"] = horizon
     if disqualifiers is not None:
@@ -294,10 +303,9 @@ def update_project(ctx: Context, name: str, stage: str = "", goal: str = "", sum
                                   "\n".join(f"- {d}" for d in fm["disqualifiers"]) or
                                   "None stated.")
     if constraints is not None:
-        bounds = Constraints.of(constraints, engine.permitted_axes("source"))
-        fm["constraints"] = {a: list(v) for a, v in bounds.values.items()}
+        fm["constraints"] = {a: list(v) for a, v in bounds.items()}
         body = notes.with_section(body, "Fixed Constraints", "\n".join(
-            f"- {a}: {', '.join(v)}" for a, v in bounds.values.items()) or "None stated.")
+            f"- {a}: {', '.join(v)}" for a, v in bounds.items()) or "None stated.")
     if goal:
         body = notes.with_section(body, "Goal", goal.strip())
     if summary:
@@ -306,7 +314,7 @@ def update_project(ctx: Context, name: str, stage: str = "", goal: str = "", sum
     if rendered == before:
         return {"updated": path.relative_to(ctx.vault.root).as_posix(), "diff": ""}
     atomic_write_text(path, rendered)
-    engine.index.upsert(path)
+    with_index(ctx, lambda index: index.upsert(path))
     rel = path.relative_to(ctx.vault.root).as_posix()
     _record(ctx, "update_project", rel)
     return {"updated": rel, "path": rel, "diff": _diff(before, rendered, rel)}
@@ -336,12 +344,14 @@ def archive_note(ctx: Context, note: str, reason: str) -> dict:
     fm = {**current.frontmatter, "archived_from": rel.as_posix(), "archived_at": now_iso()[:10],
           "archived_reason": reason.strip()}
     dest = ctx.vault.root / "Archive" / rel
+    IndexGateway(ctx).run(lambda engine: None)
     dest.parent.mkdir(parents=True, exist_ok=True)
     atomic_write_text(dest, notes.render(fm, current.body))
     path.unlink()
-    engine = engine_for(ctx, refresh=False)
-    engine.index.remove(rel.as_posix())
-    engine.index.upsert(dest)
+    def reindex(index):
+        index.remove(rel.as_posix())
+        index.upsert(dest)
+    with_index(ctx, reindex)
     archived = dest.relative_to(ctx.vault.root).as_posix()
     _record(ctx, "archive_note", archived)
     return {"archived": archived, "path": archived, "from": rel.as_posix()}

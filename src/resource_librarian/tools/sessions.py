@@ -23,7 +23,7 @@ from ..rules import Refusal
 from ..search import Constraints, search, terms_from
 from ..session import PURPOSES, SessionStore, after_call, before_call
 from ..vault import jsonl_lines, now_iso
-from .library import DUE_DATE, engine_for
+from .library import DUE_DATE, IndexGateway, with_index
 from .staging import clerk_endpoint, scribe_endpoint
 
 registry.REGISTRY.session_hooks = (before_call, after_call)
@@ -545,10 +545,11 @@ def close_session(ctx: Context, summary: str, gaps: str) -> dict:
     if session.project:
         path = ctx.vault.project_note(session.project)
         if path.is_file():
+            IndexGateway(ctx).run(lambda engine: None)
             loaded = notes.load(path)
             body = notes.with_section(loaded.body, "Current Focus", summary.strip())
             atomic_write_text(path, notes.render(loaded.frontmatter, body))
-            engine_for(ctx).index.upsert(path)
+            with_index(ctx, lambda index: index.upsert(path))
     return {"closed": session.id, "completion": done}
 
 
@@ -612,11 +613,10 @@ def create_project(ctx: Context, name: str, stage: str, summary: str,
     safe = notes.safe_name(name)
     if not safe:
         raise TypeError("a project needs a name")
-    engine = engine_for(ctx, refresh=False)
-    model = engine.index.model
-    pursuit_kind = _axis_value(model, "project", "pursuit_kind", pursuit_kind)
-    stage = _axis_value(model, "project", "stage", stage)
-    bounds = Constraints.of(constraints, engine.permitted_axes("source"))
+    pursuit_kind, stage, bounds = IndexGateway(ctx).run(lambda engine: (
+        _axis_value(engine.index.model, "project", "pursuit_kind", pursuit_kind),
+        _axis_value(engine.index.model, "project", "stage", stage),
+        Constraints.of(constraints, engine.permitted_axes("source")).values))
     path = ctx.vault.root / "Projects" / f"{safe}.md"
     if path.exists():
         _event(ctx, {"type": "plan", "fields": {"project": safe}})
@@ -625,8 +625,8 @@ def create_project(ctx: Context, name: str, stage: str, summary: str,
                           "pursuit_kind": pursuit_kind, "session": ctx.session or ""}
     if aliases:
         fm["aliases"] = aliases
-    if bounds.values:
-        fm["constraints"] = {a: list(v) for a, v in bounds.values.items()}
+    if bounds:
+        fm["constraints"] = {a: list(v) for a, v in bounds.items()}
     if disqualifiers:
         fm["disqualifiers"] = disqualifiers
     if repository:
@@ -641,7 +641,7 @@ def create_project(ctx: Context, name: str, stage: str, summary: str,
         ("Milestones", "None yet."),
         ("Current Focus", "Not yet started."),
         ("Fixed Constraints", "\n".join(f"- {a}: {', '.join(v)}" for a, v in
-                                        bounds.values.items()) or "None stated."),
+                                        bounds.items()) or "None stated."),
         ("Standing Disqualifiers", "\n".join(f"- {d}" for d in disqualifiers or []) or
          "None stated."),
         ("Open Needs", "Recorded as briefs in the sessions that work on this project."),
@@ -649,7 +649,7 @@ def create_project(ctx: Context, name: str, stage: str, summary: str,
         ("Reflections", "None yet.")])
     path.parent.mkdir(parents=True, exist_ok=True)
     atomic_write_text(path, notes.render(fm, body))
-    engine.index.upsert(path)
+    with_index(ctx, lambda index: index.upsert(path))
     if ctx.session:
         _event(ctx, {"type": "plan", "fields": {"project": safe}})
         _event(ctx, {"type": "write", "tool": "create_project", "path": f"Projects/{safe}.md"})
@@ -697,8 +697,7 @@ def understanding_record(ctx: Context, concept: str, own_words: str,
                          confidence: Literal["shaky", "ok", "solid"]) -> dict:
     if not own_words.strip():
         raise TypeError("own_words needs the person's own explanation, not a summary of it")
-    engine = engine_for(ctx)
-    row = engine.index.note_row(concept)
+    row = IndexGateway(ctx).run(lambda engine: engine.index.note_row(concept))
     if row is None or row["shape"] != "concept":
         raise TypeError(f"no concept named {concept!r}; names are exact")
     path = ctx.vault.root / row["path"]
@@ -708,7 +707,7 @@ def understanding_record(ctx: Context, concept: str, own_words: str,
              f"{notes.one_line(own_words, 'own_words')}")
     body = notes.append_to_section(loaded.body, "Understanding", entry)
     atomic_write_text(path, notes.render(loaded.frontmatter, body))
-    engine.index.upsert(path)
+    with_index(ctx, lambda index: index.upsert(path))
     if ctx.session:
         _event(ctx, {"type": "write", "tool": "understanding_record", "concept": row["name"],
                      "path": row["path"]})
@@ -866,7 +865,7 @@ def open_brief(ctx: Context, need: str, disqualifiers: list[str] | None = None,
                constraints: dict | None = None, topic: str = "") -> dict:
     session = _session(ctx)
     topic = _brief_topic(session, topic)
-    engine = engine_for(ctx)
+    gateway = IndexGateway(ctx)
     project_fm: dict[str, Any] = {}
     if session.project:
         path = ctx.vault.project_note(session.project)
@@ -880,7 +879,7 @@ def open_brief(ctx: Context, need: str, disqualifiers: list[str] | None = None,
                             f"to work without one")
         project_fm = notes.load(path).frontmatter
     merged = {**(project_fm.get("constraints") or {}), **(constraints or {})}
-    bounds = Constraints.of(merged, engine.permitted_axes("source"))
+    bounds = gateway.run(lambda engine: Constraints.of(merged, engine.permitted_axes("source")).values)
     standing = [d for d in project_fm.get("disqualifiers") or [] if d]
     stated = [d.strip() for d in disqualifiers or [] if d.strip()]
     applied = ""
@@ -895,7 +894,7 @@ def open_brief(ctx: Context, need: str, disqualifiers: list[str] | None = None,
             return {**_ask(ctx, f"For the need {need!r}: what must a candidate not assume, "
                                 f"require or depend on? (BRIEF_REQUIRED)", "disqualifier"),
                     "brief_opened": False}
-    verdict = search(engine, need, "donor", merged, limit=5)
+    verdict = gateway.run(lambda engine: search(engine, need, "donor", merged, limit=5).to_dict())
     # A person's own wording rarely matches the field's vocabulary; let the
     # clerk translate it once, up front, so the first research_round has
     # better queries to start from than the need's own phrasing (V1's
@@ -908,12 +907,12 @@ def open_brief(ctx: Context, need: str, disqualifiers: list[str] | None = None,
     brief_id = f"B{len(session.briefs) + 1}"
     _event(ctx, {"type": "brief", "id": brief_id, "need": need, "topic": topic,
                  "disqualifiers": stated + [d for d in standing if d not in stated],
-                 "constraints": {a: list(v) for a, v in bounds.values.items()},
-                 "verdict": verdict.verdict, "suggested_queries": suggested})
-    return {"brief": brief_id, "topic": topic, "verdict": verdict.verdict,
+                 "constraints": {a: list(v) for a, v in bounds.items()},
+                 "verdict": verdict["verdict"], "suggested_queries": suggested})
+    return {"brief": brief_id, "topic": topic, "verdict": verdict["verdict"],
             **({"disqualifiers_from": applied} if applied else {}),
-            "already_held": [r.name for r in verdict.results[:5]],
-            "coverage": verdict.coverage.get("sentence", ""),
+            "already_held": [r["name"] for r in verdict["results"][:5]],
+            "coverage": verdict["coverage"].get("sentence", ""),
             "suggested_queries": suggested}
 
 
@@ -980,7 +979,7 @@ def research_round(ctx: Context, queries: list[str], brief: str = "", limit: int
     if screen and not (outside and brief):
         raise TypeError("screening outside finds needs outside=true and the brief they are "
                         "screened against")
-    engine = engine_for(ctx)
+    gateway = IndexGateway(ctx)
     constraints = dict(session.briefs[brief].constraints) if brief else {}
     scope = " ".join([session.question, session.briefs[brief].need if brief else "",
                       *queries])
@@ -997,23 +996,23 @@ def research_round(ctx: Context, queries: list[str], brief: str = "", limit: int
         seen_vocab |= {t.lower() for q in r.get("queries", []) for t in terms_from(q)}
     new, vocabulary, per_query = [], [], []
     for query in queries[:6]:
-        response = search(engine, query, "donor", constraints, limit=limit)
+        response = gateway.run(lambda engine: search(engine, query, "donor", constraints, limit=limit).to_dict())
         names = []
-        for result in response.results:
-            if skip_models and str(result.fields.get("kind", "")) == "model":
+        for result in response["results"]:
+            if skip_models and str(result["fields"].get("kind", "")) == "model":
                 continue
-            if not response.matched:
+            if not response["matched"]:
                 break               # listed only for passing the constraints: not a find
-            names.append({"name": result.name, "why": result.why})
-            if result.name not in session.candidates and \
-                    result.name not in {c["source"] for c in new}:
-                new.append({"source": result.name, "brief": brief, "query": query})
-            for word in terms_from(f"{result.fields.get('title', '')} "
-                                   f"{result.fields.get('topic', '')}"):
+            names.append({"name": result["name"], "why": result["why"]})
+            if result["name"] not in session.candidates and \
+                    result["name"] not in {c["source"] for c in new}:
+                new.append({"source": result["name"], "brief": brief, "query": query})
+            for word in terms_from(f"{result['fields'].get('title', '')} "
+                                   f"{result['fields'].get('topic', '')}"):
                 low = word.lower()
                 if low not in seen_vocab and low not in vocabulary and not low.isdigit():
                     vocabulary.append(low)
-        entry = {"query": query, "verdict": response.verdict, "results": names}
+        entry = {"query": query, "verdict": response["verdict"], "results": names}
         if outside:
             entry["outside"] = _outside(ctx, query, limit, seen_vocab, vocabulary, new, brief)
         per_query.append(entry)
@@ -1190,8 +1189,7 @@ def checkpoint(ctx: Context, learned: str, subthreads: list[str] | None = None,
       card=Card("Put a catalogued source forward as a candidate by hand",
                 "you know of a source a round did not surface"))
 def add_candidate(ctx: Context, source: str, brief: str = "") -> dict:
-    engine = engine_for(ctx)
-    if engine.index.note_row(source) is None:
+    if IndexGateway(ctx).run(lambda engine: engine.index.note_row(source)) is None:
         raise TypeError(f"no note named {source!r}")
     _event(ctx, {"type": "candidate", "source": source, "brief": brief})
     return {"candidate": source}
@@ -1203,8 +1201,7 @@ def add_candidate(ctx: Context, source: str, brief: str = "") -> dict:
       card=Card("Record that a source was used, and for what",
                 "you opened or relied on a source"))
 def log_use(ctx: Context, source: str, used_for: str) -> dict:
-    engine = engine_for(ctx)
-    if engine.index.note_row(source) is None:
+    if IndexGateway(ctx).run(lambda engine: engine.index.note_row(source)) is None:
         raise TypeError(f"no note named {source!r}")
     _event(ctx, {"type": "use", "source": source, "used_for": used_for})
     return {"logged": source}
@@ -1396,7 +1393,7 @@ def draft_offering(ctx: Context, title: str, summary: str, claims: list[dict],
         raise TypeError("record_synthesis first: the offering is written from it")
     if not claims:
         raise TypeError("an offering makes at least one claim")
-    engine = engine_for(ctx)
+    gateway = IndexGateway(ctx)
     failures, checked = [], []
     for i, claim in enumerate(claims, 1):
         text = str(claim.get("text") or "").strip()
@@ -1409,14 +1406,15 @@ def draft_offering(ctx: Context, title: str, summary: str, claims: list[dict],
             failures.append(f"claim {i}: a quote of fewer than {MIN_QUOTE_WORDS} words "
                             f"proves nothing")
             continue
-        where = _quote_found(ctx, engine, source, quote)
+        where = gateway.run(lambda engine: _quote_found(ctx, engine, source, quote))
         if not where:
-            failures.append(f"claim {i}: {_quote_miss(ctx, engine, source, quote)}")
+            miss = gateway.run(lambda engine: _quote_miss(ctx, engine, source, quote))
+            failures.append(f"claim {i}: {miss}")
             continue
         checked.append({"text": text, "source": source, "quote": quote, "found_in": where})
     if failures:
         raise Refusal("EVIDENCE_QUOTE_VERIFIED", "; ".join(failures))
-    review = _review_claims(ctx, engine, checked) if _reviewing(ctx) else []
+    review = _review_claims(ctx, gateway, checked) if _reviewing(ctx) else []
     challenges, runnable = [], []
     for i, (claim, c, verdict) in enumerate(zip(claims, checked, review), 1):
         run_id = _runnable(ctx, c["text"], c["source"], verdict, "offering", session.id)
@@ -1504,13 +1502,13 @@ def _reviewing(ctx: Context) -> bool:
     # (a surface with no effort setting - the CLI, MCP, tests - keeps the library's opt-in)
 
 
-def _review_claims(ctx: Context, engine, checked: list[dict]) -> list[dict[str, str]]:
+def _review_claims(ctx: Context, gateway: IndexGateway, checked: list[dict]) -> list[dict[str, str]]:
     """One `review` task per claim: the claim, its quote and the passage the
     quote sits in - never the draft, its summary or the synthesis, so the
     draft's framing cannot lean on the verdict (Chain-of-Verification)."""
     tasks = []
     for c in checked:
-        text = _quote_source(ctx, engine, c["source"], c["quote"])[1]
+        text = gateway.run(lambda engine: _quote_source(ctx, engine, c["source"], c["quote"]))[1]
         at = clerk.locate(c["quote"], text)
         start = max(0, at - REVIEW_WINDOW) if at >= 0 else 0
         tasks.append(clerk.review(c["text"], c["quote"],
@@ -1613,17 +1611,18 @@ def _promote_staged(ctx: Context, session, record: dict) -> dict:
         raise TypeError(f"{destination.relative_to(ctx.vault.root)} already exists")
     note = notes.load(source)
     note.frontmatter["status"] = "active"
+    IndexGateway(ctx).run(lambda engine: None)
     destination.parent.mkdir(parents=True, exist_ok=True)
     atomic_write_text(destination, notes.render(note.frontmatter, note.body))
     source.unlink()
     rel = destination.relative_to(ctx.vault.root).as_posix()
-    engine = engine_for(ctx, refresh=False)
-    engine.index.upsert(destination)
+    with_index(ctx, lambda index: index.upsert(destination))
     _event(ctx, {"type": "offering", "id": offering, "status": "promoted", "path": rel})
     _event(ctx, {"type": "write", "tool": "promote_offering", "path": rel})
     # R13: the deliverable counts only if it exists, is indexed and search finds it by title
-    found = search(engine, record["title"], "made", {}, limit=10)
-    findable = any(r.name == destination.stem for r in found.results)
+    findable = IndexGateway(ctx, refresh=False).run(lambda engine: any(
+        result.name == destination.stem
+        for result in search(engine, record["title"], "made", {}, limit=10).results))
     return {"promoted": rel, "path": rel, "findable": findable}
 
 
@@ -1721,9 +1720,8 @@ def record_application(ctx: Context, title: str, stage: str, outcome: str,
                        project_files: list[str] | None = None,
                        changes: list[dict] | None = None) -> dict:
     session = _session(ctx)
-    engine = engine_for(ctx)
     unresolved = [str(u).strip() for u in unresolved_sources or [] if str(u).strip()]
-    unknown = [s for s in sources_used if engine.index.note_row(s) is None]
+    unknown = IndexGateway(ctx).run(lambda engine: [s for s in sources_used if engine.index.note_row(s) is None])
     if unknown:
         raise TypeError(f"not catalogued notes: {unknown}; a source the library does not "
                         f"hold goes in unresolved_sources, never in sources_used")
@@ -1774,7 +1772,7 @@ def record_application(ctx: Context, title: str, stage: str, outcome: str,
     body = notes.compose(name, sections)
     path.parent.mkdir(parents=True, exist_ok=True)
     atomic_write_text(path, notes.render(fm, body))
-    engine.index.upsert(path)
+    with_index(ctx, lambda index: index.upsert(path))
     rel = path.relative_to(ctx.vault.root).as_posix()
     _event(ctx, {"type": "write", "tool": "record_application", "path": rel})
     linked = _link_project_application(ctx, session, rel, name)
@@ -1893,8 +1891,7 @@ def reflection_draft(ctx: Context, project: str, agenda_buckets: dict, activity_
 def reflection_accept(ctx: Context, project: str, text: str) -> dict:
     if not text.strip():
         raise TypeError("a reflection needs text")
-    engine = engine_for(ctx)
-    row = engine.index.note_row(project, shape="project")
+    row = IndexGateway(ctx).run(lambda engine: engine.index.note_row(project, shape="project"))
     if row is None or row["shape"] != "project":
         raise TypeError(f"no pursuit named {project!r}; create_project first")
     path = ctx.vault.root / row["path"]
@@ -1902,7 +1899,7 @@ def reflection_accept(ctx: Context, project: str, text: str) -> dict:
     entry = f"- {date.today().isoformat()}: {notes.one_line(text, 'a reflection')}"
     body = notes.append_to_section(loaded.body, "Reflections", entry)
     atomic_write_text(path, notes.render(loaded.frontmatter, body))
-    engine.index.upsert(path)
+    with_index(ctx, lambda index: index.upsert(path))
     return {"project": row["name"], "recorded": entry}
 
 
@@ -1914,8 +1911,7 @@ def reflection_accept(ctx: Context, project: str, text: str) -> dict:
                 "person's call at review time"))
 def task_route(ctx: Context, note: str, text: str,
               action: Literal["reschedule", "drop", "keep"], new_due: str = "") -> dict:
-    engine = engine_for(ctx)
-    row = engine.index.note_row(note)
+    row = IndexGateway(ctx).run(lambda engine: engine.index.note_row(note))
     if row is None:
         raise TypeError(f"no note named {note!r}; names are exact, including owner prefixes")
     if action == "keep":
@@ -1939,5 +1935,5 @@ def task_route(ctx: Context, note: str, text: str,
                 if _agenda.DUE.search(task.line) else f"{task.line} 📅 {new_due}")
         body = loaded.body[:task.start] + line + loaded.body[task.end:]
     atomic_write_text(path, notes.render(loaded.frontmatter, body))
-    engine.index.upsert(path)
+    with_index(ctx, lambda index: index.upsert(path))
     return {"note": row["name"], "task": text, "action": action}
