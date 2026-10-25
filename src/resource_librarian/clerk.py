@@ -1248,7 +1248,8 @@ class OpenAICompatible(Endpoint):
             if not key:
                 raise ClerkUnavailable(f"{self.key_env} is not set")
             headers["Authorization"] = f"Bearer {key}"
-        request = urllib.request.Request(f"{self.base_url}/chat/completions",
+        from .adapters.openai_chat import chat_url
+        request = urllib.request.Request(chat_url(self.base_url),
                                          data=json.dumps(body).encode("utf-8"),
                                          headers=headers, method="POST")
         try:

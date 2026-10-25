@@ -109,7 +109,10 @@ class ServiceRuntime:
             if route.local:
                 return send()
             self._check(route)
-            return self.limiter.run(self.hosts.get(route.host_id), send)
+            # Embedding sync is background work: on a host on this machine it
+            # yields to an interactive turn (ADAPT-06).
+            return self.limiter.run(self.hosts.get(route.host_id), send,
+                                    background=route.service == "embeddings")
         finally:
             with self._lock:
                 self._calls -= 1

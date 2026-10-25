@@ -26,6 +26,7 @@ from .keys import config_dir
 from .providers import PRESETS
 from .providers import Provider, ProviderError, ToolDef, Reply
 from .vault import now_iso
+from urllib.parse import urlparse
 
 HOST_PROTOCOLS = ("openai", "anthropic")
 QUALIFICATION_STATES = ("unavailable", "experimental", "screened", "verified_local",
@@ -128,6 +129,23 @@ class Host:
     health: dict[str, Any] = field(default_factory=dict)
     health_history: list[dict[str, Any]] = field(default_factory=list)
     seeded: bool = False
+
+    @property
+    def local(self) -> bool:
+        """Whether this host's endpoint runs on this machine.
+
+        A local endpoint (LM Studio, Ollama...) shares CPU/IO with the Core
+        itself, so background work must yield to interactive turns; a remote
+        provider has no such contention.  Never raise: a malformed URL just
+        means "not local", which keeps routing decisions total.
+        """
+        try:
+            host = (urlparse(self.base_url).hostname or "").strip("[]").lower()
+        except ValueError:
+            return False
+        return (host in ("localhost", "127.0.0.1", "::1")
+                or host.endswith(".localhost")
+                or host.endswith(".local"))
 
     def normalise(self) -> "Host":
         self.id = self.id.strip().lower().replace(" ", "-")[:80]
@@ -358,6 +376,11 @@ class _HostLimit:
     lock: threading.Lock = field(default_factory=threading.Lock)
     transient_failures: int = 0
     circuit_open_until: float = 0.0
+    # Interactive turns (a Lead chat) outrank background sync on the same
+    # machine; `idle` is a separate gate from `lock` because a dataclass
+    # default_factory cannot bind to a sibling field.
+    interactive: int = 0
+    idle: threading.Condition = field(default_factory=lambda: threading.Condition(threading.Lock()))
 
 
 def transient_provider_error(error: ProviderError) -> bool:
@@ -403,51 +426,73 @@ class HostLimiter:
                 self._limits[host.id] = state
             return state
 
-    def run(self, host: Host, call: Callable[[], T]) -> T:
+    def run(self, host: Host, call: Callable[[], T], *, background: bool = False) -> T:
         state = self._limit(host)
         wait = float(min(max(host.timeout, 1), 120))
-        if not state.semaphore.acquire(timeout=wait):
-            raise ProviderError(f"host {host.display_name!r} reached its concurrency limit "
-                                f"({host.concurrency_limit}); no failover was attempted")
+        if background and host.local:
+            # A local endpoint shares this machine's CPU with the person
+            # chatting, so a background sync yields until the interactive
+            # turn drains -- before queueing on the host's semaphore, so an
+            # interactive call never waits behind embedding work.
+            deadline = time.monotonic() + wait
+            with state.idle:
+                while state.interactive > 0:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise ProviderError(f"host {host.display_name!r} is busy with an interactive turn; "
+                                            "the background call yielded")
+                    state.idle.wait(remaining)
+        if not background:
+            with state.idle:
+                state.interactive += 1
         try:
-            if host.rate_limit:
+            if not state.semaphore.acquire(timeout=wait):
+                raise ProviderError(f"host {host.display_name!r} reached its concurrency limit "
+                                    f"({host.concurrency_limit}); no failover was attempted")
+            try:
+                if host.rate_limit:
+                    with state.lock:
+                        now = time.monotonic()
+                        if state.circuit_open_until > now:
+                            remaining = max(1, round(state.circuit_open_until - now))
+                            raise ProviderError(f"host {host.display_name!r} circuit is open after repeated "
+                                                f"transient failures; retry in about {remaining}s. "
+                                                "No failover was attempted")
+                        state.calls[:] = [at for at in state.calls if now - at < 60.0]
+                        if len(state.calls) >= host.rate_limit:
+                            raise ProviderError(f"host {host.display_name!r} reached its configured rate limit "
+                                                f"({host.rate_limit}/minute); no failover was attempted")
+                        state.calls.append(now)
+                else:
+                    with state.lock:
+                        now = time.monotonic()
+                        if state.circuit_open_until > now:
+                            remaining = max(1, round(state.circuit_open_until - now))
+                            raise ProviderError(f"host {host.display_name!r} circuit is open after repeated "
+                                                f"transient failures; retry in about {remaining}s. "
+                                                "No failover was attempted")
+                result = call()
                 with state.lock:
-                    now = time.monotonic()
-                    if state.circuit_open_until > now:
-                        remaining = max(1, round(state.circuit_open_until - now))
-                        raise ProviderError(f"host {host.display_name!r} circuit is open after repeated "
-                                            f"transient failures; retry in about {remaining}s. "
-                                            "No failover was attempted")
-                    state.calls[:] = [at for at in state.calls if now - at < 60.0]
-                    if len(state.calls) >= host.rate_limit:
-                        raise ProviderError(f"host {host.display_name!r} reached its configured rate limit "
-                                            f"({host.rate_limit}/minute); no failover was attempted")
-                    state.calls.append(now)
-            else:
-                with state.lock:
-                    now = time.monotonic()
-                    if state.circuit_open_until > now:
-                        remaining = max(1, round(state.circuit_open_until - now))
-                        raise ProviderError(f"host {host.display_name!r} circuit is open after repeated "
-                                            f"transient failures; retry in about {remaining}s. "
-                                            "No failover was attempted")
-            result = call()
-            with state.lock:
-                state.transient_failures = 0
-                state.circuit_open_until = 0.0
-            return result
-        except ProviderError as exc:
-            if transient_provider_error(exc):
-                with state.lock:
-                    state.transient_failures += 1
-                    # Three consecutive host-level failures is enough to stop
-                    # a Clerk/Lead stampede, but short enough for a personal
-                    # local endpoint to recover without manual reset.
-                    if state.transient_failures >= 3:
-                        state.circuit_open_until = time.monotonic() + 30.0
-            raise
+                    state.transient_failures = 0
+                    state.circuit_open_until = 0.0
+                return result
+            except ProviderError as exc:
+                if transient_provider_error(exc):
+                    with state.lock:
+                        state.transient_failures += 1
+                        # Three consecutive host-level failures is enough to stop
+                        # a Clerk/Lead stampede, but short enough for a personal
+                        # local endpoint to recover without manual reset.
+                        if state.transient_failures >= 3:
+                            state.circuit_open_until = time.monotonic() + 30.0
+                raise
+            finally:
+                state.semaphore.release()
         finally:
-            state.semaphore.release()
+            if not background:
+                with state.idle:
+                    state.interactive -= 1
+                    state.idle.notify_all()
 
 
 class LimitedProvider(Provider):

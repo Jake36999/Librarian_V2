@@ -106,7 +106,8 @@ def _api_encoder(provider: str, model: str, *, representation_kind: str = "", ro
     from .providers import PRESETS, _key
     if not model or (route is None and (provider not in PRESETS or PRESETS[provider].get("protocol") != "openai")):
         raise EncoderUnavailable(f"{provider!r} is not an OpenAI-compatible embeddings provider")
-    url = (route.base_url if route else PRESETS[provider]["base_url"]).rstrip("/") + "/embeddings"
+    from .adapters.openai_chat import embeddings_url
+    url = embeddings_url(route.base_url if route else PRESETS[provider]["base_url"])
     key_env = route.key_env if route else PRESETS[provider]["key_env"]
 
     def post(texts: list[str]) -> list[list[float]]:

@@ -460,7 +460,8 @@ class OpenAICompatible(Provider):
         from .adapters.openai_chat import OpenAIChatAdapter
         body = OpenAIChatAdapter.render(self.model, system, messages, tools,
                                         max_tokens=max_tokens, temperature=temperature)
-        reply = _request("POST", f"{self.base_url}/chat/completions", self._headers(), body,
+        from .adapters.openai_chat import chat_url
+        reply = _request("POST", chat_url(self.base_url), self._headers(), body,
                          self.timeout)
         return OpenAIChatAdapter.parse(reply)
 

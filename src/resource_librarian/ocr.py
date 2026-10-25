@@ -59,7 +59,8 @@ class VisionChat:
                  route: service_routes.ServiceRoute | None = None, vault: Vault | None = None):
         if route is None and (provider not in PRESETS or PRESETS[provider].get("protocol") != "openai"):
             raise OcrError(f"{provider!r} is not an OpenAI-compatible provider")
-        self.url = (route.base_url if route else PRESETS[provider]["base_url"]).rstrip("/") + "/chat/completions"
+        from .adapters.openai_chat import chat_url
+        self.url = chat_url(route.base_url if route else PRESETS[provider]["base_url"])
         self.provider = provider
         self.key_env = route.key_env if route else PRESETS[provider]["key_env"]
         self.model, self.timeout, self.route, self.vault = model, timeout, route, vault

@@ -20,6 +20,17 @@ from ..providers import (
 )
 
 
+def chat_url(base_url: str) -> str:
+    """The one place a chat-completions URL is built (ADAPT-06): every
+    OpenAI-compatible caller goes through an approved transport."""
+    return base_url.rstrip("/") + "/chat/completions"
+
+
+def embeddings_url(base_url: str) -> str:
+    """The one place an embeddings URL is built (ADAPT-06)."""
+    return base_url.rstrip("/") + "/embeddings"
+
+
 class OpenAIChatAdapter:
     """Stateless adapter that builds request bodies and parses responses."""
 
