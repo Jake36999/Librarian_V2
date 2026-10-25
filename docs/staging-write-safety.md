@@ -159,6 +159,63 @@ Implementation: `ce88b04`. Verification: **113 focused tests**, **1,103 passed,
 2 skipped, 1 deselected** in the full suite, plus browser build and expanded
 smoke. See `regression-manifest.md` for commands and the local full-run log.
 
+## Catalogue promotion continuation
+
+The registered `model_catalog_adopt` path now uses Core-only SQL callbacks and
+bounded per-entry writer operations. It is an explicitly reviewed person-tier
+orchestrator, alongside the approved batch and audited macros; external tools
+still cannot opt out of writer ownership. The whole catalogue is not treated
+as one oversized 200+ source transaction. No second job store was added.
+
+Shared promotion preparation snapshots the new Source target, topic/master
+indexes, linked Concept notes, content-model/taxonomy dependencies and local
+configuration. Evidence validation/content-address calculation is read-only
+before the entry commits. The entry then declares its immutable evidence path
+as well. Per-step guards stop on new edits/leases, preserve completed work and
+return its paths. A concept's generated backlink section is rebuilt over the
+exact prepared note snapshot, preserving the person's definition and prose.
+Evidence collisions are refused, not repaired or overwritten. Internal writer
+path resolution now recognizes the owned `.evidence` root as well as
+`.librarian`; public file routes/heartbeats still reject both and unrelated
+hidden roots remain forbidden.
+
+The initial Source write carries an incomplete-promotion `needs_attention`
+marker, cleared only after final checks. A mid-round conflict, IO failure or
+restart cannot make that partial note appear complete merely because it was
+indexed. Catalogue status/Settings surface affected names; failure messages
+include completed paths and document conflicts create a normal checkpoint.
+Re-adoption skips existing names and never attempts an automatic repair or
+replacement. This corrects old documentation claiming URL dedupe or automatic
+bundle updates: existing behavior was name-based skip. Model source cards do
+not grant route qualification.
+
+Catalogue SQL planning uses `IndexGateway(include_vectors=False)`, avoiding
+encoder initialization on every callback. Lexical title/Bottom Line/concept
+and backlink checks are deterministic; hybrid retrieval itself is unchanged.
+Source-only embedding sync separately copies chunks, runs the encoder outside
+SQLite, validates count/dimensions/finite values, rechecks configuration and
+representation, and commits each vector batch transactionally. It does not
+silently rebuild unrelated sources. A hosted representation without an explicit
+first embedding pass is deferred to Settings, matching the documented opt-in
+spend rule; a changed representation still requires an explicit rebuild.
+Embedding failures remain visible as `needs_attention` rather than losing an
+already-written Source or claiming complete findability.
+
+This packet applies the new shared boundary to **catalogue adoption only**.
+Staging's new-source/attachment and mixed-topic paths remain legacy serving
+callers. It does not eliminate their early attachment movement or migrate
+their complete mutation inventory. Catalogue encoder IO releases SQLite, but
+still runs within that entry's writer operation; transport cancellation and
+writer-release restructuring remain separate work. File/index/evidence writes
+are not one cross-resource transaction, and partial work requires explicit
+inspection using the normal notes/index tools, not automatic replay.
+
+Implementation: `508959a`. **113 focused tests passed**, plus UI build and
+expanded browser smoke, including catalogue partial-failure visibility.
+Frozen-source full suite: **1,125 passed, 2 skipped, 1 deselected in 373.99s**.
+Commands/log location are recorded in the unified plan and regression manifest.
+No paid provider call or model qualification was run.
+
 ## Remaining limits
 
 - Full new-source and mixed/batch topic promotion need a resolved mutation plan

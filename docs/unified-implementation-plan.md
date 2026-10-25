@@ -940,3 +940,45 @@ No paid provider calls or new model qualification were performed; nothing was
 pushed. Source/catalog promotion is next, followed by enforcement/stress and
 adapter completion. Adoption/dedupe, Session harness and integrated acceptance
 remain open.
+
+### Core catalogue-promotion continuation, 2026-10-25
+
+`model_catalog_adopt` no longer obtains a direct Engine. The shared new-source
+promotion path now separates read-only preparation, render-only SQL work,
+guarded writer effects and embedding IO. Catalogue entries are individual
+bounded actor operations with source/view/concept/evidence inventories, not
+one transaction encompassing hundreds of models. Completed paths remain visible
+on failure. Initial partial notes retain `needs_attention` across restart until
+final verification succeeds; Settings surfaces these and normal conflict
+checkpoints. Existing names are skipped, never auto-repaired or updated.
+
+The static debt count falls **4 → 3**: staging's source/mixed-topic serving
+path (one site), plus the graph/extract explicit offline branches (two).
+G1/INDEX-04 enforcement and Windows/desk/lens concurrency work remain open.
+The new shared promotion boundary is not yet wired to staging attachment
+movement, whose current pre-validation mutation remains an explicit limitation.
+
+SQL-only catalogue callbacks avoid repeatedly loading embedding models. Local
+and already-enabled hosted embeddings update only the promoted source through
+copied data, outside the SQLite worker; dimensions/finite values/configuration
+and representation are checked, and a failed vector batch rolls back. An
+unstarted hosted representation requires the existing explicit Settings start;
+catalogue adoption cannot initiate that spend. Lexical mechanical findability
+is checked separately; hybrid retrieval and route qualification are unchanged.
+The per-entry writer can still be occupied by encoder IO: ADAPT transport
+cancellation and finer writer-release work are not claimed by this slice.
+
+Core tests cover thread ownership, no second Index, full bundle/idempotent
+adoption, leases and preparation races, concurrent adopters, evidence collisions,
+safe provider names, partial IO/conflict/restart outcomes, unchanged personal
+qualifications, valid/invalid/stale embeddings, hosted first-start deferral and
+SQL rollback. Implementation: `508959a`. **113 focused tests passed**; UI build
+and expanded smoke passed. Frozen-source full verification passed **1,125 tests,
+2 skipped, 1 deselected in 373.99s**, using the repository venv with
+`-o faulthandler_timeout=60`. Output: `tmp/catalog-ownership-full-2026-10-25-01.log`.
+Commands and local output are in
+`regression-manifest.md`; detailed limits are in `staging-write-safety.md`.
+No paid provider calls or pushes were made. Next: staging's complete new-source
+and attachment inventory/migration, then ownership enforcement/stress and adapter
+completion. Adoption/dedupe, the Session harness and release acceptance remain
+open.

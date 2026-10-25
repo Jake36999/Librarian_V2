@@ -36,6 +36,7 @@ and expected boundary explicit.
 | INDEX-03 | partial | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_core_index_service.py tests/test_sqlite_ownership.py tests/test_authoring.py tests/test_sessions.py tests/test_review_gate.py tests/test_offering_view.py tests/test_learn.py tests/test_start_pursuit.py tests/test_weekly_review.py tests/test_pursuits.py` | Interleaved work receives copied data only from Core-owned SQLite; Markdown/session mutations remain on writer; Clerk/Scribe IO releases index worker; changed schemas refresh before validation. | Serving-path debt 33 → 17; further promotion batches and Windows stress remain. | `2e95158`, `86941d3`; final combined suite 1,039 passed, 2 skipped, 1 deselected. |
 | Macro writer-wait follow-up | implemented | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_macro_permissions.py tests/test_person_waits.py tests/test_registry.py`; full browser smoke | Ask-mode waits never own the writer; explicit Deny/Plan still hold; partial work stays durable; external tools cannot opt out of writer serialization. | Automatic macro resume is not claimed. | `5b3be1f`; expanded focused group: 116 passed; final combined suite: 1,039 passed, 2 skipped, 1 deselected; browser smoke passed. |
 | INDEX-04/05 | planned | Focused module batch plus `tests/test_core_index_service.py` and Windows stress fixture | No serving path constructs a direct SQLite engine; WAL reads/writes remain safe. | Windows host. | — |
+| INDEX-03/04 catalogue promotion | partial | `tests/test_core_catalog.py` plus model catalogue/staging/embed/ownership/recovery fixtures; UI build/browser smoke | Catalogue SQL stays on Core; per-entry effects are declared/guarded; partial notes remain visible; vector IO releases SQLite and stale/invalid batches refuse or roll back. | Three construction sites, staging attachments/new-source promotion, full cancellation and Windows stress remain. | `508959a`; 113 focused passed; UI build/smoke passed; full: 1,125 passed, 2 skipped, 1 deselected. |
 | INDEX-03/04 approved batch / lifecycle | partial | `tests/test_core_batch.py` plus ingestion/DIK/Clerk, writer/recovery/shutdown and registry/macro fixtures; UI build/browser smoke | Batch SQL stays on Core; batch-owned commits serialize; metadata and decisions survive; cancelled stages resume once; closed-writer late results refuse; failed work remains visible. | Four construction sites, full source promotion, nested provider cancellation and Windows stress remain open. | `ce88b04`; 113 focused tests passed; browser build/smoke passed; full: 1,103 passed, 2 skipped, 1 deselected. |
 | ROUTE-01/02 | implemented / partial | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_app.py` | Lead patch preserves other positions; display preserves `unknown`. | API alias coverage belongs to ROUTE-03. | `77315cc`, `7a48f0c` |
 | ROUTE-03 (chat) / ROUTE-05 (chat) | partial | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_role_route_store.py tests/test_role_route_bindings.py tests/test_qualification_jobs.py tests/test_app.py tests/test_agent_runtime_profiles.py tests/test_clerk_routes.py` | Chat/background/helper use canonical bindings; task role owns qualification; invalid endpoints refuse without fallback. | Restart projection repair, offline lease, explicit helper preservation, and profile-slot fixtures. | `b6ef33b`, `14837a2`; full suite 1,016 passed, 2 skipped, 1 deselected on 2026-10-25. |
@@ -94,3 +95,18 @@ retained at `tmp/batch-ownership-full-2026-10-25-01.log` (local generated
 output, not a release artifact). Implementation `ce88b04` passed **1,103 tests,
 2 skipped, 1 deselected in 343.67s** against the frozen source. No paid provider
 call, in-flight cancellation guarantee, or stable-release gate closure is implied.
+
+Catalogue-promotion continuation on 2026-10-25 passed the **113-test** focused group:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q -x tests/test_core_catalog.py tests/test_model_catalog.py tests/test_staging.py tests/test_embed.py tests/test_sqlite_ownership.py tests/test_macro_permissions.py tests/test_core_batch.py tests/test_operation_recovery.py tests/test_staging_safety.py tests/test_core_index_service.py
+```
+
+UI `npm.cmd run build` and expanded `npm.cmd run smoke` passed, including
+catalogue incomplete-note and partial-write failure messages, existing model
+selection and staging acceptance. Frozen-source full verification uses the
+repository venv with `-o faulthandler_timeout=60`; output is retained locally
+at `tmp/catalog-ownership-full-2026-10-25-01.log`. Implementation `508959a`
+passed **1,125 tests, 2 skipped, 1 deselected in 373.99s** against frozen source.
+These are scripted/local checks, not paid model qualification or Windows
+multi-client release acceptance.
