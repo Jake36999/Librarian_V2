@@ -110,24 +110,31 @@ def test_a_revision_read_from_a_source_authorises_no_other_note(vault):
     assert refused["refused"] == "REVISION_REFUSED" and "Sources/" in refused["detail"]
 
 
-def test_a_revision_is_bound_to_its_session_caller_and_core(vault):
-    call(vault, "write_note", folder="Notes", name="Plan", body="b")
-    other = call(vault, "open_session", purpose="explore", question="q")["opened"]
-    theirs = call(vault, "get_note", session=other, name="Plan")["revision"]
-    assert call(vault, "edit_note", note="Plan", section="S", text="x",
+def test_a_revision_is_bound_to_its_session_caller_and_core(core):
+    # MCP is never a standalone registry surface. Test token caller binding
+    # against the same coordinated Core, not an offline MCP-shaped Context.
+    def bound_call(tool_name, *, session=None, caller_kind="agent", **args):
+        ctx = Context(tier="contribute", vault=core.vault, session=session,
+                      extras={**core._extras(), "caller_kind": caller_kind})
+        return REGISTRY.call(tool_name, args, ctx)
+
+    bound_call("write_note", folder="Notes", name="Plan", body="b")
+    other = bound_call("open_session", purpose="explore", question="q")["opened"]
+    theirs = bound_call("get_note", session=other, name="Plan")["revision"]
+    assert bound_call("edit_note", note="Plan", section="S", text="x",
                 revision=theirs)["refused"] == "REVISION_REFUSED"
-    mcp = call(vault, "get_note", caller_kind="mcp", name="Plan")["revision"]
-    assert call(vault, "edit_note", note="Plan", section="S", text="x",
+    mcp = bound_call("get_note", caller_kind="mcp", name="Plan")["revision"]
+    assert bound_call("edit_note", note="Plan", section="S", text="x",
                 revision=mcp)["refused"] == "REVISION_REFUSED"
-    mine = call(vault, "get_note", name="Plan")["revision"]
+    mine = bound_call("get_note", name="Plan")["revision"]
     body, signature = mine.rsplit(".", 1)
     forged = body[:-2] + ("A" if body[-2] != "A" else "B") + body[-1] + "." + signature
-    assert call(vault, "edit_note", note="Plan", section="S", text="x",
+    assert bound_call("edit_note", note="Plan", section="S", text="x",
                 revision=forged)["refused"] == "REVISION_REFUSED"
-    assert call(vault, "edit_note", note="Plan", section="S", text="x",
+    assert bound_call("edit_note", note="Plan", section="S", text="x",
                 revision="0123456789abcdef0123")["refused"] == "REVISION_REFUSED"  # a raw fingerprint
     revisions._KEYS.clear()                              # as after a Core restart
-    assert call(vault, "edit_note", note="Plan", section="S", text="x",
+    assert bound_call("edit_note", note="Plan", section="S", text="x",
                 revision=mine)["refused"] == "REVISION_REFUSED"
 
 
