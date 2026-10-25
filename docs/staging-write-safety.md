@@ -113,6 +113,52 @@ cross-file transaction or automatic rollback. An abrupt crash between a file
 commit and progress persistence still needs the existing operation-recovery
 checkpoint and human inspection; this is not exactly-once execution.
 
+## Approved-batch continuation
+
+`process_approved` is a first-party, person-tier orchestrator, not one long
+writer operation. Its approved-set reservation is serialized before stages
+start. Batch-owned staging changes, run-log appends, derived DIK saves,
+captured PDFs and local extraction phases use the existing Core writer in
+both synchronous and background mode. The existing run log and stage replay
+remain authoritative; no second job store or reducer was introduced.
+
+Validation/readiness use callback-only IndexGateway access with the existing
+no-refresh semantics. A closed Core index or writer refuses rather than
+opening another index or falling back to direct filesystem writes. Metadata
+proposals read the latest staged fields under the actor and fill missing
+values only, preserving person edits and unrelated proposals. Slow data and
+chapter-relation results check their staged-input/derived-output fingerprints
+before commit. Chapter-relation Clerk queue writes and consumed-answer cleanup
+use an optional synchronous state-write callback; model requests remain outside
+that commit. This is not a claim that every Clerk caller has been migrated.
+
+The writer can audit explicitly named owned `.librarian` targets without
+treating them as editable Obsidian documents. Its internal resolver rejects
+escapes and unrelated hidden directories. Public file routes and document
+heartbeats still reject hidden paths. Generated extraction-cache target
+inventory and the wider index/cache ownership contract remain follow-up work.
+
+Host active-work status includes the background batch. Explicit stop signals
+its cancellation and waits within the existing grace period before closing
+the writer. Batch-owned commits arriving after that writer closes refuse;
+the run remains interrupted and explicitly resumable. Stopping after the last
+stage records cancellation rather than incorrectly finishing the item, and
+resume reuses committed stage results. A changed person decision is not replaced
+by an enriched/failed batch status. An ambiguous final start-audit failure clears
+the in-memory reservation, leaving the existing durable recovery mechanism to
+surface the interrupted operation. Browser failure state is visible alongside
+explicit resume; the model picker and normal approval controls are unchanged.
+
+These are stage-boundary cancellation guarantees, not in-flight transport
+cancellation. Nested registered deep-read/review/OCR/cleanup tools can still
+hold their own writer operation during provider work. Their transport shutdown
+and late-result boundaries remain ADAPT-04/06 work; this packet does not close
+the complete Host-stop or single-owner release gate.
+
+Implementation: `ce88b04`. Verification: **113 focused tests**, **1,103 passed,
+2 skipped, 1 deselected** in the full suite, plus browser build and expanded
+smoke. See `regression-manifest.md` for commands and the local full-run log.
+
 ## Remaining limits
 
 - Full new-source and mixed/batch topic promotion need a resolved mutation plan

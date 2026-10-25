@@ -900,3 +900,43 @@ Nothing was pushed. Next ownership work is the batch validation/readiness
 lookups and source/catalog promotion; graph/extract still retain explicit
 offline construction branches. Windows stress and runtime fallback enforcement
 must follow before claiming the single-owner index gate complete.
+
+### Approved-batch ownership continuation, 2026-10-25
+
+The two remaining batch lookups now use IndexGateway callbacks on Core's
+IndexService, preserving the deliberate no-refresh behavior. Static direct-index
+construction debt is **6 → 4**: source/catalog promotion (two sites) and the
+graph/extract explicit offline branches (two). This count does not close G1,
+INDEX-04 enforcement, separate desk/lens stores, or INDEX-05 Windows stress.
+
+The batch was also writing staging state/run JSONL from its background thread.
+Its existing run/store semantics are retained, but batch-owned commits now
+use the writer in foreground/background execution. The approved-set reservation
+is short and serialized; orchestration releases the actor between stages.
+Only reviewed first-party macros and this person-tier batch can opt into that
+registry boundary; external tool registration still refuses it. Slow staged
+inputs/DIK outputs receive preconditions, newer metadata/decisions survive,
+and chapter-relation queue commits use a synchronous callback rather than
+holding the actor over model IO.
+
+Host status/explicit shutdown now include background batches. Cancellation
+after a final stage remains resumable without replaying that stage; a late
+batch-owned commit meets the closed writer instead of writing after lease
+release. Failed runs remain visible in the existing browser banner. This is
+not in-flight provider cancellation: nested registered read/review/OCR tools
+retain their own wait behavior and need the planned ADAPT-04/06 work.
+The wider boundary and remaining limits are in `staging-write-safety.md`.
+
+Implementation: `ce88b04`. **113 focused tests passed**, including real-Core/thread
+assertions, the full eight-stage no-provider path, preservation of person edits,
+queue replay, stale input rejection, cancellation/resume, start-audit recovery,
+hidden-path isolation and late shutdown results. Browser build and expanded
+smoke passed, including failure/resume visibility and the existing picker.
+Final frozen-source verification passed **1,103 tests, 2 skipped, 1 deselected
+in 343.67s**, using the repository venv with `-o faulthandler_timeout=60`.
+Output: `tmp/batch-ownership-full-2026-10-25-01.log`. Commands are recorded in
+`regression-manifest.md`.
+No paid provider calls or new model qualification were performed; nothing was
+pushed. Source/catalog promotion is next, followed by enforcement/stress and
+adapter completion. Adoption/dedupe, Session harness and integrated acceptance
+remain open.
