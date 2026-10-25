@@ -54,7 +54,8 @@ ID/kind must match the loaded file.
 | Concept | One new `Concepts/<name>.md` | Staged dependency; destination snapshot/missing guard; target lease | Core callback |
 | V1 import | One new explicit target note | Staged dependency; destination snapshot/missing guard; target lease | Core callback |
 | Lens | Separate lens store, plus staged lifecycle record | Staged dependency; serialized acceptance | Separate SQLite store; INDEX-05 review remains |
-| New source | Source note, optional attachment move, concept backlinks, topic/master indexes, optional vectors, staged record | Staged dependency only; **multi-target protection unfinished** | Legacy engine path |
+| Single new source | Source note, managed attachment copies, concept backlinks, topic/master indexes, optional vectors, staged record | Reviewed staged bytes; complete target/dependency plan; per-write CAS/leases; explicit interrupted-acceptance progress | Core callback |
+| New sources in multi-item batches | Same promotion effects, legacy attachment relocation | Staged dispatch dependency only; **multi-target protection unfinished** | Legacy engine path |
 | Single topic acceptance | `About/Topics.md`, optional source refiling, topic/master indexes, staged record | Staged review token; prepared target/dependency CAS; per-write guards; retained partial progress | Core callback |
 | Topic acceptance in mixed/multi-item batches | Same taxonomy effects | Staged dispatch dependency; per-write domain guards, but **pre-approval multi-target inventory unfinished** | Legacy engine path |
 | `refile_source` | Changed source frontmatter and old/new topic/master indexes | Prepared note bytes and target/dependency CAS; per-write guards | Core callback |
@@ -201,10 +202,9 @@ spend rule; a changed representation still requires an explicit rebuild.
 Embedding failures remain visible as `needs_attention` rather than losing an
 already-written Source or claiming complete findability.
 
-This packet applies the new shared boundary to **catalogue adoption only**.
-Staging's new-source/attachment and mixed-topic paths remain legacy serving
-callers. It does not eliminate their early attachment movement or migrate
-their complete mutation inventory. Catalogue encoder IO releases SQLite, but
+This catalogue packet initially applied the new shared boundary to **catalogue
+adoption only**. The single-source continuation below also uses it; multi-item
+source/topic acceptance still retains a legacy serving path. Catalogue encoder IO releases SQLite, but
 still runs within that entry's writer operation; transport cancellation and
 writer-release restructuring remain separate work. File/index/evidence writes
 are not one cross-resource transaction, and partial work requires explicit
@@ -216,23 +216,96 @@ Frozen-source full suite: **1,125 passed, 2 skipped, 1 deselected in 373.99s**.
 Commands/log location are recorded in the unified plan and regression manifest.
 No paid provider call or model qualification was run.
 
+## Single-source acceptance and retained attachments
+
+The registered single-item `staging_decide(decision="accept")` path now uses
+the shared promotion planner and Core-owned index callbacks. It prepares the
+approved prose/fields, source kind, coverage, D/I/K sections, destination and
+concept context before an approval wait. The plan records source/view/concept
+targets, staged JSON, schema/topics/configuration, D/I/K bytes and attachment
+input/destination fingerprints. The existing writer audit and 200-dependency
+bound apply; no parallel job log or new permissions mechanism was introduced.
+Preview uses the same preparation and predicts copy destinations without
+changing user files or staged JSON (derived index refresh is still possible).
+
+Accepting a single source **copies**, rather than moves, its raw and cleaned
+attachments into `Sources/<kind>/files/`. Original project/Inbox/staging files
+remain in place. Existing destination files are never reused for a first
+acceptance, even if identical; a numbered destination is selected instead.
+This is source-preservation behavior, not the future deployment/dedupe system.
+It deliberately differs from multi-item and offline legacy relocation, which
+are still debt. No background cleanup of retained originals is performed.
+
+Copies stream through a same-directory temporary file, check the input digest
+and all preconditions before publication, and atomically replace the prepared
+missing destination. Content fingerprints also stream, so large PDF dependencies
+do not require loading an entire attachment into memory. Hidden inputs are
+limited to the owned `.librarian/staging/files/` subtree; hidden configuration,
+Git files, traversal and redirected staging-input escapes are refused. Managed
+destinations cannot redirect through links. These checks are not an OS lock
+against a malicious process changing filesystem links concurrently.
+
+An active target document lease or changed dependency blocks before the first
+copy. A lease/edit that begins during promotion stops its next guarded write,
+leaving completed work intact. Different notes remain writable. SQL/rendering
+runs on IndexService, file effects on VaultWriter. Encoder IO releases SQLite
+but can still occupy this writer operation; transport cancellation and finer
+writer-release work remain open.
+
+If a caught interruption follows committed copies/notes, the staged record
+retains `promotion_progress`: completed paths, owned-copy identities, exact
+last Core source fingerprint, approved-content hash and original session.
+This save occurs only if the staged JSON itself is unchanged. An external
+staged edit is not overwritten to record progress. If progress cannot be
+persisted, the existing operation audit/recovery workflow remains the manual
+inspection path; there is no promise that every failure is resumable.
+
+After a restart, open the item again. The shared UI shows completed paths,
+retained originals and **Finish acceptance** instead of re-ingestion/redrafting.
+It still requires a deliberate person action. Finishing reuses only the
+recorded byte-identical managed copies and exact unchanged source, with fresh
+review tokens and guards. It preserves the approved author's metadata and
+provenance. Changed source bytes, approved prose/fields or inputs require
+inspection and the normal source-revision workflow, not replacement by a
+replayed draft. Agents cannot finish partial promotion even in agent promotion
+mode. Partial items cannot be accepted through the legacy batch shortcut.
+
+Rejecting or deferring a partial item does **not** undo copies, repair a source,
+or move original inputs. The UI says this explicitly. Reject still quarantines
+the staging record. A new Source retains its incomplete marker until promotion
+checks finish; normal accepted-but-unfindable reporting remains unchanged.
+Source, view, index and staged-record updates are not one transaction. A hard
+crash or failed final state save can still leave ambiguous completed work;
+there is no automatic replay, promotion or exactly-once guarantee.
+
+Verification: **182 focused tests passed**, including 41 new source-promotion,
+streaming and restart checks. Implementation: `870f2e5`.
+Full Python suite: **1,166 passed, 2 skipped,
+1 deselected in 391.56s**. UI build and expanded browser smoke cover the retained
+originals/partial-work warning, explicit finish action and approved-text label,
+as well as existing selection/staging flows. See `regression-manifest.md` for
+the exact command, final UI-only verification ordering and local full-run log.
+
 ## Remaining limits
 
-- Full new-source and mixed/batch topic promotion need a resolved mutation plan
+- Multi-item new-source and mixed/batch topic promotion need a resolved mutation plan
   including attachment destinations, generated views and linked concept notes.
   Do not wrap the complete promotion in an index callback: it writes files and
-  may run vector IO. Attachment movement before all validation is still debt.
+  may run vector IO. Legacy multi-item/offline attachment movement remains debt.
+- Rejecting a fresh, non-partial source still uses the legacy quarantine/move
+  path. The originals-retained guarantee above applies to single-source accept
+  and subsequent partial-work decisions, not every ingestion/rejection path.
 - Per-item batch results remain, but a dispatch-level fingerprint conflict
   refuses the whole call before mutation. This is safer than accepting an
   unseen partial batch; no automatic resolution or merge is performed.
 - CAS, per-write checks and editor heartbeats are not an OS lock on Obsidian.
   A narrow check-to-replacement race remains possible with external writers.
-  New-source promotion still needs these interruption boundaries throughout.
+  Multi-item promotion still needs the single-item interruption boundaries.
 - Filesystem/index updates are not a multi-resource transaction. Interrupted
   operations use existing recovery checkpoints, not automatic replay or a
   promise of exactly-once acceptance.
 - Staging review/deep-read provider waits are not claimed to be eliminated by
-  this slice. Source promotion, lens-store ownership and the Windows WAL stress
+  this slice. Multi-item promotion, lens-store ownership and the Windows WAL stress
   gate remain open.
 
 Verification: `tests/test_staging_safety.py` exercises a coordinated Core,

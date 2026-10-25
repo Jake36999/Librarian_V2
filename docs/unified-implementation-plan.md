@@ -982,3 +982,44 @@ No paid provider calls or pushes were made. Next: staging's complete new-source
 and attachment inventory/migration, then ownership enforcement/stress and adapter
 completion. Adoption/dedupe, the Session harness and release acceptance remain
 open.
+
+### Single-source staging acceptance continuation, 2026-10-25
+
+Single new-source acceptance now shares the catalogue promotion planner and
+Core-owned SQL callbacks. Its complete source/view/concept/staging/attachment
+inventory and dependency snapshots precede approval. File effects remain on
+VaultWriter. Managed raw/cleaned attachment copies preserve original project,
+Inbox and staging inputs; collision suffixes preserve existing destination
+files. Streaming fingerprints/copies bound attachment memory. Hidden-state
+inputs, redirects and stale approval inputs refuse before publication.
+
+Caught partial acceptance records completed paths, approved-content identity,
+exact owned-source hash, copy identities and original provenance in the
+existing staged record, provided it has not been externally edited. After
+fresh review, a person can explicitly finish unchanged work across restart.
+Changed source/content/inputs refuse; no automatic replay or agent repair is
+introduced. The shared UI offers Finish acceptance and explains that deferral
+or rejection does not roll back completed work. Re-ingestion/redrafting and
+legacy multi-item acceptance cannot bypass this partial-work review.
+
+The static debt count remains **3**: multi-item source/topic promotion still
+uses staging's one direct-engine site, while graph/extract retain two explicit
+offline branches. Fresh-item rejection/offline relocation, full cancellation,
+writer occupancy during encoder IO, INDEX-04 enforcement and INDEX-05 Windows
+stress remain open. Source/files/SQL/staged state are not one transaction;
+crashes or failed progress persistence still require operation-log inspection.
+This does not complete deployment adoption/dedupe or promise exactly-once
+acceptance. Detailed scope and limits are in `staging-write-safety.md`.
+
+**182 focused tests passed**, including 41 new Core/streaming/recovery checks;
+browser build and expanded smoke passed. Implementation: `870f2e5`.
+Full Python verification passed
+**1,166 tests, 2 skipped, 1 deselected in 391.56s**; output is retained locally
+at `tmp/source-promotion-full-2026-10-25-02.log`. The final UI-only author-label
+correction was checked separately with build/smoke; no Core code changed after
+that full run. Commands and the earlier development failures are recorded in
+`regression-manifest.md`. No paid provider call or new route
+qualification was performed. Nothing has been pushed. Next: multi-item
+source/topic inventory and migration, then runtime ownership enforcement/stress
+and adapter completion; adoption/dedupe, Session harness and integrated release
+acceptance remain open.

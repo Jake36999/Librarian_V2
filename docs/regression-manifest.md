@@ -36,6 +36,7 @@ and expected boundary explicit.
 | INDEX-03 | partial | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_core_index_service.py tests/test_sqlite_ownership.py tests/test_authoring.py tests/test_sessions.py tests/test_review_gate.py tests/test_offering_view.py tests/test_learn.py tests/test_start_pursuit.py tests/test_weekly_review.py tests/test_pursuits.py` | Interleaved work receives copied data only from Core-owned SQLite; Markdown/session mutations remain on writer; Clerk/Scribe IO releases index worker; changed schemas refresh before validation. | Serving-path debt 33 → 17; further promotion batches and Windows stress remain. | `2e95158`, `86941d3`; final combined suite 1,039 passed, 2 skipped, 1 deselected. |
 | Macro writer-wait follow-up | implemented | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_macro_permissions.py tests/test_person_waits.py tests/test_registry.py`; full browser smoke | Ask-mode waits never own the writer; explicit Deny/Plan still hold; partial work stays durable; external tools cannot opt out of writer serialization. | Automatic macro resume is not claimed. | `5b3be1f`; expanded focused group: 116 passed; final combined suite: 1,039 passed, 2 skipped, 1 deselected; browser smoke passed. |
 | INDEX-04/05 | planned | Focused module batch plus `tests/test_core_index_service.py` and Windows stress fixture | No serving path constructs a direct SQLite engine; WAL reads/writes remain safe. | Windows host. | — |
+| CORE-05 / INDEX-03/04 single-source acceptance | partial | `tests/test_core_source_promotion.py` plus staging, catalogue/taxonomy, revisions, ingestion/intake, upkeep and index-ownership fixtures; UI build/browser smoke | Complete single-source plan precedes approval; copies preserve inputs; Core owns SQL; partial outcomes survive explicit review/restart without overwriting changed work. | Multi-item promotion, fresh-item quarantine relocation, provider cancellation, runtime enforcement and Windows stress remain open. | `870f2e5`; 182 focused passed; browser build/smoke passed; full: 1,166 passed, 2 skipped, 1 deselected. |
 | INDEX-03/04 catalogue promotion | partial | `tests/test_core_catalog.py` plus model catalogue/staging/embed/ownership/recovery fixtures; UI build/browser smoke | Catalogue SQL stays on Core; per-entry effects are declared/guarded; partial notes remain visible; vector IO releases SQLite and stale/invalid batches refuse or roll back. | Three construction sites, staging attachments/new-source promotion, full cancellation and Windows stress remain. | `508959a`; 113 focused passed; UI build/smoke passed; full: 1,125 passed, 2 skipped, 1 deselected. |
 | INDEX-03/04 approved batch / lifecycle | partial | `tests/test_core_batch.py` plus ingestion/DIK/Clerk, writer/recovery/shutdown and registry/macro fixtures; UI build/browser smoke | Batch SQL stays on Core; batch-owned commits serialize; metadata and decisions survive; cancelled stages resume once; closed-writer late results refuse; failed work remains visible. | Four construction sites, full source promotion, nested provider cancellation and Windows stress remain open. | `ce88b04`; 113 focused tests passed; browser build/smoke passed; full: 1,103 passed, 2 skipped, 1 deselected. |
 | ROUTE-01/02 | implemented / partial | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_app.py` | Lead patch preserves other positions; display preserves `unknown`. | API alias coverage belongs to ROUTE-03. | `77315cc`, `7a48f0c` |
@@ -110,3 +111,29 @@ at `tmp/catalog-ownership-full-2026-10-25-01.log`. Implementation `508959a`
 passed **1,125 tests, 2 skipped, 1 deselected in 373.99s** against frozen source.
 These are scripted/local checks, not paid model qualification or Windows
 multi-client release acceptance.
+
+Single-source acceptance continuation on 2026-10-25 passed the **182-test**
+focused group, including **41 new checks**:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest tests/test_core_source_promotion.py tests/test_staging.py tests/test_staging_safety.py tests/test_core_catalog.py tests/test_core_taxonomy.py tests/test_revisions.py tests/test_sqlite_ownership.py tests/test_core_index_service.py tests/test_ingest_service.py tests/test_intake.py tests/test_upkeep.py -q -x -o faulthandler_timeout=60
+```
+
+UI `npm.cmd run build` and expanded `npm.cmd run smoke` passed, including
+interrupted-promotion warnings, completed paths, retained originals and an
+explicit finish action, plus the existing picker and ordinary staging flows.
+An old Inbox-PDF test now asserts byte-identical retained input and managed
+copy rather than expecting input deletion. The first full pass also caught
+and prompted restoration of the preview's `promotion.mode` diagnostic. That
+development run is retained at `tmp/source-promotion-full-2026-10-25-01.log`
+(2 failed, 1,163 passed); it is not final verification evidence.
+
+The full repository-venv run with `-o faulthandler_timeout=60` passed **1,166
+tests, 2 skipped, 1 deselected in 391.56s**. Output:
+`tmp/source-promotion-full-2026-10-25-02.log` (local generated output).
+Python/Core and test source were frozen during this run. A subsequent UI-only
+approved-text author-label correction was verified separately by TypeScript
+check/build and the expanded browser smoke, including its new assertion. No
+Python/Core behavior changed after the full run. Implementation: `870f2e5`.
+No paid provider call, model
+qualification, Windows multi-client stress or release-gate closure is implied.
