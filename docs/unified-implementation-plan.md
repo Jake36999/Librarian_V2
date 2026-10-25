@@ -628,6 +628,9 @@ with its primary model and reviewer (§3.2).
 | CORE-06 | implemented | `c264b9a` | Core startup scans the writer log before admitting mutation, creates an idempotent recovery checkpoint for a start-only operation, handles a partial crash tail safely, and fails closed on a malformed complete record. |
 | CORE-07 | implemented | `5708c39` | The Hub stamps events with a Core epoch and authoritative sequence/timestamp. A stale/missing epoch, expired replay, or cursor ahead emits one `resync_required`; the browser refreshes canonical state rather than replaying an action. |
 | INDEX-03 (batch 1) | partial | `2e95158` | A callback-only `IndexGateway` keeps SQLite-owned objects inside `IndexService`; intake, queued intake, taxonomy proposal, Scout sweep, and ranking compare/benchmark now release the index worker before Clerk/network/durable-file phases. Static debt shrank 39 → 33. Core-backed regression cases cover the gateway, admission order, Clerk release, proposal, sweep, comparison, and benchmark persistence. |
+| ROUTE-03A | implemented | `b6ef33b` | Strict vault-scoped `agents/routes.json`, one-time legacy migration, explicit inheritance, preserved independently selected positions, and serialized picker/service metadata updates. Focused migration/App/service tests: 60 passed; store tests: 8 passed at that commit. |
+| ROUTE-03B / ROUTE-05 (chat) | partial | `14837a2` | Chat, background Clerk/Scribe, and helper execution resolve canonical bindings; default profiles and custom profiles can explicitly choose a route slot. Host endpoint changes refuse execution; an unavailable background role queues instead of blocking Lead or borrowing another route. Role-store validation, restart projection repair, temporary offline mutation leases, and role-specific qualification regressions included. Full suite: 1,016 passed, 2 skipped, 1 deselected. Service dispatch and per-role picker readiness remain open. |
+| BASE-02 (browser smoke) | implemented | `c6d189e` | Browser smoke now launches the repository venv/source tree, strips inherited real credentials from the scripted demo, waits for completed picker writes, and terminates its own Windows process tree. Previously it could exercise the stale editable checkout. The refreshed current-policy demo passes the complete browser smoke walk. |
 
 **CORE-05 write inventory.** CAS coverage is claimed only where a token is
 checked:
@@ -663,8 +666,10 @@ yet:
   writer operation. It holds the writer without interleaving (linearity
   holds), and it already did on master. Fix with the macro checkpoint
   approval standing in for its steps' permissions.
-- ROUTE-02 fixed the tile; legacy and provider aliases are not yet canonical
-  on the server's route and readiness path (ROUTE-03).
+- ROUTE-03 now canonicalizes chat execution. Service slots currently mirror
+  configuration as metadata; their specialized transports still read the
+  existing validated service configuration. ROUTE-03/04 are not complete
+  until those dispatch paths and role-specific picker readiness are bound.
 - INDEX-02: commit real-Core context tests for the batch-1 migrations before
   expanding the batch.
 - G1 (Core lifecycle) has its known P1s, recovery, and event-resynchronization
@@ -676,3 +681,45 @@ Full suite under the repository venv after CORE-05: 959 passed, 2 skipped, 1 des
 Focused CORE-06/07 and INDEX-03 commands are recorded in the regression manifest; the
 full suite was also re-run after INDEX-03. **Next in §18 order:** ROUTE-03–05, then
 the remaining INDEX-03/04 batches and adapter request-shaping work.
+
+### Routing continuation, 2026-10-25
+
+The three-position picker and its existing APIs remain the selection workflow.
+After the one-time migration, `agents/routes.json` is authoritative for chat
+assignments. `app.json` tiers are a compatibility projection: startup repairs
+that projection after an interrupted multi-file save; it does not silently
+adopt an unrelated later edit as a new route. Use `/api/tiers` or `/api/lead`
+to change assignments. Existing corrupt binding stores fail closed and are
+never silently regenerated. Model choices remain non-secret and vault-scoped.
+Legacy local-server URL overrides are pinned to the corresponding custom Host,
+including after clearing/reselecting through the old picker. An explicit host
+ID always keeps its identity even when its spelling matches a provider preset.
+Historical qualification under a bare provider namespace is not silently
+promoted into canonical-host evidence: an affected route may require a matching
+probe again. Existing deliberate Lead overrides remain compatibility choices.
+
+Profiles can select an existing slot using `route_policy.binding_role`, exposed
+as **Model route slot** in the profile editor. This changes model selection,
+not the task role, permissions, budgets, or qualification identity. For example,
+an `analyst` task using the Scribe slot still needs analyst evidence; a Lead
+profile using that slot must satisfy Lead qualification for that exact model.
+Tests cover both cases. A custom profile without an identifiable slot receives
+an actionable configuration error rather than a silently chosen model.
+
+Review findings addressed: fractional revision coercion, service-to-chat
+inheritance, incomplete direct bindings, loss of an explicit helper assignment,
+projection divergence after restart, offline check-then-write ownership races,
+Lead pricing applied to other profiles, broken Clerk/Scribe spillover into
+Lead, stale background endpoints, and preset aliases missing price cards or
+legacy provider allow-lists. These were reviewed by the Codex route-mapping
+agent and independently checked against code/tests. The suggestion to make
+slot selection change the qualification role was rejected: it would let a
+custom task borrow qualification from a different role. No paid provider call
+was needed for this packet; no new DeepInfra spend was incurred.
+
+Final verification of `14837a2`: **1,016 passed, 2 skipped, 1 deselected** in
+305.20 seconds under the repository venv. The expanded routing/App/profile
+group passed **85 tests** during development. `npm.cmd run build` and the full
+`npm.cmd run smoke` browser walk passed. The complete final Python output is
+retained locally at `tmp/route03-full-2026-10-25-03.log`; the focused and full
+commands are recorded in the regression manifest.

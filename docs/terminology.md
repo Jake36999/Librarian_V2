@@ -11,7 +11,7 @@ delivery-status authority.
 | Core | The single mutable authority for one vault: coordinator, writer, index service, leases, session append path, and policy boundary. | A browser, Obsidian adapter, Cowork/MCP process, or CLI client. |
 | Registry tier | `consult`, `contribute`, or `curate`: the maximum tool authority of a caller. | A model-picker position, model quality level, or work budget. |
 | Role slot | A semantic assignment: `lead`, `scribe`, `clerk`, `research_helper`, `ocr`, `tts`, `stt`, or `embeddings`. | A legacy positional tier. |
-| Legacy position | The existing three-picker compatibility projection: Lead, Scribe, Clerk. | The canonical role-to-route binding planned in ROUTE-03. |
+| Legacy position | The existing three-picker compatibility projection: Lead, Scribe, Clerk. | The canonical vault-scoped role-to-route binding. |
 | Route | One host plus exact provider model, protocol adapter, expectation record, and qualification evidence. | A provider family or catalogue tile. |
 
 ## Model evidence and controls
