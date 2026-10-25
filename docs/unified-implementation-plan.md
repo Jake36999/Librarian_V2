@@ -1259,3 +1259,18 @@ acceptance. Staging quarantine/encoder waits, strict extract pinning and the
 remaining adapter/adoption/harness work are unchanged. No paid calls or pushes
 were performed; the new native reproduction is not proof of the cause of the
 earlier unreproduced mixed-acceptance failures.
+
+### Claude continuation (2026-10-25)
+
+Claude reviewed ChatGPT's 36 commits (`c9b7b25..60857ca`) and the packet it
+left uncommitted at its usage limit, and finished that packet.
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| CORE-02A (reopened) | implemented | `344a49c` | Fail-closed stop: the lease and index stay held while the writer drain timed out or admitted work is still running; `close_runtime` returns False and a retry completes it. One counted admission barrier on every mutating App entry point. Reviewed by DeepSeek-V4-Pro: no defects that held up after checking the code. |
+| ADAPT-02 | implemented | `344a49c` | Per-call identity verdict; a mismatched reply is a typed incompatibility before its tool calls run. |
+| ADAPT-03 | implemented | `344a49c` | Redacted request/response session events through CORE-03. Reviewed by GLM-5.3: the fold lost a stored response's failure class, retry count and usage (fixed, with a round-trip test); the sink now skips a context with no vault and bounds the pre-session buffer. |
+
+Full suite on ChatGPT's tree before the two fixes: 1314 passed, 2 skipped,
+1 deselected. The focused suites passed after them. G1 remains open
+(INDEX-05 is partial).
