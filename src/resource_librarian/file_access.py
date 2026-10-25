@@ -1,0 +1,28 @@
+"""Short, process-local file IO exclusion, never a vault/editor lease.
+
+Windows os.replace cannot replace an open destination. A Core fingerprint
+reader must close its handle before another Core thread replaces that path.
+These locks cover only the read or final replacement syscall, not an entire
+tool, provider request, approval wait, or transaction with an external editor.
+"""
+from __future__ import annotations
+
+import os
+import threading
+import weakref
+from pathlib import Path
+from typing import Any
+
+_guard = threading.Lock()
+_locks: weakref.WeakValueDictionary[str, Any] = weakref.WeakValueDictionary()
+
+
+def file_access(path: Path) -> Any:
+    """One reentrant lock per canonical path, reclaimed after its last user."""
+    key = os.path.normcase(str(path.resolve()))
+    with _guard:
+        lock = _locks.get(key)
+        if lock is None:
+            lock = threading.RLock()
+            _locks[key] = lock
+        return lock

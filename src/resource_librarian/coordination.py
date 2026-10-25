@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any, Callable, TypeVar
 
 from . import __version__, process_identity
+from .file_access import file_access
 from .rules import Refusal
 from .vault import Vault, now_iso
 
@@ -109,13 +110,14 @@ def fingerprint_bytes(data: bytes) -> str:
 
 def fingerprint(path: Path) -> str:
     """A cheap content fingerprint used as a write precondition."""
-    if not path.is_file():
-        return MISSING
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1 << 20), b""):
-            digest.update(block)
-    return digest.hexdigest()[:20]
+    with file_access(path):
+        if not path.is_file():
+            return MISSING
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for block in iter(lambda: handle.read(1 << 20), b""):
+                digest.update(block)
+        return digest.hexdigest()[:20]
 
 
 @dataclass(frozen=True)
@@ -312,7 +314,8 @@ def atomic_write_text(path: Path, text: str, encoding: str = "utf-8") -> None:
             handle.flush()
             with contextlib.suppress(OSError):
                 os.fsync(handle.fileno())
-        os.replace(temp, path)
+        with file_access(path):
+            os.replace(temp, path)
     finally:
         with contextlib.suppress(OSError):
             temp.unlink()
@@ -328,7 +331,8 @@ def atomic_write_bytes(path: Path, data: bytes) -> None:
             handle.flush()
             with contextlib.suppress(OSError):
                 os.fsync(handle.fileno())
-        os.replace(temp, path)
+        with file_access(path):
+            os.replace(temp, path)
     finally:
         with contextlib.suppress(OSError):
             temp.unlink()
