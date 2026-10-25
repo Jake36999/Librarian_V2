@@ -21,12 +21,15 @@ capture, apart from the reading (§4.4).
 """
 from __future__ import annotations
 
+import json
 import secrets
 import threading
-from typing import Any, Callable
+from pathlib import Path
+from typing import Any, Callable, TypeVar
 
 from . import deep_read as reading
-from .coordination import atomic_write_bytes
+from .coordination import (PreconditionChangedError, atomic_write_bytes, fingerprint,
+                           fingerprint_bytes)
 from .registry import REGISTRY, Context
 from .staging import StagingStore
 from .vault import Vault, now_iso
@@ -37,14 +40,77 @@ MAX_READ_CALLS = 40                  # deep_read is chunked; enough calls for a 
 
 _LIVE: dict[str, tuple[str, threading.Thread | None, threading.Event]] = {}
 _GUARD = threading.RLock()
+T = TypeVar("T")
+
+
+def _commit(ctx: Context, fn: Callable[[], T], *, targets: tuple[Path, ...] = (),
+            preconditions: dict[str, str] | None = None) -> T:
+    """A short state commit, never a network/model call or a whole batch.
+
+    The background worker retains the Core's authority even after the start
+    request returns. A closed writer is an error, not an offline fallback.
+    """
+    writer = ctx.extras.get("vault_writer")
+    if writer is not None:
+        return writer.submit(fn, caller="batch", targets=[
+            path.relative_to(ctx.vault.root).as_posix() for path in targets],
+            preconditions=preconditions)
+    for rel, expected in (preconditions or {}).items():
+        if fingerprint(ctx.vault.root / rel) != expected:
+            raise PreconditionChangedError(rel)
+    return fn()
+
+
+class _Runs(RunStore):
+    """Use the existing resumable run log, with Core-serialized appends."""
+
+    def __init__(self, ctx: Context):
+        super().__init__(ctx.vault)
+        self.ctx = ctx
+
+    def append(self, run_id: str, event: dict[str, Any]) -> None:
+        _commit(self.ctx, lambda: super(_Runs, self).append(run_id, event),
+                targets=(self.path(run_id),))
+
+
+def _update_item(ctx: Context, item_id: str,
+                 change: Callable[[dict[str, Any]], Any]) -> dict[str, Any]:
+    store = StagingStore(ctx.vault)
+
+    def update() -> dict[str, Any]:
+        # Read-modify-write inside the actor: a progress update must not put
+        # an old copy over the person's newer title, decision or metadata.
+        fresh = store.load(item_id)
+        _assert_active(ctx, fresh)
+        change(fresh)
+        store.save(fresh)
+        return fresh
+
+    return _commit(ctx, update, targets=(store.path(item_id),))
+
+
+def _assert_active(ctx: Context, item: dict[str, Any]) -> None:
+    run_id = ctx.extras.get("_batch_run")
+    if run_id and (item.get("status") != "processing" or item.get("batch") != run_id):
+        raise TypeError("the staged item's decision changed during processing; review it before resuming")
+
+
+def _item_precondition(ctx: Context, item: dict[str, Any]) -> dict[str, str]:
+    """Bind slow work to the exact staged inputs it received."""
+    store = StagingStore(ctx.vault)
+    path = store.path(item["id"])
+    raw = path.read_bytes()
+    if json.loads(raw) != item:
+        raise PreconditionChangedError(path.relative_to(ctx.vault.root).as_posix())
+    return {path.relative_to(ctx.vault.root).as_posix(): fingerprint_bytes(raw)}
 
 
 # ------------------------------------------------------------------ stages
 # Each takes (ctx, item) and returns {"status": complete|partial|queued|skipped|failed, ...}.
 
 def _validate(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
-    from .tools.library import engine_for
-    held = engine_for(ctx, refresh=False).index.note_row(item["name"])
+    from .tools.library import IndexGateway
+    held = IndexGateway(ctx, refresh=False).run(lambda e: e.index.note_row(item["name"]))
     if held is not None:
         return {"status": "failed", "reason": f"already in the library: {held['path']}"}
     if not (item.get("evidence") or item.get("file")):
@@ -77,12 +143,11 @@ def _parse(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
         if "error" in out:
             done = {"cleanup": f"not run: {out.get('detail') or out['error']}"}
         else:
-            store = StagingStore(ctx.vault)
-            fresh = store.load(item["id"])
-            fresh["clean_file"] = out["path"]
-            store.save(fresh)
+            fresh = _update_item(ctx, item["id"], lambda fresh: fresh.update(clean_file=out["path"]))
             item, done = fresh, {"cleanup": f"cleaned into {out['path']}"}
-    chunks = reading.chunk(reading.source_units(ctx.vault, item))
+    # Source extraction can populate the disposable text cache. Keep that
+    # local filesystem phase on the writer too, not the batch/provider thread.
+    chunks = reading.chunk(_commit(ctx, lambda: reading.source_units(ctx.vault, item)))
     if not chunks:
         return {"status": "partial", "chunks": 0, **done,
                 "reason": q.get("reason") if verdict in ("needs_ocr", "js_shell") else
@@ -117,11 +182,8 @@ def _ocr(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
         why = (out.get("errors") or [{}])[0].get("error", "no page came back")
         return {"status": "partial", "reason": f"the pages have no text layer, and OCR read "
                                                f"none of them: {why}"}
-    store = StagingStore(ctx.vault)
-    fresh = store.load(item["id"])
-    fresh["clean_file"] = out["path"]
-    fresh["ocr"] = {k: out[k] for k in ("model", "pages", "needed", "read")}
-    store.save(fresh)
+    _update_item(ctx, item["id"], lambda fresh: fresh.update(
+        clean_file=out["path"], ocr={k: out[k] for k in ("model", "pages", "needed", "read")}))
     complete = out["read"] >= out["needed"] and not out.get("errors")
     return {"ocr": f"{out['read']} of {out['needed']} image-only pages read by {out['model']}",
             "ocr_complete": complete,
@@ -132,6 +194,11 @@ def _ocr(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
 def _fetch_full_text(ctx: Context, item: dict[str, Any], url: str) -> dict[str, Any]:
     """A paper's open-access PDF, kept with the item (moved beside its note on accept)."""
     from . import intake, text
+    staged_path = StagingStore(ctx.vault).path(item["id"])
+    folder = ctx.vault.work("staging") / "files"
+    path = folder / f"{item['id']}.pdf"
+    expected = {**_item_precondition(ctx, item),
+                path.relative_to(ctx.vault.root).as_posix(): fingerprint(path)}
     fetcher = ctx.extras.get("fetcher") or intake.Fetcher()
     try:
         raw = fetcher.get(url, "application/pdf")
@@ -139,16 +206,17 @@ def _fetch_full_text(ctx: Context, item: dict[str, Any], url: str) -> dict[str, 
         return {"status": "partial", "reason": f"open-access PDF not fetched: {exc}"}
     if raw[:5] != b"%PDF-":
         return {"status": "partial", "reason": f"{url} did not return a PDF"}
-    folder = ctx.vault.work("staging") / "files"
-    folder.mkdir(parents=True, exist_ok=True)
-    path = folder / f"{item['id']}.pdf"
-    atomic_write_bytes(path, raw)
-    got = text.extract(path, ctx.vault.derived / "text")
-    store = StagingStore(ctx.vault)
-    fresh = store.load(item["id"])
-    fresh["file"] = path.relative_to(ctx.vault.root).as_posix()
-    fresh["full_text"] = {"url": url, "pages": len(got.pages), "empty_pages": got.empty_pages}
-    store.save(fresh)
+    def capture():
+        _assert_active(ctx, StagingStore(ctx.vault).load(item["id"]))
+        folder.mkdir(parents=True, exist_ok=True)
+        atomic_write_bytes(path, raw)
+        got = text.extract(path, ctx.vault.derived / "text")
+        _update_item(ctx, item["id"], lambda fresh: fresh.update(
+            file=path.relative_to(ctx.vault.root).as_posix(),
+            full_text={"url": url, "pages": len(got.pages), "empty_pages": got.empty_pages}))
+        return got
+
+    got = _commit(ctx, capture, targets=(path, staged_path), preconditions=expected)
     return {"full_text": f"{len(got.pages)} pages from {url}"}
 
 
@@ -197,13 +265,16 @@ def _data(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     """Data records (R16): a repository's components from its evidence; a document's
     chapters from its text, each with coverage and the claims read from it."""
     from . import dik
+    path = dik.path_for(ctx.vault, item["name"])
+    expected = {**_item_precondition(ctx, item),
+                path.relative_to(ctx.vault.root).as_posix(): fingerprint(path)}
     kind = item.get("source_kind", "")
     if kind == "repository":
         record = dik.repository(ctx.vault, item["name"],
                                 [e.get("id") for e in item.get("evidence") or []],
                                 str((item.get("fields") or {}).get("pushed_at") or ""))
     elif kind in ("document", "paper", "standard") and (item.get("clean_file") or item.get("file")):
-        units = reading.source_units(ctx.vault, item)
+        units = _commit(ctx, lambda: reading.source_units(ctx.vault, item))
         pages = [t for _, t in units]
         chunks = reading.chunk(units)
         record = dik.document(ctx.vault, item["name"], pages,
@@ -223,7 +294,11 @@ def _data(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
                                                       f"on the description"}
     if not record["data"]:
         return {"status": "partial", "reason": "no components were found in what was captured"}
-    dik.save(ctx.vault, record)
+    def save():
+        _assert_active(ctx, StagingStore(ctx.vault).load(item["id"]))
+        return dik.save(ctx.vault, record)
+
+    _commit(ctx, save, targets=(path,), preconditions=expected)
     partial = str(record.get("coverage", "")).startswith("partial")
     return {"status": "partial" if partial else "complete", "records": len(record["data"]),
             "relations": len(record["information"]), "coverage": record["coverage"],
@@ -235,15 +310,27 @@ def _relate(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     document's chapters are related by a model reading only the fully read ones."""
     from . import dik
     from .tools.staging import clerk_endpoint
-    record = dik.load(ctx.vault, item["name"])
+    expected = _item_precondition(ctx, item)
+    path = dik.path_for(ctx.vault, item["name"])
+    try:
+        raw = path.read_bytes()
+    except FileNotFoundError:
+        raw = b""
+    record = json.loads(raw) if raw else {}
     if not record:
         return {"status": "not_applicable", "reason": "no Data records to relate"}
     if record["kind"] != "document":
         return {"status": "complete", "relations": len(record["information"])}
     if sum(1 for d in record["data"] if d.get("kind") == "chapter") < 2:
         return {"status": "not_applicable", "reason": "a single part: nothing to relate"}
-    out = dik.relate_chapters(record, clerk_endpoint(ctx), ctx.vault.work("queue") / "clerk")
-    dik.save(ctx.vault, record)
+    out = dik.relate_chapters(record, clerk_endpoint(ctx), ctx.vault.work("queue") / "clerk",
+        state_write=lambda fn, path: _commit(ctx, fn, targets=(path,)))
+    def save():
+        _assert_active(ctx, StagingStore(ctx.vault).load(item["id"]))
+        return dik.save(ctx.vault, record)
+
+    _commit(ctx, save, targets=(path,), preconditions={**expected,
+        path.relative_to(ctx.vault.root).as_posix(): fingerprint_bytes(raw)})
     if "the clerk did not answer" in str(out.get("reason", "")):
         return {"status": "queued", "reason": "waiting for the clerk model to relate chapters"}
     if out.get("reason"):
@@ -254,26 +341,34 @@ def _relate(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
 def _metadata(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     """Metadata proposals (R16): fields the content model requires that are still unknown,
     and values the Data can supply - proposals on the item, confirmed at acceptance."""
-    from . import dik
     from .intake import readiness
-    from .tools.library import engine_for
-    fields = dict(item.get("fields") or {})
-    record = dik.load(ctx.vault, item["name"])
-    proposed = {}
-    languages = [d["name"] for d in record.get("data", []) if d.get("kind") == "language"]
-    if languages and not fields.get("language"):
-        proposed["language"] = languages[0]
-    if proposed:
-        store = StagingStore(ctx.vault)
+    from .tools.library import IndexGateway
+    gateway = IndexGateway(ctx, refresh=False)
+    # Refuse a stopped Core before changing proposals. Do not instantiate a
+    # second connection if the worker is closed.
+    gateway.run(lambda e: None)
+    store = StagingStore(ctx.vault)
+
+    def propose():
+        from . import dik
         fresh = store.load(item["id"])
-        fresh["fields"] = {**fresh.get("fields", {}), **proposed}
-        fresh["metadata_proposals"] = {k: "from the Data records" for k in proposed}
-        store.save(fresh)
+        _assert_active(ctx, fresh)
+        record = dik.load(ctx.vault, fresh["name"])
+        languages = [d["name"] for d in record.get("data", []) if d.get("kind") == "language"]
+        fields = dict(fresh.get("fields") or {})
+        proposed = {"language": languages[0]} if languages and not fields.get("language") else {}
         fields.update(proposed)
-    missing = readiness(engine_for(ctx, refresh=False), item.get("source_kind", ""), fields)
-    # fields still unknown are listed for the person, not counted against how much was read
-    return {"status": "complete", **({"unknown": missing} if missing else {}),
-            **({"proposed": proposed} if proposed else {})}
+        missing = gateway.run(lambda e: readiness(e, fresh.get("source_kind", ""), fields))
+        if proposed:
+            fresh["fields"] = fields
+            fresh["metadata_proposals"] = {**(fresh.get("metadata_proposals") or {}),
+                                          **{k: "from the Data records" for k in proposed}}
+            store.save(fresh)
+        # Unknown metadata is a review prompt, not a claim that less was read.
+        return {"status": "complete", **({"unknown": missing} if missing else {}),
+                **({"proposed": proposed} if proposed else {})}
+
+    return _commit(ctx, propose, targets=(store.path(item["id"]),))
 
 
 STAGES: list[tuple[str, Callable[[Context, dict[str, Any]], dict[str, Any]]]] = [
@@ -298,7 +393,7 @@ def live(vault: Vault) -> str:
     """The batch running in this process for this vault, or ""."""
     with _GUARD:
         entry = _LIVE.get(str(vault.root))
-    if entry and (entry[1] is None or entry[1].is_alive()):
+    if entry and (entry[1] is None or entry[1].ident is None or entry[1].is_alive()):
         return entry[0]
     return ""
 
@@ -323,7 +418,7 @@ def status(vault: Vault, run_id: str = "") -> dict[str, Any]:
     done = {(e["item"], e["stage"]): e for e in events if e["type"] == "done"}
     finished = {e["item"]: e for e in events if e["type"] == "item"}
     last = events[-1]
-    state = last["type"] if last["type"] in ("finished", "cancelled") else (
+    state = last["type"] if last["type"] in ("finished", "cancelled", "failed") else (
         "running" if run_id == out["running"] else "interrupted")
     current = next(({"item": e["item"], "stage": e["stage"],
                      **({"detail": e["detail"]} if e["type"] == "progress" else {})}
@@ -335,7 +430,7 @@ def status(vault: Vault, run_id: str = "") -> dict[str, Any]:
                                     if i in finished else {"status": "processing"}),
                        "stages": {s: done[(i, s)]["status"] for s, _ in STAGES
                                   if (i, s) in done}} for i in items])
-    if last["type"] == "cancelled":
+    if last["type"] in ("cancelled", "failed"):
         out["detail"] = last.get("detail", "")
     return out
 
@@ -346,8 +441,57 @@ def start(ctx: Context, requested_by: str, resume: str = "",
     another start reports it and does nothing. `retry_waiting` first puts back the sources
     whose steps waited for a model: their finished steps carry over, so only the waiting
     ones run."""
+    # Reserve the approved set and write the start record in one short actor
+    # operation, then release the actor before any stage/provider work. Never
+    # wait on the actor while holding _GUARD in the calling thread.
+    reservation = []
+    def begin():
+        result = _begin(ctx, requested_by, resume, retry_waiting)
+        if not isinstance(result, dict):
+            reservation.append(result[0])
+        return result
+
+    try:
+        prepared = _commit(ctx, begin)
+    except Exception:
+        # A successful state write followed by failed final audit logging is
+        # ambiguous, not a live worker. Leave its durable run resumable, but
+        # never strand the process-local reservation forever.
+        with _GUARD:
+            entry = _LIVE.get(str(ctx.vault.root))
+            if reservation and entry and entry[0] == reservation[0] and entry[1] is None:
+                _LIVE.pop(str(ctx.vault.root), None)
+        raise
+    if isinstance(prepared, dict):
+        return prepared
+    run_id, items, cancel = prepared
     vault = ctx.vault
-    runs = RunStore(vault)
+    worker_ctx = Context(tier=ctx.tier, vault=vault, extras={
+        **ctx.extras, "cancel": cancel, "_batch_run": run_id})
+    if background:
+        thread = threading.Thread(target=_run, args=(worker_ctx, run_id, items, cancel),
+                                  daemon=True, name=f"batch-{run_id}")
+        with _GUARD:
+            _LIVE[str(vault.root)] = (run_id, thread, cancel)
+        try:
+            thread.start()
+        except Exception:
+            with _GUARD:
+                _LIVE.pop(str(vault.root), None)
+            raise
+        return {"started": True, "run": run_id, "items": items, "status": "running"}
+    try:
+        _run(worker_ctx, run_id, items, cancel)
+    finally:
+        with _GUARD:
+            _LIVE.pop(str(vault.root), None)
+    return {"started": True, **status(vault, run_id)}
+
+
+def _begin(ctx: Context, requested_by: str, resume: str,
+           retry_waiting: bool) -> dict[str, Any] | tuple[str, list[str], threading.Event]:
+    vault = ctx.vault
+    runs = _Runs(ctx)
     with _GUARD:
         running = live(vault)
         if running:
@@ -359,9 +503,12 @@ def start(ctx: Context, requested_by: str, resume: str = "",
                 item["status"] = "approved"
                 item.setdefault("history", []).append(
                     {"decision": "retry_waiting", "by": requested_by, "at": now_iso()})
-                store.save(item)
+                _update_item(ctx, item_id, lambda fresh, item=item: fresh.update(
+                    status=item["status"], history=item["history"]))
         if resume:
             events = runs.events(resume)
+            if events[0].get("kind") != "batch" or events[0].get("name") != NAME:
+                raise TypeError("resume must name an approved-source batch, not another workflow")
             if events[-1]["type"] in ("finished", "cancelled") and not _unfinished(vault, resume):
                 return {"started": False, "detail": f"{resume} has nothing left to do"}
             run_id, items = resume, events[0].get("items", [])
@@ -373,27 +520,11 @@ def start(ctx: Context, requested_by: str, resume: str = "",
             run_id = f"batch-{now_iso()[:10]}-{secrets.token_hex(3)}"
             runs.append(run_id, {"type": "started", "name": NAME, "kind": "batch",
                                  "items": items, "requested_by": requested_by})
-            store = StagingStore(vault)
             for item_id in items:
-                item = store.load(item_id)
-                item.update(status="processing", batch=run_id)
-                store.save(item)
+                _update_item(ctx, item_id, lambda fresh: fresh.update(status="processing", batch=run_id))
         cancel = ctx.extras.get("cancel") or threading.Event()
         _LIVE[str(vault.root)] = (run_id, None, cancel)
-    worker_ctx = Context(tier=ctx.tier, vault=vault, extras={**ctx.extras, "cancel": cancel})
-    if background:
-        thread = threading.Thread(target=_run, args=(worker_ctx, run_id, items, cancel),
-                                  daemon=True, name=f"batch-{run_id}")
-        with _GUARD:
-            _LIVE[str(vault.root)] = (run_id, thread, cancel)
-        thread.start()
-        return {"started": True, "run": run_id, "items": items, "status": "running"}
-    try:
-        _run(worker_ctx, run_id, items, cancel)
-    finally:
-        with _GUARD:
-            _LIVE.pop(str(vault.root), None)
-    return {"started": True, **status(vault, run_id)}
+    return run_id, items, cancel
 
 
 def cancel(vault: Vault) -> dict[str, Any]:
@@ -412,7 +543,7 @@ def _unfinished(vault: Vault, run_id: str) -> list[str]:
 
 
 def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -> None:
-    runs, store = RunStore(ctx.vault), StagingStore(ctx.vault)
+    runs, store = _Runs(ctx), StagingStore(ctx.vault)
     try:
         done = {(e["item"], e["stage"]): e for e in runs.events(run_id) if e["type"] == "done"}
         finished = {e["item"] for e in runs.events(run_id) if e["type"] == "item"}
@@ -423,6 +554,7 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
             results: dict[str, dict[str, Any]] = {}
             prior = (store.load(item_id).get("processing") or {})
             for stage, fn in STAGES:
+                _assert_active(ctx, store.load(item_id))
                 if (item_id, stage) in done:                  # resumed: never done twice
                     results[stage] = done[(item_id, stage)]
                     continue
@@ -451,8 +583,21 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
                 last = f"{item_id}: {stage}"
                 if result["status"] == "failed":
                     break
-            _finish_item(store, runs, run_id, item_id, results)
+            if cancel.is_set():
+                runs.append(run_id, {"type": "cancelled", "detail": f"cancelled after {last or 'the start'}"})
+                return
+            _commit(ctx, lambda: _finish_item(store, runs, run_id, item_id, results),
+                    targets=(store.path(item_id), runs.path(run_id)))
         runs.append(run_id, {"type": "finished"})
+    except Exception as exc:
+        # A closed writer must not trigger a direct append after the Core has
+        # released its vault. The already committed run remains interrupted
+        # if even this terminal diagnostic cannot be admitted.
+        try:
+            runs.append(run_id, {"type": "failed", "detail":
+                f"processing interrupted ({type(exc).__name__}); review the item and resume"})
+        except Exception:
+            pass
     finally:
         with _GUARD:
             entry = _LIVE.get(str(ctx.vault.root))
@@ -463,6 +608,8 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
 def _finish_item(store: StagingStore, runs: RunStore, run_id: str, item_id: str,
                  results: dict[str, dict[str, Any]]) -> None:
     item = store.load(item_id)
+    if item.get("status") != "processing" or item.get("batch") != run_id:
+        raise TypeError("the person's staged-item decision changed; processing did not replace it")
     failed = next((s for s, r in results.items() if r.get("status") == "failed"), "")
     incomplete = [f"{s}: {r.get('reason') or r['status']}" for s, r in results.items()
                   if r.get("status") in ("partial", "queued", "skipped")]

@@ -43,7 +43,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterator
 from urllib.parse import parse_qs, urlparse
 
-from . import ADAPTER_PROTOCOL_RANGE, PROTOCOL_VERSION, __version__, doctor, notes, workflows
+from . import ADAPTER_PROTOCOL_RANGE, PROTOCOL_VERSION, __version__, batch, doctor, notes, workflows
 from . import tools  # noqa: F401  (registers the tools)
 from .agent_runtime import (ProfileCapacityError, ProfileRunGate, ProfiledEndpoint,
                             route_permitted)
@@ -478,6 +478,7 @@ class App:
         from: a chat turn, workflows mid-run, questions waiting on a person."""
         actions = [a.public() for a in self.actions.values() if a.status == "running"]
         return {k: v for k, v in {"turn": self.busy, "actions": actions,
+                                  "batch": batch.live(self.vault),
                                   "mcp_calls": self._calls["mcp"],
                                   "person_calls": self._calls["person"],
                                   "service_calls": self.service_runtime.active_calls,
@@ -491,7 +492,7 @@ class App:
         silence is never approval. Then drop the conversation. Outside servers
         are shared with the library that replaced this one, so they stay up."""
         deadline = time.monotonic() + patience
-        while (self.busy or any(a.status == "running" for a in self.actions.values())) \
+        while (self.busy or batch.live(self.vault) or any(a.status == "running" for a in self.actions.values())) \
                 and time.monotonic() < deadline:
             time.sleep(poll)
         self.hub.publish({"type": "library_closed", "vault": self.vault.root.name})
@@ -561,6 +562,10 @@ class App:
         cancelled: dict[str, Action] = {}
         deadline = time.monotonic() + self.STOP_GRACE_SECONDS
         while True:
+            # A person-started background batch outlives its HTTP request.
+            # Include it in explicit-stop draining, including a reservation
+            # made just before admission closed.
+            batch.cancel(self.vault)
             # Re-scan each pass: an action registered just before admission
             # closed may only now be visible as running.
             for action in list(self.actions.values()):
@@ -569,7 +574,8 @@ class App:
                     cancelled[action.id] = action
             with self._lock:
                 calls = sum(self._calls.values()) + self.service_runtime.active_calls
-            if not (self.busy or calls or any(a.status == "running" for a in cancelled.values())) \
+            if not (self.busy or calls or batch.live(self.vault) or
+                    any(a.status == "running" for a in cancelled.values())) \
                     or time.monotonic() >= deadline:
                 break
             time.sleep(0.05)
@@ -580,6 +586,7 @@ class App:
         phase("work_cancelled",
               turn="none" if turn is None else "still_running" if self.busy else "stopped",
               actions={action.id: action.status for action in cancelled.values()},
+              batch_still_running=batch.live(self.vault),
               released_waits=released, calls_still_running=calls_left)
         # A thread whose turn this stop cut off is parked, durably and through
         # the writer that is still open, so it reopens as interrupted with its

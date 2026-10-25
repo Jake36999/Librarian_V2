@@ -713,6 +713,16 @@ class VaultWriter:
     def _invoke(self, op: Operation, fn: Callable[[], T]) -> T:
         """Run one serialized mutation with revision and audit protection."""
         op.status = "running"
+        # Core operations also name their owned state files (staging, runs,
+        # derived records). Validate those through the internal resolver but
+        # never offer them as editable Obsidian documents. Public path APIs
+        # and heartbeat validation still reject hidden files.
+        document_targets = []
+        for path in op.targets:
+            target = operation_path(self.vault, path)
+            rel = target.relative_to(self.vault.root).as_posix()
+            if not rel.startswith(".librarian/"):
+                document_targets.append(rel)
         # Do this inside the actor after all preceding operations have
         # committed, then enforce document leases before the write.  A
         # supplied fingerprint is an actual compare-and-swap precondition;
@@ -731,9 +741,9 @@ class VaultWriter:
         # Do not mutate a vault if its durable operation-start event cannot be
         # recorded.  This also makes disk-full/permission failures explicit.
         self._record(op)
-        self.leases.assert_writable(op.targets)
+        self.leases.assert_writable(document_targets)
         value = fn()
-        self.leases.note_core_write(op.targets)
+        self.leases.note_core_write(document_targets)
         op.status = "done"
         op.result = _operation_result(value)
         return value

@@ -365,7 +365,8 @@ def _coverage_line(data: list[dict[str, Any]]) -> str:
 
 
 def relate_chapters(record: dict[str, Any], endpoint: clerk.Endpoint | None,
-                    queue: Path) -> dict[str, Any]:
+                    queue: Path, *,
+                    state_write: Callable[[Callable[[], Any], Path], Any] | None = None) -> dict[str, Any]:
     """How fully read chapters relate (continues, contrasts, depends on, prepares) - a model's
     reading, marked `inferred`, citing both chapters. A chapter not fully read is left out,
     and a document-level synthesis is drawn only when every chapter was read."""
@@ -374,7 +375,8 @@ def relate_chapters(record: dict[str, Any], endpoint: clerk.Endpoint | None,
     if len(read) < 2:
         return {"added": 0, "reason": "fewer than two fully read chapters"}
     listing = "\n".join(f"{d['id']} | {d['name']}: " + "; ".join(d["claims"][:4]) for d in read)
-    result = clerk.run([clerk.chapter_relations(listing)], endpoint, queue)[0]
+    result = clerk.run([clerk.chapter_relations(listing)], endpoint, queue,
+                       state_write=state_write)[0]
     if not result.ok:
         return {"added": 0, "reason": f"the clerk did not answer ({result.status})"}
     ids = {d["id"] for d in read}

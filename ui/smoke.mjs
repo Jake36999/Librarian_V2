@@ -333,6 +333,18 @@ await page.keyboard.press("Enter");
 await page.waitForSelector(".search .tile >> text=acme - rowstream");
 await page.selectOption(".search select[aria-label='Search in']", "library");
 step("search: the work too - a staged source found by name");
+await page.route("**/api/tool/batch_status", (route) => route.fulfill({
+  status: 200, contentType: "application/json", body: JSON.stringify({
+    waiting: 0, status: "failed", run: "fixture-batch", detail: "review the changed source",
+    items: [{ id: "fixture", status: "processing" }],
+  }),
+}));
+await page.click(".lib-app nav button:has-text('Staging')");
+await page.waitForSelector(".batch-banner >> text=Batch processing stopped");
+await page.waitForSelector(".batch-banner button:has-text('Resume it')");
+await page.unroute("**/api/tool/batch_status");
+await page.click(".lib-app nav button:has-text('Chat')");
+step("a failed batch stays visible with explicit resume, not a silent success");
 await page.click(".lib-app nav button:has-text('Staging')");
 await page.click(".staging .item");
 await page.waitForSelector(".staging .evidence");

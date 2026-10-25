@@ -4683,7 +4683,14 @@ var Librarian = (() => {
         if (waiting) rows.push(h("p", { class: "note inline" }, `${waiting} more approved, waiting for the next run.`));
       } else {
         const unfinished = (b.items ?? []).some((i) => i.status === "processing");
-        if (unfinished && (b.status === "interrupted" || b.status === "cancelled")) {
+        if (b.status === "failed") {
+          rows.push(h(
+            "p",
+            { class: "error" },
+            `Batch processing stopped: ${b.detail ?? "review the unfinished source before resuming"}.`
+          ));
+        }
+        if (unfinished && ["interrupted", "cancelled", "failed"].includes(b.status)) {
           rows.push(h(
             "div",
             { class: "row2 tight" },

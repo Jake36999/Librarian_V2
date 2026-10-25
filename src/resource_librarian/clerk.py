@@ -1421,7 +1421,8 @@ def run_one(task: Task, endpoint: Endpoint) -> Result:
 
 
 def run(tasks: Sequence[Task], endpoint: Endpoint | None,
-        queue_dir: Path | None = None) -> list[Result]:
+        queue_dir: Path | None = None, *,
+        state_write: Callable[[Callable[[], Any], Path], Any] | None = None) -> list[Result]:
     """Every task, in order of the input. A task a clerk agent has already
     answered uses that answer; the rest go to the endpoint. With no endpoint (or
     one that is unreachable) they are queued, never handed to another model."""
@@ -1431,21 +1432,24 @@ def run(tasks: Sequence[Task], endpoint: Endpoint | None,
     for i, task in enumerate(tasks):
         if answered is not None and answered.has(task.payload()):
             results[i] = run_one(task, answered)
-            (queue_dir / f"{task_key(task.payload())}.json").unlink(missing_ok=True)
+            path = queue_dir / f"{task_key(task.payload())}.json"
+            remove = lambda: path.unlink(missing_ok=True)
+            state_write(remove, path) if state_write is not None else remove()
         else:
             rest.append(i)
     for i, result in zip(rest, _run(tasks=[tasks[i] for i in rest], endpoint=endpoint,
-                                    queue_dir=queue_dir)):
+                                    queue_dir=queue_dir, state_write=state_write)):
         results[i] = result
     return [results[i] for i in range(len(tasks))]
 
 
 def _run(tasks: Sequence[Task], endpoint: Endpoint | None,
-         queue_dir: Path | None) -> list[Result]:
+         queue_dir: Path | None,
+         state_write: Callable[[Callable[[], Any], Path], Any] | None = None) -> list[Result]:
     if not tasks:
         return []
     if endpoint is None:
-        return [_queue(t, queue_dir, "no clerk endpoint is configured") for t in tasks]
+        return [_queue(t, queue_dir, "no clerk endpoint is configured", state_write) for t in tasks]
     if isinstance(endpoint, Router):
         # Each group on its own endpoint, at that endpoint's own concurrency,
         # answers put back in the order the tasks came in.
@@ -1455,7 +1459,7 @@ def _run(tasks: Sequence[Task], endpoint: Endpoint | None,
             groups.setdefault(id(target), (target, []))[1].append(i)
         out: dict[int, Result] = {}
         for target, indexes in groups.values():
-            for i, result in zip(indexes, _run([tasks[i] for i in indexes], target, queue_dir)):
+            for i, result in zip(indexes, _run([tasks[i] for i in indexes], target, queue_dir, state_write)):
                 out[i] = result
         return [out[i] for i in range(len(tasks))]
     try:
@@ -1464,7 +1468,7 @@ def _run(tasks: Sequence[Task], endpoint: Endpoint | None,
         with ThreadPoolExecutor(max_workers=endpoint.concurrency) as pool:
             return list(pool.map(lambda t: run_one(t, endpoint), tasks))
     except ClerkUnavailable as exc:
-        return [_queue(t, queue_dir, str(exc)) for t in tasks]
+        return [_queue(t, queue_dir, str(exc), state_write) for t in tasks]
 
 
 def task_key(payload: dict[str, Any]) -> str:
@@ -1474,12 +1478,15 @@ def task_key(payload: dict[str, Any]) -> str:
     return hashlib.sha256(json.dumps(content, sort_keys=True).encode()).hexdigest()[:16]
 
 
-def _queue(task: Task, queue_dir: Path | None, why: str) -> Result:
+def _queue(task: Task, queue_dir: Path | None, why: str,
+           state_write: Callable[[Callable[[], Any], Path], Any] | None = None) -> Result:
     if queue_dir is not None:
-        queue_dir.mkdir(parents=True, exist_ok=True)
         payload = task.payload()
-        atomic_write_text(queue_dir / f"{task_key(payload)}.json",
-                          json.dumps(payload, ensure_ascii=False))
+        path = queue_dir / f"{task_key(payload)}.json"
+        def write():
+            queue_dir.mkdir(parents=True, exist_ok=True)
+            atomic_write_text(path, json.dumps(payload, ensure_ascii=False))
+        state_write(write, path) if state_write is not None else write()
     return Result(task.kind.name, task.id, "queued", problems=why)
 
 

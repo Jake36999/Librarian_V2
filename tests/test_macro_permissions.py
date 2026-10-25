@@ -102,8 +102,10 @@ def test_macro_approval_never_overrides_a_denied_step_or_plan_mode(core):
     assert result["refused"] == "PERMISSION_DENIED"
 
 
-def test_only_audited_first_party_macros_can_orchestrate_writer_operations():
-    assert [name for name in REGISTRY.names() if REGISTRY.get(name).orchestrates] == ["macro_run"]
+def test_only_reviewed_first_party_workflows_can_orchestrate_writer_operations():
+    assert [name for name in REGISTRY.names() if REGISTRY.get(name).orchestrates] == [
+        "macro_run", "process_approved"]
+    assert REGISTRY.get("process_approved").tier == "curate"
     external = ToolSpec("external", lambda ctx: {}, "consult", "write", Card("External"),
                         external=True, orchestrates=True)
     with pytest.raises(ValueError, match="external tools cannot orchestrate"):

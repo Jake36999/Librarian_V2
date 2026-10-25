@@ -7,6 +7,7 @@ from ..registry import Card, Context, tool
 
 
 @tool("process_approved", tier="curate", effect="write", scope="library", open_world=True,
+      orchestrates=True,
       returns=("started", "run", "status"),
       card=Card("Begin the approved batch: read and review every source approved for "
                 "ingestion, then return each for acceptance",
