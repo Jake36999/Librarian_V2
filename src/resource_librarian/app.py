@@ -29,6 +29,7 @@ sequence number, so a page that reconnects misses nothing recent.
 from __future__ import annotations
 
 import contextlib
+import functools
 import hashlib
 import json
 import re
@@ -63,7 +64,8 @@ from .file_access import read_text
 from .keys import KeyStore, config_dir
 from .loop import LENGTHS, STANCES, Loop, ProviderEndpoint
 from .model_invocation import (InvocationPayload, InvocationRuntime,
-                               InvocationScope, TaskContract)
+                               InvocationScope, ModelIdentityMismatchError,
+                               TaskContract)
 from .providers import DASHBOARDS, PRESETS, Provider, ProviderError, ToolDef, from_settings
 from .registry import REGISTRY, TIERS, Context
 from .role_routes import CHAT_ROLES, RoleRouteBinding, RoleRouteStore
@@ -91,6 +93,23 @@ class ApiError(Exception):
         super().__init__(message)
         self.status = status
         self.body = {"error": message, **extra}
+
+
+def mutation_entry(what: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Guard a direct, mutating App entry point for the Core lifetime.
+
+    HTTP writes have a single outer guard, but adapters and tests may invoke
+    App methods directly.  Keeping this small decorator at those alternate
+    entry points prevents a shutdown race from becoming an API-shape
+    distinction.
+    """
+    def decorate(fn: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(fn)
+        def guarded(self: "App", *args: Any, **kwargs: Any) -> Any:
+            with self._counted_mutation(what):
+                return fn(self, *args, **kwargs)
+        return guarded
+    return decorate
 
 
 # ------------------------------------------------------------------- events
@@ -356,7 +375,13 @@ class App:
         self.document_leases = DocumentLeases(vault)
         self.watcher: VaultWatcher | None = None
         self.writer: VaultWriter | None = None
+        # This lock is created before migrations: settings migrations use the
+        # same serialization boundary as ordinary App mutations.
+        self._lock = threading.RLock()
+        self._shutdown_lock = threading.Lock()
         self._closed = False
+        self._shutdown_started = False
+        self._shutdown_pending: dict[str, Any] = {}
         # Shutdown is observable (CORE-02A): new work is refused once it
         # begins, and each phase is recorded for the Host and the tray.
         self._admitting = True
@@ -364,6 +389,10 @@ class App:
         # Synchronous calls running here - a person's own and an MCP client's
         # (CORE-04A) - so a stop waits for them rather than closing under them.
         self._calls = {"person": 0, "mcp": 0}
+        # Direct app/HTTP mutations which are neither chat turns nor registry
+        # calls.  Admission and this count are changed under ``_lock`` so a
+        # stop either refuses a new mutation or waits for its writer work.
+        self._mutations = 0
         self._offline_lock = threading.RLock()
         self._offline_lease: VaultCoordinator | None = None
         if not coordinate and (VaultCoordinator.held_here(vault) or VaultCoordinator.held_elsewhere(vault)):
@@ -372,6 +401,7 @@ class App:
             self.coordinator = VaultCoordinator(vault, protocol_version=PROTOCOL_VERSION)
             self.coordinator.acquire(takeover=takeover)
             self.writer = VaultWriter(vault, self.document_leases)
+            self.writer.retain_lifecycle_owner(self.coordinator)
             # Session events from any module go through this writer (CORE-03).
             attach_core_writer(vault, self.writer)
         # Recovery must precede *any* App-owned write (including settings
@@ -388,9 +418,10 @@ class App:
             # fail-closed condition rather than permission to mutate blindly.
             if self.writer is not None:
                 detach_core_writer(vault, self.writer)
-                self.writer.close()
-            if self.coordinator is not None:
-                self.coordinator.release()
+                if self.writer.close() and self.coordinator is not None:
+                    self.coordinator.release()
+                    self.writer.release_lifecycle_owner()
+                    self.coordinator = None
             raise
         self.keys = keys or KeyStore(obsidian_managed=self.secret_source == "obsidian")
         self.settings = Settings(vault, self.writer)
@@ -416,9 +447,10 @@ class App:
             self.index_service.close()
             if self.writer is not None:
                 detach_core_writer(vault, self.writer)
-                self.writer.close()
-            if self.coordinator is not None:
-                self.coordinator.release()
+                if self.writer.close() and self.coordinator is not None:
+                    self.coordinator.release()
+                    self.writer.release_lifecycle_owner()
+                    self.coordinator = None
             raise
         self.qualifications = QualificationStore()
         self.evaluation_jobs = EvaluationJobStore()
@@ -443,7 +475,6 @@ class App:
         self.waiters.subscribe(self.hub.publish)
         self.allowed_origins = set(HOST_ORIGINS | (allowed_origins or set()))
         self._provider_for = provider_for or self._configured_provider
-        self._lock = threading.Lock()
         self.busy = False
         self._turn_cancel: threading.Event | None = None
         self.loop: Loop | None = None
@@ -507,6 +538,11 @@ class App:
     #: that request returns (ADAPT-04B makes it abortable), so this bounds the
     #: wait; it is not a stop-latency promise.
     STOP_GRACE_SECONDS = 5.0
+    #: A writer has already closed admission when this wait begins.  If an
+    #: operation still has not returned at the deadline, the Core remains a
+    #: retained, visibly pending owner rather than releasing the vault beneath
+    #: that operation.
+    WRITER_STOP_SECONDS = 10.0
 
     def _admit(self, what: str) -> None:
         if not self._admitting:
@@ -526,116 +562,217 @@ class App:
             with self._lock:
                 self._calls[kind] -= 1
 
-    def close_runtime(self) -> None:
+    def _begin_mutation(self, what: str) -> None:
+        """Atomically admit one mutation and retain the Core until it ends.
+
+        App-owned configuration/checkpoint writes are synchronous, but cannot
+        simply check ``_admitting`` before submitting to the writer: shutdown
+        could close in that gap.  The count is held until the operation (and
+        therefore its writer work) returns, so a stop sees either a refusal or
+        work it must drain before it can release the vault.
+
+        Background work uses this paired with ``_end_mutation``: it must be
+        counted before its thread is started, not when that thread eventually
+        gets CPU time.  That makes the admission boundary apply equally to
+        synchronous and asynchronous Core-owned writes.
+        """
+        with self._lock:
+            self._admit(what)
+            self._mutations += 1
+
+    def _end_mutation(self) -> None:
+        """Release one mutation slot acquired by ``_begin_mutation``."""
+        with self._lock:
+            self._mutations -= 1
+
+    @contextlib.contextmanager
+    def _counted_mutation(self, what: str) -> Iterator[None]:
+        """Context-manager form of the Core mutation lifetime boundary."""
+        self._begin_mutation(what)
+        try:
+            yield
+        finally:
+            self._end_mutation()
+
+    def _shutdown_health(self) -> dict[str, Any]:
+        """Non-secret lifecycle state for a Core that may be draining."""
+        with self._lock:
+            if self._closed:
+                state = "closed"
+            elif self._shutdown_started:
+                state = "pending"
+            else:
+                state = "ready"
+            pending = dict(self._shutdown_pending)
+            mutations = self._mutations
+        return {"state": state, "pending": pending, "active_mutations": mutations}
+
+    def close_runtime(self) -> bool:
         """Flush mutable state and release this vault's process lease once.
 
         A tray/adapter calls this only for an explicit stop or after a switch
         has allowed work to finish.  It deliberately does not implement an
         idle timer or browser-client reference counting.  The phases are
         recorded in order (CORE-02A) in ``.librarian/runtime/shutdown.json``.
+
+        ``False`` is a deliberately fail-closed result: admission is closed,
+        but admitted work or the vault writer still exists, so the Core keeps
+        its index and vault lease.  A later call retries the final drain.
         """
-        if self._closed:
-            return
-        self._closed = True
-        phases = self.shutdown_phases
+        with self._shutdown_lock:
+            if self._closed:
+                return True
+            phases = self.shutdown_phases
 
-        def phase(name: str, **detail: Any) -> None:
-            phases.append({"phase": name, "at": now_iso(), **detail})
+            def phase(name: str, **detail: Any) -> None:
+                phases.append({"phase": name, "at": now_iso(), **detail})
 
-        # Admission closes under the same lock chat() and start_action() admit
-        # under, so nothing is admitted after this point unseen.
-        with self._lock:
-            self._admitting = False
-            turn = self._turn_cancel
-        self.service_runtime.close()
-        phase("admission_closed")
-        # Cancel before closing shared resources.  The loop checks its cancel
-        # event before every step and tool call, so a turn still inside a
-        # provider request when the grace ends stops when that request
-        # returns; a write it attempted after that would meet a closed writer.
-        if turn is not None:
-            turn.set()
-        # A question or permission request waiting for a person would hold its
-        # call (and, for a question, the writer) until it timed out.
-        # Both are terminal: a question or permission asked after this point
-        # is refused at once instead of waiting for a person nobody will see.
-        released = self.waiters.release_all() + self.broker.close("the Core is stopping")
-        cancelled: dict[str, Action] = {}
-        deadline = time.monotonic() + self.STOP_GRACE_SECONDS
-        while True:
-            # A person-started background batch outlives its HTTP request.
-            # Include it in explicit-stop draining, including a reservation
-            # made just before admission closed.
-            batch.cancel(self.vault)
-            # Re-scan each pass: an action registered just before admission
-            # closed may only now be visible as running.
-            for action in list(self.actions.values()):
-                if action.status == "running" and action.id not in cancelled:
-                    action.cancel.set()
-                    cancelled[action.id] = action
+            first_stop = not self._shutdown_started
+            if first_stop:
+                self._shutdown_started = True
+                # Admission closes under the same lock chat(), synchronous
+                # calls, and direct mutations admit under.  A request is thus
+                # either already counted below or refused before it submits.
+                with self._lock:
+                    self._admitting = False
+                    turn = self._turn_cancel
+                self.service_runtime.close()
+                phase("admission_closed")
+                if turn is not None:
+                    turn.set()
+                # A question or permission request waiting for a person would
+                # otherwise hold a call (and sometimes the writer) until its
+                # normal timeout.  These terminal closes make it return now.
+                released = self.waiters.release_all() + self.broker.close("the Core is stopping")
+            else:
+                with self._lock:
+                    turn = self._turn_cancel
+                released = 0
+
+            cancelled: dict[str, Action] = {}
+            deadline = time.monotonic() + self.STOP_GRACE_SECONDS
+            while True:
+                # A person-started background batch outlives its HTTP request.
+                # Include it in explicit-stop draining, including a reservation
+                # made just before admission closed.
+                batch.cancel(self.vault)
+                # Re-scan each pass: an action registered just before admission
+                # closed may only now be visible as running.
+                for action in list(self.actions.values()):
+                    if action.status == "running":
+                        action.cancel.set()
+                        cancelled[action.id] = action
+                with self._lock:
+                    calls = sum(self._calls.values()) + self.service_runtime.active_calls
+                    mutations = self._mutations
+                    busy = self.busy
+                active_actions = any(action.status == "running" for action in cancelled.values())
+                if not (busy or calls or mutations or batch.live(self.vault) or active_actions) \
+                        or time.monotonic() >= deadline:
+                    break
+                time.sleep(0.05)
             with self._lock:
-                calls = sum(self._calls.values()) + self.service_runtime.active_calls
-            if not (self.busy or calls or batch.live(self.vault) or
-                    any(a.status == "running" for a in cancelled.values())) \
-                    or time.monotonic() >= deadline:
-                break
-            time.sleep(0.05)
-        with self._lock:
-            calls_left = {kind: n for kind, n in self._calls.items() if n}
-        if self.service_runtime.active_calls:
-            calls_left["service"] = self.service_runtime.active_calls
-        phase("work_cancelled",
-              turn="none" if turn is None else "still_running" if self.busy else "stopped",
-              actions={action.id: action.status for action in cancelled.values()},
-              batch_still_running=batch.live(self.vault),
-              released_waits=released, calls_still_running=calls_left)
-        # A thread whose turn this stop cut off is parked, durably and through
-        # the writer that is still open, so it reopens as interrupted with its
-        # committed work intact; resume_session picks it back up (CORE-02B).
-        session_id = getattr(getattr(self.loop, "ctx", None), "session", None) if turn is not None else None
-        if session_id:
+                calls_left = {kind: n for kind, n in self._calls.items() if n}
+                mutations_left = self._mutations
+                busy = self.busy
+            if self.service_runtime.active_calls:
+                calls_left["service"] = self.service_runtime.active_calls
+            actions_left = {action.id: action.status for action in cancelled.values()
+                            if action.status == "running"}
+            batch_left = batch.live(self.vault)
+            if first_stop:
+                phase("work_cancelled",
+                      turn="none" if turn is None else "still_running" if busy else "stopped",
+                      actions={action.id: action.status for action in cancelled.values()},
+                      batch_still_running=batch_left,
+                      released_waits=released, calls_still_running=calls_left,
+                      mutations_still_running=mutations_left)
+                # A thread whose turn this stop cut off is parked, durably and
+                # through the writer that is still open, so it reopens as
+                # interrupted with committed work intact (CORE-02B).
+                session_id = getattr(getattr(self.loop, "ctx", None), "session", None) \
+                    if turn is not None else None
+                if session_id:
+                    try:
+                        store = SessionStore(self.vault)
+                        if store.load(session_id).status == "open":
+                            store.append(session_id, {
+                                "type": "status", "status": "parked",
+                                "note": "interrupted: the Core stopped while a turn was running; "
+                                        "resume this thread to continue"})
+                            phase("session_parked", session=session_id)
+                            self.hub.publish({"type": "session_interrupted", "session": session_id})
+                    except Exception:                       # noqa: BLE001
+                        pass          # a missing/unreadable log never blocks a stop
+                # Stop observing before draining writes so a final Core
+                # replacement is never reclassified as a direct human edit.
+                if self.watcher is not None:
+                    self.watcher.close()
+
+            # Once grace expires, stop *new* writer submissions even when an
+            # admitted turn/action has not returned.  This preserves the
+            # existing guarantee that a late batch result cannot commit after
+            # a stop.  Crucially, a timeout here does not release the index or
+            # lease: an already-running writer operation still owns both.
+            if busy or calls_left or mutations_left or batch_left or actions_left:
+                writer_drained: bool | None = None
+                if self.writer is not None:
+                    writer_drained = self.writer.close(timeout=self.WRITER_STOP_SECONDS)
+                    phase("writer_drained", drained=bool(writer_drained),
+                          writer_alive=self.writer.alive)
+                detail = {"reason": "admitted_work_still_running",
+                          "turn": bool(busy), "calls": calls_left,
+                          "mutations": mutations_left, "batch": batch_left,
+                          "actions": actions_left,
+                          "writer_drained": writer_drained}
+                if writer_drained is False:
+                    detail["reason"] = "writer_still_running"
+                self._shutdown_pending = detail
+                phase("shutdown_pending", **detail)
+                return False
+
+            if self.writer is not None:
+                drained = self.writer.close(timeout=self.WRITER_STOP_SECONDS)
+                phase("writer_drained", drained=bool(drained), writer_alive=self.writer.alive)
+                if not drained:
+                    detail = {"reason": "writer_still_running", "writer_alive": self.writer.alive}
+                    self._shutdown_pending = detail
+                    phase("shutdown_pending", **detail)
+                    return False
+
             try:
-                store = SessionStore(self.vault)
-                if store.load(session_id).status == "open":
-                    store.append(session_id, {
-                        "type": "status", "status": "parked",
-                        "note": "interrupted: the Core stopped while a turn was running; "
-                                "resume this thread to continue"})
-                    phase("session_parked", session=session_id)
-                    self.hub.publish({"type": "session_interrupted", "session": session_id})
-            except Exception:                               # noqa: BLE001
-                pass                  # a missing or unreadable log never blocks a stop
-        # Stop observing first: a final atomic replacement from the writer
-        # must not be reclassified as a direct human edit while shutdown is
-        # draining the queue.
-        if self.watcher is not None:
-            self.watcher.close()
-        if self.writer is not None:
-            drained = self.writer.flush(timeout=10.0)
-            self.writer.close(timeout=10.0)
-            phase("writer_drained", drained=bool(drained))
-        self.index_service.close()
-        phase("index_closed")
-        if self.coordinator is not None:
-            self.coordinator.release()
-            phase("lease_released")
-        if self.writer is not None:
-            # Detached last: until now a straggling session append meets the
-            # closed writer and fails, rather than writing beside the lease.
-            detach_core_writer(self.vault, self.writer)
-        # This App created (or took over) the outside-server manager: stop its
-        # background portal too, or it outlives the library it served.
-        if self.mcp is not None and getattr(self.mcp, "owner", None) is self:
-            try:
-                self.mcp.stop()
-            except Exception:                               # noqa: BLE001
-                pass
-        if self.coordinator is not None:
-            try:
-                atomic_write_text(connection.shutdown_path(self.vault.root),
-                                  json.dumps({"phases": phases}, indent=2) + "\n")
-            except Exception:                               # noqa: BLE001
-                pass                  # diagnostics never block a stop
+                self.index_service.close()
+            except Exception as exc:                         # noqa: BLE001
+                detail = {"reason": "index_close_failed", "error": type(exc).__name__}
+                self._shutdown_pending = detail
+                phase("shutdown_pending", **detail)
+                return False
+            phase("index_closed")
+            if self.coordinator is not None:
+                self.coordinator.release()
+                phase("lease_released")
+            if self.writer is not None:
+                # Detached only after the lease is safely gone: a late
+                # session append continues to meet a closed writer rather
+                # than falling through to an uncoordinated write.
+                detach_core_writer(self.vault, self.writer)
+                self.writer.release_lifecycle_owner()
+            # This App created (or took over) the outside-server manager:
+            # stop its background portal too, or it outlives the library.
+            if self.mcp is not None and getattr(self.mcp, "owner", None) is self:
+                try:
+                    self.mcp.stop()
+                except Exception:                            # noqa: BLE001
+                    pass
+            if self.coordinator is not None:
+                try:
+                    atomic_write_text(connection.shutdown_path(self.vault.root),
+                                      json.dumps({"phases": phases}, indent=2) + "\n")
+                except Exception:                            # noqa: BLE001
+                    pass              # diagnostics never block a stop
+            self._shutdown_pending = {}
+            self._closed = True
+            return True
 
     def request_host_stop(self, *, force: bool = False) -> dict[str, Any]:
         """Validate an explicit Host stop before its server is shut down.
@@ -655,26 +792,34 @@ class App:
         return {"stopping": True, "forced": bool(force), "active": active}
 
     def _serialized(self, caller: str, fn: Callable[[], Any]) -> Any:
-        """Run an App-owned mutation through the same vault writer as tools."""
-        if self.writer is not None:
-            return self.writer.submit(fn, caller=caller)
-        # Offline compatibility Apps have no lifetime writer. They still
-        # acquire the actual interprocess lease for each mutation, so a Core
-        # starting between discovery and migration cannot race those writes.
-        with self._offline_lock:
-            if self._offline_lease is not None:
-                return fn()
-            lease = VaultCoordinator(self.vault, protocol_version=PROTOCOL_VERSION)
-            try:
-                lease.acquire()
-            except (LeaseHeldError, StaleLeaseError) as exc:
-                raise ApiError(409, f"CORE_REQUIRED: {exc}") from exc
-            self._offline_lease = lease
-            try:
-                return fn()
-            finally:
-                self._offline_lease = None
-                lease.release()
+        """Run an App-owned mutation through the Core lifetime boundary.
+
+        The admission count deliberately spans ``writer.submit`` itself, not
+        only the check before it.  That makes configuration and checkpoint
+        writes indistinguishable from HTTP mutations to shutdown: either they
+        are refused under the admission lock or shutdown waits for them.
+        """
+        with self._counted_mutation(f"the {caller} mutation"):
+            if self.writer is not None:
+                return self.writer.submit(fn, caller=caller)
+            # Offline compatibility Apps have no lifetime writer. They still
+            # acquire the actual interprocess lease for each mutation, so a
+            # Core starting between discovery and migration cannot race those
+            # writes.
+            with self._offline_lock:
+                if self._offline_lease is not None:
+                    return fn()
+                lease = VaultCoordinator(self.vault, protocol_version=PROTOCOL_VERSION)
+                try:
+                    lease.acquire()
+                except (LeaseHeldError, StaleLeaseError) as exc:
+                    raise ApiError(409, f"CORE_REQUIRED: {exc}") from exc
+                self._offline_lease = lease
+                try:
+                    return fn()
+                finally:
+                    self._offline_lease = None
+                    lease.release()
 
     def _reconcile_interrupted_operations(self) -> list[dict[str, Any]]:
         """Turn ambiguous pre-crash writes into one durable review card each.
@@ -975,6 +1120,13 @@ class App:
     def meta(self) -> dict[str, Any]:
         """Non-secret Core/adapter handshake and operational health contract."""
         lease = self.coordinator.status() if self.coordinator is not None else {}
+        shutdown = self._shutdown_health()
+        if self.writer is None:
+            writer_state = "not_coordinated"
+        elif self.writer.alive:
+            writer_state = "draining" if shutdown["state"] == "pending" else "ready"
+        else:
+            writer_state = "closed"
         return {
             "core_version": __version__, "protocol_version": PROTOCOL_VERSION,
             "ui_build_id": "development" if __version__.endswith(".dev0") else __version__,
@@ -987,14 +1139,16 @@ class App:
                 "vault_lease": "held" if self.coordinator is not None and self.coordinator.held
                 else "not_coordinated",
                 "lease": lease,
-                "writer": "ready" if self.writer is not None else "not_coordinated",
-                "index": "ready",
+                "writer": writer_state,
+                "index": "retained_pending_shutdown" if shutdown["state"] == "pending" else "ready",
+                "shutdown": shutdown,
                 "watcher": self.watcher.health() if self.watcher is not None else {"status": "not_coordinated"},
                 "secret_source": "obsidian_managed" if self.secret_source == "obsidian" else self.keys.backend,
             },
         }
 
     # -- document-aware coordination -------------------------------------
+    @mutation_entry("the document heartbeat")
     def document_heartbeat(self, path: str, *, editor: str = "Obsidian", dirty: bool = True,
                            baseline: str = "") -> dict[str, Any]:
         try:
@@ -1003,6 +1157,7 @@ class App:
         except (ValueError, OSError) as exc:
             raise ApiError(400, str(exc)) from exc
 
+    @mutation_entry("the document release")
     def document_release(self, path: str, *, editor: str = "") -> dict[str, Any]:
         try:
             self.document_leases.release(path, editor=editor)
@@ -1010,6 +1165,7 @@ class App:
         except (ValueError, OSError) as exc:
             raise ApiError(400, str(exc)) from exc
 
+    @mutation_entry("the document change notification")
     def document_changed(self, path: str) -> dict[str, Any]:
         try:
             self.document_leases.observe_change(path)
@@ -1292,6 +1448,7 @@ class App:
                 "setup_required": not bool(self.settings.data.get("tiers")) and bool(options),
                 "choices": options}
 
+    @mutation_entry("the release-lead selection")
     def select_release_lead(self, lead_id: str, *, key: str = "", overwrite: bool = False,
                             checkpoint_id: str = "") -> dict[str, Any]:
         """Complete the explicit first-run hosted-lead path.
@@ -1346,6 +1503,7 @@ class App:
         return {"selected": True, "lead": wanted, "probe": probe, "tiers": selected["tiers"],
                 "lead_status": selected["lead"]}
 
+    @mutation_entry("the host update")
     def host_upsert(self, row: Any) -> dict[str, Any]:
         if not isinstance(row, dict):
             raise ApiError(400, "host is a JSON object")
@@ -1361,6 +1519,7 @@ class App:
         except (ValueError, TypeError) as exc:
             raise ApiError(400, str(exc)) from exc
 
+    @mutation_entry("the host controls update")
     def host_update_controls(self, row: Any) -> dict[str, Any]:
         """Apply the small, non-identity host control surface.
 
@@ -1377,6 +1536,7 @@ class App:
         except (ValueError, TypeError) as exc:
             raise ApiError(400, str(exc)) from exc
 
+    @mutation_entry("the host removal")
     def host_remove(self, host_id: str) -> dict[str, Any]:
         try:
             self.hosts.remove(host_id)
@@ -1391,6 +1551,7 @@ class App:
             raise ApiError(404, str(exc)) from exc
         return self.keys.status_ref(host.auth_ref, label=host.display_name)
 
+    @mutation_entry("the host key update")
     def host_save_key(self, host_id: str, key: str, overwrite: bool = False) -> dict[str, Any]:
         try:
             host = self.hosts.get(host_id)
@@ -1411,6 +1572,7 @@ class App:
         except OSError as exc:
             raise ApiError(503, f"could not save the key: {exc}") from exc
 
+    @mutation_entry("the host test")
     def host_test(self, host_id: str, model: str = "") -> dict[str, Any]:
         try:
             host = self.hosts.get(host_id)
@@ -1696,6 +1858,7 @@ class App:
         raise ApiError(409, "confirm evaluation spend", plan=plan,
                        checkpoint="evaluation_spend", checkpoint_record=row)
 
+    @mutation_entry("the qualification run")
     def run_qualification(self, host_id: str, model: str, role: str = "lead",
                           level: str = "L0", confirm_spend: bool = False,
                           scenario: str = "default", checkpoint_id: str = "") -> dict[str, Any]:
@@ -1764,6 +1927,33 @@ class App:
             health = self.hosts.mark_health(host_id, ok=good, detail=detail, model=model)
             self.hub.publish({"type": "route_health_changed", "host_id": host_id,
                               "model": model, "health": health.get("health", {})})
+        except ModelIdentityMismatchError as exc:
+            # The invocation runtime has already blocked this reply from any
+            # Loop/tool surface.  L1 is the one controlled observer allowed
+            # to inspect the live normalized reply so it can retain exact
+            # requested/observed evidence rather than reducing a route drift
+            # to an unhelpful generic transport failure.
+            observed_model = exc.result.observed_model
+            if exc.reply is not None:
+                probe_validation = validate_l1_probe(exc.reply, model)
+            else:
+                probe_validation = {
+                    "contract_version": L1_PROBE_CONTRACT_VERSION,
+                    "passed": False,
+                    "checks": {"returned_model": False},
+                    "failure_codes": ["returned_model_mismatch"],
+                    "requested_model": model,
+                    "observed_model": observed_model,
+                }
+            outcome = "fail"
+            detail = "strict tool-call probe failed: " + ", ".join(
+                probe_validation["failure_codes"])
+            try:
+                health = self.hosts.mark_health(host_id, ok=False, detail=detail, model=model)
+                self.hub.publish({"type": "route_health_changed", "host_id": host_id,
+                                  "model": model, "health": health.get("health", {})})
+            except (KeyError, OSError):
+                pass
         except ProviderError as exc:
             outcome, detail = "unavailable", str(exc)[:500]
             probe_validation = {
@@ -1801,6 +1991,7 @@ class App:
         self._refresh_qualification_route(job.host_id, job.model_id, job.role, current)
         return job, current
 
+    @mutation_entry("the qualification pause")
     def pause_qualification_job(self, job_id: str, reason: str = "") -> dict[str, Any]:
         self._qualification_job_current(job_id)
         try:
@@ -1810,6 +2001,7 @@ class App:
         self.hub.publish({"type": "qualification_job_paused", "job": job.public()})
         return {"job": job.public()}
 
+    @mutation_entry("the qualification resume")
     def resume_qualification_job(self, job_id: str) -> dict[str, Any]:
         self._qualification_job_current(job_id)
         try:
@@ -1819,6 +2011,7 @@ class App:
         self.hub.publish({"type": "qualification_job_resumed", "job": job.public()})
         return {"job": job.public()}
 
+    @mutation_entry("the qualification cancellation")
     def cancel_qualification_job(self, job_id: str, reason: str = "") -> dict[str, Any]:
         try:
             job = self.evaluation_jobs.cancel(job_id, reason or "cancelled by person")
@@ -1829,6 +2022,7 @@ class App:
         self.hub.publish({"type": "qualification_job_cancelled", "job": job.public()})
         return {"job": job.public()}
 
+    @mutation_entry("the qualification result")
     def record_qualification_job_result(self, job_id: str, *, outcome: str, artifact: str,
                                          detail: str = "", duration_ms: int = 0,
                                          cost_usd: float = 0.0) -> dict[str, Any]:
@@ -2134,6 +2328,7 @@ class App:
                        f"qualification for role {role!r}; this route is {observed} ({freshness})",
                        profile=profile.public(), qualification=status, plan=plan)
 
+    @mutation_entry("the agent-profile selection")
     def set_agent_profile(self, profile_id: str) -> dict[str, Any]:
         """Select the agent policy used for subsequent chat turns.
 
@@ -2183,6 +2378,7 @@ class App:
         return {"packs": [{**row, "compatible": compatible(PACKS[row["id"]])}
                           for row in all_packs()]}
 
+    @mutation_entry("the profile update")
     def profile_save(self, row: Any) -> dict[str, Any]:
         from .agent_runtime import AgentProfile
         if not isinstance(row, dict):
@@ -2194,13 +2390,14 @@ class App:
                 raise ValueError("profile needs id and role")
             profile = AgentProfile(**allowed)
             save = lambda: self.profiles.save(profile)
-            return self.writer.submit(save, caller="profile-settings") if self.writer is not None else save()
+            return self._serialized("profile-settings", save)
         except (TypeError, ValueError) as exc:
             raise ApiError(400, str(exc)) from exc
 
     def checkpoint_list(self, pending_only: bool = False) -> dict[str, Any]:
         return {"checkpoints": self.checkpoints.all(pending_only=pending_only)}
 
+    @mutation_entry("the checkpoint creation")
     def checkpoint_create(self, type: str, scope: str, evidence: Any = None,
                           choices: Any = None, requester: str = "person") -> dict[str, Any]:
         if not type or not scope:
@@ -2212,14 +2409,15 @@ class App:
             raise ApiError(400, "checkpoint choices is a list of strings")
         create = lambda: self.checkpoints.create(type, scope, evidence=evidence or {},
                                                   choices=choices or [], requester=requester)
-        row = self.writer.submit(create, caller="checkpoint") if self.writer is not None else create()
+        row = self._serialized("checkpoint", create)
         self.hub.publish({"type": "checkpoint_created", "checkpoint": row})
         return row
 
+    @mutation_entry("the checkpoint resolution")
     def checkpoint_resolve(self, checkpoint_id: str, choice: str) -> dict[str, Any]:
         try:
             resolve = lambda: self.checkpoints.resolve(checkpoint_id, choice)
-            row = self.writer.submit(resolve, caller="checkpoint") if self.writer is not None else resolve()
+            row = self._serialized("checkpoint", resolve)
             self.hub.publish({"type": "checkpoint_resolved", "checkpoint": row})
             return row
         except KeyError as exc:
@@ -2329,6 +2527,7 @@ class App:
         self.loop.turn_seconds = self.loop.cap_turn_seconds(level["turn_seconds"])
         return self.loop
 
+    @mutation_entry("the effort setting")
     def set_effort(self, level: Any) -> dict[str, Any]:
         """The effort slider: kept with the app's settings, applied from the next step, and
         written into an open session so its budgets follow (and the trace shows why)."""
@@ -2408,21 +2607,38 @@ class App:
         level = effort.profile(self.settings.data.get("effort"))
         if not (reply_review.enabled(self.vault) or level["review_replies"]):
             return
-        from .tools.staging import clerk_endpoint
-        ctx = Context(tier="contribute", vault=self.vault, extras=self._extras())
+        # The turn has already made the reply visible and cleared ``busy``.
+        # A review can queue Clerk work or add a runnable challenge, so it
+        # needs its own lifetime slot rather than letting shutdown mistake the
+        # completed turn for all completed work.  Claim the slot before the
+        # thread exists: a stop either refuses this review or retains the
+        # vault until its direct filesystem writes are done.
+        try:
+            self._begin_mutation("the reply review")
+        except ApiError:
+            return
+        try:
+            from .tools.staging import clerk_endpoint
+            ctx = Context(tier="contribute", vault=self.vault, extras=self._extras())
 
-        def run() -> None:
-            try:
-                out = reply_review.review_reply(self.vault, reply, clerk_endpoint(ctx),
-                                                max_claims=max(1, level["review_claims"]))
-            except Exception as exc:                        # noqa: BLE001
-                out = {"status": f"error: {type(exc).__name__}", "held": 0, "unchecked": 0,
-                       "challenged": []}
-            if out is None:
-                return
-            loop.challenges = list(out.get("challenged") or [])
-            self.hub.publish({"type": "reply_reviewed", **out})
-        threading.Thread(target=run, daemon=True, name="librarian-reply-review").start()
+            def run() -> None:
+                try:
+                    try:
+                        out = reply_review.review_reply(self.vault, reply, clerk_endpoint(ctx),
+                                                        max_claims=max(1, level["review_claims"]))
+                    except Exception as exc:                # noqa: BLE001
+                        out = {"status": f"error: {type(exc).__name__}", "held": 0,
+                               "unchecked": 0, "challenged": []}
+                    if out is None:
+                        return
+                    loop.challenges = list(out.get("challenged") or [])
+                    self.hub.publish({"type": "reply_reviewed", **out})
+                finally:
+                    self._end_mutation()
+            threading.Thread(target=run, daemon=True, name="librarian-reply-review").start()
+        except Exception:
+            self._end_mutation()
+            raise
 
     def _touch_desk(self, text: str) -> None:
         """Notes a person linked in a message (the paperclip inserts `[[...]]`)
@@ -2557,23 +2773,23 @@ class App:
                                               requester="mcp")
         return {"result": result, "session": ctx.session or "", "tier": granted}
 
+    @mutation_entry("the offering decision")
     def decide_offering(self, offering: str, decision: str) -> dict[str, Any]:
         from .tools.sessions import decide_offering
         ctx = Context(tier="curate", vault=self.vault,
                       extras={k: v for k, v in self._extras().items() if k != "broker"})
         try:
             action = lambda: decide_offering(ctx, offering, decision)
-            result = self.writer.submit(action, caller="browser-promotion") \
-                if self.writer is not None else action()
+            result = self._serialized("browser-promotion", action)
         except TypeError as exc:
             return {"error": "invalid_arguments", "detail": str(exc)}
         self.hub.publish({"type": "person_acted", "tool": "promote_offering"})
         return result
 
     # -- queued actions -----------------------------------------------------
+    @mutation_entry("the action start")
     def start_action(self, name: str, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
         from .tools.workflows import _library, _router
-        self._admit(f"the action {name!r}")                # fail fast; re-checked below
         action = Action(secrets.token_hex(4), name)
         extras = {**self._extras(), "cancel": action.cancel}
 
@@ -2636,6 +2852,7 @@ class App:
                 "config_dir": str(mcp.config_dir),
                 "tool_settings": dict(self.broker.settings)}
 
+    @mutation_entry("the MCP configuration update")
     def mcp_save_config(self, servers: Any) -> dict[str, Any]:
         mcp = self._mcp()
         if not isinstance(servers, dict):
@@ -2644,6 +2861,7 @@ class App:
         mcp.sync()
         return self.mcp_status()
 
+    @mutation_entry("the MCP server acceptance")
     def mcp_accept(self, name: str) -> dict[str, Any]:
         mcp = self._mcp()
         try:
@@ -2653,6 +2871,7 @@ class App:
         mcp.sync()
         return self.mcp_status()
 
+    @mutation_entry("the MCP server update")
     def mcp_add_server(self, name: str, definition: Any) -> dict[str, Any]:
         """One server, added or replaced - a skills-registry install, or a
         person's own hand-configured entry. Saving it here *is* the accept
@@ -2671,6 +2890,7 @@ class App:
         mcp.sync()
         return self.mcp_status()
 
+    @mutation_entry("the library MCP setting")
     def mcp_set_library_enabled(self, name: str, enabled: bool) -> dict[str, Any]:
         mcp = self._mcp()
         try:
@@ -2680,6 +2900,7 @@ class App:
         mcp.sync()
         return self.mcp_status()
 
+    @mutation_entry("the MCP server setting")
     def mcp_set_enabled(self, name: str, enabled: bool) -> dict[str, Any]:
         mcp = self._mcp()
         servers = mcp.servers()
@@ -2689,6 +2910,7 @@ class App:
         mcp.sync()
         return self.mcp_status()
 
+    @mutation_entry("the MCP server removal")
     def mcp_remove_server(self, name: str) -> dict[str, Any]:
         mcp = self._mcp()
         mcp.remove_server(name)
@@ -2699,6 +2921,7 @@ class App:
         return self._mcp().search_registry(query)
 
     # -- settings pages ------------------------------------------------------
+    @mutation_entry("the key update")
     def save_key(self, provider: str, key: str, overwrite: bool = False) -> dict[str, Any]:
         from .keys import SEARCH_KEYS
         if provider not in PRESETS and provider not in SEARCH_KEYS:
@@ -2719,6 +2942,7 @@ class App:
             raise ApiError(503, f"could not save the key: {exc}") from exc
         return {**status, "check": self.check(provider)}
 
+    @mutation_entry("the key migration")
     def migrate_keys_to_keychain(self, *, confirm: bool = False) -> dict[str, Any]:
         """Perform the person's explicit fallback-key migration request."""
         if not confirm:
@@ -2957,6 +3181,7 @@ class App:
                 raise ApiError(400, "each tier needs a known provider or enabled host id and a model id")
         return clean
 
+    @mutation_entry("the tier selection")
     def set_tiers(self, tiers: list[dict[str, Any]], override: str = "",
                   checkpoint_id: str = "") -> dict[str, Any]:
         return self._select_tiers(self._clean_tiers(tiers), override, checkpoint_id)
@@ -2995,6 +3220,7 @@ class App:
         self.hub.publish({"type": "tiers_changed", "tiers": changes["tiers"]})
         return {"tiers": changes["tiers"], "lead": self.lead_status(changes["tiers"])}
 
+    @mutation_entry("the lead selection")
     def set_lead(self, route: Any, override: str = "", checkpoint_id: str = "") -> dict[str, Any]:
         """Assign position 1 only (ROUTE-01).
 
@@ -3083,6 +3309,7 @@ class App:
             return {"status": "override", "model": key, **override}
         return {"status": "ineligible", "model": key}
 
+    @mutation_entry("the context setting")
     def set_context(self, working_context: str | None = None,
                     reply_length: str | None = None, stance: str | None = None
                     ) -> dict[str, Any]:
@@ -3100,6 +3327,7 @@ class App:
         self.settings.update(**changes)
         return {k: self.settings.data[k] for k in ("working_context", "reply_length", "stance")}
 
+    @mutation_entry("the permission mode")
     def set_mode(self, mode: str) -> dict[str, Any]:
         if mode not in MODES:
             raise ApiError(400, f"mode is one of {MODES}")
@@ -3211,6 +3439,7 @@ class App:
                 pass
         return out
 
+    @mutation_entry("the service setting")
     def set_service(self, slot: str, provider: str, model: str, host_id: str = "") -> dict[str, Any]:
         from . import embed
         if slot not in ("ocr", "tts", "stt", "embeddings"):
@@ -3269,6 +3498,7 @@ class App:
             self.vault.set_setting("services", "ocr", f"{provider}:{model}" if model else ""),
             self.services())[-1])
 
+    @mutation_entry("the vector-intent setting")
     def set_vector_intents(self, intents: list[str]) -> dict[str, Any]:
         from .search import INTENTS
         unknown = [i for i in intents if i not in INTENTS]
@@ -3278,6 +3508,7 @@ class App:
             self.vault.set_setting("search", "vector_intents", list(dict.fromkeys(intents))),
             self.services())[1])
 
+    @mutation_entry("the service test")
     def test_service(self, slot: str) -> dict[str, Any]:
         """One small, real call: the OCR model reads a sample line (R17's Test action)."""
         from . import ocr
@@ -3310,6 +3541,7 @@ class App:
                 "model": getattr(reader, "name", "")}
 
     # -- text to speech (slot 5): a reply (mode A) or the open document (mode B) ------
+    @mutation_entry("the read-aloud plan")
     def tts_plan(self, text: str = "", path: str = "") -> dict[str, Any]:
         """Cut a reply, or the note at `path`, into the chunks it will be read in; nothing
         is spoken (or spent) until a chunk is asked for."""
@@ -3332,6 +3564,7 @@ class App:
         return {"plan": plan_id, "mode": mode, "count": len(planned["chunks"]),
                 **{k: planned[k] for k in ("chars", "estimate_usd", "spent_usd", "cap_usd")}}
 
+    @mutation_entry("the read-aloud request")
     def tts_chunk(self, plan_id: str, index: int) -> dict[str, Any]:
         from . import tts
         if plan_id not in self._tts_plans:
@@ -3372,11 +3605,13 @@ class App:
             r["exists"] = Path(r["path"]).is_dir()
         return data
 
+    @mutation_entry("the project setting")
     def set_projects_enabled(self, on: bool) -> dict[str, Any]:
         from . import projects
         return self._serialized("project-settings", lambda: (
             projects.set_enabled(self.vault, on), self.projects())[1])
 
+    @mutation_entry("the project root update")
     def add_project_root(self, path: str, project: str) -> dict[str, Any]:
         from . import projects
         try:
@@ -3385,6 +3620,7 @@ class App:
         except TypeError as exc:
             raise ApiError(400, str(exc)) from exc
 
+    @mutation_entry("the project write setting")
     def set_project_writes(self, root_id: str, allowed: bool) -> dict[str, Any]:
         from . import projects
         try:
@@ -3393,11 +3629,13 @@ class App:
         except TypeError as exc:
             raise ApiError(404, str(exc)) from exc
 
+    @mutation_entry("the project root removal")
     def remove_project_root(self, root_id: str) -> dict[str, Any]:
         from . import projects
         return self._serialized("project-settings", lambda: (
             projects.remove_root(self.vault, root_id), self.projects())[1])
 
+    @mutation_entry("the project scan")
     def scan_project_root(self, root_id: str) -> dict[str, Any]:
         from . import projects
         entry = next((r for r in projects.state(self.vault)["roots"] if r["id"] == root_id), None)
@@ -3410,6 +3648,7 @@ class App:
             return {**self.projects(), "scanned": out}
         return self._serialized("project-scan", scan)
 
+    @mutation_entry("the library setting")
     def set_library(self, promotion_mode: str = "",
                     review: dict[str, bool] | None = None) -> dict[str, Any]:
         """Settings -> Library: the promotion mode, and the review gate (§4 G3) on replies
@@ -3497,6 +3736,7 @@ class App:
                 "text": read_text(path, encoding="utf-8", errors="replace"),
                 "modified": round(path.stat().st_mtime)}
 
+    @mutation_entry("the file upload")
     def upload_file(self, dir_rel: str, filename: str, data: bytes) -> dict[str, Any]:
         """The composer's paperclip: a file the person had on their own machine,
         saved into the vault (Inbox/ unless they chose to browse elsewhere) so
@@ -3515,11 +3755,9 @@ class App:
             atomic_write_bytes(target, data)
             root = self.vault.root.resolve()
             return {"path": target.resolve().relative_to(root).as_posix(), "name": target.name}
-        if self.writer is not None:
-            # Folder paths are visible vault paths, so an active note lease
-            # can only block a same-name replacement (we choose a new name).
-            return self.writer.submit(persist, caller="browser-upload")
-        return persist()
+        # Folder paths are visible vault paths, so an active note lease can
+        # only block a same-name replacement (we choose a new name).
+        return self._serialized("browser-upload", persist)
 
     def state(self) -> dict[str, Any]:
         data = self.settings.data
@@ -3545,6 +3783,7 @@ class App:
                 "key_migration_pending": self.keys.migration_pending,
                 "secret_source": "obsidian_managed" if self.secret_source == "obsidian" else self.keys.backend,
                 "vault_lease": self.coordinator.status() if self.coordinator is not None else {},
+                "shutdown": self._shutdown_health(),
                 "profiles": self.profiles.all(),
                 "agent_profile": str(data.get("agent_profile") or "lead"),
                  "agent_profile_role": getattr(selected_profile, "role", ""),
@@ -3780,9 +4019,15 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                                                  "reload the page"})
             try:
                 if url.path == "/api/attach":
-                    return self._attach(parse_qs(url.query))
+                    with app._counted_mutation(f"the HTTP mutation {url.path!r}"):
+                        return self._attach(parse_qs(url.query))
                 body = self._body()
-                return self._json(200, self._post(url.path, body))
+                # Every HTTP POST is a potentially state-changing control
+                # surface.  This outer admission/count closes the gaps left
+                # by legacy handlers which mutate broker/key/MCP state
+                # directly rather than through an App helper.
+                with app._counted_mutation(f"the HTTP mutation {url.path!r}"):
+                    return self._json(200, self._post(url.path, body))
             except ApiError as exc:
                 return self._json(exc.status, exc.body)
             except Exception as exc:                        # noqa: BLE001

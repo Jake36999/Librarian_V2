@@ -64,6 +64,7 @@ PROVIDER_FAILURE_CATEGORIES = (
     "provider_transport",
     "provider_rejected",
     "output_budget",
+    "model_identity_mismatch",
     "unknown",
 )
 
@@ -494,7 +495,10 @@ class OpenAICompatible(Provider):
                                   str(function.get("name") or ""),
                                   arguments if isinstance(arguments, dict) else {}))
         text = message.get("content") if isinstance(message.get("content"), str) else ""
-        observed_model = str(reply.get("model", self.model) or self.model)
+        # A missing response identity must remain missing.  Substituting the
+        # requested model would turn absence into a false match in the
+        # invocation runtime's exact-route evidence.
+        observed_model = str(reply.get("model") or "")
         stop = str(choice.get("finish_reason") or "")
         usage = _safe_usage(reply.get("usage"))
         request_id = _safe_request_id(getattr(reply, "request_id", ""))
@@ -576,7 +580,9 @@ class Anthropic(Provider):
                 calls.append(ToolCall(str(block.get("id") or synthetic_call_id()),
                                       str(block.get("name")), block.get("input") or {}))
         rendered_text = "".join(text)
-        observed_model = str(reply.get("model", self.model) or self.model)
+        # See OpenAICompatible.chat: model identity is response evidence, not
+        # a convenient echo of the model that was requested.
+        observed_model = str(reply.get("model") or "")
         stop = str(reply.get("stop_reason") or "")
         usage = _safe_usage(reply.get("usage"))
         request_id = _safe_request_id(getattr(reply, "request_id", ""))

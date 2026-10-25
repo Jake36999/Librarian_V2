@@ -17,6 +17,7 @@ from resource_librarian.model_invocation import (
     AdapterBackedProvider, ExactRoute, ExpectationPackError, ExpectationRegistry,
     InvocationCompatibilityError, InvocationPayload, InvocationRuntime, InvocationScope,
     LEGACY_OPENAI_CHAT, TaskContract, legacy_structured_output_policy,
+    ModelIdentityMismatchError,
 )
 from resource_librarian.providers import OpenAICompatible, Provider, ProviderError, Reply, ToolCall, ToolDef
 
@@ -113,6 +114,71 @@ def test_legacy_adapter_preserves_the_current_provider_call_shape_and_normalizes
     assert proposal["name"] == "search" and proposal["arguments_state"] == "decoded"
     assert proposal["provider_call_fingerprint"] != "call-1"
     assert trace["result"]["observed_model"] == "four-argument-model"
+    assert trace["result"]["model_identity"] == "matched"
+    assert trace["result"]["conformance"]["model_identity"] == "matched"
+
+
+def test_missing_provider_model_is_not_synthesized_and_is_traced_as_absent(monkeypatch):
+    monkeypatch.setattr(providers, "_request", lambda *args, **kwargs: {
+        "choices": [{"finish_reason": "stop", "message": {"content": "ok"}}],
+    })
+    runtime = InvocationRuntime()
+    provider = OpenAICompatible("https://example.invalid/v1", model="exact-model")
+
+    reply = runtime.invoke(provider, payload())
+
+    assert reply.model == ""
+    result = runtime.recent()[0]["result"]
+    assert result["requested_model"] == "exact-model"
+    assert result["observed_model"] == ""
+    assert result["model_identity"] == "absent"
+    assert result["conformance"]["model_identity"] == "absent"
+
+
+def test_mismatched_model_is_a_typed_compatibility_failure_before_tool_exposure(vault):
+    reply = Reply(tool_calls=[ToolCall("call-1", "search", {"query": "q"})],
+                  model="a-different-model", stop="tool_calls")
+    provider = FourArgumentProvider(reply)
+    runtime = InvocationRuntime()
+
+    with pytest.raises(ModelIdentityMismatchError) as raised:
+        runtime.invoke(provider, payload(tools=[ToolDef("search", "Search.", {"type": "object"})]))
+
+    error = raised.value
+    assert error.category == "model_identity_mismatch"
+    assert error.reply is reply
+    assert error.result.model_identity == "mismatched"
+    assert error.result.outcome == "failed"
+    assert error.compatibility.accepted is False
+    assert error.compatibility.disposition == "incompatible"
+    trace = runtime.recent()[0]
+    assert trace["compatibility"]["accepted"] is False
+    assert trace["result"]["failure"]["category"] == "model_identity_mismatch"
+    assert trace["result"]["conformance"]["model_identity"] == "mismatched"
+
+    # The normal Loop receives the typed failure, not the reply with a tool
+    # proposal, so it cannot execute an action from the wrong model route.
+    events: list[dict] = []
+    loop = Loop(vault, provider, extras={"invocation_runtime": runtime}, on_event=events.append)
+    turn = loop.send("hello")
+    assert turn.stopped == "provider_error"
+    assert turn.failure_category == "model_identity_mismatch"
+    assert turn.calls == []
+    assert not [event for event in events if event["type"] == "tool_call"]
+
+
+def test_unselected_route_model_has_a_not_applicable_identity_verdict():
+    provider = FourArgumentProvider(Reply(text="ok", model="server-default"))
+    provider.model = ""
+    runtime = InvocationRuntime()
+
+    runtime.invoke(provider, payload())
+
+    result = runtime.recent()[0]["result"]
+    assert result["requested_model"] == "(unselected)"
+    assert result["observed_model"] == "server-default"
+    assert result["model_identity"] == "not_applicable"
+    assert result["conformance"]["model_identity"] == "not_applicable"
 
 
 def test_unknown_capability_is_experimental_but_explicit_false_rejects_before_spend():

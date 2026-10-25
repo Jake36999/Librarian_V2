@@ -31,7 +31,7 @@ import time
 from collections import deque
 from contextlib import contextmanager
 from contextvars import ContextVar
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from importlib import resources
 from typing import Any, Callable, Iterator, Mapping
 
@@ -49,6 +49,9 @@ CAPABILITIES = frozenset({
 })
 TRI_STATES = frozenset({"true", "false", "unknown"})
 OUTCOMES = frozenset({"completed", "tool_calls", "failed"})
+MODEL_IDENTITY_VERDICTS = frozenset({
+    "matched", "absent", "mismatched", "not_applicable",
+})
 
 
 def _bounded(value: Any, limit: int = 160) -> str:
@@ -75,6 +78,29 @@ def _canonical(value: Any) -> str:
     """
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
                       default=str)
+
+
+def model_identity_verdict(requested_model: Any, observed_model: Any) -> str:
+    """Classify one provider attempt's exact-model evidence.
+
+    The requested route is an exact identifier when one is configured.  A
+    provider response can then confirm it (``matched``), omit it
+    (``absent``), or identify a different route (``mismatched``).  The
+    ``(unselected)`` sentinel is deliberately not treated as an exact route:
+    an observed model cannot prove or disprove a model that was never
+    selected, so its verdict is ``not_applicable``.
+
+    This is intentionally an exact, case-sensitive comparison.  Treating a
+    provider alias, version suffix, or casing rewrite as a match would allow
+    a route to borrow evidence for a different deployed model.
+    """
+    requested = _bounded(requested_model, 300)
+    observed = _bounded(observed_model, 300)
+    if not requested or requested in {"(unselected)", "*"}:
+        return "not_applicable"
+    if not observed:
+        return "absent"
+    return "matched" if observed == requested else "mismatched"
 
 
 def digest(value: Any, length: int = 24) -> str:
@@ -589,10 +615,10 @@ class CompatibilityResult:
 class InvocationCompatibilityError(ProviderError):
     """A plan was rejected before a provider/endpoint was contacted."""
 
-    def __init__(self, result: CompatibilityResult) -> None:
+    def __init__(self, result: CompatibilityResult, *, category: str = "route_configuration") -> None:
         self.compatibility = result
         detail = "; ".join(result.errors) or "the selected route is incompatible with this task"
-        super().__init__(detail, category="route_configuration")
+        super().__init__(detail, category=category)
 
 
 @dataclass(frozen=True)
@@ -725,6 +751,7 @@ class AdapterFailure:
             "provider_transport": "the provider endpoint could not be reached",
             "provider_rejected": "the provider rejected this request",
             "output_budget": "the model reached its output budget before returning a usable result",
+            "model_identity_mismatch": "the provider returned a different model than the selected route",
             "local_environment": "the local environment blocked this provider request",
             "unknown": "the provider request failed",
         }
@@ -748,19 +775,42 @@ class InvocationResult:
     failure: AdapterFailure | None = None
     usage: dict[str, int] = field(default_factory=dict)
     request_id: str = ""
+    model_identity: str = ""
 
     def __post_init__(self) -> None:
         if self.outcome not in OUTCOMES:
             raise ValueError(f"unknown invocation outcome {self.outcome!r}")
+        object.__setattr__(self, "requested_model", _bounded(self.requested_model, 300))
+        object.__setattr__(self, "observed_model", _bounded(self.observed_model, 300))
+        object.__setattr__(self, "stop_reason", _bounded(self.stop_reason, 160))
         object.__setattr__(self, "elapsed_ms", max(0, int(self.elapsed_ms)))
         object.__setattr__(self, "usage", _safe_usage(self.usage))
         object.__setattr__(self, "request_id", _safe_request_id(self.request_id))
+        derived_verdict = model_identity_verdict(self.requested_model, self.observed_model)
+        verdict = self.model_identity or derived_verdict
+        if verdict not in MODEL_IDENTITY_VERDICTS:
+            raise ValueError(f"unknown model identity verdict {verdict!r}")
+        # The only result with no provider attempt is the route rejection
+        # created before ``LegacyProviderAdapter.invoke``.  It records
+        # ``not_applicable`` rather than claiming a provider omitted an
+        # identity.  A response-bearing adapter cannot override a derived
+        # mismatch into a match and evade the Runtime policy gate.
+        no_provider_attempt = (
+            verdict == "not_applicable" and self.outcome == "failed" and
+            not self.observed_model and self.failure is not None and
+            self.failure.category == "route_configuration"
+        )
+        if verdict != derived_verdict and not no_provider_attempt:
+            raise ValueError("model identity verdict does not match requested/observed models")
+        object.__setattr__(self, "model_identity", verdict)
 
     def trace(self) -> dict[str, Any]:
         row: dict[str, Any] = {
             "plan_id": self.plan_id, "config_hash": self.config_hash,
             "adapter": {"id": self.adapter_id, "version": self.adapter_version},
             "requested_model": self.requested_model, "observed_model": self.observed_model,
+            "model_identity": self.model_identity,
+            "conformance": {"model_identity": self.model_identity},
             "outcome": self.outcome, "stop_reason": self.stop_reason,
             "elapsed_ms": self.elapsed_ms,
             "tool_calls": [call.trace() for call in self.tool_calls],
@@ -776,6 +826,27 @@ class InvocationResult:
                               "retryable": self.failure.retryable,
                               "message": self.failure.safe_message}
         return row
+
+
+class ModelIdentityMismatchError(InvocationCompatibilityError):
+    """A response was blocked because it identifies a different exact model.
+
+    ``reply`` is intentionally live-only.  A qualification probe may inspect
+    its normalized tool proposal to record why it failed, but no normal Loop
+    caller receives it and it never enters the redacted trace.  ``result`` is
+    the trace-safe typed outcome retained by the runtime.
+    """
+
+    def __init__(self, compatibility: CompatibilityResult, result: InvocationResult,
+                 reply: Reply | None) -> None:
+        if result.model_identity != "mismatched":
+            raise ValueError("model identity mismatch errors require a mismatched result")
+        self.result = result
+        self.reply = reply
+        # ``invocation_result`` keeps generic diagnostic callers compatible
+        # with the provider-error attachment used by LegacyProviderAdapter.
+        self.invocation_result = result
+        super().__init__(compatibility, category="model_identity_mismatch")
 
 
 @dataclass(frozen=True)
@@ -926,6 +997,37 @@ def _resolve_plan(scope: InvocationScope, binding: InvocationBinding,
     return plan, compatibility
 
 
+def _model_identity_mismatch_compatibility(
+        compatibility: CompatibilityResult) -> CompatibilityResult:
+    """Return the post-response compatibility decision for a route mismatch.
+
+    Plan resolution can only validate the route the caller selected.  The
+    provider's returned identity is evidence that arrives after spend, so it
+    must turn that provisional decision into an explicit incompatibility
+    before a Reply can reach the Loop or a tool executor.
+    """
+    return CompatibilityResult(
+        accepted=False,
+        disposition="incompatible",
+        errors=(*compatibility.errors,
+                "the provider returned a model identity that does not match the selected route"),
+        warnings=compatibility.warnings,
+        expectation_id=compatibility.expectation_id,
+    )
+
+
+def _model_identity_mismatch_result(result: InvocationResult) -> InvocationResult:
+    """Keep safe response evidence while making the Core-visible outcome fail."""
+    return replace(
+        result,
+        outcome="failed",
+        failure=AdapterFailure(
+            "model_identity_mismatch", False,
+            "the provider returned a different model than the selected route",
+        ),
+    )
+
+
 class InvocationRuntime:
     """Resolve and trace one model invocation at a time, safely across threads.
 
@@ -1026,6 +1128,22 @@ class InvocationRuntime:
         with self._lock:
             return copy.deepcopy(list(self._records)[-max(0, int(limit)):])
 
+    def _blocked_model_identity(self, plan: InvocationPlan, result: InvocationResult,
+                                compatibility: CompatibilityResult,
+                                reply: Reply | None) -> ModelIdentityMismatchError:
+        """Trace and reject a mismatched response before it reaches Core work.
+
+        The route was valid before the provider call, but a different returned
+        model cannot consume that route's expectation or qualification
+        evidence.  Recording the final incompatibility here makes the
+        post-response policy decision auditable rather than leaving a warning
+        beside a Reply that the Loop might still execute tools from.
+        """
+        final_compatibility = _model_identity_mismatch_compatibility(compatibility)
+        final_result = _model_identity_mismatch_result(result)
+        self._record(plan, final_result, final_compatibility)
+        return ModelIdentityMismatchError(final_compatibility, final_result, reply)
+
     def invoke(self, provider: Provider, payload: InvocationPayload, *,
                scope: InvocationScope | None = None,
                binding: InvocationBinding | None = None) -> Reply:
@@ -1036,7 +1154,7 @@ class InvocationRuntime:
                                      "the selected route is incompatible with this task")
             result = InvocationResult(plan.plan_id, plan.config_hash, plan.adapter_id,
                                       plan.adapter_version, plan.model_id, "", "failed", "", 0,
-                                      failure=failure)
+                                      failure=failure, model_identity="not_applicable")
             self._record(plan, result, compatibility)
             raise InvocationCompatibilityError(compatibility)
         adapter = LegacyProviderAdapter(chosen_binding.descriptor)
@@ -1050,8 +1168,12 @@ class InvocationRuntime:
                     plan.model_id, "", "failed", "", 0,
                     failure=AdapterFailure.from_error(error),
                 )
+            if result.model_identity == "mismatched":
+                raise self._blocked_model_identity(plan, result, compatibility, None) from error
             self._record(plan, result, compatibility)
             raise
+        if result.model_identity == "mismatched":
+            raise self._blocked_model_identity(plan, result, compatibility, reply)
         self._record(plan, result, compatibility)
         return reply
 

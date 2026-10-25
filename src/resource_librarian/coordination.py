@@ -660,6 +660,15 @@ class VaultWriter:
         self.leases = leases or DocumentLeases(vault)
         self._queue: queue.Queue[tuple[Operation, Callable[[], Any], threading.Event, list[Any]]] = queue.Queue()
         self._closed = threading.Event()
+        # ``submit`` and ``close`` share this boundary.  A shutdown must not
+        # observe an empty queue, then let a concurrent caller enqueue one
+        # more operation before it closes admission to the actor.
+        self._admission = threading.Lock()
+        # The App keeps its coordinator alive through the writer's lifetime.
+        # This matters when a timed shutdown returns while the daemon worker
+        # is still inside a mutation: dropping the App object must not let a
+        # file-handle finalizer release the vault lease underneath that worker.
+        self._lifecycle_owner: Any | None = None
         self._thread = threading.Thread(target=self._run, daemon=True,
                                         name=f"librarian-writer-{vault.root.name}")
         self._thread.start()
@@ -669,6 +678,30 @@ class VaultWriter:
     @property
     def log_path(self) -> Path:
         return self.vault.librarian / "runtime" / "operations.jsonl"
+
+    @property
+    def alive(self) -> bool:
+        """Whether the serial worker can still execute a vault operation."""
+        return self._thread.is_alive()
+
+    @property
+    def accepting(self) -> bool:
+        """Whether a new external operation can enter the writer."""
+        return not self._closed.is_set()
+
+    def retain_lifecycle_owner(self, owner: Any) -> None:
+        """Keep a lease owner alive until this writer has stopped.
+
+        The owner is deliberately opaque: ``VaultWriter`` stays usable in
+        offline tests, while the coordinated App supplies its
+        :class:`VaultCoordinator`.  The App explicitly releases the lease and
+        then drops this reference after a confirmed drain.
+        """
+        self._lifecycle_owner = owner
+
+    def release_lifecycle_owner(self) -> None:
+        """Drop the retention established by :meth:`retain_lifecycle_owner`."""
+        self._lifecycle_owner = None
 
     def interrupted_operations(self) -> list[dict[str, Any]]:
         """Return safe diagnostics for operations without a durable outcome.
@@ -758,12 +791,16 @@ class VaultWriter:
                 # before the mutation in _invoke and is still propagated.
                 with contextlib.suppress(Exception):
                     self._record(op)
-        if self._closed.is_set():
-            raise RuntimeError("vault writer is closed")
         op = Operation(secrets.token_hex(8), caller[:80], list(targets), now_iso(),
                        precondition_fingerprints=dict(preconditions or {}))
         done, box = threading.Event(), []
-        self._queue.put((op, fn, done, box))
+        # Admission and shutdown are one atomic decision.  In particular, do
+        # not let ``close`` return from a successful drain while a submitter
+        # which checked ``_closed`` just before it enqueues is still racing.
+        with self._admission:
+            if self._closed.is_set():
+                raise RuntimeError("vault writer is closed")
+            self._queue.put((op, fn, done, box))
         if not done.wait(timeout):
             raise TimeoutError(f"vault operation {op.id} did not finish")
         kind, value = box[0]
@@ -772,12 +809,19 @@ class VaultWriter:
         return value
 
     def _run(self) -> None:
-        while not self._closed.is_set() or not self._queue.empty():
-            try:
-                item = self._queue.get(timeout=0.1)
-            except queue.Empty:
-                continue
-            self._serve(item)
+        try:
+            while not self._closed.is_set() or not self._queue.empty():
+                try:
+                    item = self._queue.get(timeout=0.1)
+                except queue.Empty:
+                    continue
+                self._serve(item)
+        finally:
+            # Do not claim this is a writer thread after it has stopped.  A
+            # timed close used to remove this entry *while it was still
+            # running*, which also hid a useful lifecycle fact from callers.
+            with _WRITER_THREADS_GUARD:
+                _WRITER_THREADS.pop(self._thread, None)
 
     def _serve(self, item: tuple[Operation, Callable[[], Any], threading.Event, list[Any]]) -> None:
         op, fn, done, box = item
@@ -892,12 +936,24 @@ class VaultWriter:
             time.sleep(0.02)
         return True
 
-    def close(self, timeout: float = 5.0) -> None:
-        self.flush(timeout)
-        self._closed.set()
+    def close(self, timeout: float = 5.0) -> bool:
+        """Close admission and wait for every accepted operation to stop.
+
+        ``False`` means an operation is still executing after ``timeout``.
+        It is intentionally not treated as a successful close: callers that
+        own a vault lease must retain it (and any dependent resources) until
+        a later retry confirms that this worker is no longer alive.
+        """
+        with self._admission:
+            self._closed.set()
+        if threading.current_thread() is self._thread:
+            return False
         self._thread.join(timeout)
-        with _WRITER_THREADS_GUARD:
-            _WRITER_THREADS.pop(self._thread, None)
+        stopped = not self._thread.is_alive()
+        if stopped:
+            with _WRITER_THREADS_GUARD:
+                _WRITER_THREADS.pop(self._thread, None)
+        return stopped
 
 
 def _operation_recovery_record(row: Any) -> tuple[dict[str, Any] | None, str]:

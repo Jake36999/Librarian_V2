@@ -278,6 +278,29 @@ def test_l1_rejects_any_non_strict_tool_or_route_contract(served, monkeypatch, r
     assert result["status"]["qualification"]["status"] == "experimental"
 
 
+def test_l1_keeps_requested_and_observed_identity_after_runtime_blocks_a_mismatch(served, monkeypatch):
+    """Qualification can record route drift without releasing the reply to a Loop."""
+    app, _, _ = served
+    provider = providers.Scripted(
+        lambda *_: Reply(tool_calls=[ToolCall("probe", "librarian_probe", {"ok": True})],
+                          model="other-model"),
+        name="m1",
+    )
+    monkeypatch.setattr(app, "_configured_provider", lambda _choice: provider)
+
+    result = app.run_qualification("preset-deepinfra", "m1", "lead", "L1", True)
+
+    run = result["run"]
+    assert run["outcome"] == "fail"
+    assert run["probe_validation"]["requested_model"] == "m1"
+    assert run["probe_validation"]["observed_model"] == "other-model"
+    assert "returned_model_mismatch" in run["probe_validation"]["failure_codes"]
+    trace = app.invocation_runtime.recent()[-1]
+    assert trace["compatibility"]["accepted"] is False
+    assert trace["result"]["conformance"]["model_identity"] == "mismatched"
+    assert trace["result"]["failure"]["category"] == "model_identity_mismatch"
+
+
 def test_l1_records_strict_route_and_tool_evidence(served, monkeypatch):
     app, _, _ = served
     provider = providers.Scripted(

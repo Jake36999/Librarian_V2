@@ -38,7 +38,7 @@ from .model_invocation import (InvocationPayload, InvocationRuntime,
 from .providers import Provider, ProviderError, ToolDef, provider_failure_category
 from .registry import REGISTRY, Context, ToolSpec
 from .rules import Refusal
-from .session import WRITES, SessionStore
+from .session import WRITES, SessionStore, bind_model_session_events
 
 BASE = """\
 You are the librarian of a research vault: Sources someone has read, with their evidence,
@@ -397,6 +397,12 @@ class Loop:
         # sent before `open_session` gives `ctx.session` an id, so persisting
         # can't happen until then - held here and flushed once it can.
         self._pending_messages: list[dict[str, str]] = []
+        # ADAPT-03 mirrors the transcript's pre-session buffer, but contains
+        # only allow-listed route/adapter evidence from the invocation trace.
+        # The first model proposal may itself be ``open_session``; retaining
+        # its redacted event means the resumed thread still explains which
+        # route opened it without ever retaining that request's prompt.
+        self._pending_model_events: list[dict[str, Any]] = []
         # `_message_boundaries[i]` is `len(self.messages)` right after the
         # i-th persisted (session-log) message was added to it - `rewind`
         # needs this to know how much of *this* OpenAI-shaped conversation a
@@ -770,6 +776,22 @@ class Loop:
                 self._message_boundaries.append(boundary)
         self._pending_messages = []
 
+    def _flush_pending_model_events(self) -> None:
+        """Append pre-session, already-redacted invocation evidence once a
+        tool has opened a session.  Like transcript persistence, an evidence
+        logging fault must not turn a completed model response into a failed
+        person-facing turn.
+        """
+        if not self._pending_model_events or not self.ctx.session or self.ctx.vault is None:
+            return
+        store = SessionStore(self.ctx.vault)
+        for event in self._pending_model_events:
+            try:
+                store.append(self.ctx.session, event)
+            except Exception:                                   # noqa: BLE001
+                pass
+        self._pending_model_events = []
+
     def rewind_to(self, message_index: int) -> None:
         """After `rewind_session` truncates the log itself, forget everything
         this process still holds beyond that message - the pending buffer (it
@@ -779,6 +801,7 @@ class Loop:
         self.messages = self.messages[:self._message_boundaries[message_index]]
         self._message_boundaries = self._message_boundaries[:message_index + 1]
         self._pending_messages = []
+        self._pending_model_events = []
 
     def restore(self, messages: list[dict[str, str]]) -> None:
         """Rebuild this process's own context from a session's persisted
@@ -790,6 +813,7 @@ class Loop:
         self.messages = [{"role": m["role"], "content": m["text"]} for m in messages]
         self._message_boundaries = list(range(1, len(messages) + 1))
         self._pending_messages = []
+        self._pending_model_events = []
 
     # -- a turn --------------------------------------------------------------
     def send(self, text: str, cancel: threading.Event | None = None) -> Turn:
@@ -848,7 +872,14 @@ class Loop:
                         behavior_mode="provider_default")
                     invocation = InvocationPayload.from_legacy(
                         system, view, tools, max_tokens=self.profile_output_budget)
-                    reply = runtime.invoke(walk_provider, invocation, scope=scope, binding=binding)
+                    # The invocation runtime has a process-wide redacted
+                    # trace sink.  Bind it only for this synchronous call so
+                    # concurrent walks/background endpoints cannot attach a
+                    # response to this session by accident.
+                    with bind_model_session_events(
+                            self.ctx.vault, self.ctx.session,
+                            self._pending_model_events):
+                        reply = runtime.invoke(walk_provider, invocation, scope=scope, binding=binding)
             except ProviderError as exc:
                 turn.stopped, turn.error = "provider_error", str(exc)[:400]
                 turn.failure_category = provider_failure_category(exc)
@@ -878,6 +909,7 @@ class Loop:
                                "arguments": call.arguments})
                 result = self.call(call.name, call.arguments)
                 self._flush_pending()          # `call` may be what just opened the session
+                self._flush_pending_model_events()
                 self.refused_last_step = self.refused_last_step or "refused" in result
                 turn.calls.append({"tool": call.name, "ok": "error" not in result,
                                    **({"refused": result["refused"]}
