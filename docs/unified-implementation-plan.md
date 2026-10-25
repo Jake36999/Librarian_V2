@@ -631,6 +631,9 @@ with its primary model and reviewer (§3.2).
 | ROUTE-03A | implemented | `b6ef33b` | Strict vault-scoped `agents/routes.json`, one-time legacy migration, explicit inheritance, preserved independently selected positions, and serialized picker/service metadata updates. Focused migration/App/service tests: 60 passed; store tests: 8 passed at that commit. |
 | ROUTE-03B / ROUTE-05 (chat) | partial | `14837a2` | Chat, background Clerk/Scribe, and helper execution resolve canonical bindings; default profiles and custom profiles can explicitly choose a route slot. Host endpoint changes refuse execution; an unavailable background role queues instead of blocking Lead or borrowing another route. Role-store validation, restart projection repair, temporary offline mutation leases, and role-specific qualification regressions included. Full suite: 1,016 passed, 2 skipped, 1 deselected. Service dispatch and per-role picker readiness remain open. |
 | BASE-02 (browser smoke) | implemented | `c6d189e` | Browser smoke now launches the repository venv/source tree, strips inherited real credentials from the scripted demo, waits for completed picker writes, and terminates its own Windows process tree. Previously it could exercise the stale editable checkout. The refreshed current-policy demo passes the complete browser smoke walk. |
+| ROUTE-03C / ROUTE-04/05 (routing) | implemented | `4e56ca7` | Services dispatch canonical bindings, share hosted concurrency with chat, and reject stale/late routes. Picker readiness is per role; custom OCR/embedding hosts are explicit. Transport extraction/cancellation remains ADAPT-06. |
+| INDEX-03 (authoring/Session batch) | partial | `86941d3` | 16 direct construction sites migrated; debt 33 → 17. Real-Core fixtures cover writer/index separation, schema refresh and a full offering walk. Other serving-path families and WAL stress remain open. |
+| Macro writer-wait follow-up | implemented | `5b3be1f` | Macro orchestration runs outside the writer; individual mutations and checkpoint creation remain serialized. Ask/Deny/Plan gates are retained; changed plans invalidate old approvals. Automatic macro resume is not claimed. |
 
 **CORE-05 write inventory.** CAS coverage is claimed only where a token is
 checked:
@@ -662,10 +665,10 @@ yet:
 
 **Known limits and follow-ups from the review:**
 
-- A macro step's permission check in Ask mode still waits inside the macro's
-  writer operation. It holds the writer without interleaving (linearity
-  holds), and it already did on master. Fix with the macro checkpoint
-  approval standing in for its steps' permissions.
+- The macro permission-wait gap is closed by the continuation below: control
+  flow stays outside the writer and each mutation queues separately. Broker
+  authority is retained rather than broadening an approved macro into a
+  blanket permission grant. Persistent automatic macro resume remains open.
 - ROUTE-03/04 service dispatch and per-role picker readiness are implemented
   in the routing continuation below. Dedicated service transports remain;
   their unification/cancellation and local compute scheduling belong to ADAPT-06.
@@ -750,6 +753,44 @@ smoke walk passed. The final combined full run follows the next ownership
 batch, so these counts are not a claim that all release gates have closed.
 ADAPT-06 is still partial: service
 HTTP transports are not extracted/cancellable and local CPU work is not yet
-prioritized. INDEX-04/05, staging write intents, macro permission waits,
+prioritized. INDEX-04/05, staging write intents,
 remaining adapter work, deployment adoption/dedupe, and the Session harness
-remain open. No new paid provider calls were made.
+remain open. The macro permission wait is closed in the next continuation.
+No new paid provider calls were made.
+
+### Ownership and macro-wait continuation, 2026-10-25
+
+All four authoring and twelve Session direct-index construction sites have
+been migrated to callback access. The static serving-path debt falls from
+**33 to 17**. Note/project Markdown writes and Session appends remain on the
+writer; SQLite work stays on IndexService. Queries return copied ordinary
+data, never an Engine, cursor, or connection. Brief drafting, outside search,
+claim review and Scribe IO run after their index callbacks return. Project
+validation refreshes the content model before using its cached schema.
+
+Real-Core fixtures exercise authoring, task triage, reflection, project edits,
+a complete source-to-offering Session walk, and the separation of Clerk IO
+from the index worker. A closed index refuses creation before Markdown is
+written. The focused expanded suite passed **116 tests**. Final combined
+verification of `4e56ca7`, `86941d3` and `5b3be1f` passed **1,039 tests,
+2 skipped, 1 deselected** in **338.19s**, using the repository venv with
+`-o faulthandler_timeout=60`. The full output is retained locally at
+`tmp/ownership-macros-full-2026-10-25-01.log`. The expanded browser smoke walk
+passed again against the final runtime. No live/paid provider calls were made.
+
+The macro writer-wait issue is fixed without auto-allowing its contained
+tools. `macro_run` orchestrates outside the writer while checkpoint creation
+and individual mutations remain serialized. Broker requests cannot hold the
+writer, partial work survives a later denial, changed plans require renewed
+approval, and external tools cannot become orchestrators. The rationale and
+manual-recovery limits are documented in `docs/macro-runtime.md`. This is an
+execution-boundary fix, not implementation of AuditedEngagement or automatic
+exactly-once resume.
+
+Still open: the remaining 17 index compatibility sites and ownership/WAL
+stress gate; staging/promotion multi-target intents and revision handling;
+adapter shaping/cancellation/continuation probes; directory adoption/dedupe;
+Session-based harness; and integrated release acceptance. The source
+promotion helpers mutate several notes and generated views, so their index
+migration must be paired with the target inventory rather than wrapping the
+whole promotion in an index callback. G1 remains unclosed.
