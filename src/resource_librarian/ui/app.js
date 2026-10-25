@@ -4805,11 +4805,14 @@ var Librarian = (() => {
             ...item.staged_revision ? { staged_revision: item.staged_revision } : {},
             bottom_line: bottom.value,
             what_it_solves: solves.value,
-            ...isModel ? { fields: { best_for: Array.from(bestFor), ...suggestedTier ? { suggested_tier: suggestedTier } : {} } } : {}
+            ...isModel ? { fields: {
+              ...!item.promotion_progress || item.fields?.best_for !== void 0 || bestFor.size ? { best_for: Array.from(bestFor) } : {},
+              ...suggestedTier ? { suggested_tier: suggestedTier } : {}
+            } } : {}
           });
           const r = (out.results ?? [])[0] ?? out;
           if (out.error || r.error || r.refused) throw new Error(String(r.detail ?? r.refused ?? out.detail ?? out.error ?? r.error));
-          const outcome = decision === "accept" ? (r.merged_into ? `Merged ${(r.sections ?? []).join(", ") || "its sections"} into ${r.merged_into}; the previous text is kept on this item.` : r.promotion && !r.promotion.catalogued ? `Accepted: ${r.promotion.status}.` : `Accepted into the library and catalogued (coverage: ${r.coverage ?? "unknown"}).`) + (r.handoff ? " It joins your session as an undecided candidate." : "") : decision === "approve" ? "Approved for ingestion: it waits for the batch above. Nothing is in the library yet." : decision === "reject" ? "Rejected." : "Deferred.";
+          const outcome = decision === "accept" ? (r.merged_into ? `Merged ${(r.sections ?? []).join(", ") || "its sections"} into ${r.merged_into}; the previous text is kept on this item.` : r.promotion && !r.promotion.catalogued ? `Accepted: ${r.promotion.status}.` : `Accepted into the library and catalogued (coverage: ${r.coverage ?? "unknown"}).`) + (r.handoff ? " It joins your session as an undecided candidate." : "") + (r.originals_retained?.length ? " Attachments were copied; originals remain in place." : "") : decision === "approve" ? "Approved for ingestion: it waits for the batch above. Nothing is in the library yet." : decision === "reject" ? "Rejected." : "Deferred.";
           this.selected = "";
           if (r.session && r.session.session === this.currentSession()) this.onSessionUpdate(r.session);
           await this.load();
@@ -4857,7 +4860,8 @@ var Librarian = (() => {
       const st = String(item.status ?? "staged");
       const btn = (label, d, cls = "ghost", title = "") => h("button", { class: cls, onclick: decide(d), ...title ? { title } : {} }, label);
       const proc = item.processing ?? {};
-      const buttons = item.revision_of ? [btn("Accept", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : st === "enriched" ? [btn("Accept into library", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : st === "partial" ? [
+      const interrupted = item.promotion_progress && !item.promotion_progress.completed_at;
+      const buttons = interrupted ? [btn("Finish acceptance", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : item.revision_of ? [btn("Accept", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : st === "enriched" ? [btn("Accept into library", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : st === "partial" ? [
         btn("Approve for ingestion again", "approve", "primary", "Runs only the unfinished stages; finished ones are kept"),
         btn("Accept with partial coverage", "accept", "ghost", "The note records its coverage and what was not examined"),
         btn("Reject", "reject"),
@@ -4903,6 +4907,22 @@ var Librarian = (() => {
         ),
         item.sensitivity === "review" ? h("p", { class: "warn" }, "\u2691 Marked sensitive: only a person accepts it, and only a person clears the mark.") : null,
         stage,
+        interrupted ? h(
+          "div",
+          { class: "warn", role: "note" },
+          h("p", {}, "Acceptance was interrupted. Review the completed work before finishing with the same approved content. Changed content needs a source revision, not an overwrite."),
+          h("p", {}, `Completed paths: ${(item.promotion_progress.completed_paths ?? []).join(", ") || "inspect the operation log"}.`),
+          item.promotion_progress.source?.path ? h("a", { class: "wl", href: "#", onclick: (e) => {
+            e.preventDefault();
+            this.openNote(item.promotion_progress.source.path);
+          } }, item.promotion_progress.source.path) : null,
+          h("p", {}, "Original attachments remain in place. Rejecting or deferring does not undo completed copies or notes.")
+        ) : null,
+        !item.revision_of && (item.file || item.clean_file) ? h(
+          "p",
+          { class: "note" },
+          "Accepting this source copies attachments to managed Sources files; original project files stay in place."
+        ) : null,
         capture,
         item.revision_of ? h(
           "p",
@@ -4928,7 +4948,7 @@ var Librarian = (() => {
           h(
             "div",
             {},
-            h("label", { class: "f", for: "lib-bl" }, draft.bottom_line ? `Bottom Line (drafted by ${draft.model || "the clerk"}; edit it)` : "Bottom Line"),
+            h("label", { class: "f", for: "lib-bl" }, interrupted ? "Bottom Line (previously approved; review it)" : draft.bottom_line ? `Bottom Line (drafted by ${draft.model || "the clerk"}; edit it)` : "Bottom Line"),
             bottom,
             h("label", { class: "f", for: "lib-solves" }, "What it solves"),
             solves,
@@ -4946,13 +4966,13 @@ var Librarian = (() => {
               "div",
               { class: "row2" },
               buttons,
-              st === "processing" ? null : h("button", { class: "ghost push", onclick: draftIt }, draft.bottom_line ? "Redraft" : "Draft with the clerk")
+              st === "processing" || interrupted ? null : h("button", { class: "ghost push", onclick: draftIt }, draft.bottom_line ? "Redraft" : "Draft with the clerk")
             ),
             h(
               "div",
               { class: "row2" },
               h("span", { class: "note inline" }, readLine),
-              st !== "processing" && (!dr || readCount < dr.chunks) ? h(
+              st !== "processing" && !interrupted && (!dr || readCount < dr.chunks) ? h(
                 "button",
                 { class: "ghost", onclick: readIt, title: "Claims and limits from every part, with pages; terms; and any reasoning stance the text teaches, staged as a lens" },
                 dr ? "Continue deep read" : "Deep read"

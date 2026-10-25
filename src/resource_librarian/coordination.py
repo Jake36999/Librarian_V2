@@ -111,7 +111,11 @@ def fingerprint(path: Path) -> str:
     """A cheap content fingerprint used as a write precondition."""
     if not path.is_file():
         return MISSING
-    return fingerprint_bytes(path.read_bytes())
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()[:20]
 
 
 @dataclass(frozen=True)

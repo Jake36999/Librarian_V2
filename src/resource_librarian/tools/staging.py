@@ -97,9 +97,12 @@ def staging_list(ctx: Context, kind: Literal["", "source", "lens", "concept", "t
 def staging_show(ctx: Context, item_id: str) -> dict:
     item, state, observed = _snapshot(ctx, item_id)
     out = staging.show(item)
+    if item.get("promotion_progress", {}).get("review"):
+        out["review"] = {**(out.get("review") or {}), "draft": item["promotion_progress"]["review"]}
     out["staged_revision"] = revisions.issue(ctx, state, observed)
-    if item.get("revision_of"):
-        path = ctx.vault.safe_relative(str(item["revision_of"]))
+    destination = item.get("revision_of") or ((item.get("promotion_progress") or {}).get("source") or {}).get("path")
+    if destination and ctx.vault.safe_relative(str(destination)).is_file():
+        path = ctx.vault.safe_relative(str(destination))
         rel = path.relative_to(ctx.vault.root).as_posix()
         out["revision"] = revisions.issue_current(ctx, rel)
     return out
@@ -174,8 +177,8 @@ def deep_read_note(ctx: Context, note: str, max_chunks: int = reading.MAX_CHUNKS
 def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
     """Selected staging writes: explicit paths, checked before any approval.
 
-    New-source promotion has additional concept/index side effects and is
-    deliberately not claimed by this first revision/import/concept slice.
+    Single new-source acceptance includes managed attachment copies and views.
+    Multi-item source/topic promotion remains an explicitly legacy path.
     """
     if kwargs.get("dry_run") or kwargs.get("decision") != "accept":
         return None
@@ -218,6 +221,24 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
             absent.append(target)
     replacing = targets[0] if len(items) == 1 and replacements else ""
     prepared = None
+    if len(items) == 1 and items[0]["kind"] == "source" and not items[0].get("revision_of"):
+        item = items[0]
+        origin = str((item.get("found_for") or {}).get("session") or ctx.session or "")
+        try:
+            source_plan = staging.prepare_source(_store(ctx), item, kwargs.get("bottom_line") or "",
+                kwargs.get("what_it_solves") or "", "person" if ctx.tier == "curate" else "agent",
+                origin, kwargs.get("fields") or {}, IndexGateway(ctx, include_vectors=False).run)
+        except (Refusal, TypeError) as exc:
+            # Preserve the existing per-item error contract without falling
+            # through to an unplanned mutation after a failed preparation.
+            source_plan = {"item_id": item["id"], "error": exc.detail if isinstance(exc, Refusal) else str(exc),
+                           **({"refused": exc.code} if isinstance(exc, Refusal) else {})}
+        if "error" not in source_plan:
+            targets.extend(source_plan["targets"])
+            observed.extend(source_plan["observed"])
+            if source_plan.get("resuming"):
+                replacing = source_plan["path"]
+        prepared = {"operation": "stage_source", "source_plan": source_plan}
     if len(items) == 1 and items[0]["kind"] == "topic":
         from .. import taxonomy
         topic_plan = taxonomy.prepare_accept(ctx.vault, None, items[0], kwargs.get("fields") or {},
@@ -253,6 +274,22 @@ def staging_decide(ctx: Context, item_ids: list[str],
         if decision != "accept":
             raise TypeError("dry_run rehearses an accept")
         decided_by = "person" if ctx.tier == "curate" else "agent"
+        if len(item_ids) == 1:
+            item = store.load(item_ids[0])
+            if item["kind"] == "source" and not item.get("revision_of"):
+                try:
+                    plan = staging.prepare_source(store, item, bottom_line, what_it_solves, decided_by,
+                        str((item.get("found_for") or {}).get("session") or ctx.session or ""),
+                        fields or {}, IndexGateway(ctx, include_vectors=False).run)
+                    result = {"id": item["id"], "ok": True, "would": "accept", "path": plan["path"],
+                        "coverage": plan["coverage"], "copies": plan["copies"],
+                        "sections": sorted(plan["draft"]["sections"]),
+                        "not_examined": plan["draft"]["fields"].get("not_examined", []),
+                        "originals_retained": [c["source"] for c in plan["copies"]], "problems": [],
+                        **({"file": plan["copies"][0]["destination"]} if plan["copies"] else {})}
+                except (Refusal, TypeError) as exc:
+                    result = {"id": item["id"], "ok": False, "would": "accept", "problems": [str(exc)]}
+                return {"dry_run": True, "results": [result], "would_accept": int(result["ok"])}
         results = with_engine(ctx, lambda engine: [staging.preview(store, engine, i, decided_by, bottom_line,
                                    what_it_solves, fields) for i in item_ids])
         return {"dry_run": True, "results": results,
@@ -267,7 +304,7 @@ def staging_decide(ctx: Context, item_ids: list[str],
                for item in before.values() if (item.get("found_for") or {}).get("session")}
     promotion_session = next(iter(origins)) if len(origins) == 1 else (ctx.session or "")
     legacy_promotion = decision == "accept" and any(
-        not item.get("revision_of") and (item.get("kind") == "source" or
+        not item.get("revision_of") and ((item.get("kind") == "source" and len(before) > 1) or
                                         (item.get("kind") == "topic" and len(before) > 1))
         for item in before.values())
     engine = engine_for(ctx) if legacy_promotion else None
@@ -276,8 +313,10 @@ def staging_decide(ctx: Context, item_ids: list[str],
                              bottom_line, what_it_solves,
                              decided_by="person" if ctx.tier == "curate" else "agent",
                              session=promotion_session, fields=fields,
-                             index_call=None if legacy_promotion else IndexGateway(ctx).run,
+                             index_call=None if legacy_promotion else IndexGateway(ctx,
+                                 include_vectors=prepared.get("operation") != "stage_source").run,
                              topic_plan=prepared.get("topic_plan") if prepared.get("operation") == "stage_topic" else None,
+                             source_plan=prepared.get("source_plan") if prepared.get("operation") == "stage_source" else None,
                              document_leases=ctx.extras.get("document_leases"))
     for result in results:
         if result.get("status") not in ("accepted", "approved", "rejected", "deferred"):

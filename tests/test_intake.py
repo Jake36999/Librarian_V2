@@ -235,6 +235,7 @@ def test_pdf_in_inbox_to_catalogued(library, tmp_path):
     pdf.parent.mkdir(parents=True, exist_ok=True)
     pdf.write_bytes(pdf_bytes([["Write-ahead logging keeps every committed change durable before",
                                 "it is applied to the tables, so recovery can replay the log."]]))
+    original_bytes = pdf.read_bytes()
     c = ctx(library)
     staged = REGISTRY.call("ingest", {"ref": "Inbox/wal-notes.pdf"}, c)
     assert staged["status"] == "staged", staged
@@ -242,7 +243,8 @@ def test_pdf_in_inbox_to_catalogued(library, tmp_path):
     assert result["promotion"]["catalogued"], result
     note = notes.load(library.root / result["promotion"]["path"])
     assert note.frontmatter["file"] == "Sources/document/files/wal-notes.pdf"
-    assert not pdf.exists() and (library.root / note.frontmatter["file"]).exists()
+    assert pdf.read_bytes() == original_bytes  # Single-source accept preserves project/Inbox inputs.
+    assert (library.root / note.frontmatter["file"]).read_bytes() == original_bytes
     found = REGISTRY.call("search", {"query": "replay the log recovery", "intent": "in_text"}, c)
     assert found["results"] and found["results"][0]["fields"]["note"] == "wal-notes"
 

@@ -23,7 +23,10 @@ search missed, and flags the note (`needs_attention`) for maintenance
 from __future__ import annotations
 
 import json
+import hashlib
+import os
 import re
+import secrets
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -235,7 +238,7 @@ def write_master_index(index: Index) -> Path:
 
 # ------------------------------------------------------------------- the job
 
-def _source_material(vault: Vault, engine: Engine, draft: Draft) -> dict:
+def _source_material(vault: Vault, engine: Engine, draft: Draft, existing_path: str = "") -> dict:
     index = engine.index
     name = notes.safe_name(draft.name)
     if not name:
@@ -243,7 +246,8 @@ def _source_material(vault: Vault, engine: Engine, draft: Draft) -> dict:
     if not draft.bottom_line.strip() or not draft.what_it_solves.strip():
         raise TypeError("a Source is promoted with its Bottom Line and What It Solves")
     existing = index.note_row(name)
-    if existing is not None:
+    if existing is not None and not (existing_path and existing["path"] == existing_path
+                                    and existing["shape"] == "source" and existing["kind"] == draft.kind):
         raise Refusal("UNIQUE_NOTE_NAMES", f"{name!r} already exists at {existing['path']}")
     # The kind must be one the vault's own Content Model declares - never
     # "anything, when the model lists none": the kind becomes a folder name,
@@ -338,7 +342,7 @@ class PromotionInterruptedError(RuntimeError):
                          f"{self.completed_paths}; review before retrying")
 
 
-def prepare(vault: Vault, draft: Draft, index_call: Callable) -> dict:
+def prepare(vault: Vault, draft: Draft, index_call: Callable, *, resume: dict | None = None) -> dict:
     """Read-only, invocation-local plan for a *new* source (no attachments)."""
     observed, snapshots = {}, {}
     def snapshot(rel):
@@ -351,10 +355,14 @@ def prepare(vault: Vault, draft: Draft, index_call: Callable) -> dict:
     for rel in (schema.MODEL_PATH.as_posix(), "About/Topics.md", ".librarian/config.toml",
                 ".librarian/agents/routes.json"):
         snapshot(rel)
-    material = index_call(lambda engine: _source_material(vault, engine, draft))
+    material = index_call(lambda engine: _source_material(vault, engine, draft, (resume or {}).get("path", "")))
     rel = material["path"]
     snapshot(rel)
-    if observed[rel] != MISSING:
+    if resume:
+        if (resume.get("path") != rel or resume.get("fingerprint") != observed[rel]
+                or resume.get("linked") != material["linked"]):
+            raise Refusal("DOCUMENT_ACTIVE", "the interrupted source or its concept context changed; review before continuing")
+    elif observed[rel] != MISSING:
         raise Refusal("UNIQUE_NOTE_NAMES", f"{rel} already exists; promotion never replaces an unindexed file")
     topic_path = topic_index_path(vault, material["topic"]).relative_to(vault.root).as_posix()
     targets = [rel, topic_path, "Indexes/Master Index.md"]
@@ -375,7 +383,7 @@ def prepare(vault: Vault, draft: Draft, index_call: Callable) -> dict:
     if any(t != material["topic"] and topic_index_path(vault, t).name.casefold() ==
            Path(topic_path).name.casefold() for t in vault.topics()):
         raise TypeError("source topic collides with another topic's generated filename")
-    return {"operation": "new_source", "draft": asdict(draft), **material,
+    return {"operation": "new_source", "draft": asdict(draft), "resuming": bool(resume), **material,
             "topic_path": topic_path, "concepts": concepts, "targets": targets,
             "observed": list(observed.items())}
 
@@ -409,6 +417,42 @@ class PromotionGuard:
         if self.leases is not None and not rel.startswith("."):
             self.leases.note_core_write([rel])
 
+    def copy(self, source: str, destination: str):
+        """Stream a verified managed copy; never remove the original input."""
+        if destination not in self.targets or source not in self.expected:
+            raise TypeError("attachment copy is not in the prepared plan")
+        self.check()
+        target = self.vault.safe_relative(destination)
+        if self.leases is not None:
+            self.leases.assert_writable([destination])
+        if self.expected[destination] != MISSING:
+            if self.expected[destination] != self.expected[source]:
+                raise PreconditionChangedError(destination)
+            return  # Only an explicitly retained, byte-identical prior copy.
+        target.parent.mkdir(parents=True, exist_ok=True)
+        temp = target.with_name(f".{target.name}.{secrets.token_hex(6)}.tmp")
+        try:
+            digest = hashlib.sha256()
+            with operation_path(self.vault, source).open("rb") as origin, temp.open("xb") as output:
+                for block in iter(lambda: origin.read(1 << 20), b""):
+                    digest.update(block)
+                    output.write(block)
+                output.flush()
+                os.fsync(output.fileno())
+            if digest.hexdigest()[:20] != self.expected[source]:
+                raise PreconditionChangedError(source)
+            self.check()
+            if self.leases is not None:
+                self.leases.assert_writable([destination])
+            os.replace(temp, target)
+            self.expected[destination] = self.expected[source]
+            self.completed.append(destination)
+            if self.leases is not None:
+                self.leases.note_core_write([destination])
+        finally:
+            if temp.exists():
+                temp.unlink()
+
 
 def apply(vault: Vault, draft: Draft, plan: dict, index_call: Callable, *,
           leases=None, guard: PromotionGuard | None = None) -> Report:
@@ -418,7 +462,8 @@ def apply(vault: Vault, draft: Draft, plan: dict, index_call: Callable, *,
     # Admission and uniqueness precede even evidence/Markdown mutations.
     def admission(engine):
         held = engine.index.note_row(plan["name"])
-        if held is not None:
+        if held is not None and not (plan.get("resuming") and held["path"] == plan["path"]
+                                     and held["shape"] == "source" and held["kind"] == draft.kind):
             raise Refusal("UNIQUE_NOTE_NAMES", f"{plan['name']!r} is already catalogued")
     index_call(admission)
     guard = guard or PromotionGuard(vault, plan, leases)

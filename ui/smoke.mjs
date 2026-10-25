@@ -618,6 +618,37 @@ await expect(page.isVisible("dialog.settings input[aria-label='Topic name']").th
 await page.click("dialog.settings button:has-text('Close')");
 step("taxonomy: structured refresh refusal stays visible; stale proposal requires explicit reload before accepting");
 
+// Interrupted source acceptance never turns into automatic re-ingestion or a
+// blind retry. Only the UI response is mocked; no partial note is published.
+const partialSource = { id: "partial-fixture", name: "Partial Source", kind: "source", status: "staged",
+  file: "Project/docs/paper.pdf", evidence_text: "The retained source evidence.",
+  review: { draft: { status: "ok", bottom_line: "The approved wording." } },
+  promotion_progress: { source: { path: "Sources/repository/Partial Source.md" },
+    completed_paths: ["Sources/repository/files/paper.pdf", "Sources/repository/Partial Source.md"] } };
+await page.route("**/api/tool/staging_list", (route) => route.fulfill({ status: 200,
+  contentType: "application/json", body: JSON.stringify({ total: 1, items: [partialSource] }) }));
+await page.route("**/api/tool/staging_show", (route) => route.fulfill({ status: 200,
+  contentType: "application/json", body: JSON.stringify(partialSource) }));
+await page.click(".lib-app nav button:has-text('Staging')");
+await page.click(".staging .seg button:has-text('Sources')");
+await page.waitForSelector(".staging .item:has-text('Partial Source')");
+await page.click(".staging .item:has-text('Partial Source')");
+await page.waitForSelector(".staging .detail button:has-text('Finish acceptance')");
+await expect(page.isVisible(".staging .detail label >> text=Bottom Line (previously approved; review it)"),
+  "retained person-authored text is not misattributed to the clerk");
+await expect(page.isVisible(".staging .detail >> text=Original attachments remain in place"),
+  "the retained originals and incomplete work are visible");
+await expect(page.isVisible(".staging .detail >> text=Rejecting or deferring does not undo"),
+  "deferral/rejection does not promise rollback");
+await expect(page.locator(".staging .detail button:has-text('Approve')").count().then((n) => n === 0),
+  "a partial promotion cannot be re-ingested");
+await expect(page.locator(".staging .detail button:has-text('Redraft')").count().then((n) => n === 0),
+  "the saved approved content is not silently redrafted");
+await page.unroute("**/api/tool/staging_show");
+await page.unroute("**/api/tool/staging_list");
+await page.click(".lib-app nav button:has-text('Chat')");
+step("interrupted source acceptance shows retained originals, completed paths and an explicit finish action");
+
 // Phone width: nothing overflows sideways.
 await page.setViewportSize({ width: 390, height: 800 });
 await expect(page.evaluate(() => document.documentElement.scrollWidth <= 391), "no horizontal scroll at phone width");
