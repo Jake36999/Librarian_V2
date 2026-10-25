@@ -239,7 +239,7 @@ def decide(store: StagingStore, engine: Engine | None, item_ids: list[str], deci
            decided_by: str = "person", session: str = "",
            fields: dict[str, Any] | None = None, *,
            index_call: Callable | None = None, topic_plan: dict | None = None, source_plan: dict | None = None,
-           document_leases=None) -> list[dict[str, Any]]:
+           source_batch: dict | None = None, document_leases=None) -> list[dict[str, Any]]:
     """Accept, reject or defer, one item or a batch. Each item's outcome is
     reported on its own; one refusal does not stop the batch.
 
@@ -262,21 +262,43 @@ def decide(store: StagingStore, engine: Engine | None, item_ids: list[str], deci
         raise TypeError("decide requires an Engine or callback-only index access")
     mode = str(store.vault.setting("promotion", "mode") or "person")
     out = []
+    batch_guard = None
+    if source_batch is not None:
+        from .promote import PromotionGuard
+        batch_guard = PromotionGuard(store.vault, source_batch, document_leases)
     for item_id in item_ids:
         try:
             out.append(_decide_one(store, engine, item_id, decision, reason, bottom_line,
                                    what_it_solves, decided_by, session, mode,
                                    batch=len(item_ids) > 1, fields=fields or {}, index_call=index_call,
-                                   topic_plan=topic_plan, source_plan=source_plan, document_leases=document_leases))
+                                   topic_plan=topic_plan,
+                                   source_plan=(source_batch["plans"].get(item_id) if source_batch is not None else source_plan),
+                                   source_guard=batch_guard, document_leases=document_leases))
         except Refusal as refusal:
-            if (topic_plan is not None or source_plan is not None) and refusal.code == "DOCUMENT_ACTIVE":
+            if (topic_plan is not None or source_plan is not None or source_batch is not None) and refusal.code == "DOCUMENT_ACTIVE":
+                if batch_guard is not None:
+                    refusal.extra.update(completed_paths=list(dict.fromkeys(batch_guard.completed)),
+                                         completed_results=out,
+                                         next_action="Review completed writes and any unrecorded session handoffs before accepting remaining items.")
                 raise  # Surface a Core checkpoint, not a hidden per-item conflict.
-            out.append({"id": item_id, "refused": refusal.code, "detail": refusal.detail})
+            out.append({"id": item_id, "refused": refusal.code, "detail": refusal.detail,
+                        **({"completed_paths": refusal.extra["completed_paths"]}
+                           if refusal.extra.get("completed_paths") else {})})
         except TypeError as exc:
             out.append({"id": item_id, "error": str(exc)})
         except PromotionInterruptedError as exc:
             out.append({"id": item_id, "error": str(exc), "completed_paths": exc.completed_paths,
                         "next_action": "Reload the staged item, inspect completed work, then explicitly finish or reconcile it."})
+        except Exception as exc:
+            if source_batch is None:
+                raise
+            # A stopped Core/service or failed admission must not hide earlier
+            # committed decisions, attempt later items, or leak provider text.
+            out.append({"id": item_id, "error": f"source batch interrupted ({type(exc).__name__})",
+                        "completed_paths": list(dict.fromkeys(batch_guard.completed))})
+            for remaining in item_ids[len(out):]:
+                out.append({"id": remaining, "error": "not run: source batch interrupted; review before trying again"})
+            break
     return out
 
 
@@ -403,7 +425,7 @@ def _attachment_path(vault: Vault, rel: str) -> Path:
 
 
 def prepare_source(store, item, bottom_line, what_it_solves, decided_by, session,
-                   fields, index_call) -> dict:
+                   fields, index_call, *, reserved_destinations=()) -> dict:
     """Single-source pre-approval preparation; originals are never relocated."""
     from . import dik, promote as promotion
     from .coordination import MISSING, fingerprint, fingerprint_bytes, operation_path
@@ -434,7 +456,7 @@ def prepare_source(store, item, bottom_line, what_it_solves, decided_by, session
     draft, coverage = _source_draft(store, item, bottom_line, what_it_solves, decided_by,
                                      progress.get("session", session),
                                      fields, False, index_call)
-    copies, reserved = [], set()
+    copies, reserved = [], set(reserved_destinations)
     for key in ("file", "clean_file"):
         if not item.get(key):
             continue
@@ -489,7 +511,47 @@ def prepare_source(store, item, bottom_line, what_it_solves, decided_by, session
     return plan
 
 
-def _accept_prepared_source(store, item, plan, index_call, leases, entry):
+def prepare_source_batch(store, items: list[dict], decided_by: str, session: str,
+                         index_call) -> dict:
+    """One bounded source-only acceptance inventory, prepared before approval.
+
+    A shared guard advances only hashes of our own durable writes, never a
+    fresh fingerprint of arbitrary content after a prior item. Source plans
+    still render current generated backlinks/views on the Core SQL worker.
+    """
+    targets, observed, plans, reserved, names = [], {}, {}, set(), set()
+    for item in items:
+        item_id = item["id"]
+        if item_id in plans:
+            continue  # The second decision still reports "already accepted".
+        try:
+            if item.get("promotion_progress"):
+                raise TypeError("review and finish interrupted source acceptance one item at a time")
+            plan = prepare_source(store, item, "", "", decided_by,
+                str((item.get("found_for") or {}).get("session") or session or ""), {}, index_call,
+                reserved_destinations=reserved)
+            if plan["name"].casefold() in names:
+                raise Refusal("UNIQUE_NOTE_NAMES", "another source in this batch has the same destination; accept it separately")
+        except (Refusal, TypeError) as exc:
+            plans[item_id] = {"item_id": item_id,
+                "error": exc.detail if isinstance(exc, Refusal) else str(exc),
+                **({"refused": exc.code} if isinstance(exc, Refusal) else {})}
+            continue
+        for path, stamp in plan["observed"]:
+            if path in observed and observed[path] != stamp:
+                raise Refusal("DOCUMENT_ACTIVE", "a shared source-batch dependency changed during preparation")
+            observed[path] = stamp
+        names.add(plan["name"].casefold())
+        reserved.update((store.vault.root / c["destination"]).as_posix().casefold() for c in plan["copies"])
+        targets.extend(plan["targets"])
+        plans[item_id] = plan
+    if len(observed) > 200:
+        raise TypeError("source batch exceeds the 200-file recovery bound; accept it in smaller groups")
+    return {"operation": "new_sources", "plans": plans,
+            "targets": list(dict.fromkeys(targets)), "observed": list(observed.items())}
+
+
+def _accept_prepared_source(store, item, plan, index_call, leases, entry, guard=None):
     from . import promote as promotion
     from .coordination import fingerprint, operation_path
     if plan.get("error"):
@@ -498,7 +560,9 @@ def _accept_prepared_source(store, item, plan, index_call, leases, entry):
         raise TypeError(plan["error"])
     if plan.get("item_id") != item["id"]:
         raise TypeError("source acceptance requires its own prepared plan")
-    guard = promotion.PromotionGuard(store.vault, plan, leases)
+    index_call(lambda current: None)  # Each item checks Core admission before copying.
+    guard = guard or promotion.PromotionGuard(store.vault, plan, leases)
+    start = len(guard.completed)
     try:
         for copy in plan["copies"]:
             guard.copy(copy["source"], copy["destination"])
@@ -512,11 +576,11 @@ def _accept_prepared_source(store, item, plan, index_call, leases, entry):
         if item.get("promotion_progress"):
             item["promotion_progress"]["completed_at"] = now_iso()
         item["history"].append(entry)
-        store.save(item)
+        guard.write(plan["state_path"], json.dumps(item, ensure_ascii=False, indent=1))
         return {"id": item["id"], "status": "accepted", "coverage": plan["coverage"], "promotion": report.to_dict(),
                 "originals_retained": [c["source"] for c in plan["copies"]]}
     except Exception as exc:
-        completed = list(dict.fromkeys(guard.completed))
+        completed = list(dict.fromkeys(guard.completed[start:]))
         state = plan["state_path"]
         if completed and fingerprint(operation_path(store.vault, state)) == guard.expected[state]:
             fresh = store.load(item["id"])
@@ -530,20 +594,27 @@ def _accept_prepared_source(store, item, plan, index_call, leases, entry):
             fresh["fields"], fresh["sections"] = plan["draft"]["fields"], plan["draft"]["sections"]
             fresh.setdefault("history", []).append({**entry, "decision": "partial_accept", "completed_paths": completed})
             try:
-                store.save(fresh)
+                # Recording progress must not overwrite an outside staged edit.
+                # Other conflicted documents need not be rewritten or rebased.
+                text = json.dumps(fresh, ensure_ascii=False, indent=1)
+                atomic_write_text(operation_path(store.vault, state), text)
+                from .coordination import fingerprint_bytes
+                guard.expected[state] = fingerprint_bytes(text.encode("utf-8"))
+                guard.completed.append(state)
             except OSError:
                 pass  # Existing durable operation recovery covers ambiguous persistence.
         if isinstance(exc, Refusal):
             exc.extra["completed_paths"] = completed
             raise
         if isinstance(exc, promotion.PromotionInterruptedError):
-            raise
+            raise promotion.PromotionInterruptedError(exc, completed) from exc
         raise promotion.PromotionInterruptedError(exc, completed) from exc
 
 
 def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_solves,
                 decided_by, session, mode, batch, fields: dict[str, Any] | None = None,
                 index_call: Callable | None = None, topic_plan: dict | None = None, source_plan: dict | None = None,
+                source_guard=None,
                 document_leases=None
                 ) -> dict[str, Any]:
     item = store.load(item_id)
@@ -664,7 +735,7 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         return {"id": item_id, "status": "accepted", "path": path}
 
     if source_plan is not None:
-        return _accept_prepared_source(store, item, source_plan, index_call, document_leases, entry)
+        return _accept_prepared_source(store, item, source_plan, index_call, document_leases, entry, source_guard)
     if item.get("promotion_progress"):
         raise TypeError("review and finish interrupted source acceptance one item at a time")
     draft, coverage = _source_draft(store, item, bottom_line, what_it_solves, decided_by, session,

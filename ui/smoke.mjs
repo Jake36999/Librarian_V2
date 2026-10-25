@@ -625,6 +625,14 @@ const partialSource = { id: "partial-fixture", name: "Partial Source", kind: "so
   review: { draft: { status: "ok", bottom_line: "The approved wording." } },
   promotion_progress: { source: { path: "Sources/repository/Partial Source.md" },
     completed_paths: ["Sources/repository/files/paper.pdf", "Sources/repository/Partial Source.md"] } };
+let explicitFinishes = 0;
+await page.route("**/api/tool/staging_decide", (route) => {
+  explicitFinishes += 1;
+  return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+    accepted: 1, results: [{ id: partialSource.id, status: "accepted", coverage: "captured",
+      originals_retained: [partialSource.file], promotion: { catalogued: true },
+      handoff_warning: { status: "not_recorded", error: "SESSION_REQUIRED" } }] }) });
+});
 await page.route("**/api/tool/staging_list", (route) => route.fulfill({ status: 200,
   contentType: "application/json", body: JSON.stringify({ total: 1, items: [partialSource] }) }));
 await page.route("**/api/tool/staging_show", (route) => route.fulfill({ status: 200,
@@ -644,6 +652,13 @@ await expect(page.locator(".staging .detail button:has-text('Approve')").count()
   "a partial promotion cannot be re-ingested");
 await expect(page.locator(".staging .detail button:has-text('Redraft')").count().then((n) => n === 0),
   "the saved approved content is not silently redrafted");
+await expect(explicitFinishes === 0, "opening partial work never accepts it automatically");
+await page.click(".staging .detail button:has-text('Finish acceptance')");
+await page.waitForSelector(".staging .detail >> text=Session handoff was not recorded");
+await expect(explicitFinishes === 1, "only the deliberate finish sends an acceptance");
+await expect(page.isVisible(".staging .detail >> text=Attachments were copied; originals remain in place"),
+  "finishing retains original attachments and keeps a missing-session warning separate");
+await page.unroute("**/api/tool/staging_decide");
 await page.unroute("**/api/tool/staging_show");
 await page.unroute("**/api/tool/staging_list");
 await page.click(".lib-app nav button:has-text('Chat')");

@@ -356,6 +356,7 @@ export class Staging {
             : r.promotion && !r.promotion.catalogued ? `Accepted: ${r.promotion.status}.` : `Accepted into the library and catalogued (coverage: ${r.coverage ?? "unknown"}).`) +
             (r.handoff ? " It joins your session as an undecided candidate." : "")
             + (r.originals_retained?.length ? " Attachments were copied; originals remain in place." : "")
+            + (r.handoff_warning ? " Session handoff was not recorded; the library decision remains saved. Review the original session." : "")
           : decision === "approve" ? "Approved for ingestion: it waits for the batch above. Nothing is in the library yet."
           : decision === "reject" ? "Rejected." : "Deferred.";
         this.selected = "";

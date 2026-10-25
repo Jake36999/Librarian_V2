@@ -178,7 +178,8 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
     """Selected staging writes: explicit paths, checked before any approval.
 
     Single new-source acceptance includes managed attachment copies and views.
-    Multi-item source/topic promotion remains an explicitly legacy path.
+    Source-only batches share a bounded guard; mixed source/topic promotion
+    remains an explicitly legacy path.
     """
     if kwargs.get("dry_run") or kwargs.get("decision") != "accept":
         return None
@@ -221,7 +222,26 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
             absent.append(target)
     replacing = targets[0] if len(items) == 1 and replacements else ""
     prepared = None
-    if len(items) == 1 and items[0]["kind"] == "source" and not items[0].get("revision_of"):
+    source_batch = len(kwargs.get("item_ids") or []) > 1 and items and all(
+        i["kind"] == "source" and not i.get("revision_of") for i in items)
+    if source_batch:
+        if kwargs.get("fields") or kwargs.get("bottom_line") or kwargs.get("what_it_solves"):
+            raise TypeError("a batch accept cannot share prose or field corrections; accept items individually")
+        batch = staging.prepare_source_batch(_store(ctx), items,
+            "person" if ctx.tier == "curate" else "agent", ctx.session or "",
+            IndexGateway(ctx, include_vectors=False).run)
+        # Initial staged snapshots include invalid/preflight-failed items too.
+        initial = dict(observed)
+        for path, stamp in batch["observed"]:
+            if path in initial and initial[path] != stamp:
+                raise Refusal("DOCUMENT_ACTIVE", "a staged source changed during batch preparation")
+        batch["observed"] = list(dict([*observed, *batch["observed"]]).items())
+        if len(batch["observed"]) > 200:
+            raise TypeError("source batch exceeds the 200-file recovery bound; accept it in smaller groups")
+        targets.extend(batch["targets"])
+        observed = batch["observed"]
+        prepared = {"operation": "stage_sources", "source_batch": batch}
+    elif len(items) == 1 and items[0]["kind"] == "source" and not items[0].get("revision_of"):
         item = items[0]
         origin = str((item.get("found_for") or {}).get("session") or ctx.session or "")
         try:
@@ -274,6 +294,33 @@ def staging_decide(ctx: Context, item_ids: list[str],
         if decision != "accept":
             raise TypeError("dry_run rehearses an accept")
         decided_by = "person" if ctx.tier == "curate" else "agent"
+        if len(item_ids) > 1:
+            items = []
+            for item_id in item_ids:
+                try:
+                    items.append(store.load(item_id))
+                except TypeError:
+                    pass
+            if items and all(i["kind"] == "source" and not i.get("revision_of") for i in items):
+                if fields or bottom_line or what_it_solves:
+                    raise TypeError("a batch accept cannot share prose or field corrections; accept items individually")
+                batch = staging.prepare_source_batch(store, items, decided_by, ctx.session or "",
+                    IndexGateway(ctx, include_vectors=False).run)
+                results, seen = [], set()
+                for item_id in item_ids:
+                    plan = batch["plans"].get(item_id, {"error": "no staged item with this ID"})
+                    if item_id in seen:
+                        plan = {"error": "duplicate staged item ID; only the first decision can accept it"}
+                    seen.add(item_id)
+                    results.append({"id": item_id, "would": "accept", "ok": "error" not in plan,
+                        **({"problems": [plan["error"]]} if "error" in plan else {
+                            "path": plan["path"], "coverage": plan["coverage"], "copies": plan["copies"],
+                            "sections": sorted(plan["draft"]["sections"]), "problems": [],
+                            "not_examined": plan["draft"]["fields"].get("not_examined", []),
+                            **({"file": plan["copies"][0]["destination"]} if plan["copies"] else {}),
+                            "originals_retained": [c["source"] for c in plan["copies"]]})})
+                return {"dry_run": True, "results": results,
+                        "would_accept": sum(int(r["ok"]) for r in results)}
         if len(item_ids) == 1:
             item = store.load(item_ids[0])
             if item["kind"] == "source" and not item.get("revision_of"):
@@ -303,20 +350,21 @@ def staging_decide(ctx: Context, item_ids: list[str],
     origins = {str((item.get("found_for") or {}).get("session") or "")
                for item in before.values() if (item.get("found_for") or {}).get("session")}
     promotion_session = next(iter(origins)) if len(origins) == 1 else (ctx.session or "")
-    legacy_promotion = decision == "accept" and any(
+    prepared = ctx.extras.get("_prepared_write") or {}
+    legacy_promotion = decision == "accept" and prepared.get("operation") != "stage_sources" and any(
         not item.get("revision_of") and ((item.get("kind") == "source" and len(before) > 1) or
                                         (item.get("kind") == "topic" and len(before) > 1))
         for item in before.values())
     engine = engine_for(ctx) if legacy_promotion else None
-    prepared = ctx.extras.get("_prepared_write") or {}
     results = staging.decide(store, engine, item_ids, decision, reason,
                              bottom_line, what_it_solves,
                              decided_by="person" if ctx.tier == "curate" else "agent",
                              session=promotion_session, fields=fields,
                              index_call=None if legacy_promotion else IndexGateway(ctx,
-                                 include_vectors=prepared.get("operation") != "stage_source").run,
+                                 include_vectors=prepared.get("operation") not in ("stage_source", "stage_sources")).run,
                              topic_plan=prepared.get("topic_plan") if prepared.get("operation") == "stage_topic" else None,
                              source_plan=prepared.get("source_plan") if prepared.get("operation") == "stage_source" else None,
+                             source_batch=prepared.get("source_batch") if prepared.get("operation") == "stage_sources" else None,
                              document_leases=ctx.extras.get("document_leases"))
     for result in results:
         if result.get("status") not in ("accepted", "approved", "rejected", "deferred"):
@@ -335,6 +383,10 @@ def staging_decide(ctx: Context, item_ids: list[str],
         brief = (item.get("found_for") or {}).get("brief", "")
         try:
             session_store = SessionStore(ctx.vault)
+            # Do not create a library-item-only log when its original session
+            # has disappeared. Promotion is already durable; report the missing
+            # handoff without losing the acceptance result or inventing a thread.
+            session_store.load(session_id)
             session_store.append(session_id, {"type": "library_item", "id": item_id,
                 "source": item["name"], "status": result["status"], "path": path,
                 "brief": brief})
@@ -353,8 +405,10 @@ def staging_decide(ctx: Context, item_ids: list[str],
                                      "next": f"in judge: decide(source={note!r}, "
                                              f"disposition=keep|reject, role=...)"}
             result["session"] = session_store.load(session_id).envelope(ctx.vault)
-        except (TypeError, OSError):
-            pass
+        except (Refusal, TypeError, OSError) as exc:
+            result["handoff_warning"] = {"status": "not_recorded",
+                "error": exc.code if isinstance(exc, Refusal) else type(exc).__name__,
+                "next": "The library decision remains durable; inspect the original session before recording its handoff."}
     return {"results": results,
             "accepted": sum(1 for r in results if r.get("status") == "accepted"),
             "not_findable": [r["id"] for r in results if r.get("promotion")
