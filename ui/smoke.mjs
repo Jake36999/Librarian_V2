@@ -42,7 +42,7 @@ await Promise.all([
   page.waitForResponse((r) => r.url().endsWith("/api/tiers") && r.request().method() === "POST"),
   page.click("#lib-models section:has-text('Local server') .card")]);
 // R10: no lead has completed the M0 suite yet, so leading asks for a recorded override.
-await page.waitForSelector("#lib-models >> text=has not completed the M0 completion suite");
+await page.waitForSelector("#lib-models >> text=has not completed the lead qualification suite");
 await Promise.all([
   page.waitForResponse((r) => r.url().endsWith("/api/tiers") && r.status() === 200),
   page.click("#lib-models button:has-text('Use it as lead anyway')")]);
@@ -435,7 +435,10 @@ await page.click(".toolbar .tb:nth-child(4)");
 await page.waitForSelector("#lib-models section:has-text('DeepInfra') .card");
 await expect(page.isVisible("#lib-models .card:has-text('acme/no-tools-model') >> text=no tool calling"),
   "a profiled model shows its real specs, not 'unprofiled'");
-await page.click("#lib-models button:has-text('Clear selection')");    // start the gate check with no tier chosen
+await Promise.all([
+  page.waitForResponse((r) => r.url().endsWith("/api/tiers") && r.status() === 200),
+  page.click("#lib-models button:has-text('Clear selection')")]);
+await page.waitForSelector("#lib-models .slot:first-child >> text=not chosen");
 await page.click("#lib-models .card:has-text('acme/no-tools-model')");
 await page.waitForSelector("#lib-models .toast >> text=can't lead a session");
 await expect(page.locator("#lib-models .slot").first().innerText().then((t) => t.includes("not chosen")),
