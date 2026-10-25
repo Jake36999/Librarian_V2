@@ -1,0 +1,14 @@
+{
+ "model": "m-1",
+ "max_tokens": 4096,
+ "messages": [
+  {
+   "role": "system",
+   "content": "Be brief."
+  },
+  {
+   "role": "user",
+   "content": "hi"
+  }
+ ]
+}

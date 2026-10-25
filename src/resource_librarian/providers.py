@@ -447,67 +447,22 @@ class OpenAICompatible(Provider):
 
     @staticmethod
     def wire_messages(system: str, messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        out: list[dict[str, Any]] = [{"role": "system", "content": system}] if system else []
-        for m in messages:
-            if m["role"] == "assistant" and m.get("tool_calls"):
-                assistant = {"role": "assistant", "content": m.get("content") or None,
-                             "tool_calls": [{"id": c["id"], "type": "function",
-                                             "function": {"name": c["name"],
-                                                          "arguments": json.dumps(c["arguments"])}}
-                                            for c in m["tool_calls"]]}
-                # ``reasoning_content`` is a provider continuation field, not
-                # generic system context. Render it only on the exact
-                # assistant tool-call message that produced it.
-                if isinstance(m.get("reasoning_content"), str) and m["reasoning_content"]:
-                    assistant["reasoning_content"] = m["reasoning_content"]
-                out.append(assistant)
-            elif m["role"] == "tool":
-                out.append({"role": "tool", "tool_call_id": m["tool_call_id"],
-                            "content": m["content"]})
-            else:
-                out.append({"role": m["role"], "content": m.get("content") or ""})
-        return out
+        # Thin delegation kept so existing callers (OpenAICompatible.wire_messages)
+        # continue to work without importing the adapter directly.
+        from .adapters.openai_chat import OpenAIChatAdapter
+        return OpenAIChatAdapter.wire_messages(system, messages)
 
     def chat(self, system: str, messages: list[dict[str, Any]], tools: list[ToolDef],
              max_tokens: int = 4096, temperature: float | None = None) -> Reply:
         if not self.model:
             raise ProviderError(f"no model chosen for {self.name}", category="route_configuration")
-        body: dict[str, Any] = {"model": self.model, "max_tokens": max_tokens,
-                                "messages": self.wire_messages(system, messages)}
-        if temperature is not None:
-            body["temperature"] = temperature
-        if tools:
-            body["tools"] = [{"type": "function", "function": {
-                "name": t.name, "description": t.description, "parameters": t.parameters}}
-                for t in tools]
+        # Import inside the method to avoid a circular import at module level.
+        from .adapters.openai_chat import OpenAIChatAdapter
+        body = OpenAIChatAdapter.render(self.model, system, messages, tools,
+                                        max_tokens=max_tokens, temperature=temperature)
         reply = _request("POST", f"{self.base_url}/chat/completions", self._headers(), body,
                          self.timeout)
-        choice = (reply.get("choices") or [{}])[0]
-        message = choice.get("message") or {}
-        calls = []
-        for call in message.get("tool_calls") or []:
-            function = call.get("function") or {}
-            try:
-                arguments = json.loads(function.get("arguments") or "{}")
-            except json.JSONDecodeError:
-                arguments = {"_unparsed": function.get("arguments")}
-            calls.append(ToolCall(str(call.get("id") or synthetic_call_id()),
-                                  str(function.get("name") or ""),
-                                  arguments if isinstance(arguments, dict) else {}))
-        text = message.get("content") if isinstance(message.get("content"), str) else ""
-        # A missing response identity must remain missing.  Substituting the
-        # requested model would turn absence into a false match in the
-        # invocation runtime's exact-route evidence.
-        observed_model = str(reply.get("model") or "")
-        stop = str(choice.get("finish_reason") or "")
-        usage = _safe_usage(reply.get("usage"))
-        request_id = _safe_request_id(getattr(reply, "request_id", ""))
-        if not text and not calls and stop == "length":
-            raise OutputBudgetError(observed_model=observed_model, stop_reason=stop,
-                                    usage=usage, request_id=request_id)
-        reasoning = message.get("reasoning_content")
-        return Reply(text, calls, observed_model, stop, usage, request_id,
-                     reasoning if calls and isinstance(reasoning, str) else "")
+        return OpenAIChatAdapter.parse(reply)
 
 
 # ------------------------------------------------------------------ Anthropic

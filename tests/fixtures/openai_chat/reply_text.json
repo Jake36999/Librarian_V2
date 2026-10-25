@@ -1,0 +1,13 @@
+{
+ "text": "hello",
+ "tool_calls": [],
+ "model": "m-1",
+ "stop": "stop",
+ "usage": {
+  "input_tokens": 3,
+  "output_tokens": 1,
+  "total_tokens": 4
+ },
+ "request_id": "",
+ "reasoning_content": ""
+}

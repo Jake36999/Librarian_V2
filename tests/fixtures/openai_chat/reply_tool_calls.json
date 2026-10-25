@@ -1,0 +1,29 @@
+{
+ "text": "",
+ "tool_calls": [
+  {
+   "id": "t1",
+   "name": "lookup",
+   "arguments": {
+    "q": 1
+   }
+  },
+  {
+   "id": "t2",
+   "name": "lookup",
+   "arguments": {
+    "_unparsed": "not json"
+   }
+  },
+  {
+   "id": "t3",
+   "name": "lookup",
+   "arguments": {}
+  }
+ ],
+ "model": "m-1",
+ "stop": "tool_calls",
+ "usage": {},
+ "request_id": "",
+ "reasoning_content": "because"
+}
