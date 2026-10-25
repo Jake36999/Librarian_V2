@@ -1023,3 +1023,39 @@ qualification was performed. Nothing has been pushed. Next: multi-item
 source/topic inventory and migration, then runtime ownership enforcement/stress
 and adapter completion; adoption/dedupe, Session harness and integrated release
 acceptance remain open.
+
+### Source-only acceptance batches, 2026-10-25
+
+Source-only batches now use Core callbacks and a shared guarded mutation plan,
+not the direct-engine/move-attachment path. Copy destinations are reserved
+across items before approval; duplicate source names are checked across kinds.
+Shared snapshots must agree and the combined operation must fit the existing
+200-file recovery bound. Previously committed batch writes advance only their
+known hashes, so subsequent source/view/concept writes preserve earlier links
+without rebasing human edits. Each item keeps its original session provenance.
+
+Initial conflicts block before copying. Mid-operation conflicts stop the
+remaining items and expose completed results/paths in the existing checkpoint
+flow. Caught per-item IO failures retain item-local progress, allowing unchanged
+items to finish; a stopped index stops later inputs without fallback. Partial
+promotion still requires individual person review. Missing origin sessions
+produce a separate handoff warning instead of an orphan log or a lost accepted
+result. The shared UI shows this warning and does not auto-finish partial work.
+
+This is a bounded writer operation, not a transaction, automatic recovery,
+global dedupe or in-flight provider cancellation. Encoder IO can still occupy
+the actor. The static debt count remains **3**: staging's mixed-kind/multi-topic
+path plus graph/extract's explicit offline branches. INDEX-04 enforcement,
+INDEX-05 stress, fresh-item quarantine relocation and the adapter/adoption/
+harness/release tasks are still open. The next staging slice must compose
+taxonomy changes with source plans without silently changing approved scope.
+No paid provider calls or new model qualification were performed; nothing was
+pushed. See `staging-write-safety.md` for the current scope and failure limits.
+
+**204 focused tests passed**, including 22 new source-batch checks. Browser
+build and expanded smoke passed. Full-array rehashing remains a documented
+large-attachment performance limit, not a claimed throughput improvement.
+Implementation: `c48e6a0`. The final frozen-source full run passed **1,188 tests,
+2 skipped, 1 deselected in 439.18s**. Local output:
+`tmp/source-batch-full-2026-10-25-02.log`; exact verification commands and scope
+are in `regression-manifest.md`. No broader release-gate closure is claimed.

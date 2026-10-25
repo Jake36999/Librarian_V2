@@ -55,7 +55,8 @@ ID/kind must match the loaded file.
 | V1 import | One new explicit target note | Staged dependency; destination snapshot/missing guard; target lease | Core callback |
 | Lens | Separate lens store, plus staged lifecycle record | Staged dependency; serialized acceptance | Separate SQLite store; INDEX-05 review remains |
 | Single new source | Source note, managed attachment copies, concept backlinks, topic/master indexes, optional vectors, staged record | Reviewed staged bytes; complete target/dependency plan; per-write CAS/leases; explicit interrupted-acceptance progress | Core callback |
-| New sources in multi-item batches | Same promotion effects, legacy attachment relocation | Staged dispatch dependency only; **multi-target protection unfinished** | Legacy engine path |
+| Source-only new-source batches | Source notes, managed attachment copies, shared concept backlinks and topic/master views, staged records | Complete bounded pre-approval plan; one shared own-write guard; reserved copy destinations; per-item progress/results | Core callback |
+| New sources in mixed-kind batches | Same promotion effects, legacy attachment relocation | Staged dispatch dependency only; **multi-target protection unfinished** | Legacy engine path |
 | Single topic acceptance | `About/Topics.md`, optional source refiling, topic/master indexes, staged record | Staged review token; prepared target/dependency CAS; per-write guards; retained partial progress | Core callback |
 | Topic acceptance in mixed/multi-item batches | Same taxonomy effects | Staged dispatch dependency; per-write domain guards, but **pre-approval multi-target inventory unfinished** | Legacy engine path |
 | `refile_source` | Changed source frontmatter and old/new topic/master indexes | Prepared note bytes and target/dependency CAS; per-write guards | Core callback |
@@ -203,8 +204,9 @@ Embedding failures remain visible as `needs_attention` rather than losing an
 already-written Source or claiming complete findability.
 
 This catalogue packet initially applied the new shared boundary to **catalogue
-adoption only**. The single-source continuation below also uses it; multi-item
-source/topic acceptance still retains a legacy serving path. Catalogue encoder IO releases SQLite, but
+adoption only**. The single-source and source-only batch continuations below
+also use it; mixed-kind and multi-topic acceptance still retain a legacy
+serving path. Catalogue encoder IO releases SQLite, but
 still runs within that entry's writer operation; transport cancellation and
 writer-release restructuring remain separate work. File/index/evidence writes
 are not one cross-resource transaction, and partial work requires explicit
@@ -233,7 +235,7 @@ attachments into `Sources/<kind>/files/`. Original project/Inbox/staging files
 remain in place. Existing destination files are never reused for a first
 acceptance, even if identical; a numbered destination is selected instead.
 This is source-preservation behavior, not the future deployment/dedupe system.
-It deliberately differs from multi-item and offline legacy relocation, which
+It deliberately differs from mixed-kind and offline legacy relocation, which
 are still debt. No background cleanup of retained originals is performed.
 
 Copies stream through a same-directory temporary file, check the input digest
@@ -288,10 +290,10 @@ the exact command, final UI-only verification ordering and local full-run log.
 
 ## Remaining limits
 
-- Multi-item new-source and mixed/batch topic promotion need a resolved mutation plan
+- Mixed-kind and multi-topic promotion need a resolved mutation plan
   including attachment destinations, generated views and linked concept notes.
   Do not wrap the complete promotion in an index callback: it writes files and
-  may run vector IO. Legacy multi-item/offline attachment movement remains debt.
+  may run vector IO. Legacy mixed-kind/offline attachment movement remains debt.
 - Rejecting a fresh, non-partial source still uses the legacy quarantine/move
   path. The originals-retained guarantee above applies to single-source accept
   and subsequent partial-work decisions, not every ingestion/rejection path.
@@ -300,7 +302,7 @@ the exact command, final UI-only verification ordering and local full-run log.
   unseen partial batch; no automatic resolution or merge is performed.
 - CAS, per-write checks and editor heartbeats are not an OS lock on Obsidian.
   A narrow check-to-replacement race remains possible with external writers.
-  Multi-item promotion still needs the single-item interruption boundaries.
+  Mixed-kind/multi-topic promotion still needs the guarded interruption boundaries.
 - Filesystem/index updates are not a multi-resource transaction. Interrupted
   operations use existing recovery checkpoints, not automatic replay or a
   promise of exactly-once acceptance.
@@ -324,3 +326,63 @@ Taxonomy implementation: `fc58af2`; **145 focused tests**, **1,084 passed,
 2 skipped, 1 deselected** in the full suite, plus UI build/browser smoke. The
 static direct-index construction debt falls **8 → 6**; the single-owner release
 gate is not yet closed.
+
+## Source-only acceptance batches
+
+The registered `staging_decide` now uses Core callbacks for batches consisting
+only of new-source items (invalid IDs still get individual errors). All valid
+source plans are resolved before approval. Raw and cleaned copy destinations
+are reserved across the batch without writing files; previews use the same
+reservation logic. Duplicate note names are refused across source kinds, not
+just within a folder. A batch cannot share one item's edited prose/fields;
+review those individually, as before. Interrupted promotions also still
+require individual person review rather than a bulk finish shortcut.
+
+The combined inventory includes each staged snapshot and all source, view,
+concept, attachment and policy dependencies. Inconsistent shared snapshots
+refuse during preparation; the existing **200-file** recovery bound applies
+to the whole operation, not independently to each item. Smaller groups are
+required when the combined inventory exceeds it. This is a bounded serialized
+operation, not a new queue or a cross-item transaction.
+
+One shared guard checks this inventory throughout execution. Its expected
+fingerprints advance only to known bytes written by this operation. It does
+not refresh arbitrary fingerprints to make the next item's plan pass. This
+lets later source writes render current backlinks/views without losing earlier
+sources or human concept prose. Final staged-state writes advance that same
+guard, so prior successful decisions do not appear to be external conflicts.
+
+An initial lease or stale approval blocks before any copy. A later external
+edit stops remaining work and returns `completed_paths`, `completed_results`
+and a normal conflict checkpoint. A conflict can precede the final session
+handoff pass: review those handoffs as well before retrying remaining items.
+Caught per-item IO errors retain only that item's partial progress; unchanged
+other items can finish. A stopped service aborts later items without copying
+their inputs and retains earlier decisions. Nothing is automatically retried,
+rolled back, promoted, rerouted or marked as research kept.
+
+Every source keeps its own origin session, rather than inheriting a shared
+batch origin. A missing origin session no longer creates a log lacking an
+opening event or hides accepted results. The source's provenance remains
+unchanged; a structured `handoff_warning` asks for session inspection, and the
+shared UI distinguishes that warning from the durable library decision.
+
+The static construction debt remains **3**: mixed-kind/multi-topic staging
+acceptance (one serving site) and graph/extract's explicit offline branches
+(two). Full runtime ownership enforcement, Windows concurrency stress,
+fresh-item quarantine relocation and encoder/transport writer waits remain
+open. The source-only path preserves originals; this is not deployment-wide
+deduplication or an all-path source-preservation guarantee.
+
+The conservative shared guard currently rehashes the combined dependency set
+at each write. Large-PDF batches can therefore be I/O-heavy even below the
+200-file bound; use smaller groups. No batch throughput improvement is claimed.
+Optimizing this requires measured per-item write receipts/preconditions, not
+replacing content hashes with unchecked stat-based rebasing.
+
+Verification: **204 focused tests passed**, including **22 new batch checks**;
+UI build and expanded browser smoke passed, preserving the picker and normal
+staging flows and checking explicit finish plus the missing-session warning.
+Implementation: `c48e6a0`. Frozen-source full suite: **1,188 passed, 2 skipped,
+1 deselected in 439.18s**. Exact command and local final log are recorded in
+`regression-manifest.md`. No live/paid provider evaluation was performed.
