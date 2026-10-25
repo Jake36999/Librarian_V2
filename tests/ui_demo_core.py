@@ -61,6 +61,8 @@ REGISTRY.call("task_add", {"note": "duckdb", "text": "review the changelog"}, _a
 # Test Directive A2 (2026-10-01): three more flows the smoke check walks.
 from resource_librarian.staging import StagingStore
 _store = StagingStore(vault)
+_store.add({"id": "topic-smoke-safe", "kind": "topic", "name": "Smoke Topics",
+            "what_belongs": "sources reviewed in the UI smoke walk", "members": ["osquery"]})
 # (a) a staged revision of an accepted note: its banner, and Accept merging it
 _store.add({"id": "rev-osquery", "kind": "source", "status": "staged", "source_kind": "repository",
             "name": "osquery (whole text read)", "revision_of": "Sources/repository/osquery.md",

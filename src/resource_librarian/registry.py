@@ -22,7 +22,7 @@ from __future__ import annotations
 import inspect
 import types
 import typing
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Callable
 
 from .rules import Refusal
@@ -317,7 +317,7 @@ class Registry:
         if hooks and name in self._tools and self._tools[name].sessionless:
             hooks = None
         adjusted: list[str] = []
-        permission, kwargs = "no broker", None
+        permission, kwargs, intent = "no broker", None, None
         try:
             effective = _profile_tier(ctx)
             spec = self.check(name, effective)
@@ -371,7 +371,14 @@ class Registry:
                 # index mutex around a whole tool would deadlock those paths.
                 # SQLite-owning implementation code uses the Core's
                 # IndexService explicitly for its short transaction instead.
-                out = spec.fn(ctx, **kwargs)
+                execution_ctx = ctx
+                if intent is not None and intent.prepared is not None:
+                    # No shared-context mutation: concurrent calls cannot swap
+                    # prepared file contents while one waits for permission.
+                    import copy
+                    execution_ctx = replace(ctx, extras={**ctx.extras,
+                        "_prepared_write": copy.deepcopy(intent.prepared)})
+                out = spec.fn(execution_ctx, **kwargs)
                 if intent is not None and intent.note and isinstance(out, dict):
                     # Issued inside the operation, so it vouches for exactly
                     # what this call wrote and nothing written after it.
@@ -425,9 +432,16 @@ class Registry:
                 checkpoints = ctx.extras.get("checkpoints")
                 if checkpoints is not None:
                     try:
+                        evidence = {"tool": name, "arguments": arguments or {}}
+                        completed = refusal.extra.get("completed_paths")
+                        if intent is not None and isinstance(completed, list):
+                            # Only already-declared targets, never arbitrary
+                            # provider/error payloads. Keep these separate from
+                            # the short checkpoint title so partial work is visible.
+                            evidence["completed_paths"] = [path for path in intent.targets if path in completed]
                         create = lambda: checkpoints.create(
                             "write_conflict", str(refusal.detail),
-                            evidence={"tool": name, "arguments": arguments or {}},
+                            evidence=evidence,
                             choices=["wait", "retry_after_review", "cancel"],
                             requester=str(ctx.extras.get("caller") or "agent"))
                         writer = ctx.extras.get("vault_writer")

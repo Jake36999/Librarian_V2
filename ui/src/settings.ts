@@ -1134,6 +1134,9 @@ export class Settings {
   /** The closed topic list (About/Topics.md) and the topics proposed for it (R8): only
    *  here does a proposal join the list - accepted as proposed, renamed, or rejected. */
   private async paintTopics(host: HTMLElement): Promise<void> {
+    // A deliberate reload must retire the old acceptance handlers immediately,
+    // not leave a stale form clickable while its replacement is fetched.
+    clear(host, h("p", { class: "dim" }, "Loading topics…"));
     const status = h("span", { class: "note inline", role: "status" });
     const reload = () => void this.paintTopics(host);
     let out: any;
@@ -1155,25 +1158,32 @@ export class Settings {
     } }, "Propose topics");
     const refresh = h("button", { class: "ghost", title: "Rewrite the topic indexes and the Master Index from the notes",
       onclick: async () => {
-        try { await this.api.tool("views_refresh", {}); status.textContent = "Indexes rewritten."; }
+        try {
+          const result = await this.api.tool("views_refresh", {});
+          if (result.error || result.refused) throw new Error(String(result.detail ?? result.error ?? result.refused));
+          status.textContent = "Indexes rewritten.";
+        }
         catch (e) { status.textContent = (e as Error).message; }
       } }, "Rewrite indexes");
     const proposal = (p: any) => {
       const name = h("input", { type: "text", value: p.name, "aria-label": "Topic name" }) as HTMLInputElement;
-      const file = h("input", { type: "checkbox", checked: true }) as HTMLInputElement;
+      const file = h("input", { type: "checkbox", checked: p.acceptance_progress?.refile ?? true }) as HTMLInputElement;
       const accept = h("button", { class: "primary", onclick: async () => {
         try {
           const r = await this.api.tool("staging_decide", { item_ids: [p.id], decision: "accept",
+            ...(p.staged_revision ? { staged_revision: p.staged_revision } : {}),
             fields: { name: name.value, refile: file.checked } });
           const one = (r.results ?? [])[0] ?? r;
           if (r.error || one.error || one.refused) throw new Error(String(one.detail ?? one.error ?? r.detail ?? r.error));
-          status.textContent = `${one.topic} added; ${(one.refiled ?? []).filter((x: any) => x.topic && !x.unchanged).length} source(s) filed under it.`;
+          status.textContent = `${one.topic} accepted; ${(one.refiled ?? []).filter((x: any) => x.topic && !x.unchanged).length} source(s) filed under it.`;
           reload();
         } catch (e) { status.textContent = (e as Error).message; }
-      } }, "Accept");
+      } }, p.acceptance_progress ? "Finish acceptance" : "Accept");
       return h("div", { class: "srv" }, name,
         h("label", { class: "note inline" }, file, ` file its ${p.sources} source${p.sources === 1 ? "" : "s"} under it`),
-        p.duplicate_of ? h("span", { class: "warn" }, `close to ${p.duplicate_of}`) : null, accept);
+        p.duplicate_of ? h("span", { class: "warn" }, `close to ${p.duplicate_of}`) : null,
+        p.acceptance_progress ? h("span", { class: "warn" },
+          `Partly applied; review before finishing. Completed: ${(p.acceptance_progress.completed_paths ?? []).join(", ")}`) : null, accept);
     };
     clear(host,
       h("p", {}, (out.topics ?? []).map((t: any) => `${t.topic} (${t.sources})`).join(" · ")),
@@ -1181,7 +1191,8 @@ export class Settings {
       (out.not_accepted ?? []).length ? h("p", { class: "warn" }, `Filed under topics not in the list: ${(out.not_accepted as string[]).join(", ")}.`) : null,
       (out.proposed ?? []).length ? h("p", { class: "note" }, "Proposed from the library's own sources (details in Staging → Topics):") : null,
       (out.proposed ?? []).map(proposal),
-      h("div", { class: "row2 tight" }, propose, refresh, status));
+      h("div", { class: "row2 tight" }, propose, refresh,
+        h("button", { class: "ghost", onclick: reload }, "Reload topics (discards edits)"), status));
   }
 
   /** The domain profile this library was created with (profiles.py): what it

@@ -235,7 +235,8 @@ def decide(store: StagingStore, engine: Engine | None, item_ids: list[str], deci
            reason: str = "", bottom_line: str = "", what_it_solves: str = "",
            decided_by: str = "person", session: str = "",
            fields: dict[str, Any] | None = None, *,
-           index_call: Callable | None = None) -> list[dict[str, Any]]:
+           index_call: Callable | None = None, topic_plan: dict | None = None,
+           document_leases=None) -> list[dict[str, Any]]:
     """Accept, reject or defer, one item or a batch. Each item's outcome is
     reported on its own; one refusal does not stop the batch.
 
@@ -262,8 +263,11 @@ def decide(store: StagingStore, engine: Engine | None, item_ids: list[str], deci
         try:
             out.append(_decide_one(store, engine, item_id, decision, reason, bottom_line,
                                    what_it_solves, decided_by, session, mode,
-                                   batch=len(item_ids) > 1, fields=fields or {}, index_call=index_call))
+                                   batch=len(item_ids) > 1, fields=fields or {}, index_call=index_call,
+                                   topic_plan=topic_plan, document_leases=document_leases))
         except Refusal as refusal:
+            if topic_plan is not None and refusal.code == "DOCUMENT_ACTIVE":
+                raise  # Surface a Core checkpoint, not a hidden per-item conflict.
             out.append({"id": item_id, "refused": refusal.code, "detail": refusal.detail})
         except TypeError as exc:
             out.append({"id": item_id, "error": str(exc)})
@@ -338,7 +342,8 @@ def _check_field_override(model, kind: str, name: str, value: Any,
 
 def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_solves,
                 decided_by, session, mode, batch, fields: dict[str, Any] | None = None,
-                index_call: Callable | None = None
+                index_call: Callable | None = None, topic_plan: dict | None = None,
+                document_leases=None
                 ) -> dict[str, Any]:
     item = store.load(item_id)
     if item["status"] == "queued":
@@ -392,8 +397,25 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         # A person may rename it or say what belongs (`fields`); `refile: false` accepts
         # the topic without filing the proposed members under it.
         from . import taxonomy
-        done = taxonomy.accept(store.vault, engine, item, decided_by, fields or {})
+        try:
+            done = taxonomy.accept(store.vault, engine, item, decided_by, fields or {},
+                                   index_call=index_call, prepared=topic_plan, leases=document_leases)
+        except (Refusal, taxonomy.TaxonomyInterruptedError) as exc:
+            completed = exc.extra.get("completed_paths", []) if isinstance(exc, Refusal) else exc.completed_paths
+            if topic_plan is not None and (topic_plan["taxonomy_path"] in completed or item.get("acceptance_progress")):
+                request = topic_plan["request"]
+                prior = item.get("acceptance_progress") or {}
+                item["acceptance_progress"] = {"version": 1, "topic": topic_plan["result"]["topic"],
+                    "row": topic_plan["topic_row"], "request": request, "at": now_iso(),
+                    "completed_paths": list(dict.fromkeys([*prior.get("completed_paths", []), *completed]))}
+                # Retain the person's approved wording for the next explicit review.
+                item.update(name=request["name"], what_belongs=request["what_belongs"], aliases=request["aliases"])
+                item["history"].append({**entry, "decision": "partial_accept", "completed_paths": completed})
+                store.save(item)
+            raise
         item.update(status="accepted", accepted_to=f"About/Topics.md#{done['topic']}")
+        if item.get("acceptance_progress"):
+            item["acceptance_progress"]["completed_at"] = now_iso()
         item["history"].append(entry)
         store.save(item)
         return {"id": item_id, "status": "accepted", **done}

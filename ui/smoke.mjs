@@ -552,6 +552,48 @@ await page.waitForFunction(async () => {
 }, null, { timeout: 20000 });
 step("the review-due action opens a parked learn session");
 
+// Taxonomy controls keep the existing review workflow, but never report a
+// refused refresh as success or accept a changed proposal without re-review.
+await page.keyboard.press("Escape");
+await page.click(".tb.icon");
+await page.click("dialog.settings [role=tab]:has-text('Library')");
+await page.waitForSelector("dialog.settings input[aria-label='Topic name']");
+await page.route("**/api/tool/views_refresh", (route) => route.fulfill({ status: 200,
+  contentType: "application/json", body: JSON.stringify({ error: "refused", refused: "DOCUMENT_ACTIVE",
+    detail: "Active index edit (smoke)." }) }));
+await page.click("dialog.settings button:has-text('Rewrite indexes')");
+await page.waitForSelector("dialog.settings >> text=Active index edit (smoke).");
+await expect(page.isVisible("dialog.settings >> text=Indexes rewritten.").then((v) => !v),
+  "structured refusal must not be presented as rewritten indexes");
+await page.unroute("**/api/tool/views_refresh");
+await page.click("dialog.settings button:has-text('Rewrite indexes')");
+await page.waitForSelector("dialog.settings >> text=Indexes rewritten.");
+await page.fill("dialog.settings input[aria-label='Topic name']", "Smoke Topics Reviewed");
+await expect(page.evaluate(async () => {
+  const token = document.querySelector("meta[name=librarian-token]")?.getAttribute("content") ?? "";
+  const r = await fetch("/api/tool/staging_flag", { method: "POST", headers: { "Content-Type": "application/json",
+    "X-Librarian-Token": token }, body: JSON.stringify({ arguments: { item_id: "topic-smoke-safe",
+      sensitive: true, reason: "A concurrent reviewer changed this proposal." } }) });
+  const out = await r.json();
+  return r.ok && !out.error;
+}), "a topic proposal changes after Settings reviewed it");
+await page.click("dialog.settings .srv:has(input[aria-label='Topic name']) button:has-text('Accept')");
+await page.waitForSelector("dialog.settings >> text=changed after it was read");
+await expect(page.inputValue("dialog.settings input[aria-label='Topic name']").then((v) => v === "Smoke Topics Reviewed"),
+  "stale topic review keeps the edited name without silently retrying");
+await page.click("dialog.settings button:has-text('Reload topics (discards edits)')");
+await page.waitForSelector("dialog.settings input[aria-label='Topic name']");
+await page.fill("dialog.settings input[aria-label='Topic name']", "Smoke Topics Reviewed");
+const topicAcceptance = page.waitForResponse((r) => r.url().endsWith("/api/tool/staging_decide") && r.request().method() === "POST");
+await page.click("dialog.settings .srv:has(input[aria-label='Topic name']) button:has-text('Accept')");
+const topicOutcome = await (await topicAcceptance).json();
+await expect(!topicOutcome.error && topicOutcome.accepted === 1, `topic acceptance: ${JSON.stringify(topicOutcome)}`);
+await page.waitForSelector("dialog.settings >> text=Smoke Topics Reviewed (1)");
+await expect(page.isVisible("dialog.settings input[aria-label='Topic name']").then((v) => !v),
+  "accepted topic leaves the proposal list");
+await page.click("dialog.settings button:has-text('Close')");
+step("taxonomy: structured refresh refusal stays visible; stale proposal requires explicit reload before accepting");
+
 // Phone width: nothing overflows sideways.
 await page.setViewportSize({ width: 390, height: 800 });
 await expect(page.evaluate(() => document.documentElement.scrollWidth <= 391), "no horizontal scroll at phone width");

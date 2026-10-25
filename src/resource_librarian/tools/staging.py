@@ -217,8 +217,19 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
         if not item.get("revision_of") and not path.exists():
             absent.append(target)
     replacing = targets[0] if len(items) == 1 and replacements else ""
+    prepared = None
+    if len(items) == 1 and items[0]["kind"] == "topic":
+        from .. import taxonomy
+        topic_plan = taxonomy.prepare_accept(ctx.vault, None, items[0], kwargs.get("fields") or {},
+                                              index_call=IndexGateway(ctx).run)
+        targets.extend(topic_plan["targets"])
+        observed.extend(topic_plan["observed"])
+        if len(dict(observed)) > 200:
+            raise TypeError("topic acceptance exceeds the 200-file recovery bound; accept without filing "
+                            "its sources, then refile them in smaller batches")
+        prepared = {"operation": "stage_topic", "topic_plan": topic_plan}
     return WriteIntent(tuple(dict.fromkeys(targets)), replaces=replacing,
-                       absent=tuple(absent), observed=tuple(observed))
+                       absent=tuple(absent), observed=tuple(observed), prepared=prepared)
 
 
 @tool("staging_decide", tier="contribute", effect="vault_write", phases=("judge", "ingest", "seed", "assess"),
@@ -256,14 +267,18 @@ def staging_decide(ctx: Context, item_ids: list[str],
                for item in before.values() if (item.get("found_for") or {}).get("session")}
     promotion_session = next(iter(origins)) if len(origins) == 1 else (ctx.session or "")
     legacy_promotion = decision == "accept" and any(
-        not item.get("revision_of") and item.get("kind") in ("source", "topic")
+        not item.get("revision_of") and (item.get("kind") == "source" or
+                                        (item.get("kind") == "topic" and len(before) > 1))
         for item in before.values())
     engine = engine_for(ctx) if legacy_promotion else None
+    prepared = ctx.extras.get("_prepared_write") or {}
     results = staging.decide(store, engine, item_ids, decision, reason,
                              bottom_line, what_it_solves,
                              decided_by="person" if ctx.tier == "curate" else "agent",
                              session=promotion_session, fields=fields,
-                             index_call=None if legacy_promotion else IndexGateway(ctx).run)
+                             index_call=None if legacy_promotion else IndexGateway(ctx).run,
+                             topic_plan=prepared.get("topic_plan") if prepared.get("operation") == "stage_topic" else None,
+                             document_leases=ctx.extras.get("document_leases"))
     for result in results:
         if result.get("status") not in ("accepted", "approved", "rejected", "deferred"):
             continue

@@ -54,6 +54,10 @@ class WriteIntent:
     # Trusted dispatch-time snapshots for multi-target operations. These
     # protect the broker/queue interval; they do not claim a caller read token.
     observed: tuple[tuple[str, str], ...] = ()
+    # First-party, invocation-local preparation. Never part of a tool schema,
+    # permission grant, revision token or durable log. The registry gives only
+    # this invocation a copy, so a plan cannot be replaced during approval.
+    prepared: dict[str, Any] | None = None
 
 
 def canonical(vault: Any, rel: str) -> str:
@@ -71,7 +75,7 @@ def canonical_intent(vault: Any, intent: WriteIntent) -> WriteIntent:
     spell = lambda rel: canonical(vault, rel) if rel else ""
     return WriteIntent(tuple(spell(t) for t in intent.targets), spell(intent.replaces),
                        spell(intent.note), tuple(spell(t) for t in intent.absent),
-                       tuple((spell(path), value) for path, value in intent.observed))
+                       tuple((spell(path), value) for path, value in intent.observed), intent.prepared)
 
 
 _KEYS: dict[str, bytes] = {}

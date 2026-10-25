@@ -153,13 +153,7 @@ class Vault:
         """The closed list of topics in `About/Topics.md`: its table's first
         column. A person adds a row to accept a topic; nothing else does."""
         path = self.root / "About" / "Topics.md"
-        found: list[str] = []
-        if path.is_file():
-            for line in path.read_text(encoding="utf-8").splitlines():
-                m = TOPIC_ROW.match(line.strip())
-                if m and m.group(1).lower() != "topic" and not set(m.group(1)) <= set("-: "):
-                    found.append(m.group(1))
-        return list(dict.fromkeys(found)) or [UNFILED]
+        return topics_in(path.read_text(encoding="utf-8") if path.is_file() else "")
 
     # -- identity -------------------------------------------------------------
     def exists(self) -> bool:
@@ -233,6 +227,16 @@ class Vault:
                 temp.unlink()
             except OSError:
                 pass
+
+
+def topics_in(text: str) -> list[str]:
+    """The closed taxonomy from one byte-consistent document snapshot."""
+    found = []
+    for line in text.splitlines():
+        m = TOPIC_ROW.match(line.strip())
+        if m and m.group(1).lower() != "topic" and not set(m.group(1)) <= set("-: "):
+            found.append(m.group(1))
+    return list(dict.fromkeys(found)) or [UNFILED]
 
 
 def render_config(config: dict[str, dict[str, Any]]) -> str:

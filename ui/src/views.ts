@@ -729,6 +729,9 @@ export class Staging {
     clear(this.detail,
       h("div", { class: "view-head" }, h("strong", {}, item.name)),
       h("p", {}, item.what_belongs ?? ""),
+      item.acceptance_progress ? h("p", { class: "warn" },
+        `Partly applied. Completed: ${(item.acceptance_progress.completed_paths ?? []).join(", ")}. `
+        + "Finish acceptance in Settings → Library after review. Rejecting or deferring does not undo those writes.") : null,
       item.duplicate_of ? h("p", { class: "warn" }, `Close to a topic you already have: ${item.duplicate_of}. Merge rather than add?`) : null,
       h("p", { class: "dim" }, `${item.coverage?.sources ?? members.length} of the ${item.coverage?.of ?? "?"} sources considered · proposed by ${item.proposed_by ?? "the clerk"}`),
       (item.aliases ?? []).length ? h("p", {}, h("strong", {}, "Also called: "), (item.aliases as string[]).join(", ")) : null,
