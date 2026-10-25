@@ -24,11 +24,10 @@ OTHER_STORES = {("desk.py", "sqlite3.connect"): 1, ("lenses.py", "sqlite3.connec
 # 14 after selected staging paths; 8 after upkeep/catalog-status lookups;
 # 6 after taxonomy refiling/generated-view migration; 4 after batch lookups;
 # 3 after Core catalogue adoption.
-# New-source/topic promotion remains a direct caller).
+# 2 after mixed-kind/multi-topic acceptance; only explicit offline branches remain).
 DEBT = {
     ("communities.py", "Index"): 1,
     ("extract.py", "Index"): 1,
-    ("tools/staging.py", "engine_for"): 1,
 }
 
 

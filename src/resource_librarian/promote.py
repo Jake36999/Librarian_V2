@@ -453,6 +453,21 @@ class PromotionGuard:
             if temp.exists():
                 temp.unlink()
 
+    def record_progress(self, rel: str, text: str):
+        """Record caught partial work even if a different document conflicts.
+
+        Only the declared staging record can use this narrower CAS; no note,
+        policy file or arbitrary state can bypass the ordinary guard.
+        """
+        if rel not in self.targets or not rel.startswith(".librarian/staging/") or not rel.endswith(".json"):
+            raise TypeError("partial progress requires a declared staging record")
+        path = operation_path(self.vault, rel)
+        if fingerprint(path) != self.expected[rel]:
+            raise PreconditionChangedError(rel)
+        atomic_write_text(path, text)
+        self.expected[rel] = fingerprint_bytes(text.encode("utf-8"))
+        self.completed.append(rel)
+
 
 def apply(vault: Vault, draft: Draft, plan: dict, index_call: Callable, *,
           leases=None, guard: PromotionGuard | None = None) -> Report:

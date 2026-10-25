@@ -11,7 +11,6 @@ from resource_librarian.coordination import on_writer_thread
 from resource_librarian.index import Index
 from resource_librarian.keys import KeyStore
 from resource_librarian.tools import library
-from resource_librarian.tools import staging as staging_tools
 
 from test_core_source_promotion import core, _copies, _originals, _source, _store  # noqa: F401
 
@@ -58,7 +57,7 @@ def test_batch_uses_core_and_writer_and_keeps_both_generated_links(core, monkeyp
         raise AssertionError("source batch created a direct SQLite engine")
     monkeypatch.setattr(Index, "upsert", upsert)
     monkeypatch.setattr(promotion, "atomic_write_text", write)
-    monkeypatch.setattr(staging_tools, "engine_for", forbidden)
+    monkeypatch.setattr(library, "engine_for", forbidden)
     monkeypatch.setattr(library, "Index", forbidden)
     before = [p.read_bytes() for p in [*_originals(core), second]]
     out = _accept(core)

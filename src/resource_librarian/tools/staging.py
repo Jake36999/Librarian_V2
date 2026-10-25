@@ -15,7 +15,7 @@ from ..lenses import LensStore
 from ..registry import Card, Context, tool
 from ..session import SessionStore
 from ..vault import now_iso
-from .library import IndexGateway, engine_for, with_engine
+from .library import IndexGateway, with_engine
 
 
 def _store(ctx: Context) -> staging.StagingStore:
@@ -178,8 +178,8 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
     """Selected staging writes: explicit paths, checked before any approval.
 
     Single new-source acceptance includes managed attachment copies and views.
-    Source-only batches share a bounded guard; mixed source/topic promotion
-    remains an explicitly legacy path.
+    All batches share a bounded guard; mixed batches replan derived text only
+    within their approved file footprint.
     """
     if kwargs.get("dry_run") or kwargs.get("decision") != "accept":
         return None
@@ -222,7 +222,8 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
             absent.append(target)
     replacing = targets[0] if len(items) == 1 and replacements else ""
     prepared = None
-    source_batch = len(kwargs.get("item_ids") or []) > 1 and items and all(
+    multiple = len(kwargs.get("item_ids") or []) > 1
+    source_batch = multiple and items and all(
         i["kind"] == "source" and not i.get("revision_of") for i in items)
     if source_batch:
         if kwargs.get("fields") or kwargs.get("bottom_line") or kwargs.get("what_it_solves"):
@@ -241,6 +242,21 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
         targets.extend(batch["targets"])
         observed = batch["observed"]
         prepared = {"operation": "stage_sources", "source_batch": batch}
+    elif multiple and items:
+        if kwargs.get("fields") or kwargs.get("bottom_line") or kwargs.get("what_it_solves"):
+            raise TypeError("a batch accept cannot share prose or field corrections; accept items individually")
+        batch = staging.prepare_mixed_batch(_store(ctx), items,
+            "person" if ctx.tier == "curate" else "agent", ctx.session or "",
+            IndexGateway(ctx, include_vectors=False).run)
+        initial = dict(observed)
+        if any(path in initial and initial[path] != stamp for path, stamp in batch["observed"]):
+            raise Refusal("DOCUMENT_ACTIVE", "a staged item changed during mixed-batch preparation")
+        batch["observed"] = list(dict([*observed, *batch["observed"]]).items())
+        if len(batch["observed"]) > 200:
+            raise TypeError("mixed acceptance exceeds the 200-file recovery bound; accept smaller groups")
+        targets.extend(batch["targets"])
+        observed = batch["observed"]
+        prepared = {"operation": "stage_mixed", "mixed_batch": batch}
     elif len(items) == 1 and items[0]["kind"] == "source" and not items[0].get("revision_of"):
         item = items[0]
         origin = str((item.get("found_for") or {}).get("session") or ctx.session or "")
@@ -259,7 +275,7 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
             if source_plan.get("resuming"):
                 replacing = source_plan["path"]
         prepared = {"operation": "stage_source", "source_plan": source_plan}
-    if len(items) == 1 and items[0]["kind"] == "topic":
+    if not multiple and len(items) == 1 and items[0]["kind"] == "topic":
         from .. import taxonomy
         topic_plan = taxonomy.prepare_accept(ctx.vault, None, items[0], kwargs.get("fields") or {},
                                               index_call=IndexGateway(ctx).run)
@@ -321,6 +337,35 @@ def staging_decide(ctx: Context, item_ids: list[str],
                             "originals_retained": [c["source"] for c in plan["copies"]]})})
                 return {"dry_run": True, "results": results,
                         "would_accept": sum(int(r["ok"]) for r in results)}
+            if items:
+                if fields or bottom_line or what_it_solves:
+                    raise TypeError("a batch accept cannot share prose or field corrections; accept items individually")
+                batch = staging.prepare_mixed_batch(store, items, decided_by, ctx.session or "",
+                    IndexGateway(ctx, include_vectors=False).run)
+                results, seen = [], set()
+                for item_id in item_ids:
+                    plan = batch["plans"].get(item_id, {"error": "no staged item with this ID"})
+                    if item_id in seen:
+                        plan = {"error": "duplicate staged item ID"}
+                    seen.add(item_id)
+                    result = {"id": item_id, "ok": "error" not in plan, "would": "accept",
+                              "problems": [plan["error"]] if "error" in plan else []}
+                    if not plan.get("error"):
+                        result.update(targets=plan.get("targets", []), path=plan.get("path", ""))
+                        if plan.get("operation") == "new_source":
+                            result.update(coverage=plan["coverage"], copies=plan["copies"],
+                                sections=sorted(plan["draft"]["sections"]),
+                                not_examined=plan["draft"]["fields"].get("not_examined", []),
+                                originals_retained=[c["source"] for c in plan["copies"]])
+                            if plan["copies"]:
+                                result["file"] = plan["copies"][0]["destination"]
+                        elif plan.get("operation") == "revision":
+                            item = next(i for i in items if i["id"] == item_id)
+                            result.update(would="merge", sections=[heading for heading in staging.REVISED_SECTIONS
+                                if (item.get("sections") or {}).get(heading)])
+                    results.append(result)
+                return {"dry_run": True, "ordered_replanning": True, "targets": batch["targets"],
+                        "results": results, "would_accept": sum(int(r["ok"]) for r in results)}
         if len(item_ids) == 1:
             item = store.load(item_ids[0])
             if item["kind"] == "source" and not item.get("revision_of"):
@@ -351,20 +396,16 @@ def staging_decide(ctx: Context, item_ids: list[str],
                for item in before.values() if (item.get("found_for") or {}).get("session")}
     promotion_session = next(iter(origins)) if len(origins) == 1 else (ctx.session or "")
     prepared = ctx.extras.get("_prepared_write") or {}
-    legacy_promotion = decision == "accept" and prepared.get("operation") != "stage_sources" and any(
-        not item.get("revision_of") and ((item.get("kind") == "source" and len(before) > 1) or
-                                        (item.get("kind") == "topic" and len(before) > 1))
-        for item in before.values())
-    engine = engine_for(ctx) if legacy_promotion else None
-    results = staging.decide(store, engine, item_ids, decision, reason,
+    results = staging.decide(store, None, item_ids, decision, reason,
                              bottom_line, what_it_solves,
                              decided_by="person" if ctx.tier == "curate" else "agent",
                              session=promotion_session, fields=fields,
-                             index_call=None if legacy_promotion else IndexGateway(ctx,
-                                 include_vectors=prepared.get("operation") not in ("stage_source", "stage_sources")).run,
+                             index_call=IndexGateway(ctx,
+                                 include_vectors=prepared.get("operation") not in ("stage_source", "stage_sources", "stage_mixed")).run,
                              topic_plan=prepared.get("topic_plan") if prepared.get("operation") == "stage_topic" else None,
                              source_plan=prepared.get("source_plan") if prepared.get("operation") == "stage_source" else None,
                              source_batch=prepared.get("source_batch") if prepared.get("operation") == "stage_sources" else None,
+                             mixed_batch=prepared.get("mixed_batch") if prepared.get("operation") == "stage_mixed" else None,
                              document_leases=ctx.extras.get("document_leases"))
     for result in results:
         if result.get("status") not in ("accepted", "approved", "rejected", "deferred"):

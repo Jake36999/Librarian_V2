@@ -130,6 +130,8 @@ def _topic_addition(text: str, name: str, what_belongs: str, aliases: list[str])
     if any(_key(name) == _key(t) for t in accepted):
         raise TypeError(f"{name!r} is already a topic (or too close to one): "
                         f"{[t for t in accepted if _key(t) == _key(name)]}")
+    if any(notes.safe_name(name).casefold() == notes.safe_name(t).casefold() for t in accepted):
+        raise TypeError("topic index filenames collide; choose a distinct topic name before accepting")
     text = text or (
         "# Topics\n\n| Topic | What belongs here |\n| --- | --- |\n"
         f"| {UNFILED} | sources waiting for a topic |\n")
@@ -153,7 +155,7 @@ def add_topic(vault: Vault, name: str, what_belongs: str, aliases: list[str]) ->
 
 def accept(vault: Vault, engine: Engine | None, item: dict[str, Any], decided_by: str,
            edits: dict[str, Any], *, index_call: Callable | None = None,
-           prepared: dict | None = None, leases=None) -> dict[str, Any]:
+           prepared: dict | None = None, leases=None, guard=None) -> dict[str, Any]:
     if decided_by != "person":
         raise Refusal("PERSON_CONFIRMS", "a topic changes this vault's taxonomy: a person "
                                          "accepts it")
@@ -161,7 +163,7 @@ def accept(vault: Vault, engine: Engine | None, item: dict[str, Any], decided_by
     if (plan.get("operation") != "topic" or plan.get("item_id") != item["id"]
             or plan.get("request") != _topic_request(item, edits)):
         raise TypeError("topic acceptance requires its own prepared write plan")
-    return _apply_plan(vault, engine, plan, index_call, leases)[1]
+    return _apply_plan(vault, engine, plan, index_call, leases, guard=guard)[1]
 
 
 def _index_run(engine: Engine | None, index_call: Callable | None, operation: Callable):
@@ -337,9 +339,10 @@ class _WriteGuard:
 
 
 def _apply_plan(vault: Vault, engine: Engine | None, plan: dict, index_call: Callable | None,
-                leases=None) -> tuple[list[str], Any]:
+                leases=None, *, guard=None) -> tuple[list[str], Any]:
     _index_run(engine, index_call, lambda active: None)  # Admission before any file write.
-    guard = _WriteGuard(vault, plan, leases)
+    guard = guard or _WriteGuard(vault, plan, leases)
+    start = len(guard.completed)
     try:
         for write in plan["writes"]:
             guard.write(write["path"], write["text"])
@@ -353,14 +356,15 @@ def _apply_plan(vault: Vault, engine: Engine | None, plan: dict, index_call: Cal
             guard.write(write["path"], write["text"])
             _index_run(engine, index_call, lambda active: active.index.upsert(vault.safe_relative(write["path"])))
     except Refusal as exc:
-        exc.extra.update(completed_paths=list(guard.completed),
+        completed = list(dict.fromkeys(guard.completed[start:]))
+        exc.extra.update(completed_paths=completed,
                          next_action="Review the conflict and completed paths; rerun refiling/views after review.")
-        if guard.completed:
-            exc.detail = f"Earlier writes remain at {guard.completed}; review them before retrying. {exc.detail}"
+        if completed:
+            exc.detail = f"Earlier writes remain at {completed}; review them before retrying. {exc.detail}"
             exc.args = (f"{exc.code}: {exc.detail}",)
         raise
     except Exception as exc:
-        raise TaxonomyInterruptedError(exc, guard.completed) from exc
+        raise TaxonomyInterruptedError(exc, list(dict.fromkeys(guard.completed[start:]))) from exc
     return [write["path"] for write in rendered], plan["result"]
 
 

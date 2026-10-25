@@ -239,7 +239,7 @@ def decide(store: StagingStore, engine: Engine | None, item_ids: list[str], deci
            decided_by: str = "person", session: str = "",
            fields: dict[str, Any] | None = None, *,
            index_call: Callable | None = None, topic_plan: dict | None = None, source_plan: dict | None = None,
-           source_batch: dict | None = None, document_leases=None) -> list[dict[str, Any]]:
+           source_batch: dict | None = None, mixed_batch: dict | None = None, document_leases=None) -> list[dict[str, Any]]:
     """Accept, reject or defer, one item or a batch. Each item's outcome is
     reported on its own; one refusal does not stop the batch.
 
@@ -261,21 +261,32 @@ def decide(store: StagingStore, engine: Engine | None, item_ids: list[str], deci
     elif engine is None:
         raise TypeError("decide requires an Engine or callback-only index access")
     mode = str(store.vault.setting("promotion", "mode") or "person")
+    from . import taxonomy
     out = []
     batch_guard = None
-    if source_batch is not None:
+    interrupted_paths = set()
+    batch_plan = mixed_batch if mixed_batch is not None else source_batch
+    if batch_plan is not None:
         from .promote import PromotionGuard
-        batch_guard = PromotionGuard(store.vault, source_batch, document_leases)
+        batch_guard = PromotionGuard(store.vault, batch_plan, document_leases)
     for item_id in item_ids:
+        start = len(batch_guard.completed) if batch_guard is not None else 0
         try:
+            item_plan = None
+            if mixed_batch is not None:
+                if item_id not in mixed_batch["plans"]:
+                    raise TypeError(f"no staged item {item_id!r}")
+                item_plan = _mixed_item_plan(store, item_id, mixed_batch, batch_guard, decided_by, index_call, interrupted_paths)
             out.append(_decide_one(store, engine, item_id, decision, reason, bottom_line,
                                    what_it_solves, decided_by, session, mode,
                                    batch=len(item_ids) > 1, fields=fields or {}, index_call=index_call,
-                                   topic_plan=topic_plan,
-                                   source_plan=(source_batch["plans"].get(item_id) if source_batch is not None else source_plan),
-                                   source_guard=batch_guard, document_leases=document_leases))
+                                   topic_plan=(item_plan if item_plan and item_plan.get("operation") == "topic" else topic_plan),
+                                   source_plan=(item_plan if item_plan and item_plan.get("operation") == "new_source" else
+                                                source_batch["plans"].get(item_id) if source_batch is not None else source_plan),
+                                   source_guard=batch_guard, write_guard=batch_guard if mixed_batch is not None else None,
+                                   document_leases=document_leases))
         except Refusal as refusal:
-            if (topic_plan is not None or source_plan is not None or source_batch is not None) and refusal.code == "DOCUMENT_ACTIVE":
+            if (topic_plan is not None or source_plan is not None or batch_plan is not None) and refusal.code == "DOCUMENT_ACTIVE":
                 if batch_guard is not None:
                     refusal.extra.update(completed_paths=list(dict.fromkeys(batch_guard.completed)),
                                          completed_results=out,
@@ -286,19 +297,28 @@ def decide(store: StagingStore, engine: Engine | None, item_ids: list[str], deci
                            if refusal.extra.get("completed_paths") else {})})
         except TypeError as exc:
             out.append({"id": item_id, "error": str(exc)})
-        except PromotionInterruptedError as exc:
-            out.append({"id": item_id, "error": str(exc), "completed_paths": exc.completed_paths,
+        except (PromotionInterruptedError, taxonomy.TaxonomyInterruptedError) as exc:
+            if isinstance(exc, taxonomy.TaxonomyInterruptedError) and mixed_batch is None:
+                raise  # Preserve the established single-topic API failure shape.
+            out.append({"id": item_id, "error": str(exc) if isinstance(exc, PromotionInterruptedError)
+                        else f"topic acceptance interrupted ({type(exc.__cause__ or exc).__name__}); inspect completed writes",
+                        "completed_paths": exc.completed_paths,
                         "next_action": "Reload the staged item, inspect completed work, then explicitly finish or reconcile it."})
         except Exception as exc:
-            if source_batch is None:
+            if batch_plan is None:
                 raise
             # A stopped Core/service or failed admission must not hide earlier
             # committed decisions, attempt later items, or leak provider text.
-            out.append({"id": item_id, "error": f"source batch interrupted ({type(exc).__name__})",
+            out.append({"id": item_id, "error": f"acceptance batch interrupted ({type(exc).__name__})",
                         "completed_paths": list(dict.fromkeys(batch_guard.completed))})
             for remaining in item_ids[len(out):]:
-                out.append({"id": remaining, "error": "not run: source batch interrupted; review before trying again"})
+                out.append({"id": remaining, "error": "not run: acceptance batch interrupted; review before trying again"})
             break
+        finally:
+            if mixed_batch is not None and out and out[-1].get("id") == item_id and out[-1].get("status") != "accepted":
+                primary = mixed_batch["plans"].get(item_id, {}).get("path")
+                if primary and primary in batch_guard.completed[start:]:
+                    interrupted_paths.add(primary)
     return out
 
 
@@ -425,7 +445,7 @@ def _attachment_path(vault: Vault, rel: str) -> Path:
 
 
 def prepare_source(store, item, bottom_line, what_it_solves, decided_by, session,
-                   fields, index_call, *, reserved_destinations=()) -> dict:
+                   fields, index_call, *, reserved_destinations=(), destinations=None) -> dict:
     """Single-source pre-approval preparation; originals are never relocated."""
     from . import dik, promote as promotion
     from .coordination import MISSING, fingerprint, fingerprint_bytes, operation_path
@@ -474,6 +494,10 @@ def prepare_source(store, item, bottom_line, what_it_solves, decided_by, session
             if (prior.get("source") != rel or prior.get("fingerprint") != stamp
                     or (target.exists() and fingerprint(target) != stamp)):
                 raise Refusal("DOCUMENT_ACTIVE", "an interrupted attachment or retained copy changed; inspect before continuing")
+        elif destinations is not None and key in destinations:
+            target = store.vault.safe_relative(destinations[key])
+            if target.parent != store.vault.root / "Sources" / draft.kind / "files" or target.exists():
+                raise Refusal("DOCUMENT_ACTIVE", "the approved attachment destination is no longer available")
         else:
             folder = store.vault.root / "Sources" / draft.kind / "files"
             base = source.name if key == "file" or not copies else Path(copies[0]["destination"]).stem + " (clean text).md"
@@ -551,6 +575,126 @@ def prepare_source_batch(store, items: list[dict], decided_by: str, session: str
             "targets": list(dict.fromkeys(targets)), "observed": list(observed.items())}
 
 
+def prepare_mixed_batch(store, items: list[dict], decided_by: str, session: str, index_call) -> dict:
+    """Pre-approved footprint for ordered, guarded mixed-kind decisions.
+
+    Replanning may use our earlier durable writes, but cannot add a file to
+    this footprint. Unknown later dependencies require another review.
+    """
+    from . import taxonomy, promote as promotion, schema
+    from .coordination import fingerprint, operation_path
+    sources = prepare_source_batch(store, [i for i in items if i["kind"] == "source" and not i.get("revision_of")],
+                                   decided_by, session, index_call)
+    plans, targets, observed = dict(sources["plans"]), set(sources["targets"]), dict(sources["observed"])
+    def observe(rel, stamp=None, *, write=False):
+        path = operation_path(store.vault, rel)
+        if path.relative_to(store.vault.root).as_posix() != rel:
+            raise TypeError("batch paths cannot redirect through links")
+        current = fingerprint(path) if stamp is None else stamp
+        if rel in observed and observed[rel] != current:
+            raise Refusal("DOCUMENT_ACTIVE", "a shared mixed-batch dependency changed during preparation")
+        observed[rel] = current
+        if write:
+            targets.add(rel)
+    for rel in (schema.MODEL_PATH.as_posix(), "About/Topics.md", ".librarian/config.toml", ".librarian/agents/routes.json"):
+        observe(rel)
+    future = {p["name"].casefold(): (p["path"], p["topic"]) for p in plans.values() if not p.get("error")}
+    for item in items:
+        state = store.path(item["id"]).relative_to(store.vault.root).as_posix()
+        observe(state, write=True)
+        if item["id"] in plans:
+            continue
+        try:
+            if item["status"] not in DECIDABLE["accept"]:
+                raise TypeError(f"{item['id']} is {item['status']}: not awaiting acceptance")
+            if item.get("sensitivity") != "normal" and decided_by != "person":
+                raise Refusal("SENSITIVITY_REVIEW", "only a person accepts sensitive items")
+            if str(store.vault.setting("promotion", "mode") or "person") != "agent" and decided_by != "person":
+                raise Refusal("PERSON_CONFIRMS", "a person accepts these staged items")
+            if item["kind"] == "topic":
+                if decided_by != "person":
+                    raise Refusal("PERSON_CONFIRMS", "a person accepts taxonomy changes")
+                if item.get("acceptance_progress"):
+                    raise TypeError("review and finish interrupted topic acceptance one item at a time")
+                plan = taxonomy.prepare_accept(store.vault, None, item, {}, index_call=index_call)
+            elif item.get("revision_of") or item["kind"] == "import":
+                rel = str(item.get("revision_of") or item["target"])
+                path = store.vault.safe_relative(rel)
+                rel = path.relative_to(store.vault.root).as_posix()
+                if not item.get("revision_of") and path.exists():
+                    raise TypeError(f"{rel} already exists: review the collision before importing")
+                observe(rel, write=True)
+                plan = {"operation": "revision" if item.get("revision_of") else "import", "path": rel, "targets": [rel]}
+                if item["kind"] == "import" and (item.get("frontmatter") or {}).get("type") == "source":
+                    future[path.stem.casefold()] = (rel, str(item["frontmatter"].get("primary_topic") or "Unfiled"))
+            elif item["kind"] == "concept":
+                raise TypeError("a concept needs its own person-authored definition; accept it individually")
+            else:
+                plan = {"operation": "lens"}  # Its separate store retains its normal writer path.
+            plans[item["id"]] = plan
+            for rel, stamp in plan.get("observed", []):
+                observe(rel, stamp)
+            for rel in plan.get("targets", []):
+                targets.add(rel)
+        except (Refusal, TypeError) as exc:
+            plans[item["id"]] = {"error": exc.detail if isinstance(exc, Refusal) else str(exc),
+                **({"refused": exc.code} if isinstance(exc, Refusal) else {})}
+    # A later topic can refile a source/import accepted earlier in this same
+    # call. Admit its known future path and old generated view before approval.
+    for item in items:
+        plan = plans[item["id"]]
+        if plan.get("operation") == "topic":
+            for member in item.get("members", []):
+                candidate = future.get(str(member).casefold())
+                if candidate:
+                    observe(candidate[0], write=True)
+                    observe(promotion.topic_index_path(store.vault, candidate[1]).relative_to(store.vault.root).as_posix(), write=True)
+    if len(observed) > 200 or len(targets) > 200:
+        raise TypeError("mixed acceptance exceeds the 200-file recovery bound; accept smaller groups")
+    return {"operation": "mixed_acceptance", "plans": plans, "targets": sorted(targets),
+            "observed": list(observed.items()), "session": session}
+
+
+def _mixed_item_plan(store, item_id, batch, guard, decided_by, index_call, interrupted_paths):
+    """Refresh derived text only inside the approved, hash-checked footprint."""
+    from . import taxonomy
+    guard.check()
+    item = store.load(item_id)
+    original = batch["plans"][item_id]
+    if original.get("error"):
+        if original.get("refused"):
+            raise Refusal(original["refused"], original["error"])
+        raise TypeError(original["error"])
+    if item["kind"] == "source" and not item.get("revision_of"):
+        fresh = prepare_source(store, item, "", "", decided_by,
+            str((item.get("found_for") or {}).get("session") or batch["session"] or ""), {}, index_call,
+            destinations={c["key"]: c["destination"] for c in original["copies"]})
+        if fresh["request_hash"] != original["request_hash"]:
+            raise Refusal("DOCUMENT_ACTIVE", "the approved source content changed during mixed acceptance")
+    elif item["kind"] == "topic":
+        fresh = taxonomy.prepare_accept(store.vault, None, item, {}, index_call=index_call)
+        if fresh["request"] != original["request"] or fresh["topic_row"] != original["topic_row"]:
+            raise Refusal("DOCUMENT_ACTIVE", "the approved topic request changed during mixed acceptance")
+    else:
+        fresh = original
+    guard.check()
+    if interrupted_paths.intersection(fresh.get("targets", [])):
+        raise TypeError("a target has interrupted work from an earlier item; review and finish it individually before modifying it")
+    if not set(fresh.get("targets", [])).issubset(guard.targets):
+        raise Refusal("DOCUMENT_ACTIVE", "mixed acceptance needs undeclared write targets; review a new plan")
+    if any(path not in guard.expected or guard.expected[path] != stamp for path, stamp in fresh.get("observed", [])):
+        raise Refusal("DOCUMENT_ACTIVE", "mixed acceptance needs an unreviewed dependency; review a new plan")
+    return fresh
+
+
+def _save_decision(store, item, guard=None):
+    if guard is None:
+        store.save(item)
+    else:
+        rel = store.path(item["id"]).relative_to(store.vault.root).as_posix()
+        guard.write(rel, json.dumps(item, ensure_ascii=False, indent=1))
+
+
 def _accept_prepared_source(store, item, plan, index_call, leases, entry, guard=None):
     from . import promote as promotion
     from .coordination import fingerprint, operation_path
@@ -597,10 +741,7 @@ def _accept_prepared_source(store, item, plan, index_call, leases, entry, guard=
                 # Recording progress must not overwrite an outside staged edit.
                 # Other conflicted documents need not be rewritten or rebased.
                 text = json.dumps(fresh, ensure_ascii=False, indent=1)
-                atomic_write_text(operation_path(store.vault, state), text)
-                from .coordination import fingerprint_bytes
-                guard.expected[state] = fingerprint_bytes(text.encode("utf-8"))
-                guard.completed.append(state)
+                guard.record_progress(state, text)
             except OSError:
                 pass  # Existing durable operation recovery covers ambiguous persistence.
         if isinstance(exc, Refusal):
@@ -615,6 +756,7 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
                 decided_by, session, mode, batch, fields: dict[str, Any] | None = None,
                 index_call: Callable | None = None, topic_plan: dict | None = None, source_plan: dict | None = None,
                 source_guard=None,
+                write_guard=None,
                 document_leases=None
                 ) -> dict[str, Any]:
     item = store.load(item_id)
@@ -635,7 +777,8 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
             raise TypeError(f"{item_id} is a revision of an accepted note: accept or reject it")
         if decision == "accept" and item.get("sensitivity") != "normal" and decided_by != "person":
             raise Refusal("SENSITIVITY_REVIEW", "only a person accepts a sensitive source revision")
-        return _decide_revision(store, engine, item, decision, entry, decided_by, mode, index_call=index_call)
+        return _decide_revision(store, engine, item, decision, entry, decided_by, mode,
+                                index_call=index_call, guard=write_guard)
     if decision == "reject":
         item["status"] = "rejected"
         item["history"].append(entry)
@@ -673,7 +816,7 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         from . import taxonomy
         try:
             done = taxonomy.accept(store.vault, engine, item, decided_by, fields or {},
-                                   index_call=index_call, prepared=topic_plan, leases=document_leases)
+                                   index_call=index_call, prepared=topic_plan, leases=document_leases, guard=write_guard)
         except (Refusal, taxonomy.TaxonomyInterruptedError) as exc:
             completed = exc.extra.get("completed_paths", []) if isinstance(exc, Refusal) else exc.completed_paths
             if topic_plan is not None and (topic_plan["taxonomy_path"] in completed or item.get("acceptance_progress")):
@@ -685,13 +828,20 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
                 # Retain the person's approved wording for the next explicit review.
                 item.update(name=request["name"], what_belongs=request["what_belongs"], aliases=request["aliases"])
                 item["history"].append({**entry, "decision": "partial_accept", "completed_paths": completed})
-                store.save(item)
+                if write_guard is None:
+                    store.save(item)
+                else:
+                    rel = store.path(item["id"]).relative_to(store.vault.root).as_posix()
+                    # A conflicting editor's staged record must remain intact.
+                    from .coordination import fingerprint, operation_path
+                    if fingerprint(operation_path(store.vault, rel)) == write_guard.expected[rel]:
+                        write_guard.record_progress(rel, json.dumps(item, ensure_ascii=False, indent=1))
             raise
         item.update(status="accepted", accepted_to=f"About/Topics.md#{done['topic']}")
         if item.get("acceptance_progress"):
             item["acceptance_progress"]["completed_at"] = now_iso()
         item["history"].append(entry)
-        store.save(item)
+        _save_decision(store, item, write_guard)
         return {"id": item_id, "status": "accepted", **done}
     if item["kind"] == "lens":
         # A person may reword the stance or say when it applies before
@@ -700,7 +850,7 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
                                                 edits=fields)
         item.update(status="accepted", accepted_to=f"lenses.sqlite#{lens_id}")
         item["history"].append(entry)
-        store.save(item)
+        _save_decision(store, item, write_guard)
         return {"id": item_id, "status": "accepted", "lens": lens_id}
 
     if item["kind"] == "import":
@@ -711,11 +861,15 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         target.parent.mkdir(parents=True, exist_ok=True)
         front = {**item.get("frontmatter", {}), "evidence": [e["id"] for e in item["evidence"]],
                  "accepted_by": decided_by}
-        atomic_write_text(target, notes.render(front, item.get("body", "")))
+        text = notes.render(front, item.get("body", ""))
+        if write_guard is None:
+            atomic_write_text(target, text)
+        else:
+            write_guard.write(target.relative_to(store.vault.root).as_posix(), text)
         _upsert(engine, target, index_call)
         item.update(status="accepted", accepted_to=item["target"])
         item["history"].append(entry)
-        store.save(item)
+        _save_decision(store, item, write_guard)
         return {"id": item_id, "status": "accepted", "path": item["target"]}
 
     if item["kind"] == "concept":
@@ -728,10 +882,10 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         if concept_kind not in ("term", "pattern"):
             raise TypeError("concept_kind is 'term' or 'pattern'")
         path = _write_concept(store.vault, engine, item, concept_kind, definition,
-                              given.get("aliases") or [], given.get("related") or [], index_call=index_call)
+                              given.get("aliases") or [], given.get("related") or [], index_call=index_call, guard=write_guard)
         item.update(status="accepted", accepted_to=path)
         item["history"].append(entry)
-        store.save(item)
+        _save_decision(store, item, write_guard)
         return {"id": item_id, "status": "accepted", "path": path}
 
     if source_plan is not None:
@@ -761,7 +915,7 @@ REVISED_SECTIONS = ("Claims", "Evidence & Limits", "Reading Notes",
 
 
 def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: dict[str, Any],
-                     decided_by: str, mode: str, *, index_call: Callable | None = None) -> dict[str, Any]:
+                     decided_by: str, mode: str, *, index_call: Callable | None = None, guard=None) -> dict[str, Any]:
     """A deep read of an *accepted* source (roadmap §4 C2) is staged as a
     revision, never written straight into the person's note. Accepting it
     merges the sections the deep read rebuilt (what the text claims, and its
@@ -800,12 +954,16 @@ def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: 
         note.frontmatter["dik"] = item.get("dik", "")
     else:
         note.frontmatter["deep_read"] = now_iso()[:10]
-    atomic_write_text(path, notes.render(note.frontmatter, body))
+    text = notes.render(note.frontmatter, body)
+    if guard is None:
+        atomic_write_text(path, text)
+    else:
+        guard.write(path.relative_to(store.vault.root).as_posix(), text)
     _upsert(engine, path, index_call)
     item.update(status="accepted", accepted_to=item["revision_of"], merged=merged,
                 previous_sections=previous)
     item["history"].append(entry)
-    store.save(item)
+    _save_decision(store, item, guard)
     return {"id": item["id"], "status": "accepted", "merged_into": item["revision_of"],
             "sections": merged}
 
@@ -841,7 +999,7 @@ def _upsert(engine: Engine | None, path: Path, index_call: Callable | None) -> N
 
 def _write_concept(vault: Vault, engine: Engine | None, item: dict[str, Any], concept_kind: str,
                    definition: str, aliases: list[str], related: list[str], *,
-                   index_call: Callable | None = None) -> str:
+                   index_call: Callable | None = None, guard=None) -> str:
     """The Concept note itself: Usages is what the candidate already had
     (quoted, from evidence); Definition is the person's own words, just
     given at accept - the one section this module never drafts."""
@@ -865,7 +1023,11 @@ def _write_concept(vault: Vault, engine: Engine | None, item: dict[str, Any], co
         fm.update(imported_from="V1", v1_path=item["imported_from"].get("path", ""),
                   evidence=[e["id"] for e in item.get("evidence") or []])
     path.parent.mkdir(parents=True, exist_ok=True)
-    atomic_write_text(path, notes.render(fm, body))
+    text = notes.render(fm, body)
+    if guard is None:
+        atomic_write_text(path, text)
+    else:
+        guard.write(path.relative_to(vault.root).as_posix(), text)
     _upsert(engine, path, index_call)
     return f"Concepts/{safe}.md"
 
