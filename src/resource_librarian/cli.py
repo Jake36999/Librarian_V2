@@ -226,6 +226,7 @@ def main(argv: list[str] | None = None) -> int:
             coordinator.acquire()
             index_service = IndexService(vault)
             ctx.extras["index_service"] = index_service
+            ctx.extras["index_access"] = "core"
             ctx.extras["checkpoints"] = CheckpointStore(vault)
             if spec.effect != "read":
                 writer = VaultWriter(vault)

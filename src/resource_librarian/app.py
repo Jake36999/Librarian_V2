@@ -2253,6 +2253,7 @@ class App:
                                   # browser/Obsidian/Cowork request can touch
                                   # the derived SQLite index.
                                   "index_service": self.index_service,
+                                  "index_access": "core",
                                   "checkpoints": self.checkpoints,
                                   "profile_store": self.profiles,
                                   "agent_profile": profile_id,
@@ -2457,8 +2458,7 @@ class App:
     def attach(self, session_id: str) -> dict[str, Any]:
         """Continue a thread in the chat: the person picked it from Sessions."""
         loop = self._loop()
-        result = REGISTRY.call("resume_session", {"session_id": session_id},
-                               Context(tier="curate", vault=self.vault))
+        result = self.person_call("resume_session", {"session_id": session_id})
         if "error" in result:
             raise ApiError(400, result.get("detail") or result["error"], result=result)
         loop.ctx.session = session_id

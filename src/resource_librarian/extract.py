@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from .coordination import atomic_write_text
-from .index import Index
+from .index import Index, run_index
 from .rules import Refusal
 from .vault import now_iso
 
@@ -27,22 +27,18 @@ def _source(index: Index, source: str) -> Any:
     return row
 
 
-def _with_index(vault: Any, index_service: Any, operation: Any) -> Any:
+def _with_index(vault: Any, index_service: Any, operation: Any, *, offline: bool = False) -> Any:
     """Keep Core-backed extraction on its single SQLite owner.
 
-    The legacy/direct path remains useful to standalone scripts and existing
-    tests.  Browser, Obsidian, Cowork and agent calls pass their Core service
-    through the registry tool and therefore never open the vault database in
-    an adapter/request thread.
+    A standalone script must explicitly choose offline mode. Serving callers
+    supply their Core service; its absence is never permission to open SQLite.
     """
-    if index_service is not None:
-        return index_service.run(operation)
-    with Index(vault) as index:
-        return operation(index)
+    return run_index(vault, operation, index_service=index_service, offline=offline)
 
 
 def plan(vault: Any, source: str, seed: str = "", include_tests: bool = False,
-         max_files: int = 20, max_chars: int = 80_000, *, index_service: Any = None) -> dict[str, Any]:
+         max_files: int = 20, max_chars: int = 80_000, *, index_service: Any = None,
+         offline: bool = False) -> dict[str, Any]:
     max_files = max(1, min(int(max_files), 50))
     max_chars = max(1_000, min(int(max_chars), 200_000))
     def collect(index: Index) -> list[dict[str, Any]]:
@@ -51,7 +47,7 @@ def plan(vault: Any, source: str, seed: str = "", include_tests: bool = False,
         return [dict(r) for r in index.conn.execute(
             "SELECT address, revision, evidence FROM component WHERE path = ? ORDER BY address",
             (row["path"],))]
-    components = _with_index(vault, index_service, collect)
+    components = _with_index(vault, index_service, collect, offline=offline)
     candidates = []
     for component in components:
         address = str(component.get("address") or "")
@@ -81,26 +77,27 @@ def plan(vault: Any, source: str, seed: str = "", include_tests: bool = False,
 
 def materialize(vault: Any, source: str, *, seed: str = "", include_tests: bool = False,
                 max_files: int = 20, max_chars: int = 80_000, fetcher: Any = None,
-                index_service: Any = None) -> dict[str, Any]:
+                index_service: Any = None, offline: bool = False) -> dict[str, Any]:
     from . import upkeep
     from .intake import Fetcher
     data = plan(vault, source, seed, include_tests, max_files, max_chars,
-                index_service=index_service)
+                index_service=index_service, offline=offline)
     used = 0
     excerpts = []
     for item in data["files"]:
         remaining = max(0, max_chars - used)
         if remaining <= 0:
             break
-        # source_file needs the indexed source metadata only; it never
-        # executes or clones the repository.  Execute the complete lookup on
-        # the Core index worker rather than passing a raw SQLite object across
-        # an adapter/request boundary.
+        # Only copy metadata on the worker. Evidence/cache reads and the
+        # actual repository fetch must not occupy the sole SQLite owner.
         from types import SimpleNamespace
-        def retrieve(index: Index) -> dict[str, Any]:
-            return upkeep.source_file(vault, SimpleNamespace(index=index), fetcher or Fetcher(), source,
-                                      item["path"], min(20_000, remaining))
-        file = _with_index(vault, index_service, retrieve)
+        def index_call(operation: Any) -> Any:
+            def lookup(index: Index) -> Any:
+                row = operation(SimpleNamespace(index=index))
+                return dict(row) if row is not None else None
+            return _with_index(vault, index_service, lookup, offline=offline)
+        file = upkeep.source_file(vault, None, fetcher or Fetcher(), source,
+                                  item["path"], min(20_000, remaining), index_call=index_call)
         text = str(file.get("text") or "")
         used += len(text)
         excerpts.append({"path": item["path"], "revision": file.get("version", ""),

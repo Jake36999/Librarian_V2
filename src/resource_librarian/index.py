@@ -36,6 +36,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, TypeVar
 
 from . import notes, schema
+from .rules import Refusal
 from .vault import Vault, now_iso
 
 SCHEMA_VERSION = 2          # 2: repository components (P5.3)
@@ -603,6 +604,23 @@ class IndexService:
 def open_index(vault: Vault, refresh: bool = True) -> tuple[Index, RefreshReport | None]:
     index = Index(vault)
     return index, (index.refresh() if refresh else None)
+
+
+def run_index(vault: Vault, operation: Callable[[Index], T], *,
+              index_service: IndexService | None = None, offline: bool = False) -> T:
+    """Explicit first-party Core/offline index boundary, never an implicit fallback.
+
+    Offline is a developer/library compatibility mode, not an adapter mode.
+    Production CLI callers acquire the vault lease and supply their service.
+    """
+    if index_service is not None:
+        if offline or not isinstance(index_service, IndexService) or index_service.vault != vault:
+            raise Refusal("CORE_REQUIRED", "use this library's Core index service, not an offline or foreign owner")
+        return index_service.run(operation)
+    if not offline:
+        raise Refusal("CORE_REQUIRED", "an index service is required; standalone callers must explicitly select offline=True")
+    with Index(vault) as index:
+        return operation(index)
 
 
 def paths_changed(index: Index, paths: Iterable[Path]) -> list[str]:

@@ -9,8 +9,9 @@ from typing import Any, Callable, Literal, TypeVar
 
 from .. import agenda, desk, evaluation, notes, revisions, text
 from ..coordination import atomic_write_text, fingerprint_bytes
-from ..index import Index
+from ..index import Index, IndexService, run_index
 from ..registry import Card, Context, tool
+from ..rules import Refusal
 from ..search import INTENTS, Engine, search
 from ..vault import now_iso
 
@@ -90,9 +91,33 @@ def _plain_index_value(value: R) -> R:
     raise TypeError(f"an IndexGateway callback returned non-plain {type(value).__name__}")
 
 
+def index_service_for(ctx: Context) -> IndexService | None:
+    """Validate the owner before any callback, cache lookup or offline fallback."""
+    mode = ctx.extras.get("index_access")
+    service = ctx.extras.get("index_service")
+    serving = mode == "core" or ctx.extras.get("caller") == "core" or ctx.extras.get("caller_kind") == "mcp"
+    if mode not in (None, "core", "offline"):
+        raise Refusal("CORE_REQUIRED", "unknown index access mode")
+    if serving and mode == "offline":
+        raise Refusal("CORE_REQUIRED", "a serving caller cannot opt into offline index access")
+    if service is not None:
+        if mode == "offline" or not isinstance(service, IndexService) or service.vault != ctx.vault:
+            raise Refusal("CORE_REQUIRED", "this call requires its own library's Core index service")
+        return service
+    if serving or (mode != "offline" and ctx.extras.get("vault_writer") is not None):
+        raise Refusal("CORE_REQUIRED", "the Core index service is unavailable; reconnect instead of opening SQLite directly")
+    return None  # Legacy standalone Context remains an offline compatibility alias.
+
+
+def _require_offline(ctx: Context) -> None:
+    if index_service_for(ctx) is not None:
+        raise Refusal("CORE_REQUIRED", "direct engine construction is offline-only; use a Core index callback")
+
+
 def engine_for(ctx: Context, refresh: bool = True) -> Engine:
     """One engine per call context, over an index brought up to date first:
     answering from a stale index is a silent failure (`FAILURE_MUST_BE_LOUD`)."""
+    _require_offline(ctx)
     cached = ctx.extras.get("engine")
     if cached is None:
         cached = _build_engine(ctx)
@@ -114,7 +139,9 @@ def _build_engine(ctx: Context, index: Index | None = None, *, include_vectors: 
     library/test calls.  An App context supplies ``index_service`` instead,
     and all work below is then performed on its one SQLite worker.
     """
-    index = index or Index(ctx.vault)
+    if index is None:
+        _require_offline(ctx)
+        index = Index(ctx.vault)
     vectors = None
     from ..embed import VectorSearch, spec_for
     spec = spec_for(ctx.vault) if include_vectors else ""
@@ -158,10 +185,10 @@ def with_engine(ctx: Context, operation: Callable[[Engine], R], *, refresh: bool
     A generic registry-level lock is intentionally not used: some tools wait
     for a person or orchestrate other tools.  Library operations are short
     and self-contained, so their complete SQLite interaction can safely run
-    on :class:`IndexService`'s worker.  Direct callers retain V1-compatible
-    local behaviour when no service has been installed in their Context.
+    on :class:`IndexService`'s worker. Legacy standalone Contexts retain local
+    compatibility; a serving Context missing its service always refuses.
     """
-    service = ctx.extras.get("index_service")
+    service = index_service_for(ctx)
     if service is not None:
         return service.run(lambda index: operation(_prepared_engine(ctx, index, refresh,
                                                                    include_vectors=include_vectors)))
@@ -172,11 +199,8 @@ def with_engine(ctx: Context, operation: Callable[[Engine], R], *, refresh: bool
 
 def with_index(ctx: Context, operation: Callable[[Index], R]) -> R:
     """Run a short direct-index operation through Core when available."""
-    service = ctx.extras.get("index_service")
-    if service is not None:
-        return service.run(operation)
-    with Index(ctx.vault) as index:
-        return operation(index)
+    service = index_service_for(ctx)
+    return run_index(ctx.vault, operation, index_service=service, offline=service is None)
 
 
 @tool("index", tier="contribute", effect="write", scope="library",

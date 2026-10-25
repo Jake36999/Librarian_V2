@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from .. import communities
 from ..registry import Card, Context, REGISTRY
+from .library import index_service_for
 
 
 @REGISTRY.tool("community_rebuild", tier="contribute", effect="write", scope="library",
@@ -11,8 +12,8 @@ from ..registry import Card, Context, REGISTRY
                returns=("nodes", "edges", "communities"))
 def rebuild_communities(ctx: Context, iterations: int = 20) -> dict:
     """Derived index data only: it never edits notes or changes ranking."""
-    return communities.rebuild(ctx.vault, iterations,
-                               index_service=ctx.extras.get("index_service"))
+    service = index_service_for(ctx)
+    return communities.rebuild(ctx.vault, iterations, index_service=service, offline=service is None)
 
 
 @REGISTRY.tool("community_reports", tier="consult", effect="read",

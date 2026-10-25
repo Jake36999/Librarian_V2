@@ -175,9 +175,11 @@ _RULES = [
          "An audited orchestrator runs outside the vault writer; its individual mutations "
          "still pass the registry and writer, and no permission wait holds the writer."),
     Rule("CORE_REQUIRED", "boundaries",
-         "An MCP connection reaches a vault only through that vault's running Librarian "
-         "Core; it never opens the vault, its index or its writer itself. Open Librarian "
-         "for this vault (or start it from the tray), then retry."),
+         "Serving calls reach a vault through its owning Librarian Core; a missing or "
+         "foreign Core index is never permission to open SQLite directly. MCP never "
+         "opens the vault, index or writer itself. Reconnect to this vault's Core "
+         "(or start it from the tray); standalone library scripts must explicitly "
+         "choose offline access."),
     Rule("VAULT_EXISTS", "boundaries",
          "A folder that is already a vault is never initialised again."),
     Rule("VAULT_REQUIRED", "boundaries",

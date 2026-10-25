@@ -14,8 +14,12 @@ ROOT = Path(__file__).resolve().parents[1] / "src" / "resource_librarian"
 # The ownership machinery itself: IndexService wraps Index, and with_engine /
 # with_index fall back to a direct Index only when no Core service is installed.
 INFRASTRUCTURE = {
-    ("index.py", "Index"): 2, ("index.py", "sqlite3.connect"): 1,
-    ("tools/library.py", "Index"): 2, ("tools/library.py", "engine_for"): 1,
+    ("index.py", "Index"): 3, ("index.py", "sqlite3.connect"): 1,
+    ("tools/library.py", "Index"): 1, ("tools/library.py", "engine_for"): 1,
+    ("tools/library.py", "run_index"): 1,
+    # Pack APIs require a service or an explicit offline flag. Registered
+    # tools validate their serving Context before invoking either boundary.
+    ("communities.py", "run_index"): 1, ("extract.py", "run_index"): 1,
 }
 # Separate SQLite stores, not the vault index.  Reviewed under INDEX-05.
 OTHER_STORES = {("desk.py", "sqlite3.connect"): 1, ("lenses.py", "sqlite3.connect"): 1}
@@ -24,11 +28,8 @@ OTHER_STORES = {("desk.py", "sqlite3.connect"): 1, ("lenses.py", "sqlite3.connec
 # 14 after selected staging paths; 8 after upkeep/catalog-status lookups;
 # 6 after taxonomy refiling/generated-view migration; 4 after batch lookups;
 # 3 after Core catalogue adoption.
-# 2 after mixed-kind/multi-topic acceptance; only explicit offline branches remain).
-DEBT = {
-    ("communities.py", "Index"): 1,
-    ("extract.py", "Index"): 1,
-}
+# 2 after mixed-kind/multi-topic acceptance; 0 after explicit pack offline boundary).
+DEBT = {}
 
 
 def _direct_calls() -> collections.Counter:
@@ -44,7 +45,7 @@ def _direct_calls() -> collections.Counter:
             owner = func.value.id if isinstance(func, ast.Attribute) and \
                 isinstance(func.value, ast.Name) else ""
             kind = "sqlite3.connect" if (name == "connect" and owner == "sqlite3") else \
-                name if name in ("engine_for", "Index") else ""
+                name if name in ("engine_for", "Index", "open_index", "run_index") else ""
             if kind:
                 found[(path.relative_to(ROOT).as_posix(), kind)] += 1
     return found
@@ -75,7 +76,10 @@ def test_the_guard_sees_the_patterns_it_forbids(tmp_path, monkeypatch):
         "import sqlite3\nfrom ..index import Index\n"
         "def a(ctx): return engine_for(ctx)\n"
         "def b(v): return Index(v)\n"
-        "def c(p): return sqlite3.connect(p)\n", encoding="utf-8")
+        "def c(p): return sqlite3.connect(p)\n"
+        "def d(v): return open_index(v)\n"
+        "def e(v): return run_index(v, lambda i: i.stats(), offline=True)\n", encoding="utf-8")
     monkeypatch.setattr(__import__(__name__), "ROOT", package)
     assert _direct_calls() == {("tools/fresh.py", "engine_for"): 1, ("tools/fresh.py", "Index"): 1,
-                               ("tools/fresh.py", "sqlite3.connect"): 1}
+                               ("tools/fresh.py", "sqlite3.connect"): 1,
+                               ("tools/fresh.py", "open_index"): 1, ("tools/fresh.py", "run_index"): 1}
