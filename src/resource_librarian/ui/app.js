@@ -1586,14 +1586,22 @@ var Librarian = (() => {
       return pending;
     }
     readinessChips(provider, model) {
+      if (this.slot) return null;
       const row = this.routeReadiness(provider, model);
       if (!row) return null;
-      const qualification = row.qualification && typeof row.qualification === "object" ? row.qualification.status : row.qualification ?? row.status ?? "";
+      const tiers = this.tiers();
+      const selected = tiers.findIndex((t) => sameHost(t.provider, provider) && t.model === model);
+      const role = ["lead", "scribe", "clerk"][selected >= 0 ? selected : Math.min(tiers.length, 2)];
+      const evidence = row.qualification_by_role?.[role] ?? (row.role === role ? row.qualification : null);
+      const qualification = evidence?.status ?? "evidence pending";
       const workflow = row.core_workflow ?? row.workflow_ready ?? row.workflow;
       const fixture = row.fixture_preflight ?? row.fixture_ready;
       const health = row.host_health && typeof row.host_health === "object" ? row.host_health.status : row.host_health ?? row.health;
       const labels = [
-        qualification ? String(qualification).replace(/_/g, " ") : "evidence pending",
+        `${role}: ${String(qualification).replace(/_/g, " ")}`,
+        evidence?.freshness && !["current", "missing"].includes(evidence.freshness) ? `${role}: ${String(evidence.freshness).replace(/_/g, " ")}` : "",
+        row.active_task && row.role !== role ? `${row.task_profile} task: ${String(row.qualification?.status ?? "evidence pending").replace(/_/g, " ")}` : "",
+        row.binding_errors?.[role] ? `${role}: route unavailable` : "",
         this.readinessText(workflow, "walk ready", "walk blocked", "walk unchecked"),
         this.readinessText(fixture, "fixtures ready", "fixture issue", "fixtures unchecked"),
         this.readinessText(health, "host ready", "host issue", "host unchecked")
@@ -1602,7 +1610,7 @@ var Librarian = (() => {
       return h(
         "div",
         { class: "readiness", title: detail },
-        labels.filter((value, index, all) => all.indexOf(value) === index).map((value) => h("span", { class: `readiness-chip ${/blocked|issue|experimental|unavailable|stale/i.test(value) ? "warn" : ""}` }, value))
+        labels.filter((value, index, all) => value && all.indexOf(value) === index).map((value) => h("span", { class: `readiness-chip ${/blocked|issue|experimental|unavailable|stale/i.test(value) ? "warn" : ""}` }, value))
       );
     }
     readinessSummary() {
@@ -1624,6 +1632,7 @@ var Librarian = (() => {
         await this.api.post("/api/tiers", { tiers, ...override ? { override } : {} });
         this.pendingLead = null;
         this.setTiers(tiers);
+        void this.refreshReadiness(++this.readinessEpoch);
       } catch (e) {
         const body = e.body ?? {};
         if (body.needs_override) this.pendingLead = { tiers, lead: String(body.lead ?? "") };
@@ -2798,6 +2807,7 @@ var Librarian = (() => {
                 ` \xB7 ${current}`,
                 h("span", { class: "dim" }, ` \xB7 ${s.job}`),
                 contractLabel ? h("span", { class: "dim" }, contractLabel) : null,
+                s.route_status === "unavailable" ? h("span", { class: "note err" }, ` \xB7 ${s.route_error ?? "route unavailable"}`) : null,
                 s.cap_usd !== void 0 ? h("span", { class: "dim" }, ` \xB7 spent $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null
               ),
               s.built && this.chooseService ? h("button", { class: "ghost", onclick: () => {
@@ -3040,6 +3050,29 @@ var Librarian = (() => {
           status.textContent = e.message;
         }
       };
+      const serviceSlot = h(
+        "select",
+        { "aria-label": `Service slot on ${row.display_name ?? row.id}` },
+        h("option", { value: "ocr" }, "OCR"),
+        h("option", { value: "embeddings" }, "Embeddings")
+      );
+      const chooseService = async () => {
+        if (!model.value.trim()) {
+          status.textContent = "Enter or discover a model id first.";
+          return;
+        }
+        try {
+          await this.api.post("/api/services", {
+            slot: serviceSlot.value,
+            host_id: row.id,
+            model: model.value.trim()
+          });
+          await this.refresh();
+          this.render();
+        } catch (e) {
+          status.textContent = e.message;
+        }
+      };
       return h(
         "div",
         { class: "host-card" },
@@ -3082,7 +3115,14 @@ var Librarian = (() => {
           h("button", { class: "ghost", onclick: () => void probe() }, `L1 probe (${probeRole})`),
           h("button", { class: "primary", onclick: () => void chooseLead() }, "Use as lead")
         ),
-        discovered
+        discovered,
+        row.protocol === "openai" ? h(
+          "div",
+          { class: "row2" },
+          serviceSlot,
+          h("button", { class: "ghost", onclick: () => void chooseService() }, "Use for service"),
+          h("span", { class: "note inline" }, "OCR and embeddings use this exact host. Native speech remains DeepInfra-only; selection is not qualification.")
+        ) : null
       );
     }
     newHostCard(reload) {

@@ -28,6 +28,7 @@ from typing import Any
 from . import text
 from .providers import PRESETS, ProviderError, _key
 from .service_adapters import ServiceContractError, ocr_request
+from . import service_routes
 from .vault import Vault
 
 FORMATS = ("vision_chat",)
@@ -44,30 +45,32 @@ class OcrError(RuntimeError):
 
 def choice(vault: Vault) -> dict[str, str]:
     """The library's OCR model, or {} when none is chosen."""
-    raw = str(vault.setting("services", "ocr") or "").strip()
-    provider, _, model = raw.partition(":")
-    if not (provider and model):
+    route = service_routes.resolve(vault, "ocr")
+    if route is None:
         return {}
-    return {"provider": provider, "model": model,
+    return {**route.choice(),
             "format": str(vault.setting("services", "ocr_format") or "vision_chat")}
 
 
 class VisionChat:
     """An OpenAI-compatible chat endpoint that takes an image in the message."""
 
-    def __init__(self, provider: str, model: str, timeout: float = 180):
-        if provider not in PRESETS or PRESETS[provider].get("protocol") != "openai":
+    def __init__(self, provider: str, model: str, timeout: float = 180, *,
+                 route: service_routes.ServiceRoute | None = None, vault: Vault | None = None):
+        if route is None and (provider not in PRESETS or PRESETS[provider].get("protocol") != "openai"):
             raise OcrError(f"{provider!r} is not an OpenAI-compatible provider")
-        self.url = PRESETS[provider]["base_url"].rstrip("/") + "/chat/completions"
+        self.url = (route.base_url if route else PRESETS[provider]["base_url"]).rstrip("/") + "/chat/completions"
         self.provider = provider
-        self.key_env, self.model, self.timeout = PRESETS[provider]["key_env"], model, timeout
+        self.key_env = route.key_env if route else PRESETS[provider]["key_env"]
+        self.model, self.timeout, self.route, self.vault = model, timeout, route, vault
         self.name = f"{provider}:{model}"
 
     def page_text(self, png: bytes) -> str:
         key = _key(self.key_env)                           # ProviderError when no key is set
         image = "data:image/png;base64," + base64.b64encode(png).decode()
         try:
-            body, _binding = ocr_request(self.provider, self.model, PROMPT, image)
+            body, _binding = ocr_request(self.route.contract_provider if self.route else self.provider,
+                                         self.model, PROMPT, image)
         except ServiceContractError as exc:
             raise OcrError(f"{self.name}: {exc}") from exc
         request = urllib.request.Request(
@@ -75,8 +78,12 @@ class VisionChat:
             headers={"Content-Type": "application/json",
                      **({"Authorization": f"Bearer {key}"} if key else {})})
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                data = json.loads(response.read())
+            def send():
+                with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                    return json.loads(response.read())
+            data = service_routes.run(self.vault, self.route, send) if self.route and self.vault else send()
+        except service_routes.ServiceRouteError as exc:
+            raise OcrError(str(exc)) from exc
         except urllib.error.HTTPError as exc:
             raise OcrError(f"{self.name}: HTTP {exc.code} {exc.read()[:200]!r}") from exc
         except (urllib.error.URLError, TimeoutError) as exc:
@@ -97,7 +104,13 @@ def endpoint(vault: Vault, extras: dict[str, Any] | None = None) -> Any | None:
         return None
     if chosen["format"] not in FORMATS:
         raise OcrError(f"OCR format {chosen['format']!r} is not one of {FORMATS}")
-    return VisionChat(chosen["provider"], chosen["model"])
+    try:
+        route = service_routes.resolve(vault, "ocr", validate=True)
+        if route is None or route.choice() != {key: chosen[key] for key in ("provider", "model")}:
+            raise service_routes.ServiceRouteError("OCR assignment changed; restart the operation")
+        return VisionChat(chosen["provider"], chosen["model"], route=route, vault=vault)
+    except service_routes.ServiceRouteError as exc:
+        raise OcrError(str(exc)) from exc
 
 
 def render_page(path: Path, index: int, scale: float = SCALE) -> bytes:

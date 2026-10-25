@@ -44,6 +44,8 @@ from typing import Any, Callable, Sequence
 
 from .index import Index
 from .service_adapters import ServiceContractError, embedding_input, embedding_namespace
+from . import service_routes
+from .providers import ProviderError
 
 LOCAL_KINDS = ("model2vec", "fastembed", "hash")
 API_BATCH = 64
@@ -56,7 +58,7 @@ class EncoderUnavailable(RuntimeError):
     pass
 
 
-def load_encoder(spec: str) -> tuple[str, Callable[[list[str]], Any]]:
+def load_encoder(spec: str, *, vault=None) -> tuple[str, Callable[[list[str]], Any]]:
     """`kind:model` -> (model name as stored, encode function)."""
     kind, _, model = spec.partition(":")
     try:
@@ -92,20 +94,20 @@ def load_encoder(spec: str) -> tuple[str, Callable[[list[str]], Any]]:
         # still applying the reviewed *document* representation.  The search
         # path below uses load_embedding_encoders() to obtain its distinct
         # query encoder as well.
-        _, document_encode, _, _ = load_embedding_encoders(spec)
+        _, document_encode, _, _ = load_embedding_encoders(spec, vault=vault)
         return spec, document_encode
     raise EncoderUnavailable(f"unknown encoder {spec!r}; use model2vec:, fastembed:, api: "
                              f"or hash:")
 
 
-def _api_encoder(provider: str, model: str, *, representation_kind: str = "") \
+def _api_encoder(provider: str, model: str, *, representation_kind: str = "", route=None, vault=None) \
         -> Callable[[list[str]], list[list[float]]]:
     """A hosted OpenAI-compatible /embeddings endpoint. The key is read at call time."""
     from .providers import PRESETS, _key
-    if provider not in PRESETS or PRESETS[provider].get("protocol") != "openai" or not model:
+    if not model or (route is None and (provider not in PRESETS or PRESETS[provider].get("protocol") != "openai")):
         raise EncoderUnavailable(f"{provider!r} is not an OpenAI-compatible embeddings provider")
-    url = PRESETS[provider]["base_url"].rstrip("/") + "/embeddings"
-    key_env = PRESETS[provider]["key_env"]
+    url = (route.base_url if route else PRESETS[provider]["base_url"]).rstrip("/") + "/embeddings"
+    key_env = route.key_env if route else PRESETS[provider]["key_env"]
 
     def post(texts: list[str]) -> list[list[float]]:
         expected_dimension = 0
@@ -134,11 +136,13 @@ def _api_encoder(provider: str, model: str, *, representation_kind: str = "") \
                 headers={"Content-Type": "application/json",
                          **({"Authorization": f"Bearer {key}"} if key else {})})
             try:
-                with urllib.request.urlopen(request, timeout=120) as response:
-                    data = json.loads(response.read())
+                def send():
+                    with urllib.request.urlopen(request, timeout=120) as response:
+                        return json.loads(response.read())
+                data = service_routes.run(vault, route, send) if route and vault else send()
                 batch = [row["embedding"] for row in sorted(data["data"],
                                                                key=lambda row: row["index"])]
-            except (KeyError, TypeError, ValueError, urllib.error.URLError, TimeoutError) as exc:
+            except (KeyError, TypeError, ValueError, urllib.error.URLError, TimeoutError, ProviderError) as exc:
                 raise EncoderUnavailable(f"{provider}:{model}: {exc}") from exc
             if expected_dimension and any(len(vector) != expected_dimension for vector in batch):
                 raise EncoderUnavailable(
@@ -161,7 +165,7 @@ def _api_parts(spec: str) -> tuple[str, str] | None:
 
 
 def load_embedding_encoders(
-        spec: str,
+        spec: str, *, vault=None,
 ) -> tuple[str, Callable[[list[str]], Any], Callable[[list[str]], Any], dict[str, Any]]:
     """Resolve separate document/query encoders and an evidence summary.
 
@@ -171,35 +175,59 @@ def load_embedding_encoders(
     separately reviewed representation at present and therefore share an
     encoder and their original namespace.
     """
+    route = None
+    if vault is not None and service_routes.RoleRouteStore(vault).exists():
+        try:
+            route = service_routes.resolve(vault, "embeddings", validate=True)
+            if route is None or spec_for(vault) != spec:
+                raise service_routes.ServiceRouteError("embedding assignment changed; select and start it again")
+        except service_routes.ServiceRouteError as exc:
+            raise EncoderUnavailable(str(exc)) from exc
     parts = _api_parts(spec)
     if parts is None:
         model, encode = load_encoder(spec)
+        if route is not None:
+            original_encode = encode
+            def encode(texts):
+                try:
+                    return service_routes.run(vault, route, lambda: original_encode(texts))
+                except (service_routes.ServiceRouteError, ProviderError) as exc:
+                    raise EncoderUnavailable(str(exc)) from exc
         return model, encode, encode, {}
     provider, model = parts
+    if route is not None:
+        provider = route.contract_provider
     try:
         namespace, contract = embedding_namespace(spec, provider, model)
+        if route is not None and route.host_id != "preset-" + route.provider:
+            namespace += "@" + route.endpoint_fingerprint
     except ServiceContractError as exc:
         raise EncoderUnavailable(f"{provider}:{model}: {exc}") from exc
     try:
         import numpy as np
     except ImportError as exc:
         raise EncoderUnavailable("numpy is not installed") from exc
-    document_post = _api_encoder(provider, model, representation_kind="document")
-    query_post = _api_encoder(provider, model, representation_kind="query")
+    document_post = _api_encoder(provider, model, representation_kind="document", route=route, vault=vault)
+    query_post = _api_encoder(provider, model, representation_kind="query", route=route, vault=vault)
     return (namespace,
             lambda texts: np.asarray(document_post(list(texts)), dtype="float32"),
             lambda texts: np.asarray(query_post(list(texts)), dtype="float32"),
             contract.summary())
 
 
-def adapter_summary(spec: str) -> dict[str, Any]:
+def adapter_summary(spec: str, *, vault=None) -> dict[str, Any]:
     """A passive, non-secret expectation summary suitable for a service tile."""
     parts = _api_parts(spec)
     if parts is None:
         return {}
     provider, model = parts
     try:
+        route = service_routes.resolve(vault, "embeddings") if vault is not None else None
+        if route is not None:
+            provider = route.contract_provider
         namespace, contract = embedding_namespace(spec, provider, model)
+        if route is not None and route.host_id != "preset-" + route.provider:
+            namespace += "@" + route.endpoint_fingerprint
     except ServiceContractError:
         return {}
     summary = contract.summary()
@@ -238,8 +266,14 @@ def representation_current(index: Index, spec: str) -> bool:
         return True
     provider, model = parts
     try:
+        route = service_routes.resolve(index.vault, "embeddings") \
+            if service_routes.RoleRouteStore(index.vault).exists() else None
+        if route is not None:
+            provider = route.contract_provider
         namespace, _contract = embedding_namespace(spec, provider, model)
-    except ServiceContractError:
+        if route is not None and route.host_id != "preset-" + route.provider:
+            namespace += "@" + route.endpoint_fingerprint
+    except (ServiceContractError, service_routes.ServiceRouteError):
         return False
     if namespace == spec:
         return True
@@ -250,6 +284,11 @@ def representation_current(index: Index, spec: str) -> bool:
 
 def spec_for(vault) -> str:
     """The encoder in use: slot 6's choice, else the older [search] vectors setting."""
+    if service_routes.RoleRouteStore(vault).exists():
+        route = service_routes.resolve(vault, "embeddings")
+        if route is None:
+            return ""
+        return f"{route.provider}:{route.model}" if route.local else f"api:{route.provider}:{route.model}"
     chosen = str(vault.setting("services", "embeddings") or "").strip()
     if chosen:
         kind, _, rest = chosen.partition(":")
@@ -302,7 +341,7 @@ class VectorSearch:
     @classmethod
     def from_spec(cls, index: Index, spec: str) -> "VectorSearch":
         try:
-            namespace, document_encode, query_encode, adapter = load_embedding_encoders(spec)
+            namespace, document_encode, query_encode, adapter = load_embedding_encoders(spec, vault=index.vault)
             # `load_encoder("hash:")` historically normalizes its display
             # name to `hash:256`; preserve that ABI for local kinds.  Hosted
             # configuration is kept exactly as selected in the service tile.

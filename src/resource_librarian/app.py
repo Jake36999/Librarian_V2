@@ -410,6 +410,7 @@ class App:
         try:
             self._migrate_legacy_host_routes()
             self._migrate_legacy_role_routes()
+            self._migrate_service_routes()
         except Exception:
             self.index_service.close()
             if self.writer is not None:
@@ -447,6 +448,9 @@ class App:
         self.loop: Loop | None = None
         self._tts_plans: dict[str, tuple[str, list[str]]] = {}   # slot 5's readings
         self.actions: dict[str, Action] = {}
+        from .service_routes import ServiceRuntime
+        self.service_runtime = ServiceRuntime(vault, self.hosts, self.host_limiter)
+        self.service_runtime.attach()
         if mcp is not None:
             # Switching library: outside servers are configured per person, not
             # per library (mcp.json), and their tools are registered once,
@@ -476,6 +480,7 @@ class App:
         return {k: v for k, v in {"turn": self.busy, "actions": actions,
                                   "mcp_calls": self._calls["mcp"],
                                   "person_calls": self._calls["person"],
+                                  "service_calls": self.service_runtime.active_calls,
                                   "waiting_on_person": len(self.broker.pending())}.items() if v}
 
     def retire(self, patience: float = 3600.0, poll: float = 2.0) -> None:
@@ -540,6 +545,7 @@ class App:
         with self._lock:
             self._admitting = False
             turn = self._turn_cancel
+        self.service_runtime.close()
         phase("admission_closed")
         # Cancel before closing shared resources.  The loop checks its cancel
         # event before every step and tool call, so a turn still inside a
@@ -562,13 +568,15 @@ class App:
                     action.cancel.set()
                     cancelled[action.id] = action
             with self._lock:
-                calls = sum(self._calls.values())
+                calls = sum(self._calls.values()) + self.service_runtime.active_calls
             if not (self.busy or calls or any(a.status == "running" for a in cancelled.values())) \
                     or time.monotonic() >= deadline:
                 break
             time.sleep(0.05)
         with self._lock:
             calls_left = {kind: n for kind, n in self._calls.items() if n}
+        if self.service_runtime.active_calls:
+            calls_left["service"] = self.service_runtime.active_calls
         phase("work_cancelled",
               turn="none" if turn is None else "still_running" if self.busy else "stopped",
               actions={action.id: action.status for action in cancelled.values()},
@@ -825,15 +833,15 @@ class App:
                 role="research_helper", inherits_from="scribe", source="inherited", updated_at=now_iso())
         return rows
 
-    def _service_binding(self, slot: str, provider: str, model: str) -> RoleRouteBinding:
+    def _service_binding(self, slot: str, provider: str, model: str, *, host_id: str = "") -> RoleRouteBinding:
         from .embed import LOCAL_KINDS
         if not model:
             return RoleRouteBinding(role=slot, source="unconfigured", updated_at=now_iso())
-        if slot == "embeddings" and provider in LOCAL_KINDS:
+        if slot == "embeddings" and provider in LOCAL_KINDS and not host_id:
             return RoleRouteBinding(role=slot, host_id=f"local-{provider}", model_id=model,
                                      protocol="local", evidence_kind="local_service",
                                      source="legacy_service", updated_at=now_iso())
-        return self._binding_for_route(slot, {"provider": provider, "model": model},
+        return self._binding_for_route(slot, {"provider": provider, "model": model, "host_id": host_id},
                                        source="legacy_service")
 
     def _migrate_legacy_role_routes(self) -> None:
@@ -853,6 +861,41 @@ class App:
                 rows[slot] = self._service_binding(slot, provider, model)
             self.role_routes.initialize_if_absent(rows)
         self._serialized("role-route-migration", migrate)
+
+    def _migrate_service_routes(self) -> None:
+        """Promote the earlier metadata mirrors once, preserving legacy vectors."""
+        def migrate() -> None:
+            if self.settings.data.get("service_route_migration") == 1:
+                for slot in ("ocr", "tts", "stt", "embeddings"):
+                    binding = self.role_routes.resolve(slot)
+                    value = ""
+                    if binding is not None and binding.model_id:
+                        provider = binding.host_id
+                        if binding.protocol == "local":
+                            provider = provider.removeprefix("local-")
+                        elif provider.startswith("preset-") and provider[7:] in PRESETS:
+                            try:
+                                host = self.hosts.get(provider)
+                                if host.base_url.rstrip("/") == PRESETS[provider[7:]]["base_url"].rstrip("/"):
+                                    provider = provider[7:]
+                            except KeyError:
+                                pass
+                        value = f"{provider}:{binding.model_id}"
+                    if value != str(self.vault.setting("services", slot) or ""):
+                        self.vault.set_setting("services", slot, value)
+                return
+            rows = self.role_routes.raw()
+            for slot in ("ocr", "tts", "stt", "embeddings"):
+                value = str(self.vault.setting("services", slot) or "")
+                if slot == "embeddings":
+                    value = value or str(self.vault.setting("search", "vectors") or "")
+                    if value.startswith("api:"):
+                        value = value[4:]
+                provider, _, model = value.partition(":")
+                rows[slot] = self._service_binding(slot, provider, model)
+            self.role_routes.save(rows)
+            self.settings.update_in_operation(service_route_migration=1)
+        self._serialized("service-route-migration", migrate)
 
     def _chat_bindings_for_tiers(self, tiers: list[dict[str, Any]]) -> dict[str, RoleRouteBinding]:
         rows = self.role_routes.raw()
@@ -894,9 +937,9 @@ class App:
         return replace(binding, revision=previous.revision + 1 if previous else 1,
                        updated_at=now_iso())
 
-    def _save_service_binding(self, slot: str, provider: str, model: str) -> None:
+    def _save_service_binding(self, slot: str, provider: str, model: str, *, host_id: str = "") -> None:
         rows = self.role_routes.raw()
-        rows[slot] = self._revised_binding(rows.get(slot), self._service_binding(slot, provider, model))
+        rows[slot] = self._revised_binding(rows.get(slot), self._service_binding(slot, provider, model, host_id=host_id))
         self.role_routes.save(rows)
 
     def _configured_provider(self, choice: dict[str, Any]) -> Provider | None:
@@ -1009,6 +1052,31 @@ class App:
                                    "ceiling before starting a project walk")
         return outcome, detail
 
+    def _passive_qualification(self, host_id: str, model: str, role: str) -> dict[str, Any]:
+        """Inspect evidence without invalidating it or queuing paid work."""
+        current = self._qualification_fingerprints(host_id, model, role)
+        existing = self.qualifications.get(host_id, model, role)
+        change = self.qualifications.route_change_kind(
+            host_id=host_id, model_id=model, role=role,
+            compatibility_fingerprint=current["compatibility"],
+            behavior_fingerprint=current["behavior"])
+        if existing is None:
+            return {"role": role, "status": "experimental", "freshness": "missing", "fresh": False,
+                    "invalidation": ""}
+        freshness = "current" if existing.fresh() else "expired_or_missing"
+        status, invalidation = existing.status, existing.invalidation
+        if change == "hard":
+            status, freshness = "stale", "hard_incompatible"
+            invalidation = "hard compatibility fingerprint changed; run L0 then requalify"
+        elif change == "soft":
+            freshness = "advisory_stale"
+            invalidation = "advisory stale behavior fingerprint; review before release use"
+        return {"host_id": existing.host_id, "model_id": existing.model_id,
+                "role": existing.role, "status": status,
+                "updated_at": existing.updated_at, "expires_at": existing.expires_at,
+                "invalidation": invalidation, "evidence_runs": existing.evidence_runs,
+                "fresh": existing.fresh() and change != "hard", "freshness": freshness}
+
     def route_readiness(self, profile_id: str = "", session_id: str = "") -> dict[str, Any]:
         """Return compact, non-secret route evidence for the existing picker.
 
@@ -1055,6 +1123,16 @@ class App:
                 "provider": str(provider or wanted_host),
             }
 
+        stored_bindings = self.role_routes.raw()
+        bindings = {role: self.role_routes.resolve(role, stored_bindings) for role in CHAT_ROLES}
+        try:
+            task_slot = self._profile_binding_role(self.profiles.get(selected_profile))
+        except (KeyError, ValueError, ApiError):
+            task_slot = ""
+        task_binding = bindings.get(task_slot)
+        for binding in bindings.values():
+            if binding is not None and binding.source != "unconfigured":
+                add_route(binding.host_id, binding.model_id)
         for route in self.settings.data.get("tiers") or []:
             if isinstance(route, dict):
                 add_route(route.get("host_id") or route.get("provider"), route.get("model"),
@@ -1079,36 +1157,31 @@ class App:
             # may queue L2/L3 work.  Surface a prospective stale state
             # instead; the normal explicit qualification action remains the
             # only path which mutates evidence or creates paid-work plans.
-            role = qualification_role
-            current = self._qualification_fingerprints(host_id, model, role)
-            existing = self.qualifications.get(host_id, model, role)
-            change = self.qualifications.route_change_kind(
-                host_id=host_id, model_id=model, role=role,
-                compatibility_fingerprint=current["compatibility"],
-                behavior_fingerprint=current["behavior"])
-            if existing is None:
-                qualification = {"status": "experimental", "freshness": "missing", "fresh": False,
-                                 "invalidation": ""}
-            else:
-                freshness = "current" if existing.fresh() else "expired_or_missing"
-                status_value = existing.status
-                invalidation = existing.invalidation
-                if change == "hard":
-                    status_value, freshness = "stale", "hard_incompatible"
-                    invalidation = "hard compatibility fingerprint changed; run L0 then requalify"
-                elif change == "soft":
-                    freshness = "advisory_stale"
-                    invalidation = "advisory stale behavior fingerprint; review before release use"
-                qualification = {"host_id": existing.host_id, "model_id": existing.model_id,
-                                 "role": existing.role, "status": status_value,
-                                 "updated_at": existing.updated_at, "expires_at": existing.expires_at,
-                                 "invalidation": invalidation, "evidence_runs": existing.evidence_runs,
-                                 "fresh": existing.fresh() and change != "hard",
-                                 "freshness": freshness}
+            by_role = {role: self._passive_qualification(host_id, model, role)
+                       for role in dict.fromkeys((*CHAT_ROLES, qualification_role))}
+            qualification = by_role[qualification_role]
+            assigned = [binding for binding in bindings.values() if binding is not None and
+                        binding.host_id == host_id and binding.model_id == model]
+            binding_errors = {}
+            for binding in assigned:
+                if host is None:
+                    binding_errors[binding.role] = "host unavailable"
+                elif not host.enabled:
+                    binding_errors[binding.role] = "host disabled"
+                elif binding.protocol != host.protocol or binding.endpoint_fingerprint != host.endpoint_fingerprint:
+                    binding_errors[binding.role] = "endpoint changed; review and select the route again"
             route_detail = str(qualification.get("invalidation") or health.get("detail") or "")
             row = {
                 "host_id": host_id, "provider": host_id, "model": model,
+                "role": qualification_role,
                 "qualification": qualification,
+                "qualification_by_role": by_role,
+                "active_task": bool(task_binding and task_binding.host_id == host_id and
+                                    task_binding.model_id == model),
+                "task_profile": selected_profile,
+                "bound_roles": [binding.role for binding in assigned],
+                "binding_errors": binding_errors,
+                "host_enabled": host.enabled if host is not None else False,
                 "freshness": qualification.get("freshness", "missing"),
                 "host_health": health or {"status": "unknown", "detail": "Host has not been tested"},
                 "core_workflow": {"ok": core["ok"], "status": core["status"], "detail": core["detail"]},
@@ -1129,6 +1202,8 @@ class App:
         # A pack that failed to load leaves every route ``unknown``; say why
         # here rather than letting reviewed routes quietly look unreviewed.
         return {"core": core, "routes": routes,
+                "bindings": {role: binding.public() if binding is not None else None
+                             for role, binding in bindings.items()},
                 "expectation_pack": self.invocation_runtime.expectations.status()}
 
     def _release_contract(self, host_id: str) -> dict[str, Any]:
@@ -3071,10 +3146,20 @@ class App:
             if row.get("model"):
                 if name == "embeddings":
                     from . import embed
-                    row["adapter"] = embed.adapter_summary(str(row.get("spec") or ""))
+                    row["adapter"] = embed.adapter_summary(str(row.get("spec") or ""), vault=self.vault)
                 else:
-                    row["adapter"] = service_binding(name, str(row.get("provider") or ""),
+                    from .service_routes import resolve as service_route
+                    selected = service_route(self.vault, name)
+                    row["adapter"] = service_binding(name, selected.contract_provider if selected else "",
                                                      str(row.get("model") or "")).summary()
+            binding = self.role_routes.resolve(name)
+            row["binding"] = binding.public() if binding is not None else None
+            try:
+                from .service_routes import resolve as service_route, ServiceRouteError
+                selected = service_route(self.vault, name, validate=True)
+                row["route_status"] = "selected" if selected else "unconfigured"
+            except ServiceRouteError as exc:
+                row["route_status"], row["route_error"] = "unavailable", str(exc)
             slots.append(row)
         return {"slots": slots}
 
@@ -3116,20 +3201,34 @@ class App:
                 pass
         return out
 
-    def set_service(self, slot: str, provider: str, model: str) -> dict[str, Any]:
+    def set_service(self, slot: str, provider: str, model: str, host_id: str = "") -> dict[str, Any]:
         from . import embed
+        if slot not in ("ocr", "tts", "stt", "embeddings"):
+            raise ApiError(400, f"slot {slot!r} is not built yet")
+        host = None
+        local_encoder = slot == "embeddings" and provider in embed.LOCAL_KINDS and not host_id
+        if model and not local_encoder:
+            wanted = host_id or ("preset-" + provider if provider in PRESETS else provider)
+            try:
+                host = self.hosts.get(wanted)
+            except KeyError as exc:
+                raise ApiError(400, str(exc)) from exc
+            if not host.enabled or host.protocol != "openai":
+                raise ApiError(400, "services require an enabled OpenAI-compatible host")
+            if slot in ("tts", "stt"):
+                if host.id != "preset-deepinfra" or host.base_url.rstrip("/") != PRESETS["deepinfra"]["base_url"]:
+                    raise ApiError(400, "native speech services require the reviewed DeepInfra endpoint")
+                provider = "deepinfra"
+            elif host_id:
+                provider = host.id
+        selected_host = host.id if host is not None else ""
         if slot == "embeddings":
-            local = provider in embed.LOCAL_KINDS
-            if model and not local and (provider not in PRESETS or
-                                        PRESETS[provider].get("protocol") != "openai"):
-                raise ApiError(400, "embeddings come from a local encoder (model2vec, "
-                                    "fastembed) or an OpenAI-compatible /embeddings provider")
             # a new model starts with no intents using it: a person turns them on after
             # measuring (SM-8), and nothing is embedded until they start it (R17)
             def set_embeddings() -> dict[str, Any]:
+                self._save_service_binding(slot, provider, model, host_id=selected_host)
                 self.vault.set_setting("services", "embeddings", f"{provider}:{model}" if model else "")
                 self.vault.set_setting("search", "vector_intents", [])
-                self._save_service_binding(slot, provider, model)
                 return self.services()
             return self._serialized("service-settings", set_embeddings)
         if slot == "tts":
@@ -3139,8 +3238,8 @@ class App:
                                     f"is known, so its ${tts.CAP_USD:.2f} cap holds: "
                                     f"{', '.join(sorted(tts.PRICES))}")
             return self._serialized("service-settings", lambda: (
+                self._save_service_binding(slot, provider, model, host_id=selected_host),
                 self.vault.set_setting("services", "tts", f"{provider}:{model}" if model else ""),
-                self._save_service_binding(slot, provider, model),
                 self.services())[-1])
         if slot == "stt":
             from . import stt
@@ -3150,16 +3249,14 @@ class App:
                 except stt.SttError as exc:
                     raise ApiError(400, str(exc)) from exc
             return self._serialized("service-settings", lambda: (
+                self._save_service_binding(slot, provider, model, host_id=selected_host),
                 self.vault.set_setting("services", "stt", f"{provider}:{model}" if model else ""),
-                self._save_service_binding(slot, provider, model),
                 self.services())[-1])
         if slot != "ocr":
             raise ApiError(400, f"slot {slot!r} is not built yet")
-        if model and (provider not in PRESETS or PRESETS[provider].get("protocol") != "openai"):
-            raise ApiError(400, "OCR needs an OpenAI-compatible provider (a vision chat model)")
         return self._serialized("service-settings", lambda: (
+            self._save_service_binding(slot, provider, model, host_id=selected_host),
             self.vault.set_setting("services", "ocr", f"{provider}:{model}" if model else ""),
-            self._save_service_binding(slot, provider, model),
             self.services())[-1])
 
     def set_vector_intents(self, intents: list[str]) -> dict[str, Any]:
@@ -3247,7 +3344,7 @@ class App:
             return {"ok": False, "error": "no embedding model is chosen"}
         try:
             import numpy as np
-            _, encode = embed.load_encoder(spec)
+            _, encode, _query_encode, _contract = embed.load_embedding_encoders(spec, vault=self.vault)
             vectors = np.asarray(encode(["a cat sat on the mat", "a kitten sat on a mat",
                                          "quarterly tax filing deadlines"]), dtype="float32")
         except Exception as exc:                            # noqa: BLE001 - key, network, lib
@@ -3856,7 +3953,7 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                                        review if isinstance(review, dict) else None)
             if path == "/api/services":
                 return app.set_service(str(body.get("slot") or ""), str(body.get("provider") or ""),
-                                       str(body.get("model") or ""))
+                                       str(body.get("model") or ""), str(body.get("host_id") or ""))
             if path == "/api/services/test":
                 return app.test_service(str(body.get("slot") or ""))
             if path == "/api/projects/enable":

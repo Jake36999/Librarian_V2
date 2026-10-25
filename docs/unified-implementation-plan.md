@@ -666,10 +666,9 @@ yet:
   writer operation. It holds the writer without interleaving (linearity
   holds), and it already did on master. Fix with the macro checkpoint
   approval standing in for its steps' permissions.
-- ROUTE-03 now canonicalizes chat execution. Service slots currently mirror
-  configuration as metadata; their specialized transports still read the
-  existing validated service configuration. ROUTE-03/04 are not complete
-  until those dispatch paths and role-specific picker readiness are bound.
+- ROUTE-03/04 service dispatch and per-role picker readiness are implemented
+  in the routing continuation below. Dedicated service transports remain;
+  their unification/cancellation and local compute scheduling belong to ADAPT-06.
 - INDEX-02: commit real-Core context tests for the batch-1 migrations before
   expanding the batch.
 - G1 (Core lifecycle) has its known P1s, recovery, and event-resynchronization
@@ -723,3 +722,34 @@ group passed **85 tests** during development. `npm.cmd run build` and the full
 `npm.cmd run smoke` browser walk passed. The complete final Python output is
 retained locally at `tmp/route03-full-2026-10-25-03.log`; the focused and full
 commands are recorded in the regression manifest.
+
+### Service routing and readiness continuation, 2026-10-25
+
+Canonical bindings now select OCR, TTS, STT and embedding execution, including
+custom OpenAI-compatible OCR/embedding hosts. Native speech stays restricted
+to its reviewed DeepInfra API. A selected route uses the host credential
+reference and shared HostLimiter, refuses stale/disabled/deleted endpoints,
+and discards responses that return after a stop or reassignment. Outstanding
+service IO is visible during stop. Legacy vectors migrate once; clearing the
+embedding slot cannot silently restore them from the legacy search setting.
+Custom embedding representation namespaces include endpoint identity.
+
+Readiness is passive and per task role, with canonical binding errors shown
+separately from historical qualification. The existing three-position picker
+is retained. Connections adds explicit custom-host OCR/embedding assignment;
+service cards do not show chat-role qualification. New fixtures cover
+credential references, shared concurrency, stale endpoints, shutdown,
+restart, custom host name collisions, and Clerk-vs-Lead evidence separation.
+The operator contract is in `docs/role-routing.md`.
+
+Verification: the development full suite passed **1,028 tests, 2 skipped,
+1 deselected** in 329.30s. The expanded routing/App group passed **84 tests**;
+the final service-specific group passed **38 tests**, including the additional
+custom-host/local-encoder collision fixture. UI build and the expanded browser
+smoke walk passed. The final combined full run follows the next ownership
+batch, so these counts are not a claim that all release gates have closed.
+ADAPT-06 is still partial: service
+HTTP transports are not extracted/cancellable and local CPU work is not yet
+prioritized. INDEX-04/05, staging write intents, macro permission waits,
+remaining adapter work, deployment adoption/dedupe, and the Session harness
+remain open. No new paid provider calls were made.

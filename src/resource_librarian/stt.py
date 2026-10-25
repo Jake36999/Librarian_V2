@@ -24,6 +24,7 @@ from typing import Any, Callable, Mapping
 from .providers import PRESETS, ProviderError, _key
 from .service_adapters import ServiceBinding, ServiceContractError, require_binding
 from .vault import Vault
+from . import service_routes
 
 
 DEFAULT = ""
@@ -40,9 +41,8 @@ class SttError(RuntimeError):
 
 def choice(vault: Vault) -> dict[str, str]:
     """The library's selected speech-to-text route, or no choice."""
-    raw = str(vault.setting("services", "stt") or DEFAULT).strip()
-    provider, _, model = raw.partition(":")
-    return {"provider": provider, "model": model} if provider and model else {}
+    route = service_routes.resolve(vault, "stt")
+    return route.choice() if route else {}
 
 
 def validate_choice(provider: str, model: str) -> ServiceBinding:
@@ -169,11 +169,15 @@ def transcribe(vault: Vault, audio: bytes, *, filename: str = "recording.wav",
     selected = validate_choice(chosen["provider"], chosen["model"])
     provider = selected.provider
     try:
-        key = _key(PRESETS[provider]["key_env"])
-    except (KeyError, ProviderError) as exc:
+        route = service_routes.resolve(vault, "stt", validate=True)
+        if route is None or route.model != selected.model_id:
+            raise service_routes.ServiceRouteError("speech assignment changed; restart the operation")
+        key = _key(route.key_env)
+        data = service_routes.run(vault, route, lambda: (post or _post)(
+            f"{route.native_base()}/{selected.model_id}", audio, _safe_filename(filename),
+            _safe_content_type(content_type), key))
+    except (service_routes.ServiceRouteError, ProviderError) as exc:
         raise SttError(str(exc)) from exc
-    data = (post or _post)(f"{BASE}/{selected.model_id}", audio, _safe_filename(filename),
-                            _safe_content_type(content_type), key)
     out = _normalise(data)
     out["model"] = f"{selected.provider}:{selected.model_id}"
     out["adapter"] = selected.adapter_id

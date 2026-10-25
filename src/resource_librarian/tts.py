@@ -33,6 +33,8 @@ from typing import Any, Callable
 from .service_adapters import (ServiceContractError, binding as service_binding,
                                registry as service_registry, tts_request)
 from .vault import Vault, jsonl_lines, now_iso
+from . import service_routes
+from .providers import ProviderError
 
 DEFAULT = "deepinfra:hexgrad/Kokoro-82M"
 VOICE = "af_bella"
@@ -64,10 +66,8 @@ class TtsError(RuntimeError):
 
 
 def choice(vault: Vault) -> dict[str, str]:
-    value = vault.setting("services", "tts")
-    value = DEFAULT if value is None else str(value)
-    provider, _, model = value.partition(":")
-    return {"provider": provider, "model": model} if model else {}
+    route = service_routes.resolve(vault, "tts")
+    return route.choice() if route else {}
 
 
 # ------------------------------------------------------------------ the text
@@ -244,10 +244,17 @@ def speak(vault: Vault, text: str, mode: str = "message",
     if so_far + cost > CAP_USD:
         raise TtsError(f"text to speech has spent ${so_far:.2f} of its ${CAP_USD:.2f} cap; this "
                        f"part would cost ${cost:.4f}")
-    key = os.environ.get("DEEPINFRA_API_KEY", "")
-    if not key:
-        raise TtsError("DEEPINFRA_API_KEY is not set (Settings -> Connections)")
-    out = (post or _post)(f"{BASE}/{model}", body, key)
+    try:
+        route = service_routes.resolve(vault, "tts", validate=True)
+        if route is None or route.model != model:
+            raise service_routes.ServiceRouteError("speech assignment changed; restart the operation")
+        key = os.environ.get(route.key_env, "")
+        if not key:
+            raise TtsError(f"{route.key_env} is not set (Settings -> Connections)")
+        out = service_routes.run(vault, route, lambda: (post or _post)(
+            f"{route.native_base()}/{model}", body, key))
+    except (service_routes.ServiceRouteError, ProviderError) as exc:
+        raise TtsError(str(exc)) from exc
     audio = str(out.get("audio") or "")
     if not audio.startswith("data:audio"):
         raise TtsError(f"the model returned no audio ({str(out)[:200]})")

@@ -532,6 +532,7 @@ export class Settings {
             h("span", { class: "badge" }, String(s.number)),
             h("span", {}, h("strong", {}, s.label), ` · ${current}`, h("span", { class: "dim" }, ` · ${s.job}`),
               contractLabel ? h("span", { class: "dim" }, contractLabel) : null,
+              s.route_status === "unavailable" ? h("span", { class: "note err" }, ` · ${s.route_error ?? "route unavailable"}`) : null,
               s.cap_usd !== undefined ? h("span", { class: "dim" }, ` · spent $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null),
             s.built && this.chooseService ? h("button", { class: "ghost", onclick: () => {
               this.dialog.close();
@@ -709,6 +710,20 @@ export class Settings {
       try { await this.api.post("/api/hosts/remove", { host_id: row.id }); await reload(); }
       catch (e) { status.textContent = (e as Error).message; }
     };
+    // Keep the existing tile for presets. A manually entered/discovered model
+    // on a custom host can also be bound explicitly, never inferred by name.
+    const serviceSlot = h("select", { "aria-label": `Service slot on ${row.display_name ?? row.id}` },
+      h("option", { value: "ocr" }, "OCR"),
+      h("option", { value: "embeddings" }, "Embeddings")) as HTMLSelectElement;
+    const chooseService = async () => {
+      if (!model.value.trim()) { status.textContent = "Enter or discover a model id first."; return; }
+      try {
+        await this.api.post("/api/services", { slot: serviceSlot.value, host_id: row.id,
+          model: model.value.trim() });
+        await this.refresh();
+        this.render();
+      } catch (e) { status.textContent = (e as Error).message; }
+    };
     return h("div", { class: "host-card" },
       h("div", { class: "row2 tight" }, h("span", { class: `dot ${row.enabled ? "" : "off"}` }), title,
         h("code", {}, String(row.id)), row.seeded ? h("span", { class: "dim" }, "preset") : null, health),
@@ -725,7 +740,10 @@ export class Settings {
       h("div", { class: "row2" }, model, h("button", { class: "ghost", onclick: () => void discover() }, "Discover models"),
         h("button", { class: "ghost", onclick: () => void test() }, "Test"),
          h("button", { class: "ghost", onclick: () => void probe() }, `L1 probe (${probeRole})`),
-        h("button", { class: "primary", onclick: () => void chooseLead() }, "Use as lead")), discovered);
+        h("button", { class: "primary", onclick: () => void chooseLead() }, "Use as lead")), discovered,
+      row.protocol === "openai" ? h("div", { class: "row2" }, serviceSlot,
+        h("button", { class: "ghost", onclick: () => void chooseService() }, "Use for service"),
+        h("span", { class: "note inline" }, "OCR and embeddings use this exact host. Native speech remains DeepInfra-only; selection is not qualification.")) : null);
   }
 
   private newHostCard(reload: () => Promise<void>): HTMLElement {

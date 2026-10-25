@@ -120,11 +120,16 @@ def test_transcription_response_size_is_bounded(vault, monkeypatch):
 def test_slot_seven_is_configured_and_tested_through_the_existing_services_api(served, monkeypatch):
     app, client, _ = served
     slots = {slot["slot"]: slot for slot in client.get("/api/services")[1]["slots"]}
-    assert slots["stt"] == {
+    assert {key: slots["stt"][key] for key in (
+        "slot", "number", "label", "job", "provider", "model", "built", "default"
+    )} == {
         "slot": "stt", "number": 7, "label": "Speech to text",
         "job": "turns an audio recording into text", "provider": "", "model": "",
         "built": True, "default": False,
     }
+    assert slots["stt"]["route_status"] == "unconfigured"
+    assert slots["stt"]["binding"]["role"] == "stt"
+    assert slots["stt"]["binding"]["source"] == "unconfigured"
     assert client.post("/api/services", {"slot": "stt", "provider": "openai",
                                          "model": "whisper-1"})[0] == 400
     out = client.post("/api/services", {"slot": "stt", "provider": "deepinfra",

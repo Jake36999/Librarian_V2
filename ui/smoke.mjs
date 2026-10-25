@@ -48,6 +48,7 @@ await Promise.all([
   page.click("#lib-models button:has-text('Use it as lead anyway')")]);
 await page.waitForSelector("#lib-models .slot:first-child >> text=scripted-demo");
 await page.waitForSelector("#lib-models section:has-text('Local server') .card.sel");
+await page.waitForSelector("#lib-models .card.sel .readiness-chip >> text=lead: experimental");
 await page.click("#lib-models section:has-text('Local server') .card");
 await page.waitForSelector("#lib-models .toast >> text=is tier 1");
 await page.click("#lib-models section:has-text('Local server') .card", { button: "right" });
@@ -248,6 +249,8 @@ await expect(page.isVisible("dialog.settings .slot-embeddings >> text=none chose
 await expect(page.isVisible("dialog.settings .slot-embeddings button:has-text('Use a local model')"), "a local embedding model is one click");
 await page.click("dialog.settings .slot-ocr button:has-text('Choose…')");
 await page.waitForSelector("#lib-models >> text=Choose the OCR model");
+await expect(page.locator("#lib-models .readiness-chip").count().then(n => n === 0),
+  "service cards never borrow chat-role qualification");
 await page.click("#lib-models button:has-text('Show all')");
 await page.click("#lib-models .card:has-text('openai/gpt-oss-20b')");
 await page.waitForSelector("dialog.settings .slot-ocr >> text=openai/gpt-oss-20b");
@@ -255,6 +258,22 @@ step("service slot 4: OCR chosen through the model tile and kept with the librar
 await page.click("dialog.settings .slot-ocr", { button: "right" });
 await page.waitForSelector("dialog.settings .slot-ocr >> text=none chosen");
 step("right-click empties a service slot");
+
+// An exact custom host can be selected without adding it to preset provider
+// tiles. This is an assignment only; the smoke test makes no provider request.
+await page.fill("dialog.settings input[aria-label='New host id']", "smoke-vision");
+await page.fill("dialog.settings input[aria-label='New host display name']", "Smoke Vision");
+await page.fill("dialog.settings input[aria-label='New host base URL']", "http://127.0.0.1:11998/v1");
+await page.click("dialog.settings button:has-text('Add host')");
+await page.waitForSelector("dialog.settings .host-card:has-text('Smoke Vision')");
+await page.fill("dialog.settings input[aria-label='Model on Smoke Vision']", "custom-vision");
+await page.selectOption("dialog.settings select[aria-label='Service slot on Smoke Vision']", "ocr");
+await page.click("dialog.settings .host-card:has-text('Smoke Vision') button:has-text('Use for service')");
+await page.waitForSelector("dialog.settings .slot-ocr >> text=custom-vision");
+await expect(page.isVisible("dialog.settings .slot-ocr >> text=smoke-vision"), "the exact custom host is visible");
+await page.click("dialog.settings .slot-ocr", { button: "right" });
+await page.waitForSelector("dialog.settings .slot-ocr >> text=none chosen");
+step("custom service assignment stays explicit and uses the existing Connections controls");
 
 // Research Pipeline §6.1: project access is a person's switch, off by default.
 await page.click("dialog.settings [role=tab]:has-text('Projects')");

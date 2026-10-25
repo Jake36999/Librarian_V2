@@ -264,23 +264,34 @@ export class ModelTile {
   }
 
   private readinessChips(provider: string, model: string): HTMLElement | null {
+    // Chat qualification is not evidence for OCR/speech/embedding contracts.
+    if (this.slot) return null;
     const row = this.routeReadiness(provider, model);
     if (!row) return null;
-    const qualification = row.qualification && typeof row.qualification === "object"
-      ? row.qualification.status : (row.qualification ?? row.status ?? "");
+    const tiers = this.tiers();
+    const selected = tiers.findIndex((t) => sameHost(t.provider, provider) && t.model === model);
+    const role = ["lead", "scribe", "clerk"][selected >= 0 ? selected : Math.min(tiers.length, 2)];
+    const evidence = row.qualification_by_role?.[role]
+      ?? (row.role === role ? row.qualification : null);
+    const qualification = evidence?.status ?? "evidence pending";
     const workflow = row.core_workflow ?? row.workflow_ready ?? row.workflow;
     const fixture = row.fixture_preflight ?? row.fixture_ready;
     const health = row.host_health && typeof row.host_health === "object"
       ? row.host_health.status : (row.host_health ?? row.health);
     const labels = [
-      qualification ? String(qualification).replace(/_/g, " ") : "evidence pending",
+      `${role}: ${String(qualification).replace(/_/g, " ")}`,
+      evidence?.freshness && !["current", "missing"].includes(evidence.freshness)
+        ? `${role}: ${String(evidence.freshness).replace(/_/g, " ")}` : "",
+      row.active_task && row.role !== role
+        ? `${row.task_profile} task: ${String(row.qualification?.status ?? "evidence pending").replace(/_/g, " ")}` : "",
+      row.binding_errors?.[role] ? `${role}: route unavailable` : "",
       this.readinessText(workflow, "walk ready", "walk blocked", "walk unchecked"),
       this.readinessText(fixture, "fixtures ready", "fixture issue", "fixtures unchecked"),
       this.readinessText(health, "host ready", "host issue", "host unchecked"),
     ];
     const detail = String(row.detail ?? row.reason ?? row.advisory ?? "");
     return h("div", { class: "readiness", title: detail },
-      labels.filter((value, index, all) => all.indexOf(value) === index)
+      labels.filter((value, index, all) => value && all.indexOf(value) === index)
         .map((value) => h("span", { class: `readiness-chip ${/blocked|issue|experimental|unavailable|stale/i.test(value) ? "warn" : ""}` }, value)));
   }
 
@@ -307,6 +318,7 @@ export class ModelTile {
       // `render()` runs, or a picked model can briefly (or, under load,
       // not-so-briefly) look unpicked to this same click's own next step.
       this.setTiers(tiers);
+      void this.refreshReadiness(++this.readinessEpoch);
     } catch (e) {
       const body = ((e as ApiError).body ?? {}) as Record<string, unknown>;
       if (body.needs_override) this.pendingLead = { tiers, lead: String(body.lead ?? "") };

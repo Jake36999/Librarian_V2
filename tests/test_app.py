@@ -419,7 +419,9 @@ def test_route_readiness_uses_the_selected_profiles_runtime_role_for_evidence(se
     readiness = app.route_readiness("field-lead")
 
     assert readiness["core"]["profile"] == "field-lead"
-    assert observed_roles and set(observed_roles) == {"lead"}
+    assert set(observed_roles) == {"lead", "scribe", "clerk", "research_helper"}
+    assert "field-lead" not in observed_roles
+    assert all(row["qualification"]["role"] == "lead" for row in readiness["routes"])
 
 
 def test_custom_host_model_discovery_routes_by_registry_id(served, monkeypatch):
