@@ -134,6 +134,9 @@ class ToolSpec:
     # before it is queued (CORE-05A): `intent(ctx, kwargs)` returns a
     # revisions.WriteIntent, and a note it cannot resolve is refused first.
     intent: Callable[[Any, dict[str, Any]], Any] | None = None
+    # First-party control flow only: its mutations must be individual registry
+    # calls or explicit writer submissions, never a wait inside one large write.
+    orchestrates: bool = False
 
     # -- parameters, read from the function itself ---------------------------
     def parameters(self) -> list[inspect.Parameter]:
@@ -219,7 +222,8 @@ class Registry:
              sessionless: bool = False, resolve: dict[str, str] | None = None,
              scope: str = "", phases: tuple[str, ...] = (),
              needs_projects: bool = False, previews: bool = False,
-             intent: Callable[[Any, dict[str, Any]], Any] | None = None) -> Callable:
+             intent: Callable[[Any, dict[str, Any]], Any] | None = None,
+             orchestrates: bool = False) -> Callable:
         if phases:
             scope = scope or "phase"
         if tier not in TIERS:
@@ -231,6 +235,8 @@ class Registry:
                              f"or phases=(...)")
         if (scope == "phase") != bool(phases):
             raise ValueError(f"{name!r}: phases=(...) goes with scope 'phase', and only with it")
+        if orchestrates and (intent is not None or effect == "read"):
+            raise ValueError("an orchestrator declares cumulative write effects, not a direct write intent")
 
         def register(fn: Callable[..., Any]) -> Callable[..., Any]:
             if name in self._tools:
@@ -244,7 +250,7 @@ class Registry:
                 idempotent=(effect == "read") if idempotent is None else idempotent,
                 returns=tuple(returns), sessionless=sessionless, resolve=dict(resolve or {}),
                 scope=scope, phases=frozenset(phases), needs_projects=needs_projects,
-                previews=previews, intent=intent)
+                previews=previews, intent=intent, orchestrates=orchestrates)
             return fn
         return register
 
@@ -255,6 +261,8 @@ class Registry:
     # through here instead - never through `tool()`, and never allowed to
     # shadow a vault tool's name.
     def register(self, spec: ToolSpec) -> None:
+        if spec.orchestrates:
+            raise ValueError("external tools cannot orchestrate Core writer operations")
         if not spec.external:
             raise ValueError("Registry.register is for external (MCP) tools only; "
                              "a vault tool is declared with @tool at import time")
@@ -313,6 +321,10 @@ class Registry:
         try:
             effective = _profile_tier(ctx)
             spec = self.check(name, effective)
+            if spec.orchestrates:
+                from .coordination import on_writer_thread
+                if on_writer_thread():
+                    raise Refusal("ORCHESTRATION_CONTEXT", "run this orchestrator outside a vault-writer operation")
             if effective != ctx.tier:
                 adjusted.append(f"agent profile capped tier {ctx.tier} to {effective}")
             # A provider should only be able to invoke the small schema surface
@@ -380,7 +392,12 @@ class Registry:
             # compatible path.  The registry remains the enforcement boundary;
             # the writer only serialises the already-authorised function call.
             writer = ctx.extras.get("vault_writer") if spec.effect != "read" else None
-            if writer is not None:
+            if writer is not None and spec.orchestrates:
+                # Admission is still explicit. The orchestrator itself may
+                # wait, but each contained mutation is its own checked write.
+                writer.submit(lambda: None, caller=f"orchestrator:{name}:admit")
+                result = invoke()
+            elif writer is not None:
                 targets = list(intent.targets) if intent is not None else \
                     _write_targets(name, kwargs, ctx)
                 result = writer.submit(invoke,

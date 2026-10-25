@@ -171,6 +171,9 @@ _RULES = [
          "An unattended sweep waits until the vault's retrieval has passed its own eval "
          "and a person has read the previous cohort: volume into unproven search hides "
          "the problem instead of exposing it."),
+    Rule("ORCHESTRATION_CONTEXT", "boundaries",
+         "An audited orchestrator runs outside the vault writer; its individual mutations "
+         "still pass the registry and writer, and no permission wait holds the writer."),
     Rule("CORE_REQUIRED", "boundaries",
          "An MCP connection reaches a vault only through that vault's running Librarian "
          "Core; it never opens the vault, its index or its writer itself. Open Librarian "

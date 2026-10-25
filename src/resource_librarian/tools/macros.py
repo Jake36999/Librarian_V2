@@ -26,7 +26,7 @@ def show_macro_plan(ctx: Context, macro: str, inputs: dict[str, Any] | None = No
 @REGISTRY.tool("macro_run", tier="contribute", effect="vault_write",
                card=Card("Run an audited multi-step macro through normal policy gates.",
                          "a known path such as inspect-map-source or intake-to-stage fits"),
-               scope="session", idempotent=False, returns=("status", "steps"))
+               scope="session", idempotent=False, returns=("status", "steps"), orchestrates=True)
 def execute_macro(ctx: Context, macro: str, inputs: dict[str, Any]) -> dict[str, Any]:
     """Every contained tool still passes the registry, phase hooks and broker."""
     if macro not in MACROS:
