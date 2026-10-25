@@ -26,3 +26,14 @@ def file_access(path: Path) -> Any:
             lock = threading.RLock()
             _locks[key] = lock
         return lock
+
+
+def read_bytes(path: Path) -> bytes:
+    """Close this Core read handle before same-path atomic replacement."""
+    with file_access(path):
+        return path.read_bytes()
+
+
+def read_text(path: Path, *, encoding: str = "utf-8", errors: str = "strict") -> str:
+    with file_access(path):
+        return path.read_text(encoding=encoding, errors=errors)

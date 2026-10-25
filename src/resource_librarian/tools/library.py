@@ -9,6 +9,7 @@ from typing import Any, Callable, Literal, TypeVar
 
 from .. import agenda, desk, evaluation, notes, revisions, text
 from ..coordination import atomic_write_text, fingerprint_bytes
+from ..file_access import read_bytes
 from ..index import Index, IndexService, run_index
 from ..registry import Card, Context, tool
 from ..rules import Refusal
@@ -389,7 +390,7 @@ def get_note(ctx: Context, name: str, sections: list[str] | None = None) -> dict
             return {"found": False, "name": name,
                     "next_step": "search for it; names are exact, including owner prefixes"}
         path = ctx.vault.root / row["path"]
-        data = path.read_bytes()
+        data = read_bytes(path)
         frontmatter, text, error = notes.parse(data.decode("utf-8", errors="replace"))
         note = notes.Note(name=path.stem, path=path, frontmatter=frontmatter, body=text,
                           parse_error=error)

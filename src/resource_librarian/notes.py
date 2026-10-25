@@ -13,6 +13,8 @@ from typing import Any, Iterator
 
 import yaml
 
+from .file_access import read_text
+
 FRONTMATTER = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?", re.S)
 HEADING = re.compile(r"^## +(.+?)\s*$", re.M)
 
@@ -149,7 +151,7 @@ def one_line(text: str, what: str = "text") -> str:
 
 
 def load(path: Path) -> Note:
-    text = path.read_text(encoding="utf-8", errors="replace")
+    text = read_text(path, encoding="utf-8", errors="replace")
     frontmatter, body, error = parse(text)
     return Note(name=path.stem, path=path, frontmatter=frontmatter, body=body,
                 parse_error=error)

@@ -59,6 +59,7 @@ from .hosts import (EVALUATION_LEVELS, RELEASE_PROMPT_CONTRACT_VERSION,
                     LimitedProvider, QualificationStore, endpoint_fingerprint, fingerprints,
                     release_lead_for_route, release_leads, validate_l1_probe)
 from .index import IndexService
+from .file_access import read_text
 from .keys import KeyStore, config_dir
 from .loop import LENGTHS, STANCES, Loop, ProviderEndpoint
 from .model_invocation import (InvocationPayload, InvocationRuntime,
@@ -2440,9 +2441,10 @@ class App:
             if not wanted:
                 return
             store = DeskStore(self.vault)
-            for path in notes.iter_paths(self.vault.root):       # the files, not a stale index
-                if path.stem.casefold() in wanted and path.stem != project:
-                    store.touch(project, path.stem)
+            opened = [path.stem for path in notes.iter_paths(self.vault.root)
+                      if path.stem.casefold() in wanted and path.stem != project]
+            if opened:
+                self._serialized("desk-touch", lambda: [store.touch(project, note) for note in opened])
         except Exception:                                   # noqa: BLE001
             pass                                            # the desk is a convenience
 
@@ -3468,7 +3470,7 @@ class App:
                 raise ApiError(413, "that file is too large to show here")
             root = self.vault.root.resolve()
             return {"path": target.resolve().relative_to(root).as_posix(), "name": target.name,
-                    "text": target.read_text(encoding="utf-8", errors="replace"),
+                    "text": read_text(target, encoding="utf-8", errors="replace"),
                     "script": SCRIPT_SUFFIXES[target.suffix.lower()],
                     "modified": round(target.stat().st_mtime)}
         candidates = [rel if rel.lower().endswith(".md") else f"{rel}.md"]
@@ -3492,7 +3494,7 @@ class App:
             raise ApiError(413, "that note is too large to show here")
         root = self.vault.root.resolve()
         return {"path": path.resolve().relative_to(root).as_posix(), "name": path.stem,
-                "text": path.read_text(encoding="utf-8", errors="replace"),
+                "text": read_text(path, encoding="utf-8", errors="replace"),
                 "modified": round(path.stat().st_mtime)}
 
     def upload_file(self, dir_rel: str, filename: str, data: bytes) -> dict[str, Any]:

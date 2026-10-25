@@ -36,6 +36,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, TypeVar
 
 from . import notes, schema
+from .file_access import file_access
 from .rules import Refusal
 from .vault import Vault, now_iso
 
@@ -294,8 +295,9 @@ class Index:
         """Index one note. Returns False when its content was already indexed."""
         path = Path(path)
         rel = path.relative_to(self.vault.root).as_posix()
-        stat = path.stat()
-        text = path.read_text(encoding="utf-8", errors="replace")
+        with file_access(path):
+            stat = path.stat()
+            text = path.read_text(encoding="utf-8", errors="replace")
         digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:24]
         row = self.conn.execute("SELECT hash FROM note WHERE path = ?", (rel,)).fetchone()
         if row and row["hash"] == digest and not force:
