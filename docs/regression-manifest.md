@@ -35,7 +35,9 @@ and expected boundary explicit.
 | INDEX-01/02 | partial | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_sqlite_ownership.py tests/test_core_index_service.py tests/test_desk.py tests/test_taxonomy.py` | Static debt only shrinks; migrated calls remain on IndexService worker. | Real Core context per migrated family. | `557126c`, `8ccce9b` |
 | INDEX-03 | partial | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_core_index_service.py tests/test_sqlite_ownership.py tests/test_authoring.py tests/test_sessions.py tests/test_review_gate.py tests/test_offering_view.py tests/test_learn.py tests/test_start_pursuit.py tests/test_weekly_review.py tests/test_pursuits.py` | Interleaved work receives copied data only from Core-owned SQLite; Markdown/session mutations remain on writer; Clerk/Scribe IO releases index worker; changed schemas refresh before validation. | Serving-path debt 33 → 17; further promotion batches and Windows stress remain. | `2e95158`, `86941d3`; final combined suite 1,039 passed, 2 skipped, 1 deselected. |
 | Macro writer-wait follow-up | implemented | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_macro_permissions.py tests/test_person_waits.py tests/test_registry.py`; full browser smoke | Ask-mode waits never own the writer; explicit Deny/Plan still hold; partial work stays durable; external tools cannot opt out of writer serialization. | Automatic macro resume is not claimed. | `5b3be1f`; expanded focused group: 116 passed; final combined suite: 1,039 passed, 2 skipped, 1 deselected; browser smoke passed. |
-| INDEX-04/05 | planned | Focused module batch plus `tests/test_core_index_service.py` and Windows stress fixture | No serving path constructs a direct SQLite engine; WAL reads/writes remain safe. | Windows host. | — |
+| INDEX-04 serving gateway/pack boundary | implemented | `tests/test_index_ownership_runtime.py`, `tests/test_sqlite_ownership.py`, coordinated Core fixtures | A missing/closed/foreign service cannot open a direct fallback; graph/extract offline use is explicit; serving debt is zero. | Low-level offline compatibility remains; not an arbitrary-Python sandbox. | `ded98c0`, `d31cda5`; combined focused: 381 passed, 45 new ownership checks; UI build/smoke passed; full: 1,284 passed, 2 skipped, 1 deselected. |
+| INDEX-05 | planned | Windows multi-client read/write/WAL, editor, refresh, desk and lens fixtures | No SQLite busy/cross-thread/lost-write/false-lease outcome under repeated declared stress. | Real Windows launch path and explicit stress evidence; local unit checks do not close this gate. | — |
+| Core fingerprint/replacement exclusion | implemented | `tests/test_file_access.py` plus watcher/authoring/staging fixtures | A Core fingerprint closes before same-path atomic replacement; unrelated notes stay writable; external access errors remain visible. | Native Windows baseline; no mutation retry, global/editor lock, or bounded large-file hash claim. | `e40a4a6`; 7 new checks; combined focused: 381 passed; full: 1,284 passed, 2 skipped, 1 deselected. |
 | CORE-05 / INDEX-03/04 mixed acceptance | partial | `tests/test_core_mixed_acceptance.py` plus source/staging/taxonomy/revisions/ownership/recovery fixtures; UI build/smoke | Approved footprint bounds ordered replanning; earlier rows/prose survive; interrupted primaries cannot be modified; no direct staging engine. | Runtime enforcement, Windows/desk/lens stress, quarantine and rehash costs remain open. | `87e2460`; 185 focused passed, 27 new checks; UI build/smoke passed; full: 1,215 passed, 2 skipped, 1 deselected; static debt 3 → 2. |
 | Watcher read-failure recovery | implemented | `tests/test_watcher_recovery.py` plus coordinated staging/index/lease/shutdown/Host fixtures, with thread warnings treated as errors | Failed observations retry without unlocking unreadable notes or stopping the watcher; diagnostics are bounded and non-secret. | Adopted-root scoping and full Windows multi-client stress remain separate. | `89e609d`; 210 focused passed, 17 new checks; UI build/smoke passed; full: 1,232 passed, 2 skipped, 1 deselected. |
 | CORE-05 / INDEX-03/04 source-only batches | partial | `tests/test_core_source_batch.py` plus single-source/staging/catalogue/taxonomy/ingestion/revision/index fixtures; UI build/browser smoke | Copy destinations and all dependencies precede approval; own-write hashes preserve shared views; partial results/provenance survive faults without replay. | Mixed-kind/multi-topic staging, rehash IO costs, cancellation and full ownership enforcement/stress remain open. | `c48e6a0`; 204 focused passed; 22 new checks; browser build/smoke passed; full: 1,188 passed, 2 skipped, 1 deselected. |
@@ -213,3 +215,55 @@ Implementation: `89e609d`. Final result: **1,232 passed, 2 skipped, 1 deselected
 in 422.29s**, no warnings. No product/test source changed during this run.
 No paid qualification or broader release-gate closure is claimed by this
 read-failure recovery packet.
+
+INDEX-04 gateway/pack continuation and Core file-access exclusion:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest tests/test_index_ownership_runtime.py tests/test_file_access.py tests/test_sqlite_ownership.py tests/test_core_index_service.py tests/test_core_mixed_acceptance.py tests/test_core_source_batch.py tests/test_core_source_promotion.py tests/test_core_catalog.py tests/test_core_taxonomy.py tests/test_core_batch.py tests/test_core_upkeep.py tests/test_v2_remediation.py tests/test_watcher_recovery.py tests/test_app.py tests/test_sessions.py tests/test_registry.py tests/test_person_waits.py tests/test_mcp.py tests/test_upkeep.py tests/test_cli.py -q -x -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=60
+```
+
+**381 passed in 204.42s**, including **45 new ownership checks and 7 new
+file-access checks**. The smaller combined native/gateway/watcher group also
+passed **86 tests**. Browser `npm.cmd run build` and complete
+`npm.cmd run smoke` passed, including session attach and existing picker,
+service and interrupted-staging interactions.
+
+The earlier development run stopped at **1 failed, 57 passed** after an
+authoring `task_route` atomic replacement returned WinError 5. That test
+passed in isolation. A deterministic native test separately reproduces an
+open-reader replacement failure, and controlled Core read/write interleaving
+now passes. This establishes a mechanism and its local fix, not which handle
+caused that particular failure or the two prior mixed-acceptance failures.
+A FILE_SHARE_DELETE opener was experimentally insufficient and was removed;
+no Win32 shim or broad retry is included. Mechanism/source references and
+limits: [index-ownership.md](index-ownership.md).
+
+Implementation: `e40a4a6` (file exclusion), `ded98c0` (ownership). Frozen-source
+full command:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=60
+```
+
+The first frozen-source run found **1 failed, 1,283 passed, 2 skipped,
+1 deselected in 434.56s**. An old token-binding fixture constructed MCP calls
+without any Core service; it now correctly hit `CORE_REQUIRED` instead of
+receiving a revision. The fixture was moved to a coordinated Core while
+retaining its session/caller/forgery/restart assertions. The production gate
+was not relaxed. Development evidence: `tmp/index-runtime-full-2026-10-25-01.log`.
+
+Final verification against corrected snapshot `d31cda5`: **1,284 passed,
+2 skipped, 1 deselected in 434.41s**, no warnings. Product/test source stayed
+frozen throughout the run. Output: `tmp/index-runtime-full-2026-10-25-02.log`.
+The corrected revision fixture plus runtime ownership, file-access, static
+guard, coordinated index, MCP and App group passed **149 tests in 103.63s**:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest tests/test_revisions.py tests/test_index_ownership_runtime.py tests/test_file_access.py tests/test_sqlite_ownership.py tests/test_core_index_service.py tests/test_mcp.py tests/test_app.py -q -x -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=60
+```
+
+Verification environment: repository `.venv`, CPython **3.11.3 x64**,
+Windows build **10.0.26200**, imports from `D:\Librarian_V2\src`. This is not
+a fresh Python 3.12/3.13 matrix result or a clean packaged-install test.
+No G1/INDEX-05 release stress, extract pinned-plan correctness or paid provider
+qualification is implied by this packet.

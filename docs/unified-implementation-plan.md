@@ -1129,3 +1129,57 @@ without a picker/staging redesign. Implementation: `89e609d`. Final frozen-sourc
 full verification passed **1,232 tests, 2 skipped, 1 deselected in 422.29s**,
 with thread-exception warnings treated as errors and no warnings reported.
 Local output: `tmp/watcher-recovery-full-2026-10-25-01.log`.
+
+### INDEX-04 serving gateway and Windows read exclusion, 2026-10-25
+
+`ded98c0` closes the supported serving gateway/pack fallback slice of INDEX-04.
+App and short-lived CLI Core Contexts carry an explicit Core mode; helpers
+validate the service/vault before callbacks or any cached/direct engine use.
+Missing, closed or foreign ownership never opens a replacement local index.
+Core/MCP callers cannot select offline mode. Graph/extract APIs now require a
+Core service or explicit `offline=True`; registered tools validate their
+Context before choosing the compatibility branch. The three-position picker,
+service selections, tool schemas and ordinary person approval flow remain
+unchanged. Chat session attachment now goes through the existing person-call
+path rather than constructing a Context without Core extras.
+
+Extract network/cache IO now runs outside the SQLite worker, with copied
+metadata obtained through the existing source-file callback. Static serving
+construction debt falls **2 → 0**; reviewed infrastructure helpers remain.
+The guard additionally catches new `open_index`/`run_index` calls outside
+approved boundaries. Bare standalone Contexts retain the 2.x offline alias;
+this is not a sandbox against arbitrary external Python/SQLite programs.
+
+`e40a4a6` adds short process-local per-file exclusion between fingerprint
+reads and atomic text/binary replacement. A native Windows test reproduces
+an open reader denying replacement; controlled Core interleaving now waits
+for its own reader to close without retrying a mutation or locking other
+notes. Lock entries are weakly retained. A FILE_SHARE_DELETE experiment was
+rejected after native testing; no Win32 shim remains. External editor/reader
+handles can still cause an explicit failure, and large-file hash latency is
+not bounded by this change.
+
+An authoring development test failed with access denied at atomic replacement
+and passed alone. The native regression proves a relevant failure mechanism,
+not which handle caused that specific failure; the two earlier mixed failures
+also remain unexplained. INDEX-05 Windows multi-client/WAL/desk/lens stress,
+quarantine relocation, embedding/provider cancellation and G1 remain open.
+The extract pack also needs strict pinned-plan tests: component timestamps
+can stand in for revisions and source-file retrieval can fall back to the
+default branch without a survey tree SHA. This ownership packet does not
+certify full extract parity or fix that separate pre-existing contract gap.
+
+**381 focused tests passed in 204.42s**, including **45 new ownership checks
+and 7 file-access checks**. UI build and complete browser smoke passed,
+including session attach, service selection, picker and staging workflows.
+The first full run found one outdated fixture constructing MCP without a
+Core; `d31cda5` moves its caller/session/forgery/restart checks to a coordinated
+Core rather than relaxing the production gate. Its expanded follow-up group
+passed **149 tests**. Final frozen-source full verification passed **1,284
+tests, 2 skipped, 1 deselected in 434.41s**, with thread warnings treated as
+errors and no warnings reported. Local final output:
+`tmp/index-runtime-full-2026-10-25-02.log`. See `index-ownership.md` and
+`regression-manifest.md` for exact boundaries, commands and the earlier failed
+run. No paid model calls or pushes occurred. Next: INDEX-05 stress and remaining
+staging quarantine/encoder waits, followed by adapters, adoption/dedupe,
+Session-based harness and integrated release acceptance.

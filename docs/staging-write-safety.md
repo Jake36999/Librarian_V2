@@ -482,3 +482,25 @@ the existing model-selection and interrupted-staging UX. Implementation:
 `89e609d`. Frozen-source full verification passed **1,232 tests, 2 skipped,
 1 deselected in 422.29s**, with thread warnings treated as errors and no
 warnings reported. Exact command/log: `regression-manifest.md`.
+
+## Runtime ownership continuation
+
+`ded98c0` now refuses direct/cached engine fallback in serving Contexts,
+validates service/vault identity, and makes graph/extract offline use explicit.
+The static serving-debt list is empty (**2 → 0**); low-level infrastructure
+and separately reviewed desk/lens stores are not counted as serving debt.
+This does not close G1 or replace INDEX-05 concurrency verification.
+
+`e40a4a6` coordinates only a Core fingerprint handle and final atomic
+replacement of that same canonical path. A native Windows fixture shows why
+an open reader can deny replacement. The fix closes the Core handle first;
+it does not retry/replay a mutation, lock the whole vault or hide outside
+reader/ACL errors. The native mechanism does not establish the cause of the
+earlier intermittent acceptance failures. See [index-ownership.md](index-ownership.md)
+for offline compatibility, explicit limitations and the remaining extract
+revision-pinning contract gap. The expanded focused group passed **381 tests**;
+the revised coordinated MCP/revision follow-up passed **149 tests**. UI build
+and complete smoke passed. Final frozen-source full verification passed
+**1,284 tests, 2 skipped, 1 deselected in 434.41s**, with thread warnings as
+errors and no warnings reported. Test snapshot: `d31cda5`; exact commands,
+earlier failures and final local log are in `regression-manifest.md`.
