@@ -51,6 +51,9 @@ class WriteIntent:
     replaces: str = ""
     note: str = ""
     absent: tuple[str, ...] = ()
+    # Trusted dispatch-time snapshots for multi-target operations. These
+    # protect the broker/queue interval; they do not claim a caller read token.
+    observed: tuple[tuple[str, str], ...] = ()
 
 
 def canonical(vault: Any, rel: str) -> str:
@@ -67,7 +70,8 @@ def canonical(vault: Any, rel: str) -> str:
 def canonical_intent(vault: Any, intent: WriteIntent) -> WriteIntent:
     spell = lambda rel: canonical(vault, rel) if rel else ""
     return WriteIntent(tuple(spell(t) for t in intent.targets), spell(intent.replaces),
-                       spell(intent.note), tuple(spell(t) for t in intent.absent))
+                       spell(intent.note), tuple(spell(t) for t in intent.absent),
+                       tuple((spell(path), value) for path, value in intent.observed))
 
 
 _KEYS: dict[str, bytes] = {}
@@ -139,7 +143,7 @@ def preconditions(ctx: Any, intent: WriteIntent, token: str) -> dict[str, str]:
     """The writer precondition a call brings for the note it replaces, and
     for any new file that must still be missing when the write runs."""
     from .coordination import MISSING
-    expected = {target: MISSING for target in intent.absent}
+    expected = {**dict(intent.observed), **{target: MISSING for target in intent.absent}}
     if not intent.replaces:
         return expected               # a new file: there was nothing to read first
     if token:
@@ -154,7 +158,7 @@ def preconditions(ctx: Any, intent: WriteIntent, token: str) -> dict[str, str]:
 
 def check_now(ctx: Any, expected: dict[str, str]) -> None:
     """The writer's precondition, for a call made with no writer (offline)."""
-    from .coordination import PreconditionChangedError, fingerprint
+    from .coordination import PreconditionChangedError, fingerprint, operation_path
     for target, wanted in expected.items():
-        if fingerprint(ctx.vault.safe_relative(target)) != wanted:
+        if fingerprint(operation_path(ctx.vault, target)) != wanted:
             raise PreconditionChangedError(target)

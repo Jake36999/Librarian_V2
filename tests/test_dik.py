@@ -173,7 +173,7 @@ def test_an_accepted_note_is_rebuilt_and_its_sections_offered_as_a_revision(vaul
     again = REGISTRY.call("dik_rebuild", {"source": "acme - planner"},
                           Context(tier="contribute", vault=vault))
     assert again["results"][0]["revision"] == row["revision"]         # one open revision
-    person = Context(tier="curate", vault=vault)
+    person = Context(tier="curate", vault=vault, extras={"caller_kind": "person"})
     merged = REGISTRY.call("staging_decide", {"item_ids": [row["revision"]],
                                               "decision": "accept"}, person)
     assert set(merged["results"][0]["sections"]) == {"Components", "How It Fits Together"}

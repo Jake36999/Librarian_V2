@@ -4700,6 +4700,17 @@ var Librarian = (() => {
       else if (this.wasRunning && this.kind === "source") void this.load();
       this.wasRunning = running;
     }
+    decisionError(status, id, error) {
+      clear(
+        status,
+        h("p", { class: "error" }, error.message),
+        h(
+          "button",
+          { class: "ghost", onclick: () => this.show(id) },
+          "Reload item (discards form edits)"
+        )
+      );
+    }
     async show(id) {
       this.selected = id;
       this.detailLocked = false;
@@ -4754,6 +4765,8 @@ var Librarian = (() => {
             item_ids: [id],
             decision,
             reason: reason.value,
+            ...item.revision ? { revision: item.revision } : {},
+            ...item.staged_revision ? { staged_revision: item.staged_revision } : {},
             bottom_line: bottom.value,
             what_it_solves: solves.value,
             ...isModel ? { fields: { best_for: Array.from(bestFor), ...suggestedTier ? { suggested_tier: suggestedTier } : {} } } : {}
@@ -4767,7 +4780,7 @@ var Librarian = (() => {
           this.detailLocked = true;
           clear(this.detail, h("p", { class: "ok", role: "status" }, `${item.name}: ${outcome}`));
         } catch (e) {
-          clear(status, h("p", { class: "error" }, e.message));
+          this.decisionError(status, id, e);
         }
       };
       const draftIt = async () => {
@@ -4993,6 +5006,7 @@ var Librarian = (() => {
             item_ids: [item.id],
             decision: d,
             reason: reason.value,
+            ...item.staged_revision ? { staged_revision: item.staged_revision } : {},
             ...Object.keys(changed).length ? { fields: changed } : {}
           });
           const r = (out.results ?? [])[0] ?? out;
@@ -5006,7 +5020,7 @@ var Librarian = (() => {
             `${p.name}: ${d === "accept" ? "accepted into the lens store" : d === "reject" ? "rejected" : "deferred"}.`
           ));
         } catch (e) {
-          clear(status, h("p", { class: "error" }, e.message));
+          this.decisionError(status, item.id, e);
         }
       };
       const source = p.source ? h("a", { class: "wl", href: "#", onclick: (e) => {
@@ -5136,6 +5150,7 @@ var Librarian = (() => {
             item_ids: [item.id],
             decision: d,
             reason: reason.value,
+            ...item.staged_revision ? { staged_revision: item.staged_revision } : {},
             ...d === "accept" ? { fields: {
               definition: definition.value,
               concept_kind: kindSel.value,
@@ -5154,7 +5169,7 @@ var Librarian = (() => {
             `${item.name}: ${d === "accept" ? "accepted as a Concept note" : d === "reject" ? "rejected" : "deferred"}.`
           ));
         } catch (e) {
-          clear(status, h("p", { class: "error" }, e.message));
+          this.decisionError(status, item.id, e);
         }
       };
       clear(
@@ -5210,7 +5225,12 @@ var Librarian = (() => {
       const status = h("div", { role: "status" });
       const decide = (d) => async () => {
         try {
-          const out = await this.api.tool("staging_decide", { item_ids: [item.id], decision: d, reason: reason.value });
+          const out = await this.api.tool("staging_decide", {
+            item_ids: [item.id],
+            decision: d,
+            reason: reason.value,
+            ...item.staged_revision ? { staged_revision: item.staged_revision } : {}
+          });
           const r = (out.results ?? [])[0] ?? out;
           if (out.error || r.error || r.refused) throw new Error(String(r.detail ?? r.refused ?? out.detail ?? out.error ?? r.error));
           this.selected = "";
@@ -5222,7 +5242,7 @@ var Librarian = (() => {
             `${item.name}: ${d === "accept" ? `written to ${item.target}` : d === "reject" ? "rejected" : "deferred"}.`
           ));
         } catch (e) {
-          clear(status, h("p", { class: "error" }, e.message));
+          this.decisionError(status, item.id, e);
         }
       };
       clear(

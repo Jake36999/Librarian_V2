@@ -285,6 +285,14 @@ export class Staging {
     this.wasRunning = running;
   }
 
+  private decisionError(status: HTMLElement, id: string, error: unknown): void {
+    // Keep the current form intact. Only an explicit reload discards its edits;
+    // do not silently refresh tokens and re-submit an approval for changed text.
+    clear(status, h("p", { class: "error" }, (error as Error).message),
+      h("button", { class: "ghost", onclick: () => this.show(id) },
+        "Reload item (discards form edits)"));
+  }
+
   private async show(id: string): Promise<void> {
     this.selected = id;
     this.detailLocked = false;
@@ -330,6 +338,8 @@ export class Staging {
     const decide = (decision: string) => async () => {
       try {
         const out = await this.api.tool("staging_decide", { item_ids: [id], decision, reason: reason.value,
+          ...(item.revision ? { revision: item.revision } : {}),
+          ...(item.staged_revision ? { staged_revision: item.staged_revision } : {}),
           bottom_line: bottom.value, what_it_solves: solves.value,
           ...(isModel ? { fields: { best_for: Array.from(bestFor), ...(suggestedTier ? { suggested_tier: suggestedTier } : {}) } } : {}) });
         const r = (out.results ?? [])[0] ?? out;
@@ -346,7 +356,7 @@ export class Staging {
         this.detailLocked = true;
         clear(this.detail, h("p", { class: "ok", role: "status" }, `${item.name}: ${outcome}`));
       } catch (e) {
-        clear(status, h("p", { class: "error" }, (e as Error).message));
+        this.decisionError(status, id, e);
       }
     };
     const draftIt = async () => {
@@ -543,6 +553,7 @@ export class Staging {
       try {
         const changed = d === "accept" ? edits() : {};
         const out = await this.api.tool("staging_decide", { item_ids: [item.id], decision: d, reason: reason.value,
+          ...(item.staged_revision ? { staged_revision: item.staged_revision } : {}),
           ...(Object.keys(changed).length ? { fields: changed } : {}) });
         const r = (out.results ?? [])[0] ?? out;
         if (out.error || r.error || r.refused) throw new Error(String(r.detail ?? r.refused ?? out.detail ?? out.error ?? r.error));
@@ -552,7 +563,7 @@ export class Staging {
         clear(this.detail, h("p", { class: "ok", role: "status" },
           `${p.name}: ${d === "accept" ? "accepted into the lens store" : d === "reject" ? "rejected" : "deferred"}.`));
       } catch (e) {
-        clear(status, h("p", { class: "error" }, (e as Error).message));
+        this.decisionError(status, item.id, e);
       }
     };
     const source = p.source
@@ -629,6 +640,7 @@ export class Staging {
       }
       try {
         const out = await this.api.tool("staging_decide", { item_ids: [item.id], decision: d, reason: reason.value,
+          ...(item.staged_revision ? { staged_revision: item.staged_revision } : {}),
           ...(d === "accept" ? { fields: { definition: definition.value, concept_kind: kindSel.value,
             aliases: split(aliases.value), related: split(related.value) } } : {}) });
         const r = (out.results ?? [])[0] ?? out;
@@ -639,7 +651,7 @@ export class Staging {
         clear(this.detail, h("p", { class: "ok", role: "status" },
           `${item.name}: ${d === "accept" ? "accepted as a Concept note" : d === "reject" ? "rejected" : "deferred"}.`));
       } catch (e) {
-        clear(status, h("p", { class: "error" }, (e as Error).message));
+        this.decisionError(status, item.id, e);
       }
     };
     clear(this.detail,
@@ -671,7 +683,8 @@ export class Staging {
     const status = h("div", { role: "status" });
     const decide = (d: string) => async () => {
       try {
-        const out = await this.api.tool("staging_decide", { item_ids: [item.id], decision: d, reason: reason.value });
+        const out = await this.api.tool("staging_decide", { item_ids: [item.id], decision: d, reason: reason.value,
+          ...(item.staged_revision ? { staged_revision: item.staged_revision } : {}) });
         const r = (out.results ?? [])[0] ?? out;
         if (out.error || r.error || r.refused) throw new Error(String(r.detail ?? r.refused ?? out.detail ?? out.error ?? r.error));
         this.selected = "";
@@ -680,7 +693,7 @@ export class Staging {
         clear(this.detail, h("p", { class: "ok", role: "status" },
           `${item.name}: ${d === "accept" ? `written to ${item.target}` : d === "reject" ? "rejected" : "deferred"}.`));
       } catch (e) {
-        clear(status, h("p", { class: "error" }, (e as Error).message));
+        this.decisionError(status, item.id, e);
       }
     };
     clear(this.detail,

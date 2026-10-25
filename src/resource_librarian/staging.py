@@ -34,7 +34,7 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 from . import clerk, notes
 from .coordination import atomic_write_text
@@ -104,7 +104,16 @@ class StagingStore:
             raise TypeError(f"staging kind {kind!r} is not one of {KINDS}")
         return self.root / kind
 
+    @staticmethod
+    def _item_id(item_id: str) -> str:
+        if not isinstance(item_id, str) or not item_id or len(item_id) > 200 or \
+                item_id.startswith(".") or item_id.endswith((".", " ")) or \
+                any(char in item_id for char in "/\\:\x00"):
+            raise TypeError("a staged item id is a plain filename, not a path")
+        return item_id
+
     def path(self, item_id: str) -> Path:
+        item_id = self._item_id(item_id)
         for kind in KINDS:
             candidate = self.folder(kind) / f"{item_id}.json"
             if candidate.exists():
@@ -112,9 +121,18 @@ class StagingStore:
         raise TypeError(f"no staged item {item_id!r}")
 
     def load(self, item_id: str) -> dict[str, Any]:
-        return json.loads(self.path(item_id).read_text(encoding="utf-8"))
+        path = self.path(item_id)
+        item = json.loads(path.read_text(encoding="utf-8"))
+        self.validate_item(item, item_id, path.parent.name)
+        return item
+
+    @staticmethod
+    def validate_item(item: Any, item_id: str, kind: str) -> None:
+        if not isinstance(item, dict) or item.get("id") != item_id or item.get("kind") != kind:
+            raise TypeError("staged item identity does not match its file")
 
     def save(self, item: dict[str, Any]) -> None:
+        self._item_id(item["id"])
         folder = self.folder(item["kind"])
         folder.mkdir(parents=True, exist_ok=True)
         atomic_write_text(folder / f"{item['id']}.json",
@@ -213,10 +231,11 @@ def _context(text: str, quote: str, width: int = 160) -> str:
 
 # ---------------------------------------------------------------- deciding
 
-def decide(store: StagingStore, engine: Engine, item_ids: list[str], decision: str,
+def decide(store: StagingStore, engine: Engine | None, item_ids: list[str], decision: str,
            reason: str = "", bottom_line: str = "", what_it_solves: str = "",
            decided_by: str = "person", session: str = "",
-           fields: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+           fields: dict[str, Any] | None = None, *,
+           index_call: Callable | None = None) -> list[dict[str, Any]]:
     """Accept, reject or defer, one item or a batch. Each item's outcome is
     reported on its own; one refusal does not stop the batch.
 
@@ -233,13 +252,17 @@ def decide(store: StagingStore, engine: Engine, item_ids: list[str], decision: s
     if fields and len(item_ids) > 1:
         raise TypeError("a batch accept cannot share one set of field corrections; accept "
                         "items one at a time with their own")
+    if index_call is not None:
+        index_call(lambda current: None)  # Fail before mutations if Core closed.
+    elif engine is None:
+        raise TypeError("decide requires an Engine or callback-only index access")
     mode = str(store.vault.setting("promotion", "mode") or "person")
     out = []
     for item_id in item_ids:
         try:
             out.append(_decide_one(store, engine, item_id, decision, reason, bottom_line,
                                    what_it_solves, decided_by, session, mode,
-                                   batch=len(item_ids) > 1, fields=fields or {}))
+                                   batch=len(item_ids) > 1, fields=fields or {}, index_call=index_call))
         except Refusal as refusal:
             out.append({"id": item_id, "refused": refusal.code, "detail": refusal.detail})
         except TypeError as exc:
@@ -264,6 +287,15 @@ def preview(store: StagingStore, engine: Engine, item_id: str, decided_by: str,
         problems.append(f"promotion.mode is {mode!r}: a person accepts")
     if item["kind"] != "source":
         return {"id": item_id, "kind": item["kind"], "would": "accept", "problems": problems}
+    if item.get("revision_of"):
+        target = store.vault.safe_relative(str(item["revision_of"]))
+        if not target.is_file():
+            problems.append("the accepted source note no longer exists")
+        elif notes.load(target).frontmatter.get("type") != "source":
+            problems.append("a staged source revision must target a source note")
+        return {"id": item_id, "would": "merge", "ok": not problems, "problems": problems,
+                "path": str(item["revision_of"]),
+                "sections": [heading for heading in REVISED_SECTIONS if (item.get("sections") or {}).get(heading)]}
     draft = (item.get("review") or {}).get("draft") or {}
     if not bottom_line and draft.get("status") != "ok":
         problems.append("no reviewed draft and no bottom_line given")
@@ -305,7 +337,8 @@ def _check_field_override(model, kind: str, name: str, value: Any,
 
 
 def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_solves,
-                decided_by, session, mode, batch, fields: dict[str, Any] | None = None
+                decided_by, session, mode, batch, fields: dict[str, Any] | None = None,
+                index_call: Callable | None = None
                 ) -> dict[str, Any]:
     item = store.load(item_id)
     if item["status"] == "queued":
@@ -323,7 +356,9 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
     if item.get("revision_of"):
         if decision == "approve":
             raise TypeError(f"{item_id} is a revision of an accepted note: accept or reject it")
-        return _decide_revision(store, engine, item, decision, entry, decided_by, mode)
+        if decision == "accept" and item.get("sensitivity") != "normal" and decided_by != "person":
+            raise Refusal("SENSITIVITY_REVIEW", "only a person accepts a sensitive source revision")
+        return _decide_revision(store, engine, item, decision, entry, decided_by, mode, index_call=index_call)
     if decision == "reject":
         item["status"] = "rejected"
         item["history"].append(entry)
@@ -381,7 +416,7 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         front = {**item.get("frontmatter", {}), "evidence": [e["id"] for e in item["evidence"]],
                  "accepted_by": decided_by}
         atomic_write_text(target, notes.render(front, item.get("body", "")))
-        engine.index.upsert(target)
+        _upsert(engine, target, index_call)
         item.update(status="accepted", accepted_to=item["target"])
         item["history"].append(entry)
         store.save(item)
@@ -397,7 +432,7 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         if concept_kind not in ("term", "pattern"):
             raise TypeError("concept_kind is 'term' or 'pattern'")
         path = _write_concept(store.vault, engine, item, concept_kind, definition,
-                              given.get("aliases") or [], given.get("related") or [])
+                              given.get("aliases") or [], given.get("related") or [], index_call=index_call)
         item.update(status="accepted", accepted_to=path)
         item["history"].append(entry)
         store.save(item)
@@ -466,7 +501,7 @@ REVISED_SECTIONS = ("Claims", "Evidence & Limits", "Reading Notes",
 
 
 def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: dict[str, Any],
-                     decided_by: str, mode: str) -> dict[str, Any]:
+                     decided_by: str, mode: str, *, index_call: Callable | None = None) -> dict[str, Any]:
     """A deep read of an *accepted* source (roadmap §4 C2) is staged as a
     revision, never written straight into the person's note. Accepting it
     merges the sections the deep read rebuilt (what the text claims, and its
@@ -482,10 +517,12 @@ def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: 
     if mode != "agent" and decided_by != "person":
         raise Refusal("PERSON_CONFIRMS", "a revision rewrites sections of an accepted note: a "
                                          "person accepts it")
-    path = store.vault.root / item["revision_of"]
+    path = store.vault.safe_relative(str(item["revision_of"]))
     if not path.is_file():
         raise TypeError(f"{item['revision_of']} no longer exists")
     note = notes.load(path)
+    if note.frontmatter.get("type") != "source":
+        raise TypeError("a staged source revision must target a source note")
     body = note.body
     previous: dict[str, str] = {}
     merged = []
@@ -504,7 +541,7 @@ def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: 
     else:
         note.frontmatter["deep_read"] = now_iso()[:10]
     atomic_write_text(path, notes.render(note.frontmatter, body))
-    engine.index.upsert(path)
+    _upsert(engine, path, index_call)
     item.update(status="accepted", accepted_to=item["revision_of"], merged=merged,
                 previous_sections=previous)
     item["history"].append(entry)
@@ -535,8 +572,16 @@ def _move_file(vault: Vault, item: dict[str, Any], folder: Path) -> str:
     return item["file"]
 
 
-def _write_concept(vault: Vault, engine: Engine, item: dict[str, Any], concept_kind: str,
-                   definition: str, aliases: list[str], related: list[str]) -> str:
+def _upsert(engine: Engine | None, path: Path, index_call: Callable | None) -> None:
+    if index_call is not None:
+        index_call(lambda current: current.index.upsert(path))
+    else:
+        engine.index.upsert(path)
+
+
+def _write_concept(vault: Vault, engine: Engine | None, item: dict[str, Any], concept_kind: str,
+                   definition: str, aliases: list[str], related: list[str], *,
+                   index_call: Callable | None = None) -> str:
     """The Concept note itself: Usages is what the candidate already had
     (quoted, from evidence); Definition is the person's own words, just
     given at accept - the one section this module never drafts."""
@@ -561,7 +606,7 @@ def _write_concept(vault: Vault, engine: Engine, item: dict[str, Any], concept_k
                   evidence=[e["id"] for e in item.get("evidence") or []])
     path.parent.mkdir(parents=True, exist_ok=True)
     atomic_write_text(path, notes.render(fm, body))
-    engine.index.upsert(path)
+    _upsert(engine, path, index_call)
     return f"Concepts/{safe}.md"
 
 

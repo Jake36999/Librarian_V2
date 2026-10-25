@@ -85,6 +85,24 @@ class OperationLogUnreadableError(RuntimeError):
 MISSING = "missing"                      # the fingerprint of a file that does not exist
 
 
+def operation_path(vault: Vault, rel: str) -> Path:
+    """Internal operation dependencies may include owned operational state.
+
+    Public file APIs still use Vault.safe_relative and cannot read dot-folders.
+    No operation dependency may reach another hidden root or escape by a link.
+    """
+    parts = str(rel).replace("\\", "/").split("/")
+    if parts and parts[0] == ".librarian":
+        if len(parts) < 2 or any(part in ("", ".", "..") or ":" in part for part in parts):
+            raise Refusal("VAULT_REQUIRED", "invalid operational state dependency")
+        target = vault.root.joinpath(*parts).resolve()
+        state_root = vault.root.resolve() / ".librarian"
+        if state_root not in target.parents:
+            raise Refusal("VAULT_REQUIRED", "operational state dependency escapes its state root")
+        return target
+    return vault.safe_relative(rel)
+
+
 def fingerprint_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()[:20]
 
@@ -700,9 +718,9 @@ class VaultWriter:
         # supplied fingerprint is an actual compare-and-swap precondition;
         # actor-generated values document the revision seen for operations
         # that did not originate from a read-modify-write workflow.
-        for path in op.targets:
+        for path in dict.fromkeys([*op.targets, *op.precondition_fingerprints]):
             try:
-                observed = fingerprint(self.vault.safe_relative(path))
+                observed = fingerprint(operation_path(self.vault, path))
             except (OSError, ValueError, Refusal):
                 observed = "unreadable"
             op.observed_fingerprints[path] = observed

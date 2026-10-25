@@ -1,21 +1,34 @@
 """Staging review: the airlock, and the lens store the app reads."""
 from __future__ import annotations
 
+import json
 import re
 from pathlib import PurePosixPath
 from typing import Literal
 
-from .. import clerk, concepts, notes, staging
+from .. import clerk, concepts, notes, revisions, staging
+from ..coordination import fingerprint, fingerprint_bytes
+from ..revisions import WriteIntent
+from ..rules import Refusal
 from .. import deep_read as reading
 from ..lenses import LensStore
 from ..registry import Card, Context, tool
 from ..session import SessionStore
 from ..vault import now_iso
-from .library import engine_for
+from .library import IndexGateway, engine_for, with_engine
 
 
 def _store(ctx: Context) -> staging.StagingStore:
     return staging.StagingStore(ctx.vault)
+
+
+def _snapshot(ctx: Context, item_id: str) -> tuple[dict, str, str]:
+    store = _store(ctx)
+    path = store.path(item_id)
+    raw = path.read_bytes()
+    item = json.loads(raw.decode("utf-8"))
+    store.validate_item(item, item_id, path.parent.name)
+    return item, path.relative_to(ctx.vault.root).as_posix(), fingerprint_bytes(raw)
 
 
 def _profile_endpoint(ctx: Context, role: str, endpoint: clerk.Endpoint | None,
@@ -82,7 +95,14 @@ def staging_list(ctx: Context, kind: Literal["", "source", "lens", "concept", "t
       card=Card("One staged item in full, with its evidence and any review",
                 "deciding an item"))
 def staging_show(ctx: Context, item_id: str) -> dict:
-    return staging.show(_store(ctx).load(item_id))
+    item, state, observed = _snapshot(ctx, item_id)
+    out = staging.show(item)
+    out["staged_revision"] = revisions.issue(ctx, state, observed)
+    if item.get("revision_of"):
+        path = ctx.vault.safe_relative(str(item["revision_of"]))
+        rel = path.relative_to(ctx.vault.root).as_posix()
+        out["revision"] = revisions.issue_current(ctx, rel)
+    return out
 
 
 @tool("staging_review", tier="contribute", effect="write", scope="session", open_world=True,
@@ -108,7 +128,7 @@ def staging_review(ctx: Context, item_id: str, need: str = "",
 def deep_read_tool(ctx: Context, item_id: str, max_chunks: int = reading.MAX_CHUNKS,
                    lenses: bool = True) -> dict:
     kind = _store(ctx).load(item_id).get("source_kind", "")
-    sections = dict(engine_for(ctx, refresh=False).index.model.sections_for("source", kind))
+    sections = IndexGateway(ctx).run(lambda engine: dict(engine.index.model.sections_for("source", kind)))
     return reading.deep_read(ctx.vault, item_id, clerk_endpoint(ctx), max_chunks=max_chunks,
                              lenses=lenses, sections_of=sections)
 
@@ -124,8 +144,8 @@ def deep_read_tool(ctx: Context, item_id: str, max_chunks: int = reading.MAX_CHU
                 "Staging as a revision a person merges; lenses are staged as usual. Resumable"))
 def deep_read_note(ctx: Context, note: str, max_chunks: int = reading.MAX_CHUNKS,
                    lenses: bool = True) -> dict:
-    engine = engine_for(ctx)
-    row = engine.index.note_row(note)
+    gateway = IndexGateway(ctx)
+    row = gateway.run(lambda engine: engine.index.note_row(note))
     if row is None or row["shape"] != "source":
         raise TypeError(f"no accepted source named {note!r}; names are exact")
     loaded = notes.load(ctx.vault.root / row["path"])
@@ -145,13 +165,64 @@ def deep_read_note(ctx: Context, note: str, max_chunks: int = reading.MAX_CHUNKS
             "evidence": [{"id": e} for e in fm.get("evidence") or [] if isinstance(e, str)],
             "sensitivity": str(fm.get("sensitivity") or "normal"), "sections": {}})
     kind = open_revision.get("source_kind", "")
-    sections = dict(engine.index.model.sections_for("source", kind))
+    sections = gateway.run(lambda engine: dict(engine.index.model.sections_for("source", kind)))
     out = reading.deep_read(ctx.vault, open_revision["id"], clerk_endpoint(ctx),
                             max_chunks=max_chunks, lenses=lenses, sections_of=sections)
     return {"revision": open_revision["id"], "of": row["path"], **out}
 
 
+def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
+    """Selected staging writes: explicit paths, checked before any approval.
+
+    New-source promotion has additional concept/index side effects and is
+    deliberately not claimed by this first revision/import/concept slice.
+    """
+    if kwargs.get("dry_run") or kwargs.get("decision") != "accept":
+        return None
+    # The registry's existing 100-item list bound fits recovery's 200
+    # fingerprints: at most one staged record and one destination per item.
+    items, snapshots = [], {}
+    for item_id in kwargs.get("item_ids") or []:
+        try:
+            item, state, observed = _snapshot(ctx, item_id)
+            items.append(item)
+            snapshots[item["id"]] = (state, observed)
+        except TypeError:
+            continue  # Preserve the domain's per-item invalid-ID result.
+    supported = [i for i in items if i.get("revision_of") or i.get("kind") in ("concept", "import", "lens")]
+    replacements = [i for i in items if i.get("revision_of")]
+    if replacements and len(items) > 1 and ctx.extras.get("caller_kind") != "person":
+        raise Refusal("REVISION_REQUIRED", "accept one staged revision at a time with the revision from staging_show")
+    if len(items) > 1 and (kwargs.get("revision") or kwargs.get("staged_revision")):
+        raise Refusal("REVISION_REQUIRED", "a revision token applies to one staged revision; accept it separately")
+    targets, absent, observed = [], [], []
+    for item in items:
+        state, stamp = snapshots[item["id"]]
+        if len(items) == 1 and kwargs.get("staged_revision"):
+            stamp = revisions.redeem(ctx, str(kwargs["staged_revision"]), state)
+        observed.append((state, stamp))
+    for item in supported:
+        if item.get("revision_of"):
+            target = str(item["revision_of"])
+        elif item["kind"] == "concept":
+            target = f"Concepts/{notes.safe_name(item['name'])}.md"
+        elif item["kind"] == "import":
+            target = str(item["target"])
+        else:
+            continue  # LensStore is serialized but is not a Markdown target.
+        path = ctx.vault.safe_relative(target)
+        target = path.relative_to(ctx.vault.root).as_posix()
+        targets.append(target)
+        observed.append((target, fingerprint(path)))
+        if not item.get("revision_of") and not path.exists():
+            absent.append(target)
+    replacing = targets[0] if len(items) == 1 and replacements else ""
+    return WriteIntent(tuple(dict.fromkeys(targets)), replaces=replacing,
+                       absent=tuple(absent), observed=tuple(observed))
+
+
 @tool("staging_decide", tier="contribute", effect="vault_write", phases=("judge", "ingest", "seed", "assess"),
+      intent=_decision_intent,
       returns=("results", "accepted", "not_findable", "refused"),
       card=Card("Accept, approve, reject or defer staged items, one or a batch",
                 "an item has been reviewed",
@@ -163,15 +234,16 @@ def deep_read_note(ctx: Context, note: str, max_chunks: int = reading.MAX_CHUNKS
 def staging_decide(ctx: Context, item_ids: list[str],
                    decision: Literal["accept", "approve", "reject", "defer"], reason: str = "",
                    bottom_line: str = "", what_it_solves: str = "",
-                   fields: dict | None = None, dry_run: bool = False) -> dict:
+                   fields: dict | None = None, dry_run: bool = False, revision: str = "",
+                   staged_revision: str = "") -> dict:
     store = _store(ctx)
     if dry_run:
         # an accept rehearsed: every check, what would be written, nothing changed
         if decision != "accept":
             raise TypeError("dry_run rehearses an accept")
         decided_by = "person" if ctx.tier == "curate" else "agent"
-        results = [staging.preview(store, engine_for(ctx), i, decided_by, bottom_line,
-                                   what_it_solves, fields) for i in item_ids]
+        results = with_engine(ctx, lambda engine: [staging.preview(store, engine, i, decided_by, bottom_line,
+                                   what_it_solves, fields) for i in item_ids])
         return {"dry_run": True, "results": results,
                 "would_accept": sum(1 for r in results if r.get("ok"))}
     before = {}
@@ -183,10 +255,15 @@ def staging_decide(ctx: Context, item_ids: list[str],
     origins = {str((item.get("found_for") or {}).get("session") or "")
                for item in before.values() if (item.get("found_for") or {}).get("session")}
     promotion_session = next(iter(origins)) if len(origins) == 1 else (ctx.session or "")
-    results = staging.decide(store, engine_for(ctx), item_ids, decision, reason,
+    legacy_promotion = decision == "accept" and any(
+        not item.get("revision_of") and item.get("kind") in ("source", "topic")
+        for item in before.values())
+    engine = engine_for(ctx) if legacy_promotion else None
+    results = staging.decide(store, engine, item_ids, decision, reason,
                              bottom_line, what_it_solves,
                              decided_by="person" if ctx.tier == "curate" else "agent",
-                             session=promotion_session, fields=fields)
+                             session=promotion_session, fields=fields,
+                             index_call=None if legacy_promotion else IndexGateway(ctx).run)
     for result in results:
         if result.get("status") not in ("accepted", "approved", "rejected", "deferred"):
             continue

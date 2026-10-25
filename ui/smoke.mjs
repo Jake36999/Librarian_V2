@@ -494,6 +494,21 @@ await page.selectOption(".staging select[aria-label='Which sources']", "staged")
 await page.waitForSelector(".staging .item:has-text('osquery (whole text read)')");
 await page.click(".staging .item:has-text('osquery (whole text read)')");
 await page.waitForSelector(".staging .detail >> text=A revision of an accepted note");
+await page.fill("#lib-bl", "My in-progress review wording");
+await expect(page.evaluate(async () => {
+  const token = document.querySelector("meta[name=librarian-token]")?.getAttribute("content") ?? "";
+  const r = await fetch("/api/tool/staging_flag", { method: "POST", headers: { "Content-Type": "application/json",
+    "X-Librarian-Token": token }, body: JSON.stringify({ arguments: { item_id: "rev-osquery",
+      sensitive: true, reason: "A concurrent review marked this item sensitive." } }) });
+  const out = await r.json();
+  return r.ok && !out.error && !out.refused;
+}), "a separate person action changes the staged item after review");
+await page.click(".staging .detail button:has-text('Accept')");
+await page.waitForSelector(".staging .detail >> text=changed after it was read");
+await expect(page.inputValue("#lib-bl").then((v) => v === "My in-progress review wording"),
+  "a stale review keeps the person's form edits and does not retry acceptance");
+await page.click(".staging .detail button:has-text('Reload item (discards form edits)')");
+await page.waitForSelector(".staging .detail >> text=A revision of an accepted note");
 await page.click(".staging .detail button:has-text('Accept')");
 await page.waitForSelector(".staging >> text=/Merged Claims into Sources\\/repository\\/osquery.md/");
 await expect(page.evaluate(async () => {
@@ -501,7 +516,7 @@ await expect(page.evaluate(async () => {
   const r = await fetch("/api/file?path=Sources/repository/osquery.md", { headers: { "X-Librarian-Token": token } });
   return r.ok && (await r.json()).text.includes("a fleet can query");
 }), "the revision's Claims are in the note");
-step("a staged revision of an accepted note: its banner, and Accept merges it");
+step("a staged revision: stale review refuses without losing form edits; explicit reload and Accept merge it");
 
 // (c) a document-level lens: drawn from the whole text; a probe answered elsewhere in it.
 await page.click(".staging .seg button:has-text('Lenses')");

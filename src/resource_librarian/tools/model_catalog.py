@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from .. import model_catalog
 from ..registry import Card, Context, tool
-from .library import engine_for
+from .library import engine_for, with_engine
 
 
 @tool("model_catalog_status", tier="consult", effect="read",
@@ -14,7 +14,7 @@ from .library import engine_for
                 "picking a chat model with none profiled yet, or after a new provider's "
                 "catalogue is added"))
 def model_catalog_status(ctx: Context) -> dict:
-    return {"catalogues": model_catalog.status(ctx.vault, engine_for(ctx, refresh=False))}
+    return {"catalogues": with_engine(ctx, lambda engine: model_catalog.status(ctx.vault, engine), refresh=False)}
 
 
 @tool("model_catalog_adopt", tier="curate", effect="vault_write", scope="library",

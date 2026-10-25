@@ -25,7 +25,7 @@ import json
 import posixpath
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from . import clerk
 from .coordination import atomic_write_text
@@ -392,7 +392,8 @@ def relate_chapters(record: dict[str, Any], endpoint: clerk.Endpoint | None,
 
 # ------------------------------------------------------------------ accepted notes
 
-def rebuild(vault: Vault, conn, source: str = "", limit: int = 20) -> dict[str, Any]:
+def rebuild(vault: Vault, conn, source: str = "", limit: int = 20, *,
+            index_call: Callable | None = None) -> dict[str, Any]:
     """Records for notes accepted before P6 (owner-approved 2026-10-01): rebuilt from each
     note's own evidence, files and - for a document - the read its staged item kept. The
     records are written (derived, rebuildable); the note sections they support are staged as
@@ -402,9 +403,12 @@ def rebuild(vault: Vault, conn, source: str = "", limit: int = 20) -> dict[str, 
     store = StagingStore(vault)
     staged = {i.get("accepted_to"): i for i in store.items("source", "accepted")
               if i.get("accepted_to") and not i.get("revision_of")}
-    rows = conn.execute("SELECT name, path, kind, frontmatter FROM note WHERE shape = 'source'"
-                        + (" AND name = ?" if source else "") + " ORDER BY name",
-                        (source,) if source else ()).fetchall()
+    def read(connection):
+        return [dict(row) for row in connection.execute(
+            "SELECT name, path, kind, frontmatter FROM note WHERE shape = 'source'"
+            + (" AND name = ?" if source else "") + " ORDER BY name",
+            (source,) if source else ()).fetchall()]
+    rows = index_call(lambda active: read(active.conn)) if index_call is not None else read(conn)
     out = []
     for row in rows[:max(1, limit)]:
         fm = json.loads(row["frontmatter"])
