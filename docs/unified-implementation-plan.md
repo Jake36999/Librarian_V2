@@ -644,7 +644,7 @@ checked:
 | `write_note` | the note | when it replaces | A new note needs none, but must still be missing when the write runs. |
 | `archive_note` | the note and its `Archive/` place | no | A move of the librarian's own note; nothing is rewritten in place. |
 | `promote_offering` | the `Offerings/` destination | no | Creates only; the staged draft is the librarian's own state under `.librarian/`. |
-| `staging_decide` | not yet | no | **Not covered.** A batch across item kinds: sources and imports create notes, `topic` rewrites `About/Topics.md`, `lens` writes SQLite. Each kind needs its own resolution (follow-up). |
+| `staging_decide` | selected paths | agents/MCP replacing source notes | Revision/import/concept paths declare visible targets; all accepts snapshot staged JSON. New-source/topic multi-note promotion and lens-store ownership remain partial. See `staging-write-safety.md`. |
 | `create_project`, other writers | registry best-effort | no | Unchanged. |
 
 **Behaviour change in CORE-05:** an agent or MCP client must read a note
@@ -794,3 +794,65 @@ Session-based harness; and integrated release acceptance. The source
 promotion helpers mutate several notes and generated views, so their index
 migration must be paired with the target inventory rather than wrapping the
 whole promotion in an index callback. G1 remains unclosed.
+
+### Selected staging safety continuation, 2026-10-25
+
+Source revision acceptance now declares its destination and consumes the
+existing bound revision token for agent/MCP replacement. The Staging view
+passes both destination and staged-record review tokens without changing the
+Accept workflow. Stale review refuses with a write-conflict checkpoint; form
+edits survive until an explicit reload. Legacy explicit person calls remain
+compatible, with dispatch-time checks rather than an invented prior read.
+Staged-record fingerprints protect the permission/queue interval, including
+retargeting; new concept/import targets must not have appeared in that interval.
+Sensitive revisions cannot use the old shortcut around sensitivity review.
+Staged IDs and embedded identities are validated before file access/acceptance.
+
+Selected acceptance and deep-read lookups now use Core callbacks: file writes
+remain on VaultWriter, SQL on IndexService, and Clerk IO outside its callbacks.
+Static direct-index debt falls **17 → 14** construction sites. New-source/topic
+promotion intentionally retains its compatibility engine until attachment,
+concept, topic and generated-index write targets are fully planned. This is
+not INDEX-04 completion. The inventory, compatibility choices and remaining
+multi-write race limits are in `docs/staging-write-safety.md`.
+
+Focused staging/revision/coordination/ownership verification initially passed
+**56 tests**; the expanded combined group with deep-read, recovery and upkeep
+passes **122 tests**. UI build and the expanded browser smoke walk passed.
+Final full-suite verification of `90b1945` passed **1,060 tests, 2 skipped,
+1 deselected** in **349.00s**. No live/paid model calls were made. G1, complete
+promotion safety, adapter work, adoption/dedupe, Session harness and integrated
+release acceptance remain open.
+
+### Upkeep ownership continuation, 2026-10-25
+
+All five direct-index construction sites in upkeep tools and the model-catalog
+status lookup now use Core callbacks. Freshness and revision-pinned repository
+file retrieval copy their query results before network requests; duplicate
+comparison and provenance checking process copied rows outside the worker.
+D/I/K rebuilding snapshots source rows, then writes derived records and staged
+revisions on VaultWriter. Legacy domain Engine/connection callers retain their
+explicit offline path. No source promotion implementation was wrapped wholesale
+in an index callback.
+
+The static debt count falls **14 → 8**. Remaining construction sites are batch
+(2), graph/extract compatibility paths (2), catalog adoption (1), staging
+new-source/topic promotion (1), and taxonomy refiling/view generation (2).
+This count is construction sites, not concurrent connections or a claim of
+fully enforced ownership. Separate desk/lens stores and Windows WAL stress
+remain INDEX-05 work. Real-Core fixtures reject a second index, trace SQL only
+on the Core worker, call back to the index during network/provenance work, and
+assert derived writes occur on the writer.
+
+Both slices are committed in `90b1945` on `v2-unified-plan`. Final combined
+verification used the repository venv with `-o faulthandler_timeout=60`:
+**1,060 passed, 2 skipped, 1 deselected in 349.00s**. The full output is retained
+locally at `tmp/staging-upkeep-full-2026-10-25-02.log`. The expanded browser
+smoke and TypeScript/bundle build passed against the final code. These are
+scripted/deterministic checks, not new hosted-model qualification or stable
+release acceptance. Nothing was pushed.
+
+Next is the remaining ownership/promotion inventory and migration, then the
+adapter completion tasks in §7. Directory adoption/dedupe and the Session-based
+harness remain subsequent gates, not completed features. The source-kind
+mutation inventory is in `docs/staging-write-safety.md`.
