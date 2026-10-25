@@ -24,12 +24,13 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from . import notes, schema
-from .coordination import atomic_write_text
+from .coordination import (MISSING, PreconditionChangedError, atomic_write_text,
+                           fingerprint, fingerprint_bytes, operation_path)
 from .index import Index
 from .rules import Refusal
 from .search import Engine, search
@@ -174,15 +175,12 @@ def write_topic_index(index: Index, topic: str) -> Path:
 CONCEPT_SOURCES = "Sources Using This"
 
 
-def write_concept_sources(index: Index, concept: str) -> Path | None:
-    """The generated list of sources that link a Concept, inside the Concept
-    note, in its own section. Only that section is rewritten; the rest of the
-    note is the person's. Proportional to the concept's sources."""
-    row = index.note_row(concept)
-    if row is None or row["shape"] != "concept":
-        return None
-    path = index.vault.root / row["path"]
-    note = notes.load(path)
+def concept_sources_text(index: Index, concept: str, original: str) -> str:
+    """Render the generated section over a caller's exact note snapshot."""
+    front, body, error = notes.parse(original)
+    if error or front.get("type") not in (None, "", "concept"):
+        raise TypeError("concept backlink target is no longer a valid concept note")
+    note = notes.Note(concept, Path(concept), front, body)
     sources = index.conn.execute(
         "SELECT DISTINCT n.name FROM link l JOIN note n ON n.path = l.path "
         "WHERE l.dst = ? AND n.shape = 'source' ORDER BY n.name",
@@ -193,7 +191,18 @@ def write_concept_sources(index: Index, concept: str) -> Path | None:
     preamble = note.sections().get("", "")
     body = (preamble + "\n\n" if preamble else "") + "\n".join(
         f"## {h}\n{t}\n" for h, t in sections) + f"\n## {CONCEPT_SOURCES}\n{marker}\n\n{listing}\n"
-    atomic_write_text(path, notes.render(note.frontmatter, body))
+    return notes.render(note.frontmatter, body)
+
+
+def write_concept_sources(index: Index, concept: str) -> Path | None:
+    """The generated list of sources that link a Concept, inside the Concept
+    note, in its own section. Only that section is rewritten; the rest of the
+    note is the person's. Proportional to the concept's sources."""
+    row = index.note_row(concept)
+    if row is None or row["shape"] != "concept":
+        return None
+    path = index.vault.root / row["path"]
+    atomic_write_text(path, concept_sources_text(index, concept, path.read_text(encoding="utf-8")))
     index.upsert(path)
     return path
 
@@ -226,9 +235,8 @@ def write_master_index(index: Index) -> Path:
 
 # ------------------------------------------------------------------- the job
 
-def promote(vault: Vault, engine: Engine, draft: Draft) -> Report:
+def _source_material(vault: Vault, engine: Engine, draft: Draft) -> dict:
     index = engine.index
-    report = Report(draft.name)
     name = notes.safe_name(draft.name)
     if not name:
         raise TypeError("a source needs a name")
@@ -270,8 +278,20 @@ def promote(vault: Vault, engine: Engine, draft: Draft) -> Report:
     linked = _concepts(engine, body)                                  # 3, before writing
     if linked:
         fm["concepts"] = [f"[[{c}]]" for c in linked]
-    folder.mkdir(parents=True, exist_ok=True)
-    atomic_write_text(path, notes.render(fm, body))
+    return {"name": name, "path": path.relative_to(vault.root).as_posix(),
+            "topic": str(fm["primary_topic"]), "text": notes.render(fm, body), "linked": linked,
+            "concept_rows": [dict(index.note_row(c)) for c in linked]}
+
+
+def promote(vault: Vault, engine: Engine, draft: Draft) -> Report:
+    """Explicit legacy/offline path; Core callers use prepare/apply below."""
+    index = engine.index
+    material = _source_material(vault, engine, draft)
+    name, linked = material["name"], material["linked"]
+    report = Report(draft.name)
+    path = vault.safe_relative(material["path"])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    atomic_write_text(path, material["text"])
     rel = path.relative_to(vault.root).as_posix()
     report.path = rel
     violations = index.model.check(notes.load(path), vault.root)
@@ -289,7 +309,7 @@ def promote(vault: Vault, engine: Engine, draft: Draft) -> Report:
     report.step("concepts", True, {"linked": linked})
 
     # 4. index notes
-    topic_path = write_topic_index(index, fm["primary_topic"])
+    topic_path = write_topic_index(index, material["topic"])
     write_master_index(index)
     for concept in linked:
         write_concept_sources(index, concept)
@@ -306,6 +326,154 @@ def promote(vault: Vault, engine: Engine, draft: Draft) -> Report:
     report.step("findability", not missed, {"missed": missed})
     report.catalogued = not missed
     return report
+
+
+class PromotionInterruptedError(RuntimeError):
+    """Durable work exists; never suggest an automatic retry or rollback."""
+    def __init__(self, cause: Exception, completed: list[str]):
+        self.completed_paths = list(dict.fromkeys(completed))
+        # Exception text may contain a provider payload. Persist type + paths,
+        # not arbitrary messages or source text.
+        super().__init__(f"promotion interrupted ({type(cause).__name__}); completed writes: "
+                         f"{self.completed_paths}; review before retrying")
+
+
+def prepare(vault: Vault, draft: Draft, index_call: Callable) -> dict:
+    """Read-only, invocation-local plan for a *new* source (no attachments)."""
+    observed, snapshots = {}, {}
+    def snapshot(rel):
+        path = operation_path(vault, rel)
+        if path.relative_to(vault.root).as_posix() != rel:
+            raise TypeError("promotion targets cannot redirect through symlinks")
+        raw = path.read_bytes() if path.exists() else None
+        observed[rel] = fingerprint_bytes(raw) if raw is not None else MISSING
+        snapshots[rel] = raw.decode("utf-8") if raw is not None else ""
+    for rel in (schema.MODEL_PATH.as_posix(), "About/Topics.md", ".librarian/config.toml",
+                ".librarian/agents/routes.json"):
+        snapshot(rel)
+    material = index_call(lambda engine: _source_material(vault, engine, draft))
+    rel = material["path"]
+    snapshot(rel)
+    if observed[rel] != MISSING:
+        raise Refusal("UNIQUE_NOTE_NAMES", f"{rel} already exists; promotion never replaces an unindexed file")
+    topic_path = topic_index_path(vault, material["topic"]).relative_to(vault.root).as_posix()
+    targets = [rel, topic_path, "Indexes/Master Index.md"]
+    concepts = []
+    for row in material.pop("concept_rows"):
+        target = row["path"]
+        snapshot(target)
+        if observed[target] == MISSING:
+            raise PreconditionChangedError(target)
+        concepts.append({"name": row["name"], "path": target, "text": snapshots[target]})
+        targets.append(target)
+    if len(set(path.casefold() for path in targets)) != len(targets):
+        raise TypeError("promotion targets collide; resolve names before accepting")
+    for target in (topic_path, "Indexes/Master Index.md"):
+        snapshot(target)
+    # The index filename is a projection, not a topic identity. Never replace
+    # a different accepted topic whose Windows-safe filename happens to match.
+    if any(t != material["topic"] and topic_index_path(vault, t).name.casefold() ==
+           Path(topic_path).name.casefold() for t in vault.topics()):
+        raise TypeError("source topic collides with another topic's generated filename")
+    return {"operation": "new_source", "draft": asdict(draft), **material,
+            "topic_path": topic_path, "concepts": concepts, "targets": targets,
+            "observed": list(observed.items())}
+
+
+class PromotionGuard:
+    """Per-step CAS/lease checks; not an OS lock or cross-file transaction."""
+    def __init__(self, vault: Vault, plan: dict, leases=None):
+        self.vault, self.leases = vault, leases
+        self.expected, self.targets = dict(plan["observed"]), set(plan["targets"])
+        self.completed: list[str] = []
+        self.check()
+        if leases is not None:
+            leases.assert_writable([p for p in self.targets if not p.startswith(".")])
+
+    def check(self):
+        for rel, wanted in self.expected.items():
+            if fingerprint(operation_path(self.vault, rel)) != wanted:
+                raise PreconditionChangedError(rel)
+
+    def write(self, rel: str, text: str):
+        if rel not in self.targets:
+            raise TypeError("promotion attempted an undeclared write")
+        self.check()
+        path = operation_path(self.vault, rel)
+        if self.leases is not None and not rel.startswith("."):
+            self.leases.assert_writable([rel])
+        path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write_text(path, text)
+        self.expected[rel] = fingerprint_bytes(text.encode("utf-8"))
+        self.completed.append(rel)
+        if self.leases is not None and not rel.startswith("."):
+            self.leases.note_core_write([rel])
+
+
+def apply(vault: Vault, draft: Draft, plan: dict, index_call: Callable, *,
+          leases=None, guard: PromotionGuard | None = None) -> Report:
+    """SQL/rendering on Core; file mutations on the caller's writer actor."""
+    if plan.get("operation") != "new_source" or plan.get("draft") != asdict(draft):
+        raise TypeError("source promotion requires its own prepared plan")
+    # Admission and uniqueness precede even evidence/Markdown mutations.
+    def admission(engine):
+        held = engine.index.note_row(plan["name"])
+        if held is not None:
+            raise Refusal("UNIQUE_NOTE_NAMES", f"{plan['name']!r} is already catalogued")
+    index_call(admission)
+    guard = guard or PromotionGuard(vault, plan, leases)
+    report = Report(draft.name)
+    def write(rel, text):
+        guard.write(rel, text)
+        return index_call(lambda engine: engine.index.upsert(vault.safe_relative(rel)))
+    try:
+        front, body, _ = notes.parse(plan["text"])
+        # A crash or caught mid-promotion conflict must not leave an apparently
+        # complete accepted note. Clear this marker only after final checks.
+        front["needs_attention"] = "promotion incomplete; review evidence, backlinks and indexes before retrying"
+        write(plan["path"], notes.render(front, body))
+        report.path = plan["path"]
+        violations = index_call(lambda engine: [v.detail for v in engine.index.model.check(
+            notes.load(vault.safe_relative(plan["path"])), vault.root)])
+        report.step("write", True, {"path": report.path, "schema_violations": violations})
+        report.step("concepts", True, {"linked": plan["linked"]})
+        rendered = index_call(lambda engine: [
+            (plan["topic_path"], topic_index_text(engine.index, plan["topic"])),
+            ("Indexes/Master Index.md", master_index_text(engine.index)),
+            *[(c["path"], concept_sources_text(engine.index, c["name"], c["text"]))
+              for c in plan["concepts"]]])
+        for rel, text in rendered:
+            write(rel, text)
+        report.step("index_notes", True, {"topic_index": plan["topic_path"]})
+        # The mechanical searches must never invoke an embedding endpoint on
+        # the index worker. Vector sync has an explicit copied-data boundary.
+        missed = index_call(lambda engine: findability(Engine(engine.index, engine.h), plan["name"]))
+        from .embed import sync_source_via
+        try:
+            vectors = sync_source_via(vault, plan["name"], index_call)
+        except Exception as exc:
+            vectors = f"embedding update failed ({type(exc).__name__}); retry explicitly"
+            missed.append("its embedding update failed")
+        report.step("index", True, {"vectors": vectors})
+        guard.check()  # A config/document edit during embedding IO is a conflict.
+        if missed:
+            front, body, _ = notes.parse(plan["text"])
+            front["needs_attention"] = f"not findable: {'; '.join(missed)}"
+            write(plan["path"], notes.render(front, body))
+        else:
+            write(plan["path"], plan["text"])
+        report.step("findability", not missed, {"missed": missed})
+        report.catalogued = not missed
+        return report
+    except Refusal as exc:
+        exc.extra.update(completed_paths=list(dict.fromkeys(guard.completed)),
+                         next_action="Review the completed source/evidence/views; do not retry blindly.")
+        if guard.completed:
+            exc.detail = f"Earlier writes remain at {list(dict.fromkeys(guard.completed))}. {exc.detail}"
+            exc.args = (f"{exc.code}: {exc.detail}",)
+        raise
+    except Exception as exc:
+        raise PromotionInterruptedError(exc, guard.completed) from exc
 
 
 def findability(engine: Engine, name: str) -> list[str]:

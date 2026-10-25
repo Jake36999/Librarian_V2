@@ -303,7 +303,7 @@ def test_owned_state_targets_are_audited_but_hidden_paths_stay_private(core):
     events = [json.loads(line) for line in core.writer.log_path.read_text(encoding="utf-8").splitlines()]
     assert events[-1]["targets"] == [".librarian/derived/test.json"]
     assert events[-1]["observed_fingerprints"] == {".librarian/derived/test.json": "missing"}
-    for rel in (".librarian/derived/test.json", ".obsidian/settings.json"):
+    for rel in (".librarian/derived/test.json", ".evidence/model_listing/test.json", ".obsidian/settings.json"):
         with pytest.raises(Exception, match="VAULT_REQUIRED"):
             core.vault.safe_relative(rel)
         with pytest.raises(Exception, match="VAULT_REQUIRED"):

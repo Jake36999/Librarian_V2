@@ -92,11 +92,11 @@ def operation_path(vault: Vault, rel: str) -> Path:
     No operation dependency may reach another hidden root or escape by a link.
     """
     parts = str(rel).replace("\\", "/").split("/")
-    if parts and parts[0] == ".librarian":
+    if parts and parts[0] in {".librarian", ".evidence"}:
         if len(parts) < 2 or any(part in ("", ".", "..") or ":" in part for part in parts):
             raise Refusal("VAULT_REQUIRED", "invalid operational state dependency")
         target = vault.root.joinpath(*parts).resolve()
-        state_root = vault.root.resolve() / ".librarian"
+        state_root = vault.root.resolve() / parts[0]
         if state_root not in target.parents:
             raise Refusal("VAULT_REQUIRED", "operational state dependency escapes its state root")
         return target
@@ -721,7 +721,7 @@ class VaultWriter:
         for path in op.targets:
             target = operation_path(self.vault, path)
             rel = target.relative_to(self.vault.root).as_posix()
-            if not rel.startswith(".librarian/"):
+            if rel.split("/", 1)[0] not in {".librarian", ".evidence"}:
                 document_targets.append(rel)
         # Do this inside the actor after all preceding operations have
         # committed, then enforce document leases before the write.  A

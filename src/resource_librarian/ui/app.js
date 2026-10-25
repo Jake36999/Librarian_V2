@@ -3850,14 +3850,28 @@ var Librarian = (() => {
             "div",
             { class: "srv" },
             h("span", { class: `dot ${c.held === c.models ? "" : "nokey"}` }),
-            h("span", {}, h("strong", {}, c.provider), ` \xB7 ${c.held}/${c.models} models held`),
-            c.held < c.models ? h("button", { class: "ghost", onclick: async () => {
+            h(
+              "span",
+              {},
+              h("strong", {}, c.provider),
+              ` \xB7 ${c.held}/${c.models} models held`,
+              c.needs_attention?.length ? h(
+                "p",
+                { class: "warn" },
+                `Review incomplete/unfindable Source notes: ${c.needs_attention.slice(0, 5).join(", ")}. Existing notes are not overwritten by re-adoption.`
+              ) : null
+            ),
+            c.held < c.models ? h("button", { class: "ghost", onclick: async (e) => {
+              const button = e.currentTarget;
+              button.disabled = true;
               try {
                 const r = await this.api.tool("model_catalog_adopt", { provider: c.provider });
                 if (r.error) throw new Error(String(r.detail ?? r.error));
-                void this.paintModelCatalogs(host, `${c.provider}: ${r.written} model(s) added${r.already_held ? `, ${r.already_held} already held` : ""}${r.failed.length ? `, ${r.failed.length} failed` : ""}.`);
-              } catch (e) {
-                status.textContent = e.message;
+                await this.paintModelCatalogs(host, `${c.provider}: ${r.written} model(s) added${r.already_held ? `, ${r.already_held} already held` : ""}${r.failed.length ? `, ${r.failed.length} failed` : ""}${r.not_findable?.length ? `, ${r.not_findable.length} need findability review` : ""}.` + (r.failed.length ? ` Review before retrying: ${r.failed.slice(0, 3).map((f) => `${f.name}: ${f.error}`).join("; ")}` : ""));
+              } catch (e2) {
+                status.textContent = e2.message;
+              } finally {
+                if (button.isConnected) button.disabled = false;
               }
             } }, c.held ? "Adopt the rest" : "Adopt") : null
           )) : h("p", { class: "dim" }, "No standard model catalogues are bundled with this install."),

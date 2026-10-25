@@ -36,15 +36,20 @@ class IndexGateway:
     exposes only ``run(callback)``: the callback runs while the index worker
     owns the engine and must return copied, ordinary data before it leaves.
 
+    SQL-only mutation planning can set ``include_vectors=False`` so repeated
+    callbacks neither initialize a local encoder nor invoke a hosted one.
+    Embedding IO then uses its own copied-data boundary outside this worker.
+
     The first callback refreshes the derived index when the caller asked for
     it; later callbacks in the same invocation reuse that fresh snapshot.  It
     is intentionally not a transparent ``Engine`` or ``Index`` proxy.
     """
 
-    def __init__(self, ctx: Context, *, refresh: bool = True):
+    def __init__(self, ctx: Context, *, refresh: bool = True, include_vectors: bool = True):
         self._ctx = ctx
         self._refresh = refresh
         self._first = True
+        self._include_vectors = include_vectors
 
     def run(self, operation: Callable[[Engine], R]) -> R:
         refresh = self._refresh and self._first
@@ -52,7 +57,7 @@ class IndexGateway:
         # ``with_engine`` returned would already have handed a worker-owned
         # Row/connection/Engine to the caller's thread.
         value = with_engine(self._ctx, lambda engine: _plain_index_value(operation(engine)),
-                            refresh=refresh)
+                            refresh=refresh, include_vectors=self._include_vectors)
         # A failed first lookup must not suppress the required refresh for a
         # later retry in the same invocation.
         self._first = False
@@ -102,7 +107,7 @@ def engine_for(ctx: Context, refresh: bool = True) -> Engine:
     return cached
 
 
-def _build_engine(ctx: Context, index: Index | None = None) -> Engine:
+def _build_engine(ctx: Context, index: Index | None = None, *, include_vectors: bool = True) -> Engine:
     """Make an Engine around an already-owned index when Core supplies one.
 
     The compatibility path deliberately still creates an Index for direct
@@ -112,7 +117,7 @@ def _build_engine(ctx: Context, index: Index | None = None) -> Engine:
     index = index or Index(ctx.vault)
     vectors = None
     from ..embed import VectorSearch, spec_for
-    spec = spec_for(ctx.vault)
+    spec = spec_for(ctx.vault) if include_vectors else ""
     if spec:
         vectors = VectorSearch.from_spec(index, spec)
     config = ctx.vault.config()
@@ -135,9 +140,9 @@ def _build_engine(ctx: Context, index: Index | None = None) -> Engine:
     return engine
 
 
-def _prepared_engine(ctx: Context, index: Index, refresh: bool) -> Engine:
+def _prepared_engine(ctx: Context, index: Index, refresh: bool, *, include_vectors: bool = True) -> Engine:
     """Build and, when requested, refresh an engine inside the index owner."""
-    engine = _build_engine(ctx, index)
+    engine = _build_engine(ctx, index, include_vectors=include_vectors)
     if refresh:
         report = index.refresh()
         documents = text.sync_documents(index)
@@ -146,7 +151,8 @@ def _prepared_engine(ctx: Context, index: Index, refresh: bool) -> Engine:
     return engine
 
 
-def with_engine(ctx: Context, operation: Callable[[Engine], R], *, refresh: bool = True) -> R:
+def with_engine(ctx: Context, operation: Callable[[Engine], R], *, refresh: bool = True,
+                include_vectors: bool = True) -> R:
     """Run a bounded retrieval/index operation through the active Core.
 
     A generic registry-level lock is intentionally not used: some tools wait
@@ -157,7 +163,10 @@ def with_engine(ctx: Context, operation: Callable[[Engine], R], *, refresh: bool
     """
     service = ctx.extras.get("index_service")
     if service is not None:
-        return service.run(lambda index: operation(_prepared_engine(ctx, index, refresh)))
+        return service.run(lambda index: operation(_prepared_engine(ctx, index, refresh,
+                                                                   include_vectors=include_vectors)))
+    if not include_vectors:
+        return with_index(ctx, lambda index: operation(_prepared_engine(ctx, index, refresh, include_vectors=False)))
     return operation(engine_for(ctx, refresh=refresh))
 
 

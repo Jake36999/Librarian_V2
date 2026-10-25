@@ -567,8 +567,20 @@ step("the review-due action opens a parked learn session");
 // Taxonomy controls keep the existing review workflow, but never report a
 // refused refresh as success or accept a changed proposal without re-review.
 await page.keyboard.press("Escape");
+await page.route("**/api/tool/model_catalog_status", (route) => route.fulfill({ status: 200,
+  contentType: "application/json", body: JSON.stringify({ catalogues: [{ provider: "fixture-provider",
+    models: 2, held: 1, needs_attention: ["Incomplete fixture model"] }] }) }));
+await page.route("**/api/tool/model_catalog_adopt", (route) => route.fulfill({ status: 200,
+  contentType: "application/json", body: JSON.stringify({ provider: "fixture-provider", written: 0,
+    already_held: 1, failed: [{ name: "Conflicted fixture model", error: "Earlier writes remain; review before retrying" }] }) }));
 await page.click(".tb.icon");
 await page.click("dialog.settings [role=tab]:has-text('Library')");
+await page.waitForSelector("dialog.settings .model-catalogs >> text=Review incomplete/unfindable Source notes");
+await page.click("dialog.settings .model-catalogs button:has-text('Adopt the rest')");
+await page.waitForSelector("dialog.settings .model-catalogs >> text=Earlier writes remain; review before retrying");
+await page.unroute("**/api/tool/model_catalog_status");
+await page.unroute("**/api/tool/model_catalog_adopt");
+step("catalogue adoption surfaces incomplete Source notes and retained partial-write failures");
 await page.waitForSelector("dialog.settings input[aria-label='Topic name']");
 await page.route("**/api/tool/views_refresh", (route) => route.fulfill({ status: 200,
   contentType: "application/json", body: JSON.stringify({ error: "refused", refused: "DOCUMENT_ACTIVE",

@@ -22,12 +22,12 @@ OTHER_STORES = {("desk.py", "sqlite3.connect"): 1, ("lenses.py", "sqlite3.connec
 # Serving paths still opening the vault index directly (2026-10-24: 43; 39 after INDEX-02a;
 # 33 after INDEX-03's callback-gateway migration; 17 after the authoring/session batch;
 # 14 after selected staging paths; 8 after upkeep/catalog-status lookups;
-# 6 after taxonomy refiling/generated-view migration; 4 after batch lookups.
+# 6 after taxonomy refiling/generated-view migration; 4 after batch lookups;
+# 3 after Core catalogue adoption.
 # New-source/topic promotion remains a direct caller).
 DEBT = {
     ("communities.py", "Index"): 1,
     ("extract.py", "Index"): 1,
-    ("tools/model_catalog.py", "engine_for"): 1,
     ("tools/staging.py", "engine_for"): 1,
 }
 

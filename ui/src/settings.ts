@@ -1262,20 +1262,26 @@ export class Settings {
     try {
       const out = await this.api.tool("model_catalog_status", {});
       if (out.error) throw new Error(String(out.detail ?? out.error));
-      const catalogs = (out.catalogues ?? []) as { provider: string; models: number; held: number }[];
+      const catalogs = (out.catalogues ?? []) as { provider: string; models: number; held: number; needs_attention?: string[] }[];
       const status = h("span", { class: "note inline", role: "status" }, message);
       clear(host,
         h("p", { class: "note" }, "Each model here was already profiled once from its provider's own listing page - adopting a catalogue reuses that, instead of profiling every model again in this vault."),
         catalogs.length ? catalogs.map((c) => h("div", { class: "srv" },
           h("span", { class: `dot ${c.held === c.models ? "" : "nokey"}` }),
-          h("span", {}, h("strong", {}, c.provider), ` · ${c.held}/${c.models} models held`),
+          h("span", {}, h("strong", {}, c.provider), ` · ${c.held}/${c.models} models held`,
+            c.needs_attention?.length ? h("p", { class: "warn" },
+              `Review incomplete/unfindable Source notes: ${c.needs_attention.slice(0, 5).join(", ")}. Existing notes are not overwritten by re-adoption.`) : null),
           c.held < c.models
-            ? h("button", { class: "ghost", onclick: async () => {
+            ? h("button", { class: "ghost", onclick: async (e: Event) => {
+                const button = e.currentTarget as HTMLButtonElement;
+                button.disabled = true;
                 try {
                   const r = await this.api.tool("model_catalog_adopt", { provider: c.provider });
                   if (r.error) throw new Error(String(r.detail ?? r.error));
-                  void this.paintModelCatalogs(host, `${c.provider}: ${r.written} model(s) added${r.already_held ? `, ${r.already_held} already held` : ""}${r.failed.length ? `, ${r.failed.length} failed` : ""}.`);
+                  await this.paintModelCatalogs(host, `${c.provider}: ${r.written} model(s) added${r.already_held ? `, ${r.already_held} already held` : ""}${r.failed.length ? `, ${r.failed.length} failed` : ""}${r.not_findable?.length ? `, ${r.not_findable.length} need findability review` : ""}.`
+                    + (r.failed.length ? ` Review before retrying: ${r.failed.slice(0, 3).map((f: any) => `${f.name}: ${f.error}`).join("; ")}` : ""));
                 } catch (e) { status.textContent = (e as Error).message; }
+                finally { if (button.isConnected) button.disabled = false; }
               } }, c.held ? "Adopt the rest" : "Adopt")
             : null))
           : h("p", { class: "dim" }, "No standard model catalogues are bundled with this install."),

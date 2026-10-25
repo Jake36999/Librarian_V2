@@ -309,6 +309,83 @@ def estimate(index: Index, model: str, price_per_1m: float | None = None) -> dic
                if price_per_1m is not None else {})}
 
 
+def sync_source_via(vault, name: str, index_call: Callable) -> str:
+    """Update one promoted source, never holding SQLite over encoder IO.
+
+    Explicit embed_index still owns full-vault rebuilds. A new catalogue entry
+    must not silently start a hosted representation the person never enabled.
+    Only copied chunk data and vector bytes cross this callback boundary.
+    """
+    spec = spec_for(vault)
+    if not spec:
+        return "off"
+    from .coordination import fingerprint
+    controls = {path: fingerprint(path) for path in (
+        vault.config_path, vault.librarian / "agents" / "routes.json")}
+    model = storage_model(spec)
+    hosted = _api_parts(spec) is not None
+    namespace = adapter_summary(spec, vault=vault).get("representation_namespace") if hosted else model
+    if not namespace:
+        raise EncoderUnavailable("embedding representation is unavailable")
+    representation = namespace if namespace != model else ""
+    key = f"embedding-representation:{model}"
+
+    def pending(engine):
+        conn = engine.index.conn
+        marker = conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
+        current = not representation or bool(marker and marker[0] == representation)
+        count = conn.execute("SELECT COUNT(*) FROM embedding WHERE model = ?", (model,)).fetchone()[0]
+        if hosted and (not current or not count):
+            return {"deferred": "hosted vectors await explicit start in Settings -> Connections"}
+        rows = conn.execute(
+            "SELECT c.hash, MIN(c.heading) AS heading, MIN(c.text) AS text FROM chunk c "
+            "LEFT JOIN embedding e ON e.hash = c.hash AND e.model = ? "
+            "WHERE c.note = ? AND (? = 0 OR e.hash IS NULL) GROUP BY c.hash",
+            (model, name, int(current))).fetchall()
+        return {"model": model, "namespace": namespace,
+                "rows": [dict(row) for row in rows]}
+
+    plan = index_call(pending)
+    if "unavailable" in plan or "deferred" in plan:
+        return plan.get("unavailable") or plan["deferred"]
+    if not plan["rows"]:
+        return "0 chunk(s) embedded"
+    namespace, encode, _, _ = load_embedding_encoders(spec, vault=vault)
+    if namespace != plan["namespace"]:
+        raise EncoderUnavailable("embedding representation changed; retry explicitly")
+    import numpy as np
+    dimension = 0
+    for start in range(0, len(plan["rows"]), BATCH):
+        batch = plan["rows"][start:start + BATCH]
+        values = np.asarray(encode([f"{row['heading']}\n{row['text']}" for row in batch]), dtype="float32")
+        if values.ndim != 2 or values.shape[0] != len(batch) or values.shape[1] < 1 \
+                or not np.isfinite(values).all() or (dimension and dimension != values.shape[1]):
+            raise EncoderUnavailable("embedding response has invalid count, dimensions or non-finite values")
+        dimension = int(values.shape[1])
+        values = values / (np.linalg.norm(values, axis=1, keepdims=True) + 1e-9)
+        encoded = [(row["hash"], plan["model"], dimension, value.tobytes())
+                   for row, value in zip(batch, values)]
+        def commit(engine):
+            if any(fingerprint(path) != stamp for path, stamp in controls.items()) \
+                    or spec_for(vault) != spec or (hosted and
+                    adapter_summary(spec, vault=vault).get("representation_namespace") != namespace):
+                raise EncoderUnavailable("embedding assignment changed; stale results were not stored")
+            conn = engine.index.conn
+            with conn:  # A failed batch must not leak an open partial transaction.
+                if representation:
+                    marker = conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
+                    if not marker or marker[0] != representation:
+                        conn.execute("DELETE FROM embedding WHERE model = ?", (model,))
+                        conn.execute("INSERT OR REPLACE INTO meta(key, value) VALUES (?, ?)", (key, representation))
+                # Removed/edited chunks need not retain a late derived vector.
+                existing = {row[0] for row in conn.execute("SELECT hash FROM chunk WHERE note = ?", (name,))}
+                conn.executemany(
+                    "INSERT OR REPLACE INTO embedding(hash, model, dim, vector) VALUES (?, ?, ?, ?)",
+                    [row for row in encoded if row[0] in existing])
+        index_call(commit)
+    return f"{len(plan['rows'])} chunk(s) embedded"
+
+
 class VectorSearch:
     def __init__(self, index: Index, model: str, encode: Callable[[list[str]], Any] | None,
                  unavailable: str = "", *, query_encode: Callable[[list[str]], Any] | None = None,
