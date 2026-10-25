@@ -988,6 +988,7 @@ class App:
                 "lease": lease,
                 "writer": "ready" if self.writer is not None else "not_coordinated",
                 "index": "ready",
+                "watcher": self.watcher.health() if self.watcher is not None else {"status": "not_coordinated"},
                 "secret_source": "obsidian_managed" if self.secret_source == "obsidian" else self.keys.backend,
             },
         }

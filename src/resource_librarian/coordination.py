@@ -360,6 +360,7 @@ class DocumentLeases:
         # content fingerprint as well, so that delayed observation of that
         # exact Core replacement is never mistaken for a human edit.
         self._core_fingerprints: dict[str, tuple[str, float]] = {}
+        self._unreadable: set[str] = set()
         self._lock = threading.RLock()
 
     def heartbeat(self, path: str, *, editor: str = "Obsidian", dirty: bool = True,
@@ -369,8 +370,13 @@ class DocumentLeases:
         now = time.monotonic()
         with self._lock:
             self._expire(now)
+            try:
+                observed = baseline or fingerprint(target)
+            except OSError:
+                observed = "unreadable"
+                self._unreadable.add(rel)
             self._leases[rel] = DocumentLease(rel, editor[:80] or "Obsidian",
-                                               baseline or fingerprint(target), bool(dirty), now)
+                                               observed, bool(dirty), now)
         return self.view(rel)
 
     def release(self, path: str, *, editor: str = "") -> None:
@@ -387,13 +393,32 @@ class DocumentLeases:
         with self._lock:
             now = time.monotonic()
             known = self._core_fingerprints.get(rel)
-            if known is not None and known[0] == fingerprint(target):
+            recovering = rel in self._unreadable
+            if recovering:
+                try:
+                    target.stat()
+                except FileNotFoundError:
+                    pass  # A confirmed deletion can resolve a pending read.
+            observed = fingerprint(target) if known is not None or recovering else None
+            self._unreadable.discard(rel)  # Only after a required read succeeds.
+            if known is not None and known[0] == observed:
                 self._core_fingerprints.pop(rel, None)
+                self._suppress_until.pop(rel, None)
                 self._changed.pop(rel, None)
                 return
-            if now < self._suppress_until.get(rel, 0.0):
+            if known is None and not recovering and now < self._suppress_until.get(rel, 0.0):
                 return
             self._changed[rel] = now
+
+    def unreadable(self, path: str) -> None:
+        """Pause only this document until the watcher can confirm a read."""
+        target = self.vault.safe_relative(path)
+        with self._lock:
+            self._unreadable.add(target.relative_to(self.vault.root).as_posix())
+
+    def pending_reads(self) -> list[str]:
+        with self._lock:
+            return sorted(self._unreadable)
 
     def note_core_write(self, paths: list[str] | tuple[str, ...]) -> None:
         """Avoid treating the Core's own atomic replacement as a human edit."""
@@ -406,7 +431,13 @@ class DocumentLeases:
                 except (OSError, ValueError, Refusal):
                     continue
                 self._suppress_until[rel] = until
-                self._core_fingerprints[rel] = (fingerprint(target), time.monotonic() + 60.0)
+                try:
+                    observed = fingerprint(target)
+                except OSError:
+                    self._unreadable.add(rel)
+                    self._core_fingerprints.pop(rel, None)
+                    continue
+                self._core_fingerprints[rel] = (observed, time.monotonic() + 60.0)
                 self._changed.pop(rel, None)
 
     def quiet(self, path: str) -> bool:
@@ -422,6 +453,8 @@ class DocumentLeases:
             for path in paths:
                 target = self.vault.safe_relative(path)
                 rel = target.relative_to(self.vault.root).as_posix()
+                if rel in self._unreadable:
+                    raise DocumentBusyError(rel, "an unreadable note awaiting a filesystem rescan")
                 changed = self._changed.get(rel, 0.0)
                 if changed and now - changed < DEBOUNCE_SECONDS:
                     raise DocumentBusyError(rel, "an editor saving this note")
@@ -466,6 +499,8 @@ class VaultWatcher:
         self.vault, self.leases, self.interval = vault, leases, max(0.1, interval)
         self._known: dict[str, tuple[int, int]] = {}
         self._closed = threading.Event()
+        self._errors: dict[str, str] = {}
+        self._error_lock = threading.Lock()
         self._thread = threading.Thread(target=self._run, daemon=True,
                                         name=f"librarian-watch-{vault.root.name}")
 
@@ -475,7 +510,22 @@ class VaultWatcher:
 
     def close(self, timeout: float = 2.0) -> None:
         self._closed.set()
-        self._thread.join(timeout)
+        if self._thread.ident is not None:
+            self._thread.join(timeout)
+
+    def _error(self, rel: str, exc: Exception) -> None:
+        with self._error_lock:
+            self._errors[rel] = type(exc).__name__
+            while len(self._errors) > 50:
+                self._errors.pop(next(iter(self._errors)))
+
+    def health(self) -> dict[str, Any]:
+        with self._error_lock:
+            errors = [{"path": path, "error": error} for path, error in sorted(self._errors.items())][:20]
+        pending = self.leases.pending_reads()
+        status = ("stopped" if self._closed.is_set() else "not_started" if self._thread.ident is None
+                  else "failed" if not self._thread.is_alive() else "degraded" if errors or pending else "ready")
+        return {"status": status, "pending_reads": pending[:20], "pending_count": len(pending), "errors": errors}
 
     def _snapshot(self) -> dict[str, tuple[int, int]]:
         rows: dict[str, tuple[int, int]] = {}
@@ -488,15 +538,34 @@ class VaultWatcher:
                         continue
                     stat = path.stat()
                     rows[rel.as_posix()] = (stat.st_mtime_ns, stat.st_size)
-                except OSError:
+                except FileNotFoundError:
                     continue
-        except OSError:
-            pass
+                except OSError as exc:
+                    name = rel.as_posix()
+                    self._error(name, exc)
+                    try:
+                        self.leases.unreadable(name)
+                    except (OSError, Refusal):
+                        pass
+                    if name in self._known:
+                        rows[name] = self._known[name]
+        except OSError as exc:
+            self._error("<snapshot>", exc)
+            # A partial directory walk is not evidence that missing entries
+            # were deleted. Keep them until a subsequent successful scan.
+            for rel, stamp in self._known.items():
+                rows.setdefault(rel, stamp)
+        else:
+            with self._error_lock:
+                self._errors.pop("<snapshot>", None)
         return rows
 
     def _run(self) -> None:
         while not self._closed.wait(self.interval):
-            self.scan_once()
+            try:
+                self.scan_once()
+            except OSError as exc:
+                self._error("<scan>", exc)  # Filesystem failure, not a swallowed programming error.
 
     def scan_once(self) -> None:
         """Observe one coalesced Markdown snapshot.
@@ -507,11 +576,31 @@ class VaultWatcher:
         deterministic to exercise without a timing-sensitive watcher test.
         """
         latest = self._snapshot()
-        for rel, stamp in latest.items():
-            if self._known.get(rel) != stamp:
+        changed = {rel for rel, stamp in latest.items() if self._known.get(rel) != stamp}
+        changed.update(set(self._known) - set(latest))
+        changed.update(self.leases.pending_reads())
+        with self._error_lock:
+            self._errors.pop("<scan>", None)
+        for rel in sorted(changed):
+            try:
                 self.leases.observe_change(rel)
-        for rel in set(self._known) - set(latest):
-            self.leases.observe_change(rel)
+                with self._error_lock:
+                    self._errors.pop(rel, None)
+            except OSError as exc:
+                self._error(rel, exc)
+                try:
+                    self.leases.unreadable(rel)
+                except (OSError, Refusal):
+                    pass
+                # Do not consume the failed event. Retry even when the next
+                # snapshot is identical or the path remains absent.
+                if rel in self._known:
+                    latest[rel] = self._known[rel]
+                else:
+                    latest.pop(rel, None)
+            except Refusal as exc:
+                self._error(rel, exc)
+                latest.pop(rel, None)  # Invalid/out-of-vault aliases are never followed.
         self._known = latest
 
 
