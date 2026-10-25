@@ -1242,24 +1242,43 @@ class OpenAICompatible(Endpoint):
         self.name = self.base_url
 
     def _post(self, body: dict[str, Any]) -> dict[str, Any]:
-        headers = {"Content-Type": "application/json"}
+        # Key check must happen *before* any network call so that a missing
+        # key raises ClerkUnavailable with the exact legacy message.
         if self.key_env:
             key = os.environ.get(self.key_env, "")
             if not key:
                 raise ClerkUnavailable(f"{self.key_env} is not set")
+        # Build headers – only Authorization is needed because _request adds
+        # Content-Type itself.
+        headers: dict[str, str] = {}
+        if self.key_env:
             headers["Authorization"] = f"Bearer {key}"
         from .adapters.openai_chat import chat_url
-        request = urllib.request.Request(chat_url(self.base_url),
-                                         data=json.dumps(body).encode("utf-8"),
-                                         headers=headers, method="POST")
+        # Lazy import to avoid a potential cycle (providers may import clerk).
+        from .providers import ProviderError, _request
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                return json.loads(response.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", "replace")[:400]
-            raise RuntimeError(f"HTTP {exc.code}: {detail}") from exc
-        except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+            # No transport retries: a schema rejection is deterministic, and
+            # complete() owns the fallback, exactly as before ADAPT-06.
+            reply = _request("POST", chat_url(self.base_url), headers, body, self.timeout,
+                             retries=())
+        except ProviderError as exc:
+            msg = str(exc)
+            # ProviderError messages from _request have the shape
+            # "HTTP <code> from <url>: <detail>" for HTTP failures.
+            if msg.startswith("HTTP "):
+                # Extract code and detail exactly as the old code did.
+                # "HTTP 429 from https://...: detail" -> code=429, detail="detail"
+                parts = msg.split(": ", 1)
+                prefix = parts[0]               # "HTTP 429 from https://..."
+                detail = parts[1] if len(parts) > 1 else ""
+                code = prefix.split()[1]        # "429"
+                raise RuntimeError(f"HTTP {code}: {detail}") from exc
+            # Any other ProviderError (unreachable, timeout, transient) becomes
+            # ClerkUnavailable with the legacy wording.
             raise ClerkUnavailable(f"{self.base_url} is not reachable: {exc}") from exc
+        # _request returns a _ResponsePayload (dict subclass) when the
+        # response is a dict; cast to plain dict to match the old behaviour.
+        return dict(reply)
 
     def complete(self, payload: dict[str, Any], repair: str = "") -> tuple[str, str]:
         model = self.models.get(payload["task"].split(":")[0], self.model)

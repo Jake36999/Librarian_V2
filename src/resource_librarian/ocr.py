@@ -74,25 +74,25 @@ class VisionChat:
                                          self.model, PROMPT, image)
         except ServiceContractError as exc:
             raise OcrError(f"{self.name}: {exc}") from exc
-        request = urllib.request.Request(
-            self.url, data=json.dumps(body).encode(), method="POST",
-            headers={"Content-Type": "application/json",
-                     **({"Authorization": f"Bearer {key}"} if key else {})})
+        # Build auth headers – _request adds Content-Type itself.
+        auth_headers: dict[str, str] = {}
+        if key:
+            auth_headers["Authorization"] = f"Bearer {key}"
+        from .providers import ProviderError, _request
         try:
             def send():
-                with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                    return json.loads(response.read())
+                return _request("POST", self.url, auth_headers, body, self.timeout, retries=())
             data = service_routes.run(self.vault, self.route, send) if self.route and self.vault else send()
         except service_routes.ServiceRouteError as exc:
             raise OcrError(str(exc)) from exc
-        except urllib.error.HTTPError as exc:
-            raise OcrError(f"{self.name}: HTTP {exc.code} {exc.read()[:200]!r}") from exc
-        except (urllib.error.URLError, TimeoutError) as exc:
+        except ProviderError as exc:
+            # The shared transport already retried transient failures.
             raise OcrError(f"{self.name}: {exc}") from exc
         try:
             return str(data["choices"][0]["message"]["content"] or "").strip()
         except (KeyError, IndexError, TypeError) as exc:
             raise OcrError(f"{self.name}: an unexpected reply {str(data)[:200]}") from exc
+
 
 
 def endpoint(vault: Vault, extras: dict[str, Any] | None = None) -> Any | None:

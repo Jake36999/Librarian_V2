@@ -299,7 +299,9 @@ class ProviderEndpoint(Endpoint):
     def __init__(self, provider: Provider, *, invocation_runtime: InvocationRuntime | None = None,
                  role: str = "scribe"):
         self.provider = provider
-        self.invocation_runtime = invocation_runtime
+        # Every model call goes through the invocation runtime (ADAPT-06);
+        # a caller without the Core's own gets a private one, never a bypass.
+        self.invocation_runtime = invocation_runtime or InvocationRuntime()
         self.role = role
         self.name = f"provider:{provider.name}"
         # A HostRegistry route is already guarded by LimitedProvider.  Carry
@@ -319,20 +321,15 @@ class ProviderEndpoint(Endpoint):
                              f"That did not match the required shape: {repair}\n"
                              f"Return only the JSON object, corrected."})
         try:
-            if self.invocation_runtime is None:
-                reply = self.provider.chat(payload["system"], messages, [],
-                                           max_tokens=int(payload["max_tokens"]),
-                                           temperature=payload["temperature"])
-            else:
-                task = TaskContract(
-                    id="background-completion", kind=str(payload.get("task") or "completion"),
-                    interaction="single_turn", output_contract="prompted_json")
-                scope = InvocationScope(role=self.role, task=task,
-                                        behavior_mode="provider_default")
-                invocation = InvocationPayload.from_legacy(
-                    payload["system"], messages, [], max_tokens=int(payload["max_tokens"]),
-                    temperature=payload["temperature"])
-                reply = self.invocation_runtime.invoke(self.provider, invocation, scope=scope)
+            task = TaskContract(
+                id="background-completion", kind=str(payload.get("task") or "completion"),
+                interaction="single_turn", output_contract="prompted_json")
+            scope = InvocationScope(role=self.role, task=task,
+                                    behavior_mode="provider_default")
+            invocation = InvocationPayload.from_legacy(
+                payload["system"], messages, [], max_tokens=int(payload["max_tokens"]),
+                temperature=payload["temperature"])
+            reply = self.invocation_runtime.invoke(self.provider, invocation, scope=scope)
         except ProviderError as exc:
             raise ClerkUnavailable(str(exc)) from exc
         return reply.text, reply.model or self.provider.name
@@ -403,6 +400,8 @@ class Loop:
         # its redacted event means the resumed thread still explains which
         # route opened it without ever retaining that request's prompt.
         self._pending_model_events: list[dict[str, Any]] = []
+        # A runtime of its own when the context brings none (ADAPT-06).
+        self._private_runtime: InvocationRuntime | None = None
         # `_message_boundaries[i]` is `len(self.messages)` right after the
         # i-th persisted (session-log) message was added to it - `rewind`
         # needs this to know how much of *this* OpenAI-shaped conversation a
@@ -831,8 +830,13 @@ class Loop:
         # the selected model between a proposal and its tool result.
         walk_provider = self.provider
         runtime = self.ctx.extras.get("invocation_runtime")
-        runtime = runtime if isinstance(runtime, InvocationRuntime) else None
-        binding = runtime.binding_for(walk_provider) if runtime is not None else None
+        if not isinstance(runtime, InvocationRuntime):
+            # No Core runtime in the context (an offline or test Loop): a
+            # private one, so no model call bypasses the boundary (ADAPT-06).
+            if self._private_runtime is None:
+                self._private_runtime = InvocationRuntime()
+            runtime = self._private_runtime
+        binding = runtime.binding_for(walk_provider)
         while turn.steps < self.max_steps:
             if self.turn_seconds and turn.steps and \
                     time.monotonic() - started > self.turn_seconds:
@@ -855,31 +859,25 @@ class Loop:
                                "profile": self.profile_id})
                 return turn
             try:
-                if runtime is None:
-                    # Preserve the historical interactive call shape: custom
-                    # Providers are not required to accept temperature=None.
-                    reply = walk_provider.chat(system, view, tools,
-                                               max_tokens=self.profile_output_budget)
-                else:
-                    task = TaskContract(
-                        id="agent-walk", kind=self.purpose() or "research",
-                        interaction="tool_loop" if tools else "single_turn",
-                        required_capabilities=frozenset({"tool_use"}) if tools else frozenset(),
-                        output_contract="text")
-                    scope = InvocationScope(
-                        role=self.profile_role or self.profile_id or "lead", task=task,
-                        phase=self.phase(), session_id=self.ctx.session or "",
-                        behavior_mode="provider_default")
-                    invocation = InvocationPayload.from_legacy(
-                        system, view, tools, max_tokens=self.profile_output_budget)
-                    # The invocation runtime has a process-wide redacted
-                    # trace sink.  Bind it only for this synchronous call so
-                    # concurrent walks/background endpoints cannot attach a
-                    # response to this session by accident.
-                    with bind_model_session_events(
-                            self.ctx.vault, self.ctx.session,
-                            self._pending_model_events):
-                        reply = runtime.invoke(walk_provider, invocation, scope=scope, binding=binding)
+                task = TaskContract(
+                    id="agent-walk", kind=self.purpose() or "research",
+                    interaction="tool_loop" if tools else "single_turn",
+                    required_capabilities=frozenset({"tool_use"}) if tools else frozenset(),
+                    output_contract="text")
+                scope = InvocationScope(
+                    role=self.profile_role or self.profile_id or "lead", task=task,
+                    phase=self.phase(), session_id=self.ctx.session or "",
+                    behavior_mode="provider_default")
+                invocation = InvocationPayload.from_legacy(
+                    system, view, tools, max_tokens=self.profile_output_budget)
+                # The invocation runtime has a process-wide redacted
+                # trace sink.  Bind it only for this synchronous call so
+                # concurrent walks/background endpoints cannot attach a
+                # response to this session by accident.
+                with bind_model_session_events(
+                        self.ctx.vault, self.ctx.session,
+                        self._pending_model_events):
+                    reply = runtime.invoke(walk_provider, invocation, scope=scope, binding=binding)
             except ProviderError as exc:
                 turn.stopped, turn.error = "provider_error", str(exc)[:400]
                 turn.failure_category = provider_failure_category(exc)

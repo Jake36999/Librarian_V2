@@ -370,10 +370,12 @@ TRANSIENT_HTTP = (429, 500, 502, 503, 504)   # 500: "Response payload is not com
 
 
 def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
-             timeout: float = 120, sleep: Any = None) -> dict[str, Any]:
+             timeout: float = 120, sleep: Any = None,
+             retries: tuple[float, ...] | None = None) -> dict[str, Any]:
     import time
     data = json.dumps(body).encode("utf-8") if body is not None else None
-    pauses = list(TRANSIENT_RETRIES)
+    # A caller with its own recovery (Clerk's schema fallback) passes ().
+    pauses = list(TRANSIENT_RETRIES if retries is None else retries)
     while True:
         request = urllib.request.Request(url, data=data, method=method,
                                          headers={"Content-Type": "application/json",
