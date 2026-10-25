@@ -1271,6 +1271,7 @@ left uncommitted at its usage limit, and finished that packet.
 | ADAPT-02 | implemented | `344a49c` | Per-call identity verdict; a mismatched reply is a typed incompatibility before its tool calls run. |
 | ADAPT-03 | implemented | `344a49c` | Redacted request/response session events through CORE-03. Reviewed by GLM-5.3: the fold lost a stored response's failure class, retry count and usage (fixed, with a round-trip test); the sink now skips a context with no vault and bounds the pre-session buffer. |
 | ADAPT-04 | implemented | `d2f7f81` | `OpenAIChatAdapter` renders and parses; the provider keeps transport and auth. Goldens captured before the extraction prove byte-identical bodies and normalised replies (`tests/test_openai_chat_adapter.py`). Drafted by DeepSeek-V4-Pro. Suite: 1323 passed, 2 skipped, 1 deselected. |
+| ADAPT-05 | implemented | `b242d8b` | `AnthropicMessagesAdapter`; goldens captured before the extraction prove byte-identical bodies, replies and the typed output-budget error (`tests/test_anthropic_messages_adapter.py`). Drafted by DeepSeek-V4-Pro; two review fixes. Suite: 1333 passed, 2 skipped, 1 deselected. |
 
 Full suite on ChatGPT's tree before the two fixes: 1314 passed, 2 skipped,
 1 deselected. The focused suites passed after them. G1 remains open
