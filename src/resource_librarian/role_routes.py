@@ -181,15 +181,14 @@ class RoleRouteStore:
         source = cls._text(binding.source, "source", limit=80)
         if source not in SOURCES:
             raise RoleRouteStoreError(f"role route source is not supported: {source!r}")
-        try:
-            revision = int(binding.revision)
-        except (TypeError, ValueError) as exc:
-            raise RoleRouteStoreError("role route revision must be an integer") from exc
-        if isinstance(binding.revision, bool) or revision < 1 or revision > 1_000_000:
+        revision = binding.revision
+        if type(revision) is not int or revision < 1 or revision > 1_000_000:
             raise RoleRouteStoreError("role route revision is invalid")
         inherited = values["inherits_from"]
         if inherited:
             cls._require_role(inherited, "inherits_from")
+            if role not in CHAT_ROLES or inherited not in CHAT_ROLES:
+                raise RoleRouteStoreError("service routes cannot inherit chat or other service routes")
             if inherited == role:
                 raise RoleRouteStoreError(f"role route {role!r} cannot inherit from itself")
             route_values = (values["host_id"], values["model_id"], values["protocol"],
@@ -201,6 +200,12 @@ class RoleRouteStore:
             if source != "inherited":
                 raise RoleRouteStoreError(
                     f"inherited role route {role!r} must use source 'inherited'")
+        elif source == "unconfigured":
+            if any(values[field] for field in ("host_id", "model_id", "protocol", "endpoint_fingerprint",
+                                               "adapter_id", "evidence_kind")):
+                raise RoleRouteStoreError("an unconfigured role cannot contain route facts")
+        elif source == "inherited" or not values["host_id"] or not values["model_id"]:
+            raise RoleRouteStoreError("a direct role route needs a host and exact model")
         return RoleRouteBinding(role=role, source=source, revision=revision, **values)
 
     @classmethod

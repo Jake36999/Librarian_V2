@@ -249,6 +249,11 @@ export class Settings {
             placeholder: "profile id", "aria-label": "Profile id" }) as HTMLInputElement;
           const role = h("input", { type: "text", value: String(base.role ?? "lead"),
             "aria-label": "Profile role" }) as HTMLInputElement;
+          const routeSlots = ["lead", "scribe", "clerk", "research_helper"];
+          const bindingRole = h("select", { "aria-label": "Model route slot" },
+            routeSlots.map((value) => h("option", { value,
+              selected: value === String(route.binding_role ?? (routeSlots.includes(base.role) ? base.role : "lead")) },
+              value.replace(/_/g, " ")))) as HTMLSelectElement;
           const ceiling = h("select", { "aria-label": "Permission ceiling" },
             ["consult", "contribute", "curate"].map((value) => h("option", { value,
               selected: value === String(base.permission_ceiling ?? "contribute") }, value))) as HTMLSelectElement;
@@ -300,6 +305,7 @@ export class Settings {
               retry_policy: retry.value, failover_policy: failover.value,
                validation_rules: split(validation.value),
               route_policy: { ...route, host_ids: split(hosts.value), model_ids: split(models.value),
+                 binding_role: bindingRole.value,
                  providers: split(providers.value),
                 ...(Object.keys(rateCard).length ? { rate_card: rateCard } : {}) } };
             editorStatus.textContent = "Saving profile…";
@@ -317,6 +323,7 @@ export class Settings {
             h("div", { class: "confirm" },
               h("strong", {}, creating ? "New agent profile" : `Edit ${base.id}`),
               h("div", { class: "row2 tight" }, id, role, ceiling, qualification),
+              h("label", { class: "f" }, "Use the model assigned to this route slot"), bindingRole,
               h("label", { class: "f" }, "Tool bundles (comma-separated)"), bundles,
               h("label", { class: "f" }, "Route allow-lists (blank means unrestricted)"),
                h("div", { class: "row2 tight" }, hosts, providers, models),

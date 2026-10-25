@@ -1193,6 +1193,18 @@ class Endpoint:
         raise NotImplementedError
 
 
+class UnavailableEndpoint(Endpoint):
+    """An assigned role that must queue work rather than use a fallback."""
+
+    name = "unavailable"
+
+    def __init__(self, reason: str):
+        self.reason = reason
+
+    def complete(self, payload: dict[str, Any], repair: str = "") -> tuple[str, str]:
+        raise ClerkUnavailable(self.reason)
+
+
 class Scripted(Endpoint):
     """A function standing in for a model: tests and replays."""
 

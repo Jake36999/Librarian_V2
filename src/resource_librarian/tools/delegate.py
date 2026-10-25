@@ -44,10 +44,10 @@ def delegate(ctx: Context, questions: list[str], tier: Literal[1, 2] = 2) -> dic
     if len(asked) > cap:
         raise TypeError(f"effort {level['level']} allows {cap} tier {tier} helper(s) at once, "
                         f"not {len(asked)}: send fewer questions, or the person raises effort")
-    provider_for = ctx.extras.get("agent_provider")
+    provider_for = ctx.extras.get("helper_provider") or ctx.extras.get("agent_provider")
     provider = provider_for(tier) if provider_for else None
     resolved_tier = tier
-    if provider is None and tier == 2 and provider_for:
+    if provider is None and tier == 2 and provider_for and not ctx.extras.get("helper_provider"):
         provider = provider_for(1)                   # no tier 2 chosen: the lead model helps
         resolved_tier = 1
     if provider is None:

@@ -99,3 +99,17 @@ def test_initialize_never_overwrites_an_existing_store(vault):
 
     assert result["lead"].model_id == "original"
     assert store.resolve("lead").host_id == "one"
+
+
+@pytest.mark.parametrize("revision", [True, 1.5, "1"])
+def test_revision_requires_an_integer(vault, revision):
+    with pytest.raises(RoleRouteStoreError, match="revision"):
+        RoleRouteStore(vault).save({"lead": replace(route("lead", "host", "model"), revision=revision)})
+
+
+def test_service_inheritance_and_partial_routes_are_rejected(vault):
+    store = RoleRouteStore(vault)
+    with pytest.raises(RoleRouteStoreError, match="service routes"):
+        store.save({"lead": route("lead", "host", "model"), "ocr": inherited("ocr", "lead")})
+    with pytest.raises(RoleRouteStoreError, match="host and exact model"):
+        store.save({"lead": RoleRouteBinding(role="lead", host_id="host")})

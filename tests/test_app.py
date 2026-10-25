@@ -153,8 +153,8 @@ def test_selected_profile_requires_its_own_fresh_role_qualification(served):
     assert "requires screened qualification" in body["error"]
     assert body["plan"]["role"] == "research_helper"
 
-    fingerprints = app._qualification_fingerprints("deepinfra", "m1", "research_helper")
-    app.qualifications.record(host_id="deepinfra", model_id="m1", role="research_helper",
+    fingerprints = app._qualification_fingerprints("preset-deepinfra", "m1", "research_helper")
+    app.qualifications.record(host_id="preset-deepinfra", model_id="m1", role="research_helper",
                               level="L1", outcome="pass",
                               compatibility_fingerprint=fingerprints["compatibility"],
                               behavior_fingerprint=fingerprints["behavior"],

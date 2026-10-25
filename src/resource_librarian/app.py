@@ -196,6 +196,7 @@ class Settings:
     def __init__(self, vault: Vault, writer: VaultWriter | None = None):
         self.path = vault.librarian / "app.json"
         self.writer = writer
+        self.serialize: Callable[[str, Callable[[], Any]], Any] | None = None
         self.data = dict(DEFAULTS)
         own: dict[str, Any] = {}
         if self.path.is_file():
@@ -237,7 +238,9 @@ class Settings:
     def update(self, **changes: Any) -> None:
         def persist() -> None:
             self.update_in_operation(**changes)
-        if self.writer is not None:
+        if self.serialize is not None:
+            self.serialize("settings", persist)
+        elif self.writer is not None:
             # Document leases protect human-editable Markdown only.  Internal
             # state is still serialised by the writer but has no Obsidian path.
             self.writer.submit(persist, caller="settings")
@@ -360,6 +363,10 @@ class App:
         # Synchronous calls running here - a person's own and an MCP client's
         # (CORE-04A) - so a stop waits for them rather than closing under them.
         self._calls = {"person": 0, "mcp": 0}
+        self._offline_lock = threading.RLock()
+        self._offline_lease: VaultCoordinator | None = None
+        if not coordinate and (VaultCoordinator.held_here(vault) or VaultCoordinator.held_elsewhere(vault)):
+            raise ApiError(409, "CORE_REQUIRED: a Core already owns this library; connect through its API")
         if coordinate:
             self.coordinator = VaultCoordinator(vault, protocol_version=PROTOCOL_VERSION)
             self.coordinator.acquire(takeover=takeover)
@@ -386,6 +393,7 @@ class App:
             raise
         self.keys = keys or KeyStore(obsidian_managed=self.secret_source == "obsidian")
         self.settings = Settings(vault, self.writer)
+        self.settings.serialize = self._serialized
         self.index_service = IndexService(vault)
         self.hosts = HostRegistry()
         self.host_limiter = HostLimiter()
@@ -398,9 +406,9 @@ class App:
                     self.keys.register_ref(auth_ref)
             except (KeyError, AttributeError):
                 continue
-        self._migrate_legacy_host_routes()
         self.role_routes = RoleRouteStore(vault)
         try:
+            self._migrate_legacy_host_routes()
             self._migrate_legacy_role_routes()
         except Exception:
             self.index_service.close()
@@ -632,7 +640,25 @@ class App:
 
     def _serialized(self, caller: str, fn: Callable[[], Any]) -> Any:
         """Run an App-owned mutation through the same vault writer as tools."""
-        return self.writer.submit(fn, caller=caller) if self.writer is not None else fn()
+        if self.writer is not None:
+            return self.writer.submit(fn, caller=caller)
+        # Offline compatibility Apps have no lifetime writer. They still
+        # acquire the actual interprocess lease for each mutation, so a Core
+        # starting between discovery and migration cannot race those writes.
+        with self._offline_lock:
+            if self._offline_lease is not None:
+                return fn()
+            lease = VaultCoordinator(self.vault, protocol_version=PROTOCOL_VERSION)
+            try:
+                lease.acquire()
+            except (LeaseHeldError, StaleLeaseError) as exc:
+                raise ApiError(409, f"CORE_REQUIRED: {exc}") from exc
+            self._offline_lease = lease
+            try:
+                return fn()
+            finally:
+                self._offline_lease = None
+                lease.release()
 
     def _reconcile_interrupted_operations(self) -> list[dict[str, Any]]:
         """Turn ambiguous pre-crash writes into one durable review card each.
@@ -760,8 +786,16 @@ class App:
     def _binding_for_route(self, role: str, route: dict[str, Any], *,
                            source: str = "explicit") -> RoleRouteBinding:
         host_id = str(route.get("host_id") or route.get("provider") or "")
-        if host_id in PRESETS:
-            host_id = "preset-" + host_id
+        if host_id in PRESETS and not route.get("host_id"):
+            provider = host_id
+            host_id = "preset-" + provider
+            bases = self.settings.data.get("base_urls") or {}
+            requested_base = str(bases.get(provider) or route.get("base_url") or "").strip().rstrip("/") \
+                if isinstance(bases, dict) else ""
+            if role in CHAT_ROLES and not route.get("host_id") and requested_base and \
+                    requested_base != str(PRESETS[provider].get("base_url") or "").rstrip("/"):
+                suffix = hashlib.sha256(f"{provider}\n{requested_base}".encode("utf-8")).hexdigest()[:12]
+                host_id = f"legacy-{provider}-{suffix}"
         try:
             host = self.hosts.get(host_id)
         except KeyError:
@@ -805,7 +839,10 @@ class App:
     def _migrate_legacy_role_routes(self) -> None:
         def migrate() -> None:
             if self.role_routes.exists():
-                self.role_routes.raw()  # Invalid state is never silently regenerated.
+                rows = self.role_routes.raw()  # Invalid state is never silently regenerated.
+                projected = self._tiers_projection(rows, self.settings.data.get("tiers") or [])
+                if projected != self.settings.data.get("tiers"):
+                    self.settings.update_in_operation(tiers=projected)
                 return
             rows = self._legacy_chat_bindings(self.settings.data.get("tiers"))
             for slot in ("ocr", "tts", "stt", "embeddings"):
@@ -824,7 +861,31 @@ class App:
             rows.pop(role, None)
         for role, binding in self._legacy_chat_bindings(tiers).items():
             rows[role] = self._revised_binding(previous.get(role), binding)
+        helper = previous.get("research_helper")
+        if helper is not None and not helper.inherits_from:
+            rows["research_helper"] = helper
         return rows
+
+    def _tiers_projection(self, rows: dict[str, RoleRouteBinding],
+                          hints: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Rebuild the old picker from authoritative bindings after a crash."""
+        roles = ("lead", "scribe", "clerk")
+        positions = [i for i, role in enumerate(roles)
+                     if role in rows and rows[role].model_id and not rows[role].inherits_from]
+        if not positions or self.role_routes.resolve("lead", rows) is None:
+            return []
+        projected = []
+        for i in range(max(positions) + 1):
+            binding = self.role_routes.resolve(roles[i], rows)
+            if binding is None:
+                raise ValueError(f"no route for picker position {i + 1}")
+            hint = hints[i] if i < len(hints) and isinstance(hints[i], dict) else {}
+            identity = str(hint.get("host_id") or hint.get("provider") or "")
+            identity = "preset-" + identity if identity in PRESETS and not hint.get("host_id") else identity
+            projected.append(dict(hint) if identity == binding.host_id and hint.get("model") == binding.model_id
+                             else {"host_id": binding.host_id, "provider": binding.host_id,
+                                   "model": binding.model_id})
+        return projected
 
     @staticmethod
     def _revised_binding(previous: RoleRouteBinding | None,
@@ -1742,12 +1803,48 @@ class App:
                            agent_profile=profile_id) from exc
 
     def _tier_choice(self, n: int) -> dict[str, Any] | None:
-        """The actual configured route used by ``tier(n)``, including fallback."""
-        tiers = self.settings.data.get("tiers") or []
-        for i in range(min(n, len(tiers)) - 1, -1, -1):
-            if isinstance(tiers[i], dict) and tiers[i]:
-                return dict(tiers[i])
-        return None
+        """2.x projection of the canonical Lead/Scribe/Clerk bindings."""
+        if n not in (1, 2, 3):
+            return None
+        return self._role_choice(("lead", "scribe", "clerk")[n - 1])
+
+    @staticmethod
+    def _profile_binding_role(profile: Any) -> str:
+        role = str(profile.route_policy.get("binding_role") or profile.role)
+        if role not in CHAT_ROLES:
+            raise ApiError(409, f"profile {profile.id!r} needs a route slot; choose one in Profiles",
+                           profile=profile.public())
+        return role
+
+    def _role_choice(self, role: str, *, validate_host: bool = True) -> dict[str, Any] | None:
+        binding = self.role_routes.resolve(role)
+        if binding is None or binding.source == "unconfigured":
+            return None
+        route = {"host_id": binding.host_id, "provider": binding.host_id, "model": binding.model_id}
+        if not binding.host_id or not binding.model_id:
+            raise ApiError(409, f"{role} has an incomplete route; select its model again", role=role)
+        if validate_host:
+            try:
+                host = self.hosts.get(binding.host_id)
+            except KeyError as exc:
+                raise ApiError(409, f"{role}'s host is unavailable; select its route again", role=role) from exc
+            if not host.enabled:
+                raise ApiError(409, f"{role}'s host is disabled", role=role)
+            if binding.protocol != host.protocol or binding.endpoint_fingerprint != host.endpoint_fingerprint:
+                raise ApiError(409, f"{role}'s host endpoint changed; review and select its route again",
+                               role=role, route=route)
+        return route
+
+    def role_provider(self, role: str) -> Provider | None:
+        route = self._role_choice(role)
+        return self._provider_for(route) if route is not None else None
+
+    def _helper_provider(self, tier: int) -> Provider | None:
+        return self.role_provider("lead") if tier == 1 else self._provider_for_profile("research_helper")
+
+    def _provider_for_profile(self, profile_id: str) -> Provider | None:
+        profile = self.profiles.get(profile_id)
+        return self.role_provider(self._profile_binding_role(profile))
 
     def _route_rate_card(self, route: dict[str, Any] | None, profile: Any) -> dict[str, Any] | None:
         """Find an auditable price card for conservative profile cost caps.
@@ -1767,6 +1864,15 @@ class App:
         model = str(route.get("model") or "").casefold()
         if not provider or not model:
             return None
+        if route.get("host_id") and not str(route["host_id"]).startswith("preset-"):
+            return None  # custom endpoint pricing must be explicitly supplied by the profile
+        if provider.startswith("preset-") and provider[7:] in PRESETS:
+            family = provider[7:]
+            host = self.hosts.get(provider)
+            preset = PRESETS[family]
+            if host.base_url.rstrip("/") == str(preset.get("base_url") or "").rstrip("/") and \
+                    host.protocol == preset.get("protocol"):
+                provider = family
         catalogues = {**_shipped_profiles(), **_remembered_profiles(), **self._model_sources()}
         known = catalogues.get((provider, model)) or {}
         incoming, outgoing = known.get("price_input_per_1m"), known.get("price_output_per_1m")
@@ -1818,7 +1924,8 @@ class App:
         provider = getattr(endpoint, "provider", None)
         if isinstance(provider, LimitedProvider):
             provider.retry_policy = str(getattr(profile, "retry_policy", "bounded"))
-        self._require_profile_qualification(profile, route, {})
+        lead = self.lead_status([route]) if profile.role == "lead" else {}
+        self._require_profile_qualification(profile, route, lead)
         return self._route_rate_card(route, profile)
 
     def _background_profile_endpoint(self, role: str, endpoint: Any, tier: int) -> Any:
@@ -1828,17 +1935,28 @@ class App:
         with a legacy preset route; it is never a privilege selector.  Profile
         role, route allow-list and qualification remain the authority.
         """
-        if isinstance(endpoint, ProfiledEndpoint):
+        from .clerk import UnavailableEndpoint
+        if isinstance(endpoint, (ProfiledEndpoint, UnavailableEndpoint)):
             return endpoint
         try:
             profile = self.profiles.get(role)
         except (KeyError, ValueError) as exc:
             raise ValueError(f"the vault's {role} profile is unavailable") from exc
-        fallback_route = self._tier_choice(tier)
+        binding_role = self._profile_binding_role(profile)
+        fallback_route = self._role_choice(binding_role)
+
+        def guard(current: Any, target: Any) -> dict[str, Any] | None:
+            if isinstance(target, ProviderEndpoint) and fallback_route is not None:
+                # Recheck before each call in a Clerk task pool. An already
+                # constructed endpoint cannot continue after its host or
+                # assignment changes and borrow evidence for a different one.
+                if self._role_choice(binding_role) != fallback_route:
+                    raise ValueError(f"{role} route changed; restart this task on its selected route")
+            return self._background_profile_guard(current, target, fallback_route)
+
         return ProfiledEndpoint(
             endpoint, profile, gate=self.profile_gate,
-            route_guard=lambda current, target: self._background_profile_guard(
-                current, target, fallback_route),
+            route_guard=guard,
             rate_card=self._route_rate_card(fallback_route, profile),
         )
 
@@ -1850,13 +1968,13 @@ class App:
         requested label.  It keeps helper runs under the same route allow-list,
         role-qualification and cost-card policy as an interactive agent turn.
         """
-        route = self._tier_choice(tier)
+        route = self._role_choice("lead" if tier == 1 else self._profile_binding_role(profile))
         if route is None:
             raise ValueError(f"no route is configured for helper tier {tier}")
         permitted, reason = route_permitted(profile, route)
         if not permitted:
             raise ValueError(reason)
-        lead = self.lead_status() if str(getattr(profile, "role", "")) == "lead" else {}
+        lead = self.lead_status([route]) if str(getattr(profile, "role", "")) == "lead" else {}
         self._require_profile_qualification(profile, route, lead)
         return self._route_rate_card(route, profile)
 
@@ -1948,10 +2066,12 @@ class App:
             raise ApiError(404, f"no agent profile {wanted!r}") from exc
         if self.busy:
             raise ApiError(409, "wait for the active agent turn before changing its profile")
+        binding_role = self._profile_binding_role(profile)
+        route = self._role_choice(binding_role)
         self.settings.update(agent_profile=profile.id)
         if self.loop is not None:
             self.loop.ctx.extras["agent_profile"] = profile.id
-            self.loop.configure_profile(profile, rate_card=self._route_rate_card(self._tier_choice(1), profile))
+            self.loop.configure_profile(profile, rate_card=self._route_rate_card(route, profile))
             level = self.loop.ctx.extras.get("effort") or {}
             self.loop.turn_seconds = self.loop.cap_turn_seconds(level.get("turn_seconds"))
         self.hub.publish({"type": "agent_profile_changed", "profile": profile.public()})
@@ -2024,12 +2144,9 @@ class App:
             raise ApiError(400, str(exc)) from exc
 
     def tier(self, n: int) -> Provider | None:
-        """Tier n, falling back to the one above it when empty."""
-        tiers = self.settings.data.get("tiers") or []
-        for i in range(min(n, len(tiers)) - 1, -1, -1):
-            if tiers[i]:
-                return self._provider_for(tiers[i])
-        return None
+        """Legacy position API; inheritance is resolved by the role store."""
+        route = self._tier_choice(n)
+        return self._provider_for(route) if route is not None else None
 
     def _extras(self) -> dict[str, Any]:
         from . import effort
@@ -2044,6 +2161,7 @@ class App:
                                   # (a ceiling: the lead may choose less with set_effort)
                                   "effort": level, "effort_ceiling": level,
                                   "agent_provider": self.tier,
+                                  "helper_provider": self._helper_provider,
                                   "caller": "core",
                                   "document_leases": self.document_leases,
                                   # The registry uses this narrow executor for
@@ -2062,14 +2180,23 @@ class App:
                                   "use_tool_bundles": True}
         if self.writer is not None:
             extras["vault_writer"] = self.writer
-        clerk = self.tier(3)
+        from .clerk import UnavailableEndpoint
+        try:
+            clerk = self._provider_for_profile("clerk")
+        except (ApiError, ProviderError, KeyError, ValueError) as exc:
+            clerk = None
+            extras["clerk"] = UnavailableEndpoint(str(exc))
         if clerk is not None:
             # A registered route is the person's current Clerk assignment. It
             # takes precedence over a retained 2.x ``[clerk]`` block, whose
             # syntax is still used when no Host Registry route is assigned.
             extras["clerk"] = ProviderEndpoint(clerk, invocation_runtime=self.invocation_runtime,
                                                 role="clerk")
-        scribe = self.tier(2)
+        try:
+            scribe = self._provider_for_profile("scribe")
+        except (ApiError, ProviderError, KeyError, ValueError) as exc:
+            scribe = None
+            extras["scribe"] = UnavailableEndpoint(str(exc))
         if scribe is not None:
             extras["scribe"] = ProviderEndpoint(scribe, invocation_runtime=self.invocation_runtime,
                                                  role="scribe")
@@ -2081,16 +2208,17 @@ class App:
 
     def _loop(self) -> Loop:
         profile = self._active_agent_profile()
-        route = self._tier_choice(1)
+        role = self._profile_binding_role(profile)
+        route = self._role_choice(role)
         if route is not None:
             permitted, reason = route_permitted(profile, route)
             if not permitted:
                 raise ApiError(409, reason, profile=profile.public(), route=route)
-        provider = self.tier(1)
+        provider = self.role_provider(role)
         if provider is None:
             raise ApiError(409, "choose a chat model first (Model: tier 1)")
-        lead = self.lead_status()
-        if lead["status"] == "release_probe_required":
+        lead = self.lead_status([route]) if profile.role == "lead" else {}
+        if lead.get("status") == "release_probe_required":
             raise ApiError(409, "run the selected route's L1 connectivity/tool probe before starting a lead session",
                            lead=lead.get("model"), qualification=lead)
         self._require_profile_qualification(profile, route or {}, lead)
@@ -2716,7 +2844,30 @@ class App:
                 clean.append({"host_id": host.id, "provider": host.id,
                               "model": str(t["model"])})
             elif t.get("provider") in PRESETS:
-                clean.append({"provider": str(t["provider"]), "model": str(t["model"])})
+                provider = str(t["provider"])
+                binding = self._binding_for_route("lead", t)
+                if binding.host_id != "preset-" + provider:
+                    # Discovery still accepts the 2.x provider spelling and
+                    # base_urls map. Pin that same endpoint when the person
+                    # selects a model; never switch a local listing to the
+                    # preset URL merely because canonical bindings now exist.
+                    bases = self.settings.data.get("base_urls") or {}
+                    base = str(bases.get(provider) or t.get("base_url") or "").strip().rstrip("/")
+                    try:
+                        host = self.hosts.get(binding.host_id)
+                        if not host.enabled:
+                            raise ApiError(400, f"host {host.display_name!r} is disabled")
+                        if host.base_url.rstrip("/") != base or host.protocol != PRESETS[provider]["protocol"]:
+                            raise ApiError(409, "the migrated host endpoint changed; select the explicit host route")
+                    except KeyError:
+                        self._serialized("legacy-host-selection", lambda: self.hosts.upsert({
+                            "id": binding.host_id, "display_name": f"Migrated {provider} route",
+                            "protocol": PRESETS[provider]["protocol"], "base_url": base,
+                            "auth_ref": PRESETS[provider].get("key_env", "")}))
+                    clean.append({"host_id": binding.host_id, "provider": binding.host_id,
+                                  "model": str(t["model"])})
+                else:
+                    clean.append({"provider": provider, "model": str(t["model"])})
             else:
                 raise ApiError(400, "each tier needs a known provider or enabled host id and a model id")
         return clean
@@ -2751,12 +2902,13 @@ class App:
                     rows.setdefault(role, binding)
             else:
                 rows = self._chat_bindings_for_tiers(clean)
+            changes["tiers"] = self._tiers_projection(rows, clean)
             self.role_routes.save(rows)
             self.settings.update_in_operation(**changes)
 
         self._serialized("role-route-settings", persist)
-        self.hub.publish({"type": "tiers_changed", "tiers": clean})
-        return {"tiers": clean, "lead": self.lead_status(clean)}
+        self.hub.publish({"type": "tiers_changed", "tiers": changes["tiers"]})
+        return {"tiers": changes["tiers"], "lead": self.lead_status(changes["tiers"])}
 
     def set_lead(self, route: Any, override: str = "", checkpoint_id: str = "") -> dict[str, Any]:
         """Assign position 1 only (ROUTE-01).
@@ -2775,12 +2927,27 @@ class App:
         return self._select_tiers([clean, *kept], override, checkpoint_id, lead_only=True)
 
     def lead_status(self, tiers: list[dict[str, Any]] | None = None) -> dict[str, Any]:
-        tiers = self.settings.data.get("tiers") or [] if tiers is None else tiers
+        if tiers is None:
+            bound = self._role_choice("lead", validate_host=False)
+            if bound is None:
+                return {"status": "none"}
+            # Retain the compatibility display spelling when it identifies
+            # the same bound route; unrelated edits to app.json cannot
+            # change what execution or qualification uses.
+            selected = (self.settings.data.get("tiers") or [bound])[0]
+            same = (self._binding_for_route("lead", selected).host_id == bound["host_id"] and
+                    selected.get("model") == bound["model"])
+            tiers = [selected if same else bound]
         if not tiers:
             return {"status": "none"}
         route = tiers[0]
-        host_id = str(route.get("host_id") or route.get("provider") or "")
-        key = f"{host_id}/{route['model']}"
+        display_host = str(route.get("host_id") or route.get("provider") or "")
+        host_id = "preset-" + display_host if display_host in PRESETS and not route.get("host_id") else display_host
+        key = f"{display_host}/{route['model']}"
+        overrides = self.settings.data.get("lead_overrides") or {}
+        override = overrides.get(f"{host_id}/{route['model']}") or overrides.get(key)
+        if not override and host_id.startswith("preset-"):
+            override = overrides.get(f"{host_id[len('preset-'):]}/{route['model']}")
         model = str(route["model"])
         current = self._qualification_fingerprints(host_id, model, "lead")
         qualification, _ = self._refresh_qualification_route(host_id, model, "lead", current)
@@ -2814,7 +2981,6 @@ class App:
                     "reason": "bundled release evidence is valid; run the matching account L1 probe",
                     "l1_plan": self.qualification_plan(host_id, model, "lead", "L1")}
         if release_reason:
-            override = (self.settings.data.get("lead_overrides") or {}).get(key)
             if override:
                 return {"status": "override", "model": key, "release_reason": release_reason, **override}
             return {"status": "ineligible", "model": key, "reason": release_reason,
@@ -2828,7 +2994,6 @@ class App:
         listed = {f"{e.get('provider')}/{e.get('model')}": e for e in ELIGIBLE_LEADS()}
         if key in listed:
             return {"status": "eligible", "model": key, "result": listed[key].get("result", "")}
-        override = (self.settings.data.get("lead_overrides") or {}).get(key)
         if override:
             return {"status": "override", "model": key, **override}
         return {"status": "ineligible", "model": key}

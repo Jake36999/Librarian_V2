@@ -256,6 +256,10 @@ class AgentProfile:
             raise ValueError("required qualification is experimental, screened, verified_local or verified_release")
         if not isinstance(self.route_policy, dict) or not isinstance(self.checkpoint_policy, dict):
             raise ValueError("route_policy and checkpoint_policy are objects")
+        if "binding_role" in self.route_policy:
+            from .role_routes import CHAT_ROLES
+            if self.route_policy["binding_role"] not in CHAT_ROLES:
+                raise ValueError(f"route_policy.binding_role is one of {CHAT_ROLES}")
         # Route policy is deliberately an allow-list, never a way to invent a
         # route.  Unknown keys remain available for future first-party
         # adapters, but the supported selector fields must be simple lists so
@@ -322,6 +326,11 @@ def route_permitted(profile: AgentProfile, route: dict[str, Any]) -> tuple[bool,
     for key, actual, label in checks:
         raw = policy.get(key) or []
         allowed = {str(item).strip().casefold() for item in raw if str(item).strip()}
+        if key == "providers":
+            from .providers import PRESETS
+            canonical = lambda value: "preset-" + value if value in PRESETS else value
+            actual = canonical(actual) if not host or host.startswith("preset-") else actual
+            allowed = {canonical(item) for item in allowed}
         if allowed and actual not in allowed:
             return False, f"profile {profile.id!r} does not allow {label} {actual or '(none)'!r}"
     return True, ""

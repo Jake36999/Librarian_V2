@@ -2317,6 +2317,19 @@ var Librarian = (() => {
               value: String(base.role ?? "lead"),
               "aria-label": "Profile role"
             });
+            const routeSlots = ["lead", "scribe", "clerk", "research_helper"];
+            const bindingRole = h(
+              "select",
+              { "aria-label": "Model route slot" },
+              routeSlots.map((value) => h(
+                "option",
+                {
+                  value,
+                  selected: value === String(route.binding_role ?? (routeSlots.includes(base.role) ? base.role : "lead"))
+                },
+                value.replace(/_/g, " ")
+              ))
+            );
             const ceiling = h(
               "select",
               { "aria-label": "Permission ceiling" },
@@ -2439,6 +2452,7 @@ var Librarian = (() => {
                   ...route,
                   host_ids: split(hosts.value),
                   model_ids: split(models.value),
+                  binding_role: bindingRole.value,
                   providers: split(providers.value),
                   ...Object.keys(rateCard).length ? { rate_card: rateCard } : {}
                 }
@@ -2461,6 +2475,8 @@ var Librarian = (() => {
                 { class: "confirm" },
                 h("strong", {}, creating ? "New agent profile" : `Edit ${base.id}`),
                 h("div", { class: "row2 tight" }, id, role, ceiling, qualification),
+                h("label", { class: "f" }, "Use the model assigned to this route slot"),
+                bindingRole,
                 h("label", { class: "f" }, "Tool bundles (comma-separated)"),
                 bundles,
                 h("label", { class: "f" }, "Route allow-lists (blank means unrestricted)"),
