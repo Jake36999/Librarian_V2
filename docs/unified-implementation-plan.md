@@ -1183,3 +1183,46 @@ errors and no warnings reported. Local final output:
 run. No paid model calls or pushes occurred. Next: INDEX-05 stress and remaining
 staging quarantine/encoder waits, followed by adapters, adoption/dedupe,
 Session-based harness and integrated release acceptance.
+
+### INDEX-05 bounded native contention and store cleanup, 2026-10-25
+
+Implementation `f11e98d` delivers the first bounded Core-API contention slice
+of INDEX-05, not full gate closure. Deterministic tests exposed unclosed Desk
+connections and failed lens-initialization cleanup. Desk now commits/rolls
+back and closes; lens setup closes on failure. Per-store initialization is
+serialized with explicit five-second busy timeouts. These stores retain their
+schemas/journals and remain separate from the disposable Core index.
+Automatic chat desk touches now use the Core writer.
+
+A controlled Windows getter/prepared-writer fixture reproduced WinError 5.
+Short per-file read exclusion now covers get_note, pane/script reads,
+notes.load and Index.upsert's stat/text snapshot. Four interleavings check
+the active reader's real path lock at the write boundary. Parsing/SQL remain
+outside that read lock; no whole-vault/editor lock, mutation retry, new
+permission or automatic recovery is introduced.
+
+Nine repeated seven-worker fixtures completed **531 loopback requests,
+378 category iterations and 54 checkpoints** with one index connection/SQL
+thread per fixture, all store handles closed, no unfinished operations, and
+asserted note/index/session/lens/desk state preserved. Per-fixture HTTP p95
+ranged **235–281 ms** in small instrumented fixtures, not a capacity benchmark.
+A separate human-edit test preserves active typing, allows unrelated notes,
+creates one checkpoint for one write attempt, and requires a fresh explicit
+MCP retry after lease release/quiet time; resolving the checkpoint alone does
+not execute a write.
+
+**301 focused tests passed in 147.92s**, including **18 new checks**. UI build
+and full browser smoke passed with the generated bundle unchanged. Full-suite
+frozen-source verification against `f11e98d` passed **1,302 tests, 2 skipped,
+1 deselected in 449.18s**, with thread warnings as errors and no warnings
+reported. Final local log: `tmp/core-concurrency-full-2026-10-25-01.log`.
+Only a module docstring was clarified after that run; behavior is unchanged. See
+`reports/2026-10-25-core-concurrency-validation.md` and the regression manifest.
+
+INDEX-05/G1 remain open for sustained/large-vault tests, rename/delete and
+note/index-metadata snapshot consistency, crash/stop under mixed traffic,
+actual simultaneous adapters, external handles, Python matrix and packaged
+acceptance. Staging quarantine/encoder waits, strict extract pinning and the
+remaining adapter/adoption/harness work are unchanged. No paid calls or pushes
+were performed; the new native reproduction is not proof of the cause of the
+earlier unreproduced mixed-acceptance failures.

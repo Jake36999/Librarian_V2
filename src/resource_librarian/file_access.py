@@ -2,8 +2,9 @@
 
 Windows os.replace cannot replace an open destination. A Core fingerprint
 reader must close its handle before another Core thread replaces that path.
-These locks cover only the read or final replacement syscall, not an entire
-tool, provider request, approval wait, or transaction with an external editor.
+File helpers hold them only for a read or final replacement syscall; auxiliary
+stores also serialize their schema initialization. They are not whole-tool,
+provider-request, approval-wait, or external-editor transaction locks.
 """
 from __future__ import annotations
 

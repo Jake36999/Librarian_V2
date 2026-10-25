@@ -108,3 +108,34 @@ Final frozen-source run: **1,284 passed, 2 skipped, 1 deselected in 434.41s**,
 with thread-exception warnings treated as errors and no warnings reported.
 UI build/complete smoke passed. These checks used CPython 3.11.3 on this
 Windows host, not the whole supported-version/packaged-release matrix.
+
+## INDEX-05 bounded contention continuation
+
+Implementation `f11e98d` extends same-path read exclusion to `get_note`, pane/
+script display, `notes.load`, and the stat/text snapshot in `Index.upsert`.
+This closes a controlled native Windows getter/prepared-writer reproduction;
+parsing and SQL do not run while the file-read lock is held. General raw-read,
+rename/delete and note/index-metadata snapshot consistency still need coverage.
+
+Desk operations now close their connections explicitly on success or rollback;
+failed lens initialization also closes. Schema setup is serialized per store,
+with explicit bounded busy timeouts. Chat's automatic desk touches now go
+through VaultWriter. Desk/lens stores remain distinct accepted-data databases;
+their ordinary queries were not moved onto IndexService or turned into a
+cross-resource transaction. No schema, acceptance-log or UI protocol changed.
+
+Nine bounded seven-worker loopback fixtures passed: **531 HTTP requests,
+378 activity iterations, 54 checkpoints**, one owned index connection/worker
+per fixture, no unfinished operations, all store handles closed, and asserted
+Markdown/index/session/lens/desk outcomes retained. Per-fixture HTTP p95 was
+**235–281 ms** in these instrumented small fixtures, not a production SLA.
+The separate human-edit fixture creates one conflict for one write attempt,
+keeps other notes writable and requires explicit retry after fresh review.
+
+**301 focused tests passed**, including **18 new checks**; UI build and full
+smoke passed. Full frozen-source verification against `f11e98d` passed **1,302
+tests, 2 skipped, 1 deselected in 449.18s**, no warnings. A post-run module
+docstring clarification changes no runtime behavior. INDEX-05 remains
+partial, not a G1 or stable-release sign-off. See the
+[validation report](../reports/2026-10-25-core-concurrency-validation.md) and
+[regression manifest](regression-manifest.md) for methodology and limits.
