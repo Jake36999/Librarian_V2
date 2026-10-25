@@ -644,7 +644,8 @@ checked:
 | `write_note` | the note | when it replaces | A new note needs none, but must still be missing when the write runs. |
 | `archive_note` | the note and its `Archive/` place | no | A move of the librarian's own note; nothing is rewritten in place. |
 | `promote_offering` | the `Offerings/` destination | no | Creates only; the staged draft is the librarian's own state under `.librarian/`. |
-| `staging_decide` | selected paths | agents/MCP replacing source notes | Revision/import/concept paths declare visible targets; all accepts snapshot staged JSON. New-source/topic multi-note promotion and lens-store ownership remain partial. See `staging-write-safety.md`. |
+| `staging_decide` | selected paths | agents/MCP replacing source notes | Revision/import/concept/single-topic paths declare visible targets; all accepts snapshot staged JSON. New-source and mixed/batch topic promotion, plus lens-store ownership, remain partial. See `staging-write-safety.md`. |
+| `refile_source`, `views_refresh` | source and generated-view plan | no new caller-read token | Exact dispatch-time bytes/dependencies are prepared before approval and rechecked per write; not a claim of prior caller review. |
 | `create_project`, other writers | registry best-effort | no | Unchanged. |
 
 **Behaviour change in CORE-05:** an agent or MCP client must read a note
@@ -856,3 +857,46 @@ Next is the remaining ownership/promotion inventory and migration, then the
 adapter completion tasks in §7. Directory adoption/dedupe and the Session-based
 harness remain subsequent gates, not completed features. The source-kind
 mutation inventory is in `docs/staging-write-safety.md`.
+
+### Taxonomy and generated-view continuation, 2026-10-25
+
+The two taxonomy direct-index construction sites now use Core callbacks;
+static debt is **8 → 6**. `refile_source` and `views_refresh` resolve a bounded
+file/dependency inventory before permission approval. Prepared source bytes
+remain invocation-local, rather than being re-read and silently substituted
+after a wait. Render-only topic/master helpers run on IndexService; visible
+file writes remain on VaultWriter. Each write checks the destination,
+taxonomy dependency and human lease again. Mid-round conflicts retain completed
+work and include its declared paths in checkpoint evidence, even when the
+short checkpoint title cannot hold them. No new log/reducer/daemon was added.
+
+Single-item topic acceptance uses the same boundary, including its staged
+review token in Settings. Partial acceptance is retained on the existing
+staged record and can be explicitly finished after review/restart without
+adding the taxonomy row twice. Changed approved wording/row is not trusted;
+re-proposing topics cannot replace partially applied person work. Existing
+person-only topic authority, ordinary permission modes and the option not to
+file sources remain intact. Mixed/multi-item topic accepts and new-source
+promotion retain their legacy engine path and remain unfinished.
+
+Settings now surfaces structured rewrite refusals instead of always claiming
+success, retains an errored review form until explicit reload, and retires its
+old handlers while reload fetches new proposal tokens. Alias cells cannot add
+unapproved taxonomy rows; generated filename collisions fail before mutation.
+The public control flow and model picker are unchanged. These are backend
+metadata plans, not the Session harness or adapter request shaping.
+
+Implementation is committed as `fc58af2`. The expanded focused group passed
+**145 tests**; the browser build and expanded smoke walk passed. Final full
+verification passed **1,084 tests, 2 skipped, 1 deselected in 345.72s**, using
+the repository venv with `-o faulthandler_timeout=60`. The generated output is
+retained locally at `tmp/taxonomy-ownership-full-2026-10-25-01.log`.
+G1, the six remaining
+construction sites, Windows stress, full promotion safety, adapters,
+adoption/dedupe, harness and integrated release acceptance remain open. The
+mutation inventory and non-atomic/crash limits are recorded in
+`docs/staging-write-safety.md`. No live/paid provider call was made.
+Nothing was pushed. Next ownership work is the batch validation/readiness
+lookups and source/catalog promotion; graph/extract still retain explicit
+offline construction branches. Windows stress and runtime fallback enforcement
+must follow before claiming the single-owner index gate complete.

@@ -29,6 +29,7 @@ and expected boundary explicit.
 | CORE-05A/B | implemented | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_revisions.py tests/test_authoring.py tests/test_mcp.py` | Replace-existing writes require a bound revision and stale writes conflict. | Add a fixture before expanding coverage to a new write kind. | `119ded6` |
 | CORE-05 staging / INDEX-03 staging | partial | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_staging_safety.py tests/test_deep_read.py tests/test_dik.py tests/test_staging.py tests/test_revisions.py tests/test_v2_remediation.py tests/test_sqlite_ownership.py tests/test_operation_recovery.py`; UI build/browser smoke | Source revision CAS/leases, staged-record review/dispatch guards, concept/import creation guards, sensitivity gate, Core SQL vs writer file access. | New-source/topic multi-target promotion and lens-store ownership remain open. | `90b1945`; expanded combined group: 122 passed; browser smoke passed; staging direct-index debt 17 → 14. Full suite: 1,060 passed, 2 skipped, 1 deselected. |
 | INDEX-03/04 upkeep | partial | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_core_upkeep.py tests/test_upkeep.py tests/test_dik.py tests/test_model_catalog.py tests/test_core_index_service.py tests/test_sqlite_ownership.py` | Query results leave worker as ordinary data; network/provenance/D/I/K processing runs outside it; derived mutations use writer. | Remaining promotion/taxonomy/batch and offline compatibility paths need migration/enforcement. | `90b1945`; expanded combined group: 122 passed; direct-index debt 14 → 8. Full suite: 1,060 passed, 2 skipped, 1 deselected. |
+| CORE-05 / INDEX-03/04 taxonomy | partial | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_core_taxonomy.py tests/test_taxonomy.py tests/test_staging.py tests/test_staging_safety.py tests/test_revisions.py tests/test_registry.py tests/test_core_index_service.py tests/test_sqlite_ownership.py`; UI build/browser smoke | Pre-approval targets/bytes remain invocation-local; SQL/rendering stays on Core; each file write checks revisions/leases; caught partial topic acceptance survives review/restart; Settings does not misreport refusals. | Mixed/batch topic and new-source promotion, six direct construction sites and Windows stress remain. | `fc58af2`; expanded focused: 145 passed; browser build/smoke passed; full: 1,084 passed, 2 skipped, 1 deselected. |
 | CORE-06 | implemented | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_operation_recovery.py` | Start-only operation produces one idempotent recovery checkpoint before mutation admission. | Core restart fixture. | `c264b9a` |
 | CORE-07 | implemented | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_event_resync.py tests/test_app.py tests/test_shutdown.py tests/test_host_lifecycle.py` | SSE gaps/restarts emit one epoch-aware resync instruction without replaying actions. | Restart fixture. | `5708c39` |
 | INDEX-01/02 | partial | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_sqlite_ownership.py tests/test_core_index_service.py tests/test_desk.py tests/test_taxonomy.py` | Static debt only shrinks; migrated calls remain on IndexService worker. | Real Core context per migrated family. | `557126c`, `8ccce9b` |
@@ -65,3 +66,16 @@ passed. The exact **122-test** combined focused command was:
 ```
 
 No paid-provider call, L1–L3 requalification, or release-gate closure is implied.
+
+Taxonomy continuation `fc58af2` passed the full repository-venv command with
+`-o faulthandler_timeout=60`: **1,084 passed, 2 skipped, 1 deselected in 345.72s**.
+Output: `tmp/taxonomy-ownership-full-2026-10-25-01.log`. UI build and the expanded
+browser smoke walk passed, including structured refresh refusal and explicit
+stale-topic reload. The exact **145-test** focused command was:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q -x tests/test_core_taxonomy.py tests/test_taxonomy.py tests/test_staging.py tests/test_staging_safety.py tests/test_revisions.py tests/test_sqlite_ownership.py tests/test_core_index_service.py tests/test_registry.py tests/test_operation_recovery.py tests/test_macro_permissions.py tests/test_mcp.py
+```
+
+These remain deterministic/scripted checks, not paid model qualification or
+Windows multi-client stress/release acceptance.
