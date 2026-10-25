@@ -1,8 +1,10 @@
 # Model protocol-adapter requirements
 
-**Status:** Partial. The compatibility/observability foundation exists; real
-protocol render/parse shaping, cancellation, and route evidence remain
-planned in ADAPT-01+ of the [unified implementation plan](unified-implementation-plan.md).
+**Status:** Partial. The compatibility/observability foundation, including
+ADAPT-01 reply metadata and ephemeral reasoning continuation, is implemented.
+Trusted protocol render/parse shaping, cancellation, route evidence, and
+ADAPT-02–11 remain planned in the
+[unified implementation plan](unified-implementation-plan.md).
 **Terms:** [Librarian terminology](terminology.md).
 
 This is the research record and acceptance boundary for Librarian's model

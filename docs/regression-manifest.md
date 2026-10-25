@@ -16,6 +16,11 @@ and expected boundary explicit.
   `provider budget` row is opt-in and records its cost separately.
 - Future rows are planned verification contracts, not assertions that those
   checks currently pass.
+- A `tmp/...` path is an untracked local log from the originating worktree,
+  not a committed or release artifact. It supports the summarized local run
+  only. For portable evidence, retain the command, source revision,
+  environment identity, and result in a tracked record, and archive raw output
+  outside `tmp/` when a reviewer or release decision needs it.
 
 | Task | Delivery status | Focused command / fixture class | Expected boundary | Extra requirement | Evidence |
 | --- | --- | --- | --- | --- | --- |
@@ -54,7 +59,11 @@ and expected boundary explicit.
 | ADAPT-08–11 | planned | Pack, prompt-boundary, and tool-bundle/handle fixtures | Declarative packs cannot execute instructions; context/result bounds remain enforced. | Provider measurement only when opted in. | — |
 | DEPLOY-01–05 | planned | Adoption survey/apply/dedupe fixtures | Existing document trees remain byte-preserved and searchable without hidden user docs. | Windows/Obsidian fixture as applicable. | — |
 | HARNESS-01–09 | planned | Session replay, verifier, and closure fixtures | Audited work reuses Session, never auto-promotes, and remains evidence bounded. | Tier-B evaluation budget only after its gate. | — |
-| ACCEPT/RELEASE | blocked externally | Frozen artifact, UI/adapter, Windows, rollback, and qualification matrix | Stable-release claims have real environment/provider evidence. | Release-owner authority, credentials, signing material. | — |
+| ACCEPT-01 | planned | End-to-end research, staging/promotion, V1 import, profile/bundle/macro/checkpoint, client lifecycle, service, Workbench, and ranking fixtures | Each workflow has success, refusal, recovery, and no-mutation-on-failure coverage. | G1 through G4. | — |
+| ACCEPT-02 | planned | Fresh Windows repository-artifact acceptance, including lifecycle, dirty documents, two-client coordination, adoption, Docker/fallback, and rollback rehearsal | Results retain OS/Obsidian/Docker versions and a successful rollback rehearsal. | ACCEPT-01, CORE-02, DEPLOY-04. | — |
+| ACCEPT-03 | planned | Capability-matrix and V1/V2-parity reconciliation from passing acceptance evidence | Documentation distinguishes delivered behavior, exclusions, and deferred V3 work. | ACCEPT-01. | — |
+| RELEASE-01 | planned | Release-queue refresh with source-identity and lifecycle gates | R0 no longer assumes V2 implementation is complete. | BASE-03, ACCEPT-03. | — |
+| RELEASE-02–03 | blocked externally | Frozen artifact, UI/adapter, Windows, rollback, and qualification matrix | Stable-release claims have real environment/provider evidence. | RELEASE-01/G5 or RELEASE-02/ACCEPT-02, plus release-owner authority, credentials, and signing material. | — |
 
 Final combined verification on 2026-10-25 used
 `& .\.venv\Scripts\python.exe -m pytest -q -o faulthandler_timeout=60`:

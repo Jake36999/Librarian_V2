@@ -3,6 +3,13 @@
 Status: INDEX-05 partial delivery, 2026-10-25. Implementation: `f11e98d`.
 The unified implementation plan remains the delivery/status authority.
 
+**Evidence portability:** the `tmp/...` paths named below are untracked local
+output from the originating worktree, so they substantiate the summarized run
+there but do not travel with a branch. This report and the
+[regression manifest](../docs/regression-manifest.md) retain the commands,
+revision, conditions, and result summaries; archive raw output separately when
+it is needed for a hand-off or release decision.
+
 ## Findings and fixes
 
 Deterministic lifecycle tests failed **6 cases** on the previous implementation:

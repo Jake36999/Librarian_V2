@@ -597,8 +597,13 @@ another's files.
    with CORE-05B, then **ROUTE-03 → ROUTE-05**. CORE-04B follows CORE-02B
    when a managed MCP start is wanted.
 
-G1 is green only when steps 1–6, CORE-06, and INDEX-04 are merged with their
-acceptance tests passing on the owner's Windows host.
+Steps 1–6, CORE-06, and INDEX-04 are required progress toward G1; they are
+not an exhaustive G1 exit checklist. G1 can turn green only after CORE-02A's
+lifecycle acceptance criteria are met, serving-path ownership is enforced
+through INDEX-04, and INDEX-05's Windows-oriented concurrent read/write/WAL
+acceptance scope is complete. The current progress record makes no green-G1
+claim; see the [continuation ledger](#continuation-ledger-2026-10-25) and
+the [INDEX-05 continuation](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25).
 
 ## 19. Progress log
 
@@ -610,6 +615,7 @@ with its primary model and reviewer (§3.2).
 | --- | --- | --- | --- |
 | BASE-01 | implemented | `ad02715`, `f213fc6`, `1fd49c3` | Baseline in three groups; [manifest](../reports/2026-10-24-baseline-manifest.md). Found and fixed: ChatGPT's UI changes existed only in the built bundle, not in `ui/src`. |
 | BASE-02 | implemented | `a467710` | `doctor` source-identity check; the test run refuses a stale checkout. |
+| BASE-03/04/05 | implemented | `99bff07` | Reconciled implementation-status records, added the shared terminology, and introduced the task-level regression manifest. |
 | ROUTE-01 | implemented | `77315cc` | `POST /api/lead` keeps positions 2–3. Reviewed by Qwen3.5: no defects. |
 | CORE-01 | implemented | `f014b2f` | `process_identity`; **the real-child Host stop test passes**. Drafted with GLM-5.3, reviewed by Qwen3.5 (one finding fixed: a recycled own-PID lease row skipped the stale-lease safeguard). |
 | CORE-02A | implemented | `1a8adf6`, `4cfc6eb` | Shutdown phases; the real-child test runs under the venv redirector. Reviewed by GLM-5.3 (admission race and post-lease write fixed). Also fixed a pre-existing hang: the App never stopped the MCP manager it created, so a failing test with an App hung pytest at exit. |
@@ -634,6 +640,33 @@ with its primary model and reviewer (§3.2).
 | ROUTE-03C / ROUTE-04/05 (routing) | implemented | `4e56ca7` | Services dispatch canonical bindings, share hosted concurrency with chat, and reject stale/late routes. Picker readiness is per role; custom OCR/embedding hosts are explicit. Transport extraction/cancellation remains ADAPT-06. |
 | INDEX-03 (authoring/Session batch) | partial | `86941d3` | 16 direct construction sites migrated; debt 33 → 17. Real-Core fixtures cover writer/index separation, schema refresh and a full offering walk. Other serving-path families and WAL stress remain open. |
 | Macro writer-wait follow-up | implemented | `5b3be1f` | Macro orchestration runs outside the writer; individual mutations and checkpoint creation remain serialized. Ask/Deny/Plan gates are retained; changed plans invalidate old approvals. Automatic macro resume is not claimed. |
+
+### Continuation ledger, 2026-10-25
+
+The later packets below are part of this §19 ledger, rather than unindexed
+prose continuations. Their linked sections retain the detailed scope, limits,
+and exact result summaries; the [regression manifest](regression-manifest.md)
+holds the commands. Status uses §2.2 and does not close a gate unless the
+linked record says so.
+
+| Plan task(s) / packet | Status | Commit | Detailed record |
+| --- | --- | --- | --- |
+| CORE-05 staging / INDEX-03/04 upkeep | partial | `90b1945` | [Selected staging safety](#selected-staging-safety-continuation-2026-10-25) and [upkeep ownership](#upkeep-ownership-continuation-2026-10-25). |
+| CORE-05 / INDEX-03/04 taxonomy and generated views | partial | `fc58af2` | [Taxonomy and generated-view continuation](#taxonomy-and-generated-view-continuation-2026-10-25). |
+| INDEX-03/04 approved batch and lifecycle | partial | `ce88b04` | [Approved-batch ownership continuation](#approved-batch-ownership-continuation-2026-10-25). |
+| INDEX-03/04 catalogue promotion | partial | `508959a` | [Core catalogue-promotion continuation](#core-catalogue-promotion-continuation-2026-10-25). |
+| CORE-05 / INDEX-03/04 single-source acceptance | partial | `870f2e5` | [Single-source staging acceptance continuation](#single-source-staging-acceptance-continuation-2026-10-25). |
+| CORE-05 / INDEX-03/04 source-only batches | partial | `c48e6a0` | [Source-only acceptance batches](#source-only-acceptance-batches-2026-10-25). |
+| CORE-05 / INDEX-03/04 mixed-kind acceptance | partial | `87e2460` | [Mixed-kind/multi-topic acceptance](#mixed-kindmulti-topic-acceptance-2026-10-25). |
+| Watcher read-failure recovery | implemented | `89e609d` | [Watcher read-failure recovery](#watcher-read-failure-recovery-2026-10-25). |
+| INDEX-04 serving gateway and file-access exclusion | implemented | `ded98c0`, `d31cda5`, `e40a4a6` | [INDEX-04 serving gateway and Windows read exclusion](#index-04-serving-gateway-and-windows-read-exclusion-2026-10-25). |
+| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25); see also the [validation report](../reports/2026-10-25-core-concurrency-validation.md). |
+
+Unless an artifact is explicitly archived elsewhere, a `tmp/...` path cited
+below is an untracked local log from the originating worktree. It is a pointer
+to the summarized run, not portable evidence that travels with this branch;
+the command, source revision, environment details, and result summary belong
+in a tracked record before it is used for a hand-off or release decision.
 
 **CORE-05 write inventory.** CAS coverage is claimed only where a token is
 checked:

@@ -1,8 +1,9 @@
 # Model Invocation Architecture
 
-**Status:** Partial. Compatibility-first foundation is implemented; trusted
-request shaping and route-specific behaviour remain planned in ADAPT-01+
-of the [unified implementation plan](unified-implementation-plan.md).
+**Status:** Partial. Compatibility-first foundation, including ADAPT-01 reply
+metadata and ephemeral reasoning continuation, is implemented. Trusted request
+shaping and route-specific behaviour remain planned in ADAPT-02–11 of the
+[unified implementation plan](unified-implementation-plan.md).
 **Version:** 1.0 draft  
 **Audience:** Core, UI, Obsidian, Cowork, release, and model-qualification
 maintainers
