@@ -22,6 +22,7 @@ their own reviewed adapters rather than being smuggled through this bridge.
 from __future__ import annotations
 
 import copy
+import dataclasses
 import hashlib
 import json
 import re
@@ -253,6 +254,21 @@ class InvocationScope:
         object.__setattr__(self, "reasoning_intent", intent)
 
 
+# Dialect dimensions that a reviewed expectation record may declare.
+# A dimension whose vocabulary is only "provider_default" is a recognised
+# dimension whose interpreter lands with a reviewed fixture; extending the
+# set of values for any dimension is a Core change, not a pack change.
+DIALECT_VOCABULARY: dict[str, frozenset[str]] = {
+    "reasoning_replay": frozenset({"provider_default", "replay_on_tool_turn", "never_replay"}),
+    "output_headroom": frozenset({"provider_default", "reasoning_reserve"}),
+    "tool_call_in_content": frozenset({"provider_default"}),
+    "tool_schema": frozenset({"provider_default"}),
+    "tool_result_shape": frozenset({"provider_default"}),
+    "sampling_profile": frozenset({"provider_default", "deterministic"}),
+}
+REASONING_RESERVE_TOKENS = 1024
+
+
 @dataclass(frozen=True)
 class ModelExpectation:
     """A reviewed, declarative expectation record loaded from a pack.
@@ -272,6 +288,7 @@ class ModelExpectation:
     endpoint_fingerprint: str = ""
     capabilities: tuple[tuple[str, str], ...] = ()
     behavior_modes: tuple[str, ...] = ("provider_default",)
+    dialect: tuple[tuple[str, str], ...] = ()
     source_url: str = ""
     source_revision: str = ""
     pack_id: str = ""
@@ -310,6 +327,21 @@ class ModelExpectation:
         if "provider_default" not in modes:
             modes = ("provider_default",) + modes
         object.__setattr__(self, "behavior_modes", modes)
+        # Validate dialect: every dimension must be known and its value
+        # must be in the declared vocabulary.  Entries whose value is
+        # "provider_default" are dropped so the stored tuple only carries
+        # non-default overrides.
+        dialect_entries: dict[str, str] = {}
+        for raw_name, raw_value in self.dialect:
+            name = _slug(raw_name, "")
+            if name not in DIALECT_VOCABULARY:
+                raise ValueError(f"unknown dialect dimension {name!r}")
+            value = _slug(raw_value, "")
+            if value not in DIALECT_VOCABULARY[name]:
+                raise ValueError(f"dialect {name!r} does not support {value!r}")
+            if value != "provider_default":
+                dialect_entries[name] = value
+        object.__setattr__(self, "dialect", tuple(sorted(dialect_entries.items())))
         object.__setattr__(self, "source_url", _bounded(self.source_url, 1_000))
         object.__setattr__(self, "source_revision", _bounded(self.source_revision, 300))
         object.__setattr__(self, "pack_id", _slug(self.pack_id, ""))
@@ -320,17 +352,27 @@ class ModelExpectation:
             # the record but outside its hash, so adding or editing an
             # unrelated record never changes this route's qualification
             # fingerprint.
-            object.__setattr__(self, "fingerprint", digest({
+            digest_payload: dict[str, Any] = {
                 "id": self.id, "version": self.version, "status": self.status,
                 "protocol": self.protocol, "adapter": self.adapter_id,
                 "abi": self.adapter_abi, "model": self.model_id,
                 "host": self.host_id_or_family, "endpoint": self.endpoint_fingerprint,
                 "capabilities": self.capabilities, "behavior_modes": self.behavior_modes,
                 "source": self.source_url, "revision": self.source_revision,
-            }))
+            }
+            # Only include dialect in the fingerprint when it carries
+            # non-default overrides, so every existing record keeps its
+            # exact fingerprint.
+            if self.dialect:
+                digest_payload["dialect"] = self.dialect
+            object.__setattr__(self, "fingerprint", digest(digest_payload))
 
     def capability(self, name: str) -> str:
         return dict(self.capabilities).get(name, "unknown")
+
+    def dialect_value(self, name: str) -> str:
+        """Return the declared value for *name* or ``"provider_default"``."""
+        return dict(self.dialect).get(name, "provider_default")
 
     @classmethod
     def from_row(cls, row: Mapping[str, Any], *, pack_id: str, pack_fingerprint: str) -> "ModelExpectation":
@@ -346,6 +388,15 @@ class ModelExpectation:
         # parameters.  The matcher maps them conservatively below.
         if protocol == "hosted_openai":
             protocol = "openai"
+        # Dialect must be a Mapping if present; the loader rejects
+        # anything else so a pack cannot smuggle executable structures.
+        dialect_raw = row.get("dialect")
+        if dialect_raw is not None:
+            if not isinstance(dialect_raw, Mapping):
+                raise ValueError("dialect is an object")
+            dialect = tuple(dialect_raw.items())
+        else:
+            dialect = ()
         return cls(
             id=str(row.get("id") or ""), version=str(row.get("version") or "1"),
             status=str(row.get("status") or "draft"), protocol=str(protocol),
@@ -355,10 +406,29 @@ class ModelExpectation:
             host_id_or_family=str(row.get("host_id_or_family") or identity.get("host_id_or_family") or "*"),
             endpoint_fingerprint=str(row.get("endpoint_fingerprint") or identity.get("endpoint_fingerprint") or ""),
             capabilities=tuple(caps.items()), behavior_modes=tuple(str(item) for item in modes),
+            dialect=dialect,
             source_url=str(row.get("source_url") or provenance.get("source_url") or ""),
             source_revision=str(row.get("source_revision") or provenance.get("source_revision") or ""),
             pack_id=pack_id, pack_fingerprint=pack_fingerprint,
         )
+
+
+def effective_dialect(expectation: ModelExpectation | None) -> dict[str, str]:
+    """Return the effective dialect for an invocation.
+
+    Every dimension defaults to ``"provider_default"``.  A reviewed, exact
+    record (status ``"reviewed"`` and ``model_id != "*"``) may override
+    specific dimensions.  A draft or wildcard record never changes behaviour.
+    """
+    dialect: dict[str, str] = {dim: "provider_default" for dim in DIALECT_VOCABULARY}
+    if (
+        expectation is not None
+        and expectation.status == "reviewed"
+        and expectation.model_id != "*"
+    ):
+        for name, value in expectation.dialect:
+            dialect[name] = value
+    return dialect
 
 
 class ExpectationPackError(ValueError):
@@ -374,7 +444,7 @@ RECORD_FIELDS = frozenset({
     "id", "version", "status", "protocol", "adapter_id", "adapter_abi", "model_id",
     "host_id_or_family", "endpoint_fingerprint", "capabilities", "behavior_modes",
     "native_behavior_modes", "source_url", "source_revision",
-    "identity", "prompt_contract", "provenance",
+    "identity", "prompt_contract", "provenance", "dialect",
 })
 NESTED_RECORD_FIELDS = {
     "identity": frozenset({"provider_model_id", "host_id_or_family", "endpoint_fingerprint"}),
@@ -424,6 +494,21 @@ def _check_record_fields(row: Mapping[str, Any]) -> None:
                 f"expectation record {label!r}: {name} has unknown field(s): " + ", ".join(unknown))
     if "capabilities" in row and not isinstance(row["capabilities"], Mapping):
         raise ExpectationPackError(f"expectation record {label!r}: capabilities is an object")
+    # Dialect is a strict declarative object; unknown dimensions or
+    # unsupported values fail closed so a pack cannot invent behaviour.
+    if "dialect" in row:
+        dialect_raw = row["dialect"]
+        if not isinstance(dialect_raw, Mapping):
+            raise ExpectationPackError(f"expectation record {label!r}: dialect is an object")
+        for name, value in dialect_raw.items():
+            name_slug = _slug(str(name), "")
+            if name_slug not in DIALECT_VOCABULARY:
+                raise ExpectationPackError(
+                    f"expectation record {label!r}: unknown dialect dimension {name_slug!r}")
+            value_slug = _slug(str(value), "")
+            if value_slug not in DIALECT_VOCABULARY[name_slug]:
+                raise ExpectationPackError(
+                    f"expectation record {label!r}: dialect {name_slug!r} does not support {value_slug!r}")
 
 
 class ExpectationRegistry:
@@ -649,6 +734,7 @@ class InvocationPlan:
     max_output_tokens: int
     behavior_mode: str
     reasoning_intent: str
+    dialect: tuple[tuple[str, str], ...] = ()
     expectation_id: str = ""
     expectation_fingerprint: str = ""
     config_hash: str = ""
@@ -659,7 +745,7 @@ class InvocationPlan:
         object.__setattr__(self, "required_capabilities", tuple(sorted(set(self.required_capabilities))))
         object.__setattr__(self, "max_output_tokens", max(1, int(self.max_output_tokens)))
         if not self.config_hash:
-            object.__setattr__(self, "config_hash", digest({
+            config_payload: dict[str, Any] = {
                 "adapter": {"id": self.adapter_id, "version": self.adapter_version,
                             "abi": self.adapter_abi, "protocol": self.protocol},
                 "route": {"host": self.host_id, "endpoint": self.endpoint_fingerprint,
@@ -673,7 +759,12 @@ class InvocationPlan:
                 "behaviour": {"mode": self.behavior_mode, "reasoning": self.reasoning_intent},
                 "expectation": {"id": self.expectation_id,
                                 "fingerprint": self.expectation_fingerprint},
-            }))
+            }
+            # Only include dialect in the hash when it carries non-default
+            # overrides, so every existing plan keeps its exact config_hash.
+            if self.dialect:
+                config_payload["dialect"] = dict(self.dialect)
+            object.__setattr__(self, "config_hash", digest(config_payload))
 
     def trace(self) -> dict[str, Any]:
         """The only representation suitable for UI diagnostics or persistence."""
@@ -690,6 +781,7 @@ class InvocationPlan:
             "tool_schema_fingerprint": self.tool_schema_fingerprint,
             "max_output_tokens": self.max_output_tokens,
             "behavior_mode": self.behavior_mode, "reasoning_intent": self.reasoning_intent,
+            "dialect": dict(self.dialect),
             "expectation": {"id": self.expectation_id,
                             "fingerprint": self.expectation_fingerprint},
         }
@@ -716,6 +808,40 @@ class InvocationPayload:
     def legacy_tools(self) -> list[ToolDef]:
         return [ToolDef(tool.name, tool.description, copy.deepcopy(tool.parameters))
                 for tool in self.tools]
+
+
+def apply_dialect(plan: InvocationPlan, payload: InvocationPayload) -> InvocationPayload:
+    """Return a new payload with dialect-driven adjustments applied.
+
+    The payload is frozen; this returns a shallow copy with the necessary
+    replacements.  Only non-default dialect entries in *plan* take effect.
+    """
+    dialect = dict(plan.dialect)
+
+    # reasoning_replay: "never_replay" strips reasoning_content from every
+    # assistant message.  "replay_on_tool_turn" and provider_default leave
+    # messages as-is (the adapters already replay only on the tool-call
+    # message).
+    if dialect.get("reasoning_replay") == "never_replay":
+        new_messages = []
+        for msg in payload.messages:
+            if msg.get("role") == "assistant" and "reasoning_content" in msg:
+                msg = {k: v for k, v in msg.items() if k != "reasoning_content"}
+            new_messages.append(msg)
+        payload = dataclasses.replace(payload, messages=tuple(new_messages))
+
+    # output_headroom: "reasoning_reserve" adds a fixed token reserve so
+    # the model has room for internal reasoning without stealing from the
+    # visible output budget.
+    if dialect.get("output_headroom") == "reasoning_reserve":
+        payload = dataclasses.replace(payload, max_tokens=payload.max_tokens + REASONING_RESERVE_TOKENS)
+
+    # sampling_profile: "deterministic" sets temperature to 0 only when the
+    # payload does not already specify an explicit temperature.
+    if dialect.get("sampling_profile") == "deterministic" and payload.temperature is None:
+        payload = dataclasses.replace(payload, temperature=0.0)
+
+    return payload
 
 
 @dataclass(frozen=True)
@@ -877,6 +1003,8 @@ class LegacyProviderAdapter(ProtocolAdapter):
         if plan.adapter_id != self.descriptor.id or plan.adapter_abi != self.descriptor.abi_version:
             raise InvocationCompatibilityError(CompatibilityResult(
                 False, "incompatible", ("adapter contract does not match the invocation plan",)))
+        # The route's reviewed dialect shapes the request (ADAPT-08).
+        payload = apply_dialect(plan, payload)
         started = time.monotonic()
         try:
             # Do not send ``temperature=None``.  Existing custom/test
@@ -991,6 +1119,8 @@ def _resolve_plan(scope: InvocationScope, binding: InvocationBinding,
         tool_schema_fingerprint=tool_contract_fingerprint(payload.tools),
         max_output_tokens=payload.max_tokens, behavior_mode=scope.behavior_mode,
         reasoning_intent=scope.reasoning_intent,
+        dialect=tuple(sorted((k, v) for k, v in effective_dialect(expectation).items()
+                             if v != "provider_default")),
         expectation_id=expectation.id if expectation is not None else "",
         expectation_fingerprint=expectation.fingerprint if expectation is not None else "",
     )
