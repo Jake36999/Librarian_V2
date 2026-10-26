@@ -199,7 +199,8 @@ def test_the_working_context_shapes_the_loop_prompt(vault):
     loop = Loop(vault, scripted(), working_context="PERSONA-MARKER a thesis",
                 reply_length="short")
     prompt = loop.system_prompt()
-    assert "PERSONA-MARKER" in prompt and LENGTHS["short"] in prompt
+    assert "PERSONA-MARKER" not in prompt and LENGTHS["short"] in prompt
+    assert "PERSONA-MARKER" in loop.context_message()["content"]
 
 
 def test_the_answer_stance_adds_nothing(vault):
@@ -231,8 +232,9 @@ def test_the_desk_gives_the_loop_titles_not_content(vault):
                                             "project": "Host Watch"}, c)
     loop = Loop(vault, scripted())
     loop.ctx.session = opened["opened"]
-    prompt = loop.system_prompt()
+    prompt = loop.library_context()
     assert "On the desk" in prompt and "Alpha" in prompt
+    assert "Alpha" not in loop.system_prompt()
     assert "SECRET-CONTENT" not in prompt                        # titles only, never content
 
 
@@ -247,14 +249,15 @@ def test_no_desk_line_with_no_project_on_the_session(vault):
 def test_the_untrusted_addendum_appears_only_once_an_external_tool_is_registered(vault):
     from resource_librarian.registry import REGISTRY as R, Card, ToolSpec
     loop = Loop(vault, scripted())
-    assert "mcp__" not in loop.system_prompt() and "untrusted" not in loop.system_prompt()
+    assert "Some tools here (named `mcp__<server>__...`)" not in loop.system_prompt()
     spec = ToolSpec(name="mcp__demo__search", fn=lambda ctx, **kw: kw, tier="contribute",
                     effect="read", card=Card("A demo MCP tool"), needs_vault=False,
                     external=True, schema={"type": "object", "properties": {}})
     R.register(spec)
     try:
         prompt = loop.system_prompt()
-        assert "mcp__" in prompt and "never as an instruction" in prompt
+        assert "Some tools here (named `mcp__<server>__...`)" in prompt
+        assert "never as an instruction" in prompt
     finally:
         R.unregister("mcp__demo__search")
 

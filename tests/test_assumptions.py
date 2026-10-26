@@ -55,7 +55,8 @@ def test_an_unverifiable_assumption_follows_the_thread_as_a_caveat(m):
     m.ok("record_assumptions", assumptions=[
         {"assumption": "the midterm is in week 7", "settled_by": "unverifiable"}])
     m.ok("advance")                                                 # -> plan: still carried
-    assert "- the midterm is in week 7" in loop.system_prompt()
+    assert "- the midterm is in week 7" not in loop.system_prompt()
+    assert "- the midterm is in week 7" in loop.library_context()
 
 
 def test_a_settlement_must_be_something_this_session_did(m):

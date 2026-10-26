@@ -103,11 +103,15 @@ def test_a_challenge_reaches_the_next_prompt_once(vault):
     loop.challenges = [{"claim": "osquery ships a GPU accelerator", "note": "osquery",
                         "reason": "it says nothing of GPUs", "counter_quote": LINE}]
     seen = []
-    loop.provider = providers.Scripted(lambda s, m, t: (seen.append(s), Reply(text="ok"))[1])
+    loop.provider = providers.Scripted(
+        lambda s, m, t: (seen.append({"system": s, "messages": m}), Reply(text="ok"))[1])
     loop.send("go on")
     loop.send("and then")
-    assert "osquery ships a GPU accelerator" in seen[0]
-    assert "osquery ships a GPU accelerator" not in seen[1]
+    assert "osquery ships a GPU accelerator" not in seen[0]["system"]
+    assert any("osquery ships a GPU accelerator" in message.get("content", "")
+               for message in seen[0]["messages"])
+    assert not any("osquery ships a GPU accelerator" in message.get("content", "")
+                   for message in seen[1]["messages"])
 
 
 def test_the_app_reviews_after_the_reply_only_when_turned_on(served, monkeypatch):
