@@ -1276,7 +1276,27 @@ left uncommitted at its usage limit, and finished that packet.
 | ADAPT-07 | implemented | `e8b5d15` | Two-step L1 continuation probe (contract 3): replay as the loop does, tool result with a token, final answer required; one-shot proposals no longer screen. Live run (owner-approved, 2 calls per route): MiMo-V2.6-Flash pass, returns `reasoning_content` in a tool loop; DeepSeek-V4.1-Flash pass, none. [Report](../reports/2026-10-26-adapt07-continuation-probe.md). Drafted by DeepSeek-V4-Pro. Suite: 1357 passed, 2 skipped, 1 deselected. |
 | ADAPT-08 | implemented | `b70af09` | Closed dialect vocabulary on expectation records; unknown dimensions/values fail the pack. Interpreted: `reasoning_replay` (never_replay), `output_headroom` (reasoning_reserve), `sampling_profile` (deterministic); the three tool dimensions are declared with provider_default only. Only exact reviewed records apply; bundled fingerprints unchanged, so both reviewed routes keep provider defaults. MiMo-V2.6-Flash's ADAPT-07 result is the evidence for a future `replay_on_tool_turn` record. Tests: `tests/test_model_dialect.py`. Drafted by DeepSeek-V4-Pro. Suite: 1376 passed, 2 skipped, 1 deselected. |
 | ADAPT-09 | implemented | `c06d1b6` | Core-authored instructions are split into a byte-stable prefix plus a volatile state suffix. Working context, desk titles, adopted lenses, reply-review claims/names/counterquotes and assumptions are delimited user-role reference data immediately before the current request; a stable system policy denies that data instruction authority and case-insensitive delimiter lookalikes are escaped. Prior history remains ahead of the volatile context. [Measurement](../reports/2026-10-26-adapt09-prompt-layout.md): the 8,000-character fixture increased uncached estimated input by 151 tokens while expanding the context-independent cacheable prefix from 5,756 to 6,252 characters; route-specific behavior remains disabled. Suite: 1383 passed, 2 skipped, 1 deselected. |
+| ADAPT-04B | implemented | `6960d84` | First-party OpenAI/Anthropic transports, host-capacity waits and bounded retry backoff accept the turn cancellation event. Cancellation reaches the invocation runtime and Session as a typed, non-retryable `cancelled` outcome; `Loop` stops without an error and Core shutdown reaches an active provider call. The historical `Provider.chat` and duck-typed custom-provider ABI remains compatible. |
+| ADAPT-10 | implemented | `6960d84` | Model-card evidence can propose a strict declarative expectation through existing staging, person/revision review and atomic personal-pack activation. The active loader independently refuses wildcard routes, unqualified dialect behavior, executable/template fields, missing provenance, bundled-record replacement and exact-route collisions. Rejection or failed activation changes no route. Signed/sharded global distribution remains deferred as planned. |
+| ADAPT-11 | implemented | `6960d84` | Bare loops now default to task-sized bundles; explicit compatibility opt-out and helper allowlists remain. Oversized read results use loop-local content-addressed handles with bounded projections and exact chunked retrieval. [Measurement](../reports/2026-10-26-adapt11-tool-surface.md): 133 tools / ~15,813 estimated schema tokens becomes 11 / ~1,241 (92.2% reduction); a 50,000-character result reconstructs exactly. |
 
 Full suite on ChatGPT's tree before the two fixes: 1314 passed, 2 skipped,
 1 deselected. The focused suites passed after them. G1 remains open
 (INDEX-05 is partial).
+
+### Adapter completion continuation (2026-10-26)
+
+The post-ADAPT-09 packet closes ADAPT-04B, ADAPT-10 and ADAPT-11 in one
+coherent invocation/loop boundary commit (`6960d84`). Work was split across
+three delegated implementation lanes, then integrated and reviewed at the
+Core boundary. The combined focused suite passed **184 tests**. Frozen-source
+full verification passed **1,417 tests, 2 skipped, 1 deselected in 472.12s**.
+No paid provider call, route requalification or push occurred.
+
+The next blocking gate remains **INDEX-05/G1**: sustained/large-vault and
+packaged Windows contention, rename/delete and metadata-snapshot consistency,
+mixed-traffic crash/stop, simultaneous adapters and external handles. After
+G1, the next product wave is safe directory deployment (DEPLOY-01 onward),
+followed by the Session-based harness, integrated acceptance and release
+evidence. CORE-04B remains an optional managed-MCP bootstrap rather than a
+prerequisite for the direct Core path.
