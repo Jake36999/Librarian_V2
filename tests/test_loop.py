@@ -170,7 +170,10 @@ def test_a_turn_calls_tools_until_the_model_answers(vault):
         Reply(text="Opened.", tool_calls=[ToolCall("2", "draft_offering", {
             "title": "x", "summary": "x", "claims": []}), ToolCall("3", "clerk_next", {})]),
         Reply(text="The draft waits for synthesise."))
-    loop = Loop(vault, provider, on_event=events.append)
+    # This deliberately proposes hidden/phase-invalid calls. Keep the old
+    # full surface so the assertion remains specifically about phase gates.
+    loop = Loop(vault, provider, extras={"use_tool_bundles": False},
+                on_event=events.append)
     turn = loop.send("explore host monitoring")
     assert turn.reply == "The draft waits for synthesise." and turn.steps == 3
     assert [c["tool"] for c in turn.calls] == ["open_session", "draft_offering", "clerk_next"]
@@ -314,7 +317,13 @@ class WalkModel(providers.Provider):
 
 def run_loop(vault, walk, **loop_args):
     model = WalkModel(lambda call: walk(vault, call), loop_args.pop("scribe_answer", None))
-    loop = Loop(vault, model, on_event=model.on_event, max_steps=200, **loop_args)
+    # Cross-surface parity drives a pre-scripted registry walk whose calls do
+    # not choose from the schemas offered on each turn. It therefore opts out
+    # explicitly; default-bundle behavior has focused fixtures of its own.
+    extras = dict(loop_args.pop("extras", {}))
+    extras.setdefault("use_tool_bundles", False)
+    loop = Loop(vault, model, on_event=model.on_event, max_steps=200,
+                extras=extras, **loop_args)
     turn = loop.send("Frame Host Watch with me.")
     assert turn.reply == "The session is closed.", turn
     return model, loop

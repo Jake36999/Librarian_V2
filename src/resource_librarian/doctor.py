@@ -259,7 +259,7 @@ def checks(vault: Vault | None = None, mcp: Any = None) -> list[Check]:
     # A pack that fails to load leaves every model route unreviewed; say so
     # instead of letting reviewed routes quietly read as unknown.
     from .model_invocation import ExpectationRegistry
-    pack = ExpectationRegistry.bundled().status()
+    pack = ExpectationRegistry.active().status()
     out.append(Check("model expectations", pack["ok"],
                      f"{pack['pack_id']}: {pack['records']} record(s)" if pack["ok"]
                      else pack["error"]))

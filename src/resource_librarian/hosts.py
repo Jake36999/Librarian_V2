@@ -24,7 +24,7 @@ from typing import Any, Callable, TypeVar
 from .coordination import atomic_write_text
 from .keys import config_dir
 from .providers import PRESETS
-from .providers import Provider, ProviderError, ToolDef, Reply
+from .providers import Provider, ProviderCancelledError, ProviderError, Reply, ToolDef
 from .vault import now_iso
 from urllib.parse import urlparse
 
@@ -426,9 +426,16 @@ class HostLimiter:
                 self._limits[host.id] = state
             return state
 
-    def run(self, host: Host, call: Callable[[], T], *, background: bool = False) -> T:
+    def run(self, host: Host, call: Callable[[], T], *, background: bool = False,
+            cancel: threading.Event | None = None) -> T:
         state = self._limit(host)
         wait = float(min(max(host.timeout, 1), 120))
+
+        def check_cancelled() -> None:
+            if cancel is not None and cancel.is_set():
+                raise ProviderCancelledError()
+
+        check_cancelled()
         if background and host.local:
             # A local endpoint shares this machine's CPU with the person
             # chatting, so a background sync yields until the interactive
@@ -437,19 +444,28 @@ class HostLimiter:
             deadline = time.monotonic() + wait
             with state.idle:
                 while state.interactive > 0:
+                    check_cancelled()
                     remaining = deadline - time.monotonic()
                     if remaining <= 0:
                         raise ProviderError(f"host {host.display_name!r} is busy with an interactive turn; "
                                             "the background call yielded")
-                    state.idle.wait(remaining)
+                    state.idle.wait(min(remaining, 0.05) if cancel is not None else remaining)
         if not background:
             with state.idle:
                 state.interactive += 1
         try:
-            if not state.semaphore.acquire(timeout=wait):
-                raise ProviderError(f"host {host.display_name!r} reached its concurrency limit "
-                                    f"({host.concurrency_limit}); no failover was attempted")
+            deadline = time.monotonic() + wait
+            while True:
+                check_cancelled()
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise ProviderError(f"host {host.display_name!r} reached its concurrency limit "
+                                        f"({host.concurrency_limit}); no failover was attempted")
+                if state.semaphore.acquire(timeout=min(remaining, 0.05)
+                                           if cancel is not None else remaining):
+                    break
             try:
+                check_cancelled()
                 if host.rate_limit:
                     with state.lock:
                         now = time.monotonic()
@@ -506,18 +522,31 @@ class LimitedProvider(Provider):
 
     def chat(self, system: str, messages: list[dict[str, Any]], tools: list[ToolDef],
              max_tokens: int = 4096, temperature: float | None = None) -> Reply:
+        return self.chat_cancellable(system, messages, tools, max_tokens=max_tokens,
+                                     temperature=temperature)
+
+    def chat_cancellable(self, system: str, messages: list[dict[str, Any]],
+                         tools: list[ToolDef], max_tokens: int = 4096,
+                         temperature: float | None = None,
+                         cancel: threading.Event | None = None) -> Reply:
         # Providers with a native HTTP adapter generally retried before this
         # point.  A single, bounded facade retry covers custom endpoints while
         # preserving the selected route; it never silently changes models.
         attempts = 2 if self.retry_policy == "bounded" else 1
         for attempt in range(attempts):
             try:
-                return self.limiter.run(self.host, lambda: self.provider.chat(
-                    system, messages, tools, max_tokens=max_tokens, temperature=temperature))
+                return self.limiter.run(self.host, lambda: self.provider.chat_cancellable(
+                    system, messages, tools, max_tokens=max_tokens, temperature=temperature,
+                    cancel=cancel), cancel=cancel)
             except ProviderError as exc:
                 if attempt + 1 >= attempts or not transient_provider_error(exc):
                     raise
-                time.sleep(0.25 * (2 ** attempt))
+                delay = 0.25 * (2 ** attempt)
+                if cancel is not None:
+                    if cancel.wait(delay):
+                        raise ProviderCancelledError()
+                else:
+                    time.sleep(delay)
         raise AssertionError("bounded provider retry loop unexpectedly ended")
 
     def models(self) -> list[str]:

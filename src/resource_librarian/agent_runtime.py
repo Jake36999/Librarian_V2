@@ -546,7 +546,10 @@ def select_bundle(tier: str, phase: str = "", *, projects_on: bool = True,
     # A macro is the single controlled expansion path.  Its contained calls
     # are still registry calls; exposing it does not expose an arbitrary
     # 60-tool catalogue to the model.
-    for name in ("macro_plan", "macro_run"):
+    # Oversized reads are projected to a loop-local handle.  Its bounded
+    # reader belongs on every task surface so a result remains usable after a
+    # phase transition without reopening the registry.
+    for name in ("read_result", "macro_plan", "macro_run"):
         if name in by_name and name not in {spec.name for spec in selected}:
             selected.append(by_name[name])
     # A compact fallback gives a newly added phase usable reads without dumping

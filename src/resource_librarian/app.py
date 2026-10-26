@@ -534,10 +534,10 @@ class App:
             self.loop.ctx.session = None
         self.close_runtime()
 
-    #: How long shutdown waits for a cancelled chat turn or action to stop.  A
-    #: turn blocked inside a provider request sees its cancel event only when
-    #: that request returns (ADAPT-04B makes it abortable), so this bounds the
-    #: wait; it is not a stop-latency promise.
+    #: How long shutdown waits for a cancelled chat turn or action to stop.
+    #: First-party provider transports abort their active socket (ADAPT-04B);
+    #: legacy third-party providers retain their synchronous ABI, so this is
+    #: still a fail-closed bound rather than a universal stop-latency promise.
     STOP_GRACE_SECONDS = 5.0
     #: A writer has already closed admission when this wait begins.  If an
     #: operation still has not returned at the deadline, the Core remains a

@@ -40,6 +40,7 @@ from .model_invocation import (InvocationPayload, InvocationRuntime,
                                InvocationScope, TaskContract)
 from .providers import Provider, ProviderError, ToolDef, provider_failure_category
 from .registry import REGISTRY, Context, ToolSpec
+from .result_handles import ResultHandleStore
 from .rules import Refusal
 from .session import WRITES, SessionStore, bind_model_session_events
 
@@ -377,6 +378,10 @@ class Loop:
                  on_event: Callable[[dict[str, Any]], None] | None = None):
         self.provider = provider
         self.ctx = Context(tier=tier, vault=vault, extras=dict(extras or {}))
+        # Handles never cross Loop instances: knowing a digest must not grant a
+        # different caller access to this conversation's retrieved content.
+        self._result_handles = ResultHandleStore()
+        self.ctx.extras["_result_handles"] = self._result_handles
         if scribe == "provider":
             self.ctx.extras.setdefault(
                 "scribe_fallback", ProviderEndpoint(
@@ -705,7 +710,7 @@ class Loop:
         session = self._session()
         working = session is not None and session.status == "open" and \
             session.phase != session.phases[-1]
-        if self.ctx.extras.get("use_tool_bundles"):
+        if self.ctx.extras.get("use_tool_bundles", True):
             from .agent_runtime import DEFAULT_PROFILES, required_bundle_actions, select_bundle
             profile_id = str(self.ctx.extras.get("agent_profile") or "lead")
             store = self.ctx.extras.get("profile_store")
@@ -759,7 +764,7 @@ class Loop:
         it never adds a tool, changes a profile, or mutates the session.  The
         normal registry boundary remains authoritative.
         """
-        if self.only is not None or not self.ctx.extras.get("use_tool_bundles"):
+        if self.only is not None or not self.ctx.extras.get("use_tool_bundles", True):
             return None
         required = tuple(str(name) for name in self.ctx.extras.get("bundle_required_actions") or ()
                          if isinstance(name, str) and name)
@@ -953,8 +958,13 @@ class Loop:
                 with bind_model_session_events(
                         self.ctx.vault, self.ctx.session,
                         self._pending_model_events):
-                    reply = runtime.invoke(walk_provider, invocation, scope=scope, binding=binding)
+                    reply = runtime.invoke(walk_provider, invocation, scope=scope, binding=binding,
+                                           cancel=cancel)
             except ProviderError as exc:
+                if provider_failure_category(exc) == "cancelled":
+                    turn.stopped = "cancelled"
+                    self.on_event({"type": "stopped", "reason": "cancelled"})
+                    return turn
                 turn.stopped, turn.error = "provider_error", str(exc)[:400]
                 turn.failure_category = provider_failure_category(exc)
                 self.on_event({"type": "error", "error": turn.error,
@@ -1026,4 +1036,4 @@ class Loop:
         limits = self.ctx.extras.pop("turn_limits", None)
         if limits:                      # set_effort: this reply's own step and time limits
             self.max_steps, self.turn_seconds = limits[0], self.cap_turn_seconds(limits[1])
-        return result
+        return self._result_handles.project(name, result)

@@ -12,6 +12,7 @@ import pytest
 from resource_librarian import connection
 from resource_librarian.app import Action, ApiError, App
 from resource_librarian.coordination import LeaseHeldError, VaultCoordinator
+from resource_librarian.providers import Provider, ProviderCancelledError
 
 PHASES = ["admission_closed", "work_cancelled", "writer_drained", "index_closed",
           "lease_released"]
@@ -59,6 +60,38 @@ def test_a_running_turn_is_cancelled_and_new_work_is_refused(core):
     with pytest.raises(ApiError) as refused:
         core.chat("one more question")
     assert refused.value.status == 503
+
+
+def test_shutdown_cancel_reaches_an_active_provider_call(vault, monkeypatch):
+    entered = threading.Event()
+
+    class WaitingProvider(Provider):
+        name = model = "waiting"
+
+        def chat(self, system, messages, tools, max_tokens=4096, temperature=None):
+            raise AssertionError("the runtime must use the cancellable entry point")
+
+        def chat_cancellable(self, system, messages, tools, max_tokens=4096,
+                             temperature=None, cancel=None):
+            entered.set()
+            assert cancel is not None and cancel.wait(3)
+            raise ProviderCancelledError()
+
+    provider = WaitingProvider()
+    app = App(vault, coordinate=True, provider_for=lambda _choice: provider)
+    monkeypatch.setattr(App, "STOP_GRACE_SECONDS", 1.0)
+    try:
+        app.set_tiers([{"provider": "deepinfra", "model": "waiting"}], override="test")
+        assert app.chat("hello") == {"accepted": True}
+        assert entered.wait(2)
+
+        started = time.monotonic()
+        assert app.close_runtime() is True
+
+        assert time.monotonic() - started < 1
+        assert _phase(app, "work_cancelled")["turn"] == "stopped"
+    finally:
+        app.close_runtime()
 
 
 def test_a_turn_stuck_in_a_provider_call_does_not_hold_the_stop(core, monkeypatch):

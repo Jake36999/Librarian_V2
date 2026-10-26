@@ -99,7 +99,8 @@ def test_helpers_run_at_once_read_only_and_within_the_effort_cap(library):
                                      "tier": 2}, c)
     assert out["agents"] == 2 and all("found osquery" in r["answer"] for r in out["results"])
     assert all(names <= {"search", "get_note", "web_search", "read_url", "read_file",
-                         "read_source_file", "list_files", "search_work", "topics_list"}
+                         "read_source_file", "read_result", "list_files", "search_work",
+                         "topics_list"}
                for names in seen)
     assert not (library.root / "Notes" / "x.md").exists()            # the write was refused
     assert all("write_note" in r["tools"] for r in out["results"])

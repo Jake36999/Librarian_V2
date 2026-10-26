@@ -45,7 +45,7 @@ from .rules import Refusal
 from .search import Engine
 from .vault import Vault, now_iso
 
-KINDS = ("source", "lens", "concept", "topic", "import")
+KINDS = ("source", "lens", "concept", "topic", "import", "model_expectation")
 # One lifecycle for a source (Requirements - Research Pipeline §4.1, Addendum R7/R14):
 # queued (a reference, not yet fetched) -> staged (captured and described) -> approved
 # (a person approved spending processing on it) -> processing (in a batch a person
@@ -191,6 +191,9 @@ def review(store: StagingStore, item_id: str, endpoint: clerk.Endpoint | None,
     item = store.load(item_id)
     if item.get("promotion_progress"):
         raise TypeError("finish or reconcile interrupted acceptance before requesting another draft")
+    if item["kind"] == "model_expectation":
+        from .model_expectation_authoring import review as review_expectation
+        return review_expectation(store, item_id)
     if item["kind"] == "lens":
         return {"id": item_id, "kind": item["kind"], "note": "lenses are reviewed by reading "
                 "the proposal and its source_quote; there is nothing to draft"}
@@ -1058,6 +1061,9 @@ def summary(item: dict[str, Any]) -> dict[str, Any]:
                    examples=(item.get("members") or [])[:5],
                    coverage=item.get("coverage", {}), aliases=item.get("aliases", []),
                    **({"duplicate_of": item["duplicate_of"]} if item.get("duplicate_of") else {}))
+    elif item["kind"] == "model_expectation":
+        row.update(name=item.get("name", ""), source_item_id=item.get("source_item_id", ""),
+                   source_evidence_id=item.get("source_evidence_id", ""))
     else:
         row.update(name=item.get("name", ""), source=item.get("source", ""),
                    locator=item.get("locator", ""),

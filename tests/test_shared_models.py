@@ -70,8 +70,11 @@ def test_a_reply_runs_under_the_effort_the_lead_chose(tmp_path):
     init(tmp_path / "v", name="v")
     replies = [Reply(text="", tool_calls=[ToolCall("1", "set_effort", {"level": 1})])] + \
         [Reply(text="", tool_calls=[ToolCall(str(i), "vault_status", {})]) for i in range(30)]
+    # This scripted model intentionally repeats a maintenance call to measure
+    # the effort stop, so opt out of the task-sized schema boundary here.
     loop = Loop(Vault(tmp_path / "v"), providers.Scripted(lambda s, m, t: replies.pop(0)),
-                extras={"effort": effort.profile(8), "effort_ceiling": effort.profile(8)})
+                extras={"effort": effort.profile(8), "effort_ceiling": effort.profile(8),
+                        "use_tool_bundles": False})
     loop.max_steps = effort.profile(8)["turn_steps"]
     turn = loop.send("add this link")
     assert turn.stopped == "max_steps" and turn.steps == effort.profile(1)["turn_steps"]
