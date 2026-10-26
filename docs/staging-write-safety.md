@@ -368,9 +368,11 @@ shared UI distinguishes that warning from the durable library decision.
 
 The static construction debt remains **3**: mixed-kind/multi-topic staging
 acceptance (one serving site) and graph/extract's explicit offline branches
-(two). Full runtime ownership enforcement, Windows concurrency stress,
-fresh-item quarantine relocation and encoder/transport writer waits remain
-open. The source-only path preserves originals; this is not deployment-wide
+(two). Full runtime ownership enforcement, Windows concurrency stress and
+encoder/transport writer waits remain open. Commit `74c6081` later added
+collision-safe fresh-rejection targets plus complete/partial attachment
+fingerprints while retaining originals. The source-only path preserves
+originals; this is not deployment-wide
 deduplication or an all-path source-preservation guarantee.
 
 The conservative shared guard currently rehashes the combined dependency set

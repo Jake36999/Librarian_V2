@@ -68,14 +68,12 @@ callback. A fetch can query IndexService while pending without deadlocking
 the worker. The extracted result/cache format and person-only execution
 permissions are unchanged.
 
-This does not prove full extract parity. In particular, the existing planner
-can inherit a timestamp-like component revision, while source-file retrieval
-can fall back to the current default branch if survey evidence has no tree
-SHA. Mixed source metadata/revisions between files also need a pinned-plan
-review. Those pre-existing pack-contract gaps require explicit revision tests
-and closure before release; this ownership migration does not certify them.
-Schema/model-service cancellation, large embedding IO on the worker and
-adopted-root indexing remain separate tasks.
+This ownership migration by itself does not prove full extract parity. Commit
+`74c6081` later made the registered tool fail closed without one unambiguous
+reviewed survey tree SHA and added a deterministic token for the exact plan;
+the direct Python compatibility path derives both pins internally. Broader
+extract parity, schema/model-service cancellation, large embedding IO on the
+worker and adopted-root indexing remain separate tasks.
 
 ## Windows fingerprint/replacement exclusion
 
@@ -114,8 +112,10 @@ Windows host, not the whole supported-version/packaged-release matrix.
 Implementation `f11e98d` extends same-path read exclusion to `get_note`, pane/
 script display, `notes.load`, and the stat/text snapshot in `Index.upsert`.
 This closes a controlled native Windows getter/prepared-writer reproduction;
-parsing and SQL do not run while the file-read lock is held. General raw-read,
-rename/delete and note/index-metadata snapshot consistency still need coverage.
+parsing and SQL do not run while the file-read lock is held. Commit `74c6081`
+later added active-handle byte snapshots, nanosecond/native file identity and
+bounded three-pass rename/delete reconciliation with explicit non-convergence.
+Sustained/large-vault cost and unsupported external-handle interference remain.
 
 Desk operations now close their connections explicitly on success or rollback;
 failed lens initialization also closes. Schema setup is serialized per store,

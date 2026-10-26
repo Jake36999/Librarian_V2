@@ -1037,9 +1037,11 @@ legacy multi-item acceptance cannot bypass this partial-work review.
 
 The static debt count remains **3**: multi-item source/topic promotion still
 uses staging's one direct-engine site, while graph/extract retain two explicit
-offline branches. Fresh-item rejection/offline relocation, full cancellation,
-writer occupancy during encoder IO, INDEX-04 enforcement and INDEX-05 Windows
-stress remain open. Source/files/SQL/staged state are not one transaction;
+offline branches. At the time of this slice, fresh-item rejection safety, full
+cancellation, writer occupancy during encoder IO, INDEX-04 enforcement and
+INDEX-05 Windows stress remained open; rejection target/attachment guards were
+later delivered by `74c6081`. Source/files/SQL/staged state are not one
+transaction;
 crashes or failed progress persistence still require operation-log inspection.
 This does not complete deployment adoption/dedupe or promise exactly-once
 acceptance. Detailed scope and limits are in `staging-write-safety.md`.
@@ -1079,7 +1081,7 @@ This is a bounded writer operation, not a transaction, automatic recovery,
 global dedupe or in-flight provider cancellation. Encoder IO can still occupy
 the actor. The static debt count remains **3**: staging's mixed-kind/multi-topic
 path plus graph/extract's explicit offline branches. INDEX-04 enforcement,
-INDEX-05 stress, fresh-item quarantine relocation and the adapter/adoption/
+INDEX-05 stress and the adapter/adoption/
 harness/release tasks are still open. The next staging slice must compose
 taxonomy changes with source plans without silently changing approved scope.
 No paid provider calls or new model qualification were performed; nothing was
@@ -1195,12 +1197,12 @@ not bounded by this change.
 An authoring development test failed with access denied at atomic replacement
 and passed alone. The native regression proves a relevant failure mechanism,
 not which handle caused that specific failure; the two earlier mixed failures
-also remain unexplained. INDEX-05 Windows multi-client/WAL/desk/lens stress,
-quarantine relocation, embedding/provider cancellation and G1 remain open.
-The extract pack also needs strict pinned-plan tests: component timestamps
-can stand in for revisions and source-file retrieval can fall back to the
-default branch without a survey tree SHA. This ownership packet does not
-certify full extract parity or fix that separate pre-existing contract gap.
+also remain unexplained. At the time of this ownership slice, INDEX-05 Windows
+multi-client/WAL/desk/lens stress, rejection quarantine safety,
+embedding/provider cancellation and G1 remained open. Commit `74c6081` later
+added collision-safe rejection guards and strict registered-tool extract
+revision/plan pinning. This ownership packet by itself does not certify full
+extract parity.
 
 **381 focused tests passed in 204.42s**, including **45 new ownership checks
 and 7 file-access checks**. UI build and complete browser smoke passed,
@@ -1252,11 +1254,12 @@ reported. Final local log: `tmp/core-concurrency-full-2026-10-25-01.log`.
 Only a module docstring was clarified after that run; behavior is unchanged. See
 `reports/2026-10-25-core-concurrency-validation.md` and the regression manifest.
 
-INDEX-05/G1 remain open for sustained/large-vault tests, rename/delete and
-note/index-metadata snapshot consistency, crash/stop under mixed traffic,
-actual simultaneous adapters, external handles, Python matrix and packaged
-acceptance. Staging quarantine/encoder waits, strict extract pinning and the
-remaining adapter/adoption/harness work are unchanged. No paid calls or pushes
+INDEX-05/G1 remain open for sustained/large-vault and packaged Windows
+contention, crash/stop under mixed traffic, actual simultaneous adapters,
+external handles, the supported-Python matrix and packaged acceptance.
+Encoder writer occupancy and the remaining adoption/harness work are unchanged;
+`74c6081` later closed this slice's rename/delete snapshot, registered extract
+pinning and rejection-guard gaps. No paid calls or pushes
 were performed; the new native reproduction is not proof of the cause of the
 earlier unreproduced mixed-acceptance failures.
 
@@ -1294,8 +1297,9 @@ full verification passed **1,417 tests, 2 skipped, 1 deselected in 472.12s**.
 No paid provider call, route requalification or push occurred.
 
 The next blocking gate remains **INDEX-05/G1**: sustained/large-vault and
-packaged Windows contention, rename/delete and metadata-snapshot consistency,
-mixed-traffic crash/stop, simultaneous adapters and external handles. After
+packaged Windows contention, mixed-traffic crash/stop, simultaneous adapters,
+external handles, the supported-Python matrix and packaged-install evidence.
+After
 G1, the next product wave is safe directory deployment (DEPLOY-01 onward),
 followed by the Session-based harness, integrated acceptance and release
 evidence. CORE-04B remains an optional managed-MCP bootstrap rather than a
@@ -1306,9 +1310,11 @@ prerequisite for the direct Core path.
 Commit `74c6081` closes three bounded correctness gaps without closing G1.
 Index refresh/rebuild now uses active-handle byte snapshots, persists
 nanosecond metadata and native identity, catches same-size replacements,
-reconciles rename/delete races within a three-pass bound, and removes stale
-component rows. Extract materialization is bound to one reviewed survey tree
-revision and a deterministic token for the exact plan. Fresh staging rejection
+attempts rename/delete reconciliation for up to three passes, reports
+non-convergence, and removes stale component rows. Registered extract-tool
+materialization is bound to one reviewed survey tree revision and a
+deterministic token for the exact plan; direct Python compatibility derives
+both pins internally. Fresh staging rejection
 uses a prepared collision-safe quarantine target and fingerprints complete and
 partial source attachments while retaining originals for recovery.
 
