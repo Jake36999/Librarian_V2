@@ -58,7 +58,8 @@ from .hosts import (EVALUATION_LEVELS, RELEASE_PROMPT_CONTRACT_VERSION,
                     RELEASE_TOOL_CONTRACT_VERSION, L1_PROBE_CONTRACT_VERSION,
                     EvaluationJobStore, Host, HostFullRecordError, HostLimiter, HostRegistry,
                     LimitedProvider, QualificationStore, endpoint_fingerprint, fingerprints,
-                    release_lead_for_route, release_leads, validate_l1_probe)
+                    release_lead_for_route, release_leads, validate_l1_probe,
+                    validate_l1_continuation, continuation_messages)
 from .index import IndexService
 from .file_access import read_text
 from .keys import KeyStore, config_dir
@@ -1907,10 +1908,14 @@ class App:
             probe_tools = [ToolDef("librarian_probe", "Return a small probe object.",
                                    {"type": "object", "properties": {"ok": {"type": "boolean"}},
                                     "required": ["ok"], "additionalProperties": False})]
+            # One prompt for both steps; the second replays the first exactly
+            # as the agent loop does (ADAPT-07).
+            probe_prompt = [{"role": "user", "content": (
+                'Call librarian_probe with {"ok": true}. When you receive its result, '
+                "reply in plain text with the token it returns.")}]
             probe_payload = InvocationPayload.from_legacy(
-                "You are a qualification probe.",
-                [{"role": "user", "content": "Call librarian_probe with {\"ok\": true}."}],
-                probe_tools, max_tokens=64, temperature=0)
+                "You are a qualification probe.", probe_prompt, probe_tools,
+                max_tokens=64, temperature=0)
             probe_scope = InvocationScope(
                 role=role,
                 task=TaskContract(id="l1-tool-probe", kind="qualification",
@@ -1920,10 +1925,33 @@ class App:
             reply = self.invocation_runtime.invoke(provider, probe_payload, scope=probe_scope)
             observed_model = str(reply.model or "")
             probe_validation = validate_l1_probe(reply, model)
+            if probe_validation["passed"]:
+                # A one-shot proposal is not enough for tool work: send the
+                # tool result back and require a final answer that uses it.
+                continuation_payload = InvocationPayload.from_legacy(
+                    "You are a qualification probe.", continuation_messages(probe_prompt, reply),
+                    probe_tools, max_tokens=256, temperature=0)
+                continuation_scope = InvocationScope(
+                    role=role,
+                    task=TaskContract(id="l1-tool-continuation", kind="qualification",
+                                      interaction="qualification_probe",
+                                      required_capabilities=frozenset({"tool_use"})),
+                    behavior_mode="provider_default")
+                final_reply = self.invocation_runtime.invoke(provider, continuation_payload,
+                                                             scope=continuation_scope)
+                continuation = validate_l1_continuation(reply, final_reply, model)
+                probe_validation["continuation"] = continuation
+                probe_validation["passed"] = bool(probe_validation["passed"] and continuation["passed"])
+                probe_validation["failure_codes"] = list(probe_validation["failure_codes"]) + [
+                    f"continuation_{code}" for code in continuation["failure_codes"]]
+            else:
+                probe_validation["continuation"] = {"passed": False, "failure_codes": ["not_run"],
+                                                    "checks": {}}
             good = bool(probe_validation["passed"])
             outcome = "pass" if good else "fail"
-            detail = ("strict tool-call smoke probe passed" if good else
-                      "strict tool-call probe failed: " + ", ".join(probe_validation["failure_codes"]))
+            detail = ("strict tool continuation probe passed" if good else
+                      "strict tool continuation probe failed: " +
+                      ", ".join(probe_validation["failure_codes"]))
             health = self.hosts.mark_health(host_id, ok=good, detail=detail, model=model)
             self.hub.publish({"type": "route_health_changed", "host_id": host_id,
                               "model": model, "health": health.get("health", {})})

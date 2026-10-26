@@ -49,7 +49,7 @@ RELEASE_LEAD_SCHEMA_VERSION = 2
 RELEASE_LEAD_MANIFEST_STABLE_STATUS = "stable"
 # This is deliberately distinct from the release manifest version: custom and
 # local routes also need an unambiguous record of what their paid L1 proved.
-L1_PROBE_CONTRACT_VERSION = "2"
+L1_PROBE_CONTRACT_VERSION = "3"   # 3: the tool continuation step (ADAPT-07)
 T = TypeVar("T")
 
 
@@ -581,6 +581,77 @@ def validate_l1_probe(reply: Reply, requested_model: str) -> dict[str, Any]:
         "requested_model": requested,
         "observed_model": observed,
     }
+
+
+# A token only the probe's tool result carries: echoing it proves the model
+# read the tool result rather than answering from the prompt (ADAPT-07).
+CONTINUATION_TOKEN = "L1-CONT-7F3A"
+
+
+def validate_l1_continuation(first: Reply, final: Reply, requested_model: str) -> dict[str, Any]:
+    """Validate the second step of the tool-continuation probe.
+
+    The first reply must have proposed a tool call; the final reply must
+    contain the continuation token in plain text and *no* further tool calls.
+    """
+    first_calls = list(first.tool_calls) if isinstance(getattr(first, "tool_calls", None), list) else []
+    final_calls = list(final.tool_calls) if isinstance(getattr(final, "tool_calls", None), list) else []
+
+    # Every id must be a non-empty string and globally unique across both replies.
+    all_ids = [getattr(c, "id", None) for c in first_calls + final_calls]
+    ids_unique = all(isinstance(i, str) and len(i) > 0 for i in all_ids) and len(set(all_ids)) == len(all_ids)
+
+    # Final reply must not propose any tool call.
+    final_without_tool_call = len(final_calls) == 0
+
+    # Final reply text must contain the continuation token.
+    final_text = str(getattr(final, "text", "") or "")
+    final_answer = CONTINUATION_TOKEN in final_text
+
+    # Model identity check (same convention as validate_l1_probe).
+    requested = str(requested_model or "").strip()
+    observed = str(getattr(final, "model", "") or "").strip()
+    returned_model = bool(observed and requested and observed == requested)
+
+    failures: list[str] = []
+    if not ids_unique:
+        failures.append("tool_call_ids")
+    if not final_without_tool_call:
+        failures.append("repeated_tool_call")
+    if not final_answer:
+        failures.append("final_answer_missing")
+    if not observed:
+        failures.append("returned_model_missing")
+    elif not returned_model:
+        failures.append("returned_model_mismatch")
+
+    checks = {
+        "tool_call_ids_unique": ids_unique,
+        "final_without_tool_call": final_without_tool_call,
+        "final_answer": final_answer,
+        "returned_model": returned_model,
+    }
+    return {
+        "passed": not failures,
+        "checks": checks,
+        "failure_codes": failures,
+        "observed_model": observed,
+        "reasoning_content_returned": bool(getattr(first, "reasoning_content", None)),
+        "reasoning_replayed": bool(getattr(first, "reasoning_content", None)),
+    }
+
+
+def continuation_messages(prompt_messages: list[dict], first: Reply) -> list[dict]:
+    """Build the message list that replays the first turn and appends a tool result."""
+    tool_call_id = first.tool_calls[0].id
+    return prompt_messages + [
+        first.message(),
+        {
+            "role": "tool",
+            "tool_call_id": tool_call_id,
+            "content": json.dumps({"ok": True, "token": CONTINUATION_TOKEN}),
+        },
+    ]
 
 
 @dataclass

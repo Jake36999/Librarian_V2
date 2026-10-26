@@ -133,3 +133,18 @@ def pdf_bytes(pages: list[list[str]]) -> bytes:
     out += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n" \
         .encode()
     return out
+
+
+def l1_probe_answer(model, arguments=None):
+    """A scripted route answering the two-step L1 probe (ADAPT-07): it proposes
+    the probe tool, then answers with the token the tool result carries."""
+    from resource_librarian.hosts import CONTINUATION_TOKEN
+    from resource_librarian.providers import Reply, ToolCall
+
+    def answer(_system, messages, _tools):
+        if messages and messages[-1].get("role") == "tool":
+            return Reply(text=f"The token is {CONTINUATION_TOKEN}.", model=model)
+        return Reply(tool_calls=[ToolCall("probe", "librarian_probe",
+                                          {"ok": True} if arguments is None else arguments)],
+                     model=model)
+    return answer

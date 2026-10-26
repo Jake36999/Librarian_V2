@@ -215,7 +215,7 @@ def test_readiness_never_borrows_clerk_evidence_for_lead(core, monkeypatch):
     core.qualifications.record(host_id="preset-deepinfra", model_id="shared", role="clerk",
         level="L1", outcome="pass", compatibility_fingerprint=fingerprints["compatibility"],
         behavior_fingerprint=fingerprints["behavior"],
-        probe_validation={"contract_version": "2", "passed": True})
+        probe_validation={"contract_version": "3", "passed": True})
     before = core.qualifications.path.read_bytes()
     monkeypatch.setattr(core, "qualification_status", lambda *_a, **_k: pytest.fail("not a passive read"))
     row = next(r for r in core.route_readiness()["routes"] if r["host_id"] == "preset-deepinfra" and r["model"] == "shared")

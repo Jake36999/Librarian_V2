@@ -18,6 +18,7 @@ from resource_librarian.providers import Reply, ToolCall
 
 from conftest import add_source
 from test_sessions import OSQUERY_LINE
+from conftest import l1_probe_answer
 
 
 class Client:
@@ -225,9 +226,7 @@ def test_verified_release_lead_first_run_requires_a_visible_l1_checkpoint_then_s
     # accepting the tier, so model its production source rather than only the
     # first-run UI reader.
     monkeypatch.setattr(hosts_module, "release_leads", lambda: release_leads(path))
-    probe_provider = providers.Scripted(
-        lambda *_: Reply(tool_calls=[ToolCall("probe", "librarian_probe", {"ok": True})],
-                         model=model_id), name=model_id)
+    probe_provider = providers.Scripted(l1_probe_answer(model_id), name=model_id)
     monkeypatch.setattr(app, "_configured_provider", lambda _choice: probe_provider)
 
     status, waiting = client.post("/api/release-leads/select", {
@@ -303,16 +302,14 @@ def test_l1_keeps_requested_and_observed_identity_after_runtime_blocks_a_mismatc
 
 def test_l1_records_strict_route_and_tool_evidence(served, monkeypatch):
     app, _, _ = served
-    provider = providers.Scripted(
-        lambda *_: Reply(tool_calls=[ToolCall("probe", "librarian_probe", {"ok": True})], model="m1"),
-        name="m1",
-    )
+    provider = providers.Scripted(l1_probe_answer("m1"), name="m1")
     monkeypatch.setattr(app, "_configured_provider", lambda _choice: provider)
 
     result = app.run_qualification("preset-deepinfra", "m1", "lead", "L1", True)
 
     run = result["run"]
     assert run["outcome"] == "pass"
+    continuation = run["probe_validation"].pop("continuation")
     assert run["probe_validation"] == {
         "contract_version": L1_PROBE_CONTRACT_VERSION,
         "passed": True,
@@ -320,6 +317,8 @@ def test_l1_records_strict_route_and_tool_evidence(served, monkeypatch):
                    "arguments": True, "returned_model": True},
         "failure_codes": [], "requested_model": "m1", "observed_model": "m1",
     }
+    assert continuation["passed"] and continuation["reasoning_content_returned"] is False
+    assert len(provider.calls) == 2 and provider.calls[1]["messages"][-1]["role"] == "tool"
     assert result["status"]["qualification"]["status"] == "screened"
 
 
@@ -954,3 +953,17 @@ def test_the_capability_list_names_each_keys_store_entry(served):
     assert status == 200 and out["saved"] and "Repository intake" in out["check"]["status"]
     rows = {c["name"]: c for c in client.get("/api/library")[1]["doctor"]}
     assert rows["key: GitHub"]["ok"]
+
+
+def test_a_one_shot_proposal_alone_does_not_screen_a_route(served, monkeypatch):
+    """The acceptance condition: a model that proposes the tool but never
+    answers from its result stays unscreened."""
+    app, _, _ = served
+    provider = providers.Scripted(
+        lambda *_: Reply(tool_calls=[ToolCall("probe", "librarian_probe", {"ok": True})],
+                         model="m1"), name="m1")
+    monkeypatch.setattr(app, "_configured_provider", lambda _choice: provider)
+    result = app.run_qualification("preset-deepinfra", "m1", "lead", "L1", True)
+    assert result["run"]["outcome"] == "fail"
+    assert "continuation_repeated_tool_call" in result["run"]["probe_validation"]["failure_codes"]
+    assert result["status"]["qualification"]["status"] != "screened"
