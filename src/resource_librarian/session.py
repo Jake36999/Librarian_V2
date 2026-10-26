@@ -183,7 +183,8 @@ def _model_response_event(result: Any, plan: Any = None) -> dict[str, Any] | Non
             "requested_model": _model_text(result.get("requested_model"), 300),
             "observed_model": _model_text(result.get("observed_model"), 300),
         },
-        "outcome": outcome if outcome in {"completed", "tool_calls", "failed"} else "failed",
+        "outcome": outcome if outcome in {"completed", "tool_calls", "failed", "cancelled"}
+        else "failed",
         "stop_reason": _model_text(result.get("stop_reason"), 160),
         "elapsed_ms": _model_int(result.get("elapsed_ms")) or 0,
         "model_identity": identity if identity in {

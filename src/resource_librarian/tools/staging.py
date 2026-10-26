@@ -81,7 +81,7 @@ def scribe_endpoint(ctx: Context) -> clerk.Endpoint | None:
       card=Card("What waits in staging: counts, and a page of items",
                 "reviewing the airlock", "Sensitive items are marked"))
 def staging_list(ctx: Context, kind: Literal["", "source", "lens", "concept", "topic",
-                                             "import"] = "",
+                                             "import", "model_expectation"] = "",
                  status: Literal["", "queued", "staged", "approved", "processing", "enriched",
                                  "partial", "deferred", "accepted", "failed"] = "staged",
                  limit: int = 25, offset: int = 0) -> dict:
@@ -194,6 +194,8 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
         except TypeError:
             continue  # Preserve the domain's per-item invalid-ID result.
     supported = [i for i in items if i.get("revision_of") or i.get("kind") in ("concept", "import", "lens")]
+    if len(items) > 1 and any(i.get("kind") == "model_expectation" for i in items):
+        raise TypeError("review and decide model expectations one at a time")
     replacements = [i for i in items if i.get("revision_of")]
     if replacements and len(items) > 1 and ctx.extras.get("caller_kind") != "person":
         raise Refusal("REVISION_REQUIRED", "accept one staged revision at a time with the revision from staging_show")
@@ -392,6 +394,27 @@ def staging_decide(ctx: Context, item_ids: list[str],
             before[item_id] = store.load(item_id)
         except TypeError:
             pass
+    expectation_items = [item for item in before.values()
+                         if item.get("kind") == "model_expectation"]
+    if expectation_items:
+        if len(before) != 1 or len(item_ids) != 1:
+            raise TypeError("review and decide model expectations one at a time")
+        if not staged_revision:
+            raise TypeError("read staging_show and provide its staged_revision")
+        if ctx.extras.get("caller_kind") != "person":
+            raise TypeError("only a person can decide a model expectation")
+        _item, state, observed = _snapshot(ctx, item_ids[0])
+        if revisions.redeem(ctx, staged_revision, state) != observed:
+            raise TypeError("the staged expectation changed; review it again")
+        from .. import model_expectation_authoring
+        from ..model_invocation import ExpectationRegistry
+        result = model_expectation_authoring.decide(
+            store, item_ids[0], decision, reason, decided_by="person")
+        runtime = ctx.extras.get("invocation_runtime")
+        if runtime is not None and decision == "accept":
+            runtime.expectations = ExpectationRegistry.active()
+        return {"results": [result], "accepted": int(result.get("status") == "accepted"),
+                "not_findable": [], "refused": 0}
     origins = {str((item.get("found_for") or {}).get("session") or "")
                for item in before.values() if (item.get("found_for") or {}).get("session")}
     promotion_session = next(iter(origins)) if len(origins) == 1 else (ctx.session or "")

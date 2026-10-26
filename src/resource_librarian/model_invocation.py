@@ -34,10 +34,11 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field, replace
 from importlib import resources
+from pathlib import Path
 from typing import Any, Callable, Iterator, Mapping
 
-from .providers import (Anthropic, OpenAICompatible, Provider, ProviderError,
-                        Reply, ToolDef, _safe_request_id, _safe_usage,
+from .providers import (Anthropic, OpenAICompatible, Provider, ProviderCancelledError,
+                        ProviderError, Reply, ToolDef, _safe_request_id, _safe_usage,
                         provider_failure_category)
 
 
@@ -49,7 +50,7 @@ CAPABILITIES = frozenset({
     "streaming", "continuation", "native_reasoning",
 })
 TRI_STATES = frozenset({"true", "false", "unknown"})
-OUTCOMES = frozenset({"completed", "tool_calls", "failed"})
+OUTCOMES = frozenset({"completed", "tool_calls", "failed", "cancelled"})
 MODEL_IDENTITY_VERDICTS = frozenset({
     "matched", "absent", "mismatched", "not_applicable",
 })
@@ -291,6 +292,8 @@ class ModelExpectation:
     dialect: tuple[tuple[str, str], ...] = ()
     source_url: str = ""
     source_revision: str = ""
+    source_kind: str = ""
+    source_evidence_id: str = ""
     pack_id: str = ""
     pack_fingerprint: str = ""
     fingerprint: str = ""
@@ -344,6 +347,8 @@ class ModelExpectation:
         object.__setattr__(self, "dialect", tuple(sorted(dialect_entries.items())))
         object.__setattr__(self, "source_url", _bounded(self.source_url, 1_000))
         object.__setattr__(self, "source_revision", _bounded(self.source_revision, 300))
+        object.__setattr__(self, "source_kind", _slug(self.source_kind, "", 80))
+        object.__setattr__(self, "source_evidence_id", _bounded(self.source_evidence_id, 160))
         object.__setattr__(self, "pack_id", _slug(self.pack_id, ""))
         object.__setattr__(self, "pack_fingerprint", _bounded(self.pack_fingerprint, 80))
         if not self.fingerprint:
@@ -365,6 +370,10 @@ class ModelExpectation:
             # exact fingerprint.
             if self.dialect:
                 digest_payload["dialect"] = self.dialect
+            if self.source_kind:
+                digest_payload["source_kind"] = self.source_kind
+            if self.source_evidence_id:
+                digest_payload["source_evidence_id"] = self.source_evidence_id
             object.__setattr__(self, "fingerprint", digest(digest_payload))
 
     def capability(self, name: str) -> str:
@@ -409,6 +418,9 @@ class ModelExpectation:
             dialect=dialect,
             source_url=str(row.get("source_url") or provenance.get("source_url") or ""),
             source_revision=str(row.get("source_revision") or provenance.get("source_revision") or ""),
+            source_kind=str(row.get("source_kind") or provenance.get("source_kind") or ""),
+            source_evidence_id=str(row.get("source_evidence_id") or
+                                   provenance.get("source_evidence_id") or ""),
             pack_id=pack_id, pack_fingerprint=pack_fingerprint,
         )
 
@@ -444,12 +456,14 @@ RECORD_FIELDS = frozenset({
     "id", "version", "status", "protocol", "adapter_id", "adapter_abi", "model_id",
     "host_id_or_family", "endpoint_fingerprint", "capabilities", "behavior_modes",
     "native_behavior_modes", "source_url", "source_revision",
+    "source_kind", "source_evidence_id",
     "identity", "prompt_contract", "provenance", "dialect",
 })
 NESTED_RECORD_FIELDS = {
     "identity": frozenset({"provider_model_id", "host_id_or_family", "endpoint_fingerprint"}),
     "prompt_contract": frozenset({"runtime_target", "adapter_id", "adapter_abi"}),
-    "provenance": frozenset({"source_url", "source_revision"}),
+    "provenance": frozenset({"source_url", "source_revision", "source_kind",
+                              "source_evidence_id"}),
 }
 # Keys that would turn a data pack into an unreviewed executable prompt or
 # template channel.  Checked at every depth, so a nested object cannot carry
@@ -591,6 +605,80 @@ class ExpectationRegistry:
                                   f"({type(exc).__name__}: {_bounded(exc, 240)}); "
                                   f"every route is treated as unreviewed")
 
+    @classmethod
+    def active(cls, path: Path | None = None) -> "ExpectationRegistry":
+        """Layer the reviewed personal pack over the shipped baseline.
+
+        The personal artifact is declarative and non-secret. A malformed
+        artifact is visible in status while known-good bundled records remain
+        usable. Draft staging items never reach this loader.
+        """
+        baseline = cls.bundled()
+        if baseline.load_error:
+            return baseline
+        if path is None:
+            from .keys import config_dir
+            path = config_dir() / "model-expectations.json"
+        if not path.is_file():
+            return baseline
+        try:
+            personal = cls.from_payload(json.loads(path.read_text(encoding="utf-8")))
+            if personal.pack_id != "librarian-personal-model-expectations":
+                raise ExpectationPackError(
+                    "the active personal model expectation pack has the wrong pack id")
+            for record in personal.records:
+                if record.status != "reviewed":
+                    raise ExpectationPackError(
+                        "the active personal pack contains a non-reviewed record")
+                # The authoring tool enforces these constraints before writing,
+                # but the loader is the actual trust boundary: a hand-edited or
+                # copied artifact must not bypass exact-route review or introduce
+                # a behavior-changing dialect without qualification.
+                if record.model_id == "*" or record.host_id_or_family == "*":
+                    raise ExpectationPackError(
+                        "personal expectation records require an exact model and host")
+                if record.dialect:
+                    raise ExpectationPackError(
+                        "personal expectation dialect changes require qualification")
+                if (
+                    record.source_kind != "model_card"
+                    or not record.source_url
+                    or not record.source_revision
+                    or not record.source_evidence_id
+                ):
+                    raise ExpectationPackError(
+                        "personal expectation records require model-card provenance")
+            baseline_ids = {record.id for record in baseline.records}
+            duplicate_ids = sorted(baseline_ids.intersection(record.id for record in personal.records))
+            if duplicate_ids:
+                raise ExpectationPackError(
+                    "personal expectation records may not replace bundled ids: " +
+                    ", ".join(duplicate_ids))
+            def route_key(record: ModelExpectation) -> tuple[str, int, str, str, str, str]:
+                return (record.adapter_id, record.adapter_abi, record.protocol,
+                        record.model_id.casefold(), record.host_id_or_family.casefold(),
+                        record.endpoint_fingerprint)
+            exact: dict[tuple[str, int, str, str, str, str], str] = {
+                route_key(record): record.id for record in baseline.records
+                if record.model_id != "*" and record.status != "deprecated"}
+            for record in personal.records:
+                if record.model_id == "*" or record.status == "deprecated":
+                    continue
+                prior = exact.get(route_key(record))
+                if prior:
+                    raise ExpectationPackError(
+                        f"exact route is already described by expectation record {prior}")
+                exact[route_key(record)] = record.id
+            records = (*personal.records, *baseline.records)
+            return cls(records, pack_id=f"{baseline.pack_id}+{personal.pack_id}",
+                       pack_fingerprint=digest({"baseline": baseline.pack_fingerprint,
+                                                "personal": personal.pack_fingerprint}, 64))
+        except (OSError, json.JSONDecodeError, ExpectationPackError) as exc:
+            return cls(baseline.records, pack_id=baseline.pack_id,
+                       pack_fingerprint=baseline.pack_fingerprint,
+                       load_error=f"the personal model expectation pack could not be loaded "
+                                  f"({type(exc).__name__}: {_bounded(exc, 240)})")
+
     @staticmethod
     def _protocol_matches(expectation_protocol: str, route_protocol: str) -> bool:
         aliases = {
@@ -675,7 +763,7 @@ def legacy_structured_output_policy(model_id: str, *, provider_id: str = "",
         endpoint_fingerprint=digest({"protocol": "openai", "base_url": _bounded(base_url, 1_000)}),
         model_id=_bounded(model_id, 300) or "(unselected)",
     )
-    record = (expectations or ExpectationRegistry.bundled()).match(route, LEGACY_OPENAI_CHAT)
+    record = (expectations or ExpectationRegistry.active()).match(route, LEGACY_OPENAI_CHAT)
     state = record.capability("structured_output") if record is not None else "unknown"
     return {
         "state": state,
@@ -878,6 +966,7 @@ class AdapterFailure:
             "provider_rejected": "the provider rejected this request",
             "output_budget": "the model reached its output budget before returning a usable result",
             "model_identity_mismatch": "the provider returned a different model than the selected route",
+            "cancelled": "the provider request was cancelled",
             "local_environment": "the local environment blocked this provider request",
             "unknown": "the provider request failed",
         }
@@ -988,7 +1077,8 @@ class ProtocolAdapter:
     descriptor: AdapterDescriptor
 
     def invoke(self, plan: InvocationPlan, payload: InvocationPayload,
-               provider: Provider) -> tuple[Reply, InvocationResult]:
+               provider: Provider, *,
+               cancel: threading.Event | None = None) -> tuple[Reply, InvocationResult]:
         raise NotImplementedError
 
 
@@ -999,7 +1089,8 @@ class LegacyProviderAdapter(ProtocolAdapter):
         self.descriptor = descriptor
 
     def invoke(self, plan: InvocationPlan, payload: InvocationPayload,
-               provider: Provider) -> tuple[Reply, InvocationResult]:
+               provider: Provider, *,
+               cancel: threading.Event | None = None) -> tuple[Reply, InvocationResult]:
         if plan.adapter_id != self.descriptor.id or plan.adapter_abi != self.descriptor.abi_version:
             raise InvocationCompatibilityError(CompatibilityResult(
                 False, "incompatible", ("adapter contract does not match the invocation plan",)))
@@ -1013,13 +1104,30 @@ class LegacyProviderAdapter(ProtocolAdapter):
             kwargs: dict[str, Any] = {"max_tokens": payload.max_tokens}
             if payload.temperature is not None:
                 kwargs["temperature"] = payload.temperature
-            reply = provider.chat(payload.system, payload.legacy_messages(), payload.legacy_tools(), **kwargs)
+            cancellable = getattr(provider, "chat_cancellable", None)
+            if callable(cancellable):
+                reply = cancellable(
+                    payload.system, payload.legacy_messages(), payload.legacy_tools(),
+                    cancel=cancel, **kwargs)
+            else:
+                # Duck-typed legacy integrations predate Provider's optional
+                # cancellation method. Preserve that public ABI while still
+                # observing cancellation immediately before and after their
+                # synchronous call; only first-party transports promise an
+                # in-flight socket abort.
+                if cancel is not None and cancel.is_set():
+                    raise ProviderCancelledError()
+                reply = provider.chat(
+                    payload.system, payload.legacy_messages(), payload.legacy_tools(), **kwargs)
+                if cancel is not None and cancel.is_set():
+                    raise ProviderCancelledError()
         except ProviderError as error:
             failure = AdapterFailure.from_error(error)
             result = InvocationResult(
                 plan.plan_id, plan.config_hash, plan.adapter_id, plan.adapter_version,
                 plan.model_id, _bounded(getattr(error, "observed_model", ""), 300),
-                "failed", _bounded(getattr(error, "stop_reason", ""), 160),
+                "cancelled" if failure.category == "cancelled" else "failed",
+                _bounded(getattr(error, "stop_reason", ""), 160),
                 round((time.monotonic() - started) * 1_000),
                 usage=_safe_usage(getattr(error, "usage", {})),
                 request_id=_safe_request_id(getattr(error, "request_id", "")),
@@ -1173,7 +1281,7 @@ class InvocationRuntime:
                  max_records: int = 200,
                  id_factory: Callable[[], str] | None = None) -> None:
         self.adapters = adapters or AdapterRegistry()
-        self.expectations = expectations or ExpectationRegistry.bundled()
+        self.expectations = expectations or ExpectationRegistry.active()
         self.trace_sink = trace_sink
         self._scope: ContextVar[InvocationScope | None] = ContextVar("librarian_invocation_scope", default=None)
         self._records: deque[dict[str, Any]] = deque(maxlen=max(1, int(max_records)))
@@ -1276,7 +1384,8 @@ class InvocationRuntime:
 
     def invoke(self, provider: Provider, payload: InvocationPayload, *,
                scope: InvocationScope | None = None,
-               binding: InvocationBinding | None = None) -> Reply:
+               binding: InvocationBinding | None = None,
+               cancel: threading.Event | None = None) -> Reply:
         plan, compatibility, chosen_binding = self.plan_for(provider, payload, scope=scope,
                                                              binding=binding)
         if not compatibility.accepted:
@@ -1289,7 +1398,7 @@ class InvocationRuntime:
             raise InvocationCompatibilityError(compatibility)
         adapter = LegacyProviderAdapter(chosen_binding.descriptor)
         try:
-            reply, result = adapter.invoke(plan, payload, provider)
+            reply, result = adapter.invoke(plan, payload, provider, cancel=cancel)
         except ProviderError as error:
             result = getattr(error, "invocation_result", None)
             if not isinstance(result, InvocationResult):
@@ -1331,9 +1440,16 @@ class AdapterBackedProvider(Provider):
 
     def chat(self, system: str, messages: list[dict[str, Any]], tools: list[ToolDef],
              max_tokens: int = 4096, temperature: float | None = None) -> Reply:
+        return self.chat_cancellable(system, messages, tools, max_tokens=max_tokens,
+                                     temperature=temperature)
+
+    def chat_cancellable(self, system: str, messages: list[dict[str, Any]],
+                         tools: list[ToolDef], max_tokens: int = 4096,
+                         temperature: float | None = None,
+                         cancel: threading.Event | None = None) -> Reply:
         payload = InvocationPayload.from_legacy(system, messages, tools,
                                                 max_tokens=max_tokens, temperature=temperature)
-        return self.runtime.invoke(self.provider, payload, scope=self.scope)
+        return self.runtime.invoke(self.provider, payload, scope=self.scope, cancel=cancel)
 
     def models(self) -> list[str]:
         return self.provider.models()

@@ -15,7 +15,8 @@ from typing import Any, Literal
 from ..registry import Card, Context, tool
 
 HELPER_TOOLS = frozenset({"search", "get_note", "web_search", "read_url", "read_file",
-                          "read_source_file", "list_files", "search_work", "topics_list"})
+                          "read_source_file", "read_result", "list_files", "search_work",
+                          "topics_list"})
 HELPER_BRIEF = (
     "You are a helper agent working for the librarian on one question only:\n  {question}\n"
     "Look in the library first (search, get_note), then outside it (web_search, read_url). "

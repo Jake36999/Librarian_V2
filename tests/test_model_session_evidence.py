@@ -7,6 +7,7 @@ prompt, provider-body, credential, or hidden-reasoning archive.
 from __future__ import annotations
 
 import json
+import threading
 
 import pytest
 
@@ -15,7 +16,8 @@ from resource_librarian.loop import Loop
 from resource_librarian.model_invocation import (
     InvocationPayload, InvocationRuntime, InvocationScope, TaskContract,
 )
-from resource_librarian.providers import Provider, ProviderError, Reply, ToolCall, ToolDef
+from resource_librarian.providers import (Provider, ProviderCancelledError, ProviderError,
+                                          Reply, ToolCall, ToolDef)
 from resource_librarian.session import (
     SessionStore, bind_model_session_events, model_session_trace_sink,
 )
@@ -120,6 +122,28 @@ def test_failed_call_keeps_typed_failure_class_without_error_text(vault):
     raw = SessionStore(vault).path(opened.id).read_text(encoding="utf-8")
     assert "sk-ADAPT03-NEVER-PERSIST" not in raw
     assert "SYSTEM-FAILURE-SENTINEL" not in raw
+
+
+def test_cancelled_call_survives_session_persistence_and_fold(vault):
+    store = SessionStore(vault)
+    opened = store.new("explore", question="q")
+    runtime = _runtime(ids=("cancelled-plan",))
+    cancel = threading.Event()
+    cancel.set()
+
+    with bind_model_session_events(vault, opened.id), pytest.raises(ProviderCancelledError):
+        runtime.invoke(providers.Scripted(lambda *_args: Reply(text="not called")),
+                       InvocationPayload.from_legacy("system", [], []),
+                       scope=InvocationScope(session_id=opened.id), cancel=cancel)
+
+    response = next(event for event in _events(vault, opened.id)
+                    if event["type"] == "model_response")
+    assert response["outcome"] == "cancelled"
+    assert response["failure"] == {"class": "cancelled", "retryable": False}
+    folded = [event for event in store.load(opened.id).model_events
+              if event["type"] == "model_response"]
+    assert folded[0]["outcome"] == "cancelled"
+    assert folded[0]["failure"] == response["failure"]
 
 
 def test_first_invocation_is_buffered_until_its_open_session_tool(vault):

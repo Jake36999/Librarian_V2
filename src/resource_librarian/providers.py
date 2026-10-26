@@ -21,10 +21,15 @@ The neutral message shape:
 """
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import re
 import secrets
+import select
+import socket
+import threading
+import time
 import urllib.error
 import urllib.request
 from collections.abc import Mapping
@@ -65,6 +70,7 @@ PROVIDER_FAILURE_CATEGORIES = (
     "provider_rejected",
     "output_budget",
     "model_identity_mismatch",
+    "cancelled",
     "unknown",
 )
 
@@ -83,6 +89,13 @@ class ProviderError(RuntimeError):
     def __init__(self, message: str, *, category: str = "") -> None:
         super().__init__(message)
         self.category = category if category in PROVIDER_FAILURE_CATEGORIES else ""
+
+
+class ProviderCancelledError(ProviderError):
+    """The caller cancelled an in-flight provider operation."""
+
+    def __init__(self) -> None:
+        super().__init__("the provider request was cancelled", category="cancelled")
 
 
 def _safe_token_count(value: Any) -> int | None:
@@ -334,6 +347,25 @@ class Provider:
              max_tokens: int = 4096, temperature: float | None = None) -> Reply:
         raise NotImplementedError
 
+    def chat_cancellable(self, system: str, messages: list[dict[str, Any]],
+                         tools: list[ToolDef], max_tokens: int = 4096,
+                         temperature: float | None = None,
+                         cancel: threading.Event | None = None) -> Reply:
+        """Compatibility entry point which preserves the historical chat ABI.
+
+        Third-party providers get checks around their legacy call. First-party
+        transports override this method and abort their active socket.
+        """
+        if cancel is not None and cancel.is_set():
+            raise ProviderCancelledError()
+        kwargs: dict[str, Any] = {"max_tokens": max_tokens}
+        if temperature is not None:
+            kwargs["temperature"] = temperature
+        reply = self.chat(system, messages, tools, **kwargs)
+        if cancel is not None and cancel.is_set():
+            raise ProviderCancelledError()
+        return reply
+
     def models(self) -> list[str]:
         raise NotImplementedError
 
@@ -369,10 +401,215 @@ TRANSIENT_RETRIES = (3.0, 10.0)
 TRANSIENT_HTTP = (429, 500, 502, 503, 504)   # 500: "Response payload is not completed"
 
 
+class _CancellationHandle:
+    """Abort one synchronous urllib call without moving it to a worker."""
+
+    def __init__(self, cancel: threading.Event) -> None:
+        self.cancel = cancel
+        self.done = threading.Event()
+        self._lock = threading.Lock()
+        self._connection: http.client.HTTPConnection | None = None
+        self._response: Any = None
+        self._watcher = threading.Thread(
+            target=self._watch, daemon=True, name="librarian-provider-cancel")
+
+    def start(self) -> None:
+        if self.cancel.is_set():
+            raise ProviderCancelledError()
+        self._watcher.start()
+
+    def attach_connection(self, connection: http.client.HTTPConnection) -> None:
+        with self._lock:
+            if self.cancel.is_set():
+                raise ProviderCancelledError()
+            self._connection = connection
+
+    def attach_response(self, response: Any) -> None:
+        with self._lock:
+            self._response = response
+        if self.cancel.is_set():
+            self._abort()
+            raise ProviderCancelledError()
+
+    def wait_readable(self, sock: Any, timeout: float | None) -> None:
+        """Wait for socket input in bounded slices before a blocking read."""
+        deadline = time.monotonic() + float(timeout or 120)
+        while True:
+            if self.cancel.is_set():
+                raise ProviderCancelledError()
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("timed out")
+            try:
+                readable, _, _ = select.select([sock], [], [], min(remaining, 0.05))
+            except (OSError, ValueError):
+                if self.cancel.is_set():
+                    raise ProviderCancelledError()
+                raise
+            if readable:
+                return
+
+    @staticmethod
+    def _shutdown(sock: Any) -> None:
+        if sock is None:
+            return
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+        except (AttributeError, OSError):
+            pass
+        try:
+            sock.close()
+        except (AttributeError, OSError):
+            pass
+
+    def _abort(self) -> None:
+        with self._lock:
+            connection, response = self._connection, self._response
+        self._shutdown(getattr(connection, "sock", None))
+        fp = getattr(response, "fp", None)
+        raw = getattr(fp, "raw", None)
+        self._shutdown(getattr(raw, "_sock", None))
+        try:
+            if response is not None:
+                response.close()
+        except (OSError, ValueError):
+            pass
+        try:
+            if connection is not None:
+                connection.close()
+        except OSError:
+            pass
+
+    def _watch(self) -> None:
+        while not self.done.wait(0.05):
+            if self.cancel.is_set():
+                self._abort()
+                return
+
+    def finish(self) -> None:
+        self.done.set()
+        if self._watcher.is_alive():
+            self._watcher.join()
+        with self._lock:
+            self._connection = None
+            self._response = None
+
+
+class _CancellableHTTPConnection(http.client.HTTPConnection):
+    def __init__(self, host: str, handle: _CancellationHandle, **kwargs: Any) -> None:
+        self._cancel_handle = handle
+        super().__init__(host, **kwargs)
+
+    def getresponse(self) -> http.client.HTTPResponse:
+        if self.sock is not None:
+            self._cancel_handle.wait_readable(self.sock, self.timeout)
+        return super().getresponse()
+
+
+class _CancellableHTTPSConnection(http.client.HTTPSConnection):
+    def __init__(self, host: str, handle: _CancellationHandle, **kwargs: Any) -> None:
+        self._cancel_handle = handle
+        super().__init__(host, **kwargs)
+
+    def getresponse(self) -> http.client.HTTPResponse:
+        if self.sock is not None:
+            self._cancel_handle.wait_readable(self.sock, self.timeout)
+        return super().getresponse()
+
+
+class _CancellableHTTPHandler(urllib.request.HTTPHandler):
+    def __init__(self, handle: _CancellationHandle) -> None:
+        super().__init__()
+        self.handle = handle
+
+    def http_open(self, req: Any) -> Any:
+        def factory(host: str, **kwargs: Any) -> http.client.HTTPConnection:
+            connection = _CancellableHTTPConnection(host, self.handle, **kwargs)
+            self.handle.attach_connection(connection)
+            return connection
+        return self.do_open(factory, req)
+
+
+class _CancellableHTTPSHandler(urllib.request.HTTPSHandler):
+    def __init__(self, handle: _CancellationHandle) -> None:
+        super().__init__()
+        self.handle = handle
+
+    def https_open(self, req: Any) -> Any:
+        def factory(host: str, **kwargs: Any) -> http.client.HTTPSConnection:
+            connection = _CancellableHTTPSConnection(host, self.handle, **kwargs)
+            self.handle.attach_connection(connection)
+            return connection
+        return self.do_open(factory, req, context=self._context,
+                            check_hostname=self._check_hostname)
+
+
+def _open_cancellable(request: urllib.request.Request, timeout: float,
+                      cancel: threading.Event) -> tuple[Any, _CancellationHandle]:
+    handle = _CancellationHandle(cancel)
+    handle.start()
+    try:
+        opener = urllib.request.build_opener(
+            _CancellableHTTPHandler(handle), _CancellableHTTPSHandler(handle))
+        response = opener.open(request, timeout=timeout)
+        handle.attach_response(response)
+        return response, handle
+    except urllib.error.HTTPError as error:
+        # HTTPError is also the response object. Keep its body read
+        # cancellable while the caller classifies the status and extracts the
+        # bounded diagnostic detail.
+        try:
+            handle.attach_response(error)
+        except BaseException:
+            handle.finish()
+            raise
+        setattr(error, "_librarian_cancel_handle", handle)
+        raise
+    except BaseException:
+        handle.finish()
+        if cancel.is_set():
+            raise ProviderCancelledError()
+        raise
+
+
+def _retry_pause(seconds: float, sleep: Any,
+                 cancel: threading.Event | None) -> None:
+    if cancel is None:
+        if sleep is None:
+            time.sleep(seconds)
+        else:
+            sleep(seconds)
+        return
+    if sleep is not None:
+        sleep(seconds)
+        if cancel.is_set():
+            raise ProviderCancelledError()
+    elif cancel.wait(seconds):
+        raise ProviderCancelledError()
+
+
+def _read_cancellable(response: Any, handle: _CancellationHandle,
+                      timeout: float) -> bytes:
+    """Read a response in readiness-bounded chunks without a reader worker."""
+    chunks: list[bytes] = []
+    while True:
+        fp = getattr(response, "fp", None)
+        raw = getattr(fp, "raw", None)
+        sock = getattr(raw, "_sock", None)
+        if sock is not None:
+            handle.wait_readable(sock, timeout)
+        if handle.cancel.is_set():
+            raise ProviderCancelledError()
+        chunk = response.read1(64 * 1024)
+        if not chunk:
+            return b"".join(chunks)
+        chunks.append(chunk)
+
+
 def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
              timeout: float = 120, sleep: Any = None,
-             retries: tuple[float, ...] | None = None) -> dict[str, Any]:
-    import time
+             retries: tuple[float, ...] | None = None,
+             cancel: threading.Event | None = None) -> dict[str, Any]:
     data = json.dumps(body).encode("utf-8") if body is not None else None
     # A caller with its own recovery (Clerk's schema fallback) passes ().
     pauses = list(TRANSIENT_RETRIES if retries is None else retries)
@@ -380,17 +617,32 @@ def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
         request = urllib.request.Request(url, data=data, method=method,
                                          headers={"Content-Type": "application/json",
                                                   **headers})
+        handle: _CancellationHandle | None = None
         try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                decoded = json.loads(response.read().decode("utf-8"))
+            if cancel is not None:
+                response, handle = _open_cancellable(request, timeout, cancel)
+            else:
+                response = urllib.request.urlopen(request, timeout=timeout)
+            with response:
+                raw_body = (_read_cancellable(response, handle, timeout)
+                            if handle is not None else response.read())
+                decoded = json.loads(raw_body.decode("utf-8"))
+                if cancel is not None and cancel.is_set():
+                    raise ProviderCancelledError()
                 if isinstance(decoded, dict):
                     return _ResponsePayload(decoded, _response_request_id(
                         getattr(response, "headers", None)))
                 return decoded
+        except ProviderCancelledError:
+            raise
         except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", "replace")[:400]
+            if handle is None:
+                handle = getattr(exc, "_librarian_cancel_handle", None)
+            error_body = (_read_cancellable(exc, handle, timeout)
+                          if isinstance(handle, _CancellationHandle) else exc.read())
+            detail = error_body.decode("utf-8", "replace")[:400]
             if exc.code in TRANSIENT_HTTP and pauses:
-                (sleep or time.sleep)(pauses.pop(0))
+                _retry_pause(pauses.pop(0), sleep, cancel)
                 continue
             raise ProviderError(f"HTTP {exc.code} from {url}: {detail}",
                                 category=_http_failure_category(exc.code)) from exc
@@ -400,7 +652,7 @@ def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
             reason = getattr(exc, "reason", exc)
             if pauses and isinstance(reason, (TimeoutError, ConnectionResetError,
                                               ConnectionAbortedError)):
-                (sleep or time.sleep)(pauses.pop(0))
+                _retry_pause(pauses.pop(0), sleep, cancel)
                 continue
             if isinstance(reason, TimeoutError):
                 # Reached, but slow (2026-10-02): "not reachable" sent the person to check
@@ -411,6 +663,9 @@ def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
                                     f"model", category="provider_transient") from exc
             raise ProviderError(f"{url} is not reachable: {exc}",
                                 category=_transport_failure_category(reason)) from exc
+        finally:
+            if handle is not None:
+                handle.finish()
 
 
 def _key(key_env: str) -> str:
@@ -456,6 +711,13 @@ class OpenAICompatible(Provider):
 
     def chat(self, system: str, messages: list[dict[str, Any]], tools: list[ToolDef],
              max_tokens: int = 4096, temperature: float | None = None) -> Reply:
+        return self.chat_cancellable(system, messages, tools, max_tokens=max_tokens,
+                                     temperature=temperature)
+
+    def chat_cancellable(self, system: str, messages: list[dict[str, Any]],
+                         tools: list[ToolDef], max_tokens: int = 4096,
+                         temperature: float | None = None,
+                         cancel: threading.Event | None = None) -> Reply:
         if not self.model:
             raise ProviderError(f"no model chosen for {self.name}", category="route_configuration")
         # Import inside the method to avoid a circular import at module level.
@@ -463,8 +725,11 @@ class OpenAICompatible(Provider):
         body = OpenAIChatAdapter.render(self.model, system, messages, tools,
                                         max_tokens=max_tokens, temperature=temperature)
         from .adapters.openai_chat import chat_url
-        reply = _request("POST", chat_url(self.base_url), self._headers(), body,
-                         self.timeout)
+        if cancel is None:
+            reply = _request("POST", chat_url(self.base_url), self._headers(), body, self.timeout)
+        else:
+            reply = _request("POST", chat_url(self.base_url), self._headers(), body,
+                             self.timeout, cancel=cancel)
         return OpenAIChatAdapter.parse(reply)
 
 
@@ -496,12 +761,24 @@ class Anthropic(Provider):
 
     def chat(self, system: str, messages: list[dict[str, Any]], tools: list[ToolDef],
              max_tokens: int = 4096, temperature: float | None = None) -> Reply:
+        return self.chat_cancellable(system, messages, tools, max_tokens=max_tokens,
+                                     temperature=temperature)
+
+    def chat_cancellable(self, system: str, messages: list[dict[str, Any]],
+                         tools: list[ToolDef], max_tokens: int = 4096,
+                         temperature: float | None = None,
+                         cancel: threading.Event | None = None) -> Reply:
         if not self.model:
             raise ProviderError("no Anthropic model chosen", category="route_configuration")
         from .adapters.anthropic_messages import AnthropicMessagesAdapter
         body = AnthropicMessagesAdapter.render(self.model, system, messages, tools,
                                                max_tokens, temperature)
-        reply = _request("POST", f"{self.base_url}/messages", self._headers(), body, self.timeout)
+        if cancel is None:
+            reply = _request("POST", f"{self.base_url}/messages", self._headers(), body,
+                             self.timeout)
+        else:
+            reply = _request("POST", f"{self.base_url}/messages", self._headers(), body,
+                             self.timeout, cancel=cancel)
         return AnthropicMessagesAdapter.parse(reply)
 
 

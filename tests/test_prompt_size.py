@@ -17,7 +17,11 @@ class Provider:
 def make_loop():
     root = Path(tempfile.mkdtemp()) / "v"
     init(root, name="t")
-    return Loop(Vault(root), Provider(), tier="contribute")
+    # These legacy compaction checks intentionally exercise the complete
+    # registry. ADAPT-11 makes task-sized bundles the production default; an
+    # explicit opt-out keeps this test about history rather than schemas.
+    return Loop(Vault(root), Provider(), tier="contribute",
+                extras={"use_tool_bundles": False})
 
 
 def test_older_results_lose_their_envelope_and_are_clipped_the_recent_are_whole():
