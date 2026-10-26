@@ -9,7 +9,7 @@ from .library import index_service_for
 @REGISTRY.tool("extract_plan", tier="consult", effect="read", resolve={"source": "note"},
                card=Card("Plan bounded, revision-pinned repository capability extraction.",
                          "you need files and dependencies for a repository capability without executing code"),
-               returns=("source", "revision", "files", "unresolved"))
+               returns=("source", "revision", "plan_token", "files", "unresolved"))
 def extract_plan(ctx: Context, source: str, seed: str = "", include_tests: bool = False,
                  max_files: int = 20, max_chars: int = 80_000) -> dict:
     service = index_service_for(ctx)
@@ -20,12 +20,17 @@ def extract_plan(ctx: Context, source: str, seed: str = "", include_tests: bool 
 @REGISTRY.tool("extract_materialize", tier="curate", effect="write", scope="library",
                open_world=True, resolve={"source": "note"},
                card=Card("Fetch bounded source excerpts at a pinned surveyed revision.",
-                         "a person reviewed an extract plan and needs the attributed code material"),
-               returns=("source", "revision", "excerpts", "cache"))
+                         "a person reviewed an extract plan and needs the attributed code material",
+                         "Provide the exact revision and plan_token returned by extract_plan; "
+                         "missing or stale review data refuses before fetching."),
+               returns=("source", "revision", "plan_token", "excerpts", "cache"))
 def extract_materialize(ctx: Context, source: str, seed: str = "", include_tests: bool = False,
-                        max_files: int = 20, max_chars: int = 80_000) -> dict:
+                        max_files: int = 20, max_chars: int = 80_000,
+                        revision: str = "", plan_token: str = "") -> dict:
     service = index_service_for(ctx)
     return extract.materialize(ctx.vault, source, seed=seed, include_tests=include_tests,
                                max_files=max_files, max_chars=max_chars,
                                fetcher=ctx.extras.get("fetcher"),
+                               revision=revision,
+                               plan_token=plan_token,
                                index_service=service, offline=service is None)

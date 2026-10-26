@@ -141,6 +141,37 @@ def test_reject_goes_to_quarantine_and_batch_reports_each(staged):
     assert quarantined["reason"] == "off topic"
 
 
+def test_reject_retains_attachments_and_never_replaces_an_older_quarantine_record(staged):
+    source = staged.root / "Inbox" / "rejected.pdf"
+    clean = staged.work("staging") / "files" / "rejected.md"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    clean.parent.mkdir(parents=True, exist_ok=True)
+    source.write_bytes(b"source bytes")
+    clean.write_text("derived text", encoding="utf-8")
+    store = staging.StagingStore(staged)
+    item = source_item("with-file", "example - rejected")
+    item.update(file="Inbox/rejected.pdf", clean_file=".librarian/staging/files/rejected.md")
+    store.add(item)
+    quarantine = staged.work("quarantine") / "staging"
+    quarantine.mkdir(parents=True, exist_ok=True)
+    (quarantine / "with-file.json").write_text('{"older": true}', encoding="utf-8")
+
+    result = REGISTRY.call("staging_decide", {
+        "item_ids": ["with-file"], "decision": "reject", "reason": "not relevant",
+    }, ctx(staged))["results"][0]
+
+    assert result["status"] == "rejected"
+    assert result["originals_retained"] == [
+        "Inbox/rejected.pdf", ".librarian/staging/files/rejected.md"]
+    assert source.read_bytes() == b"source bytes"
+    assert clean.read_text(encoding="utf-8") == "derived text"
+    assert json.loads((quarantine / "with-file.json").read_text())["older"] is True
+    rejected = json.loads((quarantine / "with-file (2).json").read_text())
+    assert rejected["reason"] == "not relevant"
+    assert rejected["file"] == "Inbox/rejected.pdf"
+    assert not (store.folder("source") / "with-file.json").exists()
+
+
 def test_no_draft_no_accept_for_an_agent(staged):
     config = staged.config()
     config["promotion"]["mode"] = "agent"

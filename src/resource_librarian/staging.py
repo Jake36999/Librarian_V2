@@ -166,13 +166,28 @@ class StagingStore:
                 bucket["sensitive_waiting"] = bucket.get("sensitive_waiting", 0) + 1
         return out
 
-    def quarantine(self, item: dict[str, Any], reason: str) -> None:
+    def quarantine_path(self, item_id: str) -> Path:
+        """Choose a new quarantine record without replacing an older rejection."""
+        item_id = self._item_id(item_id)
         folder = self.vault.work("quarantine") / "staging"
+        candidate = folder / f"{item_id}.json"
+        suffix = 2
+        while candidate.exists():
+            candidate = folder / f"{item_id} ({suffix}).json"
+            suffix += 1
+        return candidate
+
+    def quarantine(self, item: dict[str, Any], reason: str, *, target: Path | None = None) -> str:
+        folder = self.vault.work("quarantine") / "staging"
+        target = target or self.quarantine_path(item["id"])
+        if target.parent != folder or target.exists():
+            raise TypeError("the prepared quarantine record is no longer available")
         folder.mkdir(parents=True, exist_ok=True)
-        atomic_write_text(folder / f"{item['id']}.json",
+        atomic_write_text(target,
                           json.dumps({**item, "quarantined_at": now_iso(), "reason": reason},
                                      ensure_ascii=False, indent=1))
         self.path(item["id"]).unlink()
+        return target.relative_to(self.vault.root).as_posix()
 
 
 # ---------------------------------------------------------------- reviewing
@@ -242,7 +257,8 @@ def decide(store: StagingStore, engine: Engine | None, item_ids: list[str], deci
            decided_by: str = "person", session: str = "",
            fields: dict[str, Any] | None = None, *,
            index_call: Callable | None = None, topic_plan: dict | None = None, source_plan: dict | None = None,
-           source_batch: dict | None = None, mixed_batch: dict | None = None, document_leases=None) -> list[dict[str, Any]]:
+           source_batch: dict | None = None, mixed_batch: dict | None = None,
+           rejection_plan: dict | None = None, document_leases=None) -> list[dict[str, Any]]:
     """Accept, reject or defer, one item or a batch. Each item's outcome is
     reported on its own; one refusal does not stop the batch.
 
@@ -287,6 +303,7 @@ def decide(store: StagingStore, engine: Engine | None, item_ids: list[str], deci
                                    source_plan=(item_plan if item_plan and item_plan.get("operation") == "new_source" else
                                                 source_batch["plans"].get(item_id) if source_batch is not None else source_plan),
                                    source_guard=batch_guard, write_guard=batch_guard if mixed_batch is not None else None,
+                                   rejection_plan=(rejection_plan or {}).get(item_id),
                                    document_leases=document_leases))
         except Refusal as refusal:
             if (topic_plan is not None or source_plan is not None or batch_plan is not None) and refusal.code == "DOCUMENT_ACTIVE":
@@ -760,6 +777,7 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
                 index_call: Callable | None = None, topic_plan: dict | None = None, source_plan: dict | None = None,
                 source_guard=None,
                 write_guard=None,
+                rejection_plan: dict | None = None,
                 document_leases=None
                 ) -> dict[str, Any]:
     item = store.load(item_id)
@@ -785,10 +803,16 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
     if decision == "reject":
         item["status"] = "rejected"
         item["history"].append(entry)
-        if item.get("file") and not item.get("promotion_progress"):
-            _move_file(store.vault, item, store.vault.work("quarantine") / "files")
-        store.quarantine(item, reason)
-        return {"id": item_id, "status": "rejected", "quarantined": True}
+        target = None
+        if rejection_plan is not None:
+            if rejection_plan.get("item_id") != item_id:
+                raise TypeError("a rejection requires its own prepared quarantine plan")
+            from .coordination import operation_path
+            target = operation_path(store.vault, rejection_plan["quarantine"])
+        retained = [str(item[key]) for key in ("file", "clean_file") if item.get(key)]
+        quarantined_to = store.quarantine(item, reason, target=target)
+        return {"id": item_id, "status": "rejected", "quarantined": True,
+                "quarantined_to": quarantined_to, "originals_retained": retained}
     if decision == "defer":
         item["status"] = "deferred"
         item["history"].append(entry)

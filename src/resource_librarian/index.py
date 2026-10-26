@@ -36,13 +36,14 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, TypeVar
 
 from . import notes, schema
-from .file_access import file_access
+from .file_access import FileChangedError, file_access, read_bytes_snapshot
 from .rules import Refusal
 from .vault import Vault, now_iso
 
-SCHEMA_VERSION = 2          # 2: repository components (P5.3)
+SCHEMA_VERSION = 3          # 3: stable file identity for refresh snapshots
 TARGET_CHARS = 1200
 MIN_CHARS = 80
+REFRESH_RECONCILIATION_PASSES = 3
 
 T = TypeVar("T")
 
@@ -60,7 +61,9 @@ CREATE TABLE IF NOT EXISTS note (
   frontmatter  TEXT NOT NULL,          -- JSON
   hash         TEXT NOT NULL,
   mtime        REAL NOT NULL,
+  mtime_ns     INTEGER NOT NULL,
   size         INTEGER NOT NULL,
+  file_identity TEXT NOT NULL,
   parse_error  TEXT NOT NULL,
   indexed_at   TEXT NOT NULL
 );
@@ -246,6 +249,11 @@ class Index:
             # UI hang; adapters never open this file themselves.
             conn.execute("PRAGMA busy_timeout=5000")
             conn.executescript(SCHEMA)
+            columns = {row[1] for row in conn.execute("PRAGMA table_info(note)")}
+            if "mtime_ns" not in columns:
+                conn.execute("ALTER TABLE note ADD COLUMN mtime_ns INTEGER NOT NULL DEFAULT 0")
+            if "file_identity" not in columns:
+                conn.execute("ALTER TABLE note ADD COLUMN file_identity TEXT NOT NULL DEFAULT ''")
             self._local.conn = conn
             self._all.append(conn)
         return conn
@@ -295,14 +303,17 @@ class Index:
         """Index one note. Returns False when its content was already indexed."""
         path = Path(path)
         rel = path.relative_to(self.vault.root).as_posix()
-        with file_access(path):
-            stat = path.stat()
-            text = path.read_text(encoding="utf-8", errors="replace")
+        snapshot = read_bytes_snapshot(path)
+        # Preserve Path.read_text's historical universal-newline semantics
+        # while obtaining bytes/metadata from one binary handle.
+        text = snapshot.data.decode("utf-8", errors="replace")
+        text = text.replace("\r\n", "\n").replace("\r", "\n")
         digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:24]
         row = self.conn.execute("SELECT hash FROM note WHERE path = ?", (rel,)).fetchone()
         if row and row["hash"] == digest and not force:
-            self.conn.execute("UPDATE note SET mtime = ?, size = ? WHERE path = ?",
-                              (stat.st_mtime, stat.st_size, rel))
+            self.conn.execute(
+                "UPDATE note SET mtime = ?, mtime_ns = ?, size = ?, file_identity = ? WHERE path = ?",
+                (snapshot.mtime, snapshot.mtime_ns, snapshot.size, snapshot.identity, rel))
             if commit:
                 self.conn.commit()
             return False
@@ -318,12 +329,13 @@ class Index:
         aliases = [a.lower() for a in _as_list(fm.get("aliases"))]
         self.conn.execute(
             "INSERT INTO note(path, name, name_lower, shape, kind, title, aliases, topic, "
-            "bottom_line, frontmatter, hash, mtime, size, parse_error, indexed_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "bottom_line, frontmatter, hash, mtime, mtime_ns, size, file_identity, "
+            "parse_error, indexed_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (rel, note.name, note.name.lower(), shape, kind, _title(note), "\n".join(aliases),
              topics[0] if topics else "", note.sections().get("Bottom Line", "")[:400],
-             json.dumps(fm, default=str, ensure_ascii=False), digest, stat.st_mtime,
-             stat.st_size, error, now_iso()))
+             json.dumps(fm, default=str, ensure_ascii=False), digest, snapshot.mtime,
+             snapshot.mtime_ns, snapshot.size, snapshot.identity, error, now_iso()))
         chunks = chunk_note(note, model) if not error else []
         self._insert_chunks(rel, note.name, chunks)
         facets: list[tuple[str, str]] = [("kind", kind)] if kind else []
@@ -401,28 +413,69 @@ class Index:
         reason = self.stale_reason()
         if reason:
             report = self.rebuild()
-            report.reason = reason
+            if report.reason:
+                report.reason = f"{reason}; {report.reason}"
+            else:
+                report.reason = reason
             return report
         report = RefreshReport()
-        known = {r["path"]: (r["mtime"], r["size"]) for r in
-                 self.conn.execute("SELECT path, mtime, size FROM note")}
-        seen: set[str] = set()
+        settled = False
+        for _attempt in range(REFRESH_RECONCILIATION_PASSES):
+            known = {r["path"]: (r["mtime_ns"], r["size"], r["file_identity"]) for r in
+                     self.conn.execute("SELECT path, mtime_ns, size, file_identity FROM note")}
+            seen: set[str] = set()
+            unchanged = 0
+            for path in notes.iter_paths(self.vault.root):
+                rel = path.relative_to(self.vault.root).as_posix()
+                try:
+                    with file_access(path):
+                        stat = path.stat()
+                    identity = f"{stat.st_dev}:{stat.st_ino}:{stat.st_ctime_ns}"
+                    if known.get(rel) == (stat.st_mtime_ns, stat.st_size, identity):
+                        seen.add(rel)
+                        unchanged += 1
+                        continue
+                    changed = self.upsert(path, commit=False)
+                except (FileNotFoundError, FileChangedError):
+                    # A concurrent rename/delete is not an index failure.  Do
+                    # not mark the vanished path seen; the reconciliation
+                    # pass below removes it and discovers its destination.
+                    continue
+                seen.add(rel)
+                if changed and rel not in report.upserted:
+                    report.upserted.append(rel)
+                elif not changed:
+                    unchanged += 1
+            for rel in sorted(set(known) - seen):
+                self._delete_rows(rel, keep_documents=False)
+                if rel not in report.removed:
+                    report.removed.append(rel)
+            self.conn.commit()
+            report.unchanged = unchanged
+            if self._indexed_metadata() == self._filesystem_metadata():
+                settled = True
+                break
+        if not settled:
+            report.reason = "the Markdown tree remained active; refresh again to observe later changes"
+        return report
+
+    def _indexed_metadata(self) -> dict[str, tuple[int, int, str]]:
+        return {r["path"]: (r["mtime_ns"], r["size"], r["file_identity"]) for r in
+                self.conn.execute("SELECT path, mtime_ns, size, file_identity FROM note")}
+
+    def _filesystem_metadata(self) -> dict[str, tuple[int, int, str]]:
+        """A best-effort manifest used only to detect a moving refresh target."""
+        rows: dict[str, tuple[int, int, str]] = {}
         for path in notes.iter_paths(self.vault.root):
             rel = path.relative_to(self.vault.root).as_posix()
-            seen.add(rel)
-            stat = path.stat()
-            if known.get(rel) == (stat.st_mtime, stat.st_size):
-                report.unchanged += 1
+            try:
+                with file_access(path):
+                    stat = path.stat()
+            except FileNotFoundError:
                 continue
-            if self.upsert(path, commit=False):
-                report.upserted.append(rel)
-            else:
-                report.unchanged += 1
-        for rel in sorted(set(known) - seen):
-            self._delete_rows(rel, keep_documents=False)
-            report.removed.append(rel)
-        self.conn.commit()
-        return report
+            identity = f"{stat.st_dev}:{stat.st_ino}:{stat.st_ctime_ns}"
+            rows[rel] = (stat.st_mtime_ns, stat.st_size, identity)
+        return rows
 
     def rebuild(self) -> RefreshReport:
         """Everything from the notes. Document text and embeddings survive,
@@ -430,13 +483,16 @@ class Index:
         documents = [dict(r) for r in self.conn.execute(
             "SELECT note, heading, text, ordinal FROM chunk WHERE role = 'document' "
             "ORDER BY note, ordinal")]
-        for table in ("note", "chunk", "facet", "link"):
+        for table in ("note", "chunk", "facet", "link", "component"):
             self.conn.execute(f"DELETE FROM {table}")
         self.conn.execute("DELETE FROM chunk_fts")
         self._model = None
         report = RefreshReport(rebuilt=True)
         for path in notes.iter_paths(self.vault.root):
-            self.upsert(path, commit=False, force=True)
+            try:
+                self.upsert(path, commit=False, force=True)
+            except (FileNotFoundError, FileChangedError):
+                continue
             report.upserted.append(path.relative_to(self.vault.root).as_posix())
         by_note: dict[str, list[dict]] = {}
         for doc in documents:
@@ -450,6 +506,17 @@ class Index:
         self._set_meta("model_hash", self._model_hash())
         self._set_meta("built_at", now_iso())
         self.conn.commit()
+        # The first walk may have crossed a rename/delete.  Once the schema
+        # marker is durable, use the same bounded incremental reconciliation
+        # as an ordinary refresh to discover the destination or deletion.
+        reconciled = self.refresh()
+        for rel in reconciled.upserted:
+            if rel not in report.upserted:
+                report.upserted.append(rel)
+        report.removed.extend(rel for rel in reconciled.removed if rel not in report.removed)
+        report.unchanged = reconciled.unchanged
+        if reconciled.reason:
+            report.reason = reconciled.reason
         return report
 
     # -- reads ----------------------------------------------------------------

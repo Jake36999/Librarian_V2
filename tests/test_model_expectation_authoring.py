@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 import json
+import queue
+import threading
 
 import pytest
 
 from resource_librarian import model_expectation_authoring
+from resource_librarian.app import App
 from resource_librarian.evidence import EvidenceStore
-from resource_librarian.keys import config_dir
+from resource_librarian.keys import KeyStore, config_dir
 from resource_librarian.model_invocation import (ExactRoute, ExpectationRegistry,
                                                  InvocationRuntime, LEGACY_OPENAI_CHAT)
 from resource_librarian.registry import Context, REGISTRY
@@ -123,6 +126,45 @@ def test_rejected_draft_changes_no_active_registry_or_route_behaviour(vault):
     unchanged = runtime.expectations.match(route, LEGACY_OPENAI_CHAT)
     assert unchanged.id == "core-legacy-openai-chat"
     assert unchanged.capability("tool_use") == "unknown"
+
+
+def test_rejection_keeps_its_prepared_collision_target_during_permission_wait(vault):
+    app = App(vault, coordinate=True, keys=KeyStore(use_keyring=False), broker_timeout=5)
+    app.set_mode("auto")
+    extras = app._extras()
+    extras.pop("agent_profile", None)
+    extras.pop("profile_store", None)
+    context = Context(tier="curate", vault=vault,
+                      extras={**extras, "caller_kind": "person"})
+    try:
+        staged = _stage(vault, ctx=context)
+        token = _revision(context, staged["item"])
+        quarantine = vault.work("quarantine") / "staging"
+        quarantine.mkdir(parents=True, exist_ok=True)
+        collision = quarantine / f"{staged['item']}.json"
+        collision.write_text('{"older": true}', encoding="utf-8")
+        app.set_mode("ask")
+        requests, results = queue.Queue(), []
+        app.broker.subscribe(lambda event: requests.put(event)
+                             if event.get("type") == "permission_request" else None)
+        thread = threading.Thread(target=lambda: results.append(REGISTRY.call(
+            "staging_decide", {"item_ids": [staged["item"]], "decision": "reject",
+                               "reason": "not supported", "staged_revision": token},
+            context)))
+        thread.start()
+        event = requests.get(timeout=3)
+        collision.unlink()
+        app.broker.answer(event["id"], "allow_once")
+        thread.join(3)
+
+        assert not thread.is_alive()
+        assert results[0]["results"][0]["status"] == "rejected"
+        assert not collision.exists()
+        prepared = quarantine / f"{staged['item']} (2).json"
+        assert json.loads(prepared.read_text(encoding="utf-8"))["reason"] == "not supported"
+    finally:
+        app.broker.close("test cleanup")
+        app.close_runtime()
 
 
 def test_person_acceptance_updates_pack_and_live_runtime_only_after_revision_review(vault):

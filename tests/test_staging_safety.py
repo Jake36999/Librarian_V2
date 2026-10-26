@@ -236,6 +236,78 @@ def test_new_note_created_during_permission_wait_is_not_overwritten(core, kind, 
         thread.join(3)
 
 
+def test_attachment_changed_during_rejection_permission_wait_is_not_quarantined(core):
+    source = core.vault.root / "Inbox" / "changing.pdf"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_bytes(b"reviewed bytes")
+    item = {"id": "reject-changing", "kind": "source", "source_kind": "document",
+            "name": "changing", "file": "Inbox/changing.pdf", "evidence": []}
+    core._serialized("stage-test", lambda: staging.StagingStore(core.vault).add(item))
+    core.set_mode("ask")
+    requests, results = queue.Queue(), []
+    core.broker.subscribe(lambda event: requests.put(event)
+                          if event.get("type") == "permission_request" else None)
+    thread = threading.Thread(target=lambda: results.append(core.mcp_call("staging_decide", {
+        "item_ids": ["reject-changing"], "decision": "reject", "reason": "not relevant",
+    }, tier="contribute")["result"]))
+    thread.start()
+    try:
+        event = requests.get(timeout=3)
+        source.write_bytes(b"changed after review")
+        core.broker.answer(event["id"], "allow_once")
+        thread.join(3)
+        assert not thread.is_alive()
+        assert results[0]["refused"] == "DOCUMENT_ACTIVE"
+        assert source.read_bytes() == b"changed after review"
+        assert staging.StagingStore(core.vault).load("reject-changing")["status"] == "staged"
+        assert not (core.vault.work("quarantine") / "staging" / "reject-changing.json").exists()
+    finally:
+        core.broker.close("test cleanup")
+        thread.join(3)
+
+
+def test_partial_rejection_checks_and_reports_retained_original_attachments(core):
+    source = core.vault.root / "Inbox" / "partial.pdf"
+    clean = core.vault.work("staging") / "files" / "partial.md"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    clean.parent.mkdir(parents=True, exist_ok=True)
+    source.write_bytes(b"reviewed source")
+    clean.write_text("reviewed text", encoding="utf-8")
+    item = {"id": "reject-partial", "kind": "source", "source_kind": "document",
+            "name": "partial", "status": "partial", "file": "Inbox/partial.pdf",
+            "clean_file": ".librarian/staging/files/partial.md", "evidence": [],
+            "promotion_progress": {"version": 1, "completed_paths": ["Sources/document/partial.md"]}}
+    core._serialized("stage-test", lambda: staging.StagingStore(core.vault).add(item))
+    core.set_mode("ask")
+    requests, results = queue.Queue(), []
+    core.broker.subscribe(lambda event: requests.put(event)
+                          if event.get("type") == "permission_request" else None)
+    thread = threading.Thread(target=lambda: results.append(core.mcp_call("staging_decide", {
+        "item_ids": ["reject-partial"], "decision": "reject", "reason": "stop here",
+    }, tier="contribute")["result"]))
+    thread.start()
+    try:
+        event = requests.get(timeout=3)
+        clean.write_text("changed after review", encoding="utf-8")
+        core.broker.answer(event["id"], "allow_once")
+        thread.join(3)
+        assert not thread.is_alive()
+        assert results[0]["refused"] == "DOCUMENT_ACTIVE"
+        assert staging.StagingStore(core.vault).load("reject-partial")["status"] == "partial"
+
+        core.set_mode("auto")
+        rejected = core.person_call("staging_decide", {
+            "item_ids": ["reject-partial"], "decision": "reject", "reason": "stop here",
+        })["results"][0]
+        assert rejected["originals_retained"] == [
+            "Inbox/partial.pdf", ".librarian/staging/files/partial.md"]
+        assert source.read_bytes() == b"reviewed source"
+        assert clean.read_text(encoding="utf-8") == "changed after review"
+    finally:
+        core.broker.close("test cleanup")
+        thread.join(3)
+
+
 def test_internal_dependencies_do_not_open_public_hidden_file_access(core):
     from resource_librarian.coordination import operation_path, fingerprint, PreconditionChangedError
     state = ".librarian/staging/source/revision-original.json"

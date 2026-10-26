@@ -181,7 +181,8 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
     All batches share a bounded guard; mixed batches replan derived text only
     within their approved file footprint.
     """
-    if kwargs.get("dry_run") or kwargs.get("decision") != "accept":
+    decision = kwargs.get("decision")
+    if kwargs.get("dry_run") or decision not in ("accept", "reject"):
         return None
     # The registry's existing 100-item list bound fits recovery's 200
     # fingerprints: at most one staged record and one destination per item.
@@ -193,6 +194,31 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
             snapshots[item["id"]] = (state, observed)
         except TypeError:
             continue  # Preserve the domain's per-item invalid-ID result.
+    if decision == "reject":
+        targets, absent, observed, plans = [], [], [], {}
+        store = _store(ctx)
+        for item in items:
+            state, stamp = snapshots[item["id"]]
+            quarantine = store.quarantine_path(item["id"])
+            quarantine_rel = quarantine.relative_to(ctx.vault.root).as_posix()
+            targets.extend((state, quarantine_rel))
+            absent.append(quarantine_rel)
+            observed.append((state, stamp))
+            attachments = []
+            for key in ("file", "clean_file"):
+                if not item.get(key):
+                    continue
+                path = staging._attachment_path(ctx.vault, str(item[key]))
+                rel = path.relative_to(ctx.vault.root).as_posix()
+                observed.append((rel, fingerprint(path)))
+                attachments.append(rel)
+            plans[item["id"]] = {"item_id": item["id"], "state": state,
+                                  "quarantine": quarantine_rel, "attachments": attachments}
+        if len(dict(observed)) + len(dict.fromkeys(absent)) > 200:
+            raise TypeError("rejection exceeds the 200-file recovery bound; reject it in smaller groups")
+        return WriteIntent(tuple(dict.fromkeys(targets)), absent=tuple(dict.fromkeys(absent)),
+                           observed=tuple(dict(observed).items()),
+                           prepared={"operation": "stage_reject", "rejections": plans})
     supported = [i for i in items if i.get("revision_of") or i.get("kind") in ("concept", "import", "lens")]
     if len(items) > 1 and any(i.get("kind") == "model_expectation" for i in items):
         raise TypeError("review and decide model expectations one at a time")
@@ -396,6 +422,7 @@ def staging_decide(ctx: Context, item_ids: list[str],
             pass
     expectation_items = [item for item in before.values()
                          if item.get("kind") == "model_expectation"]
+    prepared = ctx.extras.get("_prepared_write") or {}
     if expectation_items:
         if len(before) != 1 or len(item_ids) != 1:
             raise TypeError("review and decide model expectations one at a time")
@@ -408,8 +435,17 @@ def staging_decide(ctx: Context, item_ids: list[str],
             raise TypeError("the staged expectation changed; review it again")
         from .. import model_expectation_authoring
         from ..model_invocation import ExpectationRegistry
+        quarantine_target = None
+        if decision == "reject":
+            plan = prepared.get("rejections", {}).get(item_ids[0]) \
+                if prepared.get("operation") == "stage_reject" else None
+            if plan is None or plan.get("item_id") != item_ids[0]:
+                raise TypeError("a model-expectation rejection requires its prepared quarantine plan")
+            from ..coordination import operation_path
+            quarantine_target = operation_path(ctx.vault, plan["quarantine"])
         result = model_expectation_authoring.decide(
-            store, item_ids[0], decision, reason, decided_by="person")
+            store, item_ids[0], decision, reason, decided_by="person",
+            quarantine_target=quarantine_target)
         runtime = ctx.extras.get("invocation_runtime")
         if runtime is not None and decision == "accept":
             runtime.expectations = ExpectationRegistry.active()
@@ -418,7 +454,6 @@ def staging_decide(ctx: Context, item_ids: list[str],
     origins = {str((item.get("found_for") or {}).get("session") or "")
                for item in before.values() if (item.get("found_for") or {}).get("session")}
     promotion_session = next(iter(origins)) if len(origins) == 1 else (ctx.session or "")
-    prepared = ctx.extras.get("_prepared_write") or {}
     results = staging.decide(store, None, item_ids, decision, reason,
                              bottom_line, what_it_solves,
                              decided_by="person" if ctx.tier == "curate" else "agent",
@@ -429,6 +464,7 @@ def staging_decide(ctx: Context, item_ids: list[str],
                              source_plan=prepared.get("source_plan") if prepared.get("operation") == "stage_source" else None,
                              source_batch=prepared.get("source_batch") if prepared.get("operation") == "stage_sources" else None,
                              mixed_batch=prepared.get("mixed_batch") if prepared.get("operation") == "stage_mixed" else None,
+                             rejection_plan=prepared.get("rejections") if prepared.get("operation") == "stage_reject" else None,
                              document_leases=ctx.extras.get("document_leases"))
     for result in results:
         if result.get("status") not in ("accepted", "approved", "rejected", "deferred"):

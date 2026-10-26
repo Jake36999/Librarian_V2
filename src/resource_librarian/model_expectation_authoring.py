@@ -148,7 +148,8 @@ def review(store: StagingStore, item_id: str) -> dict[str, Any]:
 
 
 def decide(store: StagingStore, item_id: str, decision: str, reason: str = "", *,
-           decided_by: str, path: Path | None = None) -> dict[str, Any]:
+           decided_by: str, path: Path | None = None,
+           quarantine_target: Path | None = None) -> dict[str, Any]:
     if decided_by != "person":
         raise TypeError("only a person can accept or reject an expectation proposal")
     if decision not in {"accept", "reject"}:
@@ -162,8 +163,9 @@ def decide(store: StagingStore, item_id: str, decision: str, reason: str = "", *
         item["status"] = "rejected"
         item["history"].append({"decision": "reject", "by": "person",
                                 "at": now_iso(), "reason": reason})
-        store.quarantine(item, reason)
-        return {"id": item_id, "status": "rejected", "quarantined": True}
+        quarantined_to = store.quarantine(item, reason, target=quarantine_target)
+        return {"id": item_id, "status": "rejected", "quarantined": True,
+                "quarantined_to": quarantined_to}
 
     row = copy.deepcopy(item.get("record"))
     if not isinstance(row, dict):
