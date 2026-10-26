@@ -660,7 +660,7 @@ linked record says so.
 | CORE-05 / INDEX-03/04 mixed-kind acceptance | partial | `87e2460` | [Mixed-kind/multi-topic acceptance](#mixed-kindmulti-topic-acceptance-2026-10-25). |
 | Watcher read-failure recovery | implemented | `89e609d` | [Watcher read-failure recovery](#watcher-read-failure-recovery-2026-10-25). |
 | INDEX-04 serving gateway and file-access exclusion | implemented | `ded98c0`, `d31cda5`, `e40a4a6` | [INDEX-04 serving gateway and Windows read exclusion](#index-04-serving-gateway-and-windows-read-exclusion-2026-10-25). |
-| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25); see also the [validation report](../reports/2026-10-25-core-concurrency-validation.md). |
+| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), and the [latest validation report](../reports/2026-10-26-index05-snapshot-continuation.md). |
 
 Unless an artifact is explicitly archived elsewhere, a `tmp/...` path cited
 below is an untracked local log from the originating worktree. It is a pointer
@@ -1300,3 +1300,28 @@ G1, the next product wave is safe directory deployment (DEPLOY-01 onward),
 followed by the Session-based harness, integrated acceptance and release
 evidence. CORE-04B remains an optional managed-MCP bootstrap rather than a
 prerequisite for the direct Core path.
+
+### INDEX-05 snapshot and reviewed-file continuation (2026-10-26)
+
+Commit `74c6081` closes three bounded correctness gaps without closing G1.
+Index refresh/rebuild now uses active-handle byte snapshots, persists
+nanosecond metadata and native identity, catches same-size replacements,
+reconciles rename/delete races within a three-pass bound, and removes stale
+component rows. Extract materialization is bound to one reviewed survey tree
+revision and a deterministic token for the exact plan. Fresh staging rejection
+uses a prepared collision-safe quarantine target and fingerprints complete and
+partial source attachments while retaining originals for recovery.
+
+Independent cross-review found seven concrete defects across those lanes; all
+were corrected before verification. The dedicated group passed **68 tests**,
+the combined index/watcher/extract/staging group passed **310 tests**, and the
+frozen-source suite passed **1,435 tests, 2 skipped, 1 deselected in 502.77s**.
+The first combined run had one non-reproduced watcher quiet-window timing
+failure; the related group, five direct repetitions, the complete combined
+rerun and the full suite all passed without weakening the assertion. Detailed
+scope, environment disclosure and limits are in the [continuation report](../reports/2026-10-26-index05-snapshot-continuation.md).
+
+INDEX-05/G1 remains partial. Encoder work still occupies an enclosing writer
+call, and sustained/large-vault, crash/forced-stop mixed traffic, simultaneous
+real adapters, external handles, supported-Python and packaged-install evidence
+remain outstanding.
