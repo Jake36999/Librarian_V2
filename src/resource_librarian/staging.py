@@ -31,15 +31,16 @@ never deleted: it moves to quarantine with its reason.
 from __future__ import annotations
 
 import json
+import hashlib
 import re
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 from . import clerk, notes
 from .coordination import atomic_write_text
 from .lenses import LensStore
-from .promote import Draft, promote
+from .promote import Draft, PromotionInterruptedError, promote
 from .rules import Refusal
 from .search import Engine
 from .vault import Vault, now_iso
@@ -104,7 +105,16 @@ class StagingStore:
             raise TypeError(f"staging kind {kind!r} is not one of {KINDS}")
         return self.root / kind
 
+    @staticmethod
+    def _item_id(item_id: str) -> str:
+        if not isinstance(item_id, str) or not item_id or len(item_id) > 200 or \
+                item_id.startswith(".") or item_id.endswith((".", " ")) or \
+                any(char in item_id for char in "/\\:\x00"):
+            raise TypeError("a staged item id is a plain filename, not a path")
+        return item_id
+
     def path(self, item_id: str) -> Path:
+        item_id = self._item_id(item_id)
         for kind in KINDS:
             candidate = self.folder(kind) / f"{item_id}.json"
             if candidate.exists():
@@ -112,9 +122,18 @@ class StagingStore:
         raise TypeError(f"no staged item {item_id!r}")
 
     def load(self, item_id: str) -> dict[str, Any]:
-        return json.loads(self.path(item_id).read_text(encoding="utf-8"))
+        path = self.path(item_id)
+        item = json.loads(path.read_text(encoding="utf-8"))
+        self.validate_item(item, item_id, path.parent.name)
+        return item
+
+    @staticmethod
+    def validate_item(item: Any, item_id: str, kind: str) -> None:
+        if not isinstance(item, dict) or item.get("id") != item_id or item.get("kind") != kind:
+            raise TypeError("staged item identity does not match its file")
 
     def save(self, item: dict[str, Any]) -> None:
+        self._item_id(item["id"])
         folder = self.folder(item["kind"])
         folder.mkdir(parents=True, exist_ok=True)
         atomic_write_text(folder / f"{item['id']}.json",
@@ -170,6 +189,8 @@ def review(store: StagingStore, item_id: str, endpoint: clerk.Endpoint | None,
     """The assisted review: the unframed draft always, the framed fit judgement
     only when there is a need to judge against. Stored on the item."""
     item = store.load(item_id)
+    if item.get("promotion_progress"):
+        raise TypeError("finish or reconcile interrupted acceptance before requesting another draft")
     if item["kind"] == "lens":
         return {"id": item_id, "kind": item["kind"], "note": "lenses are reviewed by reading "
                 "the proposal and its source_quote; there is nothing to draft"}
@@ -213,10 +234,12 @@ def _context(text: str, quote: str, width: int = 160) -> str:
 
 # ---------------------------------------------------------------- deciding
 
-def decide(store: StagingStore, engine: Engine, item_ids: list[str], decision: str,
+def decide(store: StagingStore, engine: Engine | None, item_ids: list[str], decision: str,
            reason: str = "", bottom_line: str = "", what_it_solves: str = "",
            decided_by: str = "person", session: str = "",
-           fields: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+           fields: dict[str, Any] | None = None, *,
+           index_call: Callable | None = None, topic_plan: dict | None = None, source_plan: dict | None = None,
+           source_batch: dict | None = None, mixed_batch: dict | None = None, document_leases=None) -> list[dict[str, Any]]:
     """Accept, reject or defer, one item or a batch. Each item's outcome is
     reported on its own; one refusal does not stop the batch.
 
@@ -233,17 +256,69 @@ def decide(store: StagingStore, engine: Engine, item_ids: list[str], decision: s
     if fields and len(item_ids) > 1:
         raise TypeError("a batch accept cannot share one set of field corrections; accept "
                         "items one at a time with their own")
+    if index_call is not None:
+        index_call(lambda current: None)  # Fail before mutations if Core closed.
+    elif engine is None:
+        raise TypeError("decide requires an Engine or callback-only index access")
     mode = str(store.vault.setting("promotion", "mode") or "person")
+    from . import taxonomy
     out = []
+    batch_guard = None
+    interrupted_paths = set()
+    batch_plan = mixed_batch if mixed_batch is not None else source_batch
+    if batch_plan is not None:
+        from .promote import PromotionGuard
+        batch_guard = PromotionGuard(store.vault, batch_plan, document_leases)
     for item_id in item_ids:
+        start = len(batch_guard.completed) if batch_guard is not None else 0
         try:
+            item_plan = None
+            if mixed_batch is not None:
+                if item_id not in mixed_batch["plans"]:
+                    raise TypeError(f"no staged item {item_id!r}")
+                item_plan = _mixed_item_plan(store, item_id, mixed_batch, batch_guard, decided_by, index_call, interrupted_paths)
             out.append(_decide_one(store, engine, item_id, decision, reason, bottom_line,
                                    what_it_solves, decided_by, session, mode,
-                                   batch=len(item_ids) > 1, fields=fields or {}))
+                                   batch=len(item_ids) > 1, fields=fields or {}, index_call=index_call,
+                                   topic_plan=(item_plan if item_plan and item_plan.get("operation") == "topic" else topic_plan),
+                                   source_plan=(item_plan if item_plan and item_plan.get("operation") == "new_source" else
+                                                source_batch["plans"].get(item_id) if source_batch is not None else source_plan),
+                                   source_guard=batch_guard, write_guard=batch_guard if mixed_batch is not None else None,
+                                   document_leases=document_leases))
         except Refusal as refusal:
-            out.append({"id": item_id, "refused": refusal.code, "detail": refusal.detail})
+            if (topic_plan is not None or source_plan is not None or batch_plan is not None) and refusal.code == "DOCUMENT_ACTIVE":
+                if batch_guard is not None:
+                    refusal.extra.update(completed_paths=list(dict.fromkeys(batch_guard.completed)),
+                                         completed_results=out,
+                                         next_action="Review completed writes and any unrecorded session handoffs before accepting remaining items.")
+                raise  # Surface a Core checkpoint, not a hidden per-item conflict.
+            out.append({"id": item_id, "refused": refusal.code, "detail": refusal.detail,
+                        **({"completed_paths": refusal.extra["completed_paths"]}
+                           if refusal.extra.get("completed_paths") else {})})
         except TypeError as exc:
             out.append({"id": item_id, "error": str(exc)})
+        except (PromotionInterruptedError, taxonomy.TaxonomyInterruptedError) as exc:
+            if isinstance(exc, taxonomy.TaxonomyInterruptedError) and mixed_batch is None:
+                raise  # Preserve the established single-topic API failure shape.
+            out.append({"id": item_id, "error": str(exc) if isinstance(exc, PromotionInterruptedError)
+                        else f"topic acceptance interrupted ({type(exc.__cause__ or exc).__name__}); inspect completed writes",
+                        "completed_paths": exc.completed_paths,
+                        "next_action": "Reload the staged item, inspect completed work, then explicitly finish or reconcile it."})
+        except Exception as exc:
+            if batch_plan is None:
+                raise
+            # A stopped Core/service or failed admission must not hide earlier
+            # committed decisions, attempt later items, or leak provider text.
+            out.append({"id": item_id, "error": f"acceptance batch interrupted ({type(exc).__name__})",
+                        "completed_paths": list(dict.fromkeys(batch_guard.completed))})
+            for remaining in item_ids[len(out):]:
+                out.append({"id": remaining, "error": "not run: acceptance batch interrupted; review before trying again"})
+            break
+        finally:
+            if mixed_batch is not None and out and out[-1].get("id") == item_id and out[-1].get("status") != "accepted":
+                primary = mixed_batch["plans"].get(item_id, {}).get("path")
+                if primary and primary in batch_guard.completed[start:]:
+                    interrupted_paths.add(primary)
     return out
 
 
@@ -264,6 +339,15 @@ def preview(store: StagingStore, engine: Engine, item_id: str, decided_by: str,
         problems.append(f"promotion.mode is {mode!r}: a person accepts")
     if item["kind"] != "source":
         return {"id": item_id, "kind": item["kind"], "would": "accept", "problems": problems}
+    if item.get("revision_of"):
+        target = store.vault.safe_relative(str(item["revision_of"]))
+        if not target.is_file():
+            problems.append("the accepted source note no longer exists")
+        elif notes.load(target).frontmatter.get("type") != "source":
+            problems.append("a staged source revision must target a source note")
+        return {"id": item_id, "would": "merge", "ok": not problems, "problems": problems,
+                "path": str(item["revision_of"]),
+                "sections": [heading for heading in REVISED_SECTIONS if (item.get("sections") or {}).get(heading)]}
     draft = (item.get("review") or {}).get("draft") or {}
     if not bottom_line and draft.get("status") != "ok":
         problems.append("no reviewed draft and no bottom_line given")
@@ -304,8 +388,376 @@ def _check_field_override(model, kind: str, name: str, value: Any,
                 raise TypeError(f"{name}={item!r} is not one of {permitted}")
 
 
+def _source_draft(store, item, bottom_line, what_it_solves, decided_by, session,
+                  fields, batch, index_call):
+    """Resolve the approved prose/metadata without moving attachments."""
+    from . import dik
+    review = ((item.get("promotion_progress") or {}).get("review") or
+              (item.get("review") or {}).get("draft") or {})
+    merged = dict(item.get("fields") or {})
+    def validate(engine):
+        kind = item.get("source_kind", "repository")
+        if kind not in engine.index.model.kinds or not re.fullmatch(r"[a-z0-9_-]+", kind):
+            raise TypeError("source kind is not in the vault content model")
+        for key, value in (fields or {}).items():
+            _check_field_override(engine.index.model, kind, key, value, store.vault.topics())
+    index_call(validate)
+    merged.update(fields or {})
+    if batch and (bottom_line or what_it_solves):
+        raise TypeError("a batch accept cannot share one Bottom Line; accept items one at a time")
+    if not bottom_line:
+        if review.get("status") != "ok":
+            raise TypeError(f"{item['id']} has no reviewed draft: run staging_review, or give bottom_line and what_it_solves")
+        bottom_line, what_it_solves = review.get("bottom_line", ""), review.get("what_it_solves", "")
+        if not item.get("promotion_progress"):
+            merged["drafted_by"] = review.get("model") or "clerk"
+    coverage, not_examined = coverage_of(item)
+    merged.setdefault("coverage", coverage)
+    record = dik.load(store.vault, item["name"])
+    sections = {**(item.get("sections") or {}), **dik.sections(record)} if record else dict(item.get("sections") or {})
+    if record:
+        merged.setdefault("dik", dik.path_for(store.vault, item["name"]).relative_to(store.vault.root).as_posix())
+    if item.get("ocr"):
+        o = item["ocr"]
+        merged.setdefault("text_origin", f"OCR by {o.get('model')}: {o.get('read')} of {o.get('needed')} image-only pages")
+    if not_examined:
+        merged.setdefault("not_examined", not_examined)
+    return Draft(name=item["name"], kind=item.get("source_kind", "repository"),
+        title=item.get("title", item["name"]), canonical_url=item.get("canonical_url", ""),
+        bottom_line=bottom_line, what_it_solves=what_it_solves or bottom_line,
+        fields=merged, sections=sections, evidence=item.get("evidence") or [],
+        topic=item.get("topic") or "Unfiled", attested_by=decided_by, session=session,
+        captured_at=item.get("captured_at") or str(item.get("created_at") or "")[:10]), coverage
+
+
+def _attachment_path(vault: Vault, rel: str) -> Path:
+    from .coordination import operation_path
+    normalized = str(rel).replace("\\", "/")
+    if normalized.startswith(".librarian/staging/files/"):
+        path = operation_path(vault, normalized)
+        if not path.is_relative_to(vault.work("staging") / "files"):
+            raise TypeError("hidden attachments must remain inside staging/files")
+        return path
+    path = vault.safe_relative(normalized)
+    if any(part.startswith(".") for part in path.relative_to(vault.root).parts):
+        raise TypeError("visible attachments cannot resolve into hidden vault state")
+    return path
+
+
+def prepare_source(store, item, bottom_line, what_it_solves, decided_by, session,
+                   fields, index_call, *, reserved_destinations=(), destinations=None) -> dict:
+    """Single-source pre-approval preparation; originals are never relocated."""
+    from . import dik, promote as promotion
+    from .coordination import MISSING, fingerprint, fingerprint_bytes, operation_path
+    if item["status"] not in DECIDABLE["accept"] or item.get("revision_of"):
+        raise TypeError("this is not a new source awaiting acceptance")
+    if item.get("sensitivity") != "normal" and decided_by != "person":
+        raise Refusal("SENSITIVITY_REVIEW", "only a person accepts a sensitive source")
+    mode = str(store.vault.setting("promotion", "mode") or "person")
+    if mode != "agent" and decided_by != "person":
+        raise Refusal("PERSON_CONFIRMS", f"promotion.mode is {mode!r}: a person accepts this staged source")
+    progress = item.get("promotion_progress") or {}
+    if not isinstance(progress, dict) or (progress and (
+            not isinstance(progress.get("source"), dict) or
+            not isinstance(progress.get("copies"), list) or
+            any(not isinstance(c, dict) or not all(isinstance(c.get(k), str)
+                for k in ("key", "source", "destination", "fingerprint"))
+                for c in progress["copies"]))):
+        raise TypeError("invalid interrupted promotion record; inspect it before continuing")
+    if progress and decided_by != "person":
+        raise Refusal("PERSON_CONFIRMS", "a person reviews interrupted source promotion before continuing")
+    state_path = store.path(item["id"])
+    raw = state_path.read_bytes()
+    if json.loads(raw) != item:
+        raise Refusal("DOCUMENT_ACTIVE", "the staged source changed during preparation")
+    state = state_path.relative_to(store.vault.root).as_posix()
+    data_path = dik.path_for(store.vault, item["name"])
+    data_stamp = fingerprint(data_path)
+    draft, coverage = _source_draft(store, item, bottom_line, what_it_solves, decided_by,
+                                     progress.get("session", session),
+                                     fields, False, index_call)
+    copies, reserved = [], set(reserved_destinations)
+    for key in ("file", "clean_file"):
+        if not item.get(key):
+            continue
+        source = _attachment_path(store.vault, item[key])
+        rel = source.relative_to(store.vault.root).as_posix()
+        if not source.is_file():
+            raise TypeError(f"attachment is missing: {rel}")
+        stamp = fingerprint(source)
+        prior = next((c for c in progress.get("copies", []) if c.get("key") == key), None)
+        if prior:
+            target = store.vault.safe_relative(prior["destination"])
+            folder = store.vault.root / "Sources" / draft.kind / "files"
+            if target.parent != folder:
+                raise TypeError("retained attachment copies must remain in the source kind's files folder")
+            if (prior.get("source") != rel or prior.get("fingerprint") != stamp
+                    or (target.exists() and fingerprint(target) != stamp)):
+                raise Refusal("DOCUMENT_ACTIVE", "an interrupted attachment or retained copy changed; inspect before continuing")
+        elif destinations is not None and key in destinations:
+            target = store.vault.safe_relative(destinations[key])
+            if target.parent != store.vault.root / "Sources" / draft.kind / "files" or target.exists():
+                raise Refusal("DOCUMENT_ACTIVE", "the approved attachment destination is no longer available")
+        else:
+            folder = store.vault.root / "Sources" / draft.kind / "files"
+            base = source.name if key == "file" or not copies else Path(copies[0]["destination"]).stem + " (clean text).md"
+            target = folder / base
+            n = 2
+            while target.exists() or target.as_posix().casefold() in reserved:
+                target = folder / f"{Path(base).stem} ({n}){Path(base).suffix}"
+                n += 1
+        dest = target.relative_to(store.vault.root).as_posix()
+        # Reject redirects before either a source or an attachment is written.
+        if operation_path(store.vault, dest) != target:
+            raise TypeError("attachment destination redirects through a link")
+        if target.as_posix().casefold() in reserved:
+            raise TypeError("attachment targets collide")
+        reserved.add(target.as_posix().casefold())
+        copies.append({"key": key, "source": rel, "destination": dest, "fingerprint": stamp,
+                       "before": fingerprint(target)})
+        draft.fields["file" if key == "file" else "file_markdown"] = dest
+    requested = asdict(draft)
+    requested.pop("attested_by")  # Explicit human resumption may attest prior agent work.
+    request_hash = hashlib.sha256(json.dumps(requested, sort_keys=True, default=str).encode()).hexdigest()
+    if progress and (progress.get("version") != 1 or progress.get("request_hash") != request_hash):
+        raise Refusal("DOCUMENT_ACTIVE", "approved source content changed since interruption; use source revision review rather than replacing it")
+    resume = progress.get("source") if progress.get("source", {}).get("fingerprint") not in (None, MISSING) else None
+    plan = promotion.prepare(store.vault, draft, index_call, resume=resume)
+    plan.update(item_id=item["id"], coverage=coverage, request_hash=request_hash, copies=copies,
+                state_path=state)
+    plan["targets"].extend([state, *[c["destination"] for c in copies]])
+    plan["observed"].extend([(state, fingerprint_bytes(raw)),
+        (data_path.relative_to(store.vault.root).as_posix(), data_stamp)])
+    for copy in copies:
+        plan["observed"].extend([(copy["source"], copy["fingerprint"]), (copy["destination"], copy["before"])])
+    if len(dict(plan["observed"])) > 200:
+        raise TypeError("source acceptance exceeds the 200-file recovery bound")
+    return plan
+
+
+def prepare_source_batch(store, items: list[dict], decided_by: str, session: str,
+                         index_call) -> dict:
+    """One bounded source-only acceptance inventory, prepared before approval.
+
+    A shared guard advances only hashes of our own durable writes, never a
+    fresh fingerprint of arbitrary content after a prior item. Source plans
+    still render current generated backlinks/views on the Core SQL worker.
+    """
+    targets, observed, plans, reserved, names = [], {}, {}, set(), set()
+    for item in items:
+        item_id = item["id"]
+        if item_id in plans:
+            continue  # The second decision still reports "already accepted".
+        try:
+            if item.get("promotion_progress"):
+                raise TypeError("review and finish interrupted source acceptance one item at a time")
+            plan = prepare_source(store, item, "", "", decided_by,
+                str((item.get("found_for") or {}).get("session") or session or ""), {}, index_call,
+                reserved_destinations=reserved)
+            if plan["name"].casefold() in names:
+                raise Refusal("UNIQUE_NOTE_NAMES", "another source in this batch has the same destination; accept it separately")
+        except (Refusal, TypeError) as exc:
+            plans[item_id] = {"item_id": item_id,
+                "error": exc.detail if isinstance(exc, Refusal) else str(exc),
+                **({"refused": exc.code} if isinstance(exc, Refusal) else {})}
+            continue
+        for path, stamp in plan["observed"]:
+            if path in observed and observed[path] != stamp:
+                raise Refusal("DOCUMENT_ACTIVE", "a shared source-batch dependency changed during preparation")
+            observed[path] = stamp
+        names.add(plan["name"].casefold())
+        reserved.update((store.vault.root / c["destination"]).as_posix().casefold() for c in plan["copies"])
+        targets.extend(plan["targets"])
+        plans[item_id] = plan
+    if len(observed) > 200:
+        raise TypeError("source batch exceeds the 200-file recovery bound; accept it in smaller groups")
+    return {"operation": "new_sources", "plans": plans,
+            "targets": list(dict.fromkeys(targets)), "observed": list(observed.items())}
+
+
+def prepare_mixed_batch(store, items: list[dict], decided_by: str, session: str, index_call) -> dict:
+    """Pre-approved footprint for ordered, guarded mixed-kind decisions.
+
+    Replanning may use our earlier durable writes, but cannot add a file to
+    this footprint. Unknown later dependencies require another review.
+    """
+    from . import taxonomy, promote as promotion, schema
+    from .coordination import fingerprint, operation_path
+    sources = prepare_source_batch(store, [i for i in items if i["kind"] == "source" and not i.get("revision_of")],
+                                   decided_by, session, index_call)
+    plans, targets, observed = dict(sources["plans"]), set(sources["targets"]), dict(sources["observed"])
+    def observe(rel, stamp=None, *, write=False):
+        path = operation_path(store.vault, rel)
+        if path.relative_to(store.vault.root).as_posix() != rel:
+            raise TypeError("batch paths cannot redirect through links")
+        current = fingerprint(path) if stamp is None else stamp
+        if rel in observed and observed[rel] != current:
+            raise Refusal("DOCUMENT_ACTIVE", "a shared mixed-batch dependency changed during preparation")
+        observed[rel] = current
+        if write:
+            targets.add(rel)
+    for rel in (schema.MODEL_PATH.as_posix(), "About/Topics.md", ".librarian/config.toml", ".librarian/agents/routes.json"):
+        observe(rel)
+    future = {p["name"].casefold(): (p["path"], p["topic"]) for p in plans.values() if not p.get("error")}
+    for item in items:
+        state = store.path(item["id"]).relative_to(store.vault.root).as_posix()
+        observe(state, write=True)
+        if item["id"] in plans:
+            continue
+        try:
+            if item["status"] not in DECIDABLE["accept"]:
+                raise TypeError(f"{item['id']} is {item['status']}: not awaiting acceptance")
+            if item.get("sensitivity") != "normal" and decided_by != "person":
+                raise Refusal("SENSITIVITY_REVIEW", "only a person accepts sensitive items")
+            if str(store.vault.setting("promotion", "mode") or "person") != "agent" and decided_by != "person":
+                raise Refusal("PERSON_CONFIRMS", "a person accepts these staged items")
+            if item["kind"] == "topic":
+                if decided_by != "person":
+                    raise Refusal("PERSON_CONFIRMS", "a person accepts taxonomy changes")
+                if item.get("acceptance_progress"):
+                    raise TypeError("review and finish interrupted topic acceptance one item at a time")
+                plan = taxonomy.prepare_accept(store.vault, None, item, {}, index_call=index_call)
+            elif item.get("revision_of") or item["kind"] == "import":
+                rel = str(item.get("revision_of") or item["target"])
+                path = store.vault.safe_relative(rel)
+                rel = path.relative_to(store.vault.root).as_posix()
+                if not item.get("revision_of") and path.exists():
+                    raise TypeError(f"{rel} already exists: review the collision before importing")
+                observe(rel, write=True)
+                plan = {"operation": "revision" if item.get("revision_of") else "import", "path": rel, "targets": [rel]}
+                if item["kind"] == "import" and (item.get("frontmatter") or {}).get("type") == "source":
+                    future[path.stem.casefold()] = (rel, str(item["frontmatter"].get("primary_topic") or "Unfiled"))
+            elif item["kind"] == "concept":
+                raise TypeError("a concept needs its own person-authored definition; accept it individually")
+            else:
+                plan = {"operation": "lens"}  # Its separate store retains its normal writer path.
+            plans[item["id"]] = plan
+            for rel, stamp in plan.get("observed", []):
+                observe(rel, stamp)
+            for rel in plan.get("targets", []):
+                targets.add(rel)
+        except (Refusal, TypeError) as exc:
+            plans[item["id"]] = {"error": exc.detail if isinstance(exc, Refusal) else str(exc),
+                **({"refused": exc.code} if isinstance(exc, Refusal) else {})}
+    # A later topic can refile a source/import accepted earlier in this same
+    # call. Admit its known future path and old generated view before approval.
+    for item in items:
+        plan = plans[item["id"]]
+        if plan.get("operation") == "topic":
+            for member in item.get("members", []):
+                candidate = future.get(str(member).casefold())
+                if candidate:
+                    observe(candidate[0], write=True)
+                    observe(promotion.topic_index_path(store.vault, candidate[1]).relative_to(store.vault.root).as_posix(), write=True)
+    if len(observed) > 200 or len(targets) > 200:
+        raise TypeError("mixed acceptance exceeds the 200-file recovery bound; accept smaller groups")
+    return {"operation": "mixed_acceptance", "plans": plans, "targets": sorted(targets),
+            "observed": list(observed.items()), "session": session}
+
+
+def _mixed_item_plan(store, item_id, batch, guard, decided_by, index_call, interrupted_paths):
+    """Refresh derived text only inside the approved, hash-checked footprint."""
+    from . import taxonomy
+    guard.check()
+    item = store.load(item_id)
+    original = batch["plans"][item_id]
+    if original.get("error"):
+        if original.get("refused"):
+            raise Refusal(original["refused"], original["error"])
+        raise TypeError(original["error"])
+    if item["kind"] == "source" and not item.get("revision_of"):
+        fresh = prepare_source(store, item, "", "", decided_by,
+            str((item.get("found_for") or {}).get("session") or batch["session"] or ""), {}, index_call,
+            destinations={c["key"]: c["destination"] for c in original["copies"]})
+        if fresh["request_hash"] != original["request_hash"]:
+            raise Refusal("DOCUMENT_ACTIVE", "the approved source content changed during mixed acceptance")
+    elif item["kind"] == "topic":
+        fresh = taxonomy.prepare_accept(store.vault, None, item, {}, index_call=index_call)
+        if fresh["request"] != original["request"] or fresh["topic_row"] != original["topic_row"]:
+            raise Refusal("DOCUMENT_ACTIVE", "the approved topic request changed during mixed acceptance")
+    else:
+        fresh = original
+    guard.check()
+    if interrupted_paths.intersection(fresh.get("targets", [])):
+        raise TypeError("a target has interrupted work from an earlier item; review and finish it individually before modifying it")
+    if not set(fresh.get("targets", [])).issubset(guard.targets):
+        raise Refusal("DOCUMENT_ACTIVE", "mixed acceptance needs undeclared write targets; review a new plan")
+    if any(path not in guard.expected or guard.expected[path] != stamp for path, stamp in fresh.get("observed", [])):
+        raise Refusal("DOCUMENT_ACTIVE", "mixed acceptance needs an unreviewed dependency; review a new plan")
+    return fresh
+
+
+def _save_decision(store, item, guard=None):
+    if guard is None:
+        store.save(item)
+    else:
+        rel = store.path(item["id"]).relative_to(store.vault.root).as_posix()
+        guard.write(rel, json.dumps(item, ensure_ascii=False, indent=1))
+
+
+def _accept_prepared_source(store, item, plan, index_call, leases, entry, guard=None):
+    from . import promote as promotion
+    from .coordination import fingerprint, operation_path
+    if plan.get("error"):
+        if plan.get("refused"):
+            raise Refusal(plan["refused"], plan["error"])
+        raise TypeError(plan["error"])
+    if plan.get("item_id") != item["id"]:
+        raise TypeError("source acceptance requires its own prepared plan")
+    index_call(lambda current: None)  # Each item checks Core admission before copying.
+    guard = guard or promotion.PromotionGuard(store.vault, plan, leases)
+    start = len(guard.completed)
+    try:
+        for copy in plan["copies"]:
+            guard.copy(copy["source"], copy["destination"])
+        report = promotion.apply(store.vault, Draft(**plan["draft"]), plan, index_call, leases=leases, guard=guard)
+        guard.check()
+        item.update(status="accepted", accepted_to=report.path, promotion=report.to_dict(),
+                    sections=plan["draft"]["sections"],
+                    attachment_copies=[{k: c[k] for k in ("key", "source", "destination", "fingerprint")} for c in plan["copies"]])
+        for copy in plan["copies"]:
+            item[copy["key"]] = copy["destination"]
+        if item.get("promotion_progress"):
+            item["promotion_progress"]["completed_at"] = now_iso()
+        item["history"].append(entry)
+        guard.write(plan["state_path"], json.dumps(item, ensure_ascii=False, indent=1))
+        return {"id": item["id"], "status": "accepted", "coverage": plan["coverage"], "promotion": report.to_dict(),
+                "originals_retained": [c["source"] for c in plan["copies"]]}
+    except Exception as exc:
+        completed = list(dict.fromkeys(guard.completed[start:]))
+        state = plan["state_path"]
+        if completed and fingerprint(operation_path(store.vault, state)) == guard.expected[state]:
+            fresh = store.load(item["id"])
+            fresh["promotion_progress"] = {"version": 1, "request_hash": plan["request_hash"],
+                "source": {"path": plan["path"], "fingerprint": guard.expected[plan["path"]], "linked": plan["linked"]},
+                "copies": [{k: c[k] for k in ("key", "source", "destination", "fingerprint")} for c in plan["copies"]],
+                "completed_paths": completed, "at": now_iso(), "session": plan["draft"]["session"],
+                "review": {"status": "ok", "bottom_line": plan["draft"]["bottom_line"],
+                           "model": plan["draft"]["fields"].get("drafted_by", ""),
+                           "what_it_solves": plan["draft"]["what_it_solves"]}}
+            fresh["fields"], fresh["sections"] = plan["draft"]["fields"], plan["draft"]["sections"]
+            fresh.setdefault("history", []).append({**entry, "decision": "partial_accept", "completed_paths": completed})
+            try:
+                # Recording progress must not overwrite an outside staged edit.
+                # Other conflicted documents need not be rewritten or rebased.
+                text = json.dumps(fresh, ensure_ascii=False, indent=1)
+                guard.record_progress(state, text)
+            except OSError:
+                pass  # Existing durable operation recovery covers ambiguous persistence.
+        if isinstance(exc, Refusal):
+            exc.extra["completed_paths"] = completed
+            raise
+        if isinstance(exc, promotion.PromotionInterruptedError):
+            raise promotion.PromotionInterruptedError(exc, completed) from exc
+        raise promotion.PromotionInterruptedError(exc, completed) from exc
+
+
 def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_solves,
-                decided_by, session, mode, batch, fields: dict[str, Any] | None = None
+                decided_by, session, mode, batch, fields: dict[str, Any] | None = None,
+                index_call: Callable | None = None, topic_plan: dict | None = None, source_plan: dict | None = None,
+                source_guard=None,
+                write_guard=None,
+                document_leases=None
                 ) -> dict[str, Any]:
     item = store.load(item_id)
     if item["status"] == "queued":
@@ -323,11 +775,14 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
     if item.get("revision_of"):
         if decision == "approve":
             raise TypeError(f"{item_id} is a revision of an accepted note: accept or reject it")
-        return _decide_revision(store, engine, item, decision, entry, decided_by, mode)
+        if decision == "accept" and item.get("sensitivity") != "normal" and decided_by != "person":
+            raise Refusal("SENSITIVITY_REVIEW", "only a person accepts a sensitive source revision")
+        return _decide_revision(store, engine, item, decision, entry, decided_by, mode,
+                                index_call=index_call, guard=write_guard)
     if decision == "reject":
         item["status"] = "rejected"
         item["history"].append(entry)
-        if item.get("file"):
+        if item.get("file") and not item.get("promotion_progress"):
             _move_file(store.vault, item, store.vault.work("quarantine") / "files")
         store.quarantine(item, reason)
         return {"id": item_id, "status": "rejected", "quarantined": True}
@@ -345,6 +800,8 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         raise Refusal("PERSON_CONFIRMS", f"this vault's promotion.mode is {mode!r}: a "
                                          f"person accepts staged items")
     if decision == "approve":
+        if item.get("promotion_progress"):
+            raise TypeError("review and finish interrupted acceptance, or defer/reject it; do not re-ingest partial writes")
         if item["kind"] != "source":
             raise TypeError(f"{item_id} is a {item['kind']}: only a source is approved for "
                             f"ingestion; accept or reject it")
@@ -357,10 +814,34 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         # A person may rename it or say what belongs (`fields`); `refile: false` accepts
         # the topic without filing the proposed members under it.
         from . import taxonomy
-        done = taxonomy.accept(store.vault, engine, item, decided_by, fields or {})
+        try:
+            done = taxonomy.accept(store.vault, engine, item, decided_by, fields or {},
+                                   index_call=index_call, prepared=topic_plan, leases=document_leases, guard=write_guard)
+        except (Refusal, taxonomy.TaxonomyInterruptedError) as exc:
+            completed = exc.extra.get("completed_paths", []) if isinstance(exc, Refusal) else exc.completed_paths
+            if topic_plan is not None and (topic_plan["taxonomy_path"] in completed or item.get("acceptance_progress")):
+                request = topic_plan["request"]
+                prior = item.get("acceptance_progress") or {}
+                item["acceptance_progress"] = {"version": 1, "topic": topic_plan["result"]["topic"],
+                    "row": topic_plan["topic_row"], "request": request, "at": now_iso(),
+                    "completed_paths": list(dict.fromkeys([*prior.get("completed_paths", []), *completed]))}
+                # Retain the person's approved wording for the next explicit review.
+                item.update(name=request["name"], what_belongs=request["what_belongs"], aliases=request["aliases"])
+                item["history"].append({**entry, "decision": "partial_accept", "completed_paths": completed})
+                if write_guard is None:
+                    store.save(item)
+                else:
+                    rel = store.path(item["id"]).relative_to(store.vault.root).as_posix()
+                    # A conflicting editor's staged record must remain intact.
+                    from .coordination import fingerprint, operation_path
+                    if fingerprint(operation_path(store.vault, rel)) == write_guard.expected[rel]:
+                        write_guard.record_progress(rel, json.dumps(item, ensure_ascii=False, indent=1))
+            raise
         item.update(status="accepted", accepted_to=f"About/Topics.md#{done['topic']}")
+        if item.get("acceptance_progress"):
+            item["acceptance_progress"]["completed_at"] = now_iso()
         item["history"].append(entry)
-        store.save(item)
+        _save_decision(store, item, write_guard)
         return {"id": item_id, "status": "accepted", **done}
     if item["kind"] == "lens":
         # A person may reword the stance or say when it applies before
@@ -369,7 +850,7 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
                                                 edits=fields)
         item.update(status="accepted", accepted_to=f"lenses.sqlite#{lens_id}")
         item["history"].append(entry)
-        store.save(item)
+        _save_decision(store, item, write_guard)
         return {"id": item_id, "status": "accepted", "lens": lens_id}
 
     if item["kind"] == "import":
@@ -380,11 +861,15 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         target.parent.mkdir(parents=True, exist_ok=True)
         front = {**item.get("frontmatter", {}), "evidence": [e["id"] for e in item["evidence"]],
                  "accepted_by": decided_by}
-        atomic_write_text(target, notes.render(front, item.get("body", "")))
-        engine.index.upsert(target)
+        text = notes.render(front, item.get("body", ""))
+        if write_guard is None:
+            atomic_write_text(target, text)
+        else:
+            write_guard.write(target.relative_to(store.vault.root).as_posix(), text)
+        _upsert(engine, target, index_call)
         item.update(status="accepted", accepted_to=item["target"])
         item["history"].append(entry)
-        store.save(item)
+        _save_decision(store, item, write_guard)
         return {"id": item_id, "status": "accepted", "path": item["target"]}
 
     if item["kind"] == "concept":
@@ -397,62 +882,26 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         if concept_kind not in ("term", "pattern"):
             raise TypeError("concept_kind is 'term' or 'pattern'")
         path = _write_concept(store.vault, engine, item, concept_kind, definition,
-                              given.get("aliases") or [], given.get("related") or [])
+                              given.get("aliases") or [], given.get("related") or [], index_call=index_call, guard=write_guard)
         item.update(status="accepted", accepted_to=path)
         item["history"].append(entry)
-        store.save(item)
+        _save_decision(store, item, write_guard)
         return {"id": item_id, "status": "accepted", "path": path}
 
-    draft = (item.get("review") or {}).get("draft") or {}
-    item_fields = dict(item.get("fields") or {})
-    for name, value in (fields or {}).items():
-        _check_field_override(engine.index.model, item.get("source_kind", ""), name, value,
-                              store.vault.topics())
-        item_fields[name] = value
-    fields = item_fields
-    if batch and (bottom_line or what_it_solves):
-        raise TypeError("a batch accept cannot share one Bottom Line; accept items one at "
-                        "a time with their own sentences, or rely on each item's draft")
-    if not bottom_line and decided_by == "person" and draft.get("status") == "ok":
-        bottom_line, what_it_solves = draft.get("bottom_line", ""), draft.get("what_it_solves", "")
-        attested = "person"          # a person accepted the draft they were shown
-        fields["drafted_by"] = draft.get("model") or "clerk"
-    elif not bottom_line:
-        if draft.get("status") != "ok":
-            raise TypeError(f"{item_id} has no reviewed draft: run staging_review, or give "
-                            f"bottom_line and what_it_solves")
-        bottom_line, what_it_solves = draft["bottom_line"], draft["what_it_solves"]
-        attested = "agent"
-        fields["drafted_by"] = draft.get("model") or "clerk"
-    else:
-        attested = decided_by
-    coverage, not_examined = coverage_of(item)
-    fields.setdefault("coverage", coverage)
-    from . import dik                                    # R16: Data and Information, as prose
-    record = dik.load(store.vault, item["name"])
-    if record:
-        item["sections"] = {**(item.get("sections") or {}), **dik.sections(record)}
-        fields.setdefault("dik", dik.path_for(store.vault, item["name"])
-                          .relative_to(store.vault.root).as_posix())
-    if item.get("ocr"):
-        o = item["ocr"]
-        fields.setdefault("text_origin", f"OCR by {o.get('model')}: {o.get('read')} of "
-                                         f"{o.get('needed')} image-only pages")
-    if not_examined:
-        fields.setdefault("not_examined", not_examined)
+    if source_plan is not None:
+        return _accept_prepared_source(store, item, source_plan, index_call, document_leases, entry, source_guard)
+    if item.get("promotion_progress"):
+        raise TypeError("review and finish interrupted source acceptance one item at a time")
+    draft, coverage = _source_draft(store, item, bottom_line, what_it_solves, decided_by, session,
+                                    fields, batch, lambda fn: fn(engine))
+    item["sections"] = draft.sections
     if item.get("file"):
         kind = item.get("source_kind", "document")
-        fields["file"] = _move_file(store.vault, item,
+        draft.fields["file"] = _move_file(store.vault, item,
                                     store.vault.root / "Sources" / kind / "files")
         if item.get("clean_file"):
-            fields["file_markdown"] = item["clean_file"]
-    report = promote(store.vault, engine, Draft(
-        name=item["name"], kind=item.get("source_kind", "repository"),
-        title=item.get("title", item["name"]), canonical_url=item.get("canonical_url", ""),
-        bottom_line=bottom_line, what_it_solves=what_it_solves or bottom_line,
-        fields=fields, sections=item.get("sections") or {},
-        evidence=item.get("evidence") or [], topic=item.get("topic") or "Unfiled",
-        captured_at=item.get("captured_at", ""), attested_by=attested, session=session))
+            draft.fields["file_markdown"] = item["clean_file"]
+    report = promote(store.vault, engine, draft)
     item.update(status="accepted", accepted_to=report.path, promotion=report.to_dict())
     item["history"].append(entry)
     store.save(item)
@@ -466,7 +915,7 @@ REVISED_SECTIONS = ("Claims", "Evidence & Limits", "Reading Notes",
 
 
 def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: dict[str, Any],
-                     decided_by: str, mode: str) -> dict[str, Any]:
+                     decided_by: str, mode: str, *, index_call: Callable | None = None, guard=None) -> dict[str, Any]:
     """A deep read of an *accepted* source (roadmap §4 C2) is staged as a
     revision, never written straight into the person's note. Accepting it
     merges the sections the deep read rebuilt (what the text claims, and its
@@ -482,10 +931,12 @@ def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: 
     if mode != "agent" and decided_by != "person":
         raise Refusal("PERSON_CONFIRMS", "a revision rewrites sections of an accepted note: a "
                                          "person accepts it")
-    path = store.vault.root / item["revision_of"]
+    path = store.vault.safe_relative(str(item["revision_of"]))
     if not path.is_file():
         raise TypeError(f"{item['revision_of']} no longer exists")
     note = notes.load(path)
+    if note.frontmatter.get("type") != "source":
+        raise TypeError("a staged source revision must target a source note")
     body = note.body
     previous: dict[str, str] = {}
     merged = []
@@ -503,12 +954,16 @@ def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: 
         note.frontmatter["dik"] = item.get("dik", "")
     else:
         note.frontmatter["deep_read"] = now_iso()[:10]
-    atomic_write_text(path, notes.render(note.frontmatter, body))
-    engine.index.upsert(path)
+    text = notes.render(note.frontmatter, body)
+    if guard is None:
+        atomic_write_text(path, text)
+    else:
+        guard.write(path.relative_to(store.vault.root).as_posix(), text)
+    _upsert(engine, path, index_call)
     item.update(status="accepted", accepted_to=item["revision_of"], merged=merged,
                 previous_sections=previous)
     item["history"].append(entry)
-    store.save(item)
+    _save_decision(store, item, guard)
     return {"id": item["id"], "status": "accepted", "merged_into": item["revision_of"],
             "sections": merged}
 
@@ -535,8 +990,16 @@ def _move_file(vault: Vault, item: dict[str, Any], folder: Path) -> str:
     return item["file"]
 
 
-def _write_concept(vault: Vault, engine: Engine, item: dict[str, Any], concept_kind: str,
-                   definition: str, aliases: list[str], related: list[str]) -> str:
+def _upsert(engine: Engine | None, path: Path, index_call: Callable | None) -> None:
+    if index_call is not None:
+        index_call(lambda current: current.index.upsert(path))
+    else:
+        engine.index.upsert(path)
+
+
+def _write_concept(vault: Vault, engine: Engine | None, item: dict[str, Any], concept_kind: str,
+                   definition: str, aliases: list[str], related: list[str], *,
+                   index_call: Callable | None = None, guard=None) -> str:
     """The Concept note itself: Usages is what the candidate already had
     (quoted, from evidence); Definition is the person's own words, just
     given at accept - the one section this module never drafts."""
@@ -560,8 +1023,12 @@ def _write_concept(vault: Vault, engine: Engine, item: dict[str, Any], concept_k
         fm.update(imported_from="V1", v1_path=item["imported_from"].get("path", ""),
                   evidence=[e["id"] for e in item.get("evidence") or []])
     path.parent.mkdir(parents=True, exist_ok=True)
-    atomic_write_text(path, notes.render(fm, body))
-    engine.index.upsert(path)
+    text = notes.render(fm, body)
+    if guard is None:
+        atomic_write_text(path, text)
+    else:
+        guard.write(path.relative_to(vault.root).as_posix(), text)
+    _upsert(engine, path, index_call)
     return f"Concepts/{safe}.md"
 
 

@@ -23,8 +23,11 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import secrets
 import urllib.error
 import urllib.request
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -60,6 +63,8 @@ PROVIDER_FAILURE_CATEGORIES = (
     "provider_transient",
     "provider_transport",
     "provider_rejected",
+    "output_budget",
+    "model_identity_mismatch",
     "unknown",
 )
 
@@ -78,6 +83,109 @@ class ProviderError(RuntimeError):
     def __init__(self, message: str, *, category: str = "") -> None:
         super().__init__(message)
         self.category = category if category in PROVIDER_FAILURE_CATEGORIES else ""
+
+
+def _safe_token_count(value: Any) -> int | None:
+    """Accept only non-negative integral token counts from a provider reply."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int) and value >= 0:
+        return value
+    if isinstance(value, float) and value >= 0 and value.is_integer():
+        return int(value)
+    return None
+
+
+def _safe_usage(value: Any) -> dict[str, int]:
+    """Normalize the small non-secret usage subset shared by supported APIs.
+
+    Provider payloads often grow product-specific nested accounting fields. A
+    runtime trace needs only the response's input/output/total token counts;
+    keeping the whole object would make it an accidental raw-provider-payload
+    store. Invalid, negative, boolean, and unknown values are ignored.
+    """
+    if not isinstance(value, Mapping):
+        return {}
+
+    def first(*names: str) -> int | None:
+        for name in names:
+            token_count = _safe_token_count(value.get(name))
+            if token_count is not None:
+                return token_count
+        return None
+
+    usage: dict[str, int] = {}
+    input_tokens = first("input_tokens", "prompt_tokens")
+    output_tokens = first("output_tokens", "completion_tokens")
+    total_tokens = first("total_tokens")
+    if input_tokens is not None:
+        usage["input_tokens"] = input_tokens
+    if output_tokens is not None:
+        usage["output_tokens"] = output_tokens
+    if total_tokens is None and input_tokens is not None and output_tokens is not None:
+        total_tokens = input_tokens + output_tokens
+    if total_tokens is not None:
+        usage["total_tokens"] = total_tokens
+    return usage
+
+
+_SAFE_REQUEST_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,199}")
+
+
+def _safe_request_id(value: Any) -> str:
+    """Return a bounded diagnostic request ID, never an arbitrary header value."""
+    if not isinstance(value, str):
+        return ""
+    candidate = value.strip()
+    return candidate if _SAFE_REQUEST_ID.fullmatch(candidate) else ""
+
+
+def _response_request_id(headers: Any) -> str:
+    """Extract an explicitly named provider request header, if one is safe.
+
+    The response JSON's ``id`` is a completion identifier, not an HTTP request
+    ID; it deliberately never flows into this diagnostic field.
+    """
+    try:
+        items = headers.items()
+    except (AttributeError, TypeError):
+        return ""
+    for name, value in items:
+        if str(name).casefold() in {"x-request-id", "request-id", "anthropic-request-id"}:
+            request_id = _safe_request_id(value)
+            if request_id:
+                return request_id
+    return ""
+
+
+class _ResponsePayload(dict):
+    """A normal decoded response object with optional safe HTTP metadata.
+
+    Keeping this a ``dict`` subclass preserves every existing monkeypatch and
+    caller that expects the historical decoded-body return shape from
+    :func:`_request`.
+    """
+
+    __slots__ = ("request_id",)
+
+    def __init__(self, body: dict[str, Any], request_id: str = "") -> None:
+        super().__init__(body)
+        self.request_id = _safe_request_id(request_id)
+
+
+class OutputBudgetError(ProviderError):
+    """A response ended for length before it yielded text or a tool proposal."""
+
+    def __init__(self, *, observed_model: Any = "", stop_reason: Any = "",
+                 usage: Any = None, request_id: Any = "") -> None:
+        super().__init__(
+            "the model reached its output budget before returning text or a tool call",
+            category="output_budget",
+        )
+        self.observed_model = str(observed_model or "")[:300]
+        self.stop_reason = str(stop_reason or "")[:160]
+        self.usage = _safe_usage(usage)
+        self.request_id = _safe_request_id(request_id)
 
 
 def provider_failure_category(error: BaseException | str) -> str:
@@ -166,6 +274,17 @@ def _transport_failure_category(reason: Any) -> str:
     return "provider_transport"
 
 
+def synthetic_call_id() -> str:
+    """An id for a tool call the server returned without one.
+
+    A positional ``call_{i}`` repeats on every turn, so a walk's history held
+    several calls named ``call_0`` and a tool result could pair with the wrong
+    proposal.  A random id is unique within any walk; it is alphanumeric
+    after the prefix, which the stricter tool-call id formats accept.
+    """
+    return "call_" + secrets.token_hex(8)
+
+
 @dataclass
 class ToolCall:
     id: str
@@ -182,11 +301,20 @@ class Reply:
     tool_calls: list[ToolCall] = field(default_factory=list)
     model: str = ""
     stop: str = ""
+    usage: dict[str, int] = field(default_factory=dict)
+    request_id: str = ""
+    reasoning_content: str = ""
 
     def message(self) -> dict[str, Any]:
         out: dict[str, Any] = {"role": "assistant", "content": self.text}
         if self.tool_calls:
             out["tool_calls"] = [c.to_dict() for c in self.tool_calls]
+            # Some thinking-capable OpenAI-compatible routes require their
+            # reasoning continuation to accompany a later tool-result turn.
+            # It is deliberately held only in this in-memory model history:
+            # Session persistence records person-visible text, never it.
+            if self.reasoning_content:
+                out["reasoning_content"] = self.reasoning_content
         return out
 
 
@@ -242,17 +370,23 @@ TRANSIENT_HTTP = (429, 500, 502, 503, 504)   # 500: "Response payload is not com
 
 
 def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
-             timeout: float = 120, sleep: Any = None) -> dict[str, Any]:
+             timeout: float = 120, sleep: Any = None,
+             retries: tuple[float, ...] | None = None) -> dict[str, Any]:
     import time
     data = json.dumps(body).encode("utf-8") if body is not None else None
-    pauses = list(TRANSIENT_RETRIES)
+    # A caller with its own recovery (Clerk's schema fallback) passes ().
+    pauses = list(TRANSIENT_RETRIES if retries is None else retries)
     while True:
         request = urllib.request.Request(url, data=data, method=method,
                                          headers={"Content-Type": "application/json",
                                                   **headers})
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
-                return json.loads(response.read().decode("utf-8"))
+                decoded = json.loads(response.read().decode("utf-8"))
+                if isinstance(decoded, dict):
+                    return _ResponsePayload(decoded, _response_request_id(
+                        getattr(response, "headers", None)))
+                return decoded
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", "replace")[:400]
             if exc.code in TRANSIENT_HTTP and pauses:
@@ -315,49 +449,23 @@ class OpenAICompatible(Provider):
 
     @staticmethod
     def wire_messages(system: str, messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        out: list[dict[str, Any]] = [{"role": "system", "content": system}] if system else []
-        for m in messages:
-            if m["role"] == "assistant" and m.get("tool_calls"):
-                out.append({"role": "assistant", "content": m.get("content") or None,
-                            "tool_calls": [{"id": c["id"], "type": "function",
-                                            "function": {"name": c["name"],
-                                                         "arguments": json.dumps(c["arguments"])}}
-                                           for c in m["tool_calls"]]})
-            elif m["role"] == "tool":
-                out.append({"role": "tool", "tool_call_id": m["tool_call_id"],
-                            "content": m["content"]})
-            else:
-                out.append({"role": m["role"], "content": m.get("content") or ""})
-        return out
+        # Thin delegation kept so existing callers (OpenAICompatible.wire_messages)
+        # continue to work without importing the adapter directly.
+        from .adapters.openai_chat import OpenAIChatAdapter
+        return OpenAIChatAdapter.wire_messages(system, messages)
 
     def chat(self, system: str, messages: list[dict[str, Any]], tools: list[ToolDef],
              max_tokens: int = 4096, temperature: float | None = None) -> Reply:
         if not self.model:
             raise ProviderError(f"no model chosen for {self.name}", category="route_configuration")
-        body: dict[str, Any] = {"model": self.model, "max_tokens": max_tokens,
-                                "messages": self.wire_messages(system, messages)}
-        if temperature is not None:
-            body["temperature"] = temperature
-        if tools:
-            body["tools"] = [{"type": "function", "function": {
-                "name": t.name, "description": t.description, "parameters": t.parameters}}
-                for t in tools]
-        reply = _request("POST", f"{self.base_url}/chat/completions", self._headers(), body,
+        # Import inside the method to avoid a circular import at module level.
+        from .adapters.openai_chat import OpenAIChatAdapter
+        body = OpenAIChatAdapter.render(self.model, system, messages, tools,
+                                        max_tokens=max_tokens, temperature=temperature)
+        from .adapters.openai_chat import chat_url
+        reply = _request("POST", chat_url(self.base_url), self._headers(), body,
                          self.timeout)
-        choice = (reply.get("choices") or [{}])[0]
-        message = choice.get("message") or {}
-        calls = []
-        for i, call in enumerate(message.get("tool_calls") or []):
-            function = call.get("function") or {}
-            try:
-                arguments = json.loads(function.get("arguments") or "{}")
-            except json.JSONDecodeError:
-                arguments = {"_unparsed": function.get("arguments")}
-            calls.append(ToolCall(str(call.get("id") or f"call_{i}"),
-                                  str(function.get("name") or ""),
-                                  arguments if isinstance(arguments, dict) else {}))
-        return Reply(message.get("content") or "", calls, reply.get("model", self.model),
-                     choice.get("finish_reason") or "")
+        return OpenAIChatAdapter.parse(reply)
 
 
 # ------------------------------------------------------------------ Anthropic
@@ -382,55 +490,19 @@ class Anthropic(Provider):
 
     @staticmethod
     def wire_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Tool results travel as a user turn of `tool_result` blocks; a run of
-        them becomes one turn, as the API requires."""
-        out: list[dict[str, Any]] = []
-        for m in messages:
-            if m["role"] == "tool":
-                block = {"type": "tool_result", "tool_use_id": m["tool_call_id"],
-                         "content": m["content"]}
-                if out and out[-1]["role"] == "user" and isinstance(out[-1]["content"], list) \
-                        and out[-1]["content"] and \
-                        out[-1]["content"][-1].get("type") == "tool_result":
-                    out[-1]["content"].append(block)
-                else:
-                    out.append({"role": "user", "content": [block]})
-            elif m["role"] == "assistant":
-                blocks: list[dict[str, Any]] = []
-                if m.get("content"):
-                    blocks.append({"type": "text", "text": m["content"]})
-                for c in m.get("tool_calls") or []:
-                    blocks.append({"type": "tool_use", "id": c["id"], "name": c["name"],
-                                   "input": c["arguments"]})
-                out.append({"role": "assistant", "content": blocks or ""})
-            else:
-                out.append({"role": "user", "content": m.get("content") or ""})
-        return out
+        # Kept for existing callers; the adapter owns the wire shape (ADAPT-05).
+        from .adapters.anthropic_messages import AnthropicMessagesAdapter
+        return AnthropicMessagesAdapter.wire_messages(messages)
 
     def chat(self, system: str, messages: list[dict[str, Any]], tools: list[ToolDef],
              max_tokens: int = 4096, temperature: float | None = None) -> Reply:
         if not self.model:
             raise ProviderError("no Anthropic model chosen", category="route_configuration")
-        body: dict[str, Any] = {"model": self.model, "max_tokens": max_tokens,
-                                "messages": self.wire_messages(messages)}
-        if system:
-            body["system"] = system
-        if temperature is not None:
-            body["temperature"] = temperature
-        if tools:
-            body["tools"] = [{"name": t.name, "description": t.description,
-                              "input_schema": t.parameters} for t in tools]
-        reply = _request("POST", f"{self.base_url}/messages", self._headers(), body,
-                         self.timeout)
-        text, calls = [], []
-        for block in reply.get("content") or []:
-            if block.get("type") == "text":
-                text.append(block.get("text") or "")
-            elif block.get("type") == "tool_use":
-                calls.append(ToolCall(str(block.get("id")), str(block.get("name")),
-                                      block.get("input") or {}))
-        return Reply("".join(text), calls, reply.get("model", self.model),
-                     reply.get("stop_reason") or "")
+        from .adapters.anthropic_messages import AnthropicMessagesAdapter
+        body = AnthropicMessagesAdapter.render(self.model, system, messages, tools,
+                                               max_tokens, temperature)
+        reply = _request("POST", f"{self.base_url}/messages", self._headers(), body, self.timeout)
+        return AnthropicMessagesAdapter.parse(reply)
 
 
 # ------------------------------------------------------------------ scripted

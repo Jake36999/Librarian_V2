@@ -11,8 +11,8 @@ Markdown markers dropped), cut into chunks of whole sentences up to CHUNK_CHARS 
 the model reads quickly, so the first words play while the rest is still to come - and each
 chunk is spoken only when it is about to be played. Stopping costs nothing further.
 
-The model is `[services] tts` (default Kokoro-82M on DeepInfra, $0.62 per million
-characters; `PRICES` holds the register's rates). Each chunk's audio is kept by a digest of
+The model is `[services] tts` (default Kokoro-82M on DeepInfra; `PRICES` is a compatibility
+view of the evidence-backed service register). Each chunk's audio is kept by a digest of
 model, voice and text, so reading a thing again costs nothing. Spend is kept in the app's
 own `tts-spend.jsonl` - across libraries - and a chunk that would take it past `CAP_USD`
 ($2.00, the owner's limit) is refused before anything is sent; the actual cost each call
@@ -30,23 +30,33 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Callable
 
+from .service_adapters import (ServiceContractError, binding as service_binding,
+                               registry as service_registry, tts_request)
 from .vault import Vault, jsonl_lines, now_iso
+from . import service_routes
+from .providers import ProviderError
 
 DEFAULT = "deepinfra:hexgrad/Kokoro-82M"
 VOICE = "af_bella"
 CAP_USD = 2.00
 CHUNK_CHARS = 1200
-# $ per million characters (DeepInfra register, 2026-09-27); a model not here is refused, so
-# the cap cannot be crossed by a price nobody knows.
-PRICES = {"hexgrad/Kokoro-82M": 0.62, "ResembleAI/chatterbox-turbo": 1.00,
-          "ResembleAI/chatterbox-multilingual": 1.00, "Audio8/Audio8-TTS-Preview-0.6b": 5.00,
-          "Qwen/Qwen3-TTS": 20.00, "bosonai/HiggsAudioV2.5": 20.00}
+# $ per million characters.  Keep these public compatibility constants for the
+# settings picker, but derive their values from the reviewed service pack.  The
+# runtime additionally requires a current price-evidence expiry before it makes
+# a paid request, so this static view alone can never bypass the spend cap.
+PRICES = {
+    row.model_id: float(row.price_per_million)
+    for row in service_registry().records
+    if row.service == "tts" and row.provider == "deepinfra" and row.price_per_million is not None
+}
 BASE = "https://api.deepinfra.com/v1/inference"
-# What each model is sent and gives back, probed 2026-10-03 (a few characters each):
-# Kokoro takes `text` and returns mp3 with its cost; Chatterbox and Audio8 take `text` and
-# always return wav; Qwen3-TTS takes `input` and returns wav; HiggsAudio takes `input` and
-# returns raw 16-bit PCM at 24 kHz, which a browser cannot play until it is wrapped as wav.
-INPUT_FIELD = {"Qwen/Qwen3-TTS": "input", "bosonai/HiggsAudioV2.5": "input"}
+# Retained for compatibility with integrations that inspect this public map.
+# Request rendering itself is now owned by the typed service adapter.
+INPUT_FIELD = {
+    row.model_id: row.input_field
+    for row in service_registry().records
+    if row.service == "tts" and row.provider == "deepinfra" and row.input_field != "text"
+}
 AUDIO_EXT = {"audio/mp3": "mp3", "audio/mpeg": "mp3", "audio/wav": "wav", "audio/x-wav": "wav",
              "audio/ogg": "ogg", "audio/flac": "flac", "audio/opus": "opus"}
 
@@ -56,10 +66,8 @@ class TtsError(RuntimeError):
 
 
 def choice(vault: Vault) -> dict[str, str]:
-    value = vault.setting("services", "tts")
-    value = DEFAULT if value is None else str(value)
-    provider, _, model = value.partition(":")
-    return {"provider": provider, "model": model} if model else {}
+    route = service_routes.resolve(vault, "tts")
+    return route.choice() if route else {}
 
 
 # ------------------------------------------------------------------ the text
@@ -129,10 +137,18 @@ def _record(cost: float, chars: int, model: str, mode: str) -> None:
 
 
 def estimate(text: str, model: str) -> float:
-    if model not in PRICES:
+    try:
+        selected = service_binding("tts", "deepinfra", model)
+    except ServiceContractError as exc:
+        raise TtsError(str(exc)) from exc
+    contract = selected.expectation
+    if contract is None or contract.price_per_million is None:
         raise TtsError(f"no price is known for {model!r}, so the ${CAP_USD:.2f} cap could not "
                        f"hold: choose a model listed in tts.PRICES")
-    return len(text) * PRICES[model] / 1_000_000
+    if not contract.price_is_current():
+        raise TtsError(f"price evidence for {model!r} is stale, so the ${CAP_USD:.2f} cap "
+                       "cannot safely hold: refresh the service expectation pack")
+    return len(text) * float(contract.price_per_million) / 1_000_000
 
 
 # ------------------------------------------------------------------ the audio
@@ -207,7 +223,14 @@ def speak(vault: Vault, text: str, mode: str = "message",
     if chosen["provider"] != "deepinfra":
         raise TtsError("text to speech runs on DeepInfra's inference API")
     model = chosen["model"]
-    voice = VOICE if model == "hexgrad/Kokoro-82M" else ""
+    try:
+        body, _selected = tts_request(chosen["provider"], model, text)
+    except ServiceContractError as exc:
+        if "no reviewed tts adapter contract" in str(exc):
+            raise TtsError(f"no price is known for {model!r}, and it has no reviewed TTS "
+                           "adapter contract") from exc
+        raise TtsError(str(exc)) from exc
+    voice = str(body.get("preset_voice") or "")
     digest = hashlib.sha256(f"{model}|{voice}|{text}".encode("utf-8")).hexdigest()[:24]
     folder = vault.derived / "tts"
     for ext, mime in (("mp3", "audio/mp3"), ("wav", "audio/wav"), ("ogg", "audio/ogg"),
@@ -221,22 +244,17 @@ def speak(vault: Vault, text: str, mode: str = "message",
     if so_far + cost > CAP_USD:
         raise TtsError(f"text to speech has spent ${so_far:.2f} of its ${CAP_USD:.2f} cap; this "
                        f"part would cost ${cost:.4f}")
-    key = os.environ.get("DEEPINFRA_API_KEY", "")
-    if not key:
-        raise TtsError("DEEPINFRA_API_KEY is not set (Settings -> Connections)")
-    field = INPUT_FIELD.get(model, "text")
-    body: dict[str, Any] = {field: text, "output_format": "mp3"}
-    if voice:
-        body["preset_voice"] = voice
     try:
-        out = (post or _post)(f"{BASE}/{model}", body, key)
-    except TtsError as exc:
-        # A model whose field is not in INPUT_FIELD says which it wanted: asked once more.
-        other = "input" if field == "text" else "text"
-        if "HTTP 422" not in str(exc) or f'"{other}"' not in str(exc):
-            raise
-        body[other] = body.pop(field)
-        out = (post or _post)(f"{BASE}/{model}", body, key)
+        route = service_routes.resolve(vault, "tts", validate=True)
+        if route is None or route.model != model:
+            raise service_routes.ServiceRouteError("speech assignment changed; restart the operation")
+        key = os.environ.get(route.key_env, "")
+        if not key:
+            raise TtsError(f"{route.key_env} is not set (Settings -> Connections)")
+        out = service_routes.run(vault, route, lambda: (post or _post)(
+            f"{route.native_base()}/{model}", body, key))
+    except (service_routes.ServiceRouteError, ProviderError) as exc:
+        raise TtsError(str(exc)) from exc
     audio = str(out.get("audio") or "")
     if not audio.startswith("data:audio"):
         raise TtsError(f"the model returned no audio ({str(out)[:200]})")

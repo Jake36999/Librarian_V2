@@ -22,7 +22,7 @@ from __future__ import annotations
 import inspect
 import types
 import typing
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Callable
 
 from .rules import Refusal
@@ -41,6 +41,10 @@ MAX_ECHO = 160
 MAX_LIMIT = 50
 MAX_ITEMS = 100
 MAX_ITEM_TEXT = 2_000
+# A result key, never sent anywhere: a question recorded inside a vault-writer
+# operation carries the wait for its answer out of the operation, and `call`
+# finishes it once the writer is free (coordination.on_writer_thread).
+PERSON_WAIT = "_person_wait"
 
 @dataclass(frozen=True)
 class Card:
@@ -126,6 +130,13 @@ class ToolSpec:
     # dry_run=True - a refusal stops the call before anyone is asked, and its result (a diff)
     # goes in the request, so the person sees exactly what they approve.
     previews: bool = False
+    # A replace-existing or multi-target write resolves what it will touch
+    # before it is queued (CORE-05A): `intent(ctx, kwargs)` returns a
+    # revisions.WriteIntent, and a note it cannot resolve is refused first.
+    intent: Callable[[Any, dict[str, Any]], Any] | None = None
+    # First-party control flow only: its mutations must be individual registry
+    # calls or explicit writer submissions, never a wait inside one large write.
+    orchestrates: bool = False
 
     # -- parameters, read from the function itself ---------------------------
     def parameters(self) -> list[inspect.Parameter]:
@@ -210,7 +221,9 @@ class Registry:
              idempotent: bool | None = None, returns: tuple[str, ...] = (),
              sessionless: bool = False, resolve: dict[str, str] | None = None,
              scope: str = "", phases: tuple[str, ...] = (),
-             needs_projects: bool = False, previews: bool = False) -> Callable:
+             needs_projects: bool = False, previews: bool = False,
+             intent: Callable[[Any, dict[str, Any]], Any] | None = None,
+             orchestrates: bool = False) -> Callable:
         if phases:
             scope = scope or "phase"
         if tier not in TIERS:
@@ -222,6 +235,8 @@ class Registry:
                              f"or phases=(...)")
         if (scope == "phase") != bool(phases):
             raise ValueError(f"{name!r}: phases=(...) goes with scope 'phase', and only with it")
+        if orchestrates and (intent is not None or effect == "read"):
+            raise ValueError("an orchestrator declares cumulative write effects, not a direct write intent")
 
         def register(fn: Callable[..., Any]) -> Callable[..., Any]:
             if name in self._tools:
@@ -235,7 +250,7 @@ class Registry:
                 idempotent=(effect == "read") if idempotent is None else idempotent,
                 returns=tuple(returns), sessionless=sessionless, resolve=dict(resolve or {}),
                 scope=scope, phases=frozenset(phases), needs_projects=needs_projects,
-                previews=previews)
+                previews=previews, intent=intent, orchestrates=orchestrates)
             return fn
         return register
 
@@ -246,6 +261,8 @@ class Registry:
     # through here instead - never through `tool()`, and never allowed to
     # shadow a vault tool's name.
     def register(self, spec: ToolSpec) -> None:
+        if spec.orchestrates:
+            raise ValueError("external tools cannot orchestrate Core writer operations")
         if not spec.external:
             raise ValueError("Registry.register is for external (MCP) tools only; "
                              "a vault tool is declared with @tool at import time")
@@ -300,10 +317,14 @@ class Registry:
         if hooks and name in self._tools and self._tools[name].sessionless:
             hooks = None
         adjusted: list[str] = []
-        permission, kwargs = "no broker", None
+        permission, kwargs, intent = "no broker", None, None
         try:
             effective = _profile_tier(ctx)
             spec = self.check(name, effective)
+            if spec.orchestrates:
+                from .coordination import on_writer_thread
+                if on_writer_thread():
+                    raise Refusal("ORCHESTRATION_CONTEXT", "run this orchestrator outside a vault-writer operation")
             if effective != ctx.tier:
                 adjusted.append(f"agent profile capped tier {ctx.tier} to {effective}")
             # A provider should only be able to invoke the small schema surface
@@ -335,6 +356,14 @@ class Registry:
             adjusted += resolve_references(spec, kwargs, ctx)
             if hooks:
                 hooks[0](name, spec.effect, ctx)
+            # What the write touches and which revision it replaces, settled
+            # before anyone is asked to approve it (CORE-05).
+            intent = spec.intent(ctx, kwargs) if spec.intent is not None else None
+            expected: dict[str, str] = {}
+            if intent is not None:
+                from . import revisions
+                intent = revisions.canonical_intent(ctx.vault, intent)
+                expected = revisions.preconditions(ctx, intent, str(kwargs.get("revision") or ""))
             broker = ctx.extras.get("broker")
             def invoke() -> Any:
                 # Some tools intentionally block while waiting for a person
@@ -342,7 +371,19 @@ class Registry:
                 # index mutex around a whole tool would deadlock those paths.
                 # SQLite-owning implementation code uses the Core's
                 # IndexService explicitly for its short transaction instead.
-                return spec.fn(ctx, **kwargs)
+                execution_ctx = ctx
+                if intent is not None and intent.prepared is not None:
+                    # No shared-context mutation: concurrent calls cannot swap
+                    # prepared file contents while one waits for permission.
+                    import copy
+                    execution_ctx = replace(ctx, extras={**ctx.extras,
+                        "_prepared_write": copy.deepcopy(intent.prepared)})
+                out = spec.fn(execution_ctx, **kwargs)
+                if intent is not None and intent.note and isinstance(out, dict):
+                    # Issued inside the operation, so it vouches for exactly
+                    # what this call wrote and nothing written after it.
+                    out = {**out, "revision": revisions.issue_current(ctx, intent.note)}
+                return out
 
             if broker is not None:
                 # The surface's permission mode, decided as the action runs;
@@ -358,13 +399,31 @@ class Registry:
             # compatible path.  The registry remains the enforcement boundary;
             # the writer only serialises the already-authorised function call.
             writer = ctx.extras.get("vault_writer") if spec.effect != "read" else None
-            if writer is not None:
-                targets = _write_targets(name, kwargs, ctx)
+            if writer is not None and spec.orchestrates:
+                # Admission is still explicit. The orchestrator itself may
+                # wait, but each contained mutation is its own checked write.
+                writer.submit(lambda: None, caller=f"orchestrator:{name}:admit")
+                result = invoke()
+            elif writer is not None:
+                targets = list(intent.targets) if intent is not None else \
+                    _write_targets(name, kwargs, ctx)
                 result = writer.submit(invoke,
                                        caller=str(ctx.extras.get("caller") or "registry"),
-                                       targets=targets)
+                                       targets=targets, preconditions=expected)
             else:
+                if expected:
+                    revisions.check_now(ctx, expected)
                 result = invoke()
+            wait = result.pop(PERSON_WAIT, None) if isinstance(result, dict) else None
+            if wait is not None:
+                from .coordination import on_writer_thread
+                if on_writer_thread():
+                    # Nested in an operation (an audited macro): the writer
+                    # is still held, so the question stays open for the
+                    # person to answer and the caller to come back to.
+                    wait.abandon()
+                else:
+                    result = wait.finish(result)
         except Refusal as refusal:
             if refusal.code.startswith("PERMISSION_"):
                 permission = refusal.code.lower()
@@ -373,9 +432,16 @@ class Registry:
                 checkpoints = ctx.extras.get("checkpoints")
                 if checkpoints is not None:
                     try:
+                        evidence = {"tool": name, "arguments": arguments or {}}
+                        completed = refusal.extra.get("completed_paths")
+                        if intent is not None and isinstance(completed, list):
+                            # Only already-declared targets, never arbitrary
+                            # provider/error payloads. Keep these separate from
+                            # the short checkpoint title so partial work is visible.
+                            evidence["completed_paths"] = [path for path in intent.targets if path in completed]
                         create = lambda: checkpoints.create(
                             "write_conflict", str(refusal.detail),
-                            evidence={"tool": name, "arguments": arguments or {}},
+                            evidence=evidence,
                             choices=["wait", "retry_after_review", "cancel"],
                             requester=str(ctx.extras.get("caller") or "agent"))
                         writer = ctx.extras.get("vault_writer")

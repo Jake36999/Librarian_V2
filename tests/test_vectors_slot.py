@@ -58,7 +58,10 @@ def fake_embeddings(monkeypatch, calls):
     def urlopen(request, timeout=0):
         texts = json.loads(request.data)["input"]
         calls.append(len(texts))
-        vectors = [[float((zlib.crc32(f"{w}{i}".encode()) % 7) - 3) for i in range(8)]
+        # BGE-M3's reviewed service contract declares 1,024 dimensions.  The
+        # fixture deliberately mirrors that endpoint invariant so an adapter
+        # regression cannot be hidden by a toy vector shape.
+        vectors = [[float((zlib.crc32(f"{w}{i}".encode()) % 7) - 3) for i in range(1024)]
                    for w in texts]
         return Reply(json.dumps({"data": [{"index": i, "embedding": v}
                                           for i, v in enumerate(vectors)]}).encode())

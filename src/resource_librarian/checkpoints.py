@@ -15,7 +15,7 @@ from .vault import now_iso
 CHECKPOINT_TYPES = frozenset({
     "staging_promotion", "sensitive_source", "host_model_override", "cross_model_failover",
     "evaluation_spend", "macro_expansion", "write_conflict", "docker_execution",
-    "non_isolated_execution", "forced_engagement_close",
+    "non_isolated_execution", "forced_engagement_close", "operation_recovery",
 })
 
 
@@ -78,6 +78,21 @@ class CheckpointStore:
         """
         for row in self._load():
             if row.type == type and row.scope == scope and not row.resolution and not self._expired(row):
+                return self._public(row)
+        return self.create(type, scope, **kwargs)
+
+    def ensure_historical(self, type: str, scope: str, **kwargs: Any) -> dict[str, Any]:
+        """Return the one durable disposition for a historical incident.
+
+        Ordinary checkpoint scopes represent a fresh proposed operation, so
+        ``ensure`` intentionally creates a new card after resolution.  A
+        start-only writer operation is different: its resolution documents a
+        past ambiguity, and recreating it on every Core restart would imply a
+        new mutation.  Recovery therefore uses this separate, idempotent
+        lookup which reuses both pending and resolved records.
+        """
+        for row in self._load():
+            if row.type == type and row.scope == scope:
                 return self._public(row)
         return self.create(type, scope, **kwargs)
 

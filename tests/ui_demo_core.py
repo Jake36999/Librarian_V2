@@ -1,8 +1,15 @@
 """A demo core for the interface smoke check (ui/smoke.mjs): a seeded vault and
-a scripted model, on a free loopback port. Run from .v2: python tests/ui_demo_core.py"""
+a scripted model, on a free loopback port. Run from the V2 checkout."""
 import json, os, sys, tempfile, threading
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+# This harness uses scripted providers only. Real environment credentials
+# would also make key slots read-only, hiding the save/overwrite UX we test.
+for _secret_name in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "DEEPINFRA_API_KEY",
+                     "TAVILY_API_KEY", "BRAVE_API_KEY", "APIFY_TOKEN", "OPENROUTER_API_KEY",
+                     "GITHUB_TOKEN"):
+    os.environ.pop(_secret_name, None)
 from walks import library
 from test_intake import RESPONSES
 from resource_librarian import clerk, intake, providers
@@ -54,6 +61,8 @@ REGISTRY.call("task_add", {"note": "duckdb", "text": "review the changelog"}, _a
 # Test Directive A2 (2026-10-01): three more flows the smoke check walks.
 from resource_librarian.staging import StagingStore
 _store = StagingStore(vault)
+_store.add({"id": "topic-smoke-safe", "kind": "topic", "name": "Smoke Topics",
+            "what_belongs": "sources reviewed in the UI smoke walk", "members": ["osquery"]})
 # (a) a staged revision of an accepted note: its banner, and Accept merging it
 _store.add({"id": "rev-osquery", "kind": "source", "status": "staged", "source_kind": "repository",
             "name": "osquery (whole text read)", "revision_of": "Sources/repository/osquery.md",
@@ -112,7 +121,10 @@ def model(system, messages, tools):
         if "project" in text:
             return Reply(text="I'll frame it.", tool_calls=[ToolCall("p1", "create_project", {
                 "name": "Host Watch", "stage": "idea", "summary": "Watch our hosts."})])
-        return Reply(tool_calls=[ToolCall("o1", "open_session", {"purpose": "explore", "question": "host monitoring"}),
+        # The smoke walk next creates a project. Its compact Frame bundle
+        # must therefore be the real add_project path, not an Explore path
+        # whose offered tools deliberately exclude project creation.
+        return Reply(tool_calls=[ToolCall("o1", "open_session", {"purpose": "add_project", "question": "host monitoring"}),
                                  ToolCall("s1", "search", {"query": "operating system state", "intent": "orient"})])
     tool_turns = [m for m in messages if m["role"] == "tool"]
     if tool_turns and tool_turns[-1]["name"] == "create_project":

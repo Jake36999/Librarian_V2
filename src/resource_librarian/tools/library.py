@@ -3,12 +3,16 @@ from __future__ import annotations
 
 import json
 import re
+import sqlite3
+from pathlib import Path
 from typing import Any, Callable, Literal, TypeVar
 
-from .. import agenda, desk, evaluation, notes, text
-from ..coordination import atomic_write_text
-from ..index import Index
+from .. import agenda, desk, evaluation, notes, revisions, text
+from ..coordination import atomic_write_text, fingerprint_bytes
+from ..file_access import read_bytes
+from ..index import Index, IndexService, run_index
 from ..registry import Card, Context, tool
+from ..rules import Refusal
 from ..search import INTENTS, Engine, search
 from ..vault import now_iso
 
@@ -17,11 +21,104 @@ Intent = Literal["orient", "donor", "pattern", "technique", "data", "precedent",
 assert set(Intent.__args__) == set(INTENTS)                  # type: ignore[attr-defined]
 
 R = TypeVar("R")
+# Keep the concrete class for gateway escape checks.  Tests and compatibility
+# code may replace the module-level ``Index`` constructor to prove a request
+# does not create a second database; that must not turn ``isinstance`` into a
+# call against a non-type.
+_INDEX_TYPE = Index
+
+
+class IndexGateway:
+    """Callback-only access to the Core-owned search/index worker.
+
+    Some legacy workflows need a quick index lookup, then spend time on a
+    network request or a Clerk call.  Passing an :class:`Engine` across that
+    boundary would leak its thread-affine SQLite connection out of
+    :class:`~resource_librarian.index.IndexService`.  This gateway deliberately
+    exposes only ``run(callback)``: the callback runs while the index worker
+    owns the engine and must return copied, ordinary data before it leaves.
+
+    SQL-only mutation planning can set ``include_vectors=False`` so repeated
+    callbacks neither initialize a local encoder nor invoke a hosted one.
+    Embedding IO then uses its own copied-data boundary outside this worker.
+
+    The first callback refreshes the derived index when the caller asked for
+    it; later callbacks in the same invocation reuse that fresh snapshot.  It
+    is intentionally not a transparent ``Engine`` or ``Index`` proxy.
+    """
+
+    def __init__(self, ctx: Context, *, refresh: bool = True, include_vectors: bool = True):
+        self._ctx = ctx
+        self._refresh = refresh
+        self._first = True
+        self._include_vectors = include_vectors
+
+    def run(self, operation: Callable[[Engine], R]) -> R:
+        refresh = self._refresh and self._first
+        # Copy/reject inside the callback itself.  Validating after
+        # ``with_engine`` returned would already have handed a worker-owned
+        # Row/connection/Engine to the caller's thread.
+        value = with_engine(self._ctx, lambda engine: _plain_index_value(operation(engine)),
+                            refresh=refresh, include_vectors=self._include_vectors)
+        # A failed first lookup must not suppress the required refresh for a
+        # later retry in the same invocation.
+        self._first = False
+        return value
+
+
+def _plain_index_value(value: R) -> R:
+    """Reject worker-owned objects before they can cross the gateway.
+
+    SQLite rows are copied to dictionaries because callers commonly need their
+    named fields.  All other allowed containers are rebuilt recursively.  The
+    narrow rule catches the tempting but unsafe ``lambda engine: engine`` and
+    connection/cursor escapes at the call site where they occur.
+    """
+    if value is None or isinstance(value, (str, int, float, bool, bytes, Path)):
+        return value
+    if isinstance(value, sqlite3.Row):
+        return {key: _plain_index_value(value[key]) for key in value.keys()}  # type: ignore[return-value]
+    if isinstance(value, (Engine, _INDEX_TYPE, sqlite3.Connection, sqlite3.Cursor)):
+        raise TypeError("an IndexGateway callback must return copied plain data, not an index object")
+    if isinstance(value, dict):
+        return {_plain_index_value(key): _plain_index_value(item)
+                for key, item in value.items()}  # type: ignore[return-value]
+    if isinstance(value, list):
+        return [_plain_index_value(item) for item in value]  # type: ignore[return-value]
+    if isinstance(value, tuple):
+        return tuple(_plain_index_value(item) for item in value)  # type: ignore[return-value]
+    if isinstance(value, set):
+        return {_plain_index_value(item) for item in value}  # type: ignore[return-value]
+    raise TypeError(f"an IndexGateway callback returned non-plain {type(value).__name__}")
+
+
+def index_service_for(ctx: Context) -> IndexService | None:
+    """Validate the owner before any callback, cache lookup or offline fallback."""
+    mode = ctx.extras.get("index_access")
+    service = ctx.extras.get("index_service")
+    serving = mode == "core" or ctx.extras.get("caller") == "core" or ctx.extras.get("caller_kind") == "mcp"
+    if mode not in (None, "core", "offline"):
+        raise Refusal("CORE_REQUIRED", "unknown index access mode")
+    if serving and mode == "offline":
+        raise Refusal("CORE_REQUIRED", "a serving caller cannot opt into offline index access")
+    if service is not None:
+        if mode == "offline" or not isinstance(service, IndexService) or service.vault != ctx.vault:
+            raise Refusal("CORE_REQUIRED", "this call requires its own library's Core index service")
+        return service
+    if serving or (mode != "offline" and ctx.extras.get("vault_writer") is not None):
+        raise Refusal("CORE_REQUIRED", "the Core index service is unavailable; reconnect instead of opening SQLite directly")
+    return None  # Legacy standalone Context remains an offline compatibility alias.
+
+
+def _require_offline(ctx: Context) -> None:
+    if index_service_for(ctx) is not None:
+        raise Refusal("CORE_REQUIRED", "direct engine construction is offline-only; use a Core index callback")
 
 
 def engine_for(ctx: Context, refresh: bool = True) -> Engine:
     """One engine per call context, over an index brought up to date first:
     answering from a stale index is a silent failure (`FAILURE_MUST_BE_LOUD`)."""
+    _require_offline(ctx)
     cached = ctx.extras.get("engine")
     if cached is None:
         cached = _build_engine(ctx)
@@ -36,17 +133,19 @@ def engine_for(ctx: Context, refresh: bool = True) -> Engine:
     return cached
 
 
-def _build_engine(ctx: Context, index: Index | None = None) -> Engine:
+def _build_engine(ctx: Context, index: Index | None = None, *, include_vectors: bool = True) -> Engine:
     """Make an Engine around an already-owned index when Core supplies one.
 
     The compatibility path deliberately still creates an Index for direct
     library/test calls.  An App context supplies ``index_service`` instead,
     and all work below is then performed on its one SQLite worker.
     """
-    index = index or Index(ctx.vault)
+    if index is None:
+        _require_offline(ctx)
+        index = Index(ctx.vault)
     vectors = None
     from ..embed import VectorSearch, spec_for
-    spec = spec_for(ctx.vault)
+    spec = spec_for(ctx.vault) if include_vectors else ""
     if spec:
         vectors = VectorSearch.from_spec(index, spec)
     config = ctx.vault.config()
@@ -69,9 +168,9 @@ def _build_engine(ctx: Context, index: Index | None = None) -> Engine:
     return engine
 
 
-def _prepared_engine(ctx: Context, index: Index, refresh: bool) -> Engine:
+def _prepared_engine(ctx: Context, index: Index, refresh: bool, *, include_vectors: bool = True) -> Engine:
     """Build and, when requested, refresh an engine inside the index owner."""
-    engine = _build_engine(ctx, index)
+    engine = _build_engine(ctx, index, include_vectors=include_vectors)
     if refresh:
         report = index.refresh()
         documents = text.sync_documents(index)
@@ -80,28 +179,29 @@ def _prepared_engine(ctx: Context, index: Index, refresh: bool) -> Engine:
     return engine
 
 
-def with_engine(ctx: Context, operation: Callable[[Engine], R], *, refresh: bool = True) -> R:
+def with_engine(ctx: Context, operation: Callable[[Engine], R], *, refresh: bool = True,
+                include_vectors: bool = True) -> R:
     """Run a bounded retrieval/index operation through the active Core.
 
     A generic registry-level lock is intentionally not used: some tools wait
     for a person or orchestrate other tools.  Library operations are short
     and self-contained, so their complete SQLite interaction can safely run
-    on :class:`IndexService`'s worker.  Direct callers retain V1-compatible
-    local behaviour when no service has been installed in their Context.
+    on :class:`IndexService`'s worker. Legacy standalone Contexts retain local
+    compatibility; a serving Context missing its service always refuses.
     """
-    service = ctx.extras.get("index_service")
+    service = index_service_for(ctx)
     if service is not None:
-        return service.run(lambda index: operation(_prepared_engine(ctx, index, refresh)))
+        return service.run(lambda index: operation(_prepared_engine(ctx, index, refresh,
+                                                                   include_vectors=include_vectors)))
+    if not include_vectors:
+        return with_index(ctx, lambda index: operation(_prepared_engine(ctx, index, refresh, include_vectors=False)))
     return operation(engine_for(ctx, refresh=refresh))
 
 
 def with_index(ctx: Context, operation: Callable[[Index], R]) -> R:
     """Run a short direct-index operation through Core when available."""
-    service = ctx.extras.get("index_service")
-    if service is not None:
-        return service.run(operation)
-    with Index(ctx.vault) as index:
-        return operation(index)
+    service = index_service_for(ctx)
+    return run_index(ctx.vault, operation, index_service=service, offline=service is None)
 
 
 @tool("index", tier="contribute", effect="write", scope="library",
@@ -289,14 +389,22 @@ def get_note(ctx: Context, name: str, sections: list[str] | None = None) -> dict
         if row is None:
             return {"found": False, "name": name,
                     "next_step": "search for it; names are exact, including owner prefixes"}
-        note = notes.load(ctx.vault.root / row["path"])
+        path = ctx.vault.root / row["path"]
+        data = read_bytes(path)
+        frontmatter, text, error = notes.parse(data.decode("utf-8", errors="replace"))
+        note = notes.Note(name=path.stem, path=path, frontmatter=frontmatter, body=text,
+                          parse_error=error)
         body = note.sections()
         wanted = {s.lower() for s in sections or []}
         return {"found": True, "name": row["name"], "path": row["path"], "shape": row["shape"],
                 "kind": row["kind"], "frontmatter": json.loads(row["frontmatter"]),
                 "sections": {h or "opening": t for h, t in body.items()
                              if not wanted or h.lower() in wanted},
-                "linked_from": engine.index.linked_from(row["name"])[:50]}
+                "linked_from": engine.index.linked_from(row["name"])[:50],
+                # What a replace-existing write must bring back (CORE-05):
+                # this note as these exact bytes, to this session and caller.
+                "revision": revisions.issue(ctx, revisions.canonical(ctx.vault, row["path"]),
+                                            fingerprint_bytes(data))}
     return with_engine(ctx, load)
 
 

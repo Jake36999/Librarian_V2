@@ -50,6 +50,7 @@ from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from .coordination import atomic_write_text
+from .model_invocation import legacy_structured_output_policy
 
 MAX_BULLETS = 6
 BULLET_CHARS = 160
@@ -1192,6 +1193,18 @@ class Endpoint:
         raise NotImplementedError
 
 
+class UnavailableEndpoint(Endpoint):
+    """An assigned role that must queue work rather than use a fallback."""
+
+    name = "unavailable"
+
+    def __init__(self, reason: str):
+        self.reason = reason
+
+    def complete(self, payload: dict[str, Any], repair: str = "") -> tuple[str, str]:
+        raise ClerkUnavailable(self.reason)
+
+
 class Scripted(Endpoint):
     """A function standing in for a model: tests and replays."""
 
@@ -1212,7 +1225,8 @@ class OpenAICompatible(Endpoint):
     library only. The key is read from the environment, never from config."""
 
     def __init__(self, base_url: str, model: str, key_env: str = "", concurrency: int = 1,
-                 min_tokens: int = 0, timeout: int = 120, models: dict[str, str] | None = None):
+                 min_tokens: int = 0, timeout: int = 120, models: dict[str, str] | None = None,
+                 provider_id: str = ""):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.key_env = key_env
@@ -1220,26 +1234,51 @@ class OpenAICompatible(Endpoint):
         self.min_tokens = int(min_tokens)
         self.timeout = timeout
         self.models = models or {}
+        # The legacy clerk config calls a provider ``deepinfra`` while the
+        # normal route registry calls it ``preset-deepinfra``.  Keep this
+        # identifier declarative: it selects a policy record, never a key or
+        # raw provider parameter.
+        self.provider_id = str(provider_id or "").strip().lower()
         self.name = self.base_url
 
     def _post(self, body: dict[str, Any]) -> dict[str, Any]:
-        headers = {"Content-Type": "application/json"}
+        # Key check must happen *before* any network call so that a missing
+        # key raises ClerkUnavailable with the exact legacy message.
         if self.key_env:
             key = os.environ.get(self.key_env, "")
             if not key:
                 raise ClerkUnavailable(f"{self.key_env} is not set")
+        # Build headers – only Authorization is needed because _request adds
+        # Content-Type itself.
+        headers: dict[str, str] = {}
+        if self.key_env:
             headers["Authorization"] = f"Bearer {key}"
-        request = urllib.request.Request(f"{self.base_url}/chat/completions",
-                                         data=json.dumps(body).encode("utf-8"),
-                                         headers=headers, method="POST")
+        from .adapters.openai_chat import chat_url
+        # Lazy import to avoid a potential cycle (providers may import clerk).
+        from .providers import ProviderError, _request
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                return json.loads(response.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", "replace")[:400]
-            raise RuntimeError(f"HTTP {exc.code}: {detail}") from exc
-        except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+            # No transport retries: a schema rejection is deterministic, and
+            # complete() owns the fallback, exactly as before ADAPT-06.
+            reply = _request("POST", chat_url(self.base_url), headers, body, self.timeout,
+                             retries=())
+        except ProviderError as exc:
+            msg = str(exc)
+            # ProviderError messages from _request have the shape
+            # "HTTP <code> from <url>: <detail>" for HTTP failures.
+            if msg.startswith("HTTP "):
+                # Extract code and detail exactly as the old code did.
+                # "HTTP 429 from https://...: detail" -> code=429, detail="detail"
+                parts = msg.split(": ", 1)
+                prefix = parts[0]               # "HTTP 429 from https://..."
+                detail = parts[1] if len(parts) > 1 else ""
+                code = prefix.split()[1]        # "429"
+                raise RuntimeError(f"HTTP {code}: {detail}") from exc
+            # Any other ProviderError (unreachable, timeout, transient) becomes
+            # ClerkUnavailable with the legacy wording.
             raise ClerkUnavailable(f"{self.base_url} is not reachable: {exc}") from exc
+        # _request returns a _ResponsePayload (dict subclass) when the
+        # response is a dict; cast to plain dict to match the old behaviour.
+        return dict(reply)
 
     def complete(self, payload: dict[str, Any], repair: str = "") -> tuple[str, str]:
         model = self.models.get(payload["task"].split(":")[0], self.model)
@@ -1250,15 +1289,19 @@ class OpenAICompatible(Endpoint):
                              f"That did not match the required shape: {repair}\n"
                              f"Return only the JSON object, corrected."})
         safe = re.sub(r"[^a-zA-Z0-9_-]", "_", payload["task"]) or "task"
+        policy = legacy_structured_output_policy(
+            model, provider_id=self.provider_id, base_url=self.base_url)
         body: dict[str, Any] = {
             "model": model, "messages": messages, "temperature": payload["temperature"],
-            "max_tokens": max(payload["max_tokens"], self.min_tokens),
-            "response_format": {"type": "json_schema", "json_schema": {
-                "name": safe, "strict": True, "schema": _strict(payload["schema"])}}}
+            "max_tokens": max(payload["max_tokens"], self.min_tokens)}
+        if policy["strict_attempt"]:
+            body["response_format"] = {"type": "json_schema", "json_schema": {
+                "name": safe, "strict": True, "schema": _strict(payload["schema"])}}
         try:
             reply = self._post(body)
         except RuntimeError as exc:
-            if "response_format" not in str(exc) and "json_schema" not in str(exc):
+            schema_rejection = "response_format" in str(exc) or "json_schema" in str(exc)
+            if not schema_rejection or not policy["fallback_on_rejection"]:
                 raise
             body.pop("response_format")         # the model refuses constrained output
             reply = self._post(body)
@@ -1298,7 +1341,7 @@ def _endpoint(provider: str, settings: dict[str, Any]) -> OpenAICompatible:
         raise ClerkUnavailable(f"clerk provider {provider!r} needs a base_url")
     models = {k[len("model_"):]: str(v) for k, v in settings.items()
               if k.startswith("model_") and v}
-    return OpenAICompatible(models=models, **base)
+    return OpenAICompatible(models=models, provider_id=provider, **base)
 
 
 def from_config(settings: dict[str, Any]) -> Endpoint | None:
@@ -1398,7 +1441,8 @@ def run_one(task: Task, endpoint: Endpoint) -> Result:
 
 
 def run(tasks: Sequence[Task], endpoint: Endpoint | None,
-        queue_dir: Path | None = None) -> list[Result]:
+        queue_dir: Path | None = None, *,
+        state_write: Callable[[Callable[[], Any], Path], Any] | None = None) -> list[Result]:
     """Every task, in order of the input. A task a clerk agent has already
     answered uses that answer; the rest go to the endpoint. With no endpoint (or
     one that is unreachable) they are queued, never handed to another model."""
@@ -1408,21 +1452,24 @@ def run(tasks: Sequence[Task], endpoint: Endpoint | None,
     for i, task in enumerate(tasks):
         if answered is not None and answered.has(task.payload()):
             results[i] = run_one(task, answered)
-            (queue_dir / f"{task_key(task.payload())}.json").unlink(missing_ok=True)
+            path = queue_dir / f"{task_key(task.payload())}.json"
+            remove = lambda: path.unlink(missing_ok=True)
+            state_write(remove, path) if state_write is not None else remove()
         else:
             rest.append(i)
     for i, result in zip(rest, _run(tasks=[tasks[i] for i in rest], endpoint=endpoint,
-                                    queue_dir=queue_dir)):
+                                    queue_dir=queue_dir, state_write=state_write)):
         results[i] = result
     return [results[i] for i in range(len(tasks))]
 
 
 def _run(tasks: Sequence[Task], endpoint: Endpoint | None,
-         queue_dir: Path | None) -> list[Result]:
+         queue_dir: Path | None,
+         state_write: Callable[[Callable[[], Any], Path], Any] | None = None) -> list[Result]:
     if not tasks:
         return []
     if endpoint is None:
-        return [_queue(t, queue_dir, "no clerk endpoint is configured") for t in tasks]
+        return [_queue(t, queue_dir, "no clerk endpoint is configured", state_write) for t in tasks]
     if isinstance(endpoint, Router):
         # Each group on its own endpoint, at that endpoint's own concurrency,
         # answers put back in the order the tasks came in.
@@ -1432,7 +1479,7 @@ def _run(tasks: Sequence[Task], endpoint: Endpoint | None,
             groups.setdefault(id(target), (target, []))[1].append(i)
         out: dict[int, Result] = {}
         for target, indexes in groups.values():
-            for i, result in zip(indexes, _run([tasks[i] for i in indexes], target, queue_dir)):
+            for i, result in zip(indexes, _run([tasks[i] for i in indexes], target, queue_dir, state_write)):
                 out[i] = result
         return [out[i] for i in range(len(tasks))]
     try:
@@ -1441,7 +1488,7 @@ def _run(tasks: Sequence[Task], endpoint: Endpoint | None,
         with ThreadPoolExecutor(max_workers=endpoint.concurrency) as pool:
             return list(pool.map(lambda t: run_one(t, endpoint), tasks))
     except ClerkUnavailable as exc:
-        return [_queue(t, queue_dir, str(exc)) for t in tasks]
+        return [_queue(t, queue_dir, str(exc), state_write) for t in tasks]
 
 
 def task_key(payload: dict[str, Any]) -> str:
@@ -1451,12 +1498,15 @@ def task_key(payload: dict[str, Any]) -> str:
     return hashlib.sha256(json.dumps(content, sort_keys=True).encode()).hexdigest()[:16]
 
 
-def _queue(task: Task, queue_dir: Path | None, why: str) -> Result:
+def _queue(task: Task, queue_dir: Path | None, why: str,
+           state_write: Callable[[Callable[[], Any], Path], Any] | None = None) -> Result:
     if queue_dir is not None:
-        queue_dir.mkdir(parents=True, exist_ok=True)
         payload = task.payload()
-        atomic_write_text(queue_dir / f"{task_key(payload)}.json",
-                          json.dumps(payload, ensure_ascii=False))
+        path = queue_dir / f"{task_key(payload)}.json"
+        def write():
+            queue_dir.mkdir(parents=True, exist_ok=True)
+            atomic_write_text(path, json.dumps(payload, ensure_ascii=False))
+        state_write(write, path) if state_write is not None else write()
     return Result(task.kind.name, task.id, "queued", problems=why)
 
 

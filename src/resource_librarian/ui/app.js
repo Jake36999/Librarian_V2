@@ -169,13 +169,14 @@ var Librarian = (() => {
     tool(name, args = {}, session = "") {
       return this.post(`/api/tool/${encodeURIComponent(name)}`, { arguments: args, session });
     }
-    /** The event stream. Reconnects from the last sequence number seen. */
-    events(onEvent, onStatus) {
-      let last = 0;
+    /** The event stream. Reconnects from an epoch-bound sequence cursor. */
+    events(cursor, onEvent, onStatus) {
+      let last = Number.isInteger(cursor?.last_seq) && (cursor?.last_seq ?? -1) >= 0 ? Number(cursor?.last_seq) : 0;
+      let epoch = typeof cursor?.epoch === "string" ? cursor.epoch : "";
       let source = null;
       let closed = false;
       const open = () => {
-        const url = `${this.opts.base}/api/events?token=${encodeURIComponent(this.opts.token)}&since=${last}`;
+        const url = `${this.opts.base}/api/events?token=${encodeURIComponent(this.opts.token)}&since=${last}&epoch=${encodeURIComponent(epoch)}`;
         source = new EventSource(url);
         source.onopen = () => onStatus(true);
         source.onmessage = () => void 0;
@@ -186,7 +187,14 @@ var Librarian = (() => {
         };
         const handle = (message) => {
           const event = JSON.parse(message.data);
+          if (event.type === "resync_required") {
+            if (typeof event.epoch === "string") epoch = event.epoch;
+            if (Number.isInteger(event.seq) && event.seq >= 0) last = event.seq;
+            onEvent(event);
+            return;
+          }
           if (event.seq <= last) return;
+          if (typeof event.epoch === "string" && event.epoch) epoch = event.epoch;
           last = event.seq;
           onEvent(event);
         };
@@ -224,7 +232,8 @@ var Librarian = (() => {
     "checkpoint_created",
     "checkpoint_resolved",
     "route_health_changed",
-    "workflow_preflight"
+    "workflow_preflight",
+    "resync_required"
   ];
 
   // src/dom.ts
@@ -1337,8 +1346,28 @@ var Librarian = (() => {
     if (p.price_input_per_1m || p.price_output_per_1m) {
       parts.push(`$${p.price_input_per_1m ?? 0} / $${p.price_output_per_1m ?? 0} per 1M`);
     }
-    parts.push(p.tool_calling ? "tool calling" : "no tool calling");
+    parts.push(p.tool_calling === true ? "tool calling" : p.tool_calling === false ? "no tool calling" : "tool calling unknown");
     return parts.filter(Boolean).join(" \xB7 ");
+  }
+  var SEEDED = /* @__PURE__ */ new Set(["deepinfra", "openai", "anthropic", "local"]);
+  function sameHost(a, b) {
+    const norm = (v) => {
+      const s = String(v ?? "");
+      return s.startsWith("preset-") && SEEDED.has(s.slice("preset-".length)) ? s.slice("preset-".length) : s;
+    };
+    return norm(a) === norm(b);
+  }
+  function adapterMeta(m) {
+    const adapter = m.adapter;
+    if (!adapter || typeof adapter !== "object") return "";
+    const expectation = adapter.expectation && typeof adapter.expectation === "object" ? adapter.expectation : {};
+    const capabilities = adapter.capabilities && typeof adapter.capabilities === "object" ? adapter.capabilities : {};
+    const parts = [`adapter: ${String(adapter.id ?? "unknown").replace(/_/g, " ")}`];
+    if (!expectation.id) parts.push("no model expectation yet");
+    else if (capabilities.tool_use === "unknown") parts.push("tool behaviour unverified");
+    else if (capabilities.tool_use === "false") parts.push("tool use unsupported");
+    else parts.push(`expectation: ${String(expectation.status ?? "reviewed")}`);
+    return parts.join(" \xB7 ");
   }
   var Popover = class {
     constructor(id, label, button) {
@@ -1451,7 +1480,8 @@ var Librarian = (() => {
   var SLOT_KIND = {
     ocr: { label: "Vision models", fits: (m) => m.profile?.modality === "Image_To_Text" || VISION.test(String(m.id)) },
     embeddings: { label: "Embedding models", fits: (m) => m.profile?.modality === "Embeddings" || EMBED.test(String(m.id)) },
-    tts: { label: "Speech models", fits: (m) => m.profile?.modality === "Text_To_Speech" || /tts|kokoro|chatterbox|orpheus|speech|higgs/i.test(String(m.id)) }
+    tts: { label: "Speech models", fits: (m) => m.profile?.modality === "Text_To_Speech" || /tts|kokoro|chatterbox|orpheus|speech|higgs/i.test(String(m.id)) },
+    stt: { label: "Speech-recognition models", fits: (m) => m.profile?.modality === "Speech_To_Text" || /asr|whisper|voxtral|speech[ _-]?recognition|transcrib/i.test(String(m.id)) }
   };
   var ModelTile = class {
     constructor(pop, api, tiers, keysSaved, setTiers = () => {
@@ -1556,14 +1586,22 @@ var Librarian = (() => {
       return pending;
     }
     readinessChips(provider, model) {
+      if (this.slot) return null;
       const row = this.routeReadiness(provider, model);
       if (!row) return null;
-      const qualification = row.qualification && typeof row.qualification === "object" ? row.qualification.status : row.qualification ?? row.status ?? "";
+      const tiers = this.tiers();
+      const selected = tiers.findIndex((t) => sameHost(t.provider, provider) && t.model === model);
+      const role = ["lead", "scribe", "clerk"][selected >= 0 ? selected : Math.min(tiers.length, 2)];
+      const evidence = row.qualification_by_role?.[role] ?? (row.role === role ? row.qualification : null);
+      const qualification = evidence?.status ?? "evidence pending";
       const workflow = row.core_workflow ?? row.workflow_ready ?? row.workflow;
       const fixture = row.fixture_preflight ?? row.fixture_ready;
       const health = row.host_health && typeof row.host_health === "object" ? row.host_health.status : row.host_health ?? row.health;
       const labels = [
-        qualification ? String(qualification).replace(/_/g, " ") : "evidence pending",
+        `${role}: ${String(qualification).replace(/_/g, " ")}`,
+        evidence?.freshness && !["current", "missing"].includes(evidence.freshness) ? `${role}: ${String(evidence.freshness).replace(/_/g, " ")}` : "",
+        row.active_task && row.role !== role ? `${row.task_profile} task: ${String(row.qualification?.status ?? "evidence pending").replace(/_/g, " ")}` : "",
+        row.binding_errors?.[role] ? `${role}: route unavailable` : "",
         this.readinessText(workflow, "walk ready", "walk blocked", "walk unchecked"),
         this.readinessText(fixture, "fixtures ready", "fixture issue", "fixtures unchecked"),
         this.readinessText(health, "host ready", "host issue", "host unchecked")
@@ -1572,7 +1610,7 @@ var Librarian = (() => {
       return h(
         "div",
         { class: "readiness", title: detail },
-        labels.filter((value, index, all) => all.indexOf(value) === index).map((value) => h("span", { class: `readiness-chip ${/blocked|issue|experimental|unavailable|stale/i.test(value) ? "warn" : ""}` }, value))
+        labels.filter((value, index, all) => value && all.indexOf(value) === index).map((value) => h("span", { class: `readiness-chip ${/blocked|issue|experimental|unavailable|stale/i.test(value) ? "warn" : ""}` }, value))
       );
     }
     readinessSummary() {
@@ -1594,6 +1632,7 @@ var Librarian = (() => {
         await this.api.post("/api/tiers", { tiers, ...override ? { override } : {} });
         this.pendingLead = null;
         this.setTiers(tiers);
+        void this.refreshReadiness(++this.readinessEpoch);
       } catch (e) {
         const body = e.body ?? {};
         if (body.needs_override) this.pendingLead = { tiers, lead: String(body.lead ?? "") };
@@ -1637,7 +1676,7 @@ var Librarian = (() => {
     async pick(provider, model) {
       if (this.slot) return this.pickSlot(provider, model);
       const tiers = this.tiers();
-      const at = tiers.findIndex((t) => t.provider === provider && t.model === model);
+      const at = tiers.findIndex((t) => sameHost(t.provider, provider) && t.model === model);
       const entry = (this.listings.get(provider)?.models ?? []).find((m) => m.id === model);
       if (at >= 0) {
         this.toast = `${model} is tier ${at + 1}. Right-click it, press Delete, or use Clear selection to start again.`;
@@ -1746,9 +1785,9 @@ var Librarian = (() => {
         this.pendingLead ? this.overridePrompt() : this.toast ? h("div", { class: "toast", role: "status" }, this.toast) : null,
         filter,
         grids,
-        h("h4", {}, "OCR \xB7 Text to speech \xB7 Embeddings"),
-        h("p", { class: "note locked" }, "These have their own slots (4 OCR, 5 Text to speech, 6 Embeddings) in Settings \u2192 Connections, each chosen with this same tile and kept with the library."),
-        h("p", { class: "note" }, "Models come from each provider's live listing. A profiled model (a Source of kind model) shows its suggested tier and best-for tags (a first guess to confirm or correct), plus context, price and tool calling; an unprofiled one can be profiled, which stages it for your review like any other source.")
+        h("h4", {}, "OCR \xB7 Text to speech \xB7 Embeddings \xB7 Speech to text"),
+        h("p", { class: "note locked" }, "These have their own slots (4 OCR, 5 Text to speech, 6 Embeddings, 7 Speech to text) in Settings \u2192 Connections, each chosen with this same tile and kept with the library."),
+        h("p", { class: "note" }, "Models come from each provider's live listing. A profiled model (a Source of kind model) shows its suggested tier and best-for tags (a first guess to confirm or correct), plus context, price and tool calling; an unprofiled one can be profiled, which stages it for your review like any other source. The adapter line is protocol evidence, not a reliability verdict: run the route probe before treating an unverified tool path as ready.")
       );
       this.renderGrids(grids);
     }
@@ -1756,7 +1795,7 @@ var Librarian = (() => {
       const tiers = this.tiers();
       const words = this.filter.toLowerCase().split(/\s+/).filter(Boolean);
       const matches = (m) => {
-        const text = `${m.id} ${profileMeta(m)}`.toLowerCase().replace(/_/g, " ");
+        const text = `${m.id} ${profileMeta(m)} ${adapterMeta(m)}`.toLowerCase().replace(/_/g, " ");
         return words.every((w) => text.includes(w));
       };
       const next = this.slot || tiers.length >= 3 ? 0 : tiers.length + 1;
@@ -1770,8 +1809,8 @@ var Librarian = (() => {
           { class: "provider" },
           h("h4", {}, h("span", { class: `dot ${listing.status === "ready" ? "" : listing.status === "no key" ? "nokey" : "off"}` }), `${label} \xB7 ${status}`),
           models.length ? h("div", { class: "grid" }, models.slice(0, 60).map((m) => {
-            const inSlot = this.slot?.current?.provider === p && this.slot?.current?.model === m.id;
-            const at = this.slot ? inSlot ? 0 : -1 : tiers.findIndex((t) => t.provider === p && t.model === m.id);
+            const inSlot = sameHost(this.slot?.current?.provider, p) && this.slot?.current?.model === m.id;
+            const at = this.slot ? inSlot ? 0 : -1 : tiers.findIndex((t) => sameHost(t.provider, p) && t.model === m.id);
             const clear2 = () => this.slot ? this.clearSlot() : this.clearAll();
             const rec = at < 0 && recommended(m);
             const readiness = this.readinessChips(p, String(m.id));
@@ -1799,6 +1838,7 @@ var Librarian = (() => {
               at >= 0 && !this.slot ? h("span", { class: "badge" }, String(at + 1)) : null,
               h("div", { class: "name" }, m.id),
               h("div", { class: "meta" }, profileMeta(m)),
+              adapterMeta(m) ? h("div", { class: "meta" }, adapterMeta(m)) : null,
               readiness,
               rec ? h("div", { class: "rec-label" }, `Recommended for slot ${next}`) : null
             );
@@ -2286,6 +2326,19 @@ var Librarian = (() => {
               value: String(base.role ?? "lead"),
               "aria-label": "Profile role"
             });
+            const routeSlots = ["lead", "scribe", "clerk", "research_helper"];
+            const bindingRole = h(
+              "select",
+              { "aria-label": "Model route slot" },
+              routeSlots.map((value) => h(
+                "option",
+                {
+                  value,
+                  selected: value === String(route.binding_role ?? (routeSlots.includes(base.role) ? base.role : "lead"))
+                },
+                value.replace(/_/g, " ")
+              ))
+            );
             const ceiling = h(
               "select",
               { "aria-label": "Permission ceiling" },
@@ -2408,6 +2461,7 @@ var Librarian = (() => {
                   ...route,
                   host_ids: split(hosts.value),
                   model_ids: split(models.value),
+                  binding_role: bindingRole.value,
                   providers: split(providers.value),
                   ...Object.keys(rateCard).length ? { rate_card: rateCard } : {}
                 }
@@ -2430,6 +2484,8 @@ var Librarian = (() => {
                 { class: "confirm" },
                 h("strong", {}, creating ? "New agent profile" : `Edit ${base.id}`),
                 h("div", { class: "row2 tight" }, id, role, ceiling, qualification),
+                h("label", { class: "f" }, "Use the model assigned to this route slot"),
+                bindingRole,
                 h("label", { class: "f" }, "Tool bundles (comma-separated)"),
                 bundles,
                 h("label", { class: "f" }, "Route allow-lists (blank means unrestricted)"),
@@ -2686,6 +2742,7 @@ var Librarian = (() => {
         "div",
         { class: "embeddings" },
         s.model ? h("p", { class: "dim" }, `${s.embedded ?? 0} of ${s.chunks ?? 0} text chunks embedded` + (s.vector_intents?.length ? ` \xB7 vectors used for: ${s.vector_intents.join(", ")}` : " \xB7 vectors used for no intent yet")) : null,
+        s.representation_stale ? h("p", { class: "note locked" }, "Embedding representation changed; existing vectors are not used. Choose Embed all to build the reviewed representation.") : null,
         h("div", { class: "row2 tight" }, local, s.model && est.chunks ? embedAll : null, s.model ? measure : null, status),
         confirm2,
         table2,
@@ -2693,7 +2750,7 @@ var Librarian = (() => {
         s.comparison ? h("p", { class: "note" }, `Measured ${String(s.comparison.at ?? "").slice(0, 10)} on ${s.comparison.questions} questions; vectors joined ${s.comparison.vectors_contributed} answers. Turn them on only where they help.`) : null
       );
     }
-    /** Requirements Addendum R17: service models, slots 4-6 - each one kind of job with its
+    /** Requirements Addendum R17: service models, slots 4-7 - each one kind of job with its
      *  own request format, chosen with the same tile as the chat models and kept with this
      *  library. Test makes one small real call. */
     serviceModels() {
@@ -2712,12 +2769,14 @@ var Librarian = (() => {
           (out.slots ?? []).map((s) => {
             const status = h("span", { class: "note inline", role: "status" });
             const current = s.model ? `${s.model} \xB7 ${PROVIDERS[s.provider] ?? s.provider}${s.default ? " (default)" : ""}` : s.built ? "none chosen" : "planned";
+            const contract = s.adapter && typeof s.adapter === "object" ? s.adapter : {};
+            const contractLabel = !s.model ? "" : contract.adapter?.id ? ` \xB7 ${String(contract.adapter.id).replace(/_/g, " ")} \xB7 ${contract.status ?? "unreviewed"}` : " \xB7 no reviewed service contract";
             const test = async () => {
               status.className = "note inline";
               status.textContent = "Testing: one small call\u2026";
               try {
                 const t = await this.api.post("/api/services/test", { slot: s.slot });
-                status.textContent = t.ok ? `Works: it read \u201C${t.read}\u201D.` : `Not working: ${t.error ?? `it read \u201C${t.read}\u201D`}`;
+                status.textContent = t.summary ?? (t.ok ? `Works: it read \u201C${t.read}\u201D.` : `Not working: ${t.error ?? `it read \u201C${t.read}\u201D`}`);
                 if (t.ok && t.audio) void new Audio(t.audio).play().catch(() => void 0);
                 status.className = `note inline ${t.ok ? "ok" : "err"}`;
               } catch (e) {
@@ -2747,6 +2806,8 @@ var Librarian = (() => {
                 h("strong", {}, s.label),
                 ` \xB7 ${current}`,
                 h("span", { class: "dim" }, ` \xB7 ${s.job}`),
+                contractLabel ? h("span", { class: "dim" }, contractLabel) : null,
+                s.route_status === "unavailable" ? h("span", { class: "note err" }, ` \xB7 ${s.route_error ?? "route unavailable"}`) : null,
                 s.cap_usd !== void 0 ? h("span", { class: "dim" }, ` \xB7 spent $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null
               ),
               s.built && this.chooseService ? h("button", { class: "ghost", onclick: () => {
@@ -2936,8 +2997,8 @@ var Librarian = (() => {
           return;
         }
         try {
-          await this.api.post("/api/tiers", {
-            tiers: [{ host_id: row.id, model: model.value.trim() }],
+          await this.api.post("/api/lead", {
+            route: { host_id: row.id, model: model.value.trim() },
             ...checkpointId ? { checkpoint_id: checkpointId } : {},
             ...override ? { override } : {}
           });
@@ -2989,6 +3050,29 @@ var Librarian = (() => {
           status.textContent = e.message;
         }
       };
+      const serviceSlot = h(
+        "select",
+        { "aria-label": `Service slot on ${row.display_name ?? row.id}` },
+        h("option", { value: "ocr" }, "OCR"),
+        h("option", { value: "embeddings" }, "Embeddings")
+      );
+      const chooseService = async () => {
+        if (!model.value.trim()) {
+          status.textContent = "Enter or discover a model id first.";
+          return;
+        }
+        try {
+          await this.api.post("/api/services", {
+            slot: serviceSlot.value,
+            host_id: row.id,
+            model: model.value.trim()
+          });
+          await this.refresh();
+          this.render();
+        } catch (e) {
+          status.textContent = e.message;
+        }
+      };
       return h(
         "div",
         { class: "host-card" },
@@ -3031,7 +3115,14 @@ var Librarian = (() => {
           h("button", { class: "ghost", onclick: () => void probe() }, `L1 probe (${probeRole})`),
           h("button", { class: "primary", onclick: () => void chooseLead() }, "Use as lead")
         ),
-        discovered
+        discovered,
+        row.protocol === "openai" ? h(
+          "div",
+          { class: "row2" },
+          serviceSlot,
+          h("button", { class: "ghost", onclick: () => void chooseService() }, "Use for service"),
+          h("span", { class: "note inline" }, "OCR and embeddings use this exact host. Native speech remains DeepInfra-only; selection is not qualification.")
+        ) : null
       );
     }
     newHostCard(reload) {
@@ -3585,6 +3676,7 @@ var Librarian = (() => {
     /** The closed topic list (About/Topics.md) and the topics proposed for it (R8): only
      *  here does a proposal join the list - accepted as proposed, renamed, or rejected. */
     async paintTopics(host) {
+      clear(host, h("p", { class: "dim" }, "Loading topics\u2026"));
       const status = h("span", { class: "note inline", role: "status" });
       const reload = () => void this.paintTopics(host);
       let out;
@@ -3611,7 +3703,8 @@ var Librarian = (() => {
         title: "Rewrite the topic indexes and the Master Index from the notes",
         onclick: async () => {
           try {
-            await this.api.tool("views_refresh", {});
+            const result = await this.api.tool("views_refresh", {});
+            if (result.error || result.refused) throw new Error(String(result.detail ?? result.error ?? result.refused));
             status.textContent = "Indexes rewritten.";
           } catch (e) {
             status.textContent = e.message;
@@ -3620,28 +3713,34 @@ var Librarian = (() => {
       }, "Rewrite indexes");
       const proposal = (p) => {
         const name = h("input", { type: "text", value: p.name, "aria-label": "Topic name" });
-        const file = h("input", { type: "checkbox", checked: true });
+        const file = h("input", { type: "checkbox", checked: p.acceptance_progress?.refile ?? true });
         const accept = h("button", { class: "primary", onclick: async () => {
           try {
             const r = await this.api.tool("staging_decide", {
               item_ids: [p.id],
               decision: "accept",
+              ...p.staged_revision ? { staged_revision: p.staged_revision } : {},
               fields: { name: name.value, refile: file.checked }
             });
             const one = (r.results ?? [])[0] ?? r;
             if (r.error || one.error || one.refused) throw new Error(String(one.detail ?? one.error ?? r.detail ?? r.error));
-            status.textContent = `${one.topic} added; ${(one.refiled ?? []).filter((x) => x.topic && !x.unchanged).length} source(s) filed under it.`;
+            status.textContent = `${one.topic} accepted; ${(one.refiled ?? []).filter((x) => x.topic && !x.unchanged).length} source(s) filed under it.`;
             reload();
           } catch (e) {
             status.textContent = e.message;
           }
-        } }, "Accept");
+        } }, p.acceptance_progress ? "Finish acceptance" : "Accept");
         return h(
           "div",
           { class: "srv" },
           name,
           h("label", { class: "note inline" }, file, ` file its ${p.sources} source${p.sources === 1 ? "" : "s"} under it`),
           p.duplicate_of ? h("span", { class: "warn" }, `close to ${p.duplicate_of}`) : null,
+          p.acceptance_progress ? h(
+            "span",
+            { class: "warn" },
+            `Partly applied; review before finishing. Completed: ${(p.acceptance_progress.completed_paths ?? []).join(", ")}`
+          ) : null,
           accept
         );
       };
@@ -3652,7 +3751,14 @@ var Librarian = (() => {
         (out.not_accepted ?? []).length ? h("p", { class: "warn" }, `Filed under topics not in the list: ${out.not_accepted.join(", ")}.`) : null,
         (out.proposed ?? []).length ? h("p", { class: "note" }, "Proposed from the library's own sources (details in Staging \u2192 Topics):") : null,
         (out.proposed ?? []).map(proposal),
-        h("div", { class: "row2 tight" }, propose, refresh, status)
+        h(
+          "div",
+          { class: "row2 tight" },
+          propose,
+          refresh,
+          h("button", { class: "ghost", onclick: reload }, "Reload topics (discards edits)"),
+          status
+        )
       );
     }
     /** The domain profile this library was created with (profiles.py): what it
@@ -3744,14 +3850,28 @@ var Librarian = (() => {
             "div",
             { class: "srv" },
             h("span", { class: `dot ${c.held === c.models ? "" : "nokey"}` }),
-            h("span", {}, h("strong", {}, c.provider), ` \xB7 ${c.held}/${c.models} models held`),
-            c.held < c.models ? h("button", { class: "ghost", onclick: async () => {
+            h(
+              "span",
+              {},
+              h("strong", {}, c.provider),
+              ` \xB7 ${c.held}/${c.models} models held`,
+              c.needs_attention?.length ? h(
+                "p",
+                { class: "warn" },
+                `Review incomplete/unfindable Source notes: ${c.needs_attention.slice(0, 5).join(", ")}. Existing notes are not overwritten by re-adoption.`
+              ) : null
+            ),
+            c.held < c.models ? h("button", { class: "ghost", onclick: async (e) => {
+              const button = e.currentTarget;
+              button.disabled = true;
               try {
                 const r = await this.api.tool("model_catalog_adopt", { provider: c.provider });
                 if (r.error) throw new Error(String(r.detail ?? r.error));
-                void this.paintModelCatalogs(host, `${c.provider}: ${r.written} model(s) added${r.already_held ? `, ${r.already_held} already held` : ""}${r.failed.length ? `, ${r.failed.length} failed` : ""}.`);
-              } catch (e) {
-                status.textContent = e.message;
+                await this.paintModelCatalogs(host, `${c.provider}: ${r.written} model(s) added${r.already_held ? `, ${r.already_held} already held` : ""}${r.failed.length ? `, ${r.failed.length} failed` : ""}${r.not_findable?.length ? `, ${r.not_findable.length} need findability review` : ""}.` + (r.failed.length ? ` Review before retrying: ${r.failed.slice(0, 3).map((f) => `${f.name}: ${f.error}`).join("; ")}` : ""));
+              } catch (e2) {
+                status.textContent = e2.message;
+              } finally {
+                if (button.isConnected) button.disabled = false;
               }
             } }, c.held ? "Adopt the rest" : "Adopt") : null
           )) : h("p", { class: "dim" }, "No standard model catalogues are bundled with this install."),
@@ -4577,7 +4697,14 @@ var Librarian = (() => {
         if (waiting) rows.push(h("p", { class: "note inline" }, `${waiting} more approved, waiting for the next run.`));
       } else {
         const unfinished = (b.items ?? []).some((i) => i.status === "processing");
-        if (unfinished && (b.status === "interrupted" || b.status === "cancelled")) {
+        if (b.status === "failed") {
+          rows.push(h(
+            "p",
+            { class: "error" },
+            `Batch processing stopped: ${b.detail ?? "review the unfinished source before resuming"}.`
+          ));
+        }
+        if (unfinished && ["interrupted", "cancelled", "failed"].includes(b.status)) {
           rows.push(h(
             "div",
             { class: "row2 tight" },
@@ -4608,6 +4735,17 @@ var Librarian = (() => {
       if (running) this.poll = window.setTimeout(() => void this.paintBanner(), 2e3);
       else if (this.wasRunning && this.kind === "source") void this.load();
       this.wasRunning = running;
+    }
+    decisionError(status, id, error) {
+      clear(
+        status,
+        h("p", { class: "error" }, error.message),
+        h(
+          "button",
+          { class: "ghost", onclick: () => this.show(id) },
+          "Reload item (discards form edits)"
+        )
+      );
     }
     async show(id) {
       this.selected = id;
@@ -4663,20 +4801,25 @@ var Librarian = (() => {
             item_ids: [id],
             decision,
             reason: reason.value,
+            ...item.revision ? { revision: item.revision } : {},
+            ...item.staged_revision ? { staged_revision: item.staged_revision } : {},
             bottom_line: bottom.value,
             what_it_solves: solves.value,
-            ...isModel ? { fields: { best_for: Array.from(bestFor), ...suggestedTier ? { suggested_tier: suggestedTier } : {} } } : {}
+            ...isModel ? { fields: {
+              ...!item.promotion_progress || item.fields?.best_for !== void 0 || bestFor.size ? { best_for: Array.from(bestFor) } : {},
+              ...suggestedTier ? { suggested_tier: suggestedTier } : {}
+            } } : {}
           });
           const r = (out.results ?? [])[0] ?? out;
           if (out.error || r.error || r.refused) throw new Error(String(r.detail ?? r.refused ?? out.detail ?? out.error ?? r.error));
-          const outcome = decision === "accept" ? (r.merged_into ? `Merged ${(r.sections ?? []).join(", ") || "its sections"} into ${r.merged_into}; the previous text is kept on this item.` : r.promotion && !r.promotion.catalogued ? `Accepted: ${r.promotion.status}.` : `Accepted into the library and catalogued (coverage: ${r.coverage ?? "unknown"}).`) + (r.handoff ? " It joins your session as an undecided candidate." : "") : decision === "approve" ? "Approved for ingestion: it waits for the batch above. Nothing is in the library yet." : decision === "reject" ? "Rejected." : "Deferred.";
+          const outcome = decision === "accept" ? (r.merged_into ? `Merged ${(r.sections ?? []).join(", ") || "its sections"} into ${r.merged_into}; the previous text is kept on this item.` : r.promotion && !r.promotion.catalogued ? `Accepted: ${r.promotion.status}.` : `Accepted into the library and catalogued (coverage: ${r.coverage ?? "unknown"}).`) + (r.handoff ? " It joins your session as an undecided candidate." : "") + (r.originals_retained?.length ? " Attachments were copied; originals remain in place." : "") + (r.handoff_warning ? " Session handoff was not recorded; the library decision remains saved. Review the original session." : "") : decision === "approve" ? "Approved for ingestion: it waits for the batch above. Nothing is in the library yet." : decision === "reject" ? "Rejected." : "Deferred.";
           this.selected = "";
           if (r.session && r.session.session === this.currentSession()) this.onSessionUpdate(r.session);
           await this.load();
           this.detailLocked = true;
           clear(this.detail, h("p", { class: "ok", role: "status" }, `${item.name}: ${outcome}`));
         } catch (e) {
-          clear(status, h("p", { class: "error" }, e.message));
+          this.decisionError(status, id, e);
         }
       };
       const draftIt = async () => {
@@ -4717,7 +4860,8 @@ var Librarian = (() => {
       const st = String(item.status ?? "staged");
       const btn = (label, d, cls = "ghost", title = "") => h("button", { class: cls, onclick: decide(d), ...title ? { title } : {} }, label);
       const proc = item.processing ?? {};
-      const buttons = item.revision_of ? [btn("Accept", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : st === "enriched" ? [btn("Accept into library", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : st === "partial" ? [
+      const interrupted = item.promotion_progress && !item.promotion_progress.completed_at;
+      const buttons = interrupted ? [btn("Finish acceptance", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : item.revision_of ? [btn("Accept", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : st === "enriched" ? [btn("Accept into library", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : st === "partial" ? [
         btn("Approve for ingestion again", "approve", "primary", "Runs only the unfinished stages; finished ones are kept"),
         btn("Accept with partial coverage", "accept", "ghost", "The note records its coverage and what was not examined"),
         btn("Reject", "reject"),
@@ -4763,6 +4907,22 @@ var Librarian = (() => {
         ),
         item.sensitivity === "review" ? h("p", { class: "warn" }, "\u2691 Marked sensitive: only a person accepts it, and only a person clears the mark.") : null,
         stage,
+        interrupted ? h(
+          "div",
+          { class: "warn", role: "note" },
+          h("p", {}, "Acceptance was interrupted. Review the completed work before finishing with the same approved content. Changed content needs a source revision, not an overwrite."),
+          h("p", {}, `Completed paths: ${(item.promotion_progress.completed_paths ?? []).join(", ") || "inspect the operation log"}.`),
+          item.promotion_progress.source?.path ? h("a", { class: "wl", href: "#", onclick: (e) => {
+            e.preventDefault();
+            this.openNote(item.promotion_progress.source.path);
+          } }, item.promotion_progress.source.path) : null,
+          h("p", {}, "Original attachments remain in place. Rejecting or deferring does not undo completed copies or notes.")
+        ) : null,
+        !item.revision_of && (item.file || item.clean_file) ? h(
+          "p",
+          { class: "note" },
+          "Accepting this source copies attachments to managed Sources files; original project files stay in place."
+        ) : null,
         capture,
         item.revision_of ? h(
           "p",
@@ -4788,7 +4948,7 @@ var Librarian = (() => {
           h(
             "div",
             {},
-            h("label", { class: "f", for: "lib-bl" }, draft.bottom_line ? `Bottom Line (drafted by ${draft.model || "the clerk"}; edit it)` : "Bottom Line"),
+            h("label", { class: "f", for: "lib-bl" }, interrupted ? "Bottom Line (previously approved; review it)" : draft.bottom_line ? `Bottom Line (drafted by ${draft.model || "the clerk"}; edit it)` : "Bottom Line"),
             bottom,
             h("label", { class: "f", for: "lib-solves" }, "What it solves"),
             solves,
@@ -4806,13 +4966,13 @@ var Librarian = (() => {
               "div",
               { class: "row2" },
               buttons,
-              st === "processing" ? null : h("button", { class: "ghost push", onclick: draftIt }, draft.bottom_line ? "Redraft" : "Draft with the clerk")
+              st === "processing" || interrupted ? null : h("button", { class: "ghost push", onclick: draftIt }, draft.bottom_line ? "Redraft" : "Draft with the clerk")
             ),
             h(
               "div",
               { class: "row2" },
               h("span", { class: "note inline" }, readLine),
-              st !== "processing" && (!dr || readCount < dr.chunks) ? h(
+              st !== "processing" && !interrupted && (!dr || readCount < dr.chunks) ? h(
                 "button",
                 { class: "ghost", onclick: readIt, title: "Claims and limits from every part, with pages; terms; and any reasoning stance the text teaches, staged as a lens" },
                 dr ? "Continue deep read" : "Deep read"
@@ -4902,6 +5062,7 @@ var Librarian = (() => {
             item_ids: [item.id],
             decision: d,
             reason: reason.value,
+            ...item.staged_revision ? { staged_revision: item.staged_revision } : {},
             ...Object.keys(changed).length ? { fields: changed } : {}
           });
           const r = (out.results ?? [])[0] ?? out;
@@ -4915,7 +5076,7 @@ var Librarian = (() => {
             `${p.name}: ${d === "accept" ? "accepted into the lens store" : d === "reject" ? "rejected" : "deferred"}.`
           ));
         } catch (e) {
-          clear(status, h("p", { class: "error" }, e.message));
+          this.decisionError(status, item.id, e);
         }
       };
       const source = p.source ? h("a", { class: "wl", href: "#", onclick: (e) => {
@@ -5045,6 +5206,7 @@ var Librarian = (() => {
             item_ids: [item.id],
             decision: d,
             reason: reason.value,
+            ...item.staged_revision ? { staged_revision: item.staged_revision } : {},
             ...d === "accept" ? { fields: {
               definition: definition.value,
               concept_kind: kindSel.value,
@@ -5063,7 +5225,7 @@ var Librarian = (() => {
             `${item.name}: ${d === "accept" ? "accepted as a Concept note" : d === "reject" ? "rejected" : "deferred"}.`
           ));
         } catch (e) {
-          clear(status, h("p", { class: "error" }, e.message));
+          this.decisionError(status, item.id, e);
         }
       };
       clear(
@@ -5119,7 +5281,12 @@ var Librarian = (() => {
       const status = h("div", { role: "status" });
       const decide = (d) => async () => {
         try {
-          const out = await this.api.tool("staging_decide", { item_ids: [item.id], decision: d, reason: reason.value });
+          const out = await this.api.tool("staging_decide", {
+            item_ids: [item.id],
+            decision: d,
+            reason: reason.value,
+            ...item.staged_revision ? { staged_revision: item.staged_revision } : {}
+          });
           const r = (out.results ?? [])[0] ?? out;
           if (out.error || r.error || r.refused) throw new Error(String(r.detail ?? r.refused ?? out.detail ?? out.error ?? r.error));
           this.selected = "";
@@ -5131,7 +5298,7 @@ var Librarian = (() => {
             `${item.name}: ${d === "accept" ? `written to ${item.target}` : d === "reject" ? "rejected" : "deferred"}.`
           ));
         } catch (e) {
-          clear(status, h("p", { class: "error" }, e.message));
+          this.decisionError(status, item.id, e);
         }
       };
       clear(
@@ -5175,6 +5342,11 @@ var Librarian = (() => {
         this.detail,
         h("div", { class: "view-head" }, h("strong", {}, item.name)),
         h("p", {}, item.what_belongs ?? ""),
+        item.acceptance_progress ? h(
+          "p",
+          { class: "warn" },
+          `Partly applied. Completed: ${(item.acceptance_progress.completed_paths ?? []).join(", ")}. Finish acceptance in Settings \u2192 Library after review. Rejecting or deferring does not undo those writes.`
+        ) : null,
         item.duplicate_of ? h("p", { class: "warn" }, `Close to a topic you already have: ${item.duplicate_of}. Merge rather than add?`) : null,
         h("p", { class: "dim" }, `${item.coverage?.sources ?? members.length} of the ${item.coverage?.of ?? "?"} sources considered \xB7 proposed by ${item.proposed_by ?? "the clerk"}`),
         (item.aliases ?? []).length ? h("p", {}, h("strong", {}, "Also called: "), item.aliases.join(", ")) : null,
@@ -5804,7 +5976,7 @@ var Librarian = (() => {
         this.warn(`The core did not answer: ${e.message}. Is \`resource-librarian app\` running?`);
         return;
       }
-      this.stopEvents = this.api.events((event) => this.onEvent(event), (live) => {
+      this.stopEvents = this.api.events(this.state.event_stream, (event) => this.onEvent(event), (live) => {
         this.live.className = `live ${live ? "on" : "off"}`;
         this.live.textContent = live ? "\u25CF" : "\u25CB reconnecting";
         if (live) void this.refresh();
@@ -5827,6 +5999,10 @@ var Librarian = (() => {
       for (const request of this.state.pending ?? []) this.chat.handle({ seq: 0, type: "permission_request", ...request });
     }
     onEvent(event) {
+      if (event.type === "resync_required") {
+        void this.refresh().catch((error) => this.warn(error.message));
+        return;
+      }
       this.chat.handle(event);
       switch (event.type) {
         case "mode_changed":

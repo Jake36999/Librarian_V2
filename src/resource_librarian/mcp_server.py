@@ -1,10 +1,17 @@
-"""The MCP server, generated from the one tool registry.
+"""The MCP server: the registry's tools, run by the vault's active Core.
 
-Every registered tool the caller's tier grants is listed with the registry's
-own schema, description and effect hints, and every call goes through
-`Registry.call`: the tier check, argument coercion, the session's phase gate
-and budget, and the envelope. Nothing here decides anything a tool, the
-session or the vault would not decide the same way from the CLI or the loop.
+Every registered tool the connection's tier grants is listed with the
+registry's own schema, description and effect hints. Every call goes to the
+vault's running Librarian Core over its authenticated MCP endpoint (CORE-04A),
+where `Registry.call` applies the tier check, argument coercion, the session's
+phase gate and budget, and the envelope - through the same writer, index
+service, document leases and permission broker as every other Core call.
+
+**This process holds no vault state.** It never opens the vault, its SQLite
+index, its writer or its session logs: a second writer beside the Core is the
+two-writer race the vault lease exists to prevent, and it would bypass the
+Obsidian dirty-note protection. With no live Core for the vault, every call is
+refused with `CORE_REQUIRED` and nothing is written.
 
 **One research thread per connection.** A connection starts with no session.
 `open_session` and `resume_session` attach one; every later call on the
@@ -12,50 +19,54 @@ connection runs inside it, so its writes are phase-gated and its results carry
 the envelope. `close_session` detaches it. A client never passes a session id
 by hand, which is how V1's Reader tools came to be called outside any thread.
 
-**The tier is fixed at launch.** A Reader (an agent working from another
-project) connects at `consult`; the Cowork plugin, where Claude is the
-Librarian, launches at `contribute`. Tools above the tier are not listed, and
-are refused by name if called anyway.
+**The tier is fixed at launch, and an agent's.** A Reader (an agent working
+from another project) connects at `consult`; the Cowork plugin, where Claude is
+the Librarian, launches at `contribute`. `curate` is a person's own authority:
+an MCP connection is capped at `contribute`, here and again in the Core. Tools
+above the tier are not listed, and are refused by name if called anyway.
 
-**The clerk over MCP.** When no clerk endpoint is configured and the client
-offers sampling, clerk and routing tasks are sent to the client as sampling
-requests carrying only the task's own system prompt and text, with
-`includeContext: "none"`: the host's model answers them without the research
-conversation. A client that refuses, or offers no sampling, leaves the tasks
-queued, never answered by the research model in-line. (Sampling is deprecated
-from protocol 2026-07-28; handshake-era clients such as Cowork's still offer
-it, and the configured endpoint is the route that does not depend on it.)
+**The clerk is the Core's.** Clerk and routing tasks use the Core's configured
+clerk; with none they wait in the clerk queue, which this connection's model can
+answer with `clerk_next` and `clerk_submit`. (Answering them through MCP
+sampling would need the Core to call back into this process; that route is not
+offered while calls run in the Core.)
 
-**Approvals** are the host's: a Cowork or Claude Code client asks its person
-before a tool whose hints say it writes. The permission broker is the
-standalone app's Modes menu and is not attached here unless a caller supplies
-one; the registry's tiers, the phase gate and the vault's own rules
-(`PERSON_CONFIRMS`, `SENSITIVITY_REVIEW`) hold either way.
+**Approvals** are both the host's and the Core's: a Cowork or Claude Code client
+asks its person before a tool whose hints say it writes, and the Core's Modes
+setting (Plan, Ask or Auto) applies as it does to every agent - in Ask, a write
+waits for a person in the Librarian window. The registry's tiers, the phase gate
+and the vault's own rules (`PERSON_CONFIRMS`, `SENSITIVITY_REVIEW`) hold either way.
 """
 from __future__ import annotations
 
 import json
 import sys
-import warnings
+import urllib.error
+import urllib.parse
+import urllib.request
+from pathlib import Path
 from typing import Any
 
 import anyio
-import anyio.from_thread
 import anyio.to_thread
 import mcp_types as types
 from mcp_types.version import MODERN_PROTOCOL_VERSIONS
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
 
-from . import __version__
+from . import __version__, connection, process_identity
 from . import tools  # noqa: F401  (registers the tools)
-from .clerk import ClerkUnavailable, Endpoint
-from .registry import REGISTRY, TIERS, Context, ToolSpec
-from .vault import Vault
+from .registry import REGISTRY, TIERS, ToolSpec
+from .rules import Refusal
 
 # Which part of the surface a tool belongs to, by the module that declares it.
 GROUPS = {"core": "read", "library": "search", "sessions": "session", "staging": "write",
           "intake": "intake", "scout": "intake", "workflows": "workflows", "vault": "write"}
+
+#: The highest tier an MCP connection holds; the Core enforces the same cap.
+MCP_TIER_CEILING = "contribute"
+#: The Core's permission broker may wait up to 600 s for a person in Ask mode.
+CALL_TIMEOUT = 660.0
 
 INSTRUCTIONS = """\
 A research library over this vault's Sources, Concepts and Projects.
@@ -96,65 +107,71 @@ def as_result(result: dict[str, Any]) -> types.CallToolResult:
                                 is_error="error" in result)
 
 
-class SamplingClerk(Endpoint):
-    """Clerk and routing tasks answered by the client's model through MCP
-    sampling, with no conversation context attached. Called from the worker
-    thread a tool runs in; the request itself goes out on the event loop."""
-
-    name = "mcp-sampling"
-    concurrency = 1
-
-    def __init__(self, session: Any):
-        self.session = session
-        self.requests: list[dict[str, Any]] = []
-
-    def complete(self, payload: dict[str, Any], repair: str = "") -> tuple[str, str]:
-        messages = [types.SamplingMessage(role="user", content=types.TextContent(
-            type="text", text=payload["user"]))]
-        if repair:
-            messages.append(types.SamplingMessage(role="user", content=types.TextContent(
-                type="text", text=f"That did not match the required shape: {repair}\n"
-                                  f"Return only the JSON object, corrected.")))
-        request = {"system_prompt": payload["system"], "include_context": "none",
-                   "temperature": payload["temperature"],
-                   "max_tokens": int(payload["max_tokens"])}
-        self.requests.append({**request, "messages": [m.content.text for m in messages]})
-        async def sample() -> Any:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")      # deprecated from 2026-07-28; see above
-                return await self.session.create_message(messages, **request)
-        try:
-            result = anyio.from_thread.run(sample)
-        except Exception as exc:                            # noqa: BLE001
-            raise ClerkUnavailable(f"the client did not answer a sampling request: "
-                                   f"{type(exc).__name__}: {str(exc)[:200]}") from exc
-        content = result.content
-        text = getattr(content, "text", None)
-        if text is None and isinstance(content, list):
-            text = "".join(getattr(part, "text", "") for part in content)
-        return text or "", result.model or "mcp-sampling"
+def _core_required(detail: str) -> dict[str, Any]:
+    return {"error": "refused", **Refusal("CORE_REQUIRED", detail).to_dict()}
 
 
-def offers_sampling(session: Any) -> bool:
+def call_core(root: Path | None, payload: dict[str, Any], *,
+              timeout: float = CALL_TIMEOUT) -> dict[str, Any]:
+    """Run one tool call in the vault's active Core, or refuse.
+
+    The Core is found through its owner-only connection record and checked
+    with the same process identity the Host uses. A missing, stopped,
+    unreachable or non-loopback Core is a `CORE_REQUIRED` refusal - never a
+    reason to open the vault here instead.
+    """
+    if root is None:
+        return _core_required("no vault: launch with --vault, set LIBRARIAN_VAULT, or start "
+                              "from inside a vault")
+    record = connection.load(root)
+    if record is None:
+        return _core_required(f"no Librarian Core is running for {root}")
+    if not process_identity.is_alive(int(record.get("pid") or 0), record.get("process_start")):
+        return _core_required(f"the Core recorded for {root} is no longer running")
+    url = str(record.get("url") or "").rstrip("/")
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != "http" or parsed.hostname not in ("127.0.0.1", "::1", "localhost"):
+        return _core_required("the recorded Core is not on a loopback address; refusing to connect")
+    request = urllib.request.Request(
+        url + "/api/mcp/call", data=json.dumps(payload).encode("utf-8"), method="POST",
+        headers={"Content-Type": "application/json",
+                 "X-Librarian-Token": str(record.get("token") or ""), "Origin": url})
     try:
-        return bool(session.check_client_capability(
-            types.ClientCapabilities(sampling=types.SamplingCapability())))
-    except Exception:                                       # noqa: BLE001
-        return False
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        try:
+            body = json.loads(exc.read().decode("utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            body = {}
+        detail = str((body or {}).get("error") or exc)[:300]
+        if exc.code in (403, 503):
+            return _core_required(f"the Core did not accept this call ({exc.code}): {detail}")
+        return {"error": "failed", "detail": f"the Core answered {exc.code}: {detail}"}
+    except (OSError, ValueError) as exc:
+        return _core_required(f"the recorded Core could not be reached ({str(exc)[:200]}); "
+                              f"no direct vault access was attempted")
+    if not isinstance(data, dict) or not isinstance(data.get("result"), dict):
+        return {"error": "failed", "detail": "the Core returned an unexpected reply"}
+    return data
 
 
 class LibrarianServer:
-    """The registry, served. `extras` are passed to every call (tests pass a
-    scripted clerk here; the app passes its broker)."""
+    """The registry's tools for one MCP client process; their calls, the Core's."""
 
-    def __init__(self, vault: Vault | None, tier: str = "consult",
-                 extras: dict[str, Any] | None = None, sampling: bool = True):
+    def __init__(self, vault: Any, tier: str = "consult", *, timeout: float = CALL_TIMEOUT):
         if tier not in TIERS:
             raise ValueError(f"tier is one of {TIERS}")
-        self.vault = vault
+        if TIERS.index(tier) > TIERS.index(MCP_TIER_CEILING):
+            print(f"resource-librarian mcp: tier {tier!r} is a person's; this connection is "
+                  f"{MCP_TIER_CEILING!r}", file=sys.stderr)
+            tier = MCP_TIER_CEILING
+        # A Vault or a path: only the vault's root is kept.  (A Path has its own
+        # `.root` - the drive - so unwrap only a non-path object.)
+        root = vault if vault is None or isinstance(vault, (str, Path)) else vault.root
+        self.root = Path(root).resolve() if root else None
         self.tier = tier
-        self.extras = dict(extras or {})
-        self.sampling = sampling
+        self.timeout = timeout
         self._states: dict[str, dict[str, Any]] = {}
         self.server: Server[Any] = Server(
             "resource-librarian", version=__version__,
@@ -167,12 +184,12 @@ class LibrarianServer:
         modern (2026-07-28) request arrives as its own exchange, so its thread
         is kept by the transport's session id: one per stdio process, one per
         HTTP session."""
-        connection = getattr(getattr(request, "session", None), "_connection", None)
-        state = getattr(connection, "state", None)
+        connection_ = getattr(getattr(request, "session", None), "_connection", None)
+        state = getattr(connection_, "state", None)
         if isinstance(state, dict) and \
-                getattr(connection, "protocol_version", "") not in MODERN_PROTOCOL_VERSIONS:
+                getattr(connection_, "protocol_version", "") not in MODERN_PROTOCOL_VERSIONS:
             return state
-        key = str(getattr(connection, "session_id", "") or "")
+        key = str(getattr(connection_, "session_id", "") or "")
         return self._states.setdefault(key, {})
 
     # -- handlers ------------------------------------------------------------
@@ -186,26 +203,24 @@ class LibrarianServer:
     async def _call_tool(self, request: Any, params: types.CallToolRequestParams
                          ) -> types.CallToolResult:
         state = self._state(request)
-        extras = dict(self.extras)
-        session = getattr(request, "session", None)
-        if self.sampling and session is not None and offers_sampling(session):
-            extras.setdefault("clerk_fallback", SamplingClerk(session))
         result = await anyio.to_thread.run_sync(
-            self.call, params.name, dict(params.arguments or {}), state, extras)
+            self.call, params.name, dict(params.arguments or {}), state)
         return as_result(result)
 
-    def call(self, name: str, arguments: dict[str, Any], state: dict[str, Any],
-             extras: dict[str, Any] | None = None) -> dict[str, Any]:
-        """One call on one connection: the session it carries goes in, and the
-        session the call opened, resumed or closed comes out."""
-        ctx = Context(tier=self.tier, vault=self.vault, session=state.get("session") or None,
-                      extras=dict(self.extras if extras is None else extras))
-        result = REGISTRY.call(name, arguments, ctx)
+    def call(self, name: str, arguments: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
+        """One call on one connection, run in the Core: the session it carries
+        goes in, and the session the call opened, resumed or closed comes out."""
+        outcome = call_core(self.root, {"tool": name, "arguments": arguments,
+                                        "session": state.get("session") or "", "tier": self.tier},
+                            timeout=self.timeout)
+        if "result" not in outcome:
+            return outcome
+        result = outcome["result"]
         if "error" not in result:
             if name == "close_session" and result.get("closed"):
                 state.pop("session", None)
-            elif ctx.session:
-                state["session"] = ctx.session
+            elif outcome.get("session"):
+                state["session"] = outcome["session"]
         return result
 
     # -- running -------------------------------------------------------------
@@ -216,16 +231,17 @@ class LibrarianServer:
 
 def serve(vault_path: str | None, tier: str = "consult") -> int:
     """`--vault`, else `LIBRARIAN_VAULT`, else the vault holding the working
-    directory (the plugin launches without a path; the host sets one of these)."""
+    directory (the plugin launches without a path; the host sets one of these).
+    Only the vault's root is kept, to find its Core."""
     import os
-    from .rules import Refusal
+    from .vault import Vault
     try:
-        vault = Vault.find(vault_path or os.environ.get("LIBRARIAN_VAULT") or None)
+        root: Path | None = Vault.find(vault_path or os.environ.get("LIBRARIAN_VAULT") or None).root
     except Refusal as refusal:
-        # Loud, on stderr (stdout is the protocol): tools that need a vault
-        # will refuse by name, and `doctor` still answers.
+        # Loud, on stderr (stdout is the protocol): every call will refuse
+        # with CORE_REQUIRED, and the tool list still answers.
         print(f"resource-librarian mcp: no vault ({refusal}); serving without one",
               file=sys.stderr)
-        vault = None
-    anyio.run(LibrarianServer(vault, tier).run_stdio)
+        root = None
+    anyio.run(LibrarianServer(root, tier).run_stdio)
     return 0

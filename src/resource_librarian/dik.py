@@ -25,7 +25,7 @@ import json
 import posixpath
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from . import clerk
 from .coordination import atomic_write_text
@@ -365,7 +365,8 @@ def _coverage_line(data: list[dict[str, Any]]) -> str:
 
 
 def relate_chapters(record: dict[str, Any], endpoint: clerk.Endpoint | None,
-                    queue: Path) -> dict[str, Any]:
+                    queue: Path, *,
+                    state_write: Callable[[Callable[[], Any], Path], Any] | None = None) -> dict[str, Any]:
     """How fully read chapters relate (continues, contrasts, depends on, prepares) - a model's
     reading, marked `inferred`, citing both chapters. A chapter not fully read is left out,
     and a document-level synthesis is drawn only when every chapter was read."""
@@ -374,7 +375,8 @@ def relate_chapters(record: dict[str, Any], endpoint: clerk.Endpoint | None,
     if len(read) < 2:
         return {"added": 0, "reason": "fewer than two fully read chapters"}
     listing = "\n".join(f"{d['id']} | {d['name']}: " + "; ".join(d["claims"][:4]) for d in read)
-    result = clerk.run([clerk.chapter_relations(listing)], endpoint, queue)[0]
+    result = clerk.run([clerk.chapter_relations(listing)], endpoint, queue,
+                       state_write=state_write)[0]
     if not result.ok:
         return {"added": 0, "reason": f"the clerk did not answer ({result.status})"}
     ids = {d["id"] for d in read}
@@ -392,7 +394,8 @@ def relate_chapters(record: dict[str, Any], endpoint: clerk.Endpoint | None,
 
 # ------------------------------------------------------------------ accepted notes
 
-def rebuild(vault: Vault, conn, source: str = "", limit: int = 20) -> dict[str, Any]:
+def rebuild(vault: Vault, conn, source: str = "", limit: int = 20, *,
+            index_call: Callable | None = None) -> dict[str, Any]:
     """Records for notes accepted before P6 (owner-approved 2026-10-01): rebuilt from each
     note's own evidence, files and - for a document - the read its staged item kept. The
     records are written (derived, rebuildable); the note sections they support are staged as
@@ -402,9 +405,12 @@ def rebuild(vault: Vault, conn, source: str = "", limit: int = 20) -> dict[str, 
     store = StagingStore(vault)
     staged = {i.get("accepted_to"): i for i in store.items("source", "accepted")
               if i.get("accepted_to") and not i.get("revision_of")}
-    rows = conn.execute("SELECT name, path, kind, frontmatter FROM note WHERE shape = 'source'"
-                        + (" AND name = ?" if source else "") + " ORDER BY name",
-                        (source,) if source else ()).fetchall()
+    def read(connection):
+        return [dict(row) for row in connection.execute(
+            "SELECT name, path, kind, frontmatter FROM note WHERE shape = 'source'"
+            + (" AND name = ?" if source else "") + " ORDER BY name",
+            (source,) if source else ()).fetchall()]
+    rows = index_call(lambda active: read(active.conn)) if index_call is not None else read(conn)
     out = []
     for row in rows[:max(1, limit)]:
         fm = json.loads(row["frontmatter"])

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
+from typing import Any, Callable
 
 from . import notes
 from .evidence import EvidenceStore
@@ -96,10 +96,14 @@ def check(vault: Vault, path, fm: dict[str, Any] | None = None) -> list[dict[str
     return out
 
 
-def run(vault: Vault, conn, source: str = "", limit: int = 50) -> dict[str, Any]:
-    rows = conn.execute("SELECT name, path, frontmatter FROM note WHERE shape = 'source'"
-                        + (" AND name = ?" if source else "") + " ORDER BY name",
-                        (source,) if source else ()).fetchall()
+def run(vault: Vault, conn, source: str = "", limit: int = 50, *,
+        index_call: Callable | None = None) -> dict[str, Any]:
+    def read(connection):
+        return [dict(row) for row in connection.execute(
+            "SELECT name, path, frontmatter FROM note WHERE shape = 'source'"
+            + (" AND name = ?" if source else "") + " ORDER BY name",
+            (source,) if source else ()).fetchall()]
+    rows = index_call(lambda active: read(active.conn)) if index_call is not None else read(conn)
     results = []
     for row in rows:
         claims = check(vault, vault.root / row["path"], json.loads(row["frontmatter"]))

@@ -256,6 +256,10 @@ class AgentProfile:
             raise ValueError("required qualification is experimental, screened, verified_local or verified_release")
         if not isinstance(self.route_policy, dict) or not isinstance(self.checkpoint_policy, dict):
             raise ValueError("route_policy and checkpoint_policy are objects")
+        if "binding_role" in self.route_policy:
+            from .role_routes import CHAT_ROLES
+            if self.route_policy["binding_role"] not in CHAT_ROLES:
+                raise ValueError(f"route_policy.binding_role is one of {CHAT_ROLES}")
         # Route policy is deliberately an allow-list, never a way to invent a
         # route.  Unknown keys remain available for future first-party
         # adapters, but the supported selector fields must be simple lists so
@@ -322,6 +326,11 @@ def route_permitted(profile: AgentProfile, route: dict[str, Any]) -> tuple[bool,
     for key, actual, label in checks:
         raw = policy.get(key) or []
         allowed = {str(item).strip().casefold() for item in raw if str(item).strip()}
+        if key == "providers":
+            from .providers import PRESETS
+            canonical = lambda value: "preset-" + value if value in PRESETS else value
+            actual = canonical(actual) if not host or host.startswith("preset-") else actual
+            allowed = {canonical(item) for item in allowed}
         if allowed and actual not in allowed:
             return False, f"profile {profile.id!r} does not allow {label} {actual or '(none)'!r}"
     return True, ""
@@ -645,12 +654,17 @@ def _checkpoint_scope(macro: Macro, inputs: dict[str, Any]) -> str:
     # A resolved approval belongs to one exact expanded plan.  The digest
     # keeps it short and prevents reuse after source/query arguments change.
     relevant = {key: value for key, value in inputs.items() if key != "checkpoint_id"}
-    encoded = json.dumps(relevant, sort_keys=True, default=str, ensure_ascii=False)
+    encoded = json.dumps({"inputs": relevant, "plan": _expanded_plan(macro, inputs)},
+                         sort_keys=True, default=str, ensure_ascii=False)
     return f"macro:{macro.id}:v{macro.version}:{hashlib.sha256(encoded.encode()).hexdigest()[:16]}"
 
 
 def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, Any]:
     """Execute an audited macro through the normal registry one step at a time."""
+    from .coordination import on_writer_thread
+    if on_writer_thread():
+        return {"status": "paused", "resumable": True,
+                "detail": "A macro orchestrates individual writes; call it outside the vault writer."}
     macro = MACROS[macro_id]
     error = _precondition_error(macro, inputs)
     if error:
@@ -673,9 +687,13 @@ def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, 
                 approved = False
         if not approved:
             if checkpoints is not None:
-                checkpoint = checkpoints.ensure("macro_expansion", scope, evidence=plan,
-                                                choices=["approve", "cancel"], default="cancel",
-                                                requester=str(ctx.extras.get("caller") or "agent"))
+                def ensure_checkpoint():
+                    return checkpoints.ensure("macro_expansion", scope, evidence=plan,
+                                              choices=["approve", "cancel"], default="cancel",
+                                              requester=str(ctx.extras.get("caller") or "agent"))
+                writer = ctx.extras.get("vault_writer")
+                checkpoint = writer.submit(ensure_checkpoint, caller="macro-checkpoint") \
+                    if writer is not None else ensure_checkpoint()
             return {"macro": plan, "status": "awaiting_checkpoint", "resumable": True,
                     "detail": "A person must approve this expanded write-capable macro before it starts.",
                     "checkpoint": checkpoint}
@@ -704,8 +722,14 @@ def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, 
                 args["item_ids"] = [args["item_ids"]]
             result = REGISTRY.call(step.tool, args, ctx)
             steps.append({"tool": step.tool, "arguments": args, "result": result})
-            if "error" in result or "refused" in result:
-                return {"macro": plan, "steps": steps, "status": "paused", "resumable": True}
+            if "error" in result or "refused" in result or result.get("needs_person"):
+                return {"macro": plan, "steps": steps, "status": "paused", "resumable": True,
+                        "next_action": {"tool": step.tool, "arguments": args,
+                                        "completed_steps": len(steps) - 1,
+                                        "detail": "Resolve the refusal or question before retrying this step. "
+                                                  "Restarting the whole macro reruns completed steps."},
+                        **({"checkpoint": result["checkpoint"]}
+                           if isinstance(result.get("checkpoint"), dict) else {})}
         return {"macro": plan, "steps": steps, "status": "completed"}
     finally:
         if previous_depth:

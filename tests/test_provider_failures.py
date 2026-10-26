@@ -69,3 +69,57 @@ def test_connection_check_exposes_a_typed_failure_without_exposing_a_key(monkeyp
     assert checked["failure_category"] == "local_environment"
     assert "key" not in checked["error"].casefold()
 
+
+def test_request_keeps_only_a_safe_explicit_header_request_id(monkeypatch):
+    class Response:
+        headers = {"X-Request-ID": "req_123:okay", "Authorization": "never-copy-me"}
+
+        def read(self):
+            return b'{"id":"chatcmpl-not-a-request-id","model":"m"}'
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *unused):
+            return False
+
+    monkeypatch.setattr(providers.urllib.request, "urlopen", lambda request, timeout: Response())
+
+    response = providers._request("GET", "https://example.invalid/v1", {})
+
+    assert response == {"id": "chatcmpl-not-a-request-id", "model": "m"}
+    assert response.request_id == "req_123:okay"
+
+
+def test_safe_response_metadata_rejects_arbitrary_values():
+    assert providers._safe_request_id("header\\nvalue") == ""
+    assert providers._safe_usage({
+        "prompt_tokens": True, "completion_tokens": -1,
+        "total_tokens": {"nested": "raw provider payload"},
+    }) == {}
+
+
+def test_openai_reply_carries_safe_response_header_metadata(monkeypatch):
+    class Response:
+        headers = {"request-id": "req-end-to-end"}
+
+        def read(self):
+            return (b'{"id":"chatcmpl-not-a-request-id","model":"m",'
+                    b'"usage":{"prompt_tokens":3,"completion_tokens":2},'
+                    b'"choices":[{"finish_reason":"stop",'
+                    b'"message":{"content":"ok"}}]}')
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *unused):
+            return False
+
+    monkeypatch.setattr(providers.urllib.request, "urlopen", lambda request, timeout: Response())
+
+    reply = providers.OpenAICompatible("https://example.invalid/v1", model="m").chat("", [], [])
+
+    assert reply.model == "m" and reply.stop == "stop"
+    assert reply.usage == {"input_tokens": 3, "output_tokens": 2, "total_tokens": 5}
+    assert reply.request_id == "req-end-to-end"
+

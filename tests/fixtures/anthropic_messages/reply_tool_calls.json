@@ -1,0 +1,22 @@
+{
+ "text": "Looking.",
+ "tool_calls": [
+  {
+   "id": "t1",
+   "name": "lookup",
+   "arguments": {
+    "q": 1
+   }
+  },
+  {
+   "id": "call_*",
+   "name": "lookup",
+   "arguments": {}
+  }
+ ],
+ "model": "m-1",
+ "stop": "tool_use",
+ "usage": {},
+ "request_id": "",
+ "reasoning_content": ""
+}

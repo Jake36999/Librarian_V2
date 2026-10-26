@@ -4,18 +4,18 @@ from __future__ import annotations
 
 from .. import desk
 from ..registry import Card, Context, tool
-from .library import engine_for
+from .library import with_engine
 
 
 def _project_row(ctx: Context, project: str) -> dict:
-    row = engine_for(ctx).index.note_row(project, shape="project")
+    row = with_engine(ctx, lambda engine: engine.index.note_row(project, shape="project"))
     if row is None or row["shape"] != "project":
         raise TypeError(f"no pursuit named {project!r}; create_project first")
     return row
 
 
 def _note_row(ctx: Context, note: str) -> dict:
-    row = engine_for(ctx).index.note_row(note)
+    row = with_engine(ctx, lambda engine: engine.index.note_row(note))
     if row is None:
         raise TypeError(f"no note named {note!r}; names are exact, including owner prefixes")
     return row

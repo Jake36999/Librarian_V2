@@ -18,6 +18,7 @@ from resource_librarian.providers import Reply, ToolCall
 
 from conftest import add_source
 from test_sessions import OSQUERY_LINE
+from conftest import l1_probe_answer
 
 
 class Client:
@@ -153,8 +154,8 @@ def test_selected_profile_requires_its_own_fresh_role_qualification(served):
     assert "requires screened qualification" in body["error"]
     assert body["plan"]["role"] == "research_helper"
 
-    fingerprints = app._qualification_fingerprints("deepinfra", "m1", "research_helper")
-    app.qualifications.record(host_id="deepinfra", model_id="m1", role="research_helper",
+    fingerprints = app._qualification_fingerprints("preset-deepinfra", "m1", "research_helper")
+    app.qualifications.record(host_id="preset-deepinfra", model_id="m1", role="research_helper",
                               level="L1", outcome="pass",
                               compatibility_fingerprint=fingerprints["compatibility"],
                               behavior_fingerprint=fingerprints["behavior"],
@@ -225,9 +226,7 @@ def test_verified_release_lead_first_run_requires_a_visible_l1_checkpoint_then_s
     # accepting the tier, so model its production source rather than only the
     # first-run UI reader.
     monkeypatch.setattr(hosts_module, "release_leads", lambda: release_leads(path))
-    probe_provider = providers.Scripted(
-        lambda *_: Reply(tool_calls=[ToolCall("probe", "librarian_probe", {"ok": True})],
-                         model=model_id), name=model_id)
+    probe_provider = providers.Scripted(l1_probe_answer(model_id), name=model_id)
     monkeypatch.setattr(app, "_configured_provider", lambda _choice: probe_provider)
 
     status, waiting = client.post("/api/release-leads/select", {
@@ -278,10 +277,12 @@ def test_l1_rejects_any_non_strict_tool_or_route_contract(served, monkeypatch, r
     assert result["status"]["qualification"]["status"] == "experimental"
 
 
-def test_l1_records_strict_route_and_tool_evidence(served, monkeypatch):
+def test_l1_keeps_requested_and_observed_identity_after_runtime_blocks_a_mismatch(served, monkeypatch):
+    """Qualification can record route drift without releasing the reply to a Loop."""
     app, _, _ = served
     provider = providers.Scripted(
-        lambda *_: Reply(tool_calls=[ToolCall("probe", "librarian_probe", {"ok": True})], model="m1"),
+        lambda *_: Reply(tool_calls=[ToolCall("probe", "librarian_probe", {"ok": True})],
+                          model="other-model"),
         name="m1",
     )
     monkeypatch.setattr(app, "_configured_provider", lambda _choice: provider)
@@ -289,7 +290,26 @@ def test_l1_records_strict_route_and_tool_evidence(served, monkeypatch):
     result = app.run_qualification("preset-deepinfra", "m1", "lead", "L1", True)
 
     run = result["run"]
+    assert run["outcome"] == "fail"
+    assert run["probe_validation"]["requested_model"] == "m1"
+    assert run["probe_validation"]["observed_model"] == "other-model"
+    assert "returned_model_mismatch" in run["probe_validation"]["failure_codes"]
+    trace = app.invocation_runtime.recent()[-1]
+    assert trace["compatibility"]["accepted"] is False
+    assert trace["result"]["conformance"]["model_identity"] == "mismatched"
+    assert trace["result"]["failure"]["category"] == "model_identity_mismatch"
+
+
+def test_l1_records_strict_route_and_tool_evidence(served, monkeypatch):
+    app, _, _ = served
+    provider = providers.Scripted(l1_probe_answer("m1"), name="m1")
+    monkeypatch.setattr(app, "_configured_provider", lambda _choice: provider)
+
+    result = app.run_qualification("preset-deepinfra", "m1", "lead", "L1", True)
+
+    run = result["run"]
     assert run["outcome"] == "pass"
+    continuation = run["probe_validation"].pop("continuation")
     assert run["probe_validation"] == {
         "contract_version": L1_PROBE_CONTRACT_VERSION,
         "passed": True,
@@ -297,6 +317,8 @@ def test_l1_records_strict_route_and_tool_evidence(served, monkeypatch):
                    "arguments": True, "returned_model": True},
         "failure_codes": [], "requested_model": "m1", "observed_model": "m1",
     }
+    assert continuation["passed"] and continuation["reasoning_content_returned"] is False
+    assert len(provider.calls) == 2 and provider.calls[1]["messages"][-1]["role"] == "tool"
     assert result["status"]["qualification"]["status"] == "screened"
 
 
@@ -419,7 +441,9 @@ def test_route_readiness_uses_the_selected_profiles_runtime_role_for_evidence(se
     readiness = app.route_readiness("field-lead")
 
     assert readiness["core"]["profile"] == "field-lead"
-    assert observed_roles and set(observed_roles) == {"lead"}
+    assert set(observed_roles) == {"lead", "scribe", "clerk", "research_helper"}
+    assert "field-lead" not in observed_roles
+    assert all(row["qualification"]["role"] == "lead" for row in readiness["routes"])
 
 
 def test_custom_host_model_discovery_routes_by_registry_id(served, monkeypatch):
@@ -538,6 +562,28 @@ def test_the_persons_own_calls_and_settings(served):
     library = client.post("/api/library", {"promotion_mode": "agent"})[1]
     assert library["promotion"]["mode"] == "agent" and library["doctor"]
     assert client.post("/api/tiers", {"tiers": [{"provider": "nope", "model": "x"}]})[0] == 400
+
+
+def test_choosing_a_lead_keeps_the_scribe_and_clerk_positions(served, vault):
+    """ROUTE-01: "Use as lead" used to send a one-item tier list and silently
+    drop positions 2-3."""
+    from resource_librarian.app import Settings
+    app, client, model = served
+    three = [{"provider": "deepinfra", "model": "lead-a"},
+             {"provider": "deepinfra", "model": "scribe-b"},
+             {"provider": "deepinfra", "model": "clerk-c"}]
+    assert client.post("/api/tiers", {"tiers": three, "override": "test"})[0] == 200
+    status, body = client.post("/api/lead", {"route": {"provider": "deepinfra", "model": "lead-z"},
+                                             "override": "test"})
+    assert status == 200
+    assert [t["model"] for t in body["tiers"]] == ["lead-z", "scribe-b", "clerk-c"]
+    # Reopen: the saved settings carry all three positions.
+    assert [t["model"] for t in Settings(vault).data["tiers"]] == ["lead-z", "scribe-b", "clerk-c"]
+    # With only a lead chosen, choosing another adds no phantom positions.
+    client.post("/api/tiers", {"tiers": three[:1], "override": "test"})
+    assert [t["model"] for t in client.post("/api/lead", {"route": three[1], "override": "test"})[1]["tiers"]] \
+        == ["scribe-b"]
+    assert client.post("/api/lead", {"route": "not-a-route"})[0] == 400
 
 
 def test_tiers_fall_back_upward(served):
@@ -700,9 +746,30 @@ def test_models_shows_profiled_queued_and_unprofiled(served, monkeypatch):
     assert done["profile"]["best_for"] == ["Small_Coding_Tasks"]
     assert done["profile"]["context_length"] == 131072
     assert done["profile"]["path"].startswith("Sources/model/")
+    # Adapter data is passive picker evidence: it must not turn a descriptive
+    # catalogue flag into a claimed, model-specific tool guarantee.
+    assert done["adapter"]["id"] == "legacy_provider_chat"
+    assert done["adapter"]["capabilities"]["tool_use"] == "unknown"
     assert by_id["acme/queued-model"].get("profiling") == "queued"
     assert "profile" not in by_id["acme/still-unprofiled"] and \
         "profiling" not in by_id["acme/still-unprofiled"]
+
+
+def test_unassessed_tool_calling_is_unknown_not_false(served, monkeypatch):
+    """ROUTE-02: `bool(None)` used to turn "not yet assessed" into "no", and the
+    tile blocks an explicit "no" from leading."""
+    from resource_librarian import app as app_module
+    app, client, model = served
+    model.provider.models = lambda: ["acme/yes", "acme/no", "acme/unassessed"]
+    shipped = {("deepinfra", "acme/yes"): {"tool_calling": True},
+               ("deepinfra", "acme/no"): {"tool_calling": "false"},
+               ("deepinfra", "acme/unassessed"): {"modality": "Text_Generation"}}
+    monkeypatch.setattr(app_module, "_shipped_profiles", lambda: shipped)
+    by_id = {m["id"]: m for m in client.get("/api/models?provider=deepinfra")[1]["models"]}
+    assert by_id["acme/yes"]["profile"]["tool_calling"] is True
+    assert by_id["acme/no"]["profile"]["tool_calling"] is False
+    assert by_id["acme/unassessed"]["profile"]["tool_calling"] is None
+    assert by_id["acme/unassessed"]["profile"]["reasoning"] is None
 
 
 def REGISTRY_CALL(ctx, name, **arguments):
@@ -886,3 +953,17 @@ def test_the_capability_list_names_each_keys_store_entry(served):
     assert status == 200 and out["saved"] and "Repository intake" in out["check"]["status"]
     rows = {c["name"]: c for c in client.get("/api/library")[1]["doctor"]}
     assert rows["key: GitHub"]["ok"]
+
+
+def test_a_one_shot_proposal_alone_does_not_screen_a_route(served, monkeypatch):
+    """The acceptance condition: a model that proposes the tool but never
+    answers from its result stays unscreened."""
+    app, _, _ = served
+    provider = providers.Scripted(
+        lambda *_: Reply(tool_calls=[ToolCall("probe", "librarian_probe", {"ok": True})],
+                         model="m1"), name="m1")
+    monkeypatch.setattr(app, "_configured_provider", lambda _choice: provider)
+    result = app.run_qualification("preset-deepinfra", "m1", "lead", "L1", True)
+    assert result["run"]["outcome"] == "fail"
+    assert "continuation_repeated_tool_call" in result["run"]["probe_validation"]["failure_codes"]
+    assert result["status"]["qualification"]["status"] != "screened"

@@ -1,18 +1,23 @@
-# Remaining implementation and release queue
+# Release queue: externally gated work only
 
-Last reconciled: 2026-10-22
+**Status:** Release-only queue. The authoritative implementation sequence and
+delivery status are in the [unified implementation plan](unified-implementation-plan.md).
+**Last reconciled:** 2026-10-24.
 
-This is the ordered handoff queue for work that remains after the V2 source
-implementation. It distinguishes code that is already present from work that
-needs real provider evidence, protected release credentials, or physical
-Windows environments. It is deliberately not an authorization to use a
-provider account, publish an artifact, or create a release record.
+This document covers the release-owner work that remains *after* applicable
+implementation gates are green. It distinguishes work needing real provider
+evidence, protected release credentials, or physical Windows environments. It
+is deliberately not an authorization to use a provider account, publish an
+artifact, or create a release record.
 
 ## Current state
 
-The V2 implementation and its deterministic validation are complete in the
-working tree. The last full local suite recorded 808 passed, 3 skipped, and 1
-deselected. The browser and Obsidian production builds also pass locally.
+V2 remains **partial**. The branch has useful deterministic implementation
+work, but Core ownership, route binding, adoption, request shaping, and
+long-horizon gates are still being delivered. A passing local suite is
+necessary evidence for an implemented packet, not evidence that V2 or a
+release is complete. See the unified plan's G0–G7 gates and progress log for
+the current source-backed status.
 
 The checked-in `release-manifest.json` and
 `src/resource_librarian/standard/release_leads.json` are intentionally
@@ -35,7 +40,7 @@ represented as production-ready before then.
   candidate in the source tree is not an endorsement or a frozen release
   choice.
 
-## Critical path
+## Release critical path
 
 ```text
 R0 release freeze
@@ -52,8 +57,9 @@ R0 release freeze
        R5 manual publication and post-release watch
 ```
 
-R1 and R2 may run in parallel after R0. R3 cannot start until both have
-passed. R4 should exercise the final signed bundle, and R5 is an explicit
+R0 is blocked until the unified plan's applicable implementation gates are
+green. R1 and R2 may run in parallel after R0. R3 cannot start until both
+have passed. R4 should exercise the final signed bundle, and R5 is an explicit
 release-owner decision rather than an automated publication step.
 
 ## R0 — Freeze a releasable source revision

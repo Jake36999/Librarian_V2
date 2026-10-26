@@ -125,14 +125,21 @@ def _candidate(vault: Vault, candidate_id: str) -> dict[str, Any]:
     return row
 
 
-def benchmark(vault: Vault, engine: Engine, candidate_id: str, k: int = 5) -> dict[str, Any]:
-    row = _candidate(vault, candidate_id)
+def benchmark_measure(vault: Vault, engine: Engine, candidate: dict[str, Any],
+                      k: int = 5) -> dict[str, Any]:
+    """Measure one candidate while the caller owns the index worker.
+
+    This deliberately does not write ``ranking.json``: a Core-backed caller
+    runs the retrieval work through ``IndexService`` and records the resulting
+    report on its VaultWriter thread after the SQLite callback returns.
+    """
+    candidate_id = str(candidate["id"])
     folder = vault.work("eval")
     saved = dict(engine.h)
     try:
         current_q = evaluation.run_questions(engine, folder / "questions.json", k)
         current_s = evaluation.run_scenarios(engine, folder / "scenarios.json", k)
-        engine.h.update(row.get("heuristics") or {})
+        engine.h.update(candidate.get("heuristics") or {})
         engine.forget()
         candidate_q = evaluation.run_questions(engine, folder / "questions.json", k)
         candidate_s = evaluation.run_scenarios(engine, folder / "scenarios.json", k)
@@ -153,13 +160,26 @@ def benchmark(vault: Vault, engine: Engine, candidate_id: str, k: int = 5) -> di
                                                     set(candidate_q.get("expected_but_not_in_vault", [])))},
               "scenarios": {"current": current_s, "candidate": candidate_s},
               "note": "Measured offline; selecting the candidate remains a person decision."}
+    return report
+
+
+def record_benchmark(vault: Vault, candidate_id: str, report: dict[str, Any]) -> dict[str, Any]:
+    """Persist a completed benchmark outside the IndexService worker."""
     data = _load(vault)
     for item in data.get("candidates", []):
         if item.get("id") == candidate_id:
             item["benchmark"] = report
             break
+    else:
+        raise KeyError(f"no ranking candidate {candidate_id!r}")
     _save(vault, data)
     return report
+
+
+def benchmark(vault: Vault, engine: Engine, candidate_id: str, k: int = 5) -> dict[str, Any]:
+    """Compatibility wrapper for offline/direct callers."""
+    candidate = _candidate(vault, candidate_id)
+    return record_benchmark(vault, candidate_id, benchmark_measure(vault, engine, candidate, k))
 
 
 def compare(vault: Vault, engine: Engine, query: str, intent: str = "donor", limit: int = 10,

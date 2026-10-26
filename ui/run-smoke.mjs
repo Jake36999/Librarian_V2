@@ -1,7 +1,7 @@
 // Start the demo core (tests/ui_demo_core.py), run smoke.mjs against it, stop it.
 //   node run-smoke.mjs [browser-path]
 // With no path, an installed Chrome or Edge is used (no Chromium download needed).
-import { spawn } from "child_process";
+import { spawn, execFileSync } from "child_process";
 import { existsSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -18,8 +18,13 @@ const candidates = [
 const browser = candidates.find((p) => existsSync(p));
 if (!browser) { console.error("no Chrome, Edge or Chromium found: pass its path"); process.exit(2); }
 
-const core = spawn(process.platform === "win32" ? "python" : "python3", ["tests/ui_demo_core.py"],
-  { cwd: join(here, ".."), stdio: ["ignore", "pipe", "inherit"] });
+const repo = join(here, "..");
+const venvPython = join(repo, ".venv", process.platform === "win32" ? "Scripts/python.exe" : "bin/python");
+const python = process.env.LIBRARIAN_SMOKE_PYTHON ||
+  (existsSync(venvPython) ? venvPython : process.platform === "win32" ? "python" : "python3");
+const env = { ...process.env, PYTHONPATH: join(repo, "src"), LIBRARIAN_SMOKE_PYTHON: python };
+const core = spawn(python, ["tests/ui_demo_core.py"],
+  { cwd: repo, env, windowsHide: true, stdio: ["ignore", "pipe", "inherit"] });
 const url = await new Promise((resolve, reject) => {
   let buffer = "";
   core.stdout.on("data", (chunk) => {
@@ -29,7 +34,12 @@ const url = await new Promise((resolve, reject) => {
   });
   core.on("exit", (code) => reject(new Error(`the demo core exited (${code})`)));
 });
-const smoke = spawn(process.execPath, [join(here, "smoke.mjs"), url, browser], { stdio: "inherit" });
+const smoke = spawn(process.execPath, [join(here, "smoke.mjs"), url, browser], { env, windowsHide: true, stdio: "inherit" });
 const code = await new Promise((resolve) => smoke.on("exit", resolve));
-core.kill();
+if (process.platform === "win32" && core.exitCode === null && core.pid) {
+  // The venv redirector owns a separate interpreter child. Stop only this
+  // demo's process tree so a failed smoke run cannot leave a Core behind.
+  try { execFileSync("taskkill", ["/pid", String(core.pid), "/t", "/f"], { stdio: "ignore", windowsHide: true }); }
+  catch { core.kill(); }
+} else core.kill();
 process.exit(code ?? 1);

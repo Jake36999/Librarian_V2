@@ -34,16 +34,243 @@ import secrets
 import os
 import threading
 from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from collections.abc import Mapping
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator, TypeVar
 
 from . import agenda, notes
 from .coordination import atomic_write_text
 from .rules import Refusal
 from .vault import Vault, jsonl_lines, now_iso
+
+T = TypeVar("T")
+
+
+# ---------------------------------------------------------------- model evidence
+
+# Invocation plans and results deliberately have no session identifier in their
+# public diagnostic representation: that keeps a general-purpose runtime trace
+# from becoming a cross-session activity feed.  The Loop binds a trace emission
+# to the session it is currently walking instead.  Context-local state is
+# important here: one Core can run a browser turn and a background task on
+# different threads, and a model result must never land in another walk's log.
+_MODEL_EVENT_TARGET: ContextVar[tuple[Any, str, list[dict[str, Any]] | None] | None] = \
+    ContextVar("librarian_model_event_target", default=None)
+
+
+def _model_text(value: Any, limit: int = 300) -> str:
+    """Bound one piece of route/configuration metadata for session evidence.
+
+    This is intentionally *not* a generic serializer.  Model evidence below
+    selects a fixed set of known-safe scalar fields from an invocation trace;
+    prompt text, provider payloads, credentials, response text, arguments,
+    request ids, and reasoning continuations have no route into this helper.
+    """
+    return str(value or "").replace("\x00", "").replace("\r", " ").replace("\n", " ").strip()[:limit]
+
+
+def _model_hash(value: Any) -> str:
+    """Keep only the content-addressed hashes the invocation layer produces."""
+    text = _model_text(value, 128).casefold()
+    return text if re.fullmatch(r"[0-9a-f]{8,128}", text) else ""
+
+
+def _model_int(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return None
+    return number if 0 <= number <= 2 ** 63 - 1 else None
+
+
+def _model_usage(value: Any) -> dict[str, int] | str:
+    """The small, normalized usage subset; never an arbitrary provider object."""
+    if not isinstance(value, Mapping):
+        return "unavailable"
+    out: dict[str, int] = {}
+    for key in ("input_tokens", "output_tokens", "total_tokens"):
+        number = _model_int(value.get(key))
+        if number is not None:
+            out[key] = number
+    return out or "unavailable"
+
+
+def _model_adapter(value: Any) -> dict[str, Any]:
+    row = value if isinstance(value, Mapping) else {}
+    out = {
+        "id": _model_text(row.get("id"), 120),
+        "version": _model_text(row.get("version"), 80),
+        "protocol": _model_text(row.get("protocol"), 120),
+    }
+    abi = _model_int(row.get("abi"))
+    if abi is not None:
+        out["abi"] = abi
+    return {key: value for key, value in out.items() if value != ""}
+
+
+def _model_request_event(plan: Any) -> dict[str, Any] | None:
+    """Project a plan trace into the durable, redacted request event."""
+    if not isinstance(plan, Mapping):
+        return None
+    plan_id, config_hash = _model_text(plan.get("plan_id"), 80), _model_hash(plan.get("config_hash"))
+    if not plan_id or not config_hash:
+        return None
+    route = plan.get("route") if isinstance(plan.get("route"), Mapping) else {}
+    scope = plan.get("scope") if isinstance(plan.get("scope"), Mapping) else {}
+    expectation = plan.get("expectation") if isinstance(plan.get("expectation"), Mapping) else {}
+    maximum = _model_int(plan.get("max_output_tokens"))
+    event: dict[str, Any] = {
+        "type": "model_request", "plan_id": plan_id, "config_hash": config_hash,
+        "route": {
+            "host_id": _model_text(route.get("host_id"), 160),
+            "endpoint_fingerprint": _model_hash(route.get("endpoint_fingerprint")),
+            "requested_model": _model_text(route.get("requested_model"), 300),
+        },
+        "adapter": _model_adapter(plan.get("adapter")),
+        "scope": {
+            "role": _model_text(scope.get("role"), 120),
+            "task_id": _model_text(scope.get("task_id"), 120),
+            "task_kind": _model_text(scope.get("task_kind"), 120),
+            "interaction": _model_text(scope.get("interaction"), 120),
+            "phase": _model_text(scope.get("phase"), 80),
+            "output_contract": _model_text(scope.get("output_contract"), 120),
+        },
+        "tool_schema_fingerprint": _model_hash(plan.get("tool_schema_fingerprint")),
+        "behavior_mode": _model_text(plan.get("behavior_mode"), 120),
+        "reasoning_intent": _model_text(plan.get("reasoning_intent"), 120),
+        "expectation": {
+            "id": _model_text(expectation.get("id"), 120),
+            "fingerprint": _model_hash(expectation.get("fingerprint")),
+        },
+    }
+    if maximum is not None:
+        event["max_output_tokens"] = maximum
+    # Empty values are less useful than their absence and can imply a field was
+    # observed when this version of the runtime did not expose it.
+    for key in ("route", "scope", "expectation"):
+        event[key] = {name: item for name, item in event[key].items() if item != ""}
+    return event
+
+
+def _model_response_event(result: Any, plan: Any = None) -> dict[str, Any] | None:
+    """Project a result trace into the durable, redacted response event."""
+    if not isinstance(result, Mapping):
+        return None
+    plan_row = plan if isinstance(plan, Mapping) else {}
+    plan_id = _model_text(result.get("plan_id") or plan_row.get("plan_id"), 80)
+    config_hash = _model_hash(result.get("config_hash") or plan_row.get("config_hash"))
+    if not plan_id or not config_hash:
+        return None
+    telemetry = result.get("telemetry") if isinstance(result.get("telemetry"), Mapping) else {}
+    failure = result.get("failure") if isinstance(result.get("failure"), Mapping) else {}
+    # A fold passes the stored event itself: its failure, retry and usage are
+    # already in the durable shape, not the runtime's (delegate review, GLM-5.3).
+    retry = result.get("retry") if isinstance(result.get("retry"), Mapping) else {}
+    attempts = _model_int(telemetry.get("inner_attempts", retry.get("attempts")))
+    outcome = _model_text(result.get("outcome"), 40)
+    identity = _model_text(result.get("model_identity"), 40)
+    event: dict[str, Any] = {
+        "type": "model_response", "plan_id": plan_id, "config_hash": config_hash,
+        # The plan carries ABI/protocol; response traces from the initial
+        # adapter slice intentionally do not duplicate them.
+        "adapter": _model_adapter(plan_row.get("adapter") or result.get("adapter")),
+        "route": {
+            "requested_model": _model_text(result.get("requested_model"), 300),
+            "observed_model": _model_text(result.get("observed_model"), 300),
+        },
+        "outcome": outcome if outcome in {"completed", "tool_calls", "failed"} else "failed",
+        "stop_reason": _model_text(result.get("stop_reason"), 160),
+        "elapsed_ms": _model_int(result.get("elapsed_ms")) or 0,
+        "model_identity": identity if identity in {
+            "matched", "absent", "mismatched", "not_applicable"} else "not_applicable",
+        "retry": {"attempts": attempts if attempts is not None else "unavailable"},
+        "usage": _model_usage(telemetry.get("usage", result.get("usage"))),
+    }
+    if failure:
+        event["failure"] = {
+            "class": _model_text(failure.get("category") or failure.get("class"), 80) or "unknown",
+            "retryable": bool(failure.get("retryable")),
+        }
+    else:
+        event["failure"] = {"class": "none", "retryable": False}
+    event["adapter"] = event["adapter"] or {"id": "unknown"}
+    event["route"] = {name: item for name, item in event["route"].items() if item != ""}
+    if not event["stop_reason"]:
+        event.pop("stop_reason")
+    return event
+
+
+def model_session_events(trace: Any) -> tuple[dict[str, Any], ...]:
+    """Return the only invocation fields permitted in a session log.
+
+    The runtime's own trace is already redacted, but retaining a second,
+    structural allow-list here makes the persistence boundary durable: a
+    future diagnostic field cannot silently turn session JSONL into a prompt
+    or provider-payload store.
+    """
+    if not isinstance(trace, Mapping):
+        return ()
+    request = _model_request_event(trace.get("plan"))
+    response = _model_response_event(trace.get("result"), trace.get("plan"))
+    if request is None or response is None:
+        return ()
+    # A malformed external sink must not manufacture a request/response pair
+    # that links two different calls.
+    if request["plan_id"] != response["plan_id"] or request["config_hash"] != response["config_hash"]:
+        return ()
+    return request, response
+
+
+MAX_PENDING_MODEL_EVENTS = 64
+
+
+@contextmanager
+def bind_model_session_events(vault: "Vault", session_id: str,
+                              pending: list[dict[str, Any]] | None = None) -> Iterator[None]:
+    """Bind one synchronous invocation trace to a loop's current session.
+
+    Calls made before an ``open_session`` tool proposal are retained only as
+    already-redacted events in ``pending``.  Once the tool opens a session the
+    Loop flushes them through the normal CORE-03 append path; calls made with
+    no session and no pending buffer leave no vault artefact.
+    """
+    target = (vault, _model_text(session_id, 160), pending)
+    token = _MODEL_EVENT_TARGET.set(target)
+    try:
+        yield
+    finally:
+        _MODEL_EVENT_TARGET.reset(token)
+
+
+def model_session_trace_sink(trace: dict[str, Any]) -> None:
+    """Persist a bound invocation trace through :class:`SessionStore`.
+
+    ``InvocationRuntime`` deliberately treats trace sinks as diagnostic: this
+    function may raise for a failed log append, and the runtime will preserve
+    the model call while its caller remains able to surface the storage fault.
+    """
+    target = _MODEL_EVENT_TARGET.get()
+    if target is None:
+        return
+    events = model_session_events(trace)
+    if not events:
+        return
+    vault, session_id, pending = target
+    if vault is None:
+        return
+    if session_id:
+        store = SessionStore(vault)
+        for event in events:
+            store.append(session_id, event)
+    elif pending is not None:
+        # Bounded: evidence for calls made before any session opens.
+        pending.extend(events)
+        del pending[:-MAX_PENDING_MODEL_EVENTS]
 
 PURPOSES: dict[str, tuple[str, ...]] = {
     "add_project": ("frame", "ingest", "map", "need", "search", "judge", "synthesise",
@@ -261,6 +488,10 @@ class Session:
     gaps: str = ""
     history: list[str] = field(default_factory=list)
     messages: list[dict[str, Any]] = field(default_factory=list)  # the chat transcript itself
+    # ADAPT-03: durable, redacted route/adapter evidence.  This remains
+    # separate from person-visible messages: it is operational provenance,
+    # not conversation text or a provider payload archive.
+    model_events: list[dict[str, Any]] = field(default_factory=list)
     min_rewind_index: int = 0      # see `to_dict`'s `min_rewind_index`
     budgets: dict[str, int] = field(default_factory=dict)
     budget_scale: float = 1.0       # the effort setting's share (effort.py)
@@ -328,6 +559,23 @@ class Session:
             self.history.append(self.phase)
         elif kind == "effort":                       # the person's effort setting (effort.py)
             self.budget_scale = float(event.get("budget_scale") or 1.0)
+        elif kind == "model_request":
+            safe = _model_request_event(event)
+            if safe is not None:
+                timestamp = _model_text(event.get("t"), 80)
+                if timestamp:
+                    safe["t"] = timestamp
+                self.model_events.append(safe)
+        elif kind == "model_response":
+            # The durable response event contains the adapter ABI copied from
+            # its request.  Passing the same event in both positions preserves
+            # that ABI on fold without accepting arbitrary raw-log fields.
+            safe = _model_response_event(event, event)
+            if safe is not None:
+                timestamp = _model_text(event.get("t"), 80)
+                if timestamp:
+                    safe["t"] = timestamp
+                self.model_events.append(safe)
         elif kind == "call":
             self.recent = (self.recent + [(event["tool"], bool(event.get("ok", True)))])[-20:]
             if event.get("charged"):
@@ -716,6 +964,7 @@ class Session:
                 "questions": self.questions, "uses": self.uses, "writes": self.writes,
                 "offerings": self.offerings, "synthesis": self.synthesis,
                 "summary": self.summary, "gaps": self.gaps, "history": self.history,
+                "model_events": self.model_events,
                 "lenses": self.lenses, "capabilities": list(self.capabilities.values()),
                 "assumptions": self.assumptions,
                 "completion": self.completion(),
@@ -772,13 +1021,43 @@ class SessionStore:
         raise Refusal("MESSAGE_NOT_FOUND",
                       f"session {session_id} has no message at index {message_index}")
 
+    def _through_core(self, fn: Callable[[], T], caller: str) -> T:
+        """Run a log mutation through the active Core's writer when one holds
+        this vault (CORE-03), so session events are ordered with the writes
+        they describe.
+
+        Without one here a direct write is safe only offline: this process
+        holds the vault lease itself (a direct CLI call), or no Core holds it.
+        After this process's Core stopped, or while another process's Core
+        holds the vault, a write is refused - a straggling thread never writes
+        beside whichever Core holds the vault now (review, 2026-10-24).  What
+        remains is a process with no Core writing just as one starts
+        elsewhere: the append lock is cross-process, so the log's chain stays
+        whole, and the order is that of any two offline writers.
+        """
+        writer, stopped = _core_writer_state(self.vault)
+        if writer is not None:
+            return writer.submit(fn, caller=caller)
+        from .coordination import VaultCoordinator
+        if not VaultCoordinator.held_here(self.vault):
+            if stopped:
+                raise Refusal("CORE_REQUIRED", "this library's Core has stopped, so the thread "
+                                               "was not written to; start it and resume the thread")
+            if VaultCoordinator.held_elsewhere(self.vault):
+                raise Refusal("CORE_REQUIRED", "another process's Core holds this library; "
+                                               "make the call through it")
+        return fn()
+
     def truncate_to(self, session_id: str, message_index: int) -> None:
         """Rewind: discard this message's log line and everything after it -
         in place, so `session_id` still means the same thread."""
         path = self.path(session_id)
-        with _append_lock(path):
-            kept = self._lines_through(session_id, message_index)
-            atomic_write_text(path, "\n".join(kept) + "\n")
+
+        def rewrite() -> None:
+            with _append_lock(path):
+                kept = self._lines_through(session_id, message_index)
+                atomic_write_text(path, "\n".join(kept) + "\n")
+        self._through_core(rewrite, "session-rewind")
 
     def copy_through(self, session_id: str, message_index: int) -> str:
         """Branch: a new session whose log is `session_id`'s up to and
@@ -789,14 +1068,20 @@ class SessionStore:
             kept = self._lines_through(session_id, message_index)
         new_id = self._new_id()
         new_path = self.path(new_id)
-        new_path.parent.mkdir(parents=True, exist_ok=True)
-        atomic_write_text(new_path, "\n".join(kept) + "\n")
+
+        def write() -> None:
+            new_path.parent.mkdir(parents=True, exist_ok=True)
+            atomic_write_text(new_path, "\n".join(kept) + "\n")
+        self._through_core(write, "session-branch")
         return new_id
 
     def append(self, session_id: str, event: dict[str, Any]) -> None:
         """Each event carries `h`, a hash of itself chained to the event
         before it (roadmap §4 B4): editing or removing an event in the middle
         of a log breaks every hash after it, and `verify` says where."""
+        self._through_core(lambda: self._append_now(session_id, event), "session-event")
+
+    def _append_now(self, session_id: str, event: dict[str, Any]) -> None:
         event = {"t": now_iso(), **{k: v for k, v in event.items() if k != "h"}}
         path = self.path(session_id)
         with _append_lock(path):
@@ -851,6 +1136,47 @@ class SessionStore:
                         "question": s.question, "status": s.status, "phase": s.phase,
                         "opened_at": s.opened_at})
         return out
+
+
+# ------------------------------------------- the Core-owned append path (CORE-03)
+
+# While a Core holds a vault's lease it registers its writer here, and every
+# SessionStore for that vault appends through it - whichever module made the
+# store.  A vault whose Core stopped in this process stays marked until a new
+# Core attaches, so a late write is refused instead of written directly.
+_CORE_WRITERS: dict[str, Any] = {}
+_STOPPED_CORES: set[str] = set()
+_CORE_WRITERS_GUARD = threading.Lock()
+
+
+def _vault_key(vault: Vault) -> str:
+    return str(Path(vault.root).resolve()).casefold()
+
+
+def attach_core_writer(vault: Vault, writer: Any) -> None:
+    with _CORE_WRITERS_GUARD:
+        _CORE_WRITERS[_vault_key(vault)] = writer
+        _STOPPED_CORES.discard(_vault_key(vault))
+
+
+def detach_core_writer(vault: Vault, writer: Any) -> None:
+    """Detach only the writer that attached: a successor Core's stays."""
+    with _CORE_WRITERS_GUARD:
+        if _CORE_WRITERS.get(_vault_key(vault)) is writer:
+            _CORE_WRITERS.pop(_vault_key(vault), None)
+            _STOPPED_CORES.add(_vault_key(vault))
+
+
+def core_writer(vault: Vault) -> Any:
+    with _CORE_WRITERS_GUARD:
+        return _CORE_WRITERS.get(_vault_key(vault))
+
+
+def _core_writer_state(vault: Vault) -> tuple[Any, bool]:
+    """This vault's attached writer, and whether a Core here has stopped."""
+    with _CORE_WRITERS_GUARD:
+        key = _vault_key(vault)
+        return _CORE_WRITERS.get(key), key in _STOPPED_CORES
 
 
 # ------------------------------------------------------ the hash chain (B4)

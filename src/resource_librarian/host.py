@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from .coordination import atomic_write_text
-from . import connection
+from . import connection, process_identity
 from .keys import config_dir
 
 
@@ -72,18 +72,24 @@ def _startup_record(path: Path) -> dict[str, Any] | None:
     return None
 
 
-def _alive(pid: int) -> bool:
-    if pid <= 0:
-        return False
+def _alive(pid: int, start: Any = None) -> bool:
+    """Whether the process a record names is still the one that wrote it.
+
+    Never ``os.kill(pid, 0)``: on Windows it reports an exited Core as alive
+    while any handle to it is open, so Stop waited out its whole window.
+    """
+    return process_identity.is_alive(pid, start)
+
+
+def _shutdown_phases(vault: str) -> list[dict[str, Any]]:
+    """The phases a stopped Core recorded (CORE-02A), so the tray can say
+    what happened rather than a generic "still draining"."""
     try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    except OSError:
-        return False
-    return True
+        row = json.loads(connection.shutdown_path(vault).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    phases = row.get("phases") if isinstance(row, dict) else None
+    return [p for p in phases if isinstance(p, dict)] if isinstance(phases, list) else []
 
 
 class HostManager:
@@ -105,12 +111,13 @@ class HostManager:
         return out
 
     def _discovered(self) -> list[dict[str, Any]]:
-        return [row for row in connection.records() if _alive(int(row.get("pid") or 0))]
+        return [row for row in connection.records()
+                if _alive(int(row.get("pid") or 0), row.get("process_start"))]
 
     def status(self) -> dict[str, Any]:
         data = _load()
         pid = int(data.get("pid") or 0)
-        active = _alive(pid)
+        active = _alive(pid, data.get("process_start"))
         if data and not active:
             data = {**data, "status": "stopped", "detail": "process is no longer running"}
             _save(data)
@@ -142,12 +149,12 @@ class HostManager:
         if wanted:
             host_row = data if self._same_vault(str(data.get("vault") or ""), wanted) else {}
             record = connection.load(wanted)
-            if record is not None and _alive(int(record.get("pid") or 0)):
+            if record is not None and _alive(int(record.get("pid") or 0), record.get("process_start")):
                 return (host_row, record)
-            if host_row and _alive(int(host_row.get("pid") or 0)):
+            if host_row and _alive(int(host_row.get("pid") or 0), host_row.get("process_start")):
                 return (host_row, None)
             return None
-        if data and _alive(int(data.get("pid") or 0)):
+        if data and _alive(int(data.get("pid") or 0), data.get("process_start")):
             return (data, connection.load(str(data.get("vault") or "")))
         candidates = self._discovered()
         if len(candidates) == 1:
@@ -157,13 +164,14 @@ class HostManager:
     def start(self, vault: str, *, open_browser: bool = False) -> dict[str, Any]:
         vault_path = str(Path(vault).resolve())
         active_here = connection.load(vault_path)
-        if active_here is not None and _alive(int(active_here.get("pid") or 0)):
+        if active_here is not None and _alive(int(active_here.get("pid") or 0),
+                                              active_here.get("process_start")):
             return {"started": False, "status": "running",
                     "process": self._public_process(active_here, managed_by_host=False),
                     "detail": "a compatible Core is already running for this vault"}
         current = _load()
         if current and self._same_vault(str(current.get("vault") or ""), vault_path) and \
-                _alive(int(current.get("pid") or 0)):
+                _alive(int(current.get("pid") or 0), current.get("process_start")):
             # Discovery can fail closed if a profile ACL cannot be protected.
             # The Host's own record still proves that starting a second Core
             # for this *same* vault is unsafe.
@@ -198,11 +206,14 @@ class HostManager:
                 # wrong process.
                 record = connection.load(vault_path)
                 published_url = str(started["listening"]).rstrip("/")
-                core_pid = int(record.get("pid") or 0) if record is not None and \
-                    str(record.get("url") or "").rstrip("/") == published_url else process.pid
+                own_record = record is not None and \
+                    str(record.get("url") or "").rstrip("/") == published_url
+                core_pid = int(record.get("pid") or 0) if own_record else process.pid
                 data = {"pid": core_pid, "vault": vault_path,
                         "url": str(started["listening"]), "started_at": time.time(),
                         "status": "running", "log": str(log)}
+                if own_record and record.get("process_start") is not None:
+                    data["process_start"] = record["process_start"]
                 _save(data)
                 if open_browser:
                     webbrowser.open(data["url"])
@@ -224,6 +235,7 @@ class HostManager:
         data, record = target
         chosen_vault = str((record or data).get("vault") or "")
         pid = int((record or data).get("pid") or 0)
+        started = (record or data).get("process_start")
         if record is None or int(record.get("pid") or 0) != pid:
             return {"stopped": False, "detail": "the protected Core connection record is unavailable; "
                     "refusing an ungraceful kill", "log": data.get("log", "")}
@@ -248,15 +260,15 @@ class HostManager:
         except (OSError, ValueError) as exc:
             raise RuntimeError(f"could not ask the Core to stop cleanly: {exc}") from exc
         deadline = time.monotonic() + 15
-        while _alive(pid) and time.monotonic() < deadline:
+        while _alive(pid, started) and time.monotonic() < deadline:
             time.sleep(.1)
-        if _alive(pid):
+        if _alive(pid, started):
             return {"stopped": False, "detail": "Core accepted stop but is still draining work",
                     "pid": pid, "reply": reply}
         if data:
             _save({**data, "status": "stopped", "stopped_at": time.time()})
         connection.remove(chosen_vault, pid=pid, token=str(record.get("token") or ""))
-        return {"stopped": True, "pid": pid, "reply": reply}
+        return {"stopped": True, "pid": pid, "reply": reply, "phases": _shutdown_phases(chosen_vault)}
 
     def restart(self, vault: str = "", *, open_browser: bool = False) -> dict[str, Any]:
         before = _load()

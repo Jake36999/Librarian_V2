@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .coordination import atomic_write_text
-from .index import Index
+from .index import Index, run_index
 from .vault import now_iso
 
 ALGORITHM = "deterministic-label-propagation-v1"
@@ -17,7 +17,8 @@ def _path(vault: Any) -> Path:
     return vault.derived / "communities.json"
 
 
-def rebuild(vault: Any, iterations: int = 20, *, index_service: Any = None) -> dict[str, Any]:
+def rebuild(vault: Any, iterations: int = 20, *, index_service: Any = None,
+            offline: bool = False) -> dict[str, Any]:
     """Build a deterministic, advisory graph report without touching notes."""
     def collect(index: Index) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         index.refresh()
@@ -25,11 +26,7 @@ def rebuild(vault: Any, iterations: int = 20, *, index_service: Any = None) -> d
             "SELECT name, name_lower, shape, kind, path, frontmatter FROM note WHERE parse_error = ''")]
         links = [dict(row) for row in index.conn.execute("SELECT src, dst FROM link")]
         return rows, links
-    if index_service is not None:
-        rows, links = index_service.run(collect)
-    else:
-        with Index(vault) as index:
-            rows, links = collect(index)
+    rows, links = run_index(vault, collect, index_service=index_service, offline=offline)
     names = {str(r["name_lower"]): str(r["name"]) for r in rows
              if str(r["shape"]) in ("source", "concept", "offering", "application")}
     graph: dict[str, set[str]] = {key: set() for key in names}

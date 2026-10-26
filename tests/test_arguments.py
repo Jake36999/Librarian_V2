@@ -123,7 +123,9 @@ def test_the_trace_names_the_model_tier_phase_and_budget_of_each_call(vault):
                           model="lead-model-x"),
                     Reply(tool_calls=[ToolCall("2", "vault_status", {})], model="lead-model-x"),
                     Reply(text="done", model="lead-model-x")])
-    loop = Loop(vault, providers.Scripted(lambda s, msgs, t: next(replies)))
+    # Every walk now goes through the invocation runtime (ADAPT-06), which
+    # checks the reply's model against the route's: the fake is that model.
+    loop = Loop(vault, providers.Scripted(lambda s, msgs, t: next(replies), name="lead-model-x"))
     loop.send("go")
     events = [json.loads(line) for line in SessionStore(vault).path(loop.ctx.session)
               .read_text(encoding="utf-8").splitlines()]

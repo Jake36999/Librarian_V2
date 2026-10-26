@@ -32,13 +32,14 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from . import notes
 from .coordination import atomic_write_text
 from .facts import license_class
 from .intake import ATOM, Fetcher, FetchError
 from .rules import Refusal
+from .search import Engine
 from .vault import Vault, jsonl_lines, now_iso
 
 GITHUB_URL = re.compile(r"https?://(?:www\.)?github\.com/([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+)")
@@ -427,8 +428,9 @@ def sweep_gate(vault: Vault) -> None:
                                      f"(cohort_reviewed marks it)")
 
 
-def sweep(vault: Vault, engine: Any, endpoint: Any, fetcher: Fetcher,
-          limit: int = 10) -> dict[str, Any]:
+def sweep(vault: Vault, engine: Engine | None, endpoint: Any, fetcher: Fetcher,
+          limit: int = 10, *,
+          index_call: Callable[[Callable[[Engine], Any]], Any] | None = None) -> dict[str, Any]:
     """Ingest the next members of the latest reviewed-or-current cohort, up to
     `limit`. Stages only; promotion stays with review. Stops early after
     `sweep_stop_after` consecutive members that bring nothing new (already
@@ -443,7 +445,8 @@ def sweep(vault: Vault, engine: Any, endpoint: Any, fetcher: Fetcher,
     report: dict[str, Any] = {"cohort": current["id"], "results": [], "stopped": ""}
     barren = 0
     for member in [m for m in current["members"] if not m["outcome"]][:limit]:
-        result = ingest(vault, engine, member["key"], endpoint=endpoint, fetcher=fetcher)
+        result = ingest(vault, engine, member["key"], endpoint=endpoint, fetcher=fetcher,
+                        index_call=index_call)
         member["outcome"] = result.status
         report["results"].append(result.to_dict())
         barren = barren + 1 if result.status in ("already_held", "quarantined") else 0

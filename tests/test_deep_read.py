@@ -1,5 +1,7 @@
 """Deep read: a staged source's whole text, chunk by chunk - V1's lens scan
 and whole-document reading, on V2's clerk channel and staging."""
+from pathlib import Path
+
 import pytest
 
 from resource_librarian import clerk, deep_read, tools  # noqa: F401  (registers tools)
@@ -269,8 +271,10 @@ def test_an_accepted_source_is_deep_read_as_a_revision_the_person_merges(staged)
     again = REGISTRY.call("deep_read_note", {"note": name}, ctx)
     assert again["revision"] == out["revision"]                           # resumes, one revision
 
+    person = Context(tier="curate", vault=ctx.vault,
+                     extras={**ctx.extras, "caller_kind": "person"})
     done = REGISTRY.call("staging_decide", {"item_ids": [out["revision"]],
-                                            "decision": "accept"}, ctx)
+                                            "decision": "accept"}, person)
     assert done["results"][0]["merged_into"] == path
     merged = note_io.load(ctx.vault.root / path)
     assert "Cable-stayed bridges hang the deck" in merged.sections()["Claims"]
@@ -294,6 +298,33 @@ def test_rejecting_a_revision_leaves_the_accepted_note_and_its_file_alone(staged
         assert (ctx.vault.root / attached).is_file()                   # not quarantined
 
 
+def test_core_deep_read_copies_schema_and_note_before_clerk_io(staged, monkeypatch):
+    import threading
+    from resource_librarian.app import App
+    from resource_librarian.keys import KeyStore
+    from resource_librarian.tools import library
+    original, item_id = staged
+    path = _accepted(original, item_id)
+    app = App(original.vault, coordinate=True, keys=KeyStore(use_keyring=False))
+    payloads = []
+    def answer(payload):
+        assert threading.current_thread() is not app.index_service._thread
+        assert app.index_service.stats()["notes"] >= 1
+        payloads.append(payload)
+        return answers(payload)
+    def no_direct(*args, **kwargs):
+        raise AssertionError("deep_read_note constructed a second index")
+    ctx = Context(tier="curate", vault=original.vault, extras={"caller_kind": "person",
+        "index_service": app.index_service, "vault_writer": app.writer, "clerk": clerk.Scripted(answer)})
+    try:
+        monkeypatch.setattr(library, "Index", no_direct)
+        out = REGISTRY.call("deep_read_note", {"note": Path(path).stem, "max_chunks": 20}, ctx)
+        assert out["of"] == path and out["read"] == out["chunks"], out
+        assert payloads
+    finally:
+        app.close_runtime()
+
+
 def test_a_model_cannot_merge_a_revision_into_a_persons_note(staged):
     ctx, item_id = staged
     path = _accepted(ctx, item_id)
@@ -303,6 +334,10 @@ def test_a_model_cannot_merge_a_revision_into_a_persons_note(staged):
     model = Context(tier="contribute", vault=ctx.vault, extras=ctx.extras)
     done = REGISTRY.call("staging_decide", {"item_ids": [out["revision"]], "decision": "accept"},
                          model)
+    assert done["refused"] == "REVISION_REQUIRED"
+    reviewed = REGISTRY.call("staging_show", {"item_id": out["revision"]}, model)
+    done = REGISTRY.call("staging_decide", {"item_ids": [out["revision"]], "decision": "accept",
+        "revision": reviewed["revision"], "staged_revision": reviewed["staged_revision"]}, model)
     assert done["results"][0].get("refused") == "PERSON_CONFIRMS"
 
 

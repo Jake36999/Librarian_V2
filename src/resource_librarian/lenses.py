@@ -29,6 +29,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from .file_access import file_access
 from .vault import Vault, jsonl_lines, now_iso
 
 SCHEMA = """
@@ -140,13 +141,21 @@ class LensStore:
         self.path = vault.librarian / "lenses.sqlite"
 
     def _conn(self) -> sqlite3.Connection:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(self.path)
-        conn.row_factory = sqlite3.Row
-        conn.executescript(SCHEMA)
-        conn.execute(FTS)
-        self._migrate(conn)
-        return conn
+        # Concurrent first reads may both attempt schema/FTS migration.
+        # Keep initialization local to this path; callers own query lifetime.
+        with file_access(self.path):
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            conn = sqlite3.connect(self.path, timeout=5)
+            try:
+                conn.row_factory = sqlite3.Row
+                conn.execute("PRAGMA busy_timeout=5000")
+                conn.executescript(SCHEMA)
+                conn.execute(FTS)
+                self._migrate(conn)
+                return conn
+            except BaseException:
+                conn.close()
+                raise
 
     def _migrate(self, conn: sqlite3.Connection) -> None:
         """A store from before these columns keeps its rows: columns are added,

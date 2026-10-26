@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from .. import upkeep
 from ..registry import Card, Context, tool
-from .library import engine_for
+from .library import IndexGateway
 
 
 @tool("freshness_check", tier="contribute", effect="write", scope="library", open_world=True,
@@ -16,7 +16,7 @@ from .library import engine_for
 def freshness_check(ctx: Context, limit: int = 20, source: str = "") -> dict:
     from ..intake import Fetcher
     fetcher = ctx.extras.get("fetcher") or Fetcher()
-    return upkeep.freshness(ctx.vault, engine_for(ctx), fetcher, limit, source)
+    return upkeep.freshness(ctx.vault, None, fetcher, limit, source, index_call=IndexGateway(ctx).run)
 
 
 @tool("duplicate_report", tier="consult", effect="read",
@@ -26,7 +26,7 @@ def freshness_check(ctx: Context, limit: int = 20, source: str = "") -> dict:
                 "with near-identical sources",
                 "A shortlist for a person: nothing is merged, deleted or reranked"))
 def duplicate_report(ctx: Context, top: int = 15) -> dict:
-    return upkeep.duplicates(ctx.vault, engine_for(ctx), top)
+    return upkeep.duplicates(ctx.vault, None, top, index_call=IndexGateway(ctx).run)
 
 
 @tool("provenance_check", tier="consult", effect="read", resolve={"source": "note"},
@@ -37,7 +37,7 @@ def duplicate_report(ctx: Context, top: int = 15) -> dict:
                 "supported / contradicted / unsupported per claim; judgements are left alone"))
 def provenance_check(ctx: Context, source: str = "", limit: int = 50) -> dict:
     from .. import provenance
-    return provenance.run(ctx.vault, engine_for(ctx).conn, source, limit)
+    return provenance.run(ctx.vault, None, source, limit, index_call=IndexGateway(ctx).run)
 
 
 @tool("read_source_file", tier="consult", effect="read", open_world=True,
@@ -53,8 +53,8 @@ def read_source_file(ctx: Context, source: str, path: str, max_chars: int = 2000
     from .. import upkeep
     from ..intake import Fetcher
     fetcher = ctx.extras.get("fetcher") or Fetcher()
-    return upkeep.source_file(ctx.vault, engine_for(ctx), fetcher, source, path,
-                              max_chars)
+    return upkeep.source_file(ctx.vault, None, fetcher, source, path, max_chars,
+                              index_call=IndexGateway(ctx).run)
 
 
 @tool("run_claim_input", tier="curate", effect="write", scope="library", open_world=True,
@@ -88,4 +88,4 @@ def list_claim_runs(ctx: Context, limit: int = 30) -> dict:
                 "revision of the note, merged only by a person"))
 def dik_rebuild(ctx: Context, source: str = "", limit: int = 20) -> dict:
     from .. import dik
-    return dik.rebuild(ctx.vault, engine_for(ctx).conn, source, limit)
+    return dik.rebuild(ctx.vault, None, source, limit, index_call=IndexGateway(ctx).run)

@@ -123,3 +123,21 @@ def test_dependency_change_runs_l0_and_queues_requalification_without_spending(s
     assert hard["requalification"]["required_levels"] == ["L1", "L2", "L3"]
     assert {job["level"] for job in hard["requalification"]["queued_jobs"]} == {"L2", "L3"}
 
+
+def test_exact_adapter_expectation_is_a_hard_qualification_dependency(served, monkeypatch):
+    """A parser/expectation revision is not presentation-only metadata."""
+    app, _, _ = served
+    before = app._qualification_fingerprints("preset-openai", "example-model", "lead")
+    original = app.invocation_runtime.adapter_summary
+
+    def revised(provider, *, model_id=""):
+        row = original(provider, model_id=model_id)
+        row["expectation"] = {
+            "id": "example-expectation", "status": "reviewed", "fingerprint": "revised-contract",
+        }
+        return row
+
+    monkeypatch.setattr(app.invocation_runtime, "adapter_summary", revised)
+    after = app._qualification_fingerprints("preset-openai", "example-model", "lead")
+    assert before["compatibility"] != after["compatibility"]
+

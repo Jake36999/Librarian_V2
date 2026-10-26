@@ -184,6 +184,51 @@ def _workbench_checks() -> list[Check]:
     return out
 
 
+def source_identity(package_file: str | None = None,
+                    direct_url: str | None = None) -> dict[str, Any]:
+    """Which code is running, and whether pip's install record agrees.
+
+    An older editable install of this package can sit on the same machine
+    (2026-10-24: the system interpreter's record pointed at a stale sibling
+    clone), so a test run or a Core can execute different code from the
+    checkout a person is looking at.  A Windows venv's ``python.exe`` is a
+    redirector that starts the base interpreter as a child: that is the
+    repository interpreter, not a stale checkout, so both paths are reported.
+    """
+    from pathlib import Path
+    from urllib.parse import unquote, urlparse
+
+    from . import __file__ as own_file
+    package = Path(package_file or own_file).resolve().parent
+    project = package.parent.parent if package.parent.name == "src" else None
+    if direct_url is None:
+        try:
+            direct_url = metadata.distribution("resource-librarian").read_text("direct_url.json") or ""
+        except metadata.PackageNotFoundError:
+            direct_url = ""
+    try:
+        record = json.loads(direct_url) if direct_url else {}
+    except ValueError:
+        record = {}
+    editable = bool((record.get("dir_info") or {}).get("editable")) if isinstance(record, dict) else False
+    installed = ""
+    if editable:
+        parsed = urlparse(str(record.get("url") or ""))
+        path = unquote(parsed.path)
+        if os.name == "nt" and path.startswith("/") and len(path) > 2 and path[2] == ":":
+            path = path[1:]
+        installed = str(Path(path).resolve()) if path else ""
+    # An editable record is authoritative only for a source-layout import;
+    # a wheel install is consistent by construction.
+    consistent = not editable or project is None or (
+        installed != "" and installed.casefold() == str(project).casefold())
+    return {"executable": sys.executable,
+            "base_executable": getattr(sys, "_base_executable", sys.executable),
+            "venv": sys.prefix != sys.base_prefix,
+            "package": str(package), "project": str(project) if project else "",
+            "editable_install": installed, "consistent": consistent}
+
+
 def checks(vault: Vault | None = None, mcp: Any = None) -> list[Check]:
     out = [Check("python", sys.version_info >= (3, 11),
                  f"{sys.version.split()[0]} (3.11 or later required)", required=True),
@@ -203,6 +248,21 @@ def checks(vault: Vault | None = None, mcp: Any = None) -> list[Check]:
     out.append(Check("embeddings", _module("model2vec"),
                      "model2vec installed" if _module("model2vec")
                      else "model2vec not installed: search is lexical only"))
+    identity = source_identity()
+    interpreter = identity["executable"] + (f" (venv over {identity['base_executable']})"
+                                            if identity["venv"] else "")
+    out.append(Check("source identity", identity["consistent"],
+                     f"code from {identity['package']} under {interpreter}" if identity["consistent"] else
+                     f"code runs from {identity['package']} but this interpreter's install record "
+                     f"points at {identity['editable_install']}: reinstall with `pip install -e .` "
+                     f"from the checkout you mean, or use its own .venv"))
+    # A pack that fails to load leaves every model route unreviewed; say so
+    # instead of letting reviewed routes quietly read as unknown.
+    from .model_invocation import ExpectationRegistry
+    pack = ExpectationRegistry.bundled().status()
+    out.append(Check("model expectations", pack["ok"],
+                     f"{pack['pack_id']}: {pack['records']} record(s)" if pack["ok"]
+                     else pack["error"]))
     out.extend(_workbench_checks())
     for provider, variables in KEY_VARIABLES.items():
         present = next((v for v in variables if os.environ.get(v)), "")

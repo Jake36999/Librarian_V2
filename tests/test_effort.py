@@ -82,7 +82,9 @@ def test_helpers_run_at_once_read_only_and_within_the_effort_cap(library):
     def helper_step(messages, tools):
         names = {t.name for t in tools}
         seen.append(names)
-        if len(messages) == 1:                       # first step: try to write, then search
+        # ADAPT-09 may add a lower-priority context message before the current
+        # question; the first model step is the one with no assistant/tool turn.
+        if not any(message["role"] in {"assistant", "tool"} for message in messages):
             return Reply(tool_calls=[ToolCall("w", "write_note", {"folder": "Notes", "name": "x",
                                                                   "body": "y"}),
                                      ToolCall("s", "search", {"query": "operating system"})])

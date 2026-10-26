@@ -1,0 +1,60 @@
+{
+ "model": "m-1",
+ "max_tokens": 99,
+ "messages": [
+  {
+   "role": "system",
+   "content": "S"
+  },
+  {
+   "role": "user",
+   "content": "find osquery"
+  },
+  {
+   "role": "assistant",
+   "content": null,
+   "tool_calls": [
+    {
+     "id": "c1",
+     "type": "function",
+     "function": {
+      "name": "lookup",
+      "arguments": "{\"q\": \"osquery\"}"
+     }
+    }
+   ],
+   "reasoning_content": "think"
+  },
+  {
+   "role": "tool",
+   "tool_call_id": "c1",
+   "content": "found"
+  },
+  {
+   "role": "assistant",
+   "content": "Here it is."
+  },
+  {
+   "role": "user",
+   "content": ""
+  }
+ ],
+ "temperature": 0.2,
+ "tools": [
+  {
+   "type": "function",
+   "function": {
+    "name": "lookup",
+    "description": "Find a note",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "q": {
+       "type": "string"
+      }
+     }
+    }
+   }
+  }
+ ]
+}

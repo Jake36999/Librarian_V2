@@ -35,8 +35,35 @@ function profileMeta(m: any): string {
   if (p.price_input_per_1m || p.price_output_per_1m) {
     parts.push(`$${p.price_input_per_1m ?? 0} / $${p.price_output_per_1m ?? 0} per 1M`);
   }
-  parts.push(p.tool_calling ? "tool calling" : "no tool calling");
+  // Tri-state (ROUTE-02): unknown is not "no", and only an explicit "no" blocks leading.
+  parts.push(p.tool_calling === true ? "tool calling"
+    : p.tool_calling === false ? "no tool calling" : "tool calling unknown");
   return parts.filter(Boolean).join(" · ");
+}
+
+// Seeded hosts have two names: the picker lists `deepinfra`, while stored and
+// migrated routes use the registry id `preset-deepinfra`.  Compare them as one.
+const SEEDED = new Set(["deepinfra", "openai", "anthropic", "local"]);
+function sameHost(a: unknown, b: unknown): boolean {
+  const norm = (v: unknown) => {
+    const s = String(v ?? "");
+    return s.startsWith("preset-") && SEEDED.has(s.slice("preset-".length)) ? s.slice("preset-".length) : s;
+  };
+  return norm(a) === norm(b);
+}
+
+// The adapter line is protocol evidence from the Core, not a reliability verdict.
+function adapterMeta(m: any): string {
+  const adapter = m.adapter;
+  if (!adapter || typeof adapter !== "object") return "";
+  const expectation = adapter.expectation && typeof adapter.expectation === "object" ? adapter.expectation : {};
+  const capabilities = adapter.capabilities && typeof adapter.capabilities === "object" ? adapter.capabilities : {};
+  const parts = [`adapter: ${String(adapter.id ?? "unknown").replace(/_/g, " ")}`];
+  if (!expectation.id) parts.push("no model expectation yet");
+  else if (capabilities.tool_use === "unknown") parts.push("tool behaviour unverified");
+  else if (capabilities.tool_use === "false") parts.push("tool use unsupported");
+  else parts.push(`expectation: ${String(expectation.status ?? "reviewed")}`);
+  return parts.join(" · ");
 }
 
 export class Popover {
@@ -128,6 +155,7 @@ const SLOT_KIND: Record<string, { label: string; fits: (m: any) => boolean }> = 
   ocr: { label: "Vision models", fits: (m) => m.profile?.modality === "Image_To_Text" || VISION.test(String(m.id)) },
   embeddings: { label: "Embedding models", fits: (m) => m.profile?.modality === "Embeddings" || EMBED.test(String(m.id)) },
   tts: { label: "Speech models", fits: (m) => m.profile?.modality === "Text_To_Speech" || /tts|kokoro|chatterbox|orpheus|speech|higgs/i.test(String(m.id)) },
+  stt: { label: "Speech-recognition models", fits: (m) => m.profile?.modality === "Speech_To_Text" || /asr|whisper|voxtral|speech[ _-]?recognition|transcrib/i.test(String(m.id)) },
 };
 
 export class ModelTile {
@@ -236,23 +264,34 @@ export class ModelTile {
   }
 
   private readinessChips(provider: string, model: string): HTMLElement | null {
+    // Chat qualification is not evidence for OCR/speech/embedding contracts.
+    if (this.slot) return null;
     const row = this.routeReadiness(provider, model);
     if (!row) return null;
-    const qualification = row.qualification && typeof row.qualification === "object"
-      ? row.qualification.status : (row.qualification ?? row.status ?? "");
+    const tiers = this.tiers();
+    const selected = tiers.findIndex((t) => sameHost(t.provider, provider) && t.model === model);
+    const role = ["lead", "scribe", "clerk"][selected >= 0 ? selected : Math.min(tiers.length, 2)];
+    const evidence = row.qualification_by_role?.[role]
+      ?? (row.role === role ? row.qualification : null);
+    const qualification = evidence?.status ?? "evidence pending";
     const workflow = row.core_workflow ?? row.workflow_ready ?? row.workflow;
     const fixture = row.fixture_preflight ?? row.fixture_ready;
     const health = row.host_health && typeof row.host_health === "object"
       ? row.host_health.status : (row.host_health ?? row.health);
     const labels = [
-      qualification ? String(qualification).replace(/_/g, " ") : "evidence pending",
+      `${role}: ${String(qualification).replace(/_/g, " ")}`,
+      evidence?.freshness && !["current", "missing"].includes(evidence.freshness)
+        ? `${role}: ${String(evidence.freshness).replace(/_/g, " ")}` : "",
+      row.active_task && row.role !== role
+        ? `${row.task_profile} task: ${String(row.qualification?.status ?? "evidence pending").replace(/_/g, " ")}` : "",
+      row.binding_errors?.[role] ? `${role}: route unavailable` : "",
       this.readinessText(workflow, "walk ready", "walk blocked", "walk unchecked"),
       this.readinessText(fixture, "fixtures ready", "fixture issue", "fixtures unchecked"),
       this.readinessText(health, "host ready", "host issue", "host unchecked"),
     ];
     const detail = String(row.detail ?? row.reason ?? row.advisory ?? "");
     return h("div", { class: "readiness", title: detail },
-      labels.filter((value, index, all) => all.indexOf(value) === index)
+      labels.filter((value, index, all) => value && all.indexOf(value) === index)
         .map((value) => h("span", { class: `readiness-chip ${/blocked|issue|experimental|unavailable|stale/i.test(value) ? "warn" : ""}` }, value)));
   }
 
@@ -279,6 +318,7 @@ export class ModelTile {
       // `render()` runs, or a picked model can briefly (or, under load,
       // not-so-briefly) look unpicked to this same click's own next step.
       this.setTiers(tiers);
+      void this.refreshReadiness(++this.readinessEpoch);
     } catch (e) {
       const body = ((e as ApiError).body ?? {}) as Record<string, unknown>;
       if (body.needs_override) this.pendingLead = { tiers, lead: String(body.lead ?? "") };
@@ -315,7 +355,7 @@ export class ModelTile {
   private async pick(provider: string, model: string): Promise<void> {
     if (this.slot) return this.pickSlot(provider, model);
     const tiers = this.tiers();
-    const at = tiers.findIndex((t) => t.provider === provider && t.model === model);
+    const at = tiers.findIndex((t) => sameHost(t.provider, provider) && t.model === model);
     const entry = ((this.listings.get(provider)?.models ?? []) as any[]).find((m) => m.id === model);
     if (at >= 0) {
       this.toast = `${model} is tier ${at + 1}. Right-click it, press Delete, or use Clear selection to start again.`;
@@ -392,9 +432,9 @@ export class ModelTile {
       this.pendingLead ? this.overridePrompt()
         : this.toast ? h("div", { class: "toast", role: "status" }, this.toast) : null,
       filter, grids,
-      h("h4", {}, "OCR · Text to speech · Embeddings"),
-      h("p", { class: "note locked" }, "These have their own slots (4 OCR, 5 Text to speech, 6 Embeddings) in Settings → Connections, each chosen with this same tile and kept with the library."),
-      h("p", { class: "note" }, "Models come from each provider's live listing. A profiled model (a Source of kind model) shows its suggested tier and best-for tags (a first guess to confirm or correct), plus context, price and tool calling; an unprofiled one can be profiled, which stages it for your review like any other source."));
+      h("h4", {}, "OCR · Text to speech · Embeddings · Speech to text"),
+      h("p", { class: "note locked" }, "These have their own slots (4 OCR, 5 Text to speech, 6 Embeddings, 7 Speech to text) in Settings → Connections, each chosen with this same tile and kept with the library."),
+      h("p", { class: "note" }, "Models come from each provider's live listing. A profiled model (a Source of kind model) shows its suggested tier and best-for tags (a first guess to confirm or correct), plus context, price and tool calling; an unprofiled one can be profiled, which stages it for your review like any other source. The adapter line is protocol evidence, not a reliability verdict: run the route probe before treating an unverified tool path as ready."));
     this.renderGrids(grids);
   }
 
@@ -404,7 +444,7 @@ export class ModelTile {
     // tags, context, price, tool calling) - "long horizon tool calling" narrows by both.
     const words = this.filter.toLowerCase().split(/\s+/).filter(Boolean);
     const matches = (m: any) => {
-      const text = `${m.id} ${profileMeta(m)}`.toLowerCase().replace(/_/g, " ");
+      const text = `${m.id} ${profileMeta(m)} ${adapterMeta(m)}`.toLowerCase().replace(/_/g, " ");
       return words.every((w) => text.includes(w));
     };
     // The slot being chosen next (1 leads, 2 notes, 3 small tasks): its recommended models
@@ -425,9 +465,9 @@ export class ModelTile {
         h("h4", {}, h("span", { class: `dot ${listing.status === "ready" ? "" : listing.status === "no key" ? "nokey" : "off"}` }), `${label} · ${status}`),
         models.length ? h("div", { class: "grid" }, models.slice(0, 60).map((m) => {
           // In a service slot, "chosen" is the slot's own model; otherwise its tier.
-          const inSlot = this.slot?.current?.provider === p && this.slot?.current?.model === m.id;
+          const inSlot = sameHost(this.slot?.current?.provider, p) && this.slot?.current?.model === m.id;
           const at = this.slot ? (inSlot ? 0 : -1)
-            : tiers.findIndex((t) => t.provider === p && t.model === m.id);
+            : tiers.findIndex((t) => sameHost(t.provider, p) && t.model === m.id);
           const clear = () => (this.slot ? this.clearSlot() : this.clearAll());
           const rec = at < 0 && recommended(m);
           const readiness = this.readinessChips(p, String(m.id));
@@ -445,6 +485,7 @@ export class ModelTile {
           },
           at >= 0 && !this.slot ? h("span", { class: "badge" }, String(at + 1)) : null,
           h("div", { class: "name" }, m.id), h("div", { class: "meta" }, profileMeta(m)),
+          adapterMeta(m) ? h("div", { class: "meta" }, adapterMeta(m)) : null,
           readiness,
           rec ? h("div", { class: "rec-label" }, `Recommended for slot ${next}`) : null);
           return h("div", { class: "card-wrap" }, card,

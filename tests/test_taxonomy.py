@@ -78,8 +78,11 @@ def test_a_proposal_close_to_an_accepted_topic_is_marked(library):
             "aliases": ["Host monitoring"]}
     call(ctx(library, [near]), "topic_propose", only_unfiled=False)
     listed = call(ctx(library, []), "topics_list")
-    assert listed["proposed"] == [{"id": "topic-observability", "name": "Observability",
-                                   "sources": 2, "duplicate_of": "Host Monitoring"}]
+    proposed = listed["proposed"][0]
+    assert proposed["staged_revision"].startswith("rev1.")
+    assert {k: v for k, v in proposed.items() if k != "staged_revision"} == {
+                                   "id": "topic-observability", "name": "Observability",
+                                   "sources": 2, "duplicate_of": "Host Monitoring"}
     assert {"topic": "Host Monitoring", "sources": 2} in listed["topics"]
 
 

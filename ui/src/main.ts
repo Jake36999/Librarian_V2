@@ -284,7 +284,7 @@ class App {
       this.warn(`The core did not answer: ${(e as Error).message}. Is \`resource-librarian app\` running?`);
       return;
     }
-    this.stopEvents = this.api.events((event) => this.onEvent(event), (live) => {
+    this.stopEvents = this.api.events(this.state.event_stream, (event) => this.onEvent(event), (live) => {
       this.live.className = `live ${live ? "on" : "off"}`;
       this.live.textContent = live ? "●" : "○ reconnecting";
       if (live) void this.refresh();
@@ -309,6 +309,13 @@ class App {
   }
 
   private onEvent(event: Event): void {
+    if (event.type === "resync_required") {
+      // The stream is intentionally not an action log. A Core restart or a
+      // dropped retained window means the only safe recovery is to fetch the
+      // current canonical state; never replay a tool or chat action here.
+      void this.refresh().catch((error) => this.warn((error as Error).message));
+      return;
+    }
     this.chat.handle(event);
     switch (event.type) {
       case "mode_changed":

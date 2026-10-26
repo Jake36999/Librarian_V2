@@ -41,6 +41,16 @@ def path_for(vault_path: str | Path) -> Path:
     return directory() / f"{_key(vault_path)}.json"
 
 
+def shutdown_path(vault_path: str | Path) -> Path:
+    """Where a stopping Core records its shutdown phases (CORE-02A).
+
+    Per-user Host state, not vault state: it is written after the vault lease
+    is released, when a successor Core may already own the vault.  A
+    subfolder, so `records()` never mistakes it for an attachment record.
+    """
+    return directory() / "stops" / f"{_key(vault_path)}.json"
+
+
 def _private_write(path: Path, payload: str) -> bool:
     """Atomically write a record without ever leaving secret text in a broad
     Windows ACL.  On a platform where the ACL cannot be made owner-only, fail
@@ -81,7 +91,8 @@ def _private_write(path: Path, payload: str) -> bool:
 
 
 def publish(vault_path: str | Path, *, url: str, token: str, pid: int,
-            protocol_version: str, secret_source: str) -> bool:
+            protocol_version: str, secret_source: str,
+            process_start: str | None = None) -> bool:
     """Publish an adapter attachment record.  ``token`` is deliberately only
     written into this owner-only, per-user location.
     """
@@ -94,6 +105,10 @@ def publish(vault_path: str | Path, *, url: str, token: str, pid: int,
         "protocol_version": str(protocol_version),
         "secret_source": secret_source,
     }
+    if process_start:
+        # The start identity pins the record to the process that wrote it, so
+        # a recycled PID is not read as a live Core; older readers ignore it.
+        payload["process_start"] = str(process_start)
     return _private_write(path_for(vault_path), json.dumps(payload, separators=(",", ":")) + "\n")
 
 
@@ -114,6 +129,11 @@ def load(vault_path: str | Path) -> dict[str, Any] | None:
         row["pid"] = int(row["pid"])
     except (OSError, TypeError, ValueError):
         return None
+    # Identity metadata, not a required field: keep a string, drop anything else.
+    start = row.get("process_start")
+    if not (isinstance(start, str) and start):
+        row.pop("process_start", None)
+    row.pop("process_started", None)        # this branch's earlier float form
     return row
 
 

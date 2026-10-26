@@ -249,6 +249,11 @@ export class Settings {
             placeholder: "profile id", "aria-label": "Profile id" }) as HTMLInputElement;
           const role = h("input", { type: "text", value: String(base.role ?? "lead"),
             "aria-label": "Profile role" }) as HTMLInputElement;
+          const routeSlots = ["lead", "scribe", "clerk", "research_helper"];
+          const bindingRole = h("select", { "aria-label": "Model route slot" },
+            routeSlots.map((value) => h("option", { value,
+              selected: value === String(route.binding_role ?? (routeSlots.includes(base.role) ? base.role : "lead")) },
+              value.replace(/_/g, " ")))) as HTMLSelectElement;
           const ceiling = h("select", { "aria-label": "Permission ceiling" },
             ["consult", "contribute", "curate"].map((value) => h("option", { value,
               selected: value === String(base.permission_ceiling ?? "contribute") }, value))) as HTMLSelectElement;
@@ -300,6 +305,7 @@ export class Settings {
               retry_policy: retry.value, failover_policy: failover.value,
                validation_rules: split(validation.value),
               route_policy: { ...route, host_ids: split(hosts.value), model_ids: split(models.value),
+                 binding_role: bindingRole.value,
                  providers: split(providers.value),
                 ...(Object.keys(rateCard).length ? { rate_card: rateCard } : {}) } };
             editorStatus.textContent = "Saving profile…";
@@ -317,6 +323,7 @@ export class Settings {
             h("div", { class: "confirm" },
               h("strong", {}, creating ? "New agent profile" : `Edit ${base.id}`),
               h("div", { class: "row2 tight" }, id, role, ceiling, qualification),
+              h("label", { class: "f" }, "Use the model assigned to this route slot"), bindingRole,
               h("label", { class: "f" }, "Tool bundles (comma-separated)"), bundles,
               h("label", { class: "f" }, "Route allow-lists (blank means unrestricted)"),
                h("div", { class: "row2 tight" }, hosts, providers, models),
@@ -470,12 +477,13 @@ export class Settings {
     return h("div", { class: "embeddings" },
       s.model ? h("p", { class: "dim" }, `${s.embedded ?? 0} of ${s.chunks ?? 0} text chunks embedded` +
         (s.vector_intents?.length ? ` · vectors used for: ${s.vector_intents.join(", ")}` : " · vectors used for no intent yet")) : null,
+      s.representation_stale ? h("p", { class: "note locked" }, "Embedding representation changed; existing vectors are not used. Choose Embed all to build the reviewed representation.") : null,
       h("div", { class: "row2 tight" }, local, s.model && est.chunks ? embedAll : null, s.model ? measure : null, status),
       confirm, table, save,
       s.comparison ? h("p", { class: "note" }, `Measured ${String(s.comparison.at ?? "").slice(0, 10)} on ${s.comparison.questions} questions; vectors joined ${s.comparison.vectors_contributed} answers. Turn them on only where they help.`) : null);
   }
 
-  /** Requirements Addendum R17: service models, slots 4-6 - each one kind of job with its
+  /** Requirements Addendum R17: service models, slots 4-7 - each one kind of job with its
    *  own request format, chosen with the same tile as the chat models and kept with this
    *  library. Test makes one small real call. */
   private serviceModels(): HTMLElement {
@@ -494,13 +502,17 @@ export class Settings {
           const current = s.model
             ? `${s.model} · ${PROVIDERS[s.provider] ?? s.provider}${s.default ? " (default)" : ""}`
             : s.built ? "none chosen" : "planned";
+          const contract = s.adapter && typeof s.adapter === "object" ? s.adapter : {};
+          const contractLabel = !s.model ? "" : contract.adapter?.id
+            ? ` · ${String(contract.adapter.id).replace(/_/g, " ")} · ${contract.status ?? "unreviewed"}`
+            : " · no reviewed service contract";
           const test = async () => {
             status.className = "note inline";
             status.textContent = "Testing: one small call…";
             try {
               const t = await this.api.post("/api/services/test", { slot: s.slot });
-              status.textContent = t.ok ? `Works: it read “${t.read}”.`
-                : `Not working: ${t.error ?? `it read “${t.read}”`}`;
+              status.textContent = t.summary ?? (t.ok ? `Works: it read “${t.read}”.`
+                : `Not working: ${t.error ?? `it read “${t.read}”`}`);
               if (t.ok && t.audio) void new Audio(t.audio).play().catch(() => undefined);
               status.className = `note inline ${t.ok ? "ok" : "err"}`;
             } catch (e) {
@@ -519,6 +531,8 @@ export class Settings {
             } },
             h("span", { class: "badge" }, String(s.number)),
             h("span", {}, h("strong", {}, s.label), ` · ${current}`, h("span", { class: "dim" }, ` · ${s.job}`),
+              contractLabel ? h("span", { class: "dim" }, contractLabel) : null,
+              s.route_status === "unavailable" ? h("span", { class: "note err" }, ` · ${s.route_error ?? "route unavailable"}`) : null,
               s.cap_usd !== undefined ? h("span", { class: "dim" }, ` · spent $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null),
             s.built && this.chooseService ? h("button", { class: "ghost", onclick: () => {
               this.dialog.close();
@@ -665,7 +679,8 @@ export class Settings {
     const chooseLead = async (checkpointId = "", override = "") => {
       if (!model.value.trim()) { status.textContent = "Enter or discover a model id first."; return; }
       try {
-        await this.api.post("/api/tiers", { tiers: [{ host_id: row.id, model: model.value.trim() }],
+        // Position 1 only: the Scribe and Clerk positions are kept (ROUTE-01).
+        await this.api.post("/api/lead", { route: { host_id: row.id, model: model.value.trim() },
           ...(checkpointId ? { checkpoint_id: checkpointId } : {}), ...(override ? { override } : {}) });
         status.textContent = `${model.value} is the selected lead route.`;
         clear(confirm);
@@ -695,6 +710,20 @@ export class Settings {
       try { await this.api.post("/api/hosts/remove", { host_id: row.id }); await reload(); }
       catch (e) { status.textContent = (e as Error).message; }
     };
+    // Keep the existing tile for presets. A manually entered/discovered model
+    // on a custom host can also be bound explicitly, never inferred by name.
+    const serviceSlot = h("select", { "aria-label": `Service slot on ${row.display_name ?? row.id}` },
+      h("option", { value: "ocr" }, "OCR"),
+      h("option", { value: "embeddings" }, "Embeddings")) as HTMLSelectElement;
+    const chooseService = async () => {
+      if (!model.value.trim()) { status.textContent = "Enter or discover a model id first."; return; }
+      try {
+        await this.api.post("/api/services", { slot: serviceSlot.value, host_id: row.id,
+          model: model.value.trim() });
+        await this.refresh();
+        this.render();
+      } catch (e) { status.textContent = (e as Error).message; }
+    };
     return h("div", { class: "host-card" },
       h("div", { class: "row2 tight" }, h("span", { class: `dot ${row.enabled ? "" : "off"}` }), title,
         h("code", {}, String(row.id)), row.seeded ? h("span", { class: "dim" }, "preset") : null, health),
@@ -711,7 +740,10 @@ export class Settings {
       h("div", { class: "row2" }, model, h("button", { class: "ghost", onclick: () => void discover() }, "Discover models"),
         h("button", { class: "ghost", onclick: () => void test() }, "Test"),
          h("button", { class: "ghost", onclick: () => void probe() }, `L1 probe (${probeRole})`),
-        h("button", { class: "primary", onclick: () => void chooseLead() }, "Use as lead")), discovered);
+        h("button", { class: "primary", onclick: () => void chooseLead() }, "Use as lead")), discovered,
+      row.protocol === "openai" ? h("div", { class: "row2" }, serviceSlot,
+        h("button", { class: "ghost", onclick: () => void chooseService() }, "Use for service"),
+        h("span", { class: "note inline" }, "OCR and embeddings use this exact host. Native speech remains DeepInfra-only; selection is not qualification.")) : null);
   }
 
   private newHostCard(reload: () => Promise<void>): HTMLElement {
@@ -1102,6 +1134,9 @@ export class Settings {
   /** The closed topic list (About/Topics.md) and the topics proposed for it (R8): only
    *  here does a proposal join the list - accepted as proposed, renamed, or rejected. */
   private async paintTopics(host: HTMLElement): Promise<void> {
+    // A deliberate reload must retire the old acceptance handlers immediately,
+    // not leave a stale form clickable while its replacement is fetched.
+    clear(host, h("p", { class: "dim" }, "Loading topics…"));
     const status = h("span", { class: "note inline", role: "status" });
     const reload = () => void this.paintTopics(host);
     let out: any;
@@ -1123,25 +1158,32 @@ export class Settings {
     } }, "Propose topics");
     const refresh = h("button", { class: "ghost", title: "Rewrite the topic indexes and the Master Index from the notes",
       onclick: async () => {
-        try { await this.api.tool("views_refresh", {}); status.textContent = "Indexes rewritten."; }
+        try {
+          const result = await this.api.tool("views_refresh", {});
+          if (result.error || result.refused) throw new Error(String(result.detail ?? result.error ?? result.refused));
+          status.textContent = "Indexes rewritten.";
+        }
         catch (e) { status.textContent = (e as Error).message; }
       } }, "Rewrite indexes");
     const proposal = (p: any) => {
       const name = h("input", { type: "text", value: p.name, "aria-label": "Topic name" }) as HTMLInputElement;
-      const file = h("input", { type: "checkbox", checked: true }) as HTMLInputElement;
+      const file = h("input", { type: "checkbox", checked: p.acceptance_progress?.refile ?? true }) as HTMLInputElement;
       const accept = h("button", { class: "primary", onclick: async () => {
         try {
           const r = await this.api.tool("staging_decide", { item_ids: [p.id], decision: "accept",
+            ...(p.staged_revision ? { staged_revision: p.staged_revision } : {}),
             fields: { name: name.value, refile: file.checked } });
           const one = (r.results ?? [])[0] ?? r;
           if (r.error || one.error || one.refused) throw new Error(String(one.detail ?? one.error ?? r.detail ?? r.error));
-          status.textContent = `${one.topic} added; ${(one.refiled ?? []).filter((x: any) => x.topic && !x.unchanged).length} source(s) filed under it.`;
+          status.textContent = `${one.topic} accepted; ${(one.refiled ?? []).filter((x: any) => x.topic && !x.unchanged).length} source(s) filed under it.`;
           reload();
         } catch (e) { status.textContent = (e as Error).message; }
-      } }, "Accept");
+      } }, p.acceptance_progress ? "Finish acceptance" : "Accept");
       return h("div", { class: "srv" }, name,
         h("label", { class: "note inline" }, file, ` file its ${p.sources} source${p.sources === 1 ? "" : "s"} under it`),
-        p.duplicate_of ? h("span", { class: "warn" }, `close to ${p.duplicate_of}`) : null, accept);
+        p.duplicate_of ? h("span", { class: "warn" }, `close to ${p.duplicate_of}`) : null,
+        p.acceptance_progress ? h("span", { class: "warn" },
+          `Partly applied; review before finishing. Completed: ${(p.acceptance_progress.completed_paths ?? []).join(", ")}`) : null, accept);
     };
     clear(host,
       h("p", {}, (out.topics ?? []).map((t: any) => `${t.topic} (${t.sources})`).join(" · ")),
@@ -1149,7 +1191,8 @@ export class Settings {
       (out.not_accepted ?? []).length ? h("p", { class: "warn" }, `Filed under topics not in the list: ${(out.not_accepted as string[]).join(", ")}.`) : null,
       (out.proposed ?? []).length ? h("p", { class: "note" }, "Proposed from the library's own sources (details in Staging → Topics):") : null,
       (out.proposed ?? []).map(proposal),
-      h("div", { class: "row2 tight" }, propose, refresh, status));
+      h("div", { class: "row2 tight" }, propose, refresh,
+        h("button", { class: "ghost", onclick: reload }, "Reload topics (discards edits)"), status));
   }
 
   /** The domain profile this library was created with (profiles.py): what it
@@ -1219,20 +1262,26 @@ export class Settings {
     try {
       const out = await this.api.tool("model_catalog_status", {});
       if (out.error) throw new Error(String(out.detail ?? out.error));
-      const catalogs = (out.catalogues ?? []) as { provider: string; models: number; held: number }[];
+      const catalogs = (out.catalogues ?? []) as { provider: string; models: number; held: number; needs_attention?: string[] }[];
       const status = h("span", { class: "note inline", role: "status" }, message);
       clear(host,
         h("p", { class: "note" }, "Each model here was already profiled once from its provider's own listing page - adopting a catalogue reuses that, instead of profiling every model again in this vault."),
         catalogs.length ? catalogs.map((c) => h("div", { class: "srv" },
           h("span", { class: `dot ${c.held === c.models ? "" : "nokey"}` }),
-          h("span", {}, h("strong", {}, c.provider), ` · ${c.held}/${c.models} models held`),
+          h("span", {}, h("strong", {}, c.provider), ` · ${c.held}/${c.models} models held`,
+            c.needs_attention?.length ? h("p", { class: "warn" },
+              `Review incomplete/unfindable Source notes: ${c.needs_attention.slice(0, 5).join(", ")}. Existing notes are not overwritten by re-adoption.`) : null),
           c.held < c.models
-            ? h("button", { class: "ghost", onclick: async () => {
+            ? h("button", { class: "ghost", onclick: async (e: Event) => {
+                const button = e.currentTarget as HTMLButtonElement;
+                button.disabled = true;
                 try {
                   const r = await this.api.tool("model_catalog_adopt", { provider: c.provider });
                   if (r.error) throw new Error(String(r.detail ?? r.error));
-                  void this.paintModelCatalogs(host, `${c.provider}: ${r.written} model(s) added${r.already_held ? `, ${r.already_held} already held` : ""}${r.failed.length ? `, ${r.failed.length} failed` : ""}.`);
+                  await this.paintModelCatalogs(host, `${c.provider}: ${r.written} model(s) added${r.already_held ? `, ${r.already_held} already held` : ""}${r.failed.length ? `, ${r.failed.length} failed` : ""}${r.not_findable?.length ? `, ${r.not_findable.length} need findability review` : ""}.`
+                    + (r.failed.length ? ` Review before retrying: ${r.failed.slice(0, 3).map((f: any) => `${f.name}: ${f.error}`).join("; ")}` : ""));
                 } catch (e) { status.textContent = (e as Error).message; }
+                finally { if (button.isConnected) button.disabled = false; }
               } }, c.held ? "Adopt the rest" : "Adopt")
             : null))
           : h("p", { class: "dim" }, "No standard model catalogues are bundled with this install."),

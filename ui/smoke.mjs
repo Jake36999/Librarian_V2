@@ -42,12 +42,13 @@ await Promise.all([
   page.waitForResponse((r) => r.url().endsWith("/api/tiers") && r.request().method() === "POST"),
   page.click("#lib-models section:has-text('Local server') .card")]);
 // R10: no lead has completed the M0 suite yet, so leading asks for a recorded override.
-await page.waitForSelector("#lib-models >> text=has not completed the M0 completion suite");
+await page.waitForSelector("#lib-models >> text=has not completed the lead qualification suite");
 await Promise.all([
   page.waitForResponse((r) => r.url().endsWith("/api/tiers") && r.status() === 200),
   page.click("#lib-models button:has-text('Use it as lead anyway')")]);
 await page.waitForSelector("#lib-models .slot:first-child >> text=scripted-demo");
 await page.waitForSelector("#lib-models section:has-text('Local server') .card.sel");
+await page.waitForSelector("#lib-models .card.sel .readiness-chip >> text=lead: experimental");
 await page.click("#lib-models section:has-text('Local server') .card");
 await page.waitForSelector("#lib-models .toast >> text=is tier 1");
 await page.click("#lib-models section:has-text('Local server') .card", { button: "right" });
@@ -248,6 +249,8 @@ await expect(page.isVisible("dialog.settings .slot-embeddings >> text=none chose
 await expect(page.isVisible("dialog.settings .slot-embeddings button:has-text('Use a local model')"), "a local embedding model is one click");
 await page.click("dialog.settings .slot-ocr button:has-text('Choose…')");
 await page.waitForSelector("#lib-models >> text=Choose the OCR model");
+await expect(page.locator("#lib-models .readiness-chip").count().then(n => n === 0),
+  "service cards never borrow chat-role qualification");
 await page.click("#lib-models button:has-text('Show all')");
 await page.click("#lib-models .card:has-text('openai/gpt-oss-20b')");
 await page.waitForSelector("dialog.settings .slot-ocr >> text=openai/gpt-oss-20b");
@@ -255,6 +258,22 @@ step("service slot 4: OCR chosen through the model tile and kept with the librar
 await page.click("dialog.settings .slot-ocr", { button: "right" });
 await page.waitForSelector("dialog.settings .slot-ocr >> text=none chosen");
 step("right-click empties a service slot");
+
+// An exact custom host can be selected without adding it to preset provider
+// tiles. This is an assignment only; the smoke test makes no provider request.
+await page.fill("dialog.settings input[aria-label='New host id']", "smoke-vision");
+await page.fill("dialog.settings input[aria-label='New host display name']", "Smoke Vision");
+await page.fill("dialog.settings input[aria-label='New host base URL']", "http://127.0.0.1:11998/v1");
+await page.click("dialog.settings button:has-text('Add host')");
+await page.waitForSelector("dialog.settings .host-card:has-text('Smoke Vision')");
+await page.fill("dialog.settings input[aria-label='Model on Smoke Vision']", "custom-vision");
+await page.selectOption("dialog.settings select[aria-label='Service slot on Smoke Vision']", "ocr");
+await page.click("dialog.settings .host-card:has-text('Smoke Vision') button:has-text('Use for service')");
+await page.waitForSelector("dialog.settings .slot-ocr >> text=custom-vision");
+await expect(page.isVisible("dialog.settings .slot-ocr >> text=smoke-vision"), "the exact custom host is visible");
+await page.click("dialog.settings .slot-ocr", { button: "right" });
+await page.waitForSelector("dialog.settings .slot-ocr >> text=none chosen");
+step("custom service assignment stays explicit and uses the existing Connections controls");
 
 // Research Pipeline §6.1: project access is a person's switch, off by default.
 await page.click("dialog.settings [role=tab]:has-text('Projects')");
@@ -314,6 +333,18 @@ await page.keyboard.press("Enter");
 await page.waitForSelector(".search .tile >> text=acme - rowstream");
 await page.selectOption(".search select[aria-label='Search in']", "library");
 step("search: the work too - a staged source found by name");
+await page.route("**/api/tool/batch_status", (route) => route.fulfill({
+  status: 200, contentType: "application/json", body: JSON.stringify({
+    waiting: 0, status: "failed", run: "fixture-batch", detail: "review the changed source",
+    items: [{ id: "fixture", status: "processing" }],
+  }),
+}));
+await page.click(".lib-app nav button:has-text('Staging')");
+await page.waitForSelector(".batch-banner >> text=Batch processing stopped");
+await page.waitForSelector(".batch-banner button:has-text('Resume it')");
+await page.unroute("**/api/tool/batch_status");
+await page.click(".lib-app nav button:has-text('Chat')");
+step("a failed batch stays visible with explicit resume, not a silent success");
 await page.click(".lib-app nav button:has-text('Staging')");
 await page.click(".staging .item");
 await page.waitForSelector(".staging .evidence");
@@ -435,7 +466,10 @@ await page.click(".toolbar .tb:nth-child(4)");
 await page.waitForSelector("#lib-models section:has-text('DeepInfra') .card");
 await expect(page.isVisible("#lib-models .card:has-text('acme/no-tools-model') >> text=no tool calling"),
   "a profiled model shows its real specs, not 'unprofiled'");
-await page.click("#lib-models button:has-text('Clear selection')");    // start the gate check with no tier chosen
+await Promise.all([
+  page.waitForResponse((r) => r.url().endsWith("/api/tiers") && r.status() === 200),
+  page.click("#lib-models button:has-text('Clear selection')")]);
+await page.waitForSelector("#lib-models .slot:first-child >> text=not chosen");
 await page.click("#lib-models .card:has-text('acme/no-tools-model')");
 await page.waitForSelector("#lib-models .toast >> text=can't lead a session");
 await expect(page.locator("#lib-models .slot").first().innerText().then((t) => t.includes("not chosen")),
@@ -472,6 +506,21 @@ await page.selectOption(".staging select[aria-label='Which sources']", "staged")
 await page.waitForSelector(".staging .item:has-text('osquery (whole text read)')");
 await page.click(".staging .item:has-text('osquery (whole text read)')");
 await page.waitForSelector(".staging .detail >> text=A revision of an accepted note");
+await page.fill("#lib-bl", "My in-progress review wording");
+await expect(page.evaluate(async () => {
+  const token = document.querySelector("meta[name=librarian-token]")?.getAttribute("content") ?? "";
+  const r = await fetch("/api/tool/staging_flag", { method: "POST", headers: { "Content-Type": "application/json",
+    "X-Librarian-Token": token }, body: JSON.stringify({ arguments: { item_id: "rev-osquery",
+      sensitive: true, reason: "A concurrent review marked this item sensitive." } }) });
+  const out = await r.json();
+  return r.ok && !out.error && !out.refused;
+}), "a separate person action changes the staged item after review");
+await page.click(".staging .detail button:has-text('Accept')");
+await page.waitForSelector(".staging .detail >> text=changed after it was read");
+await expect(page.inputValue("#lib-bl").then((v) => v === "My in-progress review wording"),
+  "a stale review keeps the person's form edits and does not retry acceptance");
+await page.click(".staging .detail button:has-text('Reload item (discards form edits)')");
+await page.waitForSelector(".staging .detail >> text=A revision of an accepted note");
 await page.click(".staging .detail button:has-text('Accept')");
 await page.waitForSelector(".staging >> text=/Merged Claims into Sources\\/repository\\/osquery.md/");
 await expect(page.evaluate(async () => {
@@ -479,7 +528,7 @@ await expect(page.evaluate(async () => {
   const r = await fetch("/api/file?path=Sources/repository/osquery.md", { headers: { "X-Librarian-Token": token } });
   return r.ok && (await r.json()).text.includes("a fleet can query");
 }), "the revision's Claims are in the note");
-step("a staged revision of an accepted note: its banner, and Accept merges it");
+step("a staged revision: stale review refuses without losing form edits; explicit reload and Accept merge it");
 
 // (c) a document-level lens: drawn from the whole text; a probe answered elsewhere in it.
 await page.click(".staging .seg button:has-text('Lenses')");
@@ -514,6 +563,106 @@ await page.waitForFunction(async () => {
   return (out.sessions ?? []).some((s) => s.purpose === "learn" && s.status === "parked");
 }, null, { timeout: 20000 });
 step("the review-due action opens a parked learn session");
+
+// Taxonomy controls keep the existing review workflow, but never report a
+// refused refresh as success or accept a changed proposal without re-review.
+await page.keyboard.press("Escape");
+await page.route("**/api/tool/model_catalog_status", (route) => route.fulfill({ status: 200,
+  contentType: "application/json", body: JSON.stringify({ catalogues: [{ provider: "fixture-provider",
+    models: 2, held: 1, needs_attention: ["Incomplete fixture model"] }] }) }));
+await page.route("**/api/tool/model_catalog_adopt", (route) => route.fulfill({ status: 200,
+  contentType: "application/json", body: JSON.stringify({ provider: "fixture-provider", written: 0,
+    already_held: 1, failed: [{ name: "Conflicted fixture model", error: "Earlier writes remain; review before retrying" }] }) }));
+await page.click(".tb.icon");
+await page.click("dialog.settings [role=tab]:has-text('Library')");
+await page.waitForSelector("dialog.settings .model-catalogs >> text=Review incomplete/unfindable Source notes");
+await page.click("dialog.settings .model-catalogs button:has-text('Adopt the rest')");
+await page.waitForSelector("dialog.settings .model-catalogs >> text=Earlier writes remain; review before retrying");
+await page.unroute("**/api/tool/model_catalog_status");
+await page.unroute("**/api/tool/model_catalog_adopt");
+step("catalogue adoption surfaces incomplete Source notes and retained partial-write failures");
+await page.waitForSelector("dialog.settings input[aria-label='Topic name']");
+await page.route("**/api/tool/views_refresh", (route) => route.fulfill({ status: 200,
+  contentType: "application/json", body: JSON.stringify({ error: "refused", refused: "DOCUMENT_ACTIVE",
+    detail: "Active index edit (smoke)." }) }));
+await page.click("dialog.settings button:has-text('Rewrite indexes')");
+await page.waitForSelector("dialog.settings >> text=Active index edit (smoke).");
+await expect(page.isVisible("dialog.settings >> text=Indexes rewritten.").then((v) => !v),
+  "structured refusal must not be presented as rewritten indexes");
+await page.unroute("**/api/tool/views_refresh");
+await page.click("dialog.settings button:has-text('Rewrite indexes')");
+await page.waitForSelector("dialog.settings >> text=Indexes rewritten.");
+await page.fill("dialog.settings input[aria-label='Topic name']", "Smoke Topics Reviewed");
+await expect(page.evaluate(async () => {
+  const token = document.querySelector("meta[name=librarian-token]")?.getAttribute("content") ?? "";
+  const r = await fetch("/api/tool/staging_flag", { method: "POST", headers: { "Content-Type": "application/json",
+    "X-Librarian-Token": token }, body: JSON.stringify({ arguments: { item_id: "topic-smoke-safe",
+      sensitive: true, reason: "A concurrent reviewer changed this proposal." } }) });
+  const out = await r.json();
+  return r.ok && !out.error;
+}), "a topic proposal changes after Settings reviewed it");
+await page.click("dialog.settings .srv:has(input[aria-label='Topic name']) button:has-text('Accept')");
+await page.waitForSelector("dialog.settings >> text=changed after it was read");
+await expect(page.inputValue("dialog.settings input[aria-label='Topic name']").then((v) => v === "Smoke Topics Reviewed"),
+  "stale topic review keeps the edited name without silently retrying");
+await page.click("dialog.settings button:has-text('Reload topics (discards edits)')");
+await page.waitForSelector("dialog.settings input[aria-label='Topic name']");
+await page.fill("dialog.settings input[aria-label='Topic name']", "Smoke Topics Reviewed");
+const topicAcceptance = page.waitForResponse((r) => r.url().endsWith("/api/tool/staging_decide") && r.request().method() === "POST");
+await page.click("dialog.settings .srv:has(input[aria-label='Topic name']) button:has-text('Accept')");
+const topicOutcome = await (await topicAcceptance).json();
+await expect(!topicOutcome.error && topicOutcome.accepted === 1, `topic acceptance: ${JSON.stringify(topicOutcome)}`);
+await page.waitForSelector("dialog.settings >> text=Smoke Topics Reviewed (1)");
+await expect(page.isVisible("dialog.settings input[aria-label='Topic name']").then((v) => !v),
+  "accepted topic leaves the proposal list");
+await page.click("dialog.settings button:has-text('Close')");
+step("taxonomy: structured refresh refusal stays visible; stale proposal requires explicit reload before accepting");
+
+// Interrupted source acceptance never turns into automatic re-ingestion or a
+// blind retry. Only the UI response is mocked; no partial note is published.
+const partialSource = { id: "partial-fixture", name: "Partial Source", kind: "source", status: "staged",
+  file: "Project/docs/paper.pdf", evidence_text: "The retained source evidence.",
+  review: { draft: { status: "ok", bottom_line: "The approved wording." } },
+  promotion_progress: { source: { path: "Sources/repository/Partial Source.md" },
+    completed_paths: ["Sources/repository/files/paper.pdf", "Sources/repository/Partial Source.md"] } };
+let explicitFinishes = 0;
+await page.route("**/api/tool/staging_decide", (route) => {
+  explicitFinishes += 1;
+  return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+    accepted: 1, results: [{ id: partialSource.id, status: "accepted", coverage: "captured",
+      originals_retained: [partialSource.file], promotion: { catalogued: true },
+      handoff_warning: { status: "not_recorded", error: "SESSION_REQUIRED" } }] }) });
+});
+await page.route("**/api/tool/staging_list", (route) => route.fulfill({ status: 200,
+  contentType: "application/json", body: JSON.stringify({ total: 1, items: [partialSource] }) }));
+await page.route("**/api/tool/staging_show", (route) => route.fulfill({ status: 200,
+  contentType: "application/json", body: JSON.stringify(partialSource) }));
+await page.click(".lib-app nav button:has-text('Staging')");
+await page.click(".staging .seg button:has-text('Sources')");
+await page.waitForSelector(".staging .item:has-text('Partial Source')");
+await page.click(".staging .item:has-text('Partial Source')");
+await page.waitForSelector(".staging .detail button:has-text('Finish acceptance')");
+await expect(page.isVisible(".staging .detail label >> text=Bottom Line (previously approved; review it)"),
+  "retained person-authored text is not misattributed to the clerk");
+await expect(page.isVisible(".staging .detail >> text=Original attachments remain in place"),
+  "the retained originals and incomplete work are visible");
+await expect(page.isVisible(".staging .detail >> text=Rejecting or deferring does not undo"),
+  "deferral/rejection does not promise rollback");
+await expect(page.locator(".staging .detail button:has-text('Approve')").count().then((n) => n === 0),
+  "a partial promotion cannot be re-ingested");
+await expect(page.locator(".staging .detail button:has-text('Redraft')").count().then((n) => n === 0),
+  "the saved approved content is not silently redrafted");
+await expect(explicitFinishes === 0, "opening partial work never accepts it automatically");
+await page.click(".staging .detail button:has-text('Finish acceptance')");
+await page.waitForSelector(".staging .detail >> text=Session handoff was not recorded");
+await expect(explicitFinishes === 1, "only the deliberate finish sends an acceptance");
+await expect(page.isVisible(".staging .detail >> text=Attachments were copied; originals remain in place"),
+  "finishing retains original attachments and keeps a missing-session warning separate");
+await page.unroute("**/api/tool/staging_decide");
+await page.unroute("**/api/tool/staging_show");
+await page.unroute("**/api/tool/staging_list");
+await page.click(".lib-app nav button:has-text('Chat')");
+step("interrupted source acceptance shows retained originals, completed paths and an explicit finish action");
 
 // Phone width: nothing overflows sideways.
 await page.setViewportSize({ width: 390, height: 800 });

@@ -4,8 +4,24 @@ from pathlib import Path
 
 import pytest
 
+import resource_librarian
 from resource_librarian.init import init
 from resource_librarian.vault import Vault
+
+CHECKOUT_SRC = Path(__file__).resolve().parents[1] / "src"
+
+
+def pytest_configure(config):
+    """Refuse to test another checkout's code (BASE-02).
+
+    A stale editable install elsewhere on the machine made bare `pytest` import
+    a sibling clone (2026-10-24), so its results described different code.
+    """
+    imported = Path(resource_librarian.__file__).resolve()
+    if CHECKOUT_SRC not in imported.parents:
+        pytest.exit(f"tests imported resource_librarian from {imported.parent}, not this "
+                    f"checkout's {CHECKOUT_SRC}. Run `.venv\\Scripts\\python.exe -m pytest`, or "
+                    f"set PYTHONPATH=src.", returncode=4)
 
 
 @pytest.fixture(autouse=True)
@@ -117,3 +133,18 @@ def pdf_bytes(pages: list[list[str]]) -> bytes:
     out += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n" \
         .encode()
     return out
+
+
+def l1_probe_answer(model, arguments=None):
+    """A scripted route answering the two-step L1 probe (ADAPT-07): it proposes
+    the probe tool, then answers with the token the tool result carries."""
+    from resource_librarian.hosts import CONTINUATION_TOKEN
+    from resource_librarian.providers import Reply, ToolCall
+
+    def answer(_system, messages, _tools):
+        if messages and messages[-1].get("role") == "tool":
+            return Reply(text=f"The token is {CONTINUATION_TOKEN}.", model=model)
+        return Reply(tool_calls=[ToolCall("probe", "librarian_probe",
+                                          {"ok": True} if arguments is None else arguments)],
+                     model=model)
+    return answer

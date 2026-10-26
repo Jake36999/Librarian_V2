@@ -79,7 +79,7 @@ DEFAULT_CONFIG: dict[str, dict[str, Any]] = {
     # with no text layer - assigned, until a person chooses, the vision-capable model the
     # owner already runs as tier 3. An empty value means none: never a silent fallback.
     "services": {"ocr": "deepinfra:Qwen/Qwen3.5-397B-A17B", "ocr_format": "vision_chat",
-                 "tts": "deepinfra:hexgrad/Kokoro-82M"},
+                 "tts": "deepinfra:hexgrad/Kokoro-82M", "stt": ""},
     "scribe": {"provider": ""},
 }
 
@@ -153,13 +153,7 @@ class Vault:
         """The closed list of topics in `About/Topics.md`: its table's first
         column. A person adds a row to accept a topic; nothing else does."""
         path = self.root / "About" / "Topics.md"
-        found: list[str] = []
-        if path.is_file():
-            for line in path.read_text(encoding="utf-8").splitlines():
-                m = TOPIC_ROW.match(line.strip())
-                if m and m.group(1).lower() != "topic" and not set(m.group(1)) <= set("-: "):
-                    found.append(m.group(1))
-        return list(dict.fromkeys(found)) or [UNFILED]
+        return topics_in(path.read_text(encoding="utf-8") if path.is_file() else "")
 
     # -- identity -------------------------------------------------------------
     def exists(self) -> bool:
@@ -233,6 +227,16 @@ class Vault:
                 temp.unlink()
             except OSError:
                 pass
+
+
+def topics_in(text: str) -> list[str]:
+    """The closed taxonomy from one byte-consistent document snapshot."""
+    found = []
+    for line in text.splitlines():
+        m = TOPIC_ROW.match(line.strip())
+        if m and m.group(1).lower() != "topic" and not set(m.group(1)) <= set("-: "):
+            found.append(m.group(1))
+    return list(dict.fromkeys(found)) or [UNFILED]
 
 
 def render_config(config: dict[str, dict[str, Any]]) -> str:

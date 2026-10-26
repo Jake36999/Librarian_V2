@@ -119,11 +119,12 @@ def test_an_adopted_lens_reaches_the_prompt_until_dropped(vault, thread):
     assert ADOPTED_LENSES not in loop.system_prompt()
     person = Context(tier="curate", vault=vault, session=ctx.session)
     call(vault, "lens_adopt", ctx=person, lens_id=lens_id)
-    prompt = loop.system_prompt()
+    prompt = loop.library_context()
     assert ADOPTED_LENSES in prompt and "find the first broken contract" in prompt
     assert "Not when: a single-function bug" in prompt and "which contract broke first?" in prompt
-    call(vault, "lens_drop", ctx=ctx, lens_id=lens_id)            # the model may drop one
     assert ADOPTED_LENSES not in loop.system_prompt()
+    call(vault, "lens_drop", ctx=ctx, lens_id=lens_id)            # the model may drop one
+    assert ADOPTED_LENSES not in loop.library_context()
 
 
 def test_adoption_is_capped_and_costs_the_model_nothing(vault, thread):

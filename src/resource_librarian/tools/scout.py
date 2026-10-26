@@ -4,7 +4,7 @@ from __future__ import annotations
 from .. import scout
 from ..registry import Card, Context, tool
 from .intake import _fetcher
-from .library import engine_for
+from .library import IndexGateway
 from .staging import clerk_endpoint
 
 
@@ -59,7 +59,8 @@ def cohort_reviewed(ctx: Context, cohort_id: str) -> dict:
                 "Refused until both gates pass (SWEEP_GATED); stops when a run of candidates "
                 "brings nothing new; stages only"))
 def sweep(ctx: Context, limit: int = 10) -> dict:
-    return scout.sweep(ctx.vault, engine_for(ctx), clerk_endpoint(ctx), _fetcher(ctx), limit)
+    return scout.sweep(ctx.vault, None, clerk_endpoint(ctx), _fetcher(ctx), limit,
+                       index_call=IndexGateway(ctx).run)
 
 
 @tool("record_trace", tier="contribute", effect="write", scope="session",

@@ -74,8 +74,9 @@ class EvidenceStore:
     def _path(self, kind: str, record_id: str) -> Path:
         return self.vault.evidence / kind / f"{record_id}.json"
 
-    def put(self, kind: str, source: str, payload: dict[str, Any],
-            fetched_at: str | None = None) -> Record:
+    def prepare(self, kind: str, source: str, payload: dict[str, Any],
+                fetched_at: str | None = None) -> Record:
+        """Validate and identify evidence without creating any files."""
         if kind not in KINDS:
             raise ValueError(f"evidence kind {kind!r} is not one of {KINDS}")
         if not str(source).strip():
@@ -87,8 +88,12 @@ class EvidenceStore:
                           f"fetched belongs here; why it was fetched belongs in the session.")
         fetched_at = fetched_at or now_iso()
         record_id = hashlib.sha256(_canonical(kind, source, fetched_at, payload)).hexdigest()[:32]
-        path = self._path(kind, record_id)
-        record = Record(record_id, kind, source, fetched_at, payload)
+        return Record(record_id, kind, source, fetched_at, payload)
+
+    def put(self, kind: str, source: str, payload: dict[str, Any],
+            fetched_at: str | None = None) -> Record:
+        record = self.prepare(kind, source, payload, fetched_at)
+        path = self._path(record.kind, record.id)
         if not path.exists():
             path.parent.mkdir(parents=True, exist_ok=True)
             atomic_write_text(path, json.dumps(record.to_dict(), ensure_ascii=False, indent=1))

@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "pack_id": "librarian-core-protocol-expectations",
+  "records": [
+    {
+      "id": "core-legacy-openai-chat",
+      "version": "1",
+      "status": "reviewed",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "*",
+      "host_id_or_family": "*",
+      "capabilities": {
+        "tool_use": "unknown",
+        "tool_results": "unknown",
+        "system_message": "unknown",
+        "structured_output": "unknown",
+        "streaming": "unknown",
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": ["provider_default"],
+      "source_url": "https://developers.openai.com/api/docs/guides/function-calling",
+      "source_revision": "protocol-baseline-2026-10-23"
+    },
+    {
+      "id": "core-legacy-anthropic-messages",
+      "version": "1",
+      "status": "reviewed",
+      "protocol": "anthropic",
+      "adapter_id": "legacy_anthropic_messages",
+      "adapter_abi": 1,
+      "model_id": "*",
+      "host_id_or_family": "*",
+      "capabilities": {
+        "tool_use": "unknown",
+        "tool_results": "unknown",
+        "system_message": "unknown",
+        "structured_output": "unknown",
+        "streaming": "unknown",
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": ["provider_default"],
+      "source_url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview",
+      "source_revision": "protocol-baseline-2026-10-23"
+    },
+    {
+      "id": "core-legacy-provider-chat",
+      "version": "1",
+      "status": "reviewed",
+      "protocol": "legacy",
+      "adapter_id": "legacy_provider_chat",
+      "adapter_abi": 1,
+      "model_id": "*",
+      "host_id_or_family": "*",
+      "capabilities": {
+        "tool_use": "unknown",
+        "tool_results": "unknown",
+        "system_message": "unknown",
+        "structured_output": "unknown",
+        "streaming": "unknown",
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": ["provider_default"],
+      "source_url": "https://huggingface.co/docs/transformers/chat_templating_writing",
+      "source_revision": "protocol-baseline-2026-10-23"
+    },
+    {
+      "id": "deepinfra-mimo-v26-flash-lead-l1",
+      "version": "2026-10-23",
+      "status": "reviewed",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "XiaomiMiMo/MiMo-V2.6-Flash",
+      "host_id_or_family": "preset-deepinfra",
+      "capabilities": {
+        "tool_use": "true",
+        "tool_results": "true",
+        "system_message": "true",
+        "structured_output": "unknown",
+        "streaming": "unknown",
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": ["provider_default"],
+      "source_url": "https://deepinfra.com/XiaomiMiMo/MiMo-V2.6-Flash/api",
+      "source_revision": "official-api-page-and-v2-l1-lead-walk-2026-10-22"
+    },
+    {
+      "id": "deepinfra-deepseek-v41-flash-lead-l1",
+      "version": "2026-10-23",
+      "status": "reviewed",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "deepseek-ai/DeepSeek-V4.1-Flash",
+      "host_id_or_family": "preset-deepinfra",
+      "capabilities": {
+        "tool_use": "true",
+        "tool_results": "true",
+        "system_message": "true",
+        "structured_output": "unknown",
+        "streaming": "unknown",
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": ["provider_default"],
+      "source_url": "https://deepinfra.com/blog/deepseek-v4-1-flash-model-overview-integration",
+      "source_revision": "official-integration-guide-and-v2-l1-lead-walk-2026-10-22"
+    },
+    {
+      "id": "deepinfra-deepseek-v4-flash-0731-research",
+      "version": "2026-10-23",
+      "status": "draft",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "deepseek-ai/DeepSeek-V4-Flash-0731",
+      "host_id_or_family": "preset-deepinfra",
+      "capabilities": {
+        "tool_use": "unknown",
+        "tool_results": "unknown",
+        "system_message": "unknown",
+        "structured_output": "unknown",
+        "streaming": "unknown",
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": ["provider_default"],
+      "source_url": "https://deepinfra.com/deepseek-ai/DeepSeek-V4-Flash-0731",
+      "source_revision": "curated-role-register-2026-10-23; endpoint-l1-required"
+    },
+    {
+      "id": "deepinfra-glm-53-flash-research",
+      "version": "2026-10-23",
+      "status": "draft",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "zai-org/GLM-5.3-Flash",
+      "host_id_or_family": "preset-deepinfra",
+      "capabilities": {
+        "tool_use": "unknown",
+        "tool_results": "unknown",
+        "system_message": "unknown",
+        "structured_output": "unknown",
+        "streaming": "unknown",
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": ["provider_default"],
+      "source_url": "https://deepinfra.com/blog/glm-5-3-flash-documentation-integration-guide",
+      "source_revision": "official-integration-guide-2026-10-22; endpoint-l1-required"
+    },
+    {
+      "id": "deepinfra-qwen3-coder-turbo-research",
+      "version": "2026-10-23",
+      "status": "draft",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+      "host_id_or_family": "preset-deepinfra",
+      "capabilities": {
+        "tool_use": "unknown",
+        "tool_results": "unknown",
+        "system_message": "unknown",
+        "structured_output": "unknown",
+        "streaming": "unknown",
+        "native_reasoning": "false"
+      },
+      "behavior_modes": ["provider_default"],
+      "source_url": "https://huggingface.co/Qwen/Qwen3-Coder-480B-A35B-Instruct",
+      "source_revision": "official-model-card-2026-10-23; endpoint-l1-required"
+    },
+    {
+      "id": "deepinfra-seed-20-code-research",
+      "version": "2026-10-23",
+      "status": "draft",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "ByteDance/Seed-2.0-code",
+      "host_id_or_family": "preset-deepinfra",
+      "capabilities": {
+        "tool_use": "unknown",
+        "tool_results": "unknown",
+        "system_message": "unknown",
+        "structured_output": "false",
+        "streaming": "unknown",
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": ["provider_default"],
+      "source_url": "https://deepinfra.com/ByteDance/Seed-2.0-code",
+      "source_revision": "provider-page-plus-prior-schema-rejection-observation-2026-10-23"
+    },
+    {
+      "id": "deepinfra-gpt-oss-20b-research",
+      "version": "2026-10-23",
+      "status": "draft",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "openai/gpt-oss-20b",
+      "host_id_or_family": "preset-deepinfra",
+      "capabilities": {
+        "tool_use": "unknown",
+        "tool_results": "unknown",
+        "system_message": "unknown",
+        "structured_output": "unknown",
+        "streaming": "unknown",
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": ["provider_default"],
+      "source_url": "https://developers.openai.com/cookbook/articles/openai-harmony",
+      "source_revision": "official-harmony-contract-2026-10-23; hosted-mapping-l1-required"
+    },
+    {
+      "id": "deepinfra-gpt-oss-120b-research",
+      "version": "2026-10-23",
+      "status": "draft",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "openai/gpt-oss-120b",
+      "host_id_or_family": "preset-deepinfra",
+      "capabilities": {
+        "tool_use": "unknown",
+        "tool_results": "unknown",
+        "system_message": "unknown",
+        "structured_output": "unknown",
+        "streaming": "unknown",
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": ["provider_default"],
+      "source_url": "https://developers.openai.com/cookbook/articles/openai-harmony",
+      "source_revision": "official-harmony-contract-2026-10-23; hosted-mapping-l1-required"
+    },
+    {
+      "id": "deepinfra-qwen3-32b-research",
+      "version": "2026-10-23",
+      "status": "draft",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "Qwen/Qwen3-32B",
+      "host_id_or_family": "preset-deepinfra",
+      "capabilities": {
+        "tool_use": "unknown",
+        "tool_results": "unknown",
+        "system_message": "unknown",
+        "structured_output": "unknown",
+        "streaming": "unknown",
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": ["provider_default"],
+      "source_url": "https://huggingface.co/Qwen/Qwen3-32B",
+      "source_revision": "official-model-card-2026-10-23; hosted-thinking-and-tools-l1-required"
+    },
+    {
+      "id": "deepinfra-nemotron3-nano-research",
+      "version": "2026-10-23",
+      "status": "draft",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "nvidia/Nemotron-3-Nano-30B-A3B",
+      "host_id_or_family": "preset-deepinfra",
+      "capabilities": {
+        "tool_use": "unknown",
+        "tool_results": "unknown",
+        "system_message": "unknown",
+        "structured_output": "unknown",
+        "streaming": "unknown",
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": ["provider_default"],
+      "source_url": "https://deepinfra.com/nvidia/Nemotron-3-Nano-30B-A3B",
+      "source_revision": "provider-page-2026-10-23; endpoint-l1-required"
+    }
+  ]
+}

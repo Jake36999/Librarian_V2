@@ -18,11 +18,13 @@ from __future__ import annotations
 
 import math
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 from .session import SessionStore
+from .file_access import file_access
 from .vault import Vault, now_iso
 
 HALF_LIFE_DAYS = 7.0
@@ -69,12 +71,23 @@ class DeskStore:
         self.vault = vault
         self.path = vault.librarian / "desk.sqlite"
 
-    def _conn(self) -> sqlite3.Connection:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(self.path)
-        conn.row_factory = sqlite3.Row
-        conn.executescript(SCHEMA)
-        return conn
+    @contextmanager
+    def _conn(self) -> Iterator[sqlite3.Connection]:
+        conn = None
+        try:
+            # Serialize schema setup, not reads or whole user operations.
+            # A sqlite connection's transaction context does not close it.
+            with file_access(self.path):
+                self.path.parent.mkdir(parents=True, exist_ok=True)
+                conn = sqlite3.connect(self.path, timeout=5)
+                conn.row_factory = sqlite3.Row
+                conn.execute("PRAGMA busy_timeout=5000")
+                conn.executescript(SCHEMA)
+            with conn:
+                yield conn
+        finally:
+            if conn is not None:
+                conn.close()
 
     def pin(self, project: str, note: str) -> None:
         with self._conn() as conn:
