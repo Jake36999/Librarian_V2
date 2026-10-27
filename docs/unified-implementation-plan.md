@@ -660,7 +660,7 @@ linked record says so.
 | CORE-05 / INDEX-03/04 mixed-kind acceptance | partial | `87e2460` | [Mixed-kind/multi-topic acceptance](#mixed-kindmulti-topic-acceptance-2026-10-25). |
 | Watcher read-failure recovery | implemented | `89e609d` | [Watcher read-failure recovery](#watcher-read-failure-recovery-2026-10-25). |
 | INDEX-04 serving gateway and file-access exclusion | implemented | `ded98c0`, `d31cda5`, `e40a4a6` | [INDEX-04 serving gateway and Windows read exclusion](#index-04-serving-gateway-and-windows-read-exclusion-2026-10-25). |
-| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), and the [latest validation report](../reports/2026-10-27-index05-host-force-stop.md). |
+| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8`, `ae00300` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), [scale/sustained continuation](#index-05-large-vault-and-sustained-traffic-continuation-2026-10-27), and the [latest validation report](../reports/2026-10-27-index05-scale-sustained.md). |
 
 Unless an artifact is explicitly archived elsewhere, a `tmp/...` path cited
 below is an untracked local log from the originating worktree. It is a pointer
@@ -1298,10 +1298,11 @@ Core boundary. The combined focused suite passed **184 tests**. Frozen-source
 full verification passed **1,417 tests, 2 skipped, 1 deselected in 472.12s**.
 No paid provider call, route requalification or push occurred.
 
-The next blocking gate remains **INDEX-05/G1**: sustained/large-vault and
-packaged Windows contention, simultaneous adapters, external handles, the
-supported-Python matrix and packaged-install evidence. Authenticated Host
-force-stop under mixed traffic was completed in `84b90a8`.
+The next blocking gate remains **INDEX-05/G1**: packaged Windows contention,
+simultaneous real adapters, unsupported external handles, large attachments
+and encoder writer occupancy, the supported-Python matrix and packaged-install
+evidence. Authenticated Host force-stop was completed in `84b90a8`; bounded
+large-vault and sustained native-Core traffic was completed in `ae00300`.
 After G1, the next product wave is safe directory deployment (DEPLOY-01 onward),
 followed by the Session-based harness, integrated acceptance and release
 evidence. CORE-04B remains an optional managed-MCP bootstrap rather than a
@@ -1410,3 +1411,37 @@ in the [Host force-stop report](../reports/2026-10-27-index05-host-force-stop.md
 INDEX-05/G1 remains partial. Sustained/large-vault traffic, simultaneous real
 adapters, unsupported external handles, encoder writer occupancy, the
 supported-Python matrix and clean packaged-install evidence remain outstanding.
+
+### INDEX-05 large-vault and sustained-traffic continuation (2026-10-27)
+
+Commit `ae00300` closes the bounded Markdown scale and sustained native-Core
+traffic portions without closing INDEX-05/G1. Two explicit slow fixtures keep
+machine speed as characterization data rather than a release threshold.
+
+The large-vault fixture builds 5,000 notes / 24,190,000 bytes. It verifies an
+exact initial build, zero payload snapshots on a stable refresh, and exact
+incremental work for 50 modifications, 25 renames and 25 deletions. A second
+stable refresh again performs zero payload reads. Index paths, normalized
+hashes and nanosecond/native-identity metadata match the filesystem; SQLite is
+integral and outside a transaction; child tables have no orphans; and the one
+IndexService worker, instance, queue and connection close cleanly.
+
+The sustained fixture runs 30 two-barrier rounds across six workers and 750
+seed notes: Browser/person and MCP writes, same-size restored-mtime replacement
+plus rename/delete/create, Obsidian heartbeat/edit/release, search/index-status
+reads and refresh/checkpoint maintenance. All 180 iterations converge to 820
+final notes with one index connection, 30 checkpoints, complete operation
+records, no surviving document lease and successful post-stop vault-lease
+acquisition. The real loopback HTTP contracts are exercised; separate packaged
+adapter processes are not claimed. Brief Windows sharing conflicts have a
+bounded measured retry; the final run needed none.
+
+The final sequential slow group passed **2 tests in 110.81s**. The default
+focused companion passed **18 tests, 2 deselected in 17.82s**. Frozen-source
+default verification passed **1,439 tests, 2 skipped, 3 deselected in 481.36s
+(8m01s)**. Exact metrics, review corrections and environmental disclosure are
+in the [scale/sustained report](../reports/2026-10-27-index05-scale-sustained.md).
+
+INDEX-05/G1 remains partial. Simultaneous packaged real adapters, unsupported
+long-lived external handles, large attachments and encoder writer occupancy,
+the supported-Python matrix and clean packaged-install evidence remain.
