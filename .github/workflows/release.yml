@@ -50,6 +50,16 @@ jobs:
             -Python python `
             -Wheel $wheels[0].FullName `
             -WorkRoot (Join-Path $env:RUNNER_TEMP "librarian-candidate-wheel-smoke")
+      - name: Smoke candidate packaged adapters
+        shell: pwsh
+        run: |
+          $wheel = @(Get-ChildItem -LiteralPath release-out/core -Filter *.whl -File)
+          if ($wheel.Count -ne 1) { throw "Expected exactly one candidate Core wheel." }
+          ./scripts/smoke-packaged-adapters.ps1 `
+            -Python python `
+            -Wheel $wheel[0].FullName `
+            -CoworkZip (Resolve-Path release-out/cowork/librarian-cowork.zip).Path `
+            -WorkRoot (Join-Path $env:RUNNER_TEMP "librarian-candidate-packaged-adapters")
       - name: Upload non-installable candidate bundle
         uses: actions/upload-artifact@v4
         with:
@@ -90,6 +100,17 @@ jobs:
             -Python python `
             -Wheel $wheels[0].FullName `
             -WorkRoot (Join-Path $env:RUNNER_TEMP "librarian-stable-wheel-smoke") `
+            -Wheelhouse (Resolve-Path -LiteralPath release-out/wheelhouse).Path
+      - name: Smoke stable packaged adapters
+        shell: pwsh
+        run: |
+          $wheel = @(Get-ChildItem -LiteralPath release-out/core -Filter *.whl -File)
+          if ($wheel.Count -ne 1) { throw "Expected exactly one stable Core wheel." }
+          ./scripts/smoke-packaged-adapters.ps1 `
+            -Python python `
+            -Wheel $wheel[0].FullName `
+            -CoworkZip (Resolve-Path release-out/cowork/librarian-cowork.zip).Path `
+            -WorkRoot (Join-Path $env:RUNNER_TEMP "librarian-stable-packaged-adapters") `
             -Wheelhouse (Resolve-Path -LiteralPath release-out/wheelhouse).Path
       - name: Import protected signing certificate
         id: signing

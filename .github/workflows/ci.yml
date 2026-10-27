@@ -51,6 +51,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
       - name: Build browser UI from lockfile
         working-directory: ui
         run: |
@@ -61,3 +64,18 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm run build
+      - name: Build packaged adapter artifacts
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -e ".[dev]" build
+          ./scripts/build-release.ps1 -Python python -OutDir adapter-release-out -SkipTests -SkipUi
+      - name: Smoke packaged Browser and Cowork together
+        shell: pwsh
+        run: |
+          $wheel = @(Get-ChildItem -LiteralPath adapter-release-out/core -Filter *.whl -File)
+          if ($wheel.Count -ne 1) { throw "Expected exactly one Core wheel." }
+          ./scripts/smoke-packaged-adapters.ps1 `
+            -Python python `
+            -Wheel $wheel[0].FullName `
+            -CoworkZip (Resolve-Path adapter-release-out/cowork/librarian-cowork.zip).Path `
+            -WorkRoot (Join-Path $env:RUNNER_TEMP "librarian-packaged-adapters")
