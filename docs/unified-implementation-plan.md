@@ -660,7 +660,7 @@ linked record says so.
 | CORE-05 / INDEX-03/04 mixed-kind acceptance | partial | `87e2460` | [Mixed-kind/multi-topic acceptance](#mixed-kindmulti-topic-acceptance-2026-10-25). |
 | Watcher read-failure recovery | implemented | `89e609d` | [Watcher read-failure recovery](#watcher-read-failure-recovery-2026-10-25). |
 | INDEX-04 serving gateway and file-access exclusion | implemented | `ded98c0`, `d31cda5`, `e40a4a6` | [INDEX-04 serving gateway and Windows read exclusion](#index-04-serving-gateway-and-windows-read-exclusion-2026-10-25). |
-| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8`, `ae00300`, `bcf687a`, `6fb2389` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), [scale/sustained continuation](#index-05-large-vault-and-sustained-traffic-continuation-2026-10-27), [packaged-adapter prerequisite continuation](#index-05-packaged-adapter-prerequisite-continuation-2026-10-27), [clean installed-wheel continuation](#index-05-clean-installed-wheel-continuation-2026-10-27), and the [latest validation report](../reports/2026-10-27-index05-installed-wheel-smoke.md). |
+| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8`, `ae00300`, `bcf687a`, `6fb2389`, `788540e` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), [scale/sustained continuation](#index-05-large-vault-and-sustained-traffic-continuation-2026-10-27), [packaged-adapter prerequisite continuation](#index-05-packaged-adapter-prerequisite-continuation-2026-10-27), [clean installed-wheel continuation](#index-05-clean-installed-wheel-continuation-2026-10-27), [packaged Browser/Cowork continuation](#index-05-packaged-browsercowork-continuation-2026-10-27), and the [latest validation report](../reports/2026-10-27-index05-packaged-adapters.md). |
 
 Unless an artifact is explicitly archived elsewhere, a `tmp/...` path cited
 below is an untracked local log from the originating worktree. It is a pointer
@@ -1512,3 +1512,33 @@ INDEX-05/G1 remains partial. Python 3.12/3.13 execution evidence, simultaneous
 packaged Browser/Cowork hosts, real Obsidian, a signed stable bundle,
 unsupported long-lived external handles, large attachments and encoder writer
 occupancy remain open.
+
+### INDEX-05 packaged Browser/Cowork continuation (2026-10-27)
+
+Commit `788540e` adds simultaneous packaged-adapter acceptance without
+claiming the external host applications. A fresh environment installs the
+exact candidate wheel, safely extracts the actual Cowork ZIP and validates its
+root `.mcp.json`. The declared `resource-librarian mcp --tier contribute`
+command must resolve inside that isolated environment before it is executed.
+
+An installed Edge page renders the UI served from the wheel, completes startup
+API calls and drives a read-only Search. It then remains connected while the
+packaged Cowork command lists **140 tools** and calls read-only `vault_status`
+through the same installed Core. After MCP completes, that same page rechecks
+authenticated metadata. The harness observes exactly one Core and finishes
+with an authenticated graceful stop, no lease metadata and no discovery
+record. The page token is environment-only and is removed before the browser
+child launches.
+
+Node, PowerShell and workflow-YAML syntax checks passed. The combined fast
+contracts passed **11 tests in 0.21s**, and the normal-host Browser/Cowork/Host
+focused group passed **44 tests in 27.06s**. Frozen-source default verification
+result: **1,464 passed, 2 skipped, 3 deselected in 500.98s (8m20s)** against
+implementation commit `788540e`.
+Exact commands and boundaries are in the
+[packaged-adapter report](../reports/2026-10-27-index05-packaged-adapters.md).
+
+INDEX-05/G1 remains partial. Hosted CI execution, Python 3.12/3.13 runtime
+evidence, the real Claude/Cowork host UI, real Obsidian, a signed stable
+bundle, unsupported long-lived external handles, large attachments and encoder
+writer occupancy remain open.

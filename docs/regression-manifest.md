@@ -488,3 +488,46 @@ This packet does not prove Python 3.12/3.13 execution, real Browser UI
 automation, the Claude/Cowork host UI, real Obsidian, or a signed bundle.
 External handles, large attachments and encoder writer occupancy remain open.
 See the [installed-wheel report](../reports/2026-10-27-index05-installed-wheel-smoke.md).
+
+INDEX-05 packaged Browser/Cowork continuation (`788540e`):
+
+```powershell
+node --check ui\packaged-smoke.mjs
+& .\.venv\Scripts\python.exe -m pytest -q tests\test_packaged_adapter_smoke.py tests\test_installed_wheel_smoke.py -p no:cacheprovider
+& .\.venv\Scripts\python.exe -m pytest -q tests\test_packaged_adapter_smoke.py tests\test_installed_wheel_smoke.py tests\test_release_versions.py tests\test_host_lifecycle.py tests\test_mcp.py tests\test_source_identity.py -p no:cacheprovider -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=90
+```
+
+The combined fast contracts passed **11 tests in 0.21s**. The relevant
+normal-host group passed **44 tests in 27.06s**. PowerShell AST and both changed
+workflow-YAML parses also passed.
+
+```powershell
+& .\scripts\smoke-packaged-adapters.ps1 `
+  -Python .\.venv\Scripts\python.exe `
+  -Wheel tmp\release-prereq-check-host-20261027\core\resource_librarian-2.1.0.dev0-py3-none-any.whl `
+  -CoworkZip tmp\release-prereq-check-host-20261027\cowork\librarian-cowork.zip `
+  -WorkRoot C:\Users\jakem\AppData\Local\Temp\librarian-packaged-adapters-root-review-02
+```
+
+The independent fresh-venv replay passed with a real installed Edge page held
+open while the command from the actual Cowork ZIP resolved inside the venv,
+listed **140 MCP tools** and called `vault_status` through the shared installed
+Core. The same browser rechecked the API afterwards; one Core then stopped
+without lease or discovery residue. The token used only environment state and
+was deleted before launching the browser child.
+
+Frozen-source default verification:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=90
+```
+
+Result against implementation commit `788540e`: **1,464 passed, 2 skipped, 3
+deselected in 500.98s (8m20s)**.
+
+The configured Python 3.13 adapter and candidate/stable release jobs have not
+run in hosted CI. This is packaged protocol/runtime evidence, not execution in
+the real Claude/Cowork host UI or Obsidian. Python 3.12/3.13 runtime evidence,
+a signed bundle, external handles, large attachments and encoder occupancy
+remain open. See the
+[packaged-adapter report](../reports/2026-10-27-index05-packaged-adapters.md).
