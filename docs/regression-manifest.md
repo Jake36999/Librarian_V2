@@ -41,9 +41,9 @@ and expected boundary explicit.
 | INDEX-03 | partial | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_core_index_service.py tests/test_sqlite_ownership.py tests/test_authoring.py tests/test_sessions.py tests/test_review_gate.py tests/test_offering_view.py tests/test_learn.py tests/test_start_pursuit.py tests/test_weekly_review.py tests/test_pursuits.py` | Interleaved work receives copied data only from Core-owned SQLite; Markdown/session mutations remain on writer; Clerk/Scribe IO releases index worker; changed schemas refresh before validation. | Serving-path debt 33 → 17; further promotion batches and Windows stress remain. | `2e95158`, `86941d3`; final combined suite 1,039 passed, 2 skipped, 1 deselected. |
 | Macro writer-wait follow-up | implemented | `& .\.venv\Scripts\python.exe -m pytest -q tests/test_macro_permissions.py tests/test_person_waits.py tests/test_registry.py`; full browser smoke | Ask-mode waits never own the writer; explicit Deny/Plan still hold; partial work stays durable; external tools cannot opt out of writer serialization. | Automatic macro resume is not claimed. | `5b3be1f`; expanded focused group: 116 passed; final combined suite: 1,039 passed, 2 skipped, 1 deselected; browser smoke passed. |
 | INDEX-04 serving gateway/pack boundary | implemented | `tests/test_index_ownership_runtime.py`, `tests/test_sqlite_ownership.py`, coordinated Core fixtures | A missing/closed/foreign service cannot open a direct fallback; graph/extract offline use is explicit; serving debt is zero. | Low-level offline compatibility remains; not an arbitrary-Python sandbox. | `ded98c0`, `d31cda5`; combined focused: 381 passed, 45 new ownership checks; UI build/smoke passed; full: 1,284 passed, 2 skipped, 1 deselected. |
-| INDEX-05 | partial | `tests/test_core_concurrency.py`, `tests/test_auxiliary_store_lifecycle.py`, `tests/test_index_snapshot_consistency.py`, coordinated read/write/WAL/editor/store fixtures | Bounded native Core API stress preserves state, one index owner and closed auxiliary handles; active-handle snapshots reject changing bytes; same-size replacements are caught; rename/delete reconciliation is attempted for up to three passes and reports non-convergence; stale component rows are removed. | Sustained/large-vault, crash/stop mixed traffic, real adapters, external handles and packaged matrix remain. | `f11e98d`, `74c6081`; latest packet: 9 snapshot checks, 310 combined passed; full: 1,435 passed, 2 skipped, 1 deselected; [report](../reports/2026-10-26-index05-snapshot-continuation.md). |
-| Extract reviewed-plan pinning | implemented | `tests/test_extract_pinning.py`, extract/upkeep fixtures | Registered-tool materialization requires one reviewed survey tree revision and a deterministic token for the exact recomputed plan before network access. | Direct Python compatibility may omit both explicit pins together but still uses its internally derived pins; network/provider qualification is separate. | `74c6081`; included in 68 dedicated, 310 combined and 1,435 full-suite passes; [report](../reports/2026-10-26-index05-snapshot-continuation.md). |
-| Fresh-rejection quarantine safety | implemented | `tests/test_staging.py`, `tests/test_staging_safety.py`, `tests/test_model_expectation_authoring.py` | Rejection WriteIntent/preflight binds a collision-safe quarantine target and complete/partial attachment fingerprints; changed inputs refuse; older records and source attachments are retained. | Hard-crash exactly-once quarantine is not claimed; encoder IO still occupies an enclosing writer call. | `74c6081`; included in 68 dedicated, 310 combined and 1,435 full-suite passes; [report](../reports/2026-10-26-index05-snapshot-continuation.md). |
+| INDEX-05 | partial | `tests/test_core_concurrency.py`, `tests/test_auxiliary_store_lifecycle.py`, `tests/test_index_snapshot_consistency.py`, `tests/test_core_process_interruption.py`, coordinated read/write/WAL/editor/store fixtures | Bounded native Core API stress preserves state and ownership; active-handle snapshots catch replacements and report bounded non-convergence; a real child crash retains ambiguous applied work, rolls back uncommitted WAL state, requires explicit stale-lease takeover, creates one non-replaying recovery checkpoint and restores index/Markdown convergence. | Sustained/large-vault traffic, authenticated Host force-stop, real adapters, external handles and packaged/Python matrix remain. | `f11e98d`, `74c6081`, `2e9df4a`, `f3b0508`; crash repeated 5 times; 66 focused passed; full: 1,438 passed, 2 skipped, 1 deselected; [report](../reports/2026-10-27-index05-process-interruption.md). |
+| Extract reviewed-plan pinning | implemented | `tests/test_extract_pinning.py`, extract/upkeep fixtures | Registered-tool materialization requires one reviewed survey tree revision and a deterministic token for the exact recomputed plan before network access. | Direct Python compatibility may omit both explicit pins together but still uses its internally derived pins; network/provider qualification is separate. | `74c6081`; included in 69 dedicated, 310 combined and 1,435 full-suite passes; [report](../reports/2026-10-26-index05-snapshot-continuation.md). |
+| Fresh-rejection quarantine safety | implemented | `tests/test_staging.py`, `tests/test_staging_safety.py`, `tests/test_model_expectation_authoring.py` | Rejection WriteIntent/preflight binds a collision-safe quarantine target and complete/partial attachment fingerprints; changed inputs refuse; older records and source attachments are retained. | Hard-crash exactly-once quarantine is not claimed; encoder IO still occupies an enclosing writer call. | `74c6081`; included in 69 dedicated, 310 combined and 1,435 full-suite passes; [report](../reports/2026-10-26-index05-snapshot-continuation.md). |
 | Core fingerprint/replacement exclusion | implemented | `tests/test_file_access.py` plus watcher/authoring/staging fixtures | A Core fingerprint closes before same-path atomic replacement; unrelated notes stay writable; external access errors remain visible. | Native Windows baseline; no mutation retry, global/editor lock, or bounded large-file hash claim. | `e40a4a6`; 7 new checks; combined focused: 381 passed; full: 1,284 passed, 2 skipped, 1 deselected. |
 | CORE-05 / INDEX-03/04 mixed acceptance | partial | `tests/test_core_mixed_acceptance.py` plus source/staging/taxonomy/revisions/ownership/recovery fixtures; UI build/smoke | Approved footprint bounds ordered replanning; earlier rows/prose survive; interrupted primaries cannot be modified; no direct staging engine. | Runtime enforcement, Windows/desk/lens stress, quarantine and rehash costs remain open. | `87e2460`; 185 focused passed, 27 new checks; UI build/smoke passed; full: 1,215 passed, 2 skipped, 1 deselected; static debt 3 → 2. |
 | Watcher read-failure recovery | implemented | `tests/test_watcher_recovery.py` plus coordinated staging/index/lease/shutdown/Host fixtures, with thread warnings treated as errors | Failed observations retry without unlocking unreadable notes or stopping the watcher; diagnostics are bounded and non-secret. | Adopted-root scoping and full Windows multi-client stress remain separate. | `89e609d`; 210 focused passed, 17 new checks; UI build/smoke passed; full: 1,232 passed, 2 skipped, 1 deselected. |
@@ -334,13 +334,43 @@ INDEX-05 snapshot and reviewed-file continuation (`74c6081`):
 Active-handle snapshots, schema-v3 nanosecond/native identity, bounded
 rename/delete reconciliation, stale-component cleanup, strict extract revision
 and plan-token pinning, and collision-safe fresh-rejection quarantine are
-covered by 68 dedicated tests and a 310-test combined group. Frozen-source full
+covered by 69 dedicated tests and a 310-test combined group. Frozen-source full
 verification passed **1,435 tests, 2 skipped, 1 deselected in 502.77s**.
 
 The first combined run had one watcher quiet-window timing failure after 309
 passes. The related 26-test group, five direct repetitions, the complete
-310-test rerun and the full suite passed; the failure was not reproduced and no
-assertion was weakened. The normal host environment was used with approval
+310-test rerun and the full suite passed; it was not reproduced again during
+that packet. It later recurred under full-suite load, and `f3b0508` isolated
+the revision/CAS fixture from the independently tested watcher without
+weakening either assertion. The normal host environment was used with approval
 because the Codex app sandbox denied atomic replacement in its redirected
 temporary directory and stalled a socket-pair fixture. Scope and remaining G1
 work are recorded in the [continuation report](../reports/2026-10-26-index05-snapshot-continuation.md).
+
+INDEX-05 process-interruption continuation (`2e9df4a`):
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q tests/test_core_process_interruption.py tests/test_operation_recovery.py tests/test_shutdown.py tests/test_host_lifecycle.py tests/test_process_identity.py tests/test_core_concurrency.py tests/test_index_snapshot_consistency.py -p no:cacheprovider -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=60
+```
+
+The final focused group passed **66 tests in 31.92s**. The corrected abrupt-crash
+scenario also passed five consecutive independent runs. Frozen-source full
+verification:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=60
+```
+
+Result: **1,438 passed, 2 skipped, 1 deselected in 468.12s (7m48s)**.
+
+The first full run reported one failure after **1,437 passes**: the existing
+revision/CAS test raced its second write against the watcher's independent
+quiet window. Commit `f3b0508` isolates that no-plugin revision fixture; five
+direct repetitions and the 44-test revision/watcher/file-access/snapshot group
+then passed without relaxing product behavior.
+
+The normal host environment was required because the Codex app sandbox's
+redirected temporary tree denied child atomic lease replacement. No external
+provider or paid call was used. This closes abrupt process-death evidence only:
+authenticated Host force-stop, scale, real adapters, external handles and the
+supported-Python/packaged matrix remain open.

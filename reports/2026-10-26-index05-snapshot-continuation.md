@@ -32,7 +32,7 @@ target, and partial staging items omitting attachment checks.
 
 ## Verification
 
-The dedicated snapshot, extract-pinning and staging groups passed **68 tests**.
+The dedicated snapshot, extract-pinning and staging groups passed **69 tests**.
 The combined index, watcher, extract, staging, revision and recovery group
 passed **310 tests**. Frozen-source full verification passed:
 
@@ -40,7 +40,19 @@ passed **310 tests**. Frozen-source full verification passed:
 1435 passed, 2 skipped, 1 deselected in 502.77s
 ```
 
-Command:
+Dedicated command:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q tests/test_index_snapshot_consistency.py tests/test_extract_pinning.py tests/test_model_expectation_authoring.py tests/test_staging.py tests/test_staging_safety.py -p no:cacheprovider -o faulthandler_timeout=60
+```
+
+Combined command:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q tests/test_index_snapshot_consistency.py tests/test_index.py tests/test_file_access.py tests/test_core_index_service.py tests/test_core_concurrency.py tests/test_watcher_recovery.py tests/test_index_ownership_runtime.py tests/test_sqlite_ownership.py tests/test_embed.py tests/test_extract_pinning.py tests/test_upkeep.py tests/test_core_upkeep.py tests/test_model_expectation_authoring.py tests/test_staging.py tests/test_staging_safety.py tests/test_intake.py tests/test_core_source_promotion.py tests/test_core_source_batch.py tests/test_core_mixed_acceptance.py tests/test_revisions.py tests/test_operation_recovery.py -p no:cacheprovider -o faulthandler_timeout=60
+```
+
+Full-suite command:
 
 ```powershell
 & .\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider -o faulthandler_timeout=60
@@ -51,8 +63,10 @@ The first combined run reported **309 passed and one failure** in
 the immediate second write was still inside the watcher's quiet window. The
 related watcher/index group then passed 26 tests, the single test passed five
 successive invocations, the complete combined group passed all 310 tests, and
-the full suite above passed. The failure was not reproduced and no product or
-test relaxation was made for it.
+the full suite above passed. It was not reproduced again during this packet and
+no product or test relaxation was made. It later recurred under full-suite load;
+`f3b0508` isolated the revision/CAS fixture from the independently tested
+watcher quiet window, as recorded in the [process-interruption report](2026-10-27-index05-process-interruption.md).
 
 The Codex app sandbox redirected temporary files into a Windows app-container
 that denied atomic replacement and also stalled a socket-pair fixture. Final
@@ -63,7 +77,7 @@ obtained by changing the tests.
 ## Remaining boundary
 
 INDEX-05/G1 remains open. Evidence is still required for sustained and
-large-vault traffic, crash/forced-stop recovery under mixed traffic, actual
+large-vault traffic, authenticated Host force-stop under mixed traffic, actual
 simultaneous adapters, unsupported external-handle interference, the supported
 Python matrix, and a clean packaged installation. Encoder IO in source
 promotion also still occupies the enclosing writer call; moving that slow work

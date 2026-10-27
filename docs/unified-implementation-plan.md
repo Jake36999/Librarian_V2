@@ -660,7 +660,7 @@ linked record says so.
 | CORE-05 / INDEX-03/04 mixed-kind acceptance | partial | `87e2460` | [Mixed-kind/multi-topic acceptance](#mixed-kindmulti-topic-acceptance-2026-10-25). |
 | Watcher read-failure recovery | implemented | `89e609d` | [Watcher read-failure recovery](#watcher-read-failure-recovery-2026-10-25). |
 | INDEX-04 serving gateway and file-access exclusion | implemented | `ded98c0`, `d31cda5`, `e40a4a6` | [INDEX-04 serving gateway and Windows read exclusion](#index-04-serving-gateway-and-windows-read-exclusion-2026-10-25). |
-| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), and the [latest validation report](../reports/2026-10-26-index05-snapshot-continuation.md). |
+| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), and the [latest validation report](../reports/2026-10-27-index05-process-interruption.md). |
 
 Unless an artifact is explicitly archived elsewhere, a `tmp/...` path cited
 below is an untracked local log from the originating worktree. It is a pointer
@@ -1215,9 +1215,10 @@ tests, 2 skipped, 1 deselected in 434.41s**, with thread warnings treated as
 errors and no warnings reported. Local final output:
 `tmp/index-runtime-full-2026-10-25-02.log`. See `index-ownership.md` and
 `regression-manifest.md` for exact boundaries, commands and the earlier failed
-run. No paid model calls or pushes occurred. Next: INDEX-05 stress and remaining
-staging quarantine/encoder waits, followed by adapters, adoption/dedupe,
-Session-based harness and integrated release acceptance.
+run. No paid model calls or pushes occurred. At the time, the next work was
+INDEX-05 stress and staging quarantine/encoder waits; `74c6081` later completed
+the rejection guards, while encoder occupancy, adoption/dedupe, the
+Session-based harness and integrated release acceptance remain.
 
 ### INDEX-05 bounded native contention and store cleanup, 2026-10-25
 
@@ -1255,11 +1256,12 @@ Only a module docstring was clarified after that run; behavior is unchanged. See
 `reports/2026-10-25-core-concurrency-validation.md` and the regression manifest.
 
 INDEX-05/G1 remain open for sustained/large-vault and packaged Windows
-contention, crash/stop under mixed traffic, actual simultaneous adapters,
-external handles, the supported-Python matrix and packaged acceptance.
-Encoder writer occupancy and the remaining adoption/harness work are unchanged;
-`74c6081` later closed this slice's rename/delete snapshot, registered extract
-pinning and rejection-guard gaps. No paid calls or pushes
+contention, actual simultaneous adapters, external handles, the
+supported-Python matrix and packaged acceptance. Encoder writer occupancy and
+the remaining adoption/harness work are unchanged. Commit `74c6081` later
+closed this slice's rename/delete snapshot, registered extract pinning and
+rejection-guard gaps; `2e9df4a` later covered abrupt process death, while
+authenticated Host force-stop remains open. No paid calls or pushes
 were performed; the new native reproduction is not proof of the cause of the
 earlier unreproduced mixed-acceptance failures.
 
@@ -1297,10 +1299,10 @@ full verification passed **1,417 tests, 2 skipped, 1 deselected in 472.12s**.
 No paid provider call, route requalification or push occurred.
 
 The next blocking gate remains **INDEX-05/G1**: sustained/large-vault and
-packaged Windows contention, mixed-traffic crash/stop, simultaneous adapters,
-external handles, the supported-Python matrix and packaged-install evidence.
-After
-G1, the next product wave is safe directory deployment (DEPLOY-01 onward),
+packaged Windows contention, authenticated Host force-stop under mixed traffic,
+simultaneous adapters, external handles, the supported-Python matrix and
+packaged-install evidence.
+After G1, the next product wave is safe directory deployment (DEPLOY-01 onward),
 followed by the Session-based harness, integrated acceptance and release
 evidence. CORE-04B remains an optional managed-MCP bootstrap rather than a
 prerequisite for the direct Core path.
@@ -1319,15 +1321,56 @@ uses a prepared collision-safe quarantine target and fingerprints complete and
 partial source attachments while retaining originals for recovery.
 
 Independent cross-review found seven concrete defects across those lanes; all
-were corrected before verification. The dedicated group passed **68 tests**,
+were corrected before verification. The dedicated group passed **69 tests**,
 the combined index/watcher/extract/staging group passed **310 tests**, and the
 frozen-source suite passed **1,435 tests, 2 skipped, 1 deselected in 502.77s**.
-The first combined run had one non-reproduced watcher quiet-window timing
-failure; the related group, five direct repetitions, the complete combined
-rerun and the full suite all passed without weakening the assertion. Detailed
+The first combined run had one watcher quiet-window timing failure that was not
+reproduced again during that packet; the related group, five direct
+repetitions, the complete combined rerun and the full suite all passed without
+weakening the assertion. It later recurred under full-suite load and `f3b0508`
+isolated the revision/CAS fixture from the independently tested watcher. Detailed
 scope, environment disclosure and limits are in the [continuation report](../reports/2026-10-26-index05-snapshot-continuation.md).
 
 INDEX-05/G1 remains partial. Encoder work still occupies an enclosing writer
-call, and sustained/large-vault, crash/forced-stop mixed traffic, simultaneous
-real adapters, external handles, supported-Python and packaged-install evidence
-remain outstanding.
+call, and sustained/large-vault, authenticated Host force-stop under mixed
+traffic, simultaneous real adapters, external handles, supported-Python and
+packaged-install evidence remain outstanding.
+
+### INDEX-05 process-interruption continuation (2026-10-27)
+
+Commits `2e9df4a` and `f3b0508` close the abrupt-process-death portion of the
+mixed-traffic recovery boundary without closing INDEX-05/G1. A real coordinated
+Windows child Core admits a person write and search, an MCP write, a checkpoint
+mutation and an Obsidian heartbeat. Deterministic barriers then hold one
+Markdown mutation after its durable `running` record but before its terminal
+operation record, while an IndexService transaction has an uncommitted WAL
+write. The child exits
+with `os._exit(97)`.
+
+A normal successor refuses the stale lease; explicit takeover creates exactly
+one stable `operation_recovery` checkpoint and performs no replay or repair.
+The already-applied Markdown remains, the queued write remains absent, the
+Session chain verifies, the in-memory editor lease does not survive, the WAL
+probe rolls back, SQLite integrity is `ok`, refresh converges to the Markdown
+bytes and metadata, and no orphan chunk/facet/link/component rows remain. A
+second clean restart creates no duplicate recovery.
+
+The fixture also exposed a Windows lease-probe edge case: a live owner can deny
+opening or reading `vault.lock` through a second CRT handle. That failure now
+becomes `LeaseHeldError` only when the sidecar identifies an exact live foreign
+process, including `process_start`; ownerless and legacy-unpinned permission
+failures remain ordinary filesystem errors.
+
+The corrected crash scenario passed five consecutive runs, and the focused
+lifecycle/index group passed **66 tests in 31.92s** with thread warnings treated
+as errors. The first full run exposed and the second commit removed a
+pre-existing race between the revision/CAS fixture and the separately tested
+watcher quiet window. Frozen-source full verification passed **1,438 tests,
+2 skipped, 1 deselected in 468.12s (7m48s)**. Detailed
+commands, review corrections and limits are in the [process-interruption report](../reports/2026-10-27-index05-process-interruption.md).
+
+INDEX-05/G1 remains partial. This packet covers abrupt process death, not the
+authenticated `HostManager.stop(force=True)` path. Sustained/large-vault
+traffic, simultaneous real adapters, unsupported external handles, encoder
+writer occupancy, the supported-Python matrix and clean packaged-install
+evidence remain outstanding.
