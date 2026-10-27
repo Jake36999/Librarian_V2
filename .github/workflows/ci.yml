@@ -20,6 +20,33 @@ jobs:
         run: python -m pip install -e ".[dev]"
       - name: Run L0/Core suite
         run: python -m pytest
+  wheel-smoke:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Build Core wheel
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check build
+          python -m build --wheel --outdir wheel-out .
+      - name: Smoke clean installed wheel
+        shell: pwsh
+        run: |
+          $wheels = @(Get-ChildItem -LiteralPath wheel-out -Filter *.whl -File)
+          if ($wheels.Count -ne 1) {
+            throw "Expected exactly one Core wheel, found $($wheels.Count)."
+          }
+          ./scripts/smoke-installed-wheel.ps1 `
+            -Python python `
+            -Wheel $wheels[0].FullName `
+            -WorkRoot (Join-Path $env:RUNNER_TEMP "librarian-wheel-smoke-${{ matrix.python }}")
   adapters:
     runs-on: windows-latest
     steps:

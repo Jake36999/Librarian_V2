@@ -39,6 +39,17 @@ jobs:
       - name: Build all release artifacts
         shell: pwsh
         run: ./scripts/build-release.ps1 -Python python -OutDir release-out
+      - name: Smoke candidate Core wheel
+        shell: pwsh
+        run: |
+          $wheels = @(Get-ChildItem -LiteralPath release-out/core -Filter *.whl -File)
+          if ($wheels.Count -ne 1) {
+            throw "Expected exactly one candidate Core wheel, found $($wheels.Count)."
+          }
+          ./scripts/smoke-installed-wheel.ps1 `
+            -Python python `
+            -Wheel $wheels[0].FullName `
+            -WorkRoot (Join-Path $env:RUNNER_TEMP "librarian-candidate-wheel-smoke")
       - name: Upload non-installable candidate bundle
         uses: actions/upload-artifact@v4
         with:
@@ -68,6 +79,18 @@ jobs:
           -ReleaseLeads "${{ inputs.release_leads_path }}"
           -RequirementsLock "${{ inputs.requirements_lock_path }}"
           -Wheelhouse "${{ inputs.wheelhouse_path }}"
+      - name: Smoke stable Core wheel before signing
+        shell: pwsh
+        run: |
+          $wheels = @(Get-ChildItem -LiteralPath release-out/core -Filter *.whl -File)
+          if ($wheels.Count -ne 1) {
+            throw "Expected exactly one stable Core wheel, found $($wheels.Count)."
+          }
+          ./scripts/smoke-installed-wheel.ps1 `
+            -Python python `
+            -Wheel $wheels[0].FullName `
+            -WorkRoot (Join-Path $env:RUNNER_TEMP "librarian-stable-wheel-smoke") `
+            -Wheelhouse (Resolve-Path -LiteralPath release-out/wheelhouse).Path
       - name: Import protected signing certificate
         id: signing
         shell: pwsh
