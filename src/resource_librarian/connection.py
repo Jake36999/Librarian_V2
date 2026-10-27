@@ -44,9 +44,11 @@ def path_for(vault_path: str | Path) -> Path:
 def shutdown_path(vault_path: str | Path) -> Path:
     """Where a stopping Core records its shutdown phases (CORE-02A).
 
-    Per-user Host state, not vault state: it is written after the vault lease
-    is released, when a successor Core may already own the vault.  A
-    subfolder, so `records()` never mistakes it for an attachment record.
+    Per-user diagnostic state, not vault state or ownership authority. A
+    pending bounded stop writes it while retaining the lease; a clean stop
+    updates it after release, when a successor Core may already own the vault.
+    It lives in a subfolder so `records()` never mistakes it for an attachment
+    record.
     """
     return directory() / "stops" / f"{_key(vault_path)}.json"
 

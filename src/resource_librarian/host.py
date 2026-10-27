@@ -22,6 +22,13 @@ from . import connection, process_identity
 from .keys import config_dir
 
 
+# Core shutdown can spend five seconds waiting for admitted work and another
+# ten draining its writer, plus watcher/MCP/server teardown. The Host must
+# wait beyond that complete bound, rather than racing the Core at exactly
+# fifteen seconds and reporting it as still alive just before process exit.
+STOP_EXIT_SECONDS = 25.0
+
+
 def _path() -> Path:
     return config_dir() / "host.json"
 
@@ -259,7 +266,7 @@ class HostManager:
             raise RuntimeError(str(detail.get("error") or exc)) from exc
         except (OSError, ValueError) as exc:
             raise RuntimeError(f"could not ask the Core to stop cleanly: {exc}") from exc
-        deadline = time.monotonic() + 15
+        deadline = time.monotonic() + STOP_EXIT_SECONDS
         while _alive(pid, started) and time.monotonic() < deadline:
             time.sleep(.1)
         if _alive(pid, started):

@@ -608,6 +608,24 @@ class App:
             mutations = self._mutations
         return {"state": state, "pending": pending, "active_mutations": mutations}
 
+    def _persist_shutdown_phases(self) -> None:
+        """Best-effort per-user telemetry for complete *or pending* stops.
+
+        A Host-managed process exits after its one bounded shutdown attempt.
+        If admitted work or the writer is still active, the vault lease and
+        index correctly remain unreleased until process exit; retaining the
+        truthful ``shutdown_pending`` phase lets the successor and tray
+        distinguish that path from a clean drain without inventing later
+        ``index_closed`` or ``lease_released`` phases.
+        """
+        if self.coordinator is None:
+            return
+        try:
+            atomic_write_text(connection.shutdown_path(self.vault.root),
+                              json.dumps({"phases": self.shutdown_phases}, indent=2) + "\n")
+        except Exception:                                  # noqa: BLE001
+            pass                         # diagnostics never block a stop
+
     def close_runtime(self) -> bool:
         """Flush mutable state and release this vault's process lease once.
 
@@ -730,6 +748,7 @@ class App:
                     detail["reason"] = "writer_still_running"
                 self._shutdown_pending = detail
                 phase("shutdown_pending", **detail)
+                self._persist_shutdown_phases()
                 return False
 
             if self.writer is not None:
@@ -739,6 +758,7 @@ class App:
                     detail = {"reason": "writer_still_running", "writer_alive": self.writer.alive}
                     self._shutdown_pending = detail
                     phase("shutdown_pending", **detail)
+                    self._persist_shutdown_phases()
                     return False
 
             try:
@@ -747,6 +767,7 @@ class App:
                 detail = {"reason": "index_close_failed", "error": type(exc).__name__}
                 self._shutdown_pending = detail
                 phase("shutdown_pending", **detail)
+                self._persist_shutdown_phases()
                 return False
             phase("index_closed")
             if self.coordinator is not None:
@@ -765,12 +786,7 @@ class App:
                     self.mcp.stop()
                 except Exception:                            # noqa: BLE001
                     pass
-            if self.coordinator is not None:
-                try:
-                    atomic_write_text(connection.shutdown_path(self.vault.root),
-                                      json.dumps({"phases": phases}, indent=2) + "\n")
-                except Exception:                            # noqa: BLE001
-                    pass              # diagnostics never block a stop
+            self._persist_shutdown_phases()
             self._shutdown_pending = {}
             self._closed = True
             return True

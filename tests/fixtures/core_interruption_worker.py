@@ -1,8 +1,9 @@
-"""Real child Core held at deterministic crash boundaries for INDEX-05 tests.
+"""Real child Core held at deterministic interruption boundaries for INDEX-05.
 
 This is test support, not a production entry point.  The parent owns this
 exact process and terminates it only after both the Markdown mutation and an
-uncommitted WAL transaction have reached their markers.
+uncommitted WAL transaction have reached their markers. It covers abrupt
+``os._exit`` and authenticated Host force-stop modes.
 """
 from __future__ import annotations
 
@@ -14,9 +15,9 @@ import threading
 import time
 from pathlib import Path
 
+from resource_librarian import connection, process_identity
 from resource_librarian.app import App, build
 from resource_librarian.keys import KeyStore
-from resource_librarian import process_identity
 from resource_librarian.vault import Vault
 
 
@@ -30,12 +31,15 @@ def _write(path: Path, payload: dict) -> None:
 def main() -> int:
     vault = Vault(Path(sys.argv[1]).resolve())
     markers = Path(sys.argv[2]).resolve()
+    mode = sys.argv[3] if len(sys.argv) > 3 else "crash"
+    if mode not in {"crash", "host-force"}:
+        raise ValueError(f"unknown interruption mode {mode!r}")
     markers.mkdir(parents=True, exist_ok=True)
     token = "process-interruption-token"
     hold = threading.Event()
 
     app = App(vault, token=token, coordinate=True, keys=KeyStore(use_keyring=False),
-              broker_timeout=2)
+              broker_timeout=2, host_managed=mode == "host-force")
     app.broker.set_mode("auto")
     baseline = app.person_call(
         "write_note", {"folder": "Notes", "name": "Baseline", "body": "before crash"})
@@ -145,20 +149,33 @@ def main() -> int:
 
     threading.Thread(target=observe_mixed_traffic, daemon=True,
                      name="interruption-observer").start()
-    threading.Thread(target=crash_when_requested, daemon=True,
-                     name="interruption-crash-control").start()
+    if mode == "crash":
+        threading.Thread(target=crash_when_requested, daemon=True,
+                         name="interruption-crash-control").start()
+    process_start = process_identity.process_start(os.getpid())
+    if mode == "host-force":
+        if not connection.publish(
+                vault.root, url=url + "/", token=token, pid=os.getpid(),
+                process_start=process_start, protocol_version="2",
+                secret_source="desktop"):
+            raise RuntimeError("host-force fixture could not publish its protected connection")
     _write(markers / "ready.json", {
         "pid": os.getpid(), "url": url, "token": token,
         "session_id": session_id,
-        "process_start": process_identity.process_start(os.getpid()),
+        "process_start": process_start, "mode": mode,
     })
     try:
         server.serve_forever()
     finally:
-        # A normal diagnostic shutdown remains clean.  The crash fixture uses
-        # process termination, so this block intentionally does not run.
+        # The abrupt crash fixture never reaches this block. The Host force
+        # fixture records a truthful pending shutdown before process exit.
+        server.closing = True
         server.server_close()
+        if app.mcp is not None and getattr(app.mcp, "owner", None) is app:
+            app.mcp.stop()
         app.close_runtime()
+        if mode == "host-force":
+            connection.remove(vault.root, pid=os.getpid(), token=token)
     return 0
 
 

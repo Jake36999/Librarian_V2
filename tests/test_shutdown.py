@@ -180,6 +180,12 @@ def test_a_timed_writer_drain_retains_the_index_and_lease_until_a_retry(core, va
     assert health["vault_lease"] == "held"
     assert health["writer"] == "draining"
     assert health["shutdown"]["state"] == "pending"
+    pending_record = json.loads(
+        connection.shutdown_path(vault.root).read_text(encoding="utf-8"))
+    pending_phases = [row["phase"] for row in pending_record["phases"]]
+    assert pending_phases[-1] == "shutdown_pending"
+    assert "index_closed" not in pending_phases
+    assert "lease_released" not in pending_phases
 
     successor = VaultCoordinator(vault)
     with pytest.raises(LeaseHeldError):
@@ -190,6 +196,10 @@ def test_a_timed_writer_drain_retains_the_index_and_lease_until_a_retry(core, va
     assert not writer_call.is_alive()
     assert core.close_runtime() is True
     assert order == ["write finished", "index closed", "lease released"]
+    completed_record = json.loads(
+        connection.shutdown_path(vault.root).read_text(encoding="utf-8"))
+    assert [row["phase"] for row in completed_record["phases"]][-2:] == [
+        "index_closed", "lease_released"]
     successor.acquire()
     successor.release()
 
