@@ -635,11 +635,24 @@ class IndexService:
     def stats(self) -> dict[str, Any]:
         return self.run(lambda index: index.stats())
 
-    def checkpoint(self) -> None:
-        """A bounded passive checkpoint, invoked only by the Core."""
-        def do(index: Index) -> None:
-            index.conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
-        self.run(do)
+    def checkpoint(self) -> dict[str, int | bool]:
+        """Run a bounded passive checkpoint and report any retained WAL work.
+
+        A foreign reader can legitimately pin older WAL frames.  ``PASSIVE``
+        must not wait for that unsupported handle or pretend all frames were
+        copied, so expose SQLite's three counters to maintenance/acceptance
+        callers.  Existing callers may continue to ignore the result.
+        """
+        def do(index: Index) -> dict[str, int | bool]:
+            row = index.conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
+            busy, log_frames, checkpointed_frames = (int(value) for value in row)
+            return {
+                "busy": bool(busy),
+                "log_frames": log_frames,
+                "checkpointed_frames": checkpointed_frames,
+                "complete": not busy and log_frames == checkpointed_frames,
+            }
+        return self.run(do)
 
     def health(self) -> dict[str, Any]:
         return self.run(lambda index: {"path": str(index.path), "wal": True,
