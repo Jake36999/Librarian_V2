@@ -660,7 +660,7 @@ linked record says so.
 | CORE-05 / INDEX-03/04 mixed-kind acceptance | partial | `87e2460` | [Mixed-kind/multi-topic acceptance](#mixed-kindmulti-topic-acceptance-2026-10-25). |
 | Watcher read-failure recovery | implemented | `89e609d` | [Watcher read-failure recovery](#watcher-read-failure-recovery-2026-10-25). |
 | INDEX-04 serving gateway and file-access exclusion | implemented | `ded98c0`, `d31cda5`, `e40a4a6` | [INDEX-04 serving gateway and Windows read exclusion](#index-04-serving-gateway-and-windows-read-exclusion-2026-10-25). |
-| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), and the [latest validation report](../reports/2026-10-27-index05-process-interruption.md). |
+| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), and the [latest validation report](../reports/2026-10-27-index05-host-force-stop.md). |
 
 Unless an artifact is explicitly archived elsewhere, a `tmp/...` path cited
 below is an untracked local log from the originating worktree. It is a pointer
@@ -1299,9 +1299,9 @@ full verification passed **1,417 tests, 2 skipped, 1 deselected in 472.12s**.
 No paid provider call, route requalification or push occurred.
 
 The next blocking gate remains **INDEX-05/G1**: sustained/large-vault and
-packaged Windows contention, authenticated Host force-stop under mixed traffic,
-simultaneous adapters, external handles, the supported-Python matrix and
-packaged-install evidence.
+packaged Windows contention, simultaneous adapters, external handles, the
+supported-Python matrix and packaged-install evidence. Authenticated Host
+force-stop under mixed traffic was completed in `84b90a8`.
 After G1, the next product wave is safe directory deployment (DEPLOY-01 onward),
 followed by the Session-based harness, integrated acceptance and release
 evidence. CORE-04B remains an optional managed-MCP bootstrap rather than a
@@ -1374,3 +1374,39 @@ authenticated `HostManager.stop(force=True)` path. Sustained/large-vault
 traffic, simultaneous real adapters, unsupported external handles, encoder
 writer occupancy, the supported-Python matrix and clean packaged-install
 evidence remain outstanding.
+
+### INDEX-05 authenticated Host force-stop continuation (2026-10-27)
+
+Commit `84b90a8` closes the authenticated Host force-stop portion of the
+mixed-traffic recovery boundary without closing INDEX-05/G1. A real
+Host-managed Windows child admits person, MCP and checkpoint work, holds a
+durable Markdown mutation before its terminal operation record, keeps an
+uncommitted WAL transaction open, registers an Obsidian heartbeat and receives
+an external edit.
+
+A non-force stop returns `409`, exposes active work and leaves the child alive.
+The explicit force request closes admission and attempts the bounded drain. If
+the writer remains active, `close_runtime()` persists only the truthful
+`admission_closed`, `work_cancelled`, failed `writer_drained` and
+`shutdown_pending` phases; it does not claim that the index closed or lease was
+released. Host teardown exits the exact child normally and removes its
+PID/token-scoped connection record, with no process-kill fallback. The Host
+wait is 25 seconds so it exceeds the Core's five-second active-work grace plus
+ten-second writer drain and teardown margin.
+
+The stale lease then refuses ordinary acquisition. Explicit takeover creates
+one non-replaying recovery checkpoint, retains the already-applied Markdown,
+omits the queued write, rolls back the WAL probe, verifies the Session chain,
+loses the old editor lease, restores exact index metadata and leaves no orphan
+child rows. The pending phase record is per-user diagnostics, not ownership
+authority, and a successful same-process retry replaces it with the completed
+phase sequence.
+
+The focused lifecycle/recovery group passed **49 tests in 32.78s**. Frozen
+source full verification passed **1,439 tests, 2 skipped, 1 deselected in
+506.43s (8m26s)**. Exact commands, environmental limits and the boundary are
+in the [Host force-stop report](../reports/2026-10-27-index05-host-force-stop.md).
+
+INDEX-05/G1 remains partial. Sustained/large-vault traffic, simultaneous real
+adapters, unsupported external handles, encoder writer occupancy, the
+supported-Python matrix and clean packaged-install evidence remain outstanding.
