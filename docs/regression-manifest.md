@@ -531,3 +531,32 @@ the real Claude/Cowork host UI or Obsidian. Python 3.12/3.13 runtime evidence,
 a signed bundle, external handles, large attachments and encoder occupancy
 remain open. See the
 [packaged-adapter report](../reports/2026-10-27-index05-packaged-adapters.md).
+
+INDEX-05 unsupported external-handle continuation (`ef143be`):
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q tests\test_index_external_file_handle.py tests\test_index_external_sqlite_handle.py tests\test_revisions.py tests\test_file_access.py tests\test_core_concurrency.py tests\test_index_sustained_traffic.py -p no:cacheprovider -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=90
+```
+
+The focused group passed **29 tests, 1 deselected in 23.16s**. A native
+no-delete-share handle makes one Markdown replacement fail explicitly without
+partial bytes, stale index state, a temporary-file leak or a dead writer; an
+unrelated write and an explicit post-release retry succeed. A foreign
+query-only SQLite transaction retains WAL frames while coordinated
+refresh/read/integrity work stays live; passive checkpoint metrics expose the
+incomplete work and the first checkpoint after release completes.
+
+Frozen-source default verification:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=90
+```
+
+Result against implementation commit `ef143be`: **1,466 passed, 2 skipped, 3
+deselected in 485.52s (8m05s)**.
+
+This is fail-safe and recovery evidence for unsupported foreign handles, not a
+promise that arbitrary external file or SQLite handles are coordinated or
+time-bounded. Large attachments/scan amplification, encoder writer occupancy,
+hosted matrix/signing evidence and external real-host execution remain open.
+See the [external-handle report](../reports/2026-10-27-index05-external-handles.md).

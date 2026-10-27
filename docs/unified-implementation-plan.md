@@ -660,7 +660,7 @@ linked record says so.
 | CORE-05 / INDEX-03/04 mixed-kind acceptance | partial | `87e2460` | [Mixed-kind/multi-topic acceptance](#mixed-kindmulti-topic-acceptance-2026-10-25). |
 | Watcher read-failure recovery | implemented | `89e609d` | [Watcher read-failure recovery](#watcher-read-failure-recovery-2026-10-25). |
 | INDEX-04 serving gateway and file-access exclusion | implemented | `ded98c0`, `d31cda5`, `e40a4a6` | [INDEX-04 serving gateway and Windows read exclusion](#index-04-serving-gateway-and-windows-read-exclusion-2026-10-25). |
-| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8`, `ae00300`, `bcf687a`, `6fb2389`, `788540e` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), [scale/sustained continuation](#index-05-large-vault-and-sustained-traffic-continuation-2026-10-27), [packaged-adapter prerequisite continuation](#index-05-packaged-adapter-prerequisite-continuation-2026-10-27), [clean installed-wheel continuation](#index-05-clean-installed-wheel-continuation-2026-10-27), [packaged Browser/Cowork continuation](#index-05-packaged-browsercowork-continuation-2026-10-27), and the [latest validation report](../reports/2026-10-27-index05-packaged-adapters.md). |
+| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8`, `ae00300`, `bcf687a`, `6fb2389`, `788540e`, `ef143be` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), [scale/sustained continuation](#index-05-large-vault-and-sustained-traffic-continuation-2026-10-27), [packaged-adapter prerequisite continuation](#index-05-packaged-adapter-prerequisite-continuation-2026-10-27), [clean installed-wheel continuation](#index-05-clean-installed-wheel-continuation-2026-10-27), [packaged Browser/Cowork continuation](#index-05-packaged-browsercowork-continuation-2026-10-27), [external-handle continuation](#index-05-unsupported-external-handle-continuation-2026-10-27), and the [latest validation report](../reports/2026-10-27-index05-external-handles.md). |
 
 Unless an artifact is explicitly archived elsewhere, a `tmp/...` path cited
 below is an untracked local log from the originating worktree. It is a pointer
@@ -1542,3 +1542,34 @@ INDEX-05/G1 remains partial. Hosted CI execution, Python 3.12/3.13 runtime
 evidence, the real Claude/Cowork host UI, real Obsidian, a signed stable
 bundle, unsupported long-lived external handles, large attachments and encoder
 writer occupancy remain open.
+
+### INDEX-05 unsupported external-handle continuation (2026-10-27)
+
+Commit `ef143be` characterizes two deliberately unsupported Windows states
+without pretending to coordinate arbitrary third-party processes. A native
+foreign handle opens a Markdown note without delete sharing, so the Core's
+atomic same-path replacement returns a bounded, explicit `PermissionError`.
+The original bytes, revision and index row remain intact, no temporary file is
+left, the writer and an unrelated note remain usable, and an explicit retry
+after releasing the handle converges with a failed-then-done operation trail.
+
+A separate query-only SQLite connection holds a read transaction across six
+coordinated refreshes. Core writes, reads and integrity checks continue.
+`IndexService.checkpoint()` now returns SQLite's passive-checkpoint counters
+and a derived completion flag, while callers that ignore its result remain
+compatible. The pinned reader produces retained WAL frames without waiting or
+false completion; after it closes, an explicit checkpoint completes with one
+owned connection and clean worker teardown.
+
+The combined external-handle/revision/file-access/concurrency group passed
+**29 tests, 1 deselected in 23.16s**. Frozen-source default verification:
+**1,466 passed, 2 skipped, 3 deselected in 485.52s (8m05s)** against
+implementation commit `ef143be`. Exact
+commands and boundaries are in the
+[external-handle report](../reports/2026-10-27-index05-external-handles.md).
+
+This closes fail-safe and explicit-recovery acceptance for unsupported foreign
+file and SQLite handles; it does not make them supported or bound how long a
+third party may retain one. INDEX-05/G1 remains partial for large attachments
+and scan amplification, encoder writer occupancy, hosted matrix/signing
+evidence and external real-host execution.
