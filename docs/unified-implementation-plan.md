@@ -660,7 +660,7 @@ linked record says so.
 | CORE-05 / INDEX-03/04 mixed-kind acceptance | partial | `87e2460` | [Mixed-kind/multi-topic acceptance](#mixed-kindmulti-topic-acceptance-2026-10-25). |
 | Watcher read-failure recovery | implemented | `89e609d` | [Watcher read-failure recovery](#watcher-read-failure-recovery-2026-10-25). |
 | INDEX-04 serving gateway and file-access exclusion | implemented | `ded98c0`, `d31cda5`, `e40a4a6` | [INDEX-04 serving gateway and Windows read exclusion](#index-04-serving-gateway-and-windows-read-exclusion-2026-10-25). |
-| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8`, `ae00300` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), [scale/sustained continuation](#index-05-large-vault-and-sustained-traffic-continuation-2026-10-27), and the [latest validation report](../reports/2026-10-27-index05-scale-sustained.md). |
+| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8`, `ae00300`, `bcf687a` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), [scale/sustained continuation](#index-05-large-vault-and-sustained-traffic-continuation-2026-10-27), [packaged-adapter prerequisite continuation](#index-05-packaged-adapter-prerequisite-continuation-2026-10-27), and the [latest validation report](../reports/2026-10-27-index05-package-prerequisites.md). |
 
 Unless an artifact is explicitly archived elsewhere, a `tmp/...` path cited
 below is an untracked local log from the originating worktree. It is a pointer
@@ -1445,3 +1445,38 @@ in the [scale/sustained report](../reports/2026-10-27-index05-scale-sustained.md
 INDEX-05/G1 remains partial. Simultaneous packaged real adapters, unsupported
 long-lived external handles, large attachments and encoder writer occupancy,
 the supported-Python matrix and clean packaged-install evidence remain.
+
+### INDEX-05 packaged-adapter prerequisite continuation (2026-10-27)
+
+Commit `bcf687a` closes several prerequisites for packaged-adapter acceptance
+without claiming that acceptance. Setup now selects only supported CPython
+3.11--3.13 interpreters, treats an explicitly requested interpreter as a
+contract rather than silently falling back, and rejects an unsupported
+existing virtual environment. Release construction validates one exact Core
+version and its adapter form across Python metadata, the Obsidian source and
+built manifests, npm lock metadata, and the Cowork plugin manifest.
+
+Host discovery now publishes the non-secret process-start identity. Before
+returning a bearer token, the Obsidian adapter asks the authoritative installed
+Core CLI to validate the exact PID, process start, vault and loopback endpoint;
+its graceful stop wait is aligned with the Host's 25-second window. Static
+contract tests pin that ordering and timeout, while the regenerated Obsidian
+bundle contains the reviewed TypeScript behavior.
+
+The focused Python group passed **41 tests in 12.41s**. Obsidian `build` and
+`check` passed, and the release-version checker reported Core `2.1.0.dev0` and
+adapter `2.1.0-dev`. A fresh release-candidate build on the normal host with
+Python 3.11, `-SkipTests` and `-SkipUi` completed and included the standard and
+service expectation JSON resources in the wheel. The first sandbox attempt
+reached the metadata gate but could not resolve build dependencies because
+the sandbox blocked PyPI/DNS; the successful host rerun replaces that
+environment-only attempt. Exact commands and boundaries are in the
+[prerequisite report](../reports/2026-10-27-index05-package-prerequisites.md).
+Frozen-source default verification passed **1,453 tests, 2 skipped, 3
+deselected in 1,025.42s (17m05s)**.
+
+INDEX-05/G1 remains partial. This packet does not execute simultaneous
+packaged Browser/Cowork adapters, a real Obsidian installation, Python
+3.12/3.13 clean-wheel smoke, a full clean packaged install, or a signed stable
+bundle. Unsupported long-lived external handles, large attachments and
+encoder writer occupancy also remain open.

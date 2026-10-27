@@ -414,3 +414,43 @@ frozen-source default suite passed **1,439 tests, 2 skipped, 3 deselected in
 characterizations. Packaged adapters, unsupported long-lived external handles,
 large attachments/encoder occupancy and the supported-Python/packaged matrix
 remain. See the [scale report](../reports/2026-10-27-index05-scale-sustained.md).
+
+INDEX-05 packaged-adapter prerequisite continuation (`bcf687a`):
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q tests/test_setup_python.py tests/test_release_versions.py tests/test_obsidian_adapter_contract.py tests/test_host_lifecycle.py tests/test_process_identity.py tests/test_doctor.py -p no:cacheprovider -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=90
+```
+
+The focused group passed **41 tests in 12.41s**. It pins supported-interpreter
+selection, exact release-version agreement, authoritative Obsidian discovery
+identity and the Host process-start publication used by that check.
+
+```powershell
+Push-Location obsidian
+npm.cmd run build
+npm.cmd run check
+Pop-Location
+& .\.venv\Scripts\python.exe scripts/check_release_versions.py --root .
+& .\scripts\build-release.ps1 -OutDir tmp\release-prereq-check-host-20261027 -SkipTests -SkipUi
+```
+
+Both Obsidian commands passed. The metadata check reported Core `2.1.0.dev0`
+and adapters `2.1.0-dev`. The fresh Python 3.11 host release candidate passed
+the same gate, built the wheel in isolation and included both expectation JSON
+resource families. The first sandbox build reached the metadata gate and then
+failed only because DNS/PyPI access was blocked; it is not acceptance evidence.
+Generated `tmp/` artifacts remain untracked.
+
+Frozen-source default verification:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=90
+```
+
+Result: **1,453 passed, 2 skipped, 3 deselected in 1,025.42s (17m05s)**.
+
+This packet is not a packaged-runtime or matrix result. It does not cover
+simultaneous packaged Browser/Cowork execution, real Obsidian execution,
+Python 3.12/3.13, a clean installed-wheel smoke, signed artifacts, external
+handles, large attachments or encoder writer occupancy. See the
+[prerequisite report](../reports/2026-10-27-index05-package-prerequisites.md).
