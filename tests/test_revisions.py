@@ -71,6 +71,12 @@ def test_a_persons_own_edit_needs_no_revision(vault):
 
 
 def test_an_external_edit_between_read_and_write_becomes_a_conflict_checkpoint(core, vault):
+    # This is the revision/CAS fixture. The independent watcher fixtures cover
+    # its editor quiet window; leaving that poller active makes the second
+    # fresh-revision write race whether it observed the external edit yet.
+    # Stop it here to exercise the documented no-plugin revision path only.
+    assert core.watcher is not None
+    core.watcher.close()
     core_call(core, "write_note", folder="Notes", name="Plan", body="# Plan\n\nFirst.\n")
     read = core_call(core, "get_note", name="Plan")
     path = vault.root / "Notes" / "Plan.md"
