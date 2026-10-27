@@ -17,8 +17,8 @@
     Default: mcp,pdf,embed.
 
 .PARAMETER Python
-    A Python 3.11 or later to build the environment from. Default: the newest found
-    through the py launcher, else python on PATH.
+    A supported Python (3.11, 3.12 or 3.13) to build the environment from. Default:
+    the newest supported version found through the py launcher, else python on PATH.
 
 .PARAMETER ShortcutName
     The desktop shortcut's name. Default: "Librarian".
@@ -42,6 +42,7 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 $Venv = Join-Path $Root ".venv"
 $VenvPython = Join-Path $Venv "Scripts\python.exe"
+. (Join-Path $PSScriptRoot "setup-python.ps1")
 # Works around an OpenBLAS "memory allocation failed" crash on this machine when
 # numpy loads (see new-vault.ps1); harmless elsewhere.
 $env:OPENBLAS_NUM_THREADS = "1"
@@ -58,31 +59,6 @@ function Stop-Setup([string]$Text) {
     exit 1
 }
 
-function Find-Python {
-    # Each candidate is a command and its leading arguments; the first that is 3.11+ wins.
-    $candidates = @()
-    if ($Python) { $candidates += , @($Python) }
-    foreach ($minor in @("3.14", "3.13", "3.12", "3.11")) { $candidates += , @("py", "-$minor") }
-    $candidates += , @("python")
-    $candidates += , @("python3")
-    $probe = "import sys; print('%d.%d' % sys.version_info[:2]); sys.exit(0 if sys.version_info >= (3, 11) else 3)"
-    foreach ($candidate in $candidates) {
-        $exe = $candidate[0]
-        $lead = @()
-        if ($candidate.Count -gt 1) { $lead = @($candidate[1..($candidate.Count - 1)]) }
-        if (-not (Get-Command $exe -ErrorAction SilentlyContinue)) { continue }
-        try {
-            $version = & $exe @lead -c $probe 2>$null
-        } catch {
-            continue
-        }
-        if ($LASTEXITCODE -eq 0 -and $version) {
-            return @{ Exe = $exe; Lead = $lead; Version = "$version".Trim() }
-        }
-    }
-    return $null
-}
-
 Write-Host "Setting up the Librarian in $Root"
 if (-not (Test-Path (Join-Path $Root "pyproject.toml"))) {
     Stop-Setup "$Root has no pyproject.toml - this script belongs in a Librarian copy's scripts folder"
@@ -91,11 +67,15 @@ if (-not (Test-Path (Join-Path $Root "pyproject.toml"))) {
 # 1. An environment of this copy's own ---------------------------------------
 Step "Python environment ($Venv)"
 if (Test-Path $VenvPython) {
-    Write-Host "Reusing the environment already here."
+    $venvVersion = Get-LibrarianPythonVersion -Exe $VenvPython
+    if (-not $venvVersion) {
+        Stop-Setup "the environment already here does not use supported Python 3.11, 3.12 or 3.13. Remove $Venv and run setup again"
+    }
+    Write-Host "Reusing the Python $venvVersion environment already here."
 } else {
-    $found = Find-Python
+    $found = Find-LibrarianPython -Requested $Python
     if (-not $found) {
-        Stop-Setup "no Python 3.11 or later found. Install it from python.org (tick 'Add python.exe to PATH'), then run this again"
+        Stop-Setup "no supported Python found. Install Python 3.11, 3.12 or 3.13 from python.org (tick 'Add python.exe to PATH'), then run this again"
     }
     Write-Host "Creating it with Python $($found.Version) ($($found.Exe) $($found.Lead -join ' '))"
     $lead = $found.Lead

@@ -100,12 +100,8 @@ if (-not (Get-Command npm.cmd -ErrorAction SilentlyContinue) -and -not $SkipUi) 
 }
 
 $version = (Get-Content -LiteralPath (Join-Path $Root "VERSION") -Raw).Trim()
-$pyproject = Get-Content -LiteralPath (Join-Path $Root "pyproject.toml") -Raw
-$pyprojectVersion = [regex]::Match($pyproject, '(?ms)^\[project\]\s*.*?^version\s*=\s*"([^"]+)"').Groups[1].Value
-$init = Get-Content -LiteralPath (Join-Path $Root "src\resource_librarian\__init__.py") -Raw
-$initVersion = [regex]::Match($init, '(?m)^__version__\s*=\s*"([^"]+)"').Groups[1].Value
-if (-not $pyprojectVersion -or -not $initVersion -or $version -ne $pyprojectVersion -or $version -ne $initVersion) {
-    throw "VERSION, pyproject.toml, and resource_librarian.__version__ must match before a release build."
+Invoke-Native "Release metadata version check" {
+    & $Python (Join-Path $Root "scripts\check_release_versions.py") --root $Root
 }
 if ($Stable -and $version -notmatch '^\d+\.\d+\.\d+$') {
     throw "A stable build requires a SemVer release version (for example 2.1.0), not '$version'."

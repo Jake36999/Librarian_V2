@@ -5,7 +5,7 @@
 import { App, ItemView, Notice, Plugin, PluginSettingTab, SecretComponent, Setting, TFile, MarkdownView,
          WorkspaceLeaf, FileSystemAdapter } from "obsidian";
 import { mount, type Mounted } from "../../ui/src/main";
-import { CoreNotFound, KEY_ENV, start, type Running } from "./core";
+import { CoreNotFound, KEY_ENV, STOP_EXIT_MS, start, type Running } from "./core";
 
 const VIEW = "librarian-view";
 const PROVIDER_LABEL: Record<string, string> = { deepinfra: "DeepInfra", openai: "OpenAI", anthropic: "Anthropic" };
@@ -122,7 +122,7 @@ export default class LibrarianPlugin extends Plugin {
     }
     await new Promise<void>((resolve, reject) => {
       if (child.exitCode !== null) { resolve(); return; }
-      const timer = window.setTimeout(() => reject(new Error("the Core is still draining work")), 15_000);
+      const timer = window.setTimeout(() => reject(new Error("the Core is still draining work")), STOP_EXIT_MS);
       child.once("exit", () => { window.clearTimeout(timer); resolve(); });
       child.once("error", (e) => { window.clearTimeout(timer); reject(e); });
     });

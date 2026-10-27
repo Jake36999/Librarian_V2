@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from resource_librarian import connection
+from resource_librarian import connection, process_identity
 from resource_librarian.host import HostManager
 
 
@@ -61,14 +61,19 @@ def _child_pid_is_reliable() -> bool:
 
 def test_host_status_lists_discovered_core_without_page_token(vault, tmp_path, monkeypatch):
     monkeypatch.setenv("LIBRARIAN_CONFIG_DIR", str(tmp_path / "config"))
+    started = process_identity.process_start(os.getpid())
+    if started is None:
+        pytest.skip("this platform does not expose a process start identity")
     assert connection.publish(vault.root, url="http://127.0.0.1:9123", token="page-secret",
                               pid=os.getpid(), protocol_version="2",
-                              secret_source="obsidian")
+                              secret_source="obsidian", process_start=started)
 
     status = HostManager().status()
 
     assert status["status"] == "running"
-    assert status["cores"] == [{"pid": os.getpid(), "vault": str(vault.root),
+    assert status["cores"] == [{"pid": os.getpid(),
+                                "process_start": started,
+                                "vault": str(vault.root),
                                 "url": "http://127.0.0.1:9123", "secret_source": "obsidian",
                                 "managed_by_host": False}]
     assert "page-secret" not in repr(status)

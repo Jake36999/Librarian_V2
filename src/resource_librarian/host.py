@@ -112,8 +112,9 @@ class HostManager:
     def _public_process(row: dict[str, Any], *, managed_by_host: bool) -> dict[str, Any]:
         """Status is safe to show in a tray or CLI: connection tokens never
         leave the private record used below for the authenticated request."""
-        out = {key: row[key] for key in ("pid", "vault", "url", "started_at", "status", "log",
-                                          "secret_source") if row.get(key) not in (None, "")}
+        out = {key: row[key] for key in ("pid", "process_start", "vault", "url", "started_at",
+                                          "status", "log", "secret_source")
+               if row.get(key) not in (None, "")}
         out["managed_by_host"] = managed_by_host
         return out
 

@@ -12,6 +12,7 @@ import * as path from "node:path";
 export const KEY_ENV: Record<string, string> = {
   deepinfra: "DEEPINFRA_API_KEY", openai: "OPENAI_API_KEY", anthropic: "ANTHROPIC_API_KEY",
 };
+export const STOP_EXIT_MS = 25_000;
 
 export interface Running {
   url: string;
@@ -28,6 +29,7 @@ interface DiscoveryRecord {
   url: string;
   token: string;
   pid: number;
+  process_start: string;
   protocol_version: string;
 }
 
@@ -62,21 +64,74 @@ function discoveryPath(vaultPath: string): string {
   return path.join(base, "cores", `${key}.json`);
 }
 
+function samePath(left: string, right: string): boolean {
+  let a = path.resolve(left);
+  let b = path.resolve(right);
+  if (process.platform === "win32") { a = a.toLowerCase(); b = b.toLowerCase(); }
+  return a === b;
+}
+
+/** Ask the installed Core code to validate the protected record's exact
+ * PID/start identity. Node's PID-only kill(0) cannot distinguish a recycled
+ * Windows PID, while resource_librarian.process_identity uses the native
+ * creation FILETIME and is also the Host/MCP authority for this decision. */
+async function exactCoreIsRunning(corePath: string, vaultPath: string,
+                                  expected: DiscoveryRecord, expectedUrl: string): Promise<boolean> {
+  const [exe, prefix] = command(corePath);
+  return new Promise((resolve) => {
+    let child: ChildProcess;
+    try {
+      child = spawn(exe, [...prefix, "host", "status", "--vault", vaultPath],
+        { env: process.env, stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+    } catch {
+      resolve(false);
+      return;
+    }
+    let out = "";
+    let settled = false;
+    const finish = (value: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(value);
+    };
+    const timer = setTimeout(() => { child.kill(); finish(false); }, 5_000);
+    child.on("error", () => finish(false));
+    child.stdout?.on("data", (data) => {
+      out += String(data);
+      if (out.length > 1_000_000) { child.kill(); finish(false); }
+    });
+    child.on("exit", (code) => {
+      if (code !== 0) { finish(false); return; }
+      try {
+        const status = JSON.parse(out) as { cores?: Array<Record<string, unknown>> };
+        const matched = Array.isArray(status.cores) && status.cores.some((row) =>
+          Number(row.pid) === expected.pid
+          && row.process_start === expected.process_start
+          && typeof row.vault === "string" && samePath(row.vault, vaultPath)
+          && typeof row.url === "string" && loopbackUrl(row.url) === expectedUrl);
+        finish(Boolean(matched));
+      } catch { finish(false); }
+    });
+  });
+}
+
 /** Use an alive, local Core when the user already has one for this vault.
  * The Core still proves compatibility through /api/meta before the view
  * mounts. A missing/stale/unreadable private record is intentionally benign. */
-export async function discover(vaultPath: string): Promise<Running | null> {
+export async function discover(vaultPath: string, corePath = ""): Promise<Running | null> {
   try {
     const row = JSON.parse(await readFile(discoveryPath(vaultPath), "utf8")) as DiscoveryRecord;
     if (!row || typeof row.url !== "string" || typeof row.token !== "string"
-        || typeof row.pid !== "number" || String(row.protocol_version) !== "2") return null;
-    let sameVault = path.resolve(String(row.vault || ""));
-    let wanted = path.resolve(vaultPath);
-    if (process.platform === "win32") { sameVault = sameVault.toLowerCase(); wanted = wanted.toLowerCase(); }
-    if (sameVault !== wanted) return null;
+        || typeof row.pid !== "number" || typeof row.process_start !== "string"
+        || !row.process_start || String(row.protocol_version) !== "2") return null;
+    if (!samePath(String(row.vault || ""), vaultPath)) return null;
     const url = loopbackUrl(row.url);
     if (!url) return null;
-    try { process.kill(row.pid, 0); } catch { return null; }
+    // Validate before the private page token leaves this process. A stale or
+    // recycled-PID record therefore cannot disclose it to an unrelated local
+    // listener merely because that process now owns the old PID.
+    if (!await exactCoreIsRunning(corePath, vaultPath, row, url)) return null;
     return { url, token: row.token, owned: false };
   } catch { return null; }
 }
@@ -89,7 +144,7 @@ function command(corePath: string): [string, string[]] {
 
 export async function start(corePath: string, vaultPath: string, keys: Record<string, string>,
                             timeoutMs = 20000): Promise<Running> {
-  const active = await discover(vaultPath);
+  const active = await discover(vaultPath, corePath);
   if (active) return active;
   const token = randomBytes(24).toString("base64url");
   const [exe, prefix] = command(corePath);
