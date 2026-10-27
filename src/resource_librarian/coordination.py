@@ -162,12 +162,28 @@ class VaultCoordinator:
         with self._process_guard:
             if canonical in self._process_paths:
                 raise LeaseHeldError("another Librarian Core in this process owns this vault")
-        handle = open(self.path, "a+b")
+        try:
+            handle = open(self.path, "a+b")
+        except PermissionError as exc:
+            # A live Windows owner can deny even opening the byte-range lock
+            # file through a second CRT handle. That is the same ownership
+            # outcome as LK_NBLCK failing below. Preserve unrelated ACL,
+            # read-only-volume and security-software failures when no exact
+            # live foreign owner is recorded.
+            if self._live_foreign_owner():
+                raise LeaseHeldError(self._held_message()) from exc
+            raise
         claimed_process = False
         try:
             # Lock a stable byte.  Windows requires a byte to exist first.
             handle.seek(0)
-            if not handle.read(1):
+            try:
+                present = handle.read(1)
+            except PermissionError as exc:
+                if self._live_foreign_owner():
+                    raise LeaseHeldError(self._held_message()) from exc
+                raise
+            if not present:
                 handle.seek(0)
                 handle.write(b"0")
                 handle.flush()
@@ -256,6 +272,25 @@ class VaultCoordinator:
             return ("another Librarian Core owns this vault "
                     f"(pid {current.get('pid', '?')}, started {current.get('started_at', '?')})")
         return "another Librarian Core owns this vault"
+
+    def _live_foreign_owner(self) -> bool:
+        """Whether the diagnostic sidecar names one exact live other process.
+
+        This is deliberately only supporting evidence for a Windows
+        ``PermissionError`` while probing the authoritative OS lock. A stale,
+        absent or unreadable sidecar must not turn an ordinary filesystem
+        fault into a misleading ownership refusal.
+        """
+        if msvcrt is None:
+            return False
+        current = self.status()
+        try:
+            pid = int(current.get("pid") or 0)
+        except (AttributeError, TypeError, ValueError):
+            return False
+        process_start = current.get("process_start")
+        return pid > 0 and pid != os.getpid() and bool(process_start) and \
+            self._pid_alive(pid, process_start)
 
     def _write_info(self) -> None:
         payload = json.dumps(asdict(self.info), indent=2, sort_keys=True) + "\n"
