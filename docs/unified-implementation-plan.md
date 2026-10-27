@@ -660,7 +660,7 @@ linked record says so.
 | CORE-05 / INDEX-03/04 mixed-kind acceptance | partial | `87e2460` | [Mixed-kind/multi-topic acceptance](#mixed-kindmulti-topic-acceptance-2026-10-25). |
 | Watcher read-failure recovery | implemented | `89e609d` | [Watcher read-failure recovery](#watcher-read-failure-recovery-2026-10-25). |
 | INDEX-04 serving gateway and file-access exclusion | implemented | `ded98c0`, `d31cda5`, `e40a4a6` | [INDEX-04 serving gateway and Windows read exclusion](#index-04-serving-gateway-and-windows-read-exclusion-2026-10-25). |
-| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8`, `ae00300`, `bcf687a` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), [scale/sustained continuation](#index-05-large-vault-and-sustained-traffic-continuation-2026-10-27), [packaged-adapter prerequisite continuation](#index-05-packaged-adapter-prerequisite-continuation-2026-10-27), and the [latest validation report](../reports/2026-10-27-index05-package-prerequisites.md). |
+| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8`, `ae00300`, `bcf687a`, `6fb2389` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), [scale/sustained continuation](#index-05-large-vault-and-sustained-traffic-continuation-2026-10-27), [packaged-adapter prerequisite continuation](#index-05-packaged-adapter-prerequisite-continuation-2026-10-27), [clean installed-wheel continuation](#index-05-clean-installed-wheel-continuation-2026-10-27), and the [latest validation report](../reports/2026-10-27-index05-installed-wheel-smoke.md). |
 
 Unless an artifact is explicitly archived elsewhere, a `tmp/...` path cited
 below is an untracked local log from the originating worktree. It is a pointer
@@ -1480,3 +1480,35 @@ packaged Browser/Cowork adapters, a real Obsidian installation, Python
 3.12/3.13 clean-wheel smoke, a full clean packaged install, or a signed stable
 bundle. Unsupported long-lived external handles, large attachments and
 encoder writer occupancy also remain open.
+
+### INDEX-05 clean installed-wheel continuation (2026-10-27)
+
+Commit `6fb2389` adds an executable artifact-acceptance boundary. A fresh
+virtual environment outside the checkout installs the exact wheel with its MCP
+extra after removing `PYTHONPATH` and `PYTHONHOME`. The smoke proves the import
+and distribution belong to that environment, validates the packaged UI and
+expectation resources plus both console scripts, and initialises a new vault.
+
+The installed Host Core starts on a dynamic loopback port and serves the
+packaged entry point, JavaScript, stylesheet and authenticated metadata. The
+installed Cowork-compatible MCP command lists 140 tools and calls read-only
+`vault_status` through that live Core. Authenticated graceful stop then leaves
+neither vault-lease metadata nor a Core discovery record. Failure cleanup is
+armed before parsing the startup response so a malformed result cannot strand
+the child.
+
+The independent CPython 3.11 replay passed with installed version
+`2.1.0.dev0`. The fast contract passed **6 tests in 0.13s**, and the normal-host
+focused group passed **19 tests in 4.59s**. PowerShell and workflow-YAML syntax
+checks passed. The configured Windows CI matrix covers 3.11, 3.12 and 3.13;
+candidate and stable workflows gate their Core wheel, with the stable smoke
+using the reviewed offline wheelhouse. Those hosted workflow jobs have not run
+in this local evidence packet. Frozen-source default verification result:
+**1,459 passed, 2 skipped, 3 deselected in 518.59s (8m38s)** against
+implementation commit `6fb2389`. Exact commands and environmental disclosure
+are in the [installed-wheel report](../reports/2026-10-27-index05-installed-wheel-smoke.md).
+
+INDEX-05/G1 remains partial. Python 3.12/3.13 execution evidence, simultaneous
+packaged Browser/Cowork hosts, real Obsidian, a signed stable bundle,
+unsupported long-lived external handles, large attachments and encoder writer
+occupancy remain open.

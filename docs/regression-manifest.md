@@ -454,3 +454,37 @@ simultaneous packaged Browser/Cowork execution, real Obsidian execution,
 Python 3.12/3.13, a clean installed-wheel smoke, signed artifacts, external
 handles, large attachments or encoder writer occupancy. See the
 [prerequisite report](../reports/2026-10-27-index05-package-prerequisites.md).
+
+INDEX-05 clean installed-wheel continuation (`6fb2389`):
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q tests\test_installed_wheel_smoke.py -p no:cacheprovider
+& .\.venv\Scripts\python.exe -m pytest -q tests\test_installed_wheel_smoke.py tests\test_release_versions.py tests\test_host_lifecycle.py tests\test_source_identity.py -p no:cacheprovider -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=90
+```
+
+The contract passed **6 tests in 0.13s**. The focused group passed **19 tests
+in 4.59s** on the normal host. Its first sandbox run passed 15 and failed four
+Host cases only because redirected Windows temporary storage denied atomic
+`os.replace`; the host rerun replaces that environment-only result.
+
+The smoke script parsed as PowerShell, and both changed workflow YAML files
+parsed. An independent fresh-venv CPython 3.11 replay installed candidate
+version `2.1.0.dev0`, served the packaged UI/API, listed **140 MCP tools**, ran
+read-only `vault_status` through the live installed Core and stopped without a
+lease or discovery record. CI configures the same wheel smoke for 3.11--3.13,
+but hosted matrix execution is not claimed; stable uses its reviewed offline
+wheelhouse.
+
+Frozen-source default verification:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=90
+```
+
+Result against implementation commit `6fb2389`: **1,459 passed, 2 skipped, 3
+deselected in 518.59s (8m38s)**.
+
+This packet does not prove Python 3.12/3.13 execution, real Browser UI
+automation, the Claude/Cowork host UI, real Obsidian, or a signed bundle.
+External handles, large attachments and encoder writer occupancy remain open.
+See the [installed-wheel report](../reports/2026-10-27-index05-installed-wheel-smoke.md).
