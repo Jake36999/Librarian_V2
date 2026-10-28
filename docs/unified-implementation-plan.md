@@ -661,6 +661,7 @@ linked record says so.
 | Watcher read-failure recovery | implemented | `89e609d` | [Watcher read-failure recovery](#watcher-read-failure-recovery-2026-10-25). |
 | INDEX-04 serving gateway and file-access exclusion | implemented | `ded98c0`, `d31cda5`, `e40a4a6` | [INDEX-04 serving gateway and Windows read exclusion](#index-04-serving-gateway-and-windows-read-exclusion-2026-10-25). |
 | INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8`, `ae00300`, `bcf687a`, `6fb2389`, `788540e`, `ef143be`, `901ec65` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), [scale/sustained continuation](#index-05-large-vault-and-sustained-traffic-continuation-2026-10-27), [packaged-adapter prerequisite continuation](#index-05-packaged-adapter-prerequisite-continuation-2026-10-27), [clean installed-wheel continuation](#index-05-clean-installed-wheel-continuation-2026-10-27), [packaged Browser/Cowork continuation](#index-05-packaged-browsercowork-continuation-2026-10-27), [external-handle continuation](#index-05-unsupported-external-handle-continuation-2026-10-27), [large-attachment continuation](#index-05-large-attachment-characterization-2026-10-28), and the [latest validation report](../reports/2026-10-28-index05-large-attachments.md). |
+| INDEX-05 attachment scan reduction | implemented | `fd8a0ca` | [Attachment scan reduction and DeepInfra delegation evidence](../reports/2026-10-28-index05-attachment-scan-reduction.md): measured amplification 27.8x → 7.2x; full suite 1,471 passed, 2 skipped, 4 deselected. |
 
 Unless an artifact is explicitly archived elsewhere, a `tmp/...` path cited
 below is an untracked local log from the originating worktree. It is a pointer
@@ -1601,4 +1602,33 @@ commands, metrics and boundaries are in the
 INDEX-05/G1 remains partial. The next local packet is the now-measured
 attachment scan-amplification reduction, followed by encoder writer occupancy.
 Hosted matrix/signing evidence and execution in external real host
+applications remain separate.
+
+### INDEX-05 attachment scan-reduction continuation (2026-10-28)
+
+Commits `6e1a355` and `fd8a0ca` add an auditable external-delegation runner
+and close the measured single-source attachment scan-amplification packet.
+DeepInfra supplied a mapper, builder and independent critic/reducer across
+three model families; every proposal remained untrusted. The Qwen patch was
+rejected, model false positives were recorded, and a stack-attributed local
+measurement selected the final correction.
+
+The promotion guard now has an explicit single-source copy inventory.
+Intermediate text/config and embedding checks skip those attachment paths;
+streamed hashing, post-EOF source validation, destination CAS and the final
+full source/destination check remain. `DocumentLeases.note_core_write` accepts
+an optional exact fingerprint so the streamed digest can suppress the watcher
+without immediately rereading the new large destination. A later watcher
+observation still fingerprints and rejects mismatching outside bytes.
+
+The explicit 80 MiB slow fixture passed at **603,979,776 bytes / 7.2x**, with
+1 MiB peak reads and a 0.047s concurrent Browser/Cowork sample. The focused
+watcher/promotion/staging group passed **102 tests**. Frozen default
+verification passed **1,471 tests, 2 skipped, 4 deselected in 510.94s
+(8m30s)**. The [packet report](../reports/2026-10-28-index05-attachment-scan-reduction.md)
+records provider request IDs, token use, cost, accepted/rejected findings and
+non-claims.
+
+INDEX-05/G1 remains partial. Encoder writer occupancy is the next local
+packet. Hosted matrix/signing evidence and execution in external real host
 applications remain separate.
