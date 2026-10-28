@@ -393,20 +393,45 @@ class PromotionGuard:
     def __init__(self, vault: Vault, plan: dict, leases=None):
         self.vault, self.leases = vault, leases
         self.expected, self.targets = dict(plan["observed"]), set(plan["targets"])
+        # Only a single-source plan owns this top-level copy inventory. Batch
+        # plans intentionally have no ``copies`` key and retain the older
+        # full-footprint check before every write.
+        copies = plan.get("copies") if plan.get("operation") == "new_source" else None
+        self.copy_pairs = {
+            (str(copy["source"]), str(copy["destination"]))
+            for copy in copies or []
+            if isinstance(copy, dict) and copy.get("source") and copy.get("destination")
+        }
+        if copies and len(self.copy_pairs) != len(copies):
+            raise TypeError("promotion copy inventory is invalid or duplicated")
+        self.attachment_paths = {path for pair in self.copy_pairs for path in pair}
+        if any(source not in self.expected or destination not in self.expected
+               or destination not in self.targets for source, destination in self.copy_pairs):
+            raise TypeError("promotion copy inventory is outside the prepared footprint")
+        self.validated_copies: set[tuple[str, str]] = set()
         self.completed: list[str] = []
-        self.check()
+        # The writer's admission check already fingerprinted every observed
+        # path. Each declared copy below independently validates its source
+        # and destination immediately before publication, so rehash only the
+        # non-attachment dependencies here. Direct/batch guards remain full.
+        self.check(include_attachments=not self.copy_pairs)
         if leases is not None:
             leases.assert_writable([p for p in self.targets if not p.startswith(".")])
 
-    def check(self):
+    def check(self, *, include_attachments: bool = True):
         for rel, wanted in self.expected.items():
+            if not include_attachments and rel in self.attachment_paths:
+                continue
             if fingerprint(operation_path(self.vault, rel)) != wanted:
                 raise PreconditionChangedError(rel)
 
-    def write(self, rel: str, text: str):
+    def write(self, rel: str, text: str, *, include_attachments: bool | None = None):
         if rel not in self.targets:
             raise TypeError("promotion attempted an undeclared write")
-        self.check()
+        if self.copy_pairs and self.validated_copies != self.copy_pairs:
+            raise TypeError("promotion attachments must be validated before text writes")
+        self.check(include_attachments=(not self.copy_pairs if include_attachments is None
+                                        else include_attachments))
         path = operation_path(self.vault, rel)
         if self.leases is not None and not rel.startswith("."):
             self.leases.assert_writable([rel])
@@ -421,13 +446,23 @@ class PromotionGuard:
         """Stream a verified managed copy; never remove the original input."""
         if destination not in self.targets or source not in self.expected:
             raise TypeError("attachment copy is not in the prepared plan")
-        self.check()
+        pair = (source, destination)
+        declared = pair in self.copy_pairs
+        if self.copy_pairs and not declared:
+            raise TypeError("attachment copy is not in the declared single-source inventory")
+        self.check(include_attachments=not declared)
         target = self.vault.safe_relative(destination)
         if self.leases is not None:
             self.leases.assert_writable([destination])
         if self.expected[destination] != MISSING:
             if self.expected[destination] != self.expected[source]:
                 raise PreconditionChangedError(destination)
+            if declared:
+                if fingerprint(operation_path(self.vault, source)) != self.expected[source]:
+                    raise PreconditionChangedError(source)
+                if fingerprint(target) != self.expected[destination]:
+                    raise PreconditionChangedError(destination)
+                self.validated_copies.add(pair)
             return  # Only an explicitly retained, byte-identical prior copy.
         target.parent.mkdir(parents=True, exist_ok=True)
         temp = target.with_name(f".{target.name}.{secrets.token_hex(6)}.tmp")
@@ -441,14 +476,31 @@ class PromotionGuard:
                 os.fsync(output.fileno())
             if digest.hexdigest()[:20] != self.expected[source]:
                 raise PreconditionChangedError(source)
-            self.check()
+            if declared:
+                # The streamed digest catches a mutation during the read; a
+                # second fingerprint catches a change just after EOF. Text
+                # dependencies and the absent destination are checked as
+                # close to publication as the cross-file contract permits.
+                if fingerprint(operation_path(self.vault, source)) != self.expected[source]:
+                    raise PreconditionChangedError(source)
+                self.check(include_attachments=False)
+                if fingerprint(target) != self.expected[destination]:
+                    raise PreconditionChangedError(destination)
+            else:
+                self.check()
             if self.leases is not None:
                 self.leases.assert_writable([destination])
             os.replace(temp, target)
             self.expected[destination] = self.expected[source]
             self.completed.append(destination)
+            if declared:
+                self.validated_copies.add(pair)
             if self.leases is not None:
-                self.leases.note_core_write([destination])
+                # The streamed digest is the exact fingerprint of the bytes
+                # atomically published above. Reuse it for watcher suppression
+                # instead of immediately rereading a potentially large copy.
+                self.leases.note_core_write(
+                    [destination], fingerprints={destination: self.expected[source]})
         finally:
             if temp.exists():
                 temp.unlink()
@@ -515,7 +567,12 @@ def apply(vault: Vault, draft: Draft, plan: dict, index_call: Callable, *,
             vectors = f"embedding update failed ({type(exc).__name__}); retry explicitly"
             missed.append("its embedding update failed")
         report.step("index", True, {"vectors": vectors})
-        guard.check()  # A config/document edit during embedding IO is a conflict.
+        # Embedding never reads managed attachments. Their streamed copies
+        # were validated at publication and staging performs one final full
+        # source/destination check immediately before accepting its state.
+        # Keep this intermediate check on mutable text/config dependencies so
+        # large attachments are not rehashed during encoder work.
+        guard.check(include_attachments=False)
         if missed:
             front, body, _ = notes.parse(plan["text"])
             front["needs_attention"] = f"not findable: {'; '.join(missed)}"

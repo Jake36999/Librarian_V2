@@ -95,6 +95,28 @@ def test_known_mismatching_human_bytes_are_not_hidden_by_core_time_suppression(w
         leases.assert_writable(["Notes/Watched.md"])
 
 
+def test_exact_supplied_core_fingerprint_avoids_a_second_file_read(watched, monkeypatch):
+    path, leases, watcher = watched
+    expected = coordination.fingerprint(path)
+    original = coordination.fingerprint
+
+    def unexpected_read(_target):
+        raise AssertionError("the caller already supplied the exact published fingerprint")
+
+    monkeypatch.setattr(coordination, "fingerprint", unexpected_read)
+    leases.note_core_write(["Notes/Watched.md"],
+                           fingerprints={"Notes/Watched.md": expected})
+    assert leases._core_fingerprints["Notes/Watched.md"][0] == expected
+
+    # The supplied proof is still only for those exact bytes. A later human
+    # replacement must be observed normally and remain protected.
+    monkeypatch.setattr(coordination, "fingerprint", original)
+    atomic_write_text(path, "human edit immediately after Core")
+    watcher.scan_once()
+    with pytest.raises(DocumentBusyError, match="editor saving"):
+        leases.assert_writable(["Notes/Watched.md"])
+
+
 def test_human_edit_after_observed_core_save_is_not_hidden_by_suppression(watched):
     path, leases, watcher = watched
     atomic_write_text(path, "Core replacement")

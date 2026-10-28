@@ -195,9 +195,10 @@ def test_large_source_attachments_stream_and_leave_unrelated_reads_live(core, mo
             for path, size in dict(reads["by_path"]).items()
         },
     }
+    print("INDEX05_LARGE_ATTACHMENT " + json.dumps(metrics, sort_keys=True))
     assert metrics["peak_read_bytes"] <= MIB
     assert scanned >= logical_bytes * 2  # at least fingerprint plus streamed copy
-    print("INDEX05_LARGE_ATTACHMENT " + json.dumps(metrics, sort_keys=True))
+    assert scanned <= logical_bytes * 8  # two final source/destination checks remain
 
     writer = core.writer
     index_service = core.index_service

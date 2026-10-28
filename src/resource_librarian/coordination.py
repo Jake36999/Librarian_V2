@@ -459,8 +459,15 @@ class DocumentLeases:
         with self._lock:
             return sorted(self._unreadable)
 
-    def note_core_write(self, paths: list[str] | tuple[str, ...]) -> None:
-        """Avoid treating the Core's own atomic replacement as a human edit."""
+    def note_core_write(self, paths: list[str] | tuple[str, ...], *,
+                        fingerprints: dict[str, str] | None = None) -> None:
+        """Avoid treating the Core's own atomic replacement as a human edit.
+
+        A caller that computed the exact fingerprint over the bytes it
+        atomically published may supply it. This keeps the watcher proof while
+        avoiding an immediate second read of a large streamed attachment.
+        """
+        supplied = fingerprints or {}
         with self._lock:
             until = time.monotonic() + DEBOUNCE_SECONDS * 2
             for path in paths:
@@ -470,12 +477,14 @@ class DocumentLeases:
                 except (OSError, ValueError, Refusal):
                     continue
                 self._suppress_until[rel] = until
-                try:
-                    observed = fingerprint(target)
-                except OSError:
-                    self._unreadable.add(rel)
-                    self._core_fingerprints.pop(rel, None)
-                    continue
+                observed = supplied.get(rel)
+                if observed is None:
+                    try:
+                        observed = fingerprint(target)
+                    except OSError:
+                        self._unreadable.add(rel)
+                        self._core_fingerprints.pop(rel, None)
+                        continue
                 self._core_fingerprints[rel] = (observed, time.monotonic() + 60.0)
                 self._changed.pop(rel, None)
 

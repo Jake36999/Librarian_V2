@@ -731,7 +731,6 @@ def _accept_prepared_source(store, item, plan, index_call, leases, entry, guard=
         for copy in plan["copies"]:
             guard.copy(copy["source"], copy["destination"])
         report = promotion.apply(store.vault, Draft(**plan["draft"]), plan, index_call, leases=leases, guard=guard)
-        guard.check()
         item.update(status="accepted", accepted_to=report.path, promotion=report.to_dict(),
                     sections=plan["draft"]["sections"],
                     attachment_copies=[{k: c[k] for k in ("key", "source", "destination", "fingerprint")} for c in plan["copies"]])
@@ -740,7 +739,11 @@ def _accept_prepared_source(store, item, plan, index_call, leases, entry, guard=
         if item.get("promotion_progress"):
             item["promotion_progress"]["completed_at"] = now_iso()
         item["history"].append(entry)
-        guard.write(plan["state_path"], json.dumps(item, ensure_ascii=False, indent=1))
+        # This is the second and final full attachment check: immediately
+        # before publishing the accepted staging state. Intermediate source
+        # and view writes use the guard's lighter text-dependency check.
+        guard.write(plan["state_path"], json.dumps(item, ensure_ascii=False, indent=1),
+                    include_attachments=True)
         return {"id": item["id"], "status": "accepted", "coverage": plan["coverage"], "promotion": report.to_dict(),
                 "originals_retained": [c["source"] for c in plan["copies"]]}
     except Exception as exc:
