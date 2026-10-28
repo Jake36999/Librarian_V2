@@ -388,11 +388,11 @@ features.
 | ID | Size | Scope and deliverable | Dependencies | Candidate lane | Done only when |
 | --- | --- | --- | --- | --- | --- |
 | ACCEPT-01 | Medium | Build end-to-end acceptance fixtures for research intake, evidence/staging/promotion, V1 import, profiles/bundles/macros/checkpoints, Browser/Obsidian/Cowork lifecycle, service slots, Workbench execution labeling, and manual ranking. | G1 through G4 | Cross-cutting review | Each workflow has success, refusal, recovery, and no-mutation-on-failure coverage. |
-| ACCEPT-02 | Medium | Run a fresh Windows acceptance pass on the repository artifact, including Host lifecycle, Obsidian dirty documents, two-client coordination, adopted roots, Docker and honest non-Docker fallback. | ACCEPT-01, CORE-02, DEPLOY-04 | Adoption and corpus safety | Results are stored with OS/Obsidian/Docker versions and include a successful rollback rehearsal. |
+| ACCEPT-02 | Medium | Run a fresh Windows acceptance pass on the repository artifact, including Host lifecycle, Obsidian dirty documents, two-client coordination, adopted roots, Docker and honest non-Docker fallback. Moved here from INDEX-05 (2026-10-28): simultaneous real Browser/Obsidian/Cowork adapters under mixed traffic, the real Claude/Cowork interface, real Obsidian with SecretStorage, and real external file handles. | ACCEPT-01, CORE-02, DEPLOY-04 | Adoption and corpus safety | Results are stored with OS/Obsidian/Docker versions and include a successful rollback rehearsal. |
 | ACCEPT-03 | Small | Reconcile capability matrix and V1/V2 parity report from actual passing acceptance evidence. Mark feature drops, temporary exclusions, and explicitly deferred V3 work. | ACCEPT-01 | Cross-cutting review | Product documentation no longer implies parity where only a design or partial integration exists. |
 | RELEASE-01 | Small | Refresh the release queue so R0–R5 begin only after G0–G5 are satisfied. Preserve its external approval requirements and add source-identity/lifecycle gates. | BASE-03, ACCEPT-03 | Core and state | R0 no longer assumes the V2 implementation is complete. |
 | RELEASE-02 | Medium, blocked externally | Execute R0 freeze, R1 lock/wheelhouse, and R2 role/route qualification only against a frozen revision and approved credentials/budgets. | RELEASE-01, G5 | Cross-cutting review | L0–L3 evidence, exact route/adapter fingerprints, cost record, and expiry are retained. |
-| RELEASE-03 | Medium, blocked externally | Execute R3 signed artifact build, R4 real Windows/adapter acceptance, and R5 manual publication/rollback cadence. | RELEASE-02, ACCEPT-02 | Cross-cutting review | Signed artifacts, verification, rollback, operator documentation, and release-owner approval exist. |
+| RELEASE-03 | Medium, blocked externally | Execute R3 signed artifact build, R4 real Windows/adapter acceptance, and R5 manual publication/rollback cadence. Moved here from INDEX-05 (2026-10-28): hosted Python 3.12/3.13 matrix execution and signed stable bundles. | RELEASE-02, ACCEPT-02 | Cross-cutting review | Signed artifacts, verification, rollback, operator documentation, and release-owner approval exist. |
 
 ## 11. Parallelism and merge discipline
 
@@ -601,9 +601,10 @@ Steps 1–6, CORE-06, and INDEX-04 are required progress toward G1; they are
 not an exhaustive G1 exit checklist. G1 can turn green only after CORE-02A's
 lifecycle acceptance criteria are met, serving-path ownership is enforced
 through INDEX-04, and INDEX-05's Windows-oriented concurrent read/write/WAL
-acceptance scope is complete. The current progress record makes no green-G1
-claim; see the [continuation ledger](#continuation-ledger-2026-10-25) and
-the [INDEX-05 continuation](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25).
+acceptance scope is complete. **G1 is green as of 2026-10-28** on local
+evidence: the owner closed INDEX-05 against its own done-when column and moved
+the evidence that needs real external environments to ACCEPT-02 and
+RELEASE-03 (see [INDEX-05 and G1 closure](#index-05-and-g1-closure-2026-10-28)).
 
 ## 19. Progress log
 
@@ -660,7 +661,7 @@ linked record says so.
 | CORE-05 / INDEX-03/04 mixed-kind acceptance | partial | `87e2460` | [Mixed-kind/multi-topic acceptance](#mixed-kindmulti-topic-acceptance-2026-10-25). |
 | Watcher read-failure recovery | implemented | `89e609d` | [Watcher read-failure recovery](#watcher-read-failure-recovery-2026-10-25). |
 | INDEX-04 serving gateway and file-access exclusion | implemented | `ded98c0`, `d31cda5`, `e40a4a6` | [INDEX-04 serving gateway and Windows read exclusion](#index-04-serving-gateway-and-windows-read-exclusion-2026-10-25). |
-| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8`, `ae00300`, `bcf687a`, `6fb2389`, `788540e`, `ef143be`, `901ec65` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), [scale/sustained continuation](#index-05-large-vault-and-sustained-traffic-continuation-2026-10-27), [packaged-adapter prerequisite continuation](#index-05-packaged-adapter-prerequisite-continuation-2026-10-27), [clean installed-wheel continuation](#index-05-clean-installed-wheel-continuation-2026-10-27), [packaged Browser/Cowork continuation](#index-05-packaged-browsercowork-continuation-2026-10-27), [external-handle continuation](#index-05-unsupported-external-handle-continuation-2026-10-27), [large-attachment continuation](#index-05-large-attachment-characterization-2026-10-28), and the [latest validation report](../reports/2026-10-28-index05-large-attachments.md). |
+| INDEX-05 bounded native contention and store cleanup | implemented (closed 2026-10-28) | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8`, `ae00300`, `bcf687a`, `6fb2389`, `788540e`, `ef143be`, `901ec65` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), [scale/sustained continuation](#index-05-large-vault-and-sustained-traffic-continuation-2026-10-27), [packaged-adapter prerequisite continuation](#index-05-packaged-adapter-prerequisite-continuation-2026-10-27), [clean installed-wheel continuation](#index-05-clean-installed-wheel-continuation-2026-10-27), [packaged Browser/Cowork continuation](#index-05-packaged-browsercowork-continuation-2026-10-27), [external-handle continuation](#index-05-unsupported-external-handle-continuation-2026-10-27), [large-attachment continuation](#index-05-large-attachment-characterization-2026-10-28), and the [latest validation report](../reports/2026-10-28-index05-large-attachments.md). |
 | INDEX-05 attachment scan reduction | implemented | `fd8a0ca` | [Attachment scan reduction and DeepInfra delegation evidence](../reports/2026-10-28-index05-attachment-scan-reduction.md): measured amplification 27.8x → 7.2x; full suite 1,471 passed, 2 skipped, 4 deselected. |
 | INDEX-05 encoder writer release | implemented | `33fb3b5` | Staging acceptance, source promotion and catalogue adoption publish with a durable `EMBEDDING_PENDING` marker, embed after the writer is released, and record the outcome in a second CAS-guarded writer operation (a newer revision wins; the marker stays for recovery). Implemented by ChatGPT; committed by Claude after review (DeepSeek-V4-Pro findings checked in code, none held). Suite: 1476 passed, 2 skipped, 4 deselected. INDEX-05/G1 remains partial: the remaining evidence needs external environments (hosted Python 3.12/3.13, real Claude/Cowork UI, real Obsidian/SecretStorage, signed bundles). |
 
@@ -1633,3 +1634,26 @@ non-claims.
 INDEX-05/G1 remains partial. Encoder writer occupancy is the next local
 packet. Hosted matrix/signing evidence and execution in external real host
 applications remain separate.
+
+### INDEX-05 and G1 closure (2026-10-28)
+
+The owner closed INDEX-05 on its own done-when column: concurrent
+read/write/WAL stress fixtures for browser, Obsidian, Cowork, agent, refresh,
+checkpoint and writer activity, with no `SQLITE_BUSY`, cross-thread use, lost
+write or false lease state, and checkpoints only through IndexService. The
+local packets above cover that scope, ending with the encoder writer release
+(`33fb3b5`); the full suite passed 1476 tests, 2 skipped, 4 deselected.
+
+What still needs real external environments moved rather than being dropped:
+
+- **ACCEPT-02:** simultaneous real Browser/Obsidian/Cowork adapters under mixed
+  traffic, the real Claude/Cowork interface, real Obsidian with SecretStorage,
+  and real external file handles.
+- **RELEASE-03:** hosted Python 3.12/3.13 matrix execution and signed stable
+  bundles.
+
+With CORE-02A's lifecycle criteria met, INDEX-04's serving-path ownership
+enforced and INDEX-05 closed, **G1 is green on local evidence**. Claims that
+depend on the moved items (a stable desktop release, packaged multi-client
+behaviour in real host applications) still wait for ACCEPT-02 and RELEASE-03.
+Next in order: CORE-04B if a managed MCP start is wanted, then DEPLOY-01.
