@@ -73,6 +73,24 @@ RATE_CARDS: dict[str, dict[str, Any]] = {
         "source": "https://deepinfra.com/pricing",
         "as_of": "2026-10-28",
     },
+    "Qwen/Qwen3.5-397B-A17B": {
+        "input_per_1m": 0.45,
+        "output_per_1m": 3.00,
+        "source": "https://deepinfra.com/pricing",
+        "as_of": "2026-10-24",
+    },
+    "zai-org/GLM-5.3": {
+        "input_per_1m": 0.45,
+        "output_per_1m": 2.00,
+        "source": "https://deepinfra.com/pricing",
+        "as_of": "2026-10-24",
+    },
+    "XiaomiMiMo/MiMo-V2.6-Pro": {
+        "input_per_1m": 0.43,
+        "output_per_1m": 0.87,
+        "source": "https://deepinfra.com/pricing",
+        "as_of": "2026-10-24",
+    },
 }
 
 DENIED_PARTS = {
@@ -202,6 +220,112 @@ def read_ledger(path: Path, total_budget: float) -> dict[str, Any]:
     return {"schema": 1, "budget_usd": total_budget, "committed_usd": 0.0, "calls": []}
 
 
+@contextlib.contextmanager
+def ledger_lock(path: Path, timeout: float = 30):
+    """Exclusive lock file for the ledger, breaking stale locks > 120 s."""
+    lock_path = path.with_suffix(path.suffix + ".lock")
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            if time.monotonic() >= deadline:
+                # Check staleness before giving up.
+                try:
+                    stat = lock_path.stat()
+                    age = time.time() - stat.st_mtime
+                except OSError:
+                    age = 0
+                if age > 120:
+                    lock_path.unlink(missing_ok=True)
+                    continue
+                raise SystemExit(
+                    f"Could not acquire ledger lock within {timeout} s"
+                ) from None
+            time.sleep(0.05)
+            continue
+        else:
+            break
+    try:
+        os.write(fd, str(os.getpid()).encode())
+        os.fsync(fd)
+        yield
+    finally:
+        os.close(fd)
+        with contextlib.suppress(OSError):
+            lock_path.unlink()
+
+
+def _load_ledger_locked(ledger_path: Path, total_budget: float) -> dict[str, Any]:
+    """Re-read the ledger from disk (caller must hold the lock)."""
+    return read_ledger(ledger_path, total_budget)
+
+
+def _write_ledger_locked(ledger_path: Path, ledger: dict[str, Any]) -> None:
+    """Write the ledger (caller must hold the lock)."""
+    atomic_json(ledger_path, ledger)
+
+
+def reserve_call(
+    ledger_path: Path,
+    budget: float,
+    run_id: str,
+    entry: dict[str, Any],
+    reserve: float,
+    call_cap_usd: float,
+) -> None:
+    """Acquire the lock, re-read the ledger, check budget, append the call entry."""
+    with ledger_lock(ledger_path):
+        ledger = _load_ledger_locked(ledger_path, budget)
+        before = float(ledger.get("committed_usd", 0.0))
+        if reserve > call_cap_usd:
+            raise SystemExit(
+                f"preflight reserve ${reserve:.6f} exceeds per-call cap ${call_cap_usd:.6f}"
+            )
+        if before + reserve > budget:
+            raise SystemExit(
+                f"preflight reserve would exceed total budget: ${before:.6f} + ${reserve:.6f}"
+            )
+        ledger["committed_usd"] = round(before + reserve, 8)
+        ledger.setdefault("calls", []).append(entry)
+        _write_ledger_locked(ledger_path, ledger)
+
+
+def settle_call(
+    ledger_path: Path,
+    budget: float,
+    run_id: str,
+    status: str,
+    actual: float,
+    reserve: float,
+    receipt_path: str,
+) -> None:
+    """Acquire the lock, re-read the ledger, find the entry by run_id, adjust committed_usd."""
+    with ledger_lock(ledger_path):
+        ledger = _load_ledger_locked(ledger_path, budget)
+        before = float(ledger.get("committed_usd", 0.0))
+        calls = ledger.get("calls", [])
+        for call_entry in calls:
+            if call_entry.get("run_id") == run_id:
+                if status == "completed":
+                    call_entry.update({
+                        "status": "completed",
+                        "charged_usd": round(actual, 8),
+                        "receipt": receipt_path,
+                    })
+                    ledger["committed_usd"] = round(before - reserve + actual, 8)
+                else:
+                    call_entry.update({
+                        "status": "failed",
+                        "receipt": receipt_path,
+                    })
+                break
+        else:
+            # Should never happen, but guard against it.
+            raise SystemExit(f"Call entry for run_id {run_id} not found in ledger")
+        _write_ledger_locked(ledger_path, ledger)
+
+
 def packet(args: argparse.Namespace) -> tuple[str, list[dict[str, Any]]]:
     sections: list[str] = []
     manifest: list[dict[str, Any]] = []
@@ -238,12 +362,14 @@ def reserve_cost(body: dict[str, Any], card: dict[str, Any]) -> tuple[int, float
     return input_guess, reserve
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--task", required=True)
     parser.add_argument("--lens", default="correctness")
     parser.add_argument("--model", required=True, choices=sorted(RATE_CARDS))
-    parser.add_argument("--instruction", required=True)
+    instruction_group = parser.add_mutually_exclusive_group(required=True)
+    instruction_group.add_argument("--instruction")
+    instruction_group.add_argument("--instruction-file", type=Path)
     parser.add_argument("--file", action="append", default=[])
     parser.add_argument("--max-output-tokens", type=int, default=4096)
     parser.add_argument("--temperature", type=float, default=0.1)
@@ -256,17 +382,33 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-file-bytes", type=int, default=500_000)
     parser.add_argument("--max-packet-bytes", type=int, default=1_500_000)
     parser.add_argument("--dry-run", action="store_true")
-    return parser.parse_args()
+    parser.add_argument("--agent", type=str, default="unspecified")
+    return parser.parse_args(argv)
 
 
 def main() -> int:
     args = parse_args()
     if not SAFE_ID.fullmatch(args.task):
         raise SystemExit("--task must be a safe 1-100 character identifier")
+    if not SAFE_ID.fullmatch(args.agent):
+        raise SystemExit("--agent must be a safe 1-100 character identifier")
     if args.max_output_tokens < 1 or args.max_output_tokens > 16_384:
         raise SystemExit("--max-output-tokens must be between 1 and 16384")
     if args.call_cap_usd <= 0 or args.total_budget_usd <= 0:
         raise SystemExit("budget values must be positive")
+
+    # Resolve instruction from file or CLI.
+    if args.instruction_file is not None:
+        try:
+            raw_instruction = args.instruction_file.read_text(encoding="utf-8")
+        except OSError as exc:
+            raise SystemExit(f"Cannot read --instruction-file: {exc}") from exc
+        args.instruction = raw_instruction
+    # Secret-scan the instruction (already done in packet(), but do it early for clarity).
+    for pattern in SECRET_PATTERNS:
+        if pattern.search(args.instruction):
+            raise SystemExit("possible secret in --instruction/--instruction-file; no call was made")
+
     payload, manifest = packet(args)
     card = RATE_CARDS[args.model]
     body = OpenAIChatAdapter.render(
@@ -279,39 +421,25 @@ def main() -> int:
     )
     input_guess, reserve = reserve_cost(body, card)
     ledger_path = args.ledger.resolve()
-    ledger = read_ledger(ledger_path, args.total_budget_usd)
-    before = float(ledger.get("committed_usd", 0.0))
-    if reserve > args.call_cap_usd:
-        raise SystemExit(
-            f"preflight reserve ${reserve:.6f} exceeds per-call cap ${args.call_cap_usd:.6f}"
-        )
-    if before + reserve > args.total_budget_usd:
-        raise SystemExit(
-            f"preflight reserve would exceed total budget: ${before:.6f} + ${reserve:.6f}"
-        )
+
+    # Build the call entry and preflight receipt.
+    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S") + "-" + secrets.token_hex(4)
+    output_dir = args.output_dir.resolve()
+    output_path = output_dir / f"{run_id}-{args.task}.md"
+    receipt_path = output_dir / f"{run_id}-{args.task}.receipt.json"
     preflight = {
         "task": args.task,
         "lens": args.lens,
         "model": args.model,
+        "agent": args.agent,
         "manifest": manifest,
         "packet_sha256": sha256(payload.encode("utf-8")),
         "estimated_input_tokens": input_guess,
         "max_output_tokens": args.max_output_tokens,
         "preflight_reserve_usd": round(reserve, 8),
-        "committed_before_usd": round(before, 8),
         "budget_usd": args.total_budget_usd,
         "rate_card": card,
     }
-    if args.dry_run:
-        print(json.dumps({"dry_run": True, **preflight}, ensure_ascii=False))
-        return 0
-
-    key_source = load_key(args.key_file)
-    started = time.perf_counter()
-    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S") + "-" + secrets.token_hex(4)
-    output_dir = args.output_dir.resolve()
-    output_path = output_dir / f"{run_id}-{args.task}.md"
-    receipt_path = output_dir / f"{run_id}-{args.task}.receipt.json"
     receipt: dict[str, Any] = {
         "schema": 1,
         "run_id": run_id,
@@ -319,16 +447,29 @@ def main() -> int:
         "endpoint": "/v1/openai/chat/completions",
         "started_at": utc_now(),
         **preflight,
-        "key_source": key_source,
+        "key_source": "",
         "status": "started",
     }
-    # Commit the full reserve before the request.  On any uncertain failure it
-    # remains charged, because a timeout is not evidence that no billing ran.
-    ledger["committed_usd"] = round(before + reserve, 8)
-    ledger["calls"].append({"run_id": run_id, "task": args.task, "status": "started",
-                            "charged_usd": round(reserve, 8)})
-    atomic_json(ledger_path, ledger)
+    call_entry = {
+        "run_id": run_id,
+        "task": args.task,
+        "agent": args.agent,
+        "status": "started",
+        "charged_usd": round(reserve, 8),
+    }
+
+    if args.dry_run:
+        print(json.dumps({"dry_run": True, **preflight}, ensure_ascii=False))
+        return 0
+
+    key_source = load_key(args.key_file)
+    receipt["key_source"] = key_source
+    started = time.perf_counter()
+
+    # Reserve under the lock.
+    reserve_call(ledger_path, args.total_budget_usd, run_id, call_entry, reserve, args.call_cap_usd)
     atomic_json(receipt_path, receipt)
+
     try:
         response = providers._request(
             "POST",
@@ -347,24 +488,32 @@ def main() -> int:
             + output_tokens * float(card["output_per_1m"])
         ) / 1_000_000
         atomic_text(output_path, reply.text)
-        receipt.update({
+        finish_reason = reply.stop
+        receipt_update = {
             "status": "completed",
             "completed_at": utc_now(),
             "latency_ms": round((time.perf_counter() - started) * 1000),
             "request_id": reply.request_id or "unavailable",
             "model_returned": reply.model,
-            "finish_reason": reply.stop,
+            "finish_reason": finish_reason,
             "usage": usage,
             "estimated_cost_usd": round(actual, 8),
             "output_path": str(output_path),
             "output_sha256": sha256(reply.text.encode("utf-8")),
             "output_chars": len(reply.text),
-        })
-        # Replace the successful request's conservative reserve with the
-        # provider-reported token estimate.
-        ledger["committed_usd"] = round(before + actual, 8)
-        ledger["calls"][-1].update({"status": "completed", "charged_usd": round(actual, 8),
-                                     "receipt": str(receipt_path)})
+        }
+        if finish_reason == "length":
+            receipt_update["truncated"] = True
+        receipt.update(receipt_update)
+        settle_call(
+            ledger_path,
+            args.total_budget_usd,
+            run_id,
+            "completed",
+            actual,
+            reserve,
+            str(receipt_path),
+        )
     except Exception as exc:  # noqa: BLE001 - receipt must survive every provider failure
         receipt.update({
             "status": "failed",
@@ -374,12 +523,22 @@ def main() -> int:
             "error": str(exc)[:500],
             "budget_charge_usd": round(reserve, 8),
         })
-        ledger["calls"][-1].update({"status": "failed", "receipt": str(receipt_path)})
+        settle_call(
+            ledger_path,
+            args.total_budget_usd,
+            run_id,
+            "failed",
+            0.0,
+            reserve,
+            str(receipt_path),
+        )
         atomic_json(receipt_path, receipt)
-        atomic_json(ledger_path, ledger)
         raise
+
     atomic_json(receipt_path, receipt)
-    atomic_json(ledger_path, ledger)
+    # Re-read ledger for final display (under lock to be safe, though settle_call already wrote).
+    with ledger_lock(ledger_path):
+        final_ledger = _load_ledger_locked(ledger_path, args.total_budget_usd)
     print(json.dumps({
         "status": receipt["status"],
         "task": args.task,
@@ -387,7 +546,7 @@ def main() -> int:
         "request_id": receipt["request_id"],
         "usage": receipt["usage"],
         "cost_usd": receipt["estimated_cost_usd"],
-        "committed_total_usd": ledger["committed_usd"],
+        "committed_total_usd": final_ledger["committed_usd"],
         "output": str(output_path),
         "receipt": str(receipt_path),
     }, ensure_ascii=False))
