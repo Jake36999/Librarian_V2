@@ -560,3 +560,37 @@ promise that arbitrary external file or SQLite handles are coordinated or
 time-bounded. Large attachments/scan amplification, encoder writer occupancy,
 hosted matrix/signing evidence and external real-host execution remain open.
 See the [external-handle report](../reports/2026-10-27-index05-external-handles.md).
+
+INDEX-05 large-attachment characterization (`901ec65`):
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q tests\test_index_large_attachments.py -m slow -rP -s -p no:cacheprovider -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=120
+& .\.venv\Scripts\python.exe -m pytest -q tests\test_core_source_promotion.py tests\test_index_large_attachments.py -p no:cacheprovider -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=90
+```
+
+The slow characterization passed **1 test in 7.18s**. It promoted 64 MiB of
+raw input and 16 MiB of cleaned input through the real coordinated Core,
+retained both originals, published exact copies, left no attachment temporary
+file, converged the source/index, passed integrity and drained/closed the
+writer and index service. Browser and MCP reads completed in **0.047s** while
+the first attachment scan was paused. The default companion passed **41 tests,
+1 deselected in 25.86s**; its deselection is the explicit slow case.
+
+The measured work shape was **2,332,033,024 attachment bytes read**, **2,279
+read calls**, a **1 MiB** maximum block and **27.8x scan amplification** over
+80 MiB of logical input. These are diagnostic local measurements, not latency,
+memory or capacity guarantees.
+
+Frozen-source default verification:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider -W error::pytest.PytestUnhandledThreadExceptionWarning -o faulthandler_timeout=90
+```
+
+Result against implementation commit `901ec65`: **1,466 passed, 2 skipped, 4
+deselected in 497.98s (8m17s)**.
+
+This packet characterizes but does not reduce repeated attachment hashing.
+Scan amplification, encoder writer occupancy, hosted matrix/signing evidence
+and external real-host execution remain open. See the
+[large-attachment report](../reports/2026-10-28-index05-large-attachments.md).

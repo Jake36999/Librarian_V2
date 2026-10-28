@@ -660,7 +660,7 @@ linked record says so.
 | CORE-05 / INDEX-03/04 mixed-kind acceptance | partial | `87e2460` | [Mixed-kind/multi-topic acceptance](#mixed-kindmulti-topic-acceptance-2026-10-25). |
 | Watcher read-failure recovery | implemented | `89e609d` | [Watcher read-failure recovery](#watcher-read-failure-recovery-2026-10-25). |
 | INDEX-04 serving gateway and file-access exclusion | implemented | `ded98c0`, `d31cda5`, `e40a4a6` | [INDEX-04 serving gateway and Windows read exclusion](#index-04-serving-gateway-and-windows-read-exclusion-2026-10-25). |
-| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8`, `ae00300`, `bcf687a`, `6fb2389`, `788540e`, `ef143be` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), [scale/sustained continuation](#index-05-large-vault-and-sustained-traffic-continuation-2026-10-27), [packaged-adapter prerequisite continuation](#index-05-packaged-adapter-prerequisite-continuation-2026-10-27), [clean installed-wheel continuation](#index-05-clean-installed-wheel-continuation-2026-10-27), [packaged Browser/Cowork continuation](#index-05-packaged-browsercowork-continuation-2026-10-27), [external-handle continuation](#index-05-unsupported-external-handle-continuation-2026-10-27), and the [latest validation report](../reports/2026-10-27-index05-external-handles.md). |
+| INDEX-05 bounded native contention and store cleanup | partial | `f11e98d`, `1abafb8`, `74c6081`, `2e9df4a`, `f3b0508`, `84b90a8`, `ae00300`, `bcf687a`, `6fb2389`, `788540e`, `ef143be`, `901ec65` | [INDEX-05 bounded native contention and store cleanup](#index-05-bounded-native-contention-and-store-cleanup-2026-10-25), [snapshot/reviewed-file continuation](#index-05-snapshot-and-reviewed-file-continuation-2026-10-26), [process-interruption continuation](#index-05-process-interruption-continuation-2026-10-27), [Host force-stop continuation](#index-05-authenticated-host-force-stop-continuation-2026-10-27), [scale/sustained continuation](#index-05-large-vault-and-sustained-traffic-continuation-2026-10-27), [packaged-adapter prerequisite continuation](#index-05-packaged-adapter-prerequisite-continuation-2026-10-27), [clean installed-wheel continuation](#index-05-clean-installed-wheel-continuation-2026-10-27), [packaged Browser/Cowork continuation](#index-05-packaged-browsercowork-continuation-2026-10-27), [external-handle continuation](#index-05-unsupported-external-handle-continuation-2026-10-27), [large-attachment continuation](#index-05-large-attachment-characterization-2026-10-28), and the [latest validation report](../reports/2026-10-28-index05-large-attachments.md). |
 
 Unless an artifact is explicitly archived elsewhere, a `tmp/...` path cited
 below is an untracked local log from the originating worktree. It is a pointer
@@ -1573,3 +1573,32 @@ file and SQLite handles; it does not make them supported or bound how long a
 third party may retain one. INDEX-05/G1 remains partial for large attachments
 and scan amplification, encoder writer occupancy, hosted matrix/signing
 evidence and external real-host execution.
+
+### INDEX-05 large-attachment characterization (2026-10-28)
+
+Commit `901ec65` adds a slow real-promotion characterization for **80 MiB** of
+managed attachment input: a 64 MiB raw document and a 16 MiB cleaned document.
+The acceptance path retains both originals, publishes byte-exact copies with
+matching SHA-256 digests, records the accepted and indexed source, leaves no
+attachment temporary file, passes SQLite integrity, drains both Core queues
+and closes the writer and index worker cleanly.
+
+Every instrumented attachment read was explicitly sized at no more than **1
+MiB**. While the first attachment scan was paused, Browser and Cowork/MCP reads
+completed in **0.047s**, demonstrating continued unrelated read progress. The
+independent slow run passed **1 test in 7.18s**; its acceptance work took
+2.859s on this host. The default source-promotion companion passed **41 tests,
+1 deselected in 25.86s**.
+
+This is work-shape evidence, not a latency or RSS benchmark. It exposes the
+remaining cost clearly: **2,332,033,024 bytes** were read in **2,279 calls**,
+or **27.8x** the logical attachment size. Frozen-source default verification:
+**1,466 passed, 2 skipped, 4 deselected in 497.98s (8m17s)** against
+implementation commit `901ec65`. Exact
+commands, metrics and boundaries are in the
+[large-attachment report](../reports/2026-10-28-index05-large-attachments.md).
+
+INDEX-05/G1 remains partial. The next local packet is the now-measured
+attachment scan-amplification reduction, followed by encoder writer occupancy.
+Hosted matrix/signing evidence and execution in external real host
+applications remain separate.
