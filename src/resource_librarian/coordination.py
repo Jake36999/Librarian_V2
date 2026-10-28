@@ -1072,13 +1072,18 @@ def _operation_result(value: Any) -> dict[str, Any]:
     becoming another unbounded or secret-bearing content archive.
     """
     if isinstance(value, dict):
+        # Registry-owned continuations may contain callables and live Core
+        # objects. They are popped before a result reaches a surface and must
+        # not affect the durable digest of the tool's public result.
+        audited = {key: item for key, item in value.items()
+                   if key not in {"_person_wait", "_post_write"}}
         summary: dict[str, Any] = {"outcome": "ok", "type": "object",
-                                   "keys": sorted(str(key)[:80] for key in value)[:40]}
+                                   "keys": sorted(str(key)[:80] for key in audited)[:40]}
         for key in ("status", "outcome", "error", "refused", "id"):
-            if key in value and isinstance(value[key], (str, int, float, bool)):
-                summary[key] = str(value[key])[:240]
+            if key in audited and isinstance(audited[key], (str, int, float, bool)):
+                summary[key] = str(audited[key])[:240]
         try:
-            digest_source = json.dumps(value, sort_keys=True, default=str, ensure_ascii=False)
+            digest_source = json.dumps(audited, sort_keys=True, default=str, ensure_ascii=False)
         except (TypeError, ValueError):
             # A result can contain a circular/debug object.  It must not make
             # an already-completed write appear to have failed merely because

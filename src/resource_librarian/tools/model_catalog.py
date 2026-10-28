@@ -38,7 +38,8 @@ def model_catalog_adopt(ctx: Context, provider: str) -> dict:
     try:
         result = model_catalog.adopt(ctx.vault, None, provider, accepted_by="person",
             index_call=gateway.run, write_call=commit, leases=ctx.extras.get("document_leases"),
-            cancelled=(ctx.extras["cancel"].is_set if ctx.extras.get("cancel") is not None else None))
+            cancelled=(ctx.extras["cancel"].is_set if ctx.extras.get("cancel") is not None else None),
+            defer_embedding=writer is not None)
     except ValueError as exc:
         raise TypeError(str(exc)) from None
     conflicts = [f for f in result["failed"] if f.get("refused") == "DOCUMENT_ACTIVE"]

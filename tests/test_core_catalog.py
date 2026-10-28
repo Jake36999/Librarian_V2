@@ -198,6 +198,7 @@ def test_source_embedding_io_releases_core_worker_and_validates_results(vault, m
     import numpy as np
     def encode(texts):
         assert threading.current_thread() is not app.index_service._thread
+        assert not on_writer_thread()
         assert app.index_service.stats()["notes"] > 0
         called.append(len(texts))
         if mode == "changed":
@@ -223,8 +224,11 @@ def test_source_embedding_io_releases_core_worker_and_validates_results(vault, m
             assert "embedding update failed" in notes.load(_source(app)).frontmatter["needs_attention"]
             assert count == 0
         else:
-            assert out["written"] == 0 and out["failed"][0]["refused"] == "DOCUMENT_ACTIVE"
-            assert "promotion incomplete" in notes.load(_source(app)).frontmatter["needs_attention"]
+            # Publication is durable before encoder IO. A changed assignment
+            # rejects only the stale derived vectors, not the accepted source.
+            assert out["written"] == 1 and out["not_findable"] == [FAKE[0].name]
+            assert out["failed"] == []
+            assert "embedding update failed" in notes.load(_source(app)).frontmatter["needs_attention"]
             assert count == 0
     finally:
         app.close_runtime()

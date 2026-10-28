@@ -4,15 +4,15 @@ from __future__ import annotations
 import json
 import re
 from pathlib import PurePosixPath
-from typing import Literal
+from typing import Any, Literal
 
 from .. import clerk, concepts, notes, revisions, staging
-from ..coordination import fingerprint, fingerprint_bytes
+from ..coordination import PreconditionChangedError, fingerprint, fingerprint_bytes
 from ..revisions import WriteIntent
 from ..rules import Refusal
 from .. import deep_read as reading
 from ..lenses import LensStore
-from ..registry import Card, Context, tool
+from ..registry import POST_WRITE, Card, Context, tool
 from ..session import SessionStore
 from ..vault import now_iso
 from .library import IndexGateway, with_engine
@@ -20,6 +20,83 @@ from .library import IndexGateway, with_engine
 
 def _store(ctx: Context) -> staging.StagingStore:
     return staging.StagingStore(ctx.vault)
+
+
+class _StagingEmbeddingContinuation:
+    """Finish derived vectors after the accepted files release VaultWriter."""
+
+    def __init__(self, ctx: Context, entries: list[dict[str, Any]]) -> None:
+        self.ctx = ctx
+        self.entries = entries
+
+    @staticmethod
+    def _warn(result: dict[str, Any], stage: str, exc: Exception) -> None:
+        result.setdefault("embedding_warnings", []).append({
+            "stage": stage, "error": type(exc).__name__,
+            "next": "The source remains accepted; inspect its current revision and retry derived embeddings explicitly."})
+
+    def finish(self, aggregate: dict[str, Any]) -> dict[str, Any]:
+        from .. import promote as promotion
+        from ..embed import sync_source_via
+
+        writer = self.ctx.extras["vault_writer"]
+        gateway = IndexGateway(self.ctx, include_vectors=False)
+        results = {str(item.get("id") or ""): item for item in aggregate.get("results", [])}
+        for entry in self.entries:
+            result = results.get(entry["item_id"])
+            if result is None or not isinstance(result.get("promotion"), dict):
+                continue
+            report = result["promotion"]
+            failure = None
+            try:
+                vectors = sync_source_via(self.ctx.vault, entry["name"], gateway.run)
+            except Exception as exc:  # encoder/provider failure is loud but non-destructive
+                failure = exc
+                vectors = f"embedding update failed ({type(exc).__name__}); retry explicitly"
+            promotion.complete_embedding_dict(report, vectors, failure)
+
+            if failure is not None or entry.get("attention"):
+                try:
+                    writer.submit(
+                        lambda e=entry, failed=failure: (
+                            promotion.embedding_failure(
+                                self.ctx.vault, e["path"], e["fingerprint"], gateway.run)
+                            if failed is not None else promotion.embedding_success(
+                                self.ctx.vault, e["path"], e["fingerprint"], gateway.run)),
+                        caller="staging-embedding-attention" if failure is not None
+                        else "staging-embedding-complete", targets=[entry["path"]],
+                        preconditions={entry["path"]: entry["fingerprint"]})
+                except Exception as exc:  # a newer note revision wins
+                    self._warn(result, "source_attention" if failure is not None
+                               else "source_completion", exc)
+                    if failure is None:
+                        promotion.stale_embedding_dict(report)
+
+            store = _store(self.ctx)
+            state_path = store.path(entry["item_id"])
+            try:
+                raw = state_path.read_bytes()
+                stamp = fingerprint_bytes(raw)
+                state = state_path.relative_to(self.ctx.vault.root).as_posix()
+
+                def persist(e=entry, expected=stamp, promotion_report=report) -> None:
+                    if fingerprint(state_path) != expected:
+                        raise PreconditionChangedError(state)
+                    item = store.load(e["item_id"])
+                    if item.get("status") != "accepted" or item.get("accepted_to") != e["path"]:
+                        raise TypeError("accepted staging state changed before embedding finalization")
+                    item["promotion"] = promotion_report
+                    store.save(item)
+
+                writer.submit(persist, caller="staging-embedding-state", targets=[state],
+                              preconditions={state: stamp})
+            except Exception as exc:  # retain the explicit pending record for recovery
+                self._warn(result, "staging_state", exc)
+
+        aggregate["not_findable"] = [item["id"] for item in aggregate.get("results", [])
+                                     if item.get("promotion") and
+                                     not item["promotion"].get("catalogued")]
+        return aggregate
 
 
 def _snapshot(ctx: Context, item_id: str) -> tuple[dict, str, str]:
@@ -319,6 +396,7 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
 
 @tool("staging_decide", tier="contribute", effect="vault_write", phases=("judge", "ingest", "seed", "assess"),
       intent=_decision_intent,
+      post_write=True,
       returns=("results", "accepted", "not_findable", "refused"),
       card=Card("Accept, approve, reject or defer staged items, one or a batch",
                 "an item has been reviewed",
@@ -465,7 +543,10 @@ def staging_decide(ctx: Context, item_ids: list[str],
                              source_batch=prepared.get("source_batch") if prepared.get("operation") == "stage_sources" else None,
                              mixed_batch=prepared.get("mixed_batch") if prepared.get("operation") == "stage_mixed" else None,
                              rejection_plan=prepared.get("rejections") if prepared.get("operation") == "stage_reject" else None,
-                             document_leases=ctx.extras.get("document_leases"))
+                             document_leases=ctx.extras.get("document_leases"),
+                             defer_embedding=ctx.extras.get("vault_writer") is not None)
+    embedding_entries = [marker for result in results
+                         if isinstance((marker := result.pop("_embedding", None)), dict)]
     for result in results:
         if result.get("status") not in ("accepted", "approved", "rejected", "deferred"):
             continue
@@ -509,11 +590,14 @@ def staging_decide(ctx: Context, item_ids: list[str],
             result["handoff_warning"] = {"status": "not_recorded",
                 "error": exc.code if isinstance(exc, Refusal) else type(exc).__name__,
                 "next": "The library decision remains durable; inspect the original session before recording its handoff."}
-    return {"results": results,
-            "accepted": sum(1 for r in results if r.get("status") == "accepted"),
-            "not_findable": [r["id"] for r in results if r.get("promotion")
-                             and not r["promotion"]["catalogued"]],
-            "refused": sum(1 for r in results if "refused" in r or "error" in r)}
+    aggregate = {"results": results,
+                 "accepted": sum(1 for r in results if r.get("status") == "accepted"),
+                 "not_findable": [r["id"] for r in results if r.get("promotion")
+                                  and not r["promotion"]["catalogued"]],
+                 "refused": sum(1 for r in results if "refused" in r or "error" in r)}
+    if embedding_entries:
+        aggregate[POST_WRITE] = _StagingEmbeddingContinuation(ctx, embedding_entries)
+    return aggregate
 
 
 @tool("staging_flag", tier="contribute", effect="write", scope="session",

@@ -90,7 +90,8 @@ def status(vault: Vault, engine: Engine) -> list[dict[str, Any]]:
 
 def adopt(vault: Vault, engine: Engine | None, provider: str, accepted_by: str = "person", *,
           index_call: Callable | None = None, write_call: Callable | None = None, leases=None,
-          cancelled: Callable[[], bool] | None = None
+          cancelled: Callable[[], bool] | None = None,
+          defer_embedding: bool = False
          ) -> dict[str, Any]:
     """Write every not-yet-held entry as an accepted Source note, the same
     `promote` step `staging_decide` uses - this bundle has already been
@@ -99,7 +100,8 @@ def adopt(vault: Vault, engine: Engine | None, provider: str, accepted_by: str =
     if index_call is not None:
         if write_call is None:
             raise TypeError("Core catalogue adoption requires its writer callback")
-        return _adopt_via(vault, provider, accepted_by, index_call, write_call, leases, cancelled)
+        return _adopt_via(vault, provider, accepted_by, index_call, write_call, leases,
+                          cancelled, defer_embedding)
     if engine is None:
         raise TypeError("catalogue adoption requires an Engine or Core callbacks")
     store = EvidenceStore(vault)
@@ -128,11 +130,12 @@ def adopt(vault: Vault, engine: Engine | None, provider: str, accepted_by: str =
             "failed": failed}
 
 
-def _adopt_via(vault, provider, accepted_by, index_call, write_call, leases, cancelled):
+def _adopt_via(vault, provider, accepted_by, index_call, write_call, leases, cancelled,
+               defer_embedding=False):
     """One reviewed bundle action, bounded per-entry writer plans (not one giant lease)."""
     index_call(lambda engine: None)  # Admission before evidence or catalogue processing.
     store = EvidenceStore(vault)
-    written, held, failed, attention = [], [], [], []
+    written, held, failed, attention, warnings = [], [], [], [], []
     for entry in catalogue(provider):
         if cancelled is not None and cancelled():
             return {"provider": provider, "written": len(written), "already_held": len(held),
@@ -166,13 +169,39 @@ def _adopt_via(vault, provider, accepted_by, index_call, write_call, leases, can
                 try:
                     if stamp == MISSING:
                         guard.write(rel, json.dumps(record.to_dict(), ensure_ascii=False, indent=1))
-                    return promotion.apply(vault, draft, plan, index_call, leases=leases, guard=guard)
+                    return promotion.apply(vault, draft, plan, index_call, leases=leases,
+                                           guard=guard, defer_embedding=defer_embedding)
                 except Refusal as exc:
                     exc.extra["completed_paths"] = list(dict.fromkeys(guard.completed))
                     raise
                 except Exception as exc:
                     raise promotion.PromotionInterruptedError(exc, guard.completed) from exc
             report = write_call(commit, plan)
+            if report.embedding_pending:
+                from .embed import sync_source_via
+                vector_failure = None
+                try:
+                    vectors = sync_source_via(vault, report.note, index_call)
+                except Exception as exc:  # derived data cannot undo publication
+                    vector_failure = exc
+                    vectors = f"embedding update failed ({type(exc).__name__}); retry explicitly"
+                promotion.complete_embedding_report(report, vectors, vector_failure)
+                if vector_failure is not None or report.embedding_attention_pending:
+                    final_plan = {"targets": [report.path],
+                                  "observed": [(report.path, report.publication_fingerprint)]}
+                    try:
+                        write_call(lambda: (
+                            promotion.embedding_failure(
+                                vault, report.path, report.publication_fingerprint, index_call)
+                            if vector_failure is not None else promotion.embedding_success(
+                                vault, report.path, report.publication_fingerprint, index_call)), final_plan)
+                    except Exception as exc:  # a concurrent source revision wins
+                        warnings.append({"name": entry.name,
+                                         "stage": "source_attention" if vector_failure is not None
+                                         else "source_completion",
+                                         "error": type(exc).__name__})
+                        if vector_failure is None:
+                            promotion.stale_embedding_report(report)
             written.append(entry.name)
             if not report.catalogued:
                 attention.append(entry.name)
@@ -185,4 +214,5 @@ def _adopt_via(vault, provider, accepted_by, index_call, write_call, leases, can
                            **({"refused": exc.code} if isinstance(exc, Refusal) else {}),
                            "completed_paths": list(completed)})
     return {"provider": provider, "written": len(written), "already_held": len(held), "failed": failed,
-            **({"not_findable": attention} if attention else {})}
+            **({"not_findable": attention} if attention else {}),
+            **({"embedding_warnings": warnings} if warnings else {})}

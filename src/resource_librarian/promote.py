@@ -41,6 +41,7 @@ from .vault import Vault, now_iso
 
 UNFILED = "Unfiled"
 EVIDENCE_HEADING = "Evidence"
+EMBEDDING_PENDING = "embedding pending after writer release; retry derived embedding if it remains"
 
 
 @dataclass
@@ -68,6 +69,12 @@ class Report:
     path: str = ""
     steps: dict[str, dict[str, Any]] = field(default_factory=dict)
     catalogued: bool = False
+    # Internal hand-off state. Neither field is part of the public promotion
+    # report; serving callers use it to finish derived vectors after releasing
+    # the sole vault writer.
+    embedding_pending: bool = False
+    embedding_attention_pending: bool = False
+    publication_fingerprint: str = ""
 
     def step(self, name: str, ok: bool, detail: Any = "") -> None:
         self.steps[name] = {"ok": ok, "detail": detail}
@@ -522,7 +529,8 @@ class PromotionGuard:
 
 
 def apply(vault: Vault, draft: Draft, plan: dict, index_call: Callable, *,
-          leases=None, guard: PromotionGuard | None = None) -> Report:
+          leases=None, guard: PromotionGuard | None = None,
+          defer_embedding: bool = False) -> Report:
     """SQL/rendering on Core; file mutations on the caller's writer actor."""
     if plan.get("operation") != "new_source" or plan.get("draft") != asdict(draft):
         raise TypeError("source promotion requires its own prepared plan")
@@ -560,12 +568,22 @@ def apply(vault: Vault, draft: Draft, plan: dict, index_call: Callable, *,
         # The mechanical searches must never invoke an embedding endpoint on
         # the index worker. Vector sync has an explicit copied-data boundary.
         missed = index_call(lambda engine: findability(Engine(engine.index, engine.h), plan["name"]))
-        from .embed import sync_source_via
-        try:
-            vectors = sync_source_via(vault, plan["name"], index_call)
-        except Exception as exc:
-            vectors = f"embedding update failed ({type(exc).__name__}); retry explicitly"
-            missed.append("its embedding update failed")
+        if defer_embedding:
+            # Reading the assignment is cheap and local. Avoid manufacturing a
+            # continuation (and a second state write) when vectors are off.
+            from .embed import spec_for
+            if spec_for(vault):
+                vectors = "pending writer release"
+                report.embedding_pending = True
+            else:
+                vectors = "off"
+        else:
+            from .embed import sync_source_via
+            try:
+                vectors = sync_source_via(vault, plan["name"], index_call)
+            except Exception as exc:
+                vectors = f"embedding update failed ({type(exc).__name__}); retry explicitly"
+                missed.append("its embedding update failed")
         report.step("index", True, {"vectors": vectors})
         # Embedding never reads managed attachments. Their streamed copies
         # were validated at publication and staging performs one final full
@@ -577,10 +595,19 @@ def apply(vault: Vault, draft: Draft, plan: dict, index_call: Callable, *,
             front, body, _ = notes.parse(plan["text"])
             front["needs_attention"] = f"not findable: {'; '.join(missed)}"
             write(plan["path"], notes.render(front, body))
+        elif report.embedding_pending:
+            # A process can die after the writer releases but before vectors
+            # finish. Keep that window visible on the authoritative note, not
+            # only in an accepted hidden staging record.
+            front, body, _ = notes.parse(plan["text"])
+            front["needs_attention"] = EMBEDDING_PENDING
+            write(plan["path"], notes.render(front, body))
+            report.embedding_attention_pending = True
         else:
             write(plan["path"], plan["text"])
         report.step("findability", not missed, {"missed": missed})
         report.catalogued = not missed
+        report.publication_fingerprint = guard.expected[plan["path"]]
         return report
     except Refusal as exc:
         exc.extra.update(completed_paths=list(dict.fromkeys(guard.completed)),
@@ -591,6 +618,88 @@ def apply(vault: Vault, draft: Draft, plan: dict, index_call: Callable, *,
         raise
     except Exception as exc:
         raise PromotionInterruptedError(exc, guard.completed) from exc
+
+
+def complete_embedding_report(report: Report, vectors: str,
+                              failure: Exception | None = None) -> None:
+    """Reconcile a deferred vector result without changing publication facts."""
+    report.steps["index"]["detail"]["vectors"] = vectors
+    if failure is not None:
+        missed = report.steps["findability"]["detail"].setdefault("missed", [])
+        if "its embedding update failed" not in missed:
+            missed.append("its embedding update failed")
+        report.steps["findability"]["ok"] = False
+        report.catalogued = False
+    report.embedding_pending = False
+
+
+def complete_embedding_dict(report: dict[str, Any], vectors: str,
+                            failure: Exception | None = None) -> None:
+    """Dictionary counterpart used by a post-writer staging continuation."""
+    report["steps"]["index"]["detail"]["vectors"] = vectors
+    if failure is not None:
+        missed = report["steps"]["findability"]["detail"].setdefault("missed", [])
+        if "its embedding update failed" not in missed:
+            missed.append("its embedding update failed")
+        report["steps"]["findability"]["ok"] = False
+        report["catalogued"] = False
+        report["status"] = "written but not findable"
+
+
+def stale_embedding_report(report: Report) -> None:
+    """A newer source revision makes a just-computed vector result provisional."""
+    missed = report.steps["findability"]["detail"].setdefault("missed", [])
+    if "the source changed during its embedding update" not in missed:
+        missed.append("the source changed during its embedding update")
+    report.steps["findability"]["ok"] = False
+    report.catalogued = False
+
+
+def stale_embedding_dict(report: dict[str, Any]) -> None:
+    missed = report["steps"]["findability"]["detail"].setdefault("missed", [])
+    if "the source changed during its embedding update" not in missed:
+        missed.append("the source changed during its embedding update")
+    report["steps"]["findability"]["ok"] = False
+    report["catalogued"] = False
+    report["status"] = "written but not findable"
+
+
+def embedding_success(vault: Vault, path: str, expected: str,
+                      index_call: Callable) -> None:
+    """Clear the durable pending marker after vectors finish, with exact CAS."""
+    target = operation_path(vault, path)
+    if fingerprint(target) != expected:
+        raise PreconditionChangedError(path)
+    note = notes.load(target)
+    if note.frontmatter.get("needs_attention") != EMBEDDING_PENDING:
+        raise PreconditionChangedError(path)
+    note.frontmatter.pop("needs_attention", None)
+    if fingerprint(target) != expected:
+        raise PreconditionChangedError(path)
+    atomic_write_text(target, notes.render(note.frontmatter, note.body))
+    index_call(lambda engine: engine.index.upsert(target))
+
+
+def embedding_failure(vault: Vault, path: str, expected: str,
+                      index_call: Callable) -> None:
+    """Flag a published source after derived-vector failure, with exact CAS.
+
+    The encoder ran without the writer. A human or another Core operation may
+    therefore have changed the note meanwhile; that newer revision wins.
+    """
+    target = operation_path(vault, path)
+    if fingerprint(target) != expected:
+        raise PreconditionChangedError(path)
+    note = notes.load(target)
+    current = str(note.frontmatter.get("needs_attention") or "").strip()
+    if current == EMBEDDING_PENDING:
+        current = ""
+    missing = "its embedding update failed"
+    note.frontmatter["needs_attention"] = current + ("; " if current else "not findable: ") + missing
+    if fingerprint(target) != expected:
+        raise PreconditionChangedError(path)
+    atomic_write_text(target, notes.render(note.frontmatter, note.body))
+    index_call(lambda engine: engine.index.upsert(target))
 
 
 def findability(engine: Engine, name: str) -> list[str]:

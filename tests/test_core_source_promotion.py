@@ -5,7 +5,7 @@ import threading
 
 import pytest
 
-from resource_librarian import notes, promote as promotion, staging
+from resource_librarian import embed, notes, promote as promotion, staging
 from resource_librarian.app import App
 from resource_librarian.coordination import fingerprint, fingerprint_bytes, on_writer_thread
 from resource_librarian.index import Index
@@ -107,6 +107,114 @@ def test_source_accept_owns_sql_and_files_and_copies_without_relocating_inputs(c
     assert set(out["results"][0]["originals_retained"]) == {
         "Project/docs/paper.pdf", ".librarian/staging/files/paper.md"}
     assert all(p in done["precondition_fingerprints"] for p in out["results"][0]["originals_retained"])
+
+
+def test_source_encoder_releases_writer_and_reconciles_public_result(core, monkeypatch):
+    np = pytest.importorskip("numpy")
+    core.set_service("embeddings", "hash", "16")
+    entered, release, unrelated = threading.Event(), threading.Event(), threading.Event()
+
+    def encode(texts):
+        assert not on_writer_thread()
+        entered.set()
+        assert release.wait(5)
+        return np.ones((len(texts), 16), dtype="float32")
+
+    monkeypatch.setattr(embed, "load_embedding_encoders",
+                        lambda spec, **kw: ("hash:16", encode, encode, {}))
+    accepted = []
+    worker = threading.Thread(target=lambda: accepted.append(_accept(core)), daemon=True)
+    worker.start()
+    assert entered.wait(5)
+    assert notes.load(_source(core)).frontmatter["needs_attention"] == promotion.EMBEDDING_PENDING
+    other = threading.Thread(target=lambda: core.writer.submit(
+        lambda: unrelated.set(), caller="unrelated-during-embedding"), daemon=True)
+    other.start()
+    try:
+        assert unrelated.wait(1), "encoder IO still occupied the sole vault writer"
+    finally:
+        release.set()
+        worker.join(10)
+        other.join(10)
+    assert not worker.is_alive() and accepted[0]["accepted"] == 1
+    report = accepted[0]["results"][0]["promotion"]
+    assert report["steps"]["index"]["detail"]["vectors"].endswith("chunk(s) embedded")
+    assert "needs_attention" not in notes.load(_source(core)).frontmatter
+    assert _store(core).load("new-widget")["promotion"] == report
+    operations = [json.loads(row) for row in core.writer.log_path.read_text(encoding="utf-8").splitlines()]
+    assert all("_post_write" not in op.get("result", {}).get("keys", []) for op in operations)
+
+
+def test_source_embedding_failure_is_nonfatal_truthful_and_persisted(core, monkeypatch):
+    pytest.importorskip("numpy")
+    core.set_service("embeddings", "hash", "16")
+
+    def fail(_texts):
+        raise RuntimeError("private-provider-detail")
+
+    monkeypatch.setattr(embed, "load_embedding_encoders",
+                        lambda spec, **kw: ("hash:16", fail, fail, {}))
+    out = _accept(core)
+    assert out["accepted"] == 1 and out["not_findable"] == ["new-widget"]
+    report = out["results"][0]["promotion"]
+    assert not report["catalogued"]
+    assert "embedding update failed (RuntimeError)" in report["steps"]["index"]["detail"]["vectors"]
+    assert "embedding update failed" in notes.load(_source(core)).frontmatter["needs_attention"]
+    assert _store(core).load("new-widget")["promotion"] == report
+    assert "private-provider-detail" not in json.dumps(out)
+
+
+def test_embedding_failure_does_not_overwrite_edit_after_publication(core, monkeypatch):
+    pytest.importorskip("numpy")
+    core.set_service("embeddings", "hash", "16")
+    entered, release = threading.Event(), threading.Event()
+
+    def fail(_texts):
+        assert not on_writer_thread()
+        entered.set()
+        assert release.wait(5)
+        raise RuntimeError("late failure")
+
+    monkeypatch.setattr(embed, "load_embedding_encoders",
+                        lambda spec, **kw: ("hash:16", fail, fail, {}))
+    accepted = []
+    worker = threading.Thread(target=lambda: accepted.append(_accept(core)), daemon=True)
+    worker.start()
+    assert entered.wait(5) and _source(core).is_file()
+    human = _source(core).read_text(encoding="utf-8") + "\n\nHuman edit after publication.\n"
+    _source(core).write_text(human, encoding="utf-8")
+    release.set()
+    worker.join(10)
+    assert not worker.is_alive()
+    assert _source(core).read_text(encoding="utf-8") == human
+    result = accepted[0]["results"][0]
+    assert result["promotion"]["catalogued"] is False
+    assert any(w["stage"] == "source_attention" for w in result["embedding_warnings"])
+    assert _store(core).load("new-widget")["promotion"] == result["promotion"]
+
+
+def test_nested_post_write_tool_is_refused_before_source_mutation(core):
+    ctx = Context(tier="curate", vault=core.vault,
+                  extras={**core._extras(), "caller_kind": "person"})
+    out = core.writer.submit(lambda: REGISTRY.call("staging_decide", {
+        "item_ids": ["new-widget"], "decision": "accept"}, ctx), caller="nested-test")
+    assert out["refused"] == "POST_WRITE_CONTEXT"
+    assert not _source(core).exists() and _store(core).load("new-widget")["status"] == "staged"
+
+
+def test_post_write_crash_window_leaves_authoritative_pending_marker(core, monkeypatch):
+    core.set_service("embeddings", "hash", "16")
+    from resource_librarian.tools import staging as staging_tools
+
+    def crash(_self, _aggregate):
+        raise RuntimeError("continuation fixture")
+
+    monkeypatch.setattr(staging_tools._StagingEmbeddingContinuation, "finish", crash)
+    out = _accept(core)
+    assert out["accepted"] == 1 and out["post_write_warning"]["error"] == "RuntimeError"
+    assert notes.load(_source(core)).frontmatter["needs_attention"] == promotion.EMBEDDING_PENDING
+    saved = _store(core).load("new-widget")["promotion"]
+    assert saved["steps"]["index"]["detail"]["vectors"] == "pending writer release"
 
 
 def test_dry_run_predicts_copies_without_changing_files_or_staged_json(core):

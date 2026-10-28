@@ -613,7 +613,9 @@ def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
     data = json.dumps(body).encode("utf-8") if body is not None else None
     # A caller with its own recovery (Clerk's schema fallback) passes ().
     pauses = list(TRANSIENT_RETRIES if retries is None else retries)
+    attempts = 0
     while True:
+        attempts += 1
         request = urllib.request.Request(url, data=data, method=method,
                                          headers={"Content-Type": "application/json",
                                                   **headers})
@@ -658,7 +660,7 @@ def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
                 # Reached, but slow (2026-10-02): "not reachable" sent the person to check
                 # their key when the model was simply busy.
                 raise ProviderError(f"the model did not answer within {int(timeout)} seconds "
-                                    f"({len(TRANSIENT_RETRIES) + 1} tries): the provider is slow "
+                                    f"({attempts} {'try' if attempts == 1 else 'tries'}): the provider is slow "
                                     f"or busy right now - try again shortly, or choose another "
                                     f"model", category="provider_transient") from exc
             raise ProviderError(f"{url} is not reachable: {exc}",

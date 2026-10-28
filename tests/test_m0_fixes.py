@@ -208,11 +208,19 @@ def test_a_model_that_never_answers_in_time_is_called_slow_not_unreachable(monke
     import pytest
     from resource_librarian import providers
 
+    calls = []
     def slow(request, timeout):
+        calls.append(1)
         raise urllib.error.URLError(TimeoutError("The read operation timed out"))
     monkeypatch.setattr(providers.urllib.request, "urlopen", slow)
-    with pytest.raises(providers.ProviderError, match="did not answer within 120 seconds"):
+    with pytest.raises(providers.ProviderError, match=r"did not answer within 120 seconds \(3 tries\)"):
         providers._request("POST", "https://example.invalid/v1", {}, {}, sleep=lambda s: None)
+    assert len(calls) == 3
+    calls.clear()
+    with pytest.raises(providers.ProviderError, match=r"did not answer within 120 seconds \(1 try\)"):
+        providers._request("POST", "https://example.invalid/v1", {}, {},
+                           sleep=lambda s: None, retries=())
+    assert len(calls) == 1
 
 
 # ---- 2026-10-03: a thread stuck on a question that had timed out ----

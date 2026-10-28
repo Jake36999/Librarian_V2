@@ -174,6 +174,9 @@ _RULES = [
     Rule("ORCHESTRATION_CONTEXT", "boundaries",
          "An audited orchestrator runs outside the vault writer; its individual mutations "
          "still pass the registry and writer, and no permission wait holds the writer."),
+    Rule("POST_WRITE_CONTEXT", "boundaries",
+         "A mutation with bounded follow-up work runs outside an existing vault-writer "
+         "operation, so provider or encoder IO cannot retain the sole writer."),
     Rule("CORE_REQUIRED", "boundaries",
          "Serving calls reach a vault through its owning Librarian Core; a missing or "
          "foreign Core index is never permission to open SQLite directly. MCP never "

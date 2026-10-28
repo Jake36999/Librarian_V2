@@ -45,6 +45,7 @@ MAX_ITEM_TEXT = 2_000
 # operation carries the wait for its answer out of the operation, and `call`
 # finishes it once the writer is free (coordination.on_writer_thread).
 PERSON_WAIT = "_person_wait"
+POST_WRITE = "_post_write"
 
 @dataclass(frozen=True)
 class Card:
@@ -137,6 +138,9 @@ class ToolSpec:
     # First-party control flow only: its mutations must be individual registry
     # calls or explicit writer submissions, never a wait inside one large write.
     orchestrates: bool = False
+    # This tool can return a private continuation that must run only after its
+    # enclosing VaultWriter operation has released the serial writer thread.
+    post_write: bool = False
 
     # -- parameters, read from the function itself ---------------------------
     def parameters(self) -> list[inspect.Parameter]:
@@ -223,7 +227,7 @@ class Registry:
              scope: str = "", phases: tuple[str, ...] = (),
              needs_projects: bool = False, previews: bool = False,
              intent: Callable[[Any, dict[str, Any]], Any] | None = None,
-             orchestrates: bool = False) -> Callable:
+             orchestrates: bool = False, post_write: bool = False) -> Callable:
         if phases:
             scope = scope or "phase"
         if tier not in TIERS:
@@ -237,6 +241,8 @@ class Registry:
             raise ValueError(f"{name!r}: phases=(...) goes with scope 'phase', and only with it")
         if orchestrates and (intent is not None or effect == "read"):
             raise ValueError("an orchestrator declares cumulative write effects, not a direct write intent")
+        if post_write and (orchestrates or effect == "read"):
+            raise ValueError("a post-write tool is a direct mutation, not a read or orchestrator")
 
         def register(fn: Callable[..., Any]) -> Callable[..., Any]:
             if name in self._tools:
@@ -250,7 +256,8 @@ class Registry:
                 idempotent=(effect == "read") if idempotent is None else idempotent,
                 returns=tuple(returns), sessionless=sessionless, resolve=dict(resolve or {}),
                 scope=scope, phases=frozenset(phases), needs_projects=needs_projects,
-                previews=previews, intent=intent, orchestrates=orchestrates)
+                previews=previews, intent=intent, orchestrates=orchestrates,
+                post_write=post_write)
             return fn
         return register
 
@@ -325,6 +332,11 @@ class Registry:
                 from .coordination import on_writer_thread
                 if on_writer_thread():
                     raise Refusal("ORCHESTRATION_CONTEXT", "run this orchestrator outside a vault-writer operation")
+            if spec.post_write:
+                from .coordination import on_writer_thread
+                if on_writer_thread():
+                    raise Refusal("POST_WRITE_CONTEXT",
+                                  "run this tool outside a vault-writer operation so its bounded continuation can release the writer")
             if effective != ctx.tier:
                 adjusted.append(f"agent profile capped tier {ctx.tier} to {effective}")
             # A provider should only be able to invoke the small schema surface
@@ -414,6 +426,19 @@ class Registry:
                 if expected:
                     revisions.check_now(ctx, expected)
                 result = invoke()
+            post_write = result.pop(POST_WRITE, None) if isinstance(result, dict) else None
+            if post_write is not None:
+                # The tool declaration and the pre-mutation context check above
+                # make this an explicit first-party boundary, not a generic way
+                # for arbitrary result objects to execute code.
+                if writer is None:
+                    raise RuntimeError("post-write continuation requires a vault writer")
+                try:
+                    result = post_write.finish(result)
+                except Exception as exc:  # durable publication must remain visible
+                    result = {**result, "post_write_warning": {
+                        "status": "not_completed", "error": type(exc).__name__,
+                        "next": "Inspect the accepted source and retry its derived embedding explicitly."}}
             wait = result.pop(PERSON_WAIT, None) if isinstance(result, dict) else None
             if wait is not None:
                 from .coordination import on_writer_thread

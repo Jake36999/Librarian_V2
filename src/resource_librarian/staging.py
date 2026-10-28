@@ -258,7 +258,8 @@ def decide(store: StagingStore, engine: Engine | None, item_ids: list[str], deci
            fields: dict[str, Any] | None = None, *,
            index_call: Callable | None = None, topic_plan: dict | None = None, source_plan: dict | None = None,
            source_batch: dict | None = None, mixed_batch: dict | None = None,
-           rejection_plan: dict | None = None, document_leases=None) -> list[dict[str, Any]]:
+           rejection_plan: dict | None = None, document_leases=None,
+           defer_embedding: bool = False) -> list[dict[str, Any]]:
     """Accept, reject or defer, one item or a batch. Each item's outcome is
     reported on its own; one refusal does not stop the batch.
 
@@ -304,7 +305,8 @@ def decide(store: StagingStore, engine: Engine | None, item_ids: list[str], deci
                                                 source_batch["plans"].get(item_id) if source_batch is not None else source_plan),
                                    source_guard=batch_guard, write_guard=batch_guard if mixed_batch is not None else None,
                                    rejection_plan=(rejection_plan or {}).get(item_id),
-                                   document_leases=document_leases))
+                                   document_leases=document_leases,
+                                   defer_embedding=defer_embedding))
         except Refusal as refusal:
             if (topic_plan is not None or source_plan is not None or batch_plan is not None) and refusal.code == "DOCUMENT_ACTIVE":
                 if batch_guard is not None:
@@ -715,7 +717,8 @@ def _save_decision(store, item, guard=None):
         guard.write(rel, json.dumps(item, ensure_ascii=False, indent=1))
 
 
-def _accept_prepared_source(store, item, plan, index_call, leases, entry, guard=None):
+def _accept_prepared_source(store, item, plan, index_call, leases, entry, guard=None,
+                            defer_embedding: bool = False):
     from . import promote as promotion
     from .coordination import fingerprint, operation_path
     if plan.get("error"):
@@ -730,7 +733,9 @@ def _accept_prepared_source(store, item, plan, index_call, leases, entry, guard=
     try:
         for copy in plan["copies"]:
             guard.copy(copy["source"], copy["destination"])
-        report = promotion.apply(store.vault, Draft(**plan["draft"]), plan, index_call, leases=leases, guard=guard)
+        report = promotion.apply(store.vault, Draft(**plan["draft"]), plan, index_call,
+                                 leases=leases, guard=guard,
+                                 defer_embedding=defer_embedding)
         item.update(status="accepted", accepted_to=report.path, promotion=report.to_dict(),
                     sections=plan["draft"]["sections"],
                     attachment_copies=[{k: c[k] for k in ("key", "source", "destination", "fingerprint")} for c in plan["copies"]])
@@ -745,7 +750,11 @@ def _accept_prepared_source(store, item, plan, index_call, leases, entry, guard=
         guard.write(plan["state_path"], json.dumps(item, ensure_ascii=False, indent=1),
                     include_attachments=True)
         return {"id": item["id"], "status": "accepted", "coverage": plan["coverage"], "promotion": report.to_dict(),
-                "originals_retained": [c["source"] for c in plan["copies"]]}
+                "originals_retained": [c["source"] for c in plan["copies"]],
+                **({"_embedding": {"item_id": item["id"], "name": report.note,
+                    "path": report.path, "fingerprint": report.publication_fingerprint,
+                    "attention": report.embedding_attention_pending}}
+                   if report.embedding_pending else {})}
     except Exception as exc:
         completed = list(dict.fromkeys(guard.completed[start:]))
         state = plan["state_path"]
@@ -781,7 +790,8 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
                 source_guard=None,
                 write_guard=None,
                 rejection_plan: dict | None = None,
-                document_leases=None
+                document_leases=None,
+                defer_embedding: bool = False
                 ) -> dict[str, Any]:
     item = store.load(item_id)
     if item["status"] == "queued":
@@ -919,7 +929,8 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
         return {"id": item_id, "status": "accepted", "path": path}
 
     if source_plan is not None:
-        return _accept_prepared_source(store, item, source_plan, index_call, document_leases, entry, source_guard)
+        return _accept_prepared_source(store, item, source_plan, index_call, document_leases,
+                                       entry, source_guard, defer_embedding)
     if item.get("promotion_progress"):
         raise TypeError("review and finish interrupted source acceptance one item at a time")
     draft, coverage = _source_draft(store, item, bottom_line, what_it_solves, decided_by, session,
