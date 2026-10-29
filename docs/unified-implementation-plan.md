@@ -198,6 +198,7 @@ are in the [agent-workflow sprint](../reports/2026-10-28-agent-workflow-sprint/1
 | --- | --- | --- | --- |
 | DELEG-01 | Small | implemented | One schema-2 ledger with named budget pools; transport state (started, completed, failed, uncertain) separate from acceptance; an identical request is refused while an earlier one is in flight or unreconciled; an interrupted call keeps its reserve; a definite provider rejection costs nothing; a truncated reply exits 3; the exact request and raw response are kept beside each receipt; rate cards are checked against the live listing; stray spend records are imported. |
 | DELEG-03 | Small | implemented | Packet lint, a runner gate and a pre-landing diff-scope guard. **Lint:** drafter and reviewer from different model families; checks under the repository venv; the owner-host gate for §3.2 files; protected targets never writable. **Runner gate (`--work-package`):** a refused package, an export outside its targets, or a mismatched pool or task stops before any paid call; the package sets the task budget and call limit; the receipt records the package hash and its §3.3 conformance (M9). **Guard (`scripts/check_diff_scope.py`):** refuses out-of-scope, forbidden or protected files, deletions, renames, binaries, and test edits that remove a test, reduce assertions or add a skip. Positive and negative git fixtures. |
+| DELEG-06 | Experimental medium | pilot built | `scripts/delegation_controller.py` admits a package, checks the base and environment, works in a detached worktree, confirms the before-state, asks the worker for whole files, runs the scope guard and every declared check itself, allows at most two repair rounds, commits the candidate and writes the completion record. The first live pilot was accepted in one round and landed (`9a37a34`, `6e7af59`). **Still open:** the kill criterion and the go/narrow/stop decision need E2', the three-arm comparison of lead effort, which has not run. |
 | DELEG-11 | Small | implemented | The [work-package contract](delegation-work-package.md) covers four boundaries: admission, worker ownership, evidence-bearing completion, and escalation with resumption. It comes with a JSON schema and a checker for the rules that span fields. Every §3.3 field maps to a contract field (tested). ADAPT-05 is filled in as a worked example that validates and whose protected fixture hashes verify against `b242d8b`. The remaining acceptance step, a Claude session and a Codex session each completing the form unaided for a new task, happens on the first DELEG-03/06 pilot task. |
 
 Every agent calls the same runner and ledger:
@@ -1841,3 +1842,66 @@ Tests: 14 guard tests against real temporary git repositories (deleted test,
 rename, weakened assertion, fixture edited by the worker, skip, binary,
 untracked file, quoted UTF-8 path); 5 lint tests; 6 runner-gate tests.
 Full suite: 1,542 passed, 2 skipped, 4 deselected (8m13s).
+
+### DELEG-06 delegation controller and first live pilot (2026-10-29)
+
+`scripts/delegation_controller.py` owns the execution half of a work package.
+The hosted model only proposes; the controller does everything else:
+- **Admission.** It admits the package. Owner-host packages stay lead-led.
+- **Base and environment.** It requires the protected fixtures to be committed
+  at `base_revision`, and checks the interpreter and the `pyproject.toml`
+  hash.
+- **Worktree.** It works in a detached worktree at the base, with that
+  worktree's `src` first on `PYTHONPATH` (the BASE-02 checkout guard accepts
+  this).
+- **Before-state.** It confirms the oracle and regression checks fail or pass
+  as admitted. A "fail" must be pytest exit 1 or 2; a check that cannot run
+  proves nothing and escalates `ambiguity`.
+- **Worker call.** It asks the worker, through the runner (`--work-package`,
+  `--export-root`), for whole files in `<<<FILE path>>>` blocks.
+- **Scope and checks.** It writes the files, runs the diff-scope guard, then
+  runs every declared check itself.
+- **Repair.** A failed check, or a truncated or empty reply, goes back to the
+  worker for at most `max_repair_rounds`.
+- **Result.** On success it commits the candidate, which is the artifact.
+
+The completion record carries only `ran_by: controller` evidence.
+
+**Live pilot.** The pilot task was to add `--json` to `check_work_package.py`.
+The oracle was committed first, so the base was the oracle commit. Package:
+`tmp/delegation-pilot/package.json`; worker DeepSeek-V4-Pro. There were three
+runs:
+1. **No paid call.** The out-dir was relative, so `PYTHONPATH` pointed nowhere
+   and the BASE-02 guard refused the checks (exit 4). This exposed that a check
+   that could not run had satisfied an oracle admitted to fail. Both are fixed.
+2. **One call ($0.0134), rejected.** The worker wrote `<<<FILE path="...">>>`,
+   echoing the runner's packet style, and the controller treated that as an
+   out-of-scope path. The parser now accepts the form, and the instruction
+   gives a literal example.
+3. **One call ($0.0134), accepted in round 0.** The oracle, the regression
+   check and the full suite all passed inside the worktree (1,546 passed). The
+   protected oracle was untouched. The candidate was a 15-line diff to `main()`.
+
+The lead reviewed the diff and landed it unchanged: the oracle as `9a37a34`,
+the candidate as `6e7af59`, keeping the controller's authorship. The lead then
+added `--json` to the docstring and the contract page.
+
+**Delegation.** DeepSeek-V4-Pro drafted the controller ($0.047). Claude fixed
+these defects:
+- `escalation`/`resume` were written inside `completion`;
+- unusable or truncated replies escalated instead of costing a round;
+- the repair context reused stale logs;
+- `open_run_ids` listed every run;
+- protected-fixture state was hard-coded on reject;
+- the two pilot defects above.
+
+Claude also added a bytecode and pytest-cache guard, because checks must not
+leave untracked files for the scope guard to see. Tests: 15 controller
+scenarios against a toy repository with a fake worker (no paid calls), plus a
+runner test for `--export-root`.
+
+**What is not shown.** One accepted pilot is a feasibility result, not a
+saving. Remaining lead effort (R) was not measured, so the kill criterion and
+the go, narrow or stop decision wait for E2'. The pilot also needed the lead to
+write the oracle and the brief, about the same amount of text as the change.
+Full suite on master after landing: 1,561 passed, 2 skipped, 4 deselected (8m50s).

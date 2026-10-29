@@ -18,8 +18,11 @@ runtime role and creates no second qualification authority.
 To check a package:
 
 ~~~text
-.venv/Scripts/python.exe scripts/check_work_package.py PACKAGE.json [--verify-hashes]
+.venv/Scripts/python.exe scripts/check_work_package.py PACKAGE.json [--verify-hashes] [--json]
 ~~~
+
+`--json` prints one JSON object: `ok`, `errors`, and `conformance` (null for a
+schema-invalid package).
 
 The schema checks shapes and enums. The checker enforces the rules that span
 several fields:

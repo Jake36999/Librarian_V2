@@ -5,7 +5,7 @@ The JSON Schema covers shapes and enums. The rules here cross array items and
 the repository, which a schema cannot express: an oracle must cover a
 behaviour predicate, completion evidence must come from someone other than the
 worker, and protected fixtures must still have their admitted hashes.
-Usage: check_work_package.py PACKAGE.json [--verify-hashes]
+Usage: check_work_package.py PACKAGE.json [--verify-hashes] [--json]
 """
 from __future__ import annotations
 
