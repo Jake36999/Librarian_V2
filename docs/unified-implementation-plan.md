@@ -2505,3 +2505,84 @@ research sessions are run by a real model.
   HARNESS-07 and later add intents where they are needed.
 - `review.llm` has no Tier A check by design. A predicate planned with it
   needs a model-review result that nothing records yet.
+
+### HARNESS-07 mechanical authoritative closure (2026-10-29)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| HARNESS-07 | implemented | this commit | `src/resource_librarian/target_audit.py`; the `snapshot` and `target_audit` audit events; `audit_targets`; three new verifiers; tests in `tests/test_mechanical_closure.py` (13). |
+
+**Protected-target snapshot.** A contract whose operations can change the
+vault (stage, write, promote, execute, route or publish) gets a protected set
+when admitted: its write and read targets. A named folder contributes every
+file under it. The set is never the whole vault: a target of `.` is refused,
+and so is a set over 2,000 files.
+
+`admit_contract` fingerprints the set and records a `snapshot` event. A
+not-yet-existing file is recorded as `missing`. This happens before the
+first write, and preflight will not exit without the snapshot of the
+contract's current revision.
+
+**Tier A protected-target audit.** In the audit phase, `audit_targets`
+fingerprints the same set again and records a `target_audit`:
+
+| Finding | Integrity |
+| --- | --- |
+| a protected path outside the write targets changed | violation |
+| a call ran with an operation class the contract does not allow | violation |
+| a write target changed with no writer call of the contract naming it | suspect |
+| an outside edit to a protected path was recorded after the snapshot | suspect |
+| none of the above | clean |
+
+Each write call's resolved targets are now recorded in its call descriptor,
+and the Session folds them into `contract_calls`; the audit accounts each
+change against them. The audit phase does not exit until a mutating
+contract has a target audit at this epoch.
+
+**Completion.** For a mutating contract, `verified` needs a clean audit of
+the contract's current revision at the current epoch, as well as an exact or
+bounded pass for every predicate. The event rules enforce this, so a direct
+append is refused too.
+
+`reduce_round` reduces an audit that is not clean to `blocked`, giving the
+integrity as the reason. The session outcome puts `integrity_violation`
+(violation) and `needs_person` (suspect) ahead of every requirement status,
+and the summary shows each contract's integrity. A read-only contract needs
+no audit (`not_required`).
+
+**Verifier registry.** Three deterministic, exact verifiers join the
+registry, each with a Tier A check:
+- `schema.valid`: the vault's content model, `schema.py`;
+- `citation.resolves`: each frontmatter evidence id is stored and intact,
+  and each wiki link names a note;
+- `boundary.staged`: the contract's calls were reads or staging only, and
+  its artifacts lie under staging. This is the interface check for
+  submission through staging.
+
+Index (`index.findable`) and claim-run (`claim_run.passed`) checks came with
+HARNESS-06.
+
+**The mechanical fixture.** A bounded `write_note` to `Notes/out.md`, under
+a contract that reads `Sources/s.md`:
+- It completes (`complete_verified`) only after a clean audit and both exact
+  passes, `schema.valid` and `citation.resolves`.
+- If the protected source is rewritten behind the writer's back, the audit is
+  a violation: the requirement is `blocked` and the session reads
+  `integrity_violation`.
+- If the target is written outside the tools, the audit is suspect and the
+  session reads `needs_person`.
+- An out-of-scope tool write is refused before it runs, and the audit stays
+  clean.
+- Unrelated edits elsewhere in the vault do not affect the audit.
+
+**Consequence for earlier fixtures.** The HARNESS-02, -03, -04 and -06 test
+fixtures now take snapshots and clean target audits, because their contracts
+can write. That stricter completion is the point of this task.
+
+**Not yet.**
+- The watcher still bumps the epoch on an outside edit, so a recorded
+  outside edit also makes the contract stale. The audit's suspect finding is
+  the backstop for a missed watcher event.
+- Snapshots are hash-only. Keeping before-state copies for recovery is part
+  of DEPLOY's restore work.
+- Most of the 103 writing tools still declare no write intents.

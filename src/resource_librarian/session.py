@@ -615,7 +615,8 @@ class Session:
                     not event.get("refused"):
                 self.contract_calls.setdefault(str(described.get("contract")), []).append(
                     {"class": described.get("class"), "untrusted": bool(described.get("untrusted")),
-                     "key": described.get("key"), "tool": event.get("tool")})
+                     "key": described.get("key"), "tool": event.get("tool"),
+                     "targets": list(described.get("targets") or [])})
             self.recent = (self.recent + [(event["tool"], bool(event.get("ok", True)))])[-20:]
             if event.get("charged"):
                 self.phase_calls += 1
@@ -933,10 +934,20 @@ class Session:
                 return [f"contract {contract} was admitted before the latest change (epoch "
                         f"{audit.contracts[contract]['admitted_epoch']}, now {audit.epoch}): "
                         "admit it again"]
+            revision = audit.contracts[contract]["revision"]
+            if audit_events.mutating(audit, contract) and not any(
+                    s["contract"] == contract and s["revision"] == revision
+                    for s in audit.snapshots.values()):
+                return [f"contract {contract} changes the vault and has no pre-mutation "
+                        "snapshot of its protected targets"]
             return []
         if p == "audit":
             unchecked = audit_events.unchecked_predicates(audit, contract)
-            return [f"no result yet at this epoch for {item}" for item in unchecked]
+            out = [f"no result yet at this epoch for {item}" for item in unchecked]
+            if audit_events.contract_integrity(audit, contract) == "not_audited":
+                out.append(f"contract {contract}'s protected targets are not audited yet "
+                           "(audit_targets)")
+            return out
         if p == "reduce":
             return [f"requirement {r} has no reduction at this epoch"
                     for r in audit_events.unreduced_requirements(audit, contract)]

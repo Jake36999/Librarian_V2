@@ -45,10 +45,16 @@ def build(store, rounds):
                 "targets": {"read": ["sources/a.md"], "write": ["notes/s.md"]},
                 "verifiers": {f"{r}: {p}": ("quote.located" if i == 0 else "arithmetic.reproduces")
                               for r in REQUIREMENTS for i, p in enumerate(PREDICATES)}})
+        append({"type": "snapshot", "id": f"S{n}", "contract": "C1", "contract_revision": n,
+                "targets": {"notes/s.md": f"{n - 1:020d}", "sources/a.md": "a" * 20},
+                "epoch": epoch})
         for phase in ("preflight", "execute", "audit", "reduce"):
             append({"type": "phase", "to": phase})
         append({"type": "artifact", "id": f"A{n}", "path": "notes/s.md",
                 "fingerprint": f"{n:020d}", "contract": "C1"})
+        append({"type": "target_audit", "id": f"T{n}", "contract": "C1", "contract_revision": n,
+                "snapshot": f"S{n}", "integrity": "clean", "changed": ["notes/s.md"],
+                "findings": [], "epoch": epoch})
         for rid in REQUIREMENTS:
             for p, predicate in enumerate(PREDICATES):
                 failing = rid == "R1" and p == 1

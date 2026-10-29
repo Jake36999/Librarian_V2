@@ -80,6 +80,7 @@ def round_to_reduce(lead, evidence):
     quote = lead.ok("verify_grain", requirement="R1", predicate="quote present",
                     params={"evidence": evidence, "quote": QUOTE})
     clean = lead.ok("verify_grain", requirement="R1", predicate="staged draft unchanged")
+    assert lead.ok("audit_targets")["integrity"] == "clean"
     assert lead.ok("advance")["moved"] == "reduce"
     reduced = lead.ok("reduce_round")
     return staged, quote, clean, reduced
@@ -139,6 +140,7 @@ def test_a_round_resumes_from_its_log(lead, evidence, vault):
     still = resumed.ok("advance")
     assert still["moved"] is False and "staged draft unchanged" in still["missing"][0]
     resumed.ok("verify_grain", requirement="R1", predicate="staged draft unchanged")
+    resumed.ok("audit_targets")
     assert resumed.ok("advance")["moved"] == "reduce"
     assert resumed.ok("reduce_round")["reduced"]["R1"]["status"] == "verified"
 
@@ -187,6 +189,7 @@ def test_a_predicate_no_check_can_establish_is_no_suitable_tool(lead):
     assert out["outcome"] == "no_suitable_tool"
     assert lead.summary()["requirements"]["R1"]["predicates"] == {
         "the reading is fair": "no_suitable_tool"}
+    lead.ok("audit_targets")
     assert lead.ok("advance")["moved"] == "reduce"           # not waited for
     reduced = lead.ok("reduce_round")["reduced"]["R1"]
     assert reduced["status"] == "open" and "no_suitable_tool" in reduced["reason"]

@@ -4,8 +4,9 @@ Each phase of a round has its tool here, and the person has theirs:
 
 | Phase | Tool | What it records |
 | --- | --- | --- |
-| preflight | admit_contract | the contract, if the Core's rules admit it |
+| preflight | admit_contract | the contract, if the Core's rules admit it, and the snapshot of its protected targets (HARNESS-07) |
 | execute | stage_artifact | a draft in staging and its fingerprint (an artifact) |
+| audit | audit_targets | the protected-target audit: clean, suspect or violation |
 | audit | verify_grain | one Tier A check of one predicate, with its exact statement |
 | reduce | reduce_round | each requirement's status, from the results alone |
 | any (person) | accept_artifact, reject_artifact, request_evidence, set_requirement | the person's decision |
@@ -19,7 +20,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from .. import audit_events, research_grains
+from .. import audit_events, research_grains, target_audit
 from ..coordination import atomic_write_text, fingerprint
 from ..registry import Card, Context, tool
 from ..revisions import WriteIntent
@@ -77,10 +78,21 @@ def admit_contract(ctx: Context, contract_id: str, requirements: list[str],
     if operations:
         event["operations"] = list(operations)
     _store(ctx).append_audit(session.id, event)
-    admitted = _store(ctx).load(session.id).audit.contracts[contract_id]
-    return {"contract": contract_id, "revision": admitted["revision"],
-            "verifiers": admitted["verifiers"], "operations": admitted["operations"],
-            "staged_in": staging_folder(ctx, session.id)}
+    state = _store(ctx).load(session.id).audit
+    admitted = state.contracts[contract_id]
+    out = {"contract": contract_id, "revision": admitted["revision"],
+           "verifiers": admitted["verifiers"], "operations": admitted["operations"],
+           "staged_in": staging_folder(ctx, session.id)}
+    if audit_events.mutating(state, contract_id):
+        # HARNESS-07: the before-state, durable before the first write.
+        targets = target_audit.snapshot(ctx.vault, admitted)
+        ident = _next_id(state.snapshots, "S")
+        _store(ctx).append_audit(session.id, {
+            "type": "snapshot", "id": ident, "contract": contract_id,
+            "contract_revision": admitted["revision"], "targets": targets,
+            "epoch": state.epoch})
+        out["snapshot"] = {"id": ident, "protected": len(targets)}
+    return out
 
 
 @tool("stage_artifact", tier="contribute", effect="write", phases=("execute",),
@@ -116,7 +128,8 @@ def stage_artifact(ctx: Context, name: str, text: str) -> dict:
                 "never more. params by verifier - evidence.integrity: evidence, item; "
                 "coverage.status: source, parts, status; quote.located: evidence, quote; "
                 "arithmetic.reproduces: note (path); claim_run.passed: run; index.findable: "
-                "note (name); target.diff_clean: none. A predicate no verifier can check "
+                "note (name); schema.valid, citation.resolves: note (path); target.diff_clean, "
+                "boundary.staged: none. A predicate no verifier can check "
                 "returns no_suitable_tool and goes to the person"))
 def verify_grain(ctx: Context, requirement: str, predicate: str,
                  params: dict | None = None) -> dict:
@@ -149,6 +162,28 @@ def verify_grain(ctx: Context, requirement: str, predicate: str,
             **({"evidence": list(check.evidence)} if check.evidence else {})}
 
 
+@tool("audit_targets", tier="contribute", effect="write", phases=("audit",),
+      card=Card("Audit the contract's protected targets against their snapshot",
+                "auditing a contract that changed the vault, before its verifiers count",
+                "Tier A integrity: clean when every change is a write target one of the "
+                "contract's own calls named; suspect for an unaccounted change or an outside "
+                "edit; violation when a protected path outside the write targets changed. "
+                "Only a clean audit lets the contract's requirements be verified"))
+def audit_targets(ctx: Context) -> dict:
+    session = _audited(ctx)
+    audit = session.audit
+    contract = audit.current_contract
+    if not contract:
+        raise Refusal("CONTRACT_SCOPE", "no admitted contract to audit")
+    found = target_audit.audit(ctx.vault, audit, contract, session.contract_calls.get(contract, []))
+    ident = _next_id(audit.target_audits, "T")
+    _store(ctx).append_audit(session.id, {
+        "type": "target_audit", "id": ident, "contract": contract,
+        "contract_revision": audit.contracts[contract]["revision"], "epoch": audit.epoch,
+        **found})
+    return {"target_audit": ident, **found}
+
+
 def _core_status(audit: Any, rid: str) -> tuple[str, list[str], str]:
     """A requirement's status from its latest results alone, with the results cited."""
     req = audit.requirements[rid]
@@ -161,6 +196,10 @@ def _core_status(audit: Any, rid: str) -> tuple[str, list[str], str]:
         return "failed", cited, "a predicate's latest result is fail"
     unplanned = [p for p in req["predicates"] if audit_events._unplanned(audit, rid, p)]
     if req["closure"] == "authoritative":
+        integrity = {audit_events.contract_integrity(audit, audit.results[r]["contract"])
+                     for r in cited} - {"clean", "not_required"}
+        if integrity:
+            return "blocked", cited, f"protected-target audit is {', '.join(sorted(integrity))}"
         if all(hit and hit[1]["outcome"] == "pass" and hit[1]["strength"] in ("exact", "bounded")
                for hit in latest.values()):
             return "verified", cited, ""

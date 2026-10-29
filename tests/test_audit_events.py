@@ -62,8 +62,22 @@ def verify(results=("V1",), epoch=0, status="verified", by="core"):
             "by": by, "epoch": epoch}
 
 
+def snapshot(sid_="S1", *, contract_revision=1, epoch=0):
+    # HARNESS-07: a contract that writes is snapshotted before it runs...
+    return {"type": "snapshot", "id": sid_, "contract": "C1",
+            "contract_revision": contract_revision, "epoch": epoch,
+            "targets": {"notes/a.md": "f" * 20, "sources/s.md": "e" * 20}}
+
+
+def clean(tid="T1", *, snapshot_="S1", contract_revision=1, epoch=0):
+    # ...and audited clean before its results can verify anything.
+    return {"type": "target_audit", "id": tid, "contract": "C1", "snapshot": snapshot_,
+            "contract_revision": contract_revision, "epoch": epoch, "integrity": "clean",
+            "changed": ["notes/a.md"], "findings": []}
+
+
 def seed(store, sid):
-    for event in (requirement(), contract(), artifact(), result()):
+    for event in (requirement(), contract(), snapshot(), artifact(), result(), clean()):
         store.append_audit(sid, event)
 
 
@@ -178,6 +192,8 @@ def test_a_requirement_revision_reopens_it_and_stales_the_others(store, sid):
     seed(store, sid)
     store.append_audit(sid, contract("C2", requirements=("R2",)))
     store.append_audit(sid, {**result("V2"), "requirement": "R2", "contract": "C2"})
+    store.append_audit(sid, {**snapshot("S2"), "contract": "C2"})
+    store.append_audit(sid, {**clean("T2", snapshot_="S2"), "contract": "C2"})
     store.append_audit(sid, verify())
     store.append_audit(sid, {**verify(results=("V2",)), "requirement": "R2"})
 

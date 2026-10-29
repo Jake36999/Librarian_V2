@@ -22,7 +22,9 @@ from .rules import Refusal
 
 
 AUDIT_EVENTS = frozenset({"requirement", "contract", "artifact", "fact", "verifier_result",
-                          "reduction", "external_edit"})
+                          "reduction", "external_edit",
+                          # HARNESS-07: the protected-target snapshot and its Tier A audit
+                          "snapshot", "target_audit"})
 
 CLOSURES = ("authoritative", "partial", "human_judgment")
 STRENGTHS = ("exact", "bounded", "advisory")
@@ -30,6 +32,10 @@ RESULTS = ("pass", "fail", "unavailable", "inconclusive")
 FACT_BASES = ("observed", "inferred", "model", "refuted")
 STATUSES = ("open", "partial", "verified", "human_accepted", "blocked", "failed")
 EDIT_SOURCES = ("watcher", "core_check")
+INTEGRITY = ("clean", "suspect", "violation")
+# Operations that can change the vault: a contract using any of them completes
+# only after a clean protected-target audit (HARNESS-07).
+MUTATING = frozenset({"stage", "write", "promote", "execute", "route", "publish"})
 
 
 @dataclass
@@ -42,6 +48,8 @@ class AuditState:
     results: dict[str, dict[str, Any]] = field(default_factory=dict)
     reductions: list[dict[str, Any]] = field(default_factory=list)
     external_edits: list[dict[str, Any]] = field(default_factory=list)
+    snapshots: dict[str, dict[str, Any]] = field(default_factory=dict)
+    target_audits: dict[str, dict[str, Any]] = field(default_factory=dict)
     current_contract: str = ""   # the contract most recently admitted (HARNESS-03 rounds)
     # Set when replay met an event the rules refuse. The history is then
     # reported, never trusted, and no further audit event is accepted.
@@ -267,6 +275,13 @@ def _reduction(state: AuditState, event: dict[str, Any]) -> None:
                               f"({result['strength']}); verified needs an exact or bounded pass")
             if ident not in cited:
                 raise _refuse(f"verified must cite predicate {predicate!r}'s latest result {ident}")
+        # HARNESS-07: a mutating contract's results count only after a clean
+        # audit of its protected targets at this epoch.
+        for contract in sorted({state.results[r]["contract"] for r in cited}):
+            integrity = contract_integrity(state, contract)
+            if integrity not in ("clean", "not_required"):
+                raise _refuse(f"contract {contract} changes the vault and its protected-target "
+                              f"audit is {integrity}; verified needs it clean")
     if status == "human_accepted":
         if by != "person":
             raise _refuse("human_accepted is recorded only from the person's action")
@@ -296,9 +311,70 @@ def _external_edit(state: AuditState, event: dict[str, Any]) -> None:
                                  "epoch": state.epoch})
 
 
+def _current_contract(state: AuditState, event: dict[str, Any]) -> str:
+    contract = _text(event, "contract")
+    if contract not in state.contracts:
+        raise _refuse(f"{event['type']} names unknown contract {contract!r}")
+    if event.get("contract_revision") != state.contracts[contract]["revision"]:
+        raise _refuse(f"{event['type']} is for contract {contract} revision "
+                      f"{event.get('contract_revision')!r}, not its current one")
+    return contract
+
+
+def _snapshot(state: AuditState, event: dict[str, Any]) -> None:
+    ident = _new_id(state.snapshots, event)
+    contract = _current_contract(state, event)
+    targets = event.get("targets")
+    if not isinstance(targets, dict) or not all(isinstance(v, str) for v in targets.values()):
+        raise _refuse("a snapshot maps each protected path to its fingerprint")
+    revision = state.contracts[contract]["revision"]
+    if any(s["contract"] == contract and s["revision"] == revision
+           for s in state.snapshots.values()):
+        raise _refuse(f"contract {contract} revision {revision} already has its "
+                      "pre-mutation snapshot")
+    state.snapshots[ident] = {"contract": contract, "revision": revision,
+                              "targets": {_rel_path(k): v for k, v in targets.items()},
+                              "epoch": _epoch(state, event)}
+
+
+def _target_audit(state: AuditState, event: dict[str, Any]) -> None:
+    ident = _new_id(state.target_audits, event)
+    contract = _current_contract(state, event)
+    snapshot = _text(event, "snapshot")
+    if state.snapshots.get(snapshot, {}).get("contract") != contract:
+        raise _refuse(f"target_audit compares against snapshot {snapshot!r}, which is not "
+                      f"contract {contract}'s")
+    changed = event.get("changed") or []
+    if not isinstance(changed, list):
+        raise _refuse("changed lists the protected paths that differ")
+    state.target_audits[ident] = {
+        "contract": contract, "revision": state.contracts[contract]["revision"],
+        "snapshot": snapshot, "integrity": _choice(event, "integrity", INTEGRITY),
+        "changed": [str(c) for c in changed][:50],
+        "findings": [str(f)[:300] for f in event.get("findings") or []][:20],
+        "epoch": _epoch(state, event)}
+
+
+def mutating(state: AuditState, contract_id: str) -> bool:
+    return bool(MUTATING.intersection(state.contracts[contract_id]["operations"]))
+
+
+def contract_integrity(state: AuditState, contract_id: str) -> str:
+    """clean, suspect or violation from the latest target audit of the contract's
+    current revision at this epoch; `not_audited` without one; `not_required`
+    for a contract that cannot change the vault."""
+    contract = state.contracts[contract_id]
+    if not mutating(state, contract_id):
+        return "not_required"
+    latest = [a for a in state.target_audits.values()
+              if a["contract"] == contract_id and a["revision"] == contract["revision"]
+              and a["epoch"] == state.epoch]
+    return latest[-1]["integrity"] if latest else "not_audited"
+
+
 _RULES = {"requirement": _requirement, "contract": _contract, "artifact": _artifact,
           "fact": _fact, "verifier_result": _verifier_result, "reduction": _reduction,
-          "external_edit": _external_edit}
+          "external_edit": _external_edit, "snapshot": _snapshot, "target_audit": _target_audit}
 
 
 def check_and_apply(state: AuditState, event: dict[str, Any]) -> None:
@@ -385,6 +461,12 @@ def session_outcome(state: AuditState) -> str:
         return "invalid_history"
     if not state.requirements:
         return "no_requirements"
+    # HARNESS-07: an integrity finding outranks every requirement status.
+    integrity = {contract_integrity(state, c) for c in state.contracts}
+    if "violation" in integrity:
+        return "integrity_violation"
+    if "suspect" in integrity:
+        return "needs_person"
     statuses = [state.requirement_status(r) for r in state.requirements]
     for status in ("failed", "blocked", "stale"):
         if status in statuses:
@@ -470,7 +552,8 @@ def summary(state: AuditState) -> dict[str, Any]:
                                 if _person_actions(state, r) else {})}
                          for r in state.requirements},
         "scope": SCOPE,
-        "contracts": {c: {"revision": v["revision"], "requirements": v["requirements"]}
+        "contracts": {c: {"revision": v["revision"], "requirements": v["requirements"],
+                          "integrity": contract_integrity(state, c)}
                       for c, v in state.contracts.items()},
         "external_edits": state.external_edits[-20:],
     }

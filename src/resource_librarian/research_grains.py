@@ -15,6 +15,9 @@ present in evidence `<id>` at offset N", never "the claim is true".
 | executable claim | claim_run.passed | the latest person-initiated run in `claim_run.py` |
 | findability | index.findable | `promote.findability` (promotion step 5) |
 | staging integrity | target.diff_clean | each artifact's fingerprint and the contract's targets |
+| schema (HARNESS-07) | schema.valid | the vault's content model (`schema.py`) |
+| citation (HARNESS-07) | citation.resolves | the evidence store and the vault's note names |
+| boundary (HARNESS-07) | boundary.staged | the contract's own recorded calls and artifacts |
 
 Synthesis and interpretation have no check here. They are staged for the
 person, whose acceptance closes them (`human_judgment`). A predicate that no
@@ -243,10 +246,95 @@ def diff_clean(vault: Vault, params: dict[str, Any], *, session: Any = None, **_
                                   f"{paths}")
 
 
+def _note(vault: Vault, params: dict[str, Any]) -> tuple[str, Path | None]:
+    rel = _param(params, "note").replace("\\", "/")
+    path = (vault.root / rel).resolve()
+    inside = vault.root.resolve() in path.parents and path.is_file()
+    return rel, path if inside else None
+
+
+def schema_valid(vault: Vault, params: dict[str, Any], **_: Any) -> Check:
+    """Schema: the note parses and meets the content model for its shape."""
+    from . import notes, schema
+    rel, path = _note(vault, params)
+    if path is None:
+        return Check("unavailable", "exact", f"note `{rel}` is not a file in the vault")
+    model = schema.load(vault.root)
+    if not model.found or model.error:
+        return Check("unavailable", "exact", "the vault has no readable content model"
+                     + (f": {model.error}" if model.error else ""))
+    note = notes.load(path)
+    violations = model.check(note, vault.root)
+    if violations:
+        listed = "; ".join(f"{v.check}: {v.detail}"[:160] for v in violations[:8])
+        return Check("fail", "exact", f"`{rel}` does not meet the content model: {listed}")
+    shape = model.shape_of(note, vault.root) or "none"
+    return Check("pass", "exact", f"`{rel}` parses and meets the content model for shape "
+                                  f"`{shape}` (fields, sections, axis values)")
+
+
+def citation_resolves(vault: Vault, params: dict[str, Any], **_: Any) -> Check:
+    """Citation: each evidence id in the frontmatter is stored and intact, and each
+    wiki link names a note in the vault."""
+    from . import notes
+    from .evidence import EvidenceStore
+    rel, path = _note(vault, params)
+    if path is None:
+        return Check("unavailable", "exact", f"note `{rel}` is not a file in the vault")
+    note = notes.load(path)
+    ids = [str(i) for i in note.frontmatter.get("evidence") or [] if i]         if isinstance(note.frontmatter.get("evidence"), list) else []
+    links = sorted(set(notes.wikilinks(note.body)))
+    store = EvidenceStore(vault)
+    problems = []
+    for ident in ids:
+        record = store.get(ident)
+        if record is None:
+            problems.append(f"evidence {ident} is not stored")
+        elif not EvidenceStore.intact(record):
+            problems.append(f"evidence {ident} no longer matches its hash")
+    if links:
+        names = {p.stem.lower() for p in vault.root.rglob("*.md")
+                 if not any(part.startswith(".") for part in p.relative_to(vault.root).parts)}
+        problems += [f"[[{link}]] names no note" for link in links
+                     if link.rsplit("/", 1)[-1].lower() not in names]
+    if problems:
+        return Check("fail", "exact", f"`{rel}` cites what does not resolve: "
+                                      f"{'; '.join(problems[:10])}", evidence=tuple(ids))
+    if not ids and not links:
+        return Check("inconclusive", "exact", f"`{rel}` cites no evidence id and no note")
+    return Check("pass", "exact", f"the {len(ids)} evidence id(s) and {len(links)} wiki link(s) "
+                                  f"`{rel}` cites all resolve", evidence=tuple(ids))
+
+
+def boundary_staged(vault: Vault, params: dict[str, Any], *, session: Any = None,
+                    **_: Any) -> Check:
+    """Boundary: the contract's writes all went to staging, so anything reaching
+    the library still passes the person's promotion step."""
+    audit = session.audit
+    contract = str(params.get("contract") or audit.current_contract)
+    if contract not in audit.contracts:
+        return Check("unavailable", "exact", f"contract {contract!r} is not admitted")
+    calls = session.contract_calls.get(contract, [])
+    crossed = [f"{c.get('tool')} ({c.get('class')})" for c in calls
+               if c.get("class") not in ("read", "untrusted", "stage")]
+    staging = vault.work("staging").relative_to(vault.root).as_posix() + "/"
+    outside = [v["path"] for v in audit.artifacts.values()
+               if v["contract"] == contract and not v["path"].startswith(staging)]
+    if crossed or outside:
+        listed = "; ".join([f"call {c}" for c in crossed] + [f"artifact {p}" for p in outside])
+        return Check("fail", "exact", f"contract {contract} changed the vault outside staging: "
+                                      f"{listed}")
+    staged = sum(1 for c in calls if c.get("class") == "stage")
+    return Check("pass", "exact", f"contract {contract} changed the vault only through staging "
+                                  f"({staged} staged write(s), no direct write)")
+
+
 CHECKS: dict[str, Callable[..., Check]] = {
     "evidence.integrity": integrity, "coverage.status": coverage, "quote.located": quote,
     "arithmetic.reproduces": arithmetic, "claim_run.passed": claim_run,
     "index.findable": findable, "target.diff_clean": diff_clean,
+    "schema.valid": schema_valid, "citation.resolves": citation_resolves,
+    "boundary.staged": boundary_staged,
 }
 GRAINS = {"intake": "evidence.integrity", "coverage": "coverage.status",
           "quote": "quote.located", "arithmetic": "arithmetic.reproduces",

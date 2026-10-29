@@ -59,6 +59,23 @@ class Core:
                      "role": "lead", "epoch": self.epoch,
                      "targets": {"read": [], "write": ["notes/out.md"]},
                      "verifiers": {"R1: the note exists": "index.findable"}})
+        audit = self.lead.state().audit
+        self.append({"type": "snapshot", "id": f"S{len(audit.snapshots) + 1}", "contract": cid,
+                     "contract_revision": revision, "targets": {"notes/out.md": "MISSING"},
+                     "epoch": self.epoch})
+
+    def audit_targets(self, integrity="clean"):
+        """Tier A's protected-target audit (HARNESS-07), once per contract revision and epoch."""
+        audit = self.lead.state().audit
+        contract = audit.contracts["C1"]
+        if any(a["revision"] == contract["revision"] and a["epoch"] == audit.epoch
+               for a in audit.target_audits.values()):
+            return
+        snap = [i for i, s in audit.snapshots.items() if s["revision"] == contract["revision"]]
+        self.append({"type": "target_audit", "id": f"T{len(audit.target_audits) + 1}",
+                     "contract": "C1", "contract_revision": contract["revision"],
+                     "snapshot": snap[-1], "integrity": integrity, "changed": ["notes/out.md"],
+                     "findings": [], "epoch": audit.epoch})
 
     def produce(self, aid="A1"):
         self.append({"type": "artifact", "id": aid, "path": "notes/out.md",
@@ -66,6 +83,7 @@ class Core:
 
     def check(self, rid="V1", outcome="pass", aid="A1"):
         contract = self.lead.state().audit.contracts["C1"]
+        self.audit_targets()
         self.append({"type": "verifier_result", "id": rid, "requirement": "R1",
                      "contract": "C1", "contract_revision": contract["revision"],
                      "predicate": "the note exists", "verifier": "index.findable@1",

@@ -59,6 +59,13 @@ VERIFIERS: dict[str, Verifier] = {
                                "the artifact resolves through the declared lookup"),
     "target.diff_clean": Verifier("deterministic", "exact",
                                   "only the contract's write targets changed, as declared"),
+    # HARNESS-07: mechanical closure for bounded operations
+    "schema.valid": Verifier("deterministic", "exact",
+                             "the note parses and meets the vault's content model for its shape"),
+    "citation.resolves": Verifier("deterministic", "exact",
+                                  "every evidence id and wiki link the note cites resolves"),
+    "boundary.staged": Verifier("deterministic", "exact",
+                                "the contract changed the vault only through staging"),
     "review.llm": Verifier("llm", "advisory",
                            "a model's read-only assessment; advisory, never verification"),
 }
@@ -246,4 +253,7 @@ def authorize(session: Any, spec: Any, kwargs: dict[str, Any], intent: Any,
                                         f"contract {contract_id}; it is not repeated")
     return {"contract": contract_id, "revision": contract["revision"], "class": klass,
             "untrusted": klass == "untrusted" or bool(spec.open_world), "key": key,
-            "bytes": size}
+            "bytes": size,
+            # HARNESS-07: what the protected-target audit accounts each change to.
+            **({"targets": [str(t).replace("\\", "/") for t in intent.targets]}
+               if klass not in ("read", "untrusted") and intent is not None else {})}
