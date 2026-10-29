@@ -198,8 +198,8 @@ analysis only if the owner decides so before unblinding.
 - With n = 12 the 95% half-width is about 0.64σ. If σ is 0.25, that separates
   R = 0.2 from R = 0.5, but not 0.2 from 0.3. Stage A0 estimates σ.
 
-**Decision rule.** The report's proposal is below; it is the owner's to
-confirm or change before Stage A starts.
+**Decision rule.** The owner confirmed this rule on 2026-10-29, before any
+arm ran.
 - **Stop:** mean R(C) is 0.8 or more, or arm C's escaped defects exceed arm
   A's.
 - **Narrow:** use the controller only in a stratum whose mean R(C) is 0.5 or
@@ -207,6 +207,31 @@ confirm or change before Stage A starts.
 - **Claim 20/80** for this class only if mean R(C) is 0.2 or less and the
   upper end of its interval is below 0.5.
 - **Otherwise:** report the measured gain without a claim.
+
+### Amendments before the first arm (2026-10-29)
+
+These were committed before any Stage A0 arm started. The exact text each arm
+receives, and its run record, are in
+[`e2-a0-runs.json`](e2-a0-runs.json).
+
+1. **Launch.** Each arm is a fresh linked Claude Code session, started from
+   the experimenter's session in the arm's own worktree. All arms run with
+   claude-opus-5-5, medium effort and auto permission mode. They share one
+   neutral background text that names the run as an experiment and gives no
+   arm-specific hint.
+2. **Waves.** Arms run in three waves of three. Wave n holds position n of
+   each task's seeded order, so within a task the order holds, and at most
+   three sessions run at once. Each wave starts after the previous one has
+   ended.
+3. **Ledgers.** Arms B and C use their own worktree's default ledger, so both
+   delegating arms follow the same rule (the controller has no ledger option).
+   The meter joins each arm's spend from its own ledger.
+4. **Common text.** "Work only inside this folder." was added to the common
+   text.
+5. **Memory.** Each arm's auto-memory lives under its own project folder, so
+   no arm sees this project's memory. None of the nine project folders existed
+   before the run. Any memory file found there afterwards is recorded as a
+   protocol deviation.
 
 ## 7. Threats and controls
 
