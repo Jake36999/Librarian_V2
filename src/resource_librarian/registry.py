@@ -217,7 +217,7 @@ class Registry:
         self._tools: dict[str, ToolSpec] = {}
         # (before, after), installed by the session harness. Called for every
         # call made inside a session, so no surface can skip the phase gate.
-        self.session_hooks: tuple[Callable, Callable] | None = None
+        self.session_hooks: tuple[Callable, ...] | None = None
 
     # -- declaration ---------------------------------------------------------
     def tool(self, name: str, *, tier: str, effect: str, card: Card,
@@ -325,6 +325,7 @@ class Registry:
             hooks = None
         adjusted: list[str] = []
         permission, kwargs, intent = "no broker", None, None
+        authorization: dict[str, Any] | None = None
         try:
             effective = _profile_tier(ctx)
             spec = self.check(name, effective)
@@ -376,6 +377,11 @@ class Registry:
                 from . import revisions
                 intent = revisions.canonical_intent(ctx.vault, intent)
                 expected = revisions.preconditions(ctx, intent, str(kwargs.get("revision") or ""))
+            if hooks and len(hooks) > 2:
+                # HARNESS-05: an executing audited contract authorizes the call
+                # on its resolved targets, before anyone is asked to approve it.
+                authorization = hooks[2](name, spec, kwargs, intent, ctx,
+                                         raw=arguments or {}, adjusted=adjusted)
             broker = ctx.extras.get("broker")
             def invoke() -> Any:
                 # Some tools intentionally block while waiting for a person
@@ -489,7 +495,8 @@ class Registry:
         if hooks and name in self._tools and ctx.session:
             try:
                 result = hooks[1](name, arguments or {}, result, ctx, self._tools[name].effect,
-                                  permission=permission, normalised=kwargs)
+                                  permission=permission, normalised=kwargs,
+                                  authorization=authorization)
             except Refusal as refusal:
                 result = {**result, "session_error": refusal.to_dict()}
         return result

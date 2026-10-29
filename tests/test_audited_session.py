@@ -57,7 +57,8 @@ class Core:
     def admit(self, cid="C1", revision=1):
         self.append({"type": "contract", "id": cid, "revision": revision, "requirements": ["R1"],
                      "role": "lead", "epoch": self.epoch,
-                     "targets": {"read": [], "write": ["notes/out.md"]}})
+                     "targets": {"read": [], "write": ["notes/out.md"]},
+                     "verifiers": {"R1: the note exists": "index.findable"}})
 
     def produce(self, aid="A1"):
         self.append({"type": "artifact", "id": aid, "path": "notes/out.md",
@@ -67,7 +68,7 @@ class Core:
         contract = self.lead.state().audit.contracts["C1"]
         self.append({"type": "verifier_result", "id": rid, "requirement": "R1",
                      "contract": "C1", "contract_revision": contract["revision"],
-                     "predicate": "the note exists", "verifier": "tier_a.exists@1",
+                     "predicate": "the note exists", "verifier": "index.findable@1",
                      "strength": "exact", "outcome": outcome, "artifacts": [aid],
                      "epoch": self.epoch})
 

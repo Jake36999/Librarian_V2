@@ -33,18 +33,24 @@ def requirement(rid="R1", *, revision=1, closure="authoritative", predicates=("q
             "predicates": list(predicates), "text": "Quote the source exactly.", "by": by}
 
 
-def contract(cid="C1", *, revision=1, requirements=("R1",), epoch=0, write=("notes/a.md",)):
+VERIFIER_FOR = {"quote present": "quote.located", "arithmetic reproduces": "arithmetic.reproduces"}
+
+
+def contract(cid="C1", *, revision=1, requirements=("R1",), epoch=0, write=("notes/a.md",),
+             predicates=("quote present",)):
     return {"type": "contract", "id": cid, "revision": revision,
             "requirements": list(requirements), "role": "lead", "epoch": epoch,
-            "targets": {"read": ["sources/s.md"], "write": list(write)}}
+            "targets": {"read": ["sources/s.md"], "write": list(write)},
+            # HARNESS-05: an authoritative requirement needs its verifier plan up front
+            "verifiers": {f"{r}: {p}": VERIFIER_FOR[p] for r in requirements for p in predicates}}
 
 
 def result(rid_="V1", *, outcome="pass", strength="exact", epoch=0, predicate="quote present",
            contract_revision=1, artifacts=("A1",)):
     return {"type": "verifier_result", "id": rid_, "requirement": "R1", "contract": "C1",
             "contract_revision": contract_revision, "predicate": predicate,
-            "verifier": "clerk.quoted@1", "strength": strength, "outcome": outcome,
-            "artifacts": list(artifacts), "epoch": epoch}
+            "verifier": f"{VERIFIER_FOR.get(predicate, 'quote.located')}@1", "strength": strength,
+            "outcome": outcome, "artifacts": list(artifacts), "epoch": epoch}
 
 
 def artifact(aid="A1", path="notes/a.md", fp="f" * 20):
@@ -132,8 +138,8 @@ def test_an_older_pass_cannot_hide_a_newer_failure(store, sid):
 
 
 def test_every_predicate_needs_its_own_pass(store, sid):
-    for e in (requirement(predicates=("quote present", "arithmetic reproduces")), contract(),
-              artifact(), result()):
+    both = ("quote present", "arithmetic reproduces")
+    for e in (requirement(predicates=both), contract(predicates=both), artifact(), result()):
         store.append_audit(sid, e)
     refused(store, sid, verify(), "'arithmetic reproduces' has no result")
 

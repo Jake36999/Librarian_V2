@@ -108,6 +108,14 @@ _RULES = [
     Rule("SESSION_REQUIRED", "sessions",
          "The operation needs an open session. open_session starts one; resume_session "
          "reopens a parked or closed one."),
+    Rule("CONTRACT_SCOPE", "sessions",
+         "While an audited contract executes, each call must be an operation the contract "
+         "allows, on its targets, within the size limit, and not a repeat of a write that "
+         "already succeeded. Nothing was done."),
+    Rule("COMPOSITION_REFUSED", "sessions",
+         "Calls that are each allowed must not combine into one the contract does not allow: "
+         "after untrusted input, a contract may only read and stage drafts for the person. "
+         "Nothing was done."),
     Rule("AUDIT_EVENT_INVALID", "sessions",
          "An audited session's event must follow from the state before it: known "
          "requirements and contracts, the current epoch, a person's own revision, and an "

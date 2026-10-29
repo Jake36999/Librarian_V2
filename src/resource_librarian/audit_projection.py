@@ -24,6 +24,7 @@ import math
 from typing import Any
 
 from . import audit_events
+from .closure import VERIFIERS
 
 
 DEFAULT_TOKEN_BUDGET = 6000
@@ -31,17 +32,6 @@ RECENT_EVENTS = 12
 MAX_REFERENCES = 20
 TEXT_CLIP = 300
 
-# Tier A verifiers the harness can name in a contract (HARNESS-05 to HARNESS-07
-# implement them). Each id says exactly what a pass means, never more.
-TIER_A_VERIFIERS = {
-    "evidence.integrity": "the evidence object passes its integrity and ingestion checks",
-    "coverage.status": "these named sources or parts have this recorded examination status",
-    "quote.located": "the quote is present in the named evidence at the stated offset",
-    "arithmetic.reproduces": "the calculation reproduces from its operands and assumptions",
-    "claim_run.passed": "the declared claim-run passed in the recorded environment and scope",
-    "index.findable": "the artifact resolves through the declared lookup",
-    "target.diff_clean": "only the contract's write targets changed, as declared",
-}
 
 _EVENT_KEYS = ("id", "requirement", "contract", "predicate", "status", "outcome", "strength",
                "to", "path", "role", "revision", "epoch", "kind", "tool", "ok")
@@ -83,7 +73,9 @@ def capability_manifest(*, tier: str, profile: Any = None, roots: list[str] | No
     roles = ("lead", "scribe", "clerk", "research_helper")
     return {
         "bundles": bundles,
-        "verifiers": [{"id": k, "predicate": v} for k, v in sorted(TIER_A_VERIFIERS.items())],
+        # One registry (closure.py): each id says exactly what a pass means.
+        "verifiers": [{"id": k, "kind": v.kind, "max_strength": v.max_strength,
+                       "predicate": v.predicate} for k, v in sorted(VERIFIERS.items())],
         "roots": sorted(roots or ["."]),
         "routes": {role: reported.get(role, {"available": "unknown",
                                              "reason": "not reported by the Core"})

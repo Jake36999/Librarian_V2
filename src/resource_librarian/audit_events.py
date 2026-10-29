@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from . import closure
 from .rules import Refusal
 
 
@@ -162,12 +163,19 @@ def _contract(state: AuditState, event: dict[str, Any]) -> None:
     read = [_rel_path(p) for p in targets.get("read") or []]
     write = [_rel_path(p) for p in targets.get("write") or []]
     role = _text(event, "role")
+    operations = event.get("operations") or list(closure.DEFAULT_OPERATIONS)
+    if not isinstance(operations, list) or any(o not in closure.OPERATIONS for o in operations):
+        raise _refuse(f"contract operations must be a list from {list(closure.OPERATIONS)}")
+    # HARNESS-05: a plan that could not close an authoritative requirement is
+    # refused here, before anything runs.
+    plan = closure.check_plan(state.requirements, requirements, event.get("verifiers"))
     _epoch(state, event)
     if revision > 1:
         state.epoch += 1
     state.contracts[event["id"]] = {"requirements": requirements, "read": read, "write": write,
                                     "role": role, "revision": revision,
-                                    "admitted_epoch": state.epoch}
+                                    "admitted_epoch": state.epoch,
+                                    "operations": list(operations), "verifiers": plan}
     state.current_contract = event["id"]
 
 
@@ -205,9 +213,13 @@ def _verifier_result(state: AuditState, event: dict[str, Any]) -> None:
     predicate = _text(event, "predicate")
     if predicate not in state.requirements[requirement]["predicates"]:
         raise _refuse(f"predicate {predicate!r} is not one of requirement {requirement}'s")
+    strength = _choice(event, "strength", STRENGTHS)
+    verifier = _text(event, "verifier")
+    closure.check_result(verifier, strength,
+                         state.contracts[contract]["verifiers"].get(f"{requirement}: {predicate}"))
     state.results[ident] = {
         "requirement": requirement, "contract": contract, "predicate": predicate,
-        "verifier": _text(event, "verifier"), "strength": _choice(event, "strength", STRENGTHS),
+        "verifier": verifier, "strength": strength,
         "outcome": _choice(event, "outcome", RESULTS),
         "artifacts": _id_list(event, "artifacts", state.artifacts, "artifact"),
         "epoch": _epoch(state, event)}

@@ -529,6 +529,9 @@ class Session:
     # from typed events in this same log (audit_events.py is their rule book).
     audit: AuditState = field(default_factory=AuditState)
     audit_round: int = 1            # HARNESS-03: the audited purpose's round number
+    # HARNESS-05: each contract's successful calls (class, untrusted, idempotency
+    # key), folded from `call` events so composition survives a resume.
+    contract_calls: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
 
     # -- identity -------------------------------------------------------------
     @property
@@ -604,6 +607,12 @@ class Session:
                     safe["t"] = timestamp
                 self.model_events.append(safe)
         elif kind == "call":
+            described = event.get("contract_call")
+            if isinstance(described, dict) and event.get("ok", True) and \
+                    not event.get("refused"):
+                self.contract_calls.setdefault(str(described.get("contract")), []).append(
+                    {"class": described.get("class"), "untrusted": bool(described.get("untrusted")),
+                     "key": described.get("key"), "tool": event.get("tool")})
             self.recent = (self.recent + [(event["tool"], bool(event.get("ok", True)))])[-20:]
             if event.get("charged"):
                 self.phase_calls += 1
@@ -1546,9 +1555,26 @@ def _is_person(ctx: Any) -> bool:
     return getattr(ctx, "tier", "") == "curate"
 
 
+def authorize_call(tool_name: str, spec: Any, kwargs: dict[str, Any], intent: Any,
+                   ctx: Any, raw: dict[str, Any] | None = None,
+                   adjusted: list[str] | None = None) -> dict[str, Any] | None:
+    """HARNESS-05: check a call against the executing audited contract.
+
+    Runs after the write intent is resolved and before anyone is asked to
+    approve the call, so a call outside the contract is refused before it runs.
+    """
+    if tool_name in HARNESS:
+        return None          # session bookkeeping, not an effect on the vault
+    from . import closure
+    session = SessionStore(ctx.vault).load(ctx.session)
+    return closure.authorize(session, spec, kwargs, intent, ctx.vault, raw=raw,
+                             adjusted=adjusted)
+
+
 def after_call(tool_name: str, arguments: dict[str, Any], result: dict[str, Any],
                ctx: Any, effect: str = "", permission: str = "",
-               normalised: dict[str, Any] | None = None) -> dict[str, Any]:
+               normalised: dict[str, Any] | None = None,
+               authorization: dict[str, Any] | None = None) -> dict[str, Any]:
     """Record the call and hand the walk back with the result. `effect` (the
     tool's own declared "read"/"write"/"vault_write") is recorded too, so a
     fold can tell whether anything after a message actually changed the vault
@@ -1574,6 +1600,8 @@ def after_call(tool_name: str, arguments: dict[str, Any], result: dict[str, Any]
         shown = {k: _trace_value(k, v) for k, v in normalised.items()}
         if shown != event["args"]:
             event["normalised"] = shown
+    if authorization is not None:
+        event["contract_call"] = authorization
     for key in ("refused", "error"):
         if key in result:
             event[key] = str(result[key])[:80]

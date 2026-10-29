@@ -2346,3 +2346,76 @@ identical projections and digests. Other tests show:
 when the Manager is invoked belongs with the Manager call itself (HARNESS-06).
 The App will supply real route availability then.
 Full suite: 1,646 passed, 2 skipped, 4 deselected (9m24s).
+
+### HARNESS-05 closure validity, per-call authorization and composition (2026-10-29)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| HARNESS-05 | implemented | this commit | `src/resource_librarian/closure.py`; registry, session, audit-event and projection wiring; tests in `tests/test_closure.py` (24). |
+
+**Closure validity, refused before execution.** `closure.VERIFIERS` is the one
+registry. It lists eight verifiers, each with a kind, the strongest result it
+can give, and exactly what a pass means; the projection's manifest now reads
+it. The closure table:
+- **authoritative** needs a deterministic, test, solver or evidence verifier
+  at exact or bounded strength for every predicate;
+- **partial** may use any verifier, and an LLM review (`review.llm`, advisory
+  at most) can only support partial closure;
+- **human_judgment** is closed by a person's acceptance.
+
+A contract now carries its verifier plan, and it is refused at admission if:
+- the plan gives an authoritative predicate no verifier, or one that would
+  cap it at partial;
+- it names an unknown verifier;
+- it names a predicate the contract doesn't address.
+
+A verifier result must come from the planned verifier, and may not claim more
+than that verifier's strength: `claim_run.passed` can give bounded, never
+exact.
+
+**Per-call authorization.** A third registry hook runs after the write intent
+is resolved (CORE-05) and before anyone is asked to approve the call. While an
+audited contract executes, each non-bookkeeping call must pass:
+- **Operation class:** read, untrusted, stage, write, promote, execute, route
+  or publish, and one the contract allows (default read, stage and write).
+  Open-world tools count as untrusted.
+- **Path:** resolved write targets must lie within the contract's targets. A
+  write that declares no targets is refused (fail closed), and paths read must
+  be among the read or write targets.
+- **Size:** at most 256 KB, measured on the arguments as given.
+- **Idempotency key:** a hash of the contract, revision, tool and arguments.
+  An identical write that already succeeded is not repeated.
+
+The call's descriptor is recorded in its durable `call` event, and the
+Session folds it into `contract_calls`.
+
+**Found while testing.** Argument coercion silently truncates text over 20,000
+characters. Under a contract that meant a truncated note was written that
+nobody proposed. A call whose arguments would be cut is now refused: a
+contract executes the proposed call or nothing. Outside audited execution,
+coercion behaves as before.
+
+**Prohibited composition.** After untrusted input enters a contract, only
+reads, more untrusted reads and staging remain. A canonical write, promotion,
+execution, route change or publication is refused (`COMPOSITION_REFUSED`).
+
+Tested through the real registry:
+- `read_url` fetches a page carrying an injected instruction (fake fetcher);
+- `write_note` to the contract's own target is then refused, and nothing is
+  written;
+- the same write without the untrusted read succeeds;
+- the refusal survives a resume, because composition folds from the logged
+  calls.
+
+A staged draft after untrusted input is allowed, tested at the guard. The new
+rules are `CONTRACT_SCOPE` and `COMPOSITION_REFUSED`.
+
+**Consequence for earlier tests.** HARNESS-02, -03 and -04 fixtures now
+declare verifier plans and use registered verifier ids. That stricter
+admission is the point of this task.
+
+**Not yet.** Only 8 of the 103 writing tools declare write intents. Under an
+executing contract the others are refused until they gain intents, which
+HARNESS-06 and -07 add for the staging and verification tools they use.
+Targeted trust propagation stays HARNESS-09.
+Full suite: 1,670 passed, 2 skipped, 4 deselected (9m12s).

@@ -21,12 +21,12 @@ from ..registry import PERSON_WAIT, REGISTRY, Card, Context, tool
 from ..revisions import WriteIntent
 from ..rules import Refusal
 from ..search import Constraints, search, terms_from
-from ..session import PURPOSES, SessionStore, after_call, before_call
+from ..session import PURPOSES, SessionStore, after_call, authorize_call, before_call
 from ..vault import jsonl_lines, now_iso
 from .library import DUE_DATE, IndexGateway, with_index
 from .staging import clerk_endpoint, scribe_endpoint
 
-registry.REGISTRY.session_hooks = (before_call, after_call)
+registry.REGISTRY.session_hooks = (before_call, after_call, authorize_call)
 
 Purpose = Literal["add_project", "explore", "suggest", "apply", "start_pursuit", "learn",
                   "add_capability", "audited"]

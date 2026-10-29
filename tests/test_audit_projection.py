@@ -42,7 +42,9 @@ def build(store, rounds):
                                                          "step": f"round {n}"}}})
         append({"type": "contract", "id": "C1", "revision": n,
                 "requirements": list(REQUIREMENTS), "role": "lead", "epoch": issued_at,
-                "targets": {"read": ["sources/a.md"], "write": ["notes/s.md"]}})
+                "targets": {"read": ["sources/a.md"], "write": ["notes/s.md"]},
+                "verifiers": {f"{r}: {p}": ("quote.located" if i == 0 else "arithmetic.reproduces")
+                              for r in REQUIREMENTS for i, p in enumerate(PREDICATES)}})
         for phase in ("preflight", "execute", "audit", "reduce"):
             append({"type": "phase", "to": phase})
         append({"type": "artifact", "id": f"A{n}", "path": "notes/s.md",
