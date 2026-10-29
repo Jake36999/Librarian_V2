@@ -191,16 +191,27 @@ def main(argv: list[str] | None = None) -> int:
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("package", type=Path)
     parser.add_argument("--verify-hashes", action="store_true")
+    parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     try:
         package = json.loads(args.package.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         raise SystemExit(f"cannot read work package: {exc}") from exc
     errors = check(package, verify_hashes=args.verify_hashes)
-    for error in errors:
-        print(error)
-    if not errors:
-        print("ok")
+    if args.json:
+        schema_ok = not schema_errors(package)
+        report = {
+            "ok": len(errors) == 0,
+            "errors": errors,
+            "conformance": conformance(package) if schema_ok else None,
+        }
+        json.dump(report, sys.stdout)
+        sys.stdout.write("\n")
+    else:
+        for error in errors:
+            print(error)
+        if not errors:
+            print("ok")
     return 1 if errors else 0
 
 
