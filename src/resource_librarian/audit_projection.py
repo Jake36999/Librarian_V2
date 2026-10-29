@@ -73,6 +73,8 @@ def capability_manifest(*, tier: str, profile: Any = None, roots: list[str] | No
     roles = ("lead", "scribe", "clerk", "research_helper")
     return {
         "bundles": bundles,
+        # HARNESS-06 telemetry: how many bundles the tier and profile filter left.
+        "bundle_counts": {"registered": len(BUNDLES), "after_filter": len(bundles)},
         # One registry (closure.py): each id says exactly what a pass means.
         "verifiers": [{"id": k, "kind": v.kind, "max_strength": v.max_strength,
                        "predicate": v.predicate} for k, v in sorted(VERIFIERS.items())],

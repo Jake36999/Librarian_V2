@@ -601,8 +601,14 @@ def audit_projection(ctx: Context, token_budget: int = 6000) -> dict:
     if session.purpose != "audited":
         raise TypeError("only an audited session has a Manager projection")
     manifest = capability_manifest(tier=ctx.tier, projects_on=_projects_on(ctx.vault))
-    return project(session, _store(ctx).events(session.id), manifest=manifest,
+    view = project(session, _store(ctx).events(session.id), manifest=manifest,
                    vault=ctx.vault, token_budget=max(500, min(int(token_budget), 50_000)))
+    # HARNESS-06: the Manager was invoked on exactly this view; keep its digest
+    # and the post-filter bundle count with the session.
+    _event(ctx, {"type": "manager_view", "digest": view["digest"],
+                 "round": session.audit_round, "fits": view["fits"],
+                 "bundles": manifest["bundle_counts"]})
+    return view
 
 
 @tool("request_budget", tier="contribute", effect="write", scope="session",

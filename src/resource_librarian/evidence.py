@@ -116,10 +116,11 @@ class EvidenceStore:
     def verify(self) -> list[str]:
         """Records whose content no longer matches their id: evidence that was
         edited after it was stored. Empty is the only acceptable answer."""
-        bad = []
-        for record in self.iter():
-            expected = hashlib.sha256(_canonical(record.kind, record.source,
-                                                 record.fetched_at, record.payload)).hexdigest()[:32]
-            if expected != record.id:
-                bad.append(record.id)
-        return bad
+        return [record.id for record in self.iter() if not self.intact(record)]
+
+    @staticmethod
+    def intact(record: Record) -> bool:
+        """Whether one record still matches the content hash that is its id."""
+        expected = hashlib.sha256(_canonical(record.kind, record.source,
+                                             record.fetched_at, record.payload)).hexdigest()[:32]
+        return expected == record.id

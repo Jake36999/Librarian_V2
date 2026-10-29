@@ -222,7 +222,10 @@ def _verifier_result(state: AuditState, event: dict[str, Any]) -> None:
         "verifier": verifier, "strength": strength,
         "outcome": _choice(event, "outcome", RESULTS),
         "artifacts": _id_list(event, "artifacts", state.artifacts, "artifact"),
-        "epoch": _epoch(state, event)}
+        "epoch": _epoch(state, event),
+        # HARNESS-06: the exact predicate instance the check established
+        # ("the quote is present in evidence <id> at offset N"), never more.
+        "statement": str(event.get("statement", ""))[:600]}
 
 
 def _latest_result(state: AuditState, requirement: str, predicate: str) -> tuple[str, dict] | None:
@@ -270,9 +273,16 @@ def _reduction(state: AuditState, event: dict[str, Any]) -> None:
         artifact = event.get("artifact")
         if artifact not in state.artifacts:
             raise _refuse("human_accepted names the exact artifact revision accepted")
+    rejected = event.get("rejected", "")
+    if rejected and (by != "person" or rejected not in state.artifacts):
+        raise _refuse("rejected names an artifact, and only the person rejects one")
     req["status"], req["status_epoch"] = status, epoch
     state.reductions.append({"requirement": requirement, "status": status, "results": cited,
-                             "by": by, "epoch": epoch})
+                             "by": by, "epoch": epoch,
+                             **({"artifact": event["artifact"]} if event.get("artifact") else {}),
+                             **({"rejected": rejected} if rejected else {}),
+                             **({"reason": str(event["reason"])[:300]}
+                                if event.get("reason") else {})})
 
 
 def _external_edit(state: AuditState, event: dict[str, Any]) -> None:
@@ -386,12 +396,26 @@ def session_outcome(state: AuditState) -> str:
     return "in_progress"
 
 
+def _unplanned(state: AuditState, requirement: str, predicate: str) -> bool:
+    """The latest contract addressing the requirement planned no verifier for this
+    predicate: no registered tool can check it (HARNESS-06's no-suitable-tool)."""
+    for contract in reversed(list(state.contracts.values())):
+        if requirement in contract["requirements"]:
+            # A contract admitted before the latest change never saw this
+            # predicate: that is "not planned yet", not "no tool exists".
+            return contract["admitted_epoch"] == state.epoch and \
+                f"{requirement}: {predicate}" not in contract["verifiers"]
+    return False
+
+
 def unchecked_predicates(state: AuditState, contract_id: str) -> list[str]:
-    """`requirement: predicate` pairs of a contract with no result at the current epoch."""
+    """`requirement: predicate` pairs of a contract with no result at the current
+    epoch. A predicate no verifier can check is not waited for: it goes to the person."""
     contract = state.contracts[contract_id]
     return [f"{r}: {p}" for r in contract["requirements"]
             for p in state.requirements[r]["predicates"]
-            if _latest_result(state, r, p) is None]
+            if _latest_result(state, r, p) is None and
+            f"{r}: {p}" in contract["verifiers"]]
 
 
 def unreduced_requirements(state: AuditState, contract_id: str) -> list[str]:
@@ -402,7 +426,29 @@ def unreduced_requirements(state: AuditState, contract_id: str) -> list[str]:
 
 def _predicate_outcome(state: AuditState, requirement: str, predicate: str) -> str:
     latest = _latest_result(state, requirement, predicate)
-    return latest[1]["outcome"] if latest else "not_checked"
+    if latest:
+        return latest[1]["outcome"]
+    return "no_suitable_tool" if _unplanned(state, requirement, predicate) else "not_checked"
+
+
+# Said with every summary: closure is per predicate, and never more.
+SCOPE = ("each status covers only the stated predicates, as the listed statements say; "
+         "nothing here asserts that a claim is true or that the research is complete")
+
+
+def _statements(state: AuditState, requirement: str) -> list[str]:
+    out = []
+    for predicate in state.requirements[requirement]["predicates"]:
+        latest = _latest_result(state, requirement, predicate)
+        if latest and latest[1]["outcome"] == "pass" and latest[1].get("statement"):
+            out.append(latest[1]["statement"])
+    return out
+
+
+def _person_actions(state: AuditState, requirement: str) -> list[dict[str, Any]]:
+    return [{k: v for k, v in r.items() if k in ("status", "artifact", "rejected", "reason")}
+            for r in state.reductions if r["requirement"] == requirement and r["by"] == "person"
+            and r["epoch"] == state.epoch][-3:]
 
 
 def summary(state: AuditState) -> dict[str, Any]:
@@ -417,8 +463,13 @@ def summary(state: AuditState) -> dict[str, Any]:
                              "closure": state.requirements[r]["closure"],
                              "revision": state.requirements[r]["revision"],
                              "predicates": {p: _predicate_outcome(state, r, p)
-                                            for p in state.requirements[r]["predicates"]}}
+                                            for p in state.requirements[r]["predicates"]},
+                             **({"established": _statements(state, r)}
+                                if _statements(state, r) else {}),
+                             **({"person": _person_actions(state, r)}
+                                if _person_actions(state, r) else {})}
                          for r in state.requirements},
+        "scope": SCOPE,
         "contracts": {c: {"revision": v["revision"], "requirements": v["requirements"]}
                       for c, v in state.contracts.items()},
         "external_edits": state.external_edits[-20:],

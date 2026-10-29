@@ -340,7 +340,9 @@ HARNESS = frozenset({"open_session", "session_status", "update_plan", "ask_user"
                      # since editing the thread itself is bookkeeping, not the model's work
                      "rewind_session", "branch_session",
                      # the person's own requirement decision (HARNESS-03)
-                     "set_requirement"})
+                     "set_requirement",
+                     # the person's checkpoint controls in a research round (HARNESS-06)
+                     "accept_artifact", "reject_artifact", "request_evidence"})
 
 # Roadmap §4 G2: the phases just before a commitment - an answer (judge, before
 # synthesise), a server definition (assess, before propose), a plan (inventory,
@@ -529,6 +531,7 @@ class Session:
     # from typed events in this same log (audit_events.py is their rule book).
     audit: AuditState = field(default_factory=AuditState)
     audit_round: int = 1            # HARNESS-03: the audited purpose's round number
+    manager_views: list = field(default_factory=list)   # HARNESS-06 telemetry, latest 20
     # HARNESS-05: each contract's successful calls (class, untrusted, idempotency
     # key), folded from `call` events so composition survives a resume.
     contract_calls: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
@@ -737,6 +740,11 @@ class Session:
             self.summary, self.gaps = event.get("summary", ""), event.get("gaps", "")
         elif kind == "reopened":
             self.status = "open"
+        elif kind == "manager_view":
+            # HARNESS-06: what the Manager was shown, by digest, and how many
+            # bundles survived the filter when it was invoked.
+            self.manager_views = (self.manager_views + [
+                {k: event.get(k) for k in ("digest", "round", "bundles", "fits")}])[-20:]
         elif kind in AUDIT_EVENTS:
             # Checked against the state before it, exactly as at append: a
             # history that breaks the rules is marked invalid, never trusted.

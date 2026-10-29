@@ -2419,3 +2419,89 @@ executing contract the others are refused until they gain intents, which
 HARNESS-06 and -07 add for the staging and verification tools they use.
 Targeted trust propagation stays HARNESS-09.
 Full suite: 1,670 passed, 2 skipped, 4 deselected (9m12s).
+
+### HARNESS-06 research rounds with closure per grain (2026-10-29)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| HARNESS-06 | implemented; real-session measurement open | this commit | `src/resource_librarian/research_grains.py`, `src/resource_librarian/tools/audited.py`, audit-event, session and projection wiring, `scripts/tier_a_share.py`; tests in `tests/test_research_round.py` (21). |
+
+**Closure per grain.** Each registered Tier A verifier now has a check
+(`research_grains.CHECKS`), built on the helper that already existed:
+
+| Grain | Verifier | Built on |
+| --- | --- | --- |
+| intake | evidence.integrity | `EvidenceStore.intact` (new, one record), the staged item's `quality.py` verdict |
+| coverage | coverage.status | the source's `dik.py` record; "not examined" parts are always named |
+| quote | quote.located | `clerk.locate` over one evidence record's text fields |
+| arithmetic | arithmetic.reproduces | `provenance.check` |
+| executable claim | claim_run.passed | the latest person-initiated run; the check never runs anything |
+| findability | index.findable | `promote.findability` (promotion step 5) |
+| staging integrity | target.diff_clean | each artifact's fingerprint and the contract's write targets |
+
+A check returns its exact statement, the instance of the verifier's predicate
+it established, and nothing more. For example, "the quote is present in
+evidence `<id>` at offset 15 of field `text`". The statement is stored on the
+`verifier_result`. The summary lists each requirement's established
+statements and a fixed scope line: nothing in it asserts that a claim is true
+or that the research is complete.
+
+**The round's tools.** Before this task, contracts, artifacts, results and
+reductions could be appended only by test code. Each phase now has a tool:
+- `admit_contract` (preflight);
+- `stage_artifact` (execute). It writes a draft under the session's staging
+  folder with a write intent, so per-call authorization checks it as a
+  `stage` operation;
+- `verify_grain` (audit). It runs the check the contract planned for one
+  predicate;
+- `reduce_round` (reduce). It is the Core's reduction from the latest results
+  alone. Human-judgment requirements stay open until the person accepts.
+
+**The person's checkpoint controls.** These are curate tier and harness
+bookkeeping:
+- `set_requirement` proposes a constraint;
+- `request_evidence` adds a predicate, which revises the requirement so
+  earlier closures go stale;
+- `accept_artifact` names the exact staged artifact, and is refused if the
+  file changed since staging;
+- `reject_artifact` keeps the requirement open with the reason recorded.
+
+A test shows each of the four changes the audited state. The model's tier
+cannot call them.
+
+**No suitable tool.** A non-authoritative predicate that the current
+contract's plan gives no verifier is reported as `no_suitable_tool`. The
+audit phase does not wait for it, and the reduction leaves the requirement
+open with that reason. It is never closed by something weaker.
+
+Found while testing: a predicate added after the contract was admitted first
+read as `no_suitable_tool`. That is wrong; it is not planned yet. Only a
+contract admitted at the current epoch now decides it.
+
+**Telemetry.** The capability manifest carries the bundle counts before and
+after the tier/profile filter. Each `audit_projection` call (the Manager's
+view) appends a `manager_view` event with the projection digest, the round,
+`fits` and those counts. The Session folds the latest 20.
+
+**Tier A share: measured, and nothing real to measure yet.**
+`research_grains.tier_a_share(vault)` counts grains from the session logs.
+A grain is a predicate, or a requirement with no predicates. It counts as
+closed by Tier A when its latest result at the current epoch is an exact or
+bounded pass from an authoritative-kind verifier.
+
+`scripts/tier_a_share.py` runs it. On the real vault
+(`D:/Resource-Library/.librarian-app`) it found 6 session logs, all
+`explore`, and 0 audited sessions, so the share is `null`, not 0. The
+synthetic test round gives 2 of 3 grains (0.667): R1's two predicates are
+closed by Tier A, and R2's synthesis is open for the person. That is a
+fixture result, not evidence about real use.
+
+The done-when's "measured on real sessions" stays open until audited
+research sessions are run by a real model.
+
+**Not yet.**
+- The research round's search, read and ingest tools still declare no write
+  intents. Under an executing contract they are refused unless they are reads.
+  HARNESS-07 and later add intents where they are needed.
+- `review.llm` has no Tier A check by design. A predicate planned with it
+  needs a model-review result that nothing records yet.
