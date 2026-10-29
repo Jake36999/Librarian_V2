@@ -1,0 +1,48 @@
+## Findings (critical design/scope review)
+
+**1. Defect — HARNESS-05 composition example contradicts the design's own composition rule.**
+- Section: design §7 "Composition and trust" vs. plan §9.3 HARNESS-05.
+- Failure scenario: The plan's example of a prohibited composition is "reading untrusted content and then writing outside the contract's targets." The design says the forbidden thing is the *authority transition* (write outside contract targets), not the read-then-write sequence, and explicitly says "Reading untrusted text followed by an authorized staged draft is not inherently prohibited." An implementer following the plan's example could build a blanket read→write ban, or conversely treat "write outside targets" as a composition issue when it is already a per-call target check. Either reading produces a wrong refusal or a missed check.
+- Smallest correction: In HARNESS-05's acceptance text, restate the prohibited composition as an authority/effect transition (e.g., "a permitted read must not, in the same episode, authorize a write outside the contract's targets, credential access, execution, route change, or promotion"), and note that per-call target validation is separate from composition refusal.
+
+**2. Defect — HARNESS-09's "same episode" trust-zone criterion is deferred but the design relies on it earlier.**
+- Section: plan §9.3 HARNESS-09 done-when ("untrusted input cannot gain mutation, execution, credential, route, or promotion authority in the same episode") vs. design §7 ("broad trust propagation and targeted dependency taint are deferred to HARNESS-09. Existing safety boundaries remain enforced during that deferral.").
+- Failure scenario: The design's deferral is only safe if "existing safety boundaries" already prevent untrusted content from *directly* granting authority. If the current broker only checks per-call authorization and not the read→authority transition, then between HARNESS-06/07 and HARNESS-09 there is a window where the design's claim ("existing safety boundaries remain enforced") is unverified. The plan's HARNESS-09 done-when implies this property is *new* in HARNESS-09, which contradicts the design's assertion that it already holds.
+- Smallest correction: In HARNESS-01's reconciliation, state explicitly which existing mechanism (if any) enforces the read→authority boundary today, and if none does, either move a minimal version of that check into HARNESS-05 or soften the design's "existing safety boundaries remain enforced" claim to name the specific boundaries that do hold.
+
+**3. Defect — HARNESS-02's `external_edit` scope is narrower than the design's freshness semantics.**
+- Section: plan §9.3 HARNESS-02 ("appended when a note the session read or targets changes outside the Core") vs. design §4 "Freshness, replay, and integrity" ("A relevant external edit, user constraint change, or changed contract makes affected results stale").
+- Failure scenario: The design requires invalidation on user constraint changes and contract changes as well as external edits, but HARNESS-02's event vocabulary only names `external_edit` as the invalidation trigger. A user correction mid-session (a `requirement` revision) would need to also invalidate verifier results, but the plan's HARNESS-02 done-when only tests "an external edit to a session's target appears in its log." The design's broader invalidation rule has no acceptance fixture in HARNESS-02, and HARNESS-03's resume fixture doesn't cover it either.
+- Smallest correction: Add to HARNESS-02's done-when that a requirement revision or contract change also invalidates affected verifier results (or explicitly defer that to HARNESS-03 and say so in the design).
+
+**4. Defect — HARNESS-04's "latest verifier result per requirement" conflicts with the design's per-predicate closure model.**
+- Section: plan §9.3 HARNESS-04 ("latest verifier result per requirement") vs. design §7 "Research grains" (each grain has its own predicate) and §5 "Reduce" (requirement status depends on *all* permitted closure obligations).
+- Failure scenario: A requirement may have multiple closure obligations (e.g., quote presence *and* arithmetic reproducibility). Projecting only the "latest" verifier result would let a later passing check mask an earlier failing or stale one, or vice versa. The Manager would see a single result and could propose closure that the Reduce phase then rejects — or worse, if Reduce is also implemented against "latest," could close on a stale pass.
+- Smallest correction: Change HARNESS-04's projection to "latest verifier result per (requirement, predicate)" or "all current verifier results per requirement," and add a fixture where one predicate passes and another fails to confirm the projection shows both.
+
+**5. Defect — HARNESS-06's "share of grains closed by Tier A is measured on real sessions" is an evaluation requirement inside a foundation work package.**
+- Section: plan §9.3 HARNESS-06 done-when vs. design §9 ("HARNESS-08 remains a predeclared go/no-go experiment") and §11 (evaluation sample sizes left open).
+- Failure scenario: "Measured on real sessions" requires production traffic or a real-session corpus that HARNESS-06's dependencies (HARNESS-03–05) don't provide. This either blocks HARNESS-06 on data collection outside its scope, or gets satisfied by a synthetic fixture that doesn't meet the stated bar — in which case the done-when is misleading. It also duplicates HARNESS-08's evaluation role.
+- Smallest correction: Change HARNESS-06's done-when to "the Tier A closure rate is instrumented and reported on the acceptance fixtures," and move "measured on real sessions" to HARNESS-08's evaluation scope.
+
+**6. Defect — HARNESS-07's "interface/boundary verification such as submission through staging" is under-specified relative to its done-when.**
+- Section: plan §9.3 HARNESS-07 vs. design §7 "Mechanical operations" ("A diff receipt establishes only what the observation and enforcement boundary can see; unknown external effects prevent stronger claims").
+- Failure scenario: HARNESS-07's done-when requires "an exact/bounded verifier and clean protected-target audit," but the design says a diff receipt is bounded by what the enforcement boundary can observe. If the "interface/boundary verification" is itself a diff receipt, then HARNESS-07's done-when can be satisfied by a check that the design says is insufficient for stronger claims. The plan doesn't say what "interface/boundary verification" means concretely enough to distinguish it from the protected-target audit.
+- Smallest correction: In HARNESS-07, name the specific interface check (e.g., "the artifact is reachable through the declared lookup path and the staging submission record matches the audited artifact fingerprint") and state that the done-when requires *both* the protected-target audit and that interface check, not either alone.
+
+**7. Optional suggestion — HARNESS-03's "same state hash" resume fixture doesn't cover the design's "broken or unsupported history must not silently become authoritative state" rule.**
+- Section: plan §9.3 HARNESS-03 done-when vs. design §4 "Freshness, replay, and integrity."
+- Failure scenario: The design requires that a broken or unsupported history not silently become authoritative, but HARNESS-03's only resume fixture is a *successful* resume. A corrupted-tail or schema-mismatch case has no named acceptance fixture until HARNESS-02's "rejects invalid transitions" (which is about transitions, not replay integrity).
+- Smallest correction (optional): Add a HARNESS-03 fixture where a truncated or schema-mismatched event prefix produces an explicit refusal rather than a reconstructed state. This is a suggestion, not a defect, because HARNESS-02's invalid-transition fixture partially covers the space and the design leaves exact schema to implementation.
+
+**8. Optional suggestion — the design's §11 "material design change" list is broader than the plan's deferred-features list, creating a reconciliation gap for HARNESS-01.**
+- Section: design §11 vs. plan §9.1 "It does not initially implement…" list.
+- Failure scenario: The design lists "embedding-based drift gate" and "graph memory" as material changes; the plan's deferred list names "graph context" and "ranked tool selection" but not embedding-based drift gates. HARNESS-01's done-when is "no document proposes a parallel log/reducer; implementation status and terminology agree" — it doesn't require the deferred-feature lists to match. A future contributor could add an embedding drift gate citing the plan's silence.
+- Smallest correction (optional): In HARNESS-01, require the deferred-feature lists in the design and plan to be reconciled to a single canonical list, or state that the design's §11 list is authoritative for "material change" classification.
+
+## Summary
+
+- **Actual defects:** 1, 2, 3, 4, 5, 6.
+- **Optional suggestions:** 7, 8.
+- **No material issues found in:** the role mapping (§9.2 / design §3), the Session-reuse and writer-ownership decisions (design §2.1, §4), the closure-strength table (design §7), the interruption/uncertain-side-effect semantics (design §5), or the HARNESS-08 go/no-go framing (design §9). These are consistent between the two documents and don't over-prescribe implementation details.
+- **Not raised as findings:** the design's "50-round fixture" reference in HARNESS-04 matches the plan; the "five-action-tool cap" is correctly marked as a later evaluation in both documents; the design's open-decisions list (§11) is consistent with the plan's "left open" framing.

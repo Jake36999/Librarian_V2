@@ -34,6 +34,11 @@ delivery-status authority.
 | Audit integrity | `clean`, `suspect`, or `violation`, determined by a deterministic or approved audit. | Whether a research conclusion is true. |
 | Closure state | `open`, `partial`, `verified`, or `human_judgment`. Only exact/bounded deterministic evidence may produce `verified`; synthesis remains human judgment. | Session closure. |
 | Checkpoint | A structured, visible decision or conflict record that blocks only its affected operation until resolved or expired. | Silent model policy prose. |
+| Audited session | An opt-in Session purpose ("AuditedEngagement") with phases manage → preflight → execute → audit → reduce. Its requirements, contracts and verifier results are typed Session events. | A separate engagement store, log or job system. |
+| Session reduction | The deterministic fold of validated Session events that alone changes requirement status. It replays identically from the same event prefix. | A model's declaration that work is done, or a separate reducer component. |
+| Tier A audit | Deterministic, target-scoped checks: protected-target diff, schema, citation, quote location, arithmetic, claim run, index. | Tier B, or any LLM judgment. |
+| Tier B audit | An experimental, read-only LLM assessment by Clerk. It is non-default until HARNESS-08's go/no-go and never upgrades a partial or human_judgment closure on its own. | Tier A, or human acceptance. |
+| Human accepted | A person accepted a specific artifact or interpretation revision. It is recorded with provenance. | `verified` closure, or proof that a claim is true. |
 
 ## Delivery status
 

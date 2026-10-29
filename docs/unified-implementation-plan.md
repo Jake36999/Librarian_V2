@@ -350,6 +350,12 @@ evidence-backed need.
 
 ## 9. Wave 4 — session-based long-horizon co-work
 
+**Design direction:** the [long-horizon harness design](long-horizon-harness-design.md)
+(2026-10-29, from the research in `reports/2026-10-29-long-horizon-harness-research/`)
+refines this wave. The reconciled
+[audited-engagement specification](audited-engagement-harness.md) keeps the
+detailed contracts. This plan still controls scope, sequencing and gates.
+
 ### 9.1 Scope reduction
 
 AuditedEngagement begins as **externalized state for partial research work**,
@@ -457,7 +463,14 @@ preceding gates:
   expectation record and two-step continuation evidence;
 - claims of Docker isolation for non-Docker host execution;
 - release qualification based only on model cards, one-shot probes, or a
-  provider's catalog tile.
+  provider's catalog tile;
+- agent-initiated long-horizon code development. The
+  [development-agent profile](development-agent-harness.md) (DEV-01–14:
+  candidate workspaces, isolation, network and secret brokering, safe export,
+  publishing broker) is a **proposed, unadopted** scope expansion and an open
+  owner decision. It is not among this plan's tasks, and HARNESS-01–07 do not
+  deliver it. Until it is adopted, the Workbench's person-started execution
+  boundary stands.
 
 ## 13. Decision gates for optional work
 
@@ -2072,3 +2085,53 @@ over several tests, not by one golden snapshot. Recommendation: add that
 snapshot test (small), then close G2.
 
 Closing either gate is the owner's decision, as it was for G1.
+
+### HARNESS-01 harness documents reconciled (2026-10-29)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| HARNESS-01 | implemented | this commit | Documentation only. No harness document now proposes a parallel log, store or reducer. A search for those terms in the specification returns only negations. Terminology agrees across the plan, the design and `terminology.md`. |
+
+**Precedence.** The research session's
+[long-horizon harness design](long-horizon-harness-design.md) and its
+[research report](../reports/2026-10-29-long-horizon-harness-research/README.md)
+are adopted as Wave 4's design direction. When documents disagree:
+1. this plan controls scope and sequencing;
+2. the design controls direction;
+3. the [audited-engagement specification](audited-engagement-harness.md) keeps
+   the detailed contracts that agree with both.
+
+**What changed in the audited-engagement specification (v1.1).** It had
+stated in its header that it reuses Session, but its body contradicted that.
+- An AuditedEngagement is now an *audited Session purpose*.
+- The §7 records are logical views over typed Session events (the HARNESS-02
+  vocabulary), appended through VaultWriter, with no engagement store or
+  per-record class.
+- The topology, states and §19 module map now point to `session.py`, not a
+  new `audited_engagement.py` with its own event store.
+- "State reducer" becomes Session reduction, the deterministic fold.
+- §20's rollout is marked historical.
+- **Tier B** was "mandatory" under §12.3. It is now experimental and
+  non-default until HARNESS-08. Its conditions become candidate triggers, with
+  one safety rule: when a trigger applies and Tier B has not run, the
+  requirement cannot close authoritatively.
+
+`terminology.md` gains: audited session, Session reduction, Tier A and Tier B
+audit, and human accepted.
+
+**Scope kept unchanged.** The design's claim that the product "includes"
+long-horizon code development is now marked as proposed. The
+[development-agent profile](development-agent-harness.md) (DEV-01–14) is
+recorded in §12 as an unadopted scope expansion awaiting the owner's decision.
+HARNESS-01–07 do not deliver it.
+
+**Known sizing risk.** The design adds acceptance detail to HARNESS-02 (freshness
+from requirement and contract revisions), to HARNESS-03 (side effects of
+uncertain outcome) and to HARNESS-05. The small HARNESS-02 and HARNESS-05 may
+grow to medium.
+
+**Housekeeping.** The research report is committed. Extracted paper text and
+the topic and reader packets stay local and git-ignored for copyright. So does
+`docs/Development transcripts/`. The research session's one open ledger run
+(`20261029T163705-68427ed1`, request saved, no response) was reconciled as
+failed, with its $0.0136 reserve kept as the charge.

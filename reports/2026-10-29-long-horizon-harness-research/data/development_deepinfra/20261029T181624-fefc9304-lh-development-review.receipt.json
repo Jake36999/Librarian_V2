@@ -1,0 +1,82 @@
+{
+  "schema": 2,
+  "run_id": "20261029T181624-fefc9304",
+  "provider": "deepinfra",
+  "endpoint": "/v1/openai/chat/completions",
+  "started_at": "2026-10-29T18:16:24.073140Z",
+  "pool": "long-horizon-research",
+  "task_id": "",
+  "role": "critic",
+  "parent_run": "",
+  "host": "Main-Bedroom-PC",
+  "attempt": 1,
+  "timeout_s": 180,
+  "request_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261029T181624-fefc9304-lh-development-review.request.json",
+  "request_sha256": "47e45e1750bfd8debb2e773d8e2ad4558552cf9ed7f8e5617c4c4ed0dad23de8",
+  "response_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261029T181624-fefc9304-lh-development-review.response.json",
+  "route": {
+    "provider": "deepinfra",
+    "base_url": "https://api.deepinfra.com/v1/openai",
+    "endpoint": "/v1/openai/chat/completions",
+    "adapter": "OpenAIChatAdapter",
+    "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017"
+  },
+  "charged_usd": 0.0040516,
+  "cost_basis": "metered_estimate",
+  "rate_card_age_days": 0,
+  "work_package": null,
+  "truncated": false,
+  "task": "lh-development-review",
+  "lens": "development-security",
+  "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+  "agent": "unspecified",
+  "manifest": [
+    {
+      "path": "docs/development-agent-harness.md",
+      "bytes": 14740,
+      "sha256": "aa139440a640f016e3e3fc9b1f2d9c1ebd475a04064511b41e9ad882fb1bb7e3"
+    },
+    {
+      "path": "reports/2026-10-29-long-horizon-harness-research/DEVELOPMENT-AGENT-RESEARCH.md",
+      "bytes": 7182,
+      "sha256": "e09233a92e612fd9eca763545e1024a0a3b80f05c372b3a4bd1a9e2e71b3c163"
+    },
+    {
+      "path": "src/resource_librarian/workbench.py",
+      "bytes": 30845,
+      "sha256": "8fed0cc4044c5dfd6bf5204ad94a4d5f5fc5a1086901f95f04d81556b8dcdd1e"
+    },
+    {
+      "path": "src/resource_librarian/tools/workbench.py",
+      "bytes": 7302,
+      "sha256": "53ef345ad0f5069ebdc6793aa0d5483db0118de50fa876bcfd392d240b54d384"
+    }
+  ],
+  "packet_sha256": "9641a67f42f22540f32475dd9ea5fcb80f29f7d85af424d16d34b0a9e3e3ec93",
+  "estimated_input_tokens": 18160,
+  "max_output_tokens": 3500,
+  "preflight_reserve_usd": 0.005732,
+  "budget_usd": 8.0,
+  "rate_card": {
+    "input_per_1m": 0.2,
+    "output_per_1m": 0.6,
+    "source": "https://api.deepinfra.com/v1/openai/models",
+    "as_of": "2026-10-29"
+  },
+  "key_source": "transient file injection",
+  "status": "completed",
+  "completed_at": "2026-10-29T18:17:22.991978Z",
+  "latency_ms": 58897,
+  "request_id": "RUhS6jpapdLmA6MvYf7v7QvM",
+  "model_returned": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+  "finish_reason": "stop",
+  "usage": {
+    "input_tokens": 13604,
+    "output_tokens": 2218,
+    "total_tokens": 15822
+  },
+  "estimated_cost_usd": 0.0040516,
+  "output_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261029T181624-fefc9304-lh-development-review.md",
+  "output_sha256": "871214141f7274a915f4ba2808d7e5a26983ef71039750dfe54f9ba25a73818f",
+  "output_chars": 8875
+}

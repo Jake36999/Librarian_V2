@@ -1,0 +1,67 @@
+{
+  "schema": 2,
+  "run_id": "20261029T170344-866ed0d6",
+  "provider": "deepinfra",
+  "endpoint": "/v1/openai/chat/completions",
+  "started_at": "2026-10-29T17:03:44.163127Z",
+  "pool": "long-horizon-research",
+  "task_id": "",
+  "role": "reader",
+  "parent_run": "",
+  "host": "Main-Bedroom-PC",
+  "attempt": 1,
+  "timeout_s": 180,
+  "request_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261029T170344-866ed0d6-lh-remaining-2.request.json",
+  "request_sha256": "5f6afbcdf1eb54a973b5f5463193258b20c64dc1f2eeb0adf76508d173b77510",
+  "response_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261029T170344-866ed0d6-lh-remaining-2.response.json",
+  "route": {
+    "provider": "deepinfra",
+    "base_url": "https://api.deepinfra.com/v1/openai",
+    "endpoint": "/v1/openai/chat/completions",
+    "adapter": "OpenAIChatAdapter",
+    "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017"
+  },
+  "charged_usd": 0.0243798,
+  "cost_basis": "metered_estimate",
+  "rate_card_age_days": 0,
+  "work_package": null,
+  "truncated": false,
+  "task": "lh-remaining-2",
+  "lens": "academic relevance and evidence screening",
+  "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+  "agent": "unspecified",
+  "manifest": [
+    {
+      "path": "reports/2026-10-29-long-horizon-harness-research/data/remaining-packet-2.txt",
+      "bytes": 427696,
+      "sha256": "173b2293a6c04a6310c33608371033571cc126c48b3a10f5ef94705a08eb9a82"
+    }
+  ],
+  "packet_sha256": "c6be7907f42c0664ae889e43ec330457e1342be23215a77c5ad223b3a7739073",
+  "estimated_input_tokens": 126431,
+  "max_output_tokens": 3000,
+  "preflight_reserve_usd": 0.0270862,
+  "budget_usd": 8.0,
+  "rate_card": {
+    "input_per_1m": 0.2,
+    "output_per_1m": 0.6,
+    "source": "https://api.deepinfra.com/v1/openai/models",
+    "as_of": "2026-10-29"
+  },
+  "key_source": "transient file injection",
+  "status": "completed",
+  "completed_at": "2026-10-29T17:04:09.812304Z",
+  "latency_ms": 25625,
+  "request_id": "RJpjJEgZWIUl6Ummy1BZXISP",
+  "model_returned": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+  "finish_reason": "stop",
+  "usage": {
+    "input_tokens": 117882,
+    "output_tokens": 1339,
+    "total_tokens": 119221
+  },
+  "estimated_cost_usd": 0.0243798,
+  "output_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261029T170344-866ed0d6-lh-remaining-2.md",
+  "output_sha256": "f5b3a463370db013c73780599a70df83e1dc5b90af029325bea955f2c15cef0f",
+  "output_chars": 5650
+}

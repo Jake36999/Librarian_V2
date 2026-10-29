@@ -1,0 +1,142 @@
+[
+  {
+    "source": "remaining_01",
+    "pdf_page": 19,
+    "search": "absence of systematic recovery",
+    "exact_normalized_excerpt": "ng tools or fail to adapt when sub- tasks fail or return ambiguous results. The absence of systematic recovery mechanisms or error detection leads to brittle work- flows and error propagation. This shortfall severely limits agent deployment in mission-critical environments where reliabilit",
+    "sha256": "e3e1346d48bf40c47de7d97231957b58301f16151da2cdb77e74a11c854bce8f"
+  },
+  {
+    "source": "remaining_02",
+    "pdf_page": 10,
+    "search": "metadata about their source",
+    "exact_normalized_excerpt": "scarded. Fur- thermore, keywords are stored in a structured format that retains metadata about their source document and paragraph position. This practice ensures traceability and contextual consistency for subsequent knowledge association steps. An illustration of this process is provi",
+    "sha256": "725a09946e5c8278ec9628dbd3206febd52982b2ee1f6bd62b5df9b0e3a1f510"
+  },
+  {
+    "source": "remaining_02",
+    "pdf_page": 24,
+    "search": "misinterpreting",
+    "exact_normalized_excerpt": "ude: hallucinations by LLMs leading to incorrect relationship completion (e.g., misinterpreting “inhibit” as “promote”). We mitigate this through evidence retrieval using the Chroma vector database and constraint prompts, and the structural relationships in the dual graph fu",
+    "sha256": "725a09946e5c8278ec9628dbd3206febd52982b2ee1f6bd62b5df9b0e3a1f510"
+  },
+  {
+    "source": "remaining_03",
+    "pdf_page": 1,
+    "search": "double DQN",
+    "exact_normalized_excerpt": "th heterogeneous automatic guided vehicles (AGVs). A double deep Q- network (double DQN) based non-dominated sorting genetic algorithm II is proposed to minimize the makespan and total energy consumption. Firstly, an initialization strategy based on multiple heuristic m",
+    "sha256": "baee9508f72e70880f69872e413882fc1b8f65fbb0f087a057e05e6b9258c0e2"
+  },
+  {
+    "source": "remaining_04",
+    "pdf_page": 19,
+    "search": "conservative filtering",
+    "exact_normalized_excerpt": " complex se- mantic reasoning tasks. To mitigate the impact of such behavior, a conservative filtering strategy is adopted. When the LLM output fails to clearly distinguish semantic relevance or exhibits insufficient confidence, the corresponding candidate edge is treated as a low-",
+    "sha256": "1314cc9f8a0500473e3130b5ba20b736218d5747603bebc570ae3e4d09298c61"
+  },
+  {
+    "source": "remaining_04",
+    "pdf_page": 19,
+    "search": "insufficient confidence",
+    "exact_normalized_excerpt": "When the LLM output fails to clearly distinguish semantic relevance or exhibits insufficient confidence, the corresponding candidate edge is treated as a low- confidence connection and excluded from the refined graph structure. Furthermore, multiple independent inference runs are co",
+    "sha256": "1314cc9f8a0500473e3130b5ba20b736218d5747603bebc570ae3e4d09298c61"
+  },
+  {
+    "source": "remaining_05",
+    "pdf_page": 5,
+    "search": "optimal exploration parameters",
+    "exact_normalized_excerpt": "ning: 1) a meta-learner and 2) a base learner. The meta-learner ﬁnds the optimal exploration parameters for each task by adjusting the exploration noise variance and attenuation coefﬁcients of the agents in each area. The base learner is responsible for training the swarm agents. the base ",
+    "sha256": "b23e11ce5d534351b92936d78d947677c70a61ec6ed2783ba9da8f5f13dacf8d"
+  },
+  {
+    "source": "remaining_06",
+    "pdf_page": 6,
+    "search": "unparseable output",
+    "exact_normalized_excerpt": " when risk signals are detected. 2.2.4 Fallback If either stage produces unparseable output, the system falls back to a safe default policy: πdefault = ⟨RANDOM, ECONOMIC, 0.5, PERIODIC, 0.65⟩. This ensures graceful degradation under LLM failure while preserving simulation conti",
+    "sha256": "392dd3bf643ec2974dd54ed603e1328687db8977386a75f21898cb21af73a179"
+  },
+  {
+    "source": "remaining_06",
+    "pdf_page": 1,
+    "search": "statistically indistinguishable",
+    "exact_normalized_excerpt": "ll LLM compilation over a hand-coded rule with the same parameters is statistically indistinguishable from zero under stationary conditions. Under structural non-stationarity (mid-simulation graph rewire), the LLM-mediated re-deployment architecture signiﬁcantly outperforms a frozen rule (p",
+    "sha256": "392dd3bf643ec2974dd54ed603e1328687db8977386a75f21898cb21af73a179"
+  },
+  {
+    "source": "remaining_06",
+    "pdf_page": 25,
+    "search": "numerical agents represent",
+    "exact_normalized_excerpt": "t-level responses to inﬂuence, remains future work. Most critically, the numerical agents represent an idealized setting in which agents respond deterministically to the inﬂuence dose through a known logistic function. The term “agent” in our framework is model- agnostic, it encompasse",
+    "sha256": "392dd3bf643ec2974dd54ed603e1328687db8977386a75f21898cb21af73a179"
+  },
+  {
+    "source": "remaining_07",
+    "pdf_page": 7,
+    "search": "records that fail automated checks",
+    "exact_normalized_excerpt": "cale. All provisional labels are routed to a dedicated quality-assurance block; records that fail automated checks are escalated to a human reviewer for expert correction.",
+    "sha256": "9e70559991e66da5578e5857a0b0402c01c45d16d8d6f8218835e87c20456e5e"
+  },
+  {
+    "source": "remaining_08",
+    "pdf_page": 1,
+    "search": "orthogonal",
+    "exact_normalized_excerpt": "G2LoRA: Gradient Orthogonal Low-Rank Adaptation Framework for Graph Continual Learning on Text-Attributed Graphs Yuhan Wang School of Computer Science and Engineering, Beihang University Beijing, China wyh76",
+    "sha256": "f3639747ccc2bac46b4946d29fa79b6c46d44bb9dab8a43a36d605e0196a1f3a"
+  },
+  {
+    "source": "remaining_09",
+    "pdf_page": 5,
+    "search": "high-level policy makes",
+    "exact_normalized_excerpt": "o multiple sub-tasks at diﬀerent levels of abstraction. In this framework, the high-level policy makes low-frequency decisions on global actions or sub-goals. In contrast, the low-level policy executes ﬁne-grained control under the guidance of the high-level instructions. The HRL ar",
+    "sha256": "9d491f07427daeba9d87f7c41fd6ee196c28e5abbe876a3a25ff46f9f34b2afa"
+  },
+  {
+    "source": "remaining_10",
+    "pdf_page": 8,
+    "search": "local information directly related",
+    "exact_normalized_excerpt": "ing both the training and execution pro- cesses, each drone only obtains the local information directly related to it, not the global information of the environment. Thus, the proposed MAAC-R algorithm can scale well to the scenarios whose population is large and variable to achieve cooperatio",
+    "sha256": "76c5c2ace0a00c84078c39d472cfe9574691a4f48e486e505ea984be757d94f3"
+  },
+  {
+    "source": "remaining_11",
+    "pdf_page": 16,
+    "search": "behavioral uncertainty",
+    "exact_normalized_excerpt": " caused by missing AIS data or sensor noise that distorts trajectories, and (2) behavioral uncertainty, arising from divergent navigational decisions by different operators— especially during rare, high-risk maneuvers outside the training distri­ bution. Future work will (1) integr",
+    "sha256": "e547a2d592974df03560fe3f7541d566704149ee1e13b746f796a9a8037baeef"
+  },
+  {
+    "source": "remaining_13",
+    "pdf_page": 6,
+    "search": "Malformed outputs",
+    "exact_normalized_excerpt": " into plain explanatory text and concatenated with the original node attribute. Malformed outputs and empty generations are filtered by simple format checking, and nodes that fail this step fall back to their original text only. Since Stage I is executed offline, the generatio",
+    "sha256": "6b55fa9af79b3ec3d713f77d416942de569bf5788460b86df87f57183537b0ee"
+  },
+  {
+    "source": "remaining_13",
+    "pdf_page": 16,
+    "search": "same optimum",
+    "exact_normalized_excerpt": "under a fixed budget. As shown in Section 4.4, this trade-off does not have the same optimum on every dataset. The best setting depends on how much signal comes from local text versus broader graph context. Third, STAGE is decoupled by design. This makes the training proc",
+    "sha256": "6b55fa9af79b3ec3d713f77d416942de569bf5788460b86df87f57183537b0ee"
+  },
+  {
+    "source": "remaining_14",
+    "pdf_page": 30,
+    "search": "parameters are specified manually",
+    "exact_normalized_excerpt": "in quantifiers by update states (in patterns). Currently, the values of pattern parameters are specified manually; we plan to explore the problem of constraint generation in future work. To search for parameter values in the template, one can use SMT solvers. In [22], an approach is pro- pose",
+    "sha256": "b503dcc1ebd38df53230df82e6d0293ca93dcc8370a65ceff1c290a7b0f4a394"
+  },
+  {
+    "source": "remaining_14",
+    "pdf_page": 2,
+    "search": "proving verification conditions are undecidable",
+    "exact_normalized_excerpt": "conditions can be fully automated. Syn- thesizing loop invariants and proving verification conditions are undecidable in the general case. None- theless, partial automation becomes feasible through targeted methods. One effective technique involves the use of patterns. In [7], the autho",
+    "sha256": "b503dcc1ebd38df53230df82e6d0293ca93dcc8370a65ceff1c290a7b0f4a394"
+  },
+  {
+    "source": "remaining_14",
+    "pdf_page": 32,
+    "search": "76 requirements from 12 control systems",
+    "exact_normalized_excerpt": "ify and verify all requirements from our col- lection, which contains 76 requirements from 12 control systems. However, the current pattern system does not yet allow us to define certain classes of requirements, such as those stating that a certain event should occur within a sp",
+    "sha256": "b503dcc1ebd38df53230df82e6d0293ca93dcc8370a65ceff1c290a7b0f4a394"
+  }
+]

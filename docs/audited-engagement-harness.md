@@ -1,12 +1,39 @@
 # Librarian V2 audited-engagement harness and evidence-control specification
 
-**Status:** Proposed implementation specification. It is not implemented;
-the [unified implementation plan](unified-implementation-plan.md) supersedes
-this document's rollout sequencing. AuditedEngagement reuses Session and the
-Core-owned append path rather than introducing a parallel event store or
-reducer.
-**Version:** 1.0
-**Date:** 2026-10-24
+**Status:** Proposed implementation specification, not implemented.
+Reconciled under HARNESS-01 on 2026-10-29. When documents disagree, they
+take precedence in this order:
+
+1. The [unified implementation plan](unified-implementation-plan.md) (§9,
+   HARNESS-01–09 and the gates) controls scope and sequencing.
+2. The [long-horizon harness design](long-horizon-harness-design.md) controls
+   design direction.
+3. This document keeps its detailed contracts where they agree with both.
+
+Reconciled rules that apply throughout this document:
+
+- **One history.** An AuditedEngagement is an *audited Session purpose*. Every
+  record in §7 is a logical view over typed Session events
+  (`session.py`). The events are appended through the active Core and
+  VaultWriter (CORE-03) and folded by Session replay. There is no separate
+  engagement store, event log, checkpoint store or reducer, and no persistent
+  class per record.
+- **Roles.** Manager and Executor are Lead (drafting Executor: Scribe), the
+  Tier B Auditor is Clerk, and supporting research is `research_helper`.
+  These are projections of the canonical RoleRouteBinding, not new roles.
+- **Writes.** Every durable change goes through VaultWriter. Nothing is
+  written around it.
+- **Tier B** is experimental and non-default until HARNESS-08's go/no-go
+  (§12.3).
+- **Deferred:**
+  - trust-zone propagation and targeted invalidation (HARNESS-09);
+  - learned or ranked tool selection;
+  - graph context;
+  - a generic behaviour-tree framework;
+  - automatic promotion or route switching.
+
+**Version:** 1.1 (reconciled)
+**Date:** 2026-10-24; reconciled 2026-10-29
 **Audience:** Core, runtime, model-routing, vault, Obsidian, browser, Cowork,
 security, QA, and release maintainers
 
@@ -90,7 +117,8 @@ Workbench execution approval model.
 
 | Term | Meaning |
 | --- | --- |
-| AuditedEngagement | An opt-in Core-owned record coordinating a bounded set of requirements, contracts, evidence, audits, and checkpoints. |
+| AuditedEngagement | An opt-in *audited Session purpose*: a Session whose typed events coordinate a bounded set of requirements, contracts, evidence, audits, and checkpoints. |
+| Session reduction | The deterministic fold of validated Session events that alone changes requirement status (§13.1). Earlier drafts called it the "state reducer"; it is Session replay, not a separate component. |
 | Manager | A non-mutating planning invocation. It proposes one next decision or contract from compact, persisted state; it has no direct environment interface. |
 | Executor | A role-bound agent turn that can use only the contract's policy-eligible tools through the normal Core broker. |
 | Auditor | A read-only verifier. Tier A is deterministic; Tier B is a fresh-context LLM assessment when policy requires it. |
@@ -149,7 +177,7 @@ MUST NOT become a second authority for a live AuditedEngagement route.
 | --- | --- | --- |
 | Standard session | Exploration, research, brainstorming, open synthesis, ordinary drafting, or a task without inspectable closure. | No AuditedEngagement completion claim. Existing staging and approval rules still apply. |
 | Plan-only engagement | A user wants a requirement ledger, estimates, and checkpoints but no bounded execution/audit loop. | Produces a plan or staged proposal only. |
-| AuditedEngagement | Bounded work with declared requirements, durable closure carriers, acceptance predicates, and a permitted verification path. | Only a clean state-reducer transition may mark an authoritative requirement complete. |
+| AuditedEngagement | Bounded work with declared requirements, durable closure carriers, acceptance predicates, and a permitted verification path. | Only a clean Session reduction may mark an authoritative requirement complete. |
 | Workbench-linked AuditedEngagement | Audited work that uses a separately approved source-bound Workbench Engagement. | Source execution follows Workbench isolation and close rules in addition to this specification. |
 
 The user MAY explicitly choose a mode. In automatic mode selection, the Core
@@ -221,9 +249,10 @@ Person / Browser / Obsidian / Cowork
     +-----------+------------------------------+
     |                                          |
     v                                          v
-AuditedEngagement controller             VaultCoordinator
+Audited Session (session.py events)      VaultCoordinator
     |                                          |
     |                                  VaultWriter / IndexService
+    |   (every Session append goes through VaultWriter)
     |
     +--> Manager invocation: plan only, no environment tools
     |
@@ -233,9 +262,9 @@ AuditedEngagement controller             VaultCoordinator
     |
     +--> Tier A audit: deterministic, target-scoped
     |
-    +--> Tier B audit: fresh-context, brokered read-only tools
+    +--> Tier B audit (experimental, HARNESS-08): fresh-context, read-only
     |
-    +--> deterministic state reducer and checkpoint store
+    +--> Session reduction (deterministic fold) and existing checkpoints
 ~~~
 
 The active Core owns every transition. Browser UI, Obsidian, Cowork, CLI,
@@ -276,13 +305,22 @@ route, or permission.
 | Executor | Read declared context and use the contract's brokered tools; return structured execution evidence. | Expand its target/authority, bypass a checkpoint, or self-complete a requirement. |
 | Tier A auditor | Compare deterministic target state and writer events with the contract. | Use a model, mutate any target, or claim semantic completeness beyond deterministic checks. |
 | Tier B auditor | Read the capsule, required evidence, contract, and target state with read-only tools; identify gaps, scope drift, or ambiguity. | Receive raw Executor reasoning, mutate state, or promote content. |
-| State reducer | Apply typed transition rules after valid audit results. | Treat model text as an unvalidated state transition. |
+| Session reduction | Apply typed transition rules to validated Session events after valid audit results. | Treat model text as an unvalidated state transition. |
 
 ## 7. Durable data contract
 
-All records in this section MUST be JSON-schema validated, versioned, and
-written through VaultWriter. They belong in a versioned engagement store under
-Librarian operational state, never in user-authored Markdown by default.
+The records in this section are **logical records**. Each is represented by
+typed Session events (the HARNESS-02 vocabulary: `requirement`, `artifact`,
+`fact`, `question`, `contract`, `verifier_result`, `reduction`,
+`external_edit`), and by the existing invocation, phase, budget and decision
+events. Those events are appended through the active Core and VaultWriter and
+reconstructed by Session replay. They are not a separate engagement store and
+not a persistent class per record.
+
+The field lists below say what each record must be able to answer.
+Implementation may choose the event fields that carry it. Event payloads MUST
+be schema-validated and versioned, and they never live in user-authored
+Markdown by default.
 References to user documents remain paths plus fingerprints; the records MUST
 NOT copy document bodies unless a separate evidence-retention policy permits a
 protected snapshot.
@@ -584,9 +622,10 @@ DRAFT
      PARTIALLY_COMPLETED | BLOCKED | FAILED | INTERRUPTED | CANCELLED
 ~~~
 
-A state transition is valid only when a durable EngagementEvent records the
+A state transition is valid only when a durable Session event records the
 prior state, event type, actor, state epoch, input references, result, and
-resulting state.
+resulting state. These states are phases of the audited Session purpose, not
+a second state machine beside Session.
 
 ### 8.2 Main round
 
@@ -611,12 +650,12 @@ resulting state.
    fresh bounded audit context, no raw Executor trajectory
    -> AuditReport(status, evidence, gaps, scope findings)
 
-6. Deterministic reducer:
+6. Deterministic Session reduction:
    validated reports + current state epoch
    -> state/requirement update or a checkpoint
 ~~~
 
-The Manager may propose DONE. The reducer MAY reach COMPLETED only if every
+The Manager may propose DONE. Reduction MAY reach COMPLETED only if every
 authoritative Requirement has the specified clean verification evidence at the
 current epoch. A Manager declaration, Executor self-report, or green runtime
 quality signal is insufficient.
@@ -786,7 +825,7 @@ The system retains:
 - structured ExecutionReport and audit evidence references.
 
 The system MUST NOT retain or relay hidden reasoning, raw provider bodies,
-credentials, or unrestricted prompt content in the engagement store.
+credentials, or unrestricted prompt content in the Session history.
 
 All mutations—including macro steps—MUST be offered to the same broker and
 VaultWriter used by ordinary Core operations. A macro expands to traceable
@@ -882,7 +921,14 @@ A Tier B conclusion is an evidence-bound report, not a promotion action.
 
 ### 12.3 Conditional audit policy
 
-Tier B is mandatory when any of the following applies:
+Tier B is **experimental and non-default** until HARNESS-08's predeclared
+go/no-go result. The conditions below are the candidate triggers that
+HARNESS-08 evaluates; they are not yet mandatory. The rule that keeps this
+safe meanwhile: **when a trigger applies and Tier B has not run, the
+requirement cannot close authoritatively.** It stays partial or
+human_judgment and is staged for the person.
+
+Candidate triggers:
 
 - a Requirement asks for semantic synthesis, claim coverage, conflict
   resolution, or a human-jurisdiction recommendation;
@@ -893,10 +939,11 @@ Tier B is mandatory when any of the following applies:
 - the contract is terminal and policy marks its risk as high; or
 - a RuntimeQualitySignal requests audit intervention.
 
-Tier B MAY be skipped only when all requirements completed in the round have
-exact deterministic verification, the profile permits deterministic closure,
-Tier A is clean, and the skip is recorded. A skipped Tier B never upgrades a
-partial or human_judgment closure to authoritative.
+Without Tier B, a requirement closes authoritatively only when it has exact or
+bounded deterministic verification, the profile permits deterministic closure,
+and Tier A is clean. When Tier B is run, the run is recorded. An absent or
+skipped Tier B never upgrades a partial or human_judgment closure to
+authoritative.
 
 The selection policy MUST be measured before optimization. In particular, the
 system records how often Tier A and Tier B each intercept false completion or
@@ -905,9 +952,12 @@ or anecdote.
 
 ## 13. State reduction, epochs, and provenance invalidation
 
-### 13.1 Deterministic reducer
+### 13.1 Deterministic Session reduction
 
-Only the reducer may alter Requirement status. It validates:
+Only Session reduction may alter Requirement status. Reduction is the
+deterministic fold over validated Session events in `session.py`, replayed
+identically from the same event prefix; it is not a separate component. It
+validates:
 
 - AuditReport schema and contract/round/epoch references;
 - integrity and verification strength;
@@ -1243,7 +1293,7 @@ This is an implementation map, not authorization to bypass existing contracts.
 
 | Area | Primary implementation location | Required change |
 | --- | --- | --- |
-| Engagement schemas, events, state reducer | New audited_engagement.py or similarly scoped Core module | Define records in section 7, validated transitions, durable event store, replay, and epoch checks. |
+| Engagement events, transitions, reduction | `session.py` (extend existing events, fold and replay) | Add the HARNESS-02 event vocabulary, validated transitions and epoch checks to Session events and replay. No separate event store, engagement-state module or reducer. Contract and audit helpers below may live in their own modules, but they read and append only through Session. |
 | Contract compiler and preflight | New engagement_contracts.py plus policy/broker integration | Compile Manager proposals, perform section 9 checks, and reserve budgets. |
 | Tier A and Tier B audit | New engagement_audit.py | Implement target-scoped deterministic audit and fresh-context read-only audit orchestration. |
 | Provider invocation | model_invocation.py and existing provider path | Reuse immutable InvocationPlan, canonical route binding, adapter ABI, and redacted trace fields; do not overload provider TaskContract. |
@@ -1264,6 +1314,15 @@ until repeated implementations demonstrate a need for one.
 
 ## 20. Rollout plan
 
+**Historical.** The unified plan's HARNESS-01–09 and gates G1–G7 now control
+sequencing. These phases are kept for the detail they describe. Several Phase
+A preconditions are already done:
+- host stop and liveness (CORE-01/02A);
+- SQLite ownership (INDEX-01–05, G1 green);
+- canonical route binding (ROUTE-03–05).
+
+Adoption safety is DEPLOY-01–04.
+
 ### Phase A — Preconditions and no-op foundations
 
 1. Repair Host stop/liveness behavior and add phase-level lifecycle tests.
@@ -1272,7 +1331,7 @@ until repeated implementations demonstrate a need for one.
 3. Complete canonical role/slot route binding and role-specific readiness.
 4. Land adoption plan/apply/content-root safety and workspace_document search
    fallback.
-5. Add schemas, event store, state replay, and read-only UI inspection without
+5. Add the Session event vocabulary, replay validation, and read-only UI inspection without
    starting live engagement execution.
 
 **Exit:** An empty/draft engagement can be created, replayed, inspected, and
@@ -1283,7 +1342,7 @@ cancelled without mutating user content or selecting a different runtime path.
 1. Implement closure-class schema and Auditable Closure Gate.
 2. Implement Manager proposal parsing, deterministic compiler, preflight, and
    budget reservation with scripted test routes.
-3. Implement snapshots, protected target sets, Tier A audit, state reducer,
+3. Implement snapshots, protected target sets, Tier A audit, Session reduction,
    state epochs, and targeted invalidation.
 4. Add plan-only engagement UI and simple low-risk interrogation checkpoints.
 

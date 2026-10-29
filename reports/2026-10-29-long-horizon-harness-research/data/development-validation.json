@@ -1,0 +1,147 @@
+{
+  "checked_at": "2026-10-29T18:17:05.080041+00:00",
+  "links": [
+    {
+      "document": "docs\\development-agent-harness.md",
+      "target": "long-horizon-harness-design.md",
+      "exists": true
+    },
+    {
+      "document": "docs\\development-agent-harness.md",
+      "target": "../reports/2026-10-29-long-horizon-harness-research/DEVELOPMENT-AGENT-RESEARCH.md",
+      "exists": true
+    },
+    {
+      "document": "docs\\long-horizon-harness-design.md",
+      "target": "unified-implementation-plan.md",
+      "exists": true
+    },
+    {
+      "document": "docs\\long-horizon-harness-design.md",
+      "target": "audited-engagement-harness.md",
+      "exists": true
+    },
+    {
+      "document": "docs\\long-horizon-harness-design.md",
+      "target": "../reports/2026-10-29-long-horizon-harness-research/RESEARCH-REPORT.md",
+      "exists": true
+    },
+    {
+      "document": "docs\\long-horizon-harness-design.md",
+      "target": "../reports/2026-10-29-long-horizon-harness-research/REMAINING-CORPUS-REVIEW.md",
+      "exists": true
+    },
+    {
+      "document": "docs\\long-horizon-harness-design.md",
+      "target": "development-agent-harness.md",
+      "exists": true
+    },
+    {
+      "document": "docs\\long-horizon-harness-design.md",
+      "target": "../reports/2026-10-29-e2-prime-a0/README.md",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\DEVELOPMENT-AGENT-RESEARCH.md",
+      "target": "../../docs/development-agent-harness.md",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\DEVELOPMENT-AGENT-RESEARCH.md",
+      "target": "../../docs/workbench.md",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\DEVELOPMENT-AGENT-RESEARCH.md",
+      "target": "../../src/resource_librarian/tools/workbench.py",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\DEVELOPMENT-AGENT-RESEARCH.md",
+      "target": "../../src/resource_librarian/workbench.py",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\DEVELOPMENT-AGENT-RESEARCH.md",
+      "target": "../../src/resource_librarian/tools/sandbox.py",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\DEVELOPMENT-AGENT-RESEARCH.md",
+      "target": "../../src/resource_librarian/sandbox.py",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\DEVELOPMENT-AGENT-RESEARCH.md",
+      "target": "../2026-10-29-e2-prime-a0/README.md",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\DEVELOPMENT-AGENT-RESEARCH.md",
+      "target": "REMAINING-CORPUS-REVIEW.md",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\DEVELOPMENT-AGENT-RESEARCH.md",
+      "target": "RESEARCH-REPORT.md",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\README.md",
+      "target": "../../docs/long-horizon-harness-design.md",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\README.md",
+      "target": "RESEARCH-REPORT.md",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\README.md",
+      "target": "REMAINING-CORPUS-REVIEW.md",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\README.md",
+      "target": "DESIGN-REVIEW.md",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\README.md",
+      "target": "DEVELOPMENT-AGENT-RESEARCH.md",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\README.md",
+      "target": "../../docs/development-agent-harness.md",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\README.md",
+      "target": "data/complete_corpus_manifest.json",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\README.md",
+      "target": "data/remaining_extraction_anchors.json",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\README.md",
+      "target": "data/paper_text/",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\README.md",
+      "target": "data/remaining_deepinfra/",
+      "exists": true
+    },
+    {
+      "document": "reports\\2026-10-29-long-horizon-harness-research\\README.md",
+      "target": "data/budget-summary.json",
+      "exists": true
+    }
+  ],
+  "passed": true,
+  "scope": "Document links only; no runtime hardening tests performed."
+}

@@ -58,3 +58,8 @@ scratch/
 reports/2026-10-28-deepinfra-overseer-workflow/data/sources/
 reports/2026-10-28-agent-workflow-second-pass/data/paper_text/
 reports/2026-10-28-agent-workflow-second-pass/data/renders/
+reports/2026-10-29-long-horizon-harness-research/data/paper_text/
+reports/2026-10-29-long-horizon-harness-research/data/[0-9][0-9]-*.txt
+reports/2026-10-29-long-horizon-harness-research/data/read-*.txt
+reports/2026-10-29-long-horizon-harness-research/data/remaining-packet-*.txt
+/docs/Development transcripts/

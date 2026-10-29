@@ -1,0 +1,219 @@
+{
+  "snapshot_utc": "2026-10-29T18:18:01.102581+00:00",
+  "pool": "long-horizon-research",
+  "cap_usd": 8.0,
+  "committed_usd": 0.35037415,
+  "uncommitted_usd": 7.64962585,
+  "metered_estimate_usd": 0.33682275,
+  "unresolved_reserved_usd": 0.0135514,
+  "basis": "Local metered estimates plus conservative reservations; not a provider invoice.",
+  "receipts": [
+    {
+      "run_id": "20261029T163705-68427ed1",
+      "task": "lh-efficiency",
+      "status": "started",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0135514,
+      "cost_basis": "reserve",
+      "truncated": false
+    },
+    {
+      "run_id": "20261029T163723-31064801",
+      "task": "lh-architecture",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0156614,
+      "cost_basis": "metered_estimate",
+      "truncated": true
+    },
+    {
+      "run_id": "20261029T163913-fc2a4951",
+      "task": "lh-structure-review",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0079712,
+      "cost_basis": "metered_estimate",
+      "truncated": false
+    },
+    {
+      "run_id": "20261029T164003-9fe3e76d",
+      "task": "lh-verification-review",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.024688,
+      "cost_basis": "metered_estimate",
+      "truncated": true
+    },
+    {
+      "run_id": "20261029T164103-b7b93c2b",
+      "task": "lh-human-oversight-review",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.015929,
+      "cost_basis": "metered_estimate",
+      "truncated": true
+    },
+    {
+      "run_id": "20261029T164151-d65c6731",
+      "task": "lh-security-monitoring-review",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0226916,
+      "cost_basis": "metered_estimate",
+      "truncated": true
+    },
+    {
+      "run_id": "20261029T164524-d54de75e",
+      "task": "lh-report-critique",
+      "status": "failed",
+      "model": "zai-org/GLM-5.3-Flash",
+      "charged_usd": 0.0,
+      "cost_basis": "none",
+      "truncated": false
+    },
+    {
+      "run_id": "20261029T164536-2a404b66",
+      "task": "lh-report-critique-retry",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0015888,
+      "cost_basis": "metered_estimate",
+      "truncated": true
+    },
+    {
+      "run_id": "20261029T165137-475c083e",
+      "task": "lh-supplement-monitoring-drift",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0115972,
+      "cost_basis": "metered_estimate",
+      "truncated": true
+    },
+    {
+      "run_id": "20261029T165214-6dcf541f",
+      "task": "lh-supplement-contracts-ux",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0193216,
+      "cost_basis": "metered_estimate",
+      "truncated": true
+    },
+    {
+      "run_id": "20261029T165247-1dd774a9",
+      "task": "lh-supplement-evidence-graphs",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0202792,
+      "cost_basis": "metered_estimate",
+      "truncated": true
+    },
+    {
+      "run_id": "20261029T165314-106de199",
+      "task": "lh-supplement-efficiency-routing",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0177984,
+      "cost_basis": "metered_estimate",
+      "truncated": true
+    },
+    {
+      "run_id": "20261029T165419-5b80756c",
+      "task": "lh-supplement-monitoring-drift-full",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0123574,
+      "cost_basis": "metered_estimate",
+      "truncated": false
+    },
+    {
+      "run_id": "20261029T165506-49a362e5",
+      "task": "lh-supplement-contracts-ux-full",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0207584,
+      "cost_basis": "metered_estimate",
+      "truncated": true
+    },
+    {
+      "run_id": "20261029T165609-aab3aa6a",
+      "task": "lh-supplement-evidence-graphs-full",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0217156,
+      "cost_basis": "metered_estimate",
+      "truncated": true
+    },
+    {
+      "run_id": "20261029T165716-b1aef64e",
+      "task": "lh-supplement-efficiency-routing-full",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0192318,
+      "cost_basis": "metered_estimate",
+      "truncated": true
+    },
+    {
+      "run_id": "20261029T170316-bdbe7844",
+      "task": "lh-remaining-1",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0257264,
+      "cost_basis": "metered_estimate",
+      "truncated": false
+    },
+    {
+      "run_id": "20261029T170344-866ed0d6",
+      "task": "lh-remaining-2",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0243798,
+      "cost_basis": "metered_estimate",
+      "truncated": false
+    },
+    {
+      "run_id": "20261029T170410-447ff923",
+      "task": "lh-remaining-3",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0217346,
+      "cost_basis": "metered_estimate",
+      "truncated": false
+    },
+    {
+      "run_id": "20261029T170438-1c586fc3",
+      "task": "lh-remaining-4",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0142614,
+      "cost_basis": "metered_estimate",
+      "truncated": false
+    },
+    {
+      "run_id": "20261029T171318-788d5011",
+      "task": "lh-design-contract-review",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0028332,
+      "cost_basis": "metered_estimate",
+      "truncated": false
+    },
+    {
+      "run_id": "20261029T175551-a6fd70bb",
+      "task": "lh-design-evidence-review",
+      "status": "completed",
+      "model": "Qwen/Qwen3.5-397B-A17B",
+      "charged_usd": 0.01224615,
+      "cost_basis": "metered_estimate",
+      "truncated": true
+    },
+    {
+      "run_id": "20261029T181624-fefc9304",
+      "task": "lh-development-review",
+      "status": "completed",
+      "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "charged_usd": 0.0040516,
+      "cost_basis": "metered_estimate",
+      "truncated": false
+    }
+  ]
+}

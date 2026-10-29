@@ -1,0 +1,512 @@
+[
+  {
+    "id": "sed",
+    "filename": "LLM Planning against Semantic-Execution Drift.pdf",
+    "path": "E:\\Librarian research\\LLM Planning against Semantic-Execution Drift.pdf",
+    "pages": 5,
+    "bytes": 354383,
+    "sha256": "7448002efd42cf60ae96e6e052cfb36df47d6d37bd0ad42205fbef3bd34e51bc",
+    "extracted_chars": 27974,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\sed.txt"
+  },
+  {
+    "id": "reflectichain_full",
+    "filename": "electronics-15-03452-v2.pdf",
+    "path": "E:\\Librarian research\\electronics-15-03452-v2.pdf",
+    "pages": 29,
+    "bytes": 5166486,
+    "sha256": "e187bf159f56a463359571115e1a4306406f1318e80b9f6a051980a36353a2ee",
+    "extracted_chars": 92350,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\reflectichain_full.txt"
+  },
+  {
+    "id": "tms",
+    "filename": "Thought Management System for long-horizon, goal-driven LLM agents.pdf",
+    "path": "E:\\Librarian research\\Thought Management System for long-horizon, goal-driven LLM agents.pdf",
+    "pages": 16,
+    "bytes": 3160786,
+    "sha256": "4f4980ab9863c4084747fbccdd880a4c1d6a581ad5a5f4060e0c85af8b948c86",
+    "extracted_chars": 74901,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\tms.txt"
+  },
+  {
+    "id": "hpr",
+    "filename": "Hierarchical process-level generative reward modeling with.pdf",
+    "path": "E:\\Librarian research\\Hierarchical process-level generative reward modeling with.pdf",
+    "pages": 25,
+    "bytes": 2530105,
+    "sha256": "cd85e164c18dd6c73e0d66491cdb1e00a5318ac39d9cf006a9e0ef7595154a95",
+    "extracted_chars": 110087,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\hpr.txt"
+  },
+  {
+    "id": "api_distill",
+    "filename": "Knowledge-Driven Reasoning for Compatible and Interpretable API Recommendation via Teacher LLM Distillation.pdf",
+    "path": "E:\\Librarian research\\Knowledge-Driven Reasoning for Compatible and Interpretable API Recommendation via Teacher LLM Distillation.pdf",
+    "pages": 30,
+    "bytes": 8071735,
+    "sha256": "1feeffe3126b1aaf15041613bf8e63beb6309350fe41ec9c3cccf2060d8fe9cd",
+    "extracted_chars": 96150,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\api_distill.txt"
+  },
+  {
+    "id": "bbql",
+    "filename": "Integrating-Q-Learning-with-Branch-and-Bound-for-the-Job-S_2025_IFAC-PapersO.pdf",
+    "path": "E:\\Librarian research\\Integrating-Q-Learning-with-Branch-and-Bound-for-the-Job-S_2025_IFAC-PapersO.pdf",
+    "pages": 6,
+    "bytes": 842994,
+    "sha256": "7c7a2fde074d87cb2077b040a9f10af5e4e33bb6e446f4b4687d0597e5d09a28",
+    "extracted_chars": 30538,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\bbql.txt"
+  },
+  {
+    "id": "mobile_kdr",
+    "filename": "Knowledge-Driven_Reasoning_for_Mobile_Agentic_AI_Concepts_Approaches_and_Directions.pdf",
+    "path": "E:\\Librarian research\\Knowledge-Driven_Reasoning_for_Mobile_Agentic_AI_Concepts_Approaches_and_Directions.pdf",
+    "pages": 9,
+    "bytes": 1176882,
+    "sha256": "acac3bdf92105cfe4d15be13c1997302a32938813cbbc788573f7dd11948d016",
+    "extracted_chars": 52776,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\mobile_kdr.txt"
+  },
+  {
+    "id": "hddlgym",
+    "filename": "00178-LaN (1).pdf",
+    "path": "E:\\Librarian research\\00178-LaN (1).pdf",
+    "pages": 10,
+    "bytes": 895356,
+    "sha256": "646861ccfb8f960cb0f10f21f1ffceb01d28f5721befee2f51691e5a428908f0",
+    "extracted_chars": 52084,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\hddlgym.txt"
+  },
+  {
+    "id": "llm_co",
+    "filename": "Advances in LLM-Assisted Combinatorial Optimization.pdf",
+    "path": "E:\\Librarian research\\Advances in LLM-Assisted Combinatorial Optimization.pdf",
+    "pages": 26,
+    "bytes": 10439501,
+    "sha256": "6be643c3424eafa8d9a78033b35c0781deceed8c4058566e7bf5810801547c78",
+    "extracted_chars": 119912,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\llm_co.txt"
+  },
+  {
+    "id": "qrt",
+    "filename": "Electronics Letters - 2019 - Matta - Q‐RTS  a real‐time swarm intelligence based on multi‐agent Q‐learning.pdf",
+    "path": "E:\\Librarian research\\Electronics Letters - 2019 - Matta - Q‐RTS  a real‐time swarm intelligence based on multi‐agent Q‐learning.pdf",
+    "pages": 3,
+    "bytes": 525980,
+    "sha256": "acedf5f16ef600020bf18bde39e1ae21e0c2acc31ace11cb4692d80238532fcd",
+    "extracted_chars": 15695,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\qrt.txt"
+  },
+  {
+    "id": "confidence_tot",
+    "filename": "Confidence-Aware_Tree-of-Thoughts_A_Federated_Safety_Net_for_VLM_Agents_in_Smart-Home_Consumer_Electronics.pdf",
+    "path": "E:\\Librarian research\\Confidence-Aware_Tree-of-Thoughts_A_Federated_Safety_Net_for_VLM_Agents_in_Smart-Home_Consumer_Electronics.pdf",
+    "pages": 16,
+    "bytes": 1714368,
+    "sha256": "a8bb5c82380fcc4b947dbcf2a14609968bbf17871957bca723ff163d39fdf846",
+    "extracted_chars": 95353,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\confidence_tot.txt"
+  },
+  {
+    "id": "worker_study",
+    "filename": "Exploring How Knowledge Workers Situate an Organisationally Embedded LLM Agent in their Collaborative Work Practices.pdf",
+    "path": "E:\\Librarian research\\Exploring How Knowledge Workers Situate an Organisationally Embedded LLM Agent in their Collaborative Work Practices.pdf",
+    "pages": 56,
+    "bytes": 1135084,
+    "sha256": "880106639c1565055ae42a47a3bf152364d0f18c146a2df39c3cd1aaa95a021e",
+    "extracted_chars": 166014,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\worker_study.txt"
+  },
+  {
+    "id": "homo_agenticus",
+    "filename": "Homo-agenticus-in-the-age-of-agentic-AI--Agency-loops--po_2025_Information-a.pdf",
+    "path": "E:\\Librarian research\\Homo-agenticus-in-the-age-of-agentic-AI--Agency-loops--po_2025_Information-a.pdf",
+    "pages": 18,
+    "bytes": 854985,
+    "sha256": "872229a792f6b4588c8a5db7c461e6c2bb3e507cef0f43c1c4e5ae527836e049",
+    "extracted_chars": 108737,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\homo_agenticus.txt"
+  },
+  {
+    "id": "agentai_survey",
+    "filename": "AgentAI--A-comprehensive-survey-on-autonomous-agents_2025_Expert-Systems-wit.pdf",
+    "path": "E:\\Librarian research\\AgentAI--A-comprehensive-survey-on-autonomous-agents_2025_Expert-Systems-wit.pdf",
+    "pages": 18,
+    "bytes": 4577028,
+    "sha256": "0ccd23c608948ea5377da99a65ae13a6b0e5f1236c3e434e11843b053efdd74d",
+    "extracted_chars": 127798,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\agentai_survey.txt"
+  },
+  {
+    "id": "cybersecurity",
+    "filename": "Transforming-cybersecurity-with-agentic-AI-to-combat-_2025_Telecommunication.pdf",
+    "path": "E:\\Librarian research\\Transforming-cybersecurity-with-agentic-AI-to-combat-_2025_Telecommunication.pdf",
+    "pages": 12,
+    "bytes": 687452,
+    "sha256": "1d60a76268c3d446f44a10acbc3f6c86907ab283d4b9b34636e37fdc141461ac",
+    "extracted_chars": 77460,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\cybersecurity.txt"
+  },
+  {
+    "id": "pedagogy",
+    "filename": "A Pedagogy-First Approach to Integrating Large language models into education.pdf",
+    "path": "E:\\Librarian research\\A Pedagogy-First Approach to Integrating Large language models into education.pdf",
+    "pages": 3,
+    "bytes": 434152,
+    "sha256": "7045ed834f67b6de1444c64042a9615e0577b2a51b2c27ec5a592e770811ac5b",
+    "extracted_chars": 20283,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\pedagogy.txt"
+  },
+  {
+    "id": "goal_decomp_users",
+    "filename": "EBSCO-FullText-10_28_2026.pdf",
+    "path": "E:\\Librarian research\\EBSCO-FullText-10_28_2026.pdf",
+    "pages": 12,
+    "bytes": 178518,
+    "sha256": "f133cdd5cc75b255e2c110a2ec0b774b0adecaf4e69e50023b3783beaae24a7d",
+    "extracted_chars": 24232,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\goal_decomp_users.txt"
+  },
+  {
+    "id": "reasoning_age",
+    "filename": "Agentic-AI--The-age-of-reasoning-A-re_2026_Journal-of-Automation-and-Intelli.pdf",
+    "path": "E:\\Librarian research\\Agentic-AI--The-age-of-reasoning-A-re_2026_Journal-of-Automation-and-Intelli.pdf",
+    "pages": 21,
+    "bytes": 3355950,
+    "sha256": "eb09a8534ab95bfb520e801664af7b41a392fcb81a6d7f19925da5988db93e5b",
+    "extracted_chars": 154727,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\reasoning_age.txt"
+  },
+  {
+    "id": "mutual_influence",
+    "filename": "Mutual_Influence_AI_Trust-Bas.pdf",
+    "path": "E:\\Librarian research\\Mutual_Influence_AI_Trust-Bas.pdf",
+    "pages": 13,
+    "bytes": 804252,
+    "sha256": "29c2fa3751ef4bf31c439d7aa66e77ca61280ac2742065225a3c766d0a3a52c7",
+    "extracted_chars": 48047,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\mutual_influence.txt"
+  },
+  {
+    "id": "mask_guided",
+    "filename": "Mask-guided-rationales-meet-LLMs--Hybrid-encoder-LLM-question-_2026_Applied-.pdf",
+    "path": "E:\\Librarian research\\Mask-guided-rationales-meet-LLMs--Hybrid-encoder-LLM-question-_2026_Applied-.pdf",
+    "pages": 65,
+    "bytes": 10520007,
+    "sha256": "5381acfd36b10e7775862a85a6c131107e8d48c5d96c69ae7c7710e54db2c6b1",
+    "extracted_chars": 400880,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\mask_guided.txt"
+  },
+  {
+    "id": "industrial_soft_sensors",
+    "filename": "Industrial-Agentic-AI-and-generative-modelin_2025_Current-Opinion-in-Chemica.pdf",
+    "path": "E:\\Librarian research\\Industrial-Agentic-AI-and-generative-modelin_2025_Current-Opinion-in-Chemica.pdf",
+    "pages": 14,
+    "bytes": 5100715,
+    "sha256": "a42b2d8d0aa4eb34948ad28da040aeba6cdac6db14f6d00b47919b5bd8291fd6",
+    "extracted_chars": 58623,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\industrial_soft_sensors.txt"
+  },
+  {
+    "id": "drift_compensation",
+    "filename": "Semantic Drift Compensation for Class-Incremental Learning.pdf",
+    "path": "E:\\Librarian research\\Semantic Drift Compensation for Class-Incremental Learning.pdf",
+    "pages": 10,
+    "bytes": 5698826,
+    "sha256": "9835431a3f5020723cba6eaaa2dd09b7f27543e882ca6990a9276d3972ec962e",
+    "extracted_chars": 46327,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\drift_compensation.txt"
+  },
+  {
+    "id": "directed_drift",
+    "filename": "directed driftAn efficient and stealthy bias injection method usin.pdf",
+    "path": "E:\\Librarian research\\directed driftAn efficient and stealthy bias injection method usin.pdf",
+    "pages": 11,
+    "bytes": 3999104,
+    "sha256": "58fb5bb6220624e91714cab481307149e28be7176ad9cd079b4e8defcb4754d4",
+    "extracted_chars": 64897,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\directed_drift.txt"
+  },
+  {
+    "id": "miklipp_validation",
+    "filename": "metz_Vol_25_No_6_p629-630_Verification_and_process_oriented_validation_of_the_MiKlip_decadal_prediction_system_87186.pdf",
+    "path": "E:\\Librarian research\\metz_Vol_25_No_6_p629-630_Verification_and_process_oriented_validation_of_the_MiKlip_decadal_prediction_system_87186.pdf",
+    "pages": 2,
+    "bytes": 154652,
+    "sha256": "aff918d2d26a1d13e1b06501c10d211e03353a8065cb3303ddc81f7e1401a6b5",
+    "extracted_chars": 11656,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\miklipp_validation.txt"
+  },
+  {
+    "id": "hierarchical_goals",
+    "filename": "Hierarchical_goals_contextuali.pdf",
+    "path": "E:\\Librarian research\\Hierarchical_goals_contextuali.pdf",
+    "pages": 13,
+    "bytes": 827946,
+    "sha256": "f157643a8af9a008f0e9753ad0b33f0ce3e93fa0039c97624aa1f98c7ab9056a",
+    "extracted_chars": 59046,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\hierarchical_goals.txt"
+  },
+  {
+    "id": "pql_analyzer",
+    "filename": "Design_of_flexible_static_program_analyzers_with_PQL.pdf",
+    "path": "E:\\Librarian research\\Design_of_flexible_static_program_analyzers_with_PQL.pdf",
+    "pages": 19,
+    "bytes": 327460,
+    "sha256": "682f382435db3e3b4b3b22e0b0e3c4a4e5db5ddcbb1b08e60f4b74e841c24843",
+    "extracted_chars": 85299,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\pql_analyzer.txt"
+  },
+  {
+    "id": "soa_coordination",
+    "filename": "A_Formal_Perspective_for_Service_Coordination_Framework_in_Service_Oriented_Architecture.pdf",
+    "path": "E:\\Librarian research\\A_Formal_Perspective_for_Service_Coordination_Framework_in_Service_Oriented_Architecture.pdf",
+    "pages": 10,
+    "bytes": 348939,
+    "sha256": "451de5a80732bbda5a72a236e64fd59ec443c4dcf084e7c8bb83658936c762ef",
+    "extracted_chars": 49451,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\soa_coordination.txt"
+  },
+  {
+    "id": "iac_guidance",
+    "filename": "A knowledge-based approach for guided development of infrastructure as code.pdf",
+    "path": "E:\\Librarian research\\A knowledge-based approach for guided development of infrastructure as code.pdf",
+    "pages": 34,
+    "bytes": 5401647,
+    "sha256": "83663e3d2ff48863d1fa55c54dff153e98728190dcbe6051d11456d4e582ff16",
+    "extracted_chars": 127978,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\iac_guidance.txt"
+  },
+  {
+    "id": "visual_abduction",
+    "filename": "Data-And_Knowledge-Driven_Visual_Abductive_Reasoning.pdf",
+    "path": "E:\\Librarian research\\Data-And_Knowledge-Driven_Visual_Abductive_Reasoning.pdf",
+    "pages": 15,
+    "bytes": 5933624,
+    "sha256": "7e7c0baac1116480db262974a5bbff8ed105734d368098eb202a267f40d6ce0a",
+    "extracted_chars": 91834,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\visual_abduction.txt"
+  },
+  {
+    "id": "vikser",
+    "filename": "ViKSeR_Visual_Knowledge-Driven_Self-Reinforcing_Reasoning_Framework.pdf",
+    "path": "E:\\Librarian research\\ViKSeR_Visual_Knowledge-Driven_Self-Reinforcing_Reasoning_Framework.pdf",
+    "pages": 13,
+    "bytes": 9778039,
+    "sha256": "a05a09a9bd8aafbe3b5dfb329a3b73d5e13fad6a95d4b01f7cf7af15aaf37f1f",
+    "extracted_chars": 66693,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\vikser.txt"
+  },
+  {
+    "id": "kv_management",
+    "filename": "Efficient Cooperation-Aware Key and Value Management.pdf",
+    "path": "E:\\Librarian research\\Efficient Cooperation-Aware Key and Value Management.pdf",
+    "pages": 14,
+    "bytes": 1112136,
+    "sha256": "99096873fd7c94650ed58e20f6b9b38f96ea187f551a627cac286629d32d3dac",
+    "extracted_chars": 82923,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\kv_management.txt"
+  },
+  {
+    "id": "comm_efficient",
+    "filename": "Towards_Communication_Efficient_Multi-Agent_Cooperations_Reinforcement_Learning_and_LLM.pdf",
+    "path": "E:\\Librarian research\\Towards_Communication_Efficient_Multi-Agent_Cooperations_Reinforcement_Learning_and_LLM.pdf",
+    "pages": 14,
+    "bytes": 5099768,
+    "sha256": "419ed266ee7b2a0296c433d418e3d95361ac711313326626f88148c371be83d6",
+    "extracted_chars": 68802,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\comm_efficient.txt"
+  },
+  {
+    "id": "network_slicing",
+    "filename": "Multi-LLM_Cooperation-Based_Joint_Intent-Driven_Network_Slicing_and_Resource_Allocation.pdf",
+    "path": "E:\\Librarian research\\Multi-LLM_Cooperation-Based_Joint_Intent-Driven_Network_Slicing_and_Resource_Allocation.pdf",
+    "pages": 5,
+    "bytes": 1432159,
+    "sha256": "2f497f694a28116e988492054f05b30d52eb9a9834651193c33636eb06332029",
+    "extracted_chars": 28653,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\network_slicing.txt"
+  },
+  {
+    "id": "fa_hrl",
+    "filename": "Uncertainty-aware-cloud-resource-management-via-fuzzy-adap_2026_Applied-Soft.pdf",
+    "path": "E:\\Librarian research\\Uncertainty-aware-cloud-resource-management-via-fuzzy-adap_2026_Applied-Soft.pdf",
+    "pages": 18,
+    "bytes": 5206066,
+    "sha256": "167a21ed5cb6be08d45c293dddb762790bed4f51c45196730ed067b0ed303725",
+    "extracted_chars": 97328,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\fa_hrl.txt"
+  },
+  {
+    "id": "multiscale_graph",
+    "filename": "Multiscale_Contrastive_Learning_for_Node_Clustering_Based_on_Variational_Graph_Auto-Encoder.pdf",
+    "path": "E:\\Librarian research\\Multiscale_Contrastive_Learning_for_Node_Clustering_Based_on_Variational_Graph_Auto-Encoder.pdf",
+    "pages": 15,
+    "bytes": 6650525,
+    "sha256": "7b1ecb2a7c4dcd58e8d5db2842aa3e897416fe4f1266619aff2f83c3cefb35fb",
+    "extracted_chars": 73709,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\multiscale_graph.txt"
+  },
+  {
+    "id": "graph_filtering",
+    "filename": "07802-YuJ.pdf",
+    "path": "E:\\Librarian research\\07802-YuJ.pdf",
+    "pages": 9,
+    "bytes": 262151,
+    "sha256": "8ade95386511eb454b8d49163764d5aa86dcd5eefd733860dd7c6893d6e7fe71",
+    "extracted_chars": 47294,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\graph_filtering.txt"
+  },
+  {
+    "id": "embodied_tot",
+    "filename": "Embodied_Tree_of_Thoughts_Deliberate_Manipulation_Planning_With_Embodied_World_Model.pdf",
+    "path": "E:\\Librarian research\\Embodied_Tree_of_Thoughts_Deliberate_Manipulation_Planning_With_Embodied_World_Model.pdf",
+    "pages": 8,
+    "bytes": 1913491,
+    "sha256": "af31e3e8a13fc0414d8bb1b82e27b7d2d1a247b17d20a5fb951d4be46e8f0298",
+    "extracted_chars": 42143,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\embodied_tot.txt"
+  },
+  {
+    "id": "remaining_01",
+    "filename": "AI-Agents-vs--Agentic-AI--A-Conceptual-taxonomy--applicat_2026_Information-F.pdf",
+    "path": "E:\\Librarian research\\AI-Agents-vs--Agentic-AI--A-Conceptual-taxonomy--applicat_2026_Information-F.pdf",
+    "pages": 30,
+    "sha256": "e3e1346d48bf40c47de7d97231957b58301f16151da2cdb77e74a11c854bce8f",
+    "duplicate_of": null,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\remaining_01.txt",
+    "extracted_chars": 203903
+  },
+  {
+    "id": "remaining_02",
+    "filename": "applsci-16-04720.pdf",
+    "path": "E:\\Librarian research\\applsci-16-04720.pdf",
+    "pages": 28,
+    "sha256": "725a09946e5c8278ec9628dbd3206febd52982b2ee1f6bd62b5df9b0e3a1f510",
+    "duplicate_of": null,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\remaining_02.txt",
+    "extracted_chars": 94482
+  },
+  {
+    "id": "remaining_03",
+    "filename": "Double-deep-Q-network-based-multi-objective-optimization-f_2026_Expert-Syste.pdf",
+    "path": "E:\\Librarian research\\Double-deep-Q-network-based-multi-objective-optimization-f_2026_Expert-Syste.pdf",
+    "pages": 16,
+    "sha256": "baee9508f72e70880f69872e413882fc1b8f65fbb0f087a057e05e6b9258c0e2",
+    "duplicate_of": null,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\remaining_03.txt",
+    "extracted_chars": 82559
+  },
+  {
+    "id": "remaining_04",
+    "filename": "electronics-15-00844-v2.pdf",
+    "path": "E:\\Librarian research\\electronics-15-00844-v2.pdf",
+    "pages": 22,
+    "sha256": "1314cc9f8a0500473e3130b5ba20b736218d5747603bebc570ae3e4d09298c61",
+    "duplicate_of": null,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\remaining_04.txt",
+    "extracted_chars": 66500
+  },
+  {
+    "id": "remaining_05",
+    "filename": "Evolutionary_Multi-Agent_Deep_Meta_Reinforcement_Learning_Method_for_Swarm_Intelligence_Energy_Management_of_Isolated_Multi-Area_Microgrid_With_Internet_of_Things.pdf",
+    "path": "E:\\Librarian research\\Evolutionary_Multi-Agent_Deep_Meta_Reinforcement_Learning_Method_for_Swarm_Intelligence_Energy_Management_of_Isolated_Multi-Area_Microgrid_With_Internet_of_Things.pdf",
+    "pages": 15,
+    "sha256": "b23e11ce5d534351b92936d78d947677c70a61ec6ed2783ba9da8f5f13dacf8d",
+    "duplicate_of": null,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\remaining_05.txt",
+    "extracted_chars": 65636
+  },
+  {
+    "id": "remaining_06",
+    "filename": "frai-9-1820827.pdf",
+    "path": "E:\\Librarian research\\frai-9-1820827.pdf",
+    "pages": 27,
+    "sha256": "392dd3bf643ec2974dd54ed603e1328687db8977386a75f21898cb21af73a179",
+    "duplicate_of": null,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\remaining_06.txt",
+    "extracted_chars": 125049
+  },
+  {
+    "id": "remaining_07",
+    "filename": "futureinternet-17-00353-v2.pdf",
+    "path": "E:\\Librarian research\\futureinternet-17-00353-v2.pdf",
+    "pages": 38,
+    "sha256": "9e70559991e66da5578e5857a0b0402c01c45d16d8d6f8218835e87c20456e5e",
+    "duplicate_of": null,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\remaining_07.txt",
+    "extracted_chars": 148165
+  },
+  {
+    "id": "remaining_08",
+    "filename": "Gradient Orthogonal Low-Rank Adaptation Framewor.pdf",
+    "path": "E:\\Librarian research\\Gradient Orthogonal Low-Rank Adaptation Framewor.pdf",
+    "pages": 12,
+    "sha256": "f3639747ccc2bac46b4946d29fa79b6c46d44bb9dab8a43a36d605e0196a1f3a",
+    "duplicate_of": null,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\remaining_08.txt",
+    "extracted_chars": 71974
+  },
+  {
+    "id": "remaining_09",
+    "filename": "Hierarchical-reinforcement-learning-for-dynamic-collision-a_2025_Knowledge-B.pdf",
+    "path": "E:\\Librarian research\\Hierarchical-reinforcement-learning-for-dynamic-collision-a_2025_Knowledge-B.pdf",
+    "pages": 17,
+    "sha256": "9d491f07427daeba9d87f7c41fd6ee196c28e5abbe876a3a25ff46f9f34b2afa",
+    "duplicate_of": null,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\remaining_09.txt",
+    "extracted_chars": 78419
+  },
+  {
+    "id": "remaining_10",
+    "filename": "Improving multi-target cooperative tracking.pdf",
+    "path": "E:\\Librarian research\\Improving multi-target cooperative tracking.pdf",
+    "pages": 13,
+    "sha256": "76c5c2ace0a00c84078c39d472cfe9574691a4f48e486e505ea984be757d94f3",
+    "duplicate_of": null,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\remaining_10.txt",
+    "extracted_chars": 64513
+  },
+  {
+    "id": "remaining_11",
+    "filename": "KLDA-TICNet--Transposition-interaction-convolutional-network-_2026_Applied-S.pdf",
+    "path": "E:\\Librarian research\\KLDA-TICNet--Transposition-interaction-convolutional-network-_2026_Applied-S.pdf",
+    "pages": 18,
+    "sha256": "e547a2d592974df03560fe3f7541d566704149ee1e13b746f796a9a8037baeef",
+    "duplicate_of": null,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\remaining_11.txt",
+    "extracted_chars": 100394
+  },
+  {
+    "id": "remaining_12",
+    "filename": "Knowledge-Driven Reasoning for Compatible and Interpretable API Recommendation via Teacher.pdf",
+    "path": "E:\\Librarian research\\Knowledge-Driven Reasoning for Compatible and Interpretable API Recommendation via Teacher.pdf",
+    "pages": 30,
+    "sha256": "1feeffe3126b1aaf15041613bf8e63beb6309350fe41ec9c3cccf2060d8fe9cd",
+    "duplicate_of": "api_distill",
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\remaining_12.txt",
+    "extracted_chars": 96121
+  },
+  {
+    "id": "remaining_13",
+    "filename": "mathematics-14-01568-v2.pdf",
+    "path": "E:\\Librarian research\\mathematics-14-01568-v2.pdf",
+    "pages": 19,
+    "sha256": "6b55fa9af79b3ec3d713f77d416942de569bf5788460b86df87f57183537b0ee",
+    "duplicate_of": null,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\remaining_13.txt",
+    "extracted_chars": 66626
+  },
+  {
+    "id": "remaining_14",
+    "filename": "S0146411625700361.pdf",
+    "path": "E:\\Librarian research\\S0146411625700361.pdf",
+    "pages": 34,
+    "sha256": "b503dcc1ebd38df53230df82e6d0293ca93dcc8370a65ceff1c290a7b0f4a394",
+    "duplicate_of": null,
+    "text_path": "reports\\2026-10-29-long-horizon-harness-research\\data\\paper_text\\remaining_14.txt",
+    "extracted_chars": 137721
+  }
+]
