@@ -1,0 +1,273 @@
+{
+  "experiment": "E2-prime",
+  "stage": "A",
+  "seed": 2610290,
+  "order_method": "the six orders of arms A, B, C, each used twice, shuffled with random.Random(seed)",
+  "survey": "functions of at least 55 lines outside the plan section 3.2 owner-host files, with no writer, network, thread, file-write or subprocess calls (AST screen, 2026-10-29); writer-safety code excluded by class",
+  "tasks": [
+    {
+      "id": "E2-T01",
+      "stratum": "large",
+      "module": "src/resource_librarian/workflows.py",
+      "target": "validate",
+      "lines_at_survey": 148,
+      "objective": "Split validate() into one private helper per definition section, so it reads as a sequence of section checks.",
+      "oracle": {
+        "kind": "structure",
+        "max_target_lines": 45,
+        "rule": "the target is at most this many lines; new names are private (leading underscore); public signatures unchanged"
+      },
+      "write_targets": [
+        "src/resource_librarian/workflows.py"
+      ],
+      "arm_order": [
+        "B",
+        "A",
+        "C"
+      ],
+      "status": "unprepared"
+    },
+    {
+      "id": "E2-T02",
+      "stratum": "large",
+      "module": "src/resource_librarian/session.py",
+      "target": "Session.missing",
+      "lines_at_survey": 154,
+      "objective": "Split Session.missing() into one private helper per phase requirement.",
+      "oracle": {
+        "kind": "structure",
+        "max_target_lines": 45,
+        "rule": "the target is at most this many lines; new names are private (leading underscore); public signatures unchanged"
+      },
+      "write_targets": [
+        "src/resource_librarian/session.py"
+      ],
+      "arm_order": [
+        "A",
+        "C",
+        "B"
+      ],
+      "status": "unprepared"
+    },
+    {
+      "id": "E2-T03",
+      "stratum": "large",
+      "module": "src/resource_librarian/clerk.py",
+      "target": "verify",
+      "lines_at_survey": 119,
+      "objective": "Split verify() into private per-field verifiers and a short dispatcher.",
+      "oracle": {
+        "kind": "structure",
+        "max_target_lines": 45,
+        "rule": "the target is at most this many lines; new names are private (leading underscore); public signatures unchanged"
+      },
+      "write_targets": [
+        "src/resource_librarian/clerk.py"
+      ],
+      "arm_order": [
+        "A",
+        "B",
+        "C"
+      ],
+      "status": "unprepared"
+    },
+    {
+      "id": "E2-T04",
+      "stratum": "large",
+      "module": "src/resource_librarian/app.py",
+      "target": "App.route_readiness",
+      "lines_at_survey": 128,
+      "objective": "Move the readiness computation in App.route_readiness() into a module-level pure function that takes its inputs explicitly; the method gathers inputs and calls it.",
+      "oracle": {
+        "kind": "structure",
+        "max_target_lines": 45,
+        "rule": "the target is at most this many lines; new names are private (leading underscore); public signatures unchanged"
+      },
+      "write_targets": [
+        "src/resource_librarian/app.py"
+      ],
+      "arm_order": [
+        "B",
+        "C",
+        "A"
+      ],
+      "status": "unprepared"
+    },
+    {
+      "id": "E2-T05",
+      "stratum": "large",
+      "module": "src/resource_librarian/doctor.py",
+      "target": "checks",
+      "lines_at_survey": 144,
+      "objective": "Split checks() into private builders per group (runtime, dependencies, vault, MCP).",
+      "oracle": {
+        "kind": "structure",
+        "max_target_lines": 45,
+        "rule": "the target is at most this many lines; new names are private (leading underscore); public signatures unchanged"
+      },
+      "write_targets": [
+        "src/resource_librarian/doctor.py"
+      ],
+      "arm_order": [
+        "B",
+        "C",
+        "A"
+      ],
+      "status": "unprepared"
+    },
+    {
+      "id": "E2-T06",
+      "stratum": "large",
+      "module": "src/resource_librarian/hosts.py",
+      "target": "validate_release_lead",
+      "lines_at_survey": 103,
+      "objective": "Turn validate_release_lead() into an ordered table of named private checks evaluated by a short loop, keeping the first-failure message.",
+      "oracle": {
+        "kind": "structure",
+        "max_target_lines": 45,
+        "rule": "the target is at most this many lines; new names are private (leading underscore); public signatures unchanged"
+      },
+      "write_targets": [
+        "src/resource_librarian/hosts.py"
+      ],
+      "arm_order": [
+        "B",
+        "A",
+        "C"
+      ],
+      "status": "unprepared"
+    },
+    {
+      "id": "E2-T07",
+      "stratum": "medium",
+      "module": "src/resource_librarian/registry.py",
+      "target": "coerce",
+      "lines_at_survey": 95,
+      "objective": "Split coerce() into private per-type coercion helpers and a short loop.",
+      "oracle": {
+        "kind": "structure",
+        "max_target_lines": 35,
+        "rule": "the target is at most this many lines; new names are private (leading underscore); public signatures unchanged"
+      },
+      "write_targets": [
+        "src/resource_librarian/registry.py"
+      ],
+      "arm_order": [
+        "C",
+        "A",
+        "B"
+      ],
+      "status": "unprepared"
+    },
+    {
+      "id": "E2-T08",
+      "stratum": "medium",
+      "module": "src/resource_librarian/structure.py",
+      "target": "survey",
+      "lines_at_survey": 85,
+      "objective": "Split survey() into private walk, classify and summarise steps.",
+      "oracle": {
+        "kind": "structure",
+        "max_target_lines": 35,
+        "rule": "the target is at most this many lines; new names are private (leading underscore); public signatures unchanged"
+      },
+      "write_targets": [
+        "src/resource_librarian/structure.py"
+      ],
+      "arm_order": [
+        "C",
+        "B",
+        "A"
+      ],
+      "status": "unprepared"
+    },
+    {
+      "id": "E2-T09",
+      "stratum": "medium",
+      "module": "src/resource_librarian/agent_runtime.py",
+      "target": "validate",
+      "lines_at_survey": 70,
+      "objective": "Split the profile validate() into private per-field normalisers, never broadening access.",
+      "oracle": {
+        "kind": "structure",
+        "max_target_lines": 35,
+        "rule": "the target is at most this many lines; new names are private (leading underscore); public signatures unchanged"
+      },
+      "write_targets": [
+        "src/resource_librarian/agent_runtime.py"
+      ],
+      "arm_order": [
+        "C",
+        "B",
+        "A"
+      ],
+      "status": "unprepared"
+    },
+    {
+      "id": "E2-T10",
+      "stratum": "medium",
+      "module": "src/resource_librarian/app.py",
+      "target": "App._qualification_fingerprints",
+      "lines_at_survey": 67,
+      "objective": "Move App._qualification_fingerprints() into a module-level pure function over explicit inputs.",
+      "oracle": {
+        "kind": "structure",
+        "max_target_lines": 35,
+        "rule": "the target is at most this many lines; new names are private (leading underscore); public signatures unchanged"
+      },
+      "write_targets": [
+        "src/resource_librarian/app.py"
+      ],
+      "arm_order": [
+        "A",
+        "B",
+        "C"
+      ],
+      "status": "unprepared"
+    },
+    {
+      "id": "E2-T11",
+      "stratum": "medium",
+      "module": "src/resource_librarian/result_handles.py",
+      "target": "project",
+      "lines_at_survey": 63,
+      "objective": "Split project() into private per-kind projectors behind a short dispatcher.",
+      "oracle": {
+        "kind": "structure",
+        "max_target_lines": 35,
+        "rule": "the target is at most this many lines; new names are private (leading underscore); public signatures unchanged"
+      },
+      "write_targets": [
+        "src/resource_librarian/result_handles.py"
+      ],
+      "arm_order": [
+        "C",
+        "A",
+        "B"
+      ],
+      "status": "unprepared"
+    },
+    {
+      "id": "E2-T12",
+      "stratum": "medium",
+      "module": "src/resource_librarian/dik.py",
+      "target": "repository",
+      "lines_at_survey": 57,
+      "objective": "Split repository() into private builders for the Data and the Information records.",
+      "oracle": {
+        "kind": "structure",
+        "max_target_lines": 35,
+        "rule": "the target is at most this many lines; new names are private (leading underscore); public signatures unchanged"
+      },
+      "write_targets": [
+        "src/resource_librarian/dik.py"
+      ],
+      "arm_order": [
+        "A",
+        "C",
+        "B"
+      ],
+      "status": "unprepared"
+    }
+  ]
+}

@@ -198,7 +198,7 @@ are in the [agent-workflow sprint](../reports/2026-10-28-agent-workflow-sprint/1
 | --- | --- | --- | --- |
 | DELEG-01 | Small | implemented | One schema-2 ledger with named budget pools; transport state (started, completed, failed, uncertain) separate from acceptance; an identical request is refused while an earlier one is in flight or unreconciled; an interrupted call keeps its reserve; a definite provider rejection costs nothing; a truncated reply exits 3; the exact request and raw response are kept beside each receipt; rate cards are checked against the live listing; stray spend records are imported. |
 | DELEG-03 | Small | implemented | Packet lint, a runner gate and a pre-landing diff-scope guard. **Lint:** drafter and reviewer from different model families; checks under the repository venv; the owner-host gate for §3.2 files; protected targets never writable. **Runner gate (`--work-package`):** a refused package, an export outside its targets, or a mismatched pool or task stops before any paid call; the package sets the task budget and call limit; the receipt records the package hash and its §3.3 conformance (M9). **Guard (`scripts/check_diff_scope.py`):** refuses out-of-scope, forbidden or protected files, deletions, renames, binaries, and test edits that remove a test, reduce assertions or add a skip. Positive and negative git fixtures. |
-| DELEG-06 | Experimental medium | pilot built | `scripts/delegation_controller.py` admits a package, checks the base and environment, works in a detached worktree, confirms the before-state, asks the worker for whole files, runs the scope guard and every declared check itself, allows at most two repair rounds, commits the candidate and writes the completion record. The first live pilot was accepted in one round and landed (`9a37a34`, `6e7af59`). **Still open:** the kill criterion and the go/narrow/stop decision need E2', the three-arm comparison of lead effort, which has not run. |
+| DELEG-06 | Experimental medium | pilot built | `scripts/delegation_controller.py` admits a package, checks the base and environment, works in a detached worktree, confirms the before-state, asks the worker for whole files, runs the scope guard and every declared check itself, allows at most two repair rounds, commits the candidate and writes the completion record. The first live pilot was accepted in one round and landed (`9a37a34`, `6e7af59`). **Still open:** the kill criterion and the go/narrow/stop decision need E2', the three-arm comparison of lead effort. E2' is designed ([protocol](experiments/e2-prime-protocol.md)) but not run. |
 | DELEG-11 | Small | implemented | The [work-package contract](delegation-work-package.md) covers four boundaries: admission, worker ownership, evidence-bearing completion, and escalation with resumption. It comes with a JSON schema and a checker for the rules that span fields. Every §3.3 field maps to a contract field (tested). ADAPT-05 is filled in as a worked example that validates and whose protected fixture hashes verify against `b242d8b`. The remaining acceptance step, a Claude session and a Codex session each completing the form unaided for a new task, happens on the first DELEG-03/06 pilot task. |
 
 Every agent calls the same runner and ledger:
@@ -1905,3 +1905,35 @@ saving. Remaining lead effort (R) was not measured, so the kill criterion and
 the go, narrow or stop decision wait for E2'. The pilot also needed the lead to
 write the oracle and the brief, about the same amount of text as the change.
 Full suite on master after landing: 1,561 passed, 2 skipped, 4 deselected (8m50s).
+
+### E2' design (2026-10-29)
+
+E2' is the measurement DELEG-06's kill criterion needs. It asks whether a
+managed package (arm C) cuts the lead's effort against the lead working
+directly (arm A) and against one-shot delegation as practised (arm B), at
+equal quality. The protocol is
+[`docs/experiments/e2-prime-protocol.md`](experiments/e2-prime-protocol.md).
+
+**Design.**
+- Each of 12 behaviour-preserving refactor tasks is done three times from one
+  frozen base: one fresh session and one worktree per arm, with the arm order
+  balanced and seeded.
+- The tasks are six large and six medium targets, chosen by an AST screen for
+  functions outside the owner-host files with no writer, network, thread,
+  file-write or subprocess calls. They are listed in
+  [`docs/experiments/e2-prime-tasks.json`](experiments/e2-prime-tasks.json).
+- The experimenter prepares each base before any arm runs: characterization
+  tests (regression), a structure test that fails before the change (oracle),
+  and held-out cases kept outside the repository (escaped defects).
+
+**Measurement.** `scripts/e2_effort.py` meters lead effort from the Claude Code
+session logs, subagent logs included. Each API response is counted once by
+message id, and client-written `<synthetic>` records are skipped. It reports
+metric M1's weighted index, tokens by component, requests and active time,
+and joins delegate spend from the ledger by task id. R is the arm's effort
+divided by the direct arm's effort on the same task.
+
+**Not yet run.** The decision rule (stop, narrow or claim) is proposed and
+waits for the owner's confirmation. Stage A0 (three tasks, nine sessions)
+needs the owner's approval of its lead quota.
+Full suite: 1,566 passed, 2 skipped, 4 deselected (8m58s).
