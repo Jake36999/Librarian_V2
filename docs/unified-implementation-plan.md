@@ -186,6 +186,28 @@ Agents must not bundle unrelated refactors, reformat unrelated files, edit
 release records, publish artifacts, use user credentials, or change model
 assignments without a task-specific checkpoint.
 
+### 3.4 Development delegation tooling (DELEG)
+
+`DELEG-xx` rows cover the tooling the developing agents use to delegate to
+DeepInfra. They are development tooling, not Librarian runtime roles, and they
+create no second qualification authority. Candidate rows and their evidence
+are in the [agent-workflow sprint](../reports/2026-10-28-agent-workflow-sprint/10-final-report.md)
+(§7 there); a row is adopted only when it appears here.
+
+| ID | Size | Status | Done when |
+| --- | --- | --- | --- |
+| DELEG-01 | Small | implemented | One schema-2 ledger with named budget pools; transport state (started, completed, failed, uncertain) separate from acceptance; an identical request is refused while an earlier one is in flight or unreconciled; an interrupted call keeps its reserve; a definite provider rejection costs nothing; a truncated reply exits 3; the exact request and raw response are kept beside each receipt; rate cards are checked against the live listing; stray spend records are imported. |
+
+Every agent calls the same runner and ledger:
+
+~~~text
+.venv/Scripts/python.exe scripts/delegate_deepinfra.py --pool <claude|shared|...>
+    --total-budget-usd <pool budget> --agent <name> --task <label>
+    [--task-id <plan task>] [--role drafter|reviewer|critic|mapper|builder|reader|probe|canary|other]
+    [--parent-run <run_id>] --model <id> --instruction-file <brief> [--file <repo path> ...]
+.venv/Scripts/python.exe scripts/delegate_ledger.py summary | accept | reconcile | check-prices
+~~~
+
 ## 4. Critical-path gates
 
 ~~~text
@@ -1657,3 +1679,60 @@ enforced and INDEX-05 closed, **G1 is green on local evidence**. Claims that
 depend on the moved items (a stable desktop release, packaged multi-client
 behaviour in real host applications) still wait for ACCEPT-02 and RELEASE-03.
 Next in order: CORE-04B if a managed MCP start is wanted, then DEPLOY-01.
+
+### DELEG-01 delegation receipts and one ledger (2026-10-29)
+
+The first row the agent-workflow sprint proposed. Every agent's DeepInfra spend
+is now in one ledger, `tmp/deepinfra-delegation/ledger.json` (schema 2), with
+named budget pools: `claude` ($8), `shared` ($12) and `codex-overseer` ($5).
+The two schema-1 ledgers were migrated with byte-for-byte backups
+(`*.schema1.json`). Three stray record sets were imported as marked entries:
+the Claude scratchpad ledger (25 calls, $0.5457, replacing its one-line lump
+entry), the scratchpad reader logs (20 calls, $0.4468, previously in no
+ledger) and the overseer ledger (14 calls, $0.3573). Re-running an import adds
+nothing.
+
+Behaviour changes in `scripts/delegate_deepinfra.py`:
+
+- **Duplicate guard.** An identical request is refused while an earlier one is
+  in flight or unreconciled. The check is atomic with the reservation.
+- **Interrupted and failed calls.** An interrupted or timed-out call keeps its
+  reserve as `uncertain`. A definite provider rejection is `failed` and costs
+  nothing.
+- **Truncation.** A truncated reply exits with code 3 unless
+  `--allow-truncated` is given.
+- **Saved request and response.** The exact request body and the raw response
+  are written beside the receipt. The response is written before parsing, so a
+  crash after the reply can be reconciled from it.
+- **Joins.** Receipts and ledger entries carry the pool, plan task, role,
+  parent run, agent and host, the attempt number, and the cost basis.
+
+`scripts/delegate_ledger.py` provides `migrate`, `import-calls`, `reconcile`,
+`accept` (acceptance with history), `summary` and `check-prices`.
+
+**Rate cards.** The first live price check found three stale cards, the three
+the sprint had flagged. GLM-5.3 is $0.90/$4.00 per million tokens, not
+$0.45/$2.00. Both DeepSeek-V4.1-Flash cards are $0.20/$0.60. The cards are
+corrected. Earlier GLM-5.3 and Flash entries keep the lower historical
+estimates; DeepInfra's invoice is authoritative.
+
+**Open entry.** One legacy `started` entry, the INDEX-05 attachment mapper
+(reserve $0.0059), migrated as `uncertain` and is left for the owner to
+reconcile.
+
+**Delegation.** Both scripts were drafted by DeepSeek-V4-Pro in two parallel
+calls ($0.068) from one specification. Claude reviewed them and made these
+fixes:
+
+- the runner used the local date, not UTC;
+- it wrote the request file before the reservation;
+- it saved the receipt only after settlement on failure;
+- the ledger tool duplicated runner helpers;
+- it put the legacy packet hash in the request-hash field;
+- it migrated without the lock;
+- its `reconcile` could not find the response after a crash.
+
+Tests: `tests/test_deepinfra_delegation.py`, 31 tests, including an
+interruption drill (an interrupted call neither loses its charge nor repeats)
+and a crash-after-reply reconcile. A live canary through the new path cost
+$0.000015. Full suite: 1,503 passed, 2 skipped, 4 deselected (8m10s).
