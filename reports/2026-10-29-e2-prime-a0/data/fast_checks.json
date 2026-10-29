@@ -1,0 +1,128 @@
+[
+  {
+    "task": "E2-T06",
+    "arm": "A",
+    "head": "1d0c94f790576babcc96f8b3faa928c6797a02c3",
+    "changed_files": [
+      "src/resource_librarian/hosts.py"
+    ],
+    "tracked_clean": true,
+    "protected_tests_intact": true,
+    "e2_tests": "52 passed in 0.61s",
+    "e2_exit": 0,
+    "holdout": "20 passed in 0.13s",
+    "holdout_exit": 0
+  },
+  {
+    "task": "E2-T06",
+    "arm": "B",
+    "head": "a693e75aaa168b2e889878e865eba3b463f0c6e6",
+    "changed_files": [
+      "src/resource_librarian/hosts.py"
+    ],
+    "tracked_clean": true,
+    "protected_tests_intact": true,
+    "e2_tests": "52 passed in 0.59s",
+    "e2_exit": 0,
+    "holdout": "20 passed in 0.13s",
+    "holdout_exit": 0
+  },
+  {
+    "task": "E2-T06",
+    "arm": "C",
+    "head": "98a64e65ae03657d485ab3934c68122ea63533f2",
+    "changed_files": [
+      "src/resource_librarian/hosts.py"
+    ],
+    "tracked_clean": true,
+    "protected_tests_intact": true,
+    "e2_tests": "52 passed in 13.11s",
+    "e2_exit": 0,
+    "holdout": "20 passed in 0.13s",
+    "holdout_exit": 0
+  },
+  {
+    "task": "E2-T07",
+    "arm": "A",
+    "head": "271b6a66e5b4173146f28312f8dac252e1b3dece",
+    "changed_files": [
+      "src/resource_librarian/registry.py"
+    ],
+    "tracked_clean": true,
+    "protected_tests_intact": true,
+    "e2_tests": "37 passed in 0.22s",
+    "e2_exit": 0,
+    "holdout": "8 passed in 0.06s",
+    "holdout_exit": 0
+  },
+  {
+    "task": "E2-T07",
+    "arm": "B",
+    "head": "eb61c8deeb11df2367a6bdc161c79318422263ac",
+    "changed_files": [
+      "src/resource_librarian/registry.py"
+    ],
+    "tracked_clean": true,
+    "protected_tests_intact": true,
+    "e2_tests": "37 passed in 0.24s",
+    "e2_exit": 0,
+    "holdout": "8 passed in 0.05s",
+    "holdout_exit": 0
+  },
+  {
+    "task": "E2-T07",
+    "arm": "C",
+    "head": "9022a57f28240f339ec12f6e303bb89cc88587fb",
+    "changed_files": [
+      "src/resource_librarian/registry.py"
+    ],
+    "tracked_clean": true,
+    "protected_tests_intact": true,
+    "e2_tests": "37 passed in 0.22s",
+    "e2_exit": 0,
+    "holdout": "8 passed in 0.06s",
+    "holdout_exit": 0
+  },
+  {
+    "task": "E2-T10",
+    "arm": "A",
+    "head": "98d026534dd55d8c02c5e9de9f2b579bf2338df1",
+    "changed_files": [
+      "src/resource_librarian/app.py"
+    ],
+    "tracked_clean": true,
+    "protected_tests_intact": true,
+    "e2_tests": "17 passed in 2.10s",
+    "e2_exit": 0,
+    "holdout": "5 passed in 1.09s",
+    "holdout_exit": 0
+  },
+  {
+    "task": "E2-T10",
+    "arm": "B",
+    "head": "0a72098011f36ccb7d1dc63a847f8aee3d346cbb",
+    "changed_files": [
+      "src/resource_librarian/app.py"
+    ],
+    "tracked_clean": true,
+    "protected_tests_intact": true,
+    "e2_tests": "17 passed in 2.14s",
+    "e2_exit": 0,
+    "holdout": "5 passed in 1.18s",
+    "holdout_exit": 0
+  },
+  {
+    "task": "E2-T10",
+    "arm": "C",
+    "head": "d1709dcfb0ef8bbd9ebdef79b38a30933c745b00",
+    "changed_files": [
+      "src/resource_librarian/app.py"
+    ],
+    "tracked_clean": true,
+    "protected_tests_intact": true,
+    "e2_tests": "17 passed in 2.19s",
+    "e2_exit": 0,
+    "holdout": "5 passed in 1.16s",
+    "holdout_exit": 0
+  }
+]

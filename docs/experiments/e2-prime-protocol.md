@@ -1,7 +1,9 @@
 # E2' protocol: does managed delegation cut the lead's effort?
 
-Status: designed 2026-10-29. The Stage A0 bases (T06, T07, T10) are prepared
-and verified; no arm has run. Task registry:
+Status: Stage A0 ran on 2026-10-29 (nine arms). Under the confirmed decision
+rule the result is stop for this task class; see the
+[A0 report](../../reports/2026-10-29-e2-prime-a0/README.md). Stage A has not
+run. Task registry:
 [`e2-prime-tasks.json`](e2-prime-tasks.json). Effort meter:
 `scripts/e2_effort.py`. Origin: the agent-workflow sprint's final report (§6
 and §8, experiment E2'), which replaces E2.

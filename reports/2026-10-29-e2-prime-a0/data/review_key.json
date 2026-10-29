@@ -1,0 +1,50 @@
+{
+  "seed": 29102026,
+  "key": {
+    "D1": {
+      "task": "E2-T06",
+      "arm": "B",
+      "lines": 271
+    },
+    "D2": {
+      "task": "E2-T10",
+      "arm": "B",
+      "lines": 124
+    },
+    "D3": {
+      "task": "E2-T06",
+      "arm": "A",
+      "lines": 222
+    },
+    "D4": {
+      "task": "E2-T06",
+      "arm": "C",
+      "lines": 204
+    },
+    "D5": {
+      "task": "E2-T07",
+      "arm": "B",
+      "lines": 175
+    },
+    "D6": {
+      "task": "E2-T10",
+      "arm": "A",
+      "lines": 138
+    },
+    "D7": {
+      "task": "E2-T07",
+      "arm": "A",
+      "lines": 174
+    },
+    "D8": {
+      "task": "E2-T10",
+      "arm": "C",
+      "lines": 130
+    },
+    "D9": {
+      "task": "E2-T07",
+      "arm": "C",
+      "lines": 187
+    }
+  }
+}

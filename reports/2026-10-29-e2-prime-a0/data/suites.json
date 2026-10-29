@@ -1,0 +1,56 @@
+[
+  {
+    "arm": "T06-A",
+    "exit": 0,
+    "summary": "1618 passed, 2 skipped, 4 deselected in 679.60s (0:11:19)",
+    "failed": []
+  },
+  {
+    "arm": "T06-B",
+    "exit": 0,
+    "summary": "1618 passed, 2 skipped, 4 deselected in 648.79s (0:10:48)",
+    "failed": []
+  },
+  {
+    "arm": "T06-C",
+    "exit": 0,
+    "summary": "1618 passed, 2 skipped, 4 deselected in 693.61s (0:11:33)",
+    "failed": []
+  },
+  {
+    "arm": "T07-A",
+    "exit": 0,
+    "summary": "1603 passed, 2 skipped, 4 deselected in 681.89s (0:11:21)",
+    "failed": []
+  },
+  {
+    "arm": "T07-B",
+    "exit": 0,
+    "summary": "1603 passed, 2 skipped, 4 deselected in 636.33s (0:10:36)",
+    "failed": []
+  },
+  {
+    "arm": "T07-C",
+    "exit": 0,
+    "summary": "1603 passed, 2 skipped, 4 deselected in 636.15s (0:10:36)",
+    "failed": []
+  },
+  {
+    "arm": "T10-A",
+    "exit": 0,
+    "summary": "1583 passed, 2 skipped, 4 deselected in 689.41s (0:11:29)",
+    "failed": []
+  },
+  {
+    "arm": "T10-B",
+    "exit": 0,
+    "summary": "1583 passed, 2 skipped, 4 deselected in 667.89s (0:11:07)",
+    "failed": []
+  },
+  {
+    "arm": "T10-C",
+    "exit": 0,
+    "summary": "1583 passed, 2 skipped, 4 deselected in 681.12s (0:11:21)",
+    "failed": []
+  }
+]

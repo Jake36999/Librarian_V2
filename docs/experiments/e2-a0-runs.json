@@ -17,10 +17,10 @@
       "branch": "e2/run/T06-B",
       "base_revision": "53ffc2ab4390a4f0e489876595ba5ff2834c02d7",
       "text": "Task E2-T06: Turn validate_release_lead() into an ordered table of named private checks evaluated by a short loop, keeping the first-failure message. The target is `validate_release_lead` in `src/resource_librarian/hosts.py`. Behaviour must not change. `tests/e2/test_T06_characterization.py` pins it, and `tests/e2/test_T06_structure.py` states the shape required (currently failing). Done means both pass, the full suite passes (`PYTHONPATH=src .venv/Scripts/python.exe -m pytest -q`), and the change is committed on this branch. Do not edit either test file or anything outside `src/resource_librarian/hosts.py`. Work only inside this folder. Finish with the line `E2-DONE E2-T06`, or `E2-ABANDON E2-T06: <reason>` if you stop.\n\nDelegate drafting to DeepInfra as practised: `scripts/delegate_deepinfra.py` with `--pool claude --total-budget-usd 8 --task-id E2-T06-B` (this folder's own default ledger). Then integrate, test and fix the result yourself.",
-      "session_id": "",
-      "started_at": "",
-      "ended_at": "",
-      "outcome": "",
+      "session_id": "local_81f96499-89be-481c-ac9d-98c706613752",
+      "started_at": "2026-10-29T12:10:47Z",
+      "ended_at": "2026-10-29T12:32:49Z",
+      "outcome": "claimed done (a693e75)",
       "rescues": 0
     },
     {
@@ -31,10 +31,10 @@
       "branch": "e2/run/T07-C",
       "base_revision": "a49afb09165f87432d362571bf5c2832239ca87e",
       "text": "Task E2-T07: Split coerce() into private per-type coercion helpers and a short loop. The target is `coerce` in `src/resource_librarian/registry.py`. Behaviour must not change. `tests/e2/test_T07_characterization.py` pins it, and `tests/e2/test_T07_structure.py` states the shape required (currently failing). Done means both pass, the full suite passes (`PYTHONPATH=src .venv/Scripts/python.exe -m pytest -q`), and the change is committed on this branch. Do not edit either test file or anything outside `src/resource_librarian/registry.py`. Work only inside this folder. Finish with the line `E2-DONE E2-T07`, or `E2-ABANDON E2-T07: <reason>` if you stop.\n\nWrite a work package and brief for this task (`docs/delegation-work-package.md`) with task id `E2-T07-C`. Run `scripts/delegation_controller.py` with `--pool claude --total-budget-usd 8` (this folder's own default ledger). Review the candidate commit and land it on this branch. If the controller escalates, you may finish the task by any means.",
-      "session_id": "",
-      "started_at": "",
-      "ended_at": "",
-      "outcome": "",
+      "session_id": "local_67757c29-495b-443c-baab-ae4fb73de36a",
+      "started_at": "2026-10-29T12:10:47Z",
+      "ended_at": "2026-10-29T12:32:49Z",
+      "outcome": "claimed done (536a2af, 9022a57)",
       "rescues": 0
     },
     {
@@ -45,10 +45,10 @@
       "branch": "e2/run/T10-A",
       "base_revision": "cf25eef2c5bb1458accace1f0b6dcc8ea751ff2e",
       "text": "Task E2-T10: Move App._qualification_fingerprints() into a module-level pure function over explicit inputs. The target is `App._qualification_fingerprints` in `src/resource_librarian/app.py`. Behaviour must not change. `tests/e2/test_T10_characterization.py` pins it, and `tests/e2/test_T10_structure.py` states the shape required (currently failing). Done means both pass, the full suite passes (`PYTHONPATH=src .venv/Scripts/python.exe -m pytest -q`), and the change is committed on this branch. Do not edit either test file or anything outside `src/resource_librarian/app.py`. Work only inside this folder. Finish with the line `E2-DONE E2-T10`, or `E2-ABANDON E2-T10: <reason>` if you stop.\n\nDo the task yourself. Do not delegate to DeepInfra or to subagents.",
-      "session_id": "",
-      "started_at": "",
-      "ended_at": "",
-      "outcome": "",
+      "session_id": "local_d3693c7c-4734-4de5-ab08-4282f04c1ba3",
+      "started_at": "2026-10-29T12:10:47Z",
+      "ended_at": "2026-10-29T12:32:49Z",
+      "outcome": "claimed done (98d0265)",
       "rescues": 0
     },
     {
@@ -59,10 +59,10 @@
       "branch": "e2/run/T06-A",
       "base_revision": "53ffc2ab4390a4f0e489876595ba5ff2834c02d7",
       "text": "Task E2-T06: Turn validate_release_lead() into an ordered table of named private checks evaluated by a short loop, keeping the first-failure message. The target is `validate_release_lead` in `src/resource_librarian/hosts.py`. Behaviour must not change. `tests/e2/test_T06_characterization.py` pins it, and `tests/e2/test_T06_structure.py` states the shape required (currently failing). Done means both pass, the full suite passes (`PYTHONPATH=src .venv/Scripts/python.exe -m pytest -q`), and the change is committed on this branch. Do not edit either test file or anything outside `src/resource_librarian/hosts.py`. Work only inside this folder. Finish with the line `E2-DONE E2-T06`, or `E2-ABANDON E2-T06: <reason>` if you stop.\n\nDo the task yourself. Do not delegate to DeepInfra or to subagents.",
-      "session_id": "",
-      "started_at": "",
-      "ended_at": "",
-      "outcome": "",
+      "session_id": "local_eeb8bc5d-44a7-4788-968e-1e534ad118fe",
+      "started_at": "2026-10-29T12:40:15Z",
+      "ended_at": "2026-10-29T12:53:40Z",
+      "outcome": "claimed done (1d0c94f)",
       "rescues": 0
     },
     {
@@ -73,10 +73,10 @@
       "branch": "e2/run/T07-A",
       "base_revision": "a49afb09165f87432d362571bf5c2832239ca87e",
       "text": "Task E2-T07: Split coerce() into private per-type coercion helpers and a short loop. The target is `coerce` in `src/resource_librarian/registry.py`. Behaviour must not change. `tests/e2/test_T07_characterization.py` pins it, and `tests/e2/test_T07_structure.py` states the shape required (currently failing). Done means both pass, the full suite passes (`PYTHONPATH=src .venv/Scripts/python.exe -m pytest -q`), and the change is committed on this branch. Do not edit either test file or anything outside `src/resource_librarian/registry.py`. Work only inside this folder. Finish with the line `E2-DONE E2-T07`, or `E2-ABANDON E2-T07: <reason>` if you stop.\n\nDo the task yourself. Do not delegate to DeepInfra or to subagents.",
-      "session_id": "",
-      "started_at": "",
-      "ended_at": "",
-      "outcome": "",
+      "session_id": "local_2310ffb8-06d4-49a9-af0a-d5fe022bad9f",
+      "started_at": "2026-10-29T12:40:15Z",
+      "ended_at": "2026-10-29T12:53:40Z",
+      "outcome": "claimed done (271b6a6)",
       "rescues": 0
     },
     {
@@ -87,10 +87,10 @@
       "branch": "e2/run/T10-B",
       "base_revision": "cf25eef2c5bb1458accace1f0b6dcc8ea751ff2e",
       "text": "Task E2-T10: Move App._qualification_fingerprints() into a module-level pure function over explicit inputs. The target is `App._qualification_fingerprints` in `src/resource_librarian/app.py`. Behaviour must not change. `tests/e2/test_T10_characterization.py` pins it, and `tests/e2/test_T10_structure.py` states the shape required (currently failing). Done means both pass, the full suite passes (`PYTHONPATH=src .venv/Scripts/python.exe -m pytest -q`), and the change is committed on this branch. Do not edit either test file or anything outside `src/resource_librarian/app.py`. Work only inside this folder. Finish with the line `E2-DONE E2-T10`, or `E2-ABANDON E2-T10: <reason>` if you stop.\n\nDelegate drafting to DeepInfra as practised: `scripts/delegate_deepinfra.py` with `--pool claude --total-budget-usd 8 --task-id E2-T10-B` (this folder's own default ledger). Then integrate, test and fix the result yourself.",
-      "session_id": "",
-      "started_at": "",
-      "ended_at": "",
-      "outcome": "",
+      "session_id": "local_927e3e3b-e062-492e-8a6c-53256e30a458",
+      "started_at": "2026-10-29T12:40:15Z",
+      "ended_at": "2026-10-29T12:53:40Z",
+      "outcome": "claimed done (0a72098)",
       "rescues": 0
     },
     {
@@ -101,10 +101,10 @@
       "branch": "e2/run/T06-C",
       "base_revision": "53ffc2ab4390a4f0e489876595ba5ff2834c02d7",
       "text": "Task E2-T06: Turn validate_release_lead() into an ordered table of named private checks evaluated by a short loop, keeping the first-failure message. The target is `validate_release_lead` in `src/resource_librarian/hosts.py`. Behaviour must not change. `tests/e2/test_T06_characterization.py` pins it, and `tests/e2/test_T06_structure.py` states the shape required (currently failing). Done means both pass, the full suite passes (`PYTHONPATH=src .venv/Scripts/python.exe -m pytest -q`), and the change is committed on this branch. Do not edit either test file or anything outside `src/resource_librarian/hosts.py`. Work only inside this folder. Finish with the line `E2-DONE E2-T06`, or `E2-ABANDON E2-T06: <reason>` if you stop.\n\nWrite a work package and brief for this task (`docs/delegation-work-package.md`) with task id `E2-T06-C`. Run `scripts/delegation_controller.py` with `--pool claude --total-budget-usd 8` (this folder's own default ledger). Review the candidate commit and land it on this branch. If the controller escalates, you may finish the task by any means.",
-      "session_id": "",
-      "started_at": "",
-      "ended_at": "",
-      "outcome": "",
+      "session_id": "local_838594cb-4804-4e4e-86ae-aeb5b5eab9c0",
+      "started_at": "2026-10-29T13:09:43Z",
+      "ended_at": "2026-10-29T13:40:38Z",
+      "outcome": "claimed done (98a64e6); controller escalated before any paid call, lead finished by hand",
       "rescues": 0
     },
     {
@@ -115,10 +115,10 @@
       "branch": "e2/run/T07-B",
       "base_revision": "a49afb09165f87432d362571bf5c2832239ca87e",
       "text": "Task E2-T07: Split coerce() into private per-type coercion helpers and a short loop. The target is `coerce` in `src/resource_librarian/registry.py`. Behaviour must not change. `tests/e2/test_T07_characterization.py` pins it, and `tests/e2/test_T07_structure.py` states the shape required (currently failing). Done means both pass, the full suite passes (`PYTHONPATH=src .venv/Scripts/python.exe -m pytest -q`), and the change is committed on this branch. Do not edit either test file or anything outside `src/resource_librarian/registry.py`. Work only inside this folder. Finish with the line `E2-DONE E2-T07`, or `E2-ABANDON E2-T07: <reason>` if you stop.\n\nDelegate drafting to DeepInfra as practised: `scripts/delegate_deepinfra.py` with `--pool claude --total-budget-usd 8 --task-id E2-T07-B` (this folder's own default ledger). Then integrate, test and fix the result yourself.",
-      "session_id": "",
-      "started_at": "",
-      "ended_at": "",
-      "outcome": "",
+      "session_id": "local_b3f73e04-c8ce-4ddd-8370-fbb25c226a33",
+      "started_at": "2026-10-29T13:09:43Z",
+      "ended_at": "2026-10-29T13:40:38Z",
+      "outcome": "claimed done (eb61c8d)",
       "rescues": 0
     },
     {
@@ -129,10 +129,10 @@
       "branch": "e2/run/T10-C",
       "base_revision": "cf25eef2c5bb1458accace1f0b6dcc8ea751ff2e",
       "text": "Task E2-T10: Move App._qualification_fingerprints() into a module-level pure function over explicit inputs. The target is `App._qualification_fingerprints` in `src/resource_librarian/app.py`. Behaviour must not change. `tests/e2/test_T10_characterization.py` pins it, and `tests/e2/test_T10_structure.py` states the shape required (currently failing). Done means both pass, the full suite passes (`PYTHONPATH=src .venv/Scripts/python.exe -m pytest -q`), and the change is committed on this branch. Do not edit either test file or anything outside `src/resource_librarian/app.py`. Work only inside this folder. Finish with the line `E2-DONE E2-T10`, or `E2-ABANDON E2-T10: <reason>` if you stop.\n\nWrite a work package and brief for this task (`docs/delegation-work-package.md`) with task id `E2-T10-C`. Run `scripts/delegation_controller.py` with `--pool claude --total-budget-usd 8` (this folder's own default ledger). Review the candidate commit and land it on this branch. If the controller escalates, you may finish the task by any means.",
-      "session_id": "",
-      "started_at": "",
-      "ended_at": "",
-      "outcome": "",
+      "session_id": "local_e5ccafea-9c60-4a03-b59e-eef08f255a49",
+      "started_at": "2026-10-29T13:09:43Z",
+      "ended_at": "2026-10-29T13:40:38Z",
+      "outcome": "claimed done (d1709dc); controller escalated before any paid call, lead finished by hand",
       "rescues": 0
     }
   ]

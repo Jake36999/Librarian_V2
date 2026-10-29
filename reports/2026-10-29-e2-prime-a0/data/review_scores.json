@@ -1,0 +1,82 @@
+[
+  {
+    "id": "D1",
+    "scope": 3,
+    "readability": 3,
+    "behaviour_risk": 2,
+    "naming": 3,
+    "findings": [
+      "_lead_check_endpoint_protocol uses `endpoint = lead[\"endpoint\"]` which raises KeyError if endpoint is missing, whereas original used `lead.get(\"endpoint\")` and returned an error message",
+      "_lead_check_endpoint_fingerprint uses `lead[\"endpoint_fingerprint\"]` without prior existence check after splitting from combined validation",
+      "_lead_check_contract_compat uses `endpoint = lead[\"endpoint\"]` inside contract endpoint comparison block, risking KeyError"
+    ]
+  },
+  {
+    "id": "D2",
+    "scope": 3,
+    "readability": 3,
+    "behaviour_risk": 3,
+    "naming": 3,
+    "findings": []
+  },
+  {
+    "id": "D3",
+    "scope": 3,
+    "readability": 3,
+    "behaviour_risk": 2,
+    "naming": 3,
+    "findings": [
+      "_check_lead_contract_endpoint uses `endpoint = lead[\"endpoint\"]` directly without checking existence, whereas original used `lead.get(\"endpoint\")`"
+    ]
+  },
+  {
+    "id": "D4",
+    "scope": 3,
+    "readability": 3,
+    "behaviour_risk": 3,
+    "naming": 3,
+    "findings": []
+  },
+  {
+    "id": "D5",
+    "scope": 3,
+    "readability": 3,
+    "behaviour_risk": 3,
+    "naming": 3,
+    "findings": []
+  },
+  {
+    "id": "D6",
+    "scope": 3,
+    "readability": 3,
+    "behaviour_risk": 3,
+    "naming": 3,
+    "findings": []
+  },
+  {
+    "id": "D7",
+    "scope": 3,
+    "readability": 3,
+    "behaviour_risk": 3,
+    "naming": 3,
+    "findings": []
+  },
+  {
+    "id": "D8",
+    "scope": 3,
+    "readability": 3,
+    "behaviour_risk": 3,
+    "naming": 3,
+    "findings": []
+  },
+  {
+    "id": "D9",
+    "scope": 2,
+    "readability": 3,
+    "behaviour_risk": 3,
+    "naming": 3,
+    "findings": [
+      "Line `missing =sorted(k for k in schema_obj.get(\"required\", []) if k not in arguments)` has whitespace inconsistency (missing space after `=`) unrelated to refactoring objective"
+    ]
+  }
+]
