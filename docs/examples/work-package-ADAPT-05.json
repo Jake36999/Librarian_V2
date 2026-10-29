@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "admission": {
+    "package_id": "ADAPT-05-wp1",
+    "task_id": "ADAPT-05",
+    "objective": "Extract Anthropic Messages request rendering and reply parsing from providers.py into a trusted AnthropicMessagesAdapter, leaving headers, base URL and transport in the provider.",
+    "class": "implementation",
+    "base_revision": "4e9df384a8fe09409c59277cd363dbcf26dc9b7c",
+    "write_targets": [
+      "src/resource_librarian/adapters/anthropic_messages.py",
+      "src/resource_librarian/providers.py"
+    ],
+    "read_targets": [
+      "src/resource_librarian/adapters/anthropic_messages.py",
+      "src/resource_librarian/providers.py",
+      "src/resource_librarian/adapters/openai_chat.py"
+    ],
+    "forbidden_targets": [
+      "tests/fixtures/anthropic_messages/",
+      "tests/test_anthropic_messages_adapter.py"
+    ],
+    "protected_targets": [
+      {
+        "path": "tests/fixtures/anthropic_messages/reply_empty.json",
+        "sha256": "ce4fec5c004b575fc51357d0df8a9eba62591c506f566104db86efdaae66023b"
+      },
+      {
+        "path": "tests/fixtures/anthropic_messages/reply_no_identity.json",
+        "sha256": "32d47d145738cce000b54cc5a846c61f1159f5ed8cc67f83639386788562959f"
+      },
+      {
+        "path": "tests/fixtures/anthropic_messages/reply_text.json",
+        "sha256": "e7686521812f03eb4cf9c69d8637bcc057b5049171c0c17eb11ea291f54983ca"
+      },
+      {
+        "path": "tests/fixtures/anthropic_messages/reply_tool_calls.json",
+        "sha256": "7184b8e95268082324c009dbebd5a193edf4f08c08a5bf5dd2d2d5d66f8608a1"
+      },
+      {
+        "path": "tests/fixtures/anthropic_messages/request_no_system.json",
+        "sha256": "2d1ff08f4b05ebfa6972a9e500aaf94f3a167a4a455ebb7cf215892a012a96b9"
+      },
+      {
+        "path": "tests/fixtures/anthropic_messages/request_plain.json",
+        "sha256": "d5a1e26b6bd9cd89a198160436a7132af305fb4bea8e373123ceccaf7b819cda"
+      },
+      {
+        "path": "tests/fixtures/anthropic_messages/request_tools_history_temperature.json",
+        "sha256": "3523613c8ab1d9eee695fb00ad0312797473c105babe5518a0b401cfa8406520"
+      },
+      {
+        "path": "tests/test_anthropic_messages_adapter.py",
+        "sha256": "be986b774d2ff80d023914132281c951b3acb76a6e5eabdcecdb633032d66b51"
+      }
+    ],
+    "preserve": [
+      "request bodies byte-identical to the goldens where semantics are unchanged",
+      "replies normalised identically",
+      "the empty \"length\" reply stays a typed output-budget error",
+      "the legacy wire_messages entry point keeps working"
+    ],
+    "checks": [
+      {
+        "id": "golden",
+        "command": ".venv/Scripts/python.exe -m pytest tests/test_anthropic_messages_adapter.py -q",
+        "kind": "oracle",
+        "expected_before": "fail",
+        "covers": [
+          "P1-behaviour",
+          "P2-runs"
+        ]
+      },
+      {
+        "id": "providers",
+        "command": ".venv/Scripts/python.exe -m pytest tests -q -k anthropic",
+        "kind": "regression",
+        "expected_before": "pass",
+        "covers": [
+          "P3-integrates"
+        ]
+      },
+      {
+        "id": "suite",
+        "command": ".venv/Scripts/python.exe -m pytest -q",
+        "kind": "suite",
+        "expected_before": "pass",
+        "covers": [
+          "P3-integrates"
+        ]
+      }
+    ],
+    "acceptance_predicates": [
+      {
+        "id": "P1-behaviour",
+        "kind": "behaviour",
+        "text": "request bodies, replies and the output-budget error match the goldens."
+      },
+      {
+        "id": "P2-runs",
+        "kind": "applies_runs",
+        "text": "the patch applies at base_revision and the adapter imports and runs."
+      },
+      {
+        "id": "P3-integrates",
+        "kind": "integrates",
+        "text": "the provider uses the adapter and the full suite passes."
+      }
+    ],
+    "environment": {
+      "python": "3.11.3",
+      "venv": ".venv",
+      "dependency_sha256": "62445f13b48fd47c026ca601d92930fc308b5dbe2f5117059376f16be4dc0cc9"
+    },
+    "owner_host_gate": false,
+    "roles": {
+      "drafter_model": "deepseek-ai/DeepSeek-V4-Pro",
+      "reviewer_model": "anthropic/claude (lead review)",
+      "merge_owner": "Jake36999"
+    },
+    "budget": {
+      "pool": "claude",
+      "task_usd": 0.25,
+      "max_calls": 3,
+      "max_repair_rounds": 2,
+      "wall_clock_s": 1800
+    },
+    "stop_conditions": [
+      "a protected fixture would need to change",
+      "a golden mismatch remains after two repair rounds"
+    ],
+    "documentation_consequence": "Add the ADAPT-05 row to plan section 19; no other document changes."
+  },
+  "execution": {
+    "controller": "lead",
+    "repair_rounds": 1,
+    "worktree": ""
+  },
+  "completion": {
+    "artifact": {
+      "kind": "commit",
+      "ref": "b242d8b3e4ae9d10a0771d03ab7ed8a999caf95b"
+    },
+    "base_revision": "4e9df384a8fe09409c59277cd363dbcf26dc9b7c",
+    "changed_files": [],
+    "protected_targets_intact": true,
+    "check_results": [
+      {
+        "id": "golden",
+        "exit_code": 0,
+        "log_ref": "commit message b242d8b",
+        "ran_by": "lead"
+      },
+      {
+        "id": "suite",
+        "exit_code": 0,
+        "log_ref": "commit message b242d8b: 1333 passed, 2 skipped, 1 deselected",
+        "ran_by": "lead"
+      }
+    ],
+    "predicates": {
+      "P1-behaviour": "met",
+      "P2-runs": "met",
+      "P3-integrates": "met"
+    },
+    "run_ids": [
+      "import-scratchpad-ledger-2c92b15d8da3"
+    ],
+    "cost_usd": 0.0053,
+    "repair_rounds": 1,
+    "unresolved_findings": [],
+    "declared_gaps": [
+      "Reconstructed after the fact from commit b242d8b and the ledger; changed-file hashes and per-check logs were not recorded.",
+      "The two review fixes (tool rendering left in the provider; a missing import in the legacy wire_messages delegate) were made by the lead in one round."
+    ],
+    "proposed_disposition": "accept",
+    "recorded_by": "claude"
+  }
+}

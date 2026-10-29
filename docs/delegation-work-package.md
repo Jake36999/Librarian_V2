@@ -1,0 +1,207 @@
+# Delegation work-package contract (DELEG-11)
+
+Status: specification, 2026-10-29. Schema:
+[`schemas/delegation-work-package.schema.json`](schemas/delegation-work-package.schema.json).
+Worked example: [`examples/work-package-ADAPT-05.json`](examples/work-package-ADAPT-05.json).
+
+A work package is the unit of delegated development work. It is finished when
+there is **evidence**, not when a worker returns an answer. It makes the
+packet fields of plan §3.3 executable, and it adds what §3.3 lacks:
+- protected acceptance fixtures;
+- environment identity;
+- resource ceilings;
+- a completion record that the worker does not write.
+
+Claude and Codex fill in the same form. It is development tooling: it grants no
+runtime role and creates no second qualification authority.
+
+To check a package:
+
+~~~text
+.venv/Scripts/python.exe scripts/check_work_package.py PACKAGE.json [--verify-hashes]
+~~~
+
+The schema checks shapes and enums. The checker enforces the rules that span
+several fields:
+- an oracle covers a behaviour predicate;
+- each `covers` entry names a real predicate;
+- no id is used twice;
+- no protected target is also writable;
+- the evidence behind an acceptance meets the completion rules below.
+
+`--verify-hashes` re-reads each protected target from the completed commit and
+compares it with the admitted hash.
+
+Field names follow the runtime harness (`audited-engagement-harness.md` §7.3
+`AuditedSubtaskContract` and §7.6 `ExecutionReport`/`AuditReport`). Keeping
+the names means HARNESS-02/05/07 can take this record over later, rather than
+the two being reconciled.
+
+## The four boundaries
+
+### 1. Admission (`admission`)
+
+The lead writes this part before anything is delegated, and it is not changed
+afterwards. A materially changed target, check or budget means a new package.
+
+- **What and where.**
+  - `package_id`, `task_id`, `objective` (one sentence);
+  - `class`: `implementation` or `exploratory`;
+  - `base_revision`, the commit the work starts from.
+- **Scope.**
+  - `write_targets[]`: the files the worker may change;
+  - `read_targets[]`: the files exported to it;
+  - `forbidden_targets[]`.
+- **Fixtures and behaviour.**
+  - `protected_targets[]`: path and sha256 of each acceptance fixture, hashed
+    over the committed bytes (`git show REV:path`) so that line-ending
+    conversion in a checkout does not change the hash. Changing one
+    invalidates completion.
+  - `preserve[]`: existing behaviour that must not change.
+- **Checks.** Each item in `checks[]` has:
+  - an `id`;
+  - the exact `command`, run with the repository venv;
+  - a `kind`: `oracle`, `regression` or `suite`;
+  - `expected_before`: `fail` or `pass`;
+  - `covers[]`, the predicate ids it gives evidence for.
+- **Predicates.** Each item in `acceptance_predicates[]` has an `id`, a `kind`
+  and the `text` of what must hold. Code uses three kinds:
+  - `applies_runs`;
+  - `behaviour`;
+  - `integrates`.
+
+  Research uses four:
+  - `source_identity`;
+  - `quote_present`;
+  - `claim_supported`;
+  - `coverage`.
+- **Environment.** `environment`: interpreter version, venv path and a
+  dependency hash (sha256 of `pyproject.toml` at `base_revision` until there is
+  a lock file). A mismatch stops the package for requalification.
+  `owner_host_gate` is true when §3.2's Windows files are touched.
+- **People and models.** `roles`: drafter model, reviewer model (a different
+  family) and merge owner.
+- **Ceilings.** `budget`:
+  - ledger `pool`;
+  - `task_usd`;
+  - `max_calls`;
+  - `max_repair_rounds`, at most 2;
+  - `wall_clock_s`.
+- **Stopping and documents.** `stop_conditions[]` and
+  `documentation_consequence`.
+
+**Admission rules:**
+1. An `implementation` package needs at least one `oracle` check that covers a
+   `behaviour` predicate. A generic green suite alone is not admission
+   evidence.
+2. Preserve failing behaviour or reference outputs before the edit. The
+   ADAPT-04 and ADAPT-05 goldens were captured first.
+3. A task with no defensible acceptance method may still be delegated, but as
+   `exploratory`. Its result is never recorded as an accepted implementation.
+
+### 2. Worker ownership (`execution`)
+
+**Who does what:**
+- The worker **proposes**: a patch, or anchored findings for research.
+- The **controller**:
+  - applies the patch in an isolated worktree at `base_revision`;
+  - runs the declared checks in the declared environment;
+  - feeds failures back, for at most `max_repair_rounds`.
+- The hosted model executes nothing.
+- Extra context reaches the worker only through the controller, within the
+  budget.
+
+`execution.controller` records who did the controller's job:
+- `controller`, once DELEG-06 exists;
+- `lead`, when the lead follows the same steps by hand, as today.
+
+`execution.repair_rounds` records how many rounds were used.
+
+**Ownership rules:**
+- Worker-written tests add evidence. They never replace a check from
+  admission.
+- A patch that edits a protected target, deletes or renames a test, or weakens
+  an assertion fails the package. It is not repaired.
+
+### 3. Evidence-bearing completion (`completion`)
+
+The controller (or the lead acting as controller) records this part. The
+worker's prose is not the record.
+
+- **What was produced.**
+  - `artifact`: the branch, commit or patch sha256;
+  - `base_revision`, checked against admission;
+  - `changed_files[]`, each with its sha256.
+- **Fixture check.** `protected_targets_intact`: every hash re-checked.
+- **Check results.** Each item in `check_results[]` has:
+  - the check `id`;
+  - its `exit_code`;
+  - a `log_ref`;
+  - `ran_by`: `controller`, `lead` or `worker_claim`. A `worker_claim` result
+    never satisfies a predicate.
+- **Predicates.** `predicates{}`: each predicate id is `met`, `unmet` or
+  `not_checked`.
+- **Cost and calls.**
+  - `run_ids[]`: the ledger runs, joined by `--task-id`;
+  - `cost_usd`;
+  - `repair_rounds`.
+- **Gaps and decision.**
+  - `unresolved_findings[]` and `declared_gaps[]`;
+  - `proposed_disposition`: `accept`, `reject`, `partial` or `escalate`;
+  - `recorded_by`.
+
+The lead's final decision goes in the ledger
+(`delegate_ledger.py accept RUN_ID --state … --commit …`). Completion is valid
+only if all of these hold:
+- the base revision matches;
+- every protected target is intact;
+- every `behaviour` predicate is `met` by a check that a non-worker ran.
+
+### 4. Escalation and resumption (`escalation`, `resume`)
+
+The package returns to the lead with `escalation.reason`, one of:
+- `ambiguity`;
+- `scope_change`;
+- `budget_exhausted`;
+- `repeated_failure`;
+- `protected_target_change_requested`;
+- `environment_mismatch`;
+- `uncertain_call`.
+
+A partial answer, a truncated reply (runner exit 3), an unknown network outcome
+(ledger `uncertain`) and a verified artifact are different states. None of
+them is reported as "done".
+
+`resume` records:
+- `last_good_artifact`;
+- `open_run_ids[]`, which must be reconciled before a resend;
+- `next_action`.
+
+Resume from the artifact, the worktree and the ledger, never from a
+conversation summary.
+
+## Mapping from plan §3.3
+
+| §3.3 packet field | Contract field |
+| --- | --- |
+| task ID and one-sentence objective | `admission.task_id`, `admission.objective` |
+| allowed files and forbidden files | `admission.write_targets`, `admission.read_targets`, `admission.forbidden_targets` |
+| existing behavior to preserve | `admission.preserve`, `admission.protected_targets` |
+| exact test command using the repository virtual environment | `admission.checks[].command`, `admission.environment` |
+| expected failure before the patch | `admission.checks[].expected_before` |
+| acceptance tests after the patch | `admission.acceptance_predicates`, `admission.checks[].covers` |
+| documentation/status consequence | `admission.documentation_consequence` |
+| primary model, reviewer model, and human merge owner | `admission.roles` |
+| provider/network budget, if any | `admission.budget` |
+
+## Mapping to the runtime harness
+
+| Work package | Harness (`audited-engagement-harness.md`) |
+| --- | --- |
+| `admission` | `AuditedSubtaskContract` §7.3 |
+| `write_targets`, `read_targets`, `protected_targets` | the same names in §7.3 |
+| `acceptance_predicates`, `checks` | `acceptance_predicates`, `verifier_plan` |
+| `budget`, `stop_conditions` | `budget_reservation`, `stop_conditions` |
+| `completion.check_results`, `changed_files` | `ExecutionReport.produced_evidence_refs`, `observed_target_refs` |
+| `completion.predicates`, `protected_targets_intact` | `AuditReport.verified_requirement_ids`, `integrity` |
+| `escalation`, `resume` | `ExecutionReport.outcome` (`blocked`/`partial`), `recovery_plan` |

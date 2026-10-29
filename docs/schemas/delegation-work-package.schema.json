@@ -1,0 +1,557 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://librarian.local/schemas/delegation-work-package.schema.json",
+  "title": "Delegation work-package contract",
+  "description": "Schema for DELEG-11 work packages. Field names and rules match docs/delegation-work-package.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "admission"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "admission": {
+      "$ref": "#/$defs/admission"
+    },
+    "execution": {
+      "$ref": "#/$defs/execution"
+    },
+    "completion": {
+      "$ref": "#/$defs/completion"
+    },
+    "escalation": {
+      "$ref": "#/$defs/escalation"
+    },
+    "resume": {
+      "$ref": "#/$defs/resume"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "git_revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*\\.\\.)[^\\\\]+$"
+    },
+    "hashed_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "command",
+        "kind",
+        "expected_before",
+        "covers"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "oracle",
+            "regression",
+            "suite"
+          ]
+        },
+        "expected_before": {
+          "enum": [
+            "fail",
+            "pass"
+          ]
+        },
+        "covers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "predicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "applies_runs",
+            "behaviour",
+            "integrates",
+            "source_identity",
+            "quote_present",
+            "claim_supported",
+            "coverage"
+          ]
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    },
+    "check_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "exit_code",
+        "log_ref",
+        "ran_by"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exit_code": {
+          "type": "integer"
+        },
+        "log_ref": {
+          "type": "string"
+        },
+        "ran_by": {
+          "enum": [
+            "controller",
+            "lead",
+            "worker_claim"
+          ]
+        }
+      }
+    },
+    "admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "package_id",
+        "task_id",
+        "objective",
+        "class",
+        "base_revision",
+        "write_targets",
+        "read_targets",
+        "forbidden_targets",
+        "protected_targets",
+        "preserve",
+        "checks",
+        "acceptance_predicates",
+        "environment",
+        "owner_host_gate",
+        "roles",
+        "budget",
+        "stop_conditions",
+        "documentation_consequence"
+      ],
+      "properties": {
+        "package_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "objective": {
+          "type": "string",
+          "minLength": 1
+        },
+        "class": {
+          "enum": [
+            "implementation",
+            "exploratory"
+          ]
+        },
+        "base_revision": {
+          "$ref": "#/$defs/git_revision"
+        },
+        "write_targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/repo_path"
+          }
+        },
+        "read_targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/repo_path"
+          }
+        },
+        "forbidden_targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/repo_path"
+          }
+        },
+        "protected_targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/hashed_target"
+          }
+        },
+        "preserve": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/check"
+          }
+        },
+        "acceptance_predicates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/predicate"
+          }
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "python",
+            "venv",
+            "dependency_sha256"
+          ],
+          "properties": {
+            "python": {
+              "type": "string"
+            },
+            "venv": {
+              "type": "string"
+            },
+            "dependency_sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        },
+        "owner_host_gate": {
+          "type": "boolean"
+        },
+        "roles": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "drafter_model",
+            "reviewer_model",
+            "merge_owner"
+          ],
+          "properties": {
+            "drafter_model": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reviewer_model": {
+              "type": "string",
+              "minLength": 1
+            },
+            "merge_owner": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "budget": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pool",
+            "task_usd",
+            "max_calls",
+            "max_repair_rounds",
+            "wall_clock_s"
+          ],
+          "properties": {
+            "pool": {
+              "type": "string"
+            },
+            "task_usd": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "max_calls": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_repair_rounds": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "wall_clock_s": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "stop_conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "documentation_consequence": {
+          "type": "string"
+        }
+      },
+      "if": {
+        "properties": {
+          "class": {
+            "const": "implementation"
+          }
+        },
+        "required": [
+          "class"
+        ]
+      },
+      "then": {
+        "properties": {
+          "protected_targets": {
+            "minItems": 1
+          },
+          "acceptance_predicates": {
+            "minItems": 1
+          },
+          "checks": {
+            "contains": {
+              "properties": {
+                "kind": {
+                  "const": "oracle"
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            }
+          }
+        },
+        "required": [
+          "protected_targets",
+          "acceptance_predicates",
+          "checks"
+        ]
+      },
+      "$comment": "Rules that cross array items (an oracle check covers a behaviour predicate, covers[] names existing predicates, unique ids, completion evidence) are enforced by scripts/check_work_package.py, not by this schema."
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "controller",
+        "repair_rounds"
+      ],
+      "properties": {
+        "controller": {
+          "enum": [
+            "controller",
+            "lead"
+          ]
+        },
+        "repair_rounds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "worktree": {
+          "type": "string"
+        }
+      }
+    },
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact",
+        "base_revision",
+        "changed_files",
+        "protected_targets_intact",
+        "check_results",
+        "predicates",
+        "run_ids",
+        "cost_usd",
+        "repair_rounds",
+        "unresolved_findings",
+        "declared_gaps",
+        "proposed_disposition",
+        "recorded_by"
+      ],
+      "properties": {
+        "artifact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "ref"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "commit",
+                "branch",
+                "patch"
+              ]
+            },
+            "ref": {
+              "type": "string"
+            }
+          }
+        },
+        "base_revision": {
+          "$ref": "#/$defs/git_revision"
+        },
+        "changed_files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/hashed_target"
+          }
+        },
+        "protected_targets_intact": {
+          "type": "boolean"
+        },
+        "check_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/check_result"
+          }
+        },
+        "predicates": {
+          "type": "object",
+          "additionalProperties": {
+            "enum": [
+              "met",
+              "unmet",
+              "not_checked"
+            ]
+          }
+        },
+        "run_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cost_usd": {
+          "type": "number",
+          "minimum": 0
+        },
+        "repair_rounds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "unresolved_findings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "declared_gaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "proposed_disposition": {
+          "enum": [
+            "accept",
+            "reject",
+            "partial",
+            "escalate"
+          ]
+        },
+        "recorded_by": {
+          "type": "string"
+        }
+      }
+    },
+    "escalation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason",
+        "detail"
+      ],
+      "properties": {
+        "reason": {
+          "enum": [
+            "ambiguity",
+            "scope_change",
+            "budget_exhausted",
+            "repeated_failure",
+            "protected_target_change_requested",
+            "environment_mismatch",
+            "uncertain_call"
+          ]
+        },
+        "detail": {
+          "type": "string"
+        }
+      }
+    },
+    "resume": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "last_good_artifact",
+        "open_run_ids",
+        "next_action"
+      ],
+      "properties": {
+        "last_good_artifact": {
+          "type": "string"
+        },
+        "open_run_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "next_action": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -197,6 +197,7 @@ are in the [agent-workflow sprint](../reports/2026-10-28-agent-workflow-sprint/1
 | ID | Size | Status | Done when |
 | --- | --- | --- | --- |
 | DELEG-01 | Small | implemented | One schema-2 ledger with named budget pools; transport state (started, completed, failed, uncertain) separate from acceptance; an identical request is refused while an earlier one is in flight or unreconciled; an interrupted call keeps its reserve; a definite provider rejection costs nothing; a truncated reply exits 3; the exact request and raw response are kept beside each receipt; rate cards are checked against the live listing; stray spend records are imported. |
+| DELEG-11 | Small | implemented | The [work-package contract](delegation-work-package.md) covers four boundaries: admission, worker ownership, evidence-bearing completion, and escalation with resumption. It comes with a JSON schema and a checker for the rules that span fields. Every §3.3 field maps to a contract field (tested). ADAPT-05 is filled in as a worked example that validates and whose protected fixture hashes verify against `b242d8b`. The remaining acceptance step, a Claude session and a Codex session each completing the form unaided for a new task, happens on the first DELEG-03/06 pilot task. |
 
 Every agent calls the same runner and ledger:
 
@@ -1736,3 +1737,51 @@ Tests: `tests/test_deepinfra_delegation.py`, 31 tests, including an
 interruption drill (an interrupted call neither loses its charge nor repeats)
 and a crash-after-reply reconcile. A live canary through the new path cost
 $0.000015. Full suite: 1,503 passed, 2 skipped, 4 deselected (8m10s).
+
+### DELEG-11 work-package contract (2026-10-29)
+
+[`docs/delegation-work-package.md`](delegation-work-package.md) defines the unit
+of delegated development work. Each package has four parts:
+- **admission**, written before delegation and then frozen;
+- **worker ownership**, in which the controller (today the lead) applies the
+  patch, runs the checks and allows at most two repair rounds;
+- **evidence-bearing completion**, recorded by the controller and not the
+  worker;
+- **escalation and resumption.**
+
+The field names come from the runtime harness's `AuditedSubtaskContract` and
+`ExecutionReport`/`AuditReport`, so that HARNESS-02/05/07 can absorb the record
+later. The schema is
+[`docs/schemas/delegation-work-package.schema.json`](schemas/delegation-work-package.schema.json),
+and `scripts/check_work_package.py` enforces the rules that span fields:
+- an implementation package needs an oracle check covering a behaviour
+  predicate;
+- each `covers` entry names a real predicate, and no id repeats;
+- no protected target is also writable;
+- repair rounds stay within the budget;
+- an accepted completion needs intact protected targets, a matching base
+  revision and every predicate met;
+- each behaviour predicate needs a passing check run by the controller or lead,
+  never a worker's claim.
+
+`--verify-hashes` re-reads protected targets from the completed commit.
+
+[`docs/examples/work-package-ADAPT-05.json`](examples/work-package-ADAPT-05.json)
+reconstructs ADAPT-05 as a package:
+- base `4e9df38`;
+- eight protected golden files, whose hashes verify at `b242d8b`;
+- three predicates (behaviour, applies-and-runs, integrates);
+- ledger run `import-scratchpad-ledger-2c92b15d8da3`, at $0.0053.
+
+Its declared gaps say what was not recorded at the time: changed-file hashes and
+per-check logs.
+
+`jsonschema` (already installed through `mcp`) is now declared in the `dev`
+extra.
+
+**Delegation.** DeepSeek-V4-Pro drafted the schema and the example in one call
+($0.018, run `20261029T044814-996217f0`). The schema was used with these fixes:
+- `minLength` on identifiers;
+- a pointer from the schema comment to the checker.
+
+The contract page, the checker and the 14 tests are Claude's. Full suite: 1,517 passed, 2 skipped, 4 deselected (8m21s).
