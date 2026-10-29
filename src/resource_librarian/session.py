@@ -41,7 +41,8 @@ from pathlib import Path
 from collections.abc import Mapping
 from typing import Any, Callable, Iterator, TypeVar
 
-from . import agenda, notes
+from . import agenda, audit_events, notes
+from .audit_events import AUDIT_EVENTS, AuditState
 from .coordination import atomic_write_text
 from .rules import Refusal
 from .vault import Vault, jsonl_lines, now_iso
@@ -503,6 +504,9 @@ class Session:
     assumptions: list[dict[str, Any]] = field(default_factory=list)       # §4 G2
     recent: list[tuple[str, bool]] = field(default_factory=list)          # last calls, R3
     extended: dict[str, int] = field(default_factory=dict)  # calls a person added, R11
+    # HARNESS-02: requirements, contracts, evidence and verifier results, folded
+    # from typed events in this same log (audit_events.py is their rule book).
+    audit: AuditState = field(default_factory=AuditState)
 
     # -- identity -------------------------------------------------------------
     @property
@@ -696,6 +700,10 @@ class Session:
             self.summary, self.gaps = event.get("summary", ""), event.get("gaps", "")
         elif kind == "reopened":
             self.status = "open"
+        elif kind in AUDIT_EVENTS:
+            # Checked against the state before it, exactly as at append: a
+            # history that breaks the rules is marked invalid, never trusted.
+            audit_events.replay(self.audit, event)
 
     # -- exit conditions ------------------------------------------------------
     def missing(self, vault: Vault) -> list[str]:
@@ -975,7 +983,8 @@ class Session:
                 # offered from `min_rewind_index` on: the fewest messages that
                 # had happened, log-order, as of the most recent write. A write
                 # before any message at all (min_rewind_index 0) blocks nothing.
-                "min_rewind_index": self.min_rewind_index}
+                "min_rewind_index": self.min_rewind_index,
+                **({"audit": audit_events.summary(self.audit)} if self.audit.used else {})}
 
 
 # -------------------------------------------------------------------- storage
@@ -1083,17 +1092,31 @@ class SessionStore:
         self._through_core(lambda: self._append_now(session_id, event), "session-event")
 
     def _append_now(self, session_id: str, event: dict[str, Any]) -> None:
-        event = {"t": now_iso(), **{k: v for k, v in event.items() if k != "h"}}
         path = self.path(session_id)
         with _append_lock(path):
-            event["h"] = chain_hash(_last_hash(path), event)
-            with path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(event, ensure_ascii=False, default=str) + "\n")
-                handle.flush()
-                try:
-                    os.fsync(handle.fileno())
-                except OSError:
-                    pass
+            _write_event_locked(path, event)
+
+    def append_audit(self, session_id: str, event: dict[str, Any]) -> None:
+        """Append one audit event (HARNESS-02) only if the rules accept it here.
+
+        The check and the write share one writer operation and one append lock,
+        so no other event can land between them; a refused event is never
+        written. The session must exist and must not be closed.
+        """
+        if event.get("type") not in AUDIT_EVENTS:
+            raise Refusal("AUDIT_EVENT_INVALID",
+                          f"{event.get('type')!r} is not an audit event")
+        path = self.path(session_id)
+
+        def checked_append() -> None:
+            with _append_lock(path):
+                session = self.load(session_id)
+                if session.status == "closed":
+                    raise Refusal("SESSION_REQUIRED", f"session {session_id} is closed; "
+                                                      "resume it before adding audit events")
+                audit_events.check_and_apply(session.audit, dict(event))
+                _write_event_locked(path, event)
+        self._through_core(checked_append, "session-audit-event")
 
     def load(self, session_id: str) -> Session:
         path = self.path(session_id)
@@ -1228,6 +1251,19 @@ else:
         fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
+def _write_event_locked(path: Path, event: dict[str, Any]) -> None:
+    """Chain and append one event; the caller holds `_append_lock(path)`."""
+    event = {"t": now_iso(), **{k: v for k, v in event.items() if k != "h"}}
+    event["h"] = chain_hash(_last_hash(path), event)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(event, ensure_ascii=False, default=str) + "\n")
+        handle.flush()
+        try:
+            os.fsync(handle.fileno())
+        except OSError:
+            pass
+
+
 def chain_hash(previous: str, record: dict[str, Any]) -> str:
     body = json.dumps({k: v for k, v in record.items() if k != "h"}, sort_keys=True,
                       ensure_ascii=False, default=str)
@@ -1278,6 +1314,68 @@ def verify_chain(lines: list[str]) -> str:
 
 
 # ------------------------------------------------------ the registry's hooks
+
+# --------------------------------------- outside edits to audited targets (HARNESS-02)
+
+# vault -> session id -> ((mtime_ns, size), paths it watches). A log is re-read
+# only when it changed, so an outside edit costs a stat per session, not a replay.
+_WATCHED: dict[str, dict[str, tuple[tuple[int, int], frozenset[str]]]] = {}
+_WATCHED_GUARD = threading.Lock()
+_AUDIT_MARKERS = ('"type": "contract"', '"type": "artifact"')
+
+
+def sessions_watching(vault: Vault, rel: str) -> list[str]:
+    """Open audited sessions that read or target `rel`."""
+    store = SessionStore(vault)
+    found: list[str] = []
+    with _WATCHED_GUARD:
+        cache = _WATCHED.setdefault(_vault_key(vault), {})
+        present = set()
+        for path in store.folder.glob("*.jsonl"):
+            try:
+                stat = path.stat()
+            except FileNotFoundError:
+                continue
+            stamp, present_id = (stat.st_mtime_ns, stat.st_size), path.stem
+            present.add(present_id)
+            entry = cache.get(present_id)
+            if entry is None or entry[0] != stamp:
+                watched: frozenset[str] = frozenset()
+                text = path.read_text(encoding="utf-8")
+                if any(marker in text for marker in _AUDIT_MARKERS):
+                    session = store.load(present_id)
+                    if session.status != "closed" and not session.audit.invalid:
+                        watched = frozenset(session.audit.watched_paths())
+                entry = cache[present_id] = (stamp, watched)
+            if rel in entry[1]:
+                found.append(present_id)
+        for gone in set(cache) - present:
+            del cache[gone]
+    return sorted(found)
+
+
+def record_external_edit(vault: Vault, rel: str) -> list[str]:
+    """Append `external_edit` to every open audited session watching `rel`.
+
+    Called for changes made outside the Core (DocumentLeases.observe_change):
+    the edit advances each session's epoch, so its earlier verifier results and
+    closures on that state go stale. Returns the sessions it was recorded in.
+    """
+    from .coordination import fingerprint
+    path = rel.replace("\\", "/")
+    watching = sessions_watching(vault, path)
+    if not watching:
+        return []
+    try:
+        current = fingerprint(vault.root / path)
+    except OSError:
+        current = "unreadable"
+    store = SessionStore(vault)
+    for session_id in watching:
+        store.append_audit(session_id, {"type": "external_edit", "path": path,
+                                        "fingerprint": current, "source": "watcher"})
+    return watching
+
 
 def before_call(tool_name: str, effect: str, ctx: Any) -> None:
     """Refuse a gated write outside its phase, or any charged call once the

@@ -2135,3 +2135,86 @@ the topic and reader packets stay local and git-ignored for copyright. So does
 `docs/Development transcripts/`. The research session's one open ledger run
 (`20261029T163705-68427ed1`, request saved, no response) was reconciled as
 failed, with its $0.0136 reserve kept as the charge.
+
+### HARNESS-02 audited-session event vocabulary (2026-10-29)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| HARNESS-02 | implemented | this commit | `src/resource_librarian/audit_events.py`, tests in `tests/test_audit_events.py` (44). |
+
+**Vocabulary.** There are seven typed Session events: `requirement`,
+`contract`, `artifact`, `fact`, `verifier_result`, `reduction` and
+`external_edit`. Questions reuse the Session's own `question`/`answer`
+events. They live in the same chained session log and fold into
+`Session.audit`. There is no separate store, and the module is a rule book
+over Session events.
+
+**Append path.** `SessionStore.append_audit` loads, validates and writes
+inside one Core writer operation and one append lock, so a refused event is
+never written and no event can slip in between the check and the write. A
+closed session refuses audit events (`SESSION_REQUIRED`). The new
+`AUDIT_EVENT_INVALID` rule names every refusal.
+
+**Transition rules (tested):**
+- **Requirements:** set and revised only by the person, with the revision
+  number in sequence.
+- **Contracts and results:** a contract addresses known requirements. A result
+  must name a requirement's own predicate and the contract's current revision,
+  and it must be made at the current epoch.
+- **Verified:** reached only by Core reduction, for an authoritative
+  requirement. It needs the *latest* result for *every* predicate to be an
+  exact or bounded pass, and it must cite that result, so an older pass cannot
+  hide a newer failure.
+- **Human acceptance:** human_judgment and partial closures are never
+  verified. Human acceptance is recorded from the person's action and names
+  the exact artifact accepted.
+- **Paths:** they must be vault-relative.
+
+**Freshness.** A person's requirement revision, a contract revision and an
+outside edit each advance the epoch.
+- An earlier verified or human-accepted closure then reads as `stale`.
+- Old results no longer support verification.
+- A revised requirement reopens.
+- The whole session is invalidated conservatively until HARNESS-09.
+
+**Replay.** Stored events are rechecked exactly as at append. A history that
+breaks the rules (for example a hand-edited closure) is marked
+`invalid_history`, its bad event is not applied, and no further audit event
+is accepted.
+
+**Outcome mapping.** `visible_outcome(invocation, execution, audit)` maps
+every combination of the three layers to exactly one of 12 visible outcomes,
+with this precedence:
+1. integrity violation;
+2. uncertain effect;
+3. needs a person;
+4. failed, refused, cancelled, interrupted;
+5. stale, partial;
+6. checked, unchecked, no change.
+
+A tool success with no audit is `unchecked`, never `checked`.
+`session_outcome` gives the session-level result:
+- `complete_verified` and `complete_with_human_acceptance` are kept apart;
+- otherwise failed, blocked, stale, in progress or invalid history.
+
+**external_edit.** `DocumentLeases` notifies listeners of changes made outside
+the Core. It covers both the watcher's polling and the editor adapter's
+`document_changed` route; the Core's own writes are excluded by their
+fingerprint. The App appends `external_edit`, with the current fingerprint (or
+the missing-file marker), to every open audited session whose contract targets
+or artifacts include that path. A cache keyed on each log's size and
+modification time keeps the cost to one stat per session. A listener failure is
+recorded in the watcher's health and never stops the watcher.
+
+Tested end to end through the App's `document_changed` route, plus these
+cases:
+- a deletion;
+- a read target;
+- the Core's own write;
+- an unrelated path;
+- a closed session.
+
+**Scope note.** This is the vocabulary layer. The audited Session purpose and
+its manage → preflight → execute → audit → reduce phases are HARNESS-03, which
+will issue these events.
+Full suite: 1,618 passed, 2 skipped, 4 deselected (8m58s).

@@ -401,6 +401,10 @@ class DocumentLeases:
         self._core_fingerprints: dict[str, tuple[str, float]] = {}
         self._unreadable: set[str] = set()
         self._lock = threading.RLock()
+        # Told of each change made outside the Core (HARNESS-02 appends it to
+        # the sessions that read or target the path). Called after the lock.
+        self._listeners: list[Callable[[str], None]] = []
+        self._listener_errors: dict[str, str] = {}
 
     def heartbeat(self, path: str, *, editor: str = "Obsidian", dirty: bool = True,
                   baseline: str = "") -> dict[str, Any]:
@@ -426,6 +430,15 @@ class DocumentLeases:
             if lease is not None and (not editor or lease.editor == editor):
                 self._leases.pop(rel, None)
 
+    def on_external_change(self, listener: Callable[[str], None]) -> None:
+        """Register a callback for each change made outside the Core."""
+        with self._lock:
+            self._listeners.append(listener)
+
+    def listener_errors(self) -> list[dict[str, str]]:
+        with self._lock:
+            return [{"path": p, "error": e} for p, e in self._listener_errors.items()][-20:]
+
     def observe_change(self, path: str) -> None:
         target = self.vault.safe_relative(path)
         rel = target.relative_to(self.vault.root).as_posix()
@@ -448,6 +461,17 @@ class DocumentLeases:
             if known is None and not recovering and now < self._suppress_until.get(rel, 0.0):
                 return
             self._changed[rel] = now
+            listeners = list(self._listeners)
+        for listener in listeners:
+            # A listener's failure must never stop the watcher or the adapter
+            # call that reported the change; it is kept for health instead.
+            try:
+                listener(rel)
+            except Exception as exc:  # noqa: BLE001 - see above
+                with self._lock:
+                    self._listener_errors[rel] = f"{type(exc).__name__}: {str(exc)[:200]}"
+                    while len(self._listener_errors) > 50:
+                        self._listener_errors.pop(next(iter(self._listener_errors)))
 
     def unreadable(self, path: str) -> None:
         """Pause only this document until the watcher can confirm a read."""
@@ -570,6 +594,8 @@ class VaultWatcher:
     def health(self) -> dict[str, Any]:
         with self._error_lock:
             errors = [{"path": path, "error": error} for path, error in sorted(self._errors.items())][:20]
+        errors += [{"path": e["path"], "error": f"listener: {e['error']}"}
+                   for e in self.leases.listener_errors()]
         pending = self.leases.pending_reads()
         status = ("stopped" if self._closed.is_set() else "not_started" if self._thread.ident is None
                   else "failed" if not self._thread.is_alive() else "degraded" if errors or pending else "ready")

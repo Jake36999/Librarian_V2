@@ -374,6 +374,10 @@ class App:
         self.host_managed = bool(host_managed)
         self.coordinator: VaultCoordinator | None = None
         self.document_leases = DocumentLeases(vault)
+        # HARNESS-02: an edit made outside the Core to a path an open audited
+        # session reads or targets is appended to that session as external_edit.
+        from .session import record_external_edit
+        self.document_leases.on_external_change(lambda rel: record_external_edit(vault, rel))
         self.watcher: VaultWatcher | None = None
         self.writer: VaultWriter | None = None
         # This lock is created before migrations: settings migrations use the

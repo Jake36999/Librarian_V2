@@ -108,6 +108,10 @@ _RULES = [
     Rule("SESSION_REQUIRED", "sessions",
          "The operation needs an open session. open_session starts one; resume_session "
          "reopens a parked or closed one."),
+    Rule("AUDIT_EVENT_INVALID", "sessions",
+         "An audited session's event must follow from the state before it: known "
+         "requirements and contracts, the current epoch, a person's own revision, and an "
+         "exact or bounded pass for every predicate before verified. Nothing was written."),
     Rule("PROJECT_ACCESS_OFF", "sessions",
          "A project's own files are read only where a person allowed it: project access on "
          "for this library, and the folder added in Settings -> Projects. The model never "
