@@ -73,7 +73,8 @@ def test_exploratory_work_may_be_admitted_without_an_oracle(package):
     admission = package["admission"]
     admission["class"] = "exploratory"
     admission["protected_targets"] = []
-    admission["checks"] = [{"id": "suite", "command": "pytest -q", "kind": "suite",
+    admission["checks"] = [{"id": "suite", "command": ".venv/Scripts/python.exe -m pytest -q",
+                            "kind": "suite",
                             "expected_before": "pass", "covers": ["P3-integrates"]}]
     admission["acceptance_predicates"] = [
         p for p in admission["acceptance_predicates"] if p["id"] == "P3-integrates"]
@@ -124,6 +125,39 @@ def test_escalation_reasons_are_closed(package):
     assert checker.check(package)
     package["escalation"] = {"reason": "uncertain_call", "detail": "run left uncertain"}
     assert checker.check(package) == []
+
+
+def test_drafter_and_reviewer_must_be_different_families(package):
+    package["admission"]["roles"].update(drafter_model="zai-org/GLM-5.3",
+                                         reviewer_model="zai-org/GLM-5.3-Flash")
+    assert any("same model family" in e for e in checker.check(package))
+
+
+def test_checks_must_use_the_repository_venv(package):
+    package["admission"]["checks"][0]["command"] = "pytest tests -q"
+    assert any("repository venv" in e for e in checker.check(package))
+
+
+def test_owner_host_files_need_the_owner_host_gate(package):
+    package["admission"]["write_targets"].append("src/resource_librarian/")
+    assert any("owner_host_gate" in e for e in checker.check(package))
+    package["admission"]["owner_host_gate"] = True
+    assert not any("owner_host_gate" in e for e in checker.check(package))
+
+
+def test_a_protected_fixture_inside_a_writable_directory_is_refused(package):
+    package["admission"]["write_targets"].append("tests/fixtures/")
+    assert any("also a write target" in e for e in checker.check(package))
+
+
+def test_conformance_counts_the_plan_packet_fields(package):
+    assert checker.conformance(package)["present"] == 9
+    package["admission"]["documentation_consequence"] = ""
+    for check in package["admission"]["checks"]:
+        check["expected_before"] = "pass"
+    result = checker.conformance(package)
+    assert result["present"] == 7 and result["total"] == 9
+    assert not result["fields"]["expected_failure_before"]
 
 
 def test_command_line_reports_ok(capsys):

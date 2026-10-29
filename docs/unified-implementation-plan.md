@@ -197,6 +197,7 @@ are in the [agent-workflow sprint](../reports/2026-10-28-agent-workflow-sprint/1
 | ID | Size | Status | Done when |
 | --- | --- | --- | --- |
 | DELEG-01 | Small | implemented | One schema-2 ledger with named budget pools; transport state (started, completed, failed, uncertain) separate from acceptance; an identical request is refused while an earlier one is in flight or unreconciled; an interrupted call keeps its reserve; a definite provider rejection costs nothing; a truncated reply exits 3; the exact request and raw response are kept beside each receipt; rate cards are checked against the live listing; stray spend records are imported. |
+| DELEG-03 | Small | implemented | Packet lint, a runner gate and a pre-landing diff-scope guard. **Lint:** drafter and reviewer from different model families; checks under the repository venv; the owner-host gate for §3.2 files; protected targets never writable. **Runner gate (`--work-package`):** a refused package, an export outside its targets, or a mismatched pool or task stops before any paid call; the package sets the task budget and call limit; the receipt records the package hash and its §3.3 conformance (M9). **Guard (`scripts/check_diff_scope.py`):** refuses out-of-scope, forbidden or protected files, deletions, renames, binaries, and test edits that remove a test, reduce assertions or add a skip. Positive and negative git fixtures. |
 | DELEG-11 | Small | implemented | The [work-package contract](delegation-work-package.md) covers four boundaries: admission, worker ownership, evidence-bearing completion, and escalation with resumption. It comes with a JSON schema and a checker for the rules that span fields. Every §3.3 field maps to a contract field (tested). ADAPT-05 is filled in as a worked example that validates and whose protected fixture hashes verify against `b242d8b`. The remaining acceptance step, a Claude session and a Codex session each completing the form unaided for a new task, happens on the first DELEG-03/06 pilot task. |
 
 Every agent calls the same runner and ledger:
@@ -1785,3 +1786,58 @@ extra.
 - a pointer from the schema comment to the checker.
 
 The contract page, the checker and the 14 tests are Claude's. Full suite: 1,517 passed, 2 skipped, 4 deselected (8m21s).
+
+### DELEG-03 packet lint, runner gate and diff-scope guard (2026-10-29)
+
+**Lint.** `scripts/check_work_package.py` now lints admission:
+- the drafter and reviewer must come from different model families, so
+  GLM-5.3 and GLM-5.3-Flash count as one;
+- every check runs under the repository venv;
+- `owner_host_gate` must be set when a §3.2 Windows file is writable;
+- a protected target may not sit inside a writable directory.
+
+`conformance()` counts the §3.3 fields a package fills, which makes metric M9
+measurable from now on.
+
+**Runner gate.** `scripts/delegate_deepinfra.py --work-package` lints the
+package before any paid call. It also refuses:
+- an export outside the package's read and write targets;
+- a pool that differs from the package's;
+- a task id that differs from the package's.
+
+It takes the per-task budget from the package and enforces its call limit
+atomically with the reservation. The receipt records the package hash and its
+conformance.
+
+**Guard.** `scripts/check_diff_scope.py` checks a worktree, a commit range or a
+patch file before a change lands. It refuses:
+- files outside the write targets;
+- forbidden or protected files;
+- deletions, renames and binaries;
+- test edits that remove a test function, reduce assertion lines, or add a
+  skip or xfail.
+
+**First run on real history.** Run over the real ADAPT-05 commit, the guard
+found both source changes in scope. It reported all eight golden files,
+because they were committed together with the change and not in the base. The
+contract now requires protected fixtures to be committed in `base_revision`
+before delegation, and the example records the historical gap.
+
+**Delegation.** DeepSeek-V4-Pro drafted the guard in one call ($0.020, run `20261029T050540-b3a8f89b`). Claude rewrote
+the parser and fixed these defects:
+- `group(2)` on a one-group regex, which crashed on any removed test;
+- removed lines beginning `--` were dropped as headers;
+- octal path escapes decoded as Latin-1;
+- paths with spaces were split wrongly;
+- copies flagged their unchanged source.
+
+Most important, the draft ran `git diff --no-index /dev/null PATH` for
+untracked files. Native Windows git cannot open `/dev/null`, and that error
+exits 1 like a successful diff, so every new file passed silently. New files
+are now turned into a diff from their bytes. Claude wrote the lint and the
+runner gate.
+
+Tests: 14 guard tests against real temporary git repositories (deleted test,
+rename, weakened assertion, fixture edited by the worker, skip, binary,
+untracked file, quoted UTF-8 path); 5 lint tests; 6 runner-gate tests.
+Full suite: 1,542 passed, 2 skipped, 4 deselected (8m13s).

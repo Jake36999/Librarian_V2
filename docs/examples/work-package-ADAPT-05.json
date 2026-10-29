@@ -170,7 +170,8 @@
     "unresolved_findings": [],
     "declared_gaps": [
       "Reconstructed after the fact from commit b242d8b and the ledger; changed-file hashes and per-check logs were not recorded.",
-      "The two review fixes (tool rendering left in the provider; a missing import in the legacy wire_messages delegate) were made by the lead in one round."
+      "The two review fixes (tool rendering left in the provider; a missing import in the legacy wire_messages delegate) were made by the lead in one round.",
+      "The goldens were committed together with the change, not in base_revision; check_diff_scope.py over 4e9df384..b242d8b therefore reports the eight protected files, while both source changes are in scope."
     ],
     "proposed_disposition": "accept",
     "recorded_by": "claude"

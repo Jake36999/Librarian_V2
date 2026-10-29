@@ -32,6 +32,41 @@ several fields:
 `--verify-hashes` re-reads each protected target from the completed commit and
 compares it with the admitted hash.
 
+The checker also lints admission (DELEG-03):
+- the drafter and reviewer come from different model families;
+- every check runs under the repository venv;
+- `owner_host_gate` is set when a §3.2 Windows file is writable;
+- an implementation package names its write targets and its documentation
+  consequence.
+
+`conformance()` counts how many of the nine §3.3 fields a package fills; this
+is metric M9.
+
+Two tools enforce the package around a delegated call:
+
+~~~text
+.venv/Scripts/python.exe scripts/delegate_deepinfra.py --work-package PACKAGE.json ...
+.venv/Scripts/python.exe scripts/check_diff_scope.py PACKAGE.json (--worktree BASE | --git RANGE | --patch FILE)
+~~~
+
+**The runner, with `--work-package`**, does all of this before any paid call:
+- refuses a package that fails the checker;
+- refuses an export outside `read_targets` and `write_targets`;
+- refuses a pool or task id that differs from the package's;
+- takes the per-task budget and call limit from the package;
+- records the package hash and its M9 conformance in the receipt.
+
+**The diff-scope guard** runs before a change lands and refuses it for any of
+these findings:
+- a file outside `write_targets`;
+- a forbidden or protected file;
+- a deletion, a rename or a binary;
+- in test files, a removed test function, fewer assertion lines, or an added
+  skip or xfail.
+
+A refused change is not repaired by the worker. The lead may still land it by
+hand.
+
 Field names follow the runtime harness (`audited-engagement-harness.md` §7.3
 `AuditedSubtaskContract` and §7.6 `ExecutionReport`/`AuditReport`). Keeping
 the names means HARNESS-02/05/07 can take this record over later, rather than
@@ -94,8 +129,11 @@ afterwards. A materially changed target, check or budget means a new package.
 1. An `implementation` package needs at least one `oracle` check that covers a
    `behaviour` predicate. A generic green suite alone is not admission
    evidence.
-2. Preserve failing behaviour or reference outputs before the edit. The
-   ADAPT-04 and ADAPT-05 goldens were captured first.
+2. Preserve failing behaviour or reference outputs before the edit, and
+   commit them in `base_revision`. The diff-scope guard then sees only the
+   worker's change. In ADAPT-04 and ADAPT-05 the goldens were captured first
+   but committed together with the change, so measured from the old base they
+   look like worker edits.
 3. A task with no defensible acceptance method may still be delegated, but as
    `exploratory`. Its result is never recorded as an accepted implementation.
 

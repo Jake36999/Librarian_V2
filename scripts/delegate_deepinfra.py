@@ -323,6 +323,7 @@ def reserve_call(
     reserve: float,
     call_cap_usd: float,
     task_cap_usd: float | None = None,
+    task_max_calls: int | None = None,
 ) -> None:
     """Acquire the lock, re-read the ledger, check caps, append the call entry."""
     with ledger_lock(ledger_path):
@@ -390,7 +391,7 @@ def reserve_call(
                 f"${committed:.6f} + ${reserve:.6f}"
             )
 
-        # Set attempt count.
+        # Set attempt count, after the work package's call limit.
         same = [
             e for e in ledger.get("calls", [])
             if e.get("pool") == pool
@@ -399,6 +400,11 @@ def reserve_call(
                 or (not entry.get("task_id") and e.get("task") == entry.get("task"))
             )
         ]
+        if task_max_calls is not None and len(same) >= task_max_calls:
+            raise SystemExit(
+                f"task call limit reached: {len(same)} of {task_max_calls} calls already "
+                "made for this task; escalate to the lead (budget_exhausted)"
+            )
         entry["attempt"] = len(same) + 1
 
         ledger.setdefault("calls", []).append(entry)
@@ -481,6 +487,58 @@ def packet(args: argparse.Namespace) -> tuple[str, list[dict[str, Any]]]:
     return payload, manifest
 
 
+def _work_package_checker() -> Any:
+    # Loaded by path: the scripts directory is not a package, and jsonschema is
+    # only needed when a work package is given.
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "check_work_package", Path(__file__).resolve().parent / "check_work_package.py")
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def admit_work_package(args: argparse.Namespace) -> dict[str, Any]:
+    """Lint the package before any paid call and bind the call to its limits.
+
+    Fills --task-id and --task-budget-usd from the package when they are not
+    given, and returns what the receipt records (including M9 conformance).
+    """
+    checker = _work_package_checker()
+    try:
+        raw = args.work_package.read_bytes()
+        package = json.loads(raw.decode("utf-8"))
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"work package is unreadable: {exc}; no call was made") from exc
+    errors = checker.check(package)
+    if errors:
+        raise SystemExit("work package refused; no call was made:\n  " + "\n  ".join(errors))
+    admission = package["admission"]
+    if args.task_id and args.task_id != admission["task_id"]:
+        raise SystemExit(f"--task-id {args.task_id} differs from the package's "
+                         f"{admission['task_id']}")
+    args.task_id = admission["task_id"]
+    budget = admission["budget"]
+    if args.pool != budget["pool"]:
+        raise SystemExit(f"--pool {args.pool} differs from the package's pool {budget['pool']}")
+    if args.task_budget_usd is None:
+        args.task_budget_usd = float(budget["task_usd"])
+    allowed = admission["read_targets"] + admission["write_targets"]
+    for raw_path in args.file:
+        relative = resolve_export(raw_path).relative_to(REPOSITORY).as_posix()
+        if not checker.matches(relative, allowed):
+            raise SystemExit(f"export is outside the package's read and write targets: "
+                             f"{relative}")
+    return {
+        "path": str(args.work_package),
+        "sha256": sha256(raw),
+        "package_id": admission["package_id"],
+        "max_calls": int(budget["max_calls"]),
+        "conformance": checker.conformance(package),
+    }
+
+
 def reserve_cost(body: dict[str, Any], card: dict[str, Any]) -> tuple[int, float]:
     encoded = json.dumps(body, ensure_ascii=False, separators=(",", ":"))
     input_guess = max(1, math.ceil(len(encoded) / 3.5))
@@ -519,6 +577,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--max-packet-bytes", type=int, default=1_500_000)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--agent", type=str, default="unspecified")
+    parser.add_argument("--work-package", type=Path, default=None,
+                        help="admit the call under a DELEG-11 work package")
     return parser.parse_args(argv)
 
 
@@ -551,6 +611,7 @@ def main() -> int:
         if pattern.search(args.instruction):
             raise SystemExit("possible secret in --instruction/--instruction-file; no call was made")
 
+    work_package = admit_work_package(args) if args.work_package is not None else None
     payload, manifest = packet(args)
     card = RATE_CARDS[args.model]
     body = OpenAIChatAdapter.render(
@@ -626,6 +687,7 @@ def main() -> int:
         "charged_usd": round(reserve, 8),
         "cost_basis": "reserve",
         "rate_card_age_days": age_days,
+        "work_package": work_package,
         "truncated": False,
         **preflight,
         "key_source": "",
@@ -673,6 +735,7 @@ def main() -> int:
         reserve,
         args.call_cap_usd,
         args.task_budget_usd,
+        work_package["max_calls"] if work_package else None,
     )
     receipt["attempt"] = call_entry["attempt"]
     atomic_json(request_path, {"route": route, "body": body})

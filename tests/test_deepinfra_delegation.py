@@ -51,7 +51,7 @@ def run_args(tmp_path, **overrides):
         allow_stale_prices=False, ledger=tmp_path / "ledger.json",
         output_dir=tmp_path / "runs", key_file=tmp_path / ".env",
         max_file_bytes=500_000, max_packet_bytes=1_500_000, dry_run=False,
-        agent="test-agent",
+        agent="test-agent", work_package=None,
     )
     values.update(overrides)
     return Namespace(**values)
@@ -390,6 +390,77 @@ def test_dry_run_writes_nothing(isolated, monkeypatch):
     monkeypatch.setattr(delegate, "parse_args", lambda: args)
     assert delegate.main() == 0
     assert calls == [] and not args.ledger.exists() and not args.output_dir.exists()
+
+
+# --- work-package admission (DELEG-03) ----------------------------------------------
+
+def work_package(tmp_path, **budget):
+    wp = json.loads((SCRIPTS.parent / "docs" / "examples" / "work-package-ADAPT-05.json")
+                    .read_text(encoding="utf-8"))
+    del wp["completion"]
+    wp["admission"]["read_targets"] = ["module.py"]
+    wp["admission"]["budget"].update({"pool": "shared", **budget})
+    path = tmp_path / "wp.json"
+    path.write_text(json.dumps(wp), encoding="utf-8")
+    return path, wp
+
+
+def test_a_work_package_binds_the_call_and_records_conformance(isolated, monkeypatch):
+    (delegate.REPOSITORY / "module.py").write_text("x = 1\n", encoding="utf-8")
+    calls = fake_provider(monkeypatch)
+    path, wp = work_package(isolated)
+    args = run_args(isolated, work_package=path, file=["module.py"])
+    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+
+    assert delegate.main() == 0
+    assert len(calls) == 1
+    call = load(args.ledger)["calls"][0]
+    assert call["task_id"] == "ADAPT-05"  # taken from the package
+    receipt = load(call["receipt"])
+    assert receipt["work_package"]["package_id"] == "ADAPT-05-wp1"
+    assert receipt["work_package"]["sha256"] == delegate.sha256(path.read_bytes())
+    assert receipt["work_package"]["conformance"]["present"] == 9
+    assert args.task_budget_usd == wp["admission"]["budget"]["task_usd"]
+
+
+def test_a_failing_package_is_refused_before_any_call(isolated, monkeypatch):
+    calls = fake_provider(monkeypatch)
+    path, wp = work_package(isolated)
+    wp["admission"]["roles"]["reviewer_model"] = "deepseek-ai/DeepSeek-V4.1-Flash"
+    path.write_text(json.dumps(wp), encoding="utf-8")
+    args = run_args(isolated, work_package=path)
+    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    with pytest.raises(SystemExit, match="same model family"):
+        delegate.main()
+    assert calls == [] and not args.ledger.exists()
+
+
+@pytest.mark.parametrize("overrides,message", [
+    ({"file": ["other.py"]}, "outside the package's read and write targets"),
+    ({"pool": "claude"}, "differs from the package's pool"),
+    ({"task_id": "ADAPT-06"}, "differs from the package's"),
+])
+def test_a_call_outside_the_package_is_refused(isolated, monkeypatch, overrides, message):
+    (delegate.REPOSITORY / "other.py").write_text("y = 1\n", encoding="utf-8")
+    calls = fake_provider(monkeypatch)
+    path, _ = work_package(isolated)
+    args = run_args(isolated, work_package=path, **overrides)
+    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    with pytest.raises(SystemExit, match=message):
+        delegate.main()
+    assert calls == []
+
+
+def test_the_package_call_limit_escalates(isolated, monkeypatch):
+    calls = fake_provider(monkeypatch)
+    path, _ = work_package(isolated, max_calls=1)
+    args = run_args(isolated, work_package=path)
+    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    assert delegate.main() == 0
+    args.instruction = "A different request"
+    with pytest.raises(SystemExit, match="task call limit"):
+        delegate.main()
+    assert len(calls) == 1
 
 
 # --- ledger tool --------------------------------------------------------------------

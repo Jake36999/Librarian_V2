@@ -22,6 +22,22 @@ import jsonschema
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 SCHEMA = REPOSITORY / "docs" / "schemas" / "delegation-work-package.schema.json"
+# Plan §3.2: changes to these are accepted only after the owner's Windows full suite.
+OWNER_HOST_FILES = tuple(f"src/resource_librarian/{name}.py" for name in
+                         ("host", "coordination", "connection", "cli", "mcp_server"))
+VENV_PYTHON = (".venv/Scripts/python", ".venv\\Scripts\\python", ".venv/bin/python")
+
+
+def matches(path: str, targets: list[str]) -> bool:
+    """A target ending in "/" covers its directory; any other target is one file."""
+    path = path.replace("\\", "/")
+    return any(path.startswith(t) if t.endswith("/") else path == t
+               for t in (t.replace("\\", "/") for t in targets))
+
+
+def model_family(model: str) -> str:
+    """The organisation part of a model ID: zai-org/GLM-5.3 and GLM-5.3-Flash share one."""
+    return model.split("/", 1)[0].strip().casefold()
 
 
 def schema_errors(package: Any) -> list[str]:
@@ -57,10 +73,25 @@ def rule_errors(package: dict[str, Any]) -> list[str]:
             errors.append("an implementation package needs an oracle check that covers "
                           "a behaviour predicate; a generic suite is not admission evidence")
 
-    writable = set(admission["write_targets"])
     for target in admission["protected_targets"]:
-        if target["path"] in writable:
+        if matches(target["path"], admission["write_targets"]):
             errors.append(f"protected target is also a write target: {target['path']}")
+
+    roles = admission["roles"]
+    if model_family(roles["drafter_model"]) == model_family(roles["reviewer_model"]):
+        errors.append("drafter and reviewer come from the same model family; "
+                      "the reviewer must be independent (plan §3.2)")
+    for check in admission["checks"]:
+        if not any(venv in check["command"] for venv in VENV_PYTHON):
+            errors.append(f"check {check['id']} does not run with the repository venv")
+    gated = [f for f in OWNER_HOST_FILES if matches(f, admission["write_targets"])]
+    if gated and not admission["owner_host_gate"]:
+        errors.append(f"owner_host_gate must be true when {gated[0]} is writable (plan §3.2)")
+    if admission["class"] == "implementation":
+        if not admission["write_targets"]:
+            errors.append("an implementation package names no write targets")
+        if not admission["documentation_consequence"].strip():
+            errors.append("documentation_consequence is empty; say 'none' explicitly")
 
     execution = package.get("execution")
     if execution and execution["repair_rounds"] > admission["budget"]["max_repair_rounds"]:
@@ -101,6 +132,26 @@ def _completion_errors(admission: dict[str, Any], checks: dict[str, Any],
             errors.append(f"predicate {predicate_id} is marked met without a passing "
                           "check run by the controller or lead")
     return errors
+
+
+def conformance(package: dict[str, Any]) -> dict[str, Any]:
+    """Which plan §3.3 packet fields the admission fills (metric M9)."""
+    a = package["admission"]
+    covered = {c for check in a["checks"] for c in check["covers"]}
+    fields = {
+        "task_and_objective": bool(a["task_id"].strip() and a["objective"].strip()),
+        "allowed_and_forbidden_files": bool(a["write_targets"] or a["read_targets"]),
+        "behaviour_to_preserve": bool(a["preserve"] or a["protected_targets"]),
+        "venv_test_command": any(v in c["command"] for c in a["checks"] for v in VENV_PYTHON),
+        "expected_failure_before": any(c["expected_before"] == "fail" for c in a["checks"]),
+        "acceptance_tests": bool(a["acceptance_predicates"]) and all(
+            p["id"] in covered for p in a["acceptance_predicates"]),
+        "documentation_consequence": bool(a["documentation_consequence"].strip()),
+        "models_and_merge_owner": model_family(a["roles"]["drafter_model"])
+            != model_family(a["roles"]["reviewer_model"]),
+        "budget": a["budget"]["task_usd"] > 0,
+    }
+    return {"fields": fields, "present": sum(fields.values()), "total": len(fields)}
 
 
 def committed_sha256(revision: str, path: str) -> str | None:
