@@ -135,7 +135,30 @@
         "A",
         "C"
       ],
-      "status": "unprepared"
+      "status": "prepared",
+      "base_branch": "e2/base/T06",
+      "base_revision": "53ffc2ab4390a4f0e489876595ba5ff2834c02d7",
+      "protected_tests": [
+        {
+          "path": "tests/e2/test_T06_characterization.py",
+          "sha256": "7ab5fee03052ebf0ecf39deeee00c281b6bce597d2be3674a65ad4fc003a554e"
+        },
+        {
+          "path": "tests/e2/test_T06_structure.py",
+          "sha256": "c6cddae1f5d7fedaafd6e2de5bd948f11cd0ddf060c0146eca15b76439b170a1"
+        }
+      ],
+      "holdout": {
+        "path": "C:/Users/jakem/Librarian-E2-holdout/T06/test_T06_holdout.py",
+        "sha256": "86ae3e8a72e5f3e057731e5e033650faa0cd5d6be23623132fc75887f1612fd8",
+        "cases": 20
+      },
+      "verification": {
+        "characterization_tests": 47,
+        "target_statement_coverage": "85/85 executable statements",
+        "structure_oracle_at_base": "fails only on target length",
+        "verified": "2026-10-29"
+      }
     },
     {
       "id": "E2-T07",
@@ -157,7 +180,30 @@
         "A",
         "B"
       ],
-      "status": "unprepared"
+      "status": "prepared",
+      "base_branch": "e2/base/T07",
+      "base_revision": "a49afb09165f87432d362571bf5c2832239ca87e",
+      "protected_tests": [
+        {
+          "path": "tests/e2/test_T07_characterization.py",
+          "sha256": "12d3b14bf7a55b6c93e248231f9d2b8aa3e0e29268c6e04f8b2ccdbe42a3718a"
+        },
+        {
+          "path": "tests/e2/test_T07_structure.py",
+          "sha256": "6c4c17619c4678788df742699688e5b66369a92705011edc8b18b7e350b261ba"
+        }
+      ],
+      "holdout": {
+        "path": "C:/Users/jakem/Librarian-E2-holdout/T07/test_T07_holdout.py",
+        "sha256": "0c0f6060d469b2ef989093c26fcdbb3c77e6e12d5e69dbd07614d2887d19f81a",
+        "cases": 8
+      },
+      "verification": {
+        "characterization_tests": 32,
+        "target_statement_coverage": "76/76 executable statements",
+        "structure_oracle_at_base": "fails only on target length",
+        "verified": "2026-10-29"
+      }
     },
     {
       "id": "E2-T08",
@@ -223,7 +269,30 @@
         "B",
         "C"
       ],
-      "status": "unprepared"
+      "status": "prepared",
+      "base_branch": "e2/base/T10",
+      "base_revision": "cf25eef2c5bb1458accace1f0b6dcc8ea751ff2e",
+      "protected_tests": [
+        {
+          "path": "tests/e2/test_T10_characterization.py",
+          "sha256": "65c64eea811689e077cbb9f4e92bbb89e62393d10e646c2a8b92fecdb0a3fa0f"
+        },
+        {
+          "path": "tests/e2/test_T10_structure.py",
+          "sha256": "ae6a94e6a0de39d11d4b610e288984342a4877800194f0ddff4e1d908f9aa196"
+        }
+      ],
+      "holdout": {
+        "path": "C:/Users/jakem/Librarian-E2-holdout/T10/test_T10_holdout.py",
+        "sha256": "2a498f8ffcfd3a25e0c1b526168811237d40d7c806db4c99d7e214ed85187967",
+        "cases": 5
+      },
+      "verification": {
+        "characterization_tests": 12,
+        "target_statement_coverage": "19/19 executable statements",
+        "structure_oracle_at_base": "fails only on target length",
+        "verified": "2026-10-29"
+      }
     },
     {
       "id": "E2-T11",

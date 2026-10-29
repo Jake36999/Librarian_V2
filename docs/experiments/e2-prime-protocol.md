@@ -1,6 +1,7 @@
 # E2' protocol: does managed delegation cut the lead's effort?
 
-Status: designed 2026-10-29, not run. Task registry:
+Status: designed 2026-10-29. The Stage A0 bases (T06, T07, T10) are prepared
+and verified; no arm has run. Task registry:
 [`e2-prime-tasks.json`](e2-prime-tasks.json). Effort meter:
 `scripts/e2_effort.py`. Origin: the agent-workflow sprint's final report (§6
 and §8, experiment E2'), which replaces E2.
@@ -61,27 +62,44 @@ so preparation cancels out of R.
 2. **Characterization tests.** Add `tests/e2/test_<task>_characterization.py`,
    which pins the target's current behaviour across its branches. These are
    regression checks: they must pass at the base.
-3. **Structure oracle.** Add `tests/e2/test_<task>_structure.py` (AST). It
-   requires:
+3. **Structure oracle.** Generate `tests/e2/test_<task>_structure.py` with
+   `scripts/e2_structure.py <task>`, run in the base worktree. It requires:
    - the target is at most `max_target_lines` long;
-   - every new name is private;
-   - public signatures are unchanged.
+   - every function the base already had keeps its length, or stays within
+     that limit;
+   - every new function stays within that limit, so the body cannot simply
+     move whole into one helper;
+   - the module's public names and its classes' public methods are unchanged;
+   - the target's signature is unchanged.
 
-   It fails at the base, so it is the oracle.
-4. **Held-out cases.** Write about five extra characterization cases per task
-   in `D:\Librarian-E2-holdout\<task>\`, outside the repository and outside
-   every session's folders. They are used only for scoring escaped defects.
-5. **Commit.** Commit the base. Record its sha and the hashes of the two test
-   files in the registry, and set `status` to `prepared`.
+   At the base it fails only on the target's length, so it is the oracle.
+4. **Held-out cases.** Write five to twenty extra characterization cases per
+   task in `C:\Users\jakem\Librarian-E2-holdout\<task>\`. That folder is
+   outside the repository and outside every session's folders; the D: root is
+   not writable from the agent sandbox. They are used only for scoring escaped
+   defects. A held-out file that needs the repository's fixtures (T10) is
+   copied into `tests/e2/` of the arm's worktree to run, and removed after.
+5. **Commit and record.** Commit the base on `e2/base/<task>`. Record in the
+   registry its sha, the hashes of the two test files' committed bytes, the
+   held-out file's hash, and how it was verified, and set `status` to
+   `prepared`.
 
 Drafting the characterization and held-out cases may be delegated. Each case
-is verified at the base before use.
+is verified at the base before use:
+- every main-file test passes;
+- every statement of the target executes, checked by a statement trace of the
+  target;
+- every held-out case passes.
+
+A drafted expectation that fails at the base is corrected to the base's
+actual behaviour after checking the code. Characterization records behaviour;
+it does not judge it.
 
 ## 4. Running an arm
 
 **Worktree.** Each arm gets a worktree,
-`git worktree add D:\Librarian-E2\<task>-<arm> e2/base/<task>`, with a `.venv`
-junction to the main venv. Tests run with `PYTHONPATH=src`, which the
+`git worktree add C:\Users\jakem\Librarian-E2\<task>-<arm> e2/base/<task>`,
+with a `.venv` junction to the main venv. Tests run with `PYTHONPATH=src`, which the
 checkout guard requires.
 
 **Session settings.** Every arm runs a new Claude Code session in that folder,

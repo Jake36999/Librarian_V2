@@ -1937,3 +1937,42 @@ divided by the direct arm's effort on the same task.
 waits for the owner's confirmation. Stage A0 (three tasks, nine sessions)
 needs the owner's approval of its lead quota.
 Full suite: 1,566 passed, 2 skipped, 4 deselected (8m58s).
+
+### E2' Stage A0 bases prepared (2026-10-29)
+
+The three Stage A0 tasks have frozen bases: `e2/base/T06` (`53ffc2a`),
+`e2/base/T07` (`a49afb0`) and `e2/base/T10` (`cf25eef`). They are never merged
+to master. Each base adds two test files:
+- **Characterization tests.** These pin the target's behaviour (T06 47 tests,
+  T07 32, T10 12). Each passes at its base and executes every statement of its
+  target, checked by a statement trace of the target.
+- **A generated structure oracle** (`scripts/e2_structure.py`). At the base it
+  fails only on the target's length.
+
+The oracle also freezes every function's length at the base. A refactor that
+moves the body whole into one new helper therefore fails. This shortcut was
+found while preparing the oracle, and `tests/test_e2_structure.py` pins it
+alongside a real split, a new public name and a changed signature.
+
+Held-out cases (T06 20, T07 8, T10 5) are in
+`C:\Users\jakem\Librarian-E2-holdout\`, outside the repository; all pass at
+their bases. The registry records each base sha, the committed hashes of its
+test files and the held-out file's hash.
+
+**Delegation.** DeepSeek-V4-Pro drafted the T06 and T07 characterization and
+held-out files (two calls, $0.060, task id `E2-PREP`). The trace and test runs showed
+five drafted expectations that the base contradicts, and each was corrected to
+the base's actual behaviour after checking the code:
+- a protocol-version message the draft derived from the key name;
+- an expiry case that the expired check reached first;
+- an ambiguous-enum case that used an exact value;
+- a check order assumed backwards;
+- control characters that are stripped before the enum match.
+
+One case was added for the last uncovered statement. Claude wrote the T10
+characterization from goldens captured twice at the base: both captures were
+identical, and one weak held-out case was strengthened.
+
+**Still needed before any arm runs:** the owner's confirmation of the decision
+rule and approval of Stage A0's nine lead sessions.
+Full suite on master: 1,571 passed, 2 skipped, 4 deselected (8m56s).
