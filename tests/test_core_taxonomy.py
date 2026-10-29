@@ -92,7 +92,7 @@ def test_refile_and_views_keep_sql_and_files_on_their_owners(core, monkeypatch):
     assert "[[alpha]]" in (core.vault.root / "Indexes/Topic - Data.md").read_text(encoding="utf-8")
     assert "[[beta]]" in (core.vault.root / "Indexes/Topic - Data.md").read_text(encoding="utf-8")
     out = core.person_call("views_refresh", {})
-    assert out["not_accepted"] == [] and "Indexes/Master Index.md" in out["written"]
+    assert out.get("not_accepted") == [] and "Indexes/Master Index.md" in out["written"], out
     assert files and sql and rendering
     assert set(sql + rendering) == {core.index_service._thread}
     operations = [op for op in _ops(core) if op["status"] == "done" and "Sources/repository/alpha.md" in op["targets"]]

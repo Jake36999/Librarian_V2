@@ -204,18 +204,16 @@ def test_stat_read_error_is_not_reported_as_deletion(watched, monkeypatch):
 
 def test_partial_directory_failure_retains_known_paths_and_clears_health_on_recovery(watched, monkeypatch):
     path, leases, watcher = watched
-    original = Path.rglob
+    original = watcher._list
     broken = True
 
-    def scan(target, *args, **kwargs):
-        if target == watcher.vault.root and broken:
-            def failing():
-                yield path
-                raise PermissionError("private filesystem detail")
-            return failing()
-        return original(target, *args, **kwargs)
+    def scan(folder):
+        # DEPLOY-02: the walk lists folders itself; one listing fails part-way.
+        if folder != watcher.vault.root and broken:
+            raise PermissionError("private filesystem detail")
+        return original(folder)
 
-    monkeypatch.setattr(Path, "rglob", scan)
+    monkeypatch.setattr(watcher, "_list", scan)
     known = dict(watcher._known)
     watcher.scan_once()
     assert set(known) <= set(watcher._known)

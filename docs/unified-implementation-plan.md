@@ -2643,3 +2643,104 @@ Tested:
 
 **Not yet.** Applying a plan (the content-root manifest, the compare-and-apply
 on the fingerprint, and the scoped watcher) is DEPLOY-02.
+
+### DEPLOY-02 compare-and-apply adoption and a scoped watcher (2026-10-29)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| DEPLOY-02 | implemented | this commit | `src/resource_librarian/content_roots.py`; the `VaultWatcher` scope and backoff in `coordination.py`; `adopt` and `attach` CLI commands; rules `ADOPTION_STOPPED` and `ADOPTION_PLAN_STALE`; tests in `tests/test_adoption.py` (12, plus 1 slow). |
+
+**Content-root manifest.** `.librarian/content-roots.json`, version 1, holds:
+- the mode;
+- the roots, each with `read_write` or `read_only` access, and an `attached`
+  marker for attached roots;
+- the excludes;
+- the survey fingerprint it was applied from, and when.
+
+A vault made by `init` has no manifest and keeps today's behaviour.
+
+**Compare-and-apply.**
+- `plan_adopt` and `plan_attach` survey the folder and return the plan:
+  - what will be created;
+  - the excludes, taken from the survey's exclusion candidates plus the
+    person's own;
+  - the fingerprint.
+
+  Planning writes nothing.
+- `apply_*` re-surveys the folder and applies only if the fingerprint is
+  unchanged. Otherwise it refuses with `ADOPTION_PLAN_STALE` and nothing is
+  written.
+- Survey stops (an unrelated `.librarian`), a folder that cannot be adopted,
+  or an attach that overlaps the library all refuse with `ADOPTION_STOPPED`.
+
+**Adopt creates operational state only.** It writes only under
+`.librarian/`: `config.toml` (with `origin = "adopted"`), the manifest, a
+`.gitignore` for `derived/`, and the empty work folders. It writes no starter
+notes, no root `.gitignore` and no note folders.
+
+After writing, it compares the survey entries (every path, size and
+modification time outside `.librarian/`) with those from before, and refuses
+if anything differs.
+
+Tested:
+- every document's SHA-256 is identical after adoption;
+- `.librarian/` holds exactly the nine state entries and no Markdown;
+- an existing vault is not adopted twice.
+
+The evidence store's `.evidence/` folder is created later, on first use, like
+any other operational state.
+
+**Attach stays read-only.** Attaching records a `read_only`, `attached` root
+in the library's own manifest, and nothing is written into the attached
+folder (tested by hash). The library refuses to attach a folder that
+overlaps it. Attached roots lie outside the vault, where no Core write can
+resolve, and the watcher does not walk them.
+
+**Scoped watcher.**
+- `VaultWatcher` reads the manifest at construction. It walks only the
+  read-write roots, with `os.scandir`, and does not enter hidden folders,
+  excluded paths or links. Before, it ran `rglob('*.md')` through everything,
+  including `node_modules` and `.git`, and filtered hidden paths afterwards.
+- It backs off: after each scan it waits at least ten times the scan's own
+  duration (at most 30 s, never less than the 0.35 s interval).
+- `health()` reports the scope, the watched count, the last scan's duration
+  and the current interval.
+- Edits and deletions in the roots are still observed; changes inside
+  excluded folders are not.
+
+**Recorded budget.** Polling averages at most 20% of one core, and an edit
+and a deletion are both still detected.
+
+| Tree | CPU share | Scan | Interval | Edit and deletion seen in |
+| --- | --- | --- | --- | --- |
+| 2,000 files (default suite) | under 0.20 (asserted) | | | |
+| 20,000 files (`-m slow`, measured 2026-10-29) | 0.142 | 1.48 s | 14.8 s | 8.1 s |
+
+The 20,000-file tree was measured with the real watcher thread on Windows
+11. CPU time is the whole process's, measured over 10 s while the main
+thread slept. The trade-off is latency: on that tree an edit can take up to
+one interval to be seen. Document leases still guard every Core write, so a
+late-seen human edit is never overwritten blindly.
+
+**Changed test.** One watcher recovery test injected its partial-walk
+failure through `Path.rglob`. It now injects the failure at the watcher's
+directory listing. It checks the same behaviour: known paths are retained,
+and the health is cleared on recovery.
+
+**Not yet.**
+- Unfrontmattered documents are not yet searchable as workspace documents
+  (DEPLOY-03).
+- An adopted vault has not been run through the full app; that is
+  ACCEPT-02's Windows acceptance pass.
+
+**Intermittent failure seen once.**
+`tests/test_core_taxonomy.py::test_refile_and_views_keep_sql_and_files_on_their_owners`
+failed once in the first full run: `views_refresh` returned a result without
+`not_accepted`. The test then passed:
+- 26 times on its own, 20 of them four at a time in parallel;
+- in a second full run (1,728 passed, 2 skipped).
+
+The cause is not established. The Core's own writes are recognised by
+fingerprint for 60 s, so the watcher's longer waits should not turn them into
+outside edits. The assertion now prints the returned result, so a recurrence
+will show what came back.

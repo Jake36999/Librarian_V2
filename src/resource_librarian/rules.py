@@ -200,6 +200,13 @@ _RULES = [
     Rule("VAULT_REQUIRED", "boundaries",
          "The operation needs a vault. Run `init` to create one, or point at an "
          "existing vault."),
+    Rule("ADOPTION_STOPPED", "boundaries",
+         "A folder is adopted or attached only when its survey allows it: an unrelated "
+         ".librarian, a folder overlapping the library, or another survey stop halts it. "
+         "Nothing was written."),
+    Rule("ADOPTION_PLAN_STALE", "boundaries",
+         "An adoption or attachment applies only to the folder its plan surveyed. The "
+         "survey fingerprint changed, so nothing was written: survey it again."),
 ]
 
 RULES: dict[str, Rule] = {rule.code: rule for rule in _RULES}

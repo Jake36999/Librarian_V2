@@ -127,6 +127,20 @@ def build_parser() -> argparse.ArgumentParser:
                                       "a library there (reads only; changes nothing)")
     p.add_argument("folder")
 
+    p = sub.add_parser("adopt", help="make a library of a folder that already holds documents: "
+                                     "prints the plan; --fingerprint applies it")
+    p.add_argument("folder")
+    p.add_argument("--fingerprint", default="",
+                   help="apply the plan only while the folder's survey fingerprint is this one")
+    p.add_argument("--name", default="")
+    p.add_argument("--exclude", action="append", default=[],
+                   help="a folder (relative to the root) not to treat as documents")
+
+    p = sub.add_parser("attach", help="attach a folder read-only to the library (--vault): "
+                                      "prints the plan; --fingerprint applies it")
+    p.add_argument("folder")
+    p.add_argument("--fingerprint", default="")
+
     p = sub.add_parser("mcp", help="serve the tools over MCP on stdio (needs the `mcp` extra)")
     p.add_argument("--tier", dest="mcp_tier", default="consult", choices=TIERS,
                    help="the tier every client of this server runs at (default: consult, "
@@ -166,6 +180,21 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "survey":
             from .deploy_survey import survey
             _emit(survey(args.folder).to_dict())
+            return 0
+        if args.command == "adopt":
+            from . import content_roots
+            if args.fingerprint:
+                _emit(content_roots.apply_adopt(args.folder, args.fingerprint, name=args.name,
+                                                excludes=args.exclude))
+            else:
+                _emit(content_roots.plan_adopt(args.folder, name=args.name,
+                                               excludes=args.exclude))
+            return 0
+        if args.command == "attach":
+            from . import content_roots
+            vault = Vault.find(args.vault)
+            _emit(content_roots.apply_attach(vault, args.folder, args.fingerprint)
+                  if args.fingerprint else content_roots.plan_attach(vault, args.folder))
             return 0
         if args.command == "mcp":
             try:

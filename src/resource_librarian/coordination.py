@@ -25,7 +25,7 @@ import threading
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Iterator, TypeVar
 
 from . import __version__, process_identity
 from .file_access import file_access
@@ -565,11 +565,23 @@ class VaultWatcher:
     and coalesces Obsidian's rapid temp/save sequence through DocumentLeases'
     one-second quiet window.  It watches visible Markdown only, never SQLite
     or internal state.
+
+    DEPLOY-02: it walks only the content-roots manifest's read-write roots,
+    never descends into hidden or excluded folders or through links, and backs
+    off on large trees: the wait after a scan is at least BACKOFF times the
+    scan's own duration, so polling stays under about 1/BACKOFF of a core.
     """
+
+    BACKOFF = 10
+    MAX_INTERVAL = 30.0
 
     def __init__(self, vault: Vault, leases: DocumentLeases, interval: float = 0.35) -> None:
         self.vault, self.leases, self.interval = vault, leases, max(0.1, interval)
+        self._wait = self.interval
+        self._scan_seconds = 0.0
         self._known: dict[str, tuple[int, int]] = {}
+        from .content_roots import watch_scope
+        self._roots, self._excludes = watch_scope(vault.root)
         self._closed = threading.Event()
         self._errors: dict[str, str] = {}
         self._error_lock = threading.Lock()
@@ -599,12 +611,36 @@ class VaultWatcher:
         pending = self.leases.pending_reads()
         status = ("stopped" if self._closed.is_set() else "not_started" if self._thread.ident is None
                   else "failed" if not self._thread.is_alive() else "degraded" if errors or pending else "ready")
-        return {"status": status, "pending_reads": pending[:20], "pending_count": len(pending), "errors": errors}
+        return {"status": status, "pending_reads": pending[:20], "pending_count": len(pending), "errors": errors,
+                "scope": {"roots": self._roots, "excludes": sorted(self._excludes)[:20],
+                          "watched": len(self._known), "scan_seconds": round(self._scan_seconds, 4),
+                          "interval": round(self._wait, 3)}}
+
+    def _list(self, folder: Path) -> list[os.DirEntry]:
+        with os.scandir(folder) as entries:
+            return list(entries)
+
+    def _markdown(self) -> Iterator[Path]:
+        """Every visible Markdown file under the watched roots: hidden folders,
+        excluded paths and links are not entered."""
+        root = self.vault.root
+        stack = [root / r if r not in (".", "") else root for r in self._roots]
+        while stack:
+            folder = stack.pop()
+            for entry in self._list(folder):
+                if entry.name.startswith(".") or entry.is_symlink():
+                    continue
+                path = Path(entry.path)
+                if entry.is_dir(follow_symlinks=False):
+                    if path.relative_to(root).as_posix() not in self._excludes:
+                        stack.append(path)
+                elif entry.name.lower().endswith(".md"):
+                    yield path
 
     def _snapshot(self) -> dict[str, tuple[int, int]]:
         rows: dict[str, tuple[int, int]] = {}
         try:
-            paths = self.vault.root.rglob("*.md")
+            paths = self._markdown()
             for path in paths:
                 try:
                     rel = path.relative_to(self.vault.root)
@@ -635,11 +671,15 @@ class VaultWatcher:
         return rows
 
     def _run(self) -> None:
-        while not self._closed.wait(self.interval):
+        while not self._closed.wait(self._wait):
+            started = time.perf_counter()
             try:
                 self.scan_once()
             except OSError as exc:
                 self._error("<scan>", exc)  # Filesystem failure, not a swallowed programming error.
+            self._scan_seconds = time.perf_counter() - started
+            self._wait = min(self.MAX_INTERVAL,
+                             max(self.interval, self._scan_seconds * self.BACKOFF))
 
     def scan_once(self) -> None:
         """Observe one coalesced Markdown snapshot.

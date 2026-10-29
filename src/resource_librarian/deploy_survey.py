@@ -134,6 +134,7 @@ def survey(folder: Path | str) -> Survey:
     """Survey `folder` without changing anything in it."""
     given = Path(folder).expanduser()
     out = Survey(folder=str(given))
+    out.entries = []
     out.root_is_link = os.path.lexists(given) and _is_link(given)
     root = given.resolve()
     out.canonical_root = str(root)
@@ -211,6 +212,7 @@ def survey(folder: Path | str) -> Survey:
                            "DEPLOY-02 scopes it to the approved roots"}
     _modes(out, empty=not seen)
     out.fingerprint = _digest(out, seen)
+    out.entries = sorted(seen)     # not reported; DEPLOY-02 compares them before and after
     return out
 
 
