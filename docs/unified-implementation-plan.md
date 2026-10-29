@@ -2586,3 +2586,60 @@ can write. That stricter completion is the point of this task.
 - Snapshots are hash-only. Keeping before-state copies for recovery is part
   of DEPLOY's restore work.
 - Most of the 103 writing tools still declare no write intents.
+
+### DEPLOY-01 read-only Create / Adopt / Attach survey (2026-10-29)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| DEPLOY-01 | implemented | this commit | `src/resource_librarian/deploy_survey.py`; `resource-librarian survey <folder>`; tests in `tests/test_deploy_survey.py` (12). |
+
+**What it reports.** `survey(folder)` reports the following:
+- **Root.** The canonical root and its file identity (device and file id), and
+  whether the given path is itself a link.
+- **Case.** The file system's case rule, probed read-only with `samefile` on
+  the root's own name flipped. Also any names that differ only by case.
+- **Existing `.librarian`.** It is one of:
+  - `absent`;
+  - `librarian_vault`: its `config.toml` has a `[vault]` format;
+  - `unrelated`: not a plain folder, no config, a config that does not parse,
+    or another tool's config.
+- **Git and Obsidian.** Whether `.git` and `.obsidian` are present.
+- **Content candidates.** The Markdown count per top-level folder.
+- **Exclusion candidates.** Hidden folders and build, cache or dependency
+  folders. They are not descended into, and changes inside them do not move
+  the fingerprint.
+- **Links.** Symlinks and junctions (any Windows reparse point), with their
+  targets. They are never followed.
+- **Counts.** The Markdown file count, plus what it means for today's
+  whole-vault watcher (stats per second at the 0.35 s poll).
+- **Unreadable entries,** and a partial flag past 200,000 entries.
+- **The survey fingerprint.** A hash of the root identity, the `.librarian`
+  state, and every visited entry's path, size and modification time. DEPLOY-02
+  refuses to apply a plan when it differs.
+
+**Modes.** For each mode, the survey says whether it is possible and why:
+- **Create:** the folder is missing or empty.
+- **Adopt:** the folder has content.
+- **Attach:** read-only; possible for any existing folder without a stop.
+- **Existing vault:** Create and Adopt are not offered; the person opens the
+  vault instead.
+
+**Hard stops.**
+- An unrelated `.librarian` is never reused or replaced, and every mode is
+  refused.
+- Case-only name collisions on a case-sensitive file system are refused too.
+- A partial survey rules out Adopt.
+
+**Writes nothing.** The survey never constructs a `Vault`, opens no file for
+writing, and reads only `.librarian/config.toml` to classify a collision.
+
+Tested:
+- A Git and Obsidian documentation fixture's bytes, sizes and modification
+  times are identical after the survey.
+- A missing folder is not created.
+- On the repository's own `docs/` tree, 24 Markdown files were surveyed, and
+  every file's SHA-256 was identical afterwards.
+- A real junction is reported and not followed (on Windows, via `mklink /J`).
+
+**Not yet.** Applying a plan (the content-root manifest, the compare-and-apply
+on the fingerprint, and the scoped watcher) is DEPLOY-02.

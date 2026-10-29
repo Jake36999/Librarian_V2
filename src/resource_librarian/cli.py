@@ -123,6 +123,10 @@ def build_parser() -> argparse.ArgumentParser:
                    help="specialise the new library for its domain: a standard profile "
                         "(software-systems, course, history) or a profile file")
 
+    p = sub.add_parser("survey", help="survey a folder before creating, adopting or attaching "
+                                      "a library there (reads only; changes nothing)")
+    p.add_argument("folder")
+
     p = sub.add_parser("mcp", help="serve the tools over MCP on stdio (needs the `mcp` extra)")
     p.add_argument("--tier", dest="mcp_tier", default="consult", choices=TIERS,
                    help="the tier every client of this server runs at (default: consult, "
@@ -158,6 +162,10 @@ def main(argv: list[str] | None = None) -> int:
                 _emit({"error": "profile", "detail": str(exc)})
                 return 1
             _emit(report.to_dict())
+            return 0
+        if args.command == "survey":
+            from .deploy_survey import survey
+            _emit(survey(args.folder).to_dict())
             return 0
         if args.command == "mcp":
             try:
