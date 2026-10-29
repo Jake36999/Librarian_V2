@@ -258,6 +258,28 @@ def test_fixtures_must_be_committed_in_the_base(toy, tmp_path):
                                venv_python=VENV_PYTHON, out_dir=tmp_path / "out")
 
 
+def test_a_target_too_large_for_a_whole_file_reply_escalates_at_admission(toy, tmp_path):
+    """E2' A0: hosts.py and app.py could not come back whole; refuse before any work."""
+    worker = FakeWorker()
+    brief = tmp_path / "brief.txt"
+    brief.write_text("Add triple(x).", encoding="utf-8")
+    record = controller.run_package(package(toy, tmp_path), brief, worker=worker, repository=toy,
+                                    venv_python=VENV_PYTHON, out_dir=tmp_path / "out",
+                                    max_reply_tokens=5)  # calc.py is about 11 tokens
+    assert worker.calls == []
+    assert record["escalation"]["reason"] == "scope_change"
+    assert "src/toy/calc.py" in record["escalation"]["detail"]
+    assert not (tmp_path / "out" / "worktree").exists()
+    assert check_work_package.schema_errors(record) == []
+
+
+def test_an_output_limit_above_the_runner_cap_is_refused_before_anything_runs(tmp_path):
+    with pytest.raises(SystemExit, match="--max-output-tokens must be between 1 and 16384"):
+        controller.main([str(tmp_path / "missing.json"), str(tmp_path / "brief.txt"),
+                         "--model", "m", "--pool", "claude", "--total-budget-usd", "8",
+                         "--max-output-tokens", "20000"])
+
+
 def test_owner_host_packages_stay_lead_led(toy, tmp_path):
     with pytest.raises(SystemExit, match="lead-led"):
         run(toy, tmp_path, FakeWorker(), owner_host_gate=True)

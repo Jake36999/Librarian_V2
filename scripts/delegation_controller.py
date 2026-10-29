@@ -9,6 +9,7 @@ the evidence-bearing completion record.  The hosted model executes nothing.
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import shlex
@@ -27,6 +28,7 @@ if str(_SCRIPTS) not in sys.path:
 import check_work_package  # noqa: E402
 from check_diff_scope import parse_diff, scope_findings, worktree_diff_text  # noqa: E402
 from delegate_deepinfra import (  # noqa: E402
+    MAX_OUTPUT_TOKENS,
     SECRET_PATTERNS,
     atomic_json,
     atomic_text,
@@ -280,11 +282,14 @@ def run_package(
     venv_python: Path,
     out_dir: Path,
     clock: Callable[[], float] = time.monotonic,
+    max_reply_tokens: int = MAX_OUTPUT_TOKENS,
 ) -> dict[str, Any]:
     """Run one delegated work package end to end.
 
     Returns the completed package record (also written to
-    ``out_dir/"package.json"``).
+    ``out_dir/"package.json"``). `max_reply_tokens` is the worker's output
+    limit; a write target too large to come back whole within it is refused
+    at admission, before any worktree or paid call.
     """
     # Checks run with cwd set to the worktree, so every path must be absolute:
     # a relative one would put the wrong src first on PYTHONPATH.
@@ -330,6 +335,23 @@ def run_package(
             proposed_disposition="escalate",
             escalation_reason="environment_mismatch",
             escalation_detail="python or dependency_sha256 differs from admission",
+            execution={"controller": "controller", "repair_rounds": 0, "worktree": ""},
+        )
+
+    # 3b. Whole-file replies must fit the worker's output limit. In E2' A0
+    # hosts.py (74 KB) and app.py (245 KB) could not, and both runs escalated
+    # only after the lead had written the package.
+    too_large = _oversized_targets(repository, base, admission["write_targets"],
+                                   max_reply_tokens)
+    if too_large:
+        return _finish(
+            package, out_dir, base, [], [], [],
+            proposed_disposition="escalate",
+            escalation_reason="scope_change",
+            escalation_detail=(
+                "a whole-file reply cannot fit the worker's output limit of "
+                f"{max_reply_tokens} tokens: " + "; ".join(too_large)
+                + ". Do the change directly or split the module first."),
             execution={"controller": "controller", "repair_rounds": 0, "worktree": ""},
         )
 
@@ -528,6 +550,23 @@ def _exhausted(package: dict[str, Any], out_dir: Path, base: str, run_ids: list[
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+def _oversized_targets(repository: Path, base: str, write_targets: list[str],
+                       max_reply_tokens: int) -> list[str]:
+    """Write targets whose whole text, estimated as the runner does, exceeds the limit."""
+    found = []
+    for path in write_targets:
+        if path.endswith("/"):
+            continue  # a directory target: new files are written whole and are small
+        result = subprocess.run(["git", "-C", str(repository), "show", f"{base}:{path}"],
+                                capture_output=True, check=False)
+        if result.returncode != 0:
+            continue  # the worker creates this file
+        estimate = math.ceil(len(result.stdout) / 3.5)
+        if estimate > max_reply_tokens:
+            found.append(f"{path} is about {estimate} tokens")
+    return found
+
 
 def _worker_failure_reason(result: WorkerResult) -> tuple[str, str]:
     """Map a non-0/3 worker exit to an escalation reason."""
@@ -743,6 +782,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-output-tokens", type=int, default=12000)
     parser.add_argument("--timeout", type=float, default=900)
     args = parser.parse_args(argv)
+    # Refuse here, not after the lead has prepared a run: the runner would
+    # refuse every call and the controller would report "repeated_failure".
+    if not 1 <= args.max_output_tokens <= MAX_OUTPUT_TOKENS:
+        raise SystemExit(f"--max-output-tokens must be between 1 and {MAX_OUTPUT_TOKENS}")
 
     repository = _SCRIPTS.parent
     if (repository / ".venv" / "Scripts" / "python.exe").exists():
@@ -775,6 +818,7 @@ def main(argv: list[str] | None = None) -> int:
         repository=repository,
         venv_python=venv_python,
         out_dir=out_dir,
+        max_reply_tokens=args.max_output_tokens,
     )
 
     completion = record["completion"]

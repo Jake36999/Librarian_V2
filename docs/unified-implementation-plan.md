@@ -2011,3 +2011,25 @@ is not recommended.
 **Owner decisions:** whether to fix those two defects now, and whether larger
 tasks with edit-based controller output are worth a new pre-registered stage.
 DELEG-06 stays a pilot.
+
+### Controller defects found by E2' Stage A0, fixed (2026-10-29)
+
+- **Missing ledger folder.** `ledger_lock` now creates the ledger's folder. In
+  a fresh worktree the runner's first call used to fail before any paid call
+  (T07-C).
+- **Output limit not validated.** The controller now refuses an output limit
+  above the runner's cap (one shared constant, `MAX_OUTPUT_TOKENS` = 16,384)
+  before anything runs. Previously the runner refused every call, and the
+  controller reported it as `repeated_failure` (T06-C).
+- **Oversized write targets.** At admission the controller now estimates each
+  write target's size, at 3.5 bytes per token as the runner does. It escalates
+  `scope_change` before any worktree or paid call when a whole-file reply
+  cannot fit the output limit. At the default 12,000 tokens this refuses
+  `hosts.py` (about 21k tokens) and `app.py` (about 70k), where T06-C and T10-C
+  escalated only after the lead had written a package, and it admits
+  `registry.py` (T07-C, which delegated).
+
+Three tests pin these. The E2' Stage A0 result is unchanged: these fixes
+remove avoidable cost but do not change the finding that a handoff costs more
+than a small refactor.
+Full suite: 1,574 passed, 2 skipped, 4 deselected (9m35s).

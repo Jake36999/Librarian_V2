@@ -109,6 +109,8 @@ SECRET_PATTERNS = (
     ),
 )
 SAFE_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}")
+# The largest reply one call may request; the controller checks against it too.
+MAX_OUTPUT_TOKENS = 16_384
 
 ROLES = (
     "drafter", "reviewer", "critic", "mapper", "builder",
@@ -284,6 +286,8 @@ def pool_committed(ledger: dict[str, Any], pool: str) -> float:
 def ledger_lock(path: Path, timeout: float = 30):
     """Exclusive lock file for the ledger, breaking stale locks > 120 s."""
     lock_path = path.with_suffix(path.suffix + ".lock")
+    # A fresh worktree has no ledger folder yet (E2' A0: the first run failed there).
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
     deadline = time.monotonic() + timeout
     while True:
         try:
@@ -609,8 +613,8 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("--task-id must be a safe 1-100 character identifier")
     if args.pool and not SAFE_ID.fullmatch(args.pool):
         raise SystemExit("--pool must be a safe 1-100 character identifier")
-    if args.max_output_tokens < 1 or args.max_output_tokens > 16_384:
-        raise SystemExit("--max-output-tokens must be between 1 and 16384")
+    if args.max_output_tokens < 1 or args.max_output_tokens > MAX_OUTPUT_TOKENS:
+        raise SystemExit(f"--max-output-tokens must be between 1 and {MAX_OUTPUT_TOKENS}")
     if args.call_cap_usd <= 0 or args.total_budget_usd <= 0:
         raise SystemExit("budget values must be positive")
     if args.task_budget_usd is not None and args.task_budget_usd <= 0:

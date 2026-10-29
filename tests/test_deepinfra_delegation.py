@@ -234,6 +234,13 @@ def test_settled_identical_request_may_be_sent_again(tmp_path, status):
     delegate.reserve_call(path, "p", 10.0, entry("new", sha="same"), 0.1, 1.0)
 
 
+def test_a_ledger_in_a_missing_folder_is_created(tmp_path):
+    """E2' A0: a fresh worktree has no tmp/deepinfra-delegation/ yet."""
+    path = tmp_path / "fresh" / "tmp" / "deepinfra-delegation" / "ledger.json"
+    delegate.reserve_call(path, "p", 1.0, entry("a", sha="ha"), 0.1, 1.0)
+    assert load(path)["calls"][0]["run_id"] == "a"
+
+
 def test_stale_lock_broken_fresh_lock_times_out(tmp_path):
     ledger_path = tmp_path / "ledger.json"
     lock_path = ledger_path.with_suffix(ledger_path.suffix + ".lock")

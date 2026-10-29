@@ -80,7 +80,12 @@ hand.
 1. Admit the package. Owner-host packages stay lead-led.
 2. Confirm that each protected fixture has its admitted hash at
    `base_revision`, and that the interpreter and `pyproject.toml` hash match
-   `environment`.
+   `environment`. Then check that every write target can come back whole
+   within the worker's output limit. Sizes are estimated as the runner does, at
+   3.5 bytes per token. A target that is too large escalates `scope_change`
+   before any worktree or paid call; at the default 12,000 tokens, `hosts.py`
+   and `app.py` are too large. An output limit above the runner's 16,384 is
+   refused on the command line.
 3. Create a detached worktree at the base inside `--out-dir`.
 4. Run the oracle and regression checks there, to confirm they fail or pass as
    admitted. Otherwise escalate `ambiguity`.
