@@ -29,7 +29,8 @@ from .staging import clerk_endpoint, scribe_endpoint
 registry.REGISTRY.session_hooks = (before_call, after_call)
 
 Purpose = Literal["add_project", "explore", "suggest", "apply", "start_pursuit", "learn",
-                  "add_capability"]
+                  "add_capability", "audited"]
+Closure = Literal["authoritative", "partial", "human_judgment"]
 PLAN_KEYS = ("project", "question", "map", "ingested", "nothing_found", "no_application", "notes",
             # R13: the separate topics the person asked about, one brief each
             "topics",
@@ -39,7 +40,10 @@ PLAN_KEYS = ("project", "question", "map", "ingested", "nothing_found", "no_appl
             "goal", "deadline", "baseline", "focus", "practice_stopped", "consolidated",
             "scheduled",
             # F2 add_capability
-            "candidate", "assessment")
+            "candidate", "assessment",
+            # HARNESS-03 audited: the Lead's proposed next step - a proposal,
+            # never a contract; the Core admits contracts
+            "proposal")
 UNDERSTANDING_CONFIDENCE = ("shaky", "ok", "solid")
 MIN_QUOTE_WORDS = 5
 MAX_PROJECT_FILE = 20_000
@@ -511,6 +515,15 @@ def advance(ctx: Context, target: str = "", reason: str = "") -> dict:
     missing = session.missing(ctx.vault)
     if missing:
         return {"moved": False, "missing": missing}
+    if here + 1 >= len(phases) and session.purpose == "audited":
+        # HARNESS-03: reduce leads to the next round, with fresh phase budgets.
+        limit = session.audited_round_limit(ctx.vault)
+        if session.audit_round >= limit:
+            return {"moved": False,
+                    "missing": [f"round limit reached ({limit}): close_session naming what is "
+                                "unresolved, or the person raises [session] audited_max_rounds"]}
+        _event(ctx, {"type": "phase", "to": phases[0], "round": True, "reason": reason})
+        return {"moved": phases[0], "round": session.audit_round + 1}
     if here + 1 >= len(phases):
         return {"moved": False, "missing": ["this is the last phase: close_session"]}
     to = phases[here + 1]
@@ -524,7 +537,7 @@ def advance(ctx: Context, target: str = "", reason: str = "") -> dict:
     return {"moved": to, **({"skipped": skipped} if skipped else {})}
 
 
-@tool("close_session", tier="consult", effect="write", phases=("check_out", "next"),
+@tool("close_session", tier="consult", effect="write", phases=("check_out", "next", "reduce"),
       card=Card("Close the thread with its summary and what the library failed to answer",
                 "check out: briefs closed, work recorded",
                 "A session with a project also writes the summary to that project's own "
@@ -551,6 +564,28 @@ def close_session(ctx: Context, summary: str, gaps: str) -> dict:
             atomic_write_text(path, notes.render(loaded.frontmatter, body))
             with_index(ctx, lambda index: index.upsert(path))
     return {"closed": session.id, "completion": done}
+
+
+@tool("set_requirement", tier="curate", effect="write", scope="session",
+      card=Card("Set or revise a requirement of an audited session",
+                "the person states what the audited work must achieve, or changes it",
+                "The person's own decision: a model proposes, it never sets one. A revision "
+                "reopens the requirement and makes earlier results and closures stale"))
+def set_requirement(ctx: Context, requirement_id: str, text: str,
+                    closure: Closure = "authoritative", predicates: list[str] | None = None) -> dict:
+    session = _session(ctx)
+    if session.purpose != "audited":
+        raise TypeError("requirements belong to an audited session: "
+                        "open_session(purpose='audited')")
+    existing = session.audit.requirements.get(requirement_id)
+    revision = existing["revision"] + 1 if existing else 1
+    # `by` comes from who is calling (this tool is the person's tier alone),
+    # never from an argument a model could fill in.
+    _store(ctx).append_audit(session.id, {
+        "type": "requirement", "id": requirement_id, "revision": revision, "text": text,
+        "closure": closure, "predicates": list(predicates or []), "by": "person"})
+    return {"requirement": requirement_id, "revision": revision,
+            "session": _store(ctx).load(session.id).envelope(ctx.vault)}
 
 
 @tool("request_budget", tier="contribute", effect="write", scope="session",

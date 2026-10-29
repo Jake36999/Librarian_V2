@@ -293,10 +293,18 @@ PURPOSES: dict[str, tuple[str, ...]] = {
     # librarian adds anything - assessed as a source first. "candidate", not
     # apply's "find": that name already means "sources used" there.
     "add_capability": ("candidate", "assess", "propose", "install", "check_out"),
+    # HARNESS-03: an audited session works in rounds. Each round the Lead
+    # proposes (manage), the Core admits a contract (preflight), the contract
+    # runs (execute), Tier A checks it (audit) and the Core reduces the results
+    # to requirement statuses (reduce); then the next round starts at manage.
+    "audited": ("manage", "preflight", "execute", "audit", "reduce"),
 }
 MODE = {"add_project": "librarian", "explore": "librarian", "suggest": "librarian",
         "apply": "reader", "start_pursuit": "librarian", "learn": "librarian",
-        "add_capability": "librarian"}
+        "add_capability": "librarian", "audited": "librarian"}
+# A round is not a redo: each one gets its phases' full budgets, up to this cap
+# (the vault's [session] audited_max_rounds overrides it).
+AUDITED_MAX_ROUNDS = 50
 
 class _PhaseGates(Mapping[str, frozenset]):
     """The writes each phase unlocks: a tool named here is refused in any other phase.
@@ -330,7 +338,9 @@ HARNESS = frozenset({"open_session", "session_status", "update_plan", "ask_user"
                      "record_assumptions",
                      # tier "curate" already keeps these the person's alone; harness too,
                      # since editing the thread itself is bookkeeping, not the model's work
-                     "rewind_session", "branch_session"})
+                     "rewind_session", "branch_session",
+                     # the person's own requirement decision (HARNESS-03)
+                     "set_requirement"})
 
 # Roadmap §4 G2: the phases just before a commitment - an answer (judge, before
 # synthesise), a server definition (assess, before propose), a plan (inventory,
@@ -351,7 +361,8 @@ DEFAULT_BUDGETS = {"frame": 24, "ingest": 20, "map": 20, "need": 18, "search": 4
                    "judge": 40, "synthesise": 16, "check_out": 14, "check_in": 12, "find": 30,
                    "inventory": 18, "plan": 16, "seed": 20,
                    "goal": 12, "baseline": 14, "focus": 18, "practice": 30, "consolidate": 16,
-                   "next": 14}
+                   "next": 14,
+                   "manage": 12, "preflight": 8, "execute": 30, "audit": 16, "reduce": 8}
 
 # Search is sized for one brief. Each further brief - a topic the request asked about -
 # adds to it, up to a ceiling: a six-topic request parked in Search, its briefs open, in
@@ -396,6 +407,16 @@ ASKS = {
     "consolidate": "Let the person explain it in their own words first; critique it against "
                    "the sources, grounded like the scribe.",
     "next": "When should this be reviewed again, and is there a next session to propose?",
+    "manage": "Which open requirement comes next, and what one bounded step serves it? "
+              "Record it with update_plan(proposal={'requirements': [...], 'step': ...}); "
+              "ask the person instead if the requirement is unclear.",
+    "preflight": "The Core admits the proposal as a contract against the current state, "
+                 "or refuses it with the reason.",
+    "execute": "Do only what the admitted contract allows, through its tools.",
+    "audit": "Tier A checks every predicate of the contract's requirements on the actual "
+             "artifacts; a missing or failed check is recorded, not skipped.",
+    "reduce": "The Core turns the round's results into requirement statuses. Then start "
+              "the next round, or close the session if every requirement is accounted for.",
 }
 
 
@@ -507,6 +528,7 @@ class Session:
     # HARNESS-02: requirements, contracts, evidence and verifier results, folded
     # from typed events in this same log (audit_events.py is their rule book).
     audit: AuditState = field(default_factory=AuditState)
+    audit_round: int = 1            # HARNESS-03: the audited purpose's round number
 
     # -- identity -------------------------------------------------------------
     @property
@@ -599,6 +621,12 @@ class Session:
             self.extended[event["phase"]] = self.extended.get(event["phase"], 0) + \
                 int(event.get("add", 0))
         elif kind == "phase":
+            if event.get("round"):
+                # A new audited round: every phase starts again with its full
+                # budget, unlike going back to redo a phase within a round.
+                self.audit_round += 1
+                for name in self.phases:
+                    self.visits.pop(name, None)
             self.phase = event["to"]
             self.phase_calls = 0
             self.visits[self.phase] = self.visits.get(self.phase, 0) + 1
@@ -710,6 +738,8 @@ class Session:
         """What stands between this phase and the next. Empty means it may advance."""
         out = [f"unanswered question {q['id']}: {q['question']}" for q in self.open_questions()]
         p = self.phase
+        if self.purpose == "audited":
+            return out + self._audited_missing()
         if p == "frame":
             if self.purpose in ("add_project", "suggest", "start_pursuit"):
                 if not self.project:
@@ -861,6 +891,66 @@ class Session:
                        "'unverifiable' (an empty list if you assume nothing)")
         return out
 
+    def _audited_missing(self) -> list[str]:
+        """HARNESS-03 exit conditions; unanswered questions block every phase first."""
+        audit, p = self.audit, self.phase
+        if audit.invalid:
+            return [f"the audit history is invalid ({audit.invalid}); a person must review it"]
+        contract = audit.current_contract
+        if p == "manage":
+            if not audit.requirements:
+                return ["no requirements yet: the person sets them with set_requirement"]
+            proposal = self.plan.get("proposal")
+            named = proposal.get("requirements") if isinstance(proposal, dict) else None
+            if not named or not isinstance(named, list):
+                return ["propose one bounded step: update_plan(proposal={'requirements': "
+                        "[...], 'step': '...'})"]
+            unknown = [r for r in named if r not in audit.requirements]
+            if unknown:
+                return [f"the proposal names unknown requirement(s): {', '.join(map(str, unknown))}"]
+            return []
+        if not contract:
+            return ["no contract has been admitted: preflight admits one"]
+        if p == "preflight":
+            if audit.contracts[contract]["admitted_epoch"] != audit.epoch:
+                return [f"contract {contract} was admitted before the latest change (epoch "
+                        f"{audit.contracts[contract]['admitted_epoch']}, now {audit.epoch}): "
+                        "admit it again"]
+            return []
+        if p == "audit":
+            unchecked = audit_events.unchecked_predicates(audit, contract)
+            return [f"no result yet at this epoch for {item}" for item in unchecked]
+        if p == "reduce":
+            return [f"requirement {r} has no reduction at this epoch"
+                    for r in audit_events.unreduced_requirements(audit, contract)]
+        return []                                       # execute: the audit judges it
+
+    def audited_round_limit(self, vault: Vault) -> int:
+        configured = (vault.config().get("session") or {}).get("audited_max_rounds")
+        try:
+            return max(1, int(configured)) if configured is not None else AUDITED_MAX_ROUNDS
+        except (TypeError, ValueError):
+            return AUDITED_MAX_ROUNDS
+
+    def state_hash(self) -> str:
+        """A digest of everything the session's next step depends on.
+
+        Resuming a paused session must reproduce it exactly (HARNESS-03). The
+        open/parked status is left out, since pausing and resuming is what is
+        being compared; timestamps are left out because replay never changes them.
+        """
+        state = {
+            "purpose": self.purpose, "phase": self.phase, "phase_calls": self.phase_calls,
+            "round": self.audit_round, "visits": self.visits, "budgets": self.budgets,
+            "budget_scale": self.budget_scale, "extended": self.extended, "plan": self.plan,
+            "questions": self.questions, "history": self.history,
+            "audit": audit_events.summary(self.audit),
+            "contracts": self.audit.contracts, "results": self.audit.results,
+            "reductions": self.audit.reductions, "artifacts": self.audit.artifacts,
+        }
+        body = json.dumps(state, sort_keys=True, ensure_ascii=False, default=str)
+        return hashlib.sha256(body.encode("utf-8")).hexdigest()[:24]
+
     def assumptions_recorded(self) -> bool:
         visit = self.visits.get(self.phase, 1)
         return any(a["phase"] == self.phase and a["visit"] == visit for a in self.assumptions)
@@ -902,6 +992,13 @@ class Session:
             spent = (" - its budget is spent, so only advance, park_session, ask_user and "
                      "update_plan still work here" if self.budget_left() == 0 else "")
             return f"{self.phase} is complete: advance to {self.phases[position + 1]}{spent}"
+        if self.purpose == "audited":
+            done = self.completion()
+            if done["complete"]:
+                return "every requirement is accounted for: close_session(summary, gaps)"
+            return (f"round {self.audit_round} is reduced: advance starts the next round at "
+                    f"manage, or close_session naming what is unresolved: "
+                    f"{'; '.join(done['gaps'][:6])}")
         return "everything is done: close_session(summary, gaps)"
 
     def topics(self) -> list[str]:
@@ -931,7 +1028,22 @@ class Session:
 
     def completion(self) -> dict[str, Any]:
         """Is the research done (R13)? Every brief has a coverage verdict, nothing waits to
-        be judged, and what the session made is listed with its path - gaps stated."""
+        be judged, and what the session made is listed with its path - gaps stated.
+
+        An audited session is complete only when every requirement is verified or
+        human-accepted at the current epoch; anything else is a gap to name."""
+        if self.purpose == "audited":
+            statuses = {r: self.audit.requirement_status(r) for r in self.audit.requirements}
+            closed = ("verified", "human_accepted")
+            return {"complete": bool(statuses) and not self.audit.invalid and
+                    all(s in closed for s in statuses.values()),
+                    "outcome": audit_events.session_outcome(self.audit),
+                    "requirements": statuses,
+                    "gaps": [f"{r} ({s})" for r, s in statuses.items() if s not in closed] +
+                            ([f"audit history invalid: {self.audit.invalid}"]
+                             if self.audit.invalid else []),
+                    "made": [{"artifact": a["path"], "fingerprint": a["fingerprint"]}
+                             for a in self.audit.artifacts.values()]}
         ledger = self.coverage()
         verdicts = ("covered", "partial", "gap")
         return {"complete": bool(ledger) and all(r["verdict"] in verdicts for r in ledger)
@@ -953,6 +1065,7 @@ class Session:
         return {"session": self.id, "purpose": self.purpose, "project": self.project,
                 "mode": self.mode, "status": self.status, "phase": self.phase,
                 "phases": list(self.phases), "open_items": self.missing(vault),
+                **({"round": self.audit_round} if self.purpose == "audited" else {}),
                 "budget_left": self.budget_left(), "next": self.next_step(vault),
                 # R11: spent with the phase unfinished - the person may extend it
                 **({"budget_spent": True} if self.budget_left() == 0 and self.missing(vault)

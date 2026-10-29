@@ -2218,3 +2218,63 @@ cases:
 its manage → preflight → execute → audit → reduce phases are HARNESS-03, which
 will issue these events.
 Full suite: 1,618 passed, 2 skipped, 4 deselected (8m58s).
+
+### HARNESS-03 audited Session purpose (2026-10-29)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| HARNESS-03 | implemented | this commit | `session.py`, `tools/sessions.py`, `audit_events.py`; tests in `tests/test_audited_session.py` (16). |
+
+**The purpose.** `open_session(purpose="audited")` runs the phases manage →
+preflight → execute → audit → reduce in rounds. It reuses everything the
+existing session already has:
+- phase budgets;
+- question blocking (an unanswered question blocks every exit through the
+  existing `missing()`);
+- event replay;
+- the CORE-03 append path.
+
+The five phases' exit conditions:
+
+| Phase | Exit condition |
+| --- | --- |
+| manage | Requirements exist and the Lead's `proposal` (a new `update_plan` key; a proposal, never a contract) names only known ones |
+| preflight | A contract admitted at the current epoch. An outside edit after admission sends it back for re-admission |
+| execute | No extra condition: the audit judges what ran |
+| audit | Every predicate of the current contract's requirements has a result at the current epoch. A failed check still completes the audit |
+| reduce | Every requirement of the contract has a reduction at the current epoch |
+
+**Rounds.** `advance` at reduce starts the next round at manage.
+- Each round gets its phases' full budgets.
+- Going back within a round still halves the budget, as before.
+- Rounds are capped at 50 by default; the vault's `[session]
+  audited_max_rounds` overrides it.
+- The envelope shows the round number.
+
+**Closing.** `close_session` is allowed at reduce. An audited session is
+complete only when every requirement is verified or human-accepted at the
+current epoch. Otherwise the close must name each unresolved requirement as a
+gap.
+
+**Requirements are the person's.** The new `set_requirement` tool is
+curate-tier: the person's alone, and refused to the model's contribute tier.
+It sets `by="person"` from the caller, never from an argument. It is a harness
+call, so it is not phase-gated or charged.
+
+**Resume (done-when).** `Session.state_hash()` digests everything the next
+step depends on, leaving out the open/parked status. A test walks to execute,
+records an artifact, parks, and resumes from a fresh process-like store. The
+hash is identical, phase, round and epoch match, and the walk continues.
+
+**Writer-only (done-when).** With a recording Core writer attached, a full
+round from opening to closing writes exactly as many log lines as writer
+submissions, so nothing is written around VaultWriter. After the Core stops,
+an audit event is refused (`CORE_REQUIRED`) and the log is unchanged.
+
+**Not in this task.**
+- What fills the Core's side (admitting contracts, executing, Tier A checks
+  and reduction) comes in HARNESS-04 to HARNESS-07. The tests stand in for it
+  through the validated `append_audit` path.
+- Reconciling uncertain side effects is not built yet. The
+  `uncertain_effect` outcome exists for it.
+Full suite: 1,634 passed, 2 skipped, 4 deselected (8m43s).

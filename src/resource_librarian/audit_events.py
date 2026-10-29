@@ -41,6 +41,7 @@ class AuditState:
     results: dict[str, dict[str, Any]] = field(default_factory=dict)
     reductions: list[dict[str, Any]] = field(default_factory=list)
     external_edits: list[dict[str, Any]] = field(default_factory=list)
+    current_contract: str = ""   # the contract most recently admitted (HARNESS-03 rounds)
     # Set when replay met an event the rules refuse. The history is then
     # reported, never trusted, and no further audit event is accepted.
     invalid: str = ""
@@ -165,7 +166,9 @@ def _contract(state: AuditState, event: dict[str, Any]) -> None:
     if revision > 1:
         state.epoch += 1
     state.contracts[event["id"]] = {"requirements": requirements, "read": read, "write": write,
-                                    "role": role, "revision": revision}
+                                    "role": role, "revision": revision,
+                                    "admitted_epoch": state.epoch}
+    state.current_contract = event["id"]
 
 
 def _artifact(state: AuditState, event: dict[str, Any]) -> None:
@@ -369,6 +372,20 @@ def session_outcome(state: AuditState) -> str:
     if all(s in ("verified", "human_accepted") for s in statuses):
         return "complete_with_human_acceptance"
     return "in_progress"
+
+
+def unchecked_predicates(state: AuditState, contract_id: str) -> list[str]:
+    """`requirement: predicate` pairs of a contract with no result at the current epoch."""
+    contract = state.contracts[contract_id]
+    return [f"{r}: {p}" for r in contract["requirements"]
+            for p in state.requirements[r]["predicates"]
+            if _latest_result(state, r, p) is None]
+
+
+def unreduced_requirements(state: AuditState, contract_id: str) -> list[str]:
+    """A contract's requirements with no reduction at the current epoch."""
+    reduced = {r["requirement"] for r in state.reductions if r["epoch"] == state.epoch}
+    return [r for r in state.contracts[contract_id]["requirements"] if r not in reduced]
 
 
 def _predicate_outcome(state: AuditState, requirement: str, predicate: str) -> str:
