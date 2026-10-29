@@ -1,0 +1,36 @@
+{
+  "median_model_pass_rate": 0.5,
+  "models": 89,
+  "models_all_pass": 11,
+  "models_none_pass": 3,
+  "per_probe_status": {
+    "evidence_grounding": {
+      "fail": 28,
+      "pass": 60,
+      "service_error": 1
+    },
+    "file_alteration": {
+      "error": 3,
+      "fail": 14,
+      "pass": 72
+    },
+    "project_note_and_phase": {
+      "fail": 17,
+      "pass": 71,
+      "service_error": 1
+    },
+    "scholarly_search_and_ingest": {
+      "fail": 73,
+      "partial": 3,
+      "pass": 13
+    }
+  },
+  "probe_rows": 356,
+  "status_counts": {
+    "error": 3,
+    "fail": 132,
+    "partial": 3,
+    "pass": 216,
+    "service_error": 2
+  }
+}

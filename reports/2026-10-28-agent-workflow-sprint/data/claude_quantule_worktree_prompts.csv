@@ -1,0 +1,4 @@
+project,session,ts,chars,origin_kind,prompt_source,turn_origin,limit_report
+F--quantule-mapper--claude-worktrees-determined-zhukovsky-198aa9,31ba6828-7b48-4e5a-a25c-f37db817fb3f,2026-10-18T01:42:47.078Z,3447,,sdk,sdk,False
+F--quantule-mapper--claude-worktrees-determined-zhukovsky-198aa9,31ba6828-7b48-4e5a-a25c-f37db817fb3f,2026-10-18T01:55:39.704Z,1074,peer,system,peer,False
+F--quantule-mapper--claude-worktrees-determined-zhukovsky-198aa9,31ba6828-7b48-4e5a-a25c-f37db817fb3f,2026-10-18T02:28:05.720Z,113,human,sdk,human,False

@@ -1,0 +1,680 @@
+[
+  {
+    "bytes": 121298,
+    "first_line": 1,
+    "last_line": 1448,
+    "packet": "T-chat1-01.txt",
+    "source": "E:\\# Review Librarian V2 - chatgpt transcript.txt"
+  },
+  {
+    "bytes": 114516,
+    "first_line": 1449,
+    "last_line": 3133,
+    "packet": "T-chat1-02.txt",
+    "source": "E:\\# Review Librarian V2 - chatgpt transcript.txt"
+  },
+  {
+    "bytes": 103575,
+    "first_line": 3134,
+    "last_line": 4171,
+    "packet": "T-chat1-03.txt",
+    "source": "E:\\# Review Librarian V2 - chatgpt transcript.txt"
+  },
+  {
+    "bytes": 101122,
+    "first_line": 4172,
+    "last_line": 5143,
+    "packet": "T-chat1-04.txt",
+    "source": "E:\\# Review Librarian V2 - chatgpt transcript.txt"
+  },
+  {
+    "bytes": 120020,
+    "first_line": 5144,
+    "last_line": 6985,
+    "packet": "T-chat1-05.txt",
+    "source": "E:\\# Review Librarian V2 - chatgpt transcript.txt"
+  },
+  {
+    "bytes": 108403,
+    "first_line": 6986,
+    "last_line": 8131,
+    "packet": "T-chat1-06.txt",
+    "source": "E:\\# Review Librarian V2 - chatgpt transcript.txt"
+  },
+  {
+    "bytes": 118949,
+    "first_line": 8132,
+    "last_line": 9445,
+    "packet": "T-chat1-07.txt",
+    "source": "E:\\# Review Librarian V2 - chatgpt transcript.txt"
+  },
+  {
+    "bytes": 109338,
+    "first_line": 9446,
+    "last_line": 10406,
+    "packet": "T-chat1-08.txt",
+    "source": "E:\\# Review Librarian V2 - chatgpt transcript.txt"
+  },
+  {
+    "bytes": 112878,
+    "first_line": 10407,
+    "last_line": 11515,
+    "packet": "T-chat1-09.txt",
+    "source": "E:\\# Review Librarian V2 - chatgpt transcript.txt"
+  },
+  {
+    "bytes": 42175,
+    "first_line": 11516,
+    "last_line": 11859,
+    "packet": "T-chat1-10.txt",
+    "source": "E:\\# Review Librarian V2 - chatgpt transcript.txt"
+  },
+  {
+    "bytes": 115392,
+    "first_line": 1,
+    "last_line": 1181,
+    "packet": "T-chat2-01.txt",
+    "source": "E:\\# Review Librarian V2 - chatgpt transcript -2.txt"
+  },
+  {
+    "bytes": 102763,
+    "first_line": 1182,
+    "last_line": 2319,
+    "packet": "T-chat2-02.txt",
+    "source": "E:\\# Review Librarian V2 - chatgpt transcript -2.txt"
+  },
+  {
+    "bytes": 91892,
+    "first_line": 2320,
+    "last_line": 3286,
+    "packet": "T-chat2-03.txt",
+    "source": "E:\\# Review Librarian V2 - chatgpt transcript -2.txt"
+  },
+  {
+    "bytes": 60927,
+    "first_line": 1,
+    "last_line": 1095,
+    "packet": "T-claude_dev-01.txt",
+    "source": "E:\\# Review Librarian V2 - claud transcript.txt"
+  },
+  {
+    "bytes": 100091,
+    "first_line": 1,
+    "last_line": 1114,
+    "packet": "T-qball-01.txt",
+    "source": "E:\\Librarian setup and Q-ball research-claud transcript.md"
+  },
+  {
+    "bytes": 108168,
+    "first_line": 1115,
+    "last_line": 1982,
+    "packet": "T-qball-02.txt",
+    "source": "E:\\Librarian setup and Q-ball research-claud transcript.md"
+  },
+  {
+    "bytes": 101463,
+    "first_line": 1983,
+    "last_line": 3220,
+    "packet": "T-qball-03.txt",
+    "source": "E:\\Librarian setup and Q-ball research-claud transcript.md"
+  },
+  {
+    "bytes": 95843,
+    "first_line": 3221,
+    "last_line": 4454,
+    "packet": "T-qball-04.txt",
+    "source": "E:\\Librarian setup and Q-ball research-claud transcript.md"
+  },
+  {
+    "bytes": 108239,
+    "first_line": 1,
+    "last_line": 549,
+    "packet": "T-gemini-01.txt"
+  },
+  {
+    "bytes": 131,
+    "first_line": 290,
+    "last_line": 420,
+    "packet": "T-gemini-02.txt",
+    "source": "T-gemini-01.txt"
+  },
+  {
+    "bytes": 129,
+    "first_line": 421,
+    "last_line": null,
+    "packet": "T-gemini-03.txt",
+    "source": "T-gemini-01.txt"
+  },
+  {
+    "bytes": 14487,
+    "first_line": 1,
+    "last_line": 247,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__mcp_server.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\mcp_server.py"
+  },
+  {
+    "bytes": 15165,
+    "first_line": 1,
+    "last_line": 266,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__cli.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\cli.py"
+  },
+  {
+    "bytes": 17059,
+    "first_line": 1,
+    "last_line": 300,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__host.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\host.py"
+  },
+  {
+    "bytes": 8410,
+    "first_line": 1,
+    "last_line": 183,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__connection.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\connection.py"
+  },
+  {
+    "bytes": 27851,
+    "first_line": 1,
+    "last_line": 497,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__mcp_client.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\mcp_client.py"
+  },
+  {
+    "bytes": 264,
+    "first_line": 1,
+    "last_line": 12,
+    "packet": "tmp/sprint/packets/code/plugin__.mcp.json.txt",
+    "source": "D:\\Librarian_V2\\plugin\\.mcp.json"
+  },
+  {
+    "bytes": 1852,
+    "first_line": 1,
+    "last_line": 35,
+    "packet": "tmp/sprint/packets/code/docs__adapter-contract.md.txt",
+    "source": "D:\\Librarian_V2\\docs\\adapter-contract.md"
+  },
+  {
+    "bytes": 5670,
+    "first_line": 1,
+    "last_line": 98,
+    "packet": "tmp/sprint/packets/code/docs__product-contract.md.txt",
+    "source": "D:\\Librarian_V2\\docs\\product-contract.md"
+  },
+  {
+    "bytes": 14398,
+    "first_line": 1,
+    "last_line": 237,
+    "packet": "tmp/sprint/packets/code/reports__2026-10-24-architecture-blindspot-verification.md.txt",
+    "source": "D:\\Librarian_V2\\reports\\2026-10-24-architecture-blindspot-verification.md"
+  },
+  {
+    "bytes": 59348,
+    "first_line": 1,
+    "last_line": 1104,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__coordination.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\coordination.py"
+  },
+  {
+    "bytes": 41409,
+    "first_line": 1,
+    "last_line": 705,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__registry.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\registry.py"
+  },
+  {
+    "bytes": 38187,
+    "first_line": 1,
+    "last_line": 713,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__index.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\index.py"
+  },
+  {
+    "bytes": 44080,
+    "first_line": 1,
+    "last_line": 740,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__promote.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\promote.py"
+  },
+  {
+    "bytes": 72690,
+    "first_line": 1,
+    "last_line": 1120,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__staging.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\staging.py"
+  },
+  {
+    "bytes": 44443,
+    "first_line": 1,
+    "last_line": 667,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__tools__staging.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\tools\\staging.py"
+  },
+  {
+    "bytes": 9254,
+    "first_line": 1,
+    "last_line": 141,
+    "packet": "tmp/sprint/packets/code/docs__index-ownership.md.txt",
+    "source": "D:\\Librarian_V2\\docs\\index-ownership.md"
+  },
+  {
+    "bytes": 37661,
+    "first_line": 1,
+    "last_line": 508,
+    "packet": "tmp/sprint/packets/code/docs__staging-write-safety.md.txt",
+    "source": "D:\\Librarian_V2\\docs\\staging-write-safety.md"
+  },
+  {
+    "bytes": 85380,
+    "first_line": 1,
+    "last_line": 1461,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__model_invocation.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\model_invocation.py"
+  },
+  {
+    "bytes": 41233,
+    "first_line": 1,
+    "last_line": 828,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__providers.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\providers.py"
+  },
+  {
+    "bytes": 22107,
+    "first_line": 1,
+    "last_line": 405,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__service_adapters.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\service_adapters.py"
+  },
+  {
+    "bytes": 9429,
+    "first_line": 1,
+    "last_line": 194,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__service_routes.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\service_routes.py"
+  },
+  {
+    "bytes": 14943,
+    "first_line": 1,
+    "last_line": 273,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__role_routes.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\role_routes.py"
+  },
+  {
+    "bytes": 6911,
+    "first_line": 1,
+    "last_line": 146,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__adapters__openai_chat.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\adapters\\openai_chat.py"
+  },
+  {
+    "bytes": 4236,
+    "first_line": 1,
+    "last_line": 72,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__adapters__anthropic_messages.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\adapters\\anthropic_messages.py"
+  },
+  {
+    "bytes": 40822,
+    "first_line": 1,
+    "last_line": 891,
+    "packet": "tmp/sprint/packets/code/docs__model-invocation-architecture.md.txt",
+    "source": "D:\\Librarian_V2\\docs\\model-invocation-architecture.md"
+  },
+  {
+    "bytes": 10703,
+    "first_line": 1,
+    "last_line": 166,
+    "packet": "tmp/sprint/packets/code/docs__model-adapter-requirements.md.txt",
+    "source": "D:\\Librarian_V2\\docs\\model-adapter-requirements.md"
+  },
+  {
+    "bytes": 4099,
+    "first_line": 1,
+    "last_line": 64,
+    "packet": "tmp/sprint/packets/code/docs__role-routing.md.txt",
+    "source": "D:\\Librarian_V2\\docs\\role-routing.md"
+  },
+  {
+    "bytes": 9423,
+    "first_line": 1,
+    "last_line": 146,
+    "packet": "tmp/sprint/packets/code/docs__qualification.md.txt",
+    "source": "D:\\Librarian_V2\\docs\\qualification.md"
+  },
+  {
+    "bytes": 19896,
+    "first_line": 1,
+    "last_line": 370,
+    "packet": "tmp/sprint/packets/code/docs__model-expectations-registry.md.txt",
+    "source": "D:\\Librarian_V2\\docs\\model-expectations-registry.md"
+  },
+  {
+    "bytes": 9942,
+    "first_line": 1,
+    "last_line": 135,
+    "packet": "tmp/sprint/packets/code/docs__model-adapter-cohort-2026-10-23.md.txt",
+    "source": "D:\\Librarian_V2\\docs\\model-adapter-cohort-2026-10-23.md"
+  },
+  {
+    "bytes": 3262,
+    "first_line": 1,
+    "last_line": 33,
+    "packet": "tmp/sprint/packets/code/docs__capability-matrix.md.txt",
+    "source": "D:\\Librarian_V2\\docs\\capability-matrix.md"
+  },
+  {
+    "bytes": 13304,
+    "first_line": 1,
+    "last_line": 218,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__model_expectation_authoring.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\model_expectation_authoring.py"
+  },
+  {
+    "bytes": 10954,
+    "first_line": 1,
+    "last_line": 192,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__evaluation.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\evaluation.py"
+  },
+  {
+    "bytes": 6088,
+    "first_line": 1,
+    "last_line": 122,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__validation_fixtures.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\validation_fixtures.py"
+  },
+  {
+    "bytes": 998,
+    "first_line": 1,
+    "last_line": 15,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__tools__model_expectations.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\tools\\model_expectations.py"
+  },
+  {
+    "bytes": 8489,
+    "first_line": 1,
+    "last_line": 143,
+    "packet": "tmp/sprint/packets/code/tests__test_qualification_jobs.py.txt",
+    "source": "D:\\Librarian_V2\\tests\\test_qualification_jobs.py"
+  },
+  {
+    "bytes": 43222,
+    "first_line": 1,
+    "last_line": 735,
+    "packet": "tmp/sprint/packets/code/scripts__validate_deepinfra_current.py.txt",
+    "source": "D:\\Librarian_V2\\scripts\\validate_deepinfra_current.py"
+  },
+  {
+    "bytes": 1951,
+    "first_line": 1,
+    "last_line": 15,
+    "packet": "tmp/sprint/packets/code/reports__2026-10-26-adapt07-continuation-probe.md.txt",
+    "source": "D:\\Librarian_V2\\reports\\2026-10-26-adapt07-continuation-probe.md"
+  },
+  {
+    "bytes": 4060,
+    "first_line": 1,
+    "last_line": 74,
+    "packet": "tmp/sprint/packets/code/reports__2026-10-26-adapt09-prompt-layout.md.txt",
+    "source": "D:\\Librarian_V2\\reports\\2026-10-26-adapt09-prompt-layout.md"
+  },
+  {
+    "bytes": 3529,
+    "first_line": 1,
+    "last_line": 65,
+    "packet": "tmp/sprint/packets/code/reports__2026-10-26-adapt11-tool-surface.md.txt",
+    "source": "D:\\Librarian_V2\\reports\\2026-10-26-adapt11-tool-surface.md"
+  },
+  {
+    "bytes": 25290,
+    "first_line": 1,
+    "last_line": 557,
+    "packet": "tmp/sprint/packets/code/scripts__delegate_deepinfra.py.txt",
+    "source": "D:\\Librarian_V2\\scripts\\delegate_deepinfra.py"
+  },
+  {
+    "bytes": 11404,
+    "first_line": 1,
+    "last_line": 230,
+    "packet": "tmp/sprint/packets/code/tests__test_deepinfra_delegation.py.txt",
+    "source": "D:\\Librarian_V2\\tests\\test_deepinfra_delegation.py"
+  },
+  {
+    "bytes": 7450,
+    "first_line": 1,
+    "last_line": 115,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__tools__delegate.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\tools\\delegate.py"
+  },
+  {
+    "bytes": 3092,
+    "first_line": 1,
+    "last_line": 49,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__tools__sandbox.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\tools\\sandbox.py"
+  },
+  {
+    "bytes": 2333,
+    "first_line": 1,
+    "last_line": 39,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__tools__batch.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\tools\\batch.py"
+  },
+  {
+    "bytes": 2668,
+    "first_line": 1,
+    "last_line": 42,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__tools__pace.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\tools\\pace.py"
+  },
+  {
+    "bytes": 4870,
+    "first_line": 1,
+    "last_line": 78,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__tools__scout.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\tools\\scout.py"
+  },
+  {
+    "bytes": 8342,
+    "first_line": 1,
+    "last_line": 130,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__tools__workbench.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\tools\\workbench.py"
+  },
+  {
+    "bytes": 37446,
+    "first_line": 1,
+    "last_line": 632,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__batch.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\batch.py"
+  },
+  {
+    "bytes": 11528,
+    "first_line": 1,
+    "last_line": 211,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__sandbox.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\sandbox.py"
+  },
+  {
+    "bytes": 3568,
+    "first_line": 1,
+    "last_line": 72,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__effort.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\effort.py"
+  },
+  {
+    "bytes": 25479,
+    "first_line": 1,
+    "last_line": 460,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__scout.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\scout.py"
+  },
+  {
+    "bytes": 35797,
+    "first_line": 1,
+    "last_line": 619,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__workbench.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\workbench.py"
+  },
+  {
+    "bytes": 6014,
+    "first_line": 1,
+    "last_line": 113,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__trace.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\trace.py"
+  },
+  {
+    "bytes": 8484,
+    "first_line": 1,
+    "last_line": 167,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__checkpoints.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\checkpoints.py"
+  },
+  {
+    "bytes": 13499,
+    "first_line": 1,
+    "last_line": 246,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__broker.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\broker.py"
+  },
+  {
+    "bytes": 5897,
+    "first_line": 1,
+    "last_line": 115,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__agenda.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\agenda.py"
+  },
+  {
+    "bytes": 44494,
+    "first_line": 1,
+    "last_line": 741,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__agent_runtime.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\agent_runtime.py"
+  },
+  {
+    "bytes": 82255,
+    "first_line": 1,
+    "last_line": 1378,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__session.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\session.py"
+  },
+  {
+    "bytes": 66021,
+    "first_line": 1,
+    "last_line": 1039,
+    "packet": "tmp/sprint/packets/code/src__resource_librarian__loop.py.txt",
+    "source": "D:\\Librarian_V2\\src\\resource_librarian\\loop.py"
+  },
+  {
+    "bytes": 81173,
+    "first_line": 1,
+    "last_line": 1472,
+    "packet": "tmp/sprint/packets/code/docs__audited-engagement-harness.md.txt",
+    "source": "D:\\Librarian_V2\\docs\\audited-engagement-harness.md"
+  },
+  {
+    "bytes": 12904,
+    "first_line": 1,
+    "last_line": 221,
+    "packet": "tmp/sprint/packets/code/docs__release-implementation-queue.md.txt",
+    "source": "D:\\Librarian_V2\\docs\\release-implementation-queue.md"
+  },
+  {
+    "bytes": 43806,
+    "first_line": 1,
+    "last_line": 617,
+    "packet": "tmp/sprint/packets/code/reports__2026-10-24-harness-and-adapter-plan-review.md.txt",
+    "source": "D:\\Librarian_V2\\reports\\2026-10-24-harness-and-adapter-plan-review.md"
+  },
+  {
+    "bytes": 8763,
+    "first_line": 68,
+    "last_line": 131,
+    "packet": "tmp/sprint/packets/code/docs__unified-implementation-plan.md.L68-131.txt",
+    "source": "D:\\Librarian_V2\\docs\\unified-implementation-plan.md"
+  },
+  {
+    "bytes": 5647,
+    "first_line": 132,
+    "last_line": 215,
+    "packet": "tmp/sprint/packets/code/docs__unified-implementation-plan.md.L132-215.txt",
+    "source": "D:\\Librarian_V2\\docs\\unified-implementation-plan.md"
+  },
+  {
+    "bytes": 15821,
+    "first_line": 309,
+    "last_line": 436,
+    "packet": "tmp/sprint/packets/code/docs__unified-implementation-plan.md.L309-436.txt",
+    "source": "D:\\Librarian_V2\\docs\\unified-implementation-plan.md"
+  },
+  {
+    "bytes": 12528,
+    "first_line": 1,
+    "last_line": 107,
+    "packet": "tmp/sprint/packets/code/reports__2026-10-20-executive-review.md.txt",
+    "source": "D:\\Librarian_V2\\reports\\2026-10-20-executive-review.md"
+  },
+  {
+    "bytes": 11080,
+    "first_line": 1,
+    "last_line": 115,
+    "packet": "tmp/sprint/packets/code/reports__2026-10-20-model-platform-and-deployment-review.md.txt",
+    "source": "D:\\Librarian_V2\\reports\\2026-10-20-model-platform-and-deployment-review.md"
+  },
+  {
+    "bytes": 26506,
+    "first_line": 1,
+    "last_line": 406,
+    "packet": "tmp/sprint/packets/code/reports__2026-10-23-system-attention-deployment-and-runtime-review.md.txt",
+    "source": "D:\\Librarian_V2\\reports\\2026-10-23-system-attention-deployment-and-runtime-review.md"
+  },
+  {
+    "bytes": 26010,
+    "first_line": 1,
+    "last_line": 342,
+    "packet": "tmp/sprint/packets/code/reports__2026-10-24-chatgpt-transcript-review.md.txt",
+    "source": "D:\\Librarian_V2\\reports\\2026-10-24-chatgpt-transcript-review.md"
+  },
+  {
+    "bytes": 14398,
+    "first_line": 1,
+    "last_line": 237,
+    "packet": "tmp/sprint/packets/code/reports__2026-10-24-architecture-blindspot-verification.md.txt",
+    "source": "D:\\Librarian_V2\\reports\\2026-10-24-architecture-blindspot-verification.md"
+  },
+  {
+    "bytes": 12399,
+    "first_line": 1,
+    "last_line": 214,
+    "packet": "tmp/sprint/packets/code/reports__2026-10-24-handoff-to-chatgpt.md.txt",
+    "source": "D:\\Librarian_V2\\reports\\2026-10-24-handoff-to-chatgpt.md"
+  },
+  {
+    "bytes": 31856,
+    "first_line": 1,
+    "last_line": 300,
+    "packet": "tmp/sprint/packets/code/ext__vault-requirements.md.txt",
+    "source": "D:\\Resource-Library\\internal docs\\chatgpt-review\\Requirements - V2 Research Pipeline and Project Access 2026-09-30.md"
+  },
+  {
+    "bytes": 5621,
+    "first_line": 1,
+    "last_line": 37,
+    "packet": "tmp/sprint/packets/code/ext__vault-session-performance.md.txt",
+    "source": "D:\\Resource-Library\\internal docs\\chatgpt-review\\Librarian Uni session performance - 2026-09-30.md"
+  },
+  {
+    "bytes": 14779,
+    "first_line": 1,
+    "last_line": 284,
+    "packet": "tmp/sprint/packets/code/ext__vault-opening-prompt.md.txt",
+    "source": "D:\\Resource-Library\\08-Workflows\\Opening Prompt - Dedicated Research Agent.md"
+  },
+  {
+    "bytes": 12997,
+    "first_line": 1,
+    "last_line": 249,
+    "packet": "tmp/sprint/packets/code/ext__vault-contribution-workflow.md.txt",
+    "source": "D:\\Resource-Library\\08-Workflows\\Workflow - Contribution By Outside Agents.md"
+  }
+]

@@ -1,0 +1,13 @@
+{
+ "method_items_with_numeric_results": 166,
+ "primary_reader": {
+  "all_in_paper_not_all_on_page": 95,
+  "all_on_cited_page": 22
+ },
+ "all_readers": {
+  "all_in_paper_not_all_on_page": 134,
+  "all_on_cited_page": 32
+ },
+ "numbers_checked": 596,
+ "numbers_not_found_in_paper": 0
+}

@@ -1,0 +1,42 @@
+# Deployment patterns by task type (deliverable 4)
+
+Date: 2026-10-28. "Deployment" here means how agents are run on a task, not the plan's DEPLOY-xx vault-directory tasks. Costs are orchestrator costs unless stated. All figures are measured ([M]) from `data/` unless marked; n is small throughout, so treat each row as a prior to update, not a law. Literature support is tagged Hypothesis (`04-extraction-table.md`).
+
+## The patterns
+
+| Pattern | Use when | Expected orchestrator cost | How the result is checked | Failure modes seen | Guard and stop rule |
+|---|---|---|---|---|---|
+| **P1 Single delegated draft** (one call, no tools) | Acceptance can be stated as a test, a golden fixture or a diff-scope rule; the change is a refactor or addition with an existing behaviour to preserve | After the result arrives, Claude spent a median 14.9k fresh+output tokens over 8 requests and 4.6 minutes (n=31 delegate results) | Golden fixtures captured before the change (ADAPT-04, 05), then the suite | 9 drafts landed with 0 to 2 recorded fixes each (an import, tool rendering left in the provider); one reviewed commit records a draft needing review fixes; truncation at the output cap | Set `--max-output-tokens` above the expected answer and treat `finish_reason=length` as failure; one call, no silent retry |
+| **P2 Mapper, builder, critic chain** | Broad unfamiliar code needing a map and an adversary; not as a way to produce the final change | Codex main thread: median 33.4k, p90 246k tokens after each delegate result (n=62); chain cost to DeepInfra $0.044 and $0.11 | The orchestrator's own measurement and deterministic tests; agreement is never treated as proof (packet report) | Builder output accepted 0 of 2 times (Qwen patch rejected for initialisation order, legacy semantics and test patch; the other builder timed out at 181 s); mapper hit its output cap; one call duplicated and left `started`; the critic's SHIP could not be matched to the commit's "four findings" | Use mapper and critic roles; escalate to the orchestrator at the first failed audit instead of re-running a builder; one packet per call; idempotency on packet hash |
+| **P3 Parallel lanes** (spawned workers, or helper fan-out) | Independent questions or disjoint file sets; read-only exploration | Codex: workers used 46% of all fresh+output tokens (main 44%, guardian reviews 9.5%); orchestration calls 12.6%; mean parallelism 1.66, peak 6 | Each lane's own tests and a merge check | Quota burn rises with parallelism (bursts end in a limit after a median 28.5 minutes); 43 git permission-denied events in tool output; replayed history makes naive counts double | Cap lanes by remaining quota, not only by effort level; one worktree and owned file set per lane; record lane id on every receipt |
+| **P4 Independent readers** (a pair or trio, different families) | The cost of a missed defect is high, or recall matters | Doubles the reading cost (a pair on the architecture lane cost about $1.1 of $2.45) | Disagreements adjudicated by the orchestrator against code | Cohen's kappa 0.45 on 30 capability judgements; a second reader found only about half of the events a first found (capture-recapture: MiMo 71%, cheap reader 51% of findable events); the second family fabricated quotes (DeepSeek-V4-Pro anchor pass 64.5%) | The checker is never the drafter (plan §3.2) and must itself pass the anchor check; a reader below about 90% anchor pass is a source of leads |
+| **P5 Hosted compute with a time budget** | Attempt-bounded sweeps that can checkpoint and have a machine-checkable oracle | Near zero orchestrator tokens while running; $0.44 per collected job in the one run we have | Pre-registered predictions scored automatically (13 of 16 passed) | Two of six boxes produced nothing yet were rented about 14 hours (an estimated $4.46 of $13.62); a step error was logged at 05:24 but the boxes lived until 19:29; one job abandoned at the cap; the cap was raised from $13.50 to $14.00 mid-run; start failure from a registry EOF; ssh and scp timeouts | Per-box deadline and heartbeat; destroy on the first step error; incremental output; a cap raised only by a recorded decision; a plaintext key appeared in a controller log, so keep error text out of logs |
+| **P6 Deterministic local script** | Anything countable from files, logs or git | Zero model tokens; this sprint's 10 measurement scripts each ran in under 30 s | Re-run and compare hashes; reconcile totals | Wrong joins (reference-list identifiers fetched as the paper's own; a commit regex that missed `git -C`) were caught by reconciliation, not by the script | Reconcile against an independent total before trusting a number |
+| **P7 Anchored bulk extraction** (read, emit typed JSON with verbatim quotes, check mechanically) | Reading that would otherwise cost the orchestrator hundreds of thousands of tokens: transcripts, papers, code | 87 calls and $2.45 at live prices read about 4 MB of text; the orchestrator read only checked extracts | Quote found within 2 lines or 1 page: 1,891 of 1,963 items (96.3%); MiMo 99.2% | 20% of calls truncated; 3 of 11 triage batches had malformed JSON; GLM-5.3 leaked its reasoning into the answer on 2 of 6 runs; a verified quote can still carry a wrong label (two quota-awareness "present" labels described static caps) | Chunk to about 100 KB; ask for at most 70 items; repair one unclosed object per item; salvage truncated arrays; spot-check labels, not only anchors |
+| **P8 Draft, executable gate, repair loop** | Tasks that declare a test command | not measured | Tests in a scratch worktree | no evidence yet | Experiment E2 before adoption (DELEG-06) |
+
+## Decide by task type
+
+| Task type | First choice | Also use | Do not |
+|---|---|---|---|
+| Counting, joining or measuring anything in logs, git or ledgers | P6 | | Ask a model to count |
+| Reading transcripts, papers or code for evidence | P7 with the primary reader | P4 on a sample or on high-stakes lanes | Use a second reader below 90% anchor pass as evidence |
+| Refactor with an existing behaviour you can fixture | P1 by the strongest drafting model, fixtures written first | A critic on the diff | Delegate without a fixture or test |
+| Concurrency, lifecycle or writer-ownership change | Orchestrator-led | P2 mapper and critic only | Accept a builder patch unmeasured; the packets with Host, coordination, connection, CLI, MCP or writer files also need the Windows full-suite rule in plan §3.2 |
+| Review of a finished change | P4 with typed findings and a falsifier per finding | The orchestrator adjudicates each finding against code | Record findings only in commit prose (the "four findings" cannot be matched to a receipt) |
+| Open-ended breadth exploration | P3 bounded by quota | Read-only helpers (`tools/delegate.py`) | Fan out when the weekly window is above about 90% |
+| Long simulations or sweeps | P5 with oracle, deadline, heartbeat | P6 for result collection | Rent first and write the deadline later |
+| Work that must survive a usage limit | Write the resume capsule first (DELEG-04), then any pattern | P6 to produce the capsule | Rely on an open session's context |
+
+## Reader and model priors (this sprint and the 2026-09-29 benchmark)
+
+| Model | Sprint anchor pass (items) | Parse and budget behaviour | Benchmark probes passed (of 4) | Notes |
+|---|---|---|---|---|
+| MiMo-V2.6-Pro | 99.2% (1,441) | 12 of 44 calls truncated; 13 outputs salvaged (one was malformed without truncation) | 4 | best reader here; hidden reasoning costs about 2.4 times the visible JSON |
+| GLM-5.3 | 98.6% (218) | 2 of 6 unparseable (reasoning leaked into content), 5 truncated | 3 | live price twice the runner's card |
+| GLM-5.3-Flash | 97.4% (116) | 4 of 4 parsed | 3 | found about half of MiMo's events; correct critic in the attachment chain |
+| DeepSeek-V4.1-Flash | 91.5% (47) | 3 of 15 needed brace repair | 4 | cheap triage; live price 1.4 to 2 times the card |
+| DeepSeek-V4-Pro | 64.5% (141) | 14 of 14 parsed | 3 | drafted 7 of the 9 landed Claude-side commits (GLM-5.3 drafted 2); as a reader its quotes are unreliable |
+| Qwen3-Coder-480B | not used as a reader | builder: 1 rejected, 1 timed out at 181 s | 2 | do not use as a builder on concurrency-sensitive code |
+
+Benchmark probes are four small agentic tasks per model on the v1 library (n=4 each, 2026-09-29); they agree directionally with what happened here but are not a measurement of these tasks.

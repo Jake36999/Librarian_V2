@@ -1,0 +1,6 @@
+{
+  "blocked_action": "critic-contract-01: export frozen draft plus private evidence excerpts",
+  "executed": false,
+  "reason": "Auto-review required specific authorization for this sensitive payload despite general DeepInfra research authorization.",
+  "safer_alternative": "critic-abstract-01 contains only a newly authored generic workflow proposal; private factual critique remains local."
+}

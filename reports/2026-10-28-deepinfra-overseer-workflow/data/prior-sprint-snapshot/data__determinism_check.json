@@ -1,0 +1,90 @@
+{
+  "reconciliation": {
+    "codex_request_sum_vs_counter_advance": {
+      "abandoned_branch_tokens_total": 3036719,
+      "continuation_branches": [
+        {
+          "abandoned_branch_tokens": 2081984,
+          "kind": "main",
+          "next_file_offset": 173450097,
+          "previous_file_final": 175532081,
+          "thread": "4c6bc007"
+        },
+        {
+          "abandoned_branch_tokens": 954735,
+          "kind": "main",
+          "next_file_offset": 6489444,
+          "previous_file_final": 7444179,
+          "thread": "0ad0c775"
+        }
+      ],
+      "exact_match": 207,
+      "mismatch": [],
+      "note": "a positive abandoned_branch_tokens means the earlier file kept running after the point where the next file branched: real usage that the later counter omits",
+      "rollout_files_checked": 207
+    },
+    "commit_count": {
+      "commits_csv_master": 118,
+      "git_rev_list_count": 118
+    },
+    "ledger_recorded_vs_recomputed": {
+      "claude": [
+        2.61594794,
+        2.61594794
+      ],
+      "shared": [
+        0.1551861,
+        0.1551861
+      ]
+    }
+  },
+  "rerun": {
+    "benchmark_digest.py": {
+      "exit": 0,
+      "identical": {
+        "benchmark_models.csv": true,
+        "benchmark_summary.json": true
+      }
+    },
+    "codex_log_metrics.py": {
+      "exit": 0,
+      "identical": {
+        "codex_commits.csv": true,
+        "codex_delegates.csv": true,
+        "codex_events.csv": true,
+        "codex_requests.csv": true,
+        "codex_threads.csv": true
+      }
+    },
+    "git_metrics.py": {
+      "exit": 0,
+      "identical": {
+        "commits.csv": true,
+        "git_summary.json": true,
+        "rework_edges.csv": true
+      }
+    },
+    "plan_log_metrics.py": {
+      "exit": 0,
+      "identical": {
+        "handoff_artifacts.csv": true,
+        "plan_growth.csv": true
+      }
+    },
+    "receipt_metrics.py": {
+      "exit": 0,
+      "identical": {
+        "delegations.csv": true,
+        "ledger_reconciliation.json": true
+      }
+    },
+    "vast_queue_metrics.py": {
+      "exit": 0,
+      "identical": {
+        "vast_boxes.csv": true,
+        "vast_events.csv": true,
+        "vast_summary.json": true
+      }
+    }
+  }
+}

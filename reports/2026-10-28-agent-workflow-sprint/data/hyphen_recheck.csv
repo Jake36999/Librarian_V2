@@ -1,0 +1,179 @@
+rank,slug,reader,field,page,first_status,lenient,quote
+1,electronics-15-03452-v2-54a1,GLM-5.3,costs,15,unverified,exact_page,"ReflectiChain incurs a 68% token overhead relative to ReAct (13,800 vs. 8200 tokens/episode)"
+1,electronics-15-03452-v2-54a1,MiMo-V2.6-Pro,problem,1,unverified,exact_page,"Large Language Model (LLM) agents in long-horizon planning often exhibit Semantic-Execution Drift (SED), where executed "
+1,electronics-15-03452-v2-54a1,MiMo-V2.6-Pro,negative_results,12,unverified,exact_page,the latter’s episodic (between-episode) reflection is less effective at preventing within-episode drift than ReflAct’s p
+2,thought-management-system-for-long-horizon-goal-driven-llm-a-bf51,GLM-5.3,methods,3,unverified,exact_page,The Signal Generator is the core decision-making unit of TMS.
+2,thought-management-system-for-long-horizon-goal-driven-llm-a-bf51,GLM-5.3,costs,14,unverified,exact_page,Table 7 quantifies the financial impact of transitioning from MAS-only execution to a fully autonomous TMS + MAS system.
+3,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,GLM-5.3,source_availability,,no_claim,no_page_or_quote,
+3,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,GLM-5.3,methods,8,unverified,exact_page,The results show a non-monotonic tradeoff in reasoning cost.
+3,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,GLM-5.3,costs,8,unverified,exact_page,"even the largest pack remains smaller than the 1,870-token closed-loop exchange required by home_replan per disruption"
+3,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,GLM-5.3,reproducibility,7,unverified,exact_page,https://huggingface.co/Qwen/Qwen2.5-3B.
+3,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,GLM-5.3,reproducibility,6,unverified,exact_page,https://blog.google/innovation-and-ai/models-and-research/google-deepmind/google-gemini-ai-update-december-2024/.
+3,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+3,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,MiMo-V2.6-Pro,costs,8,unverified,exact_page,"even the largest pack remains smaller than the 1,870-token closed-loop exchange required by home_replan per disruption."
+3,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,MiMo-V2.6-Pro,limitations,8,unverified,exact_page,"We note that the exposure level K follows an incremental-additive schedule, so each level supersets the previous one"
+5,towards-communication-efficient-multi-agent-cooperations-rei-8883,GLM-5.3-Flash,source_availability,,no_claim,no_page_or_quote,
+5,towards-communication-efficient-multi-agent-cooperations-rei-8883,GLM-5.3-Flash,methods,8,quote_elsewhere,elsewhere_in_paper,"By simply modifying the input prompt, the framework can adapt to varying bandwidth constraints without the need for retr"
+5,towards-communication-efficient-multi-agent-cooperations-rei-8883,GLM-5.3-Flash,costs,10,unverified,exact_page,the average message size is reduced from 80 bytes to approximately 32 bytes. This represents a 60% reduction in communic
+5,towards-communication-efficient-multi-agent-cooperations-rei-8883,GLM-5.3-Flash,costs,11,unverified,exact_page,"models in MAPPO-BDP, with signiﬁcantly fewer parameters compared to gpt-4o and gpt-4o-mini, demonstrate faster inference"
+5,towards-communication-efficient-multi-agent-cooperations-rei-8883,MiMo-V2.6-Pro,problem,1,unverified,not_found,"we propose a goal-oriented human-interpretable feature communication protocol, enabling robots to transmit only the most"
+5,towards-communication-efficient-multi-agent-cooperations-rei-8883,MiMo-V2.6-Pro,sample_and_unit,10,unverified,not_found,"Each episode has 25 time steps. Each agent has five communication features available for selection, with each feature oc"
+5,towards-communication-efficient-multi-agent-cooperations-rei-8883,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+5,towards-communication-efficient-multi-agent-cooperations-rei-8883,MiMo-V2.6-Pro,negative_results,12,unverified,exact_page,"In contrast, LLM-BDP-GMZ results in the lowest rewards, indicating that the model performs poorly on this task without t"
+5,towards-communication-efficient-multi-agent-cooperations-rei-8883,MiMo-V2.6-Pro,limitations,11,unverified,exact_page,MAPPO-BDP is thus more suitable for latency-sensitive deployments
+5,towards-communication-efficient-multi-agent-cooperations-rei-8883,MiMo-V2.6-Pro,reproducibility,12,adjacent_page,adjacent_page,Fig. 7 presents the results of robot trajectories and rewards in a single episode with bandwidth Wc = 1 kHz
+6,mutual-influence-ai-trust-bas-e8e5,GLM-5.3-Flash,methods,4,adjacent_page,runs_onto_next_page,the same MutualInfluenceAssistant can be directly plugged into AutoGen v0.4
+6,mutual-influence-ai-trust-bas-e8e5,GLM-5.3-Flash,methods,4,unverified,no_page_or_quote,"Across(t) = J(PF (t), RF (t))"
+6,mutual-influence-ai-trust-bas-e8e5,GLM-5.3-Flash,methods,5,unverified,not_found,an adversarial regime (the latter simulates noisy/biased feedback from the critic in the EMA update)
+6,mutual-influence-ai-trust-bas-e8e5,GLM-5.3-Flash,limitations,10,unverified,exact_page,"must be carefully tuned for specific applications, which can be non-trivial"
+6,mutual-influence-ai-trust-bas-e8e5,MiMo-V2.6-Pro,limitations,10,unverified,exact_page,"hyperparameters such as β, k, τ, and α must be carefully tuned for specific applications, which can be non-trivial"
+7,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,GLM-5.3,source_availability,,no_claim,no_page_or_quote,
+7,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,GLM-5.3,methods,4,unverified,not_found,guaranteeing the shortest feasible plan in terms of high-level action count
+7,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,GLM-5.3,methods,5,unverified,exact_page,"If a failure is detected, the system reconstructs the current scene as a new initial state and replans from it under the"
+7,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,GLM-5.3,costs,8,unverified,exact_page,"the VLM-related overhead is dominated by the Judge module, which consumes the largest share of runtime and tokens"
+7,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,GLM-5.3,negative_results,6,unverified,exact_page,"Disabling real-world re-planning mainly affects disturbance handling, causing complete failure on the Disturbance Task ("
+7,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,GLM-5.3,limitations,7,unverified,not_found,Depth estimation errors (46.80%) are caused by noisy or distorted depth measurements.
+7,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+7,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,MiMo-V2.6-Pro,methods,4,unverified,not_found,"a breadth-ﬁrst search (BFS) strategy to traverse the planning tree layer by layer, guaranteeing the shortest feasible pl"
+7,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,MiMo-V2.6-Pro,limitations,7,unverified,not_found,Depth estimation errors (46.80%) are caused by noisy or distorted depth measurements.
+8,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,GLM-5.3,methods,13,unverified,exact_page,the break-even point is a cost ratio of 0.47
+8,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,GLM-5.3,costs,14,unverified,exact_page,the expected overhead is between 1.05 and 1.46 single-token passes per decision
+8,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,GLM-5.3,costs,11,unverified,exact_page,Retraining every configuration under multiple seeds is beyond our compute budget for a 7B-parameter verifier
+8,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,GLM-5.3,limitations,15,unverified,exact_page,a systematic white-box attack evaluation remains future work
+8,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,GLM-5.3,limitations,10,unverified,not_found,We did not implement entropy-based abstention over the branch-C JSON sequence
+8,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,MiMo-V2.6-Pro,negative_results,9,unverified,exact_page,A-only is worse than or equal to C on HARD-CONF for four of five centralized backbones
+8,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,MiMo-V2.6-Pro,limitations,15,unverified,exact_page,"true cross-camera generalization to fisheye hub cameras, in-the-wild night scenes and multi-step actions remains out of "
+8,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,MiMo-V2.6-Pro,reproducibility,11,unverified,exact_page,Retraining every configuration under multiple seeds is beyond our compute budget for a 7B-parameter verifier
+9,hierarchical-process-level-generative-reward-modeling-with-b6eb,GLM-5.3-Flash,methods,22,unverified,no_page_or_quote,P(𝑅hack) ≤exp(−𝛼⋅𝐾⋅𝐷/𝜎2)
+10,agentic-ai-the-age-of-reasoning-a-re-2026-journal-of-automat-154d,MiMo-V2.6-Pro,sample_and_unit,,no_claim,no_page_or_quote,
+10,agentic-ai-the-age-of-reasoning-a-re-2026-journal-of-automat-154d,MiMo-V2.6-Pro,negative_results,12,unverified,exact_page,meta-agent systems often fail to generalize to structurally different tasks and lack effective long-term memory consolid
+10,agentic-ai-the-age-of-reasoning-a-re-2026-journal-of-automat-154d,MiMo-V2.6-Pro,limitations,15,adjacent_page,runs_onto_next_page,"Many LLM benchmarks test single-step reasoning, missing agents' multi-step and tool-use abilities."
+10,agentic-ai-the-age-of-reasoning-a-re-2026-journal-of-automat-154d,MiMo-V2.6-Pro,limitations,15,adjacent_page,runs_onto_next_page,"Benchmarks often focus on logic puzzles or games, leaving their relevance to noisy and diverse real-world tasks unclear."
+11,00178-lan-1-32ae,GLM-5.3,comparators,3,unverified,exact_page,"PDDLGym operates under a single-action-per-step model, which suits many PDDL domains but lacks the complexity needed for"
+11,00178-lan-1-32ae,GLM-5.3,limitations,8,unverified,not_found,"HDDLGym assumes a deterministic transition function, meaning that action effects are predictable and do not account for "
+11,00178-lan-1-32ae,MiMo-V2.6-Pro,comparators,3,unverified,exact_page,"PDDLGym operates under a single-action-per-step model, which suits many PDDL domains but lacks the complexity needed for"
+11,00178-lan-1-32ae,MiMo-V2.6-Pro,limitations,9,unverified,not_found,predictable and do not account for probabilistic outcomes. This limits its applicability to environments where uncertain
+12,llm-planning-against-semantic-execution-drift-198f,GLM-5.3,source_availability,,no_claim,no_page_or_quote,
+12,llm-planning-against-semantic-execution-drift-198f,GLM-5.3,methods,3,unverified,exact_page,"Using a pre-trained DeBERTa-NLI model MNLI, we calculate the sequence-level average entailment probability"
+12,llm-planning-against-semantic-execution-drift-198f,GLM-5.3,reproducibility,3,unverified,exact_page,"we select two open-source backbones (Qwen2.5-7B-Instruct, InternLM2.5-7B-Chat) and compare four progressively advanced s"
+12,llm-planning-against-semantic-execution-drift-198f,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+12,llm-planning-against-semantic-execution-drift-198f,MiMo-V2.6-Pro,methods,3,unverified,exact_page,"Using a pre-trained DeBERTa-NLI model MNLI, we calculate the sequence-level average entailment probability"
+12,llm-planning-against-semantic-execution-drift-198f,MiMo-V2.6-Pro,reproducibility,3,unverified,exact_page,"Using a pre-trained DeBERTa-NLI model MNLI, we calculate the sequence-level average entailment probability"
+13,ai-agents-vs-agentic-ai-a-conceptual-taxonomy-applicat-2026--ed91,MiMo-V2.6-Pro,methods,3,unverified,exact_page,"This review offers the first structured taxonomy that formally separates these paradigms across dimensions of autonomy, "
+13,ai-agents-vs-agentic-ai-a-conceptual-taxonomy-applicat-2026--ed91,MiMo-V2.6-Pro,methods,23,unverified,exact_page,"orchestration refers to the dynamic coordination and task delegation across a team of specialized agents, each designed "
+14,frai-9-1820827-b598,GLM-5.3,comparators,10,unverified,exact_page,"compiled is statistically indistinguishable from static_hub_full, the strongest non-LLM rule (d = 0.18, pBonf = 1.00)"
+14,frai-9-1820827-b598,GLM-5.3,methods,5,unverified,exact_page,"Because the compiler’s LLM backbone may produce out-of-range or malformed values, every policy undergoes a normalization"
+14,frai-9-1820827-b598,GLM-5.3,costs,8,unverified,exact_page,Policy deployment occurs every t = 10 timesteps.
+14,frai-9-1820827-b598,GLM-5.3,negative_results,2,unverified,exact_page,"Llama-3.1-8B underperforms with a gap of +0.011, indicating a model-capability threshold for compiler-style structured r"
+15,multi-llm-cooperation-based-joint-intent-driven-network-slic-8a06,MiMo-V2.6-Pro,problem,1,unverified,exact_page,to jointly optimize the conﬁgurations of intent-driven network slices and resource allocation in large-scale multi-BS ne
+15,multi-llm-cooperation-based-joint-intent-driven-network-slic-8a06,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+15,multi-llm-cooperation-based-joint-intent-driven-network-slic-8a06,MiMo-V2.6-Pro,costs,4,unverified,exact_page,"we deploy a DeepSeek-R1-Distill LLM with 8B parameters and a padded sequence length 100, resulting in a 1.6 TFLOPs."
+16,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,MiMo-V2.6-Pro,problem,1,unverified,not_found,"Existing surveys often focus on isolated domains or specific autonomy levels, lacking a cohesive analysis that spans the"
+16,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,MiMo-V2.6-Pro,sample_and_unit,3,unverified,not_found,"Following this screening process, 78 articles were eliminated, resulting in a final set of 66 articles that were deemed "
+16,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,MiMo-V2.6-Pro,source_availability,3,unverified,exact_page,The link can be accessed: https://github.com/MODAL-UNINA/AgenAI-literature-search.
+16,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,MiMo-V2.6-Pro,comparators,2,unverified,not_found,Comparison with existing literature: It identifies and compares the most relevant surveys on AgentAI.
+16,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,MiMo-V2.6-Pro,methods,8,unverified,not_found,The 66 articles included in our review were grouped into nine specific sub-fields.
+16,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,MiMo-V2.6-Pro,methods,6,unverified,not_found,"human-in-the-loop control remains essential in high-risk domains for output verification, ethical alignment, and excepti"
+16,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,MiMo-V2.6-Pro,costs,3,unverified,not_found,These systems rely on human supervision or predefined rules and are not designed to adapt autonomously over time
+16,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,MiMo-V2.6-Pro,costs,9,unverified,not_found,effectively shortening decision-making cycles from days to hours
+16,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,MiMo-V2.6-Pro,negative_results,9,unverified,not_found,The transferability of skills learned in virtual environments to real-world contexts remains insufficiently validated
+16,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,MiMo-V2.6-Pro,negative_results,12,unverified,not_found,"Generalizability to game genres or architectures remains low, as most systems are tailored to specific mechanics or data"
+16,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,MiMo-V2.6-Pro,limitations,14,unverified,not_found,"significant challenges remain, especially in dynamic environments characterized by high-modality observations."
+16,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,MiMo-V2.6-Pro,limitations,14,unverified,not_found,"Agents often struggle with interpreting evolving goals, adapting to changing contexts, and processing visual inputs that"
+16,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,MiMo-V2.6-Pro,limitations,14,unverified,not_found,"biased or incomplete data may lead to flawed, opaque, and even unsafe decisions."
+17,efficient-cooperation-aware-key-and-value-management-1a9d,GLM-5.3-Flash,methods,7,unverified,exact_page,"allocates bits proportionally to our importance scores, consistently outperforms baselines that use alternative head imp"
+17,efficient-cooperation-aware-key-and-value-management-1a9d,GLM-5.3-Flash,costs,6,unverified,exact_page,significantly improving over the O(𝑇𝑛ln(2𝑛/𝛿)𝜖2)complexity required for the Shapley value approximation
+17,efficient-cooperation-aware-key-and-value-management-1a9d,MiMo-V2.6-Pro,methods,11,unverified,exact_page,"adjacent-step Spearman correlations range from 0.67–0.90, and Top-100 overlap exceeds 55% as shown in Fig. 14"
+20,knowledge-driven-reasoning-for-compatible-and-interpretable--a220,MiMo-V2.6-Pro,comparators,13,unverified,exact_page,CAPIR is a prompting-only LLM-based method that decomposes coarse-grained tasks into fine-grained subtasks using LLMs
+20,knowledge-driven-reasoning-for-compatible-and-interpretable--a220,MiMo-V2.6-Pro,methods,6,adjacent_page,adjacent_page,"KDRAR primarily comprises three modules: (1) API Retrieval module, which is set to select the relevant APIs from the dat"
+21,transforming-cybersecurity-with-agentic-ai-to-combat-2025-te-a053,MiMo-V2.6-Pro,sample_and_unit,,no_claim,no_page_or_quote,
+21,transforming-cybersecurity-with-agentic-ai-to-combat-2025-te-a053,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+21,transforming-cybersecurity-with-agentic-ai-to-combat-2025-te-a053,MiMo-V2.6-Pro,costs,9,unverified,exact_page,"Agents can consume CPU, memory, and network resources, potentially impacting performance, particularly in environments w"
+21,transforming-cybersecurity-with-agentic-ai-to-combat-2025-te-a053,MiMo-V2.6-Pro,negative_results,7,unverified,exact_page,"Current autonomous attack agents remain unreliable, requiring significant refinement for large-scale deployment"
+22,improving-multi-target-cooperative-tracking-5801,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+23,electronics-letters-2019-matta-q-rts-a-real-time-swarm-intel-590f,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+24,evolutionary-multi-agent-deep-meta-reinforcement-learning-me-5092,MiMo-V2.6-Pro,sample_and_unit,10,unverified,exact_page,"The parameters in the four-area LFC model are derived from real data of the actual CSG Sansha multi-area microgrid, whic"
+24,evolutionary-multi-agent-deep-meta-reinforcement-learning-me-5092,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+24,evolutionary-multi-agent-deep-meta-reinforcement-learning-me-5092,MiMo-V2.6-Pro,costs,7,unverified,exact_page,the average reward of all the agents in the base learner after 30 episodes is designed to be the reward function of the 
+25,advances-in-llm-assisted-combinatorial-optimization-70f8,GLM-5.3-Flash,source_availability,,no_claim,no_page_or_quote,
+25,advances-in-llm-assisted-combinatorial-optimization-70f8,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+26,a-formal-perspective-for-service-coordination-framework-in-s-a8b9,GLM-5.3-Flash,sample_and_unit,,no_claim,no_page_or_quote,
+26,a-formal-perspective-for-service-coordination-framework-in-s-a8b9,GLM-5.3-Flash,source_availability,,no_claim,no_page_or_quote,
+26,a-formal-perspective-for-service-coordination-framework-in-s-a8b9,GLM-5.3-Flash,methods,9,unverified,not_found,"This mech-
+anism can prevent the possible deadlock when two service
+do the updates involving the same data ﬁeld"
+26,a-formal-perspective-for-service-coordination-framework-in-s-a8b9,MiMo-V2.6-Pro,sample_and_unit,,no_claim,no_page_or_quote,
+26,a-formal-perspective-for-service-coordination-framework-in-s-a8b9,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+27,data-and-knowledge-driven-visual-abductive-reasoning-85fb,MiMo-V2.6-Pro,costs,10,unverified,exact_page,Five volunteers are presented with the outputs of a pair of systems
+28,design-of-flexible-static-program-analyzers-with-pql-22ea,GLM-5.3-Flash,source_availability,,no_claim,no_page_or_quote,
+28,design-of-flexible-static-program-analyzers-with-pql-22ea,GLM-5.3-Flash,methods,8,quote_elsewhere,elsewhere_in_paper,"PQL is a conceptual level, source language-independent notation to specify program queries and program views."
+28,design-of-flexible-static-program-analyzers-with-pql-22ea,GLM-5.3-Flash,methods,10,unverified,exact_page,"High-level program views can be hierarchically built out of previously constructed, simpler ones."
+28,design-of-flexible-static-program-analyzers-with-pql-22ea,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+28,design-of-flexible-static-program-analyzers-with-pql-22ea,MiMo-V2.6-Pro,methods,10,unverified,exact_page,"High-level program views can be hierarchically built out of previously constructed, simpler ones."
+29,integrating-q-learning-with-branch-and-bound-for-the-job-s-2-12a6,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+30,a-pedagogy-first-approach-to-integrating-large-language-mode-f173,MiMo-V2.6-Pro,sample_and_unit,,no_claim,no_page_or_quote,
+30,a-pedagogy-first-approach-to-integrating-large-language-mode-f173,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+30,a-pedagogy-first-approach-to-integrating-large-language-mode-f173,MiMo-V2.6-Pro,comparators,3,unverified,exact_page,But passive reliance on LLMs becomes problematic when higher-order thinking is required
+31,07802-yuj-30c4,MiMo-V2.6-Pro,methods,4,unverified,exact_page,we adopt sentence embedding models to extract information from the text such as Sentence-BERT (Reimers and Gurevych 2019
+32,a-knowledge-based-approach-for-guided-development-of-infrast-40fb,MiMo-V2.6-Pro,sample_and_unit,19,unverified,exact_page,"The participants for the M24 experiment included 9 non-experts, 5 TOSCA experts, and 4 use case owners"
+32,a-knowledge-based-approach-for-guided-development-of-infrast-40fb,MiMo-V2.6-Pro,comparators,22,unverified,not_found,"As expected, the TOSCA experts finished the task sooner than the non-expert students."
+33,applsci-16-04720-a8f4,MiMo-V2.6-Pro,costs,16,unverified,exact_page,"Key excerpts from these core papers—such as central arguments, data-driven conclusions, and methodological descriptions—"
+33,applsci-16-04720-a8f4,MiMo-V2.6-Pro,reproducibility,13,unverified,exact_page,These serve as essential inputs for semantic association mining and dual-graph fusion discussed in Sections 4.4 and 4.5
+34,directed-driftan-efficient-and-stealthy-bias-injection-metho-ef89,MiMo-V2.6-Pro,methods,4,unverified,exact_page,"By adjusting the parameter 𝜆, we control the extent of the drift."
+34,directed-driftan-efficient-and-stealthy-bias-injection-metho-ef89,MiMo-V2.6-Pro,negative_results,7,unverified,exact_page,"Silent Branding (trigger required) achieves the highest 𝐴𝑆𝑅𝑉𝐶 and confidence score, but it requires an explicit trigger"
+34,directed-driftan-efficient-and-stealthy-bias-injection-metho-ef89,MiMo-V2.6-Pro,reproducibility,5,unverified,exact_page,𝑁𝑠𝑎𝑚𝑝𝑙𝑒𝑠 represents the total number of generated samples
+35,double-deep-q-network-based-multi-objective-optimization-f-2-a375,MiMo-V2.6-Pro,methods,7,unverified,not_found,"By identifying the longest time from node 𝑆 to node 𝐸, the corresponding critical path Π can be found."
+36,ebsco-fulltext-10-28-2026-ec9f,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+37,electronics-15-00844-v2-8ec8,MiMo-V2.6-Pro,methods,19,unverified,exact_page,the corresponding candidate edge is treated as a low-confidence connection and excluded from the refined graph structure
+38,gradient-orthogonal-low-rank-adaptation-framewor-5f86,MiMo-V2.6-Pro,comparators,6,unverified,exact_page,we include representative parameter-efficient fine-tuning (PEFT) baselines based on low-rank adaptation and its variants
+38,gradient-orthogonal-low-rank-adaptation-framewor-5f86,MiMo-V2.6-Pro,comparators,8,unverified,exact_page,"We integrate G2LoRA with representative LLM-as-Aligner approaches, including G2P2 [35] and GraphCLIP [46], and assess it"
+39,hierarchical-goals-contextuali-b5e9,MiMo-V2.6-Pro,costs,10,unverified,exact_page,we relied on a hand-crafted hierarchy as well as a handcrafted reward decomposition.
+40,hierarchical-reinforcement-learning-for-dynamic-collision-a--48e0,MiMo-V2.6-Pro,methods,5,unverified,exact_page,The framework consists of two reinforcement learning agents: a high-level PPO agent responsible for global decision-maki
+40,hierarchical-reinforcement-learning-for-dynamic-collision-a--48e0,MiMo-V2.6-Pro,methods,8,unverified,exact_page,"By incorporating the one-hot encoded high-level command features, the low-level agent can more accurately capture the hi"
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,source_availability,17,unverified,exact_page,The data and code used in this study are available at https://github.com/1101Floor/TICNet.
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,comparators,11,unverified,exact_page,The Transformer [44] and TCN-Transformer (TCN-Trans.) [57] leverage self-attention to model temporal dependencies
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,comparators,11,unverified,exact_page,GAT-LSTM [48] and GATransformer (GATrans.) [58] explicitly model inter-vessel spatial interactions by aggregating neighb
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,methods,5,unverified,exact_page,"KLDA achieves similarity judgment based solely on distribution shape, independent of the original numerical amplitude, b"
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,methods,7,unverified,exact_page,element-wise products across cross-channel features to enable explicit multi-ship interaction modeling
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,methods,7,unverified,exact_page,"Traditional temporal modeling encodes multi-feature vectors into unified tokens, collapsing inter-variable correlations "
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,methods,10,unverified,exact_page,we adopt a cascaded decoding strategy that progressively refines future predictions by reusing high-confidence short-ter
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,methods,13,unverified,not_found,the Friedman [60] test rejects the null hypothesis of equivalent performance across all models in every metric-region co
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,costs,14,unverified,exact_page,"substantially longer than the version without CTD (1.51s), indicating that CTD is the primary contributor to increased t"
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,negative_results,14,unverified,exact_page,"using only transposition (feature stream) data results in MAE increases of 40.74%, 18.52%, and 72.50%"
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,negative_results,12,unverified,exact_page,"exhibit limited performance in the complex, multi-vessel maritime environment, with ADE exceeding 1000m across all three"
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,limitations,16,unverified,exact_page,"computational efficiency, particularly the training and inference latency of the KLDA module and the CTD, requires optim"
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,limitations,16,unverified,exact_page,the current framework relies solely on kinematic AIS features and omits critical marine environmental factors such as wi
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,limitations,14,unverified,exact_page,"Maritime vessel behavior is influenced by complex factors such as human decision-making, rendering uncertainty modeling "
+41,klda-ticnet-transposition-interaction-convolutional-network--6faf,MiMo-V2.6-Pro,reproducibility,14,unverified,exact_page,"the temporal-stream-only variant has 0.66M parameters and takes 1.42s, while the transposed feature-stream-only variant "
+42,mask-guided-rationales-meet-llms-hybrid-encoder-llm-question-ec4d,GLM-5.3-Flash,methods,13,quote_elsewhere,elsewhere_in_paper,predictions should remain comparatively stable when only the rationale is retained (sufficiency) and should weaken when 
+42,mask-guided-rationales-meet-llms-hybrid-encoder-llm-question-ec4d,GLM-5.3-Flash,methods,17,unverified,exact_page,RTP mitigates this by injecting lightweight tags around MGRE-salient tokens (or label-specific spans) directly in the QA
+42,mask-guided-rationales-meet-llms-hybrid-encoder-llm-question-ec4d,GLM-5.3-Flash,limitations,59,unverified,exact_page,the model robustness degrades under severe obfuscation that breaks lex­ical cues or induces tokenizer mismatch
+42,mask-guided-rationales-meet-llms-hybrid-encoder-llm-question-ec4d,GLM-5.3-Flash,limitations,60,unverified,exact_page,the strongest Ex-HateQA results are partly en­abled by the use of an instruction-tuned 7B model
+42,mask-guided-rationales-meet-llms-hybrid-encoder-llm-question-ec4d,GLM-5.3-Flash,reproducibility,22,unverified,not_found,the implementation details that materially affect reproducibility are the prompt strings ... the decoding configuration
+42,mask-guided-rationales-meet-llms-hybrid-encoder-llm-question-ec4d,MiMo-V2.6-Pro,problem,1,unverified,not_found,Effective hate speech moderation must address explainibility and bias alongside raw classification accuracy.
+42,mask-guided-rationales-meet-llms-hybrid-encoder-llm-question-ec4d,MiMo-V2.6-Pro,comparators,25,unverified,exact_page,concealed rationales per token is 50% of the entire reasoning label. BERT-RP
+42,mask-guided-rationales-meet-llms-hybrid-encoder-llm-question-ec4d,MiMo-V2.6-Pro,negative_results,47,unverified,exact_page,"falling from 61.8% to 48.2%, while abstention accuracy approaches near-perfect levels at 𝑁= All, as shown in Table 52,"
+42,mask-guided-rationales-meet-llms-hybrid-encoder-llm-question-ec4d,MiMo-V2.6-Pro,negative_results,34,unverified,no_page_or_quote,7.6%
+42,mask-guided-rationales-meet-llms-hybrid-encoder-llm-question-ec4d,MiMo-V2.6-Pro,limitations,59,unverified,exact_page,"Additionally, the model robustness degrades under severe obfuscation that breaks lex-"
+42,mask-guided-rationales-meet-llms-hybrid-encoder-llm-question-ec4d,MiMo-V2.6-Pro,limitations,60,unverified,exact_page,the strongest Ex-HateQA results are partly enabled by the use of an instruction-tuned 7B model.
+42,mask-guided-rationales-meet-llms-hybrid-encoder-llm-question-ec4d,MiMo-V2.6-Pro,limitations,58,unverified,runs_onto_next_page,we do not recommend exposing full extractive rationales to untrusted end users in a high-frequency public interface.
+44,multiscale-contrastive-learning-for-node-clustering-based-on-cb61,MiMo-V2.6-Pro,negative_results,13,unverified,exact_page,"In Fig. 9(c) and (g), ΛFR is higher for MCVGAE-Cluster than MCVGAE during the ﬁrst 150 epochs on Citeseer and Wiki."
+44,multiscale-contrastive-learning-for-node-clustering-based-on-cb61,MiMo-V2.6-Pro,limitations,14,unverified,exact_page,"Constructing a cluster-oriented graph involves operations that scale with the number of edges and nodes, reducing scalab"
+45,s0146411625700361-4c4d,GLM-5.3-Flash,source_availability,,no_claim,no_page_or_quote,
+45,s0146411625700361-4c4d,GLM-5.3-Flash,methods,3,adjacent_page,adjacent_page,the control loop invariant is expressed as a conjunction of the formalized requirement and an extra invariant that conta
+45,s0146411625700361-4c4d,GLM-5.3-Flash,methods,7,quote_elsewhere,elsewhere_in_paper,"These lemmas, in turn, support the proofs of lemmas for derived patterns that incorporate such basic pattern instances."
+45,s0146411625700361-4c4d,GLM-5.3-Flash,methods,16,quote_elsewhere,elsewhere_in_paper,"The algorithms for constructing derived extra invariant patterns and lemmas for them, as well as methods for proving the"
+45,s0146411625700361-4c4d,GLM-5.3-Flash,methods,28,adjacent_page,runs_onto_next_page,"all parameter values of the proposed proof schemes are uniquely defined by the verification condition, requirement, and "
+45,s0146411625700361-4c4d,GLM-5.3-Flash,methods,3,unverified,not_found,"the tool stores all derived requirement patterns, their associated extra invariant patterns, and the corresponding lemma"
+45,s0146411625700361-4c4d,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+45,s0146411625700361-4c4d,MiMo-V2.6-Pro,costs,28,unverified,not_found,"Therefore, this term was a parameter of the proof scheme and had to be specified manually."
+45,s0146411625700361-4c4d,MiMo-V2.6-Pro,limitations,30,adjacent_page,runs_onto_next_page,"In our work, we use only the template-based method and do not combine it with other methods."
+46,semantic-drift-compensation-for-class-incremental-learning-45f5,MiMo-V2.6-Pro,sample_and_unit,6,unverified,exact_page,"We have used the following datasets: CUB-200-2011 [42], Flowers-102 [28], Caltech-101 [11], CIFAR100 [18], and ImageNet-"
+46,semantic-drift-compensation-for-class-incremental-learning-45f5,MiMo-V2.6-Pro,comparators,8,unverified,exact_page,"exemplar based (iCaRL-CNN [30], iCaRL-NME [30], Rebalance [15])"
+46,semantic-drift-compensation-for-class-incremental-learning-45f5,MiMo-V2.6-Pro,methods,6,unverified,exact_page,"We therefore propose to combine existing methods (E-LwF, E-EWC and E-MAS) with semantic drift compensation"
+47,uncertainty-aware-cloud-resource-management-via-fuzzy-adap-2-7303,MiMo-V2.6-Pro,limitations,16,unverified,exact_page,"This may pose challenges in ultralow-latency scenarios, such as real-time gaming or financial trading, where decisions m"
+48,vikser-visual-knowledge-driven-self-reinforcing-reasoning-fr-f7ed,MiMo-V2.6-Pro,methods,6,unverified,exact_page,"This iterative process continues until either a satisfactory result is obtained (i.e., yielding a positive S ref) or a m"
+49,homo-agenticus-in-the-age-of-agentic-ai-agency-loops-po-2025-7aae,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,
+49,homo-agenticus-in-the-age-of-agentic-ai-agency-loops-po-2025-7aae,MiMo-V2.6-Pro,comparators,4,unverified,exact_page,participants performed tasks alongside a humanoid robot named Cozmo that was presented as an intentional agent
+49,homo-agenticus-in-the-age-of-agentic-ai-agency-loops-po-2025-7aae,MiMo-V2.6-Pro,methods,5,unverified,exact_page,"cycles where power circulates through processes of delegation, attribution, contingency, reassertion, and reconfiguratio"
+50,metz-vol-25-no-6-p629-630-verification-and-process-oriented--cc39,MiMo-V2.6-Pro,source_availability,,no_claim,no_page_or_quote,

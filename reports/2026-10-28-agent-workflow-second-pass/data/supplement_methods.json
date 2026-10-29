@@ -1,0 +1,227 @@
+[
+  {
+    "rank": 1,
+    "file": "electronics-15-03452-v2.pdf",
+    "page": 20,
+    "section": "8.2 Computational Cost of Reflection",
+    "method": "Cost of reflection",
+    "quote": "+68% tokens relative to ReAct",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 1,
+    "file": "electronics-15-03452-v2.pdf",
+    "page": 22,
+    "section": "10 Conclusions and Future Work",
+    "method": "Heuristic drift estimates",
+    "quote": "Drift α estimates are derived from heuristic trajectory data",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 1,
+    "file": "electronics-15-03452-v2.pdf",
+    "page": 18,
+    "section": "7.10 Cross-domain benchmark results, Table 9",
+    "method": "Negative code-domain transfer",
+    "quote": "CodeSim (Code)",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 2,
+    "file": "Thought Management System for long-horizon, goal-driven LLM agents.pdf",
+    "page": 16,
+    "section": "Code availability",
+    "method": "Reproducibility limit",
+    "quote": "repository URL to be added upon acceptance",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 3,
+    "file": "Knowledge-Driven_Reasoning_for_Mobile_Agentic_AI_Concepts_Approaches_and_Directions.pdf",
+    "page": 8,
+    "section": "IV.C Results and analysis",
+    "method": "Context amount and composition confounded",
+    "quote": "varies knowledge amount and composition jointly",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 3,
+    "file": "Knowledge-Driven_Reasoning_for_Mobile_Agentic_AI_Concepts_Approaches_and_Directions.pdf",
+    "page": 8,
+    "section": "IV.C Results and analysis",
+    "method": "Non-monotonic knowledge utility",
+    "quote": "redundancy and reconciliation",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 5,
+    "file": "Towards_Communication_Efficient_Multi-Agent_Cooperations_Reinforcement_Learning_and_LLM.pdf",
+    "page": 10,
+    "section": "V Simulation results",
+    "method": "Attribute byte savings to MAPPO-BDP",
+    "quote": "60% reduction in communication overhead",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 6,
+    "file": "Mutual_Influence_AI_Trust-Bas.pdf",
+    "page": 7,
+    "section": "5.1 Results",
+    "method": "Approval is not agreement",
+    "quote": "We did not observe a statistically significant change in approval rates",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 7,
+    "file": "Embodied_Tree_of_Thoughts_Deliberate_Manipulation_Planning_With_Embodied_World_Model.pdf",
+    "page": 8,
+    "section": "IV.E Analysis of failure, module accuracy and efficiency",
+    "method": "Verifier cost dominates",
+    "quote": "overhead is dominated by the Judge module",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 7,
+    "file": "Embodied_Tree_of_Thoughts_Deliberate_Manipulation_Planning_With_Embodied_World_Model.pdf",
+    "page": 8,
+    "section": "IV.F Parallel Acceleration",
+    "method": "Actual parallel rollout measurement",
+    "quote": "reduces the simulation time of Task 5 from 55 s to 26 s",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 8,
+    "file": "Confidence-Aware_Tree-of-Thoughts_A_Federated_Safety_Net_for_VLM_Agents_in_Smart-Home_Consumer_Electronics.pdf",
+    "page": 5,
+    "section": "III.D Cost-weighted safety metric",
+    "method": "False refusal and false execution",
+    "quote": "false-refusal rate",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 8,
+    "file": "Confidence-Aware_Tree-of-Thoughts_A_Federated_Safety_Net_for_VLM_Agents_in_Smart-Home_Consumer_Electronics.pdf",
+    "page": 11,
+    "section": "VI.G comparison control",
+    "method": "Self-reflection control",
+    "quote": "0 label flips in 1,000 reflections",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 9,
+    "file": "Hierarchical process-level generative reward modeling with.pdf",
+    "page": 20,
+    "section": "9 Limitations",
+    "method": "Offline deployment and cost",
+    "quote": "offline reward-labeling and batch-RLHF method",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 11,
+    "file": "00178-LaN (1).pdf",
+    "page": 4,
+    "section": "4 Formal Framework",
+    "method": "Check task effects",
+    "quote": "checks the current world state against the defined task effects",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 11,
+    "file": "00178-LaN (1).pdf",
+    "page": 8,
+    "section": "6.3 Evaluation Metrics",
+    "method": "Task difficulty before comparison",
+    "quote": "planning time, number of planning",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 14,
+    "file": "frai-9-1820827.pdf",
+    "page": 17,
+    "section": "4.6 Decomposition",
+    "method": "Matched fixed-rule control",
+    "quote": "not statistically robust",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 14,
+    "file": "frai-9-1820827.pdf",
+    "page": 22,
+    "section": "4.14.2 Structural shock",
+    "method": "Refreshing targets confounds model contribution",
+    "quote": "frozen target list",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 19,
+    "file": "Exploring How Knowledge Workers Situate an Organisationally Embedded LLM Agent in their Collaborative Work Practices.pdf",
+    "page": 31,
+    "section": "4.4 Remixing meeting outputs",
+    "method": "Human verification effort",
+    "quote": "reviewed and edited as necessary",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 25,
+    "file": "Advances in LLM-Assisted Combinatorial Optimization.pdf",
+    "page": 7,
+    "section": "3.2.3 CO model verification",
+    "method": "Execution versus semantic acceptance",
+    "quote": "executability checking",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 28,
+    "file": "Design_of_flexible_static_program_analyzers_with_PQL.pdf",
+    "page": 6,
+    "section": "3.3 Detailed Program Design Model",
+    "method": "Structural dependency checking",
+    "quote": "Which program statements affect",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 26,
+    "file": "A_Formal_Perspective_for_Service_Coordination_Framework_in_Service_Oriented_Architecture.pdf",
+    "page": 10,
+    "section": "5 Conclusion",
+    "method": "Separate communication and computation",
+    "quote": "separates the communication behavior from the computation behavior",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 42,
+    "file": "Mask-guided-rationales-meet-LLMs--Hybrid-encoder-LLM-question-_2026_Applied-.pdf",
+    "page": 9,
+    "section": "4 method discussion",
+    "method": "Presence does not establish faithfulness",
+    "quote": "Extractiveness by itself does not establish",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 42,
+    "file": "Mask-guided-rationales-meet-LLMs--Hybrid-encoder-LLM-question-_2026_Applied-.pdf",
+    "page": 13,
+    "section": "4.5.4 Faithfulness constraints",
+    "method": "Evidence sufficiency and removal tests",
+    "quote": "sufficiency and comprehensiveness",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 43,
+    "file": "mathematics-14-01568-v2.pdf",
+    "page": 7,
+    "section": "3.2.2 Structure-aware learning",
+    "method": "Bounded structural context",
+    "quote": "under a fixed budget",
+    "exact_page_verified": true
+  },
+  {
+    "rank": 45,
+    "file": "S0146411625700361.pdf",
+    "page": 2,
+    "section": "Introduction",
+    "method": "Requirement plus supporting invariant",
+    "quote": "an extra invariant that contains structural information",
+    "exact_page_verified": true
+  }
+]

@@ -1,0 +1,11 @@
+project,session,ts,chars,origin_kind,prompt_source,turn_origin,limit_report
+G--vast,323bb246-8f84-4a5f-9db9-05d25c675900,2026-10-25T02:51:00.639Z,311,human,sdk,human,False
+G--vast,323bb246-8f84-4a5f-9db9-05d25c675900,2026-10-25T02:55:32.175Z,102,human,sdk,human,False
+G--vast,323bb246-8f84-4a5f-9db9-05d25c675900,2026-10-25T03:12:24.955Z,101,human,sdk,human,False
+G--vast,323bb246-8f84-4a5f-9db9-05d25c675900,2026-10-25T03:12:32.218Z,29,,,,False
+G--vast,33c1d9ba-a568-4d58-9d78-92871cb029a3,2026-10-25T02:51:00.639Z,311,human,sdk,human,False
+G--vast,33c1d9ba-a568-4d58-9d78-92871cb029a3,2026-10-25T02:55:32.175Z,102,human,sdk,human,False
+G--vast,33c1d9ba-a568-4d58-9d78-92871cb029a3,2026-10-25T03:13:21.171Z,101,human,sdk,human,False
+G--vast,33c1d9ba-a568-4d58-9d78-92871cb029a3,2026-10-25T03:13:55.670Z,42,,,,False
+G--vast,33c1d9ba-a568-4d58-9d78-92871cb029a3,2026-10-25T03:15:11.246Z,28,human,sdk,human,False
+G--vast,33c1d9ba-a568-4d58-9d78-92871cb029a3,2026-10-27T15:52:36.448Z,403,human,sdk,human,False

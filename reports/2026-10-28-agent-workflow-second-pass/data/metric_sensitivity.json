@@ -1,0 +1,21 @@
+{
+  "shadow_price_original_formula": {
+    "n": 24,
+    "median": 3.0043257025,
+    "total": 106.75817887899998
+  },
+  "shadow_price_four_component_formula": {
+    "n": 24,
+    "median": 3.091945986,
+    "total": 117.078010788
+  },
+  "followup_censoring": {
+    "cutoff": "2026-10-28T21:00:00+00:00",
+    "code_commits": 74,
+    "at_least_24h_followup": 68,
+    "at_least_72h_followup": 51
+  },
+  "codex_named_delegate_tool_results": 12,
+  "tool_result_before_actual_receipt_completion": 12,
+  "causal_status": "Sensitivity checks only; retain original attribution and fitted rates, not a replacement baseline."
+}

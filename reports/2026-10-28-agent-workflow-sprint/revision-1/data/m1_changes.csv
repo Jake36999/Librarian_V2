@@ -1,0 +1,62 @@
+hash,family,commit_time,subject,A0,A1,A2,requests,fresh_tokens,cache_read_tokens,output_tokens,weighted_index,bookkeeping_commits_in_window,worker_requests,guardian_requests,orchestration_requests,max_gap_h,insertions,survival_ratio,drafted_by_delegate,reviewed_by_delegate
+ad02715,claude,2026-10-24T11:56:13+01:00,"Model and service adapters: invocation plans, expectation packs, speech to text,",True,True,True,231,600316,91662023,220200,5165520,2,0,0,0,1.5,3456,0.979,False,False
+a467710,claude,2026-10-24T11:57:52+01:00,Doctor and the test run check which checkout's code is running,True,True,True,7,11166,4584481,7125,224158,0,0,0,0,0.0,121,1.0,False,False
+77315cc,claude,2026-10-24T12:02:45+01:00,Choosing a lead keeps the Scribe and Clerk positions,True,True,True,30,37782,20395976,20659,941820,0,0,0,0,0.1,42,0.976,False,True
+f014b2f,claude,2026-10-24T12:09:25+01:00,"One Windows-safe liveness check, pinned to the process that wrote a record",True,True,True,21,35605,15081022,24646,741023,0,0,0,0,0.1,351,0.738,True,True
+1a8adf6,claude,2026-10-24T12:10:44+01:00,Stopping a Core cancels its work first and records each phase,True,True,True,3,3348,2207577,2009,100302,0,0,0,0,0.0,182,0.819,False,False
+4873894,claude,2026-10-24T12:41:15+01:00,Session events go through the active Core's writer,True,True,True,37,48340,28259048,31672,1312928,0,0,0,0,0.5,171,0.93,False,False
+4cfc6eb,claude,2026-10-24T12:42:58+01:00,"Shutdown review fixes: no admission race, no vault write after the lease, MCP po",True,True,True,7,9651,5530775,8857,267638,0,0,0,0,0.0,107,0.822,False,False
+7a48f0c,claude,2026-10-24T15:22:58+01:00,Unknown tool support stays unknown; a migrated preset route shows as selected,True,True,True,13,771945,9689097,8015,1194312,0,0,0,0,2.7,58,1.0,False,False
+557126c,claude,2026-10-24T15:24:07+01:00,A static guard freezes direct SQLite construction in serving paths,True,True,True,5,7610,4067014,5836,194648,0,0,0,0,0.0,88,0.761,False,False
+3015bc2,claude,2026-10-24T15:25:23+01:00,A thread cut off by a stop reopens parked and resumable,True,True,True,5,7744,4101538,6201,197615,0,0,0,0,0.0,59,0.915,False,False
+8ccce9b,claude,2026-10-24T15:29:55+01:00,"Desk lookups, the topic list and ranking settings read through IndexService",True,False,False,9,15532,7509090,7451,347756,0,0,0,0,0.1,10,0.5,True,False
+6b02142,claude,2026-10-24T15:57:25+01:00,A question waiting for a person no longer holds the vault writer,True,False,False,48,92812,42607627,65469,2069375,1,0,0,0,0.5,176,0.534,False,False
+d177d55,claude,2026-10-24T16:10:49+01:00,MCP reaches a vault only through its running Core,True,True,True,27,28930,25607143,18527,1134720,0,0,0,0,0.2,432,0.94,False,False
+8a34cc7,claude,2026-10-24T17:10:19+01:00,Close the four P1 gaps from the 2026-10-24 review,True,True,True,75,197931,16401624,85969,1198491,1,0,0,0,1.0,540,0.976,False,True
+119ded6,claude,2026-10-24T17:27:28+01:00,Replace-existing writes bring the revision their caller read,True,True,True,60,89415,18079050,58281,1048411,0,0,0,0,0.3,525,0.962,False,True
+344a49c,claude,2026-10-25T22:11:54Z,Fail closed on shutdown; verify model identity; keep redacted session evidence,True,True,True,34,356625,12181864,20415,928433,2,0,0,0,29.7,1286,0.908,False,True
+d2f7f81,claude,2026-10-25T22:21:43Z,Render and parse OpenAI-compatible chat in a trusted adapter (ADAPT-04),True,True,True,10,15405,3970281,8370,208537,1,0,0,0,0.2,388,1.0,True,False
+b242d8b,claude,2026-10-25T22:34:19Z,Render and parse Anthropic Messages in a trusted adapter (ADAPT-05),True,True,True,15,16640,6188945,11181,310337,2,0,0,0,0.2,325,0.997,True,False
+6aaf35b,claude,2026-10-25T22:49:24Z,Approved transports for endpoint URLs; local hosts favour interactive turns (ADA,True,True,True,14,22189,6036340,10582,307369,0,0,0,0,0.2,257,0.837,True,False
+999fe1a,claude,2026-10-25T23:04:13Z,Every model call goes through the invocation boundary (ADAPT-06 complete),True,True,True,21,22912,9561233,14212,464566,1,0,0,0,0.2,145,0.8,True,False
+e8b5d15,claude,2026-10-26T00:36:12Z,L1 qualification is a two-step tool continuation probe (ADAPT-07),True,True,True,26,459238,12149761,17445,1018037,2,0,0,0,1.5,259,1.0,True,False
+b70af09,claude,2026-10-26T00:55:22Z,Dialect vocabulary v1 for model expectations (ADAPT-08),True,True,True,16,26236,8225595,12112,405741,1,0,0,0,0.3,391,1.0,True,False
+33fb3b5,claude,2026-10-28T15:46:56Z,Release the vault writer before embedding during promotion and adoption (INDEX-0,True,True,True,27,538374,14409444,18573,1192753,0,0,0,0,62.9,431,0.977,False,True
+a328e7c,claude,2026-10-28T15:52:37Z,Make the DeepInfra delegation runner safe for parallel agents,True,True,True,16,26887,9308410,11004,445691,1,0,0,0,0.1,363,1.0,True,False
+48b61a8,codex,2026-10-24T18:09:00+01:00,Preserve safe provider continuation metadata,True,True,True,3760,15717156,443077632,1693033,40264094,1,1906,27,478,101.6,315,0.892,False,False
+c264b9a,codex,2026-10-24T18:15:10+01:00,Surface interrupted vault operations before admission,True,True,True,41,97740,6698880,14058,423350,0,18,1,13,0.1,444,0.995,False,False
+5708c39,codex,2026-10-24T21:30:36+01:00,Require epoch-bound event stream resynchronization,True,True,True,26,117001,2959104,12383,285183,0,0,2,4,3.3,232,1.0,False,False
+2e95158,codex,2026-10-24T21:53:08+01:00,Move interleaved index work behind callback gateway,True,True,True,132,466465,17715584,55942,1401577,0,46,2,22,0.4,351,0.983,False,False
+b6ef33b,codex,2026-10-24T22:48:40+01:00,Persist vault-scoped role route bindings,True,True,True,95,484891,13017728,43253,1180492,1,21,3,11,0.9,600,0.955,False,True
+c6d189e,codex,2026-10-25T01:40:50Z,Run browser smoke checks against the current checkout,True,True,True,106,232544,18674176,45707,1165944,0,39,0,17,3.9,32,1.0,False,False
+14837a2,codex,2026-10-25T01:51:04Z,Execute chat and background work through canonical role bindings,True,True,True,30,97088,7741696,17936,480050,0,0,1,0,0.2,452,0.993,False,False
+4e56ca7,codex,2026-10-25T02:44:09Z,Bind service execution and picker readiness to canonical roles,True,True,True,63,426752,12685952,45711,1118668,1,0,4,0,0.9,890,0.989,False,False
+86941d3,codex,2026-10-25T02:58:53Z,Move authoring and Session index work into Core callbacks,True,True,True,31,66678,8380416,28413,516725,0,0,0,0,0.2,212,0.995,False,False
+5b3be1f,codex,2026-10-25T02:58:56Z,Keep macro approval waits outside the vault writer,True,True,True,2,13698,134528,217,19979,0,0,2,0,0.0,200,0.97,False,False
+90b1945,codex,2026-10-25T04:24:00Z,Guard staging revision accepts and route upkeep SQL through Core,True,True,True,83,280532,16112128,59146,1163616,1,0,2,2,1.4,686,0.951,False,False
+fc58af2,codex,2026-10-25T05:02:55Z,Plan taxonomy writes through Core and retain partial topic acceptance,True,True,True,49,61247,12366848,71872,843484,1,0,1,0,0.6,867,0.973,False,False
+ce88b04,codex,2026-10-25T10:43:11Z,Serialize approved-batch state and track background shutdown,True,True,True,64,243732,10260864,37716,806311,1,0,3,4,5.7,681,0.981,False,False
+508959a,codex,2026-10-25T11:20:42Z,Route catalogue promotion through guarded Core-owned state,True,True,True,46,85251,11077376,46943,717154,1,0,4,1,0.6,762,0.971,False,False
+870f2e5,codex,2026-10-25T11:58:19Z,Guard single-source acceptance and retain original attachments,True,True,True,71,254423,12059648,51027,942049,1,0,5,1,0.6,817,0.967,False,False
+c48e6a0,codex,2026-10-25T12:42:35Z,Guard source-only staging batches through Core-owned state,True,True,True,40,64326,8687488,35312,553970,1,0,4,2,0.7,478,0.944,False,False
+87e2460,codex,2026-10-25T13:21:11Z,Guard ordered mixed-kind staging acceptance through Core,True,True,True,44,66124,12910336,51135,788484,1,0,4,1,0.6,630,0.994,False,False
+89e609d,codex,2026-10-25T13:32:19Z,Keep vault watcher alive across unreadable document observations,True,True,True,20,89512,2123776,14821,233622,0,0,1,0,0.2,406,0.993,False,False
+e40a4a6,codex,2026-10-25T15:42:15Z,Exclude Core fingerprint reads from same-file atomic replacement,True,True,True,36,225680,4859136,28115,532542,1,0,4,0,2.2,181,0.939,False,False
+ded98c0,codex,2026-10-25T15:44:24Z,Refuse direct SQLite fallback in Core-serving contexts,True,True,True,5,12188,901760,2810,59639,0,0,1,0,0.0,294,0.99,False,False
+d31cda5,codex,2026-10-25T15:54:02Z,Exercise MCP revision binding through coordinated Core,True,True,True,20,20899,4251008,10325,233064,0,0,1,5,0.2,18,1.0,False,False
+f11e98d,codex,2026-10-25T16:24:14Z,Harden Core read and auxiliary-store lifetimes under concurrent clients,True,True,True,39,75540,10331520,35229,631158,1,0,1,4,0.5,502,0.974,False,False
+1abafb8,codex,2026-10-25T16:32:00Z,Record native Core contention metrics and remaining acceptance scope,True,True,True,8,16177,2455296,9375,152176,0,0,1,2,0.1,233,0.966,False,False
+c06d1b6,codex,2026-10-26T03:16:29Z,Isolate untrusted prompt context from stable instructions (ADAPT-09),True,True,True,648,2263122,66274432,248421,5915784,1,413,6,153,10.7,309,1.0,False,False
+6960d84,codex,2026-10-26T12:15:08Z,"Complete adapter authoring, cancellation, and bounded tools",True,True,True,294,1797922,31180032,136966,3595635,1,173,7,43,9.0,1553,0.995,False,False
+74c6081,codex,2026-10-26T17:27:21Z,Harden index snapshots and reviewed file workflows,True,True,True,294,844013,36617472,95085,2695816,1,175,13,49,5.2,923,0.97,False,False
+2e9df4a,codex,2026-10-27T00:23:54Z,Exercise real-process crash recovery,True,True,True,287,1109908,34275968,92854,2858481,2,127,43,55,6.9,486,0.977,False,False
+f3b0508,codex,2026-10-27T00:34:49Z,Isolate revision conflict fixture from watcher timing,True,True,True,69,127922,9509504,25996,613970,0,14,19,4,0.2,6,1.0,False,False
+84b90a8,codex,2026-10-27T10:46:01Z,Complete authenticated Host force-stop recovery,True,True,True,138,265662,23763968,33213,1355046,1,44,23,30,10.2,198,0.99,False,False
+ae00300,codex,2026-10-27T11:12:31Z,Characterize INDEX-05 scale and sustained traffic,True,True,True,190,360330,15815040,51154,1199909,1,75,26,52,0.4,529,1.0,False,False
+bcf687a,codex,2026-10-27T15:58:25Z,Harden packaged adapter prerequisites,True,True,True,167,592803,26695936,54816,1885642,1,69,22,27,4.8,881,0.998,False,False
+6fb2389,codex,2026-10-27T16:24:23Z,Add clean installed wheel smoke,True,True,True,225,441519,10982656,48996,1077700,1,117,17,52,0.4,469,1.0,False,False
+788540e,codex,2026-10-27T16:43:35Z,Add packaged Browser and Cowork smoke,True,True,True,169,363824,16571776,46827,1216853,1,70,25,43,0.3,678,1.0,False,False
+ef143be,codex,2026-10-27T21:02:06Z,Characterize unsupported external handles,True,True,True,158,573998,23284736,42198,1679496,1,85,16,22,4.3,281,1.0,False,False
+901ec65,codex,2026-10-28T02:30:22Z,Characterize large attachment promotion,True,True,True,119,476407,19843328,38233,1427477,1,55,16,25,5.5,206,0.995,False,False
+6e1a355,codex,2026-10-28T14:30:01Z,Add auditable DeepInfra delegation runner,True,True,True,265,1121548,36664576,76890,2903482,1,76,36,31,12.0,467,0.908,False,False
+fd8a0ca,codex,2026-10-28T14:30:07Z,Bound large attachment promotion scans,True,True,True,2,4658,303232,236,17818,0,0,1,0,0.0,111,0.937,False,False

@@ -1,0 +1,41 @@
+{
+ "items": 60,
+ "verdicts": {
+  "supported": 45,
+  "partly_supported": 12,
+  "not_supported": 3
+ },
+ "by_field": {
+  "costs": {
+   "supported": 10
+  },
+  "limitations": {
+   "supported": 9,
+   "not_supported": 1
+  },
+  "methods": {
+   "supported": 16,
+   "partly_supported": 12,
+   "not_supported": 2
+  },
+  "negative_results": {
+   "supported": 10
+  }
+ },
+ "by_reader": {
+  "GLM-5.3": {
+   "supported": 8,
+   "partly_supported": 1
+  },
+  "GLM-5.3-Flash": {
+   "partly_supported": 3,
+   "supported": 7
+  },
+  "MiMo-V2.6-Pro": {
+   "supported": 30,
+   "partly_supported": 8,
+   "not_supported": 3
+  }
+ },
+ "calls_completed": 6
+}

@@ -1,0 +1,23 @@
+GENERIC WORKFLOW PROPOSAL FOR CRITIQUE
+
+This is an abstract proposal authored for review. It contains no private transcript extracts, repository content, local measurements or customer-specific research.
+
+Goal: let a lead assistant direct, correct and integrate while inexpensive remote inference workers perform most execution. One-shot proposal generation currently leaves the lead to execute and repair. The proposed improvement is a managed work package, not a prescribed autonomous framework.
+
+Roles: the lead owns objectives, protected invariants, consequential ambiguity and integration. Workers own scoped context acquisition, implementation, test creation and bounded repairs. A deterministic controller supplies local search/files/commands, budgets, isolation, paid-attempt receipts and durable job state. A separate critic makes evidence-linked recommendations; agreement is not proof.
+
+Contract boundaries:
+1. Admission pins input revision, allowed effects, environment, protected acceptance evidence, resource limits and success criteria. Exploratory outputs remain labeled exploratory.
+2. Worker ownership permits bounded retrieval and execution in an isolated worktree or staging area. A worker can propose changed acceptance criteria but cannot silently weaken them. Fixed pipelines should be compared with general tool-using agents.
+3. Completion returns artifact references and hashes, the base revision, actual checks and results recorded by the controller, unresolved findings, cost and proposed disposition. Large logs stay available behind references. Mechanical applicability, semantic validity and integration validity are separate predicates.
+4. Escalation preserves state for ambiguity, exhausted budgets and repeated failures. Truncated generation, unknown API outcome, completed generation and accepted work are distinct states. Local idempotency cannot guarantee a lost paid API response was never billed. Resume only after reconciliation.
+
+Code verification uses protected behavioral tests, pre-change reference outputs, bug reproducers and regression tests. Worker-authored tests supplement the existing contract. Research verification separates source identity, anchor presence, semantic support and coverage. Independent review is supplemented by calibrated sampling of passing results and targeted review of consequential claims.
+
+Implement execution and verification boundaries before increasing parallelism. Partition ownership of writable artifacts, serialize coupled edits, permit bounded parallel read-only challenges. Use the same contract through thin adapters for different lead assistants. Record progress durably; notifications are optional host capabilities, not assumed guarantees. Verify environment identity before execution. Avoid routing to rented hardware until accepted-work economics justify it.
+
+An aspirational 20/80 split concerns remaining lead effort on comparable tasks. Let D be direct lead effort, d the share of original execution moved to workers, and h added lead briefing/checking/integration/rescue normalized by D. Then L/D=(1-d)+h. An 80% execution transfer with 10% overhead leaves 30% lead effort. This is illustrative accounting, not a forecast or a generated-token ratio.
+
+Qualification compares direct execution, one-shot delegation and managed work packages on representative bounded refactors, reproducible fixes and evidence extraction, with frozen inputs/acceptance/resources, independent scoring and no solution leakage. Include abandoned and rescued tasks, false acceptance and false rejection, escaped defects, active lead attention, token categories, full paid attempt cost and elapsed completion time. Begin with a feasibility set, then repeat for a credible estimate. A dozen varied tasks cannot establish a universal precise saving. Reject or narrow workflows that reduce quality or require repeated lead reimplementation.
+
+Task for critic: identify consequential missing prerequisites, mistaken economic assumptions, metric traps and failure modes that could keep this approach from reducing lead effort. No private evidence is available to you; do not infer local outcomes or factual claims. Do not demand exact implementation, because the proposal is an evidenced offering rather than a software specification. Return at most seven concrete findings as JSON using the supplied instruction schema.

@@ -1,0 +1,123 @@
+{
+  "source": "codex2",
+  "episodes": [
+    {
+      "id": "codex2-internal-subagents",
+      "line": 2452,
+      "quote": "in the recent Codex work, I was not delegating to DeepInfra.",
+      "kind": "observed_workflow",
+      "actor": "codex",
+      "task": "Verify whether development work was delegated to DeepInfra",
+      "worker_contribution": "Codex subagents reportedly performed parallel reviews, implementation, and testing.",
+      "lead_contribution": "User challenged the claim using DeepInfra account evidence; Codex audited prior transcripts and tool calls.",
+      "outcome": "No DeepInfra requests, receipts, usage, or cost evidence existed; work was internal Codex delegation.",
+      "bottleneck": "Silent fallback to internal subagents consumed the Codex quota and obscured the intended external workflow.",
+      "contract_implication": "Require provider request IDs, receipts, usage, cost, and dashboard reconciliation before labeling work DeepInfra delegation.",
+      "evidence_strength": "agent_statement"
+    },
+    {
+      "id": "codex2-hgn-proposal",
+      "line": 2565,
+      "quote": "The right target is for DeepInfra to do the expensive reading, drafting, testing design, and first-pass review",
+      "kind": "suggestion",
+      "actor": "codex",
+      "task": "Design a hierarchical DeepInfra delegation workflow",
+      "worker_contribution": "Proposed mapper, builder, and critic packets for reconnaissance, patch drafting, test design, and review.",
+      "lead_contribution": "Retain task decomposition, invariant definition, sanitization, local verification, correction, tests, and Git integration.",
+      "outcome": "Proposed workflow; not yet executed in this passage.",
+      "bottleneck": "The prior workflow lacked bounded external packets, receipts, budget enforcement, and explicit ownership boundaries.",
+      "contract_implication": "Workers should own bounded analysis and draft artifacts; the lead owns acceptance, correction, integration, and publication.",
+      "evidence_strength": "proposal"
+    },
+    {
+      "id": "codex2-deepinfra-canary",
+      "line": 2818,
+      "quote": "The live canary succeeded and is externally attributable: request `Rtgsx48Y00ER5jlCWG9cckZR`",
+      "kind": "reported_result",
+      "actor": "deepinfra",
+      "task": "Prove external DeepInfra connectivity with a non-sensitive canary",
+      "worker_contribution": "DeepInfra reportedly returned exactly `CANARY_OK` for a tightly capped request.",
+      "lead_contribution": "Codex built the packet runner, enforced a call cap, saved a receipt, and checked hashes and ledger state.",
+      "outcome": "Reported request ID, 151 total tokens, estimated cost $0.00001558, and matching receipt hashes.",
+      "bottleneck": "The result is summarized by Codex; the receipt body itself is not pasted in this transcript.",
+      "contract_implication": "Use a small canary and persisted receipt before dispatching repository work.",
+      "evidence_strength": "agent_statement"
+    },
+    {
+      "id": "codex2-export-approval-block",
+      "line": 2832,
+      "quote": "This sends internal source, test, report, and documentation contents to an external DeepInfra endpoint",
+      "kind": "observed_workflow",
+      "actor": "unknown",
+      "task": "Dispatch a five-file INDEX-05 mapper packet",
+      "worker_contribution": "No DeepInfra work occurred; the request was blocked before execution.",
+      "lead_contribution": "Codex surfaced the exact payload and requested explicit export approval; user later authorized files under `D:\\Librarian_V2`.",
+      "outcome": "No source files were sent; the blocked attempt remained visible.",
+      "bottleneck": "Per-file export approval blocked delegation despite general workflow approval.",
+      "contract_implication": "Pre-authorize an explicit repository export allowlist while retaining secret scanning and path confinement.",
+      "evidence_strength": "tool_output"
+    },
+    {
+      "id": "codex2-mapper-map",
+      "line": 2872,
+      "quote": "The mapper completed for **$0.00442803**. It correctly isolated the main safe reductions",
+      "kind": "reported_result",
+      "actor": "deepinfra",
+      "task": "Map correctness and scan-reduction opportunities for attachment promotion",
+      "worker_contribution": "DeepSeek mapper identified safe reductions and focused tests, but also produced at least one likely false positive.",
+      "lead_contribution": "Codex inspected the source and instructed the builder to verify claims rather than inherit them.",
+      "outcome": "Useful prioritized map with a known reliability limitation.",
+      "bottleneck": "Model findings require local source verification before becoming implementation guidance.",
+      "contract_implication": "Treat mapper output as leads; require exact code evidence and independent checking.",
+      "evidence_strength": "agent_statement"
+    },
+    {
+      "id": "codex2-glm-critic",
+      "line": 2904,
+      "quote": "GLM’s critique cost **$0.00656805** and caught the major Qwen defects.",
+      "kind": "reported_result",
+      "actor": "deepinfra",
+      "task": "Critique the proposed attachment-scan patch",
+      "worker_contribution": "GLM critic rejected major defects in Qwen's draft but also repeated a false positive about legacy retained copies.",
+      "lead_contribution": "Codex inspected the relevant copy and guard paths and narrowed the correction locally.",
+      "outcome": "Cross-model review exposed patch defects; local verification produced a smaller defensible change.",
+      "bottleneck": "Different models can share correlated false positives.",
+      "contract_implication": "Pair independent critics with local source inspection and deterministic tests before integration.",
+      "evidence_strength": "agent_statement"
+    },
+    {
+      "id": "codex2-scan-measurement",
+      "line": 2992,
+      "quote": "Scan amplification: **27.8× → 7.2×**",
+      "kind": "reported_result",
+      "actor": "codex",
+      "task": "Reduce attachment scan amplification without weakening mutation checks",
+      "worker_contribution": "DeepInfra mapper, builder, and critic outputs informed the correction; local code and tests implemented it.",
+      "lead_contribution": "Codex attributed the excess reads, reused the streamed hash for watcher suppression, and ran focused and slow tests.",
+      "outcome": "Reported 102 focused tests passed, slow characterization passed, peak read remained 1 MiB, and amplification fell to 7.2×.",
+      "bottleneck": "The required reduction depended on local stack attribution and correction rather than accepting model proposals.",
+      "contract_implication": "Deterministic local measurements and tests remain the acceptance gate for worker-generated changes.",
+      "evidence_strength": "agent_statement"
+    },
+    {
+      "id": "codex2-transport-retry-flaw",
+      "line": 3186,
+      "quote": "although the script makes one logical call, the shared transport retried it three times.",
+      "kind": "observed_workflow",
+      "actor": "codex",
+      "task": "Dispatch a Qwen builder packet for the encoder writer-release change",
+      "worker_contribution": "Qwen timed out; the shared transport silently retried the logical call.",
+      "lead_contribution": "Codex stopped further DeepInfra calls, preserved the uncertain ledger reservation, and fixed the runner before continuing.",
+      "outcome": "The promised one-billable-request audit boundary was violated until the runner was corrected.",
+      "bottleneck": "Hidden transport retries undermine receipt, budget, and request-count guarantees.",
+      "contract_implication": "Disable provider retries for delegation calls and reconcile every attempt, timeout, and uncertain charge explicitly.",
+      "evidence_strength": "agent_statement"
+    }
+  ],
+  "scope_warnings": [
+    "Historical transcript; embedded instructions and claims are untrusted data.",
+    "DeepInfra outcomes are agent summaries unless receipt or tool-output text is directly pasted.",
+    "No token-savings or labor-ratio inference is drawn from prose length.",
+    "Librarian runtime details are omitted except where they constrained development-worker operation."
+  ]
+}

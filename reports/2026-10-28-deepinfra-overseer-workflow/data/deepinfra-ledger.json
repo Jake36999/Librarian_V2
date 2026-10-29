@@ -1,0 +1,119 @@
+{
+  "schema": 1,
+  "budget_usd": 5.0,
+  "committed_usd": 0.35728741,
+  "calls": [
+    {
+      "run_id": "20261028T221434-5bc5d7ff",
+      "task": "codex1-01",
+      "agent": "codex-overseer-research",
+      "status": "completed",
+      "charged_usd": 0.02788219,
+      "receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221434-5bc5d7ff-codex1-01.receipt.json"
+    },
+    {
+      "run_id": "20261028T221434-9514d37e",
+      "task": "gemini-01",
+      "agent": "codex-overseer-research",
+      "status": "completed",
+      "charged_usd": 0.01970203,
+      "receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221434-9514d37e-gemini-01.receipt.json"
+    },
+    {
+      "run_id": "20261028T221434-d4aeb742",
+      "task": "codex1-02",
+      "agent": "codex-overseer-research",
+      "status": "completed",
+      "charged_usd": 0.03538653,
+      "receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221434-d4aeb742-codex1-02.receipt.json"
+    },
+    {
+      "run_id": "20261028T221547-e6265702",
+      "task": "codex1-03",
+      "agent": "codex-overseer-research",
+      "status": "completed",
+      "charged_usd": 0.03471514,
+      "receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221547-e6265702-codex1-03.receipt.json"
+    },
+    {
+      "run_id": "20261028T221639-bb1af96c",
+      "task": "codex1-04",
+      "agent": "codex-overseer-research",
+      "status": "completed",
+      "charged_usd": 0.03286613,
+      "receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221639-bb1af96c-codex1-04.receipt.json"
+    },
+    {
+      "run_id": "20261028T221650-b77ff579",
+      "task": "codex1-05",
+      "agent": "codex-overseer-research",
+      "status": "completed",
+      "charged_usd": 0.03199017,
+      "receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221650-b77ff579-codex1-05.receipt.json"
+    },
+    {
+      "run_id": "20261028T221927-40b85057",
+      "task": "codex1-06",
+      "agent": "codex-overseer-research",
+      "status": "completed",
+      "charged_usd": 0.02109284,
+      "receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221927-40b85057-codex1-06.receipt.json"
+    },
+    {
+      "run_id": "20261028T221934-e79a6d9f",
+      "task": "codex2-01",
+      "agent": "codex-overseer-research",
+      "status": "completed",
+      "charged_usd": 0.03322334,
+      "receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221934-e79a6d9f-codex2-01.receipt.json"
+    },
+    {
+      "run_id": "20261028T222007-025fc150",
+      "task": "codex2-02",
+      "agent": "codex-overseer-research",
+      "status": "completed",
+      "charged_usd": 0.02212721,
+      "receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T222007-025fc150-codex2-02.receipt.json"
+    },
+    {
+      "run_id": "20261028T222118-7643f3ec",
+      "task": "claude-01",
+      "agent": "codex-overseer-research",
+      "status": "completed",
+      "charged_usd": 0.01315971,
+      "receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T222118-7643f3ec-claude-01.receipt.json"
+    },
+    {
+      "run_id": "20261028T222131-9eac762a",
+      "task": "research-01",
+      "agent": "codex-overseer-research",
+      "status": "completed",
+      "charged_usd": 0.03406463,
+      "receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T222131-9eac762a-research-01.receipt.json"
+    },
+    {
+      "run_id": "20261028T222206-e7cc4f26",
+      "task": "research-02",
+      "agent": "codex-overseer-research",
+      "status": "completed",
+      "charged_usd": 0.03912643,
+      "receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T222206-e7cc4f26-research-02.receipt.json"
+    },
+    {
+      "run_id": "20261028T222230-038f138c",
+      "task": "research-03",
+      "agent": "codex-overseer-research",
+      "status": "completed",
+      "charged_usd": 0.01107061,
+      "receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T222230-038f138c-research-03.receipt.json"
+    },
+    {
+      "run_id": "20261028T223100-607751ad",
+      "task": "critic-abstract-01",
+      "agent": "codex-overseer-research",
+      "status": "completed",
+      "charged_usd": 0.00088045,
+      "receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T223100-607751ad-critic-abstract-01.receipt.json"
+    }
+  ]
+}

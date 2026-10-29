@@ -1,0 +1,62 @@
+{
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "high",
+      "report_quote": "Local idempotency cannot guarantee a lost paid API response was never billed. Resume only after reconciliation.",
+      "problem": "The proposal acknowledges billing ambiguity but gives no reconciliation mechanism, budget cap policy, or who bears the cost of orphaned paid attempts. Repeated failures under 'bounded repairs' can silently multiply paid API calls, making the economics worse than direct execution.",
+      "evidence": "Contract boundary 4 lists states but no reconciliation procedure, retry cap, or spend ceiling per task; 'full paid attempt cost' is only a qualification metric, not an operational control.",
+      "suggested_change": "Specify a hard per-task spend ceiling enforced by the controller, a reconciliation step (query provider billing/job IDs before resume), and an explicit rule that orphaned-billing risk is disclosed in cost accounting."
+    },
+    {
+      "id": "F2",
+      "severity": "high",
+      "report_quote": "A worker can propose changed acceptance criteria but cannot silently weaken them.",
+      "problem": "The mechanism preventing silent weakening is unspecified. If the lead must adjudicate every proposed criterion change, this becomes a new escalation channel that consumes lead attention—the very resource the workflow aims to reduce.",
+      "evidence": "Boundary 2 states the prohibition; no section defines who reviews proposed criterion changes, how often they occur, or their expected rate.",
+      "suggested_change": "Add a policy: criterion changes require explicit lead sign-off recorded in job state, and track criterion-change frequency as a qualification metric; high rates should disqualify a task class from delegation."
+    },
+    {
+      "id": "F3",
+      "severity": "high",
+      "report_quote": "Then L/D=(1-d)+h. An 80% execution transfer with 10% overhead leaves 30% lead effort.",
+      "problem": "The model assumes d and h are independent and that moved work is homogeneous. In practice h is superlinear in d (more delegation → more briefing, integration conflicts, rescues), and the last 20% of execution (hard, coupled edits) is exactly what resists transfer. The illustrative arithmetic can anchor readers on favorable numbers despite the disclaimer.",
+      "evidence": "The formula treats overhead as a constant fraction of D; no interaction term or diminishing-returns term exists. The text itself admits 'a dozen varied tasks cannot establish a universal precise saving' yet presents a crisp 30% figure.",
+      "suggested_change": "Present h as a function of d with an explicitly assumed shape (e.g., convex), show sensitivity (h=25% gives 45%), and label the 30% figure as best-case, not central."
+    },
+    {
+      "id": "F4",
+      "severity": "medium",
+      "report_quote": "Independent review is supplemented by calibrated sampling of passing results and targeted review of consequential claims.",
+      "problem": "No basis is given for the sampling rate or for identifying 'consequential claims' a priori. Calibrated sampling of passing results requires a known defect base rate, which is unavailable at adoption time; low-rate escaped defects (the costly ones) are precisely what random sampling misses.",
+      "evidence": "Verification section lists the mechanism without rates, stopping rules, or how consequence is classified; qualification metrics include 'escaped defects' but no feedback loop ties escape data to sampling rates.",
+      "suggested_change": "State that sampling rates start conservative and are adjusted from observed escape rates, and define 'consequential' operationally (touches protected invariants, public API, or acceptance criteria)."
+    },
+    {
+      "id": "F5",
+      "severity": "medium",
+      "report_quote": "Verify environment identity before execution.",
+      "problem": "Environment identity verification is asserted but undefined: what attests the worker's environment (hashes of toolchain? container digest?), and what happens on mismatch? Without this, 'isolated worktree' guarantees are hollow—workers on rented or shared inference hosts could see different toolchains, producing artifacts that pass worker-side checks but fail integration.",
+      "evidence": "Boundary 1 pins 'environment' at admission; the execution section says only 'verify environment identity before execution' with no mechanism or failure handling.",
+      "suggested_change": "Specify the identity token (e.g., pinned container/toolchain digest recorded at admission and re-checked by the controller pre-execution) and a defined abort-and-escalate path on mismatch."
+    },
+    {
+      "id": "F6",
+      "severity": "medium",
+      "report_quote": "Workers own scoped context acquisition, implementation, test creation and bounded repairs.",
+      "problem": "Worker-authored tests plus 'protected behavioral tests' creates a verification asymmetry: the protected suite must already cover the behaviors at stake, or workers can write tests that pass their own implementation while missing the contract. The proposal assumes an adequate pre-existing protected suite, which is a missing prerequisite for most codebases.",
+      "evidence": "Code verification section: 'Worker-authored tests supplement the existing contract' — presupposes an existing contract of behavioral tests with meaningful coverage; no admission gate checks suite adequacy.",
+      "suggested_change": "Add an admission prerequisite: the protected test suite must be assessed (coverage of pinned acceptance evidence) before a task is eligible for delegation; otherwise classify the task as direct-execution only."
+    },
+    {
+      "id": "F7",
+      "severity": "low",
+      "report_quote": "Use the same contract through thin adapters for different lead assistants.",
+      "problem": "'Thin adapters' is an unexamined assumption: different leads differ in how they express objectives, handle escalations, and consume receipts. Adapter cost and fidelity loss (ambiguity introduced by translation) may be nontrivial and is unmeasured in the qualification plan, which tests only one lead implicitly.",
+      "evidence": "Qualification section compares execution modes but not across lead assistants; no metric captures adapter-induced ambiguity or rework.",
+      "suggested_change": "Either scope the claim to a single lead initially, or add a cross-lead qualification arm measuring escalation volume and rework attributable to the adapter."
+    }
+  ],
+  "most_important_missing_test": "A rescue-cost test: measure lead hours spent rescuing failed managed packages (including criterion-change adjudication and reconciliation) across the task set; if rescue attention rivals direct execution, the offering inverts its value.",
+  "limits": "Review based solely on the abstract proposal text; no transcript, repository, or measurement evidence was available, so findings identify missing prerequisites and reasoning gaps rather than contradicted empirical claims."
+}

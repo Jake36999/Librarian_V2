@@ -1,0 +1,208 @@
+{
+  "listing_count": 173,
+  "models": {
+    "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo": {
+      "cache_read_per_1m": 0.09999999899999999,
+      "card_in_out_per_1m": [
+        0.3,
+        1.0
+      ],
+      "context_length": 262144,
+      "live_in_out_per_1m": [
+        0.3,
+        1.0
+      ],
+      "max_tokens": 262144,
+      "pricing_keys": [
+        "cache_read_tokens",
+        "input_tokens",
+        "output_tokens"
+      ],
+      "status": "verified",
+      "tags": [
+        "chat",
+        "prompt_cache"
+      ]
+    },
+    "Qwen/Qwen3.5-397B-A17B": {
+      "cache_read_per_1m": 0.22000000050000001,
+      "card_in_out_per_1m": [
+        0.45,
+        3.0
+      ],
+      "context_length": 262144,
+      "live_in_out_per_1m": [
+        0.45,
+        2.9999999999999996
+      ],
+      "max_tokens": 262144,
+      "pricing_keys": [
+        "cache_read_tokens",
+        "input_tokens",
+        "output_tokens"
+      ],
+      "status": "verified",
+      "tags": [
+        "chat",
+        "vlm",
+        "vision",
+        "prompt_cache",
+        "reasoning_effort",
+        "reasoning"
+      ]
+    },
+    "XiaomiMiMo/MiMo-V2.6-Pro": {
+      "cache_read_per_1m": 0.0035999987000000003,
+      "card_in_out_per_1m": [
+        0.43,
+        0.87
+      ],
+      "context_length": 1048576,
+      "live_in_out_per_1m": [
+        0.43,
+        0.87
+      ],
+      "max_tokens": 1048576,
+      "pricing_keys": [
+        "cache_read_tokens",
+        "input_tokens",
+        "output_tokens"
+      ],
+      "status": "verified",
+      "tags": [
+        "chat",
+        "vlm",
+        "vision",
+        "prompt_cache",
+        "reasoning"
+      ]
+    },
+    "deepseek-ai/DeepSeek-V4-Pro": {
+      "cache_read_per_1m": 0.10000000399999999,
+      "card_in_out_per_1m": [
+        1.3,
+        2.6
+      ],
+      "context_length": 1048576,
+      "live_in_out_per_1m": [
+        1.2999999999999998,
+        2.5999999999999996
+      ],
+      "max_tokens": 1048576,
+      "pricing_keys": [
+        "cache_read_tokens",
+        "input_tokens",
+        "output_tokens"
+      ],
+      "status": "verified",
+      "tags": [
+        "chat",
+        "prompt_cache"
+      ]
+    },
+    "deepseek-ai/DeepSeek-V4.1-Flash": {
+      "cache_read_per_1m": 0.006,
+      "card_in_out_per_1m": [
+        0.14,
+        0.42
+      ],
+      "context_length": 1048576,
+      "live_in_out_per_1m": [
+        0.2,
+        0.6
+      ],
+      "max_tokens": 1048576,
+      "pricing_keys": [
+        "cache_read_tokens",
+        "input_tokens",
+        "output_tokens"
+      ],
+      "status": "stale",
+      "tags": [
+        "chat",
+        "vlm",
+        "vision",
+        "prompt_cache",
+        "reasoning"
+      ]
+    },
+    "deepseek-ai/DeepSeek-V4.1-Flash-1017": {
+      "cache_read_per_1m": 0.006,
+      "card_in_out_per_1m": [
+        0.098,
+        0.294
+      ],
+      "context_length": 1048576,
+      "live_in_out_per_1m": [
+        0.2,
+        0.6
+      ],
+      "max_tokens": 1048576,
+      "pricing_keys": [
+        "cache_read_tokens",
+        "input_tokens",
+        "output_tokens"
+      ],
+      "status": "stale",
+      "tags": [
+        "chat",
+        "vlm",
+        "vision",
+        "prompt_cache",
+        "reasoning"
+      ]
+    },
+    "zai-org/GLM-5.3": {
+      "cache_read_per_1m": 0.199999998,
+      "card_in_out_per_1m": [
+        0.45,
+        2.0
+      ],
+      "context_length": 1048576,
+      "live_in_out_per_1m": [
+        0.9,
+        4.0
+      ],
+      "max_tokens": 1048576,
+      "pricing_keys": [
+        "cache_read_tokens",
+        "input_tokens",
+        "output_tokens"
+      ],
+      "status": "stale",
+      "tags": [
+        "chat",
+        "prompt_cache",
+        "reasoning"
+      ]
+    },
+    "zai-org/GLM-5.3-Flash": {
+      "cache_read_per_1m": 0.03,
+      "card_in_out_per_1m": [
+        0.15,
+        0.5
+      ],
+      "context_length": 1048576,
+      "live_in_out_per_1m": [
+        0.15,
+        0.5
+      ],
+      "max_tokens": 1048576,
+      "pricing_keys": [
+        "cache_read_tokens",
+        "input_tokens",
+        "output_tokens"
+      ],
+      "status": "verified",
+      "tags": [
+        "chat",
+        "vlm",
+        "vision",
+        "prompt_cache",
+        "reasoning"
+      ]
+    }
+  },
+  "retrieved_at": "2026-10-28T17:05:35.199Z",
+  "url": "https://api.deepinfra.com/v1/openai/models"
+}

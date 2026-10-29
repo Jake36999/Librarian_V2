@@ -1,0 +1,50 @@
+{
+ "corpus_files": 171,
+ "numbers_checked": 186,
+ "ungrounded_distinct": 7,
+ "derived_allowed": {
+  "1.115": {
+   "lines": [
+    47
+   ],
+   "why": "sum of 56 completed development calls with a cost, recomputed from delegate_events.csv"
+  },
+  "0.027882": {
+   "lines": [
+    52
+   ],
+   "why": "55,768 x 0.43/M + 4,485 x 0.87/M, recomputed in section 3"
+  },
+  "0.00589": {
+   "lines": [
+    139
+   ],
+   "why": "INDEX-05 evidence report in the repository states $0.00589009 for the interrupted mapper's reserve, rounded"
+  },
+  "15.6": {
+   "lines": [
+    184
+   ],
+   "why": "MAST page fetched 2026-10-29 (appendix A row 5); fetch-tool extract"
+  },
+  "0.373": {
+   "lines": [
+    185
+   ],
+   "why": "scaling paper v3 abstract fetched 2026-10-29 (appendix A row 6); fetch-tool extract"
+  },
+  "0.0679": {
+   "lines": [
+    213
+   ],
+   "why": "claude-ledger.json (tmp/deepinfra-delegation) charge for CF-final-mimo"
+  },
+  "0.0221": {
+   "lines": [
+    213
+   ],
+   "why": "claude-ledger.json charge for the timed-out CF-final-glm call (its reserve)"
+  }
+ },
+ "unexplained": {}
+}

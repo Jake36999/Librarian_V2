@@ -1,0 +1,32 @@
+{
+  "claude": {
+    "aggregated_import_rows": [
+      "scratchpad-import"
+    ],
+    "budget_usd": 8.0,
+    "by_status": {
+      "completed": 171
+    },
+    "calls": 171,
+    "difference_usd": 0.0,
+    "orphan_unsettled_calls": 0,
+    "recomputed_sum_charged_usd": 4.30086226,
+    "recorded_committed_usd": 4.30086226,
+    "sum_receipt_basis_usd": 3.75516226
+  },
+  "shared": {
+    "aggregated_import_rows": [],
+    "budget_usd": 12.0,
+    "by_status": {
+      "completed": 9,
+      "failed": 1,
+      "started": 1
+    },
+    "calls": 11,
+    "difference_usd": 0.0,
+    "orphan_unsettled_calls": 1,
+    "recomputed_sum_charged_usd": 0.1551861,
+    "recorded_committed_usd": 0.1551861,
+    "sum_receipt_basis_usd": 0.1542947
+  }
+}

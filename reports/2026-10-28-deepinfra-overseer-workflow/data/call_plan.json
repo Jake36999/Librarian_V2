@@ -1,0 +1,137 @@
+[
+  {
+    "id": "gemini-01",
+    "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+    "packet": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\gemini-01.txt",
+    "instruction": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\gemini-01.instruction.txt",
+    "max_output_tokens": 10000,
+    "timeout": 900,
+    "phase": "extract"
+  },
+  {
+    "id": "codex1-01",
+    "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+    "packet": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex1-01.txt",
+    "instruction": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex1-01.instruction.txt",
+    "max_output_tokens": 10000,
+    "timeout": 900,
+    "phase": "extract"
+  },
+  {
+    "id": "codex1-02",
+    "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+    "packet": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex1-02.txt",
+    "instruction": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex1-02.instruction.txt",
+    "max_output_tokens": 10000,
+    "timeout": 900,
+    "phase": "extract"
+  },
+  {
+    "id": "codex1-03",
+    "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+    "packet": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex1-03.txt",
+    "instruction": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex1-03.instruction.txt",
+    "max_output_tokens": 10000,
+    "timeout": 900,
+    "phase": "extract"
+  },
+  {
+    "id": "codex1-04",
+    "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+    "packet": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex1-04.txt",
+    "instruction": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex1-04.instruction.txt",
+    "max_output_tokens": 10000,
+    "timeout": 900,
+    "phase": "extract"
+  },
+  {
+    "id": "codex1-05",
+    "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+    "packet": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex1-05.txt",
+    "instruction": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex1-05.instruction.txt",
+    "max_output_tokens": 10000,
+    "timeout": 900,
+    "phase": "extract"
+  },
+  {
+    "id": "codex1-06",
+    "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+    "packet": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex1-06.txt",
+    "instruction": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex1-06.instruction.txt",
+    "max_output_tokens": 10000,
+    "timeout": 900,
+    "phase": "extract"
+  },
+  {
+    "id": "codex2-01",
+    "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+    "packet": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex2-01.txt",
+    "instruction": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex2-01.instruction.txt",
+    "max_output_tokens": 10000,
+    "timeout": 900,
+    "phase": "extract"
+  },
+  {
+    "id": "codex2-02",
+    "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+    "packet": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex2-02.txt",
+    "instruction": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\codex2-02.instruction.txt",
+    "max_output_tokens": 10000,
+    "timeout": 900,
+    "phase": "extract"
+  },
+  {
+    "id": "claude-01",
+    "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+    "packet": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\claude-01.txt",
+    "instruction": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\claude-01.instruction.txt",
+    "max_output_tokens": 10000,
+    "timeout": 900,
+    "phase": "extract"
+  },
+  {
+    "id": "research-01",
+    "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+    "packet": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\research-01.txt",
+    "instruction": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\research-01.instruction.txt",
+    "max_output_tokens": 10000,
+    "timeout": 900,
+    "phase": "extract"
+  },
+  {
+    "id": "research-02",
+    "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+    "packet": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\research-02.txt",
+    "instruction": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\research-02.instruction.txt",
+    "max_output_tokens": 10000,
+    "timeout": 900,
+    "phase": "extract"
+  },
+  {
+    "id": "research-03",
+    "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+    "packet": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\research-03.txt",
+    "instruction": "D:\\Librarian_V2\\tmp\\overseer-workflow\\packets\\research-03.instruction.txt",
+    "max_output_tokens": 10000,
+    "timeout": 900,
+    "phase": "extract"
+  },
+  {
+    "id": "critic-contract-01",
+    "model": "zai-org/GLM-5.3-Flash",
+    "packet": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\critic_input.txt",
+    "instruction": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\critic_instruction.txt",
+    "max_output_tokens": 9000,
+    "timeout": 600,
+    "phase": "blocked-private-export"
+  },
+  {
+    "id": "critic-abstract-01",
+    "model": "zai-org/GLM-5.3-Flash",
+    "packet": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\critic_public_contract.txt",
+    "instruction": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\critic_instruction.txt",
+    "max_output_tokens": 9000,
+    "timeout": 600,
+    "phase": "public-critic"
+  }
+]

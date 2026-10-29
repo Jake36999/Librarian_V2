@@ -1,0 +1,13 @@
+task,receipt_status,tool_result,receipt_completion,result_precedes_completion_seconds
+index05-attachment-map,completed,2026-10-28T14:06:33.355Z,2026-10-28T14:09:37.859752Z,184.505
+index05-attachment-map,completed,2026-10-28T14:08:46.175Z,2026-10-28T14:09:37.859752Z,51.685
+index05-attachment-map-retry1,completed,2026-10-28T14:09:24.948Z,2026-10-28T14:10:19.568512Z,54.621
+index05-attachment-build,completed,2026-10-28T14:10:49.421Z,2026-10-28T14:11:01.926198Z,12.505
+index05-attachment-critic,completed,2026-10-28T14:11:25.434Z,2026-10-28T14:12:01.721985Z,36.288
+index05-scan-8x-diagnosis,completed,2026-10-28T14:15:23.623Z,2026-10-28T14:16:20.193862Z,56.571
+index05-attachment-final-review,completed,2026-10-28T14:19:35.067Z,2026-10-28T14:20:22.000659Z,46.934
+index05_encoder_mapper,completed,2026-10-28T14:33:48.718Z,2026-10-28T14:35:35.407774Z,106.69
+index05_encoder_mapper,completed,2026-10-28T14:34:24.802Z,2026-10-28T14:35:35.407774Z,70.606
+index05_encoder_contract,completed,2026-10-28T14:38:27.283Z,2026-10-28T14:39:00.094619Z,32.812
+index05_encoder_builder,failed,2026-10-28T14:40:27.523Z,2026-10-28T14:43:00.103611Z,152.581
+index05_encoder_diff_critic,completed,2026-10-28T14:50:35.200Z,2026-10-28T14:51:28.173341Z,52.973

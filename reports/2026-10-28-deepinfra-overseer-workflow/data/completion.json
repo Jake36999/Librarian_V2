@@ -1,0 +1,29 @@
+{
+  "finished_utc": "2026-10-28T22:40:15.951458+00:00",
+  "scope": "Review and recommendation; no controller implementation or savings benchmark",
+  "source_original_hashes_unchanged": 5,
+  "source_lines": 21243,
+  "completed_paid_calls": 14,
+  "reader_calls": 13,
+  "abstract_critic_calls": 1,
+  "api_usage_estimate_usd": 0.35728741,
+  "ledger_committed_usd": 0.35728741,
+  "budget_usd": 5.0,
+  "pending_or_unknown_calls": 0,
+  "input_tokens": 651679,
+  "output_tokens": 89548,
+  "anchored_unadjudicated_episodes": 100,
+  "rejected_anchors": 4,
+  "locally_adjudicated_transcript_anchors": 12,
+  "critic_findings_dispositioned": 7,
+  "private_critic_export_blocked_and_not_executed": true,
+  "checked_local_markdown_links_and_external_syntax": {
+    "REPORT.md": 11,
+    "EVIDENCE.md": 42
+  },
+  "product_tests_rerun": false,
+  "product_files_modified_by_this_review": false,
+  "archive": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\call_archive.json",
+  "report_sha256": "9a0444064e3fb6c6b760e4e1b1db9822113f8fd824466a6e617a78c0c1d67e6f",
+  "evidence_sha256": "44512a17c115156400906d915dd0763dbabeb928ce172af26e997334c4444773"
+}

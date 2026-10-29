@@ -1,0 +1,43 @@
+commit,commit_time,subject,bytes,lines,tokens,s19_start_line,s19_bytes,s19_tokens,s19_entries
+f213fc6,2026-10-24T11:56:13+01:00,"Design documents: model invocation architecture, adapter requirements and cohort, audited ",60199,590,13161,,0,0,0
+62757d3,2026-10-24T15:30:30+01:00,"Unified plan: progress log, and the engine proxy INDEX-03 needs",62852,614,13899,592,2282,656,0
+d177d55,2026-10-24T16:10:49+01:00,MCP reaches a vault only through its running Core,64130,623,14202,592,3560,959,0
+52686eb,2026-10-24T16:10:58+01:00,Unified plan: record the CORE-04A commit,64132,623,14206,592,3562,963,0
+020e3ad,2026-10-24T17:27:35+01:00,Unified plan: record the review fixes and CORE-05,68609,660,15276,592,8039,2033,0
+99bff07,2026-10-24T17:57:07+01:00,Reconcile implementation status and regression evidence,69223,671,15402,603,8039,2033,0
+c8e90fb,2026-10-24T21:56:16+01:00,Record completed core recovery and index migration work,70792,678,15727,603,9608,2358,0
+9e72bec,2026-10-25T01:51:28Z,Record canonical routing delivery and verification,75025,725,16572,603,13841,3203,1
+4e56ca7,2026-10-25T02:44:09Z,Bind service execution and picker readiness to canonical roles,76899,755,16946,603,15715,3577,2
+9f5e21b,2026-10-25T03:01:35Z,Record routing ownership and macro verification progress,80122,796,17638,603,18938,4269,3
+fa00e43,2026-10-25T04:24:40Z,Record staging safety boundaries and ownership verification,84010,858,18434,603,22826,5065,5
+c9700cf,2026-10-25T05:03:31Z,Record taxonomy mutation boundaries and regression evidence,87019,902,19046,603,25835,5677,6
+b3a8ce9,2026-10-25T10:43:40Z,Record approved-batch ownership progress and regression evidence,89533,942,19569,603,28349,6200,7
+44847f6,2026-10-25T11:21:08Z,Document catalogue ownership boundaries and verification results,92260,984,20120,603,31076,6751,8
+3f89770,2026-10-25T11:58:42Z,Record single-source staging safety scope and verification,94880,1025,20638,603,33696,7269,9
+52687af,2026-10-25T12:43:05Z,Record source-batch safety scope and verification evidence,97232,1061,21115,603,36048,7746,10
+cfdd1ce,2026-10-25T15:26:00Z,Record mixed staging and watcher verification boundaries,101642,1131,22014,603,40458,8645,12
+98082a3,2026-10-25T16:00:30Z,Record Core index boundary and final Windows verification evidence,105172,1185,22737,603,43988,9368,13
+1abafb8,2026-10-25T16:32:00Z,Record native Core contention metrics and remaining acceptance scope,107851,1228,23319,603,46667,9950,14
+60857ca,2026-10-25T20:31:51Z,Reconcile plan status and evidence records,111125,1261,24197,608,49525,10719,15
+c79daf0,2026-10-25T22:12:05Z,Unified plan: record the completed CORE-02A/ADAPT-02/03 packet,112355,1276,24509,608,50755,11031,16
+4e9df38,2026-10-25T22:21:44Z,Unified plan: record ADAPT-04,112677,1277,24593,608,51077,11115,16
+6659d81,2026-10-25T22:34:19Z,Unified plan: record ADAPT-05,112993,1278,24674,608,51393,11196,16
+c6662ca,2026-10-25T22:49:25Z,Unified plan: record ADAPT-06 progress,113493,1279,24799,608,51893,11321,16
+d845383,2026-10-25T23:04:14Z,Unified plan: ADAPT-06 implemented,113585,1279,24826,608,51985,11348,16
+1b277ec,2026-10-26T00:36:12Z,Unified plan: record ADAPT-07 and its live results,114062,1280,24970,608,52462,11492,16
+7511a14,2026-10-26T00:55:22Z,Unified plan: record ADAPT-08,114703,1281,25129,608,53103,11651,16
+7dd5ca4,2026-10-26T03:17:12Z,Unified plan: record ADAPT-09,115504,1282,25304,608,53904,11826,16
+49be087,2026-10-26T12:24:09Z,Record adapter completion evidence,117876,1302,25825,608,56276,12347,17
+a1fc533,2026-10-26T17:38:14Z,Record INDEX-05 snapshot continuation evidence,119586,1327,26187,608,57986,12709,18
+e9699ee,2026-10-26T17:41:43Z,Reconcile completed safety work in plans,119738,1333,26228,608,58138,12750,18
+fc2afa0,2026-10-27T00:44:00Z,Record INDEX-05 process interruption evidence,122548,1376,26862,608,60948,13384,19
+cd13175,2026-10-27T10:56:26Z,Record INDEX-05 Host force-stop evidence,124805,1412,27359,608,63205,13881,20
+1aced5f,2026-10-27T11:22:21Z,Record INDEX-05 scale and sustained evidence,127135,1447,27881,608,65535,14403,21
+ce76bf5,2026-10-27T16:17:17Z,Record packaged adapter prerequisite evidence,129412,1482,28398,608,67812,14920,22
+0a5e106,2026-10-27T16:33:47Z,Record installed wheel smoke evidence,131462,1514,28870,608,69862,15392,23
+ae2a878,2026-10-27T20:56:29Z,Record packaged adapter smoke evidence,133285,1544,29292,608,71685,15814,24
+942fec8,2026-10-27T21:10:43Z,Record external handle evidence,135214,1575,29704,608,73614,16226,25
+061d442,2026-10-28T02:39:20Z,Record large attachment evidence,136939,1604,30118,608,75339,16640,26
+2ca5542,2026-10-28T14:31:52Z,Record attachment scan reduction evidence,138881,1634,30571,608,77281,17093,27
+f0ed23d,2026-10-28T15:47:05Z,Unified plan: record the encoder writer release,139544,1635,30730,608,77944,17252,27
+11bdd5b,2026-10-28T15:57:15Z,Unified plan: close INDEX-05 and turn G1 green on local evidence,141169,1659,31149,609,79196,17566,28

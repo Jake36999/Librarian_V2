@@ -1,0 +1,47 @@
+[
+  {
+    "id": "gemini",
+    "path": "C:\\Users\\jakem\\Downloads\\workflow discussion and review - gemini.md",
+    "bytes": 103847,
+    "sha256": "25aeb7aac07f42db5609dc4a5ebd8a2a353ca50aa7fe9ec9566b18534ccd59d7",
+    "lines": 549,
+    "redactions": 0,
+    "prepared": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\sources\\gemini.txt"
+  },
+  {
+    "id": "codex1",
+    "path": "E:\\# Review Librarian V2 - chatgpt transcript.txt",
+    "bytes": 969368,
+    "sha256": "9fb33580e19f3384eae371c34bb1448043bb4ae525a63f56fe6be3b526a3947a",
+    "lines": 11859,
+    "redactions": 4,
+    "prepared": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\sources\\codex1.txt"
+  },
+  {
+    "id": "codex2",
+    "path": "E:\\# Review Librarian V2 - chatgpt transcript -2.txt",
+    "bytes": 287045,
+    "sha256": "414e664102b6bf53b9084eef83bd720460d3dfb4822ec4ce871d3067977f3ac5",
+    "lines": 3286,
+    "redactions": 0,
+    "prepared": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\sources\\codex2.txt"
+  },
+  {
+    "id": "claude",
+    "path": "E:\\# Review Librarian V2 - claud transcript.txt",
+    "bytes": 53262,
+    "sha256": "69549be5a00a6df249efc23b071f481abb91da820a643211d1c75803c217c6ac",
+    "lines": 1095,
+    "redactions": 0,
+    "prepared": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\sources\\claude.txt"
+  },
+  {
+    "id": "research",
+    "path": "E:\\Librarian setup and Q-ball research-claud transcript.md",
+    "bytes": 374387,
+    "sha256": "67c41bdbd6c6ab5bd15106abc1e120b8cd71f447334bdbbc12fe3c63a8df9ac7",
+    "lines": 4454,
+    "redactions": 0,
+    "prepared": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\sources\\research.txt"
+  }
+]

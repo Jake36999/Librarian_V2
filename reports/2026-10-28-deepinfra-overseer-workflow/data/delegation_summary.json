@@ -1,0 +1,175 @@
+{
+  "calls": [
+    {
+      "task": "codex1-01",
+      "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+      "status": "completed",
+      "finish": "stop",
+      "cost": 0.02788219,
+      "usage": {
+        "input_tokens": 55768,
+        "output_tokens": 4485,
+        "total_tokens": 60253
+      }
+    },
+    {
+      "task": "gemini-01",
+      "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+      "status": "completed",
+      "finish": "stop",
+      "cost": 0.01970203,
+      "usage": {
+        "input_tokens": 30274,
+        "output_tokens": 7683,
+        "total_tokens": 37957
+      }
+    },
+    {
+      "task": "codex1-02",
+      "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+      "status": "completed",
+      "finish": "stop",
+      "cost": 0.03538653,
+      "usage": {
+        "input_tokens": 67395,
+        "output_tokens": 7364,
+        "total_tokens": 74759
+      }
+    },
+    {
+      "task": "codex1-03",
+      "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+      "status": "completed",
+      "finish": "stop",
+      "cost": 0.03471514,
+      "usage": {
+        "input_tokens": 65083,
+        "output_tokens": 7735,
+        "total_tokens": 72818
+      }
+    },
+    {
+      "task": "codex1-04",
+      "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+      "status": "completed",
+      "finish": "stop",
+      "cost": 0.03286613,
+      "usage": {
+        "input_tokens": 60524,
+        "output_tokens": 7863,
+        "total_tokens": 68387
+      }
+    },
+    {
+      "task": "codex1-05",
+      "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+      "status": "completed",
+      "finish": "stop",
+      "cost": 0.03199017,
+      "usage": {
+        "input_tokens": 64326,
+        "output_tokens": 4977,
+        "total_tokens": 69303
+      }
+    },
+    {
+      "task": "codex1-06",
+      "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+      "status": "completed",
+      "finish": "stop",
+      "cost": 0.02109284,
+      "usage": {
+        "input_tokens": 34427,
+        "output_tokens": 7229,
+        "total_tokens": 41656
+      }
+    },
+    {
+      "task": "codex2-01",
+      "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+      "status": "completed",
+      "finish": "stop",
+      "cost": 0.03322334,
+      "usage": {
+        "input_tokens": 62945,
+        "output_tokens": 7077,
+        "total_tokens": 70022
+      }
+    },
+    {
+      "task": "codex2-02",
+      "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+      "status": "completed",
+      "finish": "stop",
+      "cost": 0.02212721,
+      "usage": {
+        "input_tokens": 38702,
+        "output_tokens": 6305,
+        "total_tokens": 45007
+      }
+    },
+    {
+      "task": "claude-01",
+      "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+      "status": "completed",
+      "finish": "stop",
+      "cost": 0.01315971,
+      "usage": {
+        "input_tokens": 24081,
+        "output_tokens": 3224,
+        "total_tokens": 27305
+      }
+    },
+    {
+      "task": "research-01",
+      "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+      "status": "completed",
+      "finish": "stop",
+      "cost": 0.03406463,
+      "usage": {
+        "input_tokens": 63641,
+        "output_tokens": 7700,
+        "total_tokens": 71341
+      }
+    },
+    {
+      "task": "research-02",
+      "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+      "status": "completed",
+      "finish": "stop",
+      "cost": 0.03912643,
+      "usage": {
+        "input_tokens": 74227,
+        "output_tokens": 8286,
+        "total_tokens": 82513
+      }
+    },
+    {
+      "task": "research-03",
+      "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+      "status": "completed",
+      "finish": "stop",
+      "cost": 0.01107061,
+      "usage": {
+        "input_tokens": 9163,
+        "output_tokens": 8196,
+        "total_tokens": 17359
+      }
+    },
+    {
+      "task": "critic-abstract-01",
+      "model": "zai-org/GLM-5.3-Flash",
+      "status": "completed",
+      "finish": "stop",
+      "cost": 0.00088045,
+      "usage": {
+        "input_tokens": 1123,
+        "output_tokens": 1424,
+        "total_tokens": 2547
+      }
+    }
+  ],
+  "total_estimated_usd": 0.3572874099999999,
+  "anchored_episodes": 100,
+  "rejected": 4
+}

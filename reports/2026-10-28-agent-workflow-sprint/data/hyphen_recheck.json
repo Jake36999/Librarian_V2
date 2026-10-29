@@ -1,0 +1,50 @@
+{
+ "items": 1802,
+ "claim_bearing_items": 1771,
+ "strict_status": {
+  "verified": 1626,
+  "unverified": 132,
+  "no_claim": 31,
+  "quote_elsewhere": 5,
+  "adjacent_page": 8
+ },
+ "strict_exact_rate": 0.9181,
+ "lenient_results_for_the_rest": {
+  "exact_page": 98,
+  "no_page_or_quote": 34,
+  "elsewhere_in_paper": 5,
+  "not_found": 30,
+  "adjacent_page": 3,
+  "runs_onto_next_page": 6
+ },
+ "recovered_to_exact_or_run_on": 104,
+ "recovered_on_the_page": 98,
+ "recovered_run_onto_next_page": 6,
+ "lenient_exact_rate": 0.9768,
+ "by_reader": {
+  "GLM-5.3": {
+   "claim_bearing_items": 236,
+   "strict_exact": 211,
+   "recovered": 21,
+   "not_found_anywhere": 4,
+   "strict_rate": 0.8941,
+   "lenient_rate": 0.9831
+  },
+  "GLM-5.3-Flash": {
+   "claim_bearing_items": 213,
+   "strict_exact": 190,
+   "recovered": 11,
+   "not_found_anywhere": 4,
+   "strict_rate": 0.892,
+   "lenient_rate": 0.9437
+  },
+  "MiMo-V2.6-Pro": {
+   "claim_bearing_items": 1322,
+   "strict_exact": 1225,
+   "recovered": 72,
+   "not_found_anywhere": 22,
+   "strict_rate": 0.9266,
+   "lenient_rate": 0.9811
+  }
+ }
+}

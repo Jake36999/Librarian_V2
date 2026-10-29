@@ -1,0 +1,17 @@
+{
+  "bookkeeping_only": 41,
+  "code_commits": 75,
+  "commits_all_branches": 120,
+  "commits_on_master": 118,
+  "head": "11bdd5b7c7ff9165928bf7f8998965a1b0934fef",
+  "plan_only": 12,
+  "rework_edges": 644,
+  "skip_blame": false,
+  "trailers": {
+    "claude-opus-5-5": 48,
+    "claude-sonnet-4-6": 3,
+    "none": 67
+  },
+  "with_drafted_by": 9,
+  "with_reviewed_by": 7
+}

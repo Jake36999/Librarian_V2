@@ -2033,3 +2033,42 @@ Three tests pin these. The E2' Stage A0 result is unchanged: these fixes
 remove avoidable cost but do not change the finding that a handoff costs more
 than a small refactor.
 Full suite: 1,574 passed, 2 skipped, 4 deselected (9m35s).
+
+### Status reconciliation and G2/G4 review (2026-10-29)
+
+**Statuses that lagged the code.** The rows above that still read "partial"
+are superseded:
+
+| Task | Recorded | Actual | Evidence |
+| --- | --- | --- | --- |
+| INDEX-02, INDEX-03 | partial (batches) | implemented | `tests/test_sqlite_ownership.py`: the serving-path debt list fell from 43 to 0 at `ded98c0` (2026-10-25), and the comment there records every batch. |
+| ROUTE-02 | implemented (display) | implemented | The server-side alias rewrite it deferred landed with ROUTE-03 (`test_explicit_host_id_cannot_be_reinterpreted_as_a_provider_alias`). |
+| ROUTE-03B / ROUTE-05 (chat) | partial | implemented | Its two open items (service dispatch, per-role picker readiness) closed in ROUTE-03C/04/05 (`4e56ca7`). |
+
+**G4 (adapter requests shaped by trusted code; route evidence durable).** Every
+ADAPT row is implemented, and each done-when column has its evidence in the
+repository:
+- golden byte-identical request and reply fixtures (ADAPT-04, ADAPT-05);
+- the approved-transport static test and the local-host limiter test
+  (ADAPT-06);
+- reasoning-replay tests (ADAPT-01, ADAPT-07, ADAPT-08);
+- recorded measurements for ADAPT-07, ADAPT-09 and ADAPT-11.
+
+Recommendation: **G4 can be closed.** The named test files and reports were
+checked to exist.
+
+**G2 (route/slot selection canonical; UI truth matches runtime truth).**
+ROUTE-01 to ROUTE-05 are implemented:
+- `tests/test_role_route_bindings.py` asserts that all eight roles and slots
+  (lead, scribe, clerk, research_helper, OCR, TTS, STT, embeddings) resolve
+  one canonical binding;
+- execution uses the bound route even when legacy settings differ;
+- a changed or disabled host cannot fall back to another role;
+- service slots and per-role readiness are covered.
+
+One literal gap remains: ROUTE-05 asks for "a UI/API snapshot for the
+three-position picker plus service slots". It is covered by assertions spread
+over several tests, not by one golden snapshot. Recommendation: add that
+snapshot test (small), then close G2.
+
+Closing either gate is the owner's decision, as it was for G1.

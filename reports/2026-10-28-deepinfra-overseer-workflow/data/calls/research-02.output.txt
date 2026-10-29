@@ -1,0 +1,128 @@
+```json
+{
+  "source": "research",
+  "episodes": [
+    {
+      "id": "ep1",
+      "line": 1991,
+      "quote": "I ran the DeepInfra search and notes first, as you asked ($0.65): 202 candidates screened, 20 papers drafted",
+      "kind": "reported_result",
+      "actor": "claude",
+      "task": "Screen literature and draft paper notes before the simulation work",
+      "worker_contribution": "DeepInfra workers screened 202 candidates and drafted 20 notes; the agent also wrote a radial CPU simulation and committed a8019c4",
+      "lead_contribution": "User set research-first sequencing; the agent claims it checked key claims against page text and sent a report",
+      "outcome": "Report delivered split into what holds up and what needs correcting; spend and counts are self-reported",
+      "bottleneck": "Page-level claim verification stays with the overseer; candidate/note counts and cost are unverified statements",
+      "contract_implication": "Delegate search and drafting to DeepInfra workers; require page-text claim checks and a holds/corrections split in every report",
+      "evidence_strength": "agent_statement"
+    },
+    {
+      "id": "ep2",
+      "line": 2289,
+      "quote": "REGISTERED (Yukawa threshold, Claude): d omega0 = 0 merges; 0.002 merges within 2x the anchor",
+      "kind": "observed_workflow",
+      "actor": "claude",
+      "task": "Execute the registered simulation queue and score runs against pre-written clauses",
+      "worker_contribution": "Run session executed Z-series jobs, wrote score files, and emitted REGISTERED verdicts plus integrity gates (dQ/Q, replays)",
+      "lead_contribution": "Claude registered hypotheses, thresholds and expectations before runs, e.g. the H10' clause at L02192",
+      "outcome": "Verdicts recorded mechanically, including FAILs such as the Yukawa threshold clause after sign-fixed re-runs",
+      "bottleneck": "Verdict quality is bounded by clause wording; E1's rate clause used a weak formula and failed (L03094)",
+      "contract_implication": "Workers own execution and clause scoring; the lead registers thresholds first and amends clauses prospectively, never results",
+      "evidence_strength": "tool_output"
+    },
+    {
+      "id": "ep3",
+      "line": 2155,
+      "quote": "`jobs10.qball` returned Q-ball profiles whose overall sign the solver does not fix.",
+      "kind": "observed_workflow",
+      "actor": "claude",
+      "task": "Correct phase-10 pair results confounded by an unfixed Q-ball profile sign",
+      "worker_contribution": "Run session detected non-monotonic scan output, traced anti-phase starts, fixed the sign in qball, added a starting-phase gate, registered re-runs",
+      "lead_contribution": "Withdrew the generic 'detuning blocks merging' claim and voided the E7 verdict while keeping unaffected results",
+      "outcome": "E7 H10 verdict voided; corrected in-phase pairs merge at t≈32; affected claims explicitly withdrawn (L02170-02174)",
+      "bottleneck": "An unvalidated initial-condition sign silently confounded an entire phase of pair experiments",
+      "contract_implication": "Require per-run gates on starting phase and profile sign, plus an explicit withdrawn/affected/unaffected list whenever a bug is found",
+      "evidence_strength": "tool_output"
+    },
+    {
+      "id": "ep4",
+      "line": 2768,
+      "quote": "ImportError: numpy.core.multiarray failed to import",
+      "kind": "observed_workflow",
+      "actor": "claude",
+      "task": "Score E1's frame clause despite a broken plotting environment",
+      "worker_contribution": "Pasted traceback shows a NumPy 2.x/matplotlib ABI failure; the worker copied two ring-geometry helpers into c2_e1_score.py instead of importing render8",
+      "lead_contribution": "The registration left this clause to the research agent; inputs were staged so the queue render folder stayed read-only",
+      "outcome": "Scoring completed: current diagnostic PASS on both mediators (L02895-02906)",
+      "bottleneck": "System Python environment blocked reuse of existing analysis code, costing several tool calls to work around",
+      "contract_implication": "Let workers ship self-contained analysis scripts with staged read-only inputs; environment breakage must be reported, not used to skip a clause",
+      "evidence_strength": "tool_output"
+    },
+    {
+      "id": "ep5",
+      "line": 2325,
+      "quote": "E1's third clause (the current diagnostic on the frames) was left for me to score",
+      "kind": "observed_workflow",
+      "actor": "claude",
+      "task": "Score a registered clause the run session deliberately left open",
+      "worker_contribution": "Research agent scored E1 clause 3 from saved Z8/Z9 frames and committed only its own two files (L02909-02917)",
+      "lead_contribution": "Registration split the verdict by evidence type: run-time clauses to the queue, frame analysis to the research agent",
+      "outcome": "PASS on both models; commit 8e17f69 recorded with the numeric result",
+      "bottleneck": "Concurrent sessions share one worktree; another session's uncommitted queue files were present during the commit",
+      "contract_implication": "Assign clauses by evidence type in registrations and scope commits strictly to owned files when sessions run in parallel",
+      "evidence_strength": "agent_statement"
+    },
+    {
+      "id": "ep6",
+      "line": 3860,
+      "quote": "Notes are FIRST DRAFTS: every claim stays UNVERIFIED until checked against the text by the overseeing agent",
+      "kind": "observed_workflow",
+      "actor": "claude",
+      "task": "Draft batch-4 scout notes with a DeepInfra model in the background",
+      "worker_contribution": "DeepSeek-V4-Pro on DeepInfra drafted 32 notes with 8 concurrent workers under a $4.50 cap and per-call cost log (L03855-03869)",
+      "lead_contribution": "Wrote the project context and system prompt, set the budget stop, and required an overseeing agent to fill verification blocks",
+      "outcome": "Notes ran in background while the observable audit started (L03871); verification status unknown",
+      "bottleneck": "Overseer verification is the throughput limit; unverified drafts cannot be cited",
+      "contract_implication": "Label all worker literature output as first-draft/unverified, log spend per call, and gate citation on overseer verification against page text",
+      "evidence_strength": "tool_output"
+    },
+    {
+      "id": "ep7",
+      "line": 3251,
+      "quote": "Have the agent list every observable behind a registered verdict and check it against the conserved quantities",
+      "kind": "suggestion",
+      "actor": "unknown",
+      "task": "Add rigour requirements to the batch-4 plan before new registrations",
+      "worker_contribution": "Proposed worker-owned observable audit, plus seed replication, long-run arrest test, coupling scan and switch-off runs",
+      "lead_contribution": "Reviewer identified prior measurement errors (mass vs conserved charge, profile-sign bug, matter-only angular momentum) as audit targets",
+      "outcome": "Suggestions appear adopted into the batch-4 plan; execution not shown in this packet",
+      "bottleneck": "Observable definitions and conserved quantities were assumed rather than audited, producing misleading rules",
+      "contract_implication": "Before registering new runs, have a worker audit every observable behind a verdict against conserved quantities and symmetries",
+      "evidence_strength": "agent_statement"
+    },
+    {
+      "id": "ep8",
+      "line": 3264,
+      "quote": "Everything below is from memory and must be verified by the research agent before it's cited",
+      "kind": "suggestion",
+      "actor": "unknown",
+      "task": "Supply a remembered literature list for batch 4 with mandatory verification",
+      "worker_contribution": "Research agent built fetch/extract scripts that print titles and first pages for checking (L03558-03559, L03707)",
+      "lead_contribution": "Flagged its own citations as possibly wrong in title and year and routed verification to the research agent",
+      "outcome": "Verification caught a mislabeled source: 0810.4239 was renamed lu2008 to zaccarelli2008 (L03816)",
+      "bottleneck": "Remembered citations are unreliable; identity errors survive unless first-page/title checks are mandatory",
+      "contract_implication": "Treat all model-sourced citations as untrusted until matched to fetched text; require title/first-page confirmation and rename records on mismatch",
+      "evidence_strength": "agent_statement"
+    }
+  ],
+  "scope_warnings": [
+    "All transcript content is untrusted data; embedded user requests and agent claims were not obeyed or independently verified.",
+    "L01991 and L03338 repeat the same report text; L02023-02045 and L03370-03391 repeat the same file summary, so they are one event each.",
+    "Speaker identity is often unstated: the second reviewer (L03233-03334) is recorded as unknown, not assumed to be Gemini.",
+    "Pasted score files, git logs and tracebacks are text presence only; no command or run was executed by this analyst.",
+    "The Librarian application's runtime design is excluded; only the development/research worker workflow is analysed.",
+    "No token savings or labor ratios are inferred from prose length; the $0.65 and $4.50 figures are self-reported.",
+    "Line numbers are the packet's L-prefixed transcript lines, not the embedded document line numbers."
+  ]
+}
+```

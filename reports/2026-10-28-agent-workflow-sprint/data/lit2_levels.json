@@ -1,0 +1,26 @@
+{
+ "n": 50,
+ "agree": 48,
+ "contested": 2,
+ "at_least_bounded_by_both": 46,
+ "primary": {
+  "direct_candidate": 7,
+  "bounded_analogy": 40,
+  "out_of_scope": 3,
+  "unexamined": 0
+ },
+ "judge": {
+  "direct_candidate": 6,
+  "bounded_analogy": 40,
+  "out_of_scope": 4
+ },
+ "priority": {
+  "high": 14,
+  "medium": 16,
+  "low": 20
+ },
+ "two_reader_same_level": [
+  13,
+  17
+ ]
+}

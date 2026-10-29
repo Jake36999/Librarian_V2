@@ -1,0 +1,10 @@
+project,session,ts,kind,model,input_tokens,output_tokens,thinking_tokens,cache_read_tokens,cache_creation_tokens,cost_usd,total_duration_ms,retry_attempt,max_retries,retry_in_ms,http_status,api_error,limit_type,limit_status,resets_at,overage_status,overage_reason,trigger,pre_tokens,post_tokens,duration_ms
+D--Librarian-V2,23197395-4e2e-4e3c-ad90-9cbe3af61a81,,cost_state,claude-haiku-5-5,2526,22,0,0,0,0.0002636,37300,,,,,,,,,,,,,,
+D--Librarian-V2,23197395-4e2e-4e3c-ad90-9cbe3af61a81,,cost_state,claude-sonnet-5-5,8,2620,577,312426,57527,0.2875666,37300,,,,,,,,,,,,,,
+D--Librarian-V2,2ca0af49-a456-4495-a771-3cff42505aad,2026-10-24T09:51:40.190Z,conn_error,,,,,,,,,1,10,529,,,,,,,,,,,
+D--Librarian-V2,2ca0af49-a456-4495-a771-3cff42505aad,2026-10-24T11:43:43.218Z,api_limit,,,,,,,,,,,,429,usage_limit_reached,five_hour,rejected,2026-10-24T14:20:00.000Z,rejected,out_of_credits,,,,
+D--Librarian-V2,2ca0af49-a456-4495-a771-3cff42505aad,2026-10-24T15:52:18.999Z,compaction,,,,,,,,,,,,,,,,,,,auto,970162,22653,96311
+D--Librarian-V2,2ca0af49-a456-4495-a771-3cff42505aad,2026-10-25T23:19:33.414Z,api_limit,,,,,,,,,,,,429,usage_limit_reached,five_hour,rejected,2026-10-26T00:20:00.000Z,rejected,out_of_credits,,,,
+D--Librarian-V2,2ca0af49-a456-4495-a771-3cff42505aad,2026-10-26T01:00:18.867Z,api_limit,,,,,,,,,,,,429,usage_limit_reached,seven_day,rejected,2026-10-28T15:00:00.000Z,rejected,out_of_credits,,,,
+D--Librarian-V2,61d3eaf3-e0bc-4aa9-aa45-2de25ffb574b,2026-10-28T17:30:32.862Z,api_limit,,,,,,,,,,,,429,usage_limit_reached,five_hour,rejected,2026-10-28T20:20:00.000Z,rejected,out_of_credits,,,,
+D--Librarian-V2,61d3eaf3-e0bc-4aa9-aa45-2de25ffb574b,2026-10-28T21:04:25.704Z,compaction,,,,,,,,,,,,,,,,,,,auto,967205,34529,66460

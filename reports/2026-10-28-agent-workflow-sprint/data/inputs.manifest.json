@@ -1,0 +1,2527 @@
+{
+  "created": "2026-10-28T22:32:28.477Z",
+  "groups": {
+    "claude_scratchpad_runner_records": [
+      {
+        "bytes": 4200,
+        "mtime": "2026-10-24T11:01:26.977Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\delegate.py",
+        "sha256": "c2828708db217810ff7f0c2f220624ff2b1219148db5bcc723a78d7cbcd67b5d"
+      },
+      {
+        "bytes": 5538,
+        "mtime": "2026-10-28T15:51:36.070Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\ledger.json",
+        "sha256": "d18491357426f7e0b453b5e6bed90e9e9fd846ccad14c76564ef73b2acbbf015"
+      },
+      {
+        "bytes": 989,
+        "mtime": "2026-10-24T09:58:52.166Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\prompt_code.txt",
+        "sha256": "2017faa8624b1a700d62f3c04ec57e94b452ae6ca0f9838e6948ac41e7aa71bf"
+      },
+      {
+        "bytes": 1160,
+        "mtime": "2026-10-24T09:37:27.156Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\prompt_consistency.txt",
+        "sha256": "8e8a61fbae38f6aef00d24aa7f49cc31db578718543655ee3e3e3f3490f23b82"
+      },
+      {
+        "bytes": 980,
+        "mtime": "2026-10-24T09:56:12.019Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\prompt_files.txt",
+        "sha256": "a29caab116e916c51645643c654150de83e2266fa35c0261d1ef923b2f3281af"
+      },
+      {
+        "bytes": 2425,
+        "mtime": "2026-10-24T09:57:42.487Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\prompt_lh.txt",
+        "sha256": "7ac917c616a7d6e47f7afe2bbb4ea2fb71fc1684751a69b93556ca1d1aaf3eb8"
+      },
+      {
+        "bytes": 1201,
+        "mtime": "2026-10-24T09:37:27.118Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\prompt_notes.txt",
+        "sha256": "7699c15a93949d6502f6fc9501b85c4a6996fb4fb337752513f6ce951990c70d"
+      },
+      {
+        "bytes": 7369,
+        "mtime": "2026-10-24T09:30:22.791Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\prompt_papers.txt",
+        "sha256": "370a77b01de1de32d24afb29121b2722b7340de62ea5f870b57adb1c1da8e237"
+      },
+      {
+        "bytes": 1895,
+        "mtime": "2026-10-24T09:56:11.983Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\prompt_turns.txt",
+        "sha256": "9225e9e7e4b4da395b87d57f9547dc53c615439c5382ba40dab2e7b8704160ea"
+      },
+      {
+        "bytes": 2781,
+        "mtime": "2026-10-24T09:29:20.266Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\second_reader.py",
+        "sha256": "7dba6964dbed8171e705c04f16fea43bced4d2825e1c4855c58e3d7225cbc01c"
+      },
+      {
+        "bytes": 34417,
+        "mtime": "2026-10-24T09:58:52.095Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\service_diff.patch",
+        "sha256": "5fe1a16694c64fd1455656084c8a99f5e154c27bb3df2ffb081fdfca4781dfc6"
+      },
+      {
+        "bytes": 256,
+        "mtime": "2026-10-24T09:46:53.677Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\consistency.log",
+        "sha256": "b60d8baa57c43d27160755c467a56a807c88e33b7962d3856b8dbf91d81179fc"
+      },
+      {
+        "bytes": 159,
+        "mtime": "2026-10-24T10:01:32.908Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\longhorizon_verify.log",
+        "sha256": "109ddfc0d4b26571a696cdc792d4554098df6b02e074267ae31a7e2393a08116"
+      },
+      {
+        "bytes": 265,
+        "mtime": "2026-10-24T09:39:42.756Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\notes_review.log",
+        "sha256": "ba5c947e163f23b441d75f9a0c49cae5fbf5c08ea20b8d283eb43ae623737c83"
+      },
+      {
+        "bytes": 185,
+        "mtime": "2026-10-24T09:33:38.774Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\paper_A_Pedagogy_First_Approach_to_Integrating.log",
+        "sha256": "6dece2d143f5415175e38bdc29832dc37a82a8db8f14a88f8ef18abfc558f40b"
+      },
+      {
+        "bytes": 187,
+        "mtime": "2026-10-24T09:37:42.353Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\paper_Advances_in_LLM_Assisted_Combinatorial_O.log",
+        "sha256": "6f97caf2042da77790baaa3476715a1441b70ca20e56f2477f9274573fbc534e"
+      },
+      {
+        "bytes": 186,
+        "mtime": "2026-10-24T09:34:25.230Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\paper_AgentAI__A_comprehensive_survey_on_auton.log",
+        "sha256": "747a2a375b5dde6eed537f64fbc7a37e312aeed572480751c415a4b6e3e92883"
+      },
+      {
+        "bytes": 187,
+        "mtime": "2026-10-24T09:37:13.882Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\paper_Agentic_AI__The_age_of_reasoning_A_re_20.log",
+        "sha256": "b7d814bcdf642d81475770f52471684cda926b0947ad7595b193ab25a14fe751"
+      },
+      {
+        "bytes": 187,
+        "mtime": "2026-10-24T09:37:52.702Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\paper_AI_Agents_vs__Agentic_AI__A_Conceptual_t.log",
+        "sha256": "ebdd34e9657de24b2d5ec3ade126b7069ea2cec9b2b08d74046ad06e1c539235"
+      },
+      {
+        "bytes": 163,
+        "mtime": "2026-10-24T09:34:18.050Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\paper_applsci_16_04720_.log",
+        "sha256": "4cf04b5c72573876e5b752a5f08decf6a11548d551ec428f7bf235d5433abf0d"
+      },
+      {
+        "bytes": 171,
+        "mtime": "2026-10-24T09:36:03.545Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\paper_electronics_15_03452_v2_.log",
+        "sha256": "6a03fa44ae81da407f1eb21adffc3aaec0dbdec6c60b7ba99bd95ced77a58a83"
+      },
+      {
+        "bytes": 186,
+        "mtime": "2026-10-24T09:34:25.113Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\paper_Exploring_How_Knowledge_Workers_Situate_.log",
+        "sha256": "3034240be85a86b04f6f541bdde9a015bf6c9f5c17d888cece0e7cef6e038cb0"
+      },
+      {
+        "bytes": 187,
+        "mtime": "2026-10-24T09:38:45.871Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\paper_Homo_agenticus_in_the_age_of_agentic_AI_.log",
+        "sha256": "d1c2092e94da7aa2d215eaeaead63c95b309a06e6f2f8476b5c9cb57e54d4815"
+      },
+      {
+        "bytes": 187,
+        "mtime": "2026-10-24T09:38:28.896Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\paper_Industrial_Agentic_AI_and_generative_mod.log",
+        "sha256": "d5e314abfd218c3d2f561dd4eeac3e15bdd2da18d54493a660fdcfc8cfc08e2d"
+      },
+      {
+        "bytes": 187,
+        "mtime": "2026-10-24T09:34:37.673Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\paper_Knowledge_Driven_Reasoning_for_Compatibl.log",
+        "sha256": "ce9a26e719426944ac38fe464d4de693666a4f1879927b6a8af3087a7b836f77"
+      },
+      {
+        "bytes": 186,
+        "mtime": "2026-10-24T09:38:22.074Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\paper_LLM_Planning_against_Semantic_Execution_.log",
+        "sha256": "07746c7fa0fa65534ef5135d7f839b9d4474ba64d03859ed9223138d53e29fe5"
+      },
+      {
+        "bytes": 187,
+        "mtime": "2026-10-24T09:34:35.738Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\paper_Thought_Management_System_for_long_horiz.log",
+        "sha256": "5998c1a57c35aef178db1588994d410a0c6ec95372a0e060506d5718316eeffd"
+      },
+      {
+        "bytes": 186,
+        "mtime": "2026-10-24T09:33:55.948Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\paper_Transforming_cybersecurity_with_agentic_.log",
+        "sha256": "82c6dd1a3622a3fbaff940df2930f2b041959f737af5bc535482a9d689db0fa0"
+      },
+      {
+        "bytes": 266,
+        "mtime": "2026-10-24T10:03:35.991Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\service_code_review.log",
+        "sha256": "4460750304bcbf323bd34d46360a8cbe301e14266332e217c112f89bf1ae25e8"
+      },
+      {
+        "bytes": 158,
+        "mtime": "2026-10-24T10:00:18.931Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\transcript_files.log",
+        "sha256": "101f38e389cb488607835d029d6c2c605c4f444e59999619b80dfdf1d3763142"
+      },
+      {
+        "bytes": 157,
+        "mtime": "2026-10-24T09:59:34.390Z",
+        "path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad\\scratchpad\\reader\\out\\transcript_turns.log",
+        "sha256": "632de758da63c7658af8bcd18bb2fc055a395f73517c211a075c2e7eb672bcda"
+      }
+    ],
+    "delegation_receipts": [
+      {
+        "bytes": 52,
+        "mtime": "2026-10-28T15:52:24.196Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\briefs\\canary.txt",
+        "sha256": "4b457973f4110c17668a745f739d2ba26c3456096c43b1ab402f571ca96bdffa"
+      },
+      {
+        "bytes": 40509,
+        "mtime": "2026-10-28T22:31:26.783Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\claude-ledger.json",
+        "sha256": "036282702db999089117b096ac5044bb3db58eae60785204c221df6071f816fa"
+      },
+      {
+        "bytes": 3176,
+        "mtime": "2026-10-28T14:51:28.177Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\ledger.json",
+        "sha256": "ddcfd42cad04a0dcba12840b500d713ecd954f06dc2fb8d62b90d14bd50c2562"
+      },
+      {
+        "bytes": 9,
+        "mtime": "2026-10-28T14:06:06.452Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T140605-4e6fe558-canary-001.md",
+        "sha256": "b0f59d403979fee931a778bd0a6ea20133c538f642e9dc508cf136b5a34a1027"
+      },
+      {
+        "bytes": 1298,
+        "mtime": "2026-10-28T14:06:06.454Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T140605-4e6fe558-canary-001.receipt.json",
+        "sha256": "bce23df99c593e68b89b88611a00f820e778d7dbd8eb32269b5e0f52595f1722"
+      },
+      {
+        "bytes": 24303,
+        "mtime": "2026-10-28T14:09:37.857Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T140820-4f1c3480-index05-attachment-map.md",
+        "sha256": "517e46980b7474f52a27fa65b61bfced50ba08ae8fa9fe46221d097994a9eee6"
+      },
+      {
+        "bytes": 2244,
+        "mtime": "2026-10-28T14:09:37.860Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T140820-4f1c3480-index05-attachment-map.receipt.json",
+        "sha256": "3fd135509962eb3abe3876f01015b992b95fdb461d44ac9d34560704b278a59c"
+      },
+      {
+        "bytes": 16131,
+        "mtime": "2026-10-28T14:10:19.565Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T140915-0cbf1048-index05-attachment-map-retry1.md",
+        "sha256": "bcf2e2971a355d2b3f305bcb0c262702731426fab7a6ec518074b559029f16db"
+      },
+      {
+        "bytes": 2261,
+        "mtime": "2026-10-28T14:10:19.569Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T140915-0cbf1048-index05-attachment-map-retry1.receipt.json",
+        "sha256": "7a7a376ea6a28a6b2ad1cbc608c60f591b6376791c92f2c7890699bd4d4efeab"
+      },
+      {
+        "bytes": 10101,
+        "mtime": "2026-10-28T14:11:01.924Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T141039-a049f450-index05-attachment-build.md",
+        "sha256": "3465b9fdcca556d88b29e1e9245173c5cdb84faa0a2dc4898c1976d558ab2047"
+      },
+      {
+        "bytes": 2122,
+        "mtime": "2026-10-28T14:11:01.926Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T141039-a049f450-index05-attachment-build.receipt.json",
+        "sha256": "04135b9f59fc720a251de223418463c902cc9be64835dc27221b3ef2e559162f"
+      },
+      {
+        "bytes": 8084,
+        "mtime": "2026-10-28T14:12:01.719Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T141115-034bd180-index05-attachment-critic.md",
+        "sha256": "633e107d11a3e9c97c0360b6c6dda75414d40b2ff9b107ddc47e5b8da7c80017"
+      },
+      {
+        "bytes": 2297,
+        "mtime": "2026-10-28T14:12:01.721Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T141115-034bd180-index05-attachment-critic.receipt.json",
+        "sha256": "eee717e3e47e6d650a6fe3c7ec68899231fcda6216c60e2433245efb7dfa0d6b"
+      },
+      {
+        "bytes": 15499,
+        "mtime": "2026-10-28T14:16:20.191Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T141513-ce72d5e6-index05-scan-8x-diagnosis.md",
+        "sha256": "a55316e9bf4e7eda88e2ce8499c3271a19cda3b018a3e0e1a56552a669f74a0a"
+      },
+      {
+        "bytes": 2601,
+        "mtime": "2026-10-28T14:16:20.193Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T141513-ce72d5e6-index05-scan-8x-diagnosis.receipt.json",
+        "sha256": "ae0edadbe842f5536f7b38a2fe40c2904dc6a98c6ba5ebfafc291899411387a0"
+      },
+      {
+        "bytes": 12726,
+        "mtime": "2026-10-28T14:20:21.998Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T141925-17349832-index05-attachment-final-review.md",
+        "sha256": "2a53bc652d5da783baf04fb0bf360f011ab62ff6fc2b9795d2c019ed00e2c924"
+      },
+      {
+        "bytes": 2433,
+        "mtime": "2026-10-28T14:20:22.001Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T141925-17349832-index05-attachment-final-review.receipt.json",
+        "sha256": "3f8c433fc4f83bad6de6bf7a02b8a40ea6967713451d828b00469e8c36563226"
+      },
+      {
+        "bytes": 945,
+        "mtime": "2026-10-28T14:35:35.406Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T143357-85f2fc6b-index05_encoder_mapper.md",
+        "sha256": "3977ad610c6c1c686d64b670a50bd12e653febbb2cffb89ebe546aae72b6f90e"
+      },
+      {
+        "bytes": 2856,
+        "mtime": "2026-10-28T14:35:35.407Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T143357-85f2fc6b-index05_encoder_mapper.receipt.json",
+        "sha256": "db356ca8d6494d3b0ef08ae286304d51012e27d82ad2855bfe44a5098ad7a184"
+      },
+      {
+        "bytes": 14229,
+        "mtime": "2026-10-28T14:39:00.092Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T143759-96319be5-index05_encoder_contract.md",
+        "sha256": "524eeb483c9312d438b8955e50c801aa6403c4e85986da74aa2e166b10e267d8"
+      },
+      {
+        "bytes": 2765,
+        "mtime": "2026-10-28T14:39:00.095Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T143759-96319be5-index05_encoder_contract.receipt.json",
+        "sha256": "982948420292c0868cc278b164ff05029b635a520b67e8868618e8528d0a1475"
+      },
+      {
+        "bytes": 2620,
+        "mtime": "2026-10-28T14:43:00.103Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T143959-247643cf-index05_encoder_builder.receipt.json",
+        "sha256": "ad8fe992478238fec851cdc6883a6ec79776d109f5e693b5f8ce0839a765273d"
+      },
+      {
+        "bytes": 19751,
+        "mtime": "2026-10-28T14:51:28.170Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T145006-4923e3db-index05_encoder_diff_critic.md",
+        "sha256": "316b0960772b1d3e608b48a91adeca4c0c8f0abd22cdd14f98bdcf09cc9b5806"
+      },
+      {
+        "bytes": 3266,
+        "mtime": "2026-10-28T14:51:28.174Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T145006-4923e3db-index05_encoder_diff_critic.receipt.json",
+        "sha256": "ee0f425029cca2b08eb09ba6924983dec9a5fdd11ba4c3769150fb214613b1e8"
+      },
+      {
+        "bytes": 5,
+        "mtime": "2026-10-28T15:52:25.352Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T155224-150d5997-runner-canary.md",
+        "sha256": "c2e3ac47f4a325469c1a2d5f117e463ec943c721986d5d9f09ac4540b7d80526"
+      },
+      {
+        "bytes": 1279,
+        "mtime": "2026-10-28T15:52:25.367Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T155224-150d5997-runner-canary.receipt.json",
+        "sha256": "9cdf475105f3ed26c6da3b0cf7920e8e762123753ff27e501b7e9035a6922647"
+      },
+      {
+        "bytes": 2,
+        "mtime": "2026-10-28T17:06:45.673Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T170644-1af8d6af-sprint-canary-001.md",
+        "sha256": "565339bc4d33d72817b583024112eb7f5cdf3e5eef0252d6ec1b9c9a94e12bb3"
+      },
+      {
+        "bytes": 1270,
+        "mtime": "2026-10-28T17:06:45.687Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T170644-1af8d6af-sprint-canary-001.receipt.json",
+        "sha256": "269adccc0e4cd00ec9fd95a7b088ea4268a7a4c3d4b553f1516c081d9c43a6a1"
+      },
+      {
+        "bytes": 517,
+        "mtime": "2026-10-28T17:11:22.680Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171120-07a1150d-P1-batch-11-flash.md",
+        "sha256": "233cc34002fc9a72cdd1285445197d2a78552a91dbc970b6b3504237b4849c1d"
+      },
+      {
+        "bytes": 1470,
+        "mtime": "2026-10-28T17:11:22.692Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171120-07a1150d-P1-batch-11-flash.receipt.json",
+        "sha256": "c02743f261d64d2804347911ce2d76fd820b6debc613d47e346524e8479fbf5d"
+      },
+      {
+        "bytes": 6533,
+        "mtime": "2026-10-28T17:12:46.367Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171120-54013bf8-T-claude_dev-01-mimo.md",
+        "sha256": "51c6588ebf19dc9637cb28239ece48905e5b3e2d445bd37526a65f14ee8a33cd"
+      },
+      {
+        "bytes": 1472,
+        "mtime": "2026-10-28T17:12:46.375Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171120-54013bf8-T-claude_dev-01-mimo.receipt.json",
+        "sha256": "751ea4fc4b3a77881d7e2013bb057515467bf49b49a123334f33553e8724f05d"
+      },
+      {
+        "bytes": 17538,
+        "mtime": "2026-10-28T17:13:45.535Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171120-7fea3335-G-gemini-mimo.md",
+        "sha256": "522066faa15495a05a00bd6df72fc26f1c3d13eb8b2c0fd5ebefb81c47aa2cbf"
+      },
+      {
+        "bytes": 1481,
+        "mtime": "2026-10-28T17:13:45.542Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171120-7fea3335-G-gemini-mimo.receipt.json",
+        "sha256": "9bf7c0310670b3454abd490f65991bcf6ce0c653e664a61141005ab5cb9006aa"
+      },
+      {
+        "bytes": 6558,
+        "mtime": "2026-10-28T17:17:35.124Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171554-52813550-T-chat1-01-mimo.md",
+        "sha256": "76c3aa38dbebf872e754dcca7d25e1ab5b53dc680cc648a58d819228b5f117dc"
+      },
+      {
+        "bytes": 1459,
+        "mtime": "2026-10-28T17:17:35.131Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171554-52813550-T-chat1-01-mimo.receipt.json",
+        "sha256": "d072bc62a1ef727559d5f698f76988441d726eb20ebbf3d371239ab734f6a26c"
+      },
+      {
+        "bytes": 9058,
+        "mtime": "2026-10-28T17:18:28.634Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171554-6bffe933-T-chat1-02-mimo.md",
+        "sha256": "85d30f90c15c23ab3d190183f55d839ee29e8115f5a92f8771e9d8216e4ed154"
+      },
+      {
+        "bytes": 1460,
+        "mtime": "2026-10-28T17:18:28.648Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171554-6bffe933-T-chat1-02-mimo.receipt.json",
+        "sha256": "13f7781cbb6cf77cbaa8479232d25b2fa3f9f83b4aec796534604583839ce0cf"
+      },
+      {
+        "bytes": 14477,
+        "mtime": "2026-10-28T17:18:44.013Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171554-b74cd4ee-G-gemini-b-mimo.md",
+        "sha256": "e218b046ec5555c14c638af3986b0085ca7449498d7b2e74e7babbc71212637f"
+      },
+      {
+        "bytes": 1459,
+        "mtime": "2026-10-28T17:18:44.020Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171554-b74cd4ee-G-gemini-b-mimo.receipt.json",
+        "sha256": "20fa34cec257d7231f45a6b02832a649dbe5d94ef4353ac48138748b5cc1430a"
+      },
+      {
+        "bytes": 10855,
+        "mtime": "2026-10-28T17:18:11.495Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171554-cab50e98-G-gemini-c-mimo.md",
+        "sha256": "3d475f0484c46d3432a42bf74f1cc957ef0f6a91ff1ed36071c78c95a70b02df"
+      },
+      {
+        "bytes": 1459,
+        "mtime": "2026-10-28T17:18:11.504Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171554-cab50e98-G-gemini-c-mimo.receipt.json",
+        "sha256": "a097e61cb21e1d394b32b8af6b17b4a7f1bc31cab40fa83bc330da0094745cf8"
+      },
+      {
+        "bytes": 12542,
+        "mtime": "2026-10-28T17:20:39.429Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171735-c5eadd25-T-chat1-03-mimo.md",
+        "sha256": "78663b5b0a0819097d1fe9e0ef5e7b0446935f588b1d09b3c73ff8e6d62f8295"
+      },
+      {
+        "bytes": 1461,
+        "mtime": "2026-10-28T17:20:39.443Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171735-c5eadd25-T-chat1-03-mimo.receipt.json",
+        "sha256": "f43930e464645eaba70e18669b2a64cf531dc11025263b5b774516a56ff1b939"
+      },
+      {
+        "bytes": 15423,
+        "mtime": "2026-10-28T17:21:14.495Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171811-9000885d-T-chat1-04-mimo.md",
+        "sha256": "b014daeed4f13f3503570945722bfdffbe60a1de4b07b563c67696202296e6ce"
+      },
+      {
+        "bytes": 1484,
+        "mtime": "2026-10-28T17:21:14.508Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171811-9000885d-T-chat1-04-mimo.receipt.json",
+        "sha256": "cabe5f6f30c32223435f49293c9b2ea0c1263faf6b71bd615666ffb693b0eb31"
+      },
+      {
+        "bytes": 15787,
+        "mtime": "2026-10-28T17:21:26.604Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171828-06832ed1-T-chat1-05-mimo.md",
+        "sha256": "12c2c1fcd610552b1babb895f2745ef293cca6f220add9c382bbc895fe0015fb"
+      },
+      {
+        "bytes": 1484,
+        "mtime": "2026-10-28T17:21:26.620Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171828-06832ed1-T-chat1-05-mimo.receipt.json",
+        "sha256": "b7b1907e277974704a3c063308dc287f5a27f6091b4d801a335ecc0b2a5ec977"
+      },
+      {
+        "bytes": 10705,
+        "mtime": "2026-10-28T17:20:36.329Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171844-5002319f-T-chat1-06-mimo.md",
+        "sha256": "583b0439f6a1244115f41773516e0a1c5dae27b6dd1f3e437bb8d925dade0c1c"
+      },
+      {
+        "bytes": 1460,
+        "mtime": "2026-10-28T17:20:36.337Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T171844-5002319f-T-chat1-06-mimo.receipt.json",
+        "sha256": "1804a4b7a025321dcd0940e8c95306601130fe9afa649f3c6123c67daf8a8a74"
+      },
+      {
+        "bytes": 15432,
+        "mtime": "2026-10-28T17:24:21.764Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172036-32563858-T-chat1-07-mimo.md",
+        "sha256": "b2307321b2222830eda05e9995a6a518f8ef4356b99306f200ad37b1def9ee21"
+      },
+      {
+        "bytes": 1484,
+        "mtime": "2026-10-28T17:24:21.778Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172036-32563858-T-chat1-07-mimo.receipt.json",
+        "sha256": "cf0672d349a27f29639ad7596970ea2084e3fee6f5f2da5234f3c2d2f9485a44"
+      },
+      {
+        "bytes": 15319,
+        "mtime": "2026-10-28T17:24:17.893Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172039-fd24585f-T-chat1-08-mimo.md",
+        "sha256": "c02d1eb11a37775eef9de1dc88e8341fb9b583018f5e5af70a095616262f445a"
+      },
+      {
+        "bytes": 1484,
+        "mtime": "2026-10-28T17:24:17.902Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172039-fd24585f-T-chat1-08-mimo.receipt.json",
+        "sha256": "1cc76a4a5ef21648a93e900ab454973fb33a96337dc79d9f44c5aeb46b011bc9"
+      },
+      {
+        "bytes": 16638,
+        "mtime": "2026-10-28T17:24:56.260Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172114-8a34f025-T-chat1-09-mimo.md",
+        "sha256": "63dbfd39825b110d861daa7d2c385d2cf6913a4613ef99503b6e83d4900394bd"
+      },
+      {
+        "bytes": 1461,
+        "mtime": "2026-10-28T17:24:56.268Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172114-8a34f025-T-chat1-09-mimo.receipt.json",
+        "sha256": "8b37104b260b4a641adcc015158d73fbb02879b6fb0fdec93818384e66e040ec"
+      },
+      {
+        "bytes": 14386,
+        "mtime": "2026-10-28T17:24:43.089Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172126-52ff5092-T-chat1-10-mimo.md",
+        "sha256": "82ef5ccff93605b1502417b028db5eda7624403542c838a26f10836ee36f57de"
+      },
+      {
+        "bytes": 1460,
+        "mtime": "2026-10-28T17:24:43.103Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172126-52ff5092-T-chat1-10-mimo.receipt.json",
+        "sha256": "c59363fe84375bbabc6860ab410ae921d9011453a54aab7df1e8d63fcb6344da"
+      },
+      {
+        "bytes": 15582,
+        "mtime": "2026-10-28T17:27:59.712Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172418-40539cdb-T-chat2-01-mimo.md",
+        "sha256": "44add54fd4780c42de430c8750d2d5c810c36f9e87d9dad5b96ca9200945cbbe"
+      },
+      {
+        "bytes": 1484,
+        "mtime": "2026-10-28T17:27:59.720Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172418-40539cdb-T-chat2-01-mimo.receipt.json",
+        "sha256": "42034a2bd93888d24f7555ad51b26778e393e9c312c9805ab3457337bd2909c0"
+      },
+      {
+        "bytes": 15669,
+        "mtime": "2026-10-28T17:28:10.601Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172422-0c421ab6-T-chat2-02-mimo.md",
+        "sha256": "b032028e7858c5f6656f58e6de94c2994bf0e9b2335096d5d27b58a764cdd85f"
+      },
+      {
+        "bytes": 1484,
+        "mtime": "2026-10-28T17:28:10.615Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172422-0c421ab6-T-chat2-02-mimo.receipt.json",
+        "sha256": "66a35393cba3b57518e8ee2952eb9c056710002cbde990c198c1c8d302aa0538"
+      },
+      {
+        "bytes": 15207,
+        "mtime": "2026-10-28T17:28:14.748Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172443-90c618f3-T-chat2-03-mimo.md",
+        "sha256": "7b626310957de3872868445a94609bef7a2a9561738e9676361d379df519f60e"
+      },
+      {
+        "bytes": 1483,
+        "mtime": "2026-10-28T17:28:14.762Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172443-90c618f3-T-chat2-03-mimo.receipt.json",
+        "sha256": "1143d3ea518705e2bca698f548053798cbf83460a0d3bef0c4f2a7c683c98185"
+      },
+      {
+        "bytes": 16102,
+        "mtime": "2026-10-28T17:28:25.967Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172456-ade118c2-T-qball-01-mimo.md",
+        "sha256": "1fd57b8a13698308e1ae1e2bcb2d68f235d195d34bd58e4737214bff84d63306"
+      },
+      {
+        "bytes": 1484,
+        "mtime": "2026-10-28T17:28:25.979Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172456-ade118c2-T-qball-01-mimo.receipt.json",
+        "sha256": "e60aa393b88d6d3c971ace878843620124ad3ce34af984c2d210a622798f73fb"
+      },
+      {
+        "bytes": 9314,
+        "mtime": "2026-10-28T17:30:51.999Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172759-b8271fe4-T-qball-02-mimo.md",
+        "sha256": "6632a96ed88cc3e9cf8dd5bd71484317c3ffa50606b09a8dcff09792ca009b93"
+      },
+      {
+        "bytes": 1459,
+        "mtime": "2026-10-28T17:30:52.012Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172759-b8271fe4-T-qball-02-mimo.receipt.json",
+        "sha256": "082b0d9e9b06ffdf5eccdd27fae9d54a9c5a56c5fb4b4ad9709a530322dd7801"
+      },
+      {
+        "bytes": 10451,
+        "mtime": "2026-10-28T17:31:27.871Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172810-2b8df95a-T-qball-03-mimo.md",
+        "sha256": "83e222f7beadfcca146f0128af0af275728ee2ea0097b3f41491fad3b6da0d37"
+      },
+      {
+        "bytes": 1461,
+        "mtime": "2026-10-28T17:31:27.885Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172810-2b8df95a-T-qball-03-mimo.receipt.json",
+        "sha256": "37c7df7d5429e62532c2416fdb812deef972d08c7abe983fe6aa7347339fb0fa"
+      },
+      {
+        "bytes": 14296,
+        "mtime": "2026-10-28T17:31:32.790Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172815-5af1e9f9-T-qball-04-mimo.md",
+        "sha256": "c8f7fcf394cdc416fcb5d169052acfa3495a1e032d021d270d88dbeffff813eb"
+      },
+      {
+        "bytes": 1457,
+        "mtime": "2026-10-28T17:31:32.803Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172815-5af1e9f9-T-qball-04-mimo.receipt.json",
+        "sha256": "8be5d32c0b018cadeaba088ac3d1934e6d382532141284430752f0184deb095b"
+      },
+      {
+        "bytes": 6948,
+        "mtime": "2026-10-28T17:28:57.133Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172826-87a7c3c9-T-chat1-02-glmflash.md",
+        "sha256": "2b658c077232773001f6b3e7a076c6e261193c97771d79764e5f379f3ca8ff2b"
+      },
+      {
+        "bytes": 1456,
+        "mtime": "2026-10-28T17:28:57.145Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172826-87a7c3c9-T-chat1-02-glmflash.receipt.json",
+        "sha256": "2a0c4826f8bd57991ba3072b8fa020802feaa9f1821cebcbd2fbef9a26d746d8"
+      },
+      {
+        "bytes": 6161,
+        "mtime": "2026-10-28T17:29:19.335Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172857-2be2f13e-T-chat1-06-glmflash.md",
+        "sha256": "86aa5008878819b69782de8432a5fc5d44a71a1c665490b07fc2a654ea91a281"
+      },
+      {
+        "bytes": 1457,
+        "mtime": "2026-10-28T17:29:19.349Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172857-2be2f13e-T-chat1-06-glmflash.receipt.json",
+        "sha256": "1159566a6bbd5229ebb292c83f278c452b42da7ade2c2ef43996bc8da8d4b708"
+      },
+      {
+        "bytes": 18651,
+        "mtime": "2026-10-28T17:30:09.679Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172919-9c13421e-T-chat2-01-glmflash.md",
+        "sha256": "e82eeaa9452293be7dac6fa0365220741ec1c0618a9d0885bb886ede1d115e07"
+      },
+      {
+        "bytes": 1458,
+        "mtime": "2026-10-28T17:30:09.690Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T172919-9c13421e-T-chat2-01-glmflash.receipt.json",
+        "sha256": "2bdf5560baee4fe740a2d3de61d223bc985c70188d88dd4abf6fa6a53f1124a8"
+      },
+      {
+        "bytes": 4895,
+        "mtime": "2026-10-28T17:30:30.263Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173009-6adf4b79-T-qball-02-glmflash.md",
+        "sha256": "3e6d988f00ccb88d7ba6f8f3d0d2134b633563524cbfde8cd16e4c5c7e6c173e"
+      },
+      {
+        "bytes": 1457,
+        "mtime": "2026-10-28T17:30:30.278Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173009-6adf4b79-T-qball-02-glmflash.receipt.json",
+        "sha256": "7d21e389a62e218bf57e5a68d16a29fd0e036656c4acebf7730fa6b0ed2c7a3b"
+      },
+      {
+        "bytes": 2580,
+        "mtime": "2026-10-28T17:30:36.441Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173030-eccb5e77-P1-batch-01-flash.md",
+        "sha256": "2ac7d136da6a260d5ea95bd9abf55d14c615fd29d6ceed361d35cf5ea6d5efea"
+      },
+      {
+        "bytes": 1473,
+        "mtime": "2026-10-28T17:30:36.454Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173030-eccb5e77-P1-batch-01-flash.receipt.json",
+        "sha256": "71163524e847626c7b5ffbb5d7b0df01387067465ab6b056a2e107a3434f468a"
+      },
+      {
+        "bytes": 2878,
+        "mtime": "2026-10-28T17:30:46.212Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173036-5009c464-P1-batch-02-flash.md",
+        "sha256": "d5f4c778b17745acf9ea82cd4128e9ab21fa005e14fcef9bf90032c455a7be86"
+      },
+      {
+        "bytes": 1474,
+        "mtime": "2026-10-28T17:30:46.220Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173036-5009c464-P1-batch-02-flash.receipt.json",
+        "sha256": "4e3152909fc0f8c27ac85f4465f78961d5a16aac611f9cad58b1466e33b94365"
+      },
+      {
+        "bytes": 2489,
+        "mtime": "2026-10-28T17:30:53.753Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173046-1714a128-P1-batch-03-flash.md",
+        "sha256": "fd7028177cba1a7cd684f1f0ce9fbcc10b7870a0a5cb959f6d69cf19526e3fc9"
+      },
+      {
+        "bytes": 1474,
+        "mtime": "2026-10-28T17:30:53.766Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173046-1714a128-P1-batch-03-flash.receipt.json",
+        "sha256": "489e3958a1a0712bac25119f8541627cd99fd926d5528ac2d343a02a7bc171c2"
+      },
+      {
+        "bytes": 2771,
+        "mtime": "2026-10-28T17:30:58.024Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173052-57d84bc7-P1-batch-04-flash.md",
+        "sha256": "9719ac0bc6f866c3dd12065a53594097f60a6522fdb511839ca4de7a2be404c3"
+      },
+      {
+        "bytes": 1473,
+        "mtime": "2026-10-28T17:30:58.038Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173052-57d84bc7-P1-batch-04-flash.receipt.json",
+        "sha256": "300e55c2df8231708c0de8b548b584d3d62a109c1326383d26376dffb2932eb3"
+      },
+      {
+        "bytes": 3088,
+        "mtime": "2026-10-28T17:31:01.828Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173054-735afeee-P1-batch-05-flash.md",
+        "sha256": "07046d72e359c9ea0c46cfe10cb004e7dfdcaf41f5bdc5af15bb87fd41c45e5d"
+      },
+      {
+        "bytes": 1474,
+        "mtime": "2026-10-28T17:31:01.841Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173054-735afeee-P1-batch-05-flash.receipt.json",
+        "sha256": "e35ad0b19b599e9ae1873c5bb9146be62793c53a06db82bf9049873382d6ed85"
+      },
+      {
+        "bytes": 2605,
+        "mtime": "2026-10-28T17:31:06.069Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173058-af8a823c-P1-batch-06-flash.md",
+        "sha256": "01285be4991cf7f3e83afedfab2fe75edb7d168dfac01e9730899f7967d291f0"
+      },
+      {
+        "bytes": 1473,
+        "mtime": "2026-10-28T17:31:06.083Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173058-af8a823c-P1-batch-06-flash.receipt.json",
+        "sha256": "26cf6b0556f3b74fcb6c311d9beba4a206604ab374473c5bb000038be972a13c"
+      },
+      {
+        "bytes": 2810,
+        "mtime": "2026-10-28T17:31:10.673Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173102-79267296-P1-batch-07-flash.md",
+        "sha256": "f87ad29f60a004cc22eca701c857f25c22f3bb97559a64c69edcad03b12e9f2e"
+      },
+      {
+        "bytes": 1473,
+        "mtime": "2026-10-28T17:31:10.687Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173102-79267296-P1-batch-07-flash.receipt.json",
+        "sha256": "5f506a6c3b81e6422d695937d5347f920f4f4ce49a9f614f5ee79f70b74eb9ba"
+      },
+      {
+        "bytes": 2976,
+        "mtime": "2026-10-28T17:31:13.158Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173106-968931e1-P1-batch-08-flash.md",
+        "sha256": "224204777c37a035e9c1e570e098559599ce546f843037952ae7531fc67bf1e7"
+      },
+      {
+        "bytes": 1474,
+        "mtime": "2026-10-28T17:31:13.173Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173106-968931e1-P1-batch-08-flash.receipt.json",
+        "sha256": "dc939f3264b24b571c965cfafd849bbeda5f3db1f6a3e44904e7257565a2bb28"
+      },
+      {
+        "bytes": 2722,
+        "mtime": "2026-10-28T17:31:17.989Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173110-d434bc2c-P1-batch-09-flash.md",
+        "sha256": "0da9fcef45cc3427a5069cd13458b96a5f1aded017ee9b4ff162a180da140603"
+      },
+      {
+        "bytes": 1474,
+        "mtime": "2026-10-28T17:31:18.004Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173110-d434bc2c-P1-batch-09-flash.receipt.json",
+        "sha256": "1708b691a530a7b9521b95d267cc1ea43072c2e98f5aeddb08512a4ac13e5f96"
+      },
+      {
+        "bytes": 2747,
+        "mtime": "2026-10-28T17:31:19.781Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173113-833bdca0-P1-batch-10-flash.md",
+        "sha256": "ae59b0c04ec72b9a2a6267f41e334bd162885ca3fad3ee8885273d3ac0c63ca1"
+      },
+      {
+        "bytes": 1473,
+        "mtime": "2026-10-28T17:31:19.795Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173113-833bdca0-P1-batch-10-flash.receipt.json",
+        "sha256": "e26e903e281f56140796e91fadf5795091b7a84041c84d8ced25fcac968d04e9"
+      },
+      {
+        "bytes": 3857,
+        "mtime": "2026-10-28T17:31:27.043Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173118-a38f1831-P1V-batch-01-flash.md",
+        "sha256": "8eb0fb92c318f27918f3719c222a076d0d9b4623ee015d5ad0c0f7867b8a7092"
+      },
+      {
+        "bytes": 1476,
+        "mtime": "2026-10-28T17:31:27.055Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173118-a38f1831-P1V-batch-01-flash.receipt.json",
+        "sha256": "045dff6937e82c252886b72440a316e7dc3a73851e3508e3be482f4c157169ab"
+      },
+      {
+        "bytes": 3695,
+        "mtime": "2026-10-28T17:31:28.685Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173120-ee655772-P1V-batch-02-flash.md",
+        "sha256": "27cf427855944b80e3624aeb050d2ae382b3f364ce349032b8695fd0135e0ae1"
+      },
+      {
+        "bytes": 1475,
+        "mtime": "2026-10-28T17:31:28.699Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173120-ee655772-P1V-batch-02-flash.receipt.json",
+        "sha256": "f0409bd6413bfb2842916bbe9f71ce8523c837c52d0d2a79a557f52edd6dabae"
+      },
+      {
+        "bytes": 3996,
+        "mtime": "2026-10-28T17:31:35.438Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173127-d2321322-P1V-batch-03-flash.md",
+        "sha256": "7cbf8e1b6d738f0f90ef5c6559bbf581ec70d7d4aa9fcf5d0782ce9d14e98000"
+      },
+      {
+        "bytes": 1477,
+        "mtime": "2026-10-28T17:31:35.453Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173127-d2321322-P1V-batch-03-flash.receipt.json",
+        "sha256": "0391ad79b4095a50ba0236499cc0b9ec5b72cbffb47adbbf41e0a78a15a1a920"
+      },
+      {
+        "bytes": 3417,
+        "mtime": "2026-10-28T17:31:34.716Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173128-3922fd24-P1V-batch-04-flash.md",
+        "sha256": "4dca23d5208476902f55ae7665a0c16b0750e8bd265ff92369fd43686d95a936"
+      },
+      {
+        "bytes": 1477,
+        "mtime": "2026-10-28T17:31:34.729Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173128-3922fd24-P1V-batch-04-flash.receipt.json",
+        "sha256": "2f507af649c5b9ec8a853454ad93a477ba6eddfd4e569f35f49bb838302fbcf4"
+      },
+      {
+        "bytes": 16320,
+        "mtime": "2026-10-28T17:34:33.424Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173128-9d45d48c-A1-mcp-boundary-mimo.md",
+        "sha256": "e9f8772c2259a6978d603db4549e3dd3d3a9b9bf7b27363862ecd0855443cb8c"
+      },
+      {
+        "bytes": 3074,
+        "mtime": "2026-10-28T17:34:33.439Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173128-9d45d48c-A1-mcp-boundary-mimo.receipt.json",
+        "sha256": "13b5767172cfd69651421a4cc2500b267f2c689694ae747899c0aaa16211f2c1"
+      },
+      {
+        "bytes": 15867,
+        "mtime": "2026-10-28T17:37:24.831Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173133-7bebc462-A1-mcp-boundary-glm.md",
+        "sha256": "9695523e91bf4a239f4aa1f27e98665b1fed2a67f46b98842c1c35c890c71a60"
+      },
+      {
+        "bytes": 3072,
+        "mtime": "2026-10-28T17:37:24.845Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173133-7bebc462-A1-mcp-boundary-glm.receipt.json",
+        "sha256": "358205e07f5ee02e259a1a8c497ac9005917593edeb3433ab90a014d9e17e428"
+      },
+      {
+        "bytes": 12695,
+        "mtime": "2026-10-28T17:34:48.959Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173135-16a63f0b-A2-core-writer-mimo.md",
+        "sha256": "25e0c2200108f368986926ecb065b6fb4267fea25667cf19f2d2e3472dc34530"
+      },
+      {
+        "bytes": 2887,
+        "mtime": "2026-10-28T17:34:48.974Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173135-16a63f0b-A2-core-writer-mimo.receipt.json",
+        "sha256": "bcf1ea6a2a7cb0912c409c60a12429a101e14ee0c3af7319ea3b563f5ba773d7"
+      },
+      {
+        "bytes": 16468,
+        "mtime": "2026-10-28T17:37:19.319Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173135-78d1f8b6-A2-core-writer-glm.md",
+        "sha256": "479ec861224f7c2eb880776ffd4840c1b7e0af5107fa0b6b83eeebf3e0c7f0d1"
+      },
+      {
+        "bytes": 2888,
+        "mtime": "2026-10-28T17:37:19.333Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173135-78d1f8b6-A2-core-writer-glm.receipt.json",
+        "sha256": "ccc07e5e1ee037e8401a6d290ed741fc73a909c7305a2779e82fa9f35543e848"
+      },
+      {
+        "bytes": 13969,
+        "mtime": "2026-10-28T17:37:39.494Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173433-782b363a-A3-invocation-runtime-mimo.md",
+        "sha256": "4341869c834e4f07549ba610fc84222a4ba911098d58009a9ffb00bc4f01cd63"
+      },
+      {
+        "bytes": 3354,
+        "mtime": "2026-10-28T17:37:39.509Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173433-782b363a-A3-invocation-runtime-mimo.receipt.json",
+        "sha256": "8f451ffeaaf4f306fc243a1b0b56663c06ff61c20429f5a328626242b1775755"
+      },
+      {
+        "bytes": 16799,
+        "mtime": "2026-10-28T17:40:29.103Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173449-cf039321-A3-invocation-runtime-glm.md",
+        "sha256": "bc573856988b5ef771806f5437cd40a649b1f72269526996bc0b9db3c2c0ae1a"
+      },
+      {
+        "bytes": 3355,
+        "mtime": "2026-10-28T17:40:29.117Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173449-cf039321-A3-invocation-runtime-glm.receipt.json",
+        "sha256": "cd278ca8bfea1f4d1d9c0b2ed056ea903fbb4f936ea3fd3b336a2aa99e997a7d"
+      },
+      {
+        "bytes": 18090,
+        "mtime": "2026-10-28T17:41:06.616Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173719-d69dce47-A4-qualification-expectations-mimo.md",
+        "sha256": "cb95a939d90fe7e441a43aacb1824965f9422f0efe876dcdf5e51162ca44eabc"
+      },
+      {
+        "bytes": 3998,
+        "mtime": "2026-10-28T17:41:06.630Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173719-d69dce47-A4-qualification-expectations-mimo.receipt.json",
+        "sha256": "32e5d2132f7566b41bb0db5726013bc12bd93e0c948fdb4eac84907ee11af68d"
+      },
+      {
+        "bytes": 17303,
+        "mtime": "2026-10-28T17:43:33.418Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173725-d0bc42e4-A4-qualification-expectations-glm.md",
+        "sha256": "08da5a3c7ed33d775a10f923e3c65839a1e1fa60b418da98b9698da55423f01e"
+      },
+      {
+        "bytes": 3975,
+        "mtime": "2026-10-28T17:43:33.432Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173725-d0bc42e4-A4-qualification-expectations-glm.receipt.json",
+        "sha256": "106b90c41ce5c51f1dc668ebefe837617894e2bdcacff52663d5fcc16c825dd3"
+      },
+      {
+        "bytes": 12953,
+        "mtime": "2026-10-28T17:41:34.300Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173739-72c390ed-A5-delegation-and-parallelism-mimo.md",
+        "sha256": "8531ea7b05c4337a46d43f45e66541447067442efbd478368c0279922ccdfbb6"
+      },
+      {
+        "bytes": 4938,
+        "mtime": "2026-10-28T17:41:34.314Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T173739-72c390ed-A5-delegation-and-parallelism-mimo.receipt.json",
+        "sha256": "2b2e43f71d7040c4171e9377ca7b329617c7b849db8b7f3cebcc04caf9679a5e"
+      },
+      {
+        "bytes": 15714,
+        "mtime": "2026-10-28T17:46:44.746Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T174029-d11a9d35-A5-delegation-and-parallelism-glm.md",
+        "sha256": "69250a203f3cbec6f0b72f7953b22eac08d6242f90ae770b8f906cdc33f4a0e7"
+      },
+      {
+        "bytes": 4937,
+        "mtime": "2026-10-28T17:46:44.755Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T174029-d11a9d35-A5-delegation-and-parallelism-glm.receipt.json",
+        "sha256": "42ca959057c53b17b0e5967367d2c790571fe2a1abbb79dafae8399b775d2659"
+      },
+      {
+        "bytes": 15126,
+        "mtime": "2026-10-28T17:44:29.982Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T174106-84fe07f4-A6-session-and-harness-mimo.md",
+        "sha256": "35fef0ad5fdcd6f2222b2e219a4fb4e4160a8fc2c88d2886d6a69f4bbb3a7921"
+      },
+      {
+        "bytes": 2976,
+        "mtime": "2026-10-28T17:44:29.996Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T174106-84fe07f4-A6-session-and-harness-mimo.receipt.json",
+        "sha256": "46ece3c4b8c30ae1505ab59de5292c80acac17c099e47ed47e9623d2fa5daa66"
+      },
+      {
+        "bytes": 14169,
+        "mtime": "2026-10-28T17:48:36.796Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T174134-cf19b099-A6-session-and-harness-glm.md",
+        "sha256": "d7541c055b4bf7bd0c018a6a45abdfe711bd41713402b91b38f07ea480c337d2"
+      },
+      {
+        "bytes": 2931,
+        "mtime": "2026-10-28T17:48:36.804Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T174134-cf19b099-A6-session-and-harness-glm.receipt.json",
+        "sha256": "1c29ae5249a74477a9a6655bf5b3b0d94b75cac5b3103cd401218ce4eac9668b"
+      },
+      {
+        "bytes": 14946,
+        "mtime": "2026-10-28T17:46:08.255Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T174333-dad590e4-R-prior-reviews-mimo.md",
+        "sha256": "a59013550d7debef0578ae710acc347556fdf1182a33730eef51a01dcf05cc4d"
+      },
+      {
+        "bytes": 3007,
+        "mtime": "2026-10-28T17:46:08.263Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T174333-dad590e4-R-prior-reviews-mimo.receipt.json",
+        "sha256": "14f2585d8f399599207e89a6897781fea3cbfe7e3109645be7adfd7d7baec0e3"
+      },
+      {
+        "bytes": 15893,
+        "mtime": "2026-10-28T20:30:58.574Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T202955-692f4012-A1-mcp-boundary-dsv4pro.md",
+        "sha256": "860636d3ab7e5c9bf28d38a14c416cc355110dc8c03afc9460cdd759272116d1"
+      },
+      {
+        "bytes": 3080,
+        "mtime": "2026-10-28T20:30:58.582Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T202955-692f4012-A1-mcp-boundary-dsv4pro.receipt.json",
+        "sha256": "1ee957986a8d6be64ce0e46e491cc56c39b52fcbabdd3725dded790da0035989"
+      },
+      {
+        "bytes": 15440,
+        "mtime": "2026-10-28T20:30:49.802Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T202955-df5f084b-A4-qualification-expectations-dsv4pro.md",
+        "sha256": "43c6c0485714bc16773e6c47710ce23d37fd8c93d4dc7350c328e81430ee31f7"
+      },
+      {
+        "bytes": 3981,
+        "mtime": "2026-10-28T20:30:49.812Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T202955-df5f084b-A4-qualification-expectations-dsv4pro.receipt.json",
+        "sha256": "c81824ef881fa7ede2538985abde05d51d37f68c2cd79c885db08efb9eb09e66"
+      },
+      {
+        "bytes": 7369,
+        "mtime": "2026-10-28T20:32:06.751Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203139-6d00b68a-P2-r02-dsv4pro.md",
+        "sha256": "9adcdc2b5933eb19ac11950e2022037e39a21c2808d43d11a4df0fc7c4feecb2"
+      },
+      {
+        "bytes": 1515,
+        "mtime": "2026-10-28T20:32:06.770Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203139-6d00b68a-P2-r02-dsv4pro.receipt.json",
+        "sha256": "3a32b3028060daf5539782db65e96204345a8d55744bb8c8c654f9f987321bb4"
+      },
+      {
+        "bytes": 5846,
+        "mtime": "2026-10-28T20:32:11.597Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203139-a076cf78-P2-r01-mimo.md",
+        "sha256": "000f6d3a4913fe64753c3dc3aa793b16069bda37cfc1fe830bf0c0aeebfac8fd"
+      },
+      {
+        "bytes": 1470,
+        "mtime": "2026-10-28T20:32:11.611Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203139-a076cf78-P2-r01-mimo.receipt.json",
+        "sha256": "a418646153221e0a3e9c1abba432817479b23af5379187861d922e6af308843a"
+      },
+      {
+        "bytes": 5410,
+        "mtime": "2026-10-28T20:32:18.245Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203139-eb32efa8-P2-r02-mimo.md",
+        "sha256": "c820bea2b4b25046a801d5394b6a846e5b0dcc00249e5ae9519923f8d684f39d"
+      },
+      {
+        "bytes": 1508,
+        "mtime": "2026-10-28T20:32:18.260Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203139-eb32efa8-P2-r02-mimo.receipt.json",
+        "sha256": "b9f8de9266c7019ae6d05011edefd297b9c654307d6beed0af7bc06fd313cdd9"
+      },
+      {
+        "bytes": 6730,
+        "mtime": "2026-10-28T20:32:01.336Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203139-f2149d6b-P2-r01-dsv4pro.md",
+        "sha256": "7fb1810c6f76c02d554ded20e55122e15b7ed4432cee18db8eab30e5fe9155d1"
+      },
+      {
+        "bytes": 1479,
+        "mtime": "2026-10-28T20:32:01.346Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203139-f2149d6b-P2-r01-dsv4pro.receipt.json",
+        "sha256": "5924790a8d907f99cc873f29b7c0f1454351ca3b908536466d59fb72f0f6800d"
+      },
+      {
+        "bytes": 6972,
+        "mtime": "2026-10-28T20:32:49.259Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203201-900bfc61-P2-r03-mimo.md",
+        "sha256": "a49324b919fb004d4ae802ed2417556c3294268c8fb0189e15818493d3092bbf"
+      },
+      {
+        "bytes": 1507,
+        "mtime": "2026-10-28T20:32:49.274Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203201-900bfc61-P2-r03-mimo.receipt.json",
+        "sha256": "475d2bbef55fec3b4fb1e258b5625e28f8023d1f6411247d743332962a1712aa"
+      },
+      {
+        "bytes": 8211,
+        "mtime": "2026-10-28T20:32:34.313Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203207-b7451ae0-P2-r03-dsv4pro.md",
+        "sha256": "fd6d33e2bd22997cee92669fd22c4eb9c61786f9c9479b18f9d8235b6bddcb7f"
+      },
+      {
+        "bytes": 1516,
+        "mtime": "2026-10-28T20:32:34.326Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203207-b7451ae0-P2-r03-dsv4pro.receipt.json",
+        "sha256": "12377254d83db901d457b67da649c3b7ed884514fb906a8f1b1d9bdbacc3c98c"
+      },
+      {
+        "bytes": 6082,
+        "mtime": "2026-10-28T20:33:47.489Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203211-0b8e49a9-P2-r04-mimo.md",
+        "sha256": "ed47a0a010c1027c3e2f3133b35d28dce9cb189a7e0793649cc383a38b0bdf60"
+      },
+      {
+        "bytes": 1475,
+        "mtime": "2026-10-28T20:33:47.503Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203211-0b8e49a9-P2-r04-mimo.receipt.json",
+        "sha256": "3e0d3b94c111cff24b2dec9656ba260875940bf6efffdd619bb51464b8809b63"
+      },
+      {
+        "bytes": 62,
+        "mtime": "2026-10-28T20:32:21.094Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203218-02ffef04-P2-r04-dsv4pro.md",
+        "sha256": "5c5ceab0b64fa10d9533bb5d13a4433951e0d11536e827f561c7dd0fda2020ba"
+      },
+      {
+        "bytes": 1478,
+        "mtime": "2026-10-28T20:32:21.109Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203218-02ffef04-P2-r04-dsv4pro.receipt.json",
+        "sha256": "c73b1a957faf952047fd3e95ab0549b0f6a980bacd49815bc11768562ac710b2"
+      },
+      {
+        "bytes": 6014,
+        "mtime": "2026-10-28T20:33:09.850Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203221-80910da1-P2-r05-mimo.md",
+        "sha256": "232d978e14f281d291379d0306fc004503f4118d75247e74637ba64d3c941e96"
+      },
+      {
+        "bytes": 1508,
+        "mtime": "2026-10-28T20:33:09.865Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203221-80910da1-P2-r05-mimo.receipt.json",
+        "sha256": "312c0dad9770444fddc929cd5456a7dfa2e96bc70be12fc46eef73ccec1120c3"
+      },
+      {
+        "bytes": 7793,
+        "mtime": "2026-10-28T20:33:00.135Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203234-9047fd44-P2-r05-dsv4pro.md",
+        "sha256": "a9655b9cf0a6d96b7f1d25430dd10c74d38bccc4527d8e5a08f407344b1f7959"
+      },
+      {
+        "bytes": 1516,
+        "mtime": "2026-10-28T20:33:00.149Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203234-9047fd44-P2-r05-dsv4pro.receipt.json",
+        "sha256": "5ae350802c390c6c5cd57c61fa300ffc64b9fcc0b8d4c6b6b2ab5b468c2ef2b0"
+      },
+      {
+        "bytes": 5563,
+        "mtime": "2026-10-28T20:33:50.748Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203249-377e38bb-P2-r06-mimo.md",
+        "sha256": "499c5e18efceaa8ac1d3703d87e5c95f07cf24b9f51c90d298254d4faad0921b"
+      },
+      {
+        "bytes": 1476,
+        "mtime": "2026-10-28T20:33:50.761Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203249-377e38bb-P2-r06-mimo.receipt.json",
+        "sha256": "af7bb4499c705860675e23d26e835f1371edc3bc6a3875a721accfdb552a4445"
+      },
+      {
+        "bytes": 6152,
+        "mtime": "2026-10-28T20:33:26.067Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203300-b85abb34-P2-r06-dsv4pro.md",
+        "sha256": "7c51fb2b095de258b8fa8de264c01cf4e146f7280b31833c9a54ff706b5a2a8b"
+      },
+      {
+        "bytes": 1485,
+        "mtime": "2026-10-28T20:33:26.075Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203300-b85abb34-P2-r06-dsv4pro.receipt.json",
+        "sha256": "2c28c1205020ea8477d174e8e176fc6e129d3c7c1a23d78c3a86119e597c1c98"
+      },
+      {
+        "bytes": 6364,
+        "mtime": "2026-10-28T20:34:09.993Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203310-b218567f-P2-r07-mimo.md",
+        "sha256": "eb0ef44a535aa55d06c360084ebb51ce551b53bd2ff6546447ff1fec528c93a4"
+      },
+      {
+        "bytes": 1508,
+        "mtime": "2026-10-28T20:34:10.008Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203310-b218567f-P2-r07-mimo.receipt.json",
+        "sha256": "1c1d9f27b468a06efd6bb0e310726d84a17be3192efbe57ed816e20160cf053e"
+      },
+      {
+        "bytes": 6746,
+        "mtime": "2026-10-28T20:33:48.369Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203326-54e95f9a-P2-r07-dsv4pro.md",
+        "sha256": "a5df1352a03380e385968f209262821d5786e4adc8f28d4fed46b850401a2c3d"
+      },
+      {
+        "bytes": 1516,
+        "mtime": "2026-10-28T20:33:48.382Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203326-54e95f9a-P2-r07-dsv4pro.receipt.json",
+        "sha256": "e1044103e3f9e4169eb944a2dc2e417542639e0cf14e6f09a568eab516a588f0"
+      },
+      {
+        "bytes": 5962,
+        "mtime": "2026-10-28T20:34:55.287Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203347-81a86f92-P2-r08-mimo.md",
+        "sha256": "c30b5031bba1fa8cbef2407304b36946ee6318ea79d362b8331aeff716722a36"
+      },
+      {
+        "bytes": 1508,
+        "mtime": "2026-10-28T20:34:55.302Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203347-81a86f92-P2-r08-mimo.receipt.json",
+        "sha256": "5d05631160085c24cca6a752c689fda166bfaa87e8e8c44cb9fc4d9ad85f7389"
+      },
+      {
+        "bytes": 7438,
+        "mtime": "2026-10-28T20:34:46.122Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203348-abb7893b-P2-r08-dsv4pro.md",
+        "sha256": "4840681cee253ad71e5b1ada58c7d006902a50fd5a938093e9b45febfddb96d4"
+      },
+      {
+        "bytes": 1516,
+        "mtime": "2026-10-28T20:34:46.136Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203348-abb7893b-P2-r08-dsv4pro.receipt.json",
+        "sha256": "f2af419e56358ce4651664cce98368668756c5643dce8562c1fe150df4e693dc"
+      },
+      {
+        "bytes": 7101,
+        "mtime": "2026-10-28T20:36:15.538Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203351-8b418742-P2-r09-mimo.md",
+        "sha256": "926ff9ce1a72f419ac6735ed2e6b8bc69503bba9d641a2edc3239888e1ce37ae"
+      },
+      {
+        "bytes": 1508,
+        "mtime": "2026-10-28T20:36:15.546Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203351-8b418742-P2-r09-mimo.receipt.json",
+        "sha256": "49251fe71049a8d0e4adf01d932e3702cda5ea80d07a05f28e6759a35fd79e6f"
+      },
+      {
+        "bytes": 7515,
+        "mtime": "2026-10-28T20:34:37.193Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203410-36bfab9c-P2-r09-dsv4pro.md",
+        "sha256": "5819ea0d9e33014ddfc4ca24646e45968e7fc487801d833f3e1982c4646ffa71"
+      },
+      {
+        "bytes": 1515,
+        "mtime": "2026-10-28T20:34:37.208Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203410-36bfab9c-P2-r09-dsv4pro.receipt.json",
+        "sha256": "9b5b05bab54b37771dab9f8e3a2f490943a59546a4405d1331323ea2678011ab"
+      },
+      {
+        "bytes": 5703,
+        "mtime": "2026-10-28T20:37:18.438Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203437-a39723da-P2-r10-mimo.md",
+        "sha256": "ed181b171609d97aa94529e66bfa05e96e2dace731651b00af819b525ceea7a9"
+      },
+      {
+        "bytes": 1511,
+        "mtime": "2026-10-28T20:37:18.449Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203437-a39723da-P2-r10-mimo.receipt.json",
+        "sha256": "fb0c3d7427c6dd84f275725b10ab74e4e6fcbcb2c1ae93cf4b39b892a329f8f6"
+      },
+      {
+        "bytes": 116,
+        "mtime": "2026-10-28T20:34:49.505Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203446-73844f79-P2-r10-dsv4pro.md",
+        "sha256": "2bc46aefbd183dfc02365a07ff1ae59e9ec02b458cda3e8fac1cc8b6aececda7"
+      },
+      {
+        "bytes": 1513,
+        "mtime": "2026-10-28T20:34:49.520Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203446-73844f79-P2-r10-dsv4pro.receipt.json",
+        "sha256": "3ed737338a0ec599bb67e9084af073cf05ab1615e40f39476c08a0c05bc8bead"
+      },
+      {
+        "bytes": 5572,
+        "mtime": "2026-10-28T20:36:10.042Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203449-a3c581e2-P2-r11-mimo.md",
+        "sha256": "f03647c7cb9a17a776d66cbbd0c6ff4296969ebdfec6531389a90a193c2f9980"
+      },
+      {
+        "bytes": 1459,
+        "mtime": "2026-10-28T20:36:10.056Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203449-a3c581e2-P2-r11-mimo.receipt.json",
+        "sha256": "539c8bd33de75cdbe3e8c8a8a983536081ee2cee064fe9261d74c7e480462ed9"
+      },
+      {
+        "bytes": 7229,
+        "mtime": "2026-10-28T20:35:17.818Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203455-2737b5d5-P2-r11-dsv4pro.md",
+        "sha256": "e7d9f0787c31dbd1c7e0abe0d104661b484cd2007e5386d12c52832ac417b015"
+      },
+      {
+        "bytes": 1467,
+        "mtime": "2026-10-28T20:35:17.832Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203455-2737b5d5-P2-r11-dsv4pro.receipt.json",
+        "sha256": "1be5a074e80562e6764eb6b25978feec140c939d7c4bf0376c91f69f54ecee81"
+      },
+      {
+        "bytes": 5350,
+        "mtime": "2026-10-28T20:36:39.131Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203518-b13d9f69-P2-r12-mimo.md",
+        "sha256": "19f0eaa8a109971f23478292b6be6a6d1a52db4f8ffc4405b3a6787ed352d8bd"
+      },
+      {
+        "bytes": 1491,
+        "mtime": "2026-10-28T20:36:39.140Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203518-b13d9f69-P2-r12-mimo.receipt.json",
+        "sha256": "2e55e65d002bf64deb0674827c461e12353f07d0bdbd663d4360cccba4859dab"
+      },
+      {
+        "bytes": 6258,
+        "mtime": "2026-10-28T20:36:47.068Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203610-1067457f-P2-r12-dsv4pro.md",
+        "sha256": "4ec36d8ad6d767a3ffd35cc505e798f14f697a476d56ab70643a2b2e0b2ec26e"
+      },
+      {
+        "bytes": 1498,
+        "mtime": "2026-10-28T20:36:47.083Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203610-1067457f-P2-r12-dsv4pro.receipt.json",
+        "sha256": "71c39c4d7d6219f770b3a17ccf4878c1ab5b8e29724c071beab52b7f8ed37dc7"
+      },
+      {
+        "bytes": 6285,
+        "mtime": "2026-10-28T20:38:25.841Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203615-4c665f78-P2-r13-mimo.md",
+        "sha256": "f4fc4e07f737e90a5ddbd21d5fe4c3e2d89b6b86a3678e4bb29693627a03c514"
+      },
+      {
+        "bytes": 1510,
+        "mtime": "2026-10-28T20:38:25.850Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203615-4c665f78-P2-r13-mimo.receipt.json",
+        "sha256": "6a815aafdc6be38e3df12bc9b874d20e1cde1ca4554f5671c6e0927a13ebc723"
+      },
+      {
+        "bytes": 6328,
+        "mtime": "2026-10-28T20:38:43.405Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203639-ad7fcfa7-P2-r14-mimo.md",
+        "sha256": "d1efbc93df6cc9b0fe9e4d4523c7932254f512e088e26a3b21f7bb0b215ab146"
+      },
+      {
+        "bytes": 1463,
+        "mtime": "2026-10-28T20:38:43.414Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203639-ad7fcfa7-P2-r14-mimo.receipt.json",
+        "sha256": "e2b7151f4b6c73726159f40eda93579e211d9ed621d9f28491c76265026daa6a"
+      },
+      {
+        "bytes": 5610,
+        "mtime": "2026-10-28T20:37:44.990Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203647-d72600a0-P2-r15-mimo.md",
+        "sha256": "48e7b6be0cea503acb646b594789845aa0902dc63b7dbcd16866e91b7b47fd85"
+      },
+      {
+        "bytes": 1505,
+        "mtime": "2026-10-28T20:37:45.004Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203647-d72600a0-P2-r15-mimo.receipt.json",
+        "sha256": "52594b534d73ac5c4e78858c4da53ed60248bc9f98d56b155f9fa1100a9fcf71"
+      },
+      {
+        "bytes": 6219,
+        "mtime": "2026-10-28T20:38:26.546Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203718-96a85eaf-P2-r16-mimo.md",
+        "sha256": "fdaa9bb23dd4a06a3e5d8612b0bd95678fff536bbf276e6148293bd3864ba0a4"
+      },
+      {
+        "bytes": 1508,
+        "mtime": "2026-10-28T20:38:26.561Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203718-96a85eaf-P2-r16-mimo.receipt.json",
+        "sha256": "b750c9315a688505608dad84e41a70afc37a127f2b179a7eb60fbb53841acc73"
+      },
+      {
+        "bytes": 6728,
+        "mtime": "2026-10-28T20:39:50.828Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203745-a1117213-P2-r17-mimo.md",
+        "sha256": "cc8aec4f00f53e20da5d32b493eb5c0b153d0aa1bc2ab0eb36f6747360dca73f"
+      },
+      {
+        "bytes": 1501,
+        "mtime": "2026-10-28T20:39:50.837Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203745-a1117213-P2-r17-mimo.receipt.json",
+        "sha256": "4543a82a3825fefa6437245108c5ccad18e610a8321820e99f9d4710f20d6c62"
+      },
+      {
+        "bytes": 7167,
+        "mtime": "2026-10-28T20:40:01.981Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203826-97f81365-P2-r18-mimo.md",
+        "sha256": "075f02452fa60daa87bb3722ae5225e10e274e5b69c1fe50b09787b2c4b11fef"
+      },
+      {
+        "bytes": 1507,
+        "mtime": "2026-10-28T20:40:01.989Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T203826-97f81365-P2-r18-mimo.receipt.json",
+        "sha256": "b3df0c12534ed90df198805cfae06d1cdf641776beab8f7f39649996ef93000d"
+      },
+      {
+        "bytes": 4879,
+        "mtime": "2026-10-28T20:51:19.943Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T205011-721df930-C-reports-glm.md",
+        "sha256": "b812256c8d37b42667b0678f71b41f1f74894cb02cdbc49de3190886dd96e0f0"
+      },
+      {
+        "bytes": 3551,
+        "mtime": "2026-10-28T20:51:19.952Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T205011-721df930-C-reports-glm.receipt.json",
+        "sha256": "bcf611b6635d08a33dce4e7f5cd43d00a9e796edbe6f103ac8428a8c9f4c4c2d"
+      },
+      {
+        "bytes": 8383,
+        "mtime": "2026-10-28T20:53:18.480Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T205011-a4e2b868-C-reports-mimo.md",
+        "sha256": "e6708a31d4e04a6eaa946a50789c48ef49784dd7476681198d9dccd885f198e5"
+      },
+      {
+        "bytes": 3562,
+        "mtime": "2026-10-28T20:53:18.489Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T205011-a4e2b868-C-reports-mimo.receipt.json",
+        "sha256": "32421fdcd1288c646a7267905cc44af144ce6065c0e7d7d4d69c26043f2d0542"
+      },
+      {
+        "bytes": 9969,
+        "mtime": "2026-10-28T22:08:18.989Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220255-4c53b925-L2-05-mimo.md",
+        "sha256": "01d9a38c181c85bbb9362579aa34d029a28001847e953cbda25fc972f5a9246b"
+      },
+      {
+        "bytes": 1508,
+        "mtime": "2026-10-28T22:08:19.005Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220255-4c53b925-L2-05-mimo.receipt.json",
+        "sha256": "014b3fa386ef6aa895a4d0dbbf109f85f76ac9c0d47a5be0a02a3287c60d9dd3"
+      },
+      {
+        "bytes": 11837,
+        "mtime": "2026-10-28T22:07:38.806Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220255-5983ca12-L2-01-mimo.md",
+        "sha256": "eadc749f31e666603768a67368e5106c0abf32ed8f4afd50d5d261a838ff27f8"
+      },
+      {
+        "bytes": 1472,
+        "mtime": "2026-10-28T22:07:38.820Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220255-5983ca12-L2-01-mimo.receipt.json",
+        "sha256": "1d781e25d2e040a1794dad95e067b8d1a0920dbd30243a478fabbe41817c93ec"
+      },
+      {
+        "bytes": 8938,
+        "mtime": "2026-10-28T22:04:21.520Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220255-94d701f1-L2-02-mimo.md",
+        "sha256": "ff1cd8b9ac6d504612dccb91498953426b1952207a49f0fcd991571c2d62fc28"
+      },
+      {
+        "bytes": 1506,
+        "mtime": "2026-10-28T22:04:21.534Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220255-94d701f1-L2-02-mimo.receipt.json",
+        "sha256": "8e9f8d4374c89b8e6c847dbb18e8856b869fbefdce424a1f929132280ce57228"
+      },
+      {
+        "bytes": 10003,
+        "mtime": "2026-10-28T22:07:01.988Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220255-a798d3a2-L2-04-mimo.md",
+        "sha256": "fefdc1dd00866923f99863998d98bf0d6ac6b829648e91f1d74a3dc96abc3ae9"
+      },
+      {
+        "bytes": 1474,
+        "mtime": "2026-10-28T22:07:02.002Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220255-a798d3a2-L2-04-mimo.receipt.json",
+        "sha256": "b80fb41ebf0aa2e20a4d047a2c423b03d98cbaf95c8249f87eeb1adcf8efe879"
+      },
+      {
+        "bytes": 10760,
+        "mtime": "2026-10-28T22:07:05.671Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220255-e2519cfd-L2-03-mimo.md",
+        "sha256": "8f7dbb604e98d5f51074cd0b9abf60fb09e3991c2a1cc1274f268cd3a3e56262"
+      },
+      {
+        "bytes": 1506,
+        "mtime": "2026-10-28T22:07:05.685Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220255-e2519cfd-L2-03-mimo.receipt.json",
+        "sha256": "63364cc608764878be92ff2ac6553d9c37af592ba0cd0b773de54a7762e7bfe4"
+      },
+      {
+        "bytes": 8661,
+        "mtime": "2026-10-28T22:08:10.380Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220421-3cb694f3-L2-06-mimo.md",
+        "sha256": "1f892f67c19f73ec4da917461e07434820b4d7cf6466874d4fe57e12b726c59e"
+      },
+      {
+        "bytes": 1477,
+        "mtime": "2026-10-28T22:08:10.394Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220421-3cb694f3-L2-06-mimo.receipt.json",
+        "sha256": "692b35e954be67feb908385785adfe7e7fe2141396ef56bc9e4c61aa198ff066"
+      },
+      {
+        "bytes": 10859,
+        "mtime": "2026-10-28T22:12:43.796Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220702-168fd32b-L2-07-mimo.md",
+        "sha256": "ef17f8d806aa71f1ecc0c4205ae793a0348bb83d3c7c5f89e13c0a203ba9e7c6"
+      },
+      {
+        "bytes": 1508,
+        "mtime": "2026-10-28T22:12:43.811Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220702-168fd32b-L2-07-mimo.receipt.json",
+        "sha256": "0431b1e6b5cbb23ebc17510f9a64917431fdf36d5df08e254480190837bddae5"
+      },
+      {
+        "bytes": 10310,
+        "mtime": "2026-10-28T22:12:03.489Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220705-04cf6884-L2-08-mimo.md",
+        "sha256": "362768f91d4d9435e79c1ac7f64303658f41a53b8a7e8b3cdd7ae1a1422c98f5"
+      },
+      {
+        "bytes": 1509,
+        "mtime": "2026-10-28T22:12:03.504Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220705-04cf6884-L2-08-mimo.receipt.json",
+        "sha256": "e9602dbaa2ddfca4cdfea3e612e475e76e0a34f174b422b9da3c09cc1873d8a5"
+      },
+      {
+        "bytes": 12039,
+        "mtime": "2026-10-28T22:10:52.861Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220739-430f4d34-L2-09-mimo.md",
+        "sha256": "21347bc4cfa5da0527bd0f7818858c9d62eb639d60eb242c93929f5fc416612b"
+      },
+      {
+        "bytes": 1508,
+        "mtime": "2026-10-28T22:10:52.878Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220739-430f4d34-L2-09-mimo.receipt.json",
+        "sha256": "c5c361f10ae464b5723de0f7bc870e188da7d84ff73ba694c4daed49099dbbf2"
+      },
+      {
+        "bytes": 10243,
+        "mtime": "2026-10-28T22:09:33.997Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220810-17b5b3e3-L2-10-mimo.md",
+        "sha256": "0ea009a3476c92806434e76c283dd786270962e966d7167d1112a7f47a6c58b6"
+      },
+      {
+        "bytes": 1508,
+        "mtime": "2026-10-28T22:09:34.013Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220810-17b5b3e3-L2-10-mimo.receipt.json",
+        "sha256": "5ebcc3366b08fa73496547f461f44aca372486c3a5c05d4079ffbd46c9c82e00"
+      },
+      {
+        "bytes": 9532,
+        "mtime": "2026-10-28T22:10:05.428Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220819-c9dd50cd-L2-11-mimo.md",
+        "sha256": "c7ea361448738e268aac8f529b9eb0953bd718db644bcb3486b1e8ad4c4a525d"
+      },
+      {
+        "bytes": 1458,
+        "mtime": "2026-10-28T22:10:05.442Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220819-c9dd50cd-L2-11-mimo.receipt.json",
+        "sha256": "e3ef40ea3a8fdb9d9ae97c5bbe658459437c8b4f32337104e361c11f94f4b0fd"
+      },
+      {
+        "bytes": 8824,
+        "mtime": "2026-10-28T22:11:54.863Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220934-e5497468-L2-12-mimo.md",
+        "sha256": "f0fb7fb0b6cf1887c02bfec23bfc689f052fb8fa3b09d89d2981a2c54153d956"
+      },
+      {
+        "bytes": 1490,
+        "mtime": "2026-10-28T22:11:54.878Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T220934-e5497468-L2-12-mimo.receipt.json",
+        "sha256": "336e7547365d8e279f4a4a40c55fc20761f561fe22922ba750a9a6e6dd49f526"
+      },
+      {
+        "bytes": 9931,
+        "mtime": "2026-10-28T22:12:05.907Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221005-339be71e-L2-13-mimo.md",
+        "sha256": "079881bca78a02847811f09bbf4fa799c2ff9e0734b65e2a06d4697118999a1a"
+      },
+      {
+        "bytes": 1508,
+        "mtime": "2026-10-28T22:12:05.923Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221005-339be71e-L2-13-mimo.receipt.json",
+        "sha256": "6346b21c9386cefd97bbd63a1ef0e8bb81a58966fcbb88058228181044857786"
+      },
+      {
+        "bytes": 11250,
+        "mtime": "2026-10-28T22:16:51.770Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221053-c6f6598c-L2-14-mimo.md",
+        "sha256": "fa5339418b9ee856d94a44ffb23ad06626726d97b3a3cc0bef8eb02d57f91783"
+      },
+      {
+        "bytes": 1464,
+        "mtime": "2026-10-28T22:16:51.785Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221053-c6f6598c-L2-14-mimo.receipt.json",
+        "sha256": "2fb4601b421ec3dc19d46a86d792c04016ebeeed36b9a3fc84d98f73925402b5"
+      },
+      {
+        "bytes": 7194,
+        "mtime": "2026-10-28T22:13:41.754Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221155-c458a769-L2-15-mimo.md",
+        "sha256": "3b7e87764a645d2cd3276d933c6fd2d9179981f6637b276e98a893c0834ef632"
+      },
+      {
+        "bytes": 1505,
+        "mtime": "2026-10-28T22:13:41.768Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221155-c458a769-L2-15-mimo.receipt.json",
+        "sha256": "3047e6c1d8708501f396968604ca87564de5c9001737afe36f51cdae5b5b9445"
+      },
+      {
+        "bytes": 8610,
+        "mtime": "2026-10-28T22:12:59.189Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221203-f61c5c74-L2-16-mimo.md",
+        "sha256": "e632b0843b95cc7cd7b6b1967604e4753ea873f51963d9fb9e11d729c3570a1d"
+      },
+      {
+        "bytes": 1507,
+        "mtime": "2026-10-28T22:12:59.207Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221203-f61c5c74-L2-16-mimo.receipt.json",
+        "sha256": "f1946a8b9cc92503094c8f103c1aeff14b7d6e7f1504aeae758da66cd245e512"
+      },
+      {
+        "bytes": 10444,
+        "mtime": "2026-10-28T22:14:50.771Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221206-6c640c0f-L2-17-mimo.md",
+        "sha256": "0de2272dac1ff2cf69881e872de7f00850d7f74b75423b55ddd0cc6acf84fbb6"
+      },
+      {
+        "bytes": 1500,
+        "mtime": "2026-10-28T22:14:50.786Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221206-6c640c0f-L2-17-mimo.receipt.json",
+        "sha256": "5254956283ee30462aa33bd3184f5a2b58969d8b7a02d564b6b42d482e0c5682"
+      },
+      {
+        "bytes": 10652,
+        "mtime": "2026-10-28T22:18:32.280Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221244-95f24553-L2-18-mimo.md",
+        "sha256": "7e0db61320f9602a36709bee7ed707b7352b29bf3fc11c162b5e596aa3128c0f"
+      },
+      {
+        "bytes": 1509,
+        "mtime": "2026-10-28T22:18:32.294Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221244-95f24553-L2-18-mimo.receipt.json",
+        "sha256": "baf9e2ee055063effe9a2b17ab12429ed87ba2526174400341220eb7bccdbfc1"
+      },
+      {
+        "bytes": 12085,
+        "mtime": "2026-10-28T22:17:47.669Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221259-c0ec3b09-L2-19-mimo.md",
+        "sha256": "2bb2294e35e4bf70dec44e83f73167605355a846421c80c089763c1e3fc7c03b"
+      },
+      {
+        "bytes": 1510,
+        "mtime": "2026-10-28T22:17:47.686Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221259-c0ec3b09-L2-19-mimo.receipt.json",
+        "sha256": "cd0e276ae729b9af158d456b4fbc348be91e25591735a3f5d7982a36669a0799"
+      },
+      {
+        "bytes": 10989,
+        "mtime": "2026-10-28T22:17:29.333Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221342-858b5766-L2-20-mimo.md",
+        "sha256": "cf62722d00e0c947fbd66eb9edb3f35078c6c2f384b10b9801bd1add3e04b2d7"
+      },
+      {
+        "bytes": 1509,
+        "mtime": "2026-10-28T22:17:29.349Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221342-858b5766-L2-20-mimo.receipt.json",
+        "sha256": "31df2a8b320b1291f9a0e6239fb00f2e6f0ab6511024dadae3c9f068a8ec189f"
+      },
+      {
+        "bytes": 9503,
+        "mtime": "2026-10-28T22:16:11.458Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221451-c6f065c6-L2-21-mimo.md",
+        "sha256": "88ff100790ed39bd506cfd52604fc49fd7f416575d03c40ed2cc4acb9f384082"
+      },
+      {
+        "bytes": 1506,
+        "mtime": "2026-10-28T22:16:11.472Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221451-c6f065c6-L2-21-mimo.receipt.json",
+        "sha256": "d53a5eed96392a455be9a76cd1a4f6ba0eb0b8d8d8667d8b8ff74f15a2c46da9"
+      },
+      {
+        "bytes": 7171,
+        "mtime": "2026-10-28T22:21:04.981Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221611-3b645bc9-L2-22-mimo.md",
+        "sha256": "5e2830f4fef57989c5a11bf62a25fb176f2ec2ee08d09a8a374ac99c6e6479ac"
+      },
+      {
+        "bytes": 1491,
+        "mtime": "2026-10-28T22:21:04.997Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221611-3b645bc9-L2-22-mimo.receipt.json",
+        "sha256": "6ef3efe7f2849f149dc093ad5b13d84eada0a6ce29448cb1f24a70c76a78dbb8"
+      },
+      {
+        "bytes": 5130,
+        "mtime": "2026-10-28T22:18:38.976Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221652-b197eeb2-L2-23-mimo.md",
+        "sha256": "2e682825d1cd8713c7d92c7eead02d9c0bb1c58df9934096b4e4bba3c9c48f91"
+      },
+      {
+        "bytes": 1505,
+        "mtime": "2026-10-28T22:18:38.991Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221652-b197eeb2-L2-23-mimo.receipt.json",
+        "sha256": "75f569e2fdf121c0dd2bd1848040a37d55f47c5e9d5784a31461ba5a9e746934"
+      },
+      {
+        "bytes": 8217,
+        "mtime": "2026-10-28T22:21:24.143Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221729-14d74185-L2-24-mimo.md",
+        "sha256": "84faf1623c4321a93062c35ace96e20c09a3afca6c5f511b0eea5bcd1b104393"
+      },
+      {
+        "bytes": 1508,
+        "mtime": "2026-10-28T22:21:24.160Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221729-14d74185-L2-24-mimo.receipt.json",
+        "sha256": "cabae77c6db0359770d6029dd7b141f8480a0c79fc884296c8d4a8d3e30fac0a"
+      },
+      {
+        "bytes": 10388,
+        "mtime": "2026-10-28T22:20:29.149Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221747-0182105d-L2-25-mimo.md",
+        "sha256": "0ffd3c5ee47b4ac46172c7c1e95557ebc0bd50ba2c2fc0acf7c62037b93b49b9"
+      },
+      {
+        "bytes": 1500,
+        "mtime": "2026-10-28T22:20:29.164Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221747-0182105d-L2-25-mimo.receipt.json",
+        "sha256": "fad523f9edde5a595fed80e6878cff1bf8ed4673907181d65202f34a9329b72a"
+      },
+      {
+        "bytes": 6627,
+        "mtime": "2026-10-28T22:20:48.665Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221832-dcbd6b16-L2-26-mimo.md",
+        "sha256": "aeb5e716a4d71c3f945ededc8a9d1517d24e684d18f932e93effd17be11b5ffa"
+      },
+      {
+        "bytes": 1507,
+        "mtime": "2026-10-28T22:20:48.683Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221832-dcbd6b16-L2-26-mimo.receipt.json",
+        "sha256": "08663c4fcfb9266489988f283c77748cf4b72dd9277114bfa3505897f7056f48"
+      },
+      {
+        "bytes": 9211,
+        "mtime": "2026-10-28T22:21:25.233Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221839-d29b4adf-L2-27-mimo.md",
+        "sha256": "f3b9034709aa4341af03fea124f854e0b61fe66e7121f2a11aa248e2db1ef025"
+      },
+      {
+        "bytes": 1500,
+        "mtime": "2026-10-28T22:21:25.248Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T221839-d29b4adf-L2-27-mimo.receipt.json",
+        "sha256": "a7bba762734fa99cef7e673b408bd45ed62745157a5a9350f2fd4cb65d656cc7"
+      },
+      {
+        "bytes": 10945,
+        "mtime": "2026-10-28T22:22:42.832Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222029-16496983-L2-28-mimo.md",
+        "sha256": "95885be3b080912fbb56ccfcf5f3aa7ef55e87cb7959f6333ef20f8d2a7da3df"
+      },
+      {
+        "bytes": 1500,
+        "mtime": "2026-10-28T22:22:42.847Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222029-16496983-L2-28-mimo.receipt.json",
+        "sha256": "28995f32083a0eace118db89fb775000b1557dc7cdc526041453ae4a66aaf433"
+      },
+      {
+        "bytes": 7311,
+        "mtime": "2026-10-28T22:23:08.649Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222048-a62042e2-L2-29-mimo.md",
+        "sha256": "1fd0d1504ca58401c99324a8c8ea3a896fc988006a65e9f979745ccd2f9c088b"
+      },
+      {
+        "bytes": 1506,
+        "mtime": "2026-10-28T22:23:08.665Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222048-a62042e2-L2-29-mimo.receipt.json",
+        "sha256": "abc3ad3b64c7f9366a301a9c684b11f8c8633f5b6f3d447b122476976de77e1b"
+      },
+      {
+        "bytes": 5870,
+        "mtime": "2026-10-28T22:23:23.514Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222105-6ee771ae-L2-30-mimo.md",
+        "sha256": "eaada8013397257859a813c85bdce34e6a944bd58b4f40ed416a68c72fd5bfba"
+      },
+      {
+        "bytes": 1504,
+        "mtime": "2026-10-28T22:23:23.530Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222105-6ee771ae-L2-30-mimo.receipt.json",
+        "sha256": "7c2b95490f3798c3dcb5851c1ed5d4affef93a5b5507e1cca4f3da3186b79639"
+      },
+      {
+        "bytes": 6533,
+        "mtime": "2026-10-28T22:23:55.270Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222124-2b4434ea-L2-31-mimo.md",
+        "sha256": "091a6c585e2d1252ec0543322a7c6336e2fcc7f606e010ff7933ee8f680213f8"
+      },
+      {
+        "bytes": 1456,
+        "mtime": "2026-10-28T22:23:55.285Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222124-2b4434ea-L2-31-mimo.receipt.json",
+        "sha256": "a8ea23326625972494ad697593d4bb46b3b3ffd1ec2eaf982de164d9810458f2"
+      },
+      {
+        "bytes": 10148,
+        "mtime": "2026-10-28T22:24:09.672Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222125-e39e3c3d-L2-32-mimo.md",
+        "sha256": "8cff49d3555e0e93b84e56883d084c65ce8296a53158f8bc217de698803c0184"
+      },
+      {
+        "bytes": 1510,
+        "mtime": "2026-10-28T22:24:09.688Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222125-e39e3c3d-L2-32-mimo.receipt.json",
+        "sha256": "1f8db5e2760bbbbe126aedd57d45d69053f2575c090bfecf6ac732c382049454"
+      },
+      {
+        "bytes": 9289,
+        "mtime": "2026-10-28T22:27:44.173Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222243-c3870368-L2-33-mimo.md",
+        "sha256": "4afe80510b7776c5e66d82c27da4a18660e93ac64deb68716e10708b415915d9"
+      },
+      {
+        "bytes": 1463,
+        "mtime": "2026-10-28T22:27:44.189Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222243-c3870368-L2-33-mimo.receipt.json",
+        "sha256": "64500413ce910905b9481a9bf5063174214618aaabfe35c9978566510f27cab2"
+      },
+      {
+        "bytes": 8539,
+        "mtime": "2026-10-28T22:30:08.455Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222308-9f4ea198-L2-34-mimo.md",
+        "sha256": "bbc057e9bf42777b20ef9d74a59950fc0e243fc8741672f998b37151567b08a6"
+      },
+      {
+        "bytes": 1508,
+        "mtime": "2026-10-28T22:30:08.474Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222308-9f4ea198-L2-34-mimo.receipt.json",
+        "sha256": "dde996c572fba3e877cadcc66a47d93012e82b4d78ad2a8852c8745d4dbc3133"
+      },
+      {
+        "bytes": 9318,
+        "mtime": "2026-10-28T22:30:21.540Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222323-cd848dda-L2-35-mimo.md",
+        "sha256": "dbb66a1f9e13a8412b5629be7e8231f025bc2dd813825d8243a1667d6e85576d"
+      },
+      {
+        "bytes": 1508,
+        "mtime": "2026-10-28T22:30:21.554Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222323-cd848dda-L2-35-mimo.receipt.json",
+        "sha256": "7f6da9bd518e386ee8767964e5491809fca72f6ae8b4266fdb27f3b98fc986b0"
+      },
+      {
+        "bytes": 5923,
+        "mtime": "2026-10-28T22:26:48.410Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222355-d94f7eeb-L2-36-mimo.md",
+        "sha256": "c67bf6aad1446b0a255f9394b374afb1e5381f4af25c5226c66f966be85c6b01"
+      },
+      {
+        "bytes": 1470,
+        "mtime": "2026-10-28T22:26:48.425Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222355-d94f7eeb-L2-36-mimo.receipt.json",
+        "sha256": "2d397d2c6bc7f46f81f7c8bc4b59fd60732a94968e86695bf05a2dd01eef9bef"
+      },
+      {
+        "bytes": 10427,
+        "mtime": "2026-10-28T22:28:48.846Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222409-c08971dc-L2-37-mimo.md",
+        "sha256": "20f1b82aed1bfa7f961fda7490afd49c6429fedf782c943a87007407eac57152"
+      },
+      {
+        "bytes": 1472,
+        "mtime": "2026-10-28T22:28:48.861Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222409-c08971dc-L2-37-mimo.receipt.json",
+        "sha256": "09e795c7a32d1ba6ace952155d2734e8e411f8d3368fe70b280e06576b5e8056"
+      },
+      {
+        "bytes": 9619,
+        "mtime": "2026-10-28T22:31:26.495Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222648-3dc41616-L2-38-mimo.md",
+        "sha256": "dfa92588c0eca080b8cc23930cf0cf7b1039d9d81e0cdc82aef3f7aa302e6e10"
+      },
+      {
+        "bytes": 1496,
+        "mtime": "2026-10-28T22:31:26.510Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222648-3dc41616-L2-38-mimo.receipt.json",
+        "sha256": "1ee1a01334e9e486d5a488a1cf88d618149259c72aa42e784644dd4352837f1b"
+      },
+      {
+        "bytes": 7615,
+        "mtime": "2026-10-28T22:31:02.843Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222744-5bf13550-L2-39-mimo.md",
+        "sha256": "1a8e1875678cf648891766f9fa2021593b1ced120b837c226fad43827663653c"
+      },
+      {
+        "bytes": 1476,
+        "mtime": "2026-10-28T22:31:02.860Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222744-5bf13550-L2-39-mimo.receipt.json",
+        "sha256": "917af28e60810fdadc1e9d2b0352c70e7eb98c2627679909e9fe740c8487ce9f"
+      },
+      {
+        "bytes": 958,
+        "mtime": "2026-10-28T22:28:49.118Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T222849-e67f36e6-L2-40-mimo.receipt.json",
+        "sha256": "82ad0dc0e09b44b4e9b000b882f99889713c3bf1fb5b7db7d2041999088a3556"
+      },
+      {
+        "bytes": 959,
+        "mtime": "2026-10-28T22:30:08.757Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T223008-cbe1fde4-L2-41-mimo.receipt.json",
+        "sha256": "1a6f92d76049bcac85006e723878e475911765067c58beb4bda779afd73dac44"
+      },
+      {
+        "bytes": 960,
+        "mtime": "2026-10-28T22:30:21.827Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T223021-25a40df9-L2-42-mimo.receipt.json",
+        "sha256": "86c023b9e19862de8f8cb7add68cf678055df96f3728ae0d4dc4d38ce503a59e"
+      },
+      {
+        "bytes": 921,
+        "mtime": "2026-10-28T22:31:03.133Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T223103-aa15eb41-L2-43-mimo.receipt.json",
+        "sha256": "68fef165c745246cb8ee4228a6cc68eee28e3140ca722a670395aa5f31213523"
+      },
+      {
+        "bytes": 957,
+        "mtime": "2026-10-28T22:31:26.785Z",
+        "path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261028T223126-83f0c60d-L2-44-mimo.receipt.json",
+        "sha256": "ab4f837efdce3433379c75ef34126ed51433d081079ec793768af378594bf07d"
+      }
+    ],
+    "live_logs_size_only": [
+      {
+        "bytes": 840538,
+        "mtime": "2026-10-28T16:12:29.627Z",
+        "path": "C:\\Users\\jakem\\.claude\\projects\\D--Librarian-V2\\23197395-4e2e-4e3c-ad90-9cbe3af61a81.jsonl"
+      },
+      {
+        "bytes": 24618889,
+        "mtime": "2026-10-28T16:10:09.777Z",
+        "path": "C:\\Users\\jakem\\.claude\\projects\\D--Librarian-V2\\2ca0af49-a456-4495-a771-3cff42505aad.jsonl"
+      },
+      {
+        "bytes": 15420573,
+        "mtime": "2026-10-28T22:32:28.191Z",
+        "path": "C:\\Users\\jakem\\.claude\\projects\\D--Librarian-V2\\61d3eaf3-e0bc-4aa9-aa45-2de25ffb574b.jsonl"
+      },
+      {
+        "bytes": 38462760,
+        "mtime": "2026-10-20T11:34:05.061Z",
+        "path": "C:\\Users\\jakem\\.codex\\sessions\\2026\\10\\20\\rollout-2026-10-20T12-34-04-01a15917-07b6-7b41-a0e6-5de34c6bc007.jsonl"
+      },
+      {
+        "bytes": 1448321,
+        "mtime": "2026-10-20T11:34:11.233Z",
+        "path": "C:\\Users\\jakem\\.codex\\sessions\\2026\\10\\20\\rollout-2026-10-20T12-34-11-01a15917-23c5-72d2-9f3a-faa04abd5839.jsonl"
+      },
+      {
+        "bytes": 2088753,
+        "mtime": "2026-10-20T11:34:13.037Z",
+        "path": "C:\\Users\\jakem\\.codex\\sessions\\2026\\10\\20\\rollout-2026-10-20T12-34-13-01a15917-2ad1-7bd0-b546-46eb273471df.jsonl"
+      },
+      {
+        "note": "Codex rollouts: 328 files under ~/.codex/sessions/2026/{09,10}; counts and sizes recorded by codex_threads.csv"
+      }
+    ],
+    "papers": [
+      {
+        "bytes": 895356,
+        "mtime": "2026-10-28T14:58:24.356Z",
+        "path": "E:\\Librarian research\\00178-LaN (1).pdf",
+        "sha256": "646861ccfb8f960cb0f10f21f1ffceb01d28f5721befee2f51691e5a428908f0"
+      },
+      {
+        "bytes": 262151,
+        "mtime": "2026-10-28T15:18:47.299Z",
+        "path": "E:\\Librarian research\\07802-YuJ.pdf",
+        "sha256": "8ade95386511eb454b8d49163764d5aa86dcd5eefd733860dd7c6893d6e7fe71"
+      },
+      {
+        "bytes": 5401647,
+        "mtime": "2026-10-28T15:05:59.224Z",
+        "path": "E:\\Librarian research\\A knowledge-based approach for guided development of infrastructure as code.pdf",
+        "sha256": "83663e3d2ff48863d1fa55c54dff153e98728190dcbe6051d11456d4e582ff16"
+      },
+      {
+        "bytes": 434152,
+        "mtime": "2026-10-24T00:03:55.633Z",
+        "path": "E:\\Librarian research\\A Pedagogy-First Approach to Integrating Large language models into education.pdf",
+        "sha256": "7045ed834f67b6de1444c64042a9615e0577b2a51b2c27ec5a592e770811ac5b"
+      },
+      {
+        "bytes": 348939,
+        "mtime": "2026-10-28T14:50:07.749Z",
+        "path": "E:\\Librarian research\\A_Formal_Perspective_for_Service_Coordination_Framework_in_Service_Oriented_Architecture.pdf",
+        "sha256": "451de5a80732bbda5a72a236e64fd59ec443c4dcf084e7c8bb83658936c762ef"
+      },
+      {
+        "bytes": 10439501,
+        "mtime": "2026-10-24T00:02:41.966Z",
+        "path": "E:\\Librarian research\\Advances in LLM-Assisted Combinatorial Optimization.pdf",
+        "sha256": "6be643c3424eafa8d9a78033b35c0781deceed8c4058566e7bf5810801547c78"
+      },
+      {
+        "bytes": 4577028,
+        "mtime": "2026-10-28T15:08:55.601Z",
+        "path": "E:\\Librarian research\\AgentAI--A-comprehensive-survey-on-autonomous-agents_2025_Expert-Systems-wit.pdf",
+        "sha256": "0ccd23c608948ea5377da99a65ae13a6b0e5f1236c3e434e11843b053efdd74d"
+      },
+      {
+        "bytes": 3355950,
+        "mtime": "2026-10-28T15:08:55.704Z",
+        "path": "E:\\Librarian research\\Agentic-AI--The-age-of-reasoning-A-re_2026_Journal-of-Automation-and-Intelli.pdf",
+        "sha256": "eb09a8534ab95bfb520e801664af7b41a392fcb81a6d7f19925da5988db93e5b"
+      },
+      {
+        "bytes": 6129178,
+        "mtime": "2026-10-28T15:08:55.757Z",
+        "path": "E:\\Librarian research\\AI-Agents-vs--Agentic-AI--A-Conceptual-taxonomy--applicat_2026_Information-F.pdf",
+        "sha256": "e3e1346d48bf40c47de7d97231957b58301f16151da2cdb77e74a11c854bce8f"
+      },
+      {
+        "bytes": 3868564,
+        "mtime": "2026-10-23T23:59:48.608Z",
+        "path": "E:\\Librarian research\\applsci-16-04720.pdf",
+        "sha256": "725a09946e5c8278ec9628dbd3206febd52982b2ee1f6bd62b5df9b0e3a1f510"
+      },
+      {
+        "bytes": 1714368,
+        "mtime": "2026-10-28T15:09:50.147Z",
+        "path": "E:\\Librarian research\\Confidence-Aware_Tree-of-Thoughts_A_Federated_Safety_Net_for_VLM_Agents_in_Smart-Home_Consumer_Electronics.pdf",
+        "sha256": "a8bb5c82380fcc4b947dbcf2a14609968bbf17871957bca723ff163d39fdf846"
+      },
+      {
+        "bytes": 5933624,
+        "mtime": "2026-10-28T15:15:40.394Z",
+        "path": "E:\\Librarian research\\Data-And_Knowledge-Driven_Visual_Abductive_Reasoning.pdf",
+        "sha256": "7e7c0baac1116480db262974a5bbff8ed105734d368098eb202a267f40d6ce0a"
+      },
+      {
+        "bytes": 327460,
+        "mtime": "2026-10-28T14:52:55.899Z",
+        "path": "E:\\Librarian research\\Design_of_flexible_static_program_analyzers_with_PQL.pdf",
+        "sha256": "682f382435db3e3b4b3b22e0b0e3c4a4e5db5ddcbb1b08e60f4b74e841c24843"
+      },
+      {
+        "bytes": 3999104,
+        "mtime": "2026-10-28T15:04:05.577Z",
+        "path": "E:\\Librarian research\\directed driftAn efficient and stealthy bias injection method usin.pdf",
+        "sha256": "58fb5bb6220624e91714cab481307149e28be7176ad9cd079b4e8defcb4754d4"
+      },
+      {
+        "bytes": 3494093,
+        "mtime": "2026-10-28T15:24:32.748Z",
+        "path": "E:\\Librarian research\\Double-deep-Q-network-based-multi-objective-optimization-f_2026_Expert-Syste.pdf",
+        "sha256": "baee9508f72e70880f69872e413882fc1b8f65fbb0f087a057e05e6b9258c0e2"
+      },
+      {
+        "bytes": 178518,
+        "mtime": "2026-10-28T15:12:33.590Z",
+        "path": "E:\\Librarian research\\EBSCO-FullText-10_28_2026.pdf",
+        "sha256": "f133cdd5cc75b255e2c110a2ec0b774b0adecaf4e69e50023b3783beaae24a7d"
+      },
+      {
+        "bytes": 1112136,
+        "mtime": "2026-10-28T15:02:12.242Z",
+        "path": "E:\\Librarian research\\Efficient Cooperation-Aware Key and Value Management.pdf",
+        "sha256": "99096873fd7c94650ed58e20f6b9b38f96ea187f551a627cac286629d32d3dac"
+      },
+      {
+        "bytes": 525980,
+        "mtime": "2026-10-28T14:54:14.536Z",
+        "path": "E:\\Librarian research\\Electronics Letters - 2019 - Matta - Q‐RTS  a real‐time swarm intelligence based on multi‐agent Q‐learning.pdf",
+        "sha256": "acedf5f16ef600020bf18bde39e1ae21e0c2acc31ace11cb4692d80238532fcd"
+      },
+      {
+        "bytes": 1862320,
+        "mtime": "2026-10-28T15:18:05.409Z",
+        "path": "E:\\Librarian research\\electronics-15-00844-v2.pdf",
+        "sha256": "1314cc9f8a0500473e3130b5ba20b736218d5747603bebc570ae3e4d09298c61"
+      },
+      {
+        "bytes": 5166486,
+        "mtime": "2026-10-23T23:59:22.467Z",
+        "path": "E:\\Librarian research\\electronics-15-03452-v2.pdf",
+        "sha256": "e187bf159f56a463359571115e1a4306406f1318e80b9f6a051980a36353a2ee"
+      },
+      {
+        "bytes": 1913491,
+        "mtime": "2026-10-28T15:10:37.978Z",
+        "path": "E:\\Librarian research\\Embodied_Tree_of_Thoughts_Deliberate_Manipulation_Planning_With_Embodied_World_Model.pdf",
+        "sha256": "af31e3e8a13fc0414d8bb1b82e27b7d2d1a247b17d20a5fb951d4be46e8f0298"
+      },
+      {
+        "bytes": 10007811,
+        "mtime": "2026-10-28T14:56:18.376Z",
+        "path": "E:\\Librarian research\\Evolutionary_Multi-Agent_Deep_Meta_Reinforcement_Learning_Method_for_Swarm_Intelligence_Energy_Management_of_Isolated_Multi-Area_Microgrid_With_Internet_of_Things.pdf",
+        "sha256": "b23e11ce5d534351b92936d78d947677c70a61ec6ed2783ba9da8f5f13dacf8d"
+      },
+      {
+        "bytes": 1135084,
+        "mtime": "2026-10-24T00:03:08.873Z",
+        "path": "E:\\Librarian research\\Exploring How Knowledge Workers Situate an Organisationally Embedded LLM Agent in their Collaborative Work Practices.pdf",
+        "sha256": "880106639c1565055ae42a47a3bf152364d0f18c146a2df39c3cd1aaa95a021e"
+      },
+      {
+        "bytes": 3273829,
+        "mtime": "2026-10-28T15:02:23.791Z",
+        "path": "E:\\Librarian research\\frai-9-1820827.pdf",
+        "sha256": "392dd3bf643ec2974dd54ed603e1328687db8977386a75f21898cb21af73a179"
+      },
+      {
+        "bytes": 1222998,
+        "mtime": "2026-10-28T15:13:52.344Z",
+        "path": "E:\\Librarian research\\futureinternet-17-00353-v2.pdf",
+        "sha256": "9e70559991e66da5578e5857a0b0402c01c45d16d8d6f8218835e87c20456e5e"
+      },
+      {
+        "bytes": 2537210,
+        "mtime": "2026-10-28T15:18:37.076Z",
+        "path": "E:\\Librarian research\\Gradient Orthogonal Low-Rank Adaptation Framewor.pdf",
+        "sha256": "f3639747ccc2bac46b4946d29fa79b6c46d44bb9dab8a43a36d605e0196a1f3a"
+      },
+      {
+        "bytes": 2530105,
+        "mtime": "2026-10-28T15:23:44.218Z",
+        "path": "E:\\Librarian research\\Hierarchical process-level generative reward modeling with.pdf",
+        "sha256": "cd85e164c18dd6c73e0d66491cdb1e00a5318ac39d9cf006a9e0ef7595154a95"
+      },
+      {
+        "bytes": 5960520,
+        "mtime": "2026-10-28T15:24:32.691Z",
+        "path": "E:\\Librarian research\\Hierarchical-reinforcement-learning-for-dynamic-collision-a_2025_Knowledge-B.pdf",
+        "sha256": "9d491f07427daeba9d87f7c41fd6ee196c28e5abbe876a3a25ff46f9f34b2afa"
+      },
+      {
+        "bytes": 827946,
+        "mtime": "2026-10-28T15:11:06.717Z",
+        "path": "E:\\Librarian research\\Hierarchical_goals_contextuali.pdf",
+        "sha256": "f157643a8af9a008f0e9753ad0b33f0ce3e93fa0039c97624aa1f98c7ab9056a"
+      },
+      {
+        "bytes": 854985,
+        "mtime": "2026-10-28T15:08:55.669Z",
+        "path": "E:\\Librarian research\\Homo-agenticus-in-the-age-of-agentic-AI--Agency-loops--po_2025_Information-a.pdf",
+        "sha256": "872229a792f6b4588c8a5db7c461e6c2bb3e507cef0f43c1c4e5ae527836e049"
+      },
+      {
+        "bytes": 1459864,
+        "mtime": "2026-10-28T14:55:25.245Z",
+        "path": "E:\\Librarian research\\Improving multi-target cooperative tracking.pdf",
+        "sha256": "76c5c2ace0a00c84078c39d472cfe9574691a4f48e486e505ea984be757d94f3"
+      },
+      {
+        "bytes": 5100715,
+        "mtime": "2026-10-28T15:08:55.647Z",
+        "path": "E:\\Librarian research\\Industrial-Agentic-AI-and-generative-modelin_2025_Current-Opinion-in-Chemica.pdf",
+        "sha256": "a42b2d8d0aa4eb34948ad28da040aeba6cdac6db14f6d00b47919b5bd8291fd6"
+      },
+      {
+        "bytes": 842994,
+        "mtime": "2026-10-28T15:24:32.952Z",
+        "path": "E:\\Librarian research\\Integrating-Q-Learning-with-Branch-and-Bound-for-the-Job-S_2025_IFAC-PapersO.pdf",
+        "sha256": "7c7a2fde074d87cb2077b040a9f10af5e4e33bb6e446f4b4687d0597e5d09a28"
+      },
+      {
+        "bytes": 5732998,
+        "mtime": "2026-10-28T15:24:32.805Z",
+        "path": "E:\\Librarian research\\KLDA-TICNet--Transposition-interaction-convolutional-network-_2026_Applied-S.pdf",
+        "sha256": "e547a2d592974df03560fe3f7541d566704149ee1e13b746f796a9a8037baeef"
+      },
+      {
+        "bytes": 8071735,
+        "mtime": "2026-10-28T15:14:56.973Z",
+        "path": "E:\\Librarian research\\Knowledge-Driven Reasoning for Compatible and Interpretable API Recommendation via Teacher LLM Distillation.pdf",
+        "sha256": "1feeffe3126b1aaf15041613bf8e63beb6309350fe41ec9c3cccf2060d8fe9cd"
+      },
+      {
+        "bytes": 8071735,
+        "mtime": "2026-10-24T00:05:51.449Z",
+        "path": "E:\\Librarian research\\Knowledge-Driven Reasoning for Compatible and Interpretable API Recommendation via Teacher.pdf",
+        "sha256": "1feeffe3126b1aaf15041613bf8e63beb6309350fe41ec9c3cccf2060d8fe9cd"
+      },
+      {
+        "bytes": 1176882,
+        "mtime": "2026-10-28T15:15:15.567Z",
+        "path": "E:\\Librarian research\\Knowledge-Driven_Reasoning_for_Mobile_Agentic_AI_Concepts_Approaches_and_Directions.pdf",
+        "sha256": "acac3bdf92105cfe4d15be13c1997302a32938813cbbc788573f7dd11948d016"
+      },
+      {
+        "bytes": 354383,
+        "mtime": "2026-10-23T23:58:04.933Z",
+        "path": "E:\\Librarian research\\LLM Planning against Semantic-Execution Drift.pdf",
+        "sha256": "7448002efd42cf60ae96e6e052cfb36df47d6d37bd0ad42205fbef3bd34e51bc"
+      },
+      {
+        "bytes": 10520007,
+        "mtime": "2026-10-28T15:24:32.936Z",
+        "path": "E:\\Librarian research\\Mask-guided-rationales-meet-LLMs--Hybrid-encoder-LLM-question-_2026_Applied-.pdf",
+        "sha256": "5381acfd36b10e7775862a85a6c131107e8d48c5d96c69ae7c7710e54db2c6b1"
+      },
+      {
+        "bytes": 874345,
+        "mtime": "2026-10-24T00:00:16.034Z",
+        "path": "E:\\Librarian research\\mathematics-14-01568-v2.pdf",
+        "sha256": "6b55fa9af79b3ec3d713f77d416942de569bf5788460b86df87f57183537b0ee"
+      },
+      {
+        "bytes": 154652,
+        "mtime": "2026-10-28T15:22:36.536Z",
+        "path": "E:\\Librarian research\\metz_Vol_25_No_6_p629-630_Verification_and_process_oriented_validation_of_the_MiKlip_decadal_prediction_system_87186.pdf",
+        "sha256": "aff918d2d26a1d13e1b06501c10d211e03353a8065cb3303ddc81f7e1401a6b5"
+      },
+      {
+        "bytes": 1432159,
+        "mtime": "2026-10-28T15:00:02.310Z",
+        "path": "E:\\Librarian research\\Multi-LLM_Cooperation-Based_Joint_Intent-Driven_Network_Slicing_and_Resource_Allocation.pdf",
+        "sha256": "2f497f694a28116e988492054f05b30d52eb9a9834651193c33636eb06332029"
+      },
+      {
+        "bytes": 6650525,
+        "mtime": "2026-10-28T15:05:26.677Z",
+        "path": "E:\\Librarian research\\Multiscale_Contrastive_Learning_for_Node_Clustering_Based_on_Variational_Graph_Auto-Encoder.pdf",
+        "sha256": "7b1ecb2a7c4dcd58e8d5db2842aa3e897416fe4f1266619aff2f83c3cefb35fb"
+      },
+      {
+        "bytes": 804252,
+        "mtime": "2026-10-28T15:01:22.546Z",
+        "path": "E:\\Librarian research\\Mutual_Influence_AI_Trust-Bas.pdf",
+        "sha256": "29c2fa3751ef4bf31c439d7aa66e77ca61280ac2742065225a3c766d0a3a52c7"
+      },
+      {
+        "bytes": 1338210,
+        "mtime": "2026-10-28T15:19:32.123Z",
+        "path": "E:\\Librarian research\\S0146411625700361.pdf",
+        "sha256": "b503dcc1ebd38df53230df82e6d0293ca93dcc8370a65ceff1c290a7b0f4a394"
+      },
+      {
+        "bytes": 5698826,
+        "mtime": "2026-10-28T15:03:28.333Z",
+        "path": "E:\\Librarian research\\Semantic Drift Compensation for Class-Incremental Learning.pdf",
+        "sha256": "9835431a3f5020723cba6eaaa2dd09b7f27543e882ca6990a9276d3972ec962e"
+      },
+      {
+        "bytes": 3160786,
+        "mtime": "2026-10-24T00:00:49.689Z",
+        "path": "E:\\Librarian research\\Thought Management System for long-horizon, goal-driven LLM agents.pdf",
+        "sha256": "4f4980ab9863c4084747fbccdd880a4c1d6a581ad5a5f4060e0c85af8b948c86"
+      },
+      {
+        "bytes": 5099768,
+        "mtime": "2026-10-28T15:01:04.356Z",
+        "path": "E:\\Librarian research\\Towards_Communication_Efficient_Multi-Agent_Cooperations_Reinforcement_Learning_and_LLM.pdf",
+        "sha256": "419ed266ee7b2a0296c433d418e3d95361ac711313326626f88148c371be83d6"
+      },
+      {
+        "bytes": 687452,
+        "mtime": "2026-10-28T15:08:55.769Z",
+        "path": "E:\\Librarian research\\Transforming-cybersecurity-with-agentic-AI-to-combat-_2025_Telecommunication.pdf",
+        "sha256": "1d60a76268c3d446f44a10acbc3f6c86907ab283d4b9b34636e37fdc141461ac"
+      },
+      {
+        "bytes": 5206066,
+        "mtime": "2026-10-28T15:24:32.852Z",
+        "path": "E:\\Librarian research\\Uncertainty-aware-cloud-resource-management-via-fuzzy-adap_2026_Applied-Soft.pdf",
+        "sha256": "167a21ed5cb6be08d45c293dddb762790bed4f51c45196730ed067b0ed303725"
+      },
+      {
+        "bytes": 9778039,
+        "mtime": "2026-10-28T15:16:33.791Z",
+        "path": "E:\\Librarian research\\ViKSeR_Visual_Knowledge-Driven_Self-Reinforcing_Reasoning_Framework.pdf",
+        "sha256": "a05a09a9bd8aafbe3b5dfb329a3b73d5e13fad6a95d4b01f7cf7af15aaf37f1f"
+      }
+    ],
+    "primary_pages_read_2026_10_28": [
+      {
+        "note": "read with the built-in browser or the fetch tool; not saved as files",
+        "url": "https://openai.com/index/navier-stokes-solution/"
+      },
+      {
+        "note": "read with the built-in browser or the fetch tool; not saved as files",
+        "url": "https://github.com/openai/math"
+      },
+      {
+        "note": "read with the built-in browser or the fetch tool; not saved as files",
+        "url": "https://github.com/openai/math/blob/main/history.md"
+      },
+      {
+        "note": "read with the built-in browser or the fetch tool; not saved as files",
+        "url": "https://docs.vllm.ai/en/latest/features/structured_outputs/"
+      },
+      {
+        "note": "read with the built-in browser or the fetch tool; not saved as files",
+        "url": "https://docs.deepinfra.com/account/data-privacy"
+      },
+      {
+        "note": "read with the built-in browser or the fetch tool; not saved as files",
+        "url": "https://ojs.aaai.org/index.php/ICAPS/article/view/36143"
+      }
+    ],
+    "repo_docs": [
+      {
+        "bytes": 141169,
+        "mtime": "2026-10-28T15:57:15.098Z",
+        "path": "D:\\Librarian_V2\\docs\\unified-implementation-plan.md",
+        "sha256": "766e5b741886a924c5805ede41ce6aeaa0f1d476d0162aa12c57d39eed001cc5"
+      },
+      {
+        "bytes": 11672,
+        "mtime": "2026-10-20T11:44:08.358Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-20-executive-review.md",
+        "sha256": "c47e0b701c50610369a7d27f65f9d935d8424a4e33efce4ce7c1a0bd45a15c07"
+      },
+      {
+        "bytes": 10160,
+        "mtime": "2026-10-20T11:44:10.418Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-20-model-platform-and-deployment-review.md",
+        "sha256": "c54be31904b7faabfe779910ef99ed69ba24e4d19fa8a961296c7c1a5cba7002"
+      },
+      {
+        "bytes": 7207,
+        "mtime": "2026-10-20T11:44:09.373Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-20-v1-v2-capability-parity.md",
+        "sha256": "06c29bb145b923edf3a5f14fc7eb33e804b430887506bef0a456503c224f7d1b"
+      },
+      {
+        "bytes": 9067,
+        "mtime": "2026-10-22T00:43:44.979Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-22-deepinfra-current-system-validation.md",
+        "sha256": "8b5dfbd58f12f4d58adf0e2c1e3586225e5a6ca12c3d96ee047d5e2c0745e5b1"
+      },
+      {
+        "bytes": 23258,
+        "mtime": "2026-10-23T12:42:54.400Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-23-system-attention-deployment-and-runtime-review.md",
+        "sha256": "ea5e7c70c307997408e2b705f3e36bef0a379be78f8fe53e51c10f8f34660063"
+      },
+      {
+        "bytes": 12502,
+        "mtime": "2026-10-26T03:21:57.583Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-24-architecture-blindspot-verification.md",
+        "sha256": "036d2c6ebb3f8a770ccb82f7b057cb1188d9deb472b1d4e8ad4d51aff58a0a4f"
+      },
+      {
+        "bytes": 4532,
+        "mtime": "2026-10-26T03:21:57.584Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-24-baseline-manifest.md",
+        "sha256": "437a1a8c11dc9d1dbb735f4f7fe93c5f68ce8e1e6d1a44c69b4f52898fff8ad8"
+      },
+      {
+        "bytes": 23274,
+        "mtime": "2026-10-26T03:21:57.584Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-24-chatgpt-transcript-review.md",
+        "sha256": "8881d5762ce4d1e251b2f066600c3a8c63a1a1cb37c0b71155ff9cbf89e784a4"
+      },
+      {
+        "bytes": 10687,
+        "mtime": "2026-10-26T03:21:57.585Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-24-handoff-to-chatgpt.md",
+        "sha256": "acb9c9e778eeeef523e2634bbc8ab41a506908f3811c6f0ab3ae5dbc0954e738"
+      },
+      {
+        "bytes": 38870,
+        "mtime": "2026-10-26T03:21:57.585Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-24-harness-and-adapter-plan-review.md",
+        "sha256": "fff096dab1f40bea6c492f93b9179e7a7e684a072b381837103c700effda2baf"
+      },
+      {
+        "bytes": 7004,
+        "mtime": "2026-10-26T03:21:57.585Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-25-core-concurrency-validation.md",
+        "sha256": "0d2041a74b80f7e5e09114bafc009424b484a17762fe06e16035cd24decb4805"
+      },
+      {
+        "bytes": 1831,
+        "mtime": "2026-10-26T03:21:57.587Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-26-adapt07-continuation-probe.md",
+        "sha256": "fd9cfa509d9f6b7cf49d7a789533e1d4edadfd59aaf92dc135758ad26bafa3a2"
+      },
+      {
+        "bytes": 3468,
+        "mtime": "2026-10-26T03:21:57.588Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-26-adapt09-prompt-layout.md",
+        "sha256": "571c7c4cba77c6d1a51be8bb92b9c07cc867af641d4bb85e3bf7c4feba3ef105"
+      },
+      {
+        "bytes": 3009,
+        "mtime": "2026-10-26T12:24:50.154Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-26-adapt11-tool-surface.md",
+        "sha256": "a08e96462d655159e756a324bd0def2336509dc3bf2a4c61e07ce406c0deafc4"
+      },
+      {
+        "bytes": 4991,
+        "mtime": "2026-10-27T00:44:05.358Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-26-index05-snapshot-continuation.md",
+        "sha256": "ba1e458bc42f3d276d4940e65208b95a6e688f3405ffb081ca4207101405f347"
+      },
+      {
+        "bytes": 3016,
+        "mtime": "2026-10-27T21:10:43.894Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-27-index05-external-handles.md",
+        "sha256": "a1aaf0b126652b84bed2817f4f8be10c8a054af97621427e02fcb908c663f77a"
+      },
+      {
+        "bytes": 3516,
+        "mtime": "2026-10-27T10:56:34.961Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-27-index05-host-force-stop.md",
+        "sha256": "d58eeaf41d3a35b7df817be0bd4d37bc5e39f5f34b08853765890eb7d6ee56a9"
+      },
+      {
+        "bytes": 4151,
+        "mtime": "2026-10-27T16:33:48.131Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-27-index05-installed-wheel-smoke.md",
+        "sha256": "3e14af7b5f712ce191fdf1c0fd8051c19655302fc8aa12b3dce6cd948c1fd187"
+      },
+      {
+        "bytes": 4123,
+        "mtime": "2026-10-27T16:17:22.556Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-27-index05-package-prerequisites.md",
+        "sha256": "19c32898c7a8c40b2b943a63b9f1d291335f2df240ac13452ffa85762a5cee0b"
+      },
+      {
+        "bytes": 4447,
+        "mtime": "2026-10-27T20:56:29.778Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-27-index05-packaged-adapters.md",
+        "sha256": "2e1c8a9180434c39dc911f49f8d715d5ef4cd6cae4a1a1c905eaa6a241ce5261"
+      },
+      {
+        "bytes": 4717,
+        "mtime": "2026-10-27T00:44:05.358Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-27-index05-process-interruption.md",
+        "sha256": "fea111732217101ffefffd1d3d674eb8c8975f6a66d64b9f07db2e40e90aced2"
+      },
+      {
+        "bytes": 5210,
+        "mtime": "2026-10-27T11:22:29.730Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-27-index05-scale-sustained.md",
+        "sha256": "c18daba7ec327c39bd2522550084d5cba710798d3d98c6cb1f6ceca1ce6d58ab"
+      },
+      {
+        "bytes": 4667,
+        "mtime": "2026-10-28T15:47:10.168Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-28-index05-attachment-scan-reduction.md",
+        "sha256": "4d44078ef1c5fe59a285e592c604137da7627fa76280c5f7fe1f6bc6990a6767"
+      },
+      {
+        "bytes": 3002,
+        "mtime": "2026-10-28T02:39:21.129Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-28-index05-large-attachments.md",
+        "sha256": "a25db9e9e2f6d63df392c1fb4a6e1639eedb0a31f4185f9d1af21123c730705d"
+      }
+    ],
+    "second_pass_review": [
+      {
+        "bytes": 5351,
+        "mtime": "2026-10-28T21:37:25.972Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-28-agent-workflow-second-pass\\CLAIMS.md",
+        "sha256": "c9072d13a4c2c148e6890b99c64d8a553dd846ed31258c46d72d49cce8737316"
+      },
+      {
+        "bytes": 20630,
+        "mtime": "2026-10-28T21:41:20.677Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-28-agent-workflow-second-pass\\LITERATURE.md",
+        "sha256": "d0229d646f461674ba1a20ecf9a38b7a9ee0be29a55847c6b45e9d7a0dd077fa"
+      },
+      {
+        "bytes": 19019,
+        "mtime": "2026-10-28T21:41:20.676Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-28-agent-workflow-second-pass\\REVIEW.md",
+        "sha256": "8304b36f7ccdbda4506eda61dcdcb0ebfdec111684da82db9d3e6b14f28cee3a"
+      },
+      {
+        "bytes": 1485,
+        "mtime": "2026-10-28T21:43:01.945Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-28-agent-workflow-second-pass\\data\\card_coverage.json",
+        "sha256": "2dfb02e90de652baf7f0f231627d6680ef9cd3359376916d1e95de733cfa3a60"
+      },
+      {
+        "bytes": 398,
+        "mtime": "2026-10-28T21:43:02.603Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-28-agent-workflow-second-pass\\data\\independent_checks.json",
+        "sha256": "a9f735caa61851bc2413c707c6044f9e656a2f8bdc675ed7a96553dfc280c6c8"
+      },
+      {
+        "bytes": 635,
+        "mtime": "2026-10-28T21:42:52.508Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-28-agent-workflow-second-pass\\data\\metric_sensitivity.json",
+        "sha256": "d58cf250244cf660ad480821ac8f82dea66ef8ada45d9b0b6b01321e4878ee4e"
+      },
+      {
+        "bytes": 15993,
+        "mtime": "2026-10-28T21:42:58.593Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-28-agent-workflow-second-pass\\data\\pdf_identity.json",
+        "sha256": "3653b9ac5159dd679c57c65e3ac75da898ca12d4030ae87abb580d6463fa0d00"
+      },
+      {
+        "bytes": 12004,
+        "mtime": "2026-10-28T21:43:19.328Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-28-agent-workflow-second-pass\\data\\reviewed_input_hashes.json",
+        "sha256": "5a9e79ad4378a02b826495d502f0739179ce45130a9e188edced0b437c24011a"
+      },
+      {
+        "bytes": 7642,
+        "mtime": "2026-10-28T21:42:52.868Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-28-agent-workflow-second-pass\\data\\supplement_methods.json",
+        "sha256": "96154603b9b453f1f89a3969a7f7f4449d3fdb549b84269b695453a60edd0454"
+      },
+      {
+        "bytes": 170,
+        "mtime": "2026-10-28T21:43:19.329Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-28-agent-workflow-second-pass\\data\\validation.json",
+        "sha256": "73628513e171fe903d60619354f1c911399327a0c638aae94c792abbab2190df"
+      },
+      {
+        "bytes": 14349,
+        "mtime": "2026-10-28T21:42:52.869Z",
+        "path": "D:\\Librarian_V2\\reports\\2026-10-28-agent-workflow-second-pass\\data\\claim_review.csv",
+        "sha256": "f3126587d05e6a06bbd71a547cda46b42c335cdad985553b855f9567b0d62e47"
+      }
+    ],
+    "transcripts": [
+      {
+        "bytes": 103847,
+        "mtime": "2026-10-28T13:40:30.937Z",
+        "path": "C:\\Users\\jakem\\Downloads\\workflow discussion and review - gemini.md",
+        "sha256": "25aeb7aac07f42db5609dc4a5ebd8a2a353ca50aa7fe9ec9566b18534ccd59d7"
+      },
+      {
+        "bytes": 969368,
+        "mtime": "2026-10-25T18:54:00.419Z",
+        "path": "E:\\# Review Librarian V2 - chatgpt transcript.txt",
+        "sha256": "9fb33580e19f3384eae371c34bb1448043bb4ae525a63f56fe6be3b526a3947a"
+      },
+      {
+        "bytes": 287045,
+        "mtime": "2026-10-28T15:29:22.209Z",
+        "path": "E:\\# Review Librarian V2 - chatgpt transcript -2.txt",
+        "sha256": "414e664102b6bf53b9084eef83bd720460d3dfb4822ec4ce871d3067977f3ac5"
+      },
+      {
+        "bytes": 53262,
+        "mtime": "2026-10-28T13:14:26.669Z",
+        "path": "E:\\# Review Librarian V2 - claud transcript.txt",
+        "sha256": "69549be5a00a6df249efc23b071f481abb91da820a643211d1c75803c217c6ac"
+      },
+      {
+        "bytes": 374387,
+        "mtime": "2026-10-28T12:52:45.399Z",
+        "path": "E:\\Librarian setup and Q-ball research-claud transcript.md",
+        "sha256": "67c41bdbd6c6ab5bd15106abc1e120b8cd71f447334bdbbc12fe3c63a8df9ac7"
+      }
+    ]
+  },
+  "repo_head": "11bdd5b7c7ff9165928bf7f8998965a1b0934fef"
+}

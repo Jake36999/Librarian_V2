@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "run_id": "20261028T223100-607751ad",
+  "provider": "deepinfra",
+  "endpoint": "/v1/openai/chat/completions",
+  "started_at": "2026-10-28T22:31:00.755766Z",
+  "task": "critic-abstract-01",
+  "lens": "correctness",
+  "model": "zai-org/GLM-5.3-Flash",
+  "agent": "codex-overseer-research",
+  "manifest": [
+    {
+      "path": "reports/2026-10-28-deepinfra-overseer-workflow/data/critic_public_contract.txt",
+      "bytes": 4384,
+      "sha256": "f82b56e858ed55381ad0887c813f4cd4c23d0883a330621cc623a936e2805f3d"
+    }
+  ],
+  "packet_sha256": "b3c5f154ba5f8de5d2dcd12061d336b2a0188e831eddf7970c1cfea87ea7747d",
+  "estimated_input_tokens": 1832,
+  "max_output_tokens": 9000,
+  "preflight_reserve_usd": 0.0047748,
+  "budget_usd": 5.0,
+  "rate_card": {
+    "input_per_1m": 0.15,
+    "output_per_1m": 0.5,
+    "source": "https://api.deepinfra.com/v1/openai/models",
+    "as_of": "2026-10-28"
+  },
+  "key_source": "transient file injection",
+  "status": "completed",
+  "completed_at": "2026-10-28T22:31:48.874877Z",
+  "latency_ms": 48120,
+  "request_id": "RGNeeapAI16O0BAAxdcYED2X",
+  "model_returned": "zai-org/GLM-5.3-Flash",
+  "finish_reason": "stop",
+  "usage": {
+    "input_tokens": 1123,
+    "output_tokens": 1424,
+    "total_tokens": 2547
+  },
+  "estimated_cost_usd": 0.00088045,
+  "output_path": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T223100-607751ad-critic-abstract-01.md",
+  "output_sha256": "17db05d3b3ed18fcc71641b2bc7a48902468481862b6348a544dd9daba439437",
+  "output_chars": 7052
+}

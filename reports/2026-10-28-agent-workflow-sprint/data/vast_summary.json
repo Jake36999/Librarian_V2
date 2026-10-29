@@ -1,0 +1,39 @@
+{
+  "boxes_destroyed_unfinished_at_cap": [
+    "A",
+    "B",
+    "C"
+  ],
+  "boxes_final_phase": {
+    "A": "failed",
+    "B": "failed",
+    "C": "failed",
+    "D": "done",
+    "E": "done",
+    "F": "done"
+  },
+  "boxes_rented": 7,
+  "boxes_with_zero_output": [
+    "A",
+    "B"
+  ],
+  "cap_usd_first": "13.50",
+  "cap_usd_last": "14.00",
+  "controller_restarts": 6,
+  "create_failures": 1,
+  "jobs_collected": 31,
+  "jobs_registered": 16,
+  "log_minus_epoch_offset_seconds": 2,
+  "provisioning_minutes_rent_to_runner_up": [
+    4.6,
+    5.6,
+    5.5
+  ],
+  "registered_fail": 3,
+  "registered_pass": 13,
+  "spent_closed_usd": 13.62,
+  "start_failures": 1,
+  "step_errors": 2,
+  "usd_per_collected_job": 0.439,
+  "wall_hours_first_event_to_last": 15.15
+}

@@ -1,0 +1,14 @@
+rank,page,method,equivalent_found,where,note
+1,20,Cost of reflection,yes,"#1 p. 7 (costs: about 60,000 additional tokens, a 68% increase over ReAct)","Same fact on another page; the reviewer's anchor is the repeat on p. 20."
+1,18,Negative code-domain transfer,yes,"#1 p. 17 (negative result: in medical, code and legal benchmarks ReAct or Reflexion beat ReflectiChain on CCR and SFI)","Captures the negative transfer; the reader did not record the CodeSim numbers (CCR 40% against 95%), which I read on p. 18 myself."
+3,8,Context amount and composition confounded,quote_failed,"#3 p. 8 (limitation: the K sweep varies knowledge amount and composition together)","The reader found the concept but its quote did not verify on the page, so the item is excluded from the tables."
+7,8,Verifier cost dominates,no,"#7 p. 8 has the token and latency numbers but no statement that the judge dominates","The numbers were captured; the dominance statement was not."
+8,5,False refusal and false execution,yes,"#8 p. 5 (method: cost-weighted dangerous-error metric, plus false-refusal rate)",""
+14,17,Matched fixed-rule control,yes,"#14 p. 16 (negative result and decomposition: full compilation +0.2 pp over a hand-coded rule, not significant)",""
+19,31,Human verification effort,yes,"#19 p. 18 (method: AI summaries need human review before distribution)","Same point from another passage."
+28,6,Structural dependency checking,no,"#28 items cover the query language and models but not the statement-dependency query","Related limitation on p. 7 (alias, Affects and Slice computation) is a different point."
+26,10,Separate communication and computation,yes,"#26 pp. 5 to 7 (local-space agent, global bus space, trace invariant)","The concept is carried by the level-2 agent and global bus items."
+42,9,Presence does not establish faithfulness,no,#42 records grounding hallucination rates (p. 12) and faithfulness metrics (p. 24) but not the caution that extractiveness alone does not establish faithfulness,The caution was not captured.
+42,13,Evidence sufficiency and removal tests,yes,#42 p. 24 (sufficiency and comprehensiveness) and p. 16 (masked-prompt counterfactual verifier),The tests are captured with results; the definition passage on p. 13 is not the cited page.
+43,7,Bounded structural context,yes,#43 p. 7 (graph-conditioned token selection) and p. 10 (bounded-input property),
+45,2,Requirement plus supporting invariant,yes,#45 p. 3 (extra invariant patterns),

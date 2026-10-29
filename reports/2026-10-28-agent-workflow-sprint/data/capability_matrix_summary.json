@@ -1,0 +1,11 @@
+{
+  "chance_agreement": 0.331,
+  "cohen_kappa": 0.452,
+  "observed_agreement": 0.633,
+  "pairs_with_both_labels": 30,
+  "raw_status_agreement": [
+    19,
+    30
+  ],
+  "reader_pairs": 30
+}

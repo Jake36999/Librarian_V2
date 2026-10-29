@@ -1,0 +1,222 @@
+{
+ "by_model": {
+  "GLM-5.3": {
+   "adjacent_page": 0,
+   "anchored_items": 236,
+   "calls_completed": 8,
+   "calls_truncated": 1,
+   "elsewhere": 0,
+   "exact_page": 211,
+   "exact_page_rate": 0.8941,
+   "live_cost_usd": 0.632,
+   "parse": {
+    "ok": 7,
+    "salvaged": 1
+   },
+   "unverified": 25
+  },
+  "GLM-5.3-Flash": {
+   "adjacent_page": 3,
+   "anchored_items": 213,
+   "calls_completed": 9,
+   "calls_truncated": 0,
+   "elsewhere": 5,
+   "exact_page": 190,
+   "exact_page_rate": 0.892,
+   "live_cost_usd": 0.06,
+   "parse": {
+    "ok": 8,
+    "salvaged": 1
+   },
+   "unverified": 15
+  },
+  "MiMo-V2.6-Pro": {
+   "adjacent_page": 5,
+   "anchored_items": 1322,
+   "calls_completed": 50,
+   "calls_truncated": 0,
+   "elsewhere": 0,
+   "exact_page": 1225,
+   "exact_page_rate": 0.9266,
+   "live_cost_usd": 0.978,
+   "parse": {
+    "ok": 34,
+    "repaired": 15,
+    "salvaged": 1
+   },
+   "unverified": 92
+  }
+ },
+ "second_reader_overlap": [
+  {
+   "level_primary": "direct_candidate",
+   "level_second": "direct_candidate",
+   "methods_primary": 8,
+   "methods_second": 7,
+   "primary_methods_also_found_by_second": 4,
+   "rank": 1,
+   "second": "GLM-5.3",
+   "slug": "electronics-15-03452-v2-54a1"
+  },
+  {
+   "level_primary": "direct_candidate",
+   "level_second": "direct_candidate",
+   "methods_primary": 8,
+   "methods_second": 7,
+   "primary_methods_also_found_by_second": 2,
+   "rank": 2,
+   "second": "GLM-5.3",
+   "slug": "thought-management-system-for-long-horiz"
+  },
+  {
+   "level_primary": "bounded_analogy",
+   "level_second": "direct_candidate",
+   "methods_primary": 8,
+   "methods_second": 7,
+   "primary_methods_also_found_by_second": 2,
+   "rank": 3,
+   "second": "GLM-5.3",
+   "slug": "knowledge-driven-reasoning-for-mobile-ag"
+  },
+  {
+   "level_primary": "bounded_analogy",
+   "level_second": "bounded_analogy",
+   "methods_primary": 7,
+   "methods_second": 4,
+   "primary_methods_also_found_by_second": 2,
+   "rank": 5,
+   "second": "GLM-5.3-Flash",
+   "slug": "towards-communication-efficient-multi-ag"
+  },
+  {
+   "level_primary": "direct_candidate",
+   "level_second": "bounded_analogy",
+   "methods_primary": 7,
+   "methods_second": 3,
+   "primary_methods_also_found_by_second": 1,
+   "rank": 6,
+   "second": "GLM-5.3-Flash",
+   "slug": "mutual-influence-ai-trust-bas-e8e5"
+  },
+  {
+   "level_primary": "bounded_analogy",
+   "level_second": "bounded_analogy",
+   "methods_primary": 7,
+   "methods_second": 6,
+   "primary_methods_also_found_by_second": 4,
+   "rank": 7,
+   "second": "GLM-5.3",
+   "slug": "embodied-tree-of-thoughts-deliberate-man"
+  },
+  {
+   "level_primary": "direct_candidate",
+   "level_second": "direct_candidate",
+   "methods_primary": 7,
+   "methods_second": 7,
+   "primary_methods_also_found_by_second": 4,
+   "rank": 8,
+   "second": "GLM-5.3",
+   "slug": "confidence-aware-tree-of-thoughts-a-fede"
+  },
+  {
+   "level_primary": "direct_candidate",
+   "level_second": "bounded_analogy",
+   "methods_primary": 8,
+   "methods_second": 7,
+   "primary_methods_also_found_by_second": 4,
+   "rank": 9,
+   "second": "GLM-5.3-Flash",
+   "slug": "hierarchical-process-level-generative-re"
+  },
+  {
+   "level_primary": "bounded_analogy",
+   "level_second": "bounded_analogy",
+   "methods_primary": 8,
+   "methods_second": 8,
+   "primary_methods_also_found_by_second": 2,
+   "rank": 11,
+   "second": "GLM-5.3",
+   "slug": "00178-lan-1-32ae"
+  },
+  {
+   "level_primary": "direct_candidate",
+   "level_second": "bounded_analogy",
+   "methods_primary": 7,
+   "methods_second": 7,
+   "primary_methods_also_found_by_second": 2,
+   "rank": 12,
+   "second": "GLM-5.3",
+   "slug": "llm-planning-against-semantic-execution-"
+  },
+  {
+   "level_primary": "bounded_analogy",
+   "level_second": "bounded_analogy",
+   "methods_primary": 8,
+   "methods_second": 7,
+   "primary_methods_also_found_by_second": 3,
+   "rank": 14,
+   "second": "GLM-5.3",
+   "slug": "frai-9-1820827-b598"
+  },
+  {
+   "level_primary": "bounded_analogy",
+   "level_second": "bounded_analogy",
+   "methods_primary": 7,
+   "methods_second": 3,
+   "primary_methods_also_found_by_second": 0,
+   "rank": 17,
+   "second": "GLM-5.3-Flash",
+   "slug": "efficient-cooperation-aware-key-and-valu"
+  },
+  {
+   "level_primary": "bounded_analogy",
+   "level_second": "bounded_analogy",
+   "methods_primary": 8,
+   "methods_second": 8,
+   "primary_methods_also_found_by_second": 4,
+   "rank": 25,
+   "second": "GLM-5.3-Flash",
+   "slug": "advances-in-llm-assisted-combinatorial-o"
+  },
+  {
+   "level_primary": "bounded_analogy",
+   "level_second": "bounded_analogy",
+   "methods_primary": 7,
+   "methods_second": 6,
+   "primary_methods_also_found_by_second": 1,
+   "rank": 26,
+   "second": "GLM-5.3-Flash",
+   "slug": "a-formal-perspective-for-service-coordin"
+  },
+  {
+   "level_primary": "bounded_analogy",
+   "level_second": "bounded_analogy",
+   "methods_primary": 7,
+   "methods_second": 6,
+   "primary_methods_also_found_by_second": 2,
+   "rank": 28,
+   "second": "GLM-5.3-Flash",
+   "slug": "design-of-flexible-static-program-analyz"
+  },
+  {
+   "level_primary": "bounded_analogy",
+   "level_second": "bounded_analogy",
+   "methods_primary": 8,
+   "methods_second": 6,
+   "primary_methods_also_found_by_second": 1,
+   "rank": 42,
+   "second": "GLM-5.3-Flash",
+   "slug": "mask-guided-rationales-meet-llms-hybrid-"
+  },
+  {
+   "level_primary": "bounded_analogy",
+   "level_second": "bounded_analogy",
+   "methods_primary": 8,
+   "methods_second": 3,
+   "primary_methods_also_found_by_second": 2,
+   "rank": 45,
+   "second": "GLM-5.3-Flash",
+   "slug": "s0146411625700361-4c4d"
+  }
+ ]
+}

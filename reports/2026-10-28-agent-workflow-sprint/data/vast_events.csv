@@ -1,0 +1,68 @@
+ts_local,kind,cap_usd,spent_usd,box,gpu,machine,dph,region,detail,jobs,job,mb,registered,verdict
+2026-10-25 05:20:03,controller_start,13.50,0.00,,,,,,,,,,,
+2026-10-25 05:20:10,rented,,,A,Tesla V100,142447,0.160,LK,,,,,,
+2026-10-25 05:20:16,rented,,,B,Tesla V100S,153838,0.162,US,,,,,,
+2026-10-25 05:20:20,create_failed,,,C,,,,,,,,,,
+2026-10-25 05:20:27,rented,,,D,Tesla V100,33311,0.212,US,,,,,,
+2026-10-25 05:20:33,rented,,,E,Tesla V100,33283,0.212,US,,,,,,
+2026-10-25 05:20:39,rented,,,F,Tesla V100,33241,0.236,US,,,,,,
+2026-10-25 05:21:13,controller_start,13.50,0.01,,,,,,,,,,,
+2026-10-25 05:21:24,rented,,,C,Tesla V100,32334,0.268,US,,,,,,
+2026-10-25 05:24:39,step_error,,,A,,,,,TimeoutExpired,,,,,
+2026-10-25 05:25:56,controller_start,13.50,0.11,,,,,,,,,,,
+2026-10-25 05:26:02,runner_up,,,C,,,,,,,,,,
+2026-10-25 05:26:04,runner_up,,,D,,,,,,,,,,
+2026-10-25 05:26:09,runner_up,,,F,,,,,,,,,,
+2026-10-25 05:26:54,controller_start,13.50,0.13,,,,,,,,,,,
+2026-10-25 05:27:48,runner_launch,,,C,,,,,launched,,,,,
+2026-10-25 05:27:48,running_jobs,,,C,,,,,,4,,,,
+2026-10-25 05:28:45,runner_launch,,,E,,,,,launched,,,,,
+2026-10-25 05:28:45,running_jobs,,,E,,,,,,7,,,,
+2026-10-25 05:29:44,runner_launch,,,F,,,,,launched,,,,,
+2026-10-25 05:29:44,running_jobs,,,F,,,,,,21,,,,
+2026-10-25 05:50:25,start_failed,,,B,,,,,loading,,,,,
+2026-10-25 05:50:28,destroyed,,,B,,,,,failed to start,,,,,
+2026-10-25 05:55:44,rented,,,B,Tesla V100,43164,0.155,US,,,,,,
+2026-10-25 06:07:47,runner_launch,,,B,,,,,launched,,,,,
+2026-10-25 06:07:47,running_jobs,,,B,,,,,,1,,,,
+2026-10-25 06:19:05,collected,,,F,,,,,,,G6_metric_dt005,1.7,True,FAIL
+2026-10-25 07:29:21,collected,,,E,,,,,,,G7_metric_n160,8.0,True,FAIL
+2026-10-25 07:50:28,collected,,,F,,,,,,,G2_f3b_t1000,60.8,True,PASS
+2026-10-25 08:01:08,collected,,,F,,,,,,,G3_g165_s0,0.4,False,
+2026-10-25 08:06:29,collected,,,F,,,,,,,G3_g170_s0,0.4,False,
+2026-10-25 08:12:24,collected,,,E,,,,,,,G1_metric_d030,4.6,True,PASS
+2026-10-25 08:12:30,collected,,,F,,,,,,,G3_g175_s0,0.4,False,
+2026-10-25 08:23:07,collected,,,F,,,,,,,G3_g180_s0,0.4,False,
+2026-10-25 08:28:25,collected,,,F,,,,,,,G3_g185_s0,0.4,False,
+2026-10-25 08:56:08,collected,,,E,,,,,,,G1_metric_d085,5.1,True,PASS
+2026-10-25 08:57:34,collected,,,F,,,,,,,G1_yuk_d050,2.7,True,PASS
+2026-10-25 09:04:01,collected,,,F,,,,,,,G1_yuk_d100,3.2,True,FAIL
+2026-10-25 11:18:41,step_error,,,F,,,,,TimeoutExpired,,,,,
+2026-10-25 11:25:26,collected,,,E,,,,,,,G1_metric_d125,6.8,True,PASS
+2026-10-25 11:25:32,collected,,,E,,,,,,,G1_metric_d060,4.7,True,PASS
+2026-10-25 11:27:45,collected,,,E,,,,,,,G1_metric_d105,5.6,True,PASS
+2026-10-25 11:40:28,collected,,,F,,,,,,,G1_yuk_d120,6.4,True,PASS
+2026-10-25 11:42:36,collected,,,F,,,,,,,G1_yuk_d136,7.0,True,PASS
+2026-10-25 11:42:45,collected,,,F,,,,,,,G5_nocost_s1,0.5,False,
+2026-10-25 11:42:51,collected,,,F,,,,,,,G5_nocost_s2,0.5,False,
+2026-10-25 11:43:06,collected,,,F,,,,,,,G3_g160_s1,0.4,False,
+2026-10-25 11:43:15,collected,,,F,,,,,,,G3_g165_s1,0.4,False,
+2026-10-25 11:43:30,collected,,,F,,,,,,,G3_g170_s1,0.4,False,
+2026-10-25 11:43:45,collected,,,F,,,,,,,G3_g175_s1,0.4,False,
+2026-10-25 11:43:57,collected,,,F,,,,,,,G3_g180_s1,0.4,False,
+2026-10-25 11:44:02,collected,,,F,,,,,,,G3_g185_s1,0.4,False,
+2026-10-25 11:44:13,collected,,,F,,,,,,,G3_g190_s1,0.4,False,
+2026-10-25 11:45:47,destroyed,,,F,,,,,finished,,,,,
+2026-10-25 12:29:36,collected,,,E,,,,,,,G1_metric_d125_n192,8.5,True,PASS
+2026-10-25 12:29:45,destroyed,,,E,,,,,finished,,,,,
+2026-10-25 15:10:34,collected,,,D,,,,,,,H5_f3b_n192_t2000,235.6,True,PASS
+2026-10-25 15:10:43,destroyed,,,D,,,,,finished,,,,,
+2026-10-25 19:21:03,collected,,,C,,,,,,,H1_gas_n256,35.6,False,
+2026-10-25 19:29:51,destroyed,,,A,,,,,cannot finish within the credit (no output before completion,,,,,
+2026-10-25 19:29:55,destroyed,,,B,,,,,cannot finish within the credit (no output before completion,,,,,
+2026-10-25 19:30:03,controller_start,13.50,13.36,,,,,,,,,,,
+2026-10-25 19:30:32,controller_start,14.00,13.36,,,,,,,,,,,
+2026-10-25 19:31:15,controller_start,14.00,13.37,,,,,,,,,,,
+2026-10-25 19:51:38,collected,,,C,,,,,,,H4_f3d_n192_dt005,69.0,True,PASS
+2026-10-25 20:27:04,collected,,,C,,,,,,,H6_flat_breathing_d16,47.9,True,PASS
+2026-10-25 20:28:52,destroyed,,,C,,,,,H3 cannot finish within the cap; snapshots collected,,,,,

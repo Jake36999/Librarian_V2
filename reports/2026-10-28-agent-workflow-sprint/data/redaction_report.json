@@ -1,0 +1,15 @@
+{
+  "code_and_doc_packets": {
+    "named_secret": 2
+  },
+  "note": "counts only; line numbers preserved",
+  "patterns_matched_per_source": {
+    "chat1": {
+      "env_assign": 9
+    },
+    "chat2": {},
+    "claude_dev": {},
+    "gemini": {},
+    "qball": {}
+  }
+}

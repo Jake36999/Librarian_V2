@@ -1,0 +1,126 @@
+```json
+{
+  "source": "research",
+  "episodes": [
+    {
+      "id": "research-03-e1",
+      "line": 4204,
+      "quote": "I may have found a flaw in the separation metric: if one node drains into the other",
+      "kind": "observed_workflow",
+      "actor": "claude",
+      "task": "Audit separation metric for merger-by-transfer artifact",
+      "worker_contribution": "Planned a direct check of pair records to test whether centroid drift could mimic separation",
+      "lead_contribution": "None visible in this excerpt; the same agent hypothesized the flaw and designed the check",
+      "outcome": "Check executed in following lines; see research-03-e2",
+      "bottleneck": "Shell cwd was reset to F:\\quantule_mapper before the check (L04203), requiring re-navigation",
+      "contract_implication": "Metric-audit tasks with a stated falsifiable hypothesis are directly worker-ownable",
+      "evidence_strength": "agent_statement"
+    },
+    {
+      "id": "research-03-e2",
+      "line": 4270,
+      "quote": "t   210 sep  15.24 shareL 0.053 nmax 2 wL +0.981 wR +0.473",
+      "kind": "observed_workflow",
+      "actor": "claude",
+      "task": "Run script over pair JSON records to test the metric flaw",
+      "worker_contribution": "Wrote and ran an inline Python scan of three named JSON records; pasted raw numeric output",
+      "lead_contribution": "None visible; no separate review of this output appears in the excerpt",
+      "outcome": "Output shows shareL falling 0.561 to 0.053 while sep rises 5.63 to 17.11 in Z19, consistent with the predicted artifact; X3_e3_metric03.json was missing (L04277)",
+      "bottleneck": "One requested record absent; cwd reset again after the run (L04278)",
+      "contract_implication": "Require workers to paste raw output and flag missing inputs rather than silently skipping them",
+      "evidence_strength": "tool_output"
+    },
+    {
+      "id": "research-03-e3",
+      "line": 4286,
+      "quote": "Everything below is **from memory and must be verified by the research agent** before it's cited",
+      "kind": "suggestion",
+      "actor": "unknown",
+      "task": "Supply literature leads for four thin coverage areas",
+      "worker_contribution": "Pasted delegate-style report listing candidate references and search terms, explicitly marking them unverified",
+      "lead_contribution": "User relayed the report with instruction to account for results when synthesising (L04279)",
+      "outcome": "unknown whether the research agent verified any citation",
+      "bottleneck": "Recall-based bibliographic claims are unverified and require a second pass by another worker",
+      "contract_implication": "Contract should require memory-sourced references to be labeled unverified and routed to a verification worker before citation",
+      "evidence_strength": "agent_statement"
+    },
+    {
+      "id": "research-03-e4",
+      "line": 4371,
+      "quote": "**Registered: FAIL.** Batch 3 predicted the clump-size scale would converge and the peak depth would still move",
+      "kind": "reported_result",
+      "actor": "unknown",
+      "task": "Report phase-11 experiment outcomes against registered batch-3 predictions",
+      "worker_contribution": "Pasted report tabulating convergence measures and enumerating failed predictions",
+      "lead_contribution": "User passed the results in for synthesis; no independent lead verification shown",
+      "outcome": "Registered FAIL on both E6 clauses; prior unequal-pair results corrected for a profile-sign bug (L04380); main gas result marked safe at equal resolution",
+      "bottleneck": "Results arrive as prose claims in a pasted block, not as attached tool output",
+      "contract_implication": "Keep prediction registration, FAIL recording, and bug-driven corrections in machine-readable records the lead can audit",
+      "evidence_strength": "agent_statement"
+    },
+    {
+      "id": "research-03-e5",
+      "line": 4394,
+      "quote": "It's ready to hand over for the batch-4 brief. Once batch 4 registers its predictions, I'll run the experiments.",
+      "kind": "suggestion",
+      "actor": "unknown",
+      "task": "Hand over review findings to the research agent for batch-4 brief",
+      "worker_contribution": "Wrote batch-4 additions and literature list into the repo at docs/research_infrastructure/BATCH4_INPUT_FROM_REVIEW_2026-10-23.md (L04389)",
+      "lead_contribution": "Division proposed: research agent writes brief and registers predictions; experiment agent runs them afterward",
+      "outcome": "Handover document existence is claimed; contents not independently verified in this excerpt",
+      "bottleneck": "Coordination depends on a repo file being read by the next worker; no confirmation of receipt shown",
+      "contract_implication": "Use repo-resident handover documents plus explicit prediction-registration gates between research and execution workers",
+      "evidence_strength": "agent_statement"
+    },
+    {
+      "id": "research-03-e6",
+      "line": 4397,
+      "quote": "I ran the DeepInfra search and notes first, as you asked ($0.65): 202 candidates screened, 20 papers drafted",
+      "kind": "reported_result",
+      "actor": "claude",
+      "task": "Literature search and note drafting via DeepInfra workers, plus a radial lump simulation",
+      "worker_contribution": "Claimed DeepInfra workers screened 202 candidates, drafted 20 papers, checked claims against page text; agent also wrote a radial CPU simulation and committed a8019c4",
+      "lead_contribution": "User requested DeepInfra search and notes first; ordering and budget ($0.65) directed by lead",
+      "outcome": "Claimed complete with report sent; no DeepInfra tool output pasted in this excerpt",
+      "bottleneck": "Delegate results are relayed as agent prose; per-worker artifacts and check logs are not shown here",
+      "contract_implication": "Require DeepInfra workers to return candidate counts, per-claim check status, and artifact paths so the lead can spot-check",
+      "evidence_strength": "agent_statement"
+    },
+    {
+      "id": "research-03-e7",
+      "line": 4420,
+      "quote": "N = 256's halved growth rate: a fitting artifact. The true rate is 0.068, the same as every other run.",
+      "kind": "reported_result",
+      "actor": "claude",
+      "task": "Diagnose instrument issues in gas runs",
+      "worker_contribution": "Attributed energy-check failures to once-per-time-unit dissipation sampling (L04419) and cloud/local differences to profile solve and node-segmentation version (L04421)",
+      "lead_contribution": "None visible in this excerpt",
+      "outcome": "Fix proposed: record void-cost energy removal at every step; corrected rate reported as 0.068",
+      "bottleneck": "Instrumentation sampling granularity produced false failures and a false rate difference",
+      "contract_implication": "Workers should own instrument-bug diagnosis with a concrete fix and a re-measure plan before results are trusted",
+      "evidence_strength": "agent_statement"
+    },
+    {
+      "id": "research-03-e8",
+      "line": 4422,
+      "quote": "Next runs, in priority order (I'll register predictions before any of them run):",
+      "kind": "suggestion",
+      "actor": "claude",
+      "task": "Queue follow-up experiments with pre-registration",
+      "worker_contribution": "Proposed five prioritized runs: resolved gas to t=800 with two seeds, per-step energy bookkeeping, 3D nudge test, high-res collapse box, N=160 coupling scan",
+      "lead_contribution": "Lead expected to register/confirm predictions before execution per the stated workflow",
+      "outcome": "unknown; runs not shown in this excerpt",
+      "bottleneck": "Session hit a sign-in wall at L04450-L04452, interrupting execution",
+      "contract_implication": "Make prediction registration a hard precondition for worker run requests; queue order and seeds must be explicit",
+      "evidence_strength": "proposal"
+    }
+  ],
+  "scope_warnings": [
+    "Excerpt is a mid-transcript fragment (L04181-L04454); earlier delegation context and the identity of the pasted report's author are not settled, so those episodes use actor unknown",
+    "Pasted report blocks (L04280-L04395, L04397-L04428) are agent/user statements, not tool output; numeric claims within them are unverified here",
+    "Shell cwd resets (L04203, L04278) and the sign-in interruption (L04450-L04452) are transcript-level friction, not Librarian runtime behavior",
+    "No DeepInfra worker logs, per-candidate records, or test output for the created files (L04429-L04449) appear in this excerpt",
+    "File-creation summary (L04429-L04449) is tool output but shows diffs only, not execution or test results"
+  ]
+}
+```

@@ -1,0 +1,22 @@
+[
+  {
+    "path": "D:\\Librarian_V2\\scripts\\delegate_deepinfra.py",
+    "sha256": "22adbf8c0fd363839cac300c9706afd2bc85735ef1b246c5d403f0c8866826cb"
+  },
+  {
+    "path": "D:\\Librarian_V2\\docs\\unified-implementation-plan.md",
+    "sha256": "766e5b741886a924c5805ede41ce6aeaa0f1d476d0162aa12c57d39eed001cc5"
+  },
+  {
+    "path": "D:\\Librarian_V2\\tests\\test_openai_chat_adapter.py",
+    "sha256": "850a4e703afea431e51ce2dd5d6c0ee9d18c11548ea5acd54c38d635421b7be5"
+  },
+  {
+    "path": "D:\\Librarian_V2\\tests\\test_anthropic_messages_adapter.py",
+    "sha256": "be986b774d2ff80d023914132281c951b3acb76a6e5eabdcecdb633032d66b51"
+  },
+  {
+    "path": "D:\\Librarian_V2\\reports\\2026-10-28-index05-attachment-scan-reduction.md",
+    "sha256": "4d44078ef1c5fe59a285e592c604137da7627fa76280c5f7fe1f6bc6990a6767"
+  }
+]

@@ -1,0 +1,26 @@
+rank,page,method,quote,primary_share,second_reader_share,found_primary,found_any,adjudicated_equivalent_found,found_after_adjudication
+1,20,Cost of reflection,+68% tokens relative to ReAct,0.25,0.25,False,False,yes,True
+1,22,Heuristic drift estimates,Drift α estimates are derived from heuristic trajectory data,1.0,0.12,True,True,,True
+1,18,Negative code-domain transfer,CodeSim (Code),0.5,0.5,False,False,yes,True
+2,16,Reproducibility limit,repository URL to be added upon acceptance,1.0,1.0,True,True,,True
+3,8,Context amount and composition confounded,varies knowledge amount and composition jointly,0.33,1.0,False,True,quote_failed,True
+3,8,Non-monotonic knowledge utility,redundancy and reconciliation,1.0,1.0,True,True,,True
+5,10,Attribute byte savings to MAPPO-BDP,60% reduction in communication overhead,1.0,0.5,True,True,,True
+6,7,Approval is not agreement,We did not observe a statistically significant change in approval rates,1.0,1.0,True,True,,True
+7,8,Verifier cost dominates,overhead is dominated by the Judge module,0.2,0.2,False,False,no,False
+7,8,Actual parallel rollout measurement,reduces the simulation time of Task 5 from 55 s to 26 s,1.0,1.0,True,True,,True
+8,5,False refusal and false execution,false-refusal rate,0.67,1.0,False,True,yes,True
+8,11,Self-reflection control,"0 label flips in 1,000 reflections",1.0,1.0,True,True,,True
+9,20,Offline deployment and cost,offline reward-labeling and batch-RLHF method,1.0,0.14,True,True,,True
+11,4,Check task effects,checks the current world state against the defined task effects,1.0,1.0,True,True,,True
+11,8,Task difficulty before comparison,"planning time, number of planning",1.0,0.67,True,True,,True
+14,17,Matched fixed-rule control,not statistically robust,0.33,0.33,False,False,yes,True
+14,22,Refreshing targets confounds model contribution,frozen target list,1.0,0.67,True,True,,True
+19,31,Human verification effort,reviewed and edited as necessary,0.25,0.0,False,False,yes,True
+25,7,Execution versus semantic acceptance,executability checking,1.0,1.0,True,True,,True
+28,6,Structural dependency checking,Which program statements affect,0.0,0.0,False,False,no,False
+26,10,Separate communication and computation,separates the communication behavior from the computation behavior,0.17,0.33,False,False,yes,True
+42,9,Presence does not establish faithfulness,Extractiveness by itself does not establish,0.0,0.0,False,False,no,False
+42,13,Evidence sufficiency and removal tests,sufficiency and comprehensiveness,0.0,0.0,False,False,yes,True
+43,7,Bounded structural context,under a fixed budget,1.0,0.0,True,True,yes,True
+45,2,Requirement plus supporting invariant,an extra invariant that contains structural information,0.5,1.0,False,True,yes,True

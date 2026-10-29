@@ -1,0 +1,862 @@
+{
+  "M10_parallel": {
+    "mean_parallelism_when_active": 1.66,
+    "non_guardian_thread_active_hours": 34.2,
+    "orchestration_request_share_of_fresh_plus_output": 0.1264,
+    "peak_concurrent_threads": 6,
+    "threads": {
+      "guardian": 53,
+      "main": 2,
+      "worker": 148
+    },
+    "union_wall_hours": 20.6
+  },
+  "M11_context": {
+    "claude_compactions": 1,
+    "claude_compactions_per_100k_output": 0.142,
+    "claude_peak_context_tokens": 966097.0,
+    "codex_compactions_all_threads": 70,
+    "codex_compactions_per_100k_output": 2.027,
+    "codex_peak_single_request_input_tokens": 379566.0
+  },
+  "M12_instrumentation": {
+    "claude_ledger_aggregated_import_usd": 0.5457,
+    "completed": 9,
+    "dev_calls": 10,
+    "dev_spend_usd_estimated": 0.1552,
+    "failed": 1,
+    "input_estimate_ratio": {
+      "mean": 1.28,
+      "median": 1.27,
+      "n": 9,
+      "p25": 1.25,
+      "p75": 1.3,
+      "p90": 1.31,
+      "total": 11.5
+    },
+    "latency_s": {
+      "mean": 75.45,
+      "median": 65.3,
+      "n": 10,
+      "p25": 57.78,
+      "p75": 80.7,
+      "p90": 105.94,
+      "total": 754.5
+    },
+    "ledger_reconciliation": {
+      "claude": {
+        "aggregated_import_rows": [
+          "scratchpad-import"
+        ],
+        "budget_usd": 8.0,
+        "by_status": {
+          "completed": 90
+        },
+        "calls": 90,
+        "difference_usd": 0.0,
+        "orphan_unsettled_calls": 0,
+        "recomputed_sum_charged_usd": 2.61594794,
+        "recorded_committed_usd": 2.61594794,
+        "sum_receipt_basis_usd": 2.07024794
+      },
+      "shared": {
+        "aggregated_import_rows": [],
+        "budget_usd": 12.0,
+        "by_status": {
+          "completed": 9,
+          "failed": 1,
+          "started": 1
+        },
+        "calls": 11,
+        "difference_usd": 0.0,
+        "orphan_unsettled_calls": 1,
+        "recomputed_sum_charged_usd": 0.1551861,
+        "recorded_committed_usd": 0.1551861,
+        "sum_receipt_basis_usd": 0.1542947
+      }
+    },
+    "orphan_unsettled": 1,
+    "overlapping_starts": 1,
+    "stale_or_unlisted_rate_cards": {
+      "deepseek-ai/DeepSeek-V4.1-Flash": "stale",
+      "deepseek-ai/DeepSeek-V4.1-Flash-1017": "stale",
+      "zai-org/GLM-5.3": "stale"
+    },
+    "truncated_finish_length": 4,
+    "truncated_share_of_completed": 0.444
+  },
+  "M1_by_delegation": {
+    "claude_delegate_involved=False": {
+      "n": 10,
+      "output_tokens_median": 8436.0,
+      "weighted_index_median": 701179.0
+    },
+    "claude_delegate_involved=True": {
+      "n": 14,
+      "output_tokens_median": 15828.5,
+      "weighted_index_median": 602794.5
+    },
+    "codex_delegate_involved=False": {
+      "n": 36,
+      "output_tokens_median": 43952.5,
+      "weighted_index_median": 892766.5
+    },
+    "codex_delegate_involved=True": {
+      "n": 1,
+      "output_tokens_median": 43253.0,
+      "weighted_index_median": 1180492.0
+    }
+  },
+  "M1_tokens_per_accepted_change": {
+    "claude_A0": {
+      "cache_read_tokens": {
+        "mean": 15742289.92,
+        "median": 9625165.0,
+        "n": 24,
+        "p25": 5909948.75,
+        "p75": 16820980.5,
+        "p90": 27463476.5,
+        "total": 377814958
+      },
+      "fresh_tokens": {
+        "mean": 143443.04,
+        "median": 27908.5,
+        "n": 24,
+        "p25": 15500.25,
+        "p75": 119091.75,
+        "p90": 514633.2,
+        "total": 3442633
+      },
+      "n": 24,
+      "output_tokens": {
+        "mean": 28950.46,
+        "median": 13162.0,
+        "n": 24,
+        "p25": 8281.25,
+        "p75": 21655.75,
+        "p90": 63312.6,
+        "total": 694811
+      },
+      "requests": {
+        "mean": 31.54,
+        "median": 18.5,
+        "n": 24,
+        "p25": 9.75,
+        "p75": 31.0,
+        "p90": 56.4,
+        "total": 757
+      },
+      "weighted_index": {
+        "mean": 892507.54,
+        "median": 602794.5,
+        "n": 24,
+        "p25": 297436.25,
+        "p75": 1149228.25,
+        "p90": 1278596.9,
+        "total": 21420181
+      }
+    },
+    "claude_A1": {
+      "cache_read_tokens": {
+        "mean": 14895374.59,
+        "median": 9625165.0,
+        "n": 22,
+        "p25": 5657166.25,
+        "p75": 16071473.5,
+        "p90": 25086026.3,
+        "total": 327698241
+      },
+      "fresh_tokens": {
+        "mean": 151558.59,
+        "median": 27908.5,
+        "n": 22,
+        "p25": 15713.75,
+        "p75": 170802.0,
+        "p90": 530460.4,
+        "total": 3334289
+      },
+      "n": 22,
+      "output_tokens": {
+        "mean": 28267.77,
+        "median": 13162.0,
+        "n": 22,
+        "p25": 8491.75,
+        "p75": 20598.0,
+        "p90": 55620.1,
+        "total": 621891
+      },
+      "requests": {
+        "mean": 31.82,
+        "median": 18.5,
+        "n": 22,
+        "p25": 10.75,
+        "p75": 29.25,
+        "p90": 57.7,
+        "total": 700
+      },
+      "weighted_index": {
+        "mean": 863775.0,
+        "median": 602794.5,
+        "n": 22,
+        "p25": 277570.75,
+        "p75": 1113142.75,
+        "p90": 1198073.1,
+        "total": 19003050
+      }
+    },
+    "claude_A2": {
+      "cache_read_tokens": {
+        "mean": 14895374.59,
+        "median": 9625165.0,
+        "n": 22,
+        "p25": 5657166.25,
+        "p75": 16071473.5,
+        "p90": 25086026.3,
+        "total": 327698241
+      },
+      "fresh_tokens": {
+        "mean": 151558.59,
+        "median": 27908.5,
+        "n": 22,
+        "p25": 15713.75,
+        "p75": 170802.0,
+        "p90": 530460.4,
+        "total": 3334289
+      },
+      "n": 22,
+      "output_tokens": {
+        "mean": 28267.77,
+        "median": 13162.0,
+        "n": 22,
+        "p25": 8491.75,
+        "p75": 20598.0,
+        "p90": 55620.1,
+        "total": 621891
+      },
+      "requests": {
+        "mean": 31.82,
+        "median": 18.5,
+        "n": 22,
+        "p25": 10.75,
+        "p75": 29.25,
+        "p90": 57.7,
+        "total": 700
+      },
+      "weighted_index": {
+        "mean": 863775.0,
+        "median": 602794.5,
+        "n": 22,
+        "p25": 277570.75,
+        "p75": 1113142.75,
+        "p90": 1198073.1,
+        "total": 19003050
+      }
+    },
+    "codex_A0": {
+      "cache_read_tokens": {
+        "mean": 26790960.43,
+        "median": 12366848.0,
+        "n": 37,
+        "p25": 7741696.0,
+        "p75": 19843328.0,
+        "p90": 35212569.6,
+        "total": 991265536
+      },
+      "fresh_tokens": {
+        "mean": 798899.46,
+        "median": 243732.0,
+        "n": 37,
+        "p25": 75540.0,
+        "p75": 476407.0,
+        "p90": 1114564.0,
+        "total": 29559280
+      },
+      "n": 37,
+      "output_tokens": {
+        "mean": 91955.78,
+        "median": 43253.0,
+        "n": 37,
+        "p25": 25996.0,
+        "p75": 54816.0,
+        "p90": 93746.4,
+        "total": 3402364
+      },
+      "requests": {
+        "mean": 211.78,
+        "median": 69.0,
+        "n": 37,
+        "p25": 36.0,
+        "p75": 167.0,
+        "p90": 289.8,
+        "total": 7836
+      },
+      "weighted_index": {
+        "mean": 2242065.95,
+        "median": 942049.0,
+        "n": 37,
+        "p25": 516725.0,
+        "p75": 1401577.0,
+        "p90": 2876481.4,
+        "total": 82956440
+      }
+    },
+    "codex_A1": {
+      "cache_read_tokens": {
+        "mean": 26790960.43,
+        "median": 12366848.0,
+        "n": 37,
+        "p25": 7741696.0,
+        "p75": 19843328.0,
+        "p90": 35212569.6,
+        "total": 991265536
+      },
+      "fresh_tokens": {
+        "mean": 798899.46,
+        "median": 243732.0,
+        "n": 37,
+        "p25": 75540.0,
+        "p75": 476407.0,
+        "p90": 1114564.0,
+        "total": 29559280
+      },
+      "n": 37,
+      "output_tokens": {
+        "mean": 91955.78,
+        "median": 43253.0,
+        "n": 37,
+        "p25": 25996.0,
+        "p75": 54816.0,
+        "p90": 93746.4,
+        "total": 3402364
+      },
+      "requests": {
+        "mean": 211.78,
+        "median": 69.0,
+        "n": 37,
+        "p25": 36.0,
+        "p75": 167.0,
+        "p90": 289.8,
+        "total": 7836
+      },
+      "weighted_index": {
+        "mean": 2242065.95,
+        "median": 942049.0,
+        "n": 37,
+        "p25": 516725.0,
+        "p75": 1401577.0,
+        "p90": 2876481.4,
+        "total": 82956440
+      }
+    },
+    "codex_A2": {
+      "cache_read_tokens": {
+        "mean": 26790960.43,
+        "median": 12366848.0,
+        "n": 37,
+        "p25": 7741696.0,
+        "p75": 19843328.0,
+        "p90": 35212569.6,
+        "total": 991265536
+      },
+      "fresh_tokens": {
+        "mean": 798899.46,
+        "median": 243732.0,
+        "n": 37,
+        "p25": 75540.0,
+        "p75": 476407.0,
+        "p90": 1114564.0,
+        "total": 29559280
+      },
+      "n": 37,
+      "output_tokens": {
+        "mean": 91955.78,
+        "median": 43253.0,
+        "n": 37,
+        "p25": 25996.0,
+        "p75": 54816.0,
+        "p90": 93746.4,
+        "total": 3402364
+      },
+      "requests": {
+        "mean": 211.78,
+        "median": 69.0,
+        "n": 37,
+        "p25": 36.0,
+        "p75": 167.0,
+        "p90": 289.8,
+        "total": 7836
+      },
+      "weighted_index": {
+        "mean": 2242065.95,
+        "median": 942049.0,
+        "n": 37,
+        "p25": 516725.0,
+        "p75": 1401577.0,
+        "p90": 2876481.4,
+        "total": 82956440
+      }
+    }
+  },
+  "M2_claude_shadow_usd_per_accepted_change_A0": {
+    "mean": 4.45,
+    "median": 3.0,
+    "n": 24,
+    "p25": 1.48,
+    "p75": 5.73,
+    "p90": 6.37,
+    "total": 106.76
+  },
+  "M3_rework": {
+    "accepted_code_commits": 74,
+    "delegate_drafted_commits": 9,
+    "delegate_drafted_with_fixes_in_review": 1,
+    "reverts": 0,
+    "share_with_any_line_rewritten_in_72h": 0.689,
+    "share_with_ge30pct_lines_rewritten_in_24h": 0.027,
+    "survival_ratio": {
+      "mean": 0.94,
+      "median": 0.98,
+      "n": 74,
+      "p25": 0.94,
+      "p75": 0.99,
+      "p90": 1.0,
+      "total": 69.49
+    },
+    "with_ge10_insertions": 73
+  },
+  "M5_limits": {
+    "both_blocked_hours": 59.0,
+    "both_blocked_share": 0.573,
+    "claude_blocked_hours": 65.6,
+    "claude_blocked_share": 0.637,
+    "claude_events": [
+      {
+        "agent": "claude",
+        "blocked_h": 2.6,
+        "hit": "2026-10-24T11:43:43.218Z",
+        "kind": "five_hour",
+        "resets_at": "2026-10-24T14:20:00.000Z"
+      },
+      {
+        "agent": "claude",
+        "blocked_h": 1.01,
+        "hit": "2026-10-25T23:19:33.414Z",
+        "kind": "five_hour",
+        "resets_at": "2026-10-26T00:20:00.000Z"
+      },
+      {
+        "agent": "claude",
+        "blocked_h": 61.99,
+        "hit": "2026-10-26T01:00:18.867Z",
+        "kind": "seven_day",
+        "resets_at": "2026-10-28T15:00:00.000Z"
+      },
+      {
+        "agent": "claude",
+        "blocked_h": 2.82,
+        "hit": "2026-10-28T17:30:32.862Z",
+        "kind": "five_hour",
+        "resets_at": "2026-10-28T20:20:00.000Z"
+      }
+    ],
+    "codex_bursts_ending_in_limit_minutes": {
+      "mean": 36.76,
+      "median": 28.46,
+      "n": 23,
+      "p25": 20.78,
+      "p75": 35.19,
+      "p90": 57.23,
+      "total": 845.45
+    },
+    "codex_bursts_total": 39,
+    "codex_idle_gaps_h": {
+      "mean": 5.5,
+      "median": 4.62,
+      "n": 42,
+      "p25": 3.67,
+      "p75": 7.86,
+      "p90": 9.92,
+      "total": 230.88
+    },
+    "codex_idle_share": 0.715,
+    "codex_last_request_category_before_limit": {
+      "delegate": 1,
+      "edit": 7,
+      "git": 3,
+      "other": 5,
+      "read": 11,
+      "run": 4,
+      "subagent": 18,
+      "test": 10
+    },
+    "codex_limit_turns_per_day": {
+      "2026-10-20": 11,
+      "2026-10-21": 5,
+      "2026-10-23": 3,
+      "2026-10-24": 8,
+      "2026-10-25": 9,
+      "2026-10-26": 5,
+      "2026-10-27": 14,
+      "2026-10-28": 4
+    },
+    "codex_observed_idle_hours": 73.7,
+    "codex_unique_limit_turns": 59,
+    "window_hours": 103.0
+  },
+  "M6_resume_cost": {
+    "claude_compaction": {
+      "fresh_tokens": {
+        "mean": 103862.0,
+        "median": 103862.0,
+        "n": 1,
+        "p25": 103862.0,
+        "p75": 103862.0,
+        "p90": 103862.0,
+        "total": 103862
+      },
+      "n": 1,
+      "requests": {
+        "mean": 21.0,
+        "median": 21.0,
+        "n": 1,
+        "p25": 21.0,
+        "p75": 21.0,
+        "p90": 21.0,
+        "total": 21
+      }
+    },
+    "claude_idle": {
+      "fresh_tokens": {
+        "mean": 315136.0,
+        "median": 315136.0,
+        "n": 1,
+        "p25": 315136.0,
+        "p75": 315136.0,
+        "p90": 315136.0,
+        "total": 315136
+      },
+      "n": 1,
+      "requests": {
+        "mean": 3.0,
+        "median": 3.0,
+        "n": 1,
+        "p25": 3.0,
+        "p75": 3.0,
+        "p90": 3.0,
+        "total": 3
+      }
+    },
+    "claude_limit": {
+      "fresh_tokens": {
+        "mean": 564484.0,
+        "median": 502508.0,
+        "n": 3,
+        "p25": 467410.5,
+        "p75": 630569.5,
+        "p90": 707406.4,
+        "total": 1693452
+      },
+      "n": 3,
+      "requests": {
+        "mean": 3.33,
+        "median": 2.0,
+        "n": 3,
+        "p25": 2.0,
+        "p75": 4.0,
+        "p90": 5.2,
+        "total": 10
+      }
+    },
+    "codex_main_compaction": {
+      "fresh_tokens": {
+        "mean": 73087.89,
+        "median": 58077.0,
+        "n": 38,
+        "p25": 21032.75,
+        "p75": 86931.0,
+        "p90": 122579.8,
+        "total": 2777340
+      },
+      "n": 38,
+      "requests": {
+        "mean": 12.53,
+        "median": 8.0,
+        "n": 38,
+        "p25": 5.25,
+        "p75": 12.0,
+        "p90": 22.9,
+        "total": 476
+      }
+    },
+    "codex_main_idle": {
+      "fresh_tokens": {
+        "mean": 173088.0,
+        "median": 158729.5,
+        "n": 8,
+        "p25": 90992.25,
+        "p75": 268238.0,
+        "p90": 289097.3,
+        "total": 1384704
+      },
+      "n": 8,
+      "requests": {
+        "mean": 15.75,
+        "median": 14.0,
+        "n": 8,
+        "p25": 9.75,
+        "p75": 18.75,
+        "p90": 25.8,
+        "total": 126
+      }
+    },
+    "codex_main_limit": {
+      "fresh_tokens": {
+        "mean": 134997.76,
+        "median": 134858.0,
+        "n": 21,
+        "p25": 61782.0,
+        "p75": 170742.0,
+        "p90": 250433.0,
+        "total": 2834953
+      },
+      "n": 21,
+      "requests": {
+        "mean": 7.81,
+        "median": 4.0,
+        "n": 21,
+        "p25": 2.0,
+        "p75": 12.0,
+        "p90": 22.0,
+        "total": 164
+      }
+    }
+  },
+  "M6_session_start_claude": [
+    {
+      "fresh_tokens": 100163,
+      "messages": 771,
+      "output_tokens": 6026,
+      "requests_before_first_productive": 13,
+      "session": "2ca0af49"
+    }
+  ],
+  "M7_delegate_followup": {
+    "claude": {
+      "followup_fresh_plus_output": {
+        "mean": 28124.68,
+        "median": 14860.0,
+        "n": 31,
+        "p25": 10402.5,
+        "p75": 37093.0,
+        "p90": 48003.0,
+        "total": 871865
+      },
+      "followup_minutes": {
+        "mean": 11.72,
+        "median": 4.6,
+        "n": 31,
+        "p25": 0.8,
+        "p75": 8.75,
+        "p90": 13.0,
+        "total": 363.3
+      },
+      "followup_requests": {
+        "mean": 11.29,
+        "median": 8.0,
+        "n": 31,
+        "p25": 3.0,
+        "p75": 15.0,
+        "p90": 22.0,
+        "total": 350
+      },
+      "n": 31,
+      "task_names_sample": [
+        "",
+        "CORE-01",
+        "ROUTE-01-review",
+        "",
+        "CORE-01-review",
+        "CORE-02A-review"
+      ]
+    },
+    "codex_main": {
+      "followup_fresh_plus_output": {
+        "mean": 90086.63,
+        "median": 33368.0,
+        "n": 62,
+        "p25": 10843.0,
+        "p75": 90870.5,
+        "p90": 245575.0,
+        "total": 5585371
+      },
+      "followup_minutes": {
+        "mean": 42.75,
+        "median": 4.35,
+        "n": 62,
+        "p25": 1.82,
+        "p75": 39.08,
+        "p90": 180.0,
+        "total": 2650.3
+      },
+      "followup_requests": {
+        "mean": 24.32,
+        "median": 17.0,
+        "n": 62,
+        "p25": 5.0,
+        "p75": 31.5,
+        "p90": 53.8,
+        "total": 1508
+      },
+      "n": 62,
+      "task_names_sample": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    }
+  },
+  "claude_opus_price_fit": {
+    "note": "inferred from Claude Code cost-state records (client-computed list price); sign or size anomalies mean the fit is unreliable",
+    "r2": 1.0,
+    "records": 30,
+    "usd_per_mtok_cache_creation": 7.983,
+    "usd_per_mtok_cache_read": 0.201,
+    "usd_per_mtok_input": 4.984,
+    "usd_per_mtok_output": 19.659
+  },
+  "codex_tokens_by_thread_kind": {
+    "guardian": {
+      "fresh": 3121633,
+      "out": 36073,
+      "read": 17150976,
+      "requests": 377
+    },
+    "main": {
+      "fresh": 12876228,
+      "out": 1822820,
+      "read": 584761344,
+      "requests": 4075
+    },
+    "worker": {
+      "fresh": 13807023,
+      "out": 1594751,
+      "read": 404473728,
+      "requests": 3523
+    }
+  },
+  "codex_weekly_quota_fit": [
+    {
+      "requests": 1920,
+      "used_percent_from": 0.0,
+      "used_percent_to": 96.0,
+      "weekly_window_resets": "2026-10-27T11:21:54.000Z",
+      "weighted_tokens_per_1pct": 201402
+    },
+    {
+      "requests": 737,
+      "used_percent_from": 0.0,
+      "used_percent_to": 36.0,
+      "weekly_window_resets": "2026-10-29T22:20:05.000Z",
+      "weighted_tokens_per_1pct": 205173
+    },
+    {
+      "requests": 1680,
+      "used_percent_from": 0.0,
+      "used_percent_to": 93.0,
+      "weekly_window_resets": "2026-10-30T17:41:49.000Z",
+      "weighted_tokens_per_1pct": 216691
+    },
+    {
+      "requests": 1041,
+      "used_percent_from": 0.0,
+      "used_percent_to": 63.0,
+      "weekly_window_resets": "2026-11-01T10:20:16.000Z",
+      "weighted_tokens_per_1pct": 175746
+    },
+    {
+      "requests": 225,
+      "used_percent_from": 1.0,
+      "used_percent_to": 55.0,
+      "weekly_window_resets": "2026-11-01T10:20:17.000Z",
+      "weighted_tokens_per_1pct": 60298
+    },
+    {
+      "requests": 1889,
+      "used_percent_from": 0.0,
+      "used_percent_to": 100.0,
+      "weekly_window_resets": "2026-11-02T12:08:12.000Z",
+      "weighted_tokens_per_1pct": 165980
+    },
+    {
+      "requests": 69,
+      "used_percent_from": 4.0,
+      "used_percent_to": 96.0,
+      "weekly_window_resets": "2026-11-02T12:08:13.000Z",
+      "weighted_tokens_per_1pct": 8053
+    },
+    {
+      "requests": 271,
+      "used_percent_from": 0.0,
+      "used_percent_to": 16.0,
+      "weekly_window_resets": "2026-11-04T13:04:59.000Z",
+      "weighted_tokens_per_1pct": 150000
+    },
+    {
+      "requests": 53,
+      "used_percent_from": 0.0,
+      "used_percent_to": 16.0,
+      "weekly_window_resets": "2026-11-04T13:05:00.000Z",
+      "weighted_tokens_per_1pct": 23724
+    }
+  ],
+  "commit_join": {
+    "claude": 39,
+    "codex": 63,
+    "master": 118,
+    "unjoined": 16
+  },
+  "index_weights": {
+    "cache_read": 0.04,
+    "fresh": 1.0,
+    "output": 3.944
+  },
+  "resume_payload": {
+    "plan_tokens_first": 13161,
+    "plan_tokens_last": 31149,
+    "plan_versions": 42,
+    "s19_tokens_last": 17566
+  },
+  "token_totals": {
+    "claude": {
+      "cache_read_share_of_input": 0.9911,
+      "fresh": 3455379,
+      "out": 703999,
+      "read": 386297018,
+      "requests": 771
+    },
+    "codex": {
+      "cache_read_share_of_input": 0.9712,
+      "fresh": 29804884,
+      "out": 3453644,
+      "read": 1006386048,
+      "requests": 7975
+    }
+  },
+  "unattributed_after_last_code_commit": {
+    "claude": {
+      "fresh": 12746,
+      "out": 9188,
+      "read": 8482060,
+      "requests": 14
+    },
+    "codex": {
+      "fresh": 245604,
+      "out": 51280,
+      "read": 15120512,
+      "requests": 139
+    }
+  }
+}

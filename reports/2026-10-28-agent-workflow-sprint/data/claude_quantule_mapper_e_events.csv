@@ -1,0 +1,4 @@
+project,session,ts,kind,http_status,api_error,limit_type,limit_status,resets_at,overage_status,overage_reason,trigger,pre_tokens,post_tokens,duration_ms
+E--quantule-mapper,2dfd9f60-4d4e-44a6-8555-1ef9c122c157,2026-06-17T23:35:42.202Z,api_limit,,,,,,,,,,,
+E--quantule-mapper,2dfd9f60-4d4e-44a6-8555-1ef9c122c157,2026-06-17T23:39:13.644Z,compaction,,,,,,,,auto,271691,10441,193408
+E--quantule-mapper,2dfd9f60-4d4e-44a6-8555-1ef9c122c157,2026-06-17T23:39:14.099Z,api_limit,429,,,,,,,,,,

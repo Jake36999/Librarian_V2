@@ -48,3 +48,13 @@ scratch/
 
 # The sync from the development repo (its bookkeeping, not the system)
 .sync-manifest.json
+
+# Working data for delegation and experiments: transcripts, packets, raw model
+# output and arm worktrees. Evidence a report needs is copied into the report.
+/tmp/
+
+# Behind the 2026-10-28 workflow reports, these stay local: raw private
+# conversation transcripts, and full paper texts and page images (copyright).
+reports/2026-10-28-deepinfra-overseer-workflow/data/sources/
+reports/2026-10-28-agent-workflow-second-pass/data/paper_text/
+reports/2026-10-28-agent-workflow-second-pass/data/renders/

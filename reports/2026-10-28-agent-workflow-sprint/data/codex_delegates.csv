@@ -1,0 +1,16 @@
+ts_call,ts_result,thread,kind,task,model,agent,max_output_tokens
+2026-10-26T02:53:46.472Z,2026-10-26T02:53:47.993Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,ADAPT-09-review,deepseek-ai/DeepSeek-V4-Pro,,
+2026-10-26T02:53:58.222Z,2026-10-26T02:54:03.667Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,ADAPT-09-review,deepseek-ai/DeepSeek-V4-Pro,,
+2026-10-26T02:54:09.403Z,2026-10-26T02:54:12.522Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,ADAPT-09-review,deepseek-ai/DeepSeek-V4-Pro,,
+2026-10-28T14:06:02.318Z,2026-10-28T14:06:06.527Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,canary-001,deepseek-ai/DeepSeek-V4.1-Flash-1017,,32
+2026-10-28T14:06:27.170Z,2026-10-28T14:06:33.355Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,index05-attachment-map,deepseek-ai/DeepSeek-V4.1-Flash-1017,,6000
+2026-10-28T14:08:15.147Z,2026-10-28T14:08:46.175Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,index05-attachment-map,deepseek-ai/DeepSeek-V4.1-Flash-1017,,6000
+2026-10-28T14:09:12.682Z,2026-10-28T14:09:24.948Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,index05-attachment-map-retry1,deepseek-ai/DeepSeek-V4.1-Flash-1017,,4000
+2026-10-28T14:10:35.952Z,2026-10-28T14:10:49.421Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,index05-attachment-build,Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo,,8000
+2026-10-28T14:11:13.136Z,2026-10-28T14:11:25.434Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,index05-attachment-critic,zai-org/GLM-5.3-Flash,,5000
+2026-10-28T14:15:11.573Z,2026-10-28T14:15:23.623Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,index05-scan-8x-diagnosis,deepseek-ai/DeepSeek-V4.1-Flash-1017,,4000
+2026-10-28T14:19:22.755Z,2026-10-28T14:19:35.067Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,index05-attachment-final-review,deepseek-ai/DeepSeek-V4.1-Flash-1017,,3500
+2026-10-28T14:33:53.782Z,2026-10-28T14:34:24.802Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,index05_encoder_mapper,zai-org/GLM-5.3-Flash,,5000
+2026-10-28T14:37:56.263Z,2026-10-28T14:38:27.283Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,index05_encoder_contract,deepseek-ai/DeepSeek-V4-Pro,,4500
+2026-10-28T14:39:56.494Z,2026-10-28T14:40:27.523Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,index05_encoder_builder,Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo,,8000
+2026-10-28T14:50:04.170Z,2026-10-28T14:50:35.200Z,01a17469-e0a0-7a30-a514-477c0ad0c775,main,index05_encoder_diff_critic,deepseek-ai/DeepSeek-V4.1-Flash-1017,,5000

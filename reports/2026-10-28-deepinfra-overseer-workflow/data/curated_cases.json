@@ -1,0 +1,110 @@
+[
+  {
+    "case": "E2",
+    "source": "claude",
+    "line": 985,
+    "anchor": "0.009",
+    "kind": "pasted call result",
+    "judgment": "A cheap draft returned; acceptance and integration were separate.",
+    "status": "LOCALLY_ADJUDICATED"
+  },
+  {
+    "case": "E2",
+    "source": "claude",
+    "line": 1077,
+    "anchor": "IndexError: list index out of range",
+    "kind": "pasted tool failure",
+    "judgment": "Application failed after implementation write and before test creation.",
+    "status": "LOCALLY_ADJUDICATED"
+  },
+  {
+    "case": "E3",
+    "source": "codex2",
+    "line": 3186,
+    "anchor": "retried it three times",
+    "kind": "lead report",
+    "judgment": "Historical hidden retries; current runner inspected and now disables retries.",
+    "status": "LOCALLY_ADJUDICATED"
+  },
+  {
+    "case": "E4",
+    "source": "codex2",
+    "line": 2452,
+    "anchor": "not delegating to DeepInfra",
+    "kind": "lead correction",
+    "judgment": "Native Codex workers are not external DeepInfra evidence.",
+    "status": "LOCALLY_ADJUDICATED"
+  },
+  {
+    "case": "E4",
+    "source": "codex2",
+    "line": 760,
+    "anchor": "switched the checkout",
+    "kind": "lead report",
+    "judgment": "Concurrency/ownership evidence; not evidence of DeepInfra performance.",
+    "status": "LOCALLY_ADJUDICATED"
+  },
+  {
+    "case": "E5",
+    "source": "research",
+    "line": 1806,
+    "anchor": "The brief forbids novelty claims",
+    "kind": "pasted correction code",
+    "judgment": "Correction exists; no completeness claim about all notes.",
+    "status": "LOCALLY_ADJUDICATED"
+  },
+  {
+    "case": "E5",
+    "source": "research",
+    "line": 3860,
+    "anchor": "Notes are FIRST DRAFTS",
+    "kind": "pasted script text",
+    "judgment": "Draft status is explicit; budget comment is not execution proof.",
+    "status": "LOCALLY_ADJUDICATED"
+  },
+  {
+    "case": "E6",
+    "source": "research",
+    "line": 2768,
+    "anchor": "ImportError: numpy.core.multiarray failed to import",
+    "kind": "pasted tool failure",
+    "judgment": "Environment failure, not proof of worker reasoning failure.",
+    "status": "LOCALLY_ADJUDICATED"
+  },
+  {
+    "case": "E6",
+    "source": "research",
+    "line": 973,
+    "anchor": "Five errors of my own",
+    "kind": "lead retrospective",
+    "judgment": "Motivates independent computations; physics not rederived here.",
+    "status": "LOCALLY_ADJUDICATED"
+  },
+  {
+    "case": "E7",
+    "source": "research",
+    "line": 430,
+    "anchor": "Both agents hit a server overload",
+    "kind": "lead report",
+    "judgment": "Does not identify the infrastructure cause.",
+    "status": "LOCALLY_ADJUDICATED"
+  },
+  {
+    "case": "E8",
+    "source": "gemini",
+    "line": 207,
+    "anchor": "unless two sub-agents flag a conflict",
+    "kind": "proposal",
+    "judgment": "Disagreement-only lead auditing misses correlated errors.",
+    "status": "LOCALLY_ADJUDICATED"
+  },
+  {
+    "case": "E8",
+    "source": "gemini",
+    "line": 216,
+    "anchor": "Only review flagged discrepancies",
+    "kind": "proposal",
+    "judgment": "Need audit of apparently passing cases and coverage.",
+    "status": "LOCALLY_ADJUDICATED"
+  }
+]

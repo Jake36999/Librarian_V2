@@ -1,0 +1,169 @@
+call,paper,name,claimed_page,original_status,exact_page_match,actual_matching_pages,within_one_page
+P2-r01-dsv4pro,electronics-15-03452-v2-54a1,Semantic Fidelity Index (SFI),10,verified,True,10,True
+P2-r01-dsv4pro,electronics-15-03452-v2-54a1,Semantic-Execution Drift (SED) metric,4,unverified,False,,False
+P2-r01-dsv4pro,electronics-15-03452-v2-54a1,Drift Propagation Equation and Contraction Analysis,5,verified,True,3;5,True
+P2-r01-dsv4pro,electronics-15-03452-v2-54a1,Retrospective Reflection,7,verified,True,7,True
+P2-r01-dsv4pro,electronics-15-03452-v2-54a1,Double-Loop Policy Adaptation,7,verified,True,7,True
+P2-r01-dsv4pro,electronics-15-03452-v2-54a1,Latent World Model for Physical Grounding,7,verified,True,7,True
+P2-r01-mimo,electronics-15-03452-v2-54a1,Semantic Fidelity Index (SFI),10,verified,True,10,True
+P2-r01-mimo,electronics-15-03452-v2-54a1,Semantic-Execution Drift metric (SED),4,verified,True,4,True
+P2-r01-mimo,electronics-15-03452-v2-54a1,Drift propagation equation and alpha stability test,5,verified,True,3;5,True
+P2-r01-mimo,electronics-15-03452-v2-54a1,Retrospective Reflection with re-anchoring,7,verified,True,7,True
+P2-r01-mimo,electronics-15-03452-v2-54a1,Latent World Model feasibility filter,7,verified,True,7,True
+P2-r01-mimo,electronics-15-03452-v2-54a1,Double-Loop Policy Adaptation log,7,verified,True,7,True
+P2-r02-dsv4pro,thought-management-system-for-long-horizon-goal-driven-llm-a-bf51,Tree of Thoughts (ToT) hierarchical goal decomposition,3,unverified,False,,False
+P2-r02-dsv4pro,thought-management-system-for-long-horizon-goal-driven-llm-a-bf51,Signal Generator decision module,3,unverified,False,,False
+P2-r02-dsv4pro,thought-management-system-for-long-horizon-goal-driven-llm-a-bf51,Thoughts Exploitation (Option 4) iterative refinement,3,verified,True,3,True
+P2-r02-dsv4pro,thought-management-system-for-long-horizon-goal-driven-llm-a-bf51,Validator module for execution quality control,4,unverified,False,,False
+P2-r02-dsv4pro,thought-management-system-for-long-horizon-goal-driven-llm-a-bf51,TMS-MAS integration via REST API for framework-agnostic orchestration,6,unverified,False,,False
+P2-r02-dsv4pro,thought-management-system-for-long-horizon-goal-driven-llm-a-bf51,"TMS performance metrics (TCR, EE, RU)",2,unverified,False,,False
+P2-r02-mimo,thought-management-system-for-long-horizon-goal-driven-llm-a-bf51,"TMS performance metrics (TCR, EE, RU)",2,verified,True,2,True
+P2-r02-mimo,thought-management-system-for-long-horizon-goal-driven-llm-a-bf51,TMS expansion algorithm,3,verified,True,3,True
+P2-r02-mimo,thought-management-system-for-long-horizon-goal-driven-llm-a-bf51,Tree of Thoughts entity schema,5,verified,True,5,True
+P2-r02-mimo,thought-management-system-for-long-horizon-goal-driven-llm-a-bf51,Predefined-tree memory initialization,5,verified,True,5,True
+P2-r02-mimo,thought-management-system-for-long-horizon-goal-driven-llm-a-bf51,Validator module,4,verified,True,4,True
+P2-r02-mimo,thought-management-system-for-long-horizon-goal-driven-llm-a-bf51,Orchestration-layer collaboration metrics,14,verified,True,14,True
+P2-r03-dsv4pro,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,DIKW-inspired operational taxonomy,3,verified,True,3,True
+P2-r03-dsv4pro,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,Four knowledge representations for trajectory shaping,3,verified,True,3,True
+P2-r03-dsv4pro,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,Non-monotonic knowledge activation tradeoff,5,unverified,False,,False
+P2-r03-dsv4pro,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,Knowledge lifecycle with request-inject-verify loop,6,verified,True,6,True
+P2-r03-dsv4pro,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,Reasoning cost as trajectory-level metric,5,unverified,False,,False
+P2-r03-dsv4pro,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,Coordinated activation stack,5,verified,True,5,True
+P2-r03-mimo,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,Trajectory cost and violation metrics,6,verified,True,6,True
+P2-r03-mimo,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,DIKW time-scale knowledge lifecycle,3,verified,True,3,True
+P2-r03-mimo,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,Four-representation activation stack,3,verified,True,3,True
+P2-r03-mimo,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,Non-monotonic knowledge activation,5,verified,True,5,True
+P2-r03-mimo,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,Request-inject-verify knowledge pack,6,verified,True,6,True
+P2-r03-mimo,knowledge-driven-reasoning-for-mobile-agentic-ai-concepts-ap-f7c4,Cacheable knowledge synchronization,8,verified,True,8,True
+P2-r04-mimo,futureinternet-17-00353-v2-30b2,Agent-type task taxonomy,11,verified,True,11,True
+P2-r04-mimo,futureinternet-17-00353-v2-30b2,Planner-annotator-checker workflow,6,verified,True,6,True
+P2-r04-mimo,futureinternet-17-00353-v2-30b2,Role-based ensemble orchestrator,18,verified,True,18,True
+P2-r04-mimo,futureinternet-17-00353-v2-30b2,Cascade model routing,29,verified,True,29,True
+P2-r04-mimo,futureinternet-17-00353-v2-30b2,Agent performance metric suite,19,verified,True,19,True
+P2-r04-mimo,futureinternet-17-00353-v2-30b2,Drift monitoring with HITL,30,verified,True,30,True
+P2-r05-dsv4pro,towards-communication-efficient-multi-agent-cooperations-rei-8883,Goal-Oriented Human-Interpretable Feature Communication Protocol,4,verified,True,4,True
+P2-r05-dsv4pro,towards-communication-efficient-multi-agent-cooperations-rei-8883,MAPPO-Based Bandwidth-Adaptive Dual-Policy (MAPPO-BDP),5,verified,True,5,True
+P2-r05-dsv4pro,towards-communication-efficient-multi-agent-cooperations-rei-8883,LLM-Based Bandwidth-Adaptive Dual-Policy (LLM-BDP),8,verified,True,8,True
+P2-r05-dsv4pro,towards-communication-efficient-multi-agent-cooperations-rei-8883,Constrained MAPPO for Feature Communication Policy,6,verified,True,6,True
+P2-r05-dsv4pro,towards-communication-efficient-multi-agent-cooperations-rei-8883,LLM-Based Feature Ranking and Bandwidth Adaptation,9,verified,True,9,True
+P2-r05-dsv4pro,towards-communication-efficient-multi-agent-cooperations-rei-8883,LLM-Based Navigation with Collision Avoidance Decomposition,10,verified,True,10,True
+P2-r05-mimo,towards-communication-efficient-multi-agent-cooperations-rei-8883,Coverage-collision objective,5,verified,True,5,True
+P2-r05-mimo,towards-communication-efficient-multi-agent-cooperations-rei-8883,Goal-oriented interpretable feature protocol,4,verified,True,4,True
+P2-r05-mimo,towards-communication-efficient-multi-agent-cooperations-rei-8883,Alternating dual-policy optimization,5,verified,True,5,True
+P2-r05-mimo,towards-communication-efficient-multi-agent-cooperations-rei-8883,Constrained MAPPO feature selection,7,verified,True,7,True
+P2-r05-mimo,towards-communication-efficient-multi-agent-cooperations-rei-8883,LLM-BDP four-agent decomposition,8,verified,True,8,True
+P2-r05-mimo,towards-communication-efficient-multi-agent-cooperations-rei-8883,Contextual memory and few-shot agent schema,8,verified,True,8,True
+P2-r06-dsv4pro,mutual-influence-ai-trust-bas-e8e5,Mutual Influence Factor µ,4,unverified,False,,False
+P2-r06-dsv4pro,mutual-influence-ai-trust-bas-e8e5,Logistic Mixture Coefficient λ(µ),4,unverified,False,,False
+P2-r06-dsv4pro,mutual-influence-ai-trust-bas-e8e5,Temperature Scaling T(µ),4,unverified,False,,False
+P2-r06-dsv4pro,mutual-influence-ai-trust-bas-e8e5,Cross-Role Agreement Metric (Across),4,unverified,False,,False
+P2-r06-dsv4pro,mutual-influence-ai-trust-bas-e8e5,Revision Depth (D_rev),4,unverified,False,,False
+P2-r06-dsv4pro,mutual-influence-ai-trust-bas-e8e5,Rounds-to-Approval (r*),9,verified,True,9,True
+P2-r06-mimo,mutual-influence-ai-trust-bas-e8e5,Trust-EMA mutual influence µ,4,unverified,False,,False
+P2-r06-mimo,mutual-influence-ai-trust-bas-e8e5,"Prompt and temperature modulation λ(µ), T(µ)",4,verified,True,4,True
+P2-r06-mimo,mutual-influence-ai-trust-bas-e8e5,Two-round role orchestration protocol,5,verified,True,5,True
+P2-r06-mimo,mutual-influence-ai-trust-bas-e8e5,Cross-role agreement and intra-role stability,4,verified,True,4,True
+P2-r06-mimo,mutual-influence-ai-trust-bas-e8e5,Revision depth Drev,4,verified,True,4,True
+P2-r06-mimo,mutual-influence-ai-trust-bas-e8e5,Rounds-to-Approval r*,9,verified,True,9,True
+P2-r07-dsv4pro,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,Priori Branching,4,verified,True,4,True
+P2-r07-dsv4pro,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,Reflective Branching,4,unverified,False,,False
+P2-r07-dsv4pro,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,VLM Judge for Action Feasibility,4,unverified,False,,False
+P2-r07-dsv4pro,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,BFS Tree Search with Parallel Simulation,4,unverified,False,,False
+P2-r07-dsv4pro,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,Closed-Loop Real-World Replanning,5,verified,True,5,True
+P2-r07-dsv4pro,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,Embodied World Model via Real2Sim,3,unverified,False,,False
+P2-r07-mimo,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,Discrete action skills set,3,verified,True,3,True
+P2-r07-mimo,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,Priori Branching,4,verified,True,4,True
+P2-r07-mimo,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,Reflective Branching,4,verified,True,4,True
+P2-r07-mimo,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,BFS planning-tree search (Algorithm 1),4,verified,True,4,True
+P2-r07-mimo,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,Multi-world parallelism,8,verified,True,8,True
+P2-r07-mimo,embodied-tree-of-thoughts-deliberate-manipulation-planning-w-4652,Task success rate metric,5,verified,True,5,True
+P2-r08-dsv4pro,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,Confidence-Aware Selective Tree-of-Thoughts Verifier,5,verified,True,5,True
+P2-r08-dsv4pro,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,Multi-task LoRA Training for Verifier Branches,5,verified,True,5,True
+P2-r08-dsv4pro,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,FFA-LoRA Federated Fine-Tuning with Exact Aggregation,6,unverified,False,,False
+P2-r08-dsv4pro,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,SmartHome-VSV Benchmark Auto-Derivation Pipeline,4,verified,True,4,True
+P2-r08-dsv4pro,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,Dangerous-Error Rate Safety Metric,5,verified,True,5,True
+P2-r08-dsv4pro,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,Soft-Threshold Confidence Routing on Single-Token Logprobs,5,unverified,False,,False
+P2-r08-mimo,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,Dangerous-error safety metric,5,verified,True,5,True
+P2-r08-mimo,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,Verify-before-act 5-tuple schema,4,verified,True,4,True
+P2-r08-mimo,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,Confidence-Aware Selective ToT routing,5,verified,True,5,True
+P2-r08-mimo,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,Single-token logprob confidence,5,verified,True,5,True
+P2-r08-mimo,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,FFA-LoRA exact federated aggregation,6,verified,True,6,True
+P2-r08-mimo,confidence-aware-tree-of-thoughts-a-federated-safety-net-for-18e8,Federated drift and recovery analysis,11,verified,True,11,True
+P2-r09-dsv4pro,hierarchical-process-level-generative-reward-modeling-with-b6eb,HPR-GenRM Three-Tier Architecture,5,unverified,False,,False
+P2-r09-dsv4pro,hierarchical-process-level-generative-reward-modeling-with-b6eb,Adaptive Depth Allocation Module,7,unverified,False,,False
+P2-r09-dsv4pro,hierarchical-process-level-generative-reward-modeling-with-b6eb,Multi-Objective SFT with Hierarchical Loss,7,unverified,False,,False
+P2-r09-dsv4pro,hierarchical-process-level-generative-reward-modeling-with-b6eb,Curriculum Hierarchical RL,7,unverified,False,,False
+P2-r09-dsv4pro,hierarchical-process-level-generative-reward-modeling-with-b6eb,Hierarchical Data Generation Pipeline,6,verified,True,6,True
+P2-r09-dsv4pro,hierarchical-process-level-generative-reward-modeling-with-b6eb,Process Verification with Global Context,5,unverified,False,,False
+P2-r09-mimo,hierarchical-process-level-generative-reward-modeling-with-b6eb,Three-tier hierarchical verification composition,5,verified,True,5,True
+P2-r09-mimo,hierarchical-process-level-generative-reward-modeling-with-b6eb,Hierarchical annotation pipeline with quality filters,6,verified,True,6,True
+P2-r09-mimo,hierarchical-process-level-generative-reward-modeling-with-b6eb,Adaptive depth allocation,7,verified,True,7,True
+P2-r09-mimo,hierarchical-process-level-generative-reward-modeling-with-b6eb,Multi-objective SFT with curriculum RL,7,verified,True,7,True
+P2-r09-mimo,hierarchical-process-level-generative-reward-modeling-with-b6eb,Multi-granularity orchestration metric suite,8,verified,True,8,True
+P2-r09-mimo,hierarchical-process-level-generative-reward-modeling-with-b6eb,K·D verification-checkpoint robustness bound,22,verified,True,22,True
+P2-r10-mimo,agentic-ai-the-age-of-reasoning-a-re-2026-journal-of-automat-154d,Four-stage operational agent framework,2,verified,True,2,True
+P2-r10-mimo,agentic-ai-the-age-of-reasoning-a-re-2026-journal-of-automat-154d,Progressive agent-type taxonomy,7,verified,True,7,True
+P2-r10-mimo,agentic-ai-the-age-of-reasoning-a-re-2026-journal-of-automat-154d,Pattern-level performance metric schema,8,verified,True,8,True
+P2-r10-mimo,agentic-ai-the-age-of-reasoning-a-re-2026-journal-of-automat-154d,Multi-agent pattern deployment schema,8,verified,True,7;8;15;19,True
+P2-r10-mimo,agentic-ai-the-age-of-reasoning-a-re-2026-journal-of-automat-154d,Three-tier hybrid memory architecture,11,verified,True,11,True
+P2-r10-mimo,agentic-ai-the-age-of-reasoning-a-re-2026-journal-of-automat-154d,Continual learning for drift adaptation,12,verified,True,12,True
+P2-r11-dsv4pro,00178-lan-1-32ae,Agent-Centric HDDL Extension,3,verified,True,3,True
+P2-r11-dsv4pro,00178-lan-1-32ae,HDDLGym Planner (Algorithm 1),5,unverified,False,,False
+P2-r11-dsv4pro,00178-lan-1-32ae,Agent Belief Model for Decentralized Planning,4,verified,True,4,True
+P2-r11-dsv4pro,00178-lan-1-32ae,Dynamic Grounded Predicate Observation Space,5,verified,True,5,True
+P2-r11-dsv4pro,00178-lan-1-32ae,Lifted Operator Action Representation,5,verified,True,5,True
+P2-r11-dsv4pro,00178-lan-1-32ae,Pre-Training Plan Difficulty Metrics,8,verified,True,8,True
+P2-r11-mimo,00178-lan-1-32ae,Agent-centric HDDL domain extension,3,verified,True,3,True
+P2-r11-mimo,00178-lan-1-32ae,Agent tuple with belief and hierarchy,4,verified,True,4,True
+P2-r11-mimo,00178-lan-1-32ae,Hierarchy completion pruning,5,verified,True,5,True
+P2-r11-mimo,00178-lan-1-32ae,HDDLGym joint-operator planner,6,verified,True,6,True
+P2-r11-mimo,00178-lan-1-32ae,Pre-training plan difficulty metrics,8,verified,True,8,True
+P2-r11-mimo,00178-lan-1-32ae,Training and deployment evaluation metrics,8,verified,True,8,True
+P2-r12-dsv4pro,llm-planning-against-semantic-execution-drift-198f,World-Grounded Latent Dynamics,2,verified,True,2,True
+P2-r12-dsv4pro,llm-planning-against-semantic-execution-drift-198f,Language-Constrained Joint Inference,2,unverified,False,,False
+P2-r12-dsv4pro,llm-planning-against-semantic-execution-drift-198f,Reflection-Based Rationale Alignment with Asem,2,verified,True,2,True
+P2-r12-dsv4pro,llm-planning-against-semantic-execution-drift-198f,Rationale Consistency Score (RCS),3,unverified,False,,False
+P2-r12-dsv4pro,llm-planning-against-semantic-execution-drift-198f,Constraint Compliance Rate (CCR),3,unverified,False,,False
+P2-r12-dsv4pro,llm-planning-against-semantic-execution-drift-198f,Trajectory Instability (TI),3,unverified,False,,False
+P2-r12-mimo,llm-planning-against-semantic-execution-drift-198f,Rationale Consistency Score (RCS),3,verified,True,3,True
+P2-r12-mimo,llm-planning-against-semantic-execution-drift-198f,Constraint Compliance Rate (CCR),3,verified,True,3,True
+P2-r12-mimo,llm-planning-against-semantic-execution-drift-198f,Trajectory Instability (TI),3,verified,True,3,True
+P2-r12-mimo,llm-planning-against-semantic-execution-drift-198f,Sema-Sim benchmark schema,3,verified,True,3,True
+P2-r12-mimo,llm-planning-against-semantic-execution-drift-198f,World-Grounded Latent Dynamics,2,verified,True,2,True
+P2-r12-mimo,llm-planning-against-semantic-execution-drift-198f,Retrospective reflection with semantic advantage,2,verified,True,2,True
+P2-r13-mimo,ai-agents-vs-agentic-ai-a-conceptual-taxonomy-applicat-2026--ed91,Paradigm-specific evaluation criteria,10,verified,True,10,True
+P2-r13-mimo,ai-agents-vs-agentic-ai-a-conceptual-taxonomy-applicat-2026--ed91,Role-specialized multi-agent orchestration,23,verified,True,23,True
+P2-r13-mimo,ai-agents-vs-agentic-ai-a-conceptual-taxonomy-applicat-2026--ed91,Function-calling orchestrated pipeline,22,verified,True,22,True
+P2-r13-mimo,ai-agents-vs-agentic-ai-a-conceptual-taxonomy-applicat-2026--ed91,"Episodic, semantic, and vector memory",22,verified,True,22,True
+P2-r13-mimo,ai-agents-vs-agentic-ai-a-conceptual-taxonomy-applicat-2026--ed91,Reason-action-observation loop,22,verified,True,22,True
+P2-r13-mimo,ai-agents-vs-agentic-ai-a-conceptual-taxonomy-applicat-2026--ed91,Programmatic prompt pipelines,23,verified,True,23,True
+P2-r14-mimo,frai-9-1820827-b598,Influence Policy Language (IPL),4,verified,True,4,True
+P2-r14-mimo,frai-9-1820827-b598,Solver–critic compiler with safe fallback,6,verified,True,6,True
+P2-r14-mimo,frai-9-1820827-b598,Degree-based targeting substitute,23,verified,True,23,True
+P2-r14-mimo,frai-9-1820827-b598,Fatigue–diffusion–backlash exposure model,7,verified,True,7,True
+P2-r14-mimo,frai-9-1820827-b598,Orchestration outcome metric suite,12,verified,True,12,True
+P2-r14-mimo,frai-9-1820827-b598,Re-resolvable abstract targets under drift,22,verified,True,22,True
+P2-r15-mimo,multi-llm-cooperation-based-joint-intent-driven-network-slic-8a06,JNSRA two-LLM orchestration,3,unverified,False,,False
+P2-r15-mimo,multi-llm-cooperation-based-joint-intent-driven-network-slic-8a06,Intent LLM SFT formatting,3,unverified,False,,False
+P2-r15-mimo,multi-llm-cooperation-based-joint-intent-driven-network-slic-8a06,Cross-attention Agent LLM with DPO,3,verified,True,3,True
+P2-r15-mimo,multi-llm-cooperation-based-joint-intent-driven-network-slic-8a06,Normalized environment reward,4,verified,True,4,True
+P2-r15-mimo,multi-llm-cooperation-based-joint-intent-driven-network-slic-8a06,Multi-LLM MDP joint training,4,verified,True,4,True
+P2-r15-mimo,multi-llm-cooperation-based-joint-intent-driven-network-slic-8a06,Orchestration evaluation metrics,5,unverified,False,,False
+P2-r16-mimo,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,AgentAI lifecycle schema,6,verified,True,6,True
+P2-r16-mimo,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,Domain lifecycle attribute matrix,7,verified,True,7,True
+P2-r16-mimo,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,Perception-cognition-action modules,4,verified,True,4,True
+P2-r16-mimo,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,Agent paradigm selection table,6,verified,True,6,True
+P2-r16-mimo,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,Data flywheel feedback loop,4,verified,True,4,True
+P2-r16-mimo,agentai-a-comprehensive-survey-on-autonomous-agents-2025-exp-99ef,Decentralized multi-agent coordination blueprint,15,verified,True,15,True
+P2-r17-mimo,efficient-cooperation-aware-key-and-value-management-1a9d,Sliced Shapley Value (SSV) head importance,5,verified,True,5,True
+P2-r17-mimo,efficient-cooperation-aware-key-and-value-management-1a9d,Monte Carlo complementary-contribution estimation,5,verified,True,5,True
+P2-r17-mimo,efficient-cooperation-aware-key-and-value-management-1a9d,Cooperation-aware cache budget allocation,6,verified,True,6,True
+P2-r17-mimo,efficient-cooperation-aware-key-and-value-management-1a9d,Local-window-guided token eviction,7,verified,True,7,True
+P2-r17-mimo,efficient-cooperation-aware-key-and-value-management-1a9d,Offline precomputed shared importance deployment,2,verified,True,2,True
+P2-r17-mimo,efficient-cooperation-aware-key-and-value-management-1a9d,SSV stability under decoding drift,11,unverified,False,,False
+P2-r18-mimo,industrial-agentic-ai-and-generative-modelin-2025-current-op-5c5d,SIC three-stage architecture,2,verified,True,2,True
+P2-r18-mimo,industrial-agentic-ai-and-generative-modelin-2025-current-op-5c5d,Edge-cloud hybrid agent deployment,5,verified,True,5,True
+P2-r18-mimo,industrial-agentic-ai-and-generative-modelin-2025-current-op-5c5d,Group prediction ensemble aggregation,6,verified,True,6,True
+P2-r18-mimo,industrial-agentic-ai-and-generative-modelin-2025-current-op-5c5d,Concurrent inference throughput metric,7,verified,True,7,True
+P2-r18-mimo,industrial-agentic-ai-and-generative-modelin-2025-current-op-5c5d,Hybrid mechanistic-AI soft sensor,8,verified,True,8,True
+P2-r18-mimo,industrial-agentic-ai-and-generative-modelin-2025-current-op-5c5d,Qψ-TUBE hybrid quantum-classical pipeline,12,verified,True,12,True

@@ -1,0 +1,94 @@
+family,task,model,followup_requests,followup_fresh_plus_output,followup_minutes,categories,delegate_output_tokens
+claude,,,40,163334,27.7,"{""delegate"": 1, ""edit"": 9, ""git"": 1, ""other"": 1, ""plan"": 3, ""read"": 20, ""run"": 1, ""test"": 2, ""text"": 2}",0
+claude,CORE-01,zai-org/GLM-5.3,15,36785,2.6,"{""commit"": 1, ""edit"": 2, ""git"": 1, ""read"": 10, ""text"": 1}",0
+claude,ROUTE-01-review,Qwen/Qwen3.5-397B-A17B,15,30794,2.1,"{""delegate"": 1, ""edit"": 4, ""poll"": 1, ""read"": 8, ""text"": 1}",0
+claude,,,6,10434,1.3,"{""commit"": 1, ""edit"": 1, ""git"": 1, ""read"": 1, ""test"": 2}",0
+claude,CORE-01-review,Qwen/Qwen3.5-397B-A17B,20,57961,6.5,"{""commit"": 2, ""edit"": 2, ""git"": 3, ""read"": 8, ""test"": 5}",0
+claude,CORE-02A-review,zai-org/GLM-5.3,36,77678,29.4,"{""commit"": 1, ""edit"": 2, ""read"": 15, ""test"": 18}",0
+claude,INDEX-02a,deepseek-ai/DeepSeek-V4-Pro,4,11367,0.9,"{""commit"": 1, ""read"": 2, ""test"": 1}",0
+claude,CORE-04A-review,deepseek-ai/DeepSeek-V4-Pro,11,14860,4.6,"{""commit"": 1, ""edit"": 1, ""read"": 5, ""test"": 2, ""text"": 2}",0
+claude,,,14,48003,4.6,"{""commit"": 1, ""delegate"": 2, ""edit"": 1, ""read"": 9, ""test"": 1}",0
+claude,P1-review-glm,zai-org/GLM-5.3,13,45150,4.2,"{""commit"": 1, ""delegate"": 1, ""edit"": 1, ""read"": 9, ""test"": 1}",0
+claude,P1-review-glm,Qwen/Qwen3.5-397B-A17B,12,42438,2.8,"{""commit"": 1, ""edit"": 1, ""read"": 9, ""test"": 1}",0
+claude,CORE-05-review,deepseek-ai/DeepSeek-V4-Pro,27,44927,7.1,"{""commit"": 1, ""edit"": 5, ""git"": 4, ""plan"": 1, ""poll"": 1, ""read"": 9, ""test"": 4, ""text"": 1, ""toolsearch"": 1}",0
+claude,t2-summary,zai-org/GLM-5.3,22,37401,8.8,"{""commit"": 1, ""delegate"": 1, ""git"": 3, ""poll"": 2, ""read"": 11, ""test"": 3, ""text"": 1}",0
+claude,life-review,zai-org/GLM-5.3,19,28750,6.4,"{""commit"": 1, ""git"": 2, ""poll"": 2, ""read"": 10, ""test"": 3, ""text"": 1}",0
+claude,ADAPT-04-draft,deepseek-ai/DeepSeek-V4-Pro,5,9185,8.5,"{""commit"": 1, ""read"": 1, ""test"": 3}",0
+claude,ADAPT-05-draft,deepseek-ai/DeepSeek-V4-Pro,8,12711,8.7,"{""commit"": 1, ""git"": 1, ""read"": 3, ""test"": 3}",0
+claude,ADAPT-06-limiter,zai-org/GLM-5.3,6,13556,9.3,"{""commit"": 1, ""read"": 2, ""test"": 3}",0
+claude,ADAPT-06-transport,deepseek-ai/DeepSeek-V4-Pro,15,25553,11.7,"{""commit"": 1, ""read"": 6, ""test"": 8}",0
+claude,ADAPT-07-draft,deepseek-ai/DeepSeek-V4-Pro,16,34895,13.0,"{""commit"": 1, ""read"": 10, ""test"": 5}",0
+claude,ADAPT-08-draft,deepseek-ai/DeepSeek-V4-Pro,8,15468,8.8,"{""commit"": 1, ""read"": 3, ""test"": 4}",0
+claude,ADAPT-09-draft,deepseek-ai/DeepSeek-V4-Pro,2,5318,180.0,"{""read"": 1, ""test"": 1}",0
+claude,t2a,zai-org/GLM-5.3,4,13344,0.6,"{""delegate"": 1, ""git"": 1, ""read"": 2}",0
+claude,encoder-review,deepseek-ai/DeepSeek-V4-Pro,13,20369,7.6,"{""commit"": 1, ""git"": 2, ""plan"": 1, ""poll"": 1, ""read"": 6, ""text"": 2}",0
+claude,,,3,14165,0.7,"{""delegate"": 3}",0
+claude,,,2,12309,0.7,"{""delegate"": 2}",0
+claude,,,2,10371,2.3,"{""delegate"": 2}",0
+claude,runner-fix,deepseek-ai/DeepSeek-V4-Pro,3,9715,0.5,"{""delegate"": 3}",0
+claude,,,3,9520,0.6,"{""delegate"": 3}",0
+claude,,,3,7005,0.6,"{""commit"": 1, ""delegate"": 2}",0
+claude,,,2,5768,0.5,"{""commit"": 1, ""delegate"": 1}",0
+claude,runner-canary,deepseek-ai/DeepSeek-V4.1-Flash,1,2731,0.2,"{""commit"": 1}",3.0
+codex_main,,,19,84443,180.0,"{""delegate"": 1, ""edit"": 1, ""git"": 3, ""other"": 1, ""read"": 5, ""subagent"": 6, ""test"": 1, ""text"": 1}",0
+codex_main,,,36,115708,180.0,"{""delegate"": 1, ""edit"": 7, ""git"": 1, ""other"": 6, ""read"": 13, ""run"": 1, ""subagent"": 2, ""test"": 5}",0
+codex_main,,,54,148418,180.0,"{""delegate"": 1, ""edit"": 9, ""git"": 2, ""other"": 17, ""read"": 9, ""run"": 2, ""subagent"": 5, ""test"": 8, ""text"": 1}",0
+codex_main,,,52,251189,180.0,"{""delegate"": 1, ""edit"": 8, ""git"": 2, ""other"": 2, ""read"": 19, ""subagent"": 17, ""text"": 3}",0
+codex_main,,,33,128616,4.1,"{""git"": 1, ""other"": 7, ""read"": 13, ""run"": 6, ""subagent"": 3, ""test"": 3}",0
+codex_main,,,157,696732,180.0,"{""edit"": 78, ""git"": 4, ""read"": 53, ""run"": 3, ""subagent"": 12, ""test"": 4, ""text"": 3}",0
+codex_main,,,10,33219,1.2,"{""git"": 1, ""other"": 1, ""poll"": 1, ""read"": 5, ""subagent"": 2}",0
+codex_main,,,4,10553,1.1,"{""read"": 1, ""subagent"": 1, ""test"": 2}",0
+codex_main,,,2,6229,180.0,"{""delegate"": 2}",0
+codex_main,,,1,4033,180.0,"{""delegate"": 1}",0
+codex_main,,,4,93013,1.2,"{""delegate"": 1, ""run"": 3}",0
+codex_main,,,5,21876,1.3,"{""delegate"": 2, ""other"": 2, ""read"": 1}",0
+codex_main,,,104,551652,180.0,"{""delegate"": 2, ""edit"": 10, ""git"": 11, ""other"": 4, ""read"": 38, ""run"": 6, ""subagent"": 27, ""test"": 3, ""text"": 3}",0
+codex_main,,,100,539073,180.0,"{""delegate"": 1, ""edit"": 10, ""git"": 11, ""other"": 2, ""read"": 37, ""run"": 6, ""subagent"": 27, ""test"": 3, ""text"": 3}",0
+codex_main,,,18,152072,45.0,"{""delegate"": 1, ""edit"": 4, ""git"": 2, ""read"": 8, ""run"": 1, ""subagent"": 1, ""text"": 1}",0
+codex_main,,,27,57479,4.6,"{""delegate"": 3, ""edit"": 10, ""git"": 2, ""other"": 1, ""read"": 3, ""subagent"": 4, ""test"": 4}",0
+codex_main,,,25,43063,4.4,"{""delegate"": 2, ""edit"": 10, ""git"": 2, ""other"": 1, ""read"": 3, ""subagent"": 3, ""test"": 4}",0
+codex_main,,,24,42673,4.2,"{""delegate"": 1, ""edit"": 10, ""git"": 2, ""other"": 1, ""read"": 3, ""subagent"": 3, ""test"": 4}",0
+codex_main,,,11,13511,3.3,"{""delegate"": 1, ""edit"": 1, ""git"": 2, ""other"": 3, ""read"": 4}",0
+codex_main,,,8,70217,0.8,"{""read"": 8}",0
+codex_main,,,39,181863,180.0,"{""edit"": 7, ""other"": 6, ""read"": 17, ""run"": 1, ""subagent"": 7, ""test"": 1}",0
+codex_main,,,74,195049,21.3,"{""edit"": 18, ""git"": 5, ""read"": 24, ""subagent"": 13, ""test"": 14}",0
+codex_main,,,3,14683,0.6,"{""read"": 3}",0
+codex_main,,,15,28854,4.4,"{""edit"": 2, ""git"": 1, ""other"": 1, ""read"": 9, ""test"": 2}",0
+codex_main,,,3,2411,0.8,"{""edit"": 1, ""git"": 1, ""subagent"": 1}",0
+codex_main,,,4,4973,180.0,"{""edit"": 1, ""read"": 2, ""test"": 1}",0
+codex_main,,,77,258035,91.9,"{""delegate"": 2, ""git"": 10, ""other"": 16, ""poll"": 1, ""read"": 13, ""subagent"": 31, ""test"": 3, ""text"": 1}",0
+codex_main,,,76,251744,91.7,"{""delegate"": 1, ""git"": 10, ""other"": 16, ""poll"": 1, ""read"": 13, ""subagent"": 31, ""test"": 3, ""text"": 1}",0
+codex_main,,,6,48612,2.6,"{""delegate"": 2, ""edit"": 1, ""git"": 2, ""test"": 1}",0
+codex_main,,,5,37464,2.5,"{""delegate"": 1, ""edit"": 1, ""git"": 2, ""test"": 1}",0
+codex_main,ADAPT-09-review,deepseek-ai/DeepSeek-V4-Pro,36,72038,13.1,"{""delegate"": 3, ""edit"": 4, ""git"": 2, ""other"": 16, ""read"": 3, ""run"": 2, ""subagent"": 1, ""test"": 5}",0
+codex_main,ADAPT-09-review,deepseek-ai/DeepSeek-V4-Pro,34,70231,12.9,"{""delegate"": 2, ""edit"": 4, ""git"": 2, ""other"": 16, ""read"": 3, ""run"": 1, ""subagent"": 1, ""test"": 5}",0
+codex_main,ADAPT-09-review,deepseek-ai/DeepSeek-V4-Pro,33,69579,12.7,"{""delegate"": 1, ""edit"": 4, ""git"": 2, ""other"": 16, ""read"": 3, ""run"": 1, ""subagent"": 1, ""test"": 5}",0
+codex_main,,,26,18577,9.5,"{""commit"": 1, ""delegate"": 2, ""edit"": 2, ""git"": 1, ""other"": 16, ""read"": 1, ""subagent"": 1, ""test"": 2}",0
+codex_main,,,25,17099,9.4,"{""commit"": 1, ""delegate"": 1, ""edit"": 2, ""git"": 1, ""other"": 16, ""read"": 1, ""subagent"": 1, ""test"": 2}",0
+codex_main,,,44,476632,180.0,"{""delegate"": 1, ""edit"": 5, ""git"": 4, ""other"": 3, ""read"": 21, ""subagent"": 7, ""test"": 3}",0
+codex_main,,,2,1683,0.2,"{""delegate"": 1, ""git"": 1}",0
+codex_main,,,17,161114,8.7,"{""delegate"": 1, ""edit"": 1, ""git"": 1, ""other"": 1, ""read"": 7, ""subagent"": 4, ""text"": 2}",0
+codex_main,canary-dry-run,deepseek-ai/DeepSeek-V4.1-Flash-1017,3,1712,0.5,"{""delegate"": 2, ""read"": 1}",0
+codex_main,canary-001,deepseek-ai/DeepSeek-V4.1-Flash-1017,4,3492,2.1,"{""delegate"": 2, ""read"": 1, ""text"": 1}",0
+codex_main,index05-attachment-map,deepseek-ai/DeepSeek-V4.1-Flash-1017,2,2107,1.7,"{""delegate"": 1, ""text"": 1}",0
+codex_main,index05-attachment-map,deepseek-ai/DeepSeek-V4.1-Flash-1017,8,4176,1.8,"{""delegate"": 2, ""other"": 2, ""read"": 3, ""subagent"": 1}",0
+codex_main,index05-attachment-map-retry1,deepseek-ai/DeepSeek-V4.1-Flash-1017,4,2600,1.2,"{""delegate"": 1, ""other"": 2, ""read"": 1}",0
+codex_main,index05-attachment-build,Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo,21,38651,4.4,"{""delegate"": 2, ""edit"": 2, ""other"": 5, ""read"": 7, ""subagent"": 1, ""test"": 4}",0
+codex_main,index05-attachment-critic,zai-org/GLM-5.3-Flash,18,32392,3.8,"{""delegate"": 1, ""edit"": 2, ""other"": 4, ""read"": 6, ""subagent"": 1, ""test"": 4}",0
+codex_main,index05-scan-8x-diagnosis,deepseek-ai/DeepSeek-V4.1-Flash-1017,20,35976,4.0,"{""delegate"": 1, ""edit"": 3, ""other"": 4, ""read"": 9, ""test"": 3}",0
+codex_main,index05-attachment-final-review,deepseek-ai/DeepSeek-V4.1-Flash-1017,5,6932,1.4,"{""delegate"": 1, ""edit"": 1, ""other"": 2, ""read"": 1}",0
+codex_main,,,18,4357,8.8,"{""delegate"": 1, ""other"": 15, ""subagent"": 1, ""test"": 1}",0
+codex_main,,,2,4148,0.2,"{""commit"": 1, ""delegate"": 1}",0
+codex_main,,,18,51889,4.4,"{""delegate"": 4, ""other"": 7, ""read"": 6, ""subagent"": 1}",0
+codex_main,,,17,43014,4.3,"{""delegate"": 3, ""other"": 7, ""read"": 6, ""subagent"": 1}",0
+codex_main,index05_encoder_mapper,zai-org/GLM-5.3-Flash,16,33517,4.1,"{""delegate"": 2, ""other"": 7, ""read"": 6, ""subagent"": 1}",0
+codex_main,index05_encoder_mapper,zai-org/GLM-5.3-Flash,15,26791,3.5,"{""delegate"": 1, ""other"": 7, ""read"": 6, ""subagent"": 1}",0
+codex_main,index05_encoder_contract,deepseek-ai/DeepSeek-V4-Pro,5,7677,1.5,"{""delegate"": 1, ""other"": 1, ""read"": 2, ""subagent"": 1}",0
+codex_main,index05_encoder_builder,Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo,12,16469,2.6,"{""delegate"": 1, ""edit"": 5, ""other"": 3, ""read"": 2, ""subagent"": 1}",0
+codex_main,,,37,31029,7.0,"{""delegate"": 1, ""edit"": 6, ""git"": 1, ""other"": 8, ""read"": 11, ""run"": 1, ""subagent"": 2, ""test"": 7}",0
+codex_main,index05_encoder_diff_critic,deepseek-ai/DeepSeek-V4.1-Flash-1017,19,27821,60.0,"{""delegate"": 1, ""edit"": 5, ""git"": 1, ""other"": 3, ""read"": 5, ""run"": 1, ""subagent"": 1, ""test"": 2}",0
+codex_main,,,10,20944,4.2,"{""git"": 2, ""read"": 3, ""subagent"": 5}",0
+codex_main,,,5,2888,3.4,"{""git"": 1, ""subagent"": 4}",0
+codex_main,,,6,13575,1.1,"{""edit"": 1, ""git"": 1, ""read"": 4}",0
+codex_main,,,10,11713,1.9,"{""edit"": 1, ""git"": 2, ""other"": 1, ""read"": 3, ""subagent"": 2, ""test"": 1}",0
+codex_main,,,20,187091,8.9,"{""delegate"": 1, ""edit"": 1, ""git"": 2, ""other"": 1, ""read"": 9, ""subagent"": 4, ""text"": 2}",0

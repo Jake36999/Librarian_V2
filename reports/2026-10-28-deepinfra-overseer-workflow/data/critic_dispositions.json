@@ -1,0 +1,44 @@
+[
+  {
+    "id": "F1",
+    "decision": "partly accepted",
+    "reason": "Resource limits and conservative accounting were already required, but the report now states per-task/total reservation ceilings, attempt/repair limits, and retained uncertain charges. Do not assume a provider billing/job lookup exists.",
+    "report_change": "Tooling C"
+  },
+  {
+    "id": "F2",
+    "decision": "accepted",
+    "reason": "The report now calls for protected acceptance fingerprints, explicit overseer decisions on criterion changes, and recording their frequency as escalation cost.",
+    "report_change": "Tooling A and qualification"
+  },
+  {
+    "id": "F3",
+    "decision": "premise rejected; presentation improved",
+    "reason": "The accounting identity does not assume d and h are independent or overhead constant. Neither convexity nor superlinearity is established locally. The report now states dependence explicitly and adds a higher-overhead example; the numbers remain illustrations, not forecasts or best-case estimates.",
+    "report_change": "20/80 accounting"
+  },
+  {
+    "id": "F4",
+    "decision": "accepted",
+    "reason": "The report now requires substantial initial adjudication before reducing lead review, operational examples of consequential claims, and adjustment from observed defects. No sampling rate or absence-of-rare-error guarantee is invented.",
+    "report_change": "Gemini literature-verification recommendation"
+  },
+  {
+    "id": "F5",
+    "decision": "partly accepted",
+    "reason": "Concrete environment identity and mismatch behavior improve the offering. The critic's suggestion that the remote inference host executes repository code is not adopted: a controlled local executor supplies those tools.",
+    "report_change": "Tooling A"
+  },
+  {
+    "id": "F6",
+    "decision": "partly accepted",
+    "reason": "Admission now explicitly checks task-specific adequacy rather than treating a generic green suite as sufficient. Absence of a trusted oracle need not forbid exploration or test development; those outputs remain exploratory until independently accepted.",
+    "report_change": "Contract admission"
+  },
+  {
+    "id": "F7",
+    "decision": "partly accepted",
+    "reason": "The private report already required demonstrating the contract under both Claude and Codex, which the abstract critic did not see. The report now additionally asks to measure host-specific briefing, escalation and integration costs rather than assume thin adapters are costless.",
+    "report_change": "Qualification"
+  }
+]

@@ -1,0 +1,23 @@
+{
+ "first_pass_card": {
+  "by_first_pass_class": {
+   "unverified": {
+    "unverified": 34
+   },
+   "verified": {
+    "verified": 134
+   }
+  },
+  "n": 168,
+  "strict": {
+   "unverified": 34,
+   "verified": 134
+  }
+ },
+ "second_pass_anchor": {
+  "n": 25,
+  "strict": {
+   "verified": 25
+  }
+ }
+}

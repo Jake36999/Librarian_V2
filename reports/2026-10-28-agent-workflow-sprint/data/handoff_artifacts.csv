@@ -1,0 +1,11 @@
+path,bytes,tokens
+reports/2026-10-24-handoff-to-chatgpt.md,10687,2787
+reports/2026-10-24-chatgpt-transcript-review.md,23274,6030
+reports/2026-10-24-harness-and-adapter-plan-review.md,38870,9459
+docs/audited-engagement-harness.md,69397,13975
+docs/model-invocation-architecture.md,33694,7062
+docs/staging-write-safety.md,33597,6544
+docs/regression-manifest.md,52994,12825
+docs/release-implementation-queue.md,11136,2320
+docs/qualification.md,8255,1749
+docs/unified-implementation-plan.md,141169,31149

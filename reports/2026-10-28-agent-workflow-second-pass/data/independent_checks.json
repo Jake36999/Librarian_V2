@@ -1,0 +1,14 @@
+{
+  "pdfs_checked": 50,
+  "pdf_hashes_match": true,
+  "method_cards": 168,
+  "originally_verified_cards": 134,
+  "verified_wrong_page": 0,
+  "codex_threads_reconciled": 203,
+  "codex_counter_mismatches": 2,
+  "codex_original_delegate_rows": 62,
+  "codex_rows_located": 62,
+  "codex_launch_signatures": 14,
+  "codex_inspection_signatures": 39,
+  "codex_rows_with_task_and_model": 17
+}

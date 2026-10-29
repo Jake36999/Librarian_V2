@@ -1,0 +1,240 @@
+{
+  "anchor_pass_all": {
+    "claimed": 1995,
+    "pass_rate": 0.9639,
+    "verified": 1923
+  },
+  "anchor_pass_by_model": {
+    "DeepSeek-V4-Pro": {
+      "calls": 14,
+      "claimed": 141,
+      "pass_rate": 0.645,
+      "verified": 91
+    },
+    "DeepSeek-V4.1-Flash": {
+      "calls": 15,
+      "claimed": 47,
+      "pass_rate": 0.915,
+      "verified": 43
+    },
+    "GLM-5.3": {
+      "calls": 6,
+      "claimed": 218,
+      "pass_rate": 0.986,
+      "verified": 215
+    },
+    "GLM-5.3-Flash": {
+      "calls": 5,
+      "claimed": 128,
+      "pass_rate": 0.977,
+      "verified": 125
+    },
+    "MiMo-V2.6-Pro": {
+      "calls": 47,
+      "claimed": 1461,
+      "pass_rate": 0.992,
+      "verified": 1449
+    }
+  },
+  "anchor_pass_extraction_lanes": {
+    "calls": 85,
+    "claimed": 1963,
+    "pass_rate": 0.9633,
+    "verified": 1891
+  },
+  "anchor_pass_extraction_lanes_by_model": {
+    "DeepSeek-V4-Pro": {
+      "calls": 14,
+      "claimed": 141,
+      "pass_rate": 0.645,
+      "verified": 91
+    },
+    "DeepSeek-V4.1-Flash": {
+      "calls": 15,
+      "claimed": 47,
+      "pass_rate": 0.915,
+      "verified": 43
+    },
+    "GLM-5.3": {
+      "calls": 6,
+      "claimed": 218,
+      "pass_rate": 0.986,
+      "verified": 215
+    },
+    "GLM-5.3-Flash": {
+      "calls": 4,
+      "claimed": 116,
+      "pass_rate": 0.974,
+      "verified": 113
+    },
+    "MiMo-V2.6-Pro": {
+      "calls": 46,
+      "claimed": 1441,
+      "pass_rate": 0.992,
+      "verified": 1429
+    }
+  },
+  "capture_recapture_events": {
+    "per_chunk": [
+      {
+        "chunk": "chat1-02",
+        "flash": 20,
+        "lincoln_petersen_findable": 42.5,
+        "matched": 16,
+        "mimo": 34
+      },
+      {
+        "chunk": "chat1-06",
+        "flash": 20,
+        "lincoln_petersen_findable": 38.0,
+        "matched": 20,
+        "mimo": 38
+      },
+      {
+        "chunk": "chat2-01",
+        "flash": 57,
+        "lincoln_petersen_findable": 98.8,
+        "matched": 30,
+        "mimo": 52
+      },
+      {
+        "chunk": "qball-02",
+        "flash": 16,
+        "lincoln_petersen_findable": 38.9,
+        "matched": 14,
+        "mimo": 34
+      }
+    ],
+    "pooled": {
+      "findable_estimate": 223.2,
+      "flash": 113,
+      "flash_share": 0.51,
+      "matched": 80,
+      "mimo": 158,
+      "mimo_share": 0.71
+    }
+  },
+  "claim_register": {
+    "claims": 174,
+    "local_checks": {
+      "confirmed": 9,
+      "not_checked": 98,
+      "partly": 6
+    },
+    "outside_class_claims": 67,
+    "tags": {
+      "local": 9,
+      "plausible": 21,
+      "unverified": 33,
+      "verified": 4
+    }
+  },
+  "codex_git_friction_events": {
+    "git_permission_denied": 43,
+    "index_lock": 8
+  },
+  "critic_pass": {
+    "by_class": {
+      "D": 13,
+      "T": 14,
+      "X": 5
+    },
+    "by_critic": {
+      "glm-5.3-flash": {
+        "D": 4,
+        "T": 5,
+        "X": 3
+      },
+      "mimo-v2.6-pro": {
+        "D": 9,
+        "T": 9,
+        "X": 2
+      }
+    },
+    "calls_cost_usd": 0.037,
+    "class_key": "D real defect, T traceability gap (number correct, no summary file), X false positive",
+    "findings": 32
+  },
+  "development_receipt_output_tokens": {
+    "at_or_near_cap": 5,
+    "mean": 4121,
+    "median": 4000.0,
+    "n": 9
+  },
+  "development_transcript_dispositions": {
+    "n": 48,
+    "note": "model-labelled, not adjudicated; mixes reviewers and review types",
+    "partial": 13,
+    "rejected": 9,
+    "upheld": 26
+  },
+  "handoff_events_by_source": {
+    "chat1": 31,
+    "chat2": 10,
+    "claude_dev": 3,
+    "qball": 21
+  },
+  "self_session_until_cutoff": {
+    "assistant_messages": 117,
+    "cache_read_tokens": 59431446,
+    "cutoff": "2026-10-28T20:44:38.000Z",
+    "fresh_tokens": 1374025,
+    "model": [
+      "claude-sonnet-5-5"
+    ],
+    "output_tokens": 508182,
+    "peak_context_tokens": 816221
+  },
+  "sprint_deepinfra": {
+    "by_lane_calls_truncated_usd": {
+      "A": [
+        14,
+        7,
+        1.113
+      ],
+      "C": [
+        2,
+        0,
+        0.037
+      ],
+      "G": [
+        3,
+        1,
+        0.057
+      ],
+      "P1": [
+        11,
+        0,
+        0.043
+      ],
+      "P1V": [
+        4,
+        0,
+        0.009
+      ],
+      "P2": [
+        30,
+        0,
+        0.644
+      ],
+      "R": [
+        1,
+        1,
+        0.032
+      ],
+      "T": [
+        22,
+        8,
+        0.515
+      ]
+    },
+    "calls": 87,
+    "failed": 0,
+    "input_tokens": 2717339,
+    "latency_s_median": 80.2,
+    "ledger_estimate_usd": 2.07,
+    "live_cost_usd": 2.45,
+    "output_tokens": 679274,
+    "truncated": 17
+  }
+}

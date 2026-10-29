@@ -1,0 +1,33 @@
+critic,finding,class,underlying_issue,action
+glm-5.3-flash,F1,D,delegate-drafted commit count: script said 6 (phrase broke across a line; "drafted with" missed), reports said 8,git_metrics.py regex fixed (now 9); reports corrected
+glm-5.3-flash,F2,D,thread counts mixed rollouts (149/172) with threads that recorded tokens (148/53),report text clarified
+glm-5.3-flash,F3,D,latency range excluded the failed call while p90 included it,report text clarified
+glm-5.3-flash,F4,T,delegate output size had no summary file,supporting_totals.json
+glm-5.3-flash,F5,X,compared this sprint session's peak context (816k) with the development session's (966k),none
+glm-5.3-flash,F6,D,verify_anchors.py overwrote the full table on partial runs,verifier now merges rows
+glm-5.3-flash,F7,T,sprint call totals had no summary file,supporting_totals.json + sprint_lane_results.csv
+glm-5.3-flash,F8,X,per-box rental hours exist in vast_boxes.csv (not in the packet),none
+glm-5.3-flash,F9,X,per-day limit counts imply the Oct 22 zero; 59 total is in baseline_metrics.json,none
+glm-5.3-flash,F10,T,handoff event counts had no summary file,supporting_totals.json
+glm-5.3-flash,F11,T,git permission-denied counts had no summary file,supporting_totals.json
+glm-5.3-flash,F12,T,dispositions of 48 transcript events had no summary file,supporting_totals.json
+mimo-v2.6-pro,F1,D,duplicate of delegate-drafted count (glm F1),see glm F1
+mimo-v2.6-pro,F2,D,duplicate of delegate-drafted count in 05,see glm F1
+mimo-v2.6-pro,F3,D,duplicate of delegate-drafted count in 06,see glm F1
+mimo-v2.6-pro,F4,D,duplicate of delegate-drafted count in 05,see glm F1
+mimo-v2.6-pro,F5,D,"12 truncated and 13 salvaged read as inconsistent; one salvaged output was malformed without truncation",report text clarified
+mimo-v2.6-pro,F6,D,duplicate of thread-count definitions (glm F2),see glm F2
+mimo-v2.6-pro,F7,D,duplicate of the clobbered anchor table (glm F6),see glm F6
+mimo-v2.6-pro,F8,T,duplicate of dispositions summary (glm F12),supporting_totals.json
+mimo-v2.6-pro,F9,T,provisioning minutes were not in a data file,vast_summary.json now has provisioning_minutes_rent_to_runner_up
+mimo-v2.6-pro,F10,T,architecture-lane cost had no summary file,supporting_totals.json by lane
+mimo-v2.6-pro,F11,T,duplicate of sprint call totals (glm F7),see glm F7
+mimo-v2.6-pro,F12,T,duplicate of handoff counts (glm F10),see glm F10
+mimo-v2.6-pro,F13,T,duplicate of friction counts (glm F11),see glm F11
+mimo-v2.6-pro,F14,T,duplicate of delegate output size (glm F4),see glm F4
+mimo-v2.6-pro,F15,T,Cohen kappa was printed but not stored,capability_matrix_summary.json
+mimo-v2.6-pro,F16,D,"stale claim-register counts (67: 6/20/41) in an earlier draft of the summary; corrected before this critic was read",already corrected; counts regenerated
+mimo-v2.6-pro,F17,X,per-model benchmark scores exist in benchmark_models.csv (not in the packet),none
+mimo-v2.6-pro,F18,D,the count of 34 Claude delegate invocations included 3 from the sprint session; the development session has 31,baseline and report text corrected
+mimo-v2.6-pro,F19,T,capture-recapture estimate was not stored,supporting_totals.json
+mimo-v2.6-pro,F20,X,error and destroy times are in vast_events.csv (not in the packet),none

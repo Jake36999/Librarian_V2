@@ -1,0 +1,36 @@
+{
+ "calls_by_family_runner_status": {
+  "claude|delegate_deepinfra|completed": 1,
+  "claude|delegate|completed": 25,
+  "claude|second_reader|completed": 20,
+  "codex|delegate_deepinfra|completed": 10,
+  "codex|delegate_deepinfra|failed": 1
+ },
+ "calls_linked_to_a_launch": 57,
+ "calls_with_output_reread": 43,
+ "development_calls": 57,
+ "development_cost_usd_by_runner": {
+  "delegate": 0.5457,
+  "delegate_deepinfra": 0.1224,
+  "second_reader": 0.4469
+ },
+ "launch_commands_by_family_kind": {
+  "claude|inspect": 7,
+  "claude|launch": 29,
+  "codex|dry_run": 2,
+  "codex|help": 1,
+  "codex|inspect": 14,
+  "codex|launch": 15
+ },
+ "launch_return_precedes_real_completion": 36,
+ "launch_return_states": {
+  "claude|error": 1,
+  "claude|returned": 17,
+  "claude|yielded": 11,
+  "codex|error": 2,
+  "codex|rejected": 2,
+  "codex|returned": 1,
+  "codex|yielded": 10
+ },
+ "sprint_calls": 88
+}

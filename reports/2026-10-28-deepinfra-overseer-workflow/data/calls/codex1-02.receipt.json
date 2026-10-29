@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "run_id": "20261028T221434-d4aeb742",
+  "provider": "deepinfra",
+  "endpoint": "/v1/openai/chat/completions",
+  "started_at": "2026-10-28T22:14:34.701165Z",
+  "task": "codex1-02",
+  "lens": "correctness",
+  "model": "XiaomiMiMo/MiMo-V2.6-Pro",
+  "agent": "codex-overseer-research",
+  "manifest": [
+    {
+      "path": "tmp/overseer-workflow/packets/codex1-02.txt",
+      "bytes": 192312,
+      "sha256": "cdd4a7584bf1d963d14b0eacd4f3e4ec55138a3b34a710ccfa4018a675e1133a"
+    }
+  ],
+  "packet_sha256": "b11b7ed2d3540968f546038fb906cd2bf6f2e287fe542ba4abee3cb8f73f9bf9",
+  "estimated_input_tokens": 57581,
+  "max_output_tokens": 10000,
+  "preflight_reserve_usd": 0.03345983,
+  "budget_usd": 5.0,
+  "rate_card": {
+    "input_per_1m": 0.43,
+    "output_per_1m": 0.87,
+    "source": "https://api.deepinfra.com/v1/openai/models",
+    "as_of": "2026-10-28"
+  },
+  "key_source": "transient file injection",
+  "status": "completed",
+  "completed_at": "2026-10-28T22:16:39.596009Z",
+  "latency_ms": 124894,
+  "request_id": "ReZFOuTpT0FUS2quRYEQoeus",
+  "model_returned": "XiaomiMiMo/MiMo-V2.6-Pro",
+  "finish_reason": "stop",
+  "usage": {
+    "input_tokens": 67395,
+    "output_tokens": 7364,
+    "total_tokens": 74759
+  },
+  "estimated_cost_usd": 0.03538653,
+  "output_path": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221434-d4aeb742-codex1-02.md",
+  "output_sha256": "5440b563bb49562ed41180fc48e5d6b250fc828f7afc6c781951046d92410029",
+  "output_chars": 6738
+}

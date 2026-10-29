@@ -1,0 +1,114 @@
+[
+  {
+    "task": "codex1-01",
+    "receipt": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex1-01.receipt.json",
+    "output": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex1-01.output.txt",
+    "receipt_sha256": "e00a5c526b00932bca83193bcdb972a9bb1f9e374abf736421573d58809943eb",
+    "output_sha256": "e586fcbf070300167cfb5087265b9f4f5be0f073d6c7d6f91ee465570ef4ae81",
+    "original_receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221434-5bc5d7ff-codex1-01.receipt.json"
+  },
+  {
+    "task": "gemini-01",
+    "receipt": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\gemini-01.receipt.json",
+    "output": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\gemini-01.output.txt",
+    "receipt_sha256": "b0a7238de81fa82dc5e80ae557f08dd0d479631952d0b0f3694f706aa85685b7",
+    "output_sha256": "ce64c7158a75368f04d86d9f6bdd9da86ddc308b5f8f10759db789be4f5a7689",
+    "original_receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221434-9514d37e-gemini-01.receipt.json"
+  },
+  {
+    "task": "codex1-02",
+    "receipt": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex1-02.receipt.json",
+    "output": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex1-02.output.txt",
+    "receipt_sha256": "23a37a3b3022686bc1856170cd41a128d5e01455f166749966562b784115a96a",
+    "output_sha256": "5440b563bb49562ed41180fc48e5d6b250fc828f7afc6c781951046d92410029",
+    "original_receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221434-d4aeb742-codex1-02.receipt.json"
+  },
+  {
+    "task": "codex1-03",
+    "receipt": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex1-03.receipt.json",
+    "output": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex1-03.output.txt",
+    "receipt_sha256": "b9ae18b1f6a6921862568faf7c34d3da8605fcf22a6fe3630747c7e3add76513",
+    "output_sha256": "8fd995c930fb2eb7e1a514c5dc50eb4c214a453e236ea8ac3a0c5f1636461087",
+    "original_receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221547-e6265702-codex1-03.receipt.json"
+  },
+  {
+    "task": "codex1-04",
+    "receipt": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex1-04.receipt.json",
+    "output": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex1-04.output.txt",
+    "receipt_sha256": "03c4c8d71e9114f5244745ceaad6f6d2f0d7891995339430b1e89db351e78133",
+    "output_sha256": "30574c229cd101444b2134342761b36e52385c99c900e2994ec8fe25369a8983",
+    "original_receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221639-bb1af96c-codex1-04.receipt.json"
+  },
+  {
+    "task": "codex1-05",
+    "receipt": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex1-05.receipt.json",
+    "output": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex1-05.output.txt",
+    "receipt_sha256": "a3226fbb72f91db06767bdd71715bdf4fee576e3f33440ea5cef56a4106f0cb7",
+    "output_sha256": "9a7c84ddd5380436a0bd85d2fd0afa83f509ddb2dfdbb6acf5143da101dd51df",
+    "original_receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221650-b77ff579-codex1-05.receipt.json"
+  },
+  {
+    "task": "codex1-06",
+    "receipt": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex1-06.receipt.json",
+    "output": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex1-06.output.txt",
+    "receipt_sha256": "9a49c82ffbf55416d1985d5a828e47df1c32bcdf7ad4c8a258df9d1a270d7fb7",
+    "output_sha256": "1d037cc4109874480916985224a0c616bea6af531fd2176aef8cacdf6eb01c9e",
+    "original_receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221927-40b85057-codex1-06.receipt.json"
+  },
+  {
+    "task": "codex2-01",
+    "receipt": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex2-01.receipt.json",
+    "output": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex2-01.output.txt",
+    "receipt_sha256": "abba6930eb49e1698df4ed413dae8bcdaf3118bc48b5d0264d5efc2d4a51c0a8",
+    "output_sha256": "b169c3d812264b859cbab612c41f9351adfc6c04e4a662dca26a5da6095b210e",
+    "original_receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T221934-e79a6d9f-codex2-01.receipt.json"
+  },
+  {
+    "task": "codex2-02",
+    "receipt": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex2-02.receipt.json",
+    "output": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\codex2-02.output.txt",
+    "receipt_sha256": "fac71e58594fe79edc9ef8ccb5378a57050f7bbc5e41d4eaf0bd68ae508f020c",
+    "output_sha256": "ebab29db14e8d0fa249160f57ef67dd9f4c72dfc5ccecdeabb46bfbacfa9cb58",
+    "original_receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T222007-025fc150-codex2-02.receipt.json"
+  },
+  {
+    "task": "claude-01",
+    "receipt": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\claude-01.receipt.json",
+    "output": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\claude-01.output.txt",
+    "receipt_sha256": "1eae68613ab74c522acfa5e16ccffe26200b0c0522c6f849f6f8224d7050e081",
+    "output_sha256": "cbccb102c963d883f51f56f7b6f3dcc4fb6f10756ef77fd2eade7d684dcc8979",
+    "original_receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T222118-7643f3ec-claude-01.receipt.json"
+  },
+  {
+    "task": "research-01",
+    "receipt": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\research-01.receipt.json",
+    "output": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\research-01.output.txt",
+    "receipt_sha256": "2debce83756f95528a2833a839369fa9238714b1929cd0b59137d058c0789251",
+    "output_sha256": "ebf37d54bd6c3015256cb85b0f2ce468efb2e718797e3a8285d4148135f0dbfc",
+    "original_receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T222131-9eac762a-research-01.receipt.json"
+  },
+  {
+    "task": "research-02",
+    "receipt": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\research-02.receipt.json",
+    "output": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\research-02.output.txt",
+    "receipt_sha256": "ac5e1a5ce200be00c4bdae6b9a453cdd72c9fbe9800a7c6734d877f8617dbeab",
+    "output_sha256": "c9b262734ea8edad90dab26fc93f6e0ec9ce2b062012d1146d8ab72d759b3885",
+    "original_receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T222206-e7cc4f26-research-02.receipt.json"
+  },
+  {
+    "task": "research-03",
+    "receipt": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\research-03.receipt.json",
+    "output": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\research-03.output.txt",
+    "receipt_sha256": "93be0c6c4595fac4d20067a35df80b441c49a8ebafdfeefffd3ce7fc78830b08",
+    "output_sha256": "a8a3c3b55ee413f35d334bc4f78fb713176d8d7139d59825ba97538e9f5abc78",
+    "original_receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T222230-038f138c-research-03.receipt.json"
+  },
+  {
+    "task": "critic-abstract-01",
+    "receipt": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\critic-abstract-01.receipt.json",
+    "output": "D:\\Librarian_V2\\reports\\2026-10-28-deepinfra-overseer-workflow\\data\\calls\\critic-abstract-01.output.txt",
+    "receipt_sha256": "8cca4a92f73bae0a876ba1dbc5f40c43a5f8880237017bf6cde1e0eec8148e12",
+    "output_sha256": "17db05d3b3ed18fcc71641b2bc7a48902468481862b6348a544dd9daba439437",
+    "original_receipt": "D:\\Librarian_V2\\tmp\\overseer-workflow\\runs\\20261028T223100-607751ad-critic-abstract-01.receipt.json"
+  }
+]

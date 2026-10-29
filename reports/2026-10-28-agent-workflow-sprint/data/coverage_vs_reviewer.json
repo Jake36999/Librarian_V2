@@ -1,0 +1,25 @@
+{
+ "anchors": 25,
+ "found_by_primary_reader": 13,
+ "found_by_any_reader": 16,
+ "found_after_adjudication": 22,
+ "adjudicated_rows": 13,
+ "rule": "share of the anchor's words (3+ characters) contained in a verified item on the same or an adjacent page; found = at least 75%",
+ "missed_by_all": [
+  [
+   7,
+   8,
+   "Verifier cost dominates"
+  ],
+  [
+   28,
+   6,
+   "Structural dependency checking"
+  ],
+  [
+   42,
+   9,
+   "Presence does not establish faithfulness"
+  ]
+ ]
+}

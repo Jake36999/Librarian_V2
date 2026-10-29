@@ -1,0 +1,286 @@
+{
+  "agreement_sample": [
+    {
+      "chunk": "chat1-02",
+      "glm_flash_events": 20,
+      "matched": 16,
+      "mimo_events": 34,
+      "precision_of_flash_vs_mimo": 0.8,
+      "recall_of_mimo": 0.47
+    },
+    {
+      "chunk": "chat1-06",
+      "glm_flash_events": 20,
+      "matched": 20,
+      "mimo_events": 38,
+      "precision_of_flash_vs_mimo": 1.0,
+      "recall_of_mimo": 0.53
+    },
+    {
+      "chunk": "chat2-01",
+      "glm_flash_events": 57,
+      "matched": 30,
+      "mimo_events": 52,
+      "precision_of_flash_vs_mimo": 0.53,
+      "recall_of_mimo": 0.58
+    },
+    {
+      "chunk": "qball-02",
+      "glm_flash_events": 16,
+      "matched": 14,
+      "mimo_events": 34,
+      "precision_of_flash_vs_mimo": 0.88,
+      "recall_of_mimo": 0.41
+    }
+  ],
+  "by_source_and_kind": {
+    "chat1": {
+      "compaction_or_context_loss": 31,
+      "delegation_launch": 16,
+      "delegation_result": 21,
+      "finding_disposition": 36,
+      "handoff": 31,
+      "orchestrator_direct_work": 77,
+      "protocol_step": 8,
+      "rework": 49,
+      "usage_limit": 11,
+      "verification_check": 171
+    },
+    "chat2": {
+      "compaction_or_context_loss": 6,
+      "delegation_launch": 19,
+      "delegation_result": 16,
+      "finding_disposition": 12,
+      "handoff": 10,
+      "orchestrator_direct_work": 12,
+      "protocol_step": 11,
+      "rework": 14,
+      "usage_limit": 7,
+      "verification_check": 45
+    },
+    "claude_dev": {
+      "delegation_launch": 4,
+      "delegation_result": 1,
+      "handoff": 3,
+      "orchestrator_direct_work": 4,
+      "rework": 1,
+      "usage_limit": 2,
+      "verification_check": 7
+    },
+    "qball": {
+      "compaction_or_context_loss": 3,
+      "delegation_launch": 10,
+      "delegation_result": 11,
+      "finding_disposition": 31,
+      "handoff": 21,
+      "orchestrator_direct_work": 14,
+      "protocol_step": 33,
+      "rework": 15,
+      "usage_limit": 6,
+      "verification_check": 33
+    }
+  },
+  "events_total_verified_primary": 802,
+  "finding_disposition_by_note": {
+    "partial:chat1": 10,
+    "partial:chat2": 3,
+    "partial:qball": 5,
+    "rejected:chat1": 7,
+    "rejected:chat2": 2,
+    "rejected:qball": 20,
+    "upheld:chat1": 19,
+    "upheld:chat2": 7,
+    "upheld:qball": 6
+  },
+  "kinds_flash_on_sample": {
+    "compaction_or_context_loss": 11,
+    "delegation_launch": 14,
+    "delegation_result": 9,
+    "finding_disposition": 6,
+    "handoff": 9,
+    "orchestrator_direct_work": 8,
+    "protocol_step": 3,
+    "rework": 9,
+    "usage_limit": 8,
+    "verification_check": 36
+  },
+  "kinds_mimo_on_sample": {
+    "compaction_or_context_loss": 11,
+    "delegation_launch": 14,
+    "delegation_result": 6,
+    "finding_disposition": 20,
+    "handoff": 11,
+    "orchestrator_direct_work": 20,
+    "protocol_step": 10,
+    "rework": 13,
+    "usage_limit": 6,
+    "verification_check": 47
+  },
+  "protocol_steps_qball": [
+    {
+      "actor": "claude",
+      "line": 28,
+      "note": "begins Phase 0 catalogue scout per library workflow"
+    },
+    {
+      "actor": "claude",
+      "line": 32,
+      "note": "catalogue state assessed before opening briefs"
+    },
+    {
+      "actor": "claude",
+      "line": 41,
+      "note": "opens one brief per confirmed gap"
+    },
+    {
+      "actor": "claude",
+      "line": 112,
+      "note": "logs application record in library"
+    },
+    {
+      "actor": "claude",
+      "line": 205,
+      "note": "application records registered in index"
+    },
+    {
+      "actor": "claude",
+      "line": 229,
+      "note": "catalogues key papers"
+    },
+    {
+      "actor": "claude",
+      "line": 448,
+      "note": "approved plan enters Stage 0"
+    },
+    {
+      "actor": "user",
+      "line": 521,
+      "note": "mandates independent second-route verification"
+    },
+    {
+      "actor": "user",
+      "line": 522,
+      "note": "factor-of-two labelling rule"
+    },
+    {
+      "actor": "claude",
+      "line": 559,
+      "note": "prescribes charge-based measurement going forward"
+    },
+    {
+      "actor": "user",
+      "line": 737,
+      "note": "prediction-before-result requirement"
+    },
+    {
+      "actor": "user",
+      "line": 1236,
+      "note": "Brief forbids pass/fail claims before derivation steps."
+    },
+    {
+      "actor": "user",
+      "line": 1252,
+      "note": "Brief requires predictions registered before results."
+    },
+    {
+      "actor": "user",
+      "line": 1255,
+      "note": "Each observation must update its diagnostic record."
+    },
+    {
+      "actor": "user",
+      "line": 1273,
+      "note": "Predictions must be committed before experiments run."
+    },
+    {
+      "actor": "user",
+      "line": 1296,
+      "note": "Scripts need reproducibility and a second route."
+    },
+    {
+      "actor": "user",
+      "line": 1301,
+      "note": "Pending owner decisions noted, not blocking."
+    },
+    {
+      "actor": "claude",
+      "line": 1798,
+      "note": "Protocol stamps Claude verification onto delegate drafts."
+    },
+    {
+      "actor": "codex",
+      "line": 2016,
+      "note": "Pre-registers predictions before running experiments"
+    },
+    {
+      "actor": "claude",
+      "line": 2397,
+      "note": "Takes over prescribed scoring step left unassigned"
+    },
+    {
+      "actor": "claude",
+      "line": 2927,
+      "note": "Appends batch-3 scoreboard to persistent memory"
+    },
+    {
+      "actor": "claude",
+      "line": 3127,
+      "note": "Keeps pre-registration step open for next runs"
+    },
+    {
+      "actor": "claude",
+      "line": 3222,
+      "note": "Explained claims require a successful switch-off prediction."
+    },
+    {
+      "actor": "claude",
+      "line": 3225,
+      "note": "Multi-blob runs need phase and sign gates after the bug."
+    },
+    {
+      "actor": "user",
+      "line": 3264,
+      "note": "Pasted requirement: memory-derived citations need agent verification."
+    },
+    {
+      "actor": "codex",
+      "line": 3363,
+      "note": "Predictions must be registered before runs execute."
+    },
+    {
+      "actor": "claude",
+      "line": 3551,
+      "note": "Twenty off-topic PDFs recorded and not extracted."
+    },
+    {
+      "actor": "claude",
+      "line": 3850,
+      "note": "DeepInfra note budget set to $4.50 of $5."
+    },
+    {
+      "actor": "claude",
+      "line": 3858,
+      "note": "Scout step: one draft note per local full text."
+    },
+    {
+      "actor": "claude",
+      "line": 3860,
+      "note": "Delegate notes stay unverified until overseer checks sources."
+    },
+    {
+      "actor": "claude",
+      "line": 3866,
+      "note": "Prompt forbids novelty claims in drafted notes."
+    },
+    {
+      "actor": "claude",
+      "line": 3871,
+      "note": "32 notes draft in background; audit precedes registrations."
+    },
+    {
+      "actor": "claude",
+      "line": 4078,
+      "note": "Registered H10′ criterion encoded in the analysis."
+    }
+  ]
+}
