@@ -195,13 +195,25 @@ def load_key(path: Path) -> str:
     raise SystemExit("DEEPINFRA_API_KEY is unavailable; no call was made")
 
 
-def resolve_export(raw: str) -> Path:
-    candidate = Path(raw)
-    path = (candidate if candidate.is_absolute() else REPOSITORY / candidate).resolve()
+def export_root(raw: Path | None) -> Path:
+    """The directory exports are read from: the repository, or a worktree inside it."""
+    root = (raw or REPOSITORY).resolve()
     try:
-        relative = path.relative_to(REPOSITORY)
+        root.relative_to(REPOSITORY)
     except ValueError as exc:
-        raise SystemExit(f"export path is outside the repository: {raw}") from exc
+        raise SystemExit(f"--export-root must be inside the repository: {raw}") from exc
+    return root
+
+
+def resolve_export(raw: str, root: Path | None = None) -> Path:
+    root = root or REPOSITORY
+    candidate = Path(raw)
+    path = (candidate if candidate.is_absolute() else root / candidate).resolve()
+    try:
+        relative = path.relative_to(root)
+    except ValueError as exc:
+        where = "the repository" if root == REPOSITORY else "the export root"
+        raise SystemExit(f"export path is outside {where}: {raw}") from exc
     if any(part.casefold() in DENIED_PARTS for part in relative.parts):
         raise SystemExit(f"export path is denied: {relative.as_posix()}")
     if not path.is_file():
@@ -209,9 +221,10 @@ def resolve_export(raw: str) -> Path:
     return path
 
 
-def checked_text(path: Path, *, max_bytes: int) -> tuple[str, dict[str, Any]]:
+def checked_text(path: Path, *, max_bytes: int,
+                 root: Path | None = None) -> tuple[str, dict[str, Any]]:
     data = path.read_bytes()
-    relative = path.relative_to(REPOSITORY).as_posix()
+    relative = path.relative_to(root or REPOSITORY).as_posix()
     if len(data) > max_bytes:
         raise SystemExit(f"export file exceeds --max-file-bytes: {relative}")
     if b"\x00" in data:
@@ -466,8 +479,9 @@ def packet(args: argparse.Namespace) -> tuple[str, list[dict[str, Any]]]:
     manifest: list[dict[str, Any]] = []
     total = 0
     for raw in args.file:
-        path = resolve_export(raw)
-        text, item = checked_text(path, max_bytes=args.max_file_bytes)
+        root = export_root(getattr(args, "export_root", None))
+        path = resolve_export(raw, root)
+        text, item = checked_text(path, max_bytes=args.max_file_bytes, root=root)
         total += item["bytes"]
         if total > args.max_packet_bytes:
             raise SystemExit("export packet exceeds --max-packet-bytes")
@@ -526,7 +540,8 @@ def admit_work_package(args: argparse.Namespace) -> dict[str, Any]:
         args.task_budget_usd = float(budget["task_usd"])
     allowed = admission["read_targets"] + admission["write_targets"]
     for raw_path in args.file:
-        relative = resolve_export(raw_path).relative_to(REPOSITORY).as_posix()
+        root = export_root(args.export_root)
+        relative = resolve_export(raw_path, root).relative_to(root).as_posix()
         if not checker.matches(relative, allowed):
             raise SystemExit(f"export is outside the package's read and write targets: "
                              f"{relative}")
@@ -577,13 +592,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--max-packet-bytes", type=int, default=1_500_000)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--agent", type=str, default="unspecified")
+    parser.add_argument("--export-root", type=Path, default=None,
+                        help="read --file paths relative to this worktree inside the repository")
     parser.add_argument("--work-package", type=Path, default=None,
                         help="admit the call under a DELEG-11 work package")
     return parser.parse_args(argv)
 
 
-def main() -> int:
-    args = parse_args()
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
     if not SAFE_ID.fullmatch(args.task):
         raise SystemExit("--task must be a safe 1-100 character identifier")
     if not SAFE_ID.fullmatch(args.agent):

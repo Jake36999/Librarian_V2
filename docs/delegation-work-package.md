@@ -67,6 +67,38 @@ these findings:
 A refused change is not repaired by the worker. The lead may still land it by
 hand.
 
+**The controller** (DELEG-06) runs the whole worker-ownership loop:
+
+~~~text
+.venv/Scripts/python.exe scripts/delegation_controller.py PACKAGE.json BRIEF.txt
+    --model <id> --pool <pool> --total-budget-usd <pool budget> [--agent NAME] [--out-dir DIR]
+~~~
+
+1. Admit the package. Owner-host packages stay lead-led.
+2. Confirm that each protected fixture has its admitted hash at
+   `base_revision`, and that the interpreter and `pyproject.toml` hash match
+   `environment`.
+3. Create a detached worktree at the base inside `--out-dir`.
+4. Run the oracle and regression checks there, to confirm they fail or pass as
+   admitted. Otherwise escalate `ambiguity`.
+5. Ask the worker for complete replacement files in
+   `<<<FILE path>>>`…`<<<END FILE>>>` blocks. The call goes through the runner
+   with `--work-package` and `--export-root`, so the ledger, budget and call
+   limit apply.
+6. Write the files and run the diff-scope guard. Any finding rejects the
+   change.
+7. Run every declared check with the worktree's `src` first on `PYTHONPATH`.
+8. If a check fails, or the reply is truncated or has no file blocks, send the
+   failure back. This repeats for at most `max_repair_rounds`.
+9. On success, commit the candidate in the worktree. That commit is the
+   artifact.
+
+`package.json` in the out directory is the completed record. Every check result
+in it is `ran_by: controller`, and the logs sit beside it. The lead reviews
+the candidate commit, records the decision with `delegate_ledger.py accept`,
+lands the commit, and removes the worktree
+(`git worktree remove <out-dir>/worktree`).
+
 Field names follow the runtime harness (`audited-engagement-harness.md` §7.3
 `AuditedSubtaskContract` and §7.6 `ExecutionReport`/`AuditReport`). Keeping
 the names means HARNESS-02/05/07 can take this record over later, rather than

@@ -51,7 +51,7 @@ def run_args(tmp_path, **overrides):
         allow_stale_prices=False, ledger=tmp_path / "ledger.json",
         output_dir=tmp_path / "runs", key_file=tmp_path / ".env",
         max_file_bytes=500_000, max_packet_bytes=1_500_000, dry_run=False,
-        agent="test-agent", work_package=None,
+        agent="test-agent", work_package=None, export_root=None,
     )
     values.update(overrides)
     return Namespace(**values)
@@ -151,7 +151,7 @@ def test_instruction_file_read_and_secret_scanned(isolated, monkeypatch):
     secret_file = isolated / "secret_instruction.txt"
     secret_file.write_text('api_key = "this-is-a-secret-value"', encoding="utf-8")
     args = delegate.parse_args(base + ["--instruction-file", str(secret_file)])
-    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    monkeypatch.setattr(delegate, "parse_args", lambda argv=None: args)
     with pytest.raises(SystemExit, match="possible secret"):
         delegate.main()
 
@@ -281,7 +281,7 @@ def test_stale_rate_card_refuses_before_any_call(isolated, monkeypatch):
     monkeypatch.setitem(delegate.RATE_CARDS, MODEL,
                         {**delegate.RATE_CARDS[MODEL], "as_of": "2020-01-01"})
     args = run_args(isolated)
-    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    monkeypatch.setattr(delegate, "parse_args", lambda argv=None: args)
     with pytest.raises(SystemExit, match="check-prices"):
         delegate.main()
     assert calls == [] and not args.ledger.exists()
@@ -292,7 +292,7 @@ def test_stale_rate_card_refuses_before_any_call(isolated, monkeypatch):
 def test_main_makes_exactly_one_request_and_keeps_request_and_response(isolated, monkeypatch):
     calls = fake_provider(monkeypatch)
     args = run_args(isolated, pool="claude", task_id="DELEG-01", role="drafter", parent_run="r0")
-    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    monkeypatch.setattr(delegate, "parse_args", lambda argv=None: args)
 
     assert delegate.main() == 0
     assert len(calls) == 1
@@ -315,7 +315,7 @@ def test_truncated_reply_exits_non_zero_unless_allowed(isolated, monkeypatch):
              "usage": {"prompt_tokens": 10, "completion_tokens": 100}}
     fake_provider(monkeypatch, reply=reply)
     args = run_args(isolated)
-    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    monkeypatch.setattr(delegate, "parse_args", lambda argv=None: args)
     assert delegate.main() == 3
     call = load(args.ledger)["calls"][0]
     assert call["status"] == "completed" and call["truncated"] is True
@@ -329,7 +329,7 @@ def test_definite_provider_rejection_costs_nothing(isolated, monkeypatch):
     error = _provider_error(urllib.error.HTTPError("u", 400, "bad", {}, None))
     fake_provider(monkeypatch, error=error)
     args = run_args(isolated)
-    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    monkeypatch.setattr(delegate, "parse_args", lambda argv=None: args)
     with pytest.raises(delegate.providers.ProviderError):
         delegate.main()
     call = load(args.ledger)["calls"][0]
@@ -340,7 +340,7 @@ def test_interrupted_call_keeps_its_reserve_and_blocks_a_repeat(isolated, monkey
     """E14 in miniature: an interrupt neither loses the charge nor repeats the call."""
     calls = fake_provider(monkeypatch, error=KeyboardInterrupt())
     args = run_args(isolated)
-    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    monkeypatch.setattr(delegate, "parse_args", lambda argv=None: args)
     with pytest.raises(KeyboardInterrupt):
         delegate.main()
     call = load(args.ledger)["calls"][0]
@@ -368,7 +368,7 @@ def test_crash_after_the_reply_is_reconciled_from_the_saved_response(isolated, m
 
     monkeypatch.setattr(delegate, "atomic_text", disk_failure)
     args = run_args(isolated)
-    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    monkeypatch.setattr(delegate, "parse_args", lambda argv=None: args)
     with pytest.raises(OSError):
         delegate.main()
     call = load(args.ledger)["calls"][0]
@@ -387,7 +387,7 @@ def test_crash_after_the_reply_is_reconciled_from_the_saved_response(isolated, m
 def test_dry_run_writes_nothing(isolated, monkeypatch):
     calls = fake_provider(monkeypatch)
     args = run_args(isolated, dry_run=True)
-    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    monkeypatch.setattr(delegate, "parse_args", lambda argv=None: args)
     assert delegate.main() == 0
     assert calls == [] and not args.ledger.exists() and not args.output_dir.exists()
 
@@ -410,7 +410,7 @@ def test_a_work_package_binds_the_call_and_records_conformance(isolated, monkeyp
     calls = fake_provider(monkeypatch)
     path, wp = work_package(isolated)
     args = run_args(isolated, work_package=path, file=["module.py"])
-    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    monkeypatch.setattr(delegate, "parse_args", lambda argv=None: args)
 
     assert delegate.main() == 0
     assert len(calls) == 1
@@ -429,7 +429,7 @@ def test_a_failing_package_is_refused_before_any_call(isolated, monkeypatch):
     wp["admission"]["roles"]["reviewer_model"] = "deepseek-ai/DeepSeek-V4.1-Flash"
     path.write_text(json.dumps(wp), encoding="utf-8")
     args = run_args(isolated, work_package=path)
-    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    monkeypatch.setattr(delegate, "parse_args", lambda argv=None: args)
     with pytest.raises(SystemExit, match="same model family"):
         delegate.main()
     assert calls == [] and not args.ledger.exists()
@@ -445,17 +445,35 @@ def test_a_call_outside_the_package_is_refused(isolated, monkeypatch, overrides,
     calls = fake_provider(monkeypatch)
     path, _ = work_package(isolated)
     args = run_args(isolated, work_package=path, **overrides)
-    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    monkeypatch.setattr(delegate, "parse_args", lambda argv=None: args)
     with pytest.raises(SystemExit, match=message):
         delegate.main()
     assert calls == []
+
+
+def test_exports_can_come_from_a_worktree_inside_the_repository(isolated, monkeypatch):
+    worktree = delegate.REPOSITORY / "tmp" / "wt"
+    worktree.mkdir(parents=True)
+    (worktree / "module.py").write_text("x = 2\n", encoding="utf-8")
+    calls = fake_provider(monkeypatch)
+    path, _ = work_package(isolated)
+    args = run_args(isolated, work_package=path, file=["module.py"], export_root=worktree)
+    monkeypatch.setattr(delegate, "parse_args", lambda argv=None: args)
+    assert delegate.main() == 0
+    content = calls[0]["messages"][-1]["content"]
+    assert '<file path="module.py">' in content and "x = 2" in content
+
+    args.export_root = isolated  # the repository's parent: outside it
+    args.instruction = "another request"
+    with pytest.raises(SystemExit, match="--export-root must be inside the repository"):
+        delegate.main()
 
 
 def test_the_package_call_limit_escalates(isolated, monkeypatch):
     calls = fake_provider(monkeypatch)
     path, _ = work_package(isolated, max_calls=1)
     args = run_args(isolated, work_package=path)
-    monkeypatch.setattr(delegate, "parse_args", lambda: args)
+    monkeypatch.setattr(delegate, "parse_args", lambda argv=None: args)
     assert delegate.main() == 0
     args.instruction = "A different request"
     with pytest.raises(SystemExit, match="task call limit"):
