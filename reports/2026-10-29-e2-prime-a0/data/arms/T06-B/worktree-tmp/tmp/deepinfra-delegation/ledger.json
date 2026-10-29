@@ -1,0 +1,35 @@
+{
+  "schema": 2,
+  "pools": {
+    "claude": {
+      "budget_usd": 8.0,
+      "committed_usd": 0.0287716
+    }
+  },
+  "calls": [
+    {
+      "run_id": "20261029T121115-fe133e22",
+      "pool": "claude",
+      "task": "E2-T06-draft",
+      "task_id": "E2-T06-B",
+      "role": "drafter",
+      "agent": "unspecified",
+      "host": "Main-Bedroom-PC",
+      "parent_run": "",
+      "model": "deepseek-ai/DeepSeek-V4-Pro",
+      "request_sha256": "25d2b8587597142a838ef15ce8db672e06a27abaa1de8619fae5f77bad691879",
+      "started_at": "2026-10-29T12:11:15.669920Z",
+      "timeout_s": 180,
+      "attempt": 1,
+      "status": "completed",
+      "acceptance": "not_reviewed",
+      "acceptance_commit": "",
+      "acceptance_by": "",
+      "reserve_usd": 0.0503399,
+      "charged_usd": 0.0287716,
+      "cost_basis": "metered_estimate",
+      "truncated": false,
+      "receipt": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\C--Users-jakem-Librarian-E2-T06-B\\cd0dca25-563b-4ca9-9e79-3bc67debc9e5\\scratchpad\\out\\20261029T121115-fe133e22-E2-T06-draft.receipt.json"
+    }
+  ]
+}

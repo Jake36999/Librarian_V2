@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "admission": {
+    "package_id": "E2-T06-C-wp1",
+    "task_id": "E2-T06-C",
+    "objective": "Turn validate_release_lead() in src/resource_librarian/hosts.py into an ordered table of named private checks evaluated by a short loop, keeping the first-failure message and all behaviour.",
+    "class": "implementation",
+    "base_revision": "53ffc2ab4390a4f0e489876595ba5ff2834c02d7",
+    "write_targets": [
+      "src/resource_librarian/hosts.py"
+    ],
+    "read_targets": [
+      "src/resource_librarian/hosts.py",
+      "tests/e2/test_T06_characterization.py",
+      "tests/e2/test_T06_structure.py"
+    ],
+    "forbidden_targets": [
+      "tests/",
+      "docs/",
+      "scripts/"
+    ],
+    "protected_targets": [
+      {
+        "path": "tests/e2/test_T06_characterization.py",
+        "sha256": "7ab5fee03052ebf0ecf39deeee00c281b6bce597d2be3674a65ad4fc003a554e"
+      },
+      {
+        "path": "tests/e2/test_T06_structure.py",
+        "sha256": "c6cddae1f5d7fedaafd6e2de5bd948f11cd0ddf060c0146eca15b76439b170a1"
+      }
+    ],
+    "preserve": [
+      "validate_release_lead returns exactly the same (ok, message) for every input, including which failure is reported first.",
+      "The signature of validate_release_lead, the module's public names and its classes' public methods do not change."
+    ],
+    "checks": [
+      {
+        "id": "structure",
+        "command": ".venv/Scripts/python.exe -m pytest tests/e2/test_T06_structure.py -q",
+        "kind": "oracle",
+        "expected_before": "fail",
+        "covers": [
+          "P2-runs",
+          "P3-shape"
+        ]
+      },
+      {
+        "id": "characterization",
+        "command": ".venv/Scripts/python.exe -m pytest tests/e2/test_T06_characterization.py -q",
+        "kind": "oracle",
+        "expected_before": "pass",
+        "covers": [
+          "P1-behaviour"
+        ]
+      },
+      {
+        "id": "suite",
+        "command": ".venv/Scripts/python.exe -m pytest -q",
+        "kind": "suite",
+        "expected_before": "pass",
+        "covers": [
+          "P4-integrates"
+        ]
+      }
+    ],
+    "acceptance_predicates": [
+      {
+        "id": "P1-behaviour",
+        "kind": "behaviour",
+        "text": "validate_release_lead gives the same result and first-failure message for every characterised input."
+      },
+      {
+        "id": "P2-runs",
+        "kind": "applies_runs",
+        "text": "The patch applies at base_revision and hosts.py imports."
+      },
+      {
+        "id": "P3-shape",
+        "kind": "behaviour",
+        "text": "validate_release_lead is at most 45 lines, every other function stays within its limit, and public names and the signature are unchanged."
+      },
+      {
+        "id": "P4-integrates",
+        "kind": "integrates",
+        "text": "The full suite passes."
+      }
+    ],
+    "environment": {
+      "python": "3.11.3",
+      "venv": ".venv",
+      "dependency_sha256": "593c30464f5620a92147b749d1d0354495bcbd13ff46dda22e3c95130e5710b3"
+    },
+    "owner_host_gate": false,
+    "roles": {
+      "drafter_model": "deepseek-ai/DeepSeek-V4-Pro",
+      "reviewer_model": "anthropic/claude (lead review)",
+      "merge_owner": "Jake36999"
+    },
+    "budget": {
+      "pool": "claude",
+      "task_usd": 0.5,
+      "max_calls": 3,
+      "max_repair_rounds": 2,
+      "wall_clock_s": 2400
+    },
+    "stop_conditions": [
+      "A test file would need to change.",
+      "Two repair rounds fail."
+    ],
+    "documentation_consequence": "None; an internal refactor with no documented surface."
+  },
+  "escalation": {
+    "reason": "repeated_failure",
+    "detail": "--max-output-tokens must be between 1 and 16384\n"
+  },
+  "resume": {
+    "last_good_artifact": "53ffc2ab4390a4f0e489876595ba5ff2834c02d7",
+    "open_run_ids": [],
+    "next_action": "Escalated (repeated_failure): read the logs in C:\\Users\\jakem\\Librarian-E2\\T06-C\\tmp\\e2-T06-C\\run1, reconcile any open runs, then retry with a revised brief, re-scope, or do it directly."
+  },
+  "execution": {
+    "controller": "controller",
+    "repair_rounds": 0,
+    "worktree": "C:\\Users\\jakem\\Librarian-E2\\T06-C\\tmp\\e2-T06-C\\run1\\worktree"
+  },
+  "completion": {
+    "artifact": {
+      "kind": "patch",
+      "ref": ""
+    },
+    "base_revision": "53ffc2ab4390a4f0e489876595ba5ff2834c02d7",
+    "changed_files": [],
+    "protected_targets_intact": true,
+    "check_results": [],
+    "predicates": {
+      "P1-behaviour": "not_checked",
+      "P2-runs": "not_checked",
+      "P3-shape": "not_checked",
+      "P4-integrates": "not_checked"
+    },
+    "run_ids": [],
+    "cost_usd": 0.0,
+    "repair_rounds": 0,
+    "unresolved_findings": [],
+    "declared_gaps": [
+      "cost_usd is 0.0; the lead fills it from the ledger"
+    ],
+    "proposed_disposition": "escalate",
+    "recorded_by": "delegation-controller"
+  }
+}

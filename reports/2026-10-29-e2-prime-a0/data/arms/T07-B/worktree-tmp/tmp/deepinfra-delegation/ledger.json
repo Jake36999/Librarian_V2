@@ -1,0 +1,35 @@
+{
+  "schema": 2,
+  "pools": {
+    "claude": {
+      "budget_usd": 8.0,
+      "committed_usd": 0.0037413
+    }
+  },
+  "calls": [
+    {
+      "run_id": "20261029T131015-054823e8",
+      "pool": "claude",
+      "task": "E2-T07",
+      "task_id": "E2-T07-B",
+      "role": "drafter",
+      "agent": "unspecified",
+      "host": "Main-Bedroom-PC",
+      "parent_run": "",
+      "model": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+      "request_sha256": "d77f163a16af19e334a75cd99adae6b0be5a70932a1adc0ad7dd015296670172",
+      "started_at": "2026-10-29T13:10:15.712239Z",
+      "timeout_s": 180,
+      "attempt": 1,
+      "status": "completed",
+      "acceptance": "not_reviewed",
+      "acceptance_commit": "",
+      "acceptance_by": "",
+      "reserve_usd": 0.0093672,
+      "charged_usd": 0.0037413,
+      "cost_basis": "metered_estimate",
+      "truncated": false,
+      "receipt": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\C--Users-jakem-Librarian-E2-T07-B\\8aee8aa8-87c9-4ee2-bba3-89649ef67455\\scratchpad\\out\\20261029T131015-054823e8-E2-T07.receipt.json"
+    }
+  ]
+}

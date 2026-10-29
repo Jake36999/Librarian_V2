@@ -1,0 +1,67 @@
+{
+  "schema": 2,
+  "run_id": "20261029T131015-054823e8",
+  "provider": "deepinfra",
+  "endpoint": "/v1/openai/chat/completions",
+  "started_at": "2026-10-29T13:10:15.712239Z",
+  "pool": "claude",
+  "task_id": "E2-T07-B",
+  "role": "drafter",
+  "parent_run": "",
+  "host": "Main-Bedroom-PC",
+  "attempt": 1,
+  "timeout_s": 180,
+  "request_path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\C--Users-jakem-Librarian-E2-T07-B\\8aee8aa8-87c9-4ee2-bba3-89649ef67455\\scratchpad\\out\\20261029T131015-054823e8-E2-T07.request.json",
+  "request_sha256": "d77f163a16af19e334a75cd99adae6b0be5a70932a1adc0ad7dd015296670172",
+  "response_path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\C--Users-jakem-Librarian-E2-T07-B\\8aee8aa8-87c9-4ee2-bba3-89649ef67455\\scratchpad\\out\\20261029T131015-054823e8-E2-T07.response.json",
+  "route": {
+    "provider": "deepinfra",
+    "base_url": "https://api.deepinfra.com/v1/openai",
+    "endpoint": "/v1/openai/chat/completions",
+    "adapter": "OpenAIChatAdapter",
+    "model": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo"
+  },
+  "charged_usd": 0.0037413,
+  "cost_basis": "metered_estimate",
+  "rate_card_age_days": 1,
+  "work_package": null,
+  "truncated": false,
+  "task": "E2-T07",
+  "lens": "correctness",
+  "model": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+  "agent": "unspecified",
+  "manifest": [
+    {
+      "path": "src/resource_librarian/registry.py",
+      "bytes": 35769,
+      "sha256": "4c82627f331594595d925c130e20849a408f724eaa99d64640c5190ac1a92946"
+    }
+  ],
+  "packet_sha256": "edc3cec208ba76326b360ffb4277d797c42a4c66becf61b499f5d34097d7e799",
+  "estimated_input_tokens": 11224,
+  "max_output_tokens": 6000,
+  "preflight_reserve_usd": 0.0093672,
+  "budget_usd": 8.0,
+  "rate_card": {
+    "input_per_1m": 0.3,
+    "output_per_1m": 1.0,
+    "source": "https://deepinfra.com/pricing",
+    "as_of": "2026-10-28"
+  },
+  "key_source": "transient file injection",
+  "status": "completed",
+  "completed_at": "2026-10-29T13:10:39.966635Z",
+  "latency_ms": 24221,
+  "request_id": "R6BdBakIOlJim3m3UvSfUpIG",
+  "model_returned": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+  "finish_reason": "stop",
+  "usage": {
+    "input_tokens": 8331,
+    "output_tokens": 1242,
+    "total_tokens": 9573
+  },
+  "estimated_cost_usd": 0.0037413,
+  "output_path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\C--Users-jakem-Librarian-E2-T07-B\\8aee8aa8-87c9-4ee2-bba3-89649ef67455\\scratchpad\\out\\20261029T131015-054823e8-E2-T07.md",
+  "output_sha256": "ad28c88beea2347150e4d2946860bca3a02422edc07ff937dcdb19a8afd21c51",
+  "output_chars": 4914
+}

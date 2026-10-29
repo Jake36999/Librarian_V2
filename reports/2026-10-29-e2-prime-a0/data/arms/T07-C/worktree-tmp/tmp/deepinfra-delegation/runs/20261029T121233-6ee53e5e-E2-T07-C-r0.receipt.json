@@ -1,0 +1,97 @@
+{
+  "schema": 2,
+  "run_id": "20261029T121233-6ee53e5e",
+  "provider": "deepinfra",
+  "endpoint": "/v1/openai/chat/completions",
+  "started_at": "2026-10-29T12:12:33.698037Z",
+  "pool": "claude",
+  "task_id": "E2-T07-C",
+  "role": "drafter",
+  "parent_run": "",
+  "host": "Main-Bedroom-PC",
+  "attempt": 1,
+  "timeout_s": 900.0,
+  "request_path": "C:\\Users\\jakem\\Librarian-E2\\T07-C\\tmp\\deepinfra-delegation\\runs\\20261029T121233-6ee53e5e-E2-T07-C-r0.request.json",
+  "request_sha256": "d47044f9f944714ed332570c0b9f0f468095b5031728e5720cfbc26eda5ee502",
+  "response_path": "C:\\Users\\jakem\\Librarian-E2\\T07-C\\tmp\\deepinfra-delegation\\runs\\20261029T121233-6ee53e5e-E2-T07-C-r0.response.json",
+  "route": {
+    "provider": "deepinfra",
+    "base_url": "https://api.deepinfra.com/v1/openai",
+    "endpoint": "/v1/openai/chat/completions",
+    "adapter": "OpenAIChatAdapter",
+    "model": "deepseek-ai/DeepSeek-V4-Pro"
+  },
+  "charged_usd": 0.0381368,
+  "cost_basis": "metered_estimate",
+  "rate_card_age_days": 1,
+  "work_package": {
+    "path": "tmp\\e2-t07-c\\package.json",
+    "sha256": "669ba40895354ad00b19ea7394b0da73de445b88a003dc3373db3339b70376b6",
+    "package_id": "E2-T07-C",
+    "max_calls": 3,
+    "conformance": {
+      "fields": {
+        "task_and_objective": true,
+        "allowed_and_forbidden_files": true,
+        "behaviour_to_preserve": true,
+        "venv_test_command": true,
+        "expected_failure_before": true,
+        "acceptance_tests": true,
+        "documentation_consequence": true,
+        "models_and_merge_owner": true,
+        "budget": true
+      },
+      "present": 9,
+      "total": 9
+    }
+  },
+  "truncated": false,
+  "task": "E2-T07-C-r0",
+  "lens": "correctness",
+  "model": "deepseek-ai/DeepSeek-V4-Pro",
+  "agent": "controller",
+  "manifest": [
+    {
+      "path": "src/resource_librarian/registry.py",
+      "bytes": 35769,
+      "sha256": "4c82627f331594595d925c130e20849a408f724eaa99d64640c5190ac1a92946"
+    },
+    {
+      "path": "tests/e2/test_T07_characterization.py",
+      "bytes": 9829,
+      "sha256": "12d3b14bf7a55b6c93e248231f9d2b8aa3e0e29268c6e04f8b2ccdbe42a3718a"
+    },
+    {
+      "path": "tests/e2/test_T07_structure.py",
+      "bytes": 4269,
+      "sha256": "6c4c17619c4678788df742699688e5b66369a92705011edc8b18b7e350b261ba"
+    }
+  ],
+  "packet_sha256": "5735cc03a2b201dfdbf8860240908958dbbf103f7219d48a75b8468f49e84db7",
+  "estimated_input_tokens": 15752,
+  "max_output_tokens": 12000,
+  "preflight_reserve_usd": 0.0516776,
+  "budget_usd": 8.0,
+  "rate_card": {
+    "input_per_1m": 1.3,
+    "output_per_1m": 2.6,
+    "source": "https://deepinfra.com/pricing",
+    "as_of": "2026-10-28"
+  },
+  "key_source": "transient file injection",
+  "status": "completed",
+  "completed_at": "2026-10-29T12:13:17.815272Z",
+  "latency_ms": 44093,
+  "request_id": "R7s1KrV3Syinb0xhfxuDHn55",
+  "model_returned": "deepseek-ai/DeepSeek-V4-Pro",
+  "finish_reason": "stop",
+  "usage": {
+    "input_tokens": 12674,
+    "output_tokens": 8331,
+    "total_tokens": 21005
+  },
+  "estimated_cost_usd": 0.0381368,
+  "output_path": "C:\\Users\\jakem\\Librarian-E2\\T07-C\\tmp\\deepinfra-delegation\\runs\\20261029T121233-6ee53e5e-E2-T07-C-r0.md",
+  "output_sha256": "cb363e1f2834d3e3c803b231a0fc59dbf394c984af6a8ed0aa0d849e070dfa5d",
+  "output_chars": 35586
+}

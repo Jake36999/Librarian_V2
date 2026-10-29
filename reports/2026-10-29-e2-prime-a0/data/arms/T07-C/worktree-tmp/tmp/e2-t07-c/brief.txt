@@ -1,0 +1,27 @@
+TASK E2-T07-C: refactor `coerce` in src/resource_librarian/registry.py. Behaviour must not change.
+
+Goal: `coerce` becomes a short function (at most 35 lines including its def line and docstring) that
+validates unknown/missing arguments as now, then loops over the arguments and dispatches each value
+to a private per-type helper by the schema's "type": boolean, integer, number, array, object, and a
+default text/string helper (which also handles "enum"). Suggested shape:
+
+    def _coerce_boolean(key, value, schema, changed) -> Any
+    def _coerce_integer(key, value, schema, changed) -> int
+    def _coerce_number(key, value, schema, changed) -> float
+    def _coerce_array(key, value, schema, changed) -> list
+    def _coerce_object(key, value, schema, changed) -> dict
+    def _coerce_text(key, value, schema, changed) -> str
+    _COERCERS = {"boolean": _coerce_boolean, ...}
+
+and in the loop: `out[key] = _COERCERS.get(schema.get("type"), _coerce_text)(key, value, schema, changed)`.
+Each helper appends to `changed` exactly the same messages, in the same order, as the current branch,
+and raises exactly the same TypeError. Move each branch's body verbatim apart from the
+`out[key] = ...` assignments becoming returns. Keep the docstring of coerce (you may shorten it only
+if needed to fit 35 lines; prefer keeping it).
+
+Constraints (checked by tests/e2/test_T07_structure.py and tests/e2/test_T07_characterization.py,
+which you must not edit):
+- coerce's signature stays `(spec: ToolSpec, arguments: dict[str, Any]) -> tuple[dict[str, Any], list[str]]`.
+- New names must start with an underscore; no public name is added or removed.
+- Every new helper is at most 35 lines. No existing function may get longer.
+- Change nothing else in the file.

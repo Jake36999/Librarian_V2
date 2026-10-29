@@ -159,3 +159,10 @@ direct work.
 | `data/fast_checks.json` | Per-arm scope, protected hashes, oracle and characterization, held-out results |
 | `data/suites.json` | Full-suite result per arm at its final commit |
 | `data/review_scores.json`, `data/review_key.json` | Blinded review scores and the unblinding key |
+| `data/arms/<task>-<arm>/` | The evidence that existed only as untracked files: each arm's DeepInfra ledger, the B arms' receipts, requests and responses (from their session scratchpads), and arm C's packages, briefs, controller records and logs |
+
+**Kept after clean-up.** The arm worktrees and sessions were removed and
+archived on 2026-10-29. The final commits stay on the `e2/run/<task>-<arm>`
+branches and the bases on `e2/base/<task>`. The lead logs that the meter reads
+remain under `~/.claude/projects/C--Users-jakem-Librarian-E2-<task>-<arm>/`,
+and the held-out cases remain in `C:\Users\jakem\Librarian-E2-holdout\`.

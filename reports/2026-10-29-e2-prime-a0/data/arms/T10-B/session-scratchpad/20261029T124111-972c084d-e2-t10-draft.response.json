@@ -1,0 +1,35 @@
+{
+  "request_id": "RdSRpWAT9Qc7OFCfNGImTeMY",
+  "received_at": "2026-10-29T12:41:20.779723Z",
+  "body": {
+    "service_tier": "default",
+    "id": "chatcmpl-RdSRpWAT9Qc7OFCfNGImTeMY",
+    "object": "chat.completion",
+    "created": 1793277673,
+    "model": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef _adapter_contract(summary: dict | None) -> dict[str, Any]:\n    \"\"\"Build adapter contract dict from summary, or return unresolved defaults.\"\"\"\n    if summary is None:\n        return {\n            \"id\": \"unresolved\", \"version\": \"\", \"abi\": 0, \"protocol\": \"\",\n            \"expectation_id\": \"\", \"expectation_fingerprint\": \"\", \"expectation_status\": \"unreviewed\",\n        }\n    expected = summary.get(\"expectation\") if isinstance(summary.get(\"expectation\"), dict) else {}\n    return {\n        \"id\": str(summary.get(\"id\") or \"\"),\n        \"version\": str(summary.get(\"version\") or \"\"),\n        \"abi\": int(summary.get(\"abi\") or 0),\n        \"protocol\": str(summary.get(\"protocol\") or \"\"),\n        \"expectation_id\": str(expected.get(\"id\") or \"\"),\n        \"expectation_fingerprint\": str(expected.get(\"fingerprint\") or \"\"),\n        \"expectation_status\": str(expected.get(\"status\") or \"unreviewed\"),\n    }\n\n\ndef _route_fingerprints(*, model: str, endpoint: dict, profile: dict, adapter_contract: dict,\n                        secret_source: str, reply_length: str, bundles: dict, macros: dict) -> dict[str, str]:\n    \"\"\"Pure function to compute route fingerprints from explicit inputs.\"\"\"\n    schemas = [{\"name\": spec.name, \"tier\": spec.tier, \"effect\": spec.effect,\n                \"schema\": spec.json_schema()}\n               for spec in sorted(REGISTRY.for_tier(\"curate\"), key=lambda x: x.name)]\n    return fingerprints(\n        protocol=PROTOCOL_VERSION, tool_schema=schemas,\n        response_contract={\n            \"tool_call_id\": \"string\", \"arguments\": \"object\",\n            \"adapter_contract\": adapter_contract,\n            \"l1_probe\": {\n                \"version\": L1_PROBE_CONTRACT_VERSION,\n                \"calls\": \"exactly_one:librarian_probe\",\n                \"arguments\": {\"ok\": True},\n                \"returned_model\": \"exact_requested_model\",\n            },\n        },\n        endpoint=endpoint, model=model,\n        security_policy={\"registry\": \"closed\", \"no_silent_failover\": True,\n                         \"secret_source\": secret_source},\n        prompt_bundle={\"loop_base\": \"v2\", \"reply_length\": reply_length},\n        profile=profile,\n        bundle={name: list(row.names) for name, row in bundles.items()},\n        macros={name: {\"version\": row.version, \"steps\": [step.tool for step in row.steps]}\n                for name, row in macros.items()})\n\n\ndef _qualification_fingerprints(self, host_id: str, model: str, role: str) -> dict[str, str]:\n    \"\"\"Dependency evidence for a route, split into hard and soft inputs.\"\"\"\n    from .agent_runtime import BUNDLES, MACROS\n    try:\n        host = self.hosts.get(host_id)\n        endpoint = {\"protocol\": host.protocol, \"fingerprint\": host.endpoint_fingerprint}\n    except KeyError:\n        # Legacy provider routes remain supported through 2.x; their\n        # preset is a stable endpoint dependency too.\n        preset = PRESETS.get(host_id, {})\n        endpoint = {\"protocol\": preset.get(\"protocol\", \"\"), \"base_url\": preset.get(\"base_url\", \"\")}\n    try:\n        profile = self.profiles.get(role).public()\n    except (KeyError, ValueError):\n        profile = {\"id\": role}\n    # The adapter and the exact model expectation are part of the wire /\n    # parser contract, not presentation metadata.  A changed adapter ABI,\n    # protocol renderer, endpoint identity, or exact capability record\n    # therefore produces a hard qualification fingerprint.  Do this\n    # passively: constructing a configured provider reads no secret and\n    # does not discover models or make a paid probe.\n    adapter_contract = _adapter_contract(None)\n    try:\n        provider = self._configured_provider({\"host_id\": host_id, \"model\": model})\n        if provider is not None:\n            summary = self.invocation_runtime.adapter_summary(provider, model_id=model)\n            adapter_contract = _adapter_contract(summary)\n    except (KeyError, ProviderError, ValueError):\n        # Legacy/malformed routes are still fingerprinted from their\n        # endpoint/model below.  Their unresolved adapter state cannot\n        # masquerade as compatible evidence.\n        pass\n    return _route_fingerprints(\n        model=model, endpoint=endpoint, profile=profile, adapter_contract=adapter_contract,\n        secret_source=self.secret_source, reply_length=self.settings.data.get(\"reply_length\", \"\"),\n        bundles=BUNDLES, macros=MACROS)\n```",
+          "reasoning_content": null,
+          "name": null,
+          "tool_calls": []
+        },
+        "finish_reason": "stop",
+        "logprobs": null
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1387,
+      "total_tokens": 2348,
+      "completion_tokens": 961,
+      "estimated_cost": 0.0013771,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": null
+      }
+    }
+  }
+}

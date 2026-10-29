@@ -1,0 +1,35 @@
+{
+  "request_id": "R6BdBakIOlJim3m3UvSfUpIG",
+  "received_at": "2026-10-29T13:10:39.957609Z",
+  "body": {
+    "service_tier": "default",
+    "id": "chatcmpl-R6BdBakIOlJim3m3UvSfUpIG",
+    "object": "chat.completion",
+    "created": 1793279417,
+    "model": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef coerce(spec: ToolSpec, arguments: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:\n    \"\"\"Bring arguments to their declared types and inside the declared bounds.\n\n    Unknown argument names are refused rather than dropped: a caller that\n    misspells a constraint should hear about it, not get an undifferentiated\n    answer that looks constrained. Reads `spec.json_schema()` throughout, so\n    an external tool (whose schema comes from the server, not from `fn`'s own\n    type hints) is coerced exactly the same way a vault tool is.\n    \"\"\"\n    schema_obj = spec.json_schema()\n    properties = schema_obj.get(\"properties\", {})\n    unknown = sorted(set(arguments) - set(properties))\n    if unknown:\n        raise TypeError(f\"unknown argument(s) {unknown}; accepted: {sorted(properties)}\")\n    # A normal tool's own function raises on a missing required argument, so\n    # this was previously enforced only by accident; an external tool's `fn`\n    # is a generic `**kwargs` bridge that would accept anything silently.\n    missing = sorted(k for k in schema_obj.get(\"required\", []) if k not in arguments)\n    if missing:\n        raise TypeError(f\"missing required argument(s) {missing}\")\n    out: dict[str, Any] = {}\n    changed: list[str] = []\n    for key, value in arguments.items():\n        schema = properties[key]\n        kind = schema.get(\"type\")\n        coercer = _COERCERS.get(kind, _coerce_text)\n        out[key] = coercer(key, value, schema, changed)\n    return out, changed\n\n\ndef _coerce_boolean(key: str, value: Any, schema: dict[str, Any], changed: list[str]) -> bool:\n    if isinstance(value, str):\n        result = value.strip().lower() in (\"true\", \"yes\", \"1\", \"on\")\n        changed.append(f\"{key} was text, read as a flag\")\n        return result\n    return bool(value)\n\n\ndef _coerce_integer(key: str, value: Any, schema: dict[str, Any], changed: list[str]) -> int:\n    try:\n        number = int(value)\n    except (TypeError, ValueError):\n        number = MAX_LIMIT if key == \"limit\" else 0\n        changed.append(f\"{key} was not a number\")\n    if key == \"limit\" or key.endswith(\"_limit\"):\n        bounded = max(1, min(MAX_LIMIT, number))\n        if bounded != number:\n            changed.append(f\"{key} {number} clamped to {bounded}\")\n        number = bounded\n    return number\n\n\ndef _coerce_number(key: str, value: Any, schema: dict[str, Any], changed: list[str]) -> float:\n    try:\n        return float(value)\n    except (TypeError, ValueError):\n        changed.append(f\"{key} was not a number\")\n        return 0.0\n\n\ndef _coerce_array(key: str, value: Any, schema: dict[str, Any], changed: list[str]) -> list[Any]:\n    parsed = _literal(value, list)\n    if isinstance(value, list):\n        items = value\n    elif value is None:\n        items = []\n    elif parsed is not None:\n        items = parsed\n        changed.append(f\"{key} was a list written as text, read as the list\")\n    elif isinstance(value, str):\n        items = [value]\n        changed.append(f\"{key} was text, read as a one-item list\")\n    else:\n        items = []\n        changed.append(f\"{key} was not a list\")\n    if len(items) > MAX_ITEMS:\n        changed.append(f\"{key} truncated from {len(items)} items\")\n        items = items[:MAX_ITEMS]\n    return [m[:MAX_ITEM_TEXT] if isinstance(m, str) else m for m in items]\n\n\ndef _coerce_object(key: str, value: Any, schema: dict[str, Any], changed: list[str]) -> dict[str, Any]:\n    parsed = _literal(value, dict)\n    if parsed is not None:\n        changed.append(f\"{key} was an object written as text, read as the object\")\n        return parsed\n    if value is None or isinstance(value, dict):\n        if value is not None and not isinstance(value, dict):\n            changed.append(f\"{key} was not an object\")\n        return value if isinstance(value, dict) else {}\n    changed.append(f\"{key} was not an object\")\n    return {}\n\n\ndef _coerce_text(key: str, value: Any, schema: dict[str, Any], changed: list[str]) -> str:\n    text = \"\" if value is None else str(value)\n    if not isinstance(value, str) and value is not None:\n        changed.append(f\"{key} was {type(value).__name__}, read as text\")\n    if len(text) > MAX_TEXT:\n        changed.append(f\"{key} truncated from {len(text)} characters\")\n        text = text[:MAX_TEXT]\n    text = \"\".join(c for c in text if c >= \" \" or c in \"\\n\\t\")\n    if \"enum\" in schema and text not in schema[\"enum\"]:\n        wanted = _enum_key(text)\n        matches = [v for v in schema[\"enum\"] if _enum_key(str(v)) == wanted]\n        if len(matches) != 1:\n            raise TypeError(f\"{key}={clip(text, 60)!r} is not one of {schema['enum']}\")\n        changed.append(f\"{key} {clip(text, 40)!r} read as {matches[0]!r}\")\n        text = matches[0]\n    return text\n\n\n_COERCERS = {\n    \"boolean\": _coerce_boolean,\n    \"integer\": _coerce_integer,\n    \"number\": _coerce_number,\n    \"array\": _coerce_array,\n    \"object\": _coerce_object,\n}\n```",
+          "reasoning_content": null,
+          "name": null,
+          "tool_calls": []
+        },
+        "finish_reason": "stop",
+        "logprobs": null
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 8331,
+      "total_tokens": 9573,
+      "completion_tokens": 1242,
+      "estimated_cost": 0.0037413000000000004,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": null
+      }
+    }
+  }
+}

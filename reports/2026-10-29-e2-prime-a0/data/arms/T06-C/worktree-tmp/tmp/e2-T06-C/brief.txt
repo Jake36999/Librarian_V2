@@ -1,0 +1,19 @@
+Refactor validate_release_lead() in src/resource_librarian/hosts.py. Behaviour must not change at all.
+
+Goal: replace the long run of if/return statements with an ordered table (a module-level tuple) of named private check functions, evaluated by a short loop in validate_release_lead that returns the first failure:
+
+    for check in _RELEASE_LEAD_CHECKS:
+        failure = check(lead, ...)
+        if failure:
+            return False, failure
+    return True, ""
+
+Rules:
+- Each check is a private function (name starts with an underscore) that returns "" when it passes, or the exact failure message the current code returns. Keep the checks in exactly the current order, so the first failure reported is unchanged. Copy every message string exactly.
+- Checks that need the current time or the contract must receive them; compute `current_time = now or datetime.now(timezone.utc)` once in validate_release_lead and pass it in. Keep `contract is None -> return True, ""` semantics: the contract-compatibility checks run only when a contract is given, after all lead checks pass.
+- Preserve every subtle detail: str() coercions, .strip() tests, hmac.compare_digest, the int(l3_runs or 0) fallback to 0 on TypeError/ValueError, rstrip("/") on base_url, the core_version exact-vs-range logic, the `isinstance(lead, dict)` check coming first.
+- validate_release_lead must be at most 45 lines including its def line and docstring (keep the docstring). No new helper may exceed 45 lines. Do not change its signature: (lead: dict[str, Any], *, contract: dict[str, Any] | None = None, now: datetime | None = None) -> tuple[bool, str].
+- Add no public (non-underscore) module-level names. Do not change anything else in the file.
+- Match the surrounding style: type hints, short docstrings or none, no new imports unless needed.
+
+Return the complete replacement of src/resource_librarian/hosts.py.

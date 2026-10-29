@@ -1,0 +1,28 @@
+FF...                                                                    [100%]
+================================== FAILURES ===================================
+______________________ test_the_body_is_split_not_moved _______________________
+
+    def test_the_body_is_split_not_moved():
+        for name, length in _function_lines(_tree()).items():
+            allowed = max(BASE_FUNCTION_LINES.get(name, 0), MAX_LINES)
+            if name == TARGET:
+                allowed = MAX_LINES
+>           assert length <= allowed, f"{name} is {length} lines; at most {allowed} allowed"
+E           AssertionError: validate_release_lead is 103 lines; at most 45 allowed
+E           assert 103 <= 45
+
+tests\e2\test_T06_structure.py:69: AssertionError
+__________________________ test_the_target_is_short ___________________________
+
+    def test_the_target_is_short():
+        node = _target(_tree())
+        length = node.end_lineno - node.lineno + 1
+>       assert length <= MAX_LINES, f"{TARGET} is {length} lines; at most {MAX_LINES} required"
+E       AssertionError: validate_release_lead is 103 lines; at most 45 required
+E       assert 103 <= 45
+
+tests\e2\test_T06_structure.py:75: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/e2/test_T06_structure.py::test_the_body_is_split_not_moved - Ass...
+FAILED tests/e2/test_T06_structure.py::test_the_target_is_short - AssertionEr...
+2 failed, 3 passed in 0.50s

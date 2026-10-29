@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "admission": {
+    "package_id": "E2-T07-C",
+    "task_id": "E2-T07-C",
+    "objective": "Split coerce() in registry.py into private per-type coercion helpers and a short loop, without changing behaviour.",
+    "class": "implementation",
+    "base_revision": "a49afb09165f87432d362571bf5c2832239ca87e",
+    "write_targets": [
+      "src/resource_librarian/registry.py"
+    ],
+    "read_targets": [
+      "src/resource_librarian/registry.py",
+      "tests/e2/test_T07_characterization.py",
+      "tests/e2/test_T07_structure.py"
+    ],
+    "forbidden_targets": [
+      "tests/"
+    ],
+    "protected_targets": [
+      {
+        "path": "tests/e2/test_T07_characterization.py",
+        "sha256": "12d3b14bf7a55b6c93e248231f9d2b8aa3e0e29268c6e04f8b2ccdbe42a3718a"
+      },
+      {
+        "path": "tests/e2/test_T07_structure.py",
+        "sha256": "6c4c17619c4678788df742699688e5b66369a92705011edc8b18b7e350b261ba"
+      }
+    ],
+    "preserve": [
+      "coerce returns the same (out, changed) pair, including every changed-message text and its order, for every input",
+      "coerce raises the same TypeError messages for unknown, missing and non-matching enum arguments",
+      "the public names of registry.py and coerce's signature are unchanged"
+    ],
+    "checks": [
+      {
+        "id": "structure",
+        "command": ".venv/Scripts/python.exe -m pytest tests/e2/test_T07_structure.py -q",
+        "kind": "oracle",
+        "expected_before": "fail",
+        "covers": [
+          "P1-shape",
+          "P2-runs"
+        ]
+      },
+      {
+        "id": "characterization",
+        "command": ".venv/Scripts/python.exe -m pytest tests/e2/test_T07_characterization.py -q",
+        "kind": "regression",
+        "expected_before": "pass",
+        "covers": [
+          "P3-behaviour"
+        ]
+      },
+      {
+        "id": "suite",
+        "command": ".venv/Scripts/python.exe -m pytest -q",
+        "kind": "suite",
+        "expected_before": "pass",
+        "covers": [
+          "P4-integrates"
+        ]
+      }
+    ],
+    "acceptance_predicates": [
+      {
+        "id": "P1-shape",
+        "kind": "behaviour",
+        "text": "coerce is at most 35 lines, no other function grows past its limit, and public names, methods and the signature are unchanged."
+      },
+      {
+        "id": "P2-runs",
+        "kind": "applies_runs",
+        "text": "the patch applies at base_revision and registry.py imports."
+      },
+      {
+        "id": "P3-behaviour",
+        "kind": "behaviour",
+        "text": "the characterization tests for coerce still pass unchanged."
+      },
+      {
+        "id": "P4-integrates",
+        "kind": "integrates",
+        "text": "the full suite passes."
+      }
+    ],
+    "environment": {
+      "python": "3.11.3",
+      "venv": ".venv",
+      "dependency_sha256": "593c30464f5620a92147b749d1d0354495bcbd13ff46dda22e3c95130e5710b3"
+    },
+    "owner_host_gate": false,
+    "roles": {
+      "drafter_model": "deepseek-ai/DeepSeek-V4-Pro",
+      "reviewer_model": "anthropic/claude (lead review)",
+      "merge_owner": "Jake36999"
+    },
+    "budget": {
+      "pool": "claude",
+      "task_usd": 0.5,
+      "max_calls": 3,
+      "max_repair_rounds": 2,
+      "wall_clock_s": 3600
+    },
+    "stop_conditions": [
+      "a protected test would need to change",
+      "a check still fails after two repair rounds"
+    ],
+    "documentation_consequence": "None; E2' records the run outside the repository."
+  },
+  "execution": {
+    "controller": "controller",
+    "repair_rounds": 0,
+    "worktree": "C:\\Users\\jakem\\Librarian-E2\\T07-C\\tmp\\delegation-runs\\E2-T07-C-20261029T121230\\worktree"
+  },
+  "completion": {
+    "artifact": {
+      "kind": "commit",
+      "ref": "42d58d02e02af3655868b31480d6b56837f37f20"
+    },
+    "base_revision": "a49afb09165f87432d362571bf5c2832239ca87e",
+    "changed_files": [
+      {
+        "path": "src/resource_librarian/registry.py",
+        "sha256": "2f8fcb65547393bc0dc3d3d24adc737d32bf42ae5df2cb1b7baf094dfb2a2f28"
+      }
+    ],
+    "protected_targets_intact": true,
+    "check_results": [
+      {
+        "id": "structure",
+        "exit_code": 0,
+        "log_ref": "C:\\Users\\jakem\\Librarian-E2\\T07-C\\tmp\\delegation-runs\\E2-T07-C-20261029T121230\\logs\\r0-structure.log",
+        "ran_by": "controller"
+      },
+      {
+        "id": "characterization",
+        "exit_code": 0,
+        "log_ref": "C:\\Users\\jakem\\Librarian-E2\\T07-C\\tmp\\delegation-runs\\E2-T07-C-20261029T121230\\logs\\r0-characterization.log",
+        "ran_by": "controller"
+      },
+      {
+        "id": "suite",
+        "exit_code": 0,
+        "log_ref": "C:\\Users\\jakem\\Librarian-E2\\T07-C\\tmp\\delegation-runs\\E2-T07-C-20261029T121230\\logs\\r0-suite.log",
+        "ran_by": "controller"
+      }
+    ],
+    "predicates": {
+      "P1-shape": "met",
+      "P2-runs": "met",
+      "P3-behaviour": "met",
+      "P4-integrates": "met"
+    },
+    "run_ids": [
+      "20261029T121233-6ee53e5e"
+    ],
+    "cost_usd": 0.0,
+    "repair_rounds": 0,
+    "unresolved_findings": [],
+    "declared_gaps": [
+      "cost_usd is 0.0; the lead fills it from the ledger"
+    ],
+    "proposed_disposition": "accept",
+    "recorded_by": "delegation-controller"
+  }
+}

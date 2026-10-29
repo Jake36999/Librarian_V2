@@ -1,0 +1,67 @@
+{
+  "schema": 2,
+  "run_id": "20261029T121115-fe133e22",
+  "provider": "deepinfra",
+  "endpoint": "/v1/openai/chat/completions",
+  "started_at": "2026-10-29T12:11:15.669920Z",
+  "pool": "claude",
+  "task_id": "E2-T06-B",
+  "role": "drafter",
+  "parent_run": "",
+  "host": "Main-Bedroom-PC",
+  "attempt": 1,
+  "timeout_s": 180,
+  "request_path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\C--Users-jakem-Librarian-E2-T06-B\\cd0dca25-563b-4ca9-9e79-3bc67debc9e5\\scratchpad\\out\\20261029T121115-fe133e22-E2-T06-draft.request.json",
+  "request_sha256": "25d2b8587597142a838ef15ce8db672e06a27abaa1de8619fae5f77bad691879",
+  "response_path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\C--Users-jakem-Librarian-E2-T06-B\\cd0dca25-563b-4ca9-9e79-3bc67debc9e5\\scratchpad\\out\\20261029T121115-fe133e22-E2-T06-draft.response.json",
+  "route": {
+    "provider": "deepinfra",
+    "base_url": "https://api.deepinfra.com/v1/openai",
+    "endpoint": "/v1/openai/chat/completions",
+    "adapter": "OpenAIChatAdapter",
+    "model": "deepseek-ai/DeepSeek-V4-Pro"
+  },
+  "charged_usd": 0.0287716,
+  "cost_basis": "metered_estimate",
+  "rate_card_age_days": 1,
+  "work_package": null,
+  "truncated": false,
+  "task": "E2-T06-draft",
+  "lens": "correctness",
+  "model": "deepseek-ai/DeepSeek-V4-Pro",
+  "agent": "unspecified",
+  "manifest": [
+    {
+      "path": "src/resource_librarian/hosts.py",
+      "bytes": 74011,
+      "sha256": "0a98106769b3b19b58e9b9b6a0eaaee807f7a54538cf7b6f948f2e20a74586e6"
+    }
+  ],
+  "packet_sha256": "d6ba5928470740ec81aed39f75864bb4fc50785f95d4cf1bc78d13debe26475b",
+  "estimated_input_tokens": 22723,
+  "max_output_tokens": 8000,
+  "preflight_reserve_usd": 0.0503399,
+  "budget_usd": 8.0,
+  "rate_card": {
+    "input_per_1m": 1.3,
+    "output_per_1m": 2.6,
+    "source": "https://deepinfra.com/pricing",
+    "as_of": "2026-10-28"
+  },
+  "key_source": "transient file injection",
+  "status": "completed",
+  "completed_at": "2026-10-29T12:11:44.549425Z",
+  "latency_ms": 28852,
+  "request_id": "RNSd0FbkguUfmmp0jSm1omla",
+  "model_returned": "deepseek-ai/DeepSeek-V4-Pro",
+  "finish_reason": "stop",
+  "usage": {
+    "input_tokens": 17638,
+    "output_tokens": 2247,
+    "total_tokens": 19885
+  },
+  "estimated_cost_usd": 0.0287716,
+  "output_path": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\C--Users-jakem-Librarian-E2-T06-B\\cd0dca25-563b-4ca9-9e79-3bc67debc9e5\\scratchpad\\out\\20261029T121115-fe133e22-E2-T06-draft.md",
+  "output_sha256": "e80fc7fbf9e47927f407250c6d6d8aa0e48d2b7470605dbaeaed42e0f69bc1ed",
+  "output_chars": 9461
+}

@@ -1,0 +1,35 @@
+{
+  "schema": 2,
+  "pools": {
+    "claude": {
+      "budget_usd": 8.0,
+      "committed_usd": 0.0381368
+    }
+  },
+  "calls": [
+    {
+      "run_id": "20261029T121233-6ee53e5e",
+      "pool": "claude",
+      "task": "E2-T07-C-r0",
+      "task_id": "E2-T07-C",
+      "role": "drafter",
+      "agent": "controller",
+      "host": "Main-Bedroom-PC",
+      "parent_run": "",
+      "model": "deepseek-ai/DeepSeek-V4-Pro",
+      "request_sha256": "d47044f9f944714ed332570c0b9f0f468095b5031728e5720cfbc26eda5ee502",
+      "started_at": "2026-10-29T12:12:33.698037Z",
+      "timeout_s": 900.0,
+      "attempt": 1,
+      "status": "completed",
+      "acceptance": "not_reviewed",
+      "acceptance_commit": "",
+      "acceptance_by": "",
+      "reserve_usd": 0.0516776,
+      "charged_usd": 0.0381368,
+      "cost_basis": "metered_estimate",
+      "truncated": false,
+      "receipt": "C:\\Users\\jakem\\Librarian-E2\\T07-C\\tmp\\deepinfra-delegation\\runs\\20261029T121233-6ee53e5e-E2-T07-C-r0.receipt.json"
+    }
+  ]
+}
