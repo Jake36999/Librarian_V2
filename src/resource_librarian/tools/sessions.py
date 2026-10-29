@@ -588,6 +588,23 @@ def set_requirement(ctx: Context, requirement_id: str, text: str,
             "session": _store(ctx).load(session.id).envelope(ctx.vault)}
 
 
+@tool("audit_projection", tier="consult", effect="read",
+      card=Card("The bounded view of this audited session the Manager plans from",
+                "deciding the next step in an audited session",
+                "Active requirements in full with each predicate's outcome, the current "
+                "contract, open questions, budget and what the Core can admit; older reports "
+                "by id only. fits=False means the requirements must be split or narrowed"))
+def audit_projection(ctx: Context, token_budget: int = 6000) -> dict:
+    from ..audit_projection import capability_manifest, project
+    from ..loop import _projects_on
+    session = _session(ctx)
+    if session.purpose != "audited":
+        raise TypeError("only an audited session has a Manager projection")
+    manifest = capability_manifest(tier=ctx.tier, projects_on=_projects_on(ctx.vault))
+    return project(session, _store(ctx).events(session.id), manifest=manifest,
+                   vault=ctx.vault, token_budget=max(500, min(int(token_budget), 50_000)))
+
+
 @tool("request_budget", tier="contribute", effect="write", scope="session",
       card=Card("Ask the person for more calls for this phase, with a one-click answer",
                 "the phase's budget is spent with its work unfinished",

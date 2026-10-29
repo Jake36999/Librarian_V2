@@ -1254,6 +1254,31 @@ class SessionStore:
             session.apply(event)
         return session
 
+    def events(self, session_id: str) -> list[dict[str, Any]]:
+        """The session's events in log order, without their chain hashes.
+
+        A projection reads these for counts and recent activity; an unfinished
+        trailing line (another writer mid-append) is skipped, as `load` does.
+        """
+        path = self.path(session_id)
+        if not path.exists():
+            raise Refusal("SESSION_REQUIRED", f"no session {session_id!r}")
+        text = path.read_text(encoding="utf-8")
+        lines = jsonl_lines(text)
+        out = []
+        for n, line in enumerate(lines):
+            if not line.strip():
+                continue
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                if n == len(lines) - 1 and not text.endswith("\n"):
+                    break
+                raise
+            event.pop("h", None)
+            out.append(event)
+        return out
+
     def verify(self) -> list[str]:
         """Every session log whose chain is broken, with the first line that
         fails. A log from before B4 (no `h`) is chained from its first hashed

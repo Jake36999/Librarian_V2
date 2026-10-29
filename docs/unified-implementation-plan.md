@@ -2278,3 +2278,71 @@ an audit event is refused (`CORE_REQUIRED`) and the log is unchanged.
 - Reconciling uncertain side effects is not built yet. The
   `uncertain_effect` outcome exists for it.
 Full suite: 1,634 passed, 2 skipped, 4 deselected (8m43s).
+
+### HARNESS-04 bounded Manager projection and capability manifest (2026-10-29)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| HARNESS-04 | implemented | this commit | `src/resource_librarian/audit_projection.py`, the `audit_projection` read tool, `SessionStore.events()`; tests in `tests/test_audit_projection.py` (12). |
+
+**What the Manager plans from.** `project(session, events, manifest=...,
+token_budget=...)` builds the projection in two tiers.
+
+The **essential tier** is never trimmed:
+- the session's phase, round, epoch and outcome;
+- every active requirement in full, with each predicate's own current outcome
+  (so a passing quote check cannot hide a failing arithmetic check);
+- closed requirements as id and status only;
+- the current contract and open questions;
+- the phase and round budget;
+- the capability manifest.
+
+If the essential tier alone exceeds the budget, the projection returns
+`fits: False` with the reason. It cuts no constraint, and the work must be
+split or narrowed.
+
+The **optional tier** is filled in priority order while there is room:
+1. the latest result details;
+2. aggregate counts;
+3. older reports as references only: up to 20 newest result ids and other
+   contract revisions, the rest counted;
+4. as many of the most recent compact events as fit.
+
+Chat messages enter only as role and length, never as text. Every projection
+carries an accounting of what it included, trimmed and omitted, plus a digest.
+It never reads the clock.
+
+**Capability manifest.** `capability_manifest(tier, profile, roots, routes)`
+lists:
+- the tool bundles the tier and profile allow, by the same policy as
+  `select_bundle`;
+- the seven Tier A verifier ids, each with its exact predicate wording, for
+  HARNESS-05 to HARNESS-07 to implement;
+- approved roots, which default to the whole vault until DEPLOY adds content
+  roots;
+- route availability for lead, scribe, clerk and `research_helper`. A route
+  the Core has not reported is `unknown`, never assumed available.
+
+**The done-when, measured.** A 50-round fixture revises the contract,
+produces an artifact, checks two predicates on each of three requirements,
+reduces them, and adds a 1,840-character chat message every round. The
+projection costs:
+
+| Rounds | Events in the log | Projection |
+| --- | --- | --- |
+| 1 | 21 | 1,539 tokens |
+| 10 | 183 | 1,605 tokens |
+| 50 | 903 | 1,617 tokens |
+
+That is well within the 4,000-token budget. Older results appear only as
+capped ids (294 older results, 20 listed). Two independent loads give
+identical projections and digests. Other tests show:
+- active constraints appear verbatim;
+- an oversized requirement stops the projection instead of being cut;
+- a tight budget trims recent events first and reports it;
+- a lower tier never sees more bundles.
+
+**Not yet.** Recording each projection's digest in the Session's model events
+when the Manager is invoked belongs with the Manager call itself (HARNESS-06).
+The App will supply real route availability then.
+Full suite: 1,646 passed, 2 skipped, 4 deselected (9m24s).
