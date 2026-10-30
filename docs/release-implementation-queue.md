@@ -13,14 +13,14 @@ artifact, or create a release record.
 ## Current state
 
 V2 remains **partial**, and **no release step may begin yet**. R0 needs every
-gate from G0 to G5 green, and two are not:
+gate from G0 to G5 green, and G5 is not:
 
 | Gate | State on 2026-10-30 | Source |
 | --- | --- | --- |
 | G0 baseline attributable and honest | green | Unified plan, BASE rows. |
 | G1 Core lifecycle and single-Core access | green (2026-10-28) | The plan's INDEX-05 and G1 closure. |
 | G2 canonical routes; UI truth matches runtime | green (2026-10-30) | The plan's G2 and G4 closure. |
-| G3 safe adoption of existing documentation roots | **not closed** | Local evidence from DEPLOY-01 to -04; closing it is the owner's decision. |
+| G3 safe adoption of existing documentation roots | green (2026-10-30) | The plan's G3 closure; local evidence from DEPLOY-01 to -04. Real host applications are ACCEPT-02. |
 | G4 trusted request shaping; durable route evidence | green (2026-10-30) | The plan's G2 and G4 closure. |
 | G5 Session-backed long-horizon state and Tier A | **not met** | HARNESS-01 to -07 are implemented locally. The share of grains closed by Tier A has never been measured on real sessions (HARNESS-06's done-when). |
 
@@ -126,7 +126,7 @@ product claims:
 
 ## R0 — Freeze a releasable source revision
 
-**State:** Blocked — G3 and G5 are not green (2026-10-30). Once they are, this
+**State:** Blocked — G5 is not green (2026-10-30). Once it is, this
 needs a release-owner decision.
 
 **Entry:** G0 to G5 green in the unified plan; SI-1 to SI-3 and LC-1 to LC-2

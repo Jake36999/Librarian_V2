@@ -645,6 +645,9 @@ the evidence that needs real external environments to ACCEPT-02 and
 RELEASE-03 (see [INDEX-05 and G1 closure](#index-05-and-g1-closure-2026-10-28)).
 **G2 and G4 are green as of 2026-10-30**: the owner closed both after ROUTE-05's
 golden picker snapshot (see [G2 and G4 closure](#g2-and-g4-closure-2026-10-30)).
+**G3 is green as of 2026-10-30** on local evidence (see
+[G3 closure](#g3-closure-2026-10-30)). G5 is the one gate before R0 that is not
+green.
 
 ## 19. Progress log
 
@@ -3139,3 +3142,30 @@ steps:
 **Not yet.** SI-4 says the release verifier must confirm the frozen commit in
 R3. Whether `verify-release.ps1` already checks it was not examined; R3 must
 confirm it.
+
+### G3 closure (2026-10-30)
+
+The owner closed G3 ("existing documentation roots can be safely adopted or
+attached") on 2026-10-30. §13.3 asks for three things. DEPLOY-01 to -04
+provide local evidence for each:
+
+| §13.3 requirement | Evidence |
+| --- | --- |
+| A byte-preservation fixture proves that a Git/Obsidian documentation tree remains intact | `tests/test_adoption.py`: every document's SHA-256 is unchanged after adoption, and `.librarian/` holds only state. `tests/test_deploy_survey.py`: the survey writes nothing. |
+| An unrelated `.librarian` collision halts safely | `tests/test_deploy_survey.py` and `tests/test_adoption.py`: an unrelated `.librarian` stops every mode, and nothing is reused or written. |
+| workspace_document search works without frontmatter injection | `tests/test_workspace_documents.py`: the documents are searchable through the `workspace` intent, and indexing and searching leave every file's hash unchanged. |
+
+The scoped watcher has a recorded budget: on a 20,000-file tree it used
+0.142 of one core and saw an edit and a deletion within 8.1 s. Document
+identity survives Obsidian renames (DEPLOY-04).
+
+**What the closure does not cover:**
+- Real host applications are ACCEPT-02, including adopted roots under real
+  Obsidian, Browser and Cowork traffic, and an adopted vault run through the
+  full app.
+- Attached read-only roots are not indexed yet (an exclusion in the
+  capability matrix).
+
+The release queue's gate table and R0 state are updated: G5 is now the only
+gate before R0 that is not green.
+
