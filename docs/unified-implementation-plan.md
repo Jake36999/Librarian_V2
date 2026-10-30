@@ -3450,3 +3450,26 @@ preserved in each `results.json`. No real library has audited sessions.
 with tests. Codex recommends requalifying G5 by re-running the measurement
 under the fixed code and the bound task file before a release freeze.
 Whether G5 and G3 stay closed is the owner's decision.
+
+### G5 re-run under the fixed code (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| G5 re-measurement | run | this commit | Re-run section of [the G5 report](../reports/2026-10-30-g5-measurement.md); `tmp/g5/rerun-*` (local). |
+
+After the Codex fixes (`a9be71b`), the measurement was re-run with every
+predicate's subject bound. **Tier A closed 25 of 74 grains, 0.338 (nominal
+95% 0.240–0.451).** By route: DeepSeek 0.514, MiMo 0.162.
+
+Every condition of the decision rule is met:
+- 16 of 16 histories are valid;
+- 0 of 25 closures are false, with every subject matching its binding;
+- 16 of 16 restarts reproduced the state hash.
+
+The run spent $1.78; the ledger stands at $4.70 of the $8 cap.
+
+MiMo's drop has a single cause: it omitted the `verifiers` argument on 597
+admission attempts. Recommended, not made: admission fills an omitted plan
+entry from the person's binding.
+
+G5 remains closed on this evidence unless the owner decides otherwise.

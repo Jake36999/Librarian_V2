@@ -24,7 +24,7 @@ applications (ACCEPT-02) and for a signed build (RELEASE-03) comes after R0.
 | G2 canonical routes; UI truth matches runtime | green (2026-10-30) | The plan's G2 and G4 closure. |
 | G3 safe adoption of existing documentation roots | green (2026-10-30) | The plan's G3 closure; local evidence from DEPLOY-01 to -04. Real host applications are ACCEPT-02. |
 | G4 trusted request shaping; durable route evidence | green (2026-10-30) | The plan's G2 and G4 closure. |
-| G5 Session-backed long-horizon state and Tier A | green (2026-10-30) | The plan's G5 closure: 16 real audited sessions, a Tier A share of 0.432 (95% 0.326–0.546) over seven of ten verifiers, zero false closures. |
+| G5 Session-backed long-horizon state and Tier A | green (2026-10-30) | The plan's G5 closure, re-run after the Codex review fixes: 16 real audited sessions, a Tier A share of 0.338 (nominal 95% 0.240–0.451) over seven of ten verifiers, zero false closures, with subjects bound and restarts reproduced. |
 
 A passing local suite is necessary evidence for an implemented packet. It is
 not evidence that V2 or a release is complete. The unified plan's progress log

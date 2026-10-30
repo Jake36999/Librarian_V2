@@ -135,3 +135,51 @@ the time, and is now enforced.
 **Recommendation.** Re-run the measurement under the fixed code and the bound
 task file before relying on G5 for a release. Whether G5 stays closed
 meanwhile is the owner's decision.
+
+---
+
+## Re-run under the fixed code (2026-10-30)
+
+The owner asked for a re-run after the Codex fixes (`a9be71b`). It used the
+same 8 tasks and two routes, with every predicate's subject now bound in the
+task file, and spend was reserved before each call against the shared $8
+ledger. Results are in `tmp/g5/rerun-*` (local).
+
+| Route | Grains | Closed by Tier A | Share | 95% interval (nominal) | Spend |
+| --- | --- | --- | --- | --- | --- |
+| DeepSeek-V4.1-Flash | 37 | 19 | 0.514 | 0.359–0.666 | $0.69 |
+| MiMo-V2.6-Flash | 37 | 6 | 0.162 | 0.077–0.311 | $1.09 |
+| **Pooled** | **74** | **25** | **0.338** | **0.240–0.451** | **$1.78** |
+
+**The decision rule.** All four conditions are met:
+1. 16 of 16 histories are valid.
+2. 0 of 25 closures are false. Every subject-taking pass matched the
+   person's binding, and every closure held on re-check: 14 independently
+   re-checked, 11 re-run (8 findability, 3 schema).
+3. 16 of 16 forced restarts reproduced the state hash.
+4. The share is reported with its interval.
+
+**Why the share fell (0.432 to 0.338).** Almost entirely MiMo (0.324 to
+0.162); DeepSeek held (0.541 to 0.514). MiMo repeatedly called
+`admit_contract` with no `verifiers` argument at all, 597 times across
+sessions. Each time it was refused with "the person named quote.located for
+…; plan exactly that verifier". It never added the parameter, and spent its
+preflight budget. Admission refusals rose from 254 to 616 in total.
+
+The stricter rules did what they should: no closure got through on the wrong
+subject or another contract's result. The cost is that a model which cannot
+follow the plan format closes less.
+
+**A usability fix, recommended rather than made.** When the person has named a
+predicate's verifier and subject, the plan entry is fully determined.
+Admission could fill an omitted entry from the person's binding (never
+overriding a different one), as the Codex review suggested for mechanical
+fields. This would change product behaviour, and a later measurement would
+show its effect.
+
+**Cost.** This re-run cost $1.78. The ledger stands at $4.70 of the $8 cap.
+
+**Stops.** 6 idle, 5 at the turn cap, and 5 settled as `failed`. No session
+completed with every requirement closed, because the synthesis
+requirements stay with the person by design. Several authoritative ones
+failed or stayed open.
