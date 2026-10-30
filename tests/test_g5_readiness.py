@@ -48,8 +48,10 @@ class RoundLead:
     """A scripted Lead. Each step it may call only a tool it was just offered;
     anything else is recorded as a violation instead of being called."""
 
-    def __init__(self, evidence, opens=True):
+    def __init__(self, evidence, opens=True, asks=False):
         self.evidence = evidence
+        self.asks = asks                    # ask the person one question mid-round
+        self.answers: list[str] = []
         self.opens = opens                  # the runner's person opens the session instead
         self.violations: list[tuple[str, list[str]]] = []
         self.offered: list[set[str]] = []
@@ -71,6 +73,8 @@ class RoundLead:
             yield "open_session", {"purpose": "audited", "question": "How are rounds bounded?"}
             yield None                                  # turn 1 ends; the person sets requirements
         yield "audit_projection", {}
+        if self.asks:
+            yield "ask_user", {"question": "Should the synthesis cover both requirements?"}
         yield "update_plan", {"fields": {"proposal": {
             "requirements": ["R1", "R2"], "step": "locate the quote and stage a synthesis"}}}
         yield "advance", {}
@@ -95,6 +99,8 @@ class RoundLead:
         names = {t.name for t in tools}
         self.offered.append(names)
         last = self._last_result(messages)
+        if "answer" in last:
+            self.answers.append(last["answer"])
         if "staged_in" in last:
             self.staged_in = last["staged_in"]
         if self.plan is None:
@@ -168,8 +174,8 @@ TASK = {"id": "t1", "question": "How are rounds bounded?", "requirements": [
      "closure": "human_judgment"}]}
 
 
-def dry_run(vault, evidence, tmp_path):
-    lead = RoundLead(evidence, opens=False)
+def dry_run(vault, evidence, tmp_path, asks=False):
+    lead = RoundLead(evidence, opens=False, asks=asks)
     row = g5.run_task(TASK, library=vault.root, run_dir=tmp_path / "run",
                       route={"provider": "deepinfra", "model": "scripted-lead"},
                       provider_for=lambda choice: Scripted(lead), max_turns=6)
@@ -251,3 +257,12 @@ def test_the_draft_task_file_is_well_formed():
 def test_a_task_file_that_could_not_run_is_refused(tmp_path, task, problem):
     found = g5.validate_tasks({"tasks": [task]}, tmp_path)
     assert any(problem in p for p in found), found
+
+
+def test_a_mid_session_question_gets_the_fixed_answer_and_the_round_goes_on(vault, evidence,
+                                                                          tmp_path):
+    lead, row = dry_run(vault, evidence, tmp_path, asks=True)
+    assert lead.answers == [g5.FIXED_ANSWER]
+    assert [q["question"] for q in row["questions"]] == [
+        "Should the synthesis cover both requirements?"]
+    assert row["grains"] == {"grains": 3, "tier_a": 2, "human_accepted": 0, "other": 1}

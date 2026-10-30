@@ -25,11 +25,17 @@ import math
 import os
 import shutil
 import sys
+import threading
 from pathlib import Path
 from typing import Any, Callable
 
 SETTLED = {"complete_verified", "complete_with_human_acceptance", "failed", "blocked",
            "invalid_history", "integrity_violation", "needs_person"}
+# The owner's decision (2026-10-30): a question the Lead asks mid-session gets
+# this fixed, predeclared answer, so the session keeps running; each one is
+# counted in the row's "questions".
+FIXED_ANSWER = ("No further guidance: work from the requirements as set. If a predicate cannot "
+                "be checked, say so rather than closing it.")
 CONTINUE = ("Continue the audited session: read the projection, then work the next step of "
             "the round. Stop when the round is reduced or you need the person.")
 
@@ -91,7 +97,8 @@ class Meter:
 def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[str, str],
              provider_for: Callable | None = None, card: dict[str, float] | None = None,
              budget_usd: float | None = None, max_turns: int = 12,
-             restart_after: int = 2, permission_wait: float = 5.0) -> dict[str, Any]:
+             restart_after: int = 2, permission_wait: float = 5.0,
+             answer_questions: str | None = FIXED_ANSWER) -> dict[str, Any]:
     """One predeclared task, start to finish, on its own scratch library."""
     from resource_librarian import audit_events, closure_audit, research_grains
     from resource_librarian import tools  # noqa: F401
@@ -103,6 +110,20 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
     vault = Vault(copy_library(library, run_dir / task["id"] / "vault"))
     store = SessionStore(vault)
     meter = Meter(card)
+    asked: list[dict[str, Any]] = []
+    current: dict[str, Any] = {"app": None, "session": ""}
+
+    def answer(event: dict[str, Any]) -> None:
+        """Answer the Lead's question as the person, with the fixed reply. It runs
+        on its own thread: the Lead's turn is blocked inside ask_user."""
+        if (event.get("type") != "question_asked" or answer_questions is None
+                or event.get("session") != current["session"]):
+            return
+        asked.append({"id": event.get("question_id"), "question": str(event.get("question"))[:300],
+                      "kind": event.get("kind")})
+        threading.Thread(target=lambda: current["app"].person_call(
+            "answer", {"question_id": event["question_id"], "answer": answer_questions},
+            session=current["session"]), daemon=True).start()
 
     def open_app():
         # A short permission wait: with no person present, a question or a
@@ -110,6 +131,8 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
         app = App(vault, keys=KeyStore(use_keyring=False), coordinate=True,
                   provider_for=provider_for, broker_timeout=permission_wait)
         app.invocation_runtime.trace_sink = meter
+        app.waiters.subscribe(answer)
+        current["app"] = app
         app.set_tiers([route], override="G5 measurement route")
         app.set_mode("auto")
         return app
@@ -127,6 +150,7 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
             row["stopped"] = "no_audited_session"
             return row
         row["session"] = sid
+        current["session"] = sid
         for requirement in task["requirements"]:
             args = {k: requirement[k] for k in ("requirement_id", "text", "closure", "predicates")
                     if k in requirement}
@@ -189,7 +213,7 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
             "no_suitable_tool": sum(1 for r in summary["requirements"].values()
                                     for o in r["predicates"].values() if o == "no_suitable_tool"),
             "integrity": {c: v["integrity"] for c, v in summary["contracts"].items()},
-            "verifiers": verifiers, "refusals": refusals,
+            "verifiers": verifiers, "refusals": refusals, "questions": asked,
             "closure_audit": closure_audit.audit(vault, session)})
         return row
     except Exception as exc:  # noqa: BLE001 - one task's crash is a result, not the run's end
