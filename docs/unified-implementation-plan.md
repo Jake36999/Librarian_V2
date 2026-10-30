@@ -643,6 +643,8 @@ acceptance scope is complete. **G1 is green as of 2026-10-28** on local
 evidence: the owner closed INDEX-05 against its own done-when column and moved
 the evidence that needs real external environments to ACCEPT-02 and
 RELEASE-03 (see [INDEX-05 and G1 closure](#index-05-and-g1-closure-2026-10-28)).
+**G2 and G4 are green as of 2026-10-30**: the owner closed both after ROUTE-05's
+golden picker snapshot (see [G2 and G4 closure](#g2-and-g4-closure-2026-10-30)).
 
 ## 19. Progress log
 
@@ -2909,3 +2911,42 @@ after.
 
 **G2.** All of ROUTE-01 to -05 now meet their done-when columns. Closing G2
 is the owner's decision.
+
+### G2 and G4 closure (2026-10-30)
+
+The owner closed G2 and G4 on 2026-10-30.
+
+**G2 (route/slot selection is canonical; UI truth matches runtime truth).**
+ROUTE-01 to -05 each meet their done-when column:
+- **Canonical resolution:** all eight roles and slots resolve one binding
+  (`tests/test_role_route_bindings.py`).
+- **Runtime:** execution uses the bound route and never falls back to
+  another role. Service slots dispatch their own bindings
+  (`tests/test_service_routes.py`).
+- **Readiness:** readiness is per role.
+- **ROUTE-05:** the golden snapshot of the picker and service slots
+  (`3308248`) checks that each role's label is the model that actually
+  runs.
+
+**G4 (adapter requests shaped by trusted code; route evidence durable).** Every
+ADAPT row is implemented, with the evidence listed in the
+[G2/G4 review](#status-reconciliation-and-g2g4-review-2026-10-29):
+- golden request and reply fixtures;
+- the approved-transport and limiter tests;
+- reasoning-replay tests;
+- recorded measurements for ADAPT-07, ADAPT-09 and ADAPT-11.
+
+**What stays open.** These claims still need real environments:
+- the real host applications, under ACCEPT-02;
+- a signed release, under RELEASE-03;
+- behaviour measured beyond L0 and basic L1 on further routes.
+
+G0, G1, G2 and G4 are now green. **G3 is not closed.** §13.3 asks for three
+things, and DEPLOY-01 to -04 provide local evidence for each:
+- byte-preserving adoption of a Git/Obsidian tree (`tests/test_adoption.py`);
+- a safe halt on an unrelated `.librarian`;
+- workspace-document search without frontmatter injection
+  (`tests/test_workspace_documents.py`).
+
+Closing G3 is the owner's decision. ACCEPT-01 starts next.
+
