@@ -1,0 +1,27 @@
+full-deepseek t1-design-patterns | legacy_history | a verified reduction of 'R1' names no contract: written before contract-scoped reductions (a9be71b, 2026-10-30); preserved for review, not current evidence
+full-deepseek t2-thunkable-alternatives | legacy_history | a verified reduction of 'R1' names no contract: written before contract-scoped reductions (a9be71b, 2026-10-30); preserved for review, not current evidence
+full-deepseek t4-computational-thinking-early-years | legacy_history | a verified reduction of 'R1' names no contract: written before contract-scoped reductions (a9be71b, 2026-10-30); preserved for review, not current evidence
+full-deepseek t6-long-context-models | legacy_history | a verified reduction of 'R2' names no contract: written before contract-scoped reductions (a9be71b, 2026-10-30); preserved for review, not current evidence
+full-deepseek t8-what-is-thunkable | legacy_history | a verified reduction of 'R1' names no contract: written before contract-scoped reductions (a9be71b, 2026-10-30); preserved for review, not current evidence
+full-mimo t2-thunkable-alternatives | legacy_history | a verified reduction of 'R1' names no contract: written before contract-scoped reductions (a9be71b, 2026-10-30); preserved for review, not current evidence
+full-mimo t6-long-context-models | legacy_history | a verified reduction of 'R2' names no contract: written before contract-scoped reductions (a9be71b, 2026-10-30); preserved for review, not current evidence
+full-mimo t8-what-is-thunkable | legacy_history | a verified reduction of 'R1' names no contract: written before contract-scoped reductions (a9be71b, 2026-10-30); preserved for review, not current evidence
+pilot-4 t1-design-patterns | legacy_history | a verified reduction of 'R1' names no contract: written before contract-scoped reductions (a9be71b, 2026-10-30); preserved for review, not current evidence
+pilot-4 t5-lab-sheet | legacy_history | a verified reduction of 'R1' names no contract: written before contract-scoped reductions (a9be71b, 2026-10-30); preserved for review, not current evidence
+pilot-5 t1-design-patterns | legacy_history | a verified reduction of 'R1' names no contract: written before contract-scoped reductions (a9be71b, 2026-10-30); preserved for review, not current evidence
+pilot-5 t5-lab-sheet | legacy_history | a verified reduction of 'R1' names no contract: written before contract-scoped reductions (a9be71b, 2026-10-30); preserved for review, not current evidence
+('full-deepseek', 'failed') 1
+('full-deepseek', 'in_progress') 2
+('full-deepseek', 'legacy_history') 5
+('full-mimo', 'in_progress') 5
+('full-mimo', 'legacy_history') 3
+('pilot-1', 'in_progress') 2
+('pilot-2', 'in_progress') 2
+('pilot-3', 'failed') 1
+('pilot-3', 'in_progress') 1
+('pilot-4', 'legacy_history') 2
+('pilot-5', 'legacy_history') 2
+('rerun-deepseek', 'failed') 2
+('rerun-deepseek', 'in_progress') 6
+('rerun-mimo', 'failed') 3
+('rerun-mimo', 'in_progress') 5

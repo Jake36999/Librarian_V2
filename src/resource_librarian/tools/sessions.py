@@ -294,6 +294,9 @@ def resume_session(ctx: Context, session_id: str) -> dict:
         _event(ctx, {"type": "status", "status": "open"})
     elif session.status == "closed":
         _event(ctx, {"type": "reopened"})
+    # REMED-03: what changed while it was parked or closed stales its closures.
+    from ..session import reconcile
+    reconcile(ctx.vault, session.id)
     return _store(ctx).load(session.id).to_dict(ctx.vault)
 
 

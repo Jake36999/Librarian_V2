@@ -78,8 +78,14 @@ class Core:
                      "findings": [], "epoch": audit.epoch})
 
     def produce(self, aid="A1"):
+        # The artifact is a real file with its real fingerprint: a resumed
+        # session compares the two (REMED-03).
+        from resource_librarian.coordination import fingerprint
+        path = self.lead.ctx.vault.root / "notes" / "out.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"draft {aid}\n", encoding="utf-8")
         self.append({"type": "artifact", "id": aid, "path": "notes/out.md",
-                     "fingerprint": "a" * 20, "contract": "C1"})
+                     "fingerprint": fingerprint(path), "contract": "C1"})
 
     def check(self, rid="V1", outcome="pass", aid="A1"):
         contract = self.lead.state().audit.contracts["C1"]

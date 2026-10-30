@@ -466,9 +466,17 @@ class App:
         # some, all, or none of its targets.  It has already been surfaced
         # before App-owned writes and before the watcher begins; recovery
         # never replays or repairs it.
+        self.reconciled_at_start: dict[str, list[str]] = {}
         if self.writer is not None:
             self.watcher = VaultWatcher(vault, self.document_leases)
             self.watcher.start()
+            # REMED-03: an edit made while the app was not running stales the
+            # audited sessions that depended on it, before any status is read.
+            from .session import reconcile_open
+            try:
+                self.reconciled_at_start = reconcile_open(vault)
+            except Exception as exc:  # noqa: BLE001 - startup never fails on it
+                self.reconciled_at_start = {"error": [f"{type(exc).__name__}: {exc}"[:300]]}
         # Redacted invocation diagnostics live only in process memory for the
         # first adapter slice.  Do not turn model prompts or responses into a
         # new vault artefact merely by adding a protocol translation seam.

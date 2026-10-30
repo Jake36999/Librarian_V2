@@ -3717,3 +3717,85 @@ can still write up to its own limits onto this machine before the pad is
 checked afterwards. That is the separate `sandbox_run` path, not a Workbench
 engagement. A per-run size quota there needs a volume or a filesystem quota;
 it is left for a decision.
+
+### REMED-03 closure lifecycle qualification (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| REMED-03 | implemented | this commit | `audit_events.py` (`known_fingerprints`, `drift`, `named_by_person`, `legacy_format`, result `inputs`), `session.py` (`reconcile`, `reconcile_open`), `tools/audited.py` (inputs; reconcile before reduce and accept), `tools/sessions.py` (resume), `app.py` (startup); tests in `tests/test_closure_lifecycle.py` (17 new); `scripts/audit_census.py`. Full suite: 1,894 passed, 2 skipped. |
+
+**Every mutation route now stales a closure.** Before, only the watcher
+recorded a change, and it sees only edits made outside the Core while the app
+runs. Two routes went unrecorded:
+- a Core write, for example by another session, which the watcher suppresses
+  as the Core's own;
+- an edit made while the app was closed.
+
+A closure made on the old state stayed `verified`.
+
+Now each verifier result records the files it read, by fingerprint (`inputs`):
+the note or source it names, and the evidence record's file. Staged artifacts
+already had theirs. `reconcile` compares every file the history knows with the
+file now, and appends each difference as `external_edit` with source
+`core_check`. That is the event and source the rules already defined, so the
+existing epoch rule does the staling.
+
+It runs:
+- before `reduce_round` and `accept_artifact` record anything, so no closure or
+  acceptance is ever recorded on a moved state;
+- on `resume_session`;
+- at startup, for every audited session that is not closed.
+
+An edit the watcher already recorded is known, so it is not recorded twice.
+
+**Contract boundaries** were done in a9be71b: results and reductions are
+scoped to their contract, and replacing an artifact bumps the epoch. The
+existing tests cover them and pass unchanged.
+
+**A predicate stays partial unless the person named its check.** Subject-bearing
+checks (a quote, a note, a source) already needed the person's binding. Two
+checks have no subject, `target.diff_clean` and `boundary.staged`. A model
+could plan one of them for any predicate, and a pass then verified, for
+example, "the figure matches the source". Now `verified` needs the verifier
+the person named for each predicate (`named_by_person`). Otherwise the Core's
+reduction says `partial`, with the reason, and the rules refuse a `verified`
+event. In the G5 tasks every predicate but t6 R1 is named, and t6 R1 was
+already partial.
+
+**Legacy histories read as legacy (C1).** A history written before a9be71b
+has `verified` reductions that name no contract. Replayed under the new
+rules, it read as `invalid_history`, which looks like corruption. Now replay
+recognises that one retired format:
+- it marks the history `legacy` and folds it up to that point for review;
+- the outcome is `legacy_history`, and nothing in it reads as verified;
+- the log is never rewritten, and no further audit event is accepted (a new
+  audited session continues the work);
+- an invalid history is still reported as invalid.
+
+`scripts/audit_census.py` replays every stored G5 history. All 12 that read
+as invalid are now legacy, and every one of them failed for exactly this
+reason. The 30 others replay to the same outcomes as before. The output is in
+[remed03-legacy-census.txt](../reports/2026-10-30-code-review/remed03-legacy-census.txt).
+
+**Histories tested:**
+- new: inputs recorded; unchanged state reconciles to nothing;
+- invalid: still invalid, not legacy;
+- legacy: preserved byte for byte; closed to further events;
+- interrupted: a torn last line is skipped with state unchanged; a round
+  stopped before reduction resumes and verifies;
+- stale: through a Core write, an evidence change, an edit while closed,
+  startup, the watcher, and a human acceptance. A stale result is never cited.
+
+**One fixture changed.** `tests/test_audited_session.py` recorded an
+artifact's fingerprint as `"a" * 20` for a file that did not exist.
+Reconciliation correctly found it changed on resume. The fixture now writes
+the file and records its real fingerprint.
+
+**Limits, recorded.**
+- Between a Core write and the next reconcile, a status display can still
+  show the old closure. It cannot be acted on: closure and acceptance
+  reconcile first, and resume and startup reconcile too.
+- A protected target the contract wrote, but that no result read and no
+  artifact records, is covered by its target audit at that epoch, not by
+  reconcile.
+- Invalidation stays session-wide, by epoch, as the reviews accepted.

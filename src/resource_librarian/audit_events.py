@@ -11,6 +11,20 @@ events.
 The epoch is what makes evidence go stale. A person revising a requirement,
 a revised contract and an edit made outside the Core each advance it, and a
 verifier result or a closure counts only at the epoch it was made in.
+
+**Every mutation route stales (REMED-03).** The watcher reports edits made
+outside the Core while it runs. A Core write by another session, or an edit
+made while the app was closed, is caught by fingerprint instead: each result
+records the files it read (`inputs`), each artifact its fingerprint, and
+`drift` compares them with the files now. The Core appends what differs as
+`external_edit` (source `core_check`) before any closure or acceptance is
+recorded, on resume and at startup, so the same epoch rule applies.
+
+**Legacy histories (REMED-03, C1).** A history written before reductions
+named their contract (a9be71b, 2026-10-30) has `verified` reductions without
+one. Replayed, it is read as legacy, not as corrupt: preserved byte for byte,
+folded up to that point for review, never current evidence, and closed to
+further audit events.
 """
 from __future__ import annotations
 
@@ -54,10 +68,18 @@ class AuditState:
     # Set when replay met an event the rules refuse. The history is then
     # reported, never trusted, and no further audit event is accepted.
     invalid: str = ""
+    # Set when replay met an event in a format this build no longer writes:
+    # read for review, never current evidence, closed like an invalid one.
+    legacy: str = ""
 
     @property
     def used(self) -> bool:
-        return bool(self.requirements or self.external_edits or self.invalid)
+        return bool(self.requirements or self.external_edits or self.halted)
+
+    @property
+    def halted(self) -> str:
+        """Why this history accepts no further audit event, or ''."""
+        return self.invalid or self.legacy
 
     def watched_paths(self) -> set[str]:
         """Every vault path this session read or targets: what an outside edit stales."""
@@ -263,7 +285,17 @@ def _verifier_result(state: AuditState, event: dict[str, Any]) -> None:
         # ("the quote is present in evidence <id> at offset N"), never more.
         "statement": str(event.get("statement", ""))[:600],
         # What the check was given, so an auditor can re-check it independently.
-        "params": _params(event.get("params"))}
+        "params": _params(event.get("params")),
+        # REMED-03: the files it read, by fingerprint; a change to one stales it.
+        "inputs": _inputs(event.get("inputs"))}
+
+
+def _inputs(value: Any) -> dict[str, str]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict) or not all(isinstance(v, str) for v in value.values()):
+        raise _refuse("verifier_result inputs map each file it read to its fingerprint")
+    return {_rel_path(k): v for k, v in list(value.items())[:20]}
 
 
 def _params(value: Any) -> dict[str, Any]:
@@ -338,6 +370,10 @@ def _reduction(state: AuditState, event: dict[str, Any]) -> None:
             if loose:
                 raise _refuse(f"predicate {predicate!r} passed on a subject the person did not "
                               f"bind ({', '.join(loose)}): it can be partial, not verified")
+            if not named_by_person(req, predicate, result["verifier"]):
+                raise _refuse(f"predicate {predicate!r} has no verifier the person named for "
+                              "it: no check is known to establish it, so it can be partial or "
+                              "the person's judgment, not verified")
         # HARNESS-07: a mutating contract's results count only after a clean
         # audit of its protected targets at this epoch.
         for contract in sorted({state.results[r]["contract"] for r in cited}):
@@ -361,6 +397,17 @@ def _reduction(state: AuditState, event: dict[str, Any]) -> None:
                              **({"rejected": rejected} if rejected else {}),
                              **({"reason": str(event["reason"])[:300]}
                                 if event.get("reason") else {})})
+
+
+def named_by_person(req: dict[str, Any], predicate: str, verifier: str) -> bool:
+    """Whether the person named this verifier for this predicate (REMED-03, R2).
+
+    Only the person can say a check establishes what a predicate means: a
+    model's plan can check something, but "the figure matches the source" is
+    not established by a staging check it chose. Without the person's naming,
+    a predicate stays partial or goes to their judgment."""
+    named = (req.get("verifiers") or {}).get(predicate)
+    return bool(named) and closure.base_id(verifier) == named["verifier"]
 
 
 def _external_edit(state: AuditState, event: dict[str, Any]) -> None:
@@ -449,15 +496,41 @@ def check_and_apply(state: AuditState, event: dict[str, Any]) -> None:
     if state.invalid:
         raise _refuse(f"this session's audit history is invalid ({state.invalid}); "
                       "no further audit event is accepted")
+    if state.legacy:
+        raise _refuse(f"this session's audit history is legacy ({state.legacy}); "
+                      "no further audit event is accepted: open a new audited session")
     kind = event.get("type")
     if kind not in _RULES:
         raise _refuse(f"{kind!r} is not an audit event; expected one of {sorted(AUDIT_EVENTS)}")
     _RULES[kind](state, event)
 
 
+LEGACY_CUTOVER = "a9be71b, 2026-10-30"
+
+
+def legacy_format(event: dict[str, Any]) -> str:
+    """Why a stored event is in a format this build no longer writes, or ''.
+
+    The one known case: a `verified` reduction without a contract, written
+    before contract-scoped reductions. Its results cannot be scoped to a
+    contract now, so it is neither replayed under the new rules (where it would
+    read as corruption) nor trusted under the old ones."""
+    if (event.get("type") == "reduction" and event.get("status") == "verified"
+            and "contract" not in event):
+        return (f"a verified reduction of {event.get('requirement')!r} names no contract: "
+                f"written before contract-scoped reductions ({LEGACY_CUTOVER}); preserved "
+                "for review, not current evidence")
+    return ""
+
+
 def replay(state: AuditState, event: dict[str, Any]) -> None:
-    """Fold a stored event; a refused one marks the whole audit history invalid."""
-    if state.invalid:
+    """Fold a stored event; a refused one marks the whole audit history invalid,
+    and one in a retired format marks it legacy."""
+    if state.halted:
+        return
+    old = legacy_format(event)
+    if old:
+        state.legacy = old
         return
     trial = _copy(state)
     try:
@@ -522,6 +595,8 @@ def session_outcome(state: AuditState) -> str:
     """The audited session's overall outcome, from its requirements' current statuses."""
     if state.invalid:
         return "invalid_history"
+    if state.legacy:
+        return "legacy_history"
     if not state.requirements:
         return "no_requirements"
     # HARNESS-07: an integrity finding outranks every requirement status.
@@ -607,6 +682,7 @@ def summary(state: AuditState) -> dict[str, Any]:
     """
     return {
         "epoch": state.epoch, "outcome": session_outcome(state), "invalid": state.invalid,
+        **({"legacy": state.legacy} if state.legacy else {}),
         "requirements": {r: {"status": state.requirement_status(r),
                              "closure": state.requirements[r]["closure"],
                              "revision": state.requirements[r]["revision"],
@@ -623,3 +699,42 @@ def summary(state: AuditState) -> dict[str, Any]:
                       for c, v in state.contracts.items()},
         "external_edits": state.external_edits[-20:],
     }
+
+
+# ------------------------------------------------------------------ drift (REMED-03)
+
+MISSING = ""     # an external_edit's fingerprint for a file that is gone
+
+
+def known_fingerprints(state: AuditState) -> dict[str, str]:
+    """What this history last knew each file to be: a staged artifact's
+    fingerprint, an outside edit's, and what a current result read. A newer
+    observation wins; at the same epoch an artifact follows the edit that made
+    room for it, and a current result follows both."""
+    seen: dict[str, tuple[int, int, str]] = {}
+
+    def note(path: str, epoch: int, rank: int, value: str) -> None:
+        if path not in seen or (epoch, rank) >= seen[path][:2]:
+            seen[path] = (epoch, rank, value)
+
+    for edit in state.external_edits:
+        note(edit["path"], edit["epoch"], 0, edit["fingerprint"])
+    for artifact in state.artifacts.values():
+        note(artifact["path"], artifact["epoch"], 1, artifact["fingerprint"])
+    for result in state.results.values():
+        if result["epoch"] == state.epoch:
+            for path, value in (result.get("inputs") or {}).items():
+                note(path, result["epoch"], 2, value)
+    return {path: value for path, (_, _, value) in seen.items()}
+
+
+def drift(state: AuditState, current: Any) -> dict[str, str]:
+    """The known files whose fingerprint is not what the history last knew:
+    {path: fingerprint now} (MISSING when gone). `current(path)` fingerprints a
+    vault-relative path, returning MISSING for an absent file."""
+    out = {}
+    for path, value in sorted(known_fingerprints(state).items()):
+        now = current(path)
+        if now != value:
+            out[path] = now
+    return out

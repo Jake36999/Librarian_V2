@@ -914,6 +914,9 @@ class Session:
         audit, p = self.audit, self.phase
         if audit.invalid:
             return [f"the audit history is invalid ({audit.invalid}); a person must review it"]
+        if audit.legacy:
+            return [f"the audit history is legacy ({audit.legacy}); it is kept for review - "
+                    "continue in a new audited session"]
         contract = audit.current_contract
         if p == "manage":
             if not audit.requirements:
@@ -1068,13 +1071,15 @@ class Session:
         if self.purpose == "audited":
             statuses = {r: self.audit.requirement_status(r) for r in self.audit.requirements}
             closed = ("verified", "human_accepted")
-            return {"complete": bool(statuses) and not self.audit.invalid and
+            return {"complete": bool(statuses) and not self.audit.halted and
                     all(s in closed for s in statuses.values()),
                     "outcome": audit_events.session_outcome(self.audit),
                     "requirements": statuses,
                     "gaps": [f"{r} ({s})" for r, s in statuses.items() if s not in closed] +
                             ([f"audit history invalid: {self.audit.invalid}"]
-                             if self.audit.invalid else []),
+                             if self.audit.invalid else []) +
+                            ([f"audit history legacy: {self.audit.legacy}"]
+                             if self.audit.legacy else []),
                     "made": [{"artifact": a["path"], "fingerprint": a["fingerprint"]}
                              for a in self.audit.artifacts.values()]}
         ledger = self.coverage()
@@ -1515,7 +1520,7 @@ def sessions_watching(vault: Vault, rel: str) -> list[str]:
                 text = path.read_text(encoding="utf-8")
                 if any(marker in text for marker in _AUDIT_MARKERS):
                     session = store.load(present_id)
-                    if session.status != "closed" and not session.audit.invalid:
+                    if session.status != "closed" and not session.audit.halted:
                         watched = frozenset(session.audit.watched_paths())
                 entry = cache[present_id] = (stamp, watched)
             if rel in entry[1]:
@@ -1546,6 +1551,64 @@ def record_external_edit(vault: Vault, rel: str) -> list[str]:
         store.append_audit(session_id, {"type": "external_edit", "path": path,
                                         "fingerprint": current, "source": "watcher"})
     return watching
+
+
+def reconcile(vault: Vault, session_id: str) -> list[str]:
+    """Record what changed under an audited session by any route (REMED-03).
+
+    The watcher sees edits made outside the Core while it runs; it does not see
+    a Core write by another session, or an edit made while the app was closed.
+    This compares every file the history knows by fingerprint (staged
+    artifacts, what current results read) with the file now, and appends each
+    difference as `external_edit` (source `core_check`), which stales the
+    closures made on the old state. Called before any closure or acceptance is
+    recorded, on resume and at startup. Returns the paths it recorded."""
+    from .coordination import fingerprint
+    store = SessionStore(vault)
+    session = store.load(session_id)
+    if session.purpose != "audited" or session.audit.halted or not session.audit.used:
+        return []
+
+    def current(rel: str) -> str:
+        # The rules admitted `rel` as vault-relative (no absolute path, no
+        # '..'); staged drafts and evidence live in hidden folders, which
+        # safe_relative is right to refuse for a model's arguments.
+        target = vault.root / rel
+        if not target.exists():
+            return audit_events.MISSING     # as external_edit records a deletion
+        try:
+            return fingerprint(target)
+        except FileNotFoundError:
+            return audit_events.MISSING
+        except OSError:
+            return "unreadable"
+
+    changed = audit_events.drift(session.audit, current)
+    for path, now in changed.items():
+        store.append_audit(session_id, {"type": "external_edit", "path": path,
+                                        "fingerprint": now, "source": "core_check"})
+    return sorted(changed)
+
+
+def reconcile_open(vault: Vault) -> dict[str, list[str]]:
+    """`reconcile` for every audited session that is not closed: at startup,
+    what changed while the app was not running is recorded before anything
+    reads a status."""
+    out: dict[str, list[str]] = {}
+    store = SessionStore(vault)
+    for path in sorted(store.folder.glob("*.jsonl")):
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if not any(marker in text for marker in _AUDIT_MARKERS):
+            continue
+        if store.load(path.stem).status == "closed":
+            continue
+        found = reconcile(vault, path.stem)
+        if found:
+            out[path.stem] = found
+    return out
 
 
 def before_call(tool_name: str, effect: str, ctx: Any) -> None:

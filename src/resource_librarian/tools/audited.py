@@ -192,7 +192,7 @@ def verify_grain(ctx: Context, requirement: str, predicate: str,
         "contract": contract, "contract_revision": audit.contracts[contract]["revision"],
         "predicate": predicate, "verifier": planned, "strength": check.strength,
         "outcome": check.outcome, "epoch": audit.epoch, "statement": check.statement,
-        "params": dict(params or {}),
+        "params": dict(params or {}), "inputs": _inputs(ctx, params or {}),
         "artifacts": mine if planned == "target.diff_clean" else []})
     return {"result": ident, "outcome": check.outcome, "strength": check.strength,
             "statement": check.statement, "verifier": planned,
@@ -249,6 +249,45 @@ def audit_targets(ctx: Context) -> dict:
     return {"target_audit": ident, **found}
 
 
+_EVIDENCE_ID = re.compile(r"[\w.-]{1,120}")
+
+
+def _inputs(ctx: Context, params: dict[str, Any]) -> dict[str, str]:
+    """The files a check read, by fingerprint (REMED-03): a later change to one,
+    by any route, stales the result. A note named by path or by name, a source
+    note, and an evidence record's file."""
+    vault, paths = ctx.vault, set()
+    for key in ("note", "source"):
+        value = params.get(key)
+        if isinstance(value, str) and value.strip():
+            value = value.strip().replace("\\", "/")
+            if value.endswith(".md") and (vault.root / value).is_file():
+                try:
+                    paths.add(vault.safe_relative(value).relative_to(vault.root).as_posix())
+                except (Refusal, ValueError, OSError):
+                    continue        # the check itself says what it could not read
+            else:
+                paths.update(closure._note_paths(vault, value))
+    ident = params.get("evidence")
+    if isinstance(ident, str) and _EVIDENCE_ID.fullmatch(ident.strip()):
+        paths.update(p.relative_to(vault.root).as_posix()
+                     for p in vault.evidence.glob(f"*/{ident.strip()}.json"))
+    out = {}
+    for rel in sorted(paths)[:20]:
+        try:
+            out[rel] = fingerprint(vault.root / rel)
+        except OSError:
+            continue
+    return out
+
+
+def _reconciled(ctx: Context, session: Any) -> Any:
+    """The session after recording what changed under it by any route: a closure
+    or acceptance is never recorded on a state that has moved (REMED-03)."""
+    from ..session import reconcile
+    return _store(ctx).load(session.id) if reconcile(ctx.vault, session.id) else session
+
+
 def _core_status(audit: Any, rid: str, contract: str = "") -> tuple[str, list[str], str]:
     """A requirement's status from its latest results alone, with the results cited."""
     req = audit.requirements[rid]
@@ -268,6 +307,11 @@ def _core_status(audit: Any, rid: str, contract: str = "") -> tuple[str, list[st
         if loose and all(hit and hit[1]["outcome"] == "pass" for hit in latest.values()):
             return "partial", cited, ("a passing check's subject was not bound by the person: "
                                       + "; ".join(loose))
+        unnamed = [p for p, hit in latest.items() if hit and hit[1]["outcome"] == "pass" and
+                   not audit_events.named_by_person(req, p, hit[1]["verifier"])]
+        if unnamed and all(hit and hit[1]["outcome"] == "pass" for hit in latest.values()):
+            return "partial", cited, ("no verifier the person named establishes: "
+                                      + "; ".join(unnamed))
         integrity = {audit_events.contract_integrity(audit, audit.results[r]["contract"])
                      for r in cited} - {"clean", "not_required"}
         if integrity:
@@ -293,7 +337,7 @@ def _core_status(audit: Any, rid: str, contract: str = "") -> tuple[str, list[st
                 "until the person accepts. Requirements the person already settled this epoch "
                 "are left as they are"))
 def reduce_round(ctx: Context) -> dict:
-    session = _audited(ctx)
+    session = _reconciled(ctx, _audited(ctx))
     audit = session.audit
     contract = audit.current_contract
     if not contract:
@@ -325,7 +369,7 @@ def _artifact(session: Any, ctx: Context, artifact: str) -> dict:
                 "The person's decision alone. It names the exact artifact; if the file changed "
                 "since it was staged, accept the new version only after it is staged again"))
 def accept_artifact(ctx: Context, requirement: str, artifact: str) -> dict:
-    session = _audited(ctx)
+    session = _reconciled(ctx, _audited(ctx))
     found = _artifact(session, ctx, artifact)
     path = ctx.vault.root / found["path"]
     if not path.is_file() or fingerprint(path) != found["fingerprint"]:
