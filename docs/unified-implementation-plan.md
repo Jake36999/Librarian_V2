@@ -3169,3 +3169,86 @@ identity survives Obsidian renames (DEPLOY-04).
 The release queue's gate table and R0 state are updated: G5 is now the only
 gate before R0 that is not green.
 
+
+### G5 readiness R1–R4 (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| G5 readiness | implemented | this commit | Audited phase bundles in `agent_runtime.py`; `scripts/g5_measure.py`; `src/resource_librarian/closure_audit.py`; tests in `tests/test_g5_readiness.py` (13). No paid call was made. |
+
+This is the unpaid Part 1 of the
+[G5 measurement plan](experiments/g5-measurement-plan.md).
+
+**R1: bundles.** Each audited phase now offers a model its round's tools:
+- **manage:** `audit_projection`, `update_plan`, `search`, `get_note`;
+- **preflight:** `admit_contract`;
+- **execute:** reads and `stage_artifact`;
+- **audit:** `verify_grain` and `audit_targets`;
+- **reduce:** `reduce_round`.
+
+`advance` and `ask_user` are offered where they apply. Before this, the
+phases fell back to the generic session bundle, so a model could only
+advance and ask.
+
+The person's controls (`set_requirement`, `accept_artifact`,
+`reject_artifact` and `request_evidence`) are in no bundle at any tier
+(tested).
+
+`audit_projection` now also returns `staged_in`, the session's staging
+folder. A contract that stages must name that folder as a write target, so
+the model needs it before admission.
+
+**R2: a scripted round through the real App and Lead loop.** A scripted Lead
+calls only the tools it is offered at each step, and records any other call
+as a violation. It runs a full round with no paid call: propose, admit,
+stage, verify a quote grain and the staged draft, audit the targets, and
+reduce. The result is R1 verified, the synthesis open for the person, and a
+clean integrity audit.
+
+With the R1 bundles removed, the same run fails: `audit_projection` is not
+offered.
+
+**R3: runner.** `scripts/g5_measure.py` runs each predeclared task as
+follows:
+1. It copies the library into a scratch folder, without the derived index
+   or old sessions, so the real library is only read (tested).
+2. It opens an audited session through the App, and sets the task's
+   requirements as the person.
+3. It drives Lead turns until the session settles, goes idle twice, or hits
+   the turn cap or the budget.
+4. It forces one restart, checking that the state hash survives.
+5. It collects grains, results per verifier, refusal codes, integrity
+   findings, tokens and USD, and the closure audit.
+
+Totals give the pooled and per-route share with a Wilson 95% interval.
+A paid run needs both `--confirm-paid` and a checked rate card for the
+model. It loads the DeepInfra key from `--env-file` into the process only.
+It stops at the budget, and fails closed if a response carries no usage.
+
+The dry run with the scripted Lead gives 3 grains, 2 closed by Tier A
+(0.667), an equal state hash after the restart, and zero false closures.
+
+**R4: closure audit.** `closure_audit.audit` re-checks every latest Tier A
+pass, and labels each re-check by its method:
+- **independent:** its own case-folded text match for quotes; a recomputed
+  content hash; direct reads of the coverage record, the claim-run log and
+  artifact fingerprints; its own link resolution; the calls behind the
+  boundary check;
+- **rerun:** arithmetic, findability and schema run the same code again,
+  which shows the result reproduces but no more.
+
+Verifier results now record the parameters they were given, bounded in size,
+so this re-check is possible. A quote closure whose evidence was rewritten
+afterwards is reported as a false closure (tested).
+
+**Deviation from the plan.** The plan said the budget would be enforced
+"through the delegation ledger". The runner instead enforces its own cap
+from the recorded token usage, and writes `results.json` in the run folder.
+It does not write to the ledger. A G5 run's spend must be added to the
+ledger by hand, or that integration built, before the paid stage.
+
+**Next (needs the owner).**
+- Approve `docs/experiments/g5-tasks.json` (not written yet; it needs the
+  owner's requirements), the decision rule and the $8 cap.
+- Record a rate card for MiMo-V2.6-Flash.
+- Run the pilot.

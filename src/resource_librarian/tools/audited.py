@@ -155,6 +155,7 @@ def verify_grain(ctx: Context, requirement: str, predicate: str,
         "contract": contract, "contract_revision": audit.contracts[contract]["revision"],
         "predicate": predicate, "verifier": planned, "strength": check.strength,
         "outcome": check.outcome, "epoch": audit.epoch, "statement": check.statement,
+        "params": dict(params or {}),
         "artifacts": mine if planned == "target.diff_clean" else []})
     return {"result": ident, "outcome": check.outcome, "strength": check.strength,
             "statement": check.statement, "verifier": planned,

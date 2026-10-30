@@ -608,7 +608,10 @@ def audit_projection(ctx: Context, token_budget: int = 6000) -> dict:
     _event(ctx, {"type": "manager_view", "digest": view["digest"],
                  "round": session.audit_round, "fits": view["fits"],
                  "bundles": manifest["bundle_counts"]})
-    return view
+    # Where this session's drafts go: a contract that stages names it as a write
+    # target before admission, so the Manager must know it first (G5 readiness).
+    from .audited import staging_folder
+    return {**view, "staged_in": staging_folder(ctx, session.id)}
 
 
 @tool("request_budget", tier="contribute", effect="write", scope="session",

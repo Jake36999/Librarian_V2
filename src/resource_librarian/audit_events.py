@@ -233,7 +233,22 @@ def _verifier_result(state: AuditState, event: dict[str, Any]) -> None:
         "epoch": _epoch(state, event),
         # HARNESS-06: the exact predicate instance the check established
         # ("the quote is present in evidence <id> at offset N"), never more.
-        "statement": str(event.get("statement", ""))[:600]}
+        "statement": str(event.get("statement", ""))[:600],
+        # What the check was given, so an auditor can re-check it independently.
+        "params": _params(event.get("params"))}
+
+
+def _params(value: Any) -> dict[str, Any]:
+    """A verifier's parameters as recorded: plain values, bounded in size."""
+    if not isinstance(value, dict):
+        return {}
+    out = {}
+    for key, item in list(value.items())[:12]:
+        if isinstance(item, (str, int, float, bool)) or item is None:
+            out[str(key)[:60]] = item if not isinstance(item, str) else item[:2000]
+        elif isinstance(item, list):
+            out[str(key)[:60]] = [str(x)[:200] for x in item[:50]]
+    return out
 
 
 def _latest_result(state: AuditState, requirement: str, predicate: str) -> tuple[str, dict] | None:

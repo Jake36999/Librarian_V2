@@ -1,0 +1,241 @@
+"""Run predeclared audited research sessions and measure Tier A (G5 readiness R3).
+
+See docs/experiments/g5-measurement-plan.md. Each task runs on its own scratch
+copy of the library, so the real library is never written. For each task the
+runner:
+1. opens an audited session through the real App and Lead loop;
+2. sets the task's requirements as the person;
+3. drives Lead turns until the session settles, stalls or reaches a cap;
+4. forces one restart and checks the state hash survives it;
+5. re-checks every Tier A closure (`closure_audit`).
+
+    python scripts/g5_measure.py --library D:/Resource-Library/.librarian-app \
+        --tasks docs/experiments/g5-tasks.json --run-dir tmp/g5/run-1 \
+        --route deepinfra:deepseek-ai/DeepSeek-V4.1-Flash --budget-usd 1 --confirm-paid         --env-file D:/Resource-Library/.utility/.env
+
+A paid route needs --confirm-paid and a budget. The runner stops at the budget,
+and stops if the provider reports no usage, because then spend cannot be
+bounded. A dry run passes `provider_for` from code (tests) and spends nothing.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import os
+import shutil
+import sys
+from pathlib import Path
+from typing import Any, Callable
+
+SETTLED = {"complete_verified", "complete_with_human_acceptance", "failed", "blocked",
+           "invalid_history", "integrity_violation", "needs_person"}
+CONTINUE = ("Continue the audited session: read the projection, then work the next step of "
+            "the round. Stop when the round is reduced or you need the person.")
+
+
+def wilson(hits: int, total: int, z: float = 1.96) -> list[float] | None:
+    if not total:
+        return None
+    p = hits / total
+    centre = (p + z * z / (2 * total)) / (1 + z * z / total)
+    half = z * math.sqrt(p * (1 - p) / total + z * z / (4 * total * total)) / (1 + z * z / total)
+    return [round(max(0.0, centre - half), 3), round(min(1.0, centre + half), 3)]
+
+
+def copy_library(library: Path, target: Path) -> Path:
+    """A scratch copy without the rebuildable index and without old sessions."""
+    if target.exists():
+        raise SystemExit(f"{target} already exists; choose a new --run-dir")
+    shutil.copytree(library, target, ignore=lambda folder, names: [
+        n for n in names if (Path(folder).name == ".librarian" and n in ("derived", "sessions"))])
+    return target
+
+
+def spend(events: list[dict[str, Any]], card: dict[str, float] | None) -> dict[str, Any]:
+    tokens = {"input_tokens": 0, "output_tokens": 0, "responses": 0, "without_usage": 0}
+    for event in events:
+        if event.get("type") != "model_response":
+            continue
+        tokens["responses"] += 1
+        usage = event.get("usage")
+        if not isinstance(usage, dict):
+            tokens["without_usage"] += 1
+            continue
+        tokens["input_tokens"] += int(usage.get("input_tokens") or 0)
+        tokens["output_tokens"] += int(usage.get("output_tokens") or 0)
+    if card:
+        tokens["usd"] = round(tokens["input_tokens"] / 1e6 * card["input_per_1m"] +
+                              tokens["output_tokens"] / 1e6 * card["output_per_1m"], 5)
+    return tokens
+
+
+def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[str, str],
+             provider_for: Callable | None = None, card: dict[str, float] | None = None,
+             budget_usd: float | None = None, max_turns: int = 12,
+             restart_after: int = 2) -> dict[str, Any]:
+    """One predeclared task, start to finish, on its own scratch library."""
+    from resource_librarian import audit_events, closure_audit, research_grains
+    from resource_librarian import tools  # noqa: F401
+    from resource_librarian.app import App
+    from resource_librarian.keys import KeyStore
+    from resource_librarian.session import SessionStore
+    from resource_librarian.vault import Vault
+
+    vault = Vault(copy_library(library, run_dir / task["id"] / "vault"))
+    store = SessionStore(vault)
+
+    def open_app():
+        app = App(vault, keys=KeyStore(use_keyring=False), coordinate=True,
+                  provider_for=provider_for)
+        app.set_tiers([route], override="G5 measurement route")
+        app.set_mode("auto")
+        return app
+
+    row: dict[str, Any] = {"task": task["id"], "route": f"{route['provider']}:{route['model']}"}
+    app = open_app()
+    try:
+        loop = app._loop()
+        loop.send(f"Open an audited session (open_session with purpose 'audited') for this "
+                  f"research question: {task['question']}")
+        sid = loop.ctx.session
+        if not sid or store.load(sid).purpose != "audited":
+            row["stopped"] = "no_audited_session"
+            return row
+        row["session"] = sid
+        for requirement in task["requirements"]:
+            out = app.person_call("set_requirement", requirement, session=sid)
+            if "refused" in out or "error" in out:
+                row["stopped"] = f"requirement refused: {out}"
+                return row
+        idle, turns = 0, 0
+        while turns < max_turns:
+            turn = loop.send(CONTINUE)
+            turns += 1
+            idle = idle + 1 if not turn.calls else 0
+            events = store.events(sid)
+            cost = spend(events, card)
+            if card is not None and cost["without_usage"]:
+                row["stopped"] = "usage_unavailable"
+                break
+            if budget_usd is not None and cost.get("usd", 0.0) >= budget_usd:
+                row["stopped"] = "budget"
+                break
+            if turns == restart_after and "restart" not in row:
+                before = store.load(sid).state_hash()
+                app.close_runtime()
+                app = open_app()
+                loop = app._loop()
+                loop.ctx.session = sid
+                row["restart"] = {"after_turn": turns,
+                                  "state_hash_equal": store.load(sid).state_hash() == before}
+            outcome = audit_events.session_outcome(store.load(sid).audit)
+            if outcome in SETTLED or store.load(sid).status != "open":
+                row["stopped"] = f"settled: {outcome}"
+                break
+            if idle >= 2:
+                row["stopped"] = "idle"
+                break
+        else:
+            row["stopped"] = "max_turns"
+        session = store.load(sid)
+        summary = audit_events.summary(session.audit)
+        verifiers: dict[str, dict[str, int]] = {}
+        for result in session.audit.results.values():
+            slot = verifiers.setdefault(result["verifier"], {"results": 0, "pass": 0})
+            slot["results"] += 1
+            slot["pass"] += result["outcome"] == "pass"
+        refusals: dict[str, int] = {}
+        for event in store.events(sid):
+            code = event.get("refused") if event.get("type") == "call" else None
+            if code:
+                refusals[code] = refusals.get(code, 0) + 1
+        row.update({
+            "turns": turns, "rounds": session.audit_round, "outcome": summary["outcome"],
+            "invalid_history": bool(session.audit.invalid),
+            "grains": research_grains.grain_counts(session.audit),
+            "no_suitable_tool": sum(1 for r in summary["requirements"].values()
+                                    for o in r["predicates"].values() if o == "no_suitable_tool"),
+            "integrity": {c: v["integrity"] for c, v in summary["contracts"].items()},
+            "verifiers": verifiers, "refusals": refusals,
+            "spend": spend(store.events(sid), card),
+            "closure_audit": closure_audit.audit(vault, session)})
+        return row
+    finally:
+        app.close_runtime()
+
+
+def totals(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Pooled and per-route Tier A share, with Wilson 95% intervals."""
+    def pool(selected):
+        grains = sum((r.get("grains") or {}).get("grains", 0) for r in selected)
+        tier_a = sum((r.get("grains") or {}).get("tier_a", 0) for r in selected)
+        false = sum(len((r.get("closure_audit") or {}).get("false_closures", []))
+                    for r in selected)
+        return {"sessions": len(selected), "grains": grains, "tier_a": tier_a,
+                "share": round(tier_a / grains, 3) if grains else None,
+                "interval_95": wilson(tier_a, grains), "false_closures": false,
+                "restart_failures": sum(1 for r in selected
+                                        if r.get("restart", {}).get("state_hash_equal") is False),
+                "invalid_histories": sum(1 for r in selected if r.get("invalid_history")),
+                "usd": round(sum((r.get("spend") or {}).get("usd", 0.0) for r in selected), 4)}
+    routes = sorted({r["route"] for r in rows})
+    return {"pooled": pool(rows), "by_route": {k: pool([r for r in rows if r["route"] == k])
+                                               for k in routes}}
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--library", required=True)
+    parser.add_argument("--tasks", required=True)
+    parser.add_argument("--run-dir", required=True)
+    parser.add_argument("--route", required=True, help="provider:model, e.g. deepinfra:...")
+    parser.add_argument("--budget-usd", type=float, required=True,
+                        help="hard cap for the whole run")
+    parser.add_argument("--confirm-paid", action="store_true",
+                        help="required: this run makes paid model calls")
+    parser.add_argument("--only", action="append", default=[], help="run only these task ids")
+    parser.add_argument("--max-turns", type=int, default=12)
+    parser.add_argument("--env-file", default="",
+                        help="load DEEPINFRA_API_KEY from this file into this process only")
+    args = parser.parse_args(argv)
+    if args.env_file:
+        for line in Path(args.env_file).read_text(encoding="utf-8").splitlines():
+            name, sep, value = line.strip().partition("=")
+            if sep and name.strip() == "DEEPINFRA_API_KEY":
+                os.environ["DEEPINFRA_API_KEY"] = value.strip().strip('"').strip("'")
+    if not args.confirm_paid:
+        print("refusing: a real route makes paid calls; pass --confirm-paid", file=sys.stderr)
+        return 2
+    sys.path.insert(0, str(Path(__file__).parent))
+    from delegate_deepinfra import RATE_CARDS
+    provider, _, model = args.route.partition(":")
+    card = RATE_CARDS.get(model)
+    if card is None:
+        print(f"refusing: no checked rate card for {model}; run delegate_ledger.py "
+              "check-prices and add one", file=sys.stderr)
+        return 2
+    tasks = json.loads(Path(args.tasks).read_text(encoding="utf-8"))["tasks"]
+    if args.only:
+        tasks = [t for t in tasks if t["id"] in args.only]
+    run_dir = Path(args.run_dir)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    rows, spent = [], 0.0
+    for task in tasks:
+        remaining = args.budget_usd - spent
+        if remaining <= 0:
+            rows.append({"task": task["id"], "route": args.route, "stopped": "budget_exhausted"})
+            continue
+        row = run_task(task, library=Path(args.library), run_dir=run_dir,
+                       route={"provider": provider, "model": model}, card=card,
+                       budget_usd=remaining, max_turns=args.max_turns)
+        spent += (row.get("spend") or {}).get("usd", 0.0)
+        rows.append(row)
+        (run_dir / "results.json").write_text(json.dumps(
+            {"rows": rows, "totals": totals(rows)}, indent=1, default=str), encoding="utf-8")
+    print(json.dumps(totals(rows), indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
