@@ -77,9 +77,16 @@ def check_notes(ctx: Context, limit: int = 50) -> dict:
     violations = []
     names: dict[str, str] = {}
     links: dict[str, list[str]] = {}
+    from ..content_roots import adopted
+    workspace = adopted(ctx.vault.root)
     for path in notes.iter_paths(ctx.vault.root):
         note = notes.load(path)
         rel = path.relative_to(ctx.vault.root).as_posix()
+        if workspace and not note.frontmatter and not note.parse_error:
+            # DEPLOY-03: an adopted folder's own documentation is read as it is.
+            # It answers to no content model, and a docs tree's many READMEs
+            # are not duplicate notes.
+            continue
         if note.name in names:
             violations.append({"check": "unique_note_names", "note": note.name,
                                "detail": f"also at {names[note.name]}", "severity": "error"})

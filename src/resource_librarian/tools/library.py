@@ -17,7 +17,7 @@ from ..search import INTENTS, Engine, search
 from ..vault import now_iso
 
 Intent = Literal["orient", "donor", "pattern", "technique", "data", "precedent", "in_text",
-                 "made", "all"]
+                 "made", "all", "workspace"]
 assert set(Intent.__args__) == set(INTENTS)                  # type: ignore[attr-defined]
 
 R = TypeVar("R")
@@ -242,7 +242,8 @@ def index_status(ctx: Context) -> dict:
                 "(has this shape of problem been named), technique (how is it done, inside "
                 "sources), data (datasets), precedent (has it been used before), in_text "
                 "(inside document text), made (Offerings, Applications and the librarian's "
-                "own notes), all (sources, patterns and made at once, grouped by intent). "
+                "own notes), all (sources, patterns and made at once, grouped by intent), "
+                "workspace (an adopted folder's own documentation, read as it is). "
                 "Constraints eliminate; read `verdict` beside `rank`. Each source says its "
                 "read_depth: a result is a lead to screen, never proof it was read in full"))
 def search_tool(ctx: Context, query: str, intent: Intent = "donor",

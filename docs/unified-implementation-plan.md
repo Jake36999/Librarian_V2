@@ -2744,3 +2744,54 @@ The cause is not established. The Core's own writes are recognised by
 fingerprint for 60 s, so the watcher's longer waits should not turn them into
 outside edits. The assertion now prints the returned result, so a recurrence
 will show what came back.
+
+### DEPLOY-03 workspace documents in adopted roots (2026-10-29)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| DEPLOY-03 | implemented | this commit | The `workspace_document` shape in `index.py`; the scoped `notes.iter_paths`; the `workspace` search intent; `check_notes`; tests in `tests/test_workspace_documents.py` (8). |
+
+**Identity.** In an adopted library (the manifest's mode is `adopt`), a
+Markdown file with no frontmatter is indexed with the virtual shape
+`workspace_document`. It has no kind, no axes, no facets and no
+repository components. Its file is never rewritten.
+
+The shape no longer comes from the folder the file sits in. Tested: in a
+library that has gained the content model, `Sources/vendor-notes.md` is a
+workspace document, not a source. A note with `type: source` beside it is
+still a source.
+
+A library made by `init` is unchanged: its folders still assign shapes. The
+index's model hash now covers the manifest, so adopting, attaching or editing
+the manifest rebuilds the index.
+
+**Which files are documents.** When a library has a content-roots manifest,
+`notes.iter_paths` walks only the manifest's read-write roots. It does not
+enter hidden folders, excluded paths (`node_modules`, build output) or links.
+This is the same walk the scoped watcher makes.
+
+Every caller (index, name resolution, agenda, validation) now sees the same
+set. Without a manifest, the walk is exactly as before (`rglob`).
+
+**Search scope.**
+- A new `workspace` intent searches only workspace documents.
+- `donor` and the other source intents never return them.
+- `all` adds a `workspace` group when the library has any workspace
+  documents, and names it in `ran`.
+- The `search` tool (consult tier, so every agent tier) accepts the intent.
+
+Tested: a query finds the right document; a consult-tier context finds it
+through the registry; indexing and searching leave every document's SHA-256
+unchanged.
+
+**Validation.** `check_notes` judges notes against the content model, but
+does not apply it to workspace documents. It also does not treat a docs
+tree's several `README.md` files as duplicate note names.
+
+Confirmed by removing the exemption: the test then flags `vendor-notes` and
+`README`.
+
+**Not yet.**
+- Dedupe across workspace documents and notes is DEPLOY-04.
+- Attached read-only roots lie outside the vault and are not indexed yet.
+  Reading them needs an index path outside the vault root.

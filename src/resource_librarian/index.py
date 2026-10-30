@@ -278,6 +278,12 @@ class Index:
             self._model = schema.load(self.vault.root)
         return self._model
 
+    def _adopted(self) -> bool:
+        if getattr(self, "_adopted_cache", None) is None:
+            from .content_roots import adopted
+            self._adopted_cache = adopted(self.vault.root)
+        return self._adopted_cache
+
     def _meta(self, key: str, default: str = "") -> str:
         row = self.conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
         return row["value"] if row else default
@@ -288,6 +294,10 @@ class Index:
     def _model_hash(self) -> str:
         path = self.vault.root / schema.MODEL_PATH
         data = path.read_bytes() if path.exists() else b""
+        # DEPLOY-03: what counts as a document (and a workspace document) follows
+        # the content-roots manifest, so changing it rebuilds the index.
+        from .content_roots import manifest_bytes
+        data += manifest_bytes(self.vault.root)
         return hashlib.sha256(data + str(SCHEMA_VERSION).encode()).hexdigest()[:16]
 
     def stale_reason(self) -> str:
@@ -322,7 +332,14 @@ class Index:
         note = notes.Note(name=path.stem, path=path, frontmatter=fm, body=body,
                           parse_error=error)
         model = self.model
-        shape = model.shape_of(note, self.vault.root) if model.found else ""
+        if not fm and not error and self._adopted():
+            # DEPLOY-03: an adopted folder's own documentation, without
+            # frontmatter, is a workspace document - never a source or another
+            # shape by the folder it happens to sit in, and never rewritten.
+            from .content_roots import WORKSPACE_DOCUMENT
+            shape = WORKSPACE_DOCUMENT
+        else:
+            shape = model.shape_of(note, self.vault.root) if model.found else ""
         kind = str(fm.get("kind") or "") if shape == "source" else \
             str(fm.get("concept_kind") or fm.get("offering_kind") or "")
         topics = _as_list(fm.get("primary_topic")) + _as_list(fm.get("secondary_topics"))
@@ -487,6 +504,7 @@ class Index:
             self.conn.execute(f"DELETE FROM {table}")
         self.conn.execute("DELETE FROM chunk_fts")
         self._model = None
+        self._adopted_cache = None
         report = RefreshReport(rebuilt=True)
         for path in notes.iter_paths(self.vault.root):
             try:

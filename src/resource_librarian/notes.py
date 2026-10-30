@@ -159,7 +159,15 @@ def load(path: Path) -> Note:
 
 def iter_paths(root: Path) -> Iterator[Path]:
     """Every note under `root`, skipping dot-directories (`.librarian`,
-    `.evidence`, `.obsidian`, `.git`), which hold machinery, not notes."""
+    `.evidence`, `.obsidian`, `.git`), which hold machinery, not notes.
+
+    An adopted or attaching library (DEPLOY-02/03) has a content-roots
+    manifest: then only its read-write roots are walked, and its excluded
+    folders and links are never entered."""
+    if (root / ".librarian" / "content-roots.json").is_file():
+        from .content_roots import iter_documents
+        yield from iter_documents(root)
+        return
     for path in sorted(root.rglob("*.md")):
         parts = path.relative_to(root).parts
         if any(part.startswith(".") for part in parts):

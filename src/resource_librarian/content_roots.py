@@ -169,3 +169,42 @@ def apply_attach(vault: Vault, folder: Path | str, fingerprint: str) -> dict[str
     _write_json(manifest_path(vault.root), data)
     return {**plan, "applied": True}
 
+
+
+# ------------------------------------------------- documents in the roots (DEPLOY-03)
+
+WORKSPACE_DOCUMENT = "workspace_document"
+
+
+def iter_documents(root: Path) -> list[Path]:
+    """Every visible Markdown file under the manifest's read-write roots, sorted,
+    without entering hidden folders, excluded paths or links."""
+    import os
+    import sys
+    root = Path(root)
+    roots, excludes = watch_scope(root)
+    fold = sys.platform == "win32"      # rglob's '*.md' matches '.MD' there too
+    out: set[Path] = set()
+    for start in roots:
+        top = root if start in (".", "") else root / start
+        for dirpath, dirnames, filenames in os.walk(top):
+            here = Path(dirpath)
+            rel = here.relative_to(root).as_posix()
+            dirnames[:] = [d for d in dirnames if not d.startswith(".")
+                           and not (here / d).is_symlink()
+                           and (f"{rel}/{d}" if rel != "." else d) not in excludes]
+            for name in filenames:
+                if (name.lower() if fold else name).endswith(".md"):
+                    out.add(here / name)
+    return sorted(out)
+
+
+def adopted(root: Path) -> bool:
+    """Whether this library was made by adopting an existing documents folder."""
+    data = load(root)
+    return bool(data and data.get("mode") == "adopt")
+
+
+def manifest_bytes(root: Path) -> bytes:
+    path = manifest_path(root)
+    return path.read_bytes() if path.is_file() else b""

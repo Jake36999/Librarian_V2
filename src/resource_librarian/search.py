@@ -39,7 +39,9 @@ from .index import Index, fold
 INTENTS = ("orient", "donor", "pattern", "technique", "data", "precedent", "in_text",
            # P5 (2026-09-30): what the library made - Offerings, Applications, its own notes
            # (a guide was otherwise unfindable) - and everything at once, grouped by intent
-           "made", "all")
+           "made", "all",
+           # DEPLOY-03: an adopted folder's own documentation (workspace documents)
+           "workspace")
 EVERYTHING = ("orient", "pattern", "made")      # `all`: each still answers in its own shape
 
 STOPWORDS = frozenset("""
@@ -586,7 +588,8 @@ def search(engine: Engine, query: str, intent: str = "donor",
         return _technique(engine, query, limit, source)
     shapes = {"donor": ("source",), "data": ("source",), "orient": ("source",),
               "pattern": ("concept",), "precedent": ("application",),
-              "made": ("offering", "application", "note")}[intent]
+              "made": ("offering", "application", "note"),
+              "workspace": ("workspace_document",)}[intent]
     data_shaped = list(engine.h.get("data_shaped") or ["kind=dataset"]) \
         if intent == "data" else None
     bounds = Constraints.of(constraints, engine.permitted_axes(shapes[0])) \
@@ -694,15 +697,18 @@ def _everything(engine: Engine, query: str, constraints: dict[str, Any] | None, 
                 max_age_days: int) -> Response:
     """Search everything (SM-5): sources, patterns and what the library made, each through
     its own intent and answer shape, grouped - never hiding which one ran."""
+    # An adopted folder's documentation answers too, as its own group (DEPLOY-03).
+    ran = EVERYTHING + (("workspace",) if engine.conn.execute(
+        "SELECT 1 FROM note WHERE shape = 'workspace_document' LIMIT 1").fetchone() else ())
     parts = {i: search(engine, query, i, constraints if i == "orient" else None,
                        limit=limit, max_age_days=max_age_days if i == "orient" else 0)
-             for i in EVERYTHING}
+             for i in ran}
     lead = parts["orient"]
     out = Response(intent="all", verdict=lead.verdict, coverage=lead.coverage,
                    facets=lead.facets, considered=lead.considered, filtered_out=lead.filtered_out,
                    constraints=lead.constraints, tier_reached=lead.tier_reached,
                    partial=any(p.partial for p in parts.values()),
-                   removed_by_filters=lead.removed_by_filters, ran=list(EVERYTHING))
+                   removed_by_filters=lead.removed_by_filters, ran=list(ran))
     for intent, part in parts.items():
         out.results += [Result(r.kind, r.name, r.why, r.rank, {**r.fields, "intent": intent})
                         for r in part.results]
