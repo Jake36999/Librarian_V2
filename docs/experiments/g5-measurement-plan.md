@@ -85,9 +85,11 @@ claim runs. So `arithmetic.reproduces`, `coverage.status` and
 verifiers, and t6 adds a numeric predicate that no verifier checks, to
 measure `no_suitable_tool`.
 
-To cover the missing three, the owner could ingest a few repositories, which
-brings survey evidence and DIK records, before the run. Otherwise the G5
-result must state that it covers seven of the ten verifiers.
+**Owner decision (2026-10-30): seven verifiers are enough.** The measurement
+runs on the library as it is, without ingesting repositories first. The G5
+result must state that it covers seven of the ten Tier A verifiers;
+`arithmetic.reproduces`, `coverage.status` and `claim_run.passed` stay
+measured on fixtures only.
 
 The Lead proposes each contract and its verifier plan. That proposal is
 part of what is measured, so the plan is not fixed in advance.

@@ -4,7 +4,7 @@
  "notes": [
   "Requirements are set by the person (the runner calls set_requirement as the person). The Lead proposes each contract and its verifier plan; that choice is part of what is measured.",
   "Every authoritative predicate below can be closed by a registered Tier A verifier (quote.located, evidence.integrity, index.findable, citation.resolves, schema.valid, target.diff_clean, boundary.staged). A contract that plans no such verifier is refused at admission.",
-  "This library has no repositories, coverage (DIK) records or claim runs, so arithmetic.reproduces, coverage.status and claim_run.passed cannot be exercised on it. Task t6 deliberately includes a predicate no Tier A verifier can check, to measure the no_suitable_tool outcome on real data.",
+  "This library has no repositories, coverage (DIK) records or claim runs, so arithmetic.reproduces, coverage.status and claim_run.passed cannot be exercised on it; the owner decided (2026-10-30) that the measurement covers the other seven. Task t6 deliberately includes a predicate no Tier A verifier can check, to measure the no_suitable_tool outcome on real data.",
   "'sources' lists the notes each task is about; the runner validates that they exist and does not show the list to the Lead."
  ],
  "tasks": [
