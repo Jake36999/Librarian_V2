@@ -266,3 +266,27 @@ def test_composition_survives_a_resume(vault):
     out = restarted("write_note", folder="Notes", name="out", body="x", mode="create")
     assert out["refused"] == "COMPOSITION_REFUSED"
     assert "contract_call" in json.dumps(SessionStore(vault).events(lead.ctx.session))
+
+
+# --- plan keys a real model sends (found by the G5 pilot) --------------------------
+
+def test_a_bare_predicate_maps_to_its_one_requirement(store, sid):
+    store.append_audit(sid, requirement())
+    store.append_audit(sid, contract({"quote present": "quote.located"}))
+    assert store.load(sid).audit.contracts["C1"]["verifiers"] == {
+        "R1: quote present": "quote.located"}
+
+
+def test_an_ambiguous_bare_predicate_is_refused_and_the_refusal_lists_the_keys(store, sid):
+    store.append_audit(sid, requirement("R1"))
+    store.append_audit(sid, requirement("R2"))
+    with pytest.raises(Refusal, match=r"valid keys here: \['R1: quote present', "
+                                      r"'R2: quote present'\]"):
+        store.append_audit(sid, contract({"quote present": "quote.located"},
+                                         requirements=("R1", "R2")))
+
+
+def test_a_requirement_id_alone_is_not_a_plan_key(store, sid):
+    store.append_audit(sid, requirement())
+    with pytest.raises(Refusal, match="Key each verifier by 'requirement: predicate'"):
+        store.append_audit(sid, contract({"R1": "quote.located"}))

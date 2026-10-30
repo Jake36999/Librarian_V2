@@ -173,7 +173,8 @@ def _contract(state: AuditState, event: dict[str, Any]) -> None:
     role = _text(event, "role")
     operations = event.get("operations") or list(closure.DEFAULT_OPERATIONS)
     if not isinstance(operations, list) or any(o not in closure.OPERATIONS for o in operations):
-        raise _refuse(f"contract operations must be a list from {list(closure.OPERATIONS)}")
+        raise _refuse(f"contract operations must be a list from {list(closure.OPERATIONS)}, "
+                      "for example [\"read\", \"stage\"]")
     # HARNESS-05: a plan that could not close an authoritative requirement is
     # refused here, before anything runs.
     plan = closure.check_plan(state.requirements, requirements, event.get("verifiers"))

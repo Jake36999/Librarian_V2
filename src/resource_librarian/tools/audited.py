@@ -62,9 +62,12 @@ def _stage_intent(ctx: Context, kwargs: dict[str, Any]) -> WriteIntent:
       card=Card("Ask the Core to admit this round's contract",
                 "the proposal is settled and the round needs its bounded contract",
                 "Names the requirements it addresses, what it may read and write, the operations "
-                "it may use and, for each predicate, the verifier that will check it. The Core "
-                "refuses a plan that could not close an authoritative requirement. Drafts go "
-                "under the session's staging folder (staged_in)"))
+                "it may use (a list, e.g. [\"read\", \"stage\"]) and, for each predicate, the "
+                "verifier that will check it: verifiers maps 'R1: <the predicate, exactly>' to a "
+                "verifier id, e.g. {\"R1: the quote is present\": \"quote.located\"}. Every "
+                "predicate of an authoritative requirement needs one; the Core refuses a plan "
+                "that could not close it. Drafts go under the session's staging folder "
+                "(audit_projection's staged_in)"))
 def admit_contract(ctx: Context, contract_id: str, requirements: list[str],
                    write: list[str] | None = None, read: list[str] | None = None,
                    verifiers: dict | None = None, operations: list[str] | None = None) -> dict:

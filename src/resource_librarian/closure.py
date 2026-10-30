@@ -117,13 +117,22 @@ def check_plan(requirements: dict[str, dict[str, Any]], addressed: list[str],
         plan = {}
     if not isinstance(plan, dict):
         raise _refuse_plan("contract verifiers must map 'requirement: predicate' to a verifier")
+    valid = [f"{rid}: {p}" for rid in addressed for p in requirements.get(rid, {}).get(
+        "predicates", [])]
     normalised: dict[str, str] = {}
     for key, verifier in plan.items():
-        rid, sep, predicate = str(key).partition(": ")
-        if not sep or rid not in addressed or predicate not in requirements.get(rid, {}).get(
-                "predicates", []):
-            raise _refuse_plan(f"verifier plan names {key!r}, not a predicate of a requirement "
-                               "this contract addresses")
+        key = str(key)
+        if key not in valid:
+            # A bare predicate is accepted when exactly one addressed
+            # requirement has it: the mapping is then not a guess (G5 pilot:
+            # a real model keyed its plan by predicate text alone).
+            matches = [k for k in valid if k.split(": ", 1)[1] == key]
+            if len(matches) != 1:
+                raise _refuse_plan(
+                    f"verifier plan names {key!r}, not a predicate of a requirement this "
+                    f"contract addresses. Key each verifier by 'requirement: predicate', "
+                    f"exactly; valid keys here: {valid}")
+            key = matches[0]
         if base_id(verifier) not in VERIFIERS:
             raise _refuse_plan(f"unknown verifier {verifier!r}; registered: {sorted(VERIFIERS)}")
         normalised[key] = base_id(verifier)
@@ -135,7 +144,8 @@ def check_plan(requirements: dict[str, dict[str, Any]], addressed: list[str],
             key = f"{rid}: {predicate}"
             if key not in normalised:
                 raise _refuse_plan(f"authoritative requirement {rid} needs a verifier for "
-                                   f"{predicate!r} before the contract runs")
+                                   f"{predicate!r} before the contract runs (plan key "
+                                   f"{key!r})")
             v = VERIFIERS[normalised[key]]
             if v.kind not in AUTHORITATIVE_KINDS or v.max_strength == "advisory":
                 raise _refuse_plan(
