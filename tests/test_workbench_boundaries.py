@@ -94,19 +94,32 @@ def test_too_many_files_stops_the_export(export, monkeypatch):
     assert sorted(p.name for p in folder.iterdir()) == ["f0.txt", "f1.txt", "f2.txt"]
 
 
+def test_hard_link_copies_count_against_the_size_limit(export, monkeypatch):
+    monkeypatch.setattr(workbench, "MAX_OUTPUT_BYTES", 60)
+    out, folder = export(tar_stream(entry("output/a.bin", b"a" * 40),
+                                    entry("output/b.bin", kind=tarfile.LNKTYPE,
+                                          link="output/a.bin")))
+    assert not out["export"]["complete"] and "60 bytes" in out["export"]["stopped"]
+    assert [p.name for p in folder.iterdir()] == ["a.bin"]
+
+
 def test_links_devices_and_escaping_paths_are_refused_and_named(export, vault):
     out, folder = export(tar_stream(
         entry("output/keep.txt", b"kept"),
         entry("output/link", kind=tarfile.SYMTYPE, link="/etc/passwd"),
         entry("output/hard", kind=tarfile.LNKTYPE, link="output/keep.txt"),
+        entry("output/orphan", kind=tarfile.LNKTYPE, link="/etc/shadow"),
         entry("output/fifo", kind=tarfile.FIFOTYPE),
         entry("output/device", kind=tarfile.CHRTYPE),
         entry("output/../../escaped.txt", b"out"),
         entry("/absolute.txt", b"out")))
     refused = " ".join(out["export"]["refused"])
-    for name in ("link", "hard", "fifo", "device", "escaped.txt", "absolute.txt"):
+    for name in ("link", "orphan", "fifo", "device", "escaped.txt", "absolute.txt"):
         assert name in refused
-    assert out["export"]["complete"] and [p.name for p in folder.iterdir()] == ["keep.txt"]
+    # A hard link to an exported file is a second name for it: copied, and counted.
+    assert "hard:" not in refused and (folder / "hard").read_bytes() == b"kept"
+    assert out["export"]["complete"] and out["export"]["bytes"] == 8
+    assert sorted(p.name for p in folder.iterdir()) == ["hard", "keep.txt"]
     assert not list(vault.derived.parent.rglob("escaped.txt"))
     assert not list(vault.root.rglob("absolute.txt"))
 

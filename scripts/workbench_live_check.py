@@ -50,7 +50,7 @@ for case, limits in (("hostile_size", dict(MAX_OUTPUT_BYTES=1_000_000)),
     results[case] = {"exit": out["exit_code"], "stderr": out["stderr"][-300:],
                      "stdout_held": len(out["stdout"]), "output_bytes": out.get("output_bytes"),
                      "export": out["export"],
-                     "files": sorted(a["path"].rsplit("/", 1)[-1] for a in out["artifacts"])}
+                     "files": sorted(a["path"].split("/output/", 1)[-1] for a in out["artifacts"])}
     workbench.MAX_OUTPUT_BYTES, workbench.MAX_OUTPUT_FILES = 100 * 1024 * 1024, 1000
     for kind in ("source", "output"):
         workbench._run(["docker", "volume", "rm", "-f", workbench._volume_name(engagement, kind)], 60)

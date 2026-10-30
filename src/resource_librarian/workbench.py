@@ -483,6 +483,7 @@ def _archive_outputs(vault: Vault, engagement: Engagement, image: str,
     container = f"librarian-output-{engagement.id[-8:]}"
     records: list[dict[str, Any]] = []
     refused: list[str] = []
+    exported: dict[str, Path] = {}          # relative name -> the file written here
     report: dict[str, Any] = {"complete": False, "stopped": ""}
     total = 0
     try:
@@ -510,27 +511,40 @@ def _archive_outputs(vault: Vault, engagement: Engagement, image: str,
                 if member.isdir():
                     (destination / rel).mkdir(parents=True, exist_ok=True)
                     continue
-                if not member.isreg():
-                    refused.append(f"{rel}: not a regular file (a link, device or pipe)")
+                # A hard link is a second name for a file: the stream carries the
+                # bytes once and the other name as a link (found live: a run's
+                # own `ln` lost the original name). Copied from what is already
+                # exported here, and counted; a link to anything else is refused.
+                linked = None
+                if member.islnk():
+                    link = [part for part in member.linkname.replace("\\", "/").split("/")
+                            if part not in ("", ".")]
+                    linked = exported.get("/".join(link[1:] if link[:1] == ["output"] else link))
+                    if linked is None:
+                        refused.append(f"{rel}: a hard link to a file not exported")
+                        continue
+                elif not member.isreg():
+                    refused.append(f"{rel}: not a regular file (a symbolic link, device or pipe)")
                     continue
+                size = linked.stat().st_size if linked is not None else max(0, member.size)
                 if len(records) >= MAX_OUTPUT_FILES:
                     report["stopped"] = f"more than {MAX_OUTPUT_FILES} files"
                     break
-                if total + max(0, member.size) > MAX_OUTPUT_BYTES:
+                if total + size > MAX_OUTPUT_BYTES:
                     report["stopped"] = (f"{rel} would take the export past "
-                                         f"{MAX_OUTPUT_BYTES // (1024 * 1024)} MB")
+                                         f"{MAX_OUTPUT_BYTES:,} bytes")
                     break
                 target = destination / rel
                 if home not in target.resolve().parents:
                     refused.append(f"{rel}: a path outside the engagement's folder")
                     continue
-                source = bundle.extractfile(member)
+                source = linked.open("rb") if linked is not None else bundle.extractfile(member)
                 digest, written = hashlib.sha256(), 0
                 try:
                     target.parent.mkdir(parents=True, exist_ok=True)
-                    with target.open("xb") as out:
-                        while written < member.size:
-                            block = source.read(min(64 * 1024, member.size - written))
+                    with source, target.open("xb") as out:
+                        while written < size:
+                            block = source.read(min(64 * 1024, size - written))
                             if not block:
                                 break
                             out.write(block)
@@ -542,6 +556,7 @@ def _archive_outputs(vault: Vault, engagement: Engagement, image: str,
                     refused.append(f"{rel}: could not be written here ({type(exc).__name__})")
                     continue
                 total += written
+                exported[rel] = target
                 records.append({"path": target.relative_to(vault.root).as_posix(),
                                 "bytes": written, "sha256": digest.hexdigest()[:20]})
             else:

@@ -3645,7 +3645,7 @@ not silently ignored. No existing caller passed it elsewhere.
 
 | Task | Status | Commit | Evidence and notes |
 | --- | --- | --- | --- |
-| REMED-04 | implemented; live Docker check not yet run | this commit | `workbench.py` (isolation policy, `_archive_outputs`, `_check_archive`, `_docker_stage`, host capture), `sandbox.py` (`drain`, `run_bounded`); tests in `tests/test_workbench_boundaries.py` (13 new); `scripts/workbench_live_check.py`. Full suite: 1,876 passed, 2 skipped. |
+| REMED-04 | done; live Docker check passed | c72547b and the live-check commit | `workbench.py` (isolation policy, `_archive_outputs`, `_check_archive`, `_docker_stage`, host capture), `sandbox.py` (`drain`, `run_bounded`); tests in `tests/test_workbench_boundaries.py` (14 new); `scripts/workbench_live_check.py`. Full suite: 1,877 passed, 2 skipped. |
 
 **Outputs are checked before they land (W1).** The export used to copy the
 whole output volume onto this machine and only then measure it. Now the
@@ -3687,18 +3687,30 @@ a login shell. Before this, staging had no network, capability or privilege
 restriction at all. Docker's default seccomp profile is relied on, not
 asserted.
 
-**Not yet verified against a real engine.** Docker Desktop was installed but
-not running. Starting it ran its updater, and the engine did not come up
-within eight minutes. Two things are therefore confirmed only by faked
-helpers in the unit tests:
-- the real `docker cp ... -` member naming (an `output/` prefix is assumed
-  and stripped; a `./` form would also be read);
-- that the provision and stage helpers succeed under the dropped
-  capabilities.
+**Verified against a real engine.** The first commit (c72547b) was unit-tested
+with faked helpers only, because Docker Desktop was updating. Once Docker was up,
+`scripts/workbench_live_check.py` ran three hostile engagements and one benign
+one on Docker 29.8.1 (builtin seccomp profile) with `python:3.11-slim` pinned
+by digest. The output is in
+[remed04-live.json](../reports/2026-10-30-code-review/remed04-live.json).
 
-`scripts/workbench_live_check.py` runs hostile and benign engagements through
-the real helpers. REMED-04's "done only when" needs it run on the supported
-Windows/Docker configuration before the release freeze.
+- Provisioning and staging work with all capabilities dropped. The
+  `docker cp ... -` stream names members `output/...`, as assumed. Nested
+  folders land at their paths.
+- Each hostile run printed 9 MB on stdout. 8,000 characters were kept, and
+  `output_bytes` recorded the true 9,000,000.
+- With a 1,000,000-byte limit, the export stopped at the 3 MB file before
+  writing it. With a 10-file limit, it stopped after ten files.
+- A symbolic link and a FIFO were refused and named. No helper container or
+  volume was left behind. The benign run's output exported intact.
+
+**One defect found live, fixed.** A run that hard-links a file produces a
+stream carrying the bytes once and the other name as a link. The first
+version refused the link, which here lost `keep.txt`, a legitimate output. A
+hard link to a file already exported is now copied from that file and counted
+against both limits. A hard link to anything else is refused. The live re-run
+exports both names. Two unit tests cover the copy and its counting. The
+size-limit message now gives bytes, not megabytes rounded to zero.
 
 **Out of scope, noted.** The sandbox's `/landing` is a bind mount, so a run
 can still write up to its own limits onto this machine before the pad is
