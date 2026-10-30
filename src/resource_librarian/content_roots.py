@@ -191,9 +191,32 @@ def outside_scope(rel: str, excludes: set[str], path: Path | None = None) -> boo
     return path is not None and is_link(path)
 
 
+def is_managed(note: Any, model: Any) -> bool:
+    """Whether a note is one the Librarian manages: it declares, in its own
+    frontmatter, a type the content model knows (`type: source`, `type: concept`).
+
+    This is the one classification for an adopted library, shared by the index
+    and validation (REMED-01). Neither the folder a file sits in nor the mere
+    presence of frontmatter decides it: a docs tree's `title:`-only README is
+    the folder's own documentation, not a managed note."""
+    declared = str(getattr(note, "type", "") or "")
+    return bool(declared) and any(spec.get("type") == declared
+                                  for spec in (getattr(model, "shapes", None) or {}).values())
+
+
+def iter_files(root: Path) -> list[Path]:
+    """Every visible file of any kind under the read-write roots: what a link in
+    an adopted library may name (attachments included), by the same rule."""
+    return _walk(root, markdown_only=False)
+
+
 def iter_documents(root: Path) -> list[Path]:
     """Every visible Markdown file under the manifest's read-write roots, sorted:
     `outside_scope` decides what is visible, for folders and files alike."""
+    return _walk(root, markdown_only=True)
+
+
+def _walk(root: Path, *, markdown_only: bool) -> list[Path]:
     import os
     import sys
     root = Path(root)
@@ -214,8 +237,8 @@ def iter_documents(root: Path) -> list[Path]:
                            if not outside_scope(rel_of(here / d), excludes, here / d)]
             for name in filenames:
                 path = here / name
-                if ((name.lower() if fold else name).endswith(".md")
-                        and not outside_scope(rel_of(path), excludes, path)):
+                wanted = not markdown_only or (name.lower() if fold else name).endswith(".md")
+                if wanted and not outside_scope(rel_of(path), excludes, path):
                     out.add(path)
     return sorted(out)
 

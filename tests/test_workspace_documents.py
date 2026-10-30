@@ -121,8 +121,10 @@ def test_eligible_agents_search_it_through_the_tool(adopted):
 def test_validation_does_not_judge_documents_by_the_content_model(with_model):
     out = REGISTRY.call("check_notes", {}, Context(tier="consult", vault=with_model))
     assert "violations" in out, out
-    flagged = {v["note"] for v in out["violations"]}
-    assert "vendor-notes" not in flagged and "README" not in flagged
+    # No content-model judgement of documentation. A frontmatter-less file in a
+    # note folder carries only REMED-01's informational flag.
+    judged = {v["note"] for v in out["violations"] if v["check"] != "undeclared_in_note_folder"}
+    assert "vendor-notes" not in judged and "README" not in judged
 
 
 def test_a_created_library_is_unchanged(vault):
@@ -130,3 +132,49 @@ def test_a_created_library_is_unchanged(vault):
     path = vault.root / "Sources" / "plain.md"
     path.write_text("# Plain\n\nNo frontmatter.\n", encoding="utf-8")
     assert shapes(vault)["Sources/plain.md"] == "source"
+
+
+# --- REMED-01: one classification by declared type (Codex consolidated review V1) --
+
+@pytest.fixture
+def mixed(with_model):
+    root = with_model.root
+    for rel, text in {"site/README.md": "---\ntitle: Site\n---\n# Site\n",
+                      "api/README.md": "---\ntitle: API\n---\n# API\n",
+                      "guide/link.md": "# Guide\n\nSee [[Managed]].\n",
+                      "Concepts/Managed.md": "---\ntype: concept\ntitle: Managed\n---\n# Managed\n",
+                      "Sources/PreviouslyManaged.md": "# Lost its frontmatter\n"}.items():
+        path = root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+    return with_model
+
+
+def checked(vault):
+    out = REGISTRY.call("check_notes", {}, Context(tier="consult", vault=vault))
+    assert "violations" in out, out
+    return out["violations"]
+
+
+def test_frontmattered_docs_tree_readmes_are_not_duplicate_notes(mixed):
+    assert not [v for v in checked(mixed)
+                if v["check"] == "unique_note_names" and v["note"] == "README"]
+
+
+def test_a_workspace_documents_link_keeps_a_managed_note_from_being_an_orphan(mixed):
+    assert not [v for v in checked(mixed)
+                if v["check"] == "orphan_notes" and v["note"] == "Managed"]
+
+
+def test_an_undeclared_file_in_a_note_folder_is_flagged_not_classified_by_folder(mixed):
+    flagged = [v for v in checked(mixed) if v["note"] == "PreviouslyManaged"]
+    assert [v["check"] for v in flagged] == ["undeclared_in_note_folder"]
+    assert flagged[0]["severity"] == "info"
+
+
+def test_the_index_classifies_by_declared_type_not_by_frontmatter_or_folder(mixed):
+    found = shapes(mixed)
+    assert found["site/README.md"] == "workspace_document"     # frontmatter, no managed type
+    assert found["Sources/PreviouslyManaged.md"] == "workspace_document"
+    assert found["Concepts/Managed.md"] == "concept"
+    assert found["Sources/osquery.md"] == "source"

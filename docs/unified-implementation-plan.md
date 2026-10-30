@@ -3571,3 +3571,42 @@ The release queue's R0 entry now requires REMED-01, -02 and -04.
 The Codex and Gemini review documents are committed as evidence. This
 folder's extracted paper texts and page images stay local (copyright), as in
 earlier research folders.
+
+### REMED-01 adopted-document validation (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| REMED-01 | implemented | this commit | `content_roots.is_managed` and `iter_files`; `index.py` (schema 5); `check_notes`; tests in `tests/test_workspace_documents.py` (4 new). Full suite: 1,860 passed, 2 skipped. |
+
+**One classification.** In an adopted library, a note is managed when its own
+frontmatter declares a type the content model knows (`type: source`,
+`type: concept`). Anything else is the folder's own documentation, a
+workspace document, whatever folder it sits in and whether or not it has
+frontmatter. The index and `check_notes` now share this one rule
+(`content_roots.is_managed`). Before, the index used "has no frontmatter" and
+validation used something else again. The index schema is now version 5, so
+existing indexes rebuild under the new rule.
+
+**Validation, as Codex's reproduction inverts.**
+- **No false duplicates:** a docs tree's `title:`-only READMEs are not
+  flagged as duplicate notes.
+- **No false orphans:** a workspace document's names and links are collected
+  before any exemption, so a docs page linking to `[[Managed]]` prevents a
+  false orphan.
+- **Links resolve against an exclusion-aware inventory:** the same visibility
+  rule as indexing, attachments included. An unresolved link from
+  documentation is informational, not a warning.
+
+**A managed note that loses its declaration** (C1, policy). A file with no
+frontmatter inside a Librarian note folder is flagged at info level
+(`undeclared_in_note_folder`), as either a managed note that lost its
+declaration or the folder's own document. It is not reclassified by folder.
+Recovering identity from the document-identity table is left to REMED-03.
+
+**Intermittent failure seen once.**
+`tests/test_core_mixed_acceptance.py::test_topic_partial_progress_is_item_local_and_resumes_after_restart`
+failed in one full run (an injected interruption reported as `accepted: 0`).
+It then passed in 3 single runs, in 4 runs of its whole file (108 tests), and
+in a second full run. That test uses an ordinary library, which REMED-01 does
+not change. The cause is not established; it is recorded here as the
+taxonomy test's was.

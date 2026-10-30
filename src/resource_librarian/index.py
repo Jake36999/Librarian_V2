@@ -40,8 +40,9 @@ from .file_access import FileChangedError, file_access, read_bytes_snapshot
 from .rules import Refusal
 from .vault import Vault, now_iso
 
-SCHEMA_VERSION = 4          # 3: stable file identity for refresh snapshots
+SCHEMA_VERSION = 5          # 3: stable file identity for refresh snapshots
                             # 4: document identity and duplicate layers (DEPLOY-04)
+                            # 5: adopted classification by declared type (REMED-01)
 TARGET_CHARS = 1200
 MIN_CHARS = 80
 REFRESH_RECONCILIATION_PASSES = 3
@@ -342,11 +343,12 @@ class Index:
         note = notes.Note(name=path.stem, path=path, frontmatter=fm, body=body,
                           parse_error=error)
         model = self.model
-        if not fm and not error and self._adopted():
-            # DEPLOY-03: an adopted folder's own documentation, without
-            # frontmatter, is a workspace document - never a source or another
-            # shape by the folder it happens to sit in, and never rewritten.
-            from .content_roots import WORKSPACE_DOCUMENT
+        from .content_roots import WORKSPACE_DOCUMENT, is_managed
+        if not error and self._adopted() and not is_managed(note, model):
+            # DEPLOY-03 / REMED-01: in an adopted library, a file that does not
+            # declare a managed type is the folder's own documentation - a
+            # workspace document whatever folder it sits in, and never rewritten.
+            # A docs tree's `title:`-only README is one too.
             shape = WORKSPACE_DOCUMENT
         else:
             shape = model.shape_of(note, self.vault.root) if model.found else ""

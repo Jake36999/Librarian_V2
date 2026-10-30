@@ -77,27 +77,45 @@ def check_notes(ctx: Context, limit: int = 50) -> dict:
     violations = []
     names: dict[str, str] = {}
     links: dict[str, list[str]] = {}
-    from ..content_roots import adopted
+    documents: dict[str, str] = {}        # adopted documentation: name -> path
+    from ..content_roots import adopted, is_managed, iter_files
+    from ..vault import NOTE_FOLDERS
     workspace = adopted(ctx.vault.root)
     for path in notes.iter_paths(ctx.vault.root):
         note = notes.load(path)
         rel = path.relative_to(ctx.vault.root).as_posix()
-        if workspace and not note.frontmatter and not note.parse_error:
-            # DEPLOY-03: an adopted folder's own documentation is read as it is.
-            # It answers to no content model, and a docs tree's many READMEs
-            # are not duplicate notes.
+        targets = [t.replace("\\", "/").rsplit("/", 1)[-1].removesuffix(".md")
+                   for t in notes.wikilinks(note.body)]
+        if workspace and not note.parse_error and not is_managed(note, model):
+            # REMED-01: in an adopted library, a file that declares no managed
+            # type is the folder's own documentation. It answers to no content
+            # model and a docs tree's READMEs are not duplicate notes, but its
+            # name and its links still count: a page linking to a managed note
+            # keeps that note from reading as an orphan.
+            documents.setdefault(note.name, rel)
+            links.setdefault(note.name, []).extend(targets)
+            if not note.frontmatter and rel.split("/", 1)[0] in NOTE_FOLDERS:
+                violations.append({"check": "undeclared_in_note_folder", "note": note.name,
+                                   "detail": f"{rel} has no frontmatter in a Librarian note "
+                                             "folder: a managed note that lost its declaration, "
+                                             "or the folder's own document",
+                                   "severity": "info"})
             continue
         if note.name in names:
             violations.append({"check": "unique_note_names", "note": note.name,
                                "detail": f"also at {names[note.name]}", "severity": "error"})
         names[note.name] = rel
         violations += [v.__dict__ for v in model.check(note, ctx.vault.root)]
-        links[note.name] = [t.replace("\\", "/").rsplit("/", 1)[-1].removesuffix(".md")
-                            for t in notes.wikilinks(note.body)]
+        links.setdefault(note.name, []).extend(targets)
     # V1's integrity checks, carried over (2026-09-30): a link that names no note, and a
     # Source or Concept nothing links to (a stale index, or a note filed out of reach).
-    known = {n.casefold() for n in names}
-    files = {p.name.casefold() for p in ctx.vault.root.rglob("*") if p.is_file()}
+    known = {n.casefold() for n in names} | {n.casefold() for n in documents}
+    # An adopted library's inventory follows the same visibility rule as its
+    # index (excluded, hidden and linked-out paths are not there); attachments
+    # of any kind still count as link targets.
+    pool = iter_files(ctx.vault.root) if workspace else \
+        [p for p in ctx.vault.root.rglob("*") if p.is_file()]
+    files = {p.name.casefold() for p in pool}
     inbound: set[str] = set()
     for name, targets in links.items():
         for target in targets:
@@ -107,7 +125,9 @@ def check_notes(ctx: Context, limit: int = 50) -> dict:
             inbound.add(key)
             if key not in known and key not in files:
                 violations.append({"check": "wikilinks_resolve", "note": name,
-                                   "detail": f"[[{target}]] names no note", "severity": "warn"})
+                                   "detail": f"[[{target}]] names no note",
+                                   "severity": "info" if name in documents and
+                                   name not in names else "warn"})
     for name, rel in names.items():
         if rel.split("/", 1)[0] in ("Sources", "Concepts") and name.casefold() not in inbound:
             violations.append({"check": "orphan_notes", "note": name,
