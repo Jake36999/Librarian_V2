@@ -646,8 +646,8 @@ RELEASE-03 (see [INDEX-05 and G1 closure](#index-05-and-g1-closure-2026-10-28)).
 **G2 and G4 are green as of 2026-10-30**: the owner closed both after ROUTE-05's
 golden picker snapshot (see [G2 and G4 closure](#g2-and-g4-closure-2026-10-30)).
 **G3 is green as of 2026-10-30** on local evidence (see
-[G3 closure](#g3-closure-2026-10-30)). G5 is the one gate before R0 that is not
-green.
+[G3 closure](#g3-closure-2026-10-30)). **G5 is green as of 2026-10-30** (see
+[G5 closure](#g5-closure-2026-10-30)): every gate from G0 to G5 is now green.
 
 ## 19. Progress log
 
@@ -3386,3 +3386,33 @@ Also found:
 - a 115-question loop by MiMo in t5;
 - `no_suitable_tool` never exercised, because no contract addressed t6's
   partial requirement.
+
+### G5 closure (2026-10-30)
+
+The owner closed G5 ("Session-backed externalized long-horizon state and
+Tier A work correctly") on 2026-10-30, against the decision rule they approved
+before the run. All four conditions are met
+([report](../reports/2026-10-30-g5-measurement.md)):
+1. 16 of 16 histories are valid.
+2. 0 of 32 Tier A closures are false under the closure audit.
+3. 15 of 15 forced restarts reproduced the state hash.
+4. The share is reported with its interval: 0.432 (95% 0.326–0.546), pooled
+   over DeepSeek-V4.1-Flash (0.541) and MiMo-V2.6-Flash (0.324).
+
+HARNESS-06's last done-when, "the share of grains closed by Tier A is
+measured on real sessions, not asserted", is met for seven of the ten
+verifiers. `arithmetic.reproduces`, `coverage.status` and `claim_run.passed`
+are covered by fixtures only, because this library has no material for them
+(owner decision).
+
+**What the closure does not claim:**
+- a target share;
+- results on other libraries, other tasks or other routes;
+- Tier B review, which HARNESS-08 still evaluates.
+
+Twelve of the 32 closures were re-run rather than independently re-checked.
+
+Every gate from G0 to G5 is now green. The release queue's R0 is ready for a
+release-owner decision, subject to its source-identity and lifecycle entry
+gates. ACCEPT-02 (real host applications) and RELEASE-02/-03 remain.
+

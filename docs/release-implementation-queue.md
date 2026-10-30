@@ -12,8 +12,10 @@ artifact, or create a release record.
 
 ## Current state
 
-V2 remains **partial**, and **no release step may begin yet**. R0 needs every
-gate from G0 to G5 green, and G5 is not:
+Every gate from G0 to G5 is green (2026-10-30). R0 may begin once the release
+owner decides to freeze a revision **and** that revision passes the entry
+gates below. V2 is still not a release: the evidence for real host
+applications (ACCEPT-02) and for a signed build (RELEASE-03) comes after R0.
 
 | Gate | State on 2026-10-30 | Source |
 | --- | --- | --- |
@@ -22,7 +24,7 @@ gate from G0 to G5 green, and G5 is not:
 | G2 canonical routes; UI truth matches runtime | green (2026-10-30) | The plan's G2 and G4 closure. |
 | G3 safe adoption of existing documentation roots | green (2026-10-30) | The plan's G3 closure; local evidence from DEPLOY-01 to -04. Real host applications are ACCEPT-02. |
 | G4 trusted request shaping; durable route evidence | green (2026-10-30) | The plan's G2 and G4 closure. |
-| G5 Session-backed long-horizon state and Tier A | **not met** | HARNESS-01 to -07 are implemented locally. The share of grains closed by Tier A has never been measured on real sessions (HARNESS-06's done-when). |
+| G5 Session-backed long-horizon state and Tier A | green (2026-10-30) | The plan's G5 closure: 16 real audited sessions, a Tier A share of 0.432 (95% 0.326–0.546) over seven of ten verifiers, zero false closures. |
 
 A passing local suite is necessary evidence for an implemented packet. It is
 not evidence that V2 or a release is complete. The unified plan's progress log
@@ -126,8 +128,8 @@ product claims:
 
 ## R0 — Freeze a releasable source revision
 
-**State:** Blocked — G5 is not green (2026-10-30). Once it is, this
-needs a release-owner decision.
+**State:** Ready — the gates are green (2026-10-30). The release-owner decision is
+required, and the frozen revision must pass the entry gates.
 
 **Entry:** G0 to G5 green in the unified plan; SI-1 to SI-3 and LC-1 to LC-2
 pass.
