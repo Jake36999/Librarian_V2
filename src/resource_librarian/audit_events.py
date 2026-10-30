@@ -106,8 +106,8 @@ _VERIFIER_IDS = frozenset(closure.VERIFIERS)
 _binding = closure.binding
 
 
-def _refuse(message: str) -> Refusal:
-    return Refusal("AUDIT_EVENT_INVALID", message)
+def _refuse(message: str, **details: Any) -> Refusal:
+    return Refusal("AUDIT_EVENT_INVALID", message, {"details": details} if details else None)
 
 
 def _text(event: dict[str, Any], key: str) -> str:
@@ -140,7 +140,8 @@ def _id_list(event: dict[str, Any], key: str, known: dict[str, Any], what: str) 
         raise _refuse(f"{event.get('type')} {key} must be a list of ids")
     for value in values:
         if value not in known:
-            raise _refuse(f"{event.get('type')} names unknown {what} {value!r}")
+            raise _refuse(f"{event.get('type')} names unknown {what} {value!r}",
+                          kind="unknown_id", what=what, given=value, known=sorted(known)[:50])
     return list(values)
 
 
@@ -149,7 +150,8 @@ def _epoch(state: AuditState, event: dict[str, Any]) -> int:
     epoch = event.get("epoch")
     if epoch != state.epoch:
         raise _refuse(f"{event.get('type')} was made at epoch {epoch!r}, but the session is at "
-                      f"epoch {state.epoch}: recheck against the current state")
+                      f"epoch {state.epoch}: recheck against the current state",
+                      kind="stale_epoch", given=epoch, current=state.epoch)
     return state.epoch
 
 
@@ -158,7 +160,8 @@ def _revision(state_table: dict[str, dict[str, Any]], event: dict[str, Any]) -> 
     revision = event.get("revision", 1)
     expected = state_table[ident]["revision"] + 1 if ident in state_table else 1
     if revision != expected:
-        raise _refuse(f"{event['type']} {ident} revision must be {expected}, not {revision!r}")
+        raise _refuse(f"{event['type']} {ident} revision must be {expected}, not {revision!r}",
+                      kind="revision", given=revision, expected=expected)
     return revision
 
 
@@ -196,9 +199,15 @@ def _requirement(state: AuditState, event: dict[str, Any]) -> None:
         raise _refuse(f"unknown verifier(s) {unknown}; registered: {sorted(_VERIFIER_IDS)}")
     if revision > 1:
         state.epoch += 1
+    # REMED-06: a stable id per predicate (`p1`, `p2`, ...), kept across
+    # revisions: a predicate keeps its id, a new one takes the next.
+    ids = dict((state.requirements.get(event["id"]) or {}).get("ids") or {})
+    for predicate in predicates:
+        if predicate not in ids:
+            ids[predicate] = f"p{len(ids) + 1}"
     state.requirements[event["id"]] = {
         "text": text, "closure": closure, "predicates": list(predicates),
-        "verifiers": bound,
+        "verifiers": bound, "ids": ids,
         "revision": revision, "status": "open", "status_epoch": state.epoch}
 
 
@@ -216,7 +225,8 @@ def _contract(state: AuditState, event: dict[str, Any]) -> None:
     operations = event.get("operations") or list(closure.DEFAULT_OPERATIONS)
     if not isinstance(operations, list) or any(o not in closure.OPERATIONS for o in operations):
         raise _refuse(f"contract operations must be a list from {list(closure.OPERATIONS)}, "
-                      "for example [\"read\", \"stage\"]")
+                      "for example [\"read\", \"stage\"]", kind="unknown_operation",
+                      given=operations, allowed=list(closure.OPERATIONS))
     # HARNESS-05: a plan that could not close an authoritative requirement is
     # refused here, before anything runs.
     plan = closure.check_plan(state.requirements, requirements, event.get("verifiers"))

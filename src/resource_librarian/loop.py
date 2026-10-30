@@ -1004,6 +1004,13 @@ class Loop:
                     content = content[:RESULT_CHARS] + f"... [{len(content)} chars]"
                 self.messages.append({"role": "tool", "tool_call_id": call.id,
                                       "name": call.name, "content": content})
+                if result.get("stalled"):
+                    # REMED-06: no progress parked a requirement for the person;
+                    # the turn ends here rather than running to its step limit.
+                    turn.stopped = "stalled"
+                    self.on_event({"type": "stopped", "reason": "stalled",
+                                   "parked": result["stalled"].get("parked", [])})
+                    return turn
                 # A successful session/write tool can have moved the phase or
                 # opened a session.  Recompute the compact surface now rather
                 # than spending a second model completion only to discover a

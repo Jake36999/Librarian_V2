@@ -305,6 +305,15 @@ MODE = {"add_project": "librarian", "explore": "librarian", "suggest": "libraria
 # A round is not a redo: each one gets its phases' full budgets, up to this cap
 # (the vault's [session] audited_max_rounds overrides it).
 AUDITED_MAX_ROUNDS = 50
+# REMED-06: the Lead's questions and refused calls since the last progress
+# before the dependent requirements are parked for the person. A provisional
+# default of this build, not a figure from the reviews (their two-question quota
+# was rejected); `[session] audited_stall_limit` overrides it, and REMED-08
+# measures it.
+AUDITED_STALL_LIMIT = 8
+# Audit events that are progress: they reset the count.
+PROGRESS = frozenset({"requirement", "contract", "artifact", "verifier_result", "reduction",
+                      "target_audit"})
 
 class _PhaseGates(Mapping[str, frozenset]):
     """The writes each phase unlocks: a tool named here is refused in any other phase.
@@ -535,6 +544,9 @@ class Session:
     # HARNESS-05: each contract's successful calls (class, untrusted, idempotency
     # key), folded from `call` events so composition survives a resume.
     contract_calls: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+    # REMED-06: the Lead's questions (answered or not) and refused calls since
+    # the last audit progress, folded from the log.
+    stall: dict[str, int] = field(default_factory=lambda: {"questions": 0, "refusals": 0})
 
     # -- identity -------------------------------------------------------------
     @property
@@ -618,6 +630,11 @@ class Session:
                      "key": described.get("key"), "tool": event.get("tool"),
                      "targets": list(described.get("targets") or [])})
             self.recent = (self.recent + [(event["tool"], bool(event.get("ok", True)))])[-20:]
+            if event.get("tier") != "curate":          # the person's own calls are not stalls
+                if event.get("refused"):
+                    self.stall["refusals"] += 1
+                elif event.get("tool") == "ask_user":
+                    self.stall["questions"] += 1
             if event.get("charged"):
                 self.phase_calls += 1
             if event.get("ok", True):
@@ -750,6 +767,8 @@ class Session:
             # Checked against the state before it, exactly as at append: a
             # history that breaks the rules is marked invalid, never trusted.
             audit_events.replay(self.audit, event)
+            if kind in PROGRESS and not self.audit.halted:
+                self.stall = {"questions": 0, "refusals": 0}
 
     # -- exit conditions ------------------------------------------------------
     def missing(self, vault: Vault) -> list[str]:
@@ -961,6 +980,13 @@ class Session:
                     for r in audit_events.unreduced_requirements(audit, contract)]
         return []                                       # execute: the audit judges it
 
+    def audited_stall_limit(self, vault: Vault) -> int:
+        configured = (vault.config().get("session") or {}).get("audited_stall_limit")
+        try:
+            return max(1, int(configured)) if configured is not None else AUDITED_STALL_LIMIT
+        except (TypeError, ValueError):
+            return AUDITED_STALL_LIMIT
+
     def audited_round_limit(self, vault: Vault) -> int:
         configured = (vault.config().get("session") or {}).get("audited_max_rounds")
         try:
@@ -980,7 +1006,7 @@ class Session:
             "round": self.audit_round, "visits": self.visits, "budgets": self.budgets,
             "budget_scale": self.budget_scale, "extended": self.extended, "plan": self.plan,
             "questions": self.questions, "history": self.history,
-            "audit": audit_events.summary(self.audit),
+            "audit": audit_events.summary(self.audit), "stall": self.stall,
             "contracts": self.audit.contracts, "results": self.audit.results,
             "reductions": self.audit.reductions, "artifacts": self.audit.artifacts,
         }
@@ -1701,7 +1727,52 @@ def after_call(tool_name: str, arguments: dict[str, Any], result: dict[str, Any]
         event["items"] = [_trace_item(i) for i in result.get("results", [])[:20]
                           if isinstance(i, dict)]
     store.append(ctx.session, event)
-    return {**result, "session": store.load(ctx.session).envelope(ctx.vault)}
+    parked = park_stalled(ctx.vault, ctx.session) if not _is_person(ctx) else None
+    return {**result, **({"stalled": parked} if parked else {}),
+            "session": store.load(ctx.session).envelope(ctx.vault)}
+
+
+def park_stalled(vault: Vault, session_id: str) -> dict[str, Any] | None:
+    """Park the requirements a stalled audited session depends on (REMED-06, R4).
+
+    When the Lead's questions (answered or not) and refused calls since the last
+    progress reach the limit, the requirements the current proposal (or the
+    current contract, or else every open one) depends on are reduced to
+    `blocked` by the Core, with the reason. Nothing is answered for the person
+    and no check is relaxed: the constraints stay as they are, other
+    requirements stay open for independent work, and the person reopens a
+    parked one by revising it. Returns what was parked, or None."""
+    store = SessionStore(vault)
+    session = store.load(session_id)
+    audit = session.audit
+    if session.purpose != "audited" or audit.halted:
+        return None
+    count = session.stall["questions"] + session.stall["refusals"]
+    limit = session.audited_stall_limit(vault)
+    if count < limit:
+        return None
+    proposal = session.plan.get("proposal")
+    named = proposal.get("requirements") if isinstance(proposal, dict) else None
+    contract = audit.contracts.get(audit.current_contract) if audit.current_contract else None
+    scope = ([r for r in named if r in audit.requirements] if isinstance(named, list) else []) \
+        or (list(contract["requirements"]) if contract else []) or sorted(audit.requirements)
+    settled = ("verified", "human_accepted", "blocked", "failed")
+    dependent = [r for r in scope if audit.requirement_status(r) not in settled]
+    if not dependent:
+        return None
+    reason = (f"no progress in {count} interactions ({session.stall['questions']} questions, "
+              f"{session.stall['refusals']} refused calls) since the last check, contract or "
+              f"reduction (limit {limit}): parked for the person, who reopens it by revising "
+              "the requirement")
+    for rid in dependent:
+        store.append_audit(session_id, {
+            "type": "reduction", "requirement": rid, "status": "blocked", "results": [],
+            "by": "core", "epoch": audit.epoch, "reason": reason,
+            "contract": audit.current_contract if contract and rid in contract["requirements"]
+            else ""})
+    independent = [r for r in sorted(audit.requirements)
+                   if r not in dependent and audit.requirement_status(r) not in settled]
+    return {"parked": dependent, "reason": reason, "independent": independent}
 
 
 def _trace_item(item: dict[str, Any]) -> dict[str, Any]:

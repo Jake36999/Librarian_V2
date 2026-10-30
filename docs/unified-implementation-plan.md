@@ -3871,3 +3871,89 @@ covers scripted providers that never reach HTTP.
 
 **Not run:** no paid call was made. The gate's first real use will be the
 next paid G5 run, REMED-08.
+
+### REMED-06 admission usability and stall handling (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| REMED-06 | implemented; bounded pilot not yet run | this commit | `audit_events.py` (predicate ids, refusal details), `closure.py` (`predicate_ref`, `authoritative_verifiers`, refusal details), `audit_projection.py` (`contract_skeleton`, ids, stall), `session.py` (`stall`, `park_stalled`, `AUDITED_STALL_LIMIT`), `loop.py` (a `stalled` result ends the turn), `tools/audited.py` (ids in `verify_grain`, cards); tests in `tests/test_admission_usability.py` (13 new). Full suite: 1,919 passed, 2 skipped. |
+
+**Stable predicate ids (U2).** Each requirement's predicates get ids
+(`p1`, `p2`, ...) in order of first appearance. A predicate keeps its id
+across revisions, and an id is never reused. The ids are derived in replay,
+so no event changes and old histories replay as before; the census is
+unchanged.
+
+The projection lists `R1.p1` beside each predicate's text. Two places accept
+an id:
+- a verifier plan accepts `R1.p1` as a key;
+- `verify_grain` accepts `p1` or `R1.p1`.
+
+Each id resolves to exactly one predicate. That is a semantics-preserving
+normalisation, and admission then runs every check as before.
+
+**A contract skeleton (U2).** While a contract is prepared (`manage`,
+`preflight`), the projection carries `contract_skeleton`: `admit_contract`'s
+arguments built from the person's bindings and the library alone. It holds:
+- the requirements the proposal names;
+- each predicate keyed by id, with the verifier the person named;
+- the operations those checks need (`stage` for a staged draft or a
+  human-judgment requirement, `untrusted` for reading evidence to quote);
+- the paths the bound subjects name, including evidence files;
+- the staging folder.
+
+A predicate the person named no verifier for is never guessed. It is listed
+under `needs`, with the verifiers that could close it, and the skeleton says
+`complete: false`. Tested: a complete skeleton is admitted unchanged and its
+round verifies.
+
+**Structured refusal details (U2).** Admission refusals carry `details`, a
+`kind` plus what was given and what would be admitted:
+
+| Kind | Also carries |
+| --- | --- |
+| `unknown_predicate_key` | the valid ids and keys |
+| `unknown_verifier` | the registered verifiers |
+| `person_named_verifier` | the expected verifier and the one given |
+| `missing_verifier` | the predicate id and the eligible verifiers |
+| `verifier_cannot_close` | the predicate id and the eligible verifiers |
+| `unknown_id`, `stale_epoch`, `revision`, `unknown_operation` | what was known, current or allowed |
+
+The sentence text is unchanged, apart from naming ids.
+
+**No-progress tracking parks the dependent requirement (U1, R4).** The
+session counts the Lead's questions since the last progress, answered or
+unanswered, including repeats the reuse guard answers at once. It counts
+refused calls too. Progress is an admitted contract, an artifact, a verifier
+result, a reduction, a target audit, or a revised requirement. The person's
+own calls never count. The count is folded from the log, so it survives a
+restart.
+
+At the limit, the Core records `blocked` for the requirements the proposal
+depends on, with the reason. If there is no proposal it uses the current
+contract's requirements, and otherwise every open one. The result names what
+was parked and what remains open for independent work, and the Lead's turn
+ends there (`stopped: stalled`).
+
+Nothing is answered for the person and no check is relaxed. The person
+reopens a parked requirement by revising it.
+
+**The limit.** `AUDITED_STALL_LIMIT` is 8, a provisional default of this build.
+It is not a figure from the reviews: their two-question quota and 0.65
+similarity threshold were rejected. `[session] audited_stall_limit` overrides
+it, and REMED-08 should measure it.
+
+Tested:
+- answered rephrasings;
+- repeats the reuse guard answers;
+- repeated refusals, and a reset on progress;
+- the person's own refusals;
+- reopening;
+- survival of a restart;
+- a scripted runner Lead that only asks, which ends `settled: blocked` after
+  exactly the limit's questions instead of running to `max_turns`.
+
+**Not yet run: the bounded pilot.** "A bounded pilot shows less wasted
+effort" needs paid calls. It overlaps REMED-08 (the targeted re-measurement
+within the $8 ledger, $4.70 spent) and needs the owner's go-ahead and a
+predeclared slice.

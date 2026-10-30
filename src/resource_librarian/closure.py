@@ -124,8 +124,28 @@ _ROUTE = frozenset({"task_route"})
 _PUBLISH = frozenset({"vault_push"})
 
 
-def _refuse_plan(message: str) -> Refusal:
-    return Refusal("AUDIT_EVENT_INVALID", message)
+def _refuse_plan(message: str, **details: Any) -> Refusal:
+    """A plan refusal with its structured details (REMED-06): what kind, what was
+    given and what would be admitted, so the next proposal can be built from
+    them rather than from the sentence."""
+    return Refusal("AUDIT_EVENT_INVALID", message, {"details": details} if details else None)
+
+
+def authoritative_verifiers() -> list[str]:
+    return sorted(k for k, v in VERIFIERS.items()
+                  if v.kind in AUTHORITATIVE_KINDS and v.max_strength != "advisory")
+
+
+def predicate_ref(requirements: dict[str, dict[str, Any]], addressed: list[str],
+                  ref: str) -> str:
+    """`R1.p2` (a stable predicate id) as its plan key `R1: <predicate>`, or ''."""
+    rid, dot, pid = str(ref).partition(".")
+    if not dot or rid not in addressed:
+        return ""
+    for predicate, ident in (requirements.get(rid, {}).get("ids") or {}).items():
+        if ident == pid and predicate in requirements[rid]["predicates"]:
+            return f"{rid}: {predicate}"
+    return ""
 
 
 def base_id(verifier: str) -> str:
@@ -146,22 +166,31 @@ def check_plan(requirements: dict[str, dict[str, Any]], addressed: list[str],
         raise _refuse_plan("contract verifiers must map 'requirement: predicate' to a verifier")
     valid = [f"{rid}: {p}" for rid in addressed for p in requirements.get(rid, {}).get(
         "predicates", [])]
+    ids = {f"{rid}.{requirements[rid].get('ids', {}).get(p, '')}": f"{rid}: {p}"
+           for rid in addressed for p in requirements.get(rid, {}).get("predicates", [])}
     normalised: dict[str, str] = {}
     for key, verifier in plan.items():
         key = str(key)
         if key not in valid:
-            # A bare predicate is accepted when exactly one addressed
-            # requirement has it: the mapping is then not a guess (G5 pilot:
-            # a real model keyed its plan by predicate text alone).
-            matches = [k for k in valid if k.split(": ", 1)[1] == key]
+            # A stable predicate id (`R1.p2`, REMED-06) names it exactly. A bare
+            # predicate is accepted when exactly one addressed requirement has
+            # it: the mapping is then not a guess (G5 pilot: a real model keyed
+            # its plan by predicate text alone).
+            resolved = predicate_ref(requirements, addressed, key)
+            matches = [resolved] if resolved else [k for k in valid
+                                                   if k.split(": ", 1)[1] == key]
             if len(matches) != 1:
                 raise _refuse_plan(
                     f"verifier plan names {key!r}, not a predicate of a requirement this "
-                    f"contract addresses. Key each verifier by 'requirement: predicate', "
-                    f"exactly; valid keys here: {valid}")
+                    f"contract addresses. Key each verifier by its predicate id ('R1.p1') or "
+                    f"'requirement: predicate', exactly; valid keys here: {valid}",
+                    kind="unknown_predicate_key", given=key, valid_ids=sorted(ids),
+                    valid_keys=valid)
             key = matches[0]
         if base_id(verifier) not in VERIFIERS:
-            raise _refuse_plan(f"unknown verifier {verifier!r}; registered: {sorted(VERIFIERS)}")
+            raise _refuse_plan(f"unknown verifier {verifier!r}; registered: {sorted(VERIFIERS)}",
+                               kind="unknown_verifier", key=key, given=str(verifier),
+                               registered=sorted(VERIFIERS))
         normalised[key] = base_id(verifier)
     for rid in addressed:
         for predicate, named in (requirements[rid].get("verifiers") or {}).items():
@@ -175,23 +204,29 @@ def check_plan(requirements: dict[str, dict[str, Any]], addressed: list[str],
             if normalised.get(key) != named:
                 raise _refuse_plan(
                     f"the person named {named} for {key!r}; plan exactly that verifier "
-                    f"(this plan has {normalised.get(key) or 'none'})")
+                    f"(this plan has {normalised.get(key) or 'none'})",
+                    kind="person_named_verifier", key=key, expected=named,
+                    given=normalised.get(key) or "")
     for rid in addressed:
         req = requirements[rid]
         if req["closure"] != "authoritative":
             continue
         for predicate in req["predicates"]:
             key = f"{rid}: {predicate}"
+            pid = f"{rid}.{req.get('ids', {}).get(predicate, '')}"
             if key not in normalised:
                 raise _refuse_plan(f"authoritative requirement {rid} needs a verifier for "
                                    f"{predicate!r} before the contract runs (plan key "
-                                   f"{key!r})")
+                                   f"{key!r})", kind="missing_verifier", key=key,
+                                   predicate_id=pid, eligible=authoritative_verifiers())
             v = VERIFIERS[normalised[key]]
             if v.kind not in AUTHORITATIVE_KINDS or v.max_strength == "advisory":
                 raise _refuse_plan(
                     f"{normalised[key]} ({v.kind}, at most {v.max_strength}) cannot close "
                     f"authoritative requirement {rid}: it would cap at partial. "
-                    f"Authoritative closure needs {CLOSURE_TABLE['authoritative']}")
+                    f"Authoritative closure needs {CLOSURE_TABLE['authoritative']}",
+                    kind="verifier_cannot_close", key=key, predicate_id=pid,
+                    given=normalised[key], eligible=authoritative_verifiers())
     return normalised
 
 

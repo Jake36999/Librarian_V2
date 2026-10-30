@@ -110,6 +110,9 @@ def _essential(session: Any, manifest: dict[str, Any], vault: Any) -> dict[str, 
             # failing arithmetic check on the same requirement.
             "predicates": {p: audit_events._predicate_outcome(audit, rid, p)
                            for p in req["predicates"]},
+            # REMED-06: each predicate's stable id, for plans and checks.
+            "ids": {f"{rid}.{req['ids'][p]}": p for p in req["predicates"]
+                    if p in (req.get("ids") or {})},
             # The verifier the person named for a predicate: the plan must use it.
             **({"verifiers": dict(req["verifiers"])} if req.get("verifiers") else {})}
     contract = None
@@ -131,11 +134,91 @@ def _essential(session: Any, manifest: dict[str, Any], vault: Any) -> dict[str, 
         "contract": contract,
         "open_questions": [{"id": q["id"], "question": _clip(q["question"])}
                            for q in session.open_questions()],
+        **({"contract_skeleton": skeleton}
+           if (skeleton := contract_skeleton(session, vault)) is not None else {}),
+        **({"stall": dict(session.stall)} if any(session.stall.values()) else {}),
         "budget": {"phase_calls_left": session.budget_left(),
                    **({"rounds_left": max(0, limit - session.audit_round),
                        "round_limit": limit} if limit is not None else {})},
         "manifest": manifest,
     }
+
+
+SKELETON_PHASES = ("manage", "preflight")
+_STAGING_VERIFIERS = frozenset({"target.diff_clean", "boundary.staged"})
+
+
+def _bound_reads(vault: Any, params: dict[str, Any]) -> set[str]:
+    """The vault paths a bound subject names: what the contract must let it read."""
+    from .closure import _note_paths
+    out: set[str] = set()
+    if vault is None:
+        return out
+    for key in ("note", "source"):
+        value = params.get(key)
+        if isinstance(value, str) and value.strip():
+            value = value.strip().replace("\\", "/")
+            out.update([value] if value.endswith(".md") and (vault.root / value).is_file()
+                       else _note_paths(vault, value))
+    ident = params.get("evidence")
+    if isinstance(ident, str) and ident.strip().replace("-", "").replace("_", "").isalnum():
+        out.update(p.relative_to(vault.root).as_posix()
+                   for p in vault.evidence.glob(f"*/{ident.strip()}.json"))
+    return out
+
+
+def contract_skeleton(session: Any, vault: Any) -> dict[str, Any] | None:
+    """`admit_contract`'s arguments, built from the person's bindings alone
+    (REMED-06, U2): the requirements the proposal names (or every open one),
+    each predicate keyed by its stable id with the verifier the person named,
+    the operations those checks need, and the paths their subjects name. A
+    predicate the person named no verifier for is not guessed: it is listed
+    under `needs`, with the verifiers that could close it. Shown while a
+    contract is being prepared; it depends on the log and the library only."""
+    from .closure import OPERATIONS, authoritative_verifiers
+    audit = session.audit
+    if session.purpose != "audited" or audit.halted or session.phase not in SKELETON_PHASES:
+        return None
+    proposal = session.plan.get("proposal")
+    named = proposal.get("requirements") if isinstance(proposal, dict) else None
+    closed = ("verified", "human_accepted")
+    rids = [r for r in (named if isinstance(named, list) else []) if r in audit.requirements] \
+        or [r for r in sorted(audit.requirements) if audit.requirement_status(r) not in closed]
+    if not rids:
+        return None
+    verifiers: dict[str, str] = {}
+    needs: list[dict[str, Any]] = []
+    operations, reads, stage = {"read"}, set(), False
+    for rid in rids:
+        req = audit.requirements[rid]
+        stage = stage or req["closure"] == "human_judgment"
+        for predicate in req["predicates"]:
+            pid = f"{rid}.{(req.get('ids') or {}).get(predicate, '')}"
+            bound = (req.get("verifiers") or {}).get(predicate)
+            if bound:
+                verifiers[pid] = bound["verifier"]
+                stage = stage or bound["verifier"] in _STAGING_VERIFIERS
+                if bound["verifier"] == "quote.located":
+                    operations.add("untrusted")     # the evidence text is read to quote it
+                reads |= _bound_reads(vault, bound.get("params") or {})
+            elif req["closure"] == "authoritative":
+                needs.append({"predicate": pid, "text": predicate,
+                              "why": "the person named no verifier for it: plan one that "
+                                     "establishes it, or ask the person to name one",
+                              "eligible": authoritative_verifiers()})
+    write = []
+    if stage:
+        operations.add("stage")
+        if vault is not None:
+            folder = vault.work("staging") / "audited" / session.id
+            write = [folder.relative_to(vault.root).as_posix() + "/"]
+    return {"tool": "admit_contract",
+            "arguments": {"contract_id": f"C{len(audit.contracts) + 1}", "requirements": rids,
+                          "verifiers": verifiers,
+                          "operations": [o for o in OPERATIONS if o in operations],
+                          "read": sorted(reads), "write": write},
+            "complete": not needs, **({"needs": needs} if needs else {}),
+            "from": "the person's bindings and the library; nothing in it is guessed"}
 
 
 def _latest_results(audit: Any) -> tuple[dict[str, Any], set[str]]:

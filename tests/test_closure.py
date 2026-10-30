@@ -288,7 +288,7 @@ def test_an_ambiguous_bare_predicate_is_refused_and_the_refusal_lists_the_keys(s
 
 def test_a_requirement_id_alone_is_not_a_plan_key(store, sid):
     store.append_audit(sid, requirement())
-    with pytest.raises(Refusal, match="Key each verifier by 'requirement: predicate'"):
+    with pytest.raises(Refusal, match="Key each verifier by its predicate id"):
         store.append_audit(sid, contract({"R1": "quote.located"}))
 
 

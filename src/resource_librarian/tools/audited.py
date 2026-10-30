@@ -64,8 +64,10 @@ def _stage_intent(ctx: Context, kwargs: dict[str, Any]) -> WriteIntent:
                 "the proposal is settled and the round needs its bounded contract",
                 "Names the requirements it addresses, what it may read and write, the operations "
                 "it may use (a list, e.g. [\"read\", \"stage\"]) and, for each predicate, the "
-                "verifier that will check it: verifiers maps 'R1: <the predicate, exactly>' to a "
-                "verifier id, e.g. {\"R1: the quote is present\": \"quote.located\"}. Every "
+                "verifier that will check it: verifiers maps a predicate id ('R1.p1', as "
+                "audit_projection lists them) or 'R1: <the predicate, exactly>' to a verifier "
+                "id, e.g. {\"R1.p1\": \"quote.located\"}. audit_projection's "
+                "contract_skeleton has these arguments built from the person's bindings. Every "
                 "predicate of an authoritative requirement needs one; the Core refuses a plan "
                 "that could not close it. Drafts go under the session's staging folder "
                 "(audit_projection's staged_in)"))
@@ -133,7 +135,8 @@ def stage_artifact(ctx: Context, name: str, text: str) -> dict:
                 "auditing a contract: each planned predicate needs its result",
                 "Runs the verifier the contract planned for one predicate and records its result "
                 "with the exact statement it established (an offset, a hash, a count), never "
-                "more. requirement is the id alone ('R1'); predicate is its text exactly. params "
+                "more. requirement is the id alone ('R1'); predicate is its id ('p1' or "
+                "'R1.p1') or its text exactly. params "
                 "by verifier - evidence.integrity: evidence (an evidence id), optionally item (a "
                 "staged intake item id); coverage.status: source, parts, status; quote.located: "
                 "evidence (an evidence id, as read_evidence shows), quote (copied verbatim from "
@@ -141,7 +144,7 @@ def stage_artifact(ctx: Context, name: str, text: str) -> dict:
                 "run; index.findable: note (name); schema.valid, citation.resolves: note "
                 "(path); target.diff_clean, boundary.staged: none. A predicate the contract "
                 "planned no verifier for returns no_suitable_tool and goes to the person"))
-def verify_grain(ctx: Context, requirement: str, predicate: str,
+def verify_grain(ctx: Context, requirement: str, predicate: str = "",
                  params: dict | None = None) -> dict:
     session = _audited(ctx)
     audit = session.audit
@@ -153,9 +156,19 @@ def verify_grain(ctx: Context, requirement: str, predicate: str,
     # requirement (G5 pilot 3); the id before the colon is unambiguous.
     if requirement not in addressed and ": " in requirement:
         requirement = requirement.split(": ", 1)[0]
+    # A stable predicate id (`R1.p2`, or `p2` with the requirement) names it
+    # exactly (REMED-06).
+    if "." in requirement and requirement.split(".", 1)[0] in addressed and not predicate:
+        requirement, predicate = requirement.split(".", 1)
+    if requirement not in addressed and "." in str(predicate):
+        requirement = str(predicate).split(".", 1)[0]
     if requirement not in addressed:
         raise TypeError(f"requirement {requirement!r} is not one contract {contract} addresses; "
                         f"its requirement ids are {addressed}")
+    ref = str(predicate).split(".", 1)[-1] if str(predicate).startswith(f"{requirement}.") \
+        else str(predicate)
+    by_id = {v: k for k, v in (audit.requirements[requirement].get("ids") or {}).items()}
+    predicate = by_id.get(ref, predicate)
     known = audit.requirements[requirement]["predicates"]
     if predicate not in known:
         raise TypeError(f"{predicate!r} is not a predicate of {requirement}; its predicates "
