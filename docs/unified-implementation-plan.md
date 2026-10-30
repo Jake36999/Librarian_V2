@@ -2950,3 +2950,69 @@ things, and DEPLOY-01 to -04 provide local evidence for each:
 
 Closing G3 is the owner's decision. ACCEPT-01 starts next.
 
+
+### ACCEPT-01 end-to-end acceptance matrix (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| ACCEPT-01 | implemented | this commit | `tests/test_acceptance_matrix.py`; new fixtures in `tests/test_accept_failures.py` (7), `tests/test_accept_ranking.py` (6) and `tests/test_accept_workbench.py` (8). Test-only. |
+
+**The matrix.** `tests/test_acceptance_matrix.py` lists the plan's eight
+workflows, and for each one the tests that give it success, refusal,
+recovery and no-mutation-on-failure coverage. The workflows are:
+- research intake;
+- evidence, staging and promotion;
+- V1 import;
+- profiles, bundles, macros and checkpoints;
+- Browser, Obsidian and Cowork lifecycle;
+- service slots;
+- Workbench execution labelling;
+- manual ranking.
+
+The matrix test fails if a cell is empty, or if a cited test is missing or
+marked `slow` or `skip`.
+
+Each cited test was read to confirm that it asserts what its cell claims.
+Three citations were moved after reading:
+- a coverage-verdict test that is really a refusal;
+- a shutdown test that checks the refusal code but not the state;
+- a PDF intake test that skips without `pypdf`.
+
+**New coverage where none existed.**
+- **Manual ranking** (6 tests). This is the whole lifecycle through the
+  registry:
+  - a person selects a generated, benchmarked candidate, and search then
+    uses its weights;
+  - an agent is refused selection and restoration (`PERSON_CONFIRMS`), and
+    too little feedback proposes nothing;
+  - restoration returns to the previous policy, and a damaged
+    `ranking.json` never breaks search;
+  - selecting an unknown candidate leaves the file byte-identical.
+- **Workbench labelling** (8 tests).
+  - Inspect-only, non-isolated host execution (with its "no network
+    containment" warning) and Docker execution are each labelled, in the
+    result and in the stored engagement.
+  - The Docker command is checked for `--network none`.
+  - Every refused start (unconfirmed weaker isolation, no person, no Docker,
+    an agent caller) leaves the engagement log byte-identical.
+  - A failed run pauses, keeps its label, and can run again.
+- **No mutation on failure** (7 tests):
+  - **Failed intake:** a failed ingest writes no note, no evidence and no
+    reviewable staging item. Only the quarantine record and the failed
+    queue entry are kept, the second by design (`intake.settle`), for a
+    person to retry or remove.
+  - **Refused V1 import:** an unknown path or a second root stages
+    nothing.
+  - **Refused service choice:** an unknown host, speech on the wrong host,
+    or no such slot changes no slot and no binding.
+  - **Refused change after shutdown admission closes:** settings,
+    checkpoints and bindings are unchanged.
+
+**Finding, not changed.** `ranking_select`'s card says it selects "a locally
+benchmarked" candidate, but `ranking.select` does not check for a benchmark.
+An unbenchmarked candidate can be selected. Whether to enforce the card or
+reword it is the owner's decision.
+
+**Scope.** These are in-process fixtures against the real registry, App and
+stores. Real host applications (Browser, Obsidian and Cowork running
+together) remain ACCEPT-02.
