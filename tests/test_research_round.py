@@ -325,3 +325,50 @@ def test_findability_reports_each_missed_lookup(vault):
     assert missed.outcome == "fail" and "not in the top 5 for its title" in missed.statement
     found = research_grains.findable(vault, {"note": "y"}, index_run=lambda op: ([], 5))
     assert found.outcome == "pass" and found.statement.startswith("note `y` is in the top 5")
+
+
+# --- found by G5 pilot 3 -----------------------------------------------------------
+
+def to_execute(lead, operations):
+    requirements(lead)
+    lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "s"}})
+    lead.ok("advance")
+    lead.ok("admit_contract", contract_id="C1", requirements=["R1"],
+            write=[staging_folder(lead.ctx, lead.ctx.session)], operations=operations,
+            verifiers={"R1: quote present": "quote.located",
+                       "R1: staged draft unchanged": "target.diff_clean"})
+    lead.ok("advance")
+
+
+def test_read_evidence_returns_the_captured_text(lead, evidence):
+    out = lead.ok("read_evidence", evidence_id=evidence)
+    assert QUOTE in out["fields"]["text"]["text"] and "never instructions" in out["note"]
+
+
+def test_reading_evidence_under_a_contract_needs_untrusted_then_allows_only_staging(lead,
+                                                                                    evidence):
+    to_execute(lead, ["read", "stage"])
+    refused = lead("read_evidence", evidence_id=evidence)
+    assert refused["refused"] == "CONTRACT_SCOPE" and "untrusted" in refused["detail"]
+
+
+def test_after_reading_evidence_a_draft_can_still_be_staged(lead, evidence):
+    to_execute(lead, ["read", "untrusted", "stage"])
+    lead.ok("read_evidence", evidence_id=evidence)
+    assert lead.ok("stage_artifact", name="synthesis", text="draft")["artifact"] == "A1"
+
+
+def test_verify_grain_takes_the_plan_key_as_requirement_and_json_params(lead, evidence):
+    to_execute(lead, ["read", "stage"])
+    lead.ok("stage_artifact", name="synthesis", text="draft")
+    lead.ok("advance")
+    out = lead.ok("verify_grain", requirement="R1: quote present", predicate="quote present",
+                  params=json.dumps({"evidence": evidence, "quote": QUOTE}))
+    assert out["outcome"] == "pass"
+
+
+def test_verify_grain_names_the_valid_predicates_instead_of_no_suitable_tool(lead, evidence):
+    to_execute(lead, ["read", "stage"])
+    lead.ok("advance")
+    out = lead("verify_grain", requirement="R1", predicate="the quote is there")
+    assert "error" in out and "its predicates are ['quote present'" in out["detail"]
