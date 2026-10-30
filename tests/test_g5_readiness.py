@@ -48,8 +48,9 @@ class RoundLead:
     """A scripted Lead. Each step it may call only a tool it was just offered;
     anything else is recorded as a violation instead of being called."""
 
-    def __init__(self, evidence):
+    def __init__(self, evidence, opens=True):
         self.evidence = evidence
+        self.opens = opens                  # the runner's person opens the session instead
         self.violations: list[tuple[str, list[str]]] = []
         self.offered: list[set[str]] = []
         self.staged_in = ""
@@ -66,8 +67,9 @@ class RoundLead:
         return {}
 
     def _steps(self):
-        yield "open_session", {"purpose": "audited", "question": "How are rounds bounded?"}
-        yield None                                      # turn 1 ends; the person sets requirements
+        if self.opens:
+            yield "open_session", {"purpose": "audited", "question": "How are rounds bounded?"}
+            yield None                                  # turn 1 ends; the person sets requirements
         yield "audit_projection", {}
         yield "update_plan", {"fields": {"proposal": {
             "requirements": ["R1", "R2"], "step": "locate the quote and stage a synthesis"}}}
@@ -167,7 +169,7 @@ TASK = {"id": "t1", "question": "How are rounds bounded?", "requirements": [
 
 
 def dry_run(vault, evidence, tmp_path):
-    lead = RoundLead(evidence)
+    lead = RoundLead(evidence, opens=False)
     row = g5.run_task(TASK, library=vault.root, run_dir=tmp_path / "run",
                       route={"provider": "deepinfra", "model": "scripted-lead"},
                       provider_for=lambda choice: Scripted(lead), max_turns=6)
@@ -181,6 +183,7 @@ def test_the_runner_measures_a_scripted_session_on_a_scratch_copy(vault, evidenc
     assert row["stopped"] == "idle", row
     assert row["grains"] == {"grains": 3, "tier_a": 2, "human_accepted": 0, "other": 1}
     assert row["restart"] == {"after_turn": 2, "state_hash_equal": True}
+    assert row["spend"]["calls"] > 0                  # the meter saw the scripted calls
     assert row["invalid_history"] is False and row["integrity"] == {"C1": "clean"}
     assert row["closure_audit"]["checked"] == 2 and row["closure_audit"]["false_closures"] == []
     assert {r["method"] for r in row["closure_audit"]["rows"]} == {"independent"}
@@ -200,9 +203,11 @@ def test_a_paid_run_must_be_confirmed_and_priced(tmp_path, capsys):
     assert "no checked rate card" in capsys.readouterr().err
 
 
-def test_spend_fails_closed_without_usage():
-    events = [{"type": "model_response", "usage": "unavailable"}]
-    assert g5.spend(events, {"input_per_1m": 1, "output_per_1m": 1})["without_usage"] == 1
+def test_the_meter_prices_usage_and_counts_calls_without_it():
+    meter = g5.Meter({"input_per_1m": 0.2, "output_per_1m": 0.6})
+    meter({"result": {"telemetry": {"usage": {"input_tokens": 1_000_000, "output_tokens": 0}}}})
+    meter({"result": {"telemetry": {"usage": "unavailable"}}})
+    assert meter.calls == 2 and meter.without_usage == 1 and meter.usd == 0.2
 
 
 # --- R4: the closure audit ---------------------------------------------------------

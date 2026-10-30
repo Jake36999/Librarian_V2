@@ -3252,3 +3252,50 @@ ledger by hand, or that integration built, before the paid stage.
   owner's requirements), the decision rule and the $8 cap.
 - Record a rate card for MiMo-V2.6-Flash.
 - Run the pilot.
+
+### G5 pilot 1: stopped on defects, no measurement (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| G5 pilot 1 | stopped; no measurement | this commit (fixes) | `tmp/g5/pilot-1` (local): t1 and t5 on DeepSeek-V4.1-Flash, under the $1 pilot cap. |
+
+The pilot did its job: it found defects before the full run. It produced no
+Tier A measurement.
+
+**Spend.** About 14 model turns across the two sessions. The runner did not
+meter them (see below), so the cost is an estimate, about $0.05, from the
+turn count and typical prompt size. It is within the $1 pilot cap but was
+not enforced. The DeepInfra dashboard has the exact figure.
+
+**Defects found and fixed.**
+1. **Product: a malformed proposal crashed the session's exit check.** The
+   model proposed `requirements` as objects rather than ids, and
+   `Session._audited_missing` raised `TypeError: unhashable type: 'dict'`.
+   That ended the run. It now replies with the shape it wants ("by id, as
+   strings"). Regression test in `tests/test_audited_session.py`.
+2. **Runner: spend was not metered, so the cap was not enforced.** The runner
+   read `model_response` events from session logs. The App writes none: its
+   `InvocationRuntime` has no trace sink, and a comment in `app.py` records
+   keeping model diagnostics in process memory as deliberate. The fail-closed
+   check only caught responses without usage, so zero responses passed.
+
+   The runner now attaches its own `Meter` as the runtime's trace sink. It
+   prices each call's `telemetry.usage`, and stops if a call carries no
+   usage, or if a turn made model calls the meter did not see. A crash inside
+   one task is now recorded with its spend instead of ending the run. The
+   product's no-model-events-in-sessions choice is unchanged; changing it is
+   the owner's decision.
+3. **Runner: the Lead acted before any requirement existed.** The runner set
+   requirements after the Lead's first turn. With none set, the Lead asked
+   the person (`ask_user`) and the session parked when no one answered (t1),
+   or it proposed before requirements existed (t5).
+
+   The person now opens the session and sets every requirement before the
+   Lead's first turn. A short permission wait (5 s) makes any later
+   unanswered question park quickly, and the row records it.
+
+**Open protocol question for the owner.** A model may still ask the person
+something mid-session. Today that parks the session, and it is recorded as
+such. The alternative is a fixed, predeclared answer (for example, "No
+further guidance: work from the requirements as set"), which keeps the
+session running and counts the questions asked.

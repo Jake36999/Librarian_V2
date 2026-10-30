@@ -317,3 +317,12 @@ def test_after_the_core_stops_an_audit_event_is_refused_not_written_directly(vau
         assert path.read_text(encoding="utf-8") == before
     finally:
         session_module._STOPPED_CORES.discard(session_module._vault_key(vault))
+
+
+def test_a_proposal_naming_requirements_by_object_is_explained_not_crashed(lead):
+    """Found by the G5 pilot: a real model proposed requirement objects, and the
+    exit check failed with TypeError instead of saying what shape it wants."""
+    set_r1(lead)
+    lead.ok("update_plan", fields={"proposal": {"requirements": [{"id": "R1"}], "step": "s"}})
+    out = lead.ok("advance")
+    assert out["moved"] is False and "by id, as strings" in out["missing"][0]

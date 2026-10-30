@@ -923,6 +923,11 @@ class Session:
             if not named or not isinstance(named, list):
                 return ["propose one bounded step: update_plan(proposal={'requirements': "
                         "[...], 'step': '...'})"]
+            # A model can send anything here (the G5 pilot sent objects): name
+            # the shape instead of failing on it.
+            if not all(isinstance(r, str) for r in named):
+                return ["the proposal names requirements by id, as strings: "
+                        "update_plan(proposal={'requirements': ['R1'], 'step': '...'})"]
             unknown = [r for r in named if r not in audit.requirements]
             if unknown:
                 return [f"the proposal names unknown requirement(s): {', '.join(map(str, unknown))}"]

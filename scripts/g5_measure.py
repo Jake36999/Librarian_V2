@@ -52,28 +52,46 @@ def copy_library(library: Path, target: Path) -> Path:
     return target
 
 
-def spend(events: list[dict[str, Any]], card: dict[str, float] | None) -> dict[str, Any]:
-    tokens = {"input_tokens": 0, "output_tokens": 0, "responses": 0, "without_usage": 0}
-    for event in events:
-        if event.get("type") != "model_response":
-            continue
-        tokens["responses"] += 1
-        usage = event.get("usage")
-        if not isinstance(usage, dict):
-            tokens["without_usage"] += 1
-            continue
-        tokens["input_tokens"] += int(usage.get("input_tokens") or 0)
-        tokens["output_tokens"] += int(usage.get("output_tokens") or 0)
-    if card:
-        tokens["usd"] = round(tokens["input_tokens"] / 1e6 * card["input_per_1m"] +
-                              tokens["output_tokens"] / 1e6 * card["output_per_1m"], 5)
-    return tokens
+class Meter:
+    """Spend measured from the invocation runtime's own traces, one per model call.
+
+    The App keeps these traces in memory only (it writes no model events to
+    session logs, by design), so the runner attaches this meter as the
+    runtime's trace sink. The G5 pilot found that reading session logs instead
+    counted nothing. A call whose trace carries no usage makes the spend
+    unknowable, so the run stops (fail closed).
+    """
+
+    def __init__(self, card: dict[str, float] | None = None):
+        self.card = card
+        self.calls = self.without_usage = self.input_tokens = self.output_tokens = 0
+
+    def __call__(self, row: dict[str, Any]) -> None:
+        self.calls += 1
+        usage = ((row.get("result") or {}).get("telemetry") or {}).get("usage")
+        if not isinstance(usage, dict) or not usage:
+            self.without_usage += 1
+            return
+        self.input_tokens += int(usage.get("input_tokens") or 0)
+        self.output_tokens += int(usage.get("output_tokens") or 0)
+
+    @property
+    def usd(self) -> float:
+        if not self.card:
+            return 0.0
+        return round(self.input_tokens / 1e6 * self.card["input_per_1m"] +
+                     self.output_tokens / 1e6 * self.card["output_per_1m"], 5)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"calls": self.calls, "without_usage": self.without_usage,
+                "input_tokens": self.input_tokens, "output_tokens": self.output_tokens,
+                **({"usd": self.usd} if self.card else {})}
 
 
 def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[str, str],
              provider_for: Callable | None = None, card: dict[str, float] | None = None,
              budget_usd: float | None = None, max_turns: int = 12,
-             restart_after: int = 2) -> dict[str, Any]:
+             restart_after: int = 2, permission_wait: float = 5.0) -> dict[str, Any]:
     """One predeclared task, start to finish, on its own scratch library."""
     from resource_librarian import audit_events, closure_audit, research_grains
     from resource_librarian import tools  # noqa: F401
@@ -84,10 +102,14 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
 
     vault = Vault(copy_library(library, run_dir / task["id"] / "vault"))
     store = SessionStore(vault)
+    meter = Meter(card)
 
     def open_app():
+        # A short permission wait: with no person present, a question or a
+        # permission request parks the session quickly, and the row says so.
         app = App(vault, keys=KeyStore(use_keyring=False), coordinate=True,
-                  provider_for=provider_for)
+                  provider_for=provider_for, broker_timeout=permission_wait)
+        app.invocation_runtime.trace_sink = meter
         app.set_tiers([route], override="G5 measurement route")
         app.set_mode("auto")
         return app
@@ -95,11 +117,13 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
     row: dict[str, Any] = {"task": task["id"], "route": f"{route['provider']}:{route['model']}"}
     app = open_app()
     try:
-        loop = app._loop()
-        loop.send(f"Open an audited session (open_session with purpose 'audited') for this "
-                  f"research question: {task['question']}")
-        sid = loop.ctx.session
-        if not sid or store.load(sid).purpose != "audited":
+        # The person opens the session and sets its requirements before the
+        # Lead's first turn. The G5 pilot let the Lead act first: with no
+        # requirements it asked, waited and parked, and it proposed before any
+        # requirement existed.
+        sid = app.person_call("open_session", {"purpose": "audited",
+                                               "question": task["question"]}).get("opened")
+        if not sid:
             row["stopped"] = "no_audited_session"
             return row
         row["session"] = sid
@@ -110,17 +134,22 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
             if "refused" in out or "error" in out:
                 row["stopped"] = f"requirement refused: {out}"
                 return row
+        loop = app._loop()
+        loop.ctx.session = sid
         idle, turns = 0, 0
+        message = (f"This audited session is yours to work. Its question: {task['question']} "
+                   f"The person has set its requirements. {CONTINUE}")
         while turns < max_turns:
-            turn = loop.send(CONTINUE)
+            before_calls = meter.calls
+            turn = loop.send(message)
+            message = CONTINUE
             turns += 1
             idle = idle + 1 if not turn.calls else 0
-            events = store.events(sid)
-            cost = spend(events, card)
-            if card is not None and cost["without_usage"]:
+            if card is not None and (meter.without_usage or
+                                     (turn.steps and meter.calls == before_calls)):
                 row["stopped"] = "usage_unavailable"
                 break
-            if budget_usd is not None and cost.get("usd", 0.0) >= budget_usd:
+            if budget_usd is not None and meter.usd >= budget_usd:
                 row["stopped"] = "budget"
                 break
             if turns == restart_after and "restart" not in row:
@@ -132,8 +161,9 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
                 row["restart"] = {"after_turn": turns,
                                   "state_hash_equal": store.load(sid).state_hash() == before}
             outcome = audit_events.session_outcome(store.load(sid).audit)
-            if outcome in SETTLED or store.load(sid).status != "open":
-                row["stopped"] = f"settled: {outcome}"
+            status = store.load(sid).status
+            if outcome in SETTLED or status != "open":
+                row["stopped"] = f"settled: {outcome}" if outcome in SETTLED else f"status: {status}"
                 break
             if idle >= 2:
                 row["stopped"] = "idle"
@@ -160,10 +190,13 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
                                     for o in r["predicates"].values() if o == "no_suitable_tool"),
             "integrity": {c: v["integrity"] for c, v in summary["contracts"].items()},
             "verifiers": verifiers, "refusals": refusals,
-            "spend": spend(store.events(sid), card),
             "closure_audit": closure_audit.audit(vault, session)})
         return row
+    except Exception as exc:  # noqa: BLE001 - one task's crash is a result, not the run's end
+        row["stopped"] = f"error: {type(exc).__name__}: {str(exc)[:300]}"
+        return row
     finally:
+        row["spend"] = meter.to_dict()
         app.close_runtime()
 
 
