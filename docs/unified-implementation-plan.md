@@ -3032,3 +3032,59 @@ still runs first, so an agent still gets `PERSON_CONFIRMS`.
 The acceptance matrix cites the new test under both refusal and
 no-mutation-on-failure. No UI path called selection directly, so nothing
 there changed.
+
+### ACCEPT-03 capability matrix and parity reconciled (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| ACCEPT-03 | implemented | this commit | `docs/capability-matrix.md`, rewritten; a dated reconciliation appended to `reports/2026-10-20-v1-v2-capability-parity.md`. Documentation only. |
+
+**Capability matrix.** Every row now names its evidence. "Ported" and
+"changed" are used only where the ACCEPT-01 acceptance matrix covers the
+workflow. New statuses say where the evidence stops:
+- **local evidence only:** Browser, Obsidian and MCP/Cowork pass in fixtures
+  and packaged adapters, but not yet in the real host applications
+  (ACCEPT-02);
+- **partial:** the missing part is named;
+- **excluded, dropped, deferred, retired, not adopted:** each with its
+  reason and the way back.
+
+**Corrected after checking the code.** Two rows previously implied more than
+the evidence:
+- **Community/graph advice:** the only test checks that it uses the Core's
+  index service. No test checks the communities it reports.
+- **Repository extraction:** it selects `.py`, `.ts`, `.tsx`, `.js` and `.jsx`
+  files by suffix rather than parsing those languages, and its tests use only
+  Python files.
+
+The capabilities new in V2 are listed with their limits:
+- adoption: partial, local evidence only, and G3 not closed;
+- workspace documents: attached roots are not indexed;
+- document identity;
+- audited sessions: partial. Tier B and trust propagation are deferred, and
+  the share of grains Tier A closes is unmeasured on real sessions.
+
+Drops and exclusions are explicit:
+- V1 machine state is dropped (re-intake rebuilds it);
+- V1 drafts and generated hubs are excluded;
+- attached-root indexing is excluded.
+
+The remaining items:
+- DEPLOY-05 is deferred pending an evaluation;
+- Tier B and trust propagation are deferred;
+- the plugin marketplace is deferred to V3;
+- the development-agent profile is not adopted.
+
+**Parity report.** The 2026-10-20 review is kept as written, with a dated
+reconciliation of its five gaps:
+- legacy import: closed;
+- use-signal learning: closed, as a manual experiment that requires a
+  benchmark;
+- workbench lifecycle: closed for labelling and provenance;
+- graph/community and extraction: partly closed, with the missing evidence
+  named.
+
+Follow-up step 5 was not assessed, and the addendum says so.
+
+`docs/migration.md` was checked against the V1-import acceptance evidence and
+needed no change. The README makes no parity claim beyond linking the matrix.

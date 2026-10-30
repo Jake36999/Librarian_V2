@@ -79,3 +79,27 @@ That boundary makes it possible to restore missing research capabilities as opti
 3. Restore graph/community analysis and capability extraction as optional modules.
 4. Introduce measurable use-learning readiness and source-engagement provenance.
 5. Consolidate V1 R&D material into V2-facing architecture, migration and operator documentation.
+
+---
+
+## Reconciliation, 2026-10-30 (ACCEPT-03)
+
+The review above is kept as written. Since then, each material gap has
+changed status. The current product-facing statuses, with the evidence for
+each, are in the [capability matrix](../docs/capability-matrix.md), and the
+end-to-end acceptance matrix is `tests/test_acceptance_matrix.py`.
+
+| Gap above | Status on 2026-10-30 | Evidence |
+| --- | --- | --- |
+| 1. Legacy import hidden (P0) | **Closed.** `v1_import_plan`, `v1_import_stage` and `v1_import_status` are registered, staging needs a person, the vault binds to one V1 root, and the [migration guide](../docs/migration.md) documents it. V1 machine state (surveys, queues, link records, backlogs) is dropped by design; re-intake rebuilds evidence. | Acceptance matrix: V1 import (all four kinds). |
+| 2. Graph and community analysis (P1) | **Partly closed.** An internal pack registers `community_rebuild`, `community_reports` and `community_disagreements` over the disposable index. | Only its index ownership is tested. No test checks the communities it reports. |
+| 3. Capability extraction (P1) | **Partly closed.** An internal pack plans and materialises revision-pinned excerpts and executes no code. | `test_extract_pinning.py`, with Python files only. |
+| 4. Use-signal learning (P2) | **Closed, as a manual experiment.** Feedback readiness has declared thresholds (exploratory and recommendable). Candidates are generated offline, a candidate can be selected only after its benchmark, and a person can restore the previous policy. Live traffic splitting is retired. | Acceptance matrix: manual ranking (all four kinds). |
+| 5. Workbench lifecycle (P2) | **Closed for labelling and provenance.** Engagements bind a catalogued source and pinned revision, record each run's isolation label, and close with an application and outcome, or a forced-close reason. | Acceptance matrix: Workbench execution labelling. A real Docker run waits for ACCEPT-02. |
+
+Of the follow-up order:
+- Step 1 (publish the capability matrix) is done.
+- Steps 2 and 4 are done as above.
+- Step 3 is partial, as gaps 2 and 3 show.
+- Step 5 (consolidating V1 R&D material into V2 documentation) was not
+  assessed in this reconciliation.
