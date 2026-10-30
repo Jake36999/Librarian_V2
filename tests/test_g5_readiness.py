@@ -266,3 +266,10 @@ def test_a_mid_session_question_gets_the_fixed_answer_and_the_round_goes_on(vaul
     assert [q["question"] for q in row["questions"]] == [
         "Should the synthesis cover both requirements?"]
     assert row["grains"] == {"grains": 3, "tier_a": 2, "human_accepted": 0, "other": 1}
+
+
+def test_the_task_file_must_name_a_verifier_for_every_authoritative_predicate(tmp_path):
+    task = {"id": "a", "question": "q", "requirements": [
+        {"requirement_id": "R1", "text": "t", "predicates": ["p", "q"],
+         "verifiers": {"p": "quote.located"}}]}
+    assert any("no verifier named for ['q']" in p for p in g5.validate_tasks({"tasks": [task]}))

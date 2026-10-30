@@ -570,9 +570,12 @@ def close_session(ctx: Context, summary: str, gaps: str) -> dict:
       card=Card("Set or revise a requirement of an audited session",
                 "the person states what the audited work must achieve, or changes it",
                 "The person's own decision: a model proposes, it never sets one. A revision "
-                "reopens the requirement and makes earlier results and closures stale"))
+                "reopens the requirement and makes earlier results and closures stale. "
+                "verifiers optionally names, per predicate, the verifier a contract must plan "
+                "for it"))
 def set_requirement(ctx: Context, requirement_id: str, text: str,
-                    closure: Closure = "authoritative", predicates: list[str] | None = None) -> dict:
+                    closure: Closure = "authoritative", predicates: list[str] | None = None,
+                    verifiers: dict | None = None) -> dict:
     session = _session(ctx)
     if session.purpose != "audited":
         raise TypeError("requirements belong to an audited session: "
@@ -583,7 +586,8 @@ def set_requirement(ctx: Context, requirement_id: str, text: str,
     # never from an argument a model could fill in.
     _store(ctx).append_audit(session.id, {
         "type": "requirement", "id": requirement_id, "revision": revision, "text": text,
-        "closure": closure, "predicates": list(predicates or []), "by": "person"})
+        "closure": closure, "predicates": list(predicates or []),
+        "verifiers": dict(verifiers or {}), "by": "person"})
     return {"requirement": requirement_id, "revision": revision,
             "session": _store(ctx).load(session.id).envelope(ctx.vault)}
 

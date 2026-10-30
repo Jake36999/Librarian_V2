@@ -109,7 +109,9 @@ def _essential(session: Any, manifest: dict[str, Any], vault: Any) -> dict[str, 
             # One outcome per predicate: a passing quote check cannot hide a
             # failing arithmetic check on the same requirement.
             "predicates": {p: audit_events._predicate_outcome(audit, rid, p)
-                           for p in req["predicates"]}}
+                           for p in req["predicates"]},
+            # The verifier the person named for a predicate: the plan must use it.
+            **({"verifiers": dict(req["verifiers"])} if req.get("verifiers") else {})}
     contract = None
     if audit.current_contract:
         c = audit.contracts[audit.current_contract]

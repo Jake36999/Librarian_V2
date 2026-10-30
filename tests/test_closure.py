@@ -290,3 +290,36 @@ def test_a_requirement_id_alone_is_not_a_plan_key(store, sid):
     store.append_audit(sid, requirement())
     with pytest.raises(Refusal, match="Key each verifier by 'requirement: predicate'"):
         store.append_audit(sid, contract({"R1": "quote.located"}))
+
+
+# --- the person names the verifier (owner decision after G5 pilot 4) ---------------
+
+def named(rid="R1", verifier="quote.located"):
+    return {**requirement(rid), "verifiers": {"quote present": verifier}}
+
+
+def test_a_plan_must_use_the_verifier_the_person_named(store, sid):
+    store.append_audit(sid, named(verifier="quote.located"))
+    with pytest.raises(Refusal, match="the person named quote.located for 'R1: quote present'"):
+        store.append_audit(sid, contract({"R1: quote present": "evidence.integrity"}))
+    store.append_audit(sid, contract({"R1: quote present": "quote.located"}))
+
+
+def test_a_requirement_cannot_name_an_unknown_verifier_or_a_foreign_predicate(store, sid):
+    with pytest.raises(Refusal, match="unknown verifier"):
+        store.append_audit(sid, named(verifier="vibes.check"))
+    with pytest.raises(Refusal, match="one of its own predicates"):
+        store.append_audit(sid, {**requirement(), "verifiers": {"another": "quote.located"}})
+
+
+def test_a_named_verifier_survives_a_revision_by_request_evidence(vault):
+    from resource_librarian.registry import Context
+    lead = Lead(vault)
+    lead("open_session", purpose="audited", question="q")
+    person = Context(tier="curate", vault=vault, session=lead.ctx.session)
+    REGISTRY.call("set_requirement", {"requirement_id": "R1", "text": "t",
+                                      "predicates": ["quote present"],
+                                      "verifiers": {"quote present": "quote.located"}}, person)
+    REGISTRY.call("request_evidence", {"requirement": "R1", "what": "a second source"}, person)
+    req = SessionStore(vault).load(lead.ctx.session).audit.requirements["R1"]
+    assert req["revision"] == 2 and req["verifiers"] == {"quote present": "quote.located"}

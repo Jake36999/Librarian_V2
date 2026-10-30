@@ -137,6 +137,13 @@ def check_plan(requirements: dict[str, dict[str, Any]], addressed: list[str],
             raise _refuse_plan(f"unknown verifier {verifier!r}; registered: {sorted(VERIFIERS)}")
         normalised[key] = base_id(verifier)
     for rid in addressed:
+        for predicate, named in (requirements[rid].get("verifiers") or {}).items():
+            key = f"{rid}: {predicate}"
+            if normalised.get(key) != named:
+                raise _refuse_plan(
+                    f"the person named {named} for {key!r}; plan exactly that verifier "
+                    f"(this plan has {normalised.get(key) or 'none'})")
+    for rid in addressed:
         req = requirements[rid]
         if req["closure"] != "authoritative":
             continue

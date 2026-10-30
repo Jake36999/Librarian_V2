@@ -348,5 +348,6 @@ def request_evidence(ctx: Context, requirement: str, what: str) -> dict:
     _store(ctx).append_audit(session.id, {
         "type": "requirement", "id": requirement, "revision": req["revision"] + 1,
         "text": req["text"], "closure": req["closure"],
-        "predicates": req["predicates"] + [predicate], "by": "person"})
+        "predicates": req["predicates"] + [predicate],
+        "verifiers": dict(req.get("verifiers") or {}), "by": "person"})
     return {"requirement": requirement, "revision": req["revision"] + 1, "predicate": predicate}

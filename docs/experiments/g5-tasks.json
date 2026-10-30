@@ -2,7 +2,8 @@
  "status": "approved by the owner (2026-10-30), with the decision rule and the $8 cap in g5-measurement-plan.md",
  "library": "D:/Resource-Library/.librarian-app",
  "notes": [
-  "Requirements are set by the person (the runner calls set_requirement as the person). The Lead proposes each contract and its verifier plan; that choice is part of what is measured.",
+  "Requirements, including the verifier for each predicate, are set by the person (the runner calls set_requirement as the person). The Lead proposes each contract, its targets and operations, and plans the named verifiers; its reading, quoting and staging are what is measured.",
+  "Each predicate names the verifier that checks it (owner decision, 2026-10-30, after pilot 4 closed a predicate with a verifier that does not establish it). Admission refuses a contract whose plan differs.",
   "Every authoritative predicate below can be closed by a registered Tier A verifier (quote.located, evidence.integrity, index.findable, citation.resolves, schema.valid, target.diff_clean, boundary.staged). A contract that plans no such verifier is refused at admission.",
   "This library has no repositories, coverage (DIK) records or claim runs, so arithmetic.reproduces, coverage.status and claim_run.passed cannot be exercised on it; the owner decided (2026-10-30) that the measurement covers the other seven. Task t6 deliberately includes a predicate no Tier A verifier can check, to measure the no_suitable_tool outcome on real data.",
   "'sources' lists the notes each task is about; the runner validates that they exist and does not show the list to the Lead."
@@ -11,140 +12,318 @@
   {
    "id": "t1-design-patterns",
    "question": "According to the library, what problem do software design patterns solve? Ground the answer in the GeeksforGeeks design patterns tutorial.",
-   "sources": ["Sources/page/Design Patterns Tutorial - GeeksforGeeks.md"],
+   "sources": [
+    "Sources/page/Design Patterns Tutorial - GeeksforGeeks.md"
+   ],
    "requirements": [
-    {"requirement_id": "R1", "closure": "authoritative",
+    {
+     "requirement_id": "R1",
+     "closure": "authoritative",
      "text": "The answer's central claim is quoted from the tutorial's captured text.",
-     "predicates": ["a passage stating what design patterns solve is quoted from the GeeksforGeeks tutorial's evidence",
-                    "the quoted evidence record matches its content hash"]},
-    {"requirement_id": "R2", "closure": "human_judgment",
-     "text": "A short synthesis, staged for the person, of what the library says design patterns are for."},
-    {"requirement_id": "R3", "closure": "authoritative",
+     "predicates": [
+      "a passage stating what design patterns solve is quoted from the GeeksforGeeks tutorial's evidence",
+      "the quoted evidence record matches its content hash"
+     ],
+     "verifiers": {
+      "a passage stating what design patterns solve is quoted from the GeeksforGeeks tutorial's evidence": "quote.located",
+      "the quoted evidence record matches its content hash": "evidence.integrity"
+     }
+    },
+    {
+     "requirement_id": "R2",
+     "closure": "human_judgment",
+     "text": "A short synthesis, staged for the person, of what the library says design patterns are for."
+    },
+    {
+     "requirement_id": "R3",
+     "closure": "authoritative",
      "text": "The staged synthesis is intact.",
-     "predicates": ["the staged synthesis is unchanged since it was staged"]}
+     "predicates": [
+      "the staged synthesis is unchanged since it was staged"
+     ],
+     "verifiers": {
+      "the staged synthesis is unchanged since it was staged": "target.diff_clean"
+     }
+    }
    ]
   },
   {
    "id": "t2-thunkable-alternatives",
    "question": "What alternatives to Thunkable does the library record, and what do the two comparison pages say about them?",
-   "sources": ["Sources/page/8 Best Thunkable Alternatives in 2026 Compared Side by Side  Bilt Blog  Bilt.md",
-               "Sources/page/Thunkable Alternative Mobile App Development Options (2026).md"],
+   "sources": [
+    "Sources/page/8 Best Thunkable Alternatives in 2026 Compared Side by Side  Bilt Blog  Bilt.md",
+    "Sources/page/Thunkable Alternative Mobile App Development Options (2026).md"
+   ],
    "requirements": [
-    {"requirement_id": "R1", "closure": "authoritative",
+    {
+     "requirement_id": "R1",
+     "closure": "authoritative",
      "text": "Each comparison page is quoted on at least one named alternative.",
-     "predicates": ["a named alternative is quoted from the Bilt comparison page's evidence",
-                    "a named alternative is quoted from the 2026 alternatives page's evidence"]},
-    {"requirement_id": "R2", "closure": "authoritative",
+     "predicates": [
+      "a named alternative is quoted from the Bilt comparison page's evidence",
+      "a named alternative is quoted from the 2026 alternatives page's evidence"
+     ],
+     "verifiers": {
+      "a named alternative is quoted from the Bilt comparison page's evidence": "quote.located",
+      "a named alternative is quoted from the 2026 alternatives page's evidence": "quote.located"
+     }
+    },
+    {
+     "requirement_id": "R2",
+     "closure": "authoritative",
      "text": "Both pages can be found again in the library.",
-     "predicates": ["the Bilt comparison page's note is findable by its title and Bottom Line",
-                    "the 2026 alternatives page's note is findable by its title and Bottom Line"]},
-    {"requirement_id": "R3", "closure": "human_judgment",
-     "text": "A staged comparison the person accepts or sends back."}
+     "predicates": [
+      "the Bilt comparison page's note is findable by its title and Bottom Line",
+      "the 2026 alternatives page's note is findable by its title and Bottom Line"
+     ],
+     "verifiers": {
+      "the Bilt comparison page's note is findable by its title and Bottom Line": "index.findable",
+      "the 2026 alternatives page's note is findable by its title and Bottom Line": "index.findable"
+     }
+    },
+    {
+     "requirement_id": "R3",
+     "closure": "human_judgment",
+     "text": "A staged comparison the person accepts or sends back."
+    }
    ]
   },
   {
    "id": "t3-agile-definitions",
    "question": "How do the Atlassian and Coursera pages define agile project management, and where do they differ?",
-   "sources": ["Sources/page/What is Agile Project Management  Atlassian.md",
-               "Sources/page/What is Agile Project Management  Coursera.md"],
+   "sources": [
+    "Sources/page/What is Agile Project Management  Atlassian.md",
+    "Sources/page/What is Agile Project Management  Coursera.md"
+   ],
    "requirements": [
-    {"requirement_id": "R1", "closure": "authoritative",
+    {
+     "requirement_id": "R1",
+     "closure": "authoritative",
      "text": "Each definition is quoted from its page.",
-     "predicates": ["Atlassian's definition of agile project management is quoted from its evidence",
-                    "Coursera's definition of agile project management is quoted from its evidence"]},
-    {"requirement_id": "R2", "closure": "authoritative",
+     "predicates": [
+      "Atlassian's definition of agile project management is quoted from its evidence",
+      "Coursera's definition of agile project management is quoted from its evidence"
+     ],
+     "verifiers": {
+      "Atlassian's definition of agile project management is quoted from its evidence": "quote.located",
+      "Coursera's definition of agile project management is quoted from its evidence": "quote.located"
+     }
+    },
+    {
+     "requirement_id": "R2",
+     "closure": "authoritative",
      "text": "The two source notes' citations hold.",
-     "predicates": ["every evidence id and wiki link the Atlassian note cites resolves",
-                    "every evidence id and wiki link the Coursera note cites resolves"]},
-    {"requirement_id": "R3", "closure": "human_judgment",
-     "text": "A staged account of where the definitions differ."}
+     "predicates": [
+      "every evidence id and wiki link the Atlassian note cites resolves",
+      "every evidence id and wiki link the Coursera note cites resolves"
+     ],
+     "verifiers": {
+      "every evidence id and wiki link the Atlassian note cites resolves": "citation.resolves",
+      "every evidence id and wiki link the Coursera note cites resolves": "citation.resolves"
+     }
+    },
+    {
+     "requirement_id": "R3",
+     "closure": "human_judgment",
+     "text": "A staged account of where the definitions differ."
+    }
    ]
   },
   {
    "id": "t4-computational-thinking-early-years",
    "question": "What practices does the NCCE page recommend for developing computational thinking in early childhood?",
-   "sources": ["Sources/page/Developing Computational Thinking Skills in Early Childhood Education - NCCE.md"],
+   "sources": [
+    "Sources/page/Developing Computational Thinking Skills in Early Childhood Education - NCCE.md"
+   ],
    "requirements": [
-    {"requirement_id": "R1", "closure": "authoritative",
+    {
+     "requirement_id": "R1",
+     "closure": "authoritative",
      "text": "At least one recommended practice is quoted from the page.",
-     "predicates": ["a recommended practice is quoted from the NCCE page's evidence"]},
-    {"requirement_id": "R2", "closure": "authoritative",
+     "predicates": [
+      "a recommended practice is quoted from the NCCE page's evidence"
+     ],
+     "verifiers": {
+      "a recommended practice is quoted from the NCCE page's evidence": "quote.located"
+     }
+    },
+    {
+     "requirement_id": "R2",
+     "closure": "authoritative",
      "text": "The NCCE source note is sound.",
-     "predicates": ["the NCCE source note meets the vault's content model",
-                    "every evidence id and wiki link the NCCE note cites resolves"]},
-    {"requirement_id": "R3", "closure": "human_judgment",
-     "text": "A staged summary of the recommended practices for a teacher."}
+     "predicates": [
+      "the NCCE source note meets the vault's content model",
+      "every evidence id and wiki link the NCCE note cites resolves"
+     ],
+     "verifiers": {
+      "the NCCE source note meets the vault's content model": "schema.valid",
+      "every evidence id and wiki link the NCCE note cites resolves": "citation.resolves"
+     }
+    },
+    {
+     "requirement_id": "R3",
+     "closure": "human_judgment",
+     "text": "A staged summary of the recommended practices for a teacher."
+    }
    ]
   },
   {
    "id": "t5-lab-sheet",
    "question": "What does Lab Sheet 1 ask students to build, and what constraints does it set?",
-   "sources": ["Sources/document/Lab Sheet 1 - Tutors visit France.md"],
+   "sources": [
+    "Sources/document/Lab Sheet 1 - Tutors visit France.md"
+   ],
    "requirements": [
-    {"requirement_id": "R1", "closure": "authoritative",
+    {
+     "requirement_id": "R1",
+     "closure": "authoritative",
      "text": "The task the sheet sets is quoted from the document.",
-     "predicates": ["the app the sheet asks students to build is quoted from the lab sheet's evidence",
-                    "the lab sheet's evidence record matches its content hash"]},
-    {"requirement_id": "R2", "closure": "human_judgment",
-     "text": "A staged summary of the exercise for a teacher."},
-    {"requirement_id": "R3", "closure": "authoritative",
+     "predicates": [
+      "the app the sheet asks students to build is quoted from the lab sheet's evidence",
+      "the lab sheet's evidence record matches its content hash"
+     ],
+     "verifiers": {
+      "the app the sheet asks students to build is quoted from the lab sheet's evidence": "quote.located",
+      "the lab sheet's evidence record matches its content hash": "evidence.integrity"
+     }
+    },
+    {
+     "requirement_id": "R2",
+     "closure": "human_judgment",
+     "text": "A staged summary of the exercise for a teacher."
+    },
+    {
+     "requirement_id": "R3",
+     "closure": "authoritative",
      "text": "The round touched the library only through staging, and its draft is intact.",
-     "predicates": ["the round changed the library only through staging",
-                    "the staged summary is unchanged since it was staged"]}
+     "predicates": [
+      "the round changed the library only through staging",
+      "the staged summary is unchanged since it was staged"
+     ],
+     "verifiers": {
+      "the round changed the library only through staging": "boundary.staged",
+      "the staged summary is unchanged since it was staged": "target.diff_clean"
+     }
+    }
    ]
   },
   {
    "id": "t6-long-context-models",
    "question": "Which of DeepSeek-V4.1-Flash, Qwen3.5-397B-A17B and GLM-5.3 does the library record as supporting tool calling, and what context length does it record for each?",
-   "sources": ["Sources/model/DeepSeek-V4.1-Flash - deepinfra.md",
-               "Sources/model/Qwen3.5-397B-A17B - deepinfra.md",
-               "Sources/model/GLM-5.3 - deepinfra.md"],
+   "sources": [
+    "Sources/model/DeepSeek-V4.1-Flash - deepinfra.md",
+    "Sources/model/Qwen3.5-397B-A17B - deepinfra.md",
+    "Sources/model/GLM-5.3 - deepinfra.md"
+   ],
    "requirements": [
-    {"requirement_id": "R1", "closure": "partial",
+    {
+     "requirement_id": "R1",
+     "closure": "partial",
      "text": "The stated context lengths and tool-calling flags match the model notes.",
-     "predicates": ["each stated context length matches the value recorded in the model's note"]},
-    {"requirement_id": "R2", "closure": "authoritative",
+     "predicates": [
+      "each stated context length matches the value recorded in the model's note"
+     ]
+    },
+    {
+     "requirement_id": "R2",
+     "closure": "authoritative",
      "text": "The three model notes can be found again.",
-     "predicates": ["the DeepSeek-V4.1-Flash note is findable by its title and Bottom Line",
-                    "the Qwen3.5-397B-A17B note is findable by its title and Bottom Line",
-                    "the GLM-5.3 note is findable by its title and Bottom Line"]},
-    {"requirement_id": "R3", "closure": "human_judgment",
-     "text": "A staged table of the three models for the person."}
+     "predicates": [
+      "the DeepSeek-V4.1-Flash note is findable by its title and Bottom Line",
+      "the Qwen3.5-397B-A17B note is findable by its title and Bottom Line",
+      "the GLM-5.3 note is findable by its title and Bottom Line"
+     ],
+     "verifiers": {
+      "the DeepSeek-V4.1-Flash note is findable by its title and Bottom Line": "index.findable",
+      "the Qwen3.5-397B-A17B note is findable by its title and Bottom Line": "index.findable",
+      "the GLM-5.3 note is findable by its title and Bottom Line": "index.findable"
+     }
+    },
+    {
+     "requirement_id": "R3",
+     "closure": "human_judgment",
+     "text": "A staged table of the three models for the person."
+    }
    ]
   },
   {
    "id": "t7-uk-computing-degrees",
    "question": "What do the UCLan computing degree page and the computing-with-foundation-year page say about entry and course content?",
-   "sources": ["Sources/page/BSc (Hons) Computing  UCLan London.md",
-               "Sources/page/Computing (with Foundation Year) BSc (Hons).md"],
+   "sources": [
+    "Sources/page/BSc (Hons) Computing  UCLan London.md",
+    "Sources/page/Computing (with Foundation Year) BSc (Hons).md"
+   ],
    "requirements": [
-    {"requirement_id": "R1", "closure": "authoritative",
+    {
+     "requirement_id": "R1",
+     "closure": "authoritative",
      "text": "Each page is quoted on what the course covers.",
-     "predicates": ["the UCLan page's description of course content is quoted from its evidence",
-                    "the foundation-year page's description of course content is quoted from its evidence"]},
-    {"requirement_id": "R2", "closure": "authoritative",
+     "predicates": [
+      "the UCLan page's description of course content is quoted from its evidence",
+      "the foundation-year page's description of course content is quoted from its evidence"
+     ],
+     "verifiers": {
+      "the UCLan page's description of course content is quoted from its evidence": "quote.located",
+      "the foundation-year page's description of course content is quoted from its evidence": "quote.located"
+     }
+    },
+    {
+     "requirement_id": "R2",
+     "closure": "authoritative",
      "text": "Both pages meet the content model.",
-     "predicates": ["the UCLan source note meets the vault's content model",
-                    "the foundation-year source note meets the vault's content model"]},
-    {"requirement_id": "R3", "closure": "human_judgment",
-     "text": "A staged comparison of the two courses."}
+     "predicates": [
+      "the UCLan source note meets the vault's content model",
+      "the foundation-year source note meets the vault's content model"
+     ],
+     "verifiers": {
+      "the UCLan source note meets the vault's content model": "schema.valid",
+      "the foundation-year source note meets the vault's content model": "schema.valid"
+     }
+    },
+    {
+     "requirement_id": "R3",
+     "closure": "human_judgment",
+     "text": "A staged comparison of the two courses."
+    }
    ]
   },
   {
    "id": "t8-what-is-thunkable",
    "question": "What is Thunkable, according to its own documentation, and how does Lab Sheet 1 use it?",
-   "sources": ["Sources/page/What is Thunkable  Thunkable Docs.md",
-               "Sources/document/Lab Sheet 1 - Tutors visit France.md"],
+   "sources": [
+    "Sources/page/What is Thunkable  Thunkable Docs.md",
+    "Sources/document/Lab Sheet 1 - Tutors visit France.md"
+   ],
    "requirements": [
-    {"requirement_id": "R1", "closure": "authoritative",
+    {
+     "requirement_id": "R1",
+     "closure": "authoritative",
      "text": "Thunkable's own description and the lab sheet's use of it are both quoted.",
-     "predicates": ["Thunkable's description of itself is quoted from the documentation page's evidence",
-                    "the lab sheet's instruction to use Thunkable is quoted from its evidence"]},
-    {"requirement_id": "R2", "closure": "human_judgment",
-     "text": "A staged explanation linking the two."},
-    {"requirement_id": "R3", "closure": "authoritative",
+     "predicates": [
+      "Thunkable's description of itself is quoted from the documentation page's evidence",
+      "the lab sheet's instruction to use Thunkable is quoted from its evidence"
+     ],
+     "verifiers": {
+      "Thunkable's description of itself is quoted from the documentation page's evidence": "quote.located",
+      "the lab sheet's instruction to use Thunkable is quoted from its evidence": "quote.located"
+     }
+    },
+    {
+     "requirement_id": "R2",
+     "closure": "human_judgment",
+     "text": "A staged explanation linking the two."
+    },
+    {
+     "requirement_id": "R3",
+     "closure": "authoritative",
      "text": "The round touched the library only through staging.",
-     "predicates": ["the round changed the library only through staging"]}
+     "predicates": [
+      "the round changed the library only through staging"
+     ],
+     "verifiers": {
+      "the round changed the library only through staging": "boundary.staged"
+     }
+    }
    ]
   }
  ]

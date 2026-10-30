@@ -152,8 +152,8 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
         row["session"] = sid
         current["session"] = sid
         for requirement in task["requirements"]:
-            args = {k: requirement[k] for k in ("requirement_id", "text", "closure", "predicates")
-                    if k in requirement}
+            args = {k: requirement[k] for k in ("requirement_id", "text", "closure", "predicates",
+                                                "verifiers") if k in requirement}
             out = app.person_call("set_requirement", args, session=sid)
             if "refused" in out or "error" in out:
                 row["stopped"] = f"requirement refused: {out}"
@@ -224,9 +224,15 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
         app.close_runtime()
 
 
+def _registered() -> set[str]:
+    from resource_librarian.closure import VERIFIERS
+    return set(VERIFIERS)
+
+
 def validate_tasks(data: dict[str, Any], library: Path | None = None) -> list[str]:
     """Problems with a task file, empty when it is runnable. With `library`,
     every task's named sources must exist there."""
+    registered = _registered()
     problems = []
     tasks = data.get("tasks")
     if not isinstance(tasks, list) or not tasks:
@@ -250,6 +256,19 @@ def validate_tasks(data: dict[str, Any], library: Path | None = None) -> list[st
                 problems.append(f"{tid} {req.get('requirement_id')}: authoritative needs predicates")
             if not str(req.get("text") or "").strip():
                 problems.append(f"{tid} {req.get('requirement_id')}: no text")
+            named = req.get("verifiers") or {}
+            for predicate, verifier in named.items():
+                if predicate not in (req.get("predicates") or []):
+                    problems.append(f"{tid} {req.get('requirement_id')}: verifier named for "
+                                    f"{predicate!r}, which is not one of its predicates")
+                if str(verifier).split("@", 1)[0] not in registered:
+                    problems.append(f"{tid} {req.get('requirement_id')}: unknown verifier "
+                                    f"{verifier!r}")
+            if closure == "authoritative":
+                missing = [p for p in req.get("predicates") or [] if p not in named]
+                if missing:
+                    problems.append(f"{tid} {req.get('requirement_id')}: no verifier named for "
+                                    f"{missing}")
         for rel in task.get("sources") or []:
             if library is not None and not (Path(library) / rel).is_file():
                 problems.append(f"{tid}: source {rel} is not in the library")

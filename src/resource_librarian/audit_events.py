@@ -75,6 +75,14 @@ class AuditState:
         return req["status"]
 
 
+def closure_module_base(verifier: Any) -> str:
+    return closure.base_id(str(verifier))
+
+
+# Module-level: inside the rules a local named `closure` holds the closure class.
+_VERIFIER_IDS = frozenset(closure.VERIFIERS)
+
+
 def _refuse(message: str) -> Refusal:
     return Refusal("AUDIT_EVENT_INVALID", message)
 
@@ -153,10 +161,20 @@ def _requirement(state: AuditState, event: dict[str, Any]) -> None:
     if closure == "authoritative" and not predicates:
         raise _refuse("an authoritative requirement needs at least one acceptance predicate")
     text = _text(event, "text")
+    # The person may name the verifier for each predicate (G5 pilot 4): a
+    # contract must then plan exactly that one, so a predicate is never closed
+    # by a check that does not establish it.
+    named = event.get("verifiers") or {}
+    if not isinstance(named, dict) or any(p not in predicates for p in named):
+        raise _refuse("requirement verifiers map one of its own predicates to a verifier id")
+    unknown = [v for v in named.values() if closure_module_base(v) not in _VERIFIER_IDS]
+    if unknown:
+        raise _refuse(f"unknown verifier(s) {unknown}; registered: {sorted(_VERIFIER_IDS)}")
     if revision > 1:
         state.epoch += 1
     state.requirements[event["id"]] = {
         "text": text, "closure": closure, "predicates": list(predicates),
+        "verifiers": {p: closure_module_base(v) for p, v in named.items()},
         "revision": revision, "status": "open", "status_epoch": state.epoch}
 
 
