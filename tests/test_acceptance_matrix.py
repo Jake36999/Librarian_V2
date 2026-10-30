@@ -102,11 +102,13 @@ MATRIX: dict[str, dict[str, list[str]]] = {
         "success": [
             "test_accept_ranking::test_success_a_person_selects_a_candidate_and_search_uses_its_weights"],
         "refusal": ["test_accept_ranking::test_refusal_an_agent_cannot_select_or_restore_a_policy",
+                    "test_accept_ranking::test_refusal_and_no_mutation_an_unbenchmarked_candidate_cannot_be_selected",
                     "test_accept_ranking::test_refusal_too_little_feedback_proposes_nothing"],
         "recovery": ["test_accept_ranking::test_recovery_restore_returns_to_the_previous_policy",
                      "test_accept_ranking::test_recovery_a_damaged_experiment_file_never_breaks_search"],
         "no_mutation_on_failure": [
-            "test_accept_ranking::test_no_mutation_selecting_an_unknown_candidate_changes_nothing"],
+            "test_accept_ranking::test_no_mutation_selecting_an_unknown_candidate_changes_nothing",
+            "test_accept_ranking::test_refusal_and_no_mutation_an_unbenchmarked_candidate_cannot_be_selected"],
     },
 }
 

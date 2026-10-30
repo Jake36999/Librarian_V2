@@ -72,6 +72,10 @@ _RULES = [
     Rule("EVERY_RESULT_SAYS_WHY", "search",
          "Every result carries a reason assembled from what matched, never "
          "generated."),
+    Rule("RANKING_UNBENCHMARKED", "search",
+         "A ranking candidate becomes the active policy only after its offline benchmark "
+         "is recorded, so the person selects it on evidence. Run ranking_benchmark first; "
+         "nothing was changed."),
     # --- vocabulary --------------------------------------------------------
     Rule("NO_SCHEMA_DRIFT", "vocabulary",
          "Note shapes, axes and axis values change only by editing the vault's "

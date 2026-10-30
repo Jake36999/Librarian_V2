@@ -53,10 +53,15 @@ def generated(vault):
     return out["candidate"]["id"]
 
 
+def benchmarked(vault):
+    candidate = generated(vault)
+    report = REGISTRY.call("ranking_benchmark", {"candidate_id": candidate}, agent(vault))
+    assert "error" not in report and "refused" not in report, report
+    return candidate
+
+
 def test_success_a_person_selects_a_candidate_and_search_uses_its_weights(library):
-    candidate = generated(library)
-    benchmarked = REGISTRY.call("ranking_benchmark", {"candidate_id": candidate}, agent(library))
-    assert "error" not in benchmarked and "refused" not in benchmarked, benchmarked
+    candidate = benchmarked(library)
     selected = REGISTRY.call("ranking_select", {"candidate_id": candidate}, person(library))
     assert selected == {"active": candidate, "previous": "current", "mode": "Candidate"}
     weights = ranking._candidate(library, candidate)["heuristics"]
@@ -75,6 +80,14 @@ def test_refusal_an_agent_cannot_select_or_restore_a_policy(library):
     assert ranking.status(library)["mode"] == "Current"
 
 
+def test_refusal_and_no_mutation_an_unbenchmarked_candidate_cannot_be_selected(library):
+    candidate = generated(library)
+    before = state(library)
+    out = REGISTRY.call("ranking_select", {"candidate_id": candidate}, person(library))
+    assert out["refused"] == "RANKING_UNBENCHMARKED", out
+    assert state(library) == before and ranking.status(library)["mode"] == "Current"
+
+
 def test_refusal_too_little_feedback_proposes_nothing(library):
     feedback(library, events=5, queries=2)
     out = REGISTRY.call("ranking_candidate_generate", {}, agent(library))
@@ -83,7 +96,7 @@ def test_refusal_too_little_feedback_proposes_nothing(library):
 
 
 def test_recovery_restore_returns_to_the_previous_policy(library):
-    candidate = generated(library)
+    candidate = benchmarked(library)
     REGISTRY.call("ranking_select", {"candidate_id": candidate}, person(library))
     restored = REGISTRY.call("ranking_restore", {}, person(library))
     assert restored["active"] == "current" and restored["restored"] is True

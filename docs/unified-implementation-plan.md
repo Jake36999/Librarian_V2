@@ -3016,3 +3016,19 @@ reword it is the owner's decision.
 **Scope.** These are in-process fixtures against the real registry, App and
 stores. Real host applications (Browser, Obsidian and Cowork running
 together) remain ACCEPT-02.
+
+### Ranking selection requires a benchmark (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| ACCEPT-01 follow-up | implemented | this commit | `ranking.select`; the new rule `RANKING_UNBENCHMARKED`; `tests/test_accept_ranking.py` (7). |
+
+The owner decided the ACCEPT-01 finding: selecting a ranking candidate now
+needs its recorded offline benchmark, as `ranking_select`'s card already
+promised. An unbenchmarked candidate is refused with `RANKING_UNBENCHMARKED`,
+and `ranking.json` is left byte-identical (tested). The person-only check
+still runs first, so an agent still gets `PERSON_CONFIRMS`.
+
+The acceptance matrix cites the new test under both refusal and
+no-mutation-on-failure. No UI path called selection directly, so nothing
+there changed.

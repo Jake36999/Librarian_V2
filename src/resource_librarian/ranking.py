@@ -13,6 +13,7 @@ from typing import Any
 
 from . import evaluation
 from .coordination import atomic_write_text
+from .rules import Refusal
 from .search import Engine, search
 from .vault import Vault, jsonl_lines, now_iso
 
@@ -207,7 +208,11 @@ def compare(vault: Vault, engine: Engine, query: str, intent: str = "donor", lim
 
 def select(vault: Vault, candidate_id: str) -> dict[str, Any]:
     data = _load(vault)
-    _candidate(vault, candidate_id)
+    candidate = _candidate(vault, candidate_id)
+    if not candidate.get("benchmark"):
+        # The card promises a benchmarked candidate; the person selects on evidence.
+        raise Refusal("RANKING_UNBENCHMARKED", f"candidate {candidate_id} has no recorded "
+                                               "benchmark; run ranking_benchmark before selecting it")
     before = str(data.get("active") or "current")
     data["active"] = candidate_id
     data.setdefault("history", []).append({"at": now_iso(), "action": "select", "from": before,
