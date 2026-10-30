@@ -76,7 +76,8 @@ def test_success_docker_execution_is_labelled_isolated(pinned, monkeypatch):
 
     monkeypatch.setattr(sandbox, "docker_status", lambda runner=None: (True, "docker ready"))
     monkeypatch.setattr(workbench, "_docker_stage", lambda *_: ("src-volume", "archive-hash"))
-    monkeypatch.setattr(workbench, "_archive_outputs", lambda *_: [])
+    monkeypatch.setattr(workbench, "_archive_outputs",
+                        lambda *_: {"artifacts": [], "export": {"complete": True}})
     out = workbench.start(pinned, "eng-accept", choice="docker_isolated", command=["true"],
                           image=IMAGE, person_confirmed=True, runner=runner)
     assert out["isolation_tier"] == "docker_isolated"

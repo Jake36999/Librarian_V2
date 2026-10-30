@@ -3640,3 +3640,68 @@ applicable`, and an advisory says so.
 not silently ignored. No existing caller passed it elsewhere.
 
 **Guidance** names every group that ran, workspace included.
+
+### REMED-04 Workbench output and helper boundaries (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| REMED-04 | implemented; live Docker check not yet run | this commit | `workbench.py` (isolation policy, `_archive_outputs`, `_check_archive`, `_docker_stage`, host capture), `sandbox.py` (`drain`, `run_bounded`); tests in `tests/test_workbench_boundaries.py` (13 new); `scripts/workbench_live_check.py`. Full suite: 1,876 passed, 2 skipped. |
+
+**Outputs are checked before they land (W1).** The export used to copy the
+whole output volume onto this machine and only then measure it. Now the
+volume streams out as a tar (`docker cp <helper>:/output -`) and each member
+is checked before a byte is written:
+- regular files and folders only: links, hard links, devices and pipes are
+  refused and named;
+- no path outside the engagement's folder;
+- at most MAX_OUTPUT_FILES (1,000) files and MAX_OUTPUT_BYTES (100 MB), judged
+  by the size the tar declares, so a member declaring ten gigabytes is never
+  read.
+
+Over a limit the export stops, keeps what already fit, and says why. The
+result carries `export`: complete, stopped, files, bytes, refused. A failed
+export is now reported, not returned as an empty list. The engagement's
+output folder mirrors the volume, so leftovers from earlier exports do not
+count against the limit or linger.
+
+**What a process prints is bounded.** `subprocess.run(capture_output=True)`
+held all of a command's output in memory before the last 8,000 characters
+were kept. Every Workbench and sandbox command, and host execution, now keeps
+only the last 64 KB per stream while it runs. It records how many bytes each
+stream really produced (`output_bytes`). A timeout still kills and raises.
+
+**One documented isolation policy for every helper.** The module docstring
+states it, and `CONTAINED` (no network, all capabilities dropped,
+no-new-privileges) builds every container's flags. Each phase adds only what
+it needs:
+- **provision:** read-only, root with FOWNER alone, for `chmod` on the output
+  volume;
+- **stage:** root without capabilities, with `tar -o`, so ownership is not
+  restored; the archive is validated on this machine before any helper sees
+  it, by the same check host extraction uses;
+- **execute:** unchanged in substance, with flags now drawn from the policy;
+- **export:** read-only and never started.
+
+Helpers also have memory, CPU and process limits, and use `sh -c` instead of
+a login shell. Before this, staging had no network, capability or privilege
+restriction at all. Docker's default seccomp profile is relied on, not
+asserted.
+
+**Not yet verified against a real engine.** Docker Desktop was installed but
+not running. Starting it ran its updater, and the engine did not come up
+within eight minutes. Two things are therefore confirmed only by faked
+helpers in the unit tests:
+- the real `docker cp ... -` member naming (an `output/` prefix is assumed
+  and stripped; a `./` form would also be read);
+- that the provision and stage helpers succeed under the dropped
+  capabilities.
+
+`scripts/workbench_live_check.py` runs hostile and benign engagements through
+the real helpers. REMED-04's "done only when" needs it run on the supported
+Windows/Docker configuration before the release freeze.
+
+**Out of scope, noted.** The sandbox's `/landing` is a bind mount, so a run
+can still write up to its own limits onto this machine before the pad is
+checked afterwards. That is the separate `sandbox_run` path, not a Workbench
+engagement. A per-run size quota there needs a volume or a filesystem quota;
+it is left for a decision.

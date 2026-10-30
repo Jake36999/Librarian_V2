@@ -29,6 +29,7 @@ this machine.
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import secrets
@@ -61,9 +62,66 @@ OUTPUT_CHARS = 8000
 Runner = Callable[[list[str], float], Any]
 
 
+CAPTURE_BYTES = 64 * 1024
+
+
+def drain(process: subprocess.Popen, timeout: float, on_timeout: Callable[[], Any],
+          keep: int = CAPTURE_BYTES) -> tuple[str, str, bool, dict[str, int]]:
+    """Read a process's stdout and stderr to the end, holding only the last `keep`
+    bytes of each in memory (REMED-04: a run that prints gigabytes must not
+    exhaust this machine). Returns both tails, whether it timed out, and how
+    many bytes each stream really produced."""
+    import threading
+    tails: dict[str, bytes] = {}
+    totals: dict[str, int] = {}
+
+    def pump(name: str, pipe: Any) -> None:
+        held, total = bytearray(), 0
+        try:
+            for block in iter(lambda: pipe.read1(64 * 1024), b""):
+                total += len(block)
+                held += block
+                if len(held) > keep:
+                    del held[:-keep]
+        except (OSError, ValueError):
+            pass
+        tails[name], totals[name] = bytes(held), total
+
+    pumps = [threading.Thread(target=pump, args=(name, pipe), daemon=True)
+             for name, pipe in (("stdout", process.stdout), ("stderr", process.stderr))
+             if pipe is not None]
+    for thread in pumps:
+        thread.start()
+    timed_out = False
+    try:
+        process.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        on_timeout()
+        with contextlib.suppress(subprocess.TimeoutExpired):
+            process.wait(timeout=30)
+    for thread in pumps:
+        thread.join(timeout=10)
+    text = {name: tails.get(name, b"").decode("utf-8", "replace") for name in ("stdout", "stderr")}
+    return text["stdout"], text["stderr"], timed_out, {name: totals.get(name, 0)
+                                                        for name in ("stdout", "stderr")}
+
+
+def run_bounded(args: list[str], timeout: float) -> subprocess.CompletedProcess:
+    """`subprocess.run` with bounded capture: what a command prints is held to its
+    last CAPTURE_BYTES per stream. A timeout kills it and raises, as `run` does."""
+    process = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+    stdout, stderr, timed_out, produced = drain(process, timeout, process.kill)
+    if timed_out:
+        raise subprocess.TimeoutExpired(args, timeout, stdout, stderr)
+    done = subprocess.CompletedProcess(args, process.returncode, stdout, stderr)
+    done.produced = produced                                   # type: ignore[attr-defined]
+    return done
+
+
 def _run(args: list[str], timeout: float) -> subprocess.CompletedProcess:
-    return subprocess.run(args, capture_output=True, text=True, timeout=timeout,
-                          encoding="utf-8", errors="replace")
+    return run_bounded(args, timeout)
 
 
 def docker_status(runner: Runner | None = None) -> tuple[bool, str]:

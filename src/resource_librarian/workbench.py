@@ -4,6 +4,30 @@ An engagement makes executable work explicit: which catalogued repository and
 pinned revision it concerns, why it is needed, the isolation tier, outputs,
 and its close-out outcome.  It is intentionally a first-party Core feature,
 not an arbitrary plugin runtime.
+
+Isolation policy (REMED-04).  Every container a Docker engagement starts is
+built from `CONTAINED`: no network, every capability dropped, no privilege
+gain.  Each phase then adds only what it needs, and says why:
+
+- **provision** (`_docker_stage`, output volume): read-only root, runs as root
+  with FOWNER alone, to make the root-owned output volume writable by the
+  unprivileged runner.
+- **stage** (`_docker_stage`, source volume): the archive is checked on this
+  machine first (no links, no paths outside, size held) and only then copied
+  in.  Runs as root without capabilities, so the copy lands in a root-owned
+  volume yet tar cannot restore ownership; its writable layer is where
+  `docker cp` places the archive.
+- **execute** (`_docker_execute`): read-only root, a small /tmp, the
+  unprivileged runner uid, the source read-only, memory, CPU and process limits.
+- **export** (`_archive_outputs`): a read-only helper that is never started.
+  The output volume streams out as a tar and is checked member by member
+  before anything is written here: regular files and folders only, no path
+  outside the engagement's folder, at most MAX_OUTPUT_FILES files and
+  MAX_OUTPUT_BYTES in all.  Over a limit, the export stops and says so.
+
+Docker's default seccomp profile applies; it is relied on, not asserted.
+What any process prints is held to its last `sandbox.CAPTURE_BYTES` per
+stream, host execution included.
 """
 from __future__ import annotations
 
@@ -31,7 +55,12 @@ from .vault import Vault, jsonl_lines, now_iso
 Runner = Callable[[list[str], float], Any]
 MAX_ARCHIVE_BYTES = 250 * 1024 * 1024
 MAX_OUTPUT_BYTES = 100 * 1024 * 1024
+MAX_OUTPUT_FILES = 1000
 HOST_EXECUTION_SECONDS = 300
+EXPORT_SECONDS = 300
+# The flags every Workbench container carries (see the isolation policy above).
+CONTAINED = ["--network", "none", "--cap-drop", "ALL", "--security-opt", "no-new-privileges"]
+HELPER_LIMITS = ["--memory", "512m", "--cpus", "1", "--pids-limit", "64"]
 HOST_EXECUTION_MEMORY = 1024 * 1024 * 1024
 HOST_EXECUTION_PROCESSES = 8
 
@@ -148,8 +177,29 @@ def propose(vault: Vault, source: str, purpose: str = "", project: str = "", ses
 
 
 def _run(args: list[str], timeout: float) -> subprocess.CompletedProcess:
-    return subprocess.run(args, capture_output=True, text=True, timeout=timeout,
-                          encoding="utf-8", errors="replace")
+    from .sandbox import run_bounded
+    return run_bounded(args, timeout)
+
+
+@contextlib.contextmanager
+def _stream(args: list[str], timeout: float):
+    """A command's stdout as a binary stream, read as it is produced and never
+    held whole; the command is killed on leaving, or after `timeout`."""
+    import threading
+    process = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                               stderr=subprocess.DEVNULL)
+    timer = threading.Timer(timeout, process.kill)
+    timer.start()
+    try:
+        yield process.stdout
+    finally:
+        timer.cancel()
+        if process.poll() is None:
+            process.kill()
+        with contextlib.suppress(subprocess.TimeoutExpired):
+            process.wait(timeout=30)
+        if process.stdout is not None:
+            process.stdout.close()
 
 
 def _volume_name(engagement: Engagement, kind: str) -> str:
@@ -193,6 +243,41 @@ def _download_archive(repo_key: str, revision: str) -> tuple[Path, str]:
         raise
 
 
+def _validated_members(bundle: tarfile.TarFile) -> tuple[str, list[tarfile.TarInfo]]:
+    """One top-level folder of regular files and folders, no path outside it,
+    held to MAX_ARCHIVE_BYTES expanded; anything else refuses the archive."""
+    total = 0
+    root = ""
+    safe: list[tarfile.TarInfo] = []
+    for member in bundle.getmembers():
+        raw = member.name.replace("\\", "/")
+        parts = [part for part in raw.split("/") if part not in ("", ".")]
+        if not parts or any(part == ".." for part in parts) or raw.startswith("/") or ":" in parts[0]:
+            raise TypeError("revision archive contains an unsafe path")
+        if not root:
+            root = parts[0]
+        if parts[0] != root:
+            raise TypeError("revision archive has more than one top-level directory")
+        if member.issym() or member.islnk() or member.isdev() or not (member.isdir() or member.isfile()):
+            raise TypeError("revision archive contains a link or unsupported member")
+        total += max(0, int(member.size))
+        if total > MAX_ARCHIVE_BYTES:
+            raise TypeError("revision archive expands beyond the workbench size limit")
+        safe.append(member)
+    if not root:
+        raise TypeError("revision archive is empty")
+    return root, safe
+
+
+def _check_archive(archive: Path) -> None:
+    """Refuse an archive here, before any helper container sees it (REMED-04)."""
+    try:
+        with tarfile.open(archive, "r:gz") as bundle:
+            _validated_members(bundle)
+    except tarfile.TarError as exc:
+        raise TypeError(f"revision archive is not a readable tar.gz: {exc}") from exc
+
+
 def _extract_pinned_archive(archive: Path, destination: Path) -> Path:
     """Extract one GitHub revision archive without accepting tar path tricks.
 
@@ -202,28 +287,8 @@ def _extract_pinned_archive(archive: Path, destination: Path) -> Path:
     auditable before an explicitly chosen command can run.
     """
     destination.mkdir(parents=True, exist_ok=True)
-    total = 0
-    root = ""
     with tarfile.open(archive, "r:gz") as bundle:
-        members = bundle.getmembers()
-        safe: list[tarfile.TarInfo] = []
-        for member in members:
-            raw = member.name.replace("\\", "/")
-            parts = [part for part in raw.split("/") if part not in ("", ".")]
-            if not parts or any(part == ".." for part in parts) or raw.startswith("/") or ":" in parts[0]:
-                raise TypeError("revision archive contains an unsafe path")
-            if not root:
-                root = parts[0]
-            if parts[0] != root:
-                raise TypeError("revision archive has more than one top-level directory")
-            if member.issym() or member.islnk() or member.isdev() or not (member.isdir() or member.isfile()):
-                raise TypeError("revision archive contains a link or unsupported member")
-            total += max(0, int(member.size))
-            if total > MAX_ARCHIVE_BYTES:
-                raise TypeError("revision archive expands beyond the workbench size limit")
-            safe.append(member)
-        if not root:
-            raise TypeError("revision archive is empty")
+        root, safe = _validated_members(bundle)
         # Members were validated above.  Do not preserve source ownership or
         # permissions from an untrusted archive on the host filesystem.
         bundle.extractall(destination, members=safe, numeric_owner=False)
@@ -364,19 +429,24 @@ def _docker_stage(engagement: Engagement, repo_key: str, image: str, runner: Run
     # the disposable output volume before dropping the execution container to
     # its unprivileged uid; otherwise a correctly unprivileged run cannot
     # write any declared result at all.
-    output_init = runner(["docker", "run", "--rm", "--network", "none",
+    # provision: root with FOWNER alone, so chmod works on the volume root.
+    output_init = runner(["docker", "run", "--rm", *CONTAINED, "--cap-add", "FOWNER",
+                          *HELPER_LIMITS, "--read-only", "--user", "0:0",
                           "--mount", f"type=volume,src={output_volume},dst=/output",
-                          image, "sh", "-lc", "mkdir -p /output && chmod 1777 /output"], 90)
+                          image, "sh", "-c", "chmod 1777 /output"], 90)
     if getattr(output_init, "returncode", 1) != 0:
         raise RuntimeError("could not initialise controlled Docker output volume: " +
                            str(getattr(output_init, "stderr", ""))[-300:])
     archive, archive_hash = _download_archive(repo_key, engagement.pinned_revision)
     container = f"librarian-stage-{engagement.id[-8:]}"
     try:
-        made = runner(["docker", "create", "--name", container,
+        _check_archive(archive)
+        # stage: root without capabilities; -o keeps tar from restoring owners.
+        made = runner(["docker", "create", "--name", container, *CONTAINED, *HELPER_LIMITS,
+                       "--user", "0:0",
                        "--mount", f"type=volume,src={source_volume},dst=/source",
-                       image, "sh", "-lc",
-                       "mkdir -p /source && tar -xzf /tmp/source.tar.gz -C /source --strip-components=1"], 90)
+                       image, "sh", "-c",
+                       "tar -xzof /tmp/source.tar.gz -C /source --strip-components=1"], 90)
         if getattr(made, "returncode", 1) != 0:
             raise RuntimeError(f"could not create source staging helper: {str(getattr(made, 'stderr', ''))[-300:]}")
         copied = runner(["docker", "cp", str(archive), f"{container}:/tmp/source.tar.gz"], 90)
@@ -392,36 +462,96 @@ def _docker_stage(engagement: Engagement, repo_key: str, image: str, runner: Run
             archive.unlink()
 
 
-def _archive_outputs(vault: Vault, engagement: Engagement, image: str, runner: Runner) -> list[dict[str, Any]]:
-    """Export a managed output volume back into a validated engagement record."""
+def _archive_outputs(vault: Vault, engagement: Engagement, image: str,
+                     runner: Runner) -> dict[str, Any]:
+    """Export a managed output volume into the engagement's folder, checked before
+    it lands (REMED-04).
+
+    The volume streams out as a tar (`docker cp ... -`). Each member is checked
+    before a byte is written: regular files and folders only, nothing outside
+    the folder, and the file count and total size held to MAX_OUTPUT_FILES and
+    MAX_OUTPUT_BYTES by the sizes the tar declares and the bytes it carries.
+    Over a limit the export stops, keeps what already fit and says so; a link,
+    device or unsafe path is refused and named. Before this, the whole volume
+    was copied here first and only then measured (Codex review W1)."""
     output_volume = _volume_name(engagement, "output")
     destination = vault.derived / "engagements" / engagement.id / "output"
+    # The volume is the record of every run's outputs; this folder mirrors it.
+    shutil.rmtree(destination, ignore_errors=True)
     destination.mkdir(parents=True, exist_ok=True)
+    home = destination.resolve()
     container = f"librarian-output-{engagement.id[-8:]}"
+    records: list[dict[str, Any]] = []
+    refused: list[str] = []
+    report: dict[str, Any] = {"complete": False, "stopped": ""}
+    total = 0
     try:
-        made = runner(["docker", "create", "--name", container,
+        # export: a read-only helper that is never started.
+        made = runner(["docker", "create", "--name", container, *CONTAINED, "--read-only",
                        "--mount", f"type=volume,src={output_volume},dst=/output,readonly", image,
-                       "sh", "-lc", "true"], 60)
+                       "true"], 60)
         if getattr(made, "returncode", 1) != 0:
-            return []
-        copied = runner(["docker", "cp", f"{container}:/output/.", str(destination)], 120)
-        if getattr(copied, "returncode", 1) != 0:
-            return []
+            report["stopped"] = ("could not create the export helper: " +
+                                 str(getattr(made, "stderr", ""))[-300:])
+            return {"artifacts": [], "export": report}
+        with _stream(["docker", "cp", f"{container}:/output", "-"], EXPORT_SECONDS) as pipe, \
+                tarfile.open(fileobj=pipe, mode="r|") as bundle:
+            for member in bundle:
+                raw = member.name.replace("\\", "/")
+                parts = [part for part in raw.split("/") if part not in ("", ".")]
+                if parts[:1] == ["output"]:
+                    parts = parts[1:]
+                if not parts:
+                    continue
+                rel = "/".join(parts)
+                if raw.startswith("/") or ".." in parts or any(":" in part for part in parts):
+                    refused.append(f"{raw}: a path outside the engagement's folder")
+                    continue
+                if member.isdir():
+                    (destination / rel).mkdir(parents=True, exist_ok=True)
+                    continue
+                if not member.isreg():
+                    refused.append(f"{rel}: not a regular file (a link, device or pipe)")
+                    continue
+                if len(records) >= MAX_OUTPUT_FILES:
+                    report["stopped"] = f"more than {MAX_OUTPUT_FILES} files"
+                    break
+                if total + max(0, member.size) > MAX_OUTPUT_BYTES:
+                    report["stopped"] = (f"{rel} would take the export past "
+                                         f"{MAX_OUTPUT_BYTES // (1024 * 1024)} MB")
+                    break
+                target = destination / rel
+                if home not in target.resolve().parents:
+                    refused.append(f"{rel}: a path outside the engagement's folder")
+                    continue
+                source = bundle.extractfile(member)
+                digest, written = hashlib.sha256(), 0
+                try:
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    with target.open("xb") as out:
+                        while written < member.size:
+                            block = source.read(min(64 * 1024, member.size - written))
+                            if not block:
+                                break
+                            out.write(block)
+                            digest.update(block)
+                            written += len(block)
+                except OSError as exc:
+                    with contextlib.suppress(OSError):
+                        target.unlink()
+                    refused.append(f"{rel}: could not be written here ({type(exc).__name__})")
+                    continue
+                total += written
+                records.append({"path": target.relative_to(vault.root).as_posix(),
+                                "bytes": written, "sha256": digest.hexdigest()[:20]})
+            else:
+                report["complete"] = True
+    except (tarfile.TarError, OSError) as exc:
+        report["stopped"] = f"the export stream failed: {type(exc).__name__}: {exc}"
     finally:
         runner(["docker", "rm", "-f", container], 30)
-    records = []
-    total = 0
-    for path in sorted(destination.rglob("*")):
-        if not path.is_file() or path.is_symlink():
-            continue
-        size = path.stat().st_size
-        if total + size > MAX_OUTPUT_BYTES:
-            path.unlink()
-            continue
-        total += size
-        records.append({"path": path.relative_to(vault.root).as_posix(), "bytes": size,
-                        "sha256": hashlib.sha256(path.read_bytes()).hexdigest()[:20]})
-    return records
+    report.update(files=len(records), bytes=total, refused=refused[:50])
+    return {"artifacts": records, "export": report}
 
 
 def _docker_execute(vault: Vault, engagement: Engagement, command: list[str], image: str,
@@ -430,9 +560,9 @@ def _docker_execute(vault: Vault, engagement: Engagement, command: list[str], im
     source_volume, archive_hash = _docker_stage(engagement, repo["repo_key"], image, runner)
     output_volume = _volume_name(engagement, "output")
     name = f"librarian-engage-{engagement.id[-8:]}"
-    args = ["docker", "run", "--rm", "--name", name, "--network", "none", "--read-only",
+    args = ["docker", "run", "--rm", "--name", name, *CONTAINED, "--read-only",
             "--tmpfs", "/tmp:rw,size=128m", "--memory", "2g", "--cpus", "2", "--pids-limit", "128",
-            "--cap-drop", "ALL", "--security-opt", "no-new-privileges", "--user", "10001:10001",
+            "--user", "10001:10001",
             "--mount", f"type=volume,src={source_volume},dst=/workspace/source,readonly",
             "--mount", f"type=volume,src={output_volume},dst=/workspace/output",
             "--workdir", "/workspace", image, *command]
@@ -443,12 +573,14 @@ def _docker_execute(vault: Vault, engagement: Engagement, command: list[str], im
                   "stderr": str(getattr(done, "stderr", ""))[-8000:], "archive_sha256": archive_hash,
                   "source_volume": source_volume, "output_volume": output_volume,
                   "isolation_tier": "docker_isolated"}
+        if getattr(done, "produced", None):
+            result["output_bytes"] = done.produced      # what it printed, before the tail
     except subprocess.TimeoutExpired:
         runner(["docker", "kill", name], 30)
         result = {"exit_code": -1, "stdout": "", "stderr": "stopped after 900s", "archive_sha256": archive_hash,
                   "source_volume": source_volume, "output_volume": output_volume,
                   "isolation_tier": "docker_isolated"}
-    result["artifacts"] = _archive_outputs(vault, engagement, image, runner)
+    result.update(_archive_outputs(vault, engagement, image, runner))
     return result
 
 
@@ -521,26 +653,22 @@ def _host_execute(vault: Vault, engagement: Engagement, command: list[str]) -> d
         controls["isolated_python"] = isolated_python
         env = _host_environment(workspace, venv_path)
         flags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0) if os.name == "nt" else 0
-        process = subprocess.Popen(actual_command, cwd=source, env=env, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace",
+        process = subprocess.Popen(actual_command, cwd=source, env=env, stdin=subprocess.DEVNULL,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    close_fds=True, creationflags=flags)
         job = _WindowsJob()
         attached = job.attach(process)
         controls["job_object"] = {"attached": attached, "detail": job.detail,
                                   "cpu_limited": job.cpu_limited}
-        try:
-            stdout, stderr = process.communicate(timeout=HOST_EXECUTION_SECONDS)
-            code = process.returncode
-        except subprocess.TimeoutExpired:
-            # Closing a successfully attached job kills the entire tree.
-            if attached:
-                job.close()
-            else:
-                process.kill()
-            stdout, stderr = process.communicate()
-            code = -1
-            stderr = (stderr or "") + f"\nstopped after {HOST_EXECUTION_SECONDS}s"
-        return {"exit_code": code, "stdout": (stdout or "")[-8000:], "stderr": (stderr or "")[-8000:],
+        from .sandbox import drain
+        # Closing a successfully attached job kills the entire tree.
+        stdout, stderr, timed_out, produced = drain(
+            process, HOST_EXECUTION_SECONDS, job.close if attached else process.kill)
+        code = -1 if timed_out else process.returncode
+        if timed_out:
+            stderr += f"\nstopped after {HOST_EXECUTION_SECONDS}s"
+        return {"exit_code": code, "stdout": stdout[-8000:], "stderr": stderr[-8000:],
+                "output_bytes": produced,
                 "isolation_tier": "non_isolated_host_exec", "source_archive_sha256": archive_hash,
                 "command": actual_command, "controls": controls,
                 "duration_ms": round((time.monotonic() - started) * 1000),
