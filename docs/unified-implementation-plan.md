@@ -3299,3 +3299,28 @@ something mid-session. Today that parks the session, and it is recorded as
 such. The alternative is a fixed, predeclared answer (for example, "No
 further guidance: work from the requirements as set"), which keeps the
 session running and counts the questions asked.
+
+### G5 pilots 2–4 (2026-10-30)
+
+| Pilot | Spend (metered) | Result | Found, and fixed |
+| --- | --- | --- | --- |
+| 2 | $0.139 | no contract admitted; 0 of 9 grains | nothing told the Lead the verifier-plan key format (`d458f9f`) |
+| 3 | $0.137 | contracts admitted; 0 of 9 grains, and Tier A rightly failed a paraphrased "quote" | no tool could read captured evidence; `verify_grain` misread a plan-key requirement as `no_suitable_tool`; the `item` parameter was undocumented (`2a0d74b`) |
+| 4 | $0.088 | **7 of 9 grains closed by Tier A (0.778; 95% 0.453–0.937)**; 0 false closures under the independent re-check; both restarts kept the state hash; synthesis open for the person in both | a predicate–verifier mismatch, below |
+
+All pilots ran t1 and t5 on DeepSeek-V4.1-Flash. Pilot 1 ($0.05, estimated)
+is recorded above. The pilot total is about $0.41 of its $1 cap.
+
+**Finding: a verifier can close a predicate it does not establish.** In
+pilot 4, t1's R3 ("the staged synthesis is unchanged since it was staged")
+was planned with `boundary.staged`. That verifier establishes that the round
+wrote only through staging; it does not establish that the draft is
+unchanged. Its statement holds, and the closure audit confirmed it, so by
+the decision rule's letter this is not a false closure. But the predicate
+itself was never checked. Admission checks that a verifier is able to close
+a requirement, not that it fits the predicate's meaning.
+
+Counting only fitting closures, pilot 4 is **6 of 9**. Before the full run,
+the owner should decide how a predicate's verifier is fixed. One option: the
+person names the verifier with each predicate in the task file, and
+admission requires the plan to match.
