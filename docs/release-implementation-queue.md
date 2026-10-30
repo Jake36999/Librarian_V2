@@ -2,7 +2,7 @@
 
 **Status:** Release-only queue. The authoritative implementation sequence and
 delivery status are in the [unified implementation plan](unified-implementation-plan.md).
-**Last reconciled:** 2026-10-24.
+**Last reconciled:** 2026-10-30 (RELEASE-01).
 
 This document covers the release-owner work that remains *after* applicable
 implementation gates are green. It distinguishes work needing real provider
@@ -12,12 +12,22 @@ artifact, or create a release record.
 
 ## Current state
 
-V2 remains **partial**. The branch has useful deterministic implementation
-work, but Core ownership, route binding, adoption, request shaping, and
-long-horizon gates are still being delivered. A passing local suite is
-necessary evidence for an implemented packet, not evidence that V2 or a
-release is complete. See the unified plan's G0–G7 gates and progress log for
-the current source-backed status.
+V2 remains **partial**, and **no release step may begin yet**. R0 needs every
+gate from G0 to G5 green, and two are not:
+
+| Gate | State on 2026-10-30 | Source |
+| --- | --- | --- |
+| G0 baseline attributable and honest | green | Unified plan, BASE rows. |
+| G1 Core lifecycle and single-Core access | green (2026-10-28) | The plan's INDEX-05 and G1 closure. |
+| G2 canonical routes; UI truth matches runtime | green (2026-10-30) | The plan's G2 and G4 closure. |
+| G3 safe adoption of existing documentation roots | **not closed** | Local evidence from DEPLOY-01 to -04; closing it is the owner's decision. |
+| G4 trusted request shaping; durable route evidence | green (2026-10-30) | The plan's G2 and G4 closure. |
+| G5 Session-backed long-horizon state and Tier A | **not met** | HARNESS-01 to -07 are implemented locally. The share of grains closed by Tier A has never been measured on real sessions (HARNESS-06's done-when). |
+
+A passing local suite is necessary evidence for an implemented packet. It is
+not evidence that V2 or a release is complete. The unified plan's progress log
+is the source for every gate change; this table is copied from it and must be
+updated when a gate changes there.
 
 The checked-in `release-manifest.json` and
 `src/resource_librarian/standard/release_leads.json` are intentionally
@@ -43,6 +53,9 @@ represented as production-ready before then.
 ## Release critical path
 
 ```text
+G0–G5 green in the unified plan, plus the SI and LC entry gates
+    │
+    ▼
 R0 release freeze
     ├── R1 dependency lock and offline wheelhouse
     └── R2 provider qualification and release-lead evidence
@@ -57,14 +70,67 @@ R0 release freeze
        R5 manual publication and post-release watch
 ```
 
-R0 is blocked until the unified plan's applicable implementation gates are
-green. R1 and R2 may run in parallel after R0. R3 cannot start until both
+R0 begins only when **every** gate from G0 to G5 is green in the unified plan,
+and the frozen revision passes the source-identity and lifecycle entry gates
+below. "Applicable" gates are not enough: a release is a whole-product claim.
+R1 and R2 may run in parallel after R0. R3 cannot start until both
 have passed. R4 should exercise the final signed bundle, and R5 is an explicit
 release-owner decision rather than an automated publication step.
 
+## Entry gates for every release step
+
+Each step from R0 to R5 starts only when its inputs pass both gates again. A
+pass recorded for an earlier step does not carry over to a changed input.
+
+**Source identity (SI)**, so that the evidence describes the source that
+ships:
+1. **SI-1.** The frozen revision is one commit. Its worktree is clean:
+   `git status --short` is empty, or every untracked file has been reviewed
+   and excluded from the build inputs. Builds and tests read that commit only.
+2. **SI-2.** Tests run through the repository virtual environment. Every
+   path must import the checkout under test, not a stale sibling install:
+   - `tests/test_source_identity.py` passes;
+   - the `doctor` source-identity check (`resource-librarian host doctor`)
+     reports the frozen checkout or the built wheel.
+3. **SI-3.** `python scripts/check_release_versions.py --root .` passes, so the version
+   files and the adapter metadata agree.
+4. **SI-4.** Every later artifact (the lock, the wheelhouse, the release-lead
+   evidence, the signed bundle and the acceptance records) names the frozen
+   commit. An artifact made from any other revision is not evidence for this
+   release. The release verifier must confirm this in R3.
+
+**Lifecycle (LC)**, so that the Core starts, stops and recovers as the
+product claims:
+1. **LC-1.** On the frozen revision, the Host and Core lifecycle suites
+   pass:
+   - `tests/test_host_lifecycle.py`
+   - `tests/test_shutdown.py`
+   - `tests/test_process_identity.py`
+   - `tests/test_operation_recovery.py`
+   - `tests/test_event_resync.py`
+   - `tests/test_watcher_recovery.py`
+2. **LC-2.** The end-to-end acceptance matrix (`tests/test_acceptance_matrix.py`
+   with the tests it cites, ACCEPT-01) passes on the frozen revision.
+3. **LC-3.** On the real targets, R4 repeats the lifecycle against the signed
+   bundle (step 1 below): start, explicit stop, restart, a forced stop and
+   recovery, and rollback.
+
+## Relation to the unified plan
+
+| Plan task | Release steps | Note |
+| --- | --- | --- |
+| RELEASE-01 | this document | Gates R0 to R5 on G0 to G5 and adds the entry gates above. |
+| RELEASE-02 | R0, R1, R2 | Needs G5 and approved credentials and budgets. |
+| ACCEPT-02 | before R4 | A fresh Windows pass on the repository artifact: real Browser, Obsidian and Cowork under mixed traffic, the real Claude/Cowork interface, Obsidian SecretStorage, and external file handles. |
+| RELEASE-03 | R3, R4, R5 | Includes the hosted Python 3.12/3.13 matrix and signed stable bundles, moved here from INDEX-05. |
+
 ## R0 — Freeze a releasable source revision
 
-**State:** Ready — release owner decision required.
+**State:** Blocked — G3 and G5 are not green (2026-10-30). Once they are, this
+needs a release-owner decision.
+
+**Entry:** G0 to G5 green in the unified plan; SI-1 to SI-3 and LC-1 to LC-2
+pass.
 
 1. Select the intended SemVer release version and freeze the source revision.
 2. Update `VERSION`, `pyproject.toml`, `resource_librarian.__version__`, and
@@ -75,8 +141,13 @@ release-owner decision rather than an automated publication step.
 4. Run the normal deterministic suite and UI/Obsidian builds on the frozen
    revision. Record the commit and build inputs in the release checklist.
 
-**Completion evidence:** reviewed revision identifier, consistent version
-files, passing deterministic build/test record, and approved release scope.
+**Completion evidence:**
+- the reviewed revision identifier;
+- consistent version files;
+- a passing deterministic build and test record, including the SI and LC
+  gate results;
+- the approved release scope;
+- the gate table above, as it stood at the freeze.
 
 ## R1 — Produce a Windows hash lock and offline wheelhouse
 

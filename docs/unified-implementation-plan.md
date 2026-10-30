@@ -3088,3 +3088,54 @@ Follow-up step 5 was not assessed, and the addendum says so.
 
 `docs/migration.md` was checked against the V1-import acceptance evidence and
 needed no change. The README makes no parity claim beyond linking the matrix.
+
+### RELEASE-01 release queue gated on G0–G5 (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| RELEASE-01 | implemented | this commit | `docs/release-implementation-queue.md`. Documentation only. |
+
+**R0 no longer assumes V2 is complete.** It had read "Ready — release owner
+decision required" while the paragraph above it said it was blocked. It now
+reads **Blocked — G3 and G5 are not green**.
+
+A dated gate table, copied from this log, replaces the old prose:
+- **Green:** G0, G1, G2 and G4.
+- **G3:** not closed; local evidence exists.
+- **G5:** not met. The share of grains closed by Tier A has never been
+  measured on real sessions.
+
+R0 now begins only when every gate from G0 to G5 is green, not only the
+"applicable" ones.
+
+**Entry gates.** Every step from R0 to R5 re-checks its inputs.
+- **Source identity:**
+  - **SI-1:** one frozen commit with a reviewed, clean worktree;
+  - **SI-2:** the repository venv imports the checkout under test
+    (`test_source_identity.py`, and the `doctor` source-identity check);
+  - **SI-3:** the version contract (`check_release_versions.py --root .`);
+  - **SI-4:** every artifact names the frozen commit.
+- **Lifecycle:**
+  - **LC-1:** the Host/Core lifecycle suites;
+  - **LC-2:** the ACCEPT-01 acceptance matrix;
+  - **LC-3:** R4 repeats the lifecycle on real targets against the signed
+    bundle.
+
+Run on the current HEAD as a dry run (not a freeze):
+- SI-3 reports "release versions agree: Core 2.1.0.dev0, adapters
+  2.1.0-dev".
+- SI-2 and LC-1/LC-2 pass: 107 tests.
+- SI-1 correctly flags the untracked `Theorising_transcription.md` for review
+  before any freeze.
+
+**Preserved.** Every external approval in R1 to R5 is unchanged: provider
+accounts and budgets, protected signing material, real Windows targets, and
+release-owner publication. A new table maps the plan's tasks to the release
+steps:
+- RELEASE-02 is R0 to R2;
+- ACCEPT-02 comes before R4;
+- RELEASE-03 is R3 to R5.
+
+**Not yet.** SI-4 says the release verifier must confirm the frozen commit in
+R3. Whether `verify-release.ps1` already checks it was not examined; R3 must
+confirm it.
