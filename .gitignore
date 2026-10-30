@@ -62,4 +62,6 @@ reports/2026-10-29-long-horizon-harness-research/data/paper_text/
 reports/2026-10-29-long-horizon-harness-research/data/[0-9][0-9]-*.txt
 reports/2026-10-29-long-horizon-harness-research/data/read-*.txt
 reports/2026-10-29-long-horizon-harness-research/data/remaining-packet-*.txt
+reports/2026-10-30-runtime-tooling-literature/data/paper_text/
+reports/2026-10-30-runtime-tooling-literature/data/page_views/
 /docs/Development transcripts/

@@ -1,0 +1,90 @@
+[
+  {
+    "id": "new-01",
+    "filename": "3694715.3695971.pdf",
+    "path": "E:\\Librarian research\\3694715.3695971.pdf",
+    "sha256": "f4e3209291f0312274eab22618ca3edab2a563477662d8d7ea646016e35b0091",
+    "pages": 16,
+    "text_path": "reports\\2026-10-30-runtime-tooling-literature\\data\\paper_text\\new-01.txt",
+    "nul_replaced": 0,
+    "extraction": "PyMuPDF text; NUL to space for review packets, source PDF unchanged",
+    "extracted_sha256": "6277819ccbf78f67873e9420abf6fc7e4947769db76fb2579799650e0a696559"
+  },
+  {
+    "id": "new-02",
+    "filename": "A modular approach to external function integration in LLMs.pdf",
+    "path": "E:\\Librarian research\\A modular approach to external function integration in LLMs.pdf",
+    "sha256": "1a4141fb0fa04db80d0b8a7b6074e7159f13d31f641720d37c69b60104b50415",
+    "pages": 5,
+    "text_path": "reports\\2026-10-30-runtime-tooling-literature\\data\\paper_text\\new-02.txt",
+    "nul_replaced": 0,
+    "extraction": "PyMuPDF text; NUL to space for review packets, source PDF unchanged",
+    "extracted_sha256": "75e3aedf7f2229cc68a44b933bcaf16b4937c2448f623a73089998bf2c276d1d"
+  },
+  {
+    "id": "new-03",
+    "filename": "A Runtime Access Control Layer for Privilege-Aware LLM Agent Tooling.pdf",
+    "path": "E:\\Librarian research\\A Runtime Access Control Layer for Privilege-Aware LLM Agent Tooling.pdf",
+    "sha256": "85e79b2bdb9b90fca4f771ca3bff5a7c11be31f08b5cff44dd71e08b07cda72b",
+    "pages": 10,
+    "text_path": "reports\\2026-10-30-runtime-tooling-literature\\data\\paper_text\\new-03.txt",
+    "nul_replaced": 0,
+    "extraction": "PyMuPDF text; NUL to space for review packets, source PDF unchanged",
+    "extracted_sha256": "d892368a0eb86a10d4f3d1bea7db4d243fde3a6342d69fdbc71213ea9b10629a"
+  },
+  {
+    "id": "new-04",
+    "filename": "An Orchestrated LLM Workflow for Structured Augmentation with Fact Scoring.pdf",
+    "path": "E:\\Librarian research\\An Orchestrated LLM Workflow for Structured Augmentation with Fact Scoring.pdf",
+    "sha256": "8792f39f21cda32503b3ded027ff57b8faef694d0593423c22fba54a50c14c57",
+    "pages": 19,
+    "text_path": "reports\\2026-10-30-runtime-tooling-literature\\data\\paper_text\\new-04.txt",
+    "nul_replaced": 0,
+    "extraction": "PyMuPDF text; NUL to space for review packets, source PDF unchanged",
+    "extracted_sha256": "cc787ccfd873e41722110279a3ab982f26d0e826a017711bea9f6ee373cb84be"
+  },
+  {
+    "id": "new-05",
+    "filename": "Detecting Misinformation by Uncovering Commonsense Conflicts With LLM Workflows.pdf",
+    "path": "E:\\Librarian research\\Detecting Misinformation by Uncovering Commonsense Conflicts With LLM Workflows.pdf",
+    "sha256": "7bc87379f29ed2cb3353d207ce1291294944a31301bb7472c4f76d1ac5c82ebc",
+    "pages": 15,
+    "text_path": "reports\\2026-10-30-runtime-tooling-literature\\data\\paper_text\\new-05.txt",
+    "nul_replaced": 0,
+    "extraction": "PyMuPDF text; NUL to space for review packets, source PDF unchanged",
+    "extracted_sha256": "ac925b62823f9ccd0852bddb2a7cc1d5c0114d05d6ece0e99a698c22173b490b"
+  },
+  {
+    "id": "new-06",
+    "filename": "Developer Tooling for Rapid LLM Development and Scalable Deployment.pdf",
+    "path": "E:\\Librarian research\\Developer Tooling for Rapid LLM Development and Scalable Deployment.pdf",
+    "sha256": "2d28bf20b66785792d19f37cfe6880b4d9b0d20467caecf76d8bb56f1ba5b2f2",
+    "pages": 6,
+    "text_path": "reports\\2026-10-30-runtime-tooling-literature\\data\\paper_text\\new-06.txt",
+    "nul_replaced": 0,
+    "extraction": "PyMuPDF text; NUL to space for review packets, source PDF unchanged",
+    "extracted_sha256": "0fb8a785e1b41ef76baa15224b99a85919d7ac37b6c103a173de44906b27fbbb"
+  },
+  {
+    "id": "new-07",
+    "filename": "Examples for LLM-based Entity Matching.pdf",
+    "path": "E:\\Librarian research\\Examples for LLM-based Entity Matching.pdf",
+    "sha256": "71a1dc811d3711cccbceba739c590bbe216e718956a3bbf8233e052a19680589",
+    "pages": 3,
+    "text_path": "reports\\2026-10-30-runtime-tooling-literature\\data\\paper_text\\new-07.txt",
+    "nul_replaced": 0,
+    "extraction": "PyMuPDF text; NUL to space for review packets, source PDF unchanged",
+    "extracted_sha256": "2fa20f0a4049df9dd019629e389ca667bfb7f9a5f4d132cf46afb42ad0838868"
+  },
+  {
+    "id": "new-08",
+    "filename": "Expert-LLM Workflow for Efficient Evidence Screening in Systematic Reviews.pdf",
+    "path": "E:\\Librarian research\\Expert-LLM Workflow for Efficient Evidence Screening in Systematic Reviews.pdf",
+    "sha256": "e0fb6c8c2726a233778a867f7aa8c0a2941c8a8db493d1f7d6d425597d01cf4f",
+    "pages": 6,
+    "text_path": "reports\\2026-10-30-runtime-tooling-literature\\data\\paper_text\\new-08.txt",
+    "nul_replaced": 0,
+    "extraction": "PyMuPDF text; NUL to space for review packets, source PDF unchanged",
+    "extracted_sha256": "4851219ae3b35953260ff14af594d8f6bd9205a75b2b35195637cfc15a6ba951"
+  }
+]

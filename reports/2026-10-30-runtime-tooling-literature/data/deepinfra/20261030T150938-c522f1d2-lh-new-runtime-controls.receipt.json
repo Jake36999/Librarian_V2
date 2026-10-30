@@ -1,0 +1,77 @@
+{
+  "schema": 2,
+  "run_id": "20261030T150938-c522f1d2",
+  "provider": "deepinfra",
+  "endpoint": "/v1/openai/chat/completions",
+  "started_at": "2026-10-30T15:09:38.283361Z",
+  "pool": "long-horizon-research",
+  "task_id": "",
+  "role": "reader",
+  "parent_run": "",
+  "host": "Main-Bedroom-PC",
+  "attempt": 1,
+  "timeout_s": 180,
+  "request_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261030T150938-c522f1d2-lh-new-runtime-controls.request.json",
+  "request_sha256": "ccacf5ef0fe4c40ed88751e0f3f59fd66319f121cf50ae48fc2592c0c5ee9575",
+  "response_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261030T150938-c522f1d2-lh-new-runtime-controls.response.json",
+  "route": {
+    "provider": "deepinfra",
+    "base_url": "https://api.deepinfra.com/v1/openai",
+    "endpoint": "/v1/openai/chat/completions",
+    "adapter": "OpenAIChatAdapter",
+    "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017"
+  },
+  "charged_usd": 0.0105752,
+  "cost_basis": "metered_estimate",
+  "rate_card_age_days": 1,
+  "work_package": null,
+  "truncated": false,
+  "task": "lh-new-runtime-controls",
+  "lens": "correctness",
+  "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+  "agent": "unspecified",
+  "manifest": [
+    {
+      "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-01.txt",
+      "bytes": 92400,
+      "sha256": "67c1794b20b3e3cef0c94ea367d82070a8ac47776b80062e14d9256e4106bb3c"
+    },
+    {
+      "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-03.txt",
+      "bytes": 56433,
+      "sha256": "3ec756cf88e482cf5d80f8c0949983ae3d9d493037bc4d49a00c8a7e69f22b23"
+    },
+    {
+      "path": "reports/2026-10-30-runtime-tooling-literature/data/gemini-last-two-responses.md",
+      "bytes": 26977,
+      "sha256": "46fee312fc36782332dfc16403f84c8cada6d73d1445facf59f11f71b8cf4f69"
+    }
+  ],
+  "packet_sha256": "fb71cb2cab04e1c93a2f6a40f8821e30adb5d968388d73a3861b5a741c611a4f",
+  "estimated_input_tokens": 52225,
+  "max_output_tokens": 3500,
+  "preflight_reserve_usd": 0.012545,
+  "budget_usd": 8.0,
+  "rate_card": {
+    "input_per_1m": 0.2,
+    "output_per_1m": 0.6,
+    "source": "https://api.deepinfra.com/v1/openai/models",
+    "as_of": "2026-10-29"
+  },
+  "key_source": "transient file injection",
+  "status": "completed",
+  "completed_at": "2026-10-30T15:10:06.854366Z",
+  "latency_ms": 28549,
+  "request_id": "RAPS3yFUXiGZXb7XenfMFCF4",
+  "model_returned": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+  "finish_reason": "stop",
+  "usage": {
+    "input_tokens": 46399,
+    "output_tokens": 2159,
+    "total_tokens": 48558
+  },
+  "estimated_cost_usd": 0.0105752,
+  "output_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261030T150938-c522f1d2-lh-new-runtime-controls.md",
+  "output_sha256": "574903b87632a86aabf3c9c2aeff2e651d18cd3fee61f41da5ce7428ac2c054d",
+  "output_chars": 8463
+}

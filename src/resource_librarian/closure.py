@@ -167,6 +167,11 @@ def check_plan(requirements: dict[str, dict[str, Any]], addressed: list[str],
         for predicate, named in (requirements[rid].get("verifiers") or {}).items():
             key = f"{rid}: {predicate}"
             named = binding(named)["verifier"]
+            if key not in normalised:
+                # The person already decided this entry; an omitted one is filled
+                # from their binding, never guessed (G5 re-run: MiMo omitted the
+                # plan 597 times). A different verifier is still refused below.
+                normalised[key] = named
             if normalised.get(key) != named:
                 raise _refuse_plan(
                     f"the person named {named} for {key!r}; plan exactly that verifier "

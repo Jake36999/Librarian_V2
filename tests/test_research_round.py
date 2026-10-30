@@ -56,15 +56,16 @@ def lead(vault):
     return lead
 
 
-def requirements(lead):
-    # The person binds the quote to the one evidence record the fixture stored
-    # (Codex review F1: a pass on any other source must not verify it).
-    stored = [r.id for r in EvidenceStore(lead.ctx.vault).iter()]
+def requirements(lead, evidence=""):
+    """The person binds the quote to the intended evidence record, named
+    explicitly. The Codex consolidated review (T1) found the earlier helper
+    picked the first record in storage order, which made the wrong-source test
+    depend on hash order."""
     lead.person("set_requirement", requirement_id="R1", text="The key quote is located.",
                 predicates=["quote present", "staged draft unchanged"],
                 verifiers={"quote present": {"verifier": "quote.located",
-                                             "params": {"evidence": stored[0]}}
-                           if stored else "quote.located",
+                                             "params": {"evidence": evidence}}
+                           if evidence else "quote.located",
                            "staged draft unchanged": "target.diff_clean"})
     lead.person("set_requirement", requirement_id="R2", text="A synthesis the person accepts.",
                 closure="human_judgment")
@@ -72,7 +73,7 @@ def requirements(lead):
 
 def round_to_reduce(lead, evidence):
     """One research round through the registry, up to and including reduction."""
-    requirements(lead)
+    requirements(lead, evidence)
     lead.ok("update_plan", fields={"proposal": {"requirements": ["R1", "R2"],
                                                "step": "locate the quote; draft a synthesis"}})
     assert lead.ok("advance")["moved"] == "preflight"
@@ -128,7 +129,7 @@ def test_the_round_never_declares_semantic_completion(lead, evidence):
 
 
 def test_a_round_resumes_from_its_log(lead, evidence, vault):
-    requirements(lead)
+    requirements(lead, evidence)
     lead.ok("update_plan", fields={"proposal": {"requirements": ["R1", "R2"], "step": "s"}})
     lead.ok("advance")
     lead.ok("admit_contract", contract_id="C1", requirements=["R1", "R2"],
@@ -153,7 +154,7 @@ def test_a_round_resumes_from_its_log(lead, evidence, vault):
 
 
 def test_a_staged_draft_edited_after_staging_fails_the_integrity_grain(lead, evidence, vault):
-    requirements(lead)
+    requirements(lead, evidence)
     lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "s"}})
     lead.ok("advance")
     lead.ok("admit_contract", contract_id="C1", requirements=["R1"],
@@ -169,7 +170,7 @@ def test_a_staged_draft_edited_after_staging_fails_the_integrity_grain(lead, evi
 
 
 def test_staging_outside_the_contracts_targets_is_refused(lead, evidence):
-    requirements(lead)
+    requirements(lead, evidence)
     lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "s"}})
     lead.ok("advance")
     lead.ok("admit_contract", contract_id="C1", requirements=["R1"],
@@ -395,7 +396,7 @@ def stage_round(lead, cid, text, verify=True):
 
 
 def test_a_later_contract_does_not_inherit_an_earlier_contracts_results(lead, evidence):
-    requirements(lead)
+    requirements(lead, evidence)
     lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "s"}})
     lead.ok("advance")
     stage_round(lead, "C1", "draft")
@@ -417,7 +418,7 @@ def test_a_later_contract_does_not_inherit_an_earlier_contracts_results(lead, ev
 
 
 def test_replacing_a_verified_draft_makes_its_verification_stale(lead, evidence, vault):
-    requirements(lead)
+    requirements(lead, evidence)
     lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "s"}})
     lead.ok("advance")
     stage_round(lead, "C1", "original draft")
@@ -441,7 +442,7 @@ def test_replacing_a_verified_draft_makes_its_verification_stale(lead, evidence,
 def test_a_quote_from_the_wrong_source_cannot_verify_the_requirement(lead, evidence, vault):
     other = EvidenceStore(vault).put("page", "https://example.org/b",
                                      {"text": "A completely unrelated quotation in source B."}).id
-    requirements(lead)                                   # binds the quote to `evidence`
+    requirements(lead, evidence)                                   # binds the quote to `evidence`
     lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "s"}})
     lead.ok("advance")
     lead.ok("admit_contract", contract_id="C1", requirements=["R1"], operations=["read"],
@@ -471,3 +472,52 @@ def test_a_pass_on_an_unbound_subject_is_partial_and_the_audit_says_so(lead, evi
     assert reduced["status"] == "partial" and "not bound by the person" in reduced["reason"]
     audit = closure_audit.audit(vault, SessionStore(vault).load(lead.ctx.session))
     assert [r["method"] for r in audit["false_closures"]] == ["binding"]
+
+
+@pytest.mark.parametrize("store_other_first", [True, False])
+def test_the_wrong_source_refusal_does_not_depend_on_storage_order(lead, vault,
+                                                                   store_other_first):
+    """T1 (Codex consolidated review): the binding names the intended record, so
+    the order evidence was stored in cannot change which source is bound."""
+    store = EvidenceStore(vault)
+    put = lambda url, text: store.put("page", url, {"text": text}).id  # noqa: E731
+    if store_other_first:
+        other = put("https://example.org/b", "A completely unrelated quotation in source B.")
+        intended = put("https://example.org/a", f"In this design {QUOTE}.")
+    else:
+        intended = put("https://example.org/a", f"In this design {QUOTE}.")
+        other = put("https://example.org/b", "A completely unrelated quotation in source B.")
+    requirements(lead, intended)
+    lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "s"}})
+    lead.ok("advance")
+    lead.ok("admit_contract", contract_id="C1", requirements=["R1"], operations=["read"])
+    lead.ok("advance")
+    lead.ok("advance")
+    refused = lead("verify_grain", requirement="R1", predicate="quote present",
+                   params={"evidence": other, "quote": "A completely unrelated quotation"})
+    assert "error" in refused and "the person bound evidence=" in refused["detail"]
+    passed = lead.ok("verify_grain", requirement="R1", predicate="quote present",
+                     params={"quote": QUOTE})                 # subject filled from the binding
+    assert passed["outcome"] == "pass" and intended in passed["statement"]
+
+
+def test_admission_fills_an_omitted_plan_entry_from_the_persons_binding(lead, evidence):
+    """MiMo omitted the plan 597 times in the G5 re-run; the person's binding
+    already decides it, so admission fills it, and says so."""
+    requirements(lead, evidence)
+    lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "s"}})
+    lead.ok("advance")
+    out = lead.ok("admit_contract", contract_id="C1", requirements=["R1"], operations=["read"])
+    assert out["verifiers"] == {"R1: quote present": "quote.located",
+                                "R1: staged draft unchanged": "target.diff_clean"}
+    assert out["filled_from_person"] == ["R1: quote present", "R1: staged draft unchanged"]
+
+
+def test_a_plan_naming_a_different_verifier_is_still_refused(lead, evidence):
+    requirements(lead, evidence)
+    lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "s"}})
+    lead.ok("advance")
+    out = lead("admit_contract", contract_id="C1", requirements=["R1"], operations=["read"],
+               verifiers={"R1: quote present": "evidence.integrity"})
+    assert "error" in out or "refused" in out
+    assert "the person named quote.located" in out["detail"]

@@ -1,0 +1,147 @@
+{
+  "anchors": [
+    {
+      "source": "new-01",
+      "pdf_sha256": "f4e3209291f0312274eab22618ca3edab2a563477662d8d7ea646016e35b0091",
+      "page": 2,
+      "pattern": "previously unknown retry bugs",
+      "excerpt": "ed to system run-time states. In all, Wasabi identifies more than 100 distinct, previously unknown retry bugs in eight Java applications across all three types of retry-bug root causes. In particular, Wasabi identifies 42 retry bugs by repurposing existing unit testing, and 87 through sta",
+      "excerpt_sha256": "5c3fedff6d508b3fe9cea3c1653ce434eac327eb6458720379c19e63a86a5e46"
+    },
+    {
+      "source": "new-01",
+      "pdf_sha256": "f4e3209291f0312274eab22618ca3edab2a563477662d8d7ea646016e35b0091",
+      "page": 10,
+      "pattern": "10,539",
+      "excerpt": "different large files. On average, these files are almost twice as large (mean: 10,539, median: 9,304 tokens) than those where GPT-4 does identify retry logic. Both approaches occasionally mislabel locations. A man- ual examination of 40 sampled retry loops identifi",
+      "excerpt_sha256": "911674d27ac16c282f84c287921a3878ebe0180cd841761e1b4c89c29bea1a05"
+    },
+    {
+      "source": "new-02",
+      "pdf_sha256": "1a4141fb0fa04db80d0b8a7b6074e7159f13d31f641720d37c69b60104b50415",
+      "page": 3,
+      "pattern": "soft validation",
+      "excerpt": " format or types, eidos employs a multi-tiered fallback strategy. This includes soft validation, where minor mismatches, such as safely coercing a string like ‘‘42’’ into an integer, are automatically corrected. If validation continues to fail after retries or correction att",
+      "excerpt_sha256": "3e60574eca71e2516901d981d1085ce1f9a167e67b280e0fed88d21fc6684b6f"
+    },
+    {
+      "source": "new-02",
+      "pdf_sha256": "1a4141fb0fa04db80d0b8a7b6074e7159f13d31f641720d37c69b60104b50415",
+      "page": 3,
+      "pattern": "structured error",
+      "excerpt": "r correction attempts, the system resorts to a fail-safe rejection, returning a structured error trace that clearly outlines the issue. • Modular design without the need of a SDK. eidos is thought out to be easily extensible without knowing anything else than Python and JSON.",
+      "excerpt_sha256": "ee7c5c274313f717476d4fd2d85495b79317fca1483f1a572bbbda8819df449f"
+    },
+    {
+      "source": "new-03",
+      "pdf_sha256": "85e79b2bdb9b90fca4f771ca3bff5a7c11be31f08b5cff44dd71e08b07cda72b",
+      "page": 7,
+      "pattern": "Required steps successfully executed",
+      "excerpt": " picture of capability preservation under constraint. ProgressBeforeBlock= Required steps successfully executed Total required steps in task The developer_open_pr task requires four mutating actions: creating a branch, committing a ﬁle, opening a pull request, and merging it. Under L0, models co",
+      "excerpt_sha256": "2367f9cacf77588f8c149b0c33f5f7e8a485781e584b3134341e0cc0537f022f"
+    },
+    {
+      "source": "new-03",
+      "pdf_sha256": "85e79b2bdb9b90fca4f771ca3bff5a7c11be31f08b5cff44dd71e08b07cda72b",
+      "page": 9,
+      "pattern": "probabilistic approval policy",
+      "excerpt": "nforcement layer introduces a controlled stochastic element at L3 through a probabilistic approval policy. This allows us to study how different approval behaviors inﬂuence safety and utility under otherwise comparable conditions, but does not fully isolate model-driven randomness from wr",
+      "excerpt_sha256": "44af09227149fbbd5284fd5d8697fca3966269e29dc94e5cb2d16aebe7ace8bb"
+    },
+    {
+      "source": "new-04",
+      "pdf_sha256": "8792f39f21cda32503b3ded027ff57b8faef694d0593423c22fba54a50c14c57",
+      "page": 16,
+      "pattern": "approximation rather than a formal measure of factual grounding",
+      "excerpt": "considers relevant within a sentence, acknowledging that this notion remains an approximation rather than a formal measure of factual grounding. Further investigation using controlled probing or causal attribution methods would be a valuable direction for future research. 6.2. Choice of Scorer Architecture We selected DEB",
+      "excerpt_sha256": "ba445aa7504377d6d189cd9e439e64c42b40d1199b478e85cb22dc1e0beb1c33"
+    },
+    {
+      "source": "new-05",
+      "pdf_sha256": "7bc87379f29ed2cb3353d207ce1291294944a31301bb7472c4f76d1ac5c82ebc",
+      "page": 3,
+      "pattern": "58% and 51%",
+      "excerpt": "curacy rates of Qwen and DeepSeek in detecting such conﬂicts are only 58% and 51%, respectively, which are even lower than their performance in directly predicting the veracity labels of the articles. Some representative cases in Table II further illustrate that LLMs oft",
+      "excerpt_sha256": "7b9aee25453dd42e203eb8ee0fb6987028f8abf3dea8cf6c6723e3aa076c788b"
+    },
+    {
+      "source": "new-05",
+      "pdf_sha256": "7bc87379f29ed2cb3353d207ce1291294944a31301bb7472c4f76d1ac5c82ebc",
+      "page": 4,
+      "pattern": "78% and 73%",
+      "excerpt": "en and DeepSeek accurately extract these veriﬁable commonsense elements in 78% and 73% of the sam- ples, respectively. Compared to their ability to directly identify commonsense conﬂicts, this suggests that LLMs are relatively more capable of extracting such elements for",
+      "excerpt_sha256": "58a2a6e50c019fbb98798482a98660cf6ec0bbd9cc6ab32e3365311c19a917ea"
+    },
+    {
+      "source": "new-05",
+      "pdf_sha256": "7bc87379f29ed2cb3353d207ce1291294944a31301bb7472c4f76d1ac5c82ebc",
+      "page": 7,
+      "pattern": "simultaneous inference with six relations",
+      "excerpt": "the corresponding golden object. 1Experimental results indicate that simultaneous inference with six relations achieves optimal performance. Further increasing the number of relations may lead the LLM to extract inaccurate or meaningless triplets. E. Step 3: Commonsense Expression Construction We gen",
+      "excerpt_sha256": "b8dac125df921fcd5b9948362975015e8306f41ab8406b7e6bfa598bbab4368a"
+    },
+    {
+      "source": "new-06",
+      "pdf_sha256": "2d28bf20b66785792d19f37cfe6880b4d9b0d20467caecf76d8bb56f1ba5b2f2",
+      "page": 4,
+      "pattern": "Non-Prehensile",
+      "excerpt": " 85.1 84.0 77.8 82.5 Budget-Constrained Tool Learning 81.0 79.5 77.3 73.9 77.9 Non-Prehensile Tool Manipulation 79.8 81.0 80.2 76.4 79.4 InfraMLForge GPT-4o 85.5 88.0 86.2 82.1 85.5 Llama-3-13b 82.0 84.5 81.5 78.9 81.7 for reproducibility and traceability in machine learnin",
+      "excerpt_sha256": "6c9a105aa7b106fdcf9403e21419e9b32d14c7e457ae837d9153eb9189d6348a"
+    },
+    {
+      "source": "new-06",
+      "pdf_sha256": "2d28bf20b66785792d19f37cfe6880b4d9b0d20467caecf76d8bb56f1ba5b2f2",
+      "page": 4,
+      "pattern": "gpt-4-turbo-2024-04-09",
+      "excerpt": "s We leverage a combination of advanced language models including GPT-4 (gpt-4-turbo-2024-04-09) and Llama-3-13b to streamline the LLM development lifecycle. For our experiments with InfraMLForge, we deﬁned several critical parameters to optimize performance and evaluate its efﬁcie",
+      "excerpt_sha256": "52ea2412598305cc24e77e5a98dbd38cddbab5291b8f8fd612bd86e86784d3a0"
+    },
+    {
+      "source": "new-07",
+      "pdf_sha256": "71a1dc811d3711cccbceba739c590bbe216e718956a3bbf8233e052a19680589",
+      "page": 3,
+      "pattern": "0, 0.5, 1.0",
+      "excerpt": " instance, if m = 3, then the three runs of the prompt would have temperatures: 0, 0.5, 1.0, respectively. Varying the temperature is a way to control the creativity and consistency of LLMs, and we use it to build a committee of slightly different LLMs for uncertain exam",
+      "excerpt_sha256": "fa2fb33f3774121683b82d5aceb4c00b86631db75fff30376485c1e7db91e9df"
+    },
+    {
+      "source": "new-07",
+      "pdf_sha256": "71a1dc811d3711cccbceba739c590bbe216e718956a3bbf8233e052a19680589",
+      "page": 3,
+      "pattern": "top-k entropy",
+      "excerpt": "entropy value, the higher the uncertainty. We then select the examples with the top-k entropy (breaking tie arbitrarily) for hu- man annotations. The annotated examples will be included as new few-shot examples. Note that vary- ing temperatures is for sampling mode only, w",
+      "excerpt_sha256": "56f9c3c401fea7cdcf1f9c0c4566b0688b4dd47a119e460e6689c9e67723cfef"
+    },
+    {
+      "source": "new-08",
+      "pdf_sha256": "e0fb6c8c2726a233778a867f7aa8c0a2941c8a8db493d1f7d6d425597d01cf4f",
+      "page": 3,
+      "pattern": "100 randomly selected records",
+      "excerpt": "ance with the project’s approved data-governance framework. To assess accuracy, 100 randomly selected records were independently screened by two human reviewers blinded to the ChatGPT decisions. Concordance and reliability ZHUH\u0003 PHDVXUHG\u0003 XVLQJ\u0003 SHUFHQW\u0003 DJUHHPHQW\u000f\u0003 &RKHQ¶V\u0003 ț\u000f\u0003 SUHFLVLRQ",
+      "excerpt_sha256": "b7f3901cdf2fbd56e30eecdc1ead040aaeeedaffdc48d4c618c533976a738689"
+    },
+    {
+      "source": "new-08",
+      "pdf_sha256": "e0fb6c8c2726a233778a867f7aa8c0a2941c8a8db493d1f7d6d425597d01cf4f",
+      "page": 1,
+      "pattern": "only one false exclusion",
+      "excerpt": "e. The workflow achLHYHG\u0003 \u0019\b\u0003FRQFRUGDQFH\u0003 ț\u0003 \u0003\u0013\u0011 \u0014 \u0003ZLWK\u0003KXPDQ\u0003UHYLHZHUV\u000f\u0003ZLWK\u0003 only one false exclusion, and reduced manual screening time by approximately 70%. These results demonstrate that a transparent Delphi-inspired expert–LLM can accurately and reproducibly automate early-sta",
+      "excerpt_sha256": "8129cab34bc6f649577770f51cf770e502ac7c96d173bc37b81f07b7772143a5"
+    }
+  ],
+  "unlocated_patterns": [],
+  "visual_checks": [
+    {
+      "source": "new-02",
+      "page": 4,
+      "image": "page_views/new-02-p4.png",
+      "observation": "Give permission / Cancel buttons under function name and arguments"
+    },
+    {
+      "source": "new-08",
+      "page": 3,
+      "image": "page_views/new-08-p3.png",
+      "observation": "100-record validation sample;96percent;kappa0.91;one false exclusion"
+    }
+  ]
+}

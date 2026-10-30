@@ -132,7 +132,8 @@ product claims:
 required, and the frozen revision must pass the entry gates.
 
 **Entry:** G0 to G5 green in the unified plan; SI-1 to SI-3 and LC-1 to LC-2
-pass.
+pass; the review-remediation tasks REMED-01, -02 and -04 are done (unified
+plan §10.1, added 2026-10-30 from the Codex reviews).
 
 1. Select the intended SemVer release version and freeze the source revision.
 2. Update `VERSION`, `pyproject.toml`, `resource_librarian.__version__`, and

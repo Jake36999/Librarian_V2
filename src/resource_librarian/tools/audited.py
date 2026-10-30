@@ -84,9 +84,13 @@ def admit_contract(ctx: Context, contract_id: str, requirements: list[str],
     _store(ctx).append_audit(session.id, event)
     state = _store(ctx).load(session.id).audit
     admitted = state.contracts[contract_id]
+    proposed = set(dict(verifiers or {}))
+    filled = sorted(k for k in admitted["verifiers"]
+                    if k not in proposed and k.split(": ", 1)[1] not in proposed)
     out = {"contract": contract_id, "revision": admitted["revision"],
            "verifiers": admitted["verifiers"], "operations": admitted["operations"],
-           "staged_in": staging_folder(ctx, session.id)}
+           "staged_in": staging_folder(ctx, session.id),
+           **({"filled_from_person": filled} if filled else {})}
     if audit_events.mutating(state, contract_id):
         # HARNESS-07: the before-state, durable before the first write.
         targets = target_audit.snapshot(ctx.vault, admitted)

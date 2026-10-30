@@ -1,0 +1,8 @@
+{
+  "source": "reports\\2026-10-30-runtime-tooling-literature\\data\\paper_text\\new-02.txt",
+  "derived_packet": "reports\\2026-10-30-runtime-tooling-literature\\data\\paper_text\\new-02-safe-packet.txt",
+  "source_sha256": "415d15dd5c6e347545923b5b2869dc4f37741c79d254bd8e909e52778eb56318",
+  "packet_sha256": "f14ae8b767e7de7a71d82d4230393e2f6e2b134ab8d8b0117ea98be0b41b5212",
+  "redacted_lines": 1,
+  "reason": "Public paper code examples triggered secret-export preflight; entire matching lines omitted; original extraction and PDF preserved."
+}

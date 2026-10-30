@@ -1,0 +1,77 @@
+{
+  "schema": 2,
+  "run_id": "20261030T151036-a5355d59",
+  "provider": "deepinfra",
+  "endpoint": "/v1/openai/chat/completions",
+  "started_at": "2026-10-30T15:10:36.387521Z",
+  "pool": "long-horizon-research",
+  "task_id": "",
+  "role": "reader",
+  "parent_run": "",
+  "host": "Main-Bedroom-PC",
+  "attempt": 1,
+  "timeout_s": 180,
+  "request_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261030T151036-a5355d59-lh-new-semantic-workflows.request.json",
+  "request_sha256": "952be0a3c84451046fe000784ea20b2b38e6ea71d926b291319c15453511433e",
+  "response_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261030T151036-a5355d59-lh-new-semantic-workflows.response.json",
+  "route": {
+    "provider": "deepinfra",
+    "base_url": "https://api.deepinfra.com/v1/openai",
+    "endpoint": "/v1/openai/chat/completions",
+    "adapter": "OpenAIChatAdapter",
+    "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017"
+  },
+  "charged_usd": 0.010594,
+  "cost_basis": "metered_estimate",
+  "rate_card_age_days": 1,
+  "work_package": null,
+  "truncated": false,
+  "task": "lh-new-semantic-workflows",
+  "lens": "correctness",
+  "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+  "agent": "unspecified",
+  "manifest": [
+    {
+      "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-04.txt",
+      "bytes": 71005,
+      "sha256": "7da467a803fdb4de35e93902f9f39a95edb2929d5b14c896450f6370ed3816be"
+    },
+    {
+      "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-05.txt",
+      "bytes": 73037,
+      "sha256": "4f0ca324818133a608f6bed850aee5fb1dfcfa518386cb24bda2d8f026ef8ffa"
+    },
+    {
+      "path": "reports/2026-10-30-runtime-tooling-literature/data/gemini-last-two-responses.md",
+      "bytes": 26977,
+      "sha256": "46fee312fc36782332dfc16403f84c8cada6d73d1445facf59f11f71b8cf4f69"
+    }
+  ],
+  "packet_sha256": "35506939a32c659db224df7e366af993b80a2396528f0cfa1a9a32da551df488",
+  "estimated_input_tokens": 50698,
+  "max_output_tokens": 3500,
+  "preflight_reserve_usd": 0.0122396,
+  "budget_usd": 8.0,
+  "rate_card": {
+    "input_per_1m": 0.2,
+    "output_per_1m": 0.6,
+    "source": "https://api.deepinfra.com/v1/openai/models",
+    "as_of": "2026-10-29"
+  },
+  "key_source": "transient file injection",
+  "status": "completed",
+  "completed_at": "2026-10-30T15:11:18.522926Z",
+  "latency_ms": 42113,
+  "request_id": "R56cZbbKXSTX9N2QtOMcnk3i",
+  "model_returned": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+  "finish_reason": "stop",
+  "usage": {
+    "input_tokens": 47621,
+    "output_tokens": 1783,
+    "total_tokens": 49404
+  },
+  "estimated_cost_usd": 0.010594,
+  "output_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261030T151036-a5355d59-lh-new-semantic-workflows.md",
+  "output_sha256": "2c6c1c24acb058f60083c61181edae0cedc0a68be5218666e51b0cb2226f67f7",
+  "output_chars": 6422
+}

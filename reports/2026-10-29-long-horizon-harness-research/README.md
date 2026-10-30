@@ -6,6 +6,8 @@ Start with the [harness design specification](../../docs/long-horizon-harness-de
 
 ## Supporting artifacts
 
+- [2026-10-30 runtime tooling and literature supplement](../2026-10-30-runtime-tooling-literature/README.md) — Gemini's final two responses checked against Librarian's own agent tooling; eight new papers, source anchors and incremental recommendations. The 51-file manifest below remains the original snapshot.
+
 - [Development-agent research](DEVELOPMENT-AGENT-RESEARCH.md) and [development harness profile](../../docs/development-agent-harness.md) — coding-specific external sources, current execution gaps, requirements and qualification scenarios.
 
 - [`data/complete_corpus_manifest.json`](data/complete_corpus_manifest.json) — all 51 file identities, hashes, page counts and extracted-text paths, combining the three pass manifests.

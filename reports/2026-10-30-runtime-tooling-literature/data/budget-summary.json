@@ -1,0 +1,9 @@
+{
+  "snapshot_utc": "2026-10-30T15:18:27.952480+00:00",
+  "pool": "long-horizon-research",
+  "budget_usd": 8.0,
+  "committed_usd": 0.39750955,
+  "this_review_estimated_usd": 0.027672,
+  "unresolved_prior_reserve_usd": 0.0135514,
+  "basis": "Local metered estimates and conservative reservations; not a provider invoice. Separate from G5 pool."
+}

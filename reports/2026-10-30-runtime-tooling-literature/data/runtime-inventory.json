@@ -1,0 +1,79 @@
+{
+  "revision": "818f1a2",
+  "registry_curate_count": 174,
+  "audited_lead": {
+    "manage": [
+      "audit_projection",
+      "update_plan",
+      "search",
+      "get_note",
+      "read_evidence",
+      "ask_user",
+      "advance",
+      "read_result",
+      "macro_plan",
+      "macro_run"
+    ],
+    "preflight": [
+      "admit_contract",
+      "audit_projection",
+      "ask_user",
+      "advance",
+      "read_result",
+      "macro_plan",
+      "macro_run"
+    ],
+    "execute": [
+      "search",
+      "get_note",
+      "read_evidence",
+      "read_source_file",
+      "stage_artifact",
+      "ask_user",
+      "advance",
+      "read_result",
+      "macro_plan",
+      "macro_run"
+    ],
+    "audit": [
+      "verify_grain",
+      "audit_targets",
+      "audit_projection",
+      "ask_user",
+      "advance",
+      "read_result",
+      "macro_plan",
+      "macro_run"
+    ],
+    "reduce": [
+      "reduce_round",
+      "audit_projection",
+      "advance",
+      "read_result",
+      "macro_plan",
+      "macro_run"
+    ]
+  },
+  "macros": [
+    "inspect_map_source",
+    "search_and_judge",
+    "intake_to_stage",
+    "evidence_to_claim_check",
+    "review_staged_candidate"
+  ],
+  "standard_workflows": [
+    "deep-read-staged",
+    "draft-reflection",
+    "flag-sensitive",
+    "gather-activity",
+    "gather-agenda",
+    "gather-desk",
+    "ingest-cited",
+    "review-conversation",
+    "review-due",
+    "review-item",
+    "review-staged",
+    "run-queue",
+    "sync-vault"
+  ]
+}

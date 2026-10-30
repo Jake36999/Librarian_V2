@@ -1,0 +1,87 @@
+{
+  "schema": 2,
+  "run_id": "20261030T151255-dd081504",
+  "provider": "deepinfra",
+  "endpoint": "/v1/openai/chat/completions",
+  "started_at": "2026-10-30T15:12:55.156198Z",
+  "pool": "long-horizon-research",
+  "task_id": "",
+  "role": "reader",
+  "parent_run": "",
+  "host": "Main-Bedroom-PC",
+  "attempt": 1,
+  "timeout_s": 180,
+  "request_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261030T151255-dd081504-lh-new-interface-triage-safe.request.json",
+  "request_sha256": "6a0e5cc5da72a99385725819ccc3f0907fc669be217c9cce51d31028c5bbf7c0",
+  "response_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261030T151255-dd081504-lh-new-interface-triage-safe.response.json",
+  "route": {
+    "provider": "deepinfra",
+    "base_url": "https://api.deepinfra.com/v1/openai",
+    "endpoint": "/v1/openai/chat/completions",
+    "adapter": "OpenAIChatAdapter",
+    "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017"
+  },
+  "charged_usd": 0.0065028,
+  "cost_basis": "metered_estimate",
+  "rate_card_age_days": 1,
+  "work_package": null,
+  "truncated": false,
+  "task": "lh-new-interface-triage-safe",
+  "lens": "correctness",
+  "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+  "agent": "unspecified",
+  "manifest": [
+    {
+      "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-02-safe-packet.txt",
+      "bytes": 21455,
+      "sha256": "f14ae8b767e7de7a71d82d4230393e2f6e2b134ab8d8b0117ea98be0b41b5212"
+    },
+    {
+      "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-06.txt",
+      "bytes": 21334,
+      "sha256": "74546bf1b9313e3215abae4ede3ccf1f541958daaa692c5a21cc68cbbf9fe007"
+    },
+    {
+      "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-07.txt",
+      "bytes": 13102,
+      "sha256": "36eef83c33071a9e4f25baecc861d9fee229590bea33d6411b5de285a14197c6"
+    },
+    {
+      "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-08.txt",
+      "bytes": 18372,
+      "sha256": "740bfe9dadd61c92e8b4330dd7e238d0ed4bfc8ab180c3d94bd97b76ea082de0"
+    },
+    {
+      "path": "reports/2026-10-30-runtime-tooling-literature/data/gemini-last-two-responses.md",
+      "bytes": 26977,
+      "sha256": "46fee312fc36782332dfc16403f84c8cada6d73d1445facf59f11f71b8cf4f69"
+    }
+  ],
+  "packet_sha256": "e400be90ea12a60c0416b34e5c5faaca9ae9f36a491eeeab8d1b1dedd971bc32",
+  "estimated_input_tokens": 30788,
+  "max_output_tokens": 3500,
+  "preflight_reserve_usd": 0.0082576,
+  "budget_usd": 8.0,
+  "rate_card": {
+    "input_per_1m": 0.2,
+    "output_per_1m": 0.6,
+    "source": "https://api.deepinfra.com/v1/openai/models",
+    "as_of": "2026-10-29"
+  },
+  "key_source": "transient file injection",
+  "status": "completed",
+  "completed_at": "2026-10-30T15:13:13.658977Z",
+  "latency_ms": 18480,
+  "request_id": "RuOaMn9cyzrx88G5SXZ1bh7S",
+  "model_returned": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+  "finish_reason": "stop",
+  "usage": {
+    "input_tokens": 27120,
+    "output_tokens": 1798,
+    "total_tokens": 28918
+  },
+  "estimated_cost_usd": 0.0065028,
+  "output_path": "D:\\Librarian_V2\\tmp\\deepinfra-delegation\\runs\\20261030T151255-dd081504-lh-new-interface-triage-safe.md",
+  "output_sha256": "d1716090b159c297f50cb93417d6ff9d0f7796de44732373441456c5a0dd8d83",
+  "output_chars": 6948
+}

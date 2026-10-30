@@ -425,6 +425,43 @@ features.
 | RELEASE-02 | Medium, blocked externally | Execute R0 freeze, R1 lock/wheelhouse, and R2 role/route qualification only against a frozen revision and approved credentials/budgets. | RELEASE-01, G5 | Cross-cutting review | L0–L3 evidence, exact route/adapter fingerprints, cost record, and expiry are retained. |
 | RELEASE-03 | Medium, blocked externally | Execute R3 signed artifact build, R4 real Windows/adapter acceptance, and R5 manual publication/rollback cadence. Moved here from INDEX-05 (2026-10-28): hosted Python 3.12/3.13 matrix execution and signed stable bundles. | RELEASE-02, ACCEPT-02 | Cross-cutting review | Signed artifacts, verification, rollback, operator documentation, and release-owner approval exist. |
 
+### 10.1 Review remediation (added 2026-10-30)
+
+These tasks come from the Codex code review, its consolidated remediation
+plan, and the Gemini claim review that Codex fact-checked. The sources are
+[CONSOLIDATED-REVIEW-AND-REMEDIATION.md](../reports/2026-10-30-code-review/CONSOLIDATED-REVIEW-AND-REMEDIATION.md)
+and
+[TOOLING-CLAIM-REVIEW.md](../reports/2026-10-30-runtime-tooling-literature/TOOLING-CLAIM-REVIEW.md).
+
+Each task below was either reproduced locally or follows from a reproduced
+gap. Claims the reviews could not verify are not tasks; see §12. F1–F7, the
+fixture-order defect (T1), and filling an omitted plan entry from the
+person's binding are already done (`a9be71b` and the commit recording this
+section).
+
+| ID | Size | Scope and deliverable | Dependencies | Candidate lane | Done only when |
+| --- | --- | --- | --- | --- | --- |
+| REMED-01 | Small | **Adopted-document validation (V1, reproduced).** Collect every visible note name and link, workspace documents included, before any content-model exemption. Classify a managed note by explicit Librarian provenance, not by folder or by the presence of frontmatter, so foreign documentation is never flagged as duplicate notes. | DEPLOY-03 | Adoption and corpus safety | The additional-review reproduction passes inverted: frontmattered docs-tree READMEs are not duplicates, and a workspace document's link prevents a false orphan. |
+| REMED-02 | Small | **Aggregate search contract (S1, reproduced).** The `all` intent reports considered, matched, verdict and filter applicability for each group. Source-only filters and `source` are rejected or explained where they do not apply. The search card names the `workspace` intent. | DEPLOY-03 | Core and state | A mixed workspace/source query reports each group truthfully; an unsupported filter combination is explained, never silently applied to one group. |
+| REMED-03 | Medium | **Closure lifecycle qualification (R2, C1).** Invalidation of verification and acceptance across Core writes, external edits, restart and contract boundaries. Numeric or semantic predicates no verifier establishes stay partial or human-judgment. A recorded policy for audited histories written before contract-scoped reductions: preserved, read as legacy, never replayed as current evidence. | HARNESS-07, a9be71b | Core and state | Tests cover new, invalid, interrupted and stale histories, and changes through each mutation route. Legacy logs report as legacy rather than as corruption. |
+| REMED-04 | Medium, release-blocking | **Workbench output and helper boundaries (W1).** Enforce size and type limits before outputs reach the host. Apply a documented isolation policy to provisioning, extraction, execution and export helpers. | Workbench | Core and state | Injected oversized or hostile outputs stop safely on the supported Windows/Docker configurations, and benign engagements still work. |
+| REMED-05 | Small | **Durable per-call accounting for paid evaluation (F6 remainder).** Each billable dispatch, retries included, holds a durable reservation that is settled from actual usage. A crash keeps unresolved charges. Reuse the delegation ledger service rather than add a third policy. | REMED-03 | Cross-cutting review | An injected crash, retry or missing-usage case leaves the ledger correct and spends nothing further. |
+| REMED-06 | Medium | **Admission usability and stall handling (R4, U1, U2).** Stable predicate ids, a deterministic contract skeleton in the projection, and structured refusal details. No-progress tracking across answered and unanswered questions and repeated refusals parks the dependent requirement with a reason. No threshold from the reviews is adopted as a default. | REMED-03 | Core and state | Scripted loop and refusal fixtures end predictably. A bounded pilot shows less wasted effort with admission unchanged. |
+| REMED-07 | Small | **Model-view and reachability qualification.** Measure real model-request size over long sessions, since the projection does not replace history. Derive the capability manifest from the effective dispatch context: profile, routes, roots. Publish a reachability matrix (registered, offered, admitted) for audited bundles. Inject retry and cancel faults with virtual time. | REMED-06 | Cross-cutting review | Request size, reachability and fault outcomes are recorded per profile and route, and the existing cancellation is confirmed, not rebuilt. |
+| UX-01 | Medium | **Per-predicate inspector.** For each predicate the UI shows the bound subject, statement, staleness, and authority versus acceptance, by projecting existing Session state. Review actions use the existing person tools. No new ledger. | REMED-03 | Core and state | A person can see why each predicate is open, closed or stale, and act on it, without a new source of truth. |
+| REMED-08 | Small, paid | **Targeted G5 re-measurement.** Run only the slices affected by REMED-06's admission changes, predeclared, within the existing $8 ledger. | REMED-06 | Cross-cutting review | The affected slices are measured and reported beside the 32/74 and 25/74 runs, which are both kept as distinct evidence. |
+
+**Sequencing.** REMED-01, -02 and -04 are correctness and boundary fixes. They
+should land before a release freeze, and the release queue's R0 entry names
+them. REMED-03 and -05 are qualification work. REMED-06, -07 and UX-01 are
+usability work. REMED-08 follows REMED-06.
+
+**HARNESS-08 additions.** The semantic advisory checker (extract, isolate the
+source, compare) joins HARNESS-08's evaluation. Its cases include relationship
+inversion, negation, time, units, present-but-irrelevant quotes and
+insufficient evidence. It needs held-out human labels and negative controls,
+and remains advisory: it never closes authoritatively.
+
 ## 11. Parallelism and merge discipline
 
 The following work may run concurrently once prerequisites are met:
@@ -471,6 +508,19 @@ preceding gates:
   owner decision. It is not among this plan's tasks, and HARNESS-01–07 do not
   deliver it. Until it is adopted, the Workbench's person-started execution
   boundary stands.
+
+**From the 2026-10-30 reviews: rejected or deferred, with the reason.**
+
+| Item | Disposition |
+| --- | --- |
+| Dependency/taint graph for invalidation | Stays optional inside HARNESS-09. Conservative epoch invalidation is intentional, and the graph needs a measured benefit first. |
+| Adaptive bypass of auditing on a complexity score | Rejected. Audited sessions are opt-in, and requested auditing or permissions are never bypassed. E2' measured delegation overhead, not this. |
+| Paper-derived numeric defaults: a two-question quota, a 0.65 similarity threshold, MCP-Secure's figures, WASABI's Java thresholds | Not adopted. They may be evaluated, never copied as defaults. |
+| Screening aids: MAYBE staging, random exclusion audits, active labelling | Deferred until intake volume justifies them. Never filesystem access policy, and never automatic. |
+| Automatic dedupe merges | Rejected. DEPLOY-04 explains duplicates and never merges. |
+| Attached-root indexing | Remains an explicit exclusion; added as work only if attached retrieval is required. |
+| Development-agent profile (DEV-01 to DEV-14) | Still an open owner decision. HARNESS-01 to -07 do not qualify it. |
+| Review claims found false or unverified | In-flight cancellation exists (ADAPT-04B). A loop breaker exists, though not one for rephrased no-progress loops. A contract covers several grains. The CodeSim 40%/95% figures were not located. None become tasks. |
 
 ## 13. Decision gates for optional work
 
@@ -3473,3 +3523,51 @@ admission attempts. Recommended, not made: admission fills an omitted plan
 entry from the person's binding.
 
 G5 remains closed on this evidence unless the owner decides otherwise.
+
+### Review scoping, admission fill and fixture fix (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| Admission fill | implemented | this commit | `closure.check_plan`, `admit_contract`; tests in `tests/test_research_round.py`. |
+| T1 fixture fix | implemented | this commit | `tests/test_research_round.py`, both storage orders tested. |
+| Review scoping | planned | this commit | §10.1 (REMED-01 to -08, UX-01) and §12 deferrals. The reviews themselves are committed. |
+
+**Admission fill (owner decision).** When a contract's plan omits an entry
+for a predicate whose verifier the person named, admission fills it from
+that binding. `admit_contract` reports which entries it filled
+(`filled_from_person`). A plan naming a different verifier is still refused,
+and the fill is deterministic, so replay reproduces it.
+
+**T1 (Codex consolidated review).** The test helper had bound the quote to
+the first evidence record in storage order, so the wrong-source test
+depended on hash order. The helper now takes the intended evidence
+explicitly, and a test covers both storage orders.
+
+**Newly reproduced at `818f1a2`.**
+- **V1:** adopted validation flags frontmattered docs-tree READMEs as
+  duplicate names, and ignores workspace-document links, which produces
+  false orphans.
+- **S1:** the `all` search reports `uncovered` with 0 considered over its own
+  workspace hit, and a `source` argument does not restrict the workspace
+  group.
+
+Both are scoped as REMED-01 and REMED-02, which are release-blocking with
+REMED-04.
+
+**What went into the plan.** §10.1 adds REMED-01 to -08 and UX-01, with the
+semantic advisory checker folded into HARNESS-08. §12 records what was
+rejected or deferred, with reasons:
+- the taint graph;
+- adaptive audit bypass;
+- paper-derived thresholds;
+- screening aids;
+- automatic merges;
+- attached-root indexing;
+- the development-agent profile;
+- four review claims found false or unverified.
+
+The release queue's R0 entry now requires REMED-01, -02 and -04.
+
+The Codex and Gemini review documents are committed as evidence. This
+folder's extracted paper texts and page images stay local (copyright), as in
+earlier research folders.

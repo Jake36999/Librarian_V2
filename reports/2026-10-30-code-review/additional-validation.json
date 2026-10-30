@@ -1,0 +1,61 @@
+{
+  "reviewed_head": "818f1a2",
+  "checked_at": "2026-10-30T14:54:17.232137+00:00",
+  "product_code_modified": false,
+  "latest_tests": {
+    "passed": 20,
+    "seconds": 2.89,
+    "selection": "workspace documents, search, wrong-source fixture"
+  },
+  "prior_targeted_tests": {
+    "passed": 183,
+    "failed": 1,
+    "deselected": 1,
+    "note": "Wrong-source fixture is order dependent, not repaired."
+  },
+  "links": [
+    {
+      "document": "CONSOLIDATED-REVIEW-AND-REMEDIATION.md",
+      "target": "REVIEW.md",
+      "exists": true
+    },
+    {
+      "document": "CONSOLIDATED-REVIEW-AND-REMEDIATION.md",
+      "target": "SECONDARY-REVIEW-FACTCHECK.md",
+      "exists": true
+    },
+    {
+      "document": "CONSOLIDATED-REVIEW-AND-REMEDIATION.md",
+      "target": "ADDITIONAL-REVIEW-FACTCHECK.md",
+      "exists": true
+    },
+    {
+      "document": "CONSOLIDATED-REVIEW-AND-REMEDIATION.md",
+      "target": "../../docs/development-agent-harness.md",
+      "exists": true
+    },
+    {
+      "document": "CONSOLIDATED-REVIEW-AND-REMEDIATION.md",
+      "target": "reproduce_additional_review.py",
+      "exists": true
+    },
+    {
+      "document": "CONSOLIDATED-REVIEW-AND-REMEDIATION.md",
+      "target": "rerun-recomputed.json",
+      "exists": true
+    },
+    {
+      "document": "CONSOLIDATED-REVIEW-AND-REMEDIATION.md",
+      "target": "ADDITIONAL-REVIEW-FACTCHECK.md",
+      "exists": true
+    }
+  ],
+  "all_local_links_exist": true,
+  "new_reproductions": [
+    "frontmattered README duplicate validation",
+    "plain workspace link omitted causing false Concept orphan",
+    "plain source-folder exemption confirmed as intentional classification ambiguity",
+    "aggregate workspace hit with uncovered verdict and zero considered"
+  ],
+  "new_paid_evaluation": false
+}

@@ -1,0 +1,26 @@
+{
+  "revision": "818f1a2",
+  "checked_at": "2026-10-30T15:19:17.268825+00:00",
+  "new_pdf_count": 8,
+  "current_pdf_count": 59,
+  "source_pdf_hashes_pass": true,
+  "extracted_logical_text_hashes_pass": true,
+  "raw_text_hashes_match_logical": false,
+  "extraction_hash_note": "Manifest extracted_sha256 hashes logical UTF-8 text; Windows on-disk CRLF differs. Logical text checked separately.",
+  "links_checked": 15,
+  "missing_links": [],
+  "existing_tests": {
+    "passed": 78,
+    "seconds": 48.56,
+    "modules": [
+      "provider_cancellation",
+      "workflows",
+      "macro_permissions",
+      "agent_runtime_profiles",
+      "result_handles",
+      "effort",
+      "role_route_bindings"
+    ]
+  },
+  "product_code_modified": false
+}
