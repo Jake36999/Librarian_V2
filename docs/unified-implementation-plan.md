@@ -2860,3 +2860,52 @@ in the derived index.
 - Moves across a whole-index rebuild are recognised only by the incremental
   refresh that follows it.
 - DEPLOY-05 (structural index) is deferred behind G4.
+
+### ROUTE-05 golden picker and service-slot snapshot (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| ROUTE-05 | implemented | this commit | `tests/test_route_picker_snapshot.py` (4) and `tests/golden/route_picker.json`. Test-only; no product code changed. |
+
+This closes the literal gap recorded at the G2/G4 review: one golden
+snapshot for the three-position picker plus the service slots. The
+cross-role regression fixtures already existed in
+`tests/test_role_route_bindings.py` and `tests/test_service_routes.py`.
+
+**The snapshot.** The fixture is fixed:
+- three picker positions with different models;
+- OCR chosen away from its default;
+- one L1 qualification recorded for Clerk only.
+
+The snapshot is the API payload behind `/api/routes/readiness` and
+`/api/services`, serialised as the API does. It covers the picker
+positions, each chat role's binding, every bound route's bound roles,
+active task, binding errors, host state and per-role qualification label,
+and each service slot's choice, default flag, route status, adapter status
+and binding.
+
+Volatile fields are removed: fingerprints, timestamps, revisions, and the
+machine's real TTS spend.
+
+The golden file was reviewed by hand against the fixture before it was
+checked in:
+- Research Helper follows position 2.
+- Only Clerk's route reads `screened`, and only for Clerk.
+- The Lead route is the active task.
+- The alias rows (`deepinfra`) mirror the canonical `preset-deepinfra`
+  rows.
+
+It regenerates only with `LIBRARIAN_UPDATE_GOLDEN=1`, and it was stable
+across repeated runs.
+
+**Labels match execution.** For Lead, Scribe, Clerk and Research Helper,
+the route labelled with the role and the role's binding are both the model
+that actually answers when that role runs: the Lead loop, the Scribe and
+Clerk providers, and the helper provider.
+
+**One slot at a time.** Changing the OCR slot changes only the OCR row. The
+picker positions, the bindings and the routes are identical before and
+after.
+
+**G2.** All of ROUTE-01 to -05 now meet their done-when columns. Closing G2
+is the owner's decision.

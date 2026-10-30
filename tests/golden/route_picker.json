@@ -1,0 +1,236 @@
+{
+ "bindings": {
+  "clerk": {
+   "adapter_id": "legacy_openai_chat",
+   "evidence_kind": "chat_qualification",
+   "host_id": "preset-deepinfra",
+   "inherits_from": "",
+   "model_id": "intake-m",
+   "protocol": "openai",
+   "source": "legacy_tier"
+  },
+  "lead": {
+   "adapter_id": "legacy_openai_chat",
+   "evidence_kind": "chat_qualification",
+   "host_id": "preset-deepinfra",
+   "inherits_from": "",
+   "model_id": "lead-m",
+   "protocol": "openai",
+   "source": "legacy_tier"
+  },
+  "research_helper": {
+   "adapter_id": "legacy_openai_chat",
+   "evidence_kind": "chat_qualification",
+   "host_id": "preset-deepinfra",
+   "inherits_from": "",
+   "model_id": "notes-m",
+   "protocol": "openai",
+   "source": "legacy_tier"
+  },
+  "scribe": {
+   "adapter_id": "legacy_openai_chat",
+   "evidence_kind": "chat_qualification",
+   "host_id": "preset-deepinfra",
+   "inherits_from": "",
+   "model_id": "notes-m",
+   "protocol": "openai",
+   "source": "legacy_tier"
+  }
+ },
+ "picker_positions": [
+  {
+   "model": "lead-m",
+   "provider": "deepinfra"
+  },
+  {
+   "model": "notes-m",
+   "provider": "deepinfra"
+  },
+  {
+   "model": "intake-m",
+   "provider": "deepinfra"
+  }
+ ],
+ "routes": [
+  {
+   "active_task": false,
+   "binding_errors": {},
+   "bound_roles": [
+    "clerk"
+   ],
+   "host_enabled": true,
+   "host_id": "deepinfra",
+   "model": "intake-m",
+   "qualification_by_role": {
+    "clerk": "screened",
+    "lead": "experimental",
+    "research_helper": "experimental",
+    "scribe": "experimental"
+   }
+  },
+  {
+   "active_task": true,
+   "binding_errors": {},
+   "bound_roles": [
+    "lead"
+   ],
+   "host_enabled": true,
+   "host_id": "deepinfra",
+   "model": "lead-m",
+   "qualification_by_role": {
+    "clerk": "experimental",
+    "lead": "experimental",
+    "research_helper": "experimental",
+    "scribe": "experimental"
+   }
+  },
+  {
+   "active_task": false,
+   "binding_errors": {},
+   "bound_roles": [
+    "scribe",
+    "research_helper"
+   ],
+   "host_enabled": true,
+   "host_id": "deepinfra",
+   "model": "notes-m",
+   "qualification_by_role": {
+    "clerk": "experimental",
+    "lead": "experimental",
+    "research_helper": "experimental",
+    "scribe": "experimental"
+   }
+  },
+  {
+   "active_task": false,
+   "binding_errors": {},
+   "bound_roles": [
+    "clerk"
+   ],
+   "host_enabled": true,
+   "host_id": "preset-deepinfra",
+   "model": "intake-m",
+   "qualification_by_role": {
+    "clerk": "screened",
+    "lead": "experimental",
+    "research_helper": "experimental",
+    "scribe": "experimental"
+   }
+  },
+  {
+   "active_task": true,
+   "binding_errors": {},
+   "bound_roles": [
+    "lead"
+   ],
+   "host_enabled": true,
+   "host_id": "preset-deepinfra",
+   "model": "lead-m",
+   "qualification_by_role": {
+    "clerk": "experimental",
+    "lead": "experimental",
+    "research_helper": "experimental",
+    "scribe": "experimental"
+   }
+  },
+  {
+   "active_task": false,
+   "binding_errors": {},
+   "bound_roles": [
+    "scribe",
+    "research_helper"
+   ],
+   "host_enabled": true,
+   "host_id": "preset-deepinfra",
+   "model": "notes-m",
+   "qualification_by_role": {
+    "clerk": "experimental",
+    "lead": "experimental",
+    "research_helper": "experimental",
+    "scribe": "experimental"
+   }
+  }
+ ],
+ "service_slots": [
+  {
+   "adapter_status": "unreviewed",
+   "binding": {
+    "adapter_id": "",
+    "evidence_kind": "service_contract",
+    "host_id": "preset-deepinfra",
+    "inherits_from": "",
+    "model_id": "vision-m",
+    "protocol": "openai",
+    "source": "legacy_service"
+   },
+   "built": true,
+   "default": false,
+   "label": "OCR",
+   "model": "vision-m",
+   "number": 4,
+   "provider": "deepinfra",
+   "route_status": "selected",
+   "slot": "ocr"
+  },
+  {
+   "adapter_status": "reviewed",
+   "binding": {
+    "adapter_id": "",
+    "evidence_kind": "service_contract",
+    "host_id": "preset-deepinfra",
+    "inherits_from": "",
+    "model_id": "hexgrad/Kokoro-82M",
+    "protocol": "openai",
+    "source": "legacy_service"
+   },
+   "built": true,
+   "default": true,
+   "label": "Text to speech",
+   "model": "hexgrad/Kokoro-82M",
+   "number": 5,
+   "provider": "deepinfra",
+   "route_status": "selected",
+   "slot": "tts"
+  },
+  {
+   "adapter_status": null,
+   "binding": {
+    "adapter_id": "",
+    "evidence_kind": "",
+    "host_id": "",
+    "inherits_from": "",
+    "model_id": "",
+    "protocol": "",
+    "source": "unconfigured"
+   },
+   "built": true,
+   "default": null,
+   "label": "Embeddings",
+   "model": "",
+   "number": 6,
+   "provider": "",
+   "route_status": "unconfigured",
+   "slot": "embeddings"
+  },
+  {
+   "adapter_status": null,
+   "binding": {
+    "adapter_id": "",
+    "evidence_kind": "",
+    "host_id": "",
+    "inherits_from": "",
+    "model_id": "",
+    "protocol": "",
+    "source": "unconfigured"
+   },
+   "built": true,
+   "default": false,
+   "label": "Speech to text",
+   "model": "",
+   "number": 7,
+   "provider": "",
+   "route_status": "unconfigured",
+   "slot": "stt"
+  }
+ ]
+}
