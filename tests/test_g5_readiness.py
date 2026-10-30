@@ -305,16 +305,3 @@ def test_the_cap_stops_a_call_before_it_is_sent(tmp_path):
         card={"input_per_1m": 1.0, "output_per_1m": 0.0}, budget_usd=0.05, max_turns=3)
     assert row["stopped"].startswith("budget: G5 budget"), row["stopped"]
     assert row["spend"]["usd"] <= 0.05 and len(sent) == 2
-
-
-def test_a_second_run_cannot_share_the_ledger_while_one_holds_it(tmp_path):
-    first = g5.Ledger(tmp_path / "ledger.json", 8.0)
-    try:
-        with pytest.raises(SystemExit, match="another G5 run holds the ledger"):
-            g5.Ledger(tmp_path / "ledger.json", 8.0)
-        first.record("t1", 0.5)
-    finally:
-        first.release()
-    again = g5.Ledger(tmp_path / "ledger.json", 8.0)
-    assert again.remaining == 7.5
-    again.release()

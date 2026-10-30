@@ -606,6 +606,36 @@ def _read_cancellable(response: Any, handle: _CancellationHandle,
         chunks.append(chunk)
 
 
+# ------------------------------------------------------------ the dispatch gate (REMED-05)
+
+class DispatchGate:
+    """Told of every HTTP attempt `_request` makes, retries included.
+
+    A paid evaluation installs one to hold a durable reservation for each
+    attempt before it is sent and to settle it from what came back. `before`
+    may raise ProviderError to stop the attempt unsent; its return value is
+    handed back to `after`, which is called exactly once per sent attempt with
+    the exception that ended it (None on a response) and the decoded reply.
+    """
+
+    def before(self, method: str, url: str, body: Any, sent_bytes: int) -> Any:
+        return None
+
+    def after(self, ticket: Any, error: BaseException | None, reply: Any) -> None:
+        return None
+
+
+_GATE: DispatchGate | None = None
+
+
+def set_dispatch_gate(gate: DispatchGate | None) -> DispatchGate | None:
+    """Install the process's dispatch gate (None removes it); returns the old one.
+    Process-wide on purpose: a paid run must see every dispatch, from any thread."""
+    global _GATE
+    previous, _GATE = _GATE, gate
+    return previous
+
+
 def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
              timeout: float = 120, sleep: Any = None,
              retries: tuple[float, ...] | None = None,
@@ -620,6 +650,17 @@ def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
                                          headers={"Content-Type": "application/json",
                                                   **headers})
         handle: _CancellationHandle | None = None
+        gate = _GATE
+        # Before the attempt is sent: a refusal here sends nothing.
+        ticket = gate.before(method, url, body, len(data or b"")) if gate is not None else None
+        settled = False
+
+        def settle(error: BaseException | None, reply: Any = None) -> None:
+            nonlocal settled
+            if gate is not None and not settled:
+                settled = True
+                gate.after(ticket, error, reply)
+
         try:
             if cancel is not None:
                 response, handle = _open_cancellable(request, timeout, cancel)
@@ -631,13 +672,16 @@ def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
                 decoded = json.loads(raw_body.decode("utf-8"))
                 if cancel is not None and cancel.is_set():
                     raise ProviderCancelledError()
+                settle(None, decoded)
                 if isinstance(decoded, dict):
                     return _ResponsePayload(decoded, _response_request_id(
                         getattr(response, "headers", None)))
                 return decoded
-        except ProviderCancelledError:
+        except ProviderCancelledError as exc:
+            settle(exc)
             raise
         except urllib.error.HTTPError as exc:
+            settle(exc)
             if handle is None:
                 handle = getattr(exc, "_librarian_cancel_handle", None)
             error_body = (_read_cancellable(exc, handle, timeout)
@@ -649,6 +693,7 @@ def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
             raise ProviderError(f"HTTP {exc.code} from {url}: {detail}",
                                 category=_http_failure_category(exc.code)) from exc
         except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+            settle(exc)
             # A refused connection is a server that is not running (a local model): asking
             # again only waits. A timeout or a dropped connection is worth another try.
             reason = getattr(exc, "reason", exc)
@@ -665,6 +710,9 @@ def _request(method: str, url: str, headers: dict[str, str], body: Any = None,
                                     f"model", category="provider_transient") from exc
             raise ProviderError(f"{url} is not reachable: {exc}",
                                 category=_transport_failure_category(reason)) from exc
+        except BaseException as exc:
+            settle(exc)             # an undecodable reply, an interrupt: outcome unknown
+            raise
         finally:
             if handle is not None:
                 handle.finish()

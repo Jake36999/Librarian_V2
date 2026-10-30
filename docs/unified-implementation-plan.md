@@ -3799,3 +3799,75 @@ the file and records its real fingerprint.
   artifact records, is covered by its target audit at that epoch, not by
   reconcile.
 - Invalidation stays session-wide, by epoch, as the reviews accepted.
+
+### REMED-05 durable per-call accounting for paid evaluation (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| REMED-05 | implemented | this commit | `providers.py` (`DispatchGate`, `set_dispatch_gate`, the gate in `_request`), `scripts/g5_measure.py` (`PaidDispatch`, `adopt_ledger`, `committed`), `scripts/delegate_deepinfra.py` (`classify_failure` reads raw transport errors); tests in `tests/test_paid_dispatch.py` (14 new). Full suite: 1,906 passed, 2 skipped. |
+
+**What was wrong (F6 remainder).** The G5 runner wrote its spend to its own
+ledger once per task, after the task ended. Three problems followed:
+- A crash mid-task lost that task's spend.
+- The pre-call guard reserved nothing durable. Its bound came from the loop's
+  character estimate times four, and that estimate's relation to the real
+  request was not shown.
+- `providers._request` retries a timeout or a 429/5xx up to twice, so one
+  guarded call could be up to three billable requests.
+
+**Each HTTP attempt now holds a durable reservation.** `providers._request`
+calls a process-wide dispatch gate before each attempt, retries included, and
+again exactly once with how that attempt ended. A refusal before the attempt
+sends nothing.
+
+The G5 runner's gate (`PaidDispatch`) reserves each attempt under the ledger
+lock. It uses the delegation service's own `reserve_call`. Each reservation is
+sized from the exact serialized request bytes, an upper bound on input tokens
+since a token is at least one byte, plus the request's `max_tokens` of output.
+The ledger refuses a reservation:
+- past the pool's cap;
+- past this run's budget, which is a task cap on the ledger;
+- past the per-call cap;
+- for a request identical to one whose outcome is unknown.
+
+**Settled by the delegation rules, through `settle_call`:**
+- a reply with usage is `completed`, at its metered cost;
+- an HTTP error or a refused connection, which the provider did not process, is
+  `failed`, at nothing;
+- anything else (a timeout, a dropped connection, a cancellation, a reply
+  without usage) is `uncertain` at its whole reservation. It is never refunded
+  automatically, and it blocks every later dispatch of the run;
+- a reply metered above its reservation is charged what it cost and also stops
+  the run.
+
+A crash between reserve and settle leaves the entry `started` at its
+reservation, charged against the cap until a person runs
+`delegate_ledger.py reconcile`.
+
+**One ledger policy, not a third.** The G5 ledger is now the delegation
+ledger: schema 2, pool `g5`, budget $8. `adopt_ledger` moves the first-format
+file on the first run. Each earlier entry becomes one completed entry, the
+sum is checked, and the old file is kept byte for byte as `ledger.g5v1.json`.
+
+Checked on a copy of the real `tmp/g5/ledger.json`: $4.69723 before and after,
+23 entries, backup identical. The real file is not touched until the next paid
+run.
+
+Reservations are per call under the ledger lock, so the run-long exclusive
+lock is gone and concurrent runs share the cap safely. Its test was replaced.
+The pre-call `guard` stays: it refuses before a request is even built, and it
+covers scripted providers that never reach HTTP.
+
+**Tests.** They run through the real `_request` against a local HTTP server:
+- a metered call;
+- a 503 then success: two reservations, one failed at nothing;
+- a timeout: uncertain at the reservation, and the retry refused unsent;
+- a reply without usage: uncertain, and the next call refused unsent;
+- an injected crash: `started` kept, and the same request refused;
+- the pool cap, the run budget, and two runs sharing one pool;
+- a missing `max_tokens`, an unpriced endpoint, and a request without a body
+  (not a model call);
+- adoption, and its refusals.
+
+**Not run:** no paid call was made. The gate's first real use will be the
+next paid G5 run, REMED-08.

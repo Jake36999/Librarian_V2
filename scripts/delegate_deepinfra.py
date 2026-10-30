@@ -473,6 +473,11 @@ def classify_failure(exc: BaseException, response_saved: bool) -> str:
         return "uncertain"
     if isinstance(exc, providers.ProviderCancelledError):
         return "uncertain"
+    if isinstance(exc, urllib.error.URLError):
+        # The raw transport error, as a per-attempt dispatch gate sees it (REMED-05).
+        wrapped = providers.ProviderError(str(exc))
+        wrapped.__cause__ = exc
+        exc = wrapped
     if isinstance(exc, providers.ProviderError):
         cause = exc.__cause__
         if isinstance(cause, urllib.error.HTTPError):

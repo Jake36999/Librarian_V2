@@ -13,21 +13,32 @@ runner:
         --tasks docs/experiments/g5-tasks.json --run-dir tmp/g5/run-1 \
         --route deepinfra:deepseek-ai/DeepSeek-V4.1-Flash --budget-usd 1 --confirm-paid         --env-file D:/Resource-Library/.utility/.env
 
-A paid route needs --confirm-paid and a budget. The runner stops at the budget,
-and stops if the provider reports no usage, because then spend cannot be
-bounded. A dry run passes `provider_for` from code (tests) and spends nothing.
+A paid route needs --confirm-paid and a budget. Every HTTP attempt to the
+provider, retries included, holds a durable reservation on the shared
+delegation ledger (pool `g5`) before it is sent, and is settled from the
+usage that came back (REMED-05, `PaidDispatch`). An attempt whose cost is
+unknown keeps its whole reservation and stops all further spending; a crash
+leaves its reservations charged until a person reconciles them with
+`scripts/delegate_ledger.py reconcile`. A dry run passes `provider_for` from
+code (tests) and spends nothing.
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
+import secrets
 import shutil
 import sys
 import threading
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
+
+sys.path.insert(0, str(Path(__file__).parent))
+import delegate_deepinfra as delegation  # noqa: E402  (the shared ledger service)
 
 SETTLED = {"complete_verified", "complete_with_human_acceptance", "failed", "blocked",
            "invalid_history", "integrity_violation", "needs_person"}
@@ -127,7 +138,8 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
              provider_for: Callable | None = None, card: dict[str, float] | None = None,
              budget_usd: float | None = None, max_turns: int = 12,
              restart_after: int = 2, permission_wait: float = 5.0,
-             answer_questions: str | None = FIXED_ANSWER) -> dict[str, Any]:
+             answer_questions: str | None = FIXED_ANSWER,
+             gate: "PaidDispatch | None" = None) -> dict[str, Any]:
     """One predeclared task, start to finish, on its own scratch library."""
     from resource_librarian import audit_events, closure_audit, research_grains
     from resource_librarian import tools  # noqa: F401
@@ -201,6 +213,9 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
             idle = idle + 1 if not turn.calls else 0
             if turn.stopped == "profile_budget" and "G5 budget" in (turn.error or ""):
                 row["stopped"] = f"budget: {turn.error}"
+                break
+            if gate is not None and gate.blocked:
+                row["stopped"] = f"budget: G5 budget: {gate.blocked}"
                 break
             if card is not None and (meter.without_usage or
                                      (turn.steps and meter.calls == before_calls)):
@@ -282,38 +297,137 @@ def audit_offline(vault: Any, session_id: str) -> dict[str, Any]:
                                    index_run=lambda operation: operation(Engine(index, heuristics)))
 
 
-class Ledger:
-    """The G5 spend ledger: one cap across every run that uses it. A run holds an
-    exclusive lock for its whole length, so two runs never spend against the same
-    remainder at once (Codex review: separate invocations shared no cap)."""
+POOL = "g5"
 
-    def __init__(self, path: Path, cap: float):
-        self.path, self.lock = Path(path), Path(path).with_suffix(".lock")
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+
+def adopt_ledger(path: Path, cap: float) -> None:
+    """Move a first-format G5 ledger ({cap_usd, spent_usd, entries}) onto the shared
+    delegation ledger (schema 2, pool `g5`), so G5 has no accounting policy of its
+    own (REMED-05). Each earlier run becomes one completed entry at what it
+    recorded; the old file is kept byte for byte beside it. Nothing changes when
+    the ledger is already schema 2, or absent."""
+    path = Path(path)
+    if not path.is_file():
+        return
+    old = json.loads(path.read_text(encoding="utf-8"))
+    if old.get("schema") == 2:
+        return
+    if "cap_usd" not in old:
+        raise SystemExit(f"refusing: {path} is neither a G5 nor a schema-2 ledger")
+    if abs(float(old["cap_usd"]) - cap) > 1e-9:
+        raise SystemExit(f"refusing: the ledger's cap is ${old['cap_usd']}, not ${cap}")
+    calls = []
+    for n, item in enumerate(old.get("entries") or []):
+        calls.append({"run_id": f"import-g5-{n + 1}", "pool": POOL, "task": item["label"],
+                      "task_id": "", "status": "completed", "charged_usd": float(item["usd"]),
+                      "reserve_usd": float(item["usd"]), "cost_basis": "imported_estimate",
+                      "request_sha256": "", "attempt": 1, "truncated": False,
+                      "imported_from": str(path.resolve())})
+    ledger = {"schema": 2, "pools": {POOL: {"budget_usd": cap}}, "calls": calls}
+    if abs(delegation.pool_committed(ledger, POOL) - float(old["spent_usd"])) > 0.0001:
+        raise SystemExit(f"refusing: {path}'s entries do not add up to its spent_usd")
+    backup = path.with_name(path.stem + ".g5v1.json")
+    if backup.exists():
+        raise SystemExit(f"refusing: {backup} already exists; nothing was changed")
+    with delegation.ledger_lock(path):
+        path.rename(backup)
+        delegation._write_ledger_locked(path, ledger)
+
+
+def committed(path: Path, cap: float, task_id: str = "") -> float:
+    """What the pool (or one run, by its task id) has committed, reservations included."""
+    with delegation.ledger_lock(path):
+        ledger = delegation._load_ledger_locked(path, POOL, cap)
+    return round(sum(float(c.get("charged_usd", 0.0)) for c in ledger.get("calls", [])
+                     if c.get("pool") == POOL and (not task_id or c.get("task_id") == task_id)),
+                 8)
+
+
+class PaidDispatch(delegation.providers.DispatchGate):
+    """The G5 runner's dispatch gate: each HTTP attempt to the provider, retries
+    included, is reserved on the shared ledger before it is sent and settled
+    from what came back, by the delegation service's own rules (REMED-05).
+
+    - Reserve: the exact request bytes as an upper bound on input tokens (a
+      token is at least one byte) plus `max_tokens` of output, at the rate card.
+      The ledger refuses it past the pool's cap, past this run's budget, or
+      for a request identical to one whose outcome is unknown.
+    - Settle: a reply with usage is charged its metered cost (`completed`); an
+      HTTP error or a refused connection, which the provider did not process,
+      is `failed` at nothing; anything else (a timeout, a dropped connection,
+      a reply without usage) is `uncertain` at the whole reservation, never
+      refunded, and blocks every later dispatch.
+    - A crash between the two leaves the entry `started` at its reservation.
+    """
+
+    def __init__(self, ledger: Path, cap: float, card: dict[str, float], *, model: str,
+                 run: str, task: str = "", run_budget: float | None = None,
+                 call_cap: float = 0.25, host: str = "api.deepinfra.com") -> None:
+        self.ledger, self.cap, self.card, self.model = Path(ledger), cap, card, model
+        self.run, self.task, self.run_budget, self.call_cap = run, task, run_budget, call_cap
+        self.host = host
+        self.blocked = ""
+        self.attempts = self.settled = 0
+
+    def _stop(self, reason: str) -> None:
+        self.blocked = self.blocked or reason
+        raise delegation.providers.ProviderError(f"G5 budget: {reason}", category="budget")
+
+    def before(self, method: str, url: str, body: Any, sent_bytes: int) -> Any:
+        if body is None:
+            return None                 # a listing or balance request: no model call
+        if self.blocked:
+            self._stop(self.blocked)
+        if self.host not in url:
+            self._stop(f"a model request to {url.split('?')[0]} has no rate card here")
+        limit = body.get("max_tokens") or body.get("max_completion_tokens") \
+            if isinstance(body, dict) else None
+        if not isinstance(limit, int) or limit <= 0:
+            self._stop("a model request without max_tokens cannot be bounded")
+        reserve = (sent_bytes * self.card["input_per_1m"] +
+                   limit * self.card["output_per_1m"]) / 1_000_000
+        raw = json.dumps(body).encode("utf-8")
+        entry = {"run_id": f"g5-{secrets.token_hex(6)}", "pool": POOL, "task": self.task,
+                 "task_id": self.run, "role": "evaluation", "model": self.model,
+                 "request_sha256": hashlib.sha256(raw).hexdigest(),
+                 "started_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                 "timeout_s": 180.0, "attempt": 1, "status": "started",
+                 "reserve_usd": round(reserve, 8), "charged_usd": round(reserve, 8),
+                 "cost_basis": "reserve", "truncated": False, "receipt": "",
+                 "sent_bytes": sent_bytes, "max_tokens": limit}
         try:
-            fd = os.open(self.lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        except FileExistsError:
-            raise SystemExit(f"refusing: {self.lock} exists; another G5 run holds the "
-                             "ledger (remove the lock only if that run has ended)") from None
-        os.write(fd, str(os.getpid()).encode())
-        os.close(fd)
-        self.data = (json.loads(self.path.read_text(encoding="utf-8")) if self.path.is_file()
-                     else {"cap_usd": cap, "spent_usd": 0.0, "entries": []})
-        if abs(float(self.data["cap_usd"]) - cap) > 1e-9:
-            self.release()
-            raise SystemExit(f"refusing: the ledger's cap is ${self.data['cap_usd']}, not ${cap}")
+            delegation.reserve_call(self.ledger, POOL, self.cap, entry, reserve, self.call_cap,
+                                    task_cap_usd=self.run_budget)
+        except SystemExit as exc:
+            self._stop(f"the ledger refused the reservation: {exc}")
+        self.attempts += 1
+        return entry["run_id"], reserve
 
-    @property
-    def remaining(self) -> float:
-        return max(0.0, float(self.data["cap_usd"]) - float(self.data["spent_usd"]))
-
-    def record(self, label: str, usd: float) -> None:
-        self.data["spent_usd"] = round(float(self.data["spent_usd"]) + usd, 5)
-        self.data["entries"].append({"label": label, "usd": round(usd, 5)})
-        self.path.write_text(json.dumps(self.data, indent=1) + "\n", encoding="utf-8")
-
-    def release(self) -> None:
-        self.lock.unlink(missing_ok=True)
+    def after(self, ticket: Any, error: BaseException | None, reply: Any) -> None:
+        if ticket is None:
+            return
+        run_id, reserve = ticket
+        usage = reply.get("usage") if error is None and isinstance(reply, dict) else None
+        if error is None and isinstance(usage, dict) and usage:
+            tokens_in = int(usage.get("prompt_tokens") or usage.get("input_tokens") or 0)
+            tokens_out = int(usage.get("completion_tokens") or usage.get("output_tokens") or 0)
+            actual = (tokens_in * self.card["input_per_1m"] +
+                      tokens_out * self.card["output_per_1m"]) / 1_000_000
+            status, charged, basis = "completed", actual, "metered_estimate"
+            if actual > reserve:
+                # Billed past its bound: charge what was billed, and spend no more.
+                self.blocked = self.blocked or "a call cost more than its reservation"
+        elif error is not None and delegation.classify_failure(error, False) == "failed":
+            status, charged, basis = "failed", 0.0, "none"
+        else:
+            status, charged, basis = "uncertain", reserve, "reserve"
+            self.blocked = self.blocked or (
+                "a model call's cost is unknown (no usage)" if error is None else
+                f"a model call's outcome is unknown ({type(error).__name__}); reconcile it "
+                f"with delegate_ledger.py reconcile {run_id}")
+        delegation.settle_call(self.ledger, POOL, self.cap, run_id, status=status,
+                               charged_usd=charged, cost_basis=basis, receipt_path="")
+        self.settled += 1
 
 
 def validate_tasks(data: dict[str, Any], library: Path | None = None) -> list[str]:
@@ -402,7 +516,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--only", action="append", default=[], help="run only these task ids")
     parser.add_argument("--max-turns", type=int, default=12)
     parser.add_argument("--ledger", default="tmp/g5/ledger.json",
-                        help="the spend ledger every G5 run shares")
+                        help="the spend ledger every G5 run shares (delegation schema 2, "
+                             "pool g5)")
+    parser.add_argument("--call-cap-usd", type=float, default=0.25,
+                        help="the most one model request may reserve")
     parser.add_argument("--ledger-cap", type=float, default=8.0,
                         help="the cap across all runs on this ledger (the approved $8)")
     parser.add_argument("--env-file", default="",
@@ -420,8 +537,7 @@ def main(argv: list[str] | None = None) -> int:
     # per-user config folder shared by every library. A measurement run must not
     # change the desktop app's routes, so it gets a config folder of its own.
     os.environ["LIBRARIAN_CONFIG_DIR"] = str(Path(args.run_dir).resolve() / "config")
-    sys.path.insert(0, str(Path(__file__).parent))
-    from delegate_deepinfra import RATE_CARDS
+    RATE_CARDS = delegation.RATE_CARDS
     provider, _, model = args.route.partition(":")
     card = RATE_CARDS.get(model)
     if card is None:
@@ -439,27 +555,35 @@ def main(argv: list[str] | None = None) -> int:
         tasks = [t for t in tasks if t["id"] in args.only]
     run_dir = Path(args.run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
-    ledger = Ledger(Path(args.ledger), args.ledger_cap)
-    rows, spent = [], 0.0
+    ledger = Path(args.ledger)
+    adopt_ledger(ledger, args.ledger_cap)
+    # This run's id on the ledger: its budget is a task cap there, and every
+    # reservation is charged to it as it is made, not after a task ends.
+    run_id = f"{run_dir.resolve().name}-{secrets.token_hex(3)}"
+    gate = PaidDispatch(ledger, args.ledger_cap, card, model=model, run=run_id,
+                        run_budget=args.budget_usd, call_cap=args.call_cap_usd)
+    previous = delegation.providers.set_dispatch_gate(gate)
+    rows = []
     try:
         for task in tasks:
-            remaining = min(args.budget_usd - spent, ledger.remaining)
-            if remaining <= 0:
+            used = committed(ledger, args.ledger_cap, run_id)
+            remaining = min(args.budget_usd - used,
+                            args.ledger_cap - committed(ledger, args.ledger_cap))
+            if remaining <= 0 or gate.blocked:
                 rows.append({"task": task["id"], "route": args.route,
-                             "stopped": "budget_exhausted"})
+                             "stopped": f"budget_exhausted{': ' + gate.blocked if gate.blocked else ''}"})
                 continue
+            gate.task = f"{run_dir.name}/{task['id']} ({args.route})"
             row = run_task(task, library=Path(args.library), run_dir=run_dir,
                            route={"provider": provider, "model": model}, card=card,
-                           budget_usd=remaining, max_turns=args.max_turns)
-            cost = (row.get("spend") or {}).get("usd", 0.0)
-            spent += cost
-            ledger.record(f"{run_dir.name}/{task['id']} ({args.route})", cost)
+                           budget_usd=remaining, max_turns=args.max_turns, gate=gate)
+            row["ledger_usd"] = round(committed(ledger, args.ledger_cap, run_id) - used, 8)
             rows.append(row)
             (run_dir / "results.json").write_text(json.dumps(
-                {"rows": rows, "totals": totals(rows)}, indent=1, default=str),
-                encoding="utf-8")
+                {"rows": rows, "totals": totals(rows), "ledger_run": run_id}, indent=1,
+                default=str), encoding="utf-8")
     finally:
-        ledger.release()
+        delegation.providers.set_dispatch_gate(previous)
     print(json.dumps(totals(rows), indent=1))
     return 0
 
