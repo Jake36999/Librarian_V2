@@ -58,6 +58,12 @@ RATE_CARDS: dict[str, dict[str, Any]] = {
         "source": "https://api.deepinfra.com/v1/openai/models",
         "as_of": "2026-10-29",
     },
+    "XiaomiMiMo/MiMo-V2.6-Flash": {
+        "input_per_1m": 0.14,
+        "output_per_1m": 0.28,
+        "source": "https://api.deepinfra.com/v1/openai/models",
+        "as_of": "2026-10-30",
+    },
     "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo": {
         "input_per_1m": 0.30,
         "output_per_1m": 1.00,

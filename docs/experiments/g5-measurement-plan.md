@@ -1,7 +1,9 @@
 # G5 measurement plan: Tier A on real audited sessions
 
-**Status:** proposed (2026-10-30). Nothing here has run. The paid part needs
-the owner's approval of the task set, the decision rule and the budget.
+**Status:** approved (2026-10-30). The owner approved the task file
+(`g5-tasks.json`), the decision rule below and the $8 cap. Part 1 is done;
+the pilot is next, and the full run waits for the owner's review of the
+pilot.
 
 ## What G5 needs
 

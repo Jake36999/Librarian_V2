@@ -1,5 +1,5 @@
 {
- "status": "draft for the owner's review (2026-10-30); not approved, not run",
+ "status": "approved by the owner (2026-10-30), with the decision rule and the $8 cap in g5-measurement-plan.md",
  "library": "D:/Resource-Library/.librarian-app",
  "notes": [
   "Requirements are set by the person (the runner calls set_requirement as the person). The Lead proposes each contract and its verifier plan; that choice is part of what is measured.",

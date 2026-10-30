@@ -241,6 +241,10 @@ def main(argv: list[str] | None = None) -> int:
     if not args.confirm_paid:
         print("refusing: a real route makes paid calls; pass --confirm-paid", file=sys.stderr)
         return 2
+    # The App keeps the person's model choices (tiers, overrides, profiles) in a
+    # per-user config folder shared by every library. A measurement run must not
+    # change the desktop app's routes, so it gets a config folder of its own.
+    os.environ["LIBRARIAN_CONFIG_DIR"] = str(Path(args.run_dir).resolve() / "config")
     sys.path.insert(0, str(Path(__file__).parent))
     from delegate_deepinfra import RATE_CARDS
     provider, _, model = args.route.partition(":")
