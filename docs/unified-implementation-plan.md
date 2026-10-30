@@ -3324,3 +3324,31 @@ Counting only fitting closures, pilot 4 is **6 of 9**. Before the full run,
 the owner should decide how a predicate's verifier is fixed. One option: the
 person names the verifier with each predicate in the task file, and
 admission requires the plan to match.
+
+### G5 pilot 5: person-named verifiers confirmed (2026-10-30)
+
+| Pilot | Spend (metered) | Result |
+| --- | --- | --- |
+| 5 | $0.135 | **6 of 9 grains closed by Tier A (0.667; 95% 0.354–0.879)**; 0 false closures, and every closing verifier is the one the person named; both restarts kept the state hash |
+
+The person-named verifiers (`beafaf8`) did their job on a real model. In t5
+the Lead again planned `boundary.staged` for "the staged summary is unchanged
+since it was staged", the same mismatch as pilot 4. Admission refused it ("the
+person named target.diff_clean …"), the Lead re-planned, and the fitting
+check passed.
+
+In t1, a staged draft fell outside the contract's write targets and was
+refused, so its unchanged-draft check failed rather than closing. That is
+correct behaviour, not a closure.
+
+The pilot total is about $0.55 of its $1 cap: pilot 1's estimate plus
+pilots 2–5 metered. The mechanics now hold:
+- metered spend that fails closed;
+- the person sets requirements first;
+- a fixed answer to questions;
+- restart correctness;
+- the independent closure audit;
+- verifier fit enforced at admission.
+
+The full run (8 tasks × 2 routes, $6 cap) awaits the owner's review of this
+pilot.
