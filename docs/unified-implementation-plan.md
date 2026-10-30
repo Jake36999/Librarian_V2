@@ -3352,3 +3352,37 @@ pilots 2–5 metered. The mechanics now hold:
 
 The full run (8 tasks × 2 routes, $6 cap) awaits the owner's review of this
 pilot.
+
+### G5 full measurement (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| G5 measurement | run | this commit | [reports/2026-10-30-g5-measurement.md](../reports/2026-10-30-g5-measurement.md); raw results under `tmp/g5/full-*` (local). |
+
+Sixteen real audited sessions ran: 8 tasks on each of DeepSeek-V4.1-Flash and
+MiMo-V2.6-Flash. **Tier A closed 32 of 74 grains, a pooled share of 0.432
+(95% interval 0.326–0.546).** By route: DeepSeek 0.541, MiMo 0.324. The run
+spent $2.37, metered; with the pilots, about $2.92 of the $8 cap. This
+satisfies HARNESS-06's done-when ("measured on real sessions, not asserted")
+for seven of the ten verifiers.
+
+All four conditions of the approved decision rule are met:
+- 16 of 16 histories are valid;
+- 0 of 32 closures are false under the closure audit (20 independent
+  re-checks, 12 re-runs);
+- 15 of 15 forced restarts reproduced the state hash;
+- the share is reported with its interval.
+
+**G5 can be closed; that is the owner's decision.**
+
+The run's own audit first reported 8 false closures. All of them were
+findability re-runs that had been given no index, a runner omission. They
+were re-audited offline with an index; the originals are kept, and the
+runner is fixed.
+
+Also found:
+- 254 contract or plan refusals: admission is the hard step for these
+  models;
+- a 115-question loop by MiMo in t5;
+- `no_suitable_tool` never exercised, because no contract addressed t6's
+  partial requirement.

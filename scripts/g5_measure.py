@@ -214,7 +214,7 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
                                     for o in r["predicates"].values() if o == "no_suitable_tool"),
             "integrity": {c: v["integrity"] for c, v in summary["contracts"].items()},
             "verifiers": verifiers, "refusals": refusals, "questions": asked,
-            "closure_audit": closure_audit.audit(vault, session)})
+        })
         return row
     except Exception as exc:  # noqa: BLE001 - one task's crash is a result, not the run's end
         row["stopped"] = f"error: {type(exc).__name__}: {str(exc)[:300]}"
@@ -222,11 +222,30 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
     finally:
         row["spend"] = meter.to_dict()
         app.close_runtime()
+        if row.get("session") and "grains" in row:
+            # After the App has closed: the audit opens its own index of the
+            # scratch library, so index.findable can be re-run (the full run's
+            # first audit had none, and counted 8 unavailable re-runs as false).
+            row["closure_audit"] = audit_offline(vault, row["session"])
 
 
 def _registered() -> set[str]:
     from resource_librarian.closure import VERIFIERS
     return set(VERIFIERS)
+
+
+def audit_offline(vault: Any, session_id: str) -> dict[str, Any]:
+    """The closure audit of one finished session, with an index of its library."""
+    from resource_librarian import closure_audit
+    from resource_librarian.index import Index
+    from resource_librarian.search import Engine
+    from resource_librarian.session import SessionStore
+    session = SessionStore(vault).load(session_id)
+    with Index(vault) as index:
+        index.refresh()
+        heuristics = dict(vault.config().get("heuristics") or {})
+        return closure_audit.audit(vault, session,
+                                   index_run=lambda operation: operation(Engine(index, heuristics)))
 
 
 def validate_tasks(data: dict[str, Any], library: Path | None = None) -> list[str]:

@@ -1,9 +1,11 @@
 # G5 measurement plan: Tier A on real audited sessions
 
-**Status:** approved (2026-10-30). The owner approved the task file
-(`g5-tasks.json`), the decision rule below and the $8 cap. Part 1 is done;
-the pilot is next, and the full run waits for the owner's review of the
-pilot.
+**Status:** run (2026-10-30). The owner approved the task file
+(`g5-tasks.json`), the decision rule below and the $8 cap. The pilots and
+the full run are complete. The result is in
+[reports/2026-10-30-g5-measurement.md](../../reports/2026-10-30-g5-measurement.md):
+a pooled Tier A share of 0.432 (95% 0.326–0.546), with every condition of
+the decision rule met.
 
 ## What G5 needs
 
