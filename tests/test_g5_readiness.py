@@ -219,3 +219,30 @@ def test_the_closure_audit_catches_a_closure_that_no_longer_holds(vault, evidenc
     found = closure_audit.audit(copy, SessionStore(copy).load(row["session"]))
     assert [r["verifier"] for r in found["false_closures"]] == ["quote.located"]
     assert "not in the evidence text" in found["false_closures"][0]["why"]
+
+
+# --- the task file ----------------------------------------------------------------
+
+def test_the_draft_task_file_is_well_formed():
+    data = json.loads((SCRIPTS.parent / "docs" / "experiments" / "g5-tasks.json")
+                      .read_text(encoding="utf-8"))
+    assert g5.validate_tasks(data) == []
+    assert len(data["tasks"]) == 8
+
+
+@pytest.mark.parametrize("task,problem", [
+    ({"id": "a", "question": "q", "requirements": [
+        {"requirement_id": "R1", "text": "t", "closure": "authoritative"}]},
+     "authoritative needs predicates"),
+    ({"id": "a", "question": "q", "requirements": [
+        {"requirement_id": "R1", "text": "t", "closure": "vibes", "predicates": ["p"]}]},
+     "closure 'vibes'"),
+    ({"id": "a", "question": "", "requirements": [{"requirement_id": "R1", "text": "t"}]},
+     "no question"),
+    ({"id": "a", "question": "q", "sources": ["Sources/none.md"],
+      "requirements": [{"requirement_id": "R1", "text": "t", "predicates": ["p"]}]},
+     "is not in the library"),
+])
+def test_a_task_file_that_could_not_run_is_refused(tmp_path, task, problem):
+    found = g5.validate_tasks({"tasks": [task]}, tmp_path)
+    assert any(problem in p for p in found), found

@@ -68,6 +68,27 @@ requirements and predicates. Together they cover every grain type:
 | citation | `citation.resolves` | "every cited evidence id and wiki link resolves" |
 | synthesis | none (`human_judgment`) | "a synthesis the person accepts" |
 
+**Drafted task file (2026-10-30).** The draft,
+`docs/experiments/g5-tasks.json`, was written after a read-only survey of the
+library. Its size:
+- 8 tasks;
+- 24 requirements: 15 authoritative, 8 human judgment, 1 partial;
+- 29 predicates, so 37 grains per route.
+
+It validates against the library: every named source exists, and the
+library's evidence store has no record failing its hash.
+
+**The library limits what can be measured.** It holds 102 model notes, 21
+pages and 2 documents, and has no repositories, no coverage records and no
+claim runs. So `arithmetic.reproduces`, `coverage.status` and
+`claim_run.passed` cannot be exercised. The tasks use the other seven Tier A
+verifiers, and t6 adds a numeric predicate that no verifier checks, to
+measure `no_suitable_tool`.
+
+To cover the missing three, the owner could ingest a few repositories, which
+brings survey evidence and DIK records, before the run. Otherwise the G5
+result must state that it covers seven of the ten verifiers.
+
 The Lead proposes each contract and its verifier plan. That proposal is
 part of what is measured, so the plan is not fixed in advance.
 

@@ -104,7 +104,9 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
             return row
         row["session"] = sid
         for requirement in task["requirements"]:
-            out = app.person_call("set_requirement", requirement, session=sid)
+            args = {k: requirement[k] for k in ("requirement_id", "text", "closure", "predicates")
+                    if k in requirement}
+            out = app.person_call("set_requirement", args, session=sid)
             if "refused" in out or "error" in out:
                 row["stopped"] = f"requirement refused: {out}"
                 return row
@@ -165,6 +167,38 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
         app.close_runtime()
 
 
+def validate_tasks(data: dict[str, Any], library: Path | None = None) -> list[str]:
+    """Problems with a task file, empty when it is runnable. With `library`,
+    every task's named sources must exist there."""
+    problems = []
+    tasks = data.get("tasks")
+    if not isinstance(tasks, list) or not tasks:
+        return ["the file has no tasks"]
+    seen = set()
+    for task in tasks:
+        tid = str(task.get("id") or "")
+        if not tid or tid in seen:
+            problems.append(f"task id {tid!r} is missing or repeated")
+        seen.add(tid)
+        if not str(task.get("question") or "").strip():
+            problems.append(f"{tid}: no question")
+        ids = [r.get("requirement_id") for r in task.get("requirements") or []]
+        if not ids or len(set(ids)) != len(ids):
+            problems.append(f"{tid}: requirement ids missing or repeated")
+        for req in task.get("requirements") or []:
+            closure = req.get("closure", "authoritative")
+            if closure not in ("authoritative", "partial", "human_judgment"):
+                problems.append(f"{tid} {req.get('requirement_id')}: closure {closure!r}")
+            if closure == "authoritative" and not req.get("predicates"):
+                problems.append(f"{tid} {req.get('requirement_id')}: authoritative needs predicates")
+            if not str(req.get("text") or "").strip():
+                problems.append(f"{tid} {req.get('requirement_id')}: no text")
+        for rel in task.get("sources") or []:
+            if library is not None and not (Path(library) / rel).is_file():
+                problems.append(f"{tid}: source {rel} is not in the library")
+    return problems
+
+
 def totals(rows: list[dict[str, Any]]) -> dict[str, Any]:
     """Pooled and per-route Tier A share, with Wilson 95% intervals."""
     def pool(selected):
@@ -215,7 +249,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"refusing: no checked rate card for {model}; run delegate_ledger.py "
               "check-prices and add one", file=sys.stderr)
         return 2
-    tasks = json.loads(Path(args.tasks).read_text(encoding="utf-8"))["tasks"]
+    data = json.loads(Path(args.tasks).read_text(encoding="utf-8"))
+    problems = validate_tasks(data, Path(args.library))
+    if problems:
+        print("refusing: the task file is not runnable:\n- " + "\n- ".join(problems),
+              file=sys.stderr)
+        return 2
+    tasks = data["tasks"]
     if args.only:
         tasks = [t for t in tasks if t["id"] in args.only]
     run_dir = Path(args.run_dir)
