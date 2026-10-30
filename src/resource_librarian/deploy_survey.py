@@ -75,7 +75,7 @@ class Survey:
         return asdict(self)
 
 
-def _is_link(entry: os.DirEntry | Path) -> bool:
+def is_link(entry: os.DirEntry | Path) -> bool:
     """A symlink, or on Windows any reparse point (a junction, a mount point)."""
     try:
         info = entry.stat(follow_symlinks=False) if isinstance(entry, os.DirEntry) \
@@ -86,6 +86,9 @@ def _is_link(entry: os.DirEntry | Path) -> bool:
         return True
     attributes = getattr(info, "st_file_attributes", 0)
     return bool(attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400))
+
+
+_is_link = is_link        # the survey's own name for it
 
 
 def _case_insensitive(root: Path) -> bool | None:

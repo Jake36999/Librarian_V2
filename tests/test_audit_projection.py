@@ -30,7 +30,11 @@ def build(store, rounds):
     for rid in REQUIREMENTS:
         append({"type": "requirement", "id": rid, "revision": 1,
                 "text": f"{rid}: every quoted line is checked against its source.",
-                "closure": "authoritative", "predicates": list(PREDICATES), "by": "person"})
+                "closure": "authoritative", "predicates": list(PREDICATES), "by": "person",
+                "verifiers": {PREDICATES[0]: {"verifier": "quote.located",
+                                              "params": {"evidence": "E1"}},
+                              PREDICATES[1]: {"verifier": "arithmetic.reproduces",
+                                              "params": {"note": "notes/s.md"}}}})
     ends = {}
     for n in range(1, rounds + 1):
         issued_at = max(0, n - 2)   # the epoch the contract is admitted against
@@ -50,7 +54,7 @@ def build(store, rounds):
                 "epoch": epoch})
         for phase in ("preflight", "execute", "audit", "reduce"):
             append({"type": "phase", "to": phase})
-        append({"type": "artifact", "id": f"A{n}", "path": "notes/s.md",
+        append({"type": "artifact", "id": f"A{n}", "path": f"notes/s-{n}.md",
                 "fingerprint": f"{n:020d}", "contract": "C1"})
         append({"type": "target_audit", "id": f"T{n}", "contract": "C1", "contract_revision": n,
                 "snapshot": f"S{n}", "integrity": "clean", "changed": ["notes/s.md"],
@@ -62,12 +66,13 @@ def build(store, rounds):
                         "contract": "C1", "contract_revision": n, "predicate": predicate,
                         "verifier": "quote.located" if p == 0 else "arithmetic.reproduces",
                         "strength": "exact", "outcome": "fail" if failing else "pass",
-                        "artifacts": [f"A{n}"], "epoch": epoch})
+                        "artifacts": [f"A{n}"], "epoch": epoch,
+                        "params": {"evidence": "E1"} if p == 0 else {"note": "notes/s.md"}})
             failing = rid == "R1"
             append({"type": "reduction", "requirement": rid,
                     "status": "partial" if failing else "verified",
                     "results": [] if failing else [f"V{n}-{rid}-0", f"V{n}-{rid}-1"],
-                    "by": "core", "epoch": epoch})
+                    "by": "core", "epoch": epoch, "contract": "C1"})
         ends[n] = len(store.events(sid)) if n in (1, 10, rounds) else None
     return sid, ends
 

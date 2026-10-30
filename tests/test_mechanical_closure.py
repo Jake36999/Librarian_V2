@@ -51,7 +51,10 @@ def to_execute(vault, *, operations=None):
     lead = Lead(vault)
     lead.ok("open_session", purpose="audited", question="write the summary note")
     lead.person("set_requirement", requirement_id="R1", text="A cited summary note.",
-                predicates=["the note meets the content model", "the note's citations resolve"])
+                predicates=["the note meets the content model", "the note's citations resolve"],
+                verifiers={predicate.split(": ", 1)[1]: {"verifier": verifier,
+                                                         "params": {"note": "Notes/out.md"}}
+                           for predicate, verifier in PLAN.items()})
     lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "write it"}})
     lead.ok("advance")
     admitted = lead.ok("admit_contract", contract_id="C1", requirements=["R1"],
@@ -122,7 +125,7 @@ def test_verified_is_refused_without_a_clean_audit_even_by_a_direct_append(vault
     with pytest.raises(Refusal, match="protected-target audit is not_audited"):
         store.append_audit(lead.ctx.session, {"type": "reduction", "requirement": "R1",
                                               "status": "verified", "results": ["V1", "V2"],
-                                              "by": "core", "epoch": 0})
+                                              "by": "core", "epoch": 0, "contract": "C1"})
 
 
 def test_an_out_of_scope_change_is_a_violation_and_cannot_complete(vault, source):

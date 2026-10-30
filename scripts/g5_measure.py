@@ -94,6 +94,35 @@ class Meter:
                 **({"usd": self.usd} if self.card else {})}
 
 
+# The loop estimates tokens as characters/4; a provider cannot bill more input
+# tokens than characters sent, so four times the estimate bounds the real cost.
+PROMPT_MARGIN = 4.0
+
+
+def guard(loop: Any, meter: "Meter", card: dict[str, float] | None,
+          budget_usd: float | None) -> None:
+    """Refuse a model call before it is sent when it could cross the cap, or when
+    an earlier call reported no usage (the Codex review, 2026-10-30, found the cap
+    was checked only after a whole multi-call turn). It wraps the loop's own
+    pre-dispatch reservation, so a refusal stops the turn as a profile budget."""
+    original = loop._reserve_profile_budget
+
+    def reserve(system, messages, tools):
+        if card is not None and meter.without_usage:
+            return False, "G5 budget: a model call reported no usage, so spend is unbounded"
+        if card is not None and budget_usd is not None:
+            prompt = loop._token_estimate({"system": system, "messages": messages,
+                                           "tools": [t.__dict__ for t in tools]})
+            worst = (prompt * PROMPT_MARGIN * card["input_per_1m"] +
+                     loop.profile_output_budget * card["output_per_1m"]) / 1_000_000
+            if meter.usd + worst > budget_usd:
+                return False, (f"G5 budget: the next call could cost ${worst:.4f} and only "
+                               f"${max(0.0, budget_usd - meter.usd):.4f} of the cap remains")
+        return original(system, messages, tools)
+
+    loop._reserve_profile_budget = reserve
+
+
 def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[str, str],
              provider_for: Callable | None = None, card: dict[str, float] | None = None,
              budget_usd: float | None = None, max_turns: int = 12,
@@ -160,6 +189,7 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
                 return row
         loop = app._loop()
         loop.ctx.session = sid
+        guard(loop, meter, card, budget_usd)
         idle, turns = 0, 0
         message = (f"This audited session is yours to work. Its question: {task['question']} "
                    f"The person has set its requirements. {CONTINUE}")
@@ -169,6 +199,9 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
             message = CONTINUE
             turns += 1
             idle = idle + 1 if not turn.calls else 0
+            if turn.stopped == "profile_budget" and "G5 budget" in (turn.error or ""):
+                row["stopped"] = f"budget: {turn.error}"
+                break
             if card is not None and (meter.without_usage or
                                      (turn.steps and meter.calls == before_calls)):
                 row["stopped"] = "usage_unavailable"
@@ -182,6 +215,7 @@ def run_task(task: dict[str, Any], *, library: Path, run_dir: Path, route: dict[
                 app = open_app()
                 loop = app._loop()
                 loop.ctx.session = sid
+                guard(loop, meter, card, budget_usd)
                 row["restart"] = {"after_turn": turns,
                                   "state_hash_equal": store.load(sid).state_hash() == before}
             outcome = audit_events.session_outcome(store.load(sid).audit)
@@ -248,6 +282,40 @@ def audit_offline(vault: Any, session_id: str) -> dict[str, Any]:
                                    index_run=lambda operation: operation(Engine(index, heuristics)))
 
 
+class Ledger:
+    """The G5 spend ledger: one cap across every run that uses it. A run holds an
+    exclusive lock for its whole length, so two runs never spend against the same
+    remainder at once (Codex review: separate invocations shared no cap)."""
+
+    def __init__(self, path: Path, cap: float):
+        self.path, self.lock = Path(path), Path(path).with_suffix(".lock")
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            fd = os.open(self.lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            raise SystemExit(f"refusing: {self.lock} exists; another G5 run holds the "
+                             "ledger (remove the lock only if that run has ended)") from None
+        os.write(fd, str(os.getpid()).encode())
+        os.close(fd)
+        self.data = (json.loads(self.path.read_text(encoding="utf-8")) if self.path.is_file()
+                     else {"cap_usd": cap, "spent_usd": 0.0, "entries": []})
+        if abs(float(self.data["cap_usd"]) - cap) > 1e-9:
+            self.release()
+            raise SystemExit(f"refusing: the ledger's cap is ${self.data['cap_usd']}, not ${cap}")
+
+    @property
+    def remaining(self) -> float:
+        return max(0.0, float(self.data["cap_usd"]) - float(self.data["spent_usd"]))
+
+    def record(self, label: str, usd: float) -> None:
+        self.data["spent_usd"] = round(float(self.data["spent_usd"]) + usd, 5)
+        self.data["entries"].append({"label": label, "usd": round(usd, 5)})
+        self.path.write_text(json.dumps(self.data, indent=1) + "\n", encoding="utf-8")
+
+    def release(self) -> None:
+        self.lock.unlink(missing_ok=True)
+
+
 def validate_tasks(data: dict[str, Any], library: Path | None = None) -> list[str]:
     """Problems with a task file, empty when it is runnable. With `library`,
     every task's named sources must exist there."""
@@ -276,13 +344,21 @@ def validate_tasks(data: dict[str, Any], library: Path | None = None) -> list[st
             if not str(req.get("text") or "").strip():
                 problems.append(f"{tid} {req.get('requirement_id')}: no text")
             named = req.get("verifiers") or {}
-            for predicate, verifier in named.items():
+            from resource_librarian.closure import SUBJECTS, binding
+            for predicate, named_verifier in named.items():
+                bound = binding(named_verifier)
                 if predicate not in (req.get("predicates") or []):
                     problems.append(f"{tid} {req.get('requirement_id')}: verifier named for "
                                     f"{predicate!r}, which is not one of its predicates")
-                if str(verifier).split("@", 1)[0] not in registered:
+                if bound["verifier"] not in registered:
                     problems.append(f"{tid} {req.get('requirement_id')}: unknown verifier "
-                                    f"{verifier!r}")
+                                    f"{bound['verifier']!r}")
+                elif closure == "authoritative":
+                    missing = [k for k in SUBJECTS.get(bound["verifier"], ())
+                               if k not in bound["params"]]
+                    if missing:
+                        problems.append(f"{tid} {req.get('requirement_id')}: {predicate!r} "
+                                        f"binds no subject ({', '.join(missing)})")
             if closure == "authoritative":
                 missing = [p for p in req.get("predicates") or [] if p not in named]
                 if missing:
@@ -325,6 +401,10 @@ def main(argv: list[str] | None = None) -> int:
                         help="required: this run makes paid model calls")
     parser.add_argument("--only", action="append", default=[], help="run only these task ids")
     parser.add_argument("--max-turns", type=int, default=12)
+    parser.add_argument("--ledger", default="tmp/g5/ledger.json",
+                        help="the spend ledger every G5 run shares")
+    parser.add_argument("--ledger-cap", type=float, default=8.0,
+                        help="the cap across all runs on this ledger (the approved $8)")
     parser.add_argument("--env-file", default="",
                         help="load DEEPINFRA_API_KEY from this file into this process only")
     args = parser.parse_args(argv)
@@ -359,19 +439,27 @@ def main(argv: list[str] | None = None) -> int:
         tasks = [t for t in tasks if t["id"] in args.only]
     run_dir = Path(args.run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
+    ledger = Ledger(Path(args.ledger), args.ledger_cap)
     rows, spent = [], 0.0
-    for task in tasks:
-        remaining = args.budget_usd - spent
-        if remaining <= 0:
-            rows.append({"task": task["id"], "route": args.route, "stopped": "budget_exhausted"})
-            continue
-        row = run_task(task, library=Path(args.library), run_dir=run_dir,
-                       route={"provider": provider, "model": model}, card=card,
-                       budget_usd=remaining, max_turns=args.max_turns)
-        spent += (row.get("spend") or {}).get("usd", 0.0)
-        rows.append(row)
-        (run_dir / "results.json").write_text(json.dumps(
-            {"rows": rows, "totals": totals(rows)}, indent=1, default=str), encoding="utf-8")
+    try:
+        for task in tasks:
+            remaining = min(args.budget_usd - spent, ledger.remaining)
+            if remaining <= 0:
+                rows.append({"task": task["id"], "route": args.route,
+                             "stopped": "budget_exhausted"})
+                continue
+            row = run_task(task, library=Path(args.library), run_dir=run_dir,
+                           route={"provider": provider, "model": model}, card=card,
+                           budget_usd=remaining, max_turns=args.max_turns)
+            cost = (row.get("spend") or {}).get("usd", 0.0)
+            spent += cost
+            ledger.record(f"{run_dir.name}/{task['id']} ({args.route})", cost)
+            rows.append(row)
+            (run_dir / "results.json").write_text(json.dumps(
+                {"rows": rows, "totals": totals(rows)}, indent=1, default=str),
+                encoding="utf-8")
+    finally:
+        ledger.release()
     print(json.dumps(totals(rows), indent=1))
     return 0
 

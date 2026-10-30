@@ -88,11 +88,12 @@ class Core:
                      "contract": "C1", "contract_revision": contract["revision"],
                      "predicate": "the note exists", "verifier": "index.findable@1",
                      "strength": "exact", "outcome": outcome, "artifacts": [aid],
-                     "epoch": self.epoch})
+                     "epoch": self.epoch, "params": {"note": "out"}})
 
     def reduce(self, status, results=("V1",)):
         self.append({"type": "reduction", "requirement": "R1", "status": status,
-                     "results": list(results), "by": "core", "epoch": self.epoch})
+                     "results": list(results), "by": "core", "epoch": self.epoch,
+                     "contract": "C1"})
 
 
 @pytest.fixture
@@ -104,7 +105,9 @@ def lead(vault):
 
 def set_r1(lead):
     lead.person("set_requirement", requirement_id="R1", text="A summary note exists.",
-                predicates=["the note exists"])
+                predicates=["the note exists"],
+                verifiers={"the note exists": {"verifier": "index.findable",
+                                               "params": {"note": "out"}}})
 
 
 def propose(lead):

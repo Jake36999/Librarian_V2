@@ -27,13 +27,17 @@ def lines(store, sid):
     return [json.loads(l) for l in store.path(sid).read_text(encoding="utf-8").splitlines() if l]
 
 
+VERIFIER_FOR = {"quote present": "quote.located", "arithmetic reproduces": "arithmetic.reproduces"}
+# The subject the person binds to each predicate (Codex review, 2026-10-30).
+SUBJECT_FOR = {"quote present": {"evidence": "E1"}, "arithmetic reproduces": {"note": "notes/a.md"}}
+
+
 def requirement(rid="R1", *, revision=1, closure="authoritative", predicates=("quote present",),
                 by="person"):
     return {"type": "requirement", "id": rid, "revision": revision, "closure": closure,
-            "predicates": list(predicates), "text": "Quote the source exactly.", "by": by}
-
-
-VERIFIER_FOR = {"quote present": "quote.located", "arithmetic reproduces": "arithmetic.reproduces"}
+            "predicates": list(predicates), "text": "Quote the source exactly.", "by": by,
+            "verifiers": {p: {"verifier": VERIFIER_FOR[p], "params": SUBJECT_FOR[p]}
+                          for p in predicates if p in VERIFIER_FOR}}
 
 
 def contract(cid="C1", *, revision=1, requirements=("R1",), epoch=0, write=("notes/a.md",),
@@ -50,16 +54,17 @@ def result(rid_="V1", *, outcome="pass", strength="exact", epoch=0, predicate="q
     return {"type": "verifier_result", "id": rid_, "requirement": "R1", "contract": "C1",
             "contract_revision": contract_revision, "predicate": predicate,
             "verifier": f"{VERIFIER_FOR.get(predicate, 'quote.located')}@1", "strength": strength,
-            "outcome": outcome, "artifacts": list(artifacts), "epoch": epoch}
+            "outcome": outcome, "artifacts": list(artifacts), "epoch": epoch,
+            "params": dict(SUBJECT_FOR.get(predicate, {}))}
 
 
 def artifact(aid="A1", path="notes/a.md", fp="f" * 20):
     return {"type": "artifact", "id": aid, "path": path, "fingerprint": fp, "contract": "C1"}
 
 
-def verify(results=("V1",), epoch=0, status="verified", by="core"):
+def verify(results=("V1",), epoch=0, status="verified", by="core", contract="C1"):
     return {"type": "reduction", "requirement": "R1", "status": status, "results": list(results),
-            "by": by, "epoch": epoch}
+            "by": by, "epoch": epoch, "contract": contract}
 
 
 def snapshot(sid_="S1", *, contract_revision=1, epoch=0):
@@ -195,7 +200,7 @@ def test_a_requirement_revision_reopens_it_and_stales_the_others(store, sid):
     store.append_audit(sid, {**snapshot("S2"), "contract": "C2"})
     store.append_audit(sid, {**clean("T2", snapshot_="S2"), "contract": "C2"})
     store.append_audit(sid, verify())
-    store.append_audit(sid, {**verify(results=("V2",)), "requirement": "R2"})
+    store.append_audit(sid, {**verify(results=("V2",), contract="C2"), "requirement": "R2"})
 
     store.append_audit(sid, requirement(revision=2))  # the person changes R1
 

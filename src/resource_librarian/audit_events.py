@@ -81,6 +81,7 @@ def closure_module_base(verifier: Any) -> str:
 
 # Module-level: inside the rules a local named `closure` holds the closure class.
 _VERIFIER_IDS = frozenset(closure.VERIFIERS)
+_binding = closure.binding
 
 
 def _refuse(message: str) -> Refusal:
@@ -167,14 +168,15 @@ def _requirement(state: AuditState, event: dict[str, Any]) -> None:
     named = event.get("verifiers") or {}
     if not isinstance(named, dict) or any(p not in predicates for p in named):
         raise _refuse("requirement verifiers map one of its own predicates to a verifier id")
-    unknown = [v for v in named.values() if closure_module_base(v) not in _VERIFIER_IDS]
+    bound = {p: _binding(v) for p, v in named.items()}
+    unknown = [b["verifier"] for b in bound.values() if b["verifier"] not in _VERIFIER_IDS]
     if unknown:
         raise _refuse(f"unknown verifier(s) {unknown}; registered: {sorted(_VERIFIER_IDS)}")
     if revision > 1:
         state.epoch += 1
     state.requirements[event["id"]] = {
         "text": text, "closure": closure, "predicates": list(predicates),
-        "verifiers": {p: closure_module_base(v) for p, v in named.items()},
+        "verifiers": bound,
         "revision": revision, "status": "open", "status_epoch": state.epoch}
 
 
@@ -211,8 +213,14 @@ def _artifact(state: AuditState, event: dict[str, Any]) -> None:
     contract = event.get("contract", "")
     if contract and contract not in state.contracts:
         raise _refuse(f"artifact names unknown contract {contract!r}")
-    state.artifacts[ident] = {"path": _rel_path(event.get("path")),
-                              "fingerprint": _text(event, "fingerprint"), "contract": contract,
+    path, fingerprint = _rel_path(event.get("path")), _text(event, "fingerprint")
+    # Replacing a recorded artifact with different content changes what every
+    # earlier result and acceptance was about: they all go stale (Codex review,
+    # 2026-10-30: a later contract overwrote a verified draft unnoticed).
+    if any(a["path"] == path and a["fingerprint"] != fingerprint
+           for a in state.artifacts.values()):
+        state.epoch += 1
+    state.artifacts[ident] = {"path": path, "fingerprint": fingerprint, "contract": contract,
                               "epoch": state.epoch}
 
 
@@ -247,6 +255,7 @@ def _verifier_result(state: AuditState, event: dict[str, Any]) -> None:
     state.results[ident] = {
         "requirement": requirement, "contract": contract, "predicate": predicate,
         "verifier": verifier, "strength": strength,
+        "revision": state.contracts[contract]["revision"],
         "outcome": _choice(event, "outcome", RESULTS),
         "artifacts": _id_list(event, "artifacts", state.artifacts, "artifact"),
         "epoch": _epoch(state, event),
@@ -270,14 +279,22 @@ def _params(value: Any) -> dict[str, Any]:
     return out
 
 
-def _latest_result(state: AuditState, requirement: str, predicate: str) -> tuple[str, dict] | None:
+def _latest_result(state: AuditState, requirement: str, predicate: str,
+                   contract: str = "") -> tuple[str, dict] | None:
     """The newest result for one predicate at the current epoch; an older pass never
-    hides a newer failure."""
+    hides a newer failure. With `contract`, only that contract's results at its
+    current revision count: another contract's check is not this one's (Codex
+    review, 2026-10-30)."""
     found = None
     for ident, result in state.results.items():  # insertion order is append order
-        if (result["requirement"], result["predicate"]) == (requirement, predicate) and \
-                result["epoch"] == state.epoch:
-            found = (ident, result)
+        if (result["requirement"], result["predicate"]) != (requirement, predicate):
+            continue
+        if result["epoch"] != state.epoch:
+            continue
+        if contract and (result["contract"] != contract
+                         or result.get("revision") != state.contracts[contract]["revision"]):
+            continue
+        found = (ident, result)
     return found
 
 
@@ -292,6 +309,9 @@ def _reduction(state: AuditState, event: dict[str, Any]) -> None:
         raise _refuse("a reduction cites only results for its own requirement")
     by = _choice(event, "by", ("core", "person"))
     epoch = _epoch(state, event)
+    contract = str(event.get("contract") or "")
+    if contract and contract not in state.contracts:
+        raise _refuse(f"reduction names unknown contract {contract!r}")
     if status == "verified":
         if req["closure"] != "authoritative":
             raise _refuse(f"requirement {requirement} has {req['closure']} closure; only an "
@@ -299,8 +319,11 @@ def _reduction(state: AuditState, event: dict[str, Any]) -> None:
         if by != "core":
             raise _refuse("verified is reached by Core reduction over verifier results, "
                           "not declared by a person or model")
+        if not contract or requirement not in state.contracts[contract]["requirements"]:
+            raise _refuse("verified names the contract whose results it reduces, and that "
+                          "contract addresses the requirement")
         for predicate in req["predicates"]:
-            latest = _latest_result(state, requirement, predicate)
+            latest = _latest_result(state, requirement, predicate, contract)
             if latest is None:
                 raise _refuse(f"predicate {predicate!r} has no result at the current epoch")
             ident, result = latest
@@ -309,6 +332,12 @@ def _reduction(state: AuditState, event: dict[str, Any]) -> None:
                               f"({result['strength']}); verified needs an exact or bounded pass")
             if ident not in cited:
                 raise _refuse(f"verified must cite predicate {predicate!r}'s latest result {ident}")
+            loose = closure.unbound_subject(
+                result["verifier"], (req.get("verifiers") or {}).get(predicate, {}).get(
+                    "params", {}), result.get("params") or {})
+            if loose:
+                raise _refuse(f"predicate {predicate!r} passed on a subject the person did not "
+                              f"bind ({', '.join(loose)}): it can be partial, not verified")
         # HARNESS-07: a mutating contract's results count only after a clean
         # audit of its protected targets at this epoch.
         for contract in sorted({state.results[r]["contract"] for r in cited}):
@@ -327,7 +356,7 @@ def _reduction(state: AuditState, event: dict[str, Any]) -> None:
         raise _refuse("rejected names an artifact, and only the person rejects one")
     req["status"], req["status_epoch"] = status, epoch
     state.reductions.append({"requirement": requirement, "status": status, "results": cited,
-                             "by": by, "epoch": epoch,
+                             "by": by, "epoch": epoch, "contract": contract,
                              **({"artifact": event["artifact"]} if event.get("artifact") else {}),
                              **({"rejected": rejected} if rejected else {}),
                              **({"reason": str(event["reason"])[:300]}
@@ -525,18 +554,21 @@ def _unplanned(state: AuditState, requirement: str, predicate: str) -> bool:
 
 
 def unchecked_predicates(state: AuditState, contract_id: str) -> list[str]:
-    """`requirement: predicate` pairs of a contract with no result at the current
-    epoch. A predicate no verifier can check is not waited for: it goes to the person."""
+    """`requirement: predicate` pairs of a contract with no result of its own at the
+    current epoch. A predicate no verifier can check is not waited for: it goes
+    to the person."""
     contract = state.contracts[contract_id]
     return [f"{r}: {p}" for r in contract["requirements"]
             for p in state.requirements[r]["predicates"]
-            if _latest_result(state, r, p) is None and
+            if _latest_result(state, r, p, contract_id) is None and
             f"{r}: {p}" in contract["verifiers"]]
 
 
 def unreduced_requirements(state: AuditState, contract_id: str) -> list[str]:
-    """A contract's requirements with no reduction at the current epoch."""
-    reduced = {r["requirement"] for r in state.reductions if r["epoch"] == state.epoch}
+    """A contract's requirements with no reduction of their own at the current epoch.
+    A person's acceptance or rejection counts for whichever contract is current."""
+    reduced = {r["requirement"] for r in state.reductions if r["epoch"] == state.epoch
+               and (r.get("contract") == contract_id or r["by"] == "person")}
     return [r for r in state.contracts[contract_id]["requirements"] if r not in reduced]
 
 

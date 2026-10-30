@@ -21,7 +21,7 @@ import json
 import re
 from typing import Any
 
-from .. import audit_events, research_grains, target_audit
+from .. import audit_events, closure, research_grains, target_audit
 from ..coordination import atomic_write_text, fingerprint
 from ..registry import Card, Context, tool
 from ..revisions import WriteIntent
@@ -161,6 +161,16 @@ def verify_grain(ctx: Context, requirement: str, predicate: str,
             params = json.loads(params)
         except ValueError as exc:
             raise TypeError("params is an object of the verifier's parameters") from exc
+    # The subject the person bound (which evidence, which note) is not the
+    # model's to change: a contradicting value is refused, a missing one filled.
+    bound = (audit.requirements[requirement].get("verifiers") or {}).get(
+        predicate, {}).get("params", {})
+    params = dict(params or {})
+    clash = [k for k, v in bound.items() if k in params and str(params[k]) != str(v)]
+    if clash:
+        raise TypeError(f"the person bound {', '.join(f'{k}={bound[k]!r}' for k in clash)} "
+                        f"for {requirement}: {predicate!r}; check that subject")
+    params.update(bound)
     planned = audit.contracts[contract]["verifiers"].get(f"{requirement}: {predicate}")
     if planned not in research_grains.CHECKS:
         # No registered check can establish it: say so, close nothing.
@@ -235,10 +245,10 @@ def audit_targets(ctx: Context) -> dict:
     return {"target_audit": ident, **found}
 
 
-def _core_status(audit: Any, rid: str) -> tuple[str, list[str], str]:
+def _core_status(audit: Any, rid: str, contract: str = "") -> tuple[str, list[str], str]:
     """A requirement's status from its latest results alone, with the results cited."""
     req = audit.requirements[rid]
-    latest = {p: audit_events._latest_result(audit, rid, p) for p in req["predicates"]}
+    latest = {p: audit_events._latest_result(audit, rid, p, contract) for p in req["predicates"]}
     cited = [hit[0] for hit in latest.values() if hit]
     outcomes = {p: hit[1]["outcome"] if hit else "" for p, hit in latest.items()}
     if req["closure"] == "human_judgment":
@@ -247,6 +257,13 @@ def _core_status(audit: Any, rid: str) -> tuple[str, list[str], str]:
         return "failed", cited, "a predicate's latest result is fail"
     unplanned = [p for p in req["predicates"] if audit_events._unplanned(audit, rid, p)]
     if req["closure"] == "authoritative":
+        loose = [p for p, hit in latest.items() if hit and hit[1]["outcome"] == "pass" and
+                 closure.unbound_subject(hit[1]["verifier"],
+                                         (req.get("verifiers") or {}).get(p, {}).get(
+                                             "params", {}), hit[1].get("params") or {})]
+        if loose and all(hit and hit[1]["outcome"] == "pass" for hit in latest.values()):
+            return "partial", cited, ("a passing check's subject was not bound by the person: "
+                                      + "; ".join(loose))
         integrity = {audit_events.contract_integrity(audit, audit.results[r]["contract"])
                      for r in cited} - {"clean", "not_required"}
         if integrity:
@@ -279,10 +296,10 @@ def reduce_round(ctx: Context) -> dict:
         raise Refusal("CONTRACT_SCOPE", "no admitted contract to reduce")
     out = {}
     for rid in audit_events.unreduced_requirements(audit, contract):
-        status, cited, reason = _core_status(audit, rid)
+        status, cited, reason = _core_status(audit, rid, contract)
         _store(ctx).append_audit(session.id, {"type": "reduction", "requirement": rid,
                                               "status": status, "results": cited, "by": "core",
-                                              "epoch": audit.epoch,
+                                              "epoch": audit.epoch, "contract": contract,
                                               **({"reason": reason} if reason else {})})
         out[rid] = {"status": status, **({"reason": reason} if reason else {})}
     summary = audit_events.summary(_store(ctx).load(session.id).audit)
@@ -313,6 +330,7 @@ def accept_artifact(ctx: Context, requirement: str, artifact: str) -> dict:
     _store(ctx).append_audit(session.id, {"type": "reduction", "requirement": requirement,
                                           "status": "human_accepted", "results": [],
                                           "by": "person", "artifact": artifact,
+                                          "contract": found["contract"],
                                           "epoch": session.audit.epoch})
     return {"requirement": requirement, "status": "human_accepted", "artifact": artifact}
 
@@ -324,10 +342,11 @@ def accept_artifact(ctx: Context, requirement: str, artifact: str) -> dict:
                 "starts from it"))
 def reject_artifact(ctx: Context, requirement: str, artifact: str, reason: str) -> dict:
     session = _audited(ctx)
-    _artifact(session, ctx, artifact)
+    found = _artifact(session, ctx, artifact)
     _store(ctx).append_audit(session.id, {"type": "reduction", "requirement": requirement,
                                           "status": "open", "results": [], "by": "person",
                                           "rejected": artifact, "reason": reason,
+                                          "contract": found["contract"],
                                           "epoch": session.audit.epoch})
     return {"requirement": requirement, "status": "open", "rejected": artifact}
 

@@ -3416,3 +3416,37 @@ Every gate from G0 to G5 is now green. The release queue's R0 is ready for a
 release-owner decision, subject to its source-identity and lifecycle entry
 gates. ACCEPT-02 (real host applications) and RELEASE-02/-03 remain.
 
+
+### Codex review fixes (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| Codex review F1–F7 | fixed | this commit | [Review](../reports/2026-10-30-code-review/REVIEW.md), reproduced locally before fixing. A regression test for each. Full suite: 1,851 passed, 2 skipped; the one failure, the task-file validator, is fixed and its 22 tests pass. |
+
+A code review at `fd715f1` reproduced six defects. All six reproduced here
+before any change:
+
+| # | Defect | Fix |
+| --- | --- | --- |
+| F1 (P1) | A quote from the wrong source could verify a requirement, and the closure audit agreed | The person binds each predicate's **subject** (evidence id or note) as well as its verifier. `verify_grain` refuses a contradicting subject; `verified` needs every subject-taking pass to match the binding (an unbound pass is `partial`); the closure audit checks the binding independently (method `binding`). |
+| F2 (P1) | A later contract inherited an earlier contract's results, and could replace a verified draft unnoticed | Results and reductions belong to a contract. A contract's audit and reduce phases wait for their own; `verified` names its contract and cites that contract's latest results. Recording an artifact at a path that already holds different content bumps the epoch, so earlier closures and acceptances go stale. |
+| F3 (P1) | `get_note` (and `read_evidence`) bypassed the contract's read scope | Reads are resolved: a note named through a resolvable argument must lie in the targets, and an evidence id is readable only if its file is targeted or a note in the targets cites it. |
+| F4 (P1) | Adopted-library indexing and watching followed Windows junctions | One rule, `content_roots.outside_scope`, used by the index walker and the watcher. It catches any reparse point, as the survey already did. |
+| F5 (P2) | Excluded files and hidden Markdown entered adopted indexing | The same rule applies to files as well as folders. |
+| F6 (P2) | The G5 dollar cap was checked only after a whole multi-call turn | The runner reserves each call's worst case before dispatch (4× the prompt estimate, which bounds the input tokens, plus the full output cap). It refuses the call when that could cross the cap, or when an earlier call had no usage. A shared ledger, `tmp/g5/ledger.json`, holds one $8 cap across runs under an exclusive lock, seeded with $2.91 already spent. |
+| F7 | The G5 report wrongly said t6's partial requirement was never addressed | Corrected in a dated section; the original text is kept. |
+
+**Real data re-checked.** With the task file now binding every predicate's
+subject, all 29 subject-taking passes in the full run used exactly the
+intended subject. The measured 32/74 holds in substance, but its assurance
+was not enforced at the time.
+
+**Compatibility.** Audited histories written before this change name no
+contract on their `verified` reductions, so they replay as invalid. The only
+such histories are the G5 runs under `tmp/g5/`; their measured results are
+preserved in each `results.json`. No real library has audited sessions.
+
+**Gates.** G3's three adoption defects (F4, F5, and part of F3) are fixed
+with tests. Codex recommends requalifying G5 by re-running the measurement
+under the fixed code and the bound task file before a release freeze.
+Whether G5 and G3 stay closed is the owner's decision.

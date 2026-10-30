@@ -57,8 +57,15 @@ def lead(vault):
 
 
 def requirements(lead):
+    # The person binds the quote to the one evidence record the fixture stored
+    # (Codex review F1: a pass on any other source must not verify it).
+    stored = [r.id for r in EvidenceStore(lead.ctx.vault).iter()]
     lead.person("set_requirement", requirement_id="R1", text="The key quote is located.",
-                predicates=["quote present", "staged draft unchanged"])
+                predicates=["quote present", "staged draft unchanged"],
+                verifiers={"quote present": {"verifier": "quote.located",
+                                             "params": {"evidence": stored[0]}}
+                           if stored else "quote.located",
+                           "staged draft unchanged": "target.diff_clean"})
     lead.person("set_requirement", requirement_id="R2", text="A synthesis the person accepts.",
                 closure="human_judgment")
 
@@ -329,11 +336,11 @@ def test_findability_reports_each_missed_lookup(vault):
 
 # --- found by G5 pilot 3 -----------------------------------------------------------
 
-def to_execute(lead, operations):
+def to_execute(lead, operations, read=()):
     requirements(lead)
     lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "s"}})
     lead.ok("advance")
-    lead.ok("admit_contract", contract_id="C1", requirements=["R1"],
+    lead.ok("admit_contract", contract_id="C1", requirements=["R1"], read=list(read),
             write=[staging_folder(lead.ctx, lead.ctx.session)], operations=operations,
             verifiers={"R1: quote present": "quote.located",
                        "R1: staged draft unchanged": "target.diff_clean"})
@@ -353,7 +360,7 @@ def test_reading_evidence_under_a_contract_needs_untrusted_then_allows_only_stag
 
 
 def test_after_reading_evidence_a_draft_can_still_be_staged(lead, evidence):
-    to_execute(lead, ["read", "untrusted", "stage"])
+    to_execute(lead, ["read", "untrusted", "stage"], read=[".evidence/"])   # declared
     lead.ok("read_evidence", evidence_id=evidence)
     assert lead.ok("stage_artifact", name="synthesis", text="draft")["artifact"] == "A1"
 
@@ -372,3 +379,95 @@ def test_verify_grain_names_the_valid_predicates_instead_of_no_suitable_tool(lea
     lead.ok("advance")
     out = lead("verify_grain", requirement="R1", predicate="the quote is there")
     assert "error" in out and "its predicates are ['quote present'" in out["detail"]
+
+
+# --- staleness across contracts and artifacts (Codex review, 2026-10-30) -----------
+
+def stage_round(lead, cid, text, verify=True):
+    """One round on the same draft path: admit, stage, audit, reduce."""
+    lead.ok("admit_contract", contract_id=cid, requirements=["R1"],
+            write=[staging_folder(lead.ctx, lead.ctx.session)], operations=["read", "stage"],
+            verifiers={"R1: quote present": "quote.located",
+                       "R1: staged draft unchanged": "target.diff_clean"})
+    lead.ok("advance")
+    lead.ok("stage_artifact", name="same-draft", text=text)
+    lead.ok("advance")
+
+
+def test_a_later_contract_does_not_inherit_an_earlier_contracts_results(lead, evidence):
+    requirements(lead)
+    lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "s"}})
+    lead.ok("advance")
+    stage_round(lead, "C1", "draft")
+    lead.ok("verify_grain", requirement="R1", predicate="quote present",
+            params={"evidence": evidence, "quote": QUOTE})
+    lead.ok("verify_grain", requirement="R1", predicate="staged draft unchanged")
+    lead.ok("audit_targets")
+    lead.ok("advance")
+    assert lead.ok("reduce_round")["reduced"]["R1"]["status"] == "verified"
+    lead.ok("advance")                                   # round 2 at manage
+    lead.ok("advance")
+    lead.ok("admit_contract", contract_id="C2", requirements=["R1"], operations=["read"],
+            verifiers={"R1: quote present": "quote.located",
+                       "R1: staged draft unchanged": "target.diff_clean"})
+    from resource_librarian import audit_events
+    audit = lead.audit()
+    assert audit_events.unchecked_predicates(audit, "C2") != []     # C1's results are C1's
+    assert audit_events.unreduced_requirements(audit, "C2") == ["R1"]
+
+
+def test_replacing_a_verified_draft_makes_its_verification_stale(lead, evidence, vault):
+    requirements(lead)
+    lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "s"}})
+    lead.ok("advance")
+    stage_round(lead, "C1", "original draft")
+    lead.ok("verify_grain", requirement="R1", predicate="quote present",
+            params={"evidence": evidence, "quote": QUOTE})
+    lead.ok("verify_grain", requirement="R1", predicate="staged draft unchanged")
+    lead.ok("audit_targets")
+    lead.ok("advance")
+    lead.ok("reduce_round")
+    assert lead.audit().requirement_status("R1") == "verified"
+    lead.ok("advance")
+    lead.ok("advance")
+    stage_round(lead, "C2", "replacement draft")         # same path, new content
+    assert lead.audit().requirement_status("R1") == "stale"
+    moved = lead.ok("advance")                           # audit cannot exit without C2's own
+    assert moved["moved"] is False and any("no result yet" in m for m in moved["missing"])
+
+
+# --- a pass verifies only the subject the person bound (Codex review F1) -----------
+
+def test_a_quote_from_the_wrong_source_cannot_verify_the_requirement(lead, evidence, vault):
+    other = EvidenceStore(vault).put("page", "https://example.org/b",
+                                     {"text": "A completely unrelated quotation in source B."}).id
+    requirements(lead)                                   # binds the quote to `evidence`
+    lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "s"}})
+    lead.ok("advance")
+    lead.ok("admit_contract", contract_id="C1", requirements=["R1"], operations=["read"],
+            verifiers={"R1: quote present": "quote.located",
+                       "R1: staged draft unchanged": "target.diff_clean"})
+    lead.ok("advance")
+    lead.ok("advance")
+    out = lead("verify_grain", requirement="R1", predicate="quote present",
+               params={"evidence": other, "quote": "A completely unrelated quotation"})
+    assert "error" in out and "the person bound evidence=" in out["detail"]
+
+
+def test_a_pass_on_an_unbound_subject_is_partial_and_the_audit_says_so(lead, evidence, vault):
+    from resource_librarian import closure_audit
+    lead.person("set_requirement", requirement_id="R1", text="Quote something.",
+                predicates=["quote present"])                       # no subject bound
+    lead.ok("update_plan", fields={"proposal": {"requirements": ["R1"], "step": "s"}})
+    lead.ok("advance")
+    lead.ok("admit_contract", contract_id="C1", requirements=["R1"], operations=["read"],
+            verifiers={"R1: quote present": "quote.located"})
+    lead.ok("advance")
+    lead.ok("advance")
+    assert lead.ok("verify_grain", requirement="R1", predicate="quote present",
+                   params={"evidence": evidence, "quote": QUOTE})["outcome"] == "pass"
+    lead.ok("advance")
+    reduced = lead.ok("reduce_round")["reduced"]["R1"]
+    assert reduced["status"] == "partial" and "not bound by the person" in reduced["reason"]
+    audit = closure_audit.audit(vault, SessionStore(vault).load(lead.ctx.session))
+    assert [r["method"] for r in audit["false_closures"]] == ["binding"]

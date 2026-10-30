@@ -158,6 +158,16 @@ def audit(vault: Vault, session: Any, index_run: Any = None) -> dict[str, Any]:
                 continue
             ident, result = latest
             verifier = closure.base_id(result["verifier"])
+            bound = (req.get("verifiers") or {}).get(predicate, {}).get("params", {})
+            loose = closure.unbound_subject(verifier, bound, result.get("params") or {})
+            if loose:
+                # Independent of the model's choice: a pass on a subject the
+                # person did not bind establishes nothing about the predicate.
+                rows.append({"result": ident, "requirement": rid, "predicate": predicate,
+                             "verifier": verifier, "statement": result.get("statement", ""),
+                             "method": "binding", "verdict": "fails",
+                             "why": f"subject not bound by the person: {', '.join(loose)}"})
+                continue
             if verifier in INDEPENDENT:
                 method, (verdict, why) = "independent", INDEPENDENT[verifier](
                     vault, result, session)

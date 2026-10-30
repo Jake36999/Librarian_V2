@@ -4,6 +4,7 @@
  "notes": [
   "Requirements, including the verifier for each predicate, are set by the person (the runner calls set_requirement as the person). The Lead proposes each contract, its targets and operations, and plans the named verifiers; its reading, quoting and staging are what is measured.",
   "Each predicate names the verifier that checks it (owner decision, 2026-10-30, after pilot 4 closed a predicate with a verifier that does not establish it). Admission refuses a contract whose plan differs.",
+  "Each predicate also binds its subject: the evidence id or note it is about (Codex review, 2026-10-30). A check on any other subject cannot verify it.",
   "Every authoritative predicate below can be closed by a registered Tier A verifier (quote.located, evidence.integrity, index.findable, citation.resolves, schema.valid, target.diff_clean, boundary.staged). A contract that plans no such verifier is refused at admission.",
   "This library has no repositories, coverage (DIK) records or claim runs, so arithmetic.reproduces, coverage.status and claim_run.passed cannot be exercised on it; the owner decided (2026-10-30) that the measurement covers the other seven. Task t6 deliberately includes a predicate no Tier A verifier can check, to measure the no_suitable_tool outcome on real data.",
   "'sources' lists the notes each task is about; the runner validates that they exist and does not show the list to the Lead."
@@ -25,8 +26,18 @@
       "the quoted evidence record matches its content hash"
      ],
      "verifiers": {
-      "a passage stating what design patterns solve is quoted from the GeeksforGeeks tutorial's evidence": "quote.located",
-      "the quoted evidence record matches its content hash": "evidence.integrity"
+      "a passage stating what design patterns solve is quoted from the GeeksforGeeks tutorial's evidence": {
+       "verifier": "quote.located",
+       "params": {
+        "evidence": "158ea51c0664994ff195a2a53941c904"
+       }
+      },
+      "the quoted evidence record matches its content hash": {
+       "verifier": "evidence.integrity",
+       "params": {
+        "evidence": "158ea51c0664994ff195a2a53941c904"
+       }
+      }
      }
     },
     {
@@ -42,7 +53,10 @@
       "the staged synthesis is unchanged since it was staged"
      ],
      "verifiers": {
-      "the staged synthesis is unchanged since it was staged": "target.diff_clean"
+      "the staged synthesis is unchanged since it was staged": {
+       "verifier": "target.diff_clean",
+       "params": {}
+      }
      }
     }
    ]
@@ -64,8 +78,18 @@
       "a named alternative is quoted from the 2026 alternatives page's evidence"
      ],
      "verifiers": {
-      "a named alternative is quoted from the Bilt comparison page's evidence": "quote.located",
-      "a named alternative is quoted from the 2026 alternatives page's evidence": "quote.located"
+      "a named alternative is quoted from the Bilt comparison page's evidence": {
+       "verifier": "quote.located",
+       "params": {
+        "evidence": "f8850ccd57d7b1c866fe6f0e3e24be74"
+       }
+      },
+      "a named alternative is quoted from the 2026 alternatives page's evidence": {
+       "verifier": "quote.located",
+       "params": {
+        "evidence": "4f1e7f1bbd6c65ab13a95a07191ff8f6"
+       }
+      }
      }
     },
     {
@@ -77,8 +101,18 @@
       "the 2026 alternatives page's note is findable by its title and Bottom Line"
      ],
      "verifiers": {
-      "the Bilt comparison page's note is findable by its title and Bottom Line": "index.findable",
-      "the 2026 alternatives page's note is findable by its title and Bottom Line": "index.findable"
+      "the Bilt comparison page's note is findable by its title and Bottom Line": {
+       "verifier": "index.findable",
+       "params": {
+        "note": "8 Best Thunkable Alternatives in 2026 Compared Side by Side  Bilt Blog  Bilt"
+       }
+      },
+      "the 2026 alternatives page's note is findable by its title and Bottom Line": {
+       "verifier": "index.findable",
+       "params": {
+        "note": "Thunkable Alternative Mobile App Development Options (2026)"
+       }
+      }
      }
     },
     {
@@ -105,8 +139,18 @@
       "Coursera's definition of agile project management is quoted from its evidence"
      ],
      "verifiers": {
-      "Atlassian's definition of agile project management is quoted from its evidence": "quote.located",
-      "Coursera's definition of agile project management is quoted from its evidence": "quote.located"
+      "Atlassian's definition of agile project management is quoted from its evidence": {
+       "verifier": "quote.located",
+       "params": {
+        "evidence": "c453c3ae3e87bbf7f4b5e878eeb13bbd"
+       }
+      },
+      "Coursera's definition of agile project management is quoted from its evidence": {
+       "verifier": "quote.located",
+       "params": {
+        "evidence": "f3c8f49064d17612466cd05d3e64c7db"
+       }
+      }
      }
     },
     {
@@ -118,8 +162,18 @@
       "every evidence id and wiki link the Coursera note cites resolves"
      ],
      "verifiers": {
-      "every evidence id and wiki link the Atlassian note cites resolves": "citation.resolves",
-      "every evidence id and wiki link the Coursera note cites resolves": "citation.resolves"
+      "every evidence id and wiki link the Atlassian note cites resolves": {
+       "verifier": "citation.resolves",
+       "params": {
+        "note": "Sources/page/What is Agile Project Management  Atlassian.md"
+       }
+      },
+      "every evidence id and wiki link the Coursera note cites resolves": {
+       "verifier": "citation.resolves",
+       "params": {
+        "note": "Sources/page/What is Agile Project Management  Coursera.md"
+       }
+      }
      }
     },
     {
@@ -144,7 +198,12 @@
       "a recommended practice is quoted from the NCCE page's evidence"
      ],
      "verifiers": {
-      "a recommended practice is quoted from the NCCE page's evidence": "quote.located"
+      "a recommended practice is quoted from the NCCE page's evidence": {
+       "verifier": "quote.located",
+       "params": {
+        "evidence": "0345a8d88eac8c495906933646e4059c"
+       }
+      }
      }
     },
     {
@@ -156,8 +215,18 @@
       "every evidence id and wiki link the NCCE note cites resolves"
      ],
      "verifiers": {
-      "the NCCE source note meets the vault's content model": "schema.valid",
-      "every evidence id and wiki link the NCCE note cites resolves": "citation.resolves"
+      "the NCCE source note meets the vault's content model": {
+       "verifier": "schema.valid",
+       "params": {
+        "note": "Sources/page/Developing Computational Thinking Skills in Early Childhood Education - NCCE.md"
+       }
+      },
+      "every evidence id and wiki link the NCCE note cites resolves": {
+       "verifier": "citation.resolves",
+       "params": {
+        "note": "Sources/page/Developing Computational Thinking Skills in Early Childhood Education - NCCE.md"
+       }
+      }
      }
     },
     {
@@ -183,8 +252,18 @@
       "the lab sheet's evidence record matches its content hash"
      ],
      "verifiers": {
-      "the app the sheet asks students to build is quoted from the lab sheet's evidence": "quote.located",
-      "the lab sheet's evidence record matches its content hash": "evidence.integrity"
+      "the app the sheet asks students to build is quoted from the lab sheet's evidence": {
+       "verifier": "quote.located",
+       "params": {
+        "evidence": "5954b53385c1512dcb6e2814c3710afe"
+       }
+      },
+      "the lab sheet's evidence record matches its content hash": {
+       "verifier": "evidence.integrity",
+       "params": {
+        "evidence": "5954b53385c1512dcb6e2814c3710afe"
+       }
+      }
      }
     },
     {
@@ -201,8 +280,14 @@
       "the staged summary is unchanged since it was staged"
      ],
      "verifiers": {
-      "the round changed the library only through staging": "boundary.staged",
-      "the staged summary is unchanged since it was staged": "target.diff_clean"
+      "the round changed the library only through staging": {
+       "verifier": "boundary.staged",
+       "params": {}
+      },
+      "the staged summary is unchanged since it was staged": {
+       "verifier": "target.diff_clean",
+       "params": {}
+      }
      }
     }
    ]
@@ -234,9 +319,24 @@
       "the GLM-5.3 note is findable by its title and Bottom Line"
      ],
      "verifiers": {
-      "the DeepSeek-V4.1-Flash note is findable by its title and Bottom Line": "index.findable",
-      "the Qwen3.5-397B-A17B note is findable by its title and Bottom Line": "index.findable",
-      "the GLM-5.3 note is findable by its title and Bottom Line": "index.findable"
+      "the DeepSeek-V4.1-Flash note is findable by its title and Bottom Line": {
+       "verifier": "index.findable",
+       "params": {
+        "note": "DeepSeek-V4.1-Flash - deepinfra"
+       }
+      },
+      "the Qwen3.5-397B-A17B note is findable by its title and Bottom Line": {
+       "verifier": "index.findable",
+       "params": {
+        "note": "Qwen3.5-397B-A17B - deepinfra"
+       }
+      },
+      "the GLM-5.3 note is findable by its title and Bottom Line": {
+       "verifier": "index.findable",
+       "params": {
+        "note": "GLM-5.3 - deepinfra"
+       }
+      }
      }
     },
     {
@@ -263,8 +363,18 @@
       "the foundation-year page's description of course content is quoted from its evidence"
      ],
      "verifiers": {
-      "the UCLan page's description of course content is quoted from its evidence": "quote.located",
-      "the foundation-year page's description of course content is quoted from its evidence": "quote.located"
+      "the UCLan page's description of course content is quoted from its evidence": {
+       "verifier": "quote.located",
+       "params": {
+        "evidence": "1eaa2a468bd18584e333ffa55c61ecb2"
+       }
+      },
+      "the foundation-year page's description of course content is quoted from its evidence": {
+       "verifier": "quote.located",
+       "params": {
+        "evidence": "46e83b34ade8cf1ee23132f054e707d0"
+       }
+      }
      }
     },
     {
@@ -276,8 +386,18 @@
       "the foundation-year source note meets the vault's content model"
      ],
      "verifiers": {
-      "the UCLan source note meets the vault's content model": "schema.valid",
-      "the foundation-year source note meets the vault's content model": "schema.valid"
+      "the UCLan source note meets the vault's content model": {
+       "verifier": "schema.valid",
+       "params": {
+        "note": "Sources/page/BSc (Hons) Computing  UCLan London.md"
+       }
+      },
+      "the foundation-year source note meets the vault's content model": {
+       "verifier": "schema.valid",
+       "params": {
+        "note": "Sources/page/Computing (with Foundation Year) BSc (Hons).md"
+       }
+      }
      }
     },
     {
@@ -304,8 +424,18 @@
       "the lab sheet's instruction to use Thunkable is quoted from its evidence"
      ],
      "verifiers": {
-      "Thunkable's description of itself is quoted from the documentation page's evidence": "quote.located",
-      "the lab sheet's instruction to use Thunkable is quoted from its evidence": "quote.located"
+      "Thunkable's description of itself is quoted from the documentation page's evidence": {
+       "verifier": "quote.located",
+       "params": {
+        "evidence": "c925a2dd99112a9a8fe9c4fd65a470c7"
+       }
+      },
+      "the lab sheet's instruction to use Thunkable is quoted from its evidence": {
+       "verifier": "quote.located",
+       "params": {
+        "evidence": "5954b53385c1512dcb6e2814c3710afe"
+       }
+      }
      }
     },
     {
@@ -321,7 +451,10 @@
       "the round changed the library only through staging"
      ],
      "verifiers": {
-      "the round changed the library only through staging": "boundary.staged"
+      "the round changed the library only through staging": {
+       "verifier": "boundary.staged",
+       "params": {}
+      }
      }
     }
    ]

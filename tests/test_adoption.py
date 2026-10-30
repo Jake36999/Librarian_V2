@@ -217,3 +217,38 @@ def test_the_watcher_stays_within_its_cpu_budget_on_20000_files(tmp_path):
     print(measured)
     assert measured["watched"] == 20_000
     assert measured["cpu_share"] <= CPU_BUDGET, measured
+
+
+# --- found by the Codex review (2026-10-30) ----------------------------------------
+
+def junction(link: Path, target: Path) -> bool:
+    import subprocess
+    import sys
+    if sys.platform == "win32":
+        return subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)],
+                              capture_output=True).returncode == 0
+    os.symlink(target, link, target_is_directory=True)
+    return True
+
+
+def test_a_junction_out_of_an_adopted_root_is_neither_indexed_nor_watched(docs, tmp_path):
+    vault, leases = adopted(docs)
+    outside = tmp_path / "Outside"
+    outside.mkdir()
+    (outside / "outside.md").write_text("# not approved\n", encoding="utf-8")
+    if not junction(docs / "linked", outside):
+        pytest.skip("could not make a junction here")
+    assert all("linked" not in p.relative_to(docs).parts for p in content_roots.iter_documents(docs))
+    assert "linked/outside.md" not in VaultWatcher(vault, leases)._snapshot()
+
+
+def test_an_excluded_file_and_a_hidden_file_are_neither_indexed_nor_watched(docs):
+    (docs / "private.md").write_text("# excluded\n", encoding="utf-8")
+    (docs / ".secret.md").write_text("# hidden\n", encoding="utf-8")
+    plan = content_roots.plan_adopt(docs, excludes=["private.md"])
+    content_roots.apply_adopt(docs, plan["survey_fingerprint"], excludes=["private.md"])
+    vault = Vault(docs)
+    names = {p.name for p in content_roots.iter_documents(docs)}
+    assert "private.md" not in names and ".secret.md" not in names and "README.md" in names
+    watched = VaultWatcher(vault, DocumentLeases(vault))._snapshot()
+    assert "private.md" not in watched and ".secret.md" not in watched

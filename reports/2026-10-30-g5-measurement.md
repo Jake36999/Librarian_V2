@@ -90,3 +90,48 @@ audit checks the latest pass for each predicate, so its totals differ.
 - Seven of ten verifiers.
 - The fixed answer to questions is a protocol choice. A person answering
   live might change the sessions.
+
+---
+
+## Corrections after the Codex review (2026-10-30)
+
+The text above is kept as written. A code review
+([REVIEW.md](2026-10-30-code-review/REVIEW.md)) reproduced six defects, and
+one error in this report.
+
+**Error in this report.** "`no_suitable_tool` was not exercised: neither
+model's contract ever addressed t6's partial requirement" is wrong. MiMo's
+contracts `round-2-model-notes` to `round-4-model-notes` address R1. They
+planned `quote.located` for its numeric predicate, and results V6–V11 are
+quote passes against it. That is the defect below in real data: a quote pass
+does not establish that the context lengths match. R1 ended `partial`. The
+headline count is unchanged.
+
+**What weakens this run's assurance.**
+- **Wrong subjects could close a requirement.** A predicate's verifier was
+  bound, but not its subject (which evidence, which note), so a real quote
+  from another source could verify it. The closure audit re-checked the
+  model's chosen subject, so it could not catch this.
+- **A later contract could inherit an earlier contract's results.** It could
+  also replace a verified draft without the verification going stale.
+
+Neither could be detected by this run's checks. "Zero false closures" was
+true of what the audit could see, not a guarantee.
+
+**Checked after the fixes, on this run's saved histories.** The task file now
+binds a subject to every predicate. Against those exact bindings, **all 29
+subject-taking passes used the intended subject**, with no swaps, including
+between the two pages of t2, t3 and t7. The other 3 of the 32 closures check
+the contract itself. So 32/74 holds in substance. The assurance was missing at
+the time, and is now enforced.
+
+**Protocol notes.**
+- The forced restart happened after turn 2, not at a randomly chosen audit or
+  reduce boundary as the plan described.
+- The Wilson intervals treat grains as independent, but grains within a
+  session, and the same task across routes, are not. Read them as nominal.
+- "Settled" sessions (3) all settled as `failed`. None completed.
+
+**Recommendation.** Re-run the measurement under the fixed code and the bound
+task file before relying on G5 for a release. Whether G5 stays closed
+meanwhile is the owner's decision.

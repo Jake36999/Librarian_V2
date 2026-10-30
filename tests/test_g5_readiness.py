@@ -135,7 +135,10 @@ def test_a_scripted_lead_drives_a_full_round_using_only_offered_tools(vault, evi
         assert sid, "the Lead opened no session"
         app.person_call("set_requirement", {
             "requirement_id": "R1", "text": "The key quote is located.",
-            "predicates": ["quote present", "staged draft unchanged"]}, session=sid)
+            "predicates": ["quote present", "staged draft unchanged"],
+            "verifiers": {"quote present": {"verifier": "quote.located",
+                                            "params": {"evidence": evidence}},
+                          "staged draft unchanged": "target.diff_clean"}}, session=sid)
         app.person_call("set_requirement", {
             "requirement_id": "R2", "text": "A synthesis the person accepts.",
             "closure": "human_judgment"}, session=sid)
@@ -167,16 +170,20 @@ _spec = importlib.util.spec_from_file_location("g5_measure", SCRIPTS / "g5_measu
 g5 = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(g5)
 
-TASK = {"id": "t1", "question": "How are rounds bounded?", "requirements": [
-    {"requirement_id": "R1", "text": "The key quote is located.",
-     "predicates": ["quote present", "staged draft unchanged"]},
-    {"requirement_id": "R2", "text": "A synthesis the person accepts.",
-     "closure": "human_judgment"}]}
+def task_for(evidence):
+    return {"id": "t1", "question": "How are rounds bounded?", "requirements": [
+        {"requirement_id": "R1", "text": "The key quote is located.",
+         "predicates": ["quote present", "staged draft unchanged"],
+         "verifiers": {"quote present": {"verifier": "quote.located",
+                                         "params": {"evidence": evidence}},
+                       "staged draft unchanged": "target.diff_clean"}},
+        {"requirement_id": "R2", "text": "A synthesis the person accepts.",
+         "closure": "human_judgment"}]}
 
 
 def dry_run(vault, evidence, tmp_path, asks=False):
     lead = RoundLead(evidence, opens=False, asks=asks)
-    row = g5.run_task(TASK, library=vault.root, run_dir=tmp_path / "run",
+    row = g5.run_task(task_for(evidence), library=vault.root, run_dir=tmp_path / "run",
                       route={"provider": "deepinfra", "model": "scripted-lead"},
                       provider_for=lambda choice: Scripted(lead), max_turns=6)
     return lead, row
@@ -273,3 +280,41 @@ def test_the_task_file_must_name_a_verifier_for_every_authoritative_predicate(tm
         {"requirement_id": "R1", "text": "t", "predicates": ["p", "q"],
          "verifiers": {"p": "quote.located"}}]}
     assert any("no verifier named for ['q']" in p for p in g5.validate_tasks({"tasks": [task]}))
+
+
+# --- the budget is a hard cap per call (Codex review F6) ---------------------------
+
+def test_the_cap_stops_a_call_before_it_is_sent(tmp_path):
+    """Each call reports 20,000 input tokens at $1 per million ($0.02). With a $0.05
+    cap the third call is refused before dispatch; the old after-turn check let
+    every call in the turn through."""
+    from resource_librarian.init import init
+    init(tmp_path / "library", name="budget")
+    sent = []
+
+    def model(system, messages, tools):
+        sent.append(1)
+        return Reply(tool_calls=[ToolCall(f"c{len(sent)}", "audit_projection", {})],
+                     usage={"input_tokens": 20_000, "output_tokens": 0})
+
+    row = g5.run_task({"id": "b", "question": "q", "requirements": [
+        {"requirement_id": "R1", "text": "t", "closure": "human_judgment"}]},
+        library=tmp_path / "library", run_dir=tmp_path / "run",
+        route={"provider": "deepinfra", "model": "scripted"},
+        provider_for=lambda choice: Scripted(model),
+        card={"input_per_1m": 1.0, "output_per_1m": 0.0}, budget_usd=0.05, max_turns=3)
+    assert row["stopped"].startswith("budget: G5 budget"), row["stopped"]
+    assert row["spend"]["usd"] <= 0.05 and len(sent) == 2
+
+
+def test_a_second_run_cannot_share_the_ledger_while_one_holds_it(tmp_path):
+    first = g5.Ledger(tmp_path / "ledger.json", 8.0)
+    try:
+        with pytest.raises(SystemExit, match="another G5 run holds the ledger"):
+            g5.Ledger(tmp_path / "ledger.json", 8.0)
+        first.record("t1", 0.5)
+    finally:
+        first.release()
+    again = g5.Ledger(tmp_path / "ledger.json", 8.0)
+    assert again.remaining == 7.5
+    again.release()

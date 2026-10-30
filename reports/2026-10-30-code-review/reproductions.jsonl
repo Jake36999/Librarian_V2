@@ -1,0 +1,7 @@
+{"finding": "registry_get_note_outside_scope", "read_targets": [], "read_succeeded": true}
+{"finding": "wrong_source_closure", "status": "verified", "audit_verdict": "holds"}
+{"finding": "cross_contract_reuse", "epoch": 0, "current_contract": "C2", "result_contract": "C1"}
+{"finding": "changed_draft_stays_verified", "status": "verified", "closure_recheck": "fails", "current_contract": "C2"}
+{"finding": "get_note_read_scope_bypass", "read_targets": [], "authorized": true}
+{"finding": "adopted_file_exclusions_ignored", "indexed_candidates": [".secret.md", "private.md", "visible.md"]}
+{"finding": "junction_followed", "outside_root_file": "linked/outside.md"}

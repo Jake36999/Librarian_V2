@@ -322,4 +322,34 @@ def test_a_named_verifier_survives_a_revision_by_request_evidence(vault):
                                       "verifiers": {"quote present": "quote.located"}}, person)
     REGISTRY.call("request_evidence", {"requirement": "R1", "what": "a second source"}, person)
     req = SessionStore(vault).load(lead.ctx.session).audit.requirements["R1"]
-    assert req["revision"] == 2 and req["verifiers"] == {"quote present": "quote.located"}
+    assert req["revision"] == 2
+    assert req["verifiers"] == {"quote present": {"verifier": "quote.located", "params": {}}}
+
+
+# --- read scope covers resolved reads (Codex review, 2026-10-30) -------------------
+
+def reading(vault, read=("Notes/in.md",)):
+    note = vault.root / "Notes" / "in.md"
+    note.parent.mkdir(parents=True, exist_ok=True)
+    evidence = __import__("resource_librarian.evidence", fromlist=["EvidenceStore"]) \
+        .EvidenceStore(vault).put("page", "https://example.org/x", {"text": "captured"}).id
+    other = __import__("resource_librarian.evidence", fromlist=["EvidenceStore"]) \
+        .EvidenceStore(vault).put("page", "https://example.org/y", {"text": "elsewhere"}).id
+    note.write_text(f"---\ntitle: In\nevidence: [{evidence}]\n---\n# In\n", encoding="utf-8")
+    (vault.root / "Notes" / "out of scope.md").write_text("# Secret\n", encoding="utf-8")
+    lead = executing(vault, operations=["read", "untrusted", "stage"], read=read)
+    return lead, evidence, other
+
+
+def test_get_note_outside_the_read_targets_is_refused(vault):
+    lead, _, _ = reading(vault)
+    out = lead("get_note", name="out of scope")
+    assert out["refused"] == "CONTRACT_SCOPE" and "out of scope.md" in out["detail"]
+    assert "refused" not in lead("get_note", name="in")
+
+
+def test_read_evidence_needs_a_citing_note_in_the_targets(vault):
+    lead, cited, uncited = reading(vault)
+    assert "refused" not in lead("read_evidence", evidence_id=cited)
+    out = lead("read_evidence", evidence_id=uncited)
+    assert out["refused"] == "CONTRACT_SCOPE" and "no note within contract" in out["detail"]

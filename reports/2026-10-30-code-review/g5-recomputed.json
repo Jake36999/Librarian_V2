@@ -1,0 +1,287 @@
+[
+  {
+    "route": "full-deepseek",
+    "task": "t1-design-patterns",
+    "counts": {
+      "grains": 4,
+      "tier_a": 3,
+      "human_accepted": 0,
+      "other": 1
+    },
+    "stop": "idle",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 2
+  },
+  {
+    "route": "full-deepseek",
+    "task": "t2-thunkable-alternatives",
+    "counts": {
+      "grains": 5,
+      "tier_a": 4,
+      "human_accepted": 0,
+      "other": 1
+    },
+    "stop": "max_turns",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 0
+  },
+  {
+    "route": "full-deepseek",
+    "task": "t3-agile-definitions",
+    "counts": {
+      "grains": 5,
+      "tier_a": 3,
+      "human_accepted": 0,
+      "other": 2
+    },
+    "stop": "idle",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 3
+  },
+  {
+    "route": "full-deepseek",
+    "task": "t4-computational-thinking-early-years",
+    "counts": {
+      "grains": 4,
+      "tier_a": 3,
+      "human_accepted": 0,
+      "other": 1
+    },
+    "stop": "max_turns",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 1
+  },
+  {
+    "route": "full-deepseek",
+    "task": "t5-lab-sheet",
+    "counts": {
+      "grains": 5,
+      "tier_a": 1,
+      "human_accepted": 0,
+      "other": 4
+    },
+    "stop": "idle",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 5
+  },
+  {
+    "route": "full-deepseek",
+    "task": "t6-long-context-models",
+    "counts": {
+      "grains": 5,
+      "tier_a": 3,
+      "human_accepted": 0,
+      "other": 2
+    },
+    "stop": "settled: failed",
+    "restart": null,
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 0
+  },
+  {
+    "route": "full-deepseek",
+    "task": "t7-uk-computing-degrees",
+    "counts": {
+      "grains": 5,
+      "tier_a": 0,
+      "human_accepted": 0,
+      "other": 5
+    },
+    "stop": "settled: failed",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 2
+  },
+  {
+    "route": "full-deepseek",
+    "task": "t8-what-is-thunkable",
+    "counts": {
+      "grains": 4,
+      "tier_a": 3,
+      "human_accepted": 0,
+      "other": 1
+    },
+    "stop": "idle",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 0
+  },
+  {
+    "route": "full-mimo",
+    "task": "t1-design-patterns",
+    "counts": {
+      "grains": 4,
+      "tier_a": 1,
+      "human_accepted": 0,
+      "other": 3
+    },
+    "stop": "max_turns",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 2
+  },
+  {
+    "route": "full-mimo",
+    "task": "t2-thunkable-alternatives",
+    "counts": {
+      "grains": 5,
+      "tier_a": 2,
+      "human_accepted": 0,
+      "other": 3
+    },
+    "stop": "settled: failed",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 1
+  },
+  {
+    "route": "full-mimo",
+    "task": "t3-agile-definitions",
+    "counts": {
+      "grains": 5,
+      "tier_a": 0,
+      "human_accepted": 0,
+      "other": 5
+    },
+    "stop": "max_turns",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 3
+  },
+  {
+    "route": "full-mimo",
+    "task": "t4-computational-thinking-early-years",
+    "counts": {
+      "grains": 4,
+      "tier_a": 2,
+      "human_accepted": 0,
+      "other": 2
+    },
+    "stop": "max_turns",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 3
+  },
+  {
+    "route": "full-mimo",
+    "task": "t5-lab-sheet",
+    "counts": {
+      "grains": 5,
+      "tier_a": 1,
+      "human_accepted": 0,
+      "other": 4
+    },
+    "stop": "max_turns",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 115
+  },
+  {
+    "route": "full-mimo",
+    "task": "t6-long-context-models",
+    "counts": {
+      "grains": 5,
+      "tier_a": 4,
+      "human_accepted": 0,
+      "other": 1
+    },
+    "stop": "max_turns",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 0
+  },
+  {
+    "route": "full-mimo",
+    "task": "t7-uk-computing-degrees",
+    "counts": {
+      "grains": 5,
+      "tier_a": 2,
+      "human_accepted": 0,
+      "other": 3
+    },
+    "stop": "max_turns",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 3
+  },
+  {
+    "route": "full-mimo",
+    "task": "t8-what-is-thunkable",
+    "counts": {
+      "grains": 4,
+      "tier_a": 0,
+      "human_accepted": 0,
+      "other": 4
+    },
+    "stop": "max_turns",
+    "restart": {
+      "after_turn": 2,
+      "state_hash_equal": true
+    },
+    "unclean_passes": [],
+    "invalid": "",
+    "questions": 0
+  }
+]

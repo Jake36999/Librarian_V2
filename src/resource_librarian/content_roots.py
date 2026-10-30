@@ -176,26 +176,47 @@ def apply_attach(vault: Vault, folder: Path | str, fingerprint: str) -> dict[str
 WORKSPACE_DOCUMENT = "workspace_document"
 
 
+def outside_scope(rel: str, excludes: set[str], path: Path | None = None) -> bool:
+    """One visibility rule for indexing and watching an adopted library: a hidden
+    name, an excluded path (file or folder) or anything under one, and any
+    link or Windows reparse point (a junction is not a symlink to Python 3.11)
+    are outside it. The Codex review (2026-10-30) found the walker and the
+    watcher each applied only part of this."""
+    from .deploy_survey import is_link
+    parts = rel.split("/")
+    if any(part.startswith(".") for part in parts):
+        return True
+    if any("/".join(parts[:i]) in excludes for i in range(1, len(parts) + 1)):
+        return True
+    return path is not None and is_link(path)
+
+
 def iter_documents(root: Path) -> list[Path]:
-    """Every visible Markdown file under the manifest's read-write roots, sorted,
-    without entering hidden folders, excluded paths or links."""
+    """Every visible Markdown file under the manifest's read-write roots, sorted:
+    `outside_scope` decides what is visible, for folders and files alike."""
     import os
     import sys
     root = Path(root)
     roots, excludes = watch_scope(root)
     fold = sys.platform == "win32"      # rglob's '*.md' matches '.MD' there too
     out: set[Path] = set()
+
+    def rel_of(path: Path) -> str:
+        return path.relative_to(root).as_posix()
+
     for start in roots:
         top = root if start in (".", "") else root / start
+        if top != root and outside_scope(rel_of(top), excludes, top):
+            continue
         for dirpath, dirnames, filenames in os.walk(top):
             here = Path(dirpath)
-            rel = here.relative_to(root).as_posix()
-            dirnames[:] = [d for d in dirnames if not d.startswith(".")
-                           and not (here / d).is_symlink()
-                           and (f"{rel}/{d}" if rel != "." else d) not in excludes]
+            dirnames[:] = [d for d in dirnames
+                           if not outside_scope(rel_of(here / d), excludes, here / d)]
             for name in filenames:
-                if (name.lower() if fold else name).endswith(".md"):
-                    out.add(here / name)
+                path = here / name
+                if ((name.lower() if fold else name).endswith(".md")
+                        and not outside_scope(rel_of(path), excludes, path)):
+                    out.add(path)
     return sorted(out)
 
 

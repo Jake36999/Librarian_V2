@@ -623,17 +623,19 @@ class VaultWatcher:
     def _markdown(self) -> Iterator[Path]:
         """Every visible Markdown file under the watched roots: hidden folders,
         excluded paths and links are not entered."""
+        from .content_roots import outside_scope
         root = self.vault.root
         stack = [root / r if r not in (".", "") else root for r in self._roots]
         while stack:
             folder = stack.pop()
             for entry in self._list(folder):
-                if entry.name.startswith(".") or entry.is_symlink():
-                    continue
                 path = Path(entry.path)
+                # The same rule the index walks by: hidden, excluded (files too)
+                # and links or junctions are never entered or watched.
+                if outside_scope(path.relative_to(root).as_posix(), self._excludes, path):
+                    continue
                 if entry.is_dir(follow_symlinks=False):
-                    if path.relative_to(root).as_posix() not in self._excludes:
-                        stack.append(path)
+                    stack.append(path)
                 elif entry.name.lower().endswith(".md"):
                     yield path
 

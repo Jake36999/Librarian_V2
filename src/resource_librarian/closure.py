@@ -71,6 +71,33 @@ VERIFIERS: dict[str, Verifier] = {
 }
 
 AUTHORITATIVE_KINDS = frozenset({"deterministic", "test", "solver", "evidence"})
+
+# The parameters that name what a verifier checks. A pass establishes a
+# predicate only when these match the subject the person bound to it (Codex
+# review, 2026-10-30: a real quote from source B verified "quoted from source A").
+# Verifiers with no entry check the contract itself, which admission binds.
+SUBJECTS: dict[str, tuple[str, ...]] = {
+    "evidence.integrity": ("evidence",), "coverage.status": ("source",),
+    "quote.located": ("evidence",), "arithmetic.reproduces": ("note",),
+    "claim_run.passed": ("run",), "index.findable": ("note",),
+    "schema.valid": ("note",), "citation.resolves": ("note",),
+}
+
+
+def binding(named: Any) -> dict[str, Any]:
+    """A person-named verifier, as {"verifier": id, "params": {...}}: a bare id
+    names the verifier without binding its subject."""
+    if isinstance(named, dict):
+        return {"verifier": base_id(named.get("verifier", "")),
+                "params": dict(named.get("params") or {})}
+    return {"verifier": base_id(named), "params": {}}
+
+
+def unbound_subject(verifier: str, bound: dict[str, Any], params: dict[str, Any]) -> list[str]:
+    """The subject keys a result does not match the person's binding on: empty
+    when the result checked the subject the person named."""
+    keys = SUBJECTS.get(base_id(verifier), ())
+    return [k for k in keys if k not in bound or str(params.get(k)) != str(bound[k])]
 _STRENGTH_ORDER = {"advisory": 0, "bounded": 1, "exact": 2}
 
 # The closure-validity table: what each closure class may be closed by.
@@ -139,6 +166,7 @@ def check_plan(requirements: dict[str, dict[str, Any]], addressed: list[str],
     for rid in addressed:
         for predicate, named in (requirements[rid].get("verifiers") or {}).items():
             key = f"{rid}: {predicate}"
+            named = binding(named)["verifier"]
             if normalised.get(key) != named:
                 raise _refuse_plan(
                     f"the person named {named} for {key!r}; plan exactly that verifier "
@@ -201,6 +229,44 @@ def _covered(path: str, targets: list[str]) -> bool:
     return any(path == t or (t.endswith("/") and path.startswith(t)) for t in targets)
 
 
+def _note_paths(vault: Any, name: str) -> list[str]:
+    from . import notes
+    wanted = str(name).strip().casefold().removesuffix(".md").rsplit("/", 1)[-1]
+    return [p.relative_to(vault.root).as_posix() for p in notes.iter_paths(vault.root)
+            if p.stem.casefold() == wanted]
+
+
+def _resolved_reads(spec: Any, kwargs: dict[str, Any], vault: Any) -> list[str]:
+    out: list[str] = []
+    for arg, kind in (getattr(spec, "resolve", None) or {}).items():
+        value = kwargs.get(arg)
+        if kind == "note" and isinstance(value, str) and value.strip():
+            out += _note_paths(vault, value)
+    return out
+
+
+def _evidence_readable(vault: Any, ident: str, readable: list[str]) -> bool:
+    """An evidence record is readable when its own file is targeted, or when a
+    note within the targets cites it."""
+    from . import notes
+    for path in vault.evidence.glob(f"*/{ident}.json"):
+        if _covered(path.relative_to(vault.root).as_posix(), readable):
+            return True
+    root = vault.root
+    for target in readable:
+        target = str(target).replace("\\", "/")
+        if target.endswith("/"):
+            candidates = sorted((root / target).rglob("*.md"))[:500]
+        else:
+            candidates = [root / target]
+        for path in candidates:
+            if path.suffix == ".md" and path.is_file():
+                cited = notes.load(path).frontmatter.get("evidence") or []
+                if ident in [str(c) for c in cited]:
+                    return True
+    return False
+
+
 def idempotency_key(contract_id: str, revision: int, tool: str, kwargs: dict[str, Any]) -> str:
     body = json.dumps({"contract": contract_id, "revision": revision, "tool": tool,
                        "args": kwargs}, sort_keys=True, ensure_ascii=False, default=str)
@@ -259,6 +325,20 @@ def authorize(session: Any, spec: Any, kwargs: dict[str, Any], intent: Any,
             if isinstance(value, str) and value and not _covered(value, readable):
                 raise Refusal("CONTRACT_SCOPE", f"{spec.name} would read {value}, outside "
                                                 f"contract {contract_id}'s targets")
+        # What a call reads is resolved, not guessed from argument names: a note
+        # named by a resolvable argument (get_note's `name`) and an evidence id
+        # (read_evidence) must lie within the targets too (Codex review,
+        # 2026-10-30: both bypassed the scope).
+        for value in _resolved_reads(spec, kwargs, vault):
+            if not _covered(value, readable):
+                raise Refusal("CONTRACT_SCOPE", f"{spec.name} would read {value}, outside "
+                                                f"contract {contract_id}'s targets")
+        ident = kwargs.get("evidence_id")
+        if (spec.name == "read_evidence" and isinstance(ident, str)
+                and not _evidence_readable(vault, ident.strip(), readable)):
+            raise Refusal("CONTRACT_SCOPE", f"read_evidence would read evidence {ident}, which "
+                                            f"no note within contract {contract_id}'s read "
+                                            "targets cites; add the citing note to the targets")
     history = session.contract_calls.get(contract_id, [])
     if any(c["untrusted"] for c in history) and klass not in AFTER_UNTRUSTED:
         raise Refusal("COMPOSITION_REFUSED",

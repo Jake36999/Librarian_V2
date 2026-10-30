@@ -1,0 +1,8 @@
+{
+  "pool": "long-horizon-research",
+  "snapshot": "2026-10-30T11:56:37.117319+00:00",
+  "budget_usd": 8.0,
+  "committed_usd": 0.36314935,
+  "review_increment_usd": 0.0127752,
+  "basis": "Local estimated charges plus unresolved prior reservation; not a provider invoice."
+}

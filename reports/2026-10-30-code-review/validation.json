@@ -1,0 +1,26 @@
+{
+  "reviewed_commit": "fd715f1",
+  "product_files_modified": false,
+  "targeted_tests": {
+    "passed": 170,
+    "deselected": 1,
+    "seconds": 35.81
+  },
+  "source_identity": "PYTHONPATH=src; checkout-source guard passed",
+  "release_versions": "Core 2.1.0.dev0, adapters 2.1.0-dev; agree",
+  "reproductions": [
+    "wrong-source requirement verified and re-audit holds",
+    "changed draft remains verified across fresh contracts",
+    "get_note succeeds outside empty contract read scope",
+    "hidden and explicitly excluded Markdown enumerated",
+    "Windows junction followed outside adopted root",
+    "synthetic budget 0.10, three calls and 3.00 before stop; zero real spend"
+  ],
+  "full_suite": {
+    "passed": 1848,
+    "skipped": 1,
+    "deselected": 5,
+    "seconds": 635.75,
+    "exit_code": 0
+  }
+}
