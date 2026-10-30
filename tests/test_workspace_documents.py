@@ -178,3 +178,38 @@ def test_the_index_classifies_by_declared_type_not_by_frontmatter_or_folder(mixe
     assert found["Sources/PreviouslyManaged.md"] == "workspace_document"
     assert found["Concepts/Managed.md"] == "concept"
     assert found["Sources/osquery.md"] == "source"
+
+
+# --- REMED-02: the `all` search reports each group honestly (Codex review S1) ------
+
+def everything(vault, **kwargs):
+    from resource_librarian.search import search as run
+    with Index(vault) as index:
+        index.refresh()
+        return run(Engine(index, vault.config()["heuristics"]), "blue-green rollout canary",
+                   "all", **kwargs)
+
+
+def test_all_reports_each_groups_own_counts_and_verdict(adopted):
+    out = everything(adopted)
+    assert "workspace" in out.ran and out.groups["workspace"]["matched"] >= 1
+    assert out.verdict != "uncovered"                    # a group found it
+    assert out.considered == sum(g["considered"] for g in out.groups.values())
+    assert out.coverage["from_group"] in out.groups
+    assert "workspace" in out.next_step
+
+
+def test_filters_say_which_group_they_narrowed(adopted):
+    out = everything(adopted, max_age_days=1)
+    assert out.groups["orient"]["filters"] == "applied"
+    assert out.groups["workspace"]["filters"] == "not applicable"
+    assert out.advisories[0].startswith("constraints and max_age_days narrowed the sources")
+
+
+def test_a_source_argument_that_would_be_ignored_is_refused(adopted):
+    from resource_librarian.search import ConstraintError
+    with pytest.raises(ConstraintError, match="source narrows only in_text, technique"):
+        everything(adopted, source="does-not-exist")
+    out = REGISTRY.call("search", {"query": "canary", "intent": "donor", "source": "x"},
+                        Context(tier="consult", vault=adopted))
+    assert "error" in out and "source narrows only" in str(out)

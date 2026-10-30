@@ -43,6 +43,8 @@ INTENTS = ("orient", "donor", "pattern", "technique", "data", "precedent", "in_t
            # DEPLOY-03: an adopted folder's own documentation (workspace documents)
            "workspace")
 EVERYTHING = ("orient", "pattern", "made")      # `all`: each still answers in its own shape
+SOURCE_INTENTS = ("in_text", "technique")      # the intents a `source` argument narrows
+_LEVEL_ORDER = {"uncovered": 0, "thin": 1, "covered": 2}
 
 STOPWORDS = frozenset("""
 a an and are as at be but by can could do does for from get give has have how i
@@ -102,13 +104,17 @@ class Response:
     # R15: the top candidates the constraints removed, by name - a list, not only a sentence
     removed_by_filters: list[str] = field(default_factory=list)
     ran: list[str] = field(default_factory=list)          # `all`: the intents that answered
+    # `all` (REMED-02): each group's own considered/matched/verdict and which
+    # filters applied to it; the top-level figures summarise these honestly.
+    groups: dict[str, dict[str, Any]] = field(default_factory=dict)
     ranking: str = "lexical"                  # or "hybrid (<model>)" when vectors contributed
 
     def to_dict(self) -> dict[str, Any]:
         return {"intent": self.intent, "verdict": self.verdict, "coverage": self.coverage,
                 **({"removed_by_filters": self.removed_by_filters}
                    if self.removed_by_filters else {}),
-                **({"ran": self.ran} if self.ran else {}), "ranking": self.ranking,
+                **({"ran": self.ran} if self.ran else {}),
+                **({"groups": self.groups} if self.groups else {}), "ranking": self.ranking,
                 "results": [r.to_dict() for r in self.results], "facets": self.facets,
                 "considered": self.considered, "matched": self.matched,
                 "filtered_out": self.filtered_out, "constraints": self.constraints,
@@ -580,6 +586,11 @@ def search(engine: Engine, query: str, intent: str = "donor",
            source: str = "", max_age_days: int = 0) -> Response:
     if intent not in INTENTS:
         raise ConstraintError(f"intent {intent!r} is not one of {INTENTS}")
+    if source and intent not in SOURCE_INTENTS:
+        # It would be silently ignored (Codex review S1): say so instead.
+        raise ConstraintError(f"source narrows only {', '.join(SOURCE_INTENTS)} (inside one "
+                              f"source's text); {intent!r} searches the whole library - "
+                              "drop source, or use in_text")
     if intent == "all":
         return _everything(engine, query, constraints, limit, max_age_days)
     if intent == "in_text":
@@ -695,28 +706,52 @@ def _add_navigation(engine: Engine, response: Response) -> None:
 
 def _everything(engine: Engine, query: str, constraints: dict[str, Any] | None, limit: int,
                 max_age_days: int) -> Response:
-    """Search everything (SM-5): sources, patterns and what the library made, each through
-    its own intent and answer shape, grouped - never hiding which one ran."""
-    # An adopted folder's documentation answers too, as its own group (DEPLOY-03).
+    """Search everything (SM-5): sources, patterns, what the library made and, in an
+    adopted library, its own documentation - each through its own intent and
+    answer shape, grouped, never hiding which one ran.
+
+    Each group reports its own considered, matched and verdict, and which filters
+    applied to it (REMED-02). Constraints and max_age_days narrow the sources
+    group only; the top-level figures summarise the groups rather than repeating
+    the sources group's (Codex review S1: a workspace hit sat under a top-level
+    "uncovered, 0 considered")."""
     ran = EVERYTHING + (("workspace",) if engine.conn.execute(
         "SELECT 1 FROM note WHERE shape = 'workspace_document' LIMIT 1").fetchone() else ())
     parts = {i: search(engine, query, i, constraints if i == "orient" else None,
                        limit=limit, max_age_days=max_age_days if i == "orient" else 0)
              for i in ran}
     lead = parts["orient"]
-    out = Response(intent="all", verdict=lead.verdict, coverage=lead.coverage,
-                   facets=lead.facets, considered=lead.considered, filtered_out=lead.filtered_out,
-                   constraints=lead.constraints, tier_reached=lead.tier_reached,
+    filtered = bool(constraints) or bool(max_age_days)
+    groups = {i: {"considered": part.considered, "matched": part.matched,
+                  "verdict": part.verdict, "filtered_out": part.filtered_out,
+                  "filters": ("applied" if i == "orient" else "not applicable")
+                  if filtered else "none given"}
+              for i, part in parts.items()}
+    best = max(parts.values(), key=lambda part: _LEVEL_ORDER.get(part.verdict, -1))
+    out = Response(intent="all", verdict=best.verdict,
+                   coverage={"level": best.verdict, "from_group": best.intent,
+                             "by_group": {i: part.coverage for i, part in parts.items()}},
+                   facets=lead.facets, considered=sum(p.considered for p in parts.values()),
+                   filtered_out=lead.filtered_out, constraints=lead.constraints,
+                   tier_reached=max(p.tier_reached for p in parts.values()),
                    partial=any(p.partial for p in parts.values()),
-                   removed_by_filters=lead.removed_by_filters, ran=list(ran))
+                   removed_by_filters=lead.removed_by_filters, ran=list(ran), groups=groups)
     for intent, part in parts.items():
         out.results += [Result(r.kind, r.name, r.why, r.rank, {**r.fields, "intent": intent})
                         for r in part.results]
         out.matched += part.matched
         out.notes += part.notes
     out.advisories = list(dict.fromkeys(a for p in parts.values() for a in p.advisories))
-    out.next_step = ("each group answered its own intent: sources (orient), patterns, and "
-                     "what this library made; search one intent for its full answer")
+    if filtered:
+        out.advisories.insert(0, "constraints and max_age_days narrowed the sources group "
+                                 "(orient) only; " + ", ".join(i for i in ran if i != "orient")
+                                 + " are not filtered by them")
+    names = {"orient": "sources (orient)", "pattern": "patterns", "made": "what this library made",
+             "workspace": "the adopted folder's own documentation (workspace)"}
+    out.next_step = ("each group answered its own intent - " +
+                     ", ".join(names[i] for i in ran) +
+                     "; groups gives each one's own verdict and counts; search one intent for "
+                     "its full answer")
     return out
 
 

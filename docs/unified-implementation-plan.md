@@ -3610,3 +3610,33 @@ It then passed in 3 single runs, in 4 runs of its whole file (108 tests), and
 in a second full run. That test uses an ordinary library, which REMED-01 does
 not change. The cause is not established; it is recorded here as the
 taxonomy test's was.
+
+### REMED-02 aggregate search contract (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| REMED-02 | implemented | this commit | `search.py` (`_everything`, the `source` check); tests in `tests/test_workspace_documents.py` (3 new). Full suite: 1,863 passed, 2 skipped. |
+
+**Each group reports for itself.** The `all` intent's response now carries
+`groups`: for each group that ran (orient, pattern, made, and workspace in an
+adopted library), its own considered, matched, verdict, filtered-out count,
+and whether filters applied.
+
+The top-level figures summarise the groups instead of copying the sources
+group:
+- the verdict is the best group's;
+- `coverage` names the group it came from and keeps every group's coverage;
+- `considered` is the sum.
+
+Codex's case of a workspace hit under a top-level "uncovered, 0 considered"
+no longer happens.
+
+**Filters say where they apply.** Constraints and `max_age_days` narrow only
+the sources group. That group reports them as `applied`, the others as `not
+applicable`, and an advisory says so.
+
+**`source` is refused where it does nothing.** It narrows only `in_text` and
+`technique`. With any other intent it is now refused with an explanation,
+not silently ignored. No existing caller passed it elsewhere.
+
+**Guidance** names every group that ran, workspace included.
