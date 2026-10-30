@@ -40,7 +40,8 @@ from .file_access import FileChangedError, file_access, read_bytes_snapshot
 from .rules import Refusal
 from .vault import Vault, now_iso
 
-SCHEMA_VERSION = 3          # 3: stable file identity for refresh snapshots
+SCHEMA_VERSION = 4          # 3: stable file identity for refresh snapshots
+                            # 4: document identity and duplicate layers (DEPLOY-04)
 TARGET_CHARS = 1200
 MIN_CHARS = 80
 REFRESH_RECONCILIATION_PASSES = 3
@@ -146,11 +147,13 @@ class RefreshReport:
     removed: list[str] = field(default_factory=list)
     rebuilt: bool = False
     reason: str = ""
+    moved: list[dict[str, str]] = field(default_factory=list)   # DEPLOY-04
 
     def to_dict(self) -> dict[str, Any]:
         return {"upserted": len(self.upserted), "unchanged": self.unchanged,
                 "removed": len(self.removed), "rebuilt": self.rebuilt, "reason": self.reason,
-                "sample": self.upserted[:10]}
+                "sample": self.upserted[:10],
+                **({"moved": self.moved[:20]} if self.moved else {})}
 
 
 # ------------------------------------------------------------------ chunking
@@ -249,6 +252,8 @@ class Index:
             # UI hang; adapters never open this file themselves.
             conn.execute("PRAGMA busy_timeout=5000")
             conn.executescript(SCHEMA)
+            from .document_identity import TABLE as DOCUMENT_TABLE
+            conn.executescript(DOCUMENT_TABLE)
             columns = {row[1] for row in conn.execute("PRAGMA table_info(note)")}
             if "mtime_ns" not in columns:
                 conn.execute("ALTER TABLE note ADD COLUMN mtime_ns INTEGER NOT NULL DEFAULT 0")
@@ -320,6 +325,12 @@ class Index:
         text = text.replace("\r\n", "\n").replace("\r", "\n")
         digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:24]
         row = self.conn.execute("SELECT hash FROM note WHERE path = ?", (rel,)).fetchone()
+        fm, body, error = notes.parse(text)
+        # DEPLOY-04: what this path holds now, for identity across moves and
+        # for explainable duplicates.
+        from .document_identity import remember
+        remember(self.conn, rel, snapshot.data, text, fm if not error else {},
+                 snapshot.device, snapshot.inode)
         if row and row["hash"] == digest and not force:
             self.conn.execute(
                 "UPDATE note SET mtime = ?, mtime_ns = ?, size = ?, file_identity = ? WHERE path = ?",
@@ -328,7 +339,6 @@ class Index:
                 self.conn.commit()
             return False
         self._delete_rows(rel)
-        fm, body, error = notes.parse(text)
         note = notes.Note(name=path.stem, path=path, frontmatter=fm, body=body,
                           parse_error=error)
         model = self.model
@@ -474,6 +484,11 @@ class Index:
                 break
         if not settled:
             report.reason = "the Markdown tree remained active; refresh again to observe later changes"
+        # DEPLOY-04: only now, with the whole tree seen, can a vanished path and a
+        # new one be recognised as one document that moved.
+        from .document_identity import reconcile
+        report.moved = reconcile(self.conn)
+        self.conn.commit()
         return report
 
     def _indexed_metadata(self) -> dict[str, tuple[int, int, str]]:
@@ -533,11 +548,17 @@ class Index:
                 report.upserted.append(rel)
         report.removed.extend(rel for rel in reconciled.removed if rel not in report.removed)
         report.unchanged = reconciled.unchanged
+        report.moved = reconciled.moved
         if reconciled.reason:
             report.reason = reconciled.reason
         return report
 
     # -- reads ----------------------------------------------------------------
+    def document(self, rel: str) -> dict[str, Any] | None:
+        """One path's document identity (DEPLOY-04)."""
+        row = self.conn.execute("SELECT * FROM document WHERE path = ?", (rel,)).fetchone()
+        return dict(row) if row else None
+
     def stats(self) -> dict[str, Any]:
         def count(sql: str) -> int:
             return self.conn.execute(sql).fetchone()[0]

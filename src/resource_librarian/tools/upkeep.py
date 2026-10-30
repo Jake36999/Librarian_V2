@@ -29,6 +29,20 @@ def duplicate_report(ctx: Context, top: int = 15) -> dict:
     return upkeep.duplicates(ctx.vault, None, top, index_call=IndexGateway(ctx).run)
 
 
+@tool("document_duplicates", tier="consult", effect="read",
+      returns=("documents", "groups"),
+      card=Card("Documents that are the same file, the same bytes, the same text in another "
+                "format, or about the same outside thing - each group with the layer that "
+                "matched and why",
+                "after adopting a folder, or when the same page seems to exist twice",
+                "Exact identity layers, unlike duplicate_report's similarity shortlist. "
+                "An explanation for a person: nothing is merged, moved or deleted"))
+def document_duplicates(ctx: Context, limit: int = 50) -> dict:
+    from ..document_identity import duplicates
+    return IndexGateway(ctx).run(lambda engine: duplicates(engine.index.conn,
+                                                           max(1, min(int(limit), 200))))
+
+
 @tool("provenance_check", tier="consult", effect="read", resolve={"source": "note"},
       returns=("checked", "supported", "contradicted", "unsupported", "results"),
       card=Card("Check the numbers a note states about a repository (files, test files, "

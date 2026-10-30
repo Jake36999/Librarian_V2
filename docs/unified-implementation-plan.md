@@ -2795,3 +2795,68 @@ Confirmed by removing the exemption: the test then flags `vendor-notes` and
 - Dedupe across workspace documents and notes is DEPLOY-04.
 - Attached read-only roots lie outside the vault and are not indexed yet.
   Reading them needs an index path outside the vault root.
+
+### DEPLOY-04 document identity and dedupe layers one to four (2026-10-30)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| DEPLOY-04 | implemented | this commit | `src/resource_librarian/document_identity.py`; the index's `document` table (index schema version 4); the `document_duplicates` tool; tests in `tests/test_document_identity.py` (15). |
+
+**Identity.** Every indexed document has a stable `doc_id`. Each upsert
+records what its path holds:
+- the file's device and file id;
+- the byte hash;
+- the normalised text hash;
+- the external identity.
+
+When a refresh has seen the whole tree, it reconciles. A document that
+vanished from one path and appeared at another keeps its id only on an
+unambiguous match. The match is checked in order:
+1. **File identity.** A same-volume rename keeps the file id, which is what
+   Obsidian does.
+2. **Byte hash.** This covers a move that rewrote the file.
+
+Unambiguous means exactly one vanished and one new document share the key.
+Otherwise the new path is a new document; an identity is never guessed.
+The refresh report lists each move with the layer that matched, and the id
+survives a full rebuild.
+
+Tested on NTFS:
+- an in-place rename (by file identity);
+- a move to another folder edited in the same refresh;
+- a delete-and-rewrite elsewhere (by byte hash);
+- an ambiguous pair, which gets new ids;
+- a delete then recreate, which gets a new id.
+
+Bumping the index schema to 4 rebuilds existing indexes once, so every
+document gets its row.
+
+**Duplicates, explained.** `document_duplicates` (consult tier, read-only)
+groups live documents that match on a layer and says why:
+
+| Layer | Grouped by | Why |
+| --- | --- | --- |
+| file identity | the same device and file id | one file reached through several paths (a hard link) |
+| byte hash | the same bytes in separate files | byte-identical content |
+| normalised text | the same text after normalising the byte-order mark, line endings, NFC, whitespace runs, trailing space and blank lines (case is content) | differs only in formatting |
+| external identity | the same repository key, DOI or normalised URL | each declares the same outside thing, and whether their texts differ |
+
+Tested:
+- a copy, and a CRLF and whitespace variant;
+- two notes whose `canonical_url` differ only by `www.`, case and a trailing
+  slash;
+- a real hard link.
+
+The report leaves every file in place. It sits beside `duplicate_report`,
+whose similarity shortlist for sources is unchanged.
+
+**No automatic merge or delete.** Neither reconciliation nor the report
+moves, merges or deletes a document. Reconciliation only re-points an id
+in the derived index.
+
+**Not yet.**
+- The ids live in the derived index. Deleting `.librarian/derived/` issues
+  new ids, which is fine while nothing outside the index refers to them.
+- Moves across a whole-index rebuild are recognised only by the incremental
+  refresh that follows it.
+- DEPLOY-05 (structural index) is deferred behind G4.
