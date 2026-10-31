@@ -356,7 +356,9 @@ class PaidDispatch(delegation.providers.DispatchGate):
       HTTP error or a refused connection, which the provider did not process,
       is `failed` at nothing; anything else (a timeout, a dropped connection,
       a reply without usage) is `uncertain` at the whole reservation, never
-      refunded, and blocks every later dispatch.
+      refunded, and blocks later dispatches in that task. The next task may
+      start against the remaining caps; structural budget failures still stop
+      the whole run.
     - A crash between the two leaves the entry `started` at its reservation.
     """
 
@@ -367,17 +369,26 @@ class PaidDispatch(delegation.providers.DispatchGate):
         self.run, self.task, self.run_budget, self.call_cap = run, task, run_budget, call_cap
         self.host = host
         self.blocked = ""
+        self.run_blocked = ""
         self.attempts = self.settled = 0
 
     def _stop(self, reason: str) -> None:
-        self.blocked = self.blocked or reason
+        self.run_blocked = self.run_blocked or reason
         raise delegation.providers.ProviderError(f"G5 budget: {reason}", category="budget")
+
+    def begin_task(self, task: str) -> None:
+        """Start one task without forgiving a run-wide safety failure."""
+        self.task = task
+        self.blocked = ""
 
     def before(self, method: str, url: str, body: Any, sent_bytes: int) -> Any:
         if body is None:
             return None                 # a listing or balance request: no model call
+        if self.run_blocked:
+            self._stop(self.run_blocked)
         if self.blocked:
-            self._stop(self.blocked)
+            raise delegation.providers.ProviderError(
+                f"G5 budget: {self.blocked}", category="budget")
         if self.host not in url:
             self._stop(f"a model request to {url.split('?')[0]} has no rate card here")
         limit = body.get("max_tokens") or body.get("max_completion_tokens") \
@@ -416,7 +427,7 @@ class PaidDispatch(delegation.providers.DispatchGate):
             status, charged, basis = "completed", actual, "metered_estimate"
             if actual > reserve:
                 # Billed past its bound: charge what was billed, and spend no more.
-                self.blocked = self.blocked or "a call cost more than its reservation"
+                self.run_blocked = self.run_blocked or "a call cost more than its reservation"
         elif error is not None and delegation.classify_failure(error, False) == "failed":
             status, charged, basis = "failed", 0.0, "none"
         else:
@@ -575,14 +586,14 @@ def main(argv: list[str] | None = None) -> int:
             used = committed(ledger, args.ledger_cap, run_id)
             remaining = min(args.budget_usd - used,
                             args.ledger_cap - committed(ledger, args.ledger_cap))
-            if remaining <= 0 or gate.blocked:
+            if remaining <= 0 or gate.run_blocked:
                 # A task the run could not start is a result too: it is saved
                 # with the reason (the REMED-08 pilot found these unrecorded).
                 rows.append({"task": task["id"], "route": args.route,
-                             "stopped": f"budget_exhausted{': ' + gate.blocked if gate.blocked else ''}"})
+                             "stopped": f"budget_exhausted{': ' + gate.run_blocked if gate.run_blocked else ''}"})
                 save()
                 continue
-            gate.task = f"{run_dir.name}/{task['id']} ({args.route})"
+            gate.begin_task(f"{run_dir.name}/{task['id']} ({args.route})")
             row = run_task(task, library=Path(args.library), run_dir=run_dir,
                            route={"provider": provider, "model": model}, card=card,
                            budget_usd=remaining, max_turns=args.max_turns, gate=gate)

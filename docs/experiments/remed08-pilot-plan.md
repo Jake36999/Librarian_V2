@@ -1,7 +1,9 @@
 # REMED-08 pilot plan: wasted effort after REMED-06
 
-Status: **proposed, awaiting the owner's approval.** Nothing in this plan has
-been run or spent.
+Status: **approved and in progress.** The canary and DeepSeek control are
+complete. MiMo tasks t1--t3 were attempted; two unknown outcomes retained
+their full reservations. On 2026-10-31 the owner chose the session-only stop
+policy below before t4--t8 resume.
 
 ## Why
 
@@ -123,7 +125,11 @@ file is kept as `tmp/g5/ledger.g5v1.json`.
 
 That leaves at least $0.85 in the pool. Each request reserves its worst case
 before it is sent. An `uncertain` outcome keeps its whole reservation and
-stops that run, and a person resolves it with `delegate_ledger.py reconcile`.
+stops its current task. Later tasks may use only the genuinely remaining run
+and pool caps. Structural failures (including a refused reservation or an
+unbounded request) still stop the run. A person may resolve an uncertain entry
+with `delegate_ledger.py reconcile`; the two entries already awaiting owner
+reconciliation are not changed by the runner-policy update.
 
 ## Commands
 
@@ -158,16 +164,18 @@ beside the 32/74 and 25/74 runs, which stay as they are. It includes:
   earlier than `max_turns` would. That is the intended trade: less spend on
   unproductive loops. The share is reported, and the DeepSeek control guards
   against loss on a route that works.
-- **The gate's first real use may stop a run early.** A timeout or a reply
-  without usage stops spending by design. The canary is there to find a
-  systematic problem cheaply.
+- **An uncertain call stops its task.** A timeout or a reply without usage
+  retains its reservation and prevents retries in that task. Continuing with
+  a later task spends only within the remaining caps, so correlated provider
+  failures can still consume the cap conservatively.
 - **The stall limit of 8 is provisional.** This pilot measures it at one
   setting only.
 - **Eight tasks per route is a small sample.** The intervals are nominal,
   because grains within a session are correlated.
 
-## Approvals needed
+## Approval record
 
-1. The three slices, including the canary-first order.
-2. The decision rule, as written or amended.
-3. The caps: $0.15, $1.40 and $0.90, at most $2.45 in total.
+The owner approved the slices, decision rule and caps before the pilot. On
+2026-10-31 the owner additionally approved session-only stopping for unknown
+outcomes: keep the complete reservation, stop that task, and let later tasks
+continue only against the remaining caps.

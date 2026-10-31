@@ -3,8 +3,8 @@
 Every HTTP attempt to a paid provider, retries included, holds a reservation
 on the shared delegation ledger before it is sent, and is settled from what
 came back. A crash, a retry, a timeout or a reply without usage leaves the
-ledger correct and spends nothing further. Driven through the real
-`providers._request` against a local server."""
+ledger correct. An unknown outcome stops that task; structural failures stop
+the run. Driven through the real `providers._request` against a local server."""
 from __future__ import annotations
 
 import importlib.util
@@ -144,17 +144,30 @@ def test_a_timeout_keeps_its_reservation_and_sends_nothing_more(tmp_path, serve,
     assert "outcome is unknown" in paid.blocked
 
 
-def test_a_reply_without_usage_is_charged_its_reservation_and_stops_the_run(tmp_path, serve,
-                                                                            gate):
+def test_a_reply_without_usage_stops_only_its_task(tmp_path, serve, gate):
     server = serve((200, {"choices": []}, 0), (200, {"usage": USAGE}, 0))
     paid = gate()
     send(server)
     with pytest.raises(providers.ProviderError, match="no usage"):
         send(server)
-    [entry] = calls(tmp_path)
-    assert server.hits == 1 and entry["status"] == "uncertain"
-    assert entry["charged_usd"] == pytest.approx(reserve_for())
-    assert "no usage" in paid.blocked
+    assert "no usage" in paid.blocked and not paid.run_blocked   # this task only
+    paid.begin_task("next task")
+    other = {**BODY, "messages": [{"role": "user", "content": "other"}]}
+    send(server, body=other)
+    first, second = calls(tmp_path)
+    assert server.hits == 2 and first["status"] == "uncertain"
+    assert first["charged_usd"] == pytest.approx(reserve_for())
+    assert second["status"] == "completed"
+    assert paid.blocked == ""                                    # the next task ran
+
+
+def test_a_run_wide_failure_survives_the_next_task(tmp_path, gate):
+    paid = gate()
+    with pytest.raises(providers.ProviderError, match="no rate card"):
+        paid.before("POST", "https://api.other.example/v1/chat", BODY, 10)
+    paid.begin_task("next task")
+    with pytest.raises(providers.ProviderError, match="no rate card"):
+        paid.before("POST", "http://127.0.0.1/v1/chat", BODY, 10)
 
 
 def test_a_crash_between_reserve_and_settle_keeps_the_charge(tmp_path, serve, gate):
