@@ -3986,3 +3986,17 @@ audited session, displayed `R1.p1` and its bound evidence, requested more
 evidence through the UI, then observed revision 2 and stable `R1.p2` after the
 explicit status refresh. The full Python suite passed: 1,923 passed, 2 skipped,
 5 deselected in 602.30 seconds.
+
+### ACCEPT-02 fresh Windows pass, local packet (2026-10-31)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| ACCEPT-02 | in progress; local artifact boundary passed, external real-host checks remain | this commit | Fresh candidate wheel/Obsidian/Cowork artifacts; 106 focused Windows tests; installed-wheel Host/UI/MCP lifecycle; simultaneous packaged Browser/Cowork protocol; successful rollback with unchanged vault content. See `reports/2026-10-31-accept02-windows-acceptance.md`. |
+
+The pass records Windows 11 25H2, Python 3.11.3, Chrome/Edge 156 and
+Docker client 29.8.1. Docker's daemon was not running and no Obsidian
+executable was found, so neither condition is reported as passed. The report
+contains the remaining hands-on checklist for real Obsidian/SecretStorage,
+dirty documents, the real Claude/Cowork UI, mixed three-client traffic,
+external application handles and a fresh live-Docker run. ACCEPT-02 remains
+open until that evidence is retained with the exact host versions.
