@@ -564,14 +564,23 @@ def main(argv: list[str] | None = None) -> int:
                         run_budget=args.budget_usd, call_cap=args.call_cap_usd)
     previous = delegation.providers.set_dispatch_gate(gate)
     rows = []
+
+    def save() -> None:
+        (run_dir / "results.json").write_text(json.dumps(
+            {"rows": rows, "totals": totals(rows), "ledger_run": run_id}, indent=1,
+            default=str), encoding="utf-8")
+
     try:
         for task in tasks:
             used = committed(ledger, args.ledger_cap, run_id)
             remaining = min(args.budget_usd - used,
                             args.ledger_cap - committed(ledger, args.ledger_cap))
             if remaining <= 0 or gate.blocked:
+                # A task the run could not start is a result too: it is saved
+                # with the reason (the REMED-08 pilot found these unrecorded).
                 rows.append({"task": task["id"], "route": args.route,
                              "stopped": f"budget_exhausted{': ' + gate.blocked if gate.blocked else ''}"})
+                save()
                 continue
             gate.task = f"{run_dir.name}/{task['id']} ({args.route})"
             row = run_task(task, library=Path(args.library), run_dir=run_dir,
@@ -579,9 +588,7 @@ def main(argv: list[str] | None = None) -> int:
                            budget_usd=remaining, max_turns=args.max_turns, gate=gate)
             row["ledger_usd"] = round(committed(ledger, args.ledger_cap, run_id) - used, 8)
             rows.append(row)
-            (run_dir / "results.json").write_text(json.dumps(
-                {"rows": rows, "totals": totals(rows), "ledger_run": run_id}, indent=1,
-                default=str), encoding="utf-8")
+            save()
     finally:
         delegation.providers.set_dispatch_gate(previous)
     print(json.dumps(totals(rows), indent=1))
