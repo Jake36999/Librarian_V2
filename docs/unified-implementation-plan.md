@@ -3957,3 +3957,32 @@ Tested:
 effort" needs paid calls. It overlaps REMED-08 (the targeted re-measurement
 within the $8 ledger, $4.70 spent) and needs the owner's go-ahead and a
 predeclared slice.
+
+### UX-01 per-predicate inspector (2026-10-31)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| UX-01 | implemented | this commit | `audit_events.predicate_inspector` is a pure projection of folded Session state; `Session.to_dict` exposes it; the shared web/Obsidian UI renders it and invokes the existing person tools. Four focused backend tests, a browser action walk, and the full suite passed. No ledger or stored UI state was added. |
+
+The inspector keeps one row per current predicate, including closed and stale
+requirements. It shows the stable predicate id, the person's verifier and
+bound subject, missing or mismatched subject keys, the latest current or
+historical result, its exact statement, authority and strength, contract
+integrity, epoch and staleness. Core verification, partial support and person
+acceptance use separate labels. Invalid and legacy histories are read-only.
+
+Historical artifacts remain visible beside the result or person decision, but
+are not offered as fresh one-click acceptance actions after the epoch changes.
+Current referenced artifacts can be accepted or rejected through the existing
+person-only tools. Requesting more evidence uses `request_evidence`; every UI
+action then reloads `session_status`, so the inspector is never a second source
+of truth.
+
+**Tested.** `tests/test_predicate_inspector.py` covers unchecked, passing,
+failing, unbound and subject-mismatched predicates, stale historical results,
+person acceptance, invalid/legacy histories, determinism and `session_status`
+exposure. The shared UI build passed. The Playwright smoke walk opened a real
+audited session, displayed `R1.p1` and its bound evidence, requested more
+evidence through the UI, then observed revision 2 and stable `R1.p2` after the
+explicit status refresh. The full Python suite passed: 1,923 passed, 2 skipped,
+5 deselected in 602.30 seconds.

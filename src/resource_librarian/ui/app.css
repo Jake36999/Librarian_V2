@@ -103,6 +103,26 @@
 .lib-app .question { border: 1px solid var(--warn-line); background: var(--warn-bg); border-radius: 8px; padding: 8px; margin-bottom: 12px; }
 .lib-app .question p { margin: 0; }
 .lib-app .question input { flex: 1; min-width: 0; }
+.lib-app .predicate-inspector { margin: 2px 0 16px; }
+.lib-app .predicate-inspector .inspector-scope { margin-bottom: 8px; }
+.lib-app .requirement-card { border: 1px solid var(--line); border-radius: 8px; padding: 9px; margin-bottom: 9px; background: var(--panel); }
+.lib-app .requirement-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.lib-app .inspector-meta { margin: -7px 0 8px; }
+.lib-app .inspector-state { flex: none; border: 1px solid var(--line); border-radius: 999px; padding: 1px 6px; color: var(--muted); font-size: 11px; }
+.lib-app .state-pass, .lib-app .state-verified, .lib-app .state-human_accepted { border-color: var(--ok); color: var(--ok); }
+.lib-app .state-fail, .lib-app .state-failed, .lib-app .state-stale { border-color: var(--warn-line); color: var(--warn-ink); background: var(--warn-bg); }
+.lib-app .predicate-row { border-top: 1px solid var(--line); padding: 6px 0 0; margin-top: 6px; }
+.lib-app .predicate-row summary { display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 6px; cursor: pointer; }
+.lib-app .predicate-row summary code { white-space: nowrap; }
+.lib-app .predicate-detail { padding: 7px 2px 1px 21px; }
+.lib-app .predicate-detail p { margin-bottom: 6px; }
+.lib-app .warn-text { color: var(--warn-ink); }
+.lib-app .inspector-actions { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
+.lib-app .inspector-action-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.lib-app .inspector-action-row input { flex: 1 1 140px; min-width: 0; }
+.lib-app .inspector-artifact { border-left: 2px solid var(--line); margin-top: 8px; padding-left: 8px; }
+.lib-app .inspector-artifact p { margin: 3px 0 6px; }
+.lib-app .inspector-action-status { min-height: 1em; margin-top: 5px; }
 
 .lib-app .composer { flex: none; padding: 8px max(16px, calc((100% - 860px) / 2)) 14px; border-top: 1px solid var(--line); background: var(--bg); position: relative; }
 .lib-app .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }

@@ -684,6 +684,131 @@ def _person_actions(state: AuditState, requirement: str) -> list[dict[str, Any]]
             and r["epoch"] == state.epoch][-3:]
 
 
+def _inspector_artifact(state: AuditState, ident: str) -> dict[str, Any]:
+    """The compact, immutable identity of one artifact named by audit state."""
+    artifact = state.artifacts.get(ident) or {}
+    return {"id": ident, **{k: artifact[k] for k in ("path", "contract", "epoch")
+                            if k in artifact}}
+
+
+def predicate_inspector(state: AuditState) -> dict[str, Any]:
+    """One deterministic review row per current requirement predicate (UX-01).
+
+    This is a projection of the folded ``AuditState`` only.  It neither reads
+    the vault nor appends an event.  When no result is current, the newest
+    historical result remains visible and is labelled stale instead of being
+    mistaken for current evidence.
+    """
+    requirements: list[dict[str, Any]] = []
+    for requirement, req in state.requirements.items():
+        person = next((r for r in reversed(state.reductions)
+                       if r["requirement"] == requirement and r["by"] == "person"), None)
+        person_view = None
+        if person is not None:
+            person_view = {
+                k: person[k] for k in ("status", "reason", "epoch") if k in person
+            }
+            person_view["stale"] = person["epoch"] != state.epoch
+            if person.get("artifact"):
+                person_view["artifact"] = _inspector_artifact(state, person["artifact"])
+            if person.get("rejected"):
+                person_view["rejected"] = _inspector_artifact(state, person["rejected"])
+
+        predicates: list[dict[str, Any]] = []
+        referenced_artifacts: list[str] = []
+        for predicate in req["predicates"]:
+            binding = (req.get("verifiers") or {}).get(predicate)
+            verifier = str((binding or {}).get("verifier") or "")
+            subject = dict((binding or {}).get("params") or {})
+            required_subject = list(closure.SUBJECTS.get(verifier, ())) if verifier else []
+            missing = (["verifier"] if not verifier else
+                       [key for key in required_subject if key not in subject])
+
+            matches = [(ident, result) for ident, result in state.results.items()
+                       if (result["requirement"], result["predicate"]) ==
+                       (requirement, predicate)]
+            current = [item for item in matches if item[1]["epoch"] == state.epoch]
+            found = current[-1] if current else (matches[-1] if matches else None)
+            result_view = None
+            subject_mismatches: list[str] = []
+            if found is not None:
+                ident, result = found
+                subject_mismatches = closure.unbound_subject(
+                    result["verifier"], subject, result.get("params") or {})
+                # Historical artifacts explain an old result, but are not
+                # offered as one-click review actions after the session epoch
+                # has moved on.  The server would reconcile them again, yet
+                # the inspector should not visually suggest stale acceptance.
+                if result["epoch"] == state.epoch:
+                    for artifact in result.get("artifacts") or []:
+                        if artifact not in referenced_artifacts:
+                            referenced_artifacts.append(artifact)
+                contract = state.contracts.get(result["contract"])
+                integrity = (contract_integrity(state, result["contract"])
+                             if contract is not None and
+                             result["revision"] == contract["revision"] and
+                             result["epoch"] == state.epoch else "stale")
+                result_view = {
+                    "id": ident, "outcome": result["outcome"],
+                    "strength": result["strength"], "verifier": result["verifier"],
+                    "contract": result["contract"], "revision": result["revision"],
+                    "contract_integrity": integrity,
+                    "epoch": result["epoch"], "stale": result["epoch"] != state.epoch,
+                    "artifacts": [_inspector_artifact(state, artifact)
+                                  for artifact in result.get("artifacts") or []],
+                }
+                if result.get("statement"):
+                    result_view["statement"] = result["statement"]
+
+            verifier_view = None
+            if verifier:
+                registered = closure.VERIFIERS.get(verifier)
+                verifier_view = {"id": verifier, "named_by_person": True}
+                if registered is not None:
+                    verifier_view.update(kind=registered.kind,
+                                         max_strength=registered.max_strength)
+                if subject:
+                    verifier_view["params"] = subject
+            decision_path = ({"authoritative": "core_verification",
+                              "partial": "partial_only",
+                              "human_judgment": "person_acceptance"}[req["closure"]]
+                             if req["status"] != "human_accepted"
+                             else "person_acceptance")
+            decision = {
+                "path": decision_path,
+                "status": state.requirement_status(requirement),
+            }
+            if person_view is not None:
+                decision["person"] = person_view
+            predicates.append({
+                "id": f"{requirement}.{req['ids'][predicate]}",
+                "text": predicate, "outcome": _predicate_outcome(state, requirement, predicate),
+                "stale": bool(result_view and result_view["stale"]) or
+                         state.requirement_status(requirement) == "stale",
+                "verifier": verifier_view, "subject": subject,
+                "missing_subject_keys": missing, "result": result_view,
+                **({"subject_mismatches": subject_mismatches}
+                   if subject_mismatches else {}),
+                "decision_path": decision_path, "decision": decision,
+            })
+        if person_view is not None and not person_view["stale"]:
+            for key in ("artifact", "rejected"):
+                artifact = person_view.get(key)
+                if isinstance(artifact, dict) and artifact.get("id") not in referenced_artifacts:
+                    referenced_artifacts.append(artifact["id"])
+        requirements.append({
+            "id": requirement, "text": req["text"], "closure": req["closure"],
+            "revision": req["revision"], "status": state.requirement_status(requirement),
+            "artifacts": [_inspector_artifact(state, ident)
+                          for ident in referenced_artifacts],
+            "predicates": predicates,
+            **({"person": person_view} if person_view is not None else {}),
+        })
+    return {"actionable": not bool(state.halted), "invalid": state.invalid,
+            **({"legacy": state.legacy} if state.legacy else {}),
+            "scope": SCOPE, "requirements": requirements}
+
+
 def summary(state: AuditState) -> dict[str, Any]:
     """What a person and a projection read: no event bodies, just current truth.
 

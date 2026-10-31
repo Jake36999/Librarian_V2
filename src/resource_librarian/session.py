@@ -1161,7 +1161,9 @@ class Session:
                 # had happened, log-order, as of the most recent write. A write
                 # before any message at all (min_rewind_index 0) blocks nothing.
                 "min_rewind_index": self.min_rewind_index,
-                **({"audit": audit_events.summary(self.audit)} if self.audit.used else {})}
+                **({"audit": audit_events.summary(self.audit)} if self.audit.used else {}),
+                **({"predicate_inspector": audit_events.predicate_inspector(self.audit)}
+                   if self.purpose == "audited" or self.audit.used else {})}
 
 
 # -------------------------------------------------------------------- storage

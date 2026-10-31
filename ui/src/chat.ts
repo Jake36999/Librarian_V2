@@ -430,6 +430,150 @@ export class Chat {
     this.append(this.outcomeCard);
   }
 
+  /** UX-01: the Core projects this from the audited Session ledger. The UI
+   * explains and acts on that projection; it never derives closure state. */
+  private predicateInspector(session: Session): HTMLElement | null {
+    if (!session) return null;
+    const view = session?.predicate_inspector as Record<string, any> | undefined;
+    if (!view) return null;
+    const requirements = inspectorRequirements(view);
+    if (!requirements.length) return null;
+    const actionable = view.actionable !== false && session.status !== "closed";
+    const halted = String(view.invalid ?? view.legacy ?? "");
+
+    return h("section", { class: "predicate-inspector", "aria-label": "Requirement predicates" },
+      h("h3", {}, "Requirements"),
+      h("p", { class: "dim inspector-scope" },
+        "Checks support only the exact predicate shown. Person acceptance is a separate judgment; it is not verification."),
+      halted ? h("p", { class: "warn-text" },
+        `This audit history is ${view.invalid ? "invalid" : "legacy"} and is read-only: ${halted}`) : null,
+      requirements.map((requirement) => {
+        const rid = String(requirement.id ?? requirement.requirement_id ?? "Requirement");
+        const closure = String(requirement.closure ?? "");
+        const status = String(requirement.status ?? "open");
+        const predicates = predicateRows(requirement.predicates, rid);
+        const artifacts = namedRows(requirement.artifacts, "id");
+        const actionStatus = h("div", { class: "inspector-action-status", role: "status" });
+        return h("div", { class: `requirement-card status-${safeClass(status)}` },
+          h("div", { class: "requirement-heading" }, h("strong", {}, rid),
+            h("span", { class: `inspector-state state-${safeClass(status)}` }, statusLabel(status))),
+          requirement.text ? h("p", {}, String(requirement.text)) : null,
+          h("p", { class: "dim inspector-meta" },
+            closure ? `${closureLabel(closure)} · ` : "", `revision ${String(requirement.revision ?? 1)}`),
+          predicates.map((predicate) => this.predicateRow(predicate, rid)),
+          !actionable ? null
+            : this.inspectorActions(session, rid, closure, artifacts, actionStatus),
+          actionStatus);
+      }));
+  }
+
+  private predicateRow(predicate: Record<string, any>, requirementId: string): HTMLElement {
+    const result = (predicate.latest_result ?? predicate.result ?? {}) as Record<string, any>;
+    const id = String(predicate.id ?? predicate.predicate_id ?? `${requirementId}.?`);
+    const text = String(predicate.text ?? predicate.predicate ?? predicate.statement ?? "Unnamed predicate");
+    const outcome = String(predicate.outcome ?? predicate.status ?? result.outcome ?? "not_checked");
+    const stale = Boolean(predicate.stale ?? result.stale);
+    const verifier = (predicate.verifier ?? predicate.authority ?? {}) as string | Record<string, any>;
+    const verifierId = typeof verifier === "string" ? verifier
+      : String(verifier.id ?? verifier.verifier ?? predicate.verifier_id ?? "");
+    const verifierKind = typeof verifier === "string" ? String(predicate.verifier_kind ?? "")
+      : String(verifier.kind ?? predicate.verifier_kind ?? "");
+    const strength = String(result.strength ?? predicate.strength
+      ?? (typeof verifier === "string" ? "" : verifier.max_strength ?? ""));
+    const rawDecision = predicate.decision_path ?? predicate.decision?.path ?? predicate.decision ?? "";
+    const decision = typeof rawDecision === "string" ? rawDecision : "";
+    const subject = (predicate.bound_subject ?? predicate.subject ?? predicate.binding
+      ?? (typeof verifier === "string" ? {} : verifier.params ?? {})) as Record<string, any>;
+    const missing = (predicate.missing_subject_keys ?? predicate.missing_bindings ?? subject.missing ?? []) as unknown;
+    const mismatches = predicate.subject_mismatches as unknown;
+    const subjectValues = Object.entries(subject).filter(([key, value]) =>
+      key !== "missing" && key !== "bound" && value !== undefined && value !== null && value !== "");
+    const exactStatement = String(result.statement ?? predicate.result_statement
+      ?? predicate.established_statement ?? "");
+    const artifacts = namedRows(result.artifacts, "id");
+    const open = stale || !["pass", "verified", "human_accepted"].includes(outcome);
+
+    return h("details", { class: `predicate-row outcome-${safeClass(stale ? "stale" : outcome)}`, open },
+      h("summary", {}, h("code", {}, id), h("span", {}, text),
+        h("span", { class: `inspector-state state-${safeClass(stale ? "stale" : outcome)}` },
+          stale ? "stale" : statusLabel(outcome))),
+      h("div", { class: "predicate-detail" },
+        h("p", {}, h("strong", {}, "Decision path: "), decisionLabel(decision)),
+        verifierId ? h("p", {}, h("strong", {}, "Check: "), verifierId,
+          verifierKind ? ` · ${verifierKind}` : "", strength ? ` · ${strength}` : "")
+          : h("p", { class: "dim" }, "No check has been named for this predicate."),
+        subjectValues.length ? h("p", {}, h("strong", {}, "Bound subject: "),
+          subjectValues.map(([key, value]) => `${key} = ${displayValue(value)}`).join(" · "))
+          : h("p", { class: "dim" }, "No subject is bound."),
+        Array.isArray(missing) && missing.length ? h("p", { class: "warn-text" },
+          `Missing subject binding: ${missing.map(String).join(", ")}. A pass can be partial, but cannot verify this predicate.`) : null,
+        Array.isArray(mismatches) && mismatches.length ? h("p", { class: "warn-text" },
+          `The latest check does not match the bound subject: ${mismatches.map(String).join(", ")}. It cannot verify this predicate.`) : null,
+        exactStatement ? h("p", {}, h("strong", {}, "Established statement: "), exactStatement)
+          : h("p", { class: "dim" }, "No current check statement."),
+        result.id ? h("p", { class: "dim" }, `Result ${String(result.id)}${result.epoch !== undefined
+          ? ` · epoch ${String(result.epoch)}` : ""}${artifacts.length
+            ? ` · artifacts ${artifacts.map((artifact) => String(artifact.id ?? artifact.artifact ?? "?")).join(", ")}` : ""}`) : null,
+        stale ? h("p", { class: "warn-text" }, String(predicate.stale_reason ?? result.stale_reason
+          ?? "This result belongs to an earlier session state and is not current evidence.")) : null));
+  }
+
+  private inspectorActions(session: Session, requirement: string, closure: string,
+                           artifacts: Record<string, any>[], status: HTMLElement): HTMLElement {
+    const evidence = h("input", { type: "text", "aria-label": `Evidence needed for ${requirement}`,
+      placeholder: "Evidence or check needed" }) as HTMLInputElement;
+    const request = h("button", { class: "ghost", disabled: true }, "Request evidence") as HTMLButtonElement;
+    evidence.oninput = () => { request.disabled = !evidence.value.trim(); };
+    request.onclick = () => {
+      const what = evidence.value.trim();
+      if (what) void this.inspectorAction(session, "request_evidence", { requirement, what }, request, status);
+    };
+    const rows: HTMLElement[] = [h("div", { class: "inspector-action-row" }, evidence, request)];
+
+    // Accept/reject is offered only for artifacts explicitly projected on this requirement.
+    for (const artifact of artifacts) {
+      const id = String(artifact.id ?? artifact.artifact ?? "");
+      if (!id) continue;
+      const reason = h("input", { type: "text", "aria-label": `Reason for rejecting ${id}`,
+        placeholder: "Reason if rejecting" }) as HTMLInputElement;
+      const accept = h("button", { class: "ghost" }, "Accept") as HTMLButtonElement;
+      const reject = h("button", { class: "ghost", disabled: true }, "Reject") as HTMLButtonElement;
+      reason.oninput = () => { reject.disabled = !reason.value.trim(); };
+      accept.onclick = () => void this.inspectorAction(session, "accept_artifact",
+        { requirement, artifact: id }, accept, status);
+      reject.onclick = () => {
+        const why = reason.value.trim();
+        if (why) void this.inspectorAction(session, "reject_artifact",
+          { requirement, artifact: id, reason: why }, reject, status);
+      };
+      rows.push(h("div", { class: "inspector-artifact" },
+        h("div", {}, h("strong", {}, id), artifact.path ? " · " : "",
+          artifact.path ? link(String(artifact.path), pathName(String(artifact.path)), this.hooks.openNote) : null),
+        h("p", { class: "dim" }, closure === "human_judgment"
+          ? "Accept records your judgment about this exact artifact; it does not turn it into verified evidence."
+          : "Accept records your judgment separately from Core verification."),
+        h("div", { class: "inspector-action-row" }, accept, reason, reject)));
+    }
+    return h("div", { class: "inspector-actions" }, rows);
+  }
+
+  private async inspectorAction(session: Session, tool: string, args: Record<string, unknown>,
+                                button: HTMLButtonElement, status: HTMLElement): Promise<void> {
+    button.disabled = true;
+    clear(status, h("span", { class: "dim" }, "Updating…"));
+    try {
+      const sessionId = String(session?.session ?? "");
+      const out = await this.api.tool(tool, args, sessionId);
+      if (out.error || out.refused) throw new Error(String(out.detail ?? out.refused ?? out.error));
+      const fresh = await this.api.tool("session_status", {}, sessionId);
+      if (fresh.error || fresh.refused) throw new Error(String(fresh.detail ?? fresh.refused ?? fresh.error));
+      this.hooks.onSession(fresh as Session);
+    } catch (error) {
+      button.disabled = false;
+      clear(status, h("span", { class: "error" }, (error as Error).message));
+    }
+  }
+
   /** G3: a person's "Run it" - one function call in a Docker sandbox with no network. The
    *  verdict (confirmed / not confirmed / could not run) replaces the button. */
   private runButton(runId: string): HTMLElement {
@@ -561,6 +705,7 @@ export class Chat {
       (session.open_items ?? []).length ? h("h3", {}, "Open") : null,
       (session.open_items ?? []).length
         ? h("ul", {}, (session.open_items as string[]).map((t) => h("li", {}, t))) : null,
+      this.predicateInspector(session),
       this.coverage(session),
       Object.keys(session.briefs ?? {}).length ? h("h3", {}, "Briefs") : null,
       Object.entries(session.briefs ?? {}).map(([id, b]: [string, any]) =>
@@ -605,6 +750,89 @@ export class Chat {
     }
     return box;
   }
+}
+
+/** Accept either the keyed projection used by the Core or an array from an
+ * older/custom host. Keys are copied only as fallback ids. */
+function inspectorRequirements(view: Record<string, any>): Record<string, any>[] {
+  const direct = namedRows(view.requirements, "id");
+  if (direct.length) return direct;
+  const grouped = new Map<string, Record<string, any>>();
+  for (const row of namedRows(view.predicates, "id")) {
+    const requirement = String(row.requirement ?? "Requirement");
+    let parent = grouped.get(requirement);
+    if (!parent) {
+      parent = { id: requirement, text: row.requirement_text, closure: row.closure,
+        status: row.status, revision: row.revision, predicates: [] };
+      grouped.set(requirement, parent);
+    }
+    parent.predicates.push({ ...row, text: row.predicate ?? row.text,
+      outcome: row.outcome ?? row.result?.outcome ?? (row.result?.stale ? "stale" : "not_checked"),
+      verifier: row.verifier ?? row.authority, decision_path: row.decision_path ?? row.decision?.path,
+      missing_subject_keys: row.missing_subject_keys ?? row.missing_bindings });
+  }
+  return [...grouped.values()];
+}
+
+function namedRows(value: unknown, idKey: string): Record<string, any>[] {
+  if (Array.isArray(value)) return value.flatMap((row) => {
+    if (row && typeof row === "object") return [row as Record<string, any>];
+    return row === undefined || row === null || row === "" ? [] : [{ [idKey]: String(row) }];
+  });
+  if (!value || typeof value !== "object") return [];
+  return Object.entries(value as Record<string, unknown>).map(([id, raw]) => {
+    if (raw && typeof raw === "object" && !Array.isArray(raw))
+      return { [idKey]: id, ...(raw as Record<string, any>) };
+    return { [idKey]: id, value: raw };
+  });
+}
+
+function predicateRows(value: unknown, requirementId: string): Record<string, any>[] {
+  if (Array.isArray(value)) return value.filter((row) => row && typeof row === "object");
+  if (!value || typeof value !== "object") return [];
+  return Object.entries(value as Record<string, unknown>).map(([text, raw], index) => {
+    if (raw && typeof raw === "object" && !Array.isArray(raw))
+      return { text, id: `${requirementId}.p${index + 1}`, ...(raw as Record<string, any>) };
+    return { text, id: `${requirementId}.p${index + 1}`, outcome: raw };
+  });
+}
+
+function safeClass(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-|-$/g, "") || "unknown";
+}
+
+function statusLabel(value: string): string {
+  const labels: Record<string, string> = {
+    not_checked: "not checked", no_suitable_tool: "no suitable tool",
+    human_accepted: "person accepted", inconclusive: "inconclusive",
+  };
+  return labels[value] ?? value.replace(/_/g, " ");
+}
+
+function closureLabel(value: string): string {
+  const labels: Record<string, string> = {
+    authoritative: "Core-verifiable requirement",
+    partial: "Partial evidence requirement",
+    human_judgment: "Person-acceptance requirement",
+  };
+  return labels[value] ?? value.replace(/_/g, " ");
+}
+
+function decisionLabel(value: string): string {
+  const labels: Record<string, string> = {
+    core_verification: "Core verification from exact or bounded checks",
+    person_acceptance: "Person acceptance of an exact artifact — not verification",
+    partial_only: "Advisory or partial support only",
+    partial: "Advisory or partial support only",
+    acceptance: "Person acceptance — not verification",
+  };
+  return labels[value] ?? (value ? value.replace(/_/g, " ") : "Not established yet");
+}
+
+function displayValue(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  try { return JSON.stringify(value); } catch { return String(value); }
 }
 
 function pathName(path: string): string {

@@ -664,6 +664,53 @@ await page.unroute("**/api/tool/staging_list");
 await page.click(".lib-app nav button:has-text('Chat')");
 step("interrupted source acceptance shows retained originals, completed paths and an explicit finish action");
 
+// UX-01: an audited thread exposes the Core's per-predicate projection in the
+// plan pane.  A review action uses the existing person tool, then the UI
+// explicitly refreshes session_status and renders the revised requirement.
+const auditedSession = await page.evaluate(async () => {
+  const token = document.querySelector("meta[name=librarian-token]")?.getAttribute("content") ?? "";
+  const call = async (name, args, session = "") => {
+    const response = await fetch(`/api/tool/${name}`, { method: "POST", headers: {
+      "Content-Type": "application/json", "X-Librarian-Token": token },
+      body: JSON.stringify({ arguments: args, session }) });
+    const out = await response.json();
+    if (!response.ok || out.error || out.refused) throw new Error(JSON.stringify(out));
+    return out;
+  };
+  const opened = await call("open_session", { purpose: "audited",
+    question: "inspect acceptance predicates" });
+  const session = String(opened.session?.session ?? "");
+  await call("set_requirement", { requirement_id: "R1", text: "The quoted evidence is present.",
+    predicates: ["the quote is present"], verifiers: { "the quote is present": {
+      verifier: "quote.located", params: { evidence: "E1" } } } }, session);
+  const attached = await fetch("/api/chat/attach", { method: "POST", headers: {
+    "Content-Type": "application/json", "X-Librarian-Token": token },
+    body: JSON.stringify({ session_id: session }) });
+  if (!attached.ok) throw new Error(await attached.text());
+  return session;
+});
+await page.reload();
+await page.waitForSelector("header nav");
+await page.waitForSelector(".predicate-inspector code:has-text('R1.p1')");
+await expect(page.isVisible(".predicate-inspector >> text=evidence = E1"),
+  "the inspector shows the person-bound subject");
+await expect(page.isVisible(".predicate-inspector >> text=Core verification from exact or bounded checks"),
+  "the inspector distinguishes verifier authority from person acceptance");
+await page.fill(`input[aria-label='Evidence needed for R1']`, "a second independent quote");
+const evidenceRequest = page.waitForResponse((r) => r.url().endsWith("/api/tool/request_evidence") &&
+  r.request().method() === "POST");
+const inspectorRefresh = page.waitForResponse((r) => r.url().endsWith("/api/tool/session_status") &&
+  r.request().method() === "POST");
+await page.click(".predicate-inspector button:has-text('Request evidence')");
+await Promise.all([evidenceRequest, inspectorRefresh]);
+await page.waitForSelector(".predicate-inspector code:has-text('R1.p2')");
+await expect(page.isVisible(".predicate-inspector >> text=revision 2"),
+  "the inspector refreshes after its existing person action");
+await expect(page.evaluate(() => document.body.textContent?.includes("Person acceptance is a separate judgment")),
+  "the inspector never presents person acceptance as verification");
+await expect(Boolean(auditedSession), "the audited smoke thread has an id");
+step("audited predicate inspector shows bindings and refreshes after a person review action");
+
 // Phone width: nothing overflows sideways.
 await page.setViewportSize({ width: 390, height: 800 });
 await expect(page.evaluate(() => document.documentElement.scrollWidth <= 391), "no horizontal scroll at phone width");
