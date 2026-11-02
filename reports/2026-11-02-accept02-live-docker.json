@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "acceptance_task": "ACCEPT-02",
+  "run_date": "2026-11-02",
+  "repository_revision": "7029c68db49f9f3b643249cc0b7eb202b4177c5e",
+  "artifact_candidate_revision": "bdfd8344ad1408a4c5eef4e4bf55984f147b1e23",
+  "package_file": "D:\\Librarian_V2\\src\\resource_librarian\\__init__.py",
+  "scratch_root": "C:\\Users\\jakem\\AppData\\Local\\Temp\\librarian-accept02-docker-b7ab2fb1b5ad48da90ac080912d038a4",
+  "docker": {
+    "desktop": "4.93.0 (240920)",
+    "client": "29.8.1",
+    "client_api": "1.56",
+    "engine": "29.8.1",
+    "engine_api": "1.56",
+    "engine_os": "linux",
+    "engine_arch": "amd64",
+    "kernel": "6.18.54.1-microsoft-standard-WSL2",
+    "security_options": [
+      "name=seccomp,profile=builtin",
+      "name=cgroupns"
+    ]
+  },
+  "wsl": {
+    "version": "3.0.3.0",
+    "kernel_version": "6.18.54.1-1"
+  },
+  "image": {
+    "reference": "python@sha256:db20d8506e2f15b6db39b40b6015ca46bae855dec6dd326d462cfe79ae972893",
+    "local_id": "sha256:db20d8506e2f15b6db39b40b6015ca46bae855dec6dd326d462cfe79ae972893"
+  },
+  "results": {
+    "hostile_size": {
+      "exit": 0,
+      "stderr": "",
+      "stdout_held": 8000,
+      "output_bytes": {
+        "stdout": 9000000,
+        "stderr": 0
+      },
+      "export": {
+        "complete": false,
+        "stopped": "big.bin would take the export past 1,000,000 bytes",
+        "files": 0,
+        "bytes": 0,
+        "refused": []
+      },
+      "files": []
+    },
+    "hostile_count": {
+      "exit": 0,
+      "stderr": "",
+      "stdout_held": 8000,
+      "output_bytes": {
+        "stdout": 9000000,
+        "stderr": 0
+      },
+      "export": {
+        "complete": false,
+        "stopped": "more than 10 files",
+        "files": 10,
+        "bytes": 3000025,
+        "refused": []
+      },
+      "files": [
+        "big.bin",
+        "deep/er/n.txt",
+        "f1.txt",
+        "f10.txt",
+        "f11.txt",
+        "f12.txt",
+        "f13.txt",
+        "f14.txt",
+        "f15.txt",
+        "f16.txt"
+      ]
+    },
+    "hostile_types_only": {
+      "exit": 0,
+      "stderr": "",
+      "stdout_held": 8000,
+      "output_bytes": {
+        "stdout": 9000000,
+        "stderr": 0
+      },
+      "export": {
+        "complete": true,
+        "stopped": "",
+        "files": 34,
+        "bytes": 3000093,
+        "refused": [
+          "fifo: not a regular file (a symbolic link, device or pipe)",
+          "link: not a regular file (a symbolic link, device or pipe)"
+        ]
+      },
+      "files": [
+        "big.bin",
+        "deep/er/n.txt",
+        "f1.txt",
+        "f10.txt",
+        "f11.txt",
+        "f12.txt",
+        "f13.txt",
+        "f14.txt",
+        "f15.txt",
+        "f16.txt",
+        "f17.txt",
+        "f18.txt",
+        "f19.txt",
+        "f2.txt",
+        "f20.txt",
+        "f21.txt",
+        "f22.txt",
+        "f23.txt",
+        "f24.txt",
+        "f25.txt",
+        "f26.txt",
+        "f27.txt",
+        "f28.txt",
+        "f29.txt",
+        "f3.txt",
+        "f30.txt",
+        "f4.txt",
+        "f5.txt",
+        "f6.txt",
+        "f7.txt",
+        "f8.txt",
+        "f9.txt",
+        "hard",
+        "keep.txt"
+      ]
+    },
+    "benign": {
+      "exit": 0,
+      "stdout": "hi\n",
+      "stderr": "",
+      "export": {
+        "complete": true,
+        "stopped": "",
+        "files": 1,
+        "bytes": 3,
+        "refused": []
+      },
+      "artifacts": [
+        {
+          "path": ".librarian/derived/engagements/eng-live-benign/output/result.txt",
+          "bytes": 3,
+          "sha256": "98ea6e4f216f2fb4b69f"
+        }
+      ]
+    }
+  },
+  "post_run": {
+    "residual_live_check_containers": [],
+    "residual_live_check_volumes": []
+  }
+}

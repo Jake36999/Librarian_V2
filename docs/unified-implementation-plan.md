@@ -3996,11 +3996,11 @@ explicit status refresh. The full Python suite passed: 1,923 passed, 2 skipped,
 
 The pass records Windows 11 25H2, Python 3.11.3, Chrome/Edge 156 and
 Docker client 29.8.1. Docker's daemon was not running and no Obsidian
-executable was found, so neither condition is reported as passed. The report
-contains the remaining hands-on checklist for real Obsidian/SecretStorage,
-dirty documents, the real Claude/Cowork UI, mixed three-client traffic,
-external application handles and a fresh live-Docker run. ACCEPT-02 remains
-open until that evidence is retained with the exact host versions.
+executable was found in the original packet. The report contains the remaining
+hands-on checklist for real Obsidian/SecretStorage, dirty documents, the real
+Claude/Cowork UI, mixed three-client traffic and external application handles.
+ACCEPT-02 remains open until that evidence is retained with the exact host
+versions.
 
 #### ACCEPT-02 current-candidate refresh (2026-11-02)
 
@@ -4013,9 +4013,16 @@ durable vault files outside runtime unchanged, and returned zero failed
 required Doctor checks on both versions. Exact artifact and manifest hashes
 are retained in `reports/2026-10-31-accept02-windows-acceptance.md`.
 
-This is refreshed local evidence, not task closure. Docker's daemon remained
-unavailable and Obsidian was not installed; the real-host checklist above is
-unchanged.
+This is refreshed local evidence, not task closure. Obsidian was not installed
+and the external real-host checklist above remains.
+
+A subsequent fresh live-Docker run passed on Docker Desktop 4.93.0 / engine
+29.8.1 with WSL 3.0.3.0 and digest-pinned
+`python@sha256:db20d8506e2f15b6db39b40b6015ca46bae855dec6dd326d462cfe79ae972893`.
+Three hostile runs enforced stdout, byte, count and file-type boundaries; the
+benign result exported intact; no helper container or volume remained. Exact
+JSON is retained in `reports/2026-11-02-accept02-live-docker.json`. This closes
+only the Docker checklist item; ACCEPT-02 remains in progress.
 
 ### REMED-08 measurement and REMED-06 exit (2026-11-02)
 

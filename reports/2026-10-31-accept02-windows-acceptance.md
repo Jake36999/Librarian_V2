@@ -5,15 +5,16 @@ Date: 2026-10-31; refreshed 2026-11-02
 Repository revision: original packet at `716ac10`; current-candidate refresh at
 `bdfd834` (`REMED-07: qualify model view and reachability`)
 
-Status: **in progress — local artifact boundary passed; real Obsidian, real Claude/Cowork UI and live Docker remain**
+Status: **in progress — local artifact and live-Docker boundaries passed; real Obsidian, real Claude/Cowork UI and external-application handles remain**
 
 This packet records a fresh Windows pass on a repository-built candidate. It
 does not close ACCEPT-02: the plan explicitly requires real Obsidian with
-SecretStorage, the real Claude/Cowork host interface, real external application
-handles and a fresh live-Docker pass. Those environments were not available in
-this session and are listed as hands-on checks below.
+SecretStorage, the real Claude/Cowork host interface and real external
+application handles. Those environments were not available in this session
+and are listed as hands-on checks below. A dated refresh below now records the
+fresh live-Docker pass that was unavailable in the original packet.
 
-## Environment
+## Environment (original 2026-10-31 packet)
 
 | Component | Observed identity |
 | --- | --- |
@@ -157,9 +158,40 @@ proving that different package bytes were active. Hashing every vault file
 outside `.librarian/runtime/**` after Doctor on each version found zero added,
 removed or changed durable files.
 
-Docker client 29.8.1 was still present but its Desktop daemon was unavailable,
-and no Obsidian executable was found. No live-Docker, SecretStorage, dirty-note
-or real three-client evidence is inferred from this refresh.
+At the time of the artifact refresh, Docker client 29.8.1 was present but its
+Desktop daemon was unavailable, and no Obsidian executable was found. The
+subsequent section supersedes that statement for Docker only; no
+SecretStorage, dirty-note or real three-client evidence is inferred.
+
+## 2026-11-02 live-Docker refresh
+
+Docker Desktop was started after the candidate refresh. Against current pushed
+revision `7029c68db49f9f3b643249cc0b7eb202b4177c5e` (documentation-only changes
+after artifact candidate `bdfd8344ad1408a4c5eef4e4bf55984f147b1e23`), the
+live Workbench check used:
+
+- Docker Desktop 4.93.0 (240920), client and engine 29.8.1, API 1.56;
+- Linux engine on amd64, kernel `6.18.54.1-microsoft-standard-WSL2`;
+- WSL 3.0.3.0 and WSL kernel 6.18.54.1-1; and
+- freshly pulled and digest-pinned image
+  `python@sha256:db20d8506e2f15b6db39b40b6015ca46bae855dec6dd326d462cfe79ae972893`.
+
+The exact metadata and raw results are retained in
+`reports/2026-11-02-accept02-live-docker.json` (3,685 bytes, SHA-256
+`537411d8765c4254bf36d298ad2cd1cdbce34dd00f82e539bd03e3e982c86c76`).
+
+All three hostile cases exited successfully while enforcing the boundary: 9
+MB stdout was measured but only 8,000 characters retained; the byte-limited
+export stopped before a 3 MB file crossed its 1 MB limit; the count-limited
+export stopped after ten files; and the type-only run refused its FIFO and
+symbolic link while retaining the hard-linked names and nested file. The
+benign case exported one three-byte `hi\n` result. Post-run inspection found no
+residual live-check containers or volumes. Docker's builtin seccomp profile is
+relied upon, not independently proved.
+
+Result: **fresh live-Docker acceptance passed.** This closes only the Docker
+check, not the real Obsidian, Claude/Cowork, mixed-client or external-handle
+requirements.
 
 ## Honest gaps and owner hands-on checklist
 
@@ -181,9 +213,10 @@ versions, screenshots/log paths and pass/fail notes to this report.
 - [ ] Hold a Markdown file and the index database open from real external
   applications. Confirm the documented refusal/retry behaviour and that no
   process reports success after a failed write.
-- [ ] Start Docker Desktop manually. Record Docker Desktop, engine and WSL2
+- [x] Start Docker Desktop manually. Record Docker Desktop, engine and WSL2
   versions, then run `scripts/workbench_live_check.py` with a freshly resolved,
-  pinned `python:3.11-slim@sha256:...` image. Retain its JSON output.
+  pinned `python:3.11-slim@sha256:...` image. Passed in the 2026-11-02 refresh;
+  the exact JSON and its hash are retained above.
 - [x] With Docker unavailable, confirm only `non_isolated_host_exec` is
   offered as executable fallback, requires both confirmations and makes no
   network-isolation claim. Covered by the focused tests above.
