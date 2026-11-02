@@ -1,8 +1,9 @@
 # ACCEPT-02 Windows acceptance pass
 
-Date: 2026-10-31
+Date: 2026-10-31; refreshed 2026-11-02
 
-Repository revision: `716ac10` (`UX-01: add per-predicate audit inspector`)
+Repository revision: original packet at `716ac10`; current-candidate refresh at
+`bdfd834` (`REMED-07: qualify model view and reachability`)
 
 Status: **in progress — local artifact boundary passed; real Obsidian, real Claude/Cowork UI and live Docker remain**
 
@@ -116,6 +117,49 @@ the sets and hashes were identical. Runtime operation telemetry was excluded
 because running the lifecycle check is itself expected to append telemetry.
 
 Result: **rollback succeeded; required health green; user content and durable non-runtime vault state unchanged**.
+
+## 2026-11-02 current-candidate refresh
+
+The local artifact boundary was repeated after REMED-07 at exact revision
+`bdfd8344ad1408a4c5eef4e4bf55984f147b1e23`. This refresh supersedes the
+candidate hashes above, but does not replace or waive any unchecked real-host
+item below.
+
+The complete Python suite at this revision passed with **1,935 passed, 2
+skipped and 5 deselected**. A fresh focused Windows packet passed **106 tests
+with 1 deselected**. The release build reran the shared UI and Obsidian builds,
+then produced this unsigned, deliberately non-installable development
+candidate:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `core/resource_librarian-2.1.0.dev0-py3-none-any.whl` | 1,054,355 | `cb7b6ca692e1a172e5c0d5c6a9a0d623b2e53337d97ecf8d6f32320686f27c5d` |
+| `obsidian/librarian-obsidian.zip` | 84,957 | `559f8a4fca28a0f89671aaa8032034c2e5e33d4492ea5715b0cfc2e8345f46e4` |
+| `cowork/librarian-cowork.zip` | 9,462 | `068c2cf2337bb5c4c03e7c080bbaf4e537a5785af70e331ab8542c9d2a030291` |
+| `release-manifest.json` | 2,038 | `0c56cd98b76de1fc1549437a32a0f69666df5c9463afa51d4bd08a1bdcc0ae09` |
+
+The manifest identifies UI build `2.1.0.dev0-bdfd8344ad14`, status
+`development_template`, and signing status `not_signed`.
+
+The clean installed-wheel smoke passed with version `2.1.0.dev0`, 148 MCP
+tools, authenticated packaged UI/API access and a clean Host shutdown. The
+packaged-adapter smoke also passed with one real browser, the command from the
+Cowork bundle, 148 tools, one shared Core and a clean stop. These remain
+protocol/package checks rather than claims about execution inside the real
+Claude/Cowork desktop UI.
+
+The rollback rehearsal was repeated in a fresh external venv and disposable
+vault. Candidate Doctor and rollback Doctor each had zero failed required
+checks. The installed `resource_librarian.app` hash changed from
+`1224c9cdecde9543b4ef5b5f7bc4281992646719277cc2478f3ddb61d604e95f`
+to `cbe2eea212e690b68de6ae68e28d4a7637dcba829cb1f252717b1f2b1da2ddeb`,
+proving that different package bytes were active. Hashing every vault file
+outside `.librarian/runtime/**` after Doctor on each version found zero added,
+removed or changed durable files.
+
+Docker client 29.8.1 was still present but its Desktop daemon was unavailable,
+and no Obsidian executable was found. No live-Docker, SecretStorage, dirty-note
+or real three-client evidence is inferred from this refresh.
 
 ## Honest gaps and owner hands-on checklist
 

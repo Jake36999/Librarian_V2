@@ -4002,6 +4002,21 @@ dirty documents, the real Claude/Cowork UI, mixed three-client traffic,
 external application handles and a fresh live-Docker run. ACCEPT-02 remains
 open until that evidence is retained with the exact host versions.
 
+#### ACCEPT-02 current-candidate refresh (2026-11-02)
+
+The local packet was rerun at exact revision `bdfd8344ad14`. The complete suite
+passed (1,935 passed, 2 skipped, 5 deselected), the fresh focused packet passed
+(106 passed, 1 deselected), and clean installed-wheel plus packaged
+Browser/Cowork smokes passed with 148 tools and a clean shared-Core shutdown.
+The corrected rollback rehearsal activated different package bytes, left all
+durable vault files outside runtime unchanged, and returned zero failed
+required Doctor checks on both versions. Exact artifact and manifest hashes
+are retained in `reports/2026-10-31-accept02-windows-acceptance.md`.
+
+This is refreshed local evidence, not task closure. Docker's daemon remained
+unavailable and Obsidian was not installed; the real-host checklist above is
+unchanged.
+
 ### REMED-08 measurement and REMED-06 exit (2026-11-02)
 
 | Task | Status | Commit | Evidence and notes |
