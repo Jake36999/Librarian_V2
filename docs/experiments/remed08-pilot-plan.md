@@ -1,9 +1,11 @@
 # REMED-08 pilot plan: wasted effort after REMED-06
 
-Status: **approved and in progress.** The canary and DeepSeek control are
-complete. MiMo tasks t1--t3 were attempted; two unknown outcomes retained
-their full reservations. On 2026-10-31 the owner chose the session-only stop
-policy below before t4--t8 resume.
+Status: **completed 2026-11-02; the predeclared rule passed.** The canary,
+DeepSeek control and all eight MiMo tasks were attempted. Three unknown
+outcomes retain their full reservations. On 2026-10-31 the owner chose the
+session-only stop policy below before t4--t8 resumed; the t7 timeout exercised
+it and t8 continued within the remaining caps. Results are in
+`reports/2026-10-30-g5-measurement.md`.
 
 ## Why
 

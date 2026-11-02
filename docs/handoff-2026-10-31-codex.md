@@ -4,6 +4,16 @@ Date: 2026-10-31. From: Claude (this session's work, REMED-01 to -06 and the
 REMED-08 pilot). Master is at `6d471ad`, about 70 commits ahead of
 `origin/master`. **Do not push**: the owner pushes.
 
+> **Continuation update, 2026-11-02.** This note's snapshot below is retained
+> as the original handoff, but its task count is stale. UX-01 and the local
+> ACCEPT-02 packet were committed before `8b3844c`. REMED-08 is now complete,
+> its predeclared rule passed, and REMED-06's pilot exit is met; see the latest
+> §19 entry and `reports/2026-10-30-g5-measurement.md`. BASE-03/04/05,
+> INDEX-02--05 and ROUTE-03/04 are already recorded as implemented in §19.
+> The next unblocked required task is REMED-07. ACCEPT-02 still needs the
+> listed real-host checks. The three uncertain G5 entries remain for owner
+> reconciliation and must not be changed automatically.
+
 ## How work is done here
 
 - **The plan** is `docs/unified-implementation-plan.md`. Task definitions are

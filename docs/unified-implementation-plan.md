@@ -3835,8 +3835,9 @@ The ledger refuses a reservation:
 - an HTTP error or a refused connection, which the provider did not process, is
   `failed`, at nothing;
 - anything else (a timeout, a dropped connection, a cancellation, a reply
-  without usage) is `uncertain` at its whole reservation. It is never refunded
-  automatically, and it blocks every later dispatch of the run;
+  without usage) is `uncertain` at its whole reservation. At this commit it
+  blocked every later dispatch of the run; `8b3844c` later narrowed that stop
+  to the current task while preserving the reservation and both caps;
 - a reply metered above its reservation is charged what it cost and also stops
   the run.
 
@@ -4000,3 +4001,34 @@ contains the remaining hands-on checklist for real Obsidian/SecretStorage,
 dirty documents, the real Claude/Cowork UI, mixed three-client traffic,
 external application handles and a fresh live-Docker run. ACCEPT-02 remains
 open until that evidence is retained with the exact host versions.
+
+### REMED-08 measurement and REMED-06 exit (2026-11-02)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| REMED-08 | implemented | this commit | The approved canary, MiMo primary and DeepSeek control are complete within the existing $8 G5 ledger. The split-run measures and decision rule are recorded in `reports/2026-10-30-g5-measurement.md`. |
+| REMED-06 | implemented; bounded-pilot exit met | `4742baa`, this commit | Scripted stall/refusal fixtures already passed. In the bounded candidate, MiMo refusals fell 881 → 54, calls/Tier A 72.3 → 22.5 and `max_turns` stops 5 → 0; the admission guard held. |
+
+The candidate covered eight tasks on each of two routes. DeepSeek improved
+from 19/37 to 28/37 Tier A with 19 refusals. MiMo improved from 6/37 to 10/37
+with 54 refusals. All 16 histories were valid, all 38 closures held, every one
+of the 14 forced restarts that was reached reproduced the state hash, and no
+verified reduction bypassed the verifier the person named. MiMo t4 settled
+and t7 timed out before their restart points.
+
+The pilot cost $0.87900: 524 completed dispatches and three uncertain MiMo
+timeouts. Each uncertainty retains its full reservation. The owner approved
+task-local stopping before the final slice; `8b3844c` implements it, and the
+t7 timeout demonstrated that t8 could continue within the remaining caps.
+The three uncertain entries are left for owner reconciliation.
+
+This closes only the declared exit rule. The measurement cannot isolate
+REMED-06 from the other changes since the fixed-code baseline, especially the
+omitted-plan-entry fix. The sample is eight tasks per route and the Wilson
+intervals are nominal because grains within sessions are correlated.
+
+**Tests and evidence tooling.** `scripts/remed08_measures.py` now combines
+provider-interrupted run folders, excludes not-started placeholders and
+rejects duplicate measured tasks. Its regression test and the paid-dispatch
+policy tests pass (15 focused tests). Full suite: 1,925 passed, 2 skipped,
+5 deselected in 630.12 seconds.

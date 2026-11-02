@@ -2,7 +2,8 @@
 
 See docs/experiments/remed08-pilot-plan.md. Read-only.
 
-    python scripts/remed08_measures.py --baseline tmp/g5/rerun-mimo --candidate tmp/g5/remed08-mimo
+    python scripts/remed08_measures.py --baseline tmp/g5/rerun-mimo \
+      --candidate tmp/g5/remed08-mimo --candidate tmp/g5/remed08-mimo-2
 """
 from __future__ import annotations
 
@@ -16,12 +17,31 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).parent))
 
 
-def measures(run_dir: Path) -> dict[str, Any]:
+def _session_rows(run_dirs: list[Path]) -> list[tuple[Path, dict[str, Any]]]:
+    """Load real session rows across split runs, ignoring not-started placeholders."""
+    selected: list[tuple[Path, dict[str, Any]]] = []
+    seen: set[str] = set()
+    for run_dir in run_dirs:
+        data = json.loads((run_dir / "results.json").read_text(encoding="utf-8"))
+        for row in data["rows"]:
+            if not row.get("session"):
+                continue
+            task = str(row.get("task") or "")
+            if task in seen:
+                raise ValueError(f"duplicate measured task across run folders: {task}")
+            seen.add(task)
+            selected.append((run_dir, row))
+    return selected
+
+
+def measures(run_dirs: Path | list[Path]) -> dict[str, Any]:
     from resource_librarian import audit_events
     from resource_librarian.session import SessionStore
     from resource_librarian.vault import Vault
-    data = json.loads((run_dir / "results.json").read_text(encoding="utf-8"))
-    rows = data["rows"]
+    if isinstance(run_dirs, Path):
+        run_dirs = [run_dirs]
+    located = _session_rows(run_dirs)
+    rows = [row for _, row in located]
     refused = [sum((r.get("refusals") or {}).values()) for r in rows]
     calls = sum((r.get("spend") or {}).get("calls", 0) for r in rows)
     usd = sum(float(r.get("ledger_usd", (r.get("spend") or {}).get("usd", 0.0))) for r in rows)
@@ -29,7 +49,7 @@ def measures(run_dir: Path) -> dict[str, Any]:
     grains = sum((r.get("grains") or {}).get("grains", 0) for r in rows)
     kinds: dict[str, int] = {}
     parks, unnamed, verified = [], 0, 0
-    for row in rows:
+    for run_dir, row in located:
         for code, n in (row.get("refusals") or {}).items():
             kinds[code] = kinds.get(code, 0) + n
         sid = row.get("session")
@@ -75,10 +95,13 @@ def measures(run_dir: Path) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--baseline", required=True)
-    parser.add_argument("--candidate", required=True)
+    parser.add_argument("--baseline", action="append", required=True,
+                        help="baseline run folder; repeat for a split run")
+    parser.add_argument("--candidate", action="append", required=True,
+                        help="candidate run folder; repeat for a split run")
     args = parser.parse_args(argv)
-    out = {"baseline": measures(Path(args.baseline)), "candidate": measures(Path(args.candidate))}
+    out = {"baseline": measures([Path(p) for p in args.baseline]),
+           "candidate": measures([Path(p) for p in args.candidate])}
     print(json.dumps(out, indent=1, default=str))
     return 0
 

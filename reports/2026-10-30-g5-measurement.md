@@ -183,3 +183,77 @@ show its effect.
 completed with every requirement closed, because the synthesis
 requirements stay with the person by design. Several authoritative ones
 failed or stayed open.
+
+---
+
+## REMED-08 targeted re-measurement (completed 2026-11-02)
+
+The owner approved the predeclared slices, thresholds and caps in
+[`remed08-pilot-plan.md`](../docs/experiments/remed08-pilot-plan.md). The
+candidate contains the REMED-01--06 changes through `4742baa`; result saving
+and measures use `6d471ad`, and the owner-approved task-local timeout policy
+used for MiMo t4--t8 is `8b3844c`. This is therefore a measurement of the
+current build, not an ablation of REMED-06.
+
+| Route | Build | Tier A | Share (95% Wilson) | Refused calls | Calls / Tier A | $ / Tier A | At `max_turns` |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| MiMo-V2.6-Flash | fixed-code baseline | 6/37 | 0.162 (0.077--0.311) | 881 | 72.3 | $0.18142 | 5/8 |
+| MiMo-V2.6-Flash | candidate | 10/37 | 0.270 (0.154--0.430) | 54 | 22.5 | $0.03315 | 0/8 |
+| DeepSeek-V4.1-Flash | fixed-code baseline | 19/37 | 0.514 (0.359--0.666) | 41 | 17.2 | $0.03654 | 0/8 |
+| DeepSeek-V4.1-Flash | candidate | 28/37 | 0.757 (0.599--0.866) | 19 | 10.1 | $0.01862 | 0/8 |
+
+The MiMo candidate is assembled, without duplicated placeholders, from
+`tmp/g5/remed08-mimo`, `remed08-mimo-2` and `remed08-mimo-3`. The DeepSeek
+candidate is `tmp/g5/remed08-deepseek`. `scripts/remed08_measures.py` accepts
+repeated run folders and rejects duplicate measured task rows, so the split
+run remains reproducible.
+
+### Predeclared decision rule
+
+| Condition | Result |
+| --- | --- |
+| Admission guard | **Met.** 16/16 histories valid; 0/38 false closures; 14/14 restarts that reached the forced-restart point reproduced the state hash (MiMo t4 settled and t7 timed out before that point); 0/19 verified reductions bypassed the person's named verifier. |
+| MiMo refused calls at most 440 | **Met:** 54. |
+| MiMo calls per Tier A below about 72 | **Met:** 22.5. |
+| MiMo sessions at `max_turns` fewer than 5 | **Met:** 0. |
+| DeepSeek candidate interval overlaps 0.359--0.666 | **Met:** overlap is 0.599--0.666. |
+| DeepSeek refused calls no more than 82 | **Met:** 19. |
+
+The rule passes. REMED-06's bounded-pilot exit condition is met: the current
+build used less wasted effort while the declared admission guard held.
+
+### What changed and what did not
+
+MiMo's refused calls fell from 881 to 54. Its refusal kinds were 29
+`CONTRACT_SCOPE` and 25 `BUDGET_SPENT`; the baseline had 611
+`AUDIT_EVENT_INVALID` refusals, chiefly the omitted-verifier loop. Model calls
+fell from 434 to 225, and questions from 19 to 4. The candidate parked eight
+MiMo requirements after bounded no-progress loops; DeepSeek parked one. These
+parks explain part of the reduced work and are the intended REMED-06 trade.
+
+The confound declared before the run remains: REMED-01--06 and `c0f7736`
+all separate this candidate from the baseline. In particular, filling an
+omitted plan entry from the person's binding targets the same MiMo failure.
+The result supports the current build and REMED-06's exit rule; it does not
+attribute the improvement to one change.
+
+### Paid-call accounting and interruptions
+
+| Slice | Dispatches | Settlement | Committed spend |
+| --- | ---: | --- | ---: |
+| DeepSeek canary | 19 | 19 completed | $0.02622 |
+| DeepSeek control | 283 | 283 completed | $0.52131 |
+| MiMo primary | 225 | 222 completed, 3 uncertain | $0.33147 |
+| **Pilot total** | **527** | **524 completed, 3 uncertain** | **$0.87900** |
+
+The shared G5 ledger stands at $5.57623 of $8.00, leaving $2.42377. Three
+MiMo requests timed out and retain their full reservations:
+`g5-6f67e1617aea`, `g5-6cc14337750d`, and `g5-889befbf09d1`. None was
+reconciled. After the first two stopped whole runs, the owner approved a
+conservative task-local policy: an uncertain call stops its task, retains the
+whole reservation, and later tasks may use only the remaining caps. The t7
+timeout demonstrated that policy; t8 then ran and was saved normally.
+
+Eight tasks per route remain a small, correlated sample. Two MiMo sessions
+ended before their forced restart, and three retained upper-bound rather than
+metered charges. Those limits do not change the declared rule's outcome.
