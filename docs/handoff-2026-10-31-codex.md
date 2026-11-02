@@ -14,6 +14,14 @@ REMED-08 pilot). Master is at `6d471ad`, about 70 commits ahead of
 > listed real-host checks. The three uncertain G5 entries remain for owner
 > reconciliation and must not be changed automatically.
 
+> **Further continuation update, 2026-11-02.** REMED-07 is now implemented
+> and qualified offline; see the latest §19 entry and
+> `reports/2026-11-02-remed07-qualification.md`. Every required local task in
+> the original list below is complete. ACCEPT-02 remains open only for its
+> real-host/Obsidian/Docker evidence. Experimental and deferred tasks still
+> require the recorded owner decisions below, and RELEASE-02/-03 remain
+> externally blocked.
+
 ## How work is done here
 
 - **The plan** is `docs/unified-implementation-plan.md`. Task definitions are

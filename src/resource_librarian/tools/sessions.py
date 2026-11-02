@@ -603,11 +603,53 @@ def set_requirement(ctx: Context, requirement_id: str, text: str,
                 "by id only. fits=False means the requirements must be split or narrowed"))
 def audit_projection(ctx: Context, token_budget: int = 6000) -> dict:
     from ..audit_projection import capability_manifest, project
+    from ..agent_runtime import AgentProfile
     from ..loop import _projects_on
     session = _session(ctx)
     if session.purpose != "audited":
         raise TypeError("only an audited session has a Manager projection")
-    manifest = capability_manifest(tier=ctx.tier, projects_on=_projects_on(ctx.vault))
+    selected = str(ctx.extras.get("agent_profile") or "")
+    store = ctx.extras.get("profile_store")
+    profile = None
+    context_errors: list[str] = []
+    if selected:
+        try:
+            if store is None:
+                raise KeyError("selected profile store is unavailable")
+            profile = store.get(selected)
+        except (KeyError, TypeError, ValueError) as exc:
+            # Never let a missing/corrupt selected profile broaden a model's
+            # projection. The read fallback is informational only; dispatch
+            # still fails at App._active_agent_profile.
+            profile = AgentProfile("unavailable", "lead", allowed_bundles=["read"],
+                                   permission_ceiling="consult",
+                                   required_qualification="experimental")
+            context_errors.append(str(exc))
+    snapshot: dict[str, Any] = {}
+    derive = ctx.extras.get("capability_context")
+    if callable(derive):
+        try:
+            found = derive(selected)
+            if not isinstance(found, dict):
+                raise TypeError("effective dispatch context did not return an object")
+            snapshot = found
+        except Exception as exc:  # noqa: BLE001 - fail-closed informational projection
+            context_errors.append(f"effective dispatch context unavailable: {exc}")
+            snapshot = {"roots": [], "routes": {
+                role: {"available": False,
+                       "reason": "effective dispatch context unavailable"}
+                for role in ("lead", "scribe", "clerk", "research_helper")}}
+    if snapshot.get("profile_error"):
+        context_errors.append(str(snapshot["profile_error"]))
+    if snapshot.get("root_error"):
+        context_errors.append(str(snapshot["root_error"]))
+    manifest = capability_manifest(
+        tier=ctx.tier, profile=profile,
+        roots=snapshot.get("roots") if "roots" in snapshot else None,
+        routes=snapshot.get("routes") if isinstance(snapshot.get("routes"), dict) else None,
+        projects_on=_projects_on(ctx.vault))
+    if context_errors:
+        manifest["context_errors"] = list(dict.fromkeys(context_errors))
     view = project(session, _store(ctx).events(session.id), manifest=manifest,
                    vault=ctx.vault, token_budget=max(500, min(int(token_budget), 50_000)))
     # HARNESS-06: the Manager was invoked on exactly this view; keep its digest

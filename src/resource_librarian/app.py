@@ -2512,6 +2512,7 @@ class App:
                                   "checkpoints": self.checkpoints,
                                   "profile_store": self.profiles,
                                   "agent_profile": profile_id,
+                                  "capability_context": self._capability_context,
                                   "profile_gate": self.profile_gate,
                                   "helper_profile_guard": self._helper_profile_guard,
                                    "background_profile_endpoint": self._background_profile_endpoint,
@@ -3494,6 +3495,95 @@ class App:
             except json.JSONDecodeError:
                 pass
         return out
+
+    def _capability_context(self, profile_id: str = "") -> dict[str, Any]:
+        """Non-secret effective dispatch facts for the Manager projection.
+
+        This is a read-only projection of the same profile, binding, host,
+        allow-list and qualification records used at dispatch. It never
+        discovers models, probes a host or creates qualification work. A fact
+        that cannot be established is unavailable rather than guessed ready.
+        """
+        from . import content_roots
+
+        selected = profile_id or str(self.settings.data.get("agent_profile") or "lead")
+        profile_error = ""
+        try:
+            active = self.profiles.get(selected)
+            active_role = self._profile_binding_role(active)
+        except (KeyError, ValueError, ApiError) as exc:
+            active, active_role, profile_error = None, "", str(exc)
+
+        try:
+            manifest = content_roots.load(self.vault.root)
+            roots = list((manifest or {}).get("roots") or [
+                {"path": ".", "access": "read_write"}])
+            root_error = ""
+        except (OSError, ValueError, Refusal) as exc:
+            roots, root_error = [], str(exc)
+
+        routes: dict[str, dict[str, Any]] = {}
+        try:
+            stored = self.role_routes.raw()
+        except (OSError, ValueError) as exc:
+            stored = {}
+            route_store_error = str(exc)
+        else:
+            route_store_error = ""
+        for role in CHAT_ROLES:
+            row: dict[str, Any] = {"available": False, "role": role}
+            if profile_error:
+                row["reason"] = f"selected profile unavailable: {profile_error}"
+                routes[role] = row
+                continue
+            if route_store_error:
+                row["reason"] = f"route store unavailable: {route_store_error}"
+                routes[role] = row
+                continue
+            try:
+                binding = self.role_routes.resolve(role, stored)
+                if binding is None or binding.source == "unconfigured":
+                    raise ValueError("no route is configured")
+                route = self._role_choice(role)
+                if route is None:
+                    raise ValueError("no route is configured")
+                policy_profile = active if active is not None and role == active_role \
+                    else self.profiles.get(role)
+                permitted, reason = route_permitted(policy_profile, route)
+                if not permitted:
+                    raise ValueError(reason)
+                qualification = self._passive_qualification(
+                    str(route.get("host_id") or route.get("provider") or ""),
+                    str(route.get("model") or ""), role)
+                required = str(policy_profile.required_qualification or "screened")
+                observed = str(qualification.get("status") or "experimental")
+                floor_met = self._qualification_rank(required) == 0 or (
+                    bool(qualification.get("fresh")) and
+                    self._qualification_rank(observed) >= self._qualification_rank(required))
+                # A retained 2.x Lead override is an explicit dispatch path.
+                # Read it directly rather than calling lead_status(), whose
+                # refresh path can create qualification work.
+                if role == "lead" and policy_profile is active:
+                    host_id, model = str(route.get("host_id") or ""), str(route.get("model") or "")
+                    aliases = {f"{host_id}/{model}"}
+                    if host_id.startswith("preset-"):
+                        aliases.add(f"{host_id[7:]}/{model}")
+                    floor_met = floor_met or any(
+                        key in (self.settings.data.get("lead_overrides") or {}) for key in aliases)
+                row.update({"host_id": str(route.get("host_id") or ""),
+                            "model": str(route.get("model") or ""),
+                            "profile": policy_profile.id,
+                            "required_qualification": required,
+                            "qualification": qualification,
+                            "available": bool(floor_met),
+                            "reason": ("effective route is configured and qualified" if floor_met else
+                                       f"route is configured but does not have fresh {required} qualification")})
+            except (KeyError, ValueError, ApiError) as exc:
+                row["reason"] = str(exc)
+            routes[role] = row
+        return {"profile_id": selected, "profile_error": profile_error,
+                "routes": routes, "roots": roots,
+                **({"root_error": root_error} if root_error else {})}
 
     @mutation_entry("the service setting")
     def set_service(self, slot: str, provider: str, model: str, host_id: str = "") -> dict[str, Any]:

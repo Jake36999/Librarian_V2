@@ -4032,3 +4032,34 @@ provider-interrupted run folders, excludes not-started placeholders and
 rejects duplicate measured tasks. Its regression test and the paid-dispatch
 policy tests pass (15 focused tests). Full suite: 1,925 passed, 2 skipped,
 5 deselected in 630.12 seconds.
+
+### REMED-07 model-view and reachability qualification (2026-11-02)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| REMED-07 | implemented | this commit | Exact long-session wire sizes, effective profile/route/root context, audited registered/offered/admission boundaries and virtual-time retry/cancel outcomes are recorded in `reports/2026-11-02-remed07-qualification.md`. No paid or external call was made. |
+
+The bounded Manager projection does not replace runtime history. At 50
+historical rounds the actual serialized request was 27,470 bytes on the
+OpenAI-compatible renderer and 28,529 bytes on Anthropic. Both retained the
+first, last and current history markers; the capture retained only counts and
+digests.
+
+The capability manifest now uses the same bundle selector as `Loop.tools()`
+and receives a non-secret snapshot derived from the App's selected profile,
+canonical role bindings, host/endpoint checks, route allow-list, passive
+qualification and adopted/attached roots. Missing context fails closed.
+Audited phase surfaces are 10/7/10/8/6 tools for
+manage/preflight/execute/audit/reduce under the default Lead. The manifest
+labels admission `checked_at_call_time`; it never promotes an offered tool to
+pre-authorized.
+
+The real Registry admitted every required action in a scripted full audited
+round. Person-only and role-inappropriate tools remained hidden/refused. With
+virtual time, a bounded transient retried once after 0.25 seconds, a
+retry-disabled profile failed once, cancellation during backoff was typed and
+leaked no slot, and a pre-cancelled route sent nothing. Existing OpenAI and
+Anthropic slow-socket cancellation tests remain the real transport check.
+
+**Verification:** 80 focused/adjacent tests passed in 42.02 seconds. Full
+suite: 1,935 passed, 2 skipped, 5 deselected in 629.83 seconds.

@@ -53,7 +53,7 @@ def _clip(value: Any, limit: int = TEXT_CLIP) -> Any:
     return value
 
 
-def capability_manifest(*, tier: str, profile: Any = None, roots: list[str] | None = None,
+def capability_manifest(*, tier: str, profile: Any = None, roots: list[Any] | None = None,
                         routes: dict[str, dict[str, Any]] | None = None,
                         projects_on: bool = True) -> dict[str, Any]:
     """What the Core could admit: bundles, verifiers, roots and route availability.
@@ -62,23 +62,64 @@ def capability_manifest(*, tier: str, profile: Any = None, roots: list[str] | No
     `select_bundle`. Roots default to the whole vault until DEPLOY adds content
     roots. Routes the caller does not report are marked unknown, never available.
     """
-    from .agent_runtime import BUNDLES, effective_tier
-    from .loop import narrowed
-    allowed = {s.name for s in narrowed(effective_tier(tier, profile), "", projects_on, False)}
-    permitted = getattr(profile, "allowed_bundles", None) or None
-    bundles = [{"id": b.id, "purpose": b.purpose}
-               for b in sorted(BUNDLES.values(), key=lambda b: b.id)
-               if (permitted is None or b.id in permitted) and allowed.intersection(b.names)]
+    from .agent_runtime import BUNDLES, bundle_selection
+    audited_phases = ("manage", "preflight", "execute", "audit", "reduce")
+    permitted = getattr(profile, "allowed_bundles", None) if profile is not None else None
+    candidate_ids = set(BUNDLES) if not permitted else set(permitted)
+    # ``research`` is the runtime's phase-specific wildcard. Expand only to
+    # the actual audited phases, not unrelated role bundles such as Clerk or
+    # Draft, and let the shared selector derive each surface below.
+    if permitted and "research" in permitted:
+        candidate_ids.update(audited_phases)
+    bundles = []
+    for bundle in sorted((BUNDLES[name] for name in candidate_ids), key=lambda b: b.id):
+        selected = bundle_selection(tier, bundle.id, projects_on=projects_on,
+                                    profile=profile)
+        if selected.allowed and selected.offered:
+            # Keep the essential Manager projection compact. The detailed
+            # reachability rows below are only the five audited phases.
+            bundles.append({"id": bundle.id, "purpose": bundle.purpose})
+    audited = {}
+    for phase in audited_phases:
+        selected = bundle_selection(tier, phase, projects_on=projects_on, working=True,
+                                    profile=profile, purpose="audited")
+        audited[phase] = {
+            "bundle": selected.bundle_id, "allowed": selected.allowed,
+            "registered": list(selected.registered),
+            "offered": [spec.name for spec in selected.offered],
+            "admission": "checked_at_call_time",
+            **({"fallback": selected.fallback} if selected.fallback else {}),
+        }
+    raw_roots = roots if roots is not None else [
+        {"path": ".", "access": "read_write", "attached": False}]
+    root_access = []
+    for raw in raw_roots:
+        if isinstance(raw, dict):
+            path = str(raw.get("path") or "").strip()
+            if path:
+                root_access.append({"path": path,
+                                    "access": str(raw.get("access") or "unknown"),
+                                    "attached": bool(raw.get("attached"))})
+        elif str(raw).strip():
+            root_access.append({"path": str(raw).strip(), "access": "unknown",
+                                "attached": False})
+    root_access.sort(key=lambda row: row["path"])
     reported = routes or {}
     roles = ("lead", "scribe", "clerk", "research_helper")
     return {
         "bundles": bundles,
+        "audited_bundles": audited,
         # HARNESS-06 telemetry: how many bundles the tier and profile filter left.
         "bundle_counts": {"registered": len(BUNDLES), "after_filter": len(bundles)},
         # One registry (closure.py): each id says exactly what a pass means.
         "verifiers": [{"id": k, "kind": v.kind, "max_strength": v.max_strength,
                        "predicate": v.predicate} for k, v in sorted(VERIFIERS.items())],
-        "roots": sorted(roots or ["."]),
+        "roots": [row["path"] for row in root_access],
+        "root_access": root_access,
+        "profile": ({key: getattr(profile, key) for key in (
+            "id", "role", "revision", "permission_ceiling", "required_qualification",
+            "allowed_bundles") if hasattr(profile, key)} if profile is not None else
+                    {"status": "not_reported"}),
         "routes": {role: reported.get(role, {"available": "unknown",
                                              "reason": "not reported by the Core"})
                    for role in sorted(set(roles) | set(reported))},

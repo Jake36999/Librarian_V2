@@ -522,11 +522,28 @@ def required_bundle_actions(phase: str = "", *, purpose: str = "", project: str 
     return ()
 
 
-def select_bundle(tier: str, phase: str = "", *, projects_on: bool = True,
-                  working: bool = False, profile: AgentProfile | None = None,
-                  purpose: str = "", project: str = "",
-                  project_exists: bool = False) -> list[ToolSpec]:
-    """Return a compact, policy-compatible subset for a loop turn."""
+@dataclass(frozen=True)
+class BundleSelection:
+    """The one derived explanation of a compact runtime tool surface.
+
+    ``offered`` is prompt/runtime reachability, not admission. Registry,
+    phase, arguments and an executing audited contract still decide whether
+    one offered call is admitted when it is made.
+    """
+
+    bundle_id: str
+    purpose: str
+    allowed: bool
+    registered: tuple[str, ...]
+    offered: tuple[ToolSpec, ...]
+    fallback: str = ""
+
+
+def bundle_selection(tier: str, phase: str = "", *, projects_on: bool = True,
+                     working: bool = False, profile: AgentProfile | None = None,
+                     purpose: str = "", project: str = "",
+                     project_exists: bool = False) -> BundleSelection:
+    """Return the exact compact surface and why it was selected."""
     from .loop import narrowed  # avoids the loop/runtime import cycle at module load
     # The UI surface and the execution boundary both cap the tier.  The
     # second check in Registry.call means a stale prompt can never turn this
@@ -539,7 +556,8 @@ def select_bundle(tier: str, phase: str = "", *, projects_on: bool = True,
     phase_id = phase.strip().lower().replace("_", "-")
     bundle_id = phase_id if phase_id in BUNDLES else "session" if not phase_id else "research"
     bundle = BUNDLES.get(bundle_id, BUNDLES["session"])
-    names = bundle.names
+    declared_names = bundle.names
+    names = declared_names
     if not names and phase_id:
         names = BUNDLES.get(phase_id, BUNDLES["session"]).names
     bundle_allowed = not (profile and profile.allowed_bundles and
@@ -572,7 +590,22 @@ def select_bundle(tier: str, phase: str = "", *, projects_on: bool = True,
     # the whole registry into the prompt.
     if not selected:
         selected = sorted(by_name.values(), key=lambda s: s.name)[:MAX_BUNDLE_TOOLS]
-    return selected[:MAX_BUNDLE_TOOLS]
+    return BundleSelection(
+        bundle_id=bundle_id, purpose=bundle.purpose, allowed=bundle_allowed,
+        registered=tuple(name for name in declared_names if name in REGISTRY),
+        offered=tuple(selected[:MAX_BUNDLE_TOOLS]),
+        fallback="" if bundle_allowed else "profile_read_fallback",
+    )
+
+
+def select_bundle(tier: str, phase: str = "", *, projects_on: bool = True,
+                  working: bool = False, profile: AgentProfile | None = None,
+                  purpose: str = "", project: str = "",
+                  project_exists: bool = False) -> list[ToolSpec]:
+    """Return a compact, policy-compatible subset for a loop turn."""
+    return list(bundle_selection(
+        tier, phase, projects_on=projects_on, working=working, profile=profile,
+        purpose=purpose, project=project, project_exists=project_exists).offered)
 
 
 @dataclass(frozen=True)
