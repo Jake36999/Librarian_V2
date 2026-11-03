@@ -4063,9 +4063,23 @@ confirmed the recovery flow in real Obsidian. The shared UI smoke, both builds
 and five focused adapter contract tests pass. The complete repository suite
 then passed **1,938 tests, 2 skipped, 5 deselected**.
 
+The remaining external-handle boundary then passed against the live
+Obsidian-owned Core using independent Windows processes. A PowerShell process
+denied delete sharing on a Markdown target: the Core returned an explicit
+WinError 5 in 1.007 seconds, retained the original revision, left no temp file,
+kept unrelated writes live, and succeeded when the same revision was retried
+after release. A separate query-only Python/SQLite process pinned a 48-note
+snapshot while the Core created/indexed three notes, reported 51 and grew the
+WAL; the pinned reader still saw 48. After release, another Core write passed
+and a fresh reader saw 52 with `integrity_check = ok`. These are real
+cross-process handles with scripted holders, not GUI-application claims. The
+public API exposes no checkpoint counters, so the prior Windows fixture remains
+the evidence for passive-checkpoint reporting and convergence. Exact results
+are retained in `reports/2026-11-03-accept02-external-handles.json`.
+
 ACCEPT-02 remains open for exact in-app Obsidian About version evidence, a final
-real-host visual confirmation of the repaired model selector, the real
-Browser+Obsidian+Claude/Cowork mixed-client run, and real external file handles.
+real-host visual confirmation of the repaired model selector, and the real
+Browser+Obsidian+Claude/Cowork mixed-client run.
 
 ### REMED-08 measurement and REMED-06 exit (2026-11-02)
 

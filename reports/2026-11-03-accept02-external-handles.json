@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "acceptance_task": "ACCEPT-02",
+  "run_date": "2026-11-03",
+  "base_core_candidate_revision": "bdfd8344ad1408a4c5eef4e4bf55984f147b1e23",
+  "vault": "C:\\Users\\jakem\\Librarian ACCEPT-02 Vault",
+  "core": {
+    "pid": 26044,
+    "process_start": "win:134381448652756855",
+    "secret_source": "obsidian",
+    "remained_running": true
+  },
+  "markdown_handle": {
+    "holder": {
+      "kind": "independent PowerShell process using System.IO.File",
+      "pid": 35284,
+      "file_share": "Read only; write and delete sharing denied"
+    },
+    "target": "Notes/ACCEPT-02 External Handle Target.md",
+    "original_revision": "rev1.eyJjIjoicGVyc29uIiwiZiI6ImFiMGJhNjM3ZjE0N2I0YjFiZGE5IiwiayI6Im5vdGUiLCJzIjoiIiwidCI6Ik5vdGVzL0FDQ0VQVC0wMiBFeHRlcm5hbCBIYW5kbGUgVGFyZ2V0Lm1kIn0.pLlCCOBSXaI-4fDdqm9PEjUM",
+    "original_fingerprint": "ab0ba637f147b4b1bda9",
+    "held_attempt": {
+      "elapsed_ms": 1007,
+      "cli_exit": 1,
+      "result": "failed",
+      "error_type": "PermissionError",
+      "winerror": 5,
+      "operation_id": "b5f7ed6570a77a74",
+      "operation_terminal_status": "failed",
+      "revision_after_attempt_unchanged": true,
+      "temporary_replacement_files_remaining": 0,
+      "unrelated_write_succeeded": "Notes/ACCEPT-02 External Handle Unrelated.md",
+      "core_remained_running": true
+    },
+    "after_release": {
+      "explicit_retry_used_same_original_revision": true,
+      "result": "done",
+      "operation_id": "fd7fb4d66b84b46f",
+      "new_revision": "rev1.eyJjIjoicGVyc29uIiwiZiI6IjVjMDFiNWExMGM2MDc2NjhiNTg3IiwiayI6Im5vdGUiLCJzIjoiIiwidCI6Ik5vdGVzL0FDQ0VQVC0wMiBFeHRlcm5hbCBIYW5kbGUgVGFyZ2V0Lm1kIn0.TA57-VmirlfF5-TIjuO-hJK5",
+      "index_current": true
+    }
+  },
+  "sqlite_handle": {
+    "holder": {
+      "kind": "independent Python process using the standard SQLite library",
+      "pid": 17792,
+      "query_only": true,
+      "transaction": "BEGIN read snapshot"
+    },
+    "database": ".librarian\\derived\\index.sqlite",
+    "baseline_note_count": 48,
+    "baseline_wal_bytes": 2488512,
+    "while_snapshot_held": {
+      "core_notes_created": 3,
+      "core_note_count": 51,
+      "foreign_snapshot_note_count": 48,
+      "core_write_and_index_sequence_elapsed_ms": 4037,
+      "wal_bytes": 2855192,
+      "wal_grew": true,
+      "sqlite_busy_observed": false,
+      "core_remained_running": true
+    },
+    "after_release": {
+      "additional_core_write_succeeded": true,
+      "fresh_external_note_count": 52,
+      "integrity_check": "ok",
+      "wal_bytes_after_additional_write": 3543232
+    }
+  },
+  "scope": {
+    "actual_cross_process_windows_handles": true,
+    "scripted_holders": true,
+    "gui_application_claimed": false,
+    "public_core_checkpoint_counters_observed": false,
+    "checkpoint_counter_reason": "The public Core API does not expose IndexService.checkpoint; the existing Windows fixture covers passive-checkpoint counters and post-release convergence.",
+    "provider_calls_made": 0
+  }
+}

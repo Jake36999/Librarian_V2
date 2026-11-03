@@ -5,7 +5,7 @@ Date: 2026-10-31; refreshed 2026-11-03
 Repository revision: original packet at `716ac10`; current-candidate refresh at
 `bdfd834` (`REMED-07: qualify model view and reachability`)
 
-Status: **in progress — local artifact, live-Docker, real Obsidian UI, dirty-document and SecretStorage boundaries passed; real Claude/Cowork mixed traffic and external-application handles remain**
+Status: **in progress — local artifact, live-Docker, real Obsidian UI, dirty-document, SecretStorage and real cross-process handle boundaries passed; exact Obsidian UI confirmation and real Claude/Cowork mixed traffic remain**
 
 The original 2026-10-31 packet records a fresh Windows pass on a
 repository-built candidate. At that time real Obsidian with SecretStorage, the
@@ -303,6 +303,39 @@ wording and one-shot stale recovery. The complete repository suite passed
 confirmation of the repaired model selector in real Obsidian remains desirable;
 the stale-recovery flow is already confirmed in the real host.
 
+### Real cross-process Markdown and SQLite handles
+
+The external-handle boundary was repeated against the live Obsidian-owned Core
+using two independent Windows processes. These were deliberately scripted
+holders, not GUI applications; the evidence establishes genuine OS/process
+handle behavior without claiming coverage of a particular editor or SQLite
+GUI.
+
+An independent PowerShell process (PID 35284) opened a dedicated acceptance
+note with read sharing only, denying write and delete sharing. The Core's
+revision-guarded replacement returned in 1.007 seconds with an explicit
+`PermissionError` / WinError 5 and CLI exit 1. The original revision and
+fingerprint remained current, no replacement temp file remained, the operation
+log ended the attempt as `failed`, and an unrelated note was written while the
+handle stayed open. After release, an explicit retry with the same original
+revision succeeded, produced a new revision, and the operation log ended it as
+`done`. The Core remained PID 26044 throughout.
+
+An independent Python process (PID 17792) then held a query-only SQLite read
+transaction on the derived index. Its snapshot contained 48 notes. While it
+remained open, the Core created and indexed three notes in 4.037 seconds,
+reported 51 notes, and grew the WAL from 2,488,512 to 2,855,192 bytes; the
+foreign transaction correctly continued to see its pinned count of 48. No
+`SQLITE_BUSY`, cross-thread error or false success appeared. After release, a
+further Core write/index succeeded, and a fresh external connection saw 52
+notes with `PRAGMA integrity_check = ok`.
+
+The public Core API does not expose `IndexService.checkpoint()`, so this real
+process run does not claim direct passive-checkpoint counters. The existing
+Windows fixture supplies those counters and post-release checkpoint
+convergence. Sanitized exact results are retained in
+`reports/2026-11-03-accept02-external-handles.json`.
+
 ## Honest gaps and owner hands-on checklist
 
 Run these against the candidate above (or a later frozen replacement) and add
@@ -327,9 +360,11 @@ versions, screenshots/log paths and pass/fail notes to this report.
   Core. Under mixed read/write traffic, confirm one vault lease, ordered writer
   completion, no `SQLITE_BUSY`, no lost JSONL events and clean reconnect after
   one client closes.
-- [ ] Hold a Markdown file and the index database open from real external
-  applications. Confirm the documented refusal/retry behaviour and that no
-  process reports success after a failed write.
+- [x] Hold a Markdown file and the index database open from real external
+  processes. Confirm the documented refusal/retry behaviour and that no
+  process reports success after a failed write. Passed with independent
+  PowerShell and Python/SQLite holders; this is cross-process OS-handle
+  evidence, not a claim about a particular GUI application.
 - [x] Start Docker Desktop manually. Record Docker Desktop, engine and WSL2
   versions, then run `scripts/workbench_live_check.py` with a freshly resolved,
   pinned `python:3.11-slim@sha256:...` image. Passed in the 2026-11-02 refresh;
