@@ -5,7 +5,7 @@ Date: 2026-10-31; refreshed 2026-11-03
 Repository revision: original packet at `716ac10`; current-candidate refresh at
 `bdfd834` (`REMED-07: qualify model view and reachability`)
 
-Status: **in progress — local artifact, live-Docker, real Obsidian UI, dirty-document, SecretStorage and real cross-process handle boundaries passed; exact Obsidian UI confirmation and real Claude/Cowork mixed traffic remain**
+Status: **in progress — local artifact, live-Docker, real Obsidian UI, dirty-document, SecretStorage, repaired layout and real cross-process handle boundaries passed; real Claude/Cowork mixed traffic remains**
 
 The original 2026-10-31 packet records a fresh Windows pass on a
 repository-built candidate. At that time real Obsidian with SecretStorage, the
@@ -211,8 +211,9 @@ The exact `bdfd834` candidate wheel was installed in a fresh external venv and
 the exact candidate Obsidian ZIP was installed beside the existing Excalidraw
 and Tasks plugins. All required Doctor checks passed. The launcher executable
 at `D:\obsidian\Obsidian.exe` reports file version 1.12.7.0; a running window
-title reported runtime 1.15.0. The exact in-app About version still needs to be
-retained before the version checklist item closes.
+title reported runtime 1.15.0. The person subsequently retained the authoritative
+in-app About version as **1.12.7**; the window-title observation is not treated
+as the application version.
 
 The person opened the copied vault in real Obsidian and confirmed that the
 Librarian plugin loaded, every button behaved as expected, and the Chat,
@@ -297,11 +298,22 @@ The real-host walk also exposed three usability defects, which were repaired:
   plugin returned to the normal UI.
 
 The shared UI smoke passes with the hostile host rule, both TypeScript bundles
-build, and five focused adapter contract tests pin the namespace, checkpoint
+build, and the focused adapter contract tests pin the namespace, checkpoint
 wording and one-shot stale recovery. The complete repository suite passed
-**1,938 tests, 2 skipped, 5 deselected** after the repairs. A final visual
-confirmation of the repaired model selector in real Obsidian remains desirable;
-the stale-recovery flow is already confirmed in the real host.
+**1,938 tests, 2 skipped, 5 deselected** after the first repairs. The
+stale-recovery flow was also confirmed in the real host.
+
+A second Obsidian 1.12.7 retest showed two remaining host effects: Obsidian's
+generic `.card` and normal-button rules forced model buttons into fixed-height
+flex controls, and the saved Librarian right sidedock was 1515.5 pixels wide,
+squeezing the Markdown workspace into single-character columns. The model DOM
+now uses model-specific class names and explicitly resets display, flex, height,
+margin, wrapping and width. The plugin now creates a main-workspace tab and
+migrates a saved sidedock leaf there. The hostile-CSS smoke was expanded to the
+actual generic grid/card/button behavior, both bundles rebuilt, and six focused
+adapter contracts passed. After installing the rebuilt bundle, the person
+confirmed in real Obsidian that the corrected layout worked. This closes the
+model-selector/main-tab visual check.
 
 ### Real cross-process Markdown and SQLite handles
 
@@ -344,8 +356,13 @@ versions, screenshots/log paths and pass/fail notes to this report.
 - [x] Install the exact candidate Obsidian ZIP into a disposable copy of a real
   vault and exercise the real plugin and shared UI. Covered by the 2026-11-03
   refresh.
-- [ ] Retain the exact in-app Obsidian About version. The launcher file and a
-  runtime window title reported different versions.
+- [x] Retain the exact in-app Obsidian About version. The person confirmed
+  **1.12.7**; the earlier 1.15.0 window-title observation is not treated as the
+  About version.
+- [x] Confirm the repaired model selector and workspace placement in real
+  Obsidian. The person confirmed the namespaced, auto-height cards rendered
+  correctly after the plugin migrated from the oversized right sidedock to a
+  main-workspace tab.
 - [x] Set a provider key through Obsidian SecretStorage; confirm the Core marks
   it `obsidian_managed`, the browser cannot overwrite it, no value appears in
   loopback responses or vault files, and rotating it restarts the Core. Passed

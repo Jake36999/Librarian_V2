@@ -51,6 +51,16 @@ export default class LibrarianPlugin extends Plugin {
       const file = this.app.workspace.getActiveFile();
       if (file?.extension === "md") this.lastMarkdownPath = file.path;
     }));
+    // This is a full two-pane application, not a compact sidebar widget. Old
+    // plugin versions opened it in the right sidedock and could leave the
+    // editor squeezed to single-character columns. Migrate that saved leaf to
+    // a normal main-workspace tab once the saved layout is available.
+    this.app.workspace.onLayoutReady(() => {
+      const leaves = this.app.workspace.getLeavesOfType(VIEW);
+      if (leaves.length && !leaves.some((leaf) => leaf.getRoot() === this.app.workspace.rootSplit)) {
+        void this.activate();
+      }
+    });
     this.addSettingTab(new LibrarianSettings(this.app, this));
   }
 
@@ -146,10 +156,12 @@ export default class LibrarianPlugin extends Plugin {
   }
 
   async activate(): Promise<LibrarianView | null> {
-    let leaf = this.app.workspace.getLeavesOfType(VIEW)[0];
+    const existing = this.app.workspace.getLeavesOfType(VIEW);
+    let leaf = existing.find((candidate) => candidate.getRoot() === this.app.workspace.rootSplit);
     if (!leaf) {
-      leaf = this.app.workspace.getRightLeaf(false) ?? this.app.workspace.getLeaf(true);
+      leaf = this.app.workspace.getLeaf("tab");
       await leaf.setViewState({ type: VIEW, active: true });
+      for (const old of existing) old.detach();
     }
     await this.app.workspace.revealLeaf(leaf);
     return leaf.view instanceof LibrarianView ? leaf.view : null;

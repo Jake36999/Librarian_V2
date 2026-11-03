@@ -464,9 +464,9 @@ export class ModelTile {
         : listing.status === "no key" ? "no key saved (+ → Connections)"
         : listing.status === "offline" ? "offline: the local server is not running"
         : listing.error ? `error: ${listing.error}` : listing.status;
-      return h("section", { class: "provider" },
+      return h("section", { class: "model-provider" },
         h("h4", {}, h("span", { class: `dot ${listing.status === "ready" ? "" : listing.status === "no key" ? "nokey" : "off"}` }), `${label} · ${status}`),
-        models.length ? h("div", { class: "grid" }, models.slice(0, 60).map((m) => {
+        models.length ? h("div", { class: "model-grid" }, models.slice(0, 60).map((m) => {
           // In a service slot, "chosen" is the slot's own model; otherwise its tier.
           const inSlot = sameHost(this.slot?.current?.provider, p) && this.slot?.current?.model === m.id;
           const at = this.slot ? (inSlot ? 0 : -1)
@@ -475,7 +475,7 @@ export class ModelTile {
           const rec = at < 0 && recommended(m);
           const readiness = this.readinessChips(p, String(m.id));
           const card = h("button", {
-            class: `card${at >= 0 ? " sel" : ""}${rec ? " rec" : ""}`, "aria-pressed": at >= 0 ? "true" : "false",
+            class: `model-card${at >= 0 ? " sel" : ""}${rec ? " rec" : ""}`, "aria-pressed": at >= 0 ? "true" : "false",
             title: at >= 0 ? (this.slot ? "Right-click (or Delete) to empty this slot"
               : "Right-click (or Delete) to clear the chosen models")
               : m.profile && m.profile.tool_calling === false
@@ -487,11 +487,11 @@ export class ModelTile {
             ontouchend: () => window.clearTimeout(this.press),
           },
           at >= 0 && !this.slot ? h("span", { class: "badge" }, String(at + 1)) : null,
-          h("div", { class: "name" }, m.id), h("div", { class: "meta" }, profileMeta(m)),
-          adapterMeta(m) ? h("div", { class: "meta" }, adapterMeta(m)) : null,
+          h("div", { class: "model-name" }, m.id), h("div", { class: "model-meta" }, profileMeta(m)),
+          adapterMeta(m) ? h("div", { class: "model-meta" }, adapterMeta(m)) : null,
           readiness,
           rec ? h("div", { class: "rec-label" }, `Recommended for slot ${next}`) : null);
-          return h("div", { class: "card-wrap" }, card,
+          return h("div", { class: "model-card-wrap" }, card,
             // "local" has no public listing page to profile from (see MODEL_PAGES
             // server-side); offering the action there would only fail loudly.
             p !== "local" && !m.profile && m.profiling !== "queued"

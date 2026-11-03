@@ -29,7 +29,7 @@ await page.waitForSelector("header nav");
 // Obsidian owns a generic `.popover` class and makes it a horizontal flex
 // container. The shared UI must namespace its own panels so host CSS cannot
 // turn the model picker's vertical sections into squeezed columns.
-await page.addStyleTag({ content: ".popover { display: flex !important; flex-direction: row !important; }" });
+await page.addStyleTag({ content: ".popover, .grid { display: flex !important; flex-direction: row !important; } .card { display: inline-flex !important; height: 32px !important; white-space: nowrap !important; }" });
 
 // No model yet: sending says so, plainly.
 await page.fill("#lib-msg", "hello");
@@ -39,36 +39,40 @@ step("sending without a model says what to do");
 
 // Model tile: click order sets tiers; clicking again explains; right-click clears.
 await page.click(".toolbar .tb:nth-child(4)");
-await page.waitForSelector("#lib-models .card");
+await page.waitForSelector("#lib-models .model-card");
 await expect(page.evaluate(() => {
   const panel = document.querySelector("#lib-models");
   if (!panel || panel.classList.contains("popover") || getComputedStyle(panel).display !== "block") return false;
   const visible = [...panel.children].filter((el) => getComputedStyle(el).display !== "none");
   const tops = visible.map((el) => el.getBoundingClientRect().top);
   const box = panel.getBoundingClientRect();
+  const card = panel.querySelector(".model-card");
+  const cardBox = card?.getBoundingClientRect();
   return tops.every((top, i) => i === 0 || top >= tops[i - 1])
-    && box.left >= 0 && box.right <= window.innerWidth;
+    && box.left >= 0 && box.right <= window.innerWidth
+    && !!card && getComputedStyle(card).display === "block"
+    && !!cardBox && cardBox.height >= card.scrollHeight;
 }), "host popover CSS cannot turn the model picker into horizontal columns");
 // The cards re-render once the choice is saved; a click before the save has
 // answered lands on the old card and simply chooses it again. Wait for it.
 await Promise.all([
   page.waitForResponse((r) => r.url().endsWith("/api/tiers") && r.request().method() === "POST"),
-  page.click("#lib-models section:has-text('Local server') .card")]);
+  page.click("#lib-models section:has-text('Local server') .model-card")]);
 // R10: no lead has completed the M0 suite yet, so leading asks for a recorded override.
 await page.waitForSelector("#lib-models >> text=has not completed the lead qualification suite");
 await Promise.all([
   page.waitForResponse((r) => r.url().endsWith("/api/tiers") && r.status() === 200),
   page.click("#lib-models button:has-text('Use it as lead anyway')")]);
 await page.waitForSelector("#lib-models .slot:first-child >> text=scripted-demo");
-await page.waitForSelector("#lib-models section:has-text('Local server') .card.sel");
-await page.waitForSelector("#lib-models .card.sel .readiness-chip >> text=lead: experimental");
-await page.click("#lib-models section:has-text('Local server') .card");
+await page.waitForSelector("#lib-models section:has-text('Local server') .model-card.sel");
+await page.waitForSelector("#lib-models .model-card.sel .readiness-chip >> text=lead: experimental");
+await page.click("#lib-models section:has-text('Local server') .model-card");
 await page.waitForSelector("#lib-models .toast >> text=is tier 1");
-await page.click("#lib-models section:has-text('Local server') .card", { button: "right" });
+await page.click("#lib-models section:has-text('Local server') .model-card", { button: "right" });
 await page.waitForSelector("#lib-models .toast >> text=Selection cleared");
-await page.waitForSelector("#lib-models section:has-text('Local server') .card:not(.sel)");
-await page.click("#lib-models section:has-text('Local server') .card");
-await page.waitForSelector("#lib-models section:has-text('Local server') .card.sel");
+await page.waitForSelector("#lib-models section:has-text('Local server') .model-card:not(.sel)");
+await page.click("#lib-models section:has-text('Local server') .model-card");
+await page.waitForSelector("#lib-models section:has-text('Local server') .model-card.sel");
 await page.keyboard.press("Escape");
 await page.waitForSelector(".toolbar >> text=scripted-demo");
 step("tiers by click order, right-click clears");
@@ -265,7 +269,7 @@ await page.waitForSelector("#lib-models >> text=Choose the OCR model");
 await expect(page.locator("#lib-models .readiness-chip").count().then(n => n === 0),
   "service cards never borrow chat-role qualification");
 await page.click("#lib-models button:has-text('Show all')");
-await page.click("#lib-models .card:has-text('openai/gpt-oss-20b')");
+await page.click("#lib-models .model-card:has-text('openai/gpt-oss-20b')");
 await page.waitForSelector("dialog.settings .slot-ocr >> text=openai/gpt-oss-20b");
 step("service slot 4: OCR chosen through the model tile and kept with the library");
 await page.click("dialog.settings .slot-ocr", { button: "right" });
@@ -476,23 +480,23 @@ step("a lens is adopted into the thread from the ⋮ menu, under the name it was
 // source); a model already profiled with tool_calling: false can't lead a
 // session, but can still be tier 2 or 3.
 await page.click(".toolbar .tb:nth-child(4)");
-await page.waitForSelector("#lib-models section:has-text('DeepInfra') .card");
-await expect(page.isVisible("#lib-models .card:has-text('acme/no-tools-model') >> text=no tool calling"),
+await page.waitForSelector("#lib-models section:has-text('DeepInfra') .model-card");
+await expect(page.isVisible("#lib-models .model-card:has-text('acme/no-tools-model') >> text=no tool calling"),
   "a profiled model shows its real specs, not 'unprofiled'");
 await Promise.all([
   page.waitForResponse((r) => r.url().endsWith("/api/tiers") && r.status() === 200),
   page.click("#lib-models button:has-text('Clear selection')")]);
 await page.waitForSelector("#lib-models .slot:first-child >> text=not chosen");
-await page.click("#lib-models .card:has-text('acme/no-tools-model')");
+await page.click("#lib-models .model-card:has-text('acme/no-tools-model')");
 await page.waitForSelector("#lib-models .toast >> text=can't lead a session");
 await expect(page.locator("#lib-models .slot").first().innerText().then((t) => t.includes("not chosen")),
   "the gated model was not made tier 1");
 await page.click("#lib-models section:has-text('DeepInfra') button.profile-link");
 await page.waitForSelector("#lib-models .toast >> text=staged for review");
-await page.click("#lib-models .card:has-text('openai/gpt-oss-20b')");         // unprofiled: still fine as tier 1
+await page.click("#lib-models .model-card:has-text('openai/gpt-oss-20b')");         // unprofiled: still fine as tier 1
 await page.click("#lib-models button:has-text('Use it as lead anyway')");       // R10: not M0-qualified
 await page.waitForSelector("#lib-models .slot:first-child >> text=openai/gpt-oss-20b");
-await page.click("#lib-models .card:has-text('acme/no-tools-model')");        // now tier 2, no gate on tier 2/3
+await page.click("#lib-models .model-card:has-text('acme/no-tools-model')");        // now tier 2, no gate on tier 2/3
 await page.waitForSelector("#lib-models .slot:nth-child(2) >> text=acme/no-tools-model");
 await page.keyboard.press("Escape");
 step("an unprofiled model can be profiled; a profiled non-tool-calling model can't lead, but can be tier 2");
@@ -506,8 +510,8 @@ await page.click(".staging button:has-text('Accept')");
 await page.waitForSelector(".staging >> text=Accepted");
 await page.click(".lib-app nav button:has-text('Chat')");
 await page.click(".toolbar .tb:nth-child(4)");
-await page.waitForSelector("#lib-models section:has-text('DeepInfra') .card:has-text('openai/gpt-oss-20b') >> text=Tier 3");
-await expect(page.isVisible("#lib-models .card:has-text('openai/gpt-oss-20b') >> text=131k ctx"),
+await page.waitForSelector("#lib-models section:has-text('DeepInfra') .model-card:has-text('openai/gpt-oss-20b') >> text=Tier 3");
+await expect(page.isVisible("#lib-models .model-card:has-text('openai/gpt-oss-20b') >> text=131k ctx"),
   "the accepted model now shows its measured specs in the tile");
 await page.keyboard.press("Escape");
 step("accepting the staged model finishes profiling it; the tile shows the real specs");

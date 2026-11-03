@@ -2104,9 +2104,9 @@ var ModelTile = class {
       const status = listing.status === "ready" ? `${listing.models.length} model${listing.models.length === 1 ? "" : "s"}` : listing.status === "no key" ? "no key saved (+ \u2192 Connections)" : listing.status === "offline" ? "offline: the local server is not running" : listing.error ? `error: ${listing.error}` : listing.status;
       return h(
         "section",
-        { class: "provider" },
+        { class: "model-provider" },
         h("h4", {}, h("span", { class: `dot ${listing.status === "ready" ? "" : listing.status === "no key" ? "nokey" : "off"}` }), `${label} \xB7 ${status}`),
-        models.length ? h("div", { class: "grid" }, models.slice(0, 60).map((m) => {
+        models.length ? h("div", { class: "model-grid" }, models.slice(0, 60).map((m) => {
           const inSlot = sameHost(this.slot?.current?.provider, p) && this.slot?.current?.model === m.id;
           const at = this.slot ? inSlot ? 0 : -1 : tiers.findIndex((t) => sameHost(t.provider, p) && t.model === m.id);
           const clear2 = () => this.slot ? this.clearSlot() : this.clearAll();
@@ -2115,7 +2115,7 @@ var ModelTile = class {
           const card = h(
             "button",
             {
-              class: `card${at >= 0 ? " sel" : ""}${rec ? " rec" : ""}`,
+              class: `model-card${at >= 0 ? " sel" : ""}${rec ? " rec" : ""}`,
               "aria-pressed": at >= 0 ? "true" : "false",
               title: at >= 0 ? this.slot ? "Right-click (or Delete) to empty this slot" : "Right-click (or Delete) to clear the chosen models" : m.profile && m.profile.tool_calling === false ? "Profiled as not supporting tool calling: can still lead as tier 2 or 3" : "",
               onclick: () => this.pick(p, m.id),
@@ -2134,15 +2134,15 @@ var ModelTile = class {
               ontouchend: () => window.clearTimeout(this.press)
             },
             at >= 0 && !this.slot ? h("span", { class: "badge" }, String(at + 1)) : null,
-            h("div", { class: "name" }, m.id),
-            h("div", { class: "meta" }, profileMeta(m)),
-            adapterMeta(m) ? h("div", { class: "meta" }, adapterMeta(m)) : null,
+            h("div", { class: "model-name" }, m.id),
+            h("div", { class: "model-meta" }, profileMeta(m)),
+            adapterMeta(m) ? h("div", { class: "model-meta" }, adapterMeta(m)) : null,
             readiness,
             rec ? h("div", { class: "rec-label" }, `Recommended for slot ${next}`) : null
           );
           return h(
             "div",
-            { class: "card-wrap" },
+            { class: "model-card-wrap" },
             card,
             // "local" has no public listing page to profile from (see MODEL_PAGES
             // server-side); offering the action there would only fail loudly.
@@ -6929,6 +6929,12 @@ var LibrarianPlugin = class extends import_obsidian.Plugin {
       const file = this.app.workspace.getActiveFile();
       if (file?.extension === "md") this.lastMarkdownPath = file.path;
     }));
+    this.app.workspace.onLayoutReady(() => {
+      const leaves = this.app.workspace.getLeavesOfType(VIEW);
+      if (leaves.length && !leaves.some((leaf) => leaf.getRoot() === this.app.workspace.rootSplit)) {
+        void this.activate();
+      }
+    });
     this.addSettingTab(new LibrarianSettings(this.app, this));
   }
   onunload() {
@@ -7025,10 +7031,12 @@ var LibrarianPlugin = class extends import_obsidian.Plugin {
     }
   }
   async activate() {
-    let leaf = this.app.workspace.getLeavesOfType(VIEW)[0];
+    const existing = this.app.workspace.getLeavesOfType(VIEW);
+    let leaf = existing.find((candidate) => candidate.getRoot() === this.app.workspace.rootSplit);
     if (!leaf) {
-      leaf = this.app.workspace.getRightLeaf(false) ?? this.app.workspace.getLeaf(true);
+      leaf = this.app.workspace.getLeaf("tab");
       await leaf.setViewState({ type: VIEW, active: true });
+      for (const old of existing) old.detach();
     }
     await this.app.workspace.revealLeaf(leaf);
     return leaf.view instanceof LibrarianView ? leaf.view : null;

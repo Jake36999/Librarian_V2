@@ -34,8 +34,22 @@ def test_shared_popovers_do_not_collide_with_obsidian_host_css() -> None:
 
     assert 'class: "lib-popover"' in panels
     assert 'class: "popover"' not in panels
+    assert 'class: "model-grid"' in panels
+    assert 'class: "grid"' not in panels
+    assert 'class: `model-card${' in panels
+    assert 'class: `card${' not in panels
     assert ".lib-app .lib-popover { display: block;" in css
+    assert ".lib-app .model-card { display: block;" in css
+    assert "height: auto" in css and "white-space: normal" in css
     assert ".lib-app .popover" not in css
+
+
+def test_obsidian_opens_full_librarian_in_main_workspace_tab() -> None:
+    main = (ROOT / "obsidian/src/main.ts").read_text(encoding="utf-8")
+
+    assert 'getLeaf("tab")' in main
+    assert "getRightLeaf" not in main
+    assert "leaf.getRoot() === this.app.workspace.rootSplit" in main
 
 
 def test_write_conflict_ui_says_review_does_not_retry() -> None:

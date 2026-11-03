@@ -4077,9 +4077,21 @@ public API exposes no checkpoint counters, so the prior Windows fixture remains
 the evidence for passive-checkpoint reporting and convergence. Exact results
 are retained in `reports/2026-11-03-accept02-external-handles.json`.
 
-ACCEPT-02 remains open for exact in-app Obsidian About version evidence, a final
-real-host visual confirmation of the repaired model selector, and the real
-Browser+Obsidian+Claude/Cowork mixed-client run.
+The person then retained the authoritative in-app Obsidian About version as
+**1.12.7**. The earlier 1.15.0 window-title observation is not application-version
+evidence.
+
+A second real-host retest exposed Obsidian's fixed-height normal-button and
+generic `.card` rules, plus a persisted 1515.5-pixel Librarian right sidedock
+that squeezed the editor into single-character columns. Model elements now use
+model-specific class names and reset the host button layout; the plugin creates
+and migrates to a main-workspace tab. The hostile-CSS smoke covers the actual
+grid/card/button rules, both bundles build, and six focused adapter contracts
+pass. The rebuilt bundle was installed and the person confirmed the corrected
+layout in real Obsidian 1.12.7.
+
+ACCEPT-02 remains open only for the real Browser+Obsidian+Claude/Cowork
+mixed-client run.
 
 ### REMED-08 measurement and REMED-06 exit (2026-11-02)
 

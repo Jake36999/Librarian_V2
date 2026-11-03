@@ -29,7 +29,8 @@
     "launcher_path": "D:\\obsidian\\Obsidian.exe",
     "launcher_file_version": "1.12.7.0",
     "observed_runtime_title_version": "1.15.0",
-    "in_app_about_version_retained": false,
+    "in_app_about_version_retained": true,
+    "in_app_about_version": "1.12.7",
     "plugin_loaded": true,
     "person_confirmed_all_buttons": true,
     "person_confirmed_pages": [
@@ -39,6 +40,11 @@
       "Sessions",
       "Checkpoints"
     ],
+    "layout_retest": {
+      "model_cards_rendered_without_overlap": true,
+      "librarian_migrated_to_main_workspace_tab": true,
+      "person_confirmed_in_real_host": true
+    },
     "core": {
       "plugin_owned": true,
       "held_vault_leases": 1,
