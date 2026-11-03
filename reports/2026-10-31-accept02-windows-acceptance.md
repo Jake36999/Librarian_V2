@@ -1,18 +1,18 @@
 # ACCEPT-02 Windows acceptance pass
 
-Date: 2026-10-31; refreshed 2026-11-02
+Date: 2026-10-31; refreshed 2026-11-03
 
 Repository revision: original packet at `716ac10`; current-candidate refresh at
 `bdfd834` (`REMED-07: qualify model view and reachability`)
 
-Status: **in progress — local artifact and live-Docker boundaries passed; real Obsidian, real Claude/Cowork UI and external-application handles remain**
+Status: **in progress — local artifact, live-Docker, real Obsidian UI, dirty-document and SecretStorage boundaries passed; real Claude/Cowork mixed traffic and external-application handles remain**
 
-This packet records a fresh Windows pass on a repository-built candidate. It
-does not close ACCEPT-02: the plan explicitly requires real Obsidian with
-SecretStorage, the real Claude/Cowork host interface and real external
-application handles. Those environments were not available in this session
-and are listed as hands-on checks below. A dated refresh below now records the
-fresh live-Docker pass that was unavailable in the original packet.
+The original 2026-10-31 packet records a fresh Windows pass on a
+repository-built candidate. At that time real Obsidian with SecretStorage, the
+real Claude/Cowork host interface and real external application handles were
+unavailable. Dated refreshes below supersede the original gaps for live Docker,
+real Obsidian UI, dirty-document coordination and SecretStorage. ACCEPT-02
+remains open only for the still-unchecked hands-on items below.
 
 ## Environment (original 2026-10-31 packet)
 
@@ -193,19 +193,136 @@ Result: **fresh live-Docker acceptance passed.** This closes only the Docker
 check, not the real Obsidian, Claude/Cowork, mixed-client or external-handle
 requirements.
 
+## 2026-11-03 real-Obsidian and dirty-document refresh
+
+The supplied `D:\Testing Folder` was a genuine Obsidian vault containing 163
+files, including 42 Markdown files and mixed PDF, image, Office, Canvas and
+HTML content. Its inherited D-drive ACL allowed directory creation but not
+writes inside newly created directories, so fingerprinted adoption stopped
+without retaining `.librarian` state or changing an existing file.
+
+A byte-verified working copy was made at
+`C:\Users\jakem\Librarian ACCEPT-02 Vault`. All 163 copied files matched their
+source SHA-256 values. The copy was adopted under survey fingerprint
+`a7154dfe13eb9bb312fb9609ea19b855`; every pre-existing file remained
+byte-identical.
+
+The exact `bdfd834` candidate wheel was installed in a fresh external venv and
+the exact candidate Obsidian ZIP was installed beside the existing Excalidraw
+and Tasks plugins. All required Doctor checks passed. The launcher executable
+at `D:\obsidian\Obsidian.exe` reports file version 1.12.7.0; a running window
+title reported runtime 1.15.0. The exact in-app About version still needs to be
+retained before the version checklist item closes.
+
+The person opened the copied vault in real Obsidian and confirmed that the
+Librarian plugin loaded, every button behaved as expected, and the Chat,
+Staging, Search, Sessions and Checkpoints pages rendered. The plugin-owned Core
+reported version 2.1.0.dev0, protocol 2, compatible adapter range `>=2,<3`, one
+held vault lease, ready writer and index, 44 watched Markdown files, and
+`secret_source: obsidian_managed`. No provider secret had yet been selected.
+
+### Real dirty-document boundary
+
+The first asynchronous attempt depended on the ten-second heartbeat surviving
+a chat round trip. It had expired before the write arrived, so the Core
+correctly treated the note as inactive and accepted the update. That attempt
+temporarily replaced the person's Summary sentence. The generated diff
+retained the exact prior sentence; it was restored immediately. Its restored
+SHA-256
+`af0ba28cfef6eb1a137758050be8adbf7277b8bd30e159836454be21806729c6`
+and 675-byte size matched the pre-attempt values exactly. This was a flawed
+acceptance procedure, not evidence that an active lease was bypassed.
+
+The repeat used a watcher that performed no write until the real Obsidian
+lease appeared. It observed path `Projects/ACCEPT-02 Dirty Target.md`, editor
+`Obsidian`, `dirty: true`, 9.9 seconds remaining and baseline prefix
+`e44d84f677644d6df1dd`.
+
+During that lease, the conflicting `update_project` call was refused as
+`DOCUMENT_ACTIVE`. Checkpoint `c38bf833180dc49a` had type `write_conflict`,
+default `wait`, and only `wait`, `retry_after_review` and `cancel` choices; the
+person confirmed those choices in the real UI. The dirty note remained exactly
+SHA-256
+`e44d84f677644d6df1dde3991e06b456f4604f2e413e3a22d31a3f83484ec410`
+and 677 bytes before and after. In the same lease, the unrelated project write
+succeeded and changed from SHA-256
+`fd9f76e732c36c46e2537fb8bc1e411251b0f2848aa73bb389278786c263f279`
+to
+`cc286710b237857854fcff397b56bdcba90d81f84e05af5e9300e1eff2c67725`.
+
+Result: **the real Obsidian dirty-document boundary passed.** A live edit was
+retained byte-for-byte, a document-specific person checkpoint appeared, and an
+unrelated note remained writable. Sanitized raw evidence is retained in
+`reports/2026-11-03-accept02-obsidian-dirty.json`.
+
+### SecretStorage and defects found in the real host
+
+After the initial exact-`bdfd834` dirty-document walk exposed host-integration
+defects, the repaired working-tree Obsidian bundle was copied over the candidate
+plugin in the disposable vault. The stale-recovery and SecretStorage checks
+below therefore qualify that remediation overlay on top of the `bdfd834` base
+Core; they are not claimed as tests of the unchanged old plugin ZIP. Final diff
+review then hardened the same typed diagnostic by parsing it after child stdio
+closed instead of at process exit; that race correction passed the focused
+contracts but was not separately repeated in the real host.
+
+Two dummy OpenAI entries were selected in turn through real Obsidian
+SecretStorage. The first selection restarted the plugin-owned Core, which
+reported `saved: true`, `source: obsidian_managed` and the expected last-four
+indicator. A browser attempt to replace it through `/api/keys` was refused with
+HTTP 409 and `managed_by: obsidian`; the selected value remained in force.
+Selecting the second entry restarted the Core again and changed the reported
+last-four indicator. Plugin data retained only the selected SecretStorage ID,
+not either value. Neither full dummy value appeared in serialized API responses
+or any vault file.
+
+The person then selected the blank option and removed both dummy entries.
+Another clean Core restart followed; the Core reported `saved: false`, and the
+plugin's stored OpenAI secret ID was blank. No provider request or key check was
+made. Sanitized evidence, deliberately excluding the dummy values, is retained
+in `reports/2026-11-03-accept02-obsidian-secretstorage.json`.
+
+The real-host walk also exposed three usability defects, which were repaired:
+
+- Obsidian's host `.popover` rule could turn the model selector into a wide,
+  clipped flex row. Librarian now uses the namespaced `.lib-popover` class and
+  a hostile-host-CSS browser regression exercises its geometry.
+- `retry_after_review` resolves a checkpoint but does not itself retry the
+  write or open a separate review page. The UI now says **Mark reviewed; retry
+  manually** and explains that behavior before resolution.
+- After disabling and re-enabling the plugin, an exited Core could leave a
+  stale vault lease. The error is now typed, and **Recover and try again** makes
+  exactly one explicit takeover attempt. The person exercised that recovery in
+  real Obsidian: the old Core was dead, one replacement Core started, and the
+  plugin returned to the normal UI.
+
+The shared UI smoke passes with the hostile host rule, both TypeScript bundles
+build, and five focused adapter contract tests pin the namespace, checkpoint
+wording and one-shot stale recovery. The complete repository suite passed
+**1,938 tests, 2 skipped, 5 deselected** after the repairs. A final visual
+confirmation of the repaired model selector in real Obsidian remains desirable;
+the stale-recovery flow is already confirmed in the real host.
+
 ## Honest gaps and owner hands-on checklist
 
 Run these against the candidate above (or a later frozen replacement) and add
 versions, screenshots/log paths and pass/fail notes to this report.
 
-- [ ] Record the exact Obsidian version and install the candidate Obsidian ZIP
-  into a disposable copy of a real vault.
-- [ ] Set a provider key through Obsidian SecretStorage; confirm the Core marks
+- [x] Install the exact candidate Obsidian ZIP into a disposable copy of a real
+  vault and exercise the real plugin and shared UI. Covered by the 2026-11-03
+  refresh.
+- [ ] Retain the exact in-app Obsidian About version. The launcher file and a
+  runtime window title reported different versions.
+- [x] Set a provider key through Obsidian SecretStorage; confirm the Core marks
   it `obsidian_managed`, the browser cannot overwrite it, no value appears in
-  loopback responses or vault files, and rotating it restarts the Core.
-- [ ] With a note dirty in Obsidian, attempt a Core write to that same note.
+  loopback responses or vault files, and rotating it restarts the Core. Passed
+  with two dummy entries, followed by verified cleanup; no provider call was
+  made.
+- [x] With a note dirty in Obsidian, attempt a Core write to that same note.
   Confirm the document-specific checkpoint appears, the unsaved editor text is
-  retained, and a different note can still be written.
+  retained, and a different note can still be written. Passed in the
+  synchronized 2026-11-03 repeat; the expired-heartbeat procedure failure and
+  exact restoration are disclosed above.
 - [ ] Keep Browser, Obsidian and the real Claude/Cowork UI attached to the same
   Core. Under mixed read/write traffic, confirm one vault lease, ordered writer
   completion, no `SQLITE_BUSY`, no lost JSONL events and clean reconnect after

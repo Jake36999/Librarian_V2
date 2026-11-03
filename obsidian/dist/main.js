@@ -1670,7 +1670,7 @@ function adapterMeta(m) {
 var Popover = class {
   constructor(id, label, button) {
     this.button = button;
-    this.el = h("div", { class: "popover", id, hidden: true, role: "dialog", "aria-label": label });
+    this.el = h("div", { class: "lib-popover", id, hidden: true, role: "dialog", "aria-label": label });
     button.setAttribute("aria-haspopup", "true");
     button.setAttribute("aria-expanded", "false");
   }
@@ -6392,10 +6392,18 @@ var App = class {
     const rows = this.state.pending_checkpoints ?? [];
     const card = (row) => {
       const evidence = row.evidence && Object.keys(row.evidence).length ? h("pre", { class: "checkpoint-evidence" }, JSON.stringify(row.evidence, null, 2)) : null;
+      const writeConflictHelp = row.type === "write_conflict" ? h(
+        "p",
+        { class: "checkpoint-help" },
+        "Review the named note in its editor. Resolving this card records your decision only; it does not retry the blocked write. Repeat the original action after the editor is quiet."
+      ) : null;
       const resolve2 = async (choice) => {
         try {
           await this.api.post("/api/checkpoints/resolve", { id: row.id, choice });
           await this.refreshCheckpoints();
+          if (choice === "retry_after_review") this.warn(
+            "Review recorded. The blocked write was not retried; repeat the original action after the editor is quiet."
+          );
         } catch (e) {
           this.warn(e.message);
         }
@@ -6406,10 +6414,15 @@ var App = class {
         h("strong", {}, String(row.type ?? "Decision").replace(/_/g, " ")),
         h("p", {}, String(row.scope ?? "")),
         evidence,
+        writeConflictHelp,
         h("div", { class: "row2" }, ...(Array.isArray(row.choices) ? row.choices : []).map((choice) => (
           // The Core declares the safe default.  Array order is presentation
           // history, not an instruction to make an approval action primary.
-          h("button", { class: choice === row.default ? "primary" : "ghost", onclick: () => void resolve2(choice) }, choice.replace(/_/g, " "))
+          h(
+            "button",
+            { class: choice === row.default ? "primary" : "ghost", onclick: () => void resolve2(choice) },
+            choice === "retry_after_review" ? "Mark reviewed; retry manually" : choice.replace(/_/g, " ")
+          )
         )))
       );
     };
@@ -6703,6 +6716,8 @@ var KEY_ENV = {
 var STOP_EXIT_MS = 25e3;
 var CoreNotFound = class extends Error {
 };
+var StaleCoreLease = class extends Error {
+};
 function loopbackUrl(value) {
   try {
     const parsed = new URL(value);
@@ -6767,7 +6782,7 @@ async function exactCoreIsRunning(corePath, vaultPath, expected, expectedUrl) {
         finish(false);
       }
     });
-    child.on("exit", (code) => {
+    child.on("close", (code) => {
       if (code !== 0) {
         finish(false);
         return;
@@ -6799,7 +6814,8 @@ function command(corePath) {
   const exe = corePath.trim() || "resource-librarian";
   return /^python[\d.]*(\.exe)?$/i.test(path.basename(exe)) ? [exe, ["-m", "resource_librarian"]] : [exe, []];
 }
-async function start(corePath, vaultPath, keys, timeoutMs = 2e4) {
+async function start(corePath, vaultPath, keys, options = {}) {
+  const timeoutMs = options.timeoutMs ?? 2e4;
   const active = await discover(vaultPath, corePath);
   if (active) return active;
   const token2 = (0, import_node_crypto.randomBytes)(24).toString("base64url");
@@ -6820,9 +6836,11 @@ async function start(corePath, vaultPath, keys, timeoutMs = 2e4) {
   return new Promise((resolve2, reject) => {
     let child;
     try {
+      const args = [...prefix, "--vault", vaultPath, "app", "--port", "0"];
+      if (options.takeover) args.push("--takeover");
       child = (0, import_node_child_process.spawn)(
         exe,
-        [...prefix, "--vault", vaultPath, "app", "--port", "0"],
+        args,
         { env, stdio: ["pipe", "pipe", "pipe"], windowsHide: true }
       );
     } catch (e) {
@@ -6839,8 +6857,19 @@ async function start(corePath, vaultPath, keys, timeoutMs = 2e4) {
       clearTimeout(timer);
       reject(e.code === "ENOENT" ? new CoreNotFound(`${exe} was not found`) : e);
     });
-    child.on("exit", (code) => {
+    child.on("close", (code) => {
       clearTimeout(timer);
+      for (const line of `${out}
+${err}`.split(/\r?\n/).reverse()) {
+        try {
+          const row = JSON.parse(line);
+          if (row?.error === "stale_vault_lease") {
+            reject(new StaleCoreLease(String(row.detail || "a stopped Core left stale lease metadata")));
+            return;
+          }
+        } catch {
+        }
+      }
       reject(new Error(`the core exited (${code}). ${err.slice(-400) || out.slice(-400)}`));
     });
     child.stderr?.on("data", (d) => {
@@ -6919,10 +6948,10 @@ var LibrarianPlugin = class extends import_obsidian.Plugin {
     }
     return out;
   }
-  ensureCore() {
+  ensureCore(takeover = false) {
     if (this.core) return Promise.resolve(this.core);
     if (!this.starting) {
-      this.starting = start(this.settings.corePath, this.vaultPath(), this.keys()).then((running) => {
+      this.starting = start(this.settings.corePath, this.vaultPath(), this.keys(), { takeover }).then((running) => {
         this.core = running;
         running.process?.on("exit", () => {
           if (this.core === running) this.core = null;
@@ -7042,7 +7071,7 @@ var LibrarianView = class extends import_obsidian.ItemView {
   async onOpen() {
     await this.render();
   }
-  async render() {
+  async render(takeover = false) {
     this.mounted?.dispose();
     this.mounted = null;
     this.stopHeartbeat(this.plugin.core ?? void 0);
@@ -7052,7 +7081,7 @@ var LibrarianView = class extends import_obsidian.ItemView {
     root.createEl("p", { text: "Starting the librarian\u2026" });
     let core;
     try {
-      core = await this.plugin.ensureCore();
+      core = await this.plugin.ensureCore(takeover);
     } catch (e) {
       root.empty();
       const box = root.createDiv({ cls: "librarian-missing" });
@@ -7062,7 +7091,9 @@ var LibrarianView = class extends import_obsidian.ItemView {
       } else {
         box.createEl("p", { text: `The core did not start: ${e.message}` });
       }
-      new import_obsidian.Setting(box).addButton((b) => b.setButtonText("Try again").onClick(() => this.render()));
+      const staleLease = e instanceof StaleCoreLease;
+      if (staleLease) box.createEl("p", { text: "The previous Core is no longer running. Recovery will verify the OS lock again and replace only its stale lease metadata." });
+      new import_obsidian.Setting(box).addButton((b) => b.setButtonText(staleLease ? "Recover and try again" : "Try again").onClick(() => this.render(staleLease)));
       return;
     }
     try {

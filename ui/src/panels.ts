@@ -69,7 +69,10 @@ function adapterMeta(m: any): string {
 export class Popover {
   readonly el: HTMLElement;
   constructor(id: string, label: string, readonly button: HTMLElement) {
-    this.el = h("div", { class: "popover", id, hidden: true, role: "dialog", "aria-label": label });
+    // Do not use the generic class `popover`: Obsidian owns that class too and
+    // gives it a horizontal flex layout, which crushes this shared UI's model
+    // picker into narrow columns inside an Obsidian view.
+    this.el = h("div", { class: "lib-popover", id, hidden: true, role: "dialog", "aria-label": label });
     button.setAttribute("aria-haspopup", "true");
     button.setAttribute("aria-expanded", "false");
   }

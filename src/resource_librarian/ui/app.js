@@ -1659,7 +1659,7 @@ var Librarian = (() => {
   var Popover = class {
     constructor(id, label, button) {
       this.button = button;
-      this.el = h("div", { class: "popover", id, hidden: true, role: "dialog", "aria-label": label });
+      this.el = h("div", { class: "lib-popover", id, hidden: true, role: "dialog", "aria-label": label });
       button.setAttribute("aria-haspopup", "true");
       button.setAttribute("aria-expanded", "false");
     }
@@ -6381,10 +6381,18 @@ var Librarian = (() => {
       const rows = this.state.pending_checkpoints ?? [];
       const card = (row) => {
         const evidence = row.evidence && Object.keys(row.evidence).length ? h("pre", { class: "checkpoint-evidence" }, JSON.stringify(row.evidence, null, 2)) : null;
+        const writeConflictHelp = row.type === "write_conflict" ? h(
+          "p",
+          { class: "checkpoint-help" },
+          "Review the named note in its editor. Resolving this card records your decision only; it does not retry the blocked write. Repeat the original action after the editor is quiet."
+        ) : null;
         const resolve = async (choice) => {
           try {
             await this.api.post("/api/checkpoints/resolve", { id: row.id, choice });
             await this.refreshCheckpoints();
+            if (choice === "retry_after_review") this.warn(
+              "Review recorded. The blocked write was not retried; repeat the original action after the editor is quiet."
+            );
           } catch (e) {
             this.warn(e.message);
           }
@@ -6395,10 +6403,15 @@ var Librarian = (() => {
           h("strong", {}, String(row.type ?? "Decision").replace(/_/g, " ")),
           h("p", {}, String(row.scope ?? "")),
           evidence,
+          writeConflictHelp,
           h("div", { class: "row2" }, ...(Array.isArray(row.choices) ? row.choices : []).map((choice) => (
             // The Core declares the safe default.  Array order is presentation
             // history, not an instruction to make an approval action primary.
-            h("button", { class: choice === row.default ? "primary" : "ghost", onclick: () => void resolve(choice) }, choice.replace(/_/g, " "))
+            h(
+              "button",
+              { class: choice === row.default ? "primary" : "ghost", onclick: () => void resolve(choice) },
+              choice === "retry_after_review" ? "Mark reviewed; retry manually" : choice.replace(/_/g, " ")
+            )
           )))
         );
       };

@@ -121,9 +121,13 @@ def test_a_busy_model_is_retried_then_said_plainly(monkeypatch):
     assert len(calls) == 4 and pauses == list(tts.BUSY_RETRIES)
 
 
-def test_each_model_is_sent_its_own_field_and_raw_pcm_becomes_wav(vault, ledger):
+def test_each_model_is_sent_its_own_field_and_raw_pcm_becomes_wav(vault, ledger, monkeypatch):
     """2026-10-03: Qwen3-TTS answered 422 'input: Field required', and HiggsAudio returns raw
     PCM a browser cannot play."""
+    # Payload/decoding behavior must not start failing merely because the
+    # separate, correctly fail-closed price evidence expires. Pricing freshness
+    # has its own contract tests; this call never reaches a provider.
+    monkeypatch.setattr(tts, "estimate", lambda text, model: 0.0)
     import struct
     pcm = struct.pack("<4h", 0, 1000, -1000, 0)
     sent = []
@@ -141,7 +145,11 @@ def test_each_model_is_sent_its_own_field_and_raw_pcm_becomes_wav(vault, ledger)
     assert tts.speak(vault, "Hello.", "message", post=higgs)["cached"]      # kept as .wav
 
 
-def test_a_model_that_rejects_its_reviewed_field_is_not_retried_with_a_guess(vault, ledger):
+def test_a_model_that_rejects_its_reviewed_field_is_not_retried_with_a_guess(vault, ledger,
+                                                                            monkeypatch):
+    # Isolate the reviewed request-field behavior from time-varying price
+    # evidence. Production still refuses stale pricing before a paid call.
+    monkeypatch.setattr(tts, "estimate", lambda text, model: 0.0)
     calls = []
 
     def wants_input(url, body, key):

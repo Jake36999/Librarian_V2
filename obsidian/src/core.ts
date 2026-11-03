@@ -23,6 +23,13 @@ export interface Running {
 }
 
 export class CoreNotFound extends Error {}
+export class StaleCoreLease extends Error {}
+
+interface StartOptions {
+  timeoutMs?: number;
+  /** A person's explicit recovery action. The Core still refuses a live OS lock. */
+  takeover?: boolean;
+}
 
 interface DiscoveryRecord {
   vault: string;
@@ -101,7 +108,9 @@ async function exactCoreIsRunning(corePath: string, vaultPath: string,
       out += String(data);
       if (out.length > 1_000_000) { child.kill(); finish(false); }
     });
-    child.on("exit", (code) => {
+    // `close` follows stdio closure, unlike `exit`; parsing on `exit` can race
+    // the final JSON diagnostic flushed by the Python process.
+    child.on("close", (code) => {
       if (code !== 0) { finish(false); return; }
       try {
         const status = JSON.parse(out) as { cores?: Array<Record<string, unknown>> };
@@ -143,7 +152,8 @@ function command(corePath: string): [string, string[]] {
 }
 
 export async function start(corePath: string, vaultPath: string, keys: Record<string, string>,
-                            timeoutMs = 20000): Promise<Running> {
+                            options: StartOptions = {}): Promise<Running> {
+  const timeoutMs = options.timeoutMs ?? 20000;
   const active = await discover(vaultPath, corePath);
   if (active) return active;
   const token = randomBytes(24).toString("base64url");
@@ -168,7 +178,9 @@ export async function start(corePath: string, vaultPath: string, keys: Record<st
   return new Promise((resolve, reject) => {
     let child: ChildProcess;
     try {
-      child = spawn(exe, [...prefix, "--vault", vaultPath, "app", "--port", "0"],
+      const args = [...prefix, "--vault", vaultPath, "app", "--port", "0"];
+      if (options.takeover) args.push("--takeover");
+      child = spawn(exe, args,
         { env, stdio: ["pipe", "pipe", "pipe"], windowsHide: true });
     } catch (e) {
       reject(new CoreNotFound(String(e)));
@@ -184,8 +196,22 @@ export async function start(corePath: string, vaultPath: string, keys: Record<st
       clearTimeout(timer);
       reject(e.code === "ENOENT" ? new CoreNotFound(`${exe} was not found`) : e);
     });
-    child.on("exit", (code) => {
+    // `close` follows stdio closure, unlike `exit`; parsing on `exit` can race
+    // the final JSON diagnostic flushed by the Python process.
+    child.on("close", (code) => {
       clearTimeout(timer);
+      // A stale diagnostic sidecar is intentionally not replaced on ordinary
+      // startup. Surface a typed error so only the person's explicit recovery
+      // click can make the one-shot --takeover attempt.
+      for (const line of `${out}\n${err}`.split(/\r?\n/).reverse()) {
+        try {
+          const row = JSON.parse(line);
+          if (row?.error === "stale_vault_lease") {
+            reject(new StaleCoreLease(String(row.detail || "a stopped Core left stale lease metadata")));
+            return;
+          }
+        } catch { /* non-JSON diagnostic line */ }
+      }
       reject(new Error(`the core exited (${code}). ${err.slice(-400) || out.slice(-400)}`));
     });
     child.stderr?.on("data", (d) => { err += String(d); });

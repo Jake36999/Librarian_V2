@@ -4024,6 +4024,49 @@ benign result exported intact; no helper container or volume remained. Exact
 JSON is retained in `reports/2026-11-02-accept02-live-docker.json`. This closes
 only the Docker checklist item; ACCEPT-02 remains in progress.
 
+#### ACCEPT-02 real-Obsidian refresh (2026-11-03)
+
+The exact candidate plugin and wheel ran in a byte-verified disposable copy of
+a real 163-file Obsidian vault. The shared UI and controls passed in real
+Obsidian; one plugin-owned compatible Core held the vault lease with ready
+writer/index state. A synchronized real edit produced a `DOCUMENT_ACTIVE`
+write-conflict checkpoint, preserved the dirty note byte-for-byte and allowed
+an unrelated write.
+
+The earlier chat-timed attempt arrived after the ten-second lease expired,
+temporarily changed the note, and was restored to its exact pre-attempt hash;
+it is recorded as a procedure failure, not counted as a boundary pass. Sanitized
+evidence is retained in `reports/2026-11-03-accept02-obsidian-dirty.json`.
+
+The repaired working-tree Obsidian bundle was then overlaid on the exact
+`bdfd834` base plugin in the disposable vault. The following recovery and
+SecretStorage results qualify that remediation overlay rather than the
+unchanged old plugin ZIP. Final review additionally moved diagnostic parsing
+from child exit to post-stdio close to remove a final-output race; that focused
+contract passed but was not separately repeated in the real host. Real Obsidian
+SecretStorage selection, rotation and cleanup passed with two dummy OpenAI
+entries. Each selection restarted the plugin-owned Core; the Core
+reported `obsidian_managed`; a browser overwrite was refused with HTTP 409; the
+plugin retained only the selected secret ID; and neither full dummy value
+appeared in loopback responses or vault files. Cleanup left `saved: false` and a
+blank stored ID. No provider call was made. Sanitized evidence is retained in
+`reports/2026-11-03-accept02-obsidian-secretstorage.json`.
+
+The walk found and repaired three real-host UX defects: a generic `.popover`
+class collided with Obsidian's host CSS, the `retry_after_review` label implied
+an automatic retry/review screen that does not exist, and ordinary **Try again**
+could not recover a dead Core's stale vault lease. The selector is now
+namespaced and covered by hostile-host-CSS geometry checks; the checkpoint copy
+now states that the write must be retried manually; and a typed stale-lease
+error offers a one-shot explicit **Recover and try again** action. The person
+confirmed the recovery flow in real Obsidian. The shared UI smoke, both builds
+and five focused adapter contract tests pass. The complete repository suite
+then passed **1,938 tests, 2 skipped, 5 deselected**.
+
+ACCEPT-02 remains open for exact in-app Obsidian About version evidence, a final
+real-host visual confirmation of the repaired model selector, the real
+Browser+Obsidian+Claude/Cowork mixed-client run, and real external file handles.
+
 ### REMED-08 measurement and REMED-06 exit (2026-11-02)
 
 | Task | Status | Commit | Evidence and notes |

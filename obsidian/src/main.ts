@@ -5,7 +5,7 @@
 import { App, ItemView, Notice, Plugin, PluginSettingTab, SecretComponent, Setting, TFile, MarkdownView,
          WorkspaceLeaf, FileSystemAdapter } from "obsidian";
 import { mount, type Mounted } from "../../ui/src/main";
-import { CoreNotFound, KEY_ENV, STOP_EXIT_MS, start, type Running } from "./core";
+import { CoreNotFound, KEY_ENV, STOP_EXIT_MS, StaleCoreLease, start, type Running } from "./core";
 
 const VIEW = "librarian-view";
 const PROVIDER_LABEL: Record<string, string> = { deepinfra: "DeepInfra", openai: "OpenAI", anthropic: "Anthropic" };
@@ -77,10 +77,10 @@ export default class LibrarianPlugin extends Plugin {
     return out;
   }
 
-  ensureCore(): Promise<Running> {
+  ensureCore(takeover = false): Promise<Running> {
     if (this.core) return Promise.resolve(this.core);
     if (!this.starting) {
-      this.starting = start(this.settings.corePath, this.vaultPath(), this.keys())
+      this.starting = start(this.settings.corePath, this.vaultPath(), this.keys(), { takeover })
         .then((running) => {
           this.core = running;
           running.process?.on("exit", () => { if (this.core === running) this.core = null; });
@@ -197,7 +197,7 @@ class LibrarianView extends ItemView {
     await this.render();
   }
 
-  async render(): Promise<void> {
+  async render(takeover = false): Promise<void> {
     this.mounted?.dispose();
     this.mounted = null;
     this.stopHeartbeat(this.plugin.core ?? undefined);
@@ -207,7 +207,7 @@ class LibrarianView extends ItemView {
     root.createEl("p", { text: "Starting the librarian…" });
     let core: Running;
     try {
-      core = await this.plugin.ensureCore();
+      core = await this.plugin.ensureCore(takeover);
     } catch (e) {
       root.empty();
       const box = root.createDiv({ cls: "librarian-missing" });
@@ -217,7 +217,10 @@ class LibrarianView extends ItemView {
       } else {
         box.createEl("p", { text: `The core did not start: ${(e as Error).message}` });
       }
-      new Setting(box).addButton((b) => b.setButtonText("Try again").onClick(() => this.render()));
+      const staleLease = e instanceof StaleCoreLease;
+      if (staleLease) box.createEl("p", { text: "The previous Core is no longer running. Recovery will verify the OS lock again and replace only its stale lease metadata." });
+      new Setting(box).addButton((b) => b.setButtonText(staleLease ? "Recover and try again" : "Try again")
+        .onClick(() => this.render(staleLease)));
       return;
     }
     try {

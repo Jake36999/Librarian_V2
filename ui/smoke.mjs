@@ -26,6 +26,10 @@ const expect = async (cond, what) => { if (!(await cond)) throw new Error(`expec
 
 await page.goto(url);
 await page.waitForSelector("header nav");
+// Obsidian owns a generic `.popover` class and makes it a horizontal flex
+// container. The shared UI must namespace its own panels so host CSS cannot
+// turn the model picker's vertical sections into squeezed columns.
+await page.addStyleTag({ content: ".popover { display: flex !important; flex-direction: row !important; }" });
 
 // No model yet: sending says so, plainly.
 await page.fill("#lib-msg", "hello");
@@ -36,6 +40,15 @@ step("sending without a model says what to do");
 // Model tile: click order sets tiers; clicking again explains; right-click clears.
 await page.click(".toolbar .tb:nth-child(4)");
 await page.waitForSelector("#lib-models .card");
+await expect(page.evaluate(() => {
+  const panel = document.querySelector("#lib-models");
+  if (!panel || panel.classList.contains("popover") || getComputedStyle(panel).display !== "block") return false;
+  const visible = [...panel.children].filter((el) => getComputedStyle(el).display !== "none");
+  const tops = visible.map((el) => el.getBoundingClientRect().top);
+  const box = panel.getBoundingClientRect();
+  return tops.every((top, i) => i === 0 || top >= tops[i - 1])
+    && box.left >= 0 && box.right <= window.innerWidth;
+}), "host popover CSS cannot turn the model picker into horizontal columns");
 // The cards re-render once the choice is saved; a click before the save has
 // answered lands on the old card and simply chooses it again. Wait for it.
 await Promise.all([

@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "acceptance_task": "ACCEPT-02",
+  "run_date": "2026-11-03",
+  "artifact_candidate_revision": "bdfd8344ad1408a4c5eef4e4bf55984f147b1e23",
+  "source_vault": {
+    "path": "D:\\Testing Folder",
+    "files": 163,
+    "markdown_files": 42,
+    "adoption_attempt": "stopped by inherited ACL before Librarian state was retained",
+    "existing_files_changed": 0
+  },
+  "acceptance_vault": {
+    "path": "C:\\Users\\jakem\\Librarian ACCEPT-02 Vault",
+    "copy_hash_differences": 0,
+    "survey_fingerprint": "a7154dfe13eb9bb312fb9609ea19b855",
+    "adopted": true,
+    "pre_existing_files_changed": 0
+  },
+  "candidate": {
+    "core_version": "2.1.0.dev0",
+    "protocol_version": "2",
+    "compatible_adapter_range": ">=2,<3",
+    "core_source": "clean installed candidate wheel",
+    "obsidian_bundle": "exact bdfd834 candidate ZIP",
+    "doctor_required_failed": 0
+  },
+  "real_obsidian": {
+    "launcher_path": "D:\\obsidian\\Obsidian.exe",
+    "launcher_file_version": "1.12.7.0",
+    "observed_runtime_title_version": "1.15.0",
+    "in_app_about_version_retained": false,
+    "plugin_loaded": true,
+    "person_confirmed_all_buttons": true,
+    "person_confirmed_pages": [
+      "Chat",
+      "Staging",
+      "Search",
+      "Sessions",
+      "Checkpoints"
+    ],
+    "core": {
+      "plugin_owned": true,
+      "held_vault_leases": 1,
+      "writer": "ready",
+      "index": "ready",
+      "watched_markdown_files": 44,
+      "secret_source": "obsidian_managed"
+    }
+  },
+  "expired_heartbeat_attempt": {
+    "counted_as_boundary_evidence": false,
+    "reason": "the asynchronous chat round trip outlasted the ten-second document lease",
+    "write_was_accepted": true,
+    "person_text_restored": true,
+    "restored_sha256": "af0ba28cfef6eb1a137758050be8adbf7277b8bd30e159836454be21806729c6",
+    "restored_bytes": 675,
+    "matched_pre_attempt": true
+  },
+  "synchronized_attempt": {
+    "lease": {
+      "path": "Projects/ACCEPT-02 Dirty Target.md",
+      "editor": "Obsidian",
+      "dirty": true,
+      "expires_in_seconds": 9.9,
+      "baseline_prefix": "e44d84f677644d6df1dd"
+    },
+    "dirty_write": {
+      "result": "DOCUMENT_ACTIVE",
+      "checkpoint_id": "c38bf833180dc49a",
+      "checkpoint_type": "write_conflict",
+      "choices": [
+        "wait",
+        "retry_after_review",
+        "cancel"
+      ],
+      "default": "wait",
+      "person_confirmed_choices_in_real_ui": true,
+      "before_sha256": "e44d84f677644d6df1dde3991e06b456f4604f2e413e3a22d31a3f83484ec410",
+      "after_sha256": "e44d84f677644d6df1dde3991e06b456f4604f2e413e3a22d31a3f83484ec410",
+      "before_bytes": 677,
+      "after_bytes": 677,
+      "unchanged": true
+    },
+    "unrelated_write": {
+      "succeeded": true,
+      "before_sha256": "fd9f76e732c36c46e2537fb8bc1e411251b0f2848aa73bb389278786c263f279",
+      "after_sha256": "cc286710b237857854fcff397b56bdcba90d81f84e05af5e9300e1eff2c67725",
+      "changed": true
+    }
+  }
+}

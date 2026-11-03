@@ -411,20 +411,27 @@ class App {
     const card = (row: any) => {
       const evidence = row.evidence && Object.keys(row.evidence).length
         ? h("pre", { class: "checkpoint-evidence" }, JSON.stringify(row.evidence, null, 2)) : null;
+      const writeConflictHelp = row.type === "write_conflict"
+        ? h("p", { class: "checkpoint-help" },
+            "Review the named note in its editor. Resolving this card records your decision only; it does not retry the blocked write. Repeat the original action after the editor is quiet.")
+        : null;
       const resolve = async (choice: string) => {
         try {
           await this.api.post("/api/checkpoints/resolve", { id: row.id, choice });
           await this.refreshCheckpoints();
+          if (choice === "retry_after_review") this.warn(
+            "Review recorded. The blocked write was not retried; repeat the original action after the editor is quiet.");
         } catch (e) { this.warn((e as Error).message); }
       };
       return h("section", { class: "checkpoint" },
         h("strong", {}, String(row.type ?? "Decision").replace(/_/g, " ")),
         h("p", {}, String(row.scope ?? "")),
-        evidence,
+        evidence, writeConflictHelp,
         h("div", { class: "row2" }, ...(Array.isArray(row.choices) ? row.choices : []).map((choice: string) =>
           // The Core declares the safe default.  Array order is presentation
           // history, not an instruction to make an approval action primary.
-          h("button", { class: choice === row.default ? "primary" : "ghost", onclick: () => void resolve(choice) }, choice.replace(/_/g, " ")))));
+          h("button", { class: choice === row.default ? "primary" : "ghost", onclick: () => void resolve(choice) },
+            choice === "retry_after_review" ? "Mark reviewed; retry manually" : choice.replace(/_/g, " ")))));
     };
     clear(this.checkpoints.el,
       h("h4", {}, "Decisions waiting for you"),
