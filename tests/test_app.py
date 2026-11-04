@@ -2,6 +2,7 @@
 through the loop, permissions decided live, keys that never come back, and the
 person's own calls."""
 import json
+import os
 import threading
 import time
 import urllib.error
@@ -539,7 +540,9 @@ def test_keys_are_saved_confirmed_and_never_returned(served, tmp_path, monkeypat
                              app.hub.since(0)])
     assert secret not in everything and "SECRET" not in everything
     stored = tmp_path / "config" / ".env"
-    assert stored.is_file() and keys.owner_only(stored)      # 0600, or its Windows ACL
+    assert stored.is_file()
+    assert keys.owner_only(stored), \
+        keys.dacl_sddl(stored) if os.name == "nt" else oct(stored.stat().st_mode)  # 0600, or its Windows ACL
     assert not list(app.vault.root.rglob(".env"))                 # never inside the vault
     assert client.post("/api/keys/remove", {"provider": "deepinfra"})[0] == 409
     removed = client.post("/api/keys/remove", {"provider": "deepinfra", "confirm": True})

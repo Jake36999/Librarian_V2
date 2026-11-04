@@ -514,7 +514,7 @@ settings, signing or publication.
 | REMED-06/07/08 | Implemented. The REMED-06 exit is met, and task-local timeout stopping was approved. The three uncertain G5 entries are liabilities for MF-002. |
 | ACCEPT-02 | Partial. One original item remains: three-client mixed traffic (MF-001). The owner noted on 2026-11-04 that official Claude Cowork support has ended, so the Claude side is Claude Code (or a subagent) acting as the MCP client. A final-candidate re-run is MF-045. |
 | ACCEPT-01/03, RELEASE-01 | Implemented. Release work continues as MF-044 (acceptance refresh), MF-046 and MF-047 (owner gates) and MF-043a–f (build and release evidence). |
-| Hosted CI | Observed red on 2026-11-04 (run 41567602480): 1 failure on 3.11, 262 on 3.12 and on 3.13. Both causes were reproduced and fixed locally on all three versions (MF-004, §19); hosted CI is confirmed only by the next push. |
+| Hosted CI | Run 41567602480 (2026-11-03): 1 failure on 3.11, 262 on 3.12 and on 3.13. After the MF-004 fix, run 41912301225: 2, 2 and 3, all key-file checks except one intermittent test on 3.13. The key-file check was reworked (§19); hosted CI is confirmed only by the next push. |
 | §12 and §13 deferrals and decision gates | Retained: full HARNESS-09, DEPLOY-05, CORE-04B and the development-agent profile. Experiments MF-036–041 and MF-048 are conditional, each ending in keep, defer or reject. |
 
 **Order of work:**
@@ -4394,4 +4394,66 @@ to filter archives.
 
 Not verified: hosted CI itself. The packet closes when the first push after
 this commit shows Core green on all three lanes.
+
+### MF-004, second pass after the first hosted run (2026-11-04)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-004 | partial: the change-time fix holds on hosted CI; key-file check reworked, hosted result pending | this commit | `src/resource_librarian/keys.py`, `promote.py` (cause name); tests in `tests/test_windows_file_metadata.py`, `tests/test_app.py`, `tests/test_core_source_promotion.py`. Evidence: `ci-41912301225-failures.json`, `suite-mf004b-py3*.json`. |
+
+**Hosted run 41912301225, head `2602512`:**
+- Python 3.11 and 3.12: 2 failed, 1,939 passed.
+- Python 3.13: 3 failed, 1,938 passed.
+
+None of the failures is a `FileChangedError`. The change-time fix holds on all
+three lanes.
+
+**Correction to the entry above.** The integrity-label explanation of the
+key-file failure was wrong, or not enough. On the runner, the new test failed
+its first check, before any label was added. What was reproduced locally was a
+real weakness in parsing icacls text, not the runner's cause. The runner's
+actual access list is still unobserved.
+
+**Change.** Key-file protection now goes through the Windows API.
+- `_owner_only` writes a protected access list with one allow entry for the
+  current user's SID (`D:P(A;;FA;;;<SID>)`). If that call fails, it falls back
+  to icacls.
+- `owner_only` reads the access list as SDDL (`dacl_sddl`). It accepts a
+  protected list whose only entry is an explicit allow for the current user;
+  an account written as an alias, such as `LA`, is compared in full SID form.
+
+Neither depends on icacls display text or the display language, and labels
+cannot appear, because they live in the SACL. Files that icacls protected
+earlier (`D:PAI(...)`) still pass, and a test covers that. When the check
+fails, the tests now print the SDDL, so a failure on the runner will name the
+extra entry.
+
+**Intermittent, not fixed.** `test_unrelated_note_stays_editable_during_acceptance`
+failed on hosted 3.13 only, accepting 0 items instead of 1.
+- On local 3.13.14 it passed 20 isolated runs and 3 whole-file runs. In full
+  suites it failed in 1 of 3 runs (`suite-mf004b-py313.json`).
+- With its new assertion message, the failure reads: "promotion interrupted
+  (PromotionInterruptedError); completed writes: ['Sou…". Acceptance stopped
+  after durable writes.
+- The message named the wrapper, not the cause, because staging re-wraps a
+  promotion interruption. `PromotionInterruptedError` now carries the original
+  cause's type name through a re-wrap (`cause_name`), and a test covers that.
+  The next occurrence will name the cause.
+- A probe run that logged root causes passed, so the cause is still unobserved.
+
+The test also failed in the earlier hosted run, where `FileChangedError`
+explains that failure. It needs its own diagnosis, outside this packet.
+
+**Verification:** the full suite in a clean clone at `2602512`, with the
+key-file and test changes applied:
+- Python 3.11: 1951 passed, 2 skipped, 5 deselected in 596.30s (0:09:56) (exit 0, Python 3.11.3), `suite-mf004b-py311.json`;
+- Python 3.12: 1951 passed, 2 skipped, 5 deselected, 5 warnings in 611.70s (0:10:11) (exit 0, Python 3.12.13), `suite-mf004b-py312.json`;
+- Python 3.13: 1 failed, 1950 passed, 2 skipped, 5 deselected, 5 warnings in 589.98s (0:09:49) (exit 1, Python 3.13.14), `suite-mf004b-py313.json`. The one failure is the
+  intermittent test above.
+
+The `cause_name` change followed. Its checks: `test_core_source_promotion.py`
+and `test_core_catalog.py` (69 passed), and the full suite on 3.11 (1952 passed, 2 skipped, 5 deselected in 626.69s (0:10:26) (exit 0, Python 3.11.3),
+`suite-mf004c-py311.json`).
+
+Not verified: hosted CI, until the next push.
 

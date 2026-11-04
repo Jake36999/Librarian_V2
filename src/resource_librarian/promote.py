@@ -343,9 +343,12 @@ class PromotionInterruptedError(RuntimeError):
     """Durable work exists; never suggest an automatic retry or rollback."""
     def __init__(self, cause: Exception, completed: list[str]):
         self.completed_paths = list(dict.fromkeys(completed))
+        # A re-wrap (staging adds its own completed paths) names the original
+        # cause, not "PromotionInterruptedError" (MF-004 diagnosis).
+        self.cause_name = getattr(cause, "cause_name", "") or type(cause).__name__
         # Exception text may contain a provider payload. Persist type + paths,
         # not arbitrary messages or source text.
-        super().__init__(f"promotion interrupted ({type(cause).__name__}); completed writes: "
+        super().__init__(f"promotion interrupted ({self.cause_name}); completed writes: "
                          f"{self.completed_paths}; review before retrying")
 
 

@@ -18,7 +18,7 @@ Remaining work follows the adopted master finalization queue
 | HARNESS-01–07 / -08 / -09 | implemented / experimental / deferred | Real-session caveats are in the REMED-08 report. |
 | ACCEPT-02 | partial | Only the three-client mixed-traffic check (MF-001) remains. Obsidian, Docker and external-handle evidence is retained. |
 | RELEASE-01 / -02, -03 | implemented / blocked externally | — |
-| Hosted Core CI | fixed locally, hosted run pending (2026-11-04) | MF-004. Run 41567602480 failed (`ci-41567602480-failures.json`); both causes fixed and the suite passes on 3.11, 3.12 and 3.13 locally (`suite-mf004-py3*.json`). Confirmed by the next push. |
+| Hosted Core CI | partial, hosted run pending (2026-11-04) | MF-004. Run 41567602480: 1/262/262 failures. Run 41912301225 (`ci-41912301225-failures.json`): 2/2/3, all key-file checks except one intermittent test on 3.13. The key-file check now uses the Windows API; the local suite passes on 3.11, 3.12 and 3.13 (`suite-mf004b-py3*.json`). |
 
 **New rows** are added one per MF packet when that packet is admitted, never
 before, so planned checks cannot be mistaken for evidence. Each row uses this

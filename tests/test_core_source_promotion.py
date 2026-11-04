@@ -247,7 +247,8 @@ def test_existing_attachment_destination_is_not_replaced(core):
     dest = core.vault.root / "Sources/document/files/paper.pdf"
     dest.parent.mkdir(parents=True)
     dest.write_bytes(b"Another source's attachment")
-    assert _accept(core)["accepted"] == 1
+    out = _accept(core)
+    assert out["accepted"] == 1, out
     assert dest.read_bytes() == b"Another source's attachment"
     assert notes.load(_source(core)).frontmatter["file"].endswith("paper (2).pdf")
 
@@ -263,7 +264,8 @@ def test_human_target_lease_blocks_before_any_copy(core, target):
 
 def test_unrelated_note_stays_editable_during_acceptance(core):
     core.document_leases.heartbeat("Project/docs/working.md", editor="Obsidian", dirty=True)
-    assert _accept(core)["accepted"] == 1
+    out = _accept(core)
+    assert out["accepted"] == 1, out
 
 
 @pytest.mark.parametrize("rel", [".librarian/config.toml", ".git/config", "../outside.pdf"])
@@ -519,3 +521,9 @@ def test_visible_attachment_alias_cannot_resolve_into_hidden_state(core, monkeyp
     out = _accept(core)
     assert out["accepted"] == 0 and "hidden vault state" in str(out), out
     assert not _copies(core)
+
+
+def test_a_rewrapped_interruption_names_its_original_cause():
+    inner = promotion.PromotionInterruptedError(OSError("disk"), ["Sources/document/New Widget.md"])
+    outer = promotion.PromotionInterruptedError(inner, ["Sources/document/New Widget.md", "x.md"])
+    assert outer.cause_name == "OSError" and "promotion interrupted (OSError)" in str(outer)

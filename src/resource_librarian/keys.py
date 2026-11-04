@@ -95,14 +95,124 @@ def _windows_principal() -> str:
         return ""
 
 
+_DACL = 0x00000004                      # DACL_SECURITY_INFORMATION
+_SDDL_REVISION = 1
+
+
+def _win_api() -> Any:
+    """advapi32/kernel32 with explicit signatures (64-bit pointers)."""
+    import ctypes
+    from ctypes import wintypes
+    advapi = ctypes.WinDLL("advapi32", use_last_error=True)
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    advapi.GetFileSecurityW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, ctypes.c_void_p,
+                                        wintypes.DWORD, ctypes.POINTER(wintypes.DWORD)]
+    advapi.GetFileSecurityW.restype = wintypes.BOOL
+    advapi.SetFileSecurityW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, ctypes.c_void_p]
+    advapi.SetFileSecurityW.restype = wintypes.BOOL
+    advapi.ConvertSecurityDescriptorToStringSecurityDescriptorW.argtypes = [
+        ctypes.c_void_p, wintypes.DWORD, wintypes.DWORD, ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(wintypes.ULONG)]
+    advapi.ConvertSecurityDescriptorToStringSecurityDescriptorW.restype = wintypes.BOOL
+    advapi.ConvertStringSecurityDescriptorToSecurityDescriptorW.argtypes = [
+        wintypes.LPCWSTR, wintypes.DWORD, ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(wintypes.ULONG)]
+    advapi.ConvertStringSecurityDescriptorToSecurityDescriptorW.restype = wintypes.BOOL
+    advapi.ConvertStringSidToSidW.argtypes = [wintypes.LPCWSTR, ctypes.POINTER(ctypes.c_void_p)]
+    advapi.ConvertStringSidToSidW.restype = wintypes.BOOL
+    advapi.ConvertSidToStringSidW.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p)]
+    advapi.ConvertSidToStringSidW.restype = wintypes.BOOL
+    kernel.LocalFree.argtypes = [ctypes.c_void_p]
+    kernel.LocalFree.restype = ctypes.c_void_p
+    return ctypes, advapi, kernel
+
+
+def dacl_sddl(path: Path) -> str:
+    """The file's access list as SDDL, read through the Windows API; empty if
+    it cannot be read. Diagnostic and check input, never a secret."""
+    try:
+        ctypes, advapi, kernel = _win_api()
+        from ctypes import wintypes
+        needed = wintypes.DWORD(0)
+        advapi.GetFileSecurityW(str(path), _DACL, None, 0, ctypes.byref(needed))
+        if not needed.value:
+            return ""
+        buffer = ctypes.create_string_buffer(needed.value)
+        if not advapi.GetFileSecurityW(str(path), _DACL, buffer, needed, ctypes.byref(needed)):
+            return ""
+        text = ctypes.c_void_p()
+        if not advapi.ConvertSecurityDescriptorToStringSecurityDescriptorW(
+                buffer, _SDDL_REVISION, _DACL, ctypes.byref(text), None):
+            return ""
+        try:
+            return ctypes.wstring_at(text.value) if text.value else ""
+        finally:
+            kernel.LocalFree(text)
+    except (OSError, AttributeError, ValueError):
+        return ""
+
+
+def _full_sid(sid: str) -> str:
+    """An SDDL account ("LA", "BA" or "S-1-...") as its full S-1 form."""
+    try:
+        ctypes, advapi, kernel = _win_api()
+        binary, text = ctypes.c_void_p(), ctypes.c_void_p()
+        if not advapi.ConvertStringSidToSidW(sid, ctypes.byref(binary)):
+            return sid
+        try:
+            if not advapi.ConvertSidToStringSidW(binary, ctypes.byref(text)):
+                return sid
+            try:
+                return ctypes.wstring_at(text.value)
+            finally:
+                kernel.LocalFree(text)
+        finally:
+            kernel.LocalFree(binary)
+    except (OSError, AttributeError, ValueError):
+        return sid
+
+
+_ACE = re.compile(r"\(([^;()]*);([^;()]*);([^;()]*);([^;()]*);([^;()]*);([^;()]*)\)")
+
+
+def sddl_owner_only(sddl: str, sid: str) -> bool:
+    """A protected DACL holding exactly one entry: an explicit allow for `sid`.
+
+    Integrity labels live in the SACL, so they never appear here; icacls
+    printed them among the grants (MF-004).
+    """
+    match = re.fullmatch(r"D:([A-Z]*)((?:\([^()]*\))*)", sddl or "")
+    if not match or "P" not in match.group(1) or not sid:
+        return False
+    aces = _ACE.findall(match.group(2))
+    if len(aces) != 1:
+        return False
+    kind, flags, _rights, _object, _inherited, account = aces[0]
+    return kind == "A" and "ID" not in flags and _full_sid(account) == sid
+
+
 def _owner_only(path: Path) -> bool:
     """Windows has no POSIX modes - `chmod(0o600)` leaves the file readable by
-    whatever the folder grants. Drop inherited entries and grant the current
-    user alone, which is what 0600 means. False (never raised) if `icacls`
-    is unavailable; `doctor` reports an unprotected file either way."""
+    whatever the folder grants. Replace the access list with one protected
+    entry for the current user, which is what 0600 means. The Windows API is
+    tried first and `icacls` second. False (never raised) when neither works;
+    `doctor` reports an unprotected file either way."""
     principal = _windows_principal()
     if not principal:
         return False
+    sid = principal.lstrip("*")
+    try:
+        ctypes, advapi, kernel = _win_api()
+        descriptor = ctypes.c_void_p()
+        if advapi.ConvertStringSecurityDescriptorToSecurityDescriptorW(
+                f"D:P(A;;FA;;;{sid})", _SDDL_REVISION, ctypes.byref(descriptor), None):
+            try:
+                if advapi.SetFileSecurityW(str(path), _DACL, descriptor):
+                    return True
+            finally:
+                kernel.LocalFree(descriptor)
+    except (OSError, AttributeError, ValueError):
+        pass
     try:
         done = subprocess.run(["icacls", str(path), "/inheritance:r", "/grant:r", f"{principal}:F"],
                               capture_output=True, text=True, timeout=15)
@@ -111,29 +221,17 @@ def _owner_only(path: Path) -> bool:
     return done.returncode == 0
 
 
-# An integrity label ("Mandatory Label\High Mandatory Level:(NW)") is a SACL
-# entry, not an access grant. icacls lists it with the grants; its flags are
-# only ever no-write-up, no-read-up and no-execute-up, in any display language,
-# after any inheritance flags.
-_LABEL_ONLY = re.compile(r":(?:\((?:OI|CI|IO|NP|I)\))*\(N[WRX](?:,N[WRX])*\)\s*$")
-
-
 def owner_only(path: Path) -> bool:
     """Whether `path` is readable by its owner alone - POSIX mode 600, or on
-    Windows an ACL with no inherited entries and one explicit grant.
+    Windows a protected access list whose one entry grants the current user.
 
-    A file created by an elevated process carries an explicit integrity
-    label, which icacls prints like a grant; it is not one (MF-004).
+    Read through the Windows API, not icacls' display text: that text varies
+    with the display language and listed an elevated creator's integrity
+    label as if it were a grant (MF-004).
     """
     if os.name != "nt":
         return oct(path.stat().st_mode)[-3:] == "600"
-    try:
-        done = subprocess.run(["icacls", str(path)], capture_output=True, text=True, timeout=15)
-    except (OSError, subprocess.SubprocessError):
-        return False
-    grants = [line for line in done.stdout.splitlines()[:-1]
-              if ":" in line and "(" in line and not _LABEL_ONLY.search(line)]
-    return done.returncode == 0 and len(grants) == 1 and "(I)" not in grants[0]
+    return sddl_owner_only(dacl_sddl(path), _windows_principal().lstrip("*"))
 
 
 class KeyStore:

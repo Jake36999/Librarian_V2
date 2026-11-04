@@ -50,16 +50,45 @@ def test_a_change_time_lagging_only_in_os_stat_is_not_a_change(tmp_path, monkeyp
     assert snapshot.identity == expected == file_identity(note.stat())
 
 
+ME = "S-1-5-21-1-2-3-1001"
+
+
+@pytest.mark.parametrize("sddl, expected", [
+    (f"D:P(A;;FA;;;{ME})", True),
+    (f"D:PAI(A;;FA;;;{ME})", True),                   # what icacls /inheritance:r leaves
+    (f"D:AI(A;;FA;;;{ME})", False),                   # inheritance still on
+    (f"D:P(A;ID;FA;;;{ME})", False),                  # an inherited entry
+    (f"D:P(A;;FA;;;{ME})(A;;FR;;;S-1-1-0)", False),   # Everyone can read
+    (f"D:P(D;;FA;;;{ME})", False),                    # a deny is not a grant
+    ("D:P(A;;FA;;;S-1-5-21-1-2-3-1002)", False),      # someone else's
+    ("", False),
+])
+def test_owner_only_means_one_protected_explicit_grant(sddl, expected):
+    assert keys.sddl_owner_only(sddl, ME) is expected
+
+
 @windows
-def test_an_integrity_label_is_not_a_second_grant(tmp_path):
+def test_a_protected_key_file_passes_with_or_without_an_integrity_label(tmp_path):
     secret = tmp_path / ".env"
     secret.write_text("", encoding="utf-8")
-    assert keys._owner_only(secret) and keys.owner_only(secret)
-    # An elevated creator leaves a High label; an ordinary user may only lower
-    # it, and icacls prints a Low label the same way.
+    assert keys._owner_only(secret)
+    assert keys.owner_only(secret), keys.dacl_sddl(secret)
+    # An elevated creator (GitHub's runneradmin) leaves a High label; an
+    # ordinary user may only lower it. Labels live outside the access list.
     subprocess.run(["icacls", str(secret), "/setintegritylevel", "Low"],
                    capture_output=True, check=True)
-    assert keys.owner_only(secret)
+    assert keys.owner_only(secret), keys.dacl_sddl(secret)
     subprocess.run(["icacls", str(secret), "/grant", "*S-1-1-0:(R)"],   # Everyone
                    capture_output=True, check=True)
-    assert not keys.owner_only(secret)
+    assert not keys.owner_only(secret), keys.dacl_sddl(secret)
+
+
+@windows
+def test_a_file_protected_by_icacls_still_counts(tmp_path):
+    """Key files protected before the API path keep passing the check."""
+    secret = tmp_path / ".env"
+    secret.write_text("", encoding="utf-8")
+    principal = keys._windows_principal()
+    subprocess.run(["icacls", str(secret), "/inheritance:r", "/grant:r", f"{principal}:F"],
+                   capture_output=True, check=True)
+    assert keys.owner_only(secret), keys.dacl_sddl(secret)
