@@ -3,7 +3,7 @@
 // conversation, answered in place; a failure says what failed.
 
 import type { Api, Event } from "./api";
-import { clear, h } from "./dom";
+import { clear, h, cls, sel } from "./dom";
 import { link, render } from "./markdown";
 import { reader, speakerIcon } from "./speech";
 
@@ -128,7 +128,7 @@ export class Chat {
   }
 
   private append(el: HTMLElement): void {
-    this.log.querySelector(".hint")?.remove();
+    this.log.querySelector(sel(".hint"))?.remove();
     if (this.working) this.log.insertBefore(el, this.working);
     else this.log.append(el);
     this.scroll();
@@ -239,7 +239,7 @@ export class Chat {
         const line = waiting.shift() ?? h("div", { class: "tool" }, h("code", {}, tool));
         const result = (event.result ?? {}) as Record<string, any>;
         clear(line, h("code", {}, tool), " · ", summarise(tool, result, this.hooks.openNote));
-        if (result.error) line.classList.add("refused");
+        if (result.error) line.classList.add(cls("refused"));
         if (!line.isConnected) this.append(line);
         if (result.session) this.hooks.onSession(result.session);
         // G3: a review's challenge that carries a failing input - only a person runs it.
@@ -256,8 +256,8 @@ export class Chat {
       case "permission_decided": {
         const card = this.cards.get(String(event.id));
         if (card) {
-          card.classList.add("done");
-          const row = card.querySelector(".row");
+          card.classList.add(cls("done"));
+          const row = card.querySelector(sel(".row"));
           if (row) clear(row as HTMLElement, h("em", {}, sentence(String(event.reason ?? event.outcome))));
         }
         break;
@@ -359,9 +359,9 @@ export class Chat {
         // tool result or the next turn_done. Answered from elsewhere (the
         // Plan panel, another tab): this card still needs marking done.
         const card = this.cards.get(`q:${String(event.question_id ?? "")}`);
-        if (card && !card.classList.contains("done")) {
-          card.classList.add("done");
-          const row = card.querySelector(".row");
+        if (card && !card.classList.contains(cls("done"))) {
+          card.classList.add(cls("done"));
+          const row = card.querySelector(sel(".row"));
           if (row) clear(row as HTMLElement, h("em", {}, event.answered ? "Answered elsewhere." : "Timed out unanswered."));
         }
         const sessionId = String(event.session ?? "");
@@ -645,7 +645,7 @@ export class Chat {
         if (out.error) throw new Error(String(out.detail ?? out.error));
         clear(row, h("em", {}, out.resumed
           ? `Answered: “${value}”` : `Recorded: “${value}” - send a message to carry the thread on.`));
-        card.classList.add("done");
+        card.classList.add(cls("done"));
         if (out.session) this.hooks.onSession(out.session);
       } catch (e) {
         clear(row, h("div", { class: "error" }, (e as Error).message),

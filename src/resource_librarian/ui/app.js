@@ -24,6 +24,49 @@ var Librarian = (() => {
     mount: () => mount
   });
 
+  // src/dom.ts
+  var OWNED_PREFIX = "lib-";
+  function own(token2) {
+    return token2.startsWith(OWNED_PREFIX) || token2.startsWith("librarian-") ? token2 : OWNED_PREFIX + token2;
+  }
+  function cls(value) {
+    return value.split(/\s+/).filter(Boolean).map(own).join(" ");
+  }
+  function sel(selector) {
+    return selector.replace(/\.(-?[A-Za-z_][\w-]*)/g, (_m, name) => `.${own(name)}`);
+  }
+  function h(tag, attrs = {}, ...children) {
+    const el = document.createElement(tag);
+    for (const [key, value] of Object.entries(attrs)) {
+      if (value === void 0 || value === false) continue;
+      if (key.startsWith("on") && typeof value === "function") {
+        el.addEventListener(key.slice(2), value);
+      } else if (key === "class") {
+        el.className = cls(String(value));
+      } else {
+        el.setAttribute(key, value === true ? "" : String(value));
+      }
+    }
+    for (const child of children.flat()) {
+      if (child === null || child === void 0 || child === false) continue;
+      el.append(child instanceof Node ? child : document.createTextNode(child));
+    }
+    return el;
+  }
+  var $ = (root, sel2) => root.querySelector(sel2);
+  function clear(el, ...children) {
+    el.replaceChildren();
+    for (const child of children.flat()) {
+      if (child === null || child === void 0 || child === false) continue;
+      el.append(child instanceof Node ? child : document.createTextNode(child));
+    }
+    return el;
+  }
+  function when(iso) {
+    const text = String(iso ?? "");
+    return text.slice(0, 16).replace("T", " ");
+  }
+
   // src/speech.ts
   var NS = "http://www.w3.org/2000/svg";
   function icon(paths, size = 13) {
@@ -74,7 +117,7 @@ var Librarian = (() => {
       const run = ++this.run;
       this.button = button;
       this.title = button.title;
-      button.classList.add("speaking");
+      button.classList.add(cls("speaking"));
       button.replaceChildren(stopIcon(size));
       try {
         const plan = await this.api.post("/api/tts/plan", source);
@@ -116,7 +159,7 @@ var Librarian = (() => {
     }
     reset(size = 13) {
       if (this.button) {
-        this.button.classList.remove("speaking");
+        this.button.classList.remove(cls("speaking"));
         this.button.replaceChildren(speakerIcon(size));
         this.button.title = this.title;
       }
@@ -235,39 +278,6 @@ var Librarian = (() => {
     "workflow_preflight",
     "resync_required"
   ];
-
-  // src/dom.ts
-  function h(tag, attrs = {}, ...children) {
-    const el = document.createElement(tag);
-    for (const [key, value] of Object.entries(attrs)) {
-      if (value === void 0 || value === false) continue;
-      if (key.startsWith("on") && typeof value === "function") {
-        el.addEventListener(key.slice(2), value);
-      } else if (key === "class") {
-        el.className = String(value);
-      } else {
-        el.setAttribute(key, value === true ? "" : String(value));
-      }
-    }
-    for (const child of children.flat()) {
-      if (child === null || child === void 0 || child === false) continue;
-      el.append(child instanceof Node ? child : document.createTextNode(child));
-    }
-    return el;
-  }
-  var $ = (root, sel) => root.querySelector(sel);
-  function clear(el, ...children) {
-    el.replaceChildren();
-    for (const child of children.flat()) {
-      if (child === null || child === void 0 || child === false) continue;
-      el.append(child instanceof Node ? child : document.createTextNode(child));
-    }
-    return el;
-  }
-  function when(iso) {
-    const text = String(iso ?? "");
-    return text.slice(0, 16).replace("T", " ");
-  }
 
   // src/attach.ts
   var AttachPanel = class {
@@ -696,7 +706,7 @@ var Librarian = (() => {
       this.log.scrollTop = this.log.scrollHeight;
     }
     append(el) {
-      this.log.querySelector(".hint")?.remove();
+      this.log.querySelector(sel(".hint"))?.remove();
       if (this.working) this.log.insertBefore(el, this.working);
       else this.log.append(el);
       this.scroll();
@@ -819,7 +829,7 @@ var Librarian = (() => {
           const line = waiting.shift() ?? h("div", { class: "tool" }, h("code", {}, tool));
           const result = event.result ?? {};
           clear(line, h("code", {}, tool), " \xB7 ", summarise(tool, result, this.hooks.openNote));
-          if (result.error) line.classList.add("refused");
+          if (result.error) line.classList.add(cls("refused"));
           if (!line.isConnected) this.append(line);
           if (result.session) this.hooks.onSession(result.session);
           const runnable = result.runnable ?? [];
@@ -844,8 +854,8 @@ var Librarian = (() => {
         case "permission_decided": {
           const card = this.cards.get(String(event.id));
           if (card) {
-            card.classList.add("done");
-            const row = card.querySelector(".row");
+            card.classList.add(cls("done"));
+            const row = card.querySelector(sel(".row"));
             if (row) clear(row, h("em", {}, sentence(String(event.reason ?? event.outcome))));
           }
           break;
@@ -984,9 +994,9 @@ var Librarian = (() => {
           break;
         case "question_answered": {
           const card = this.cards.get(`q:${String(event.question_id ?? "")}`);
-          if (card && !card.classList.contains("done")) {
-            card.classList.add("done");
-            const row = card.querySelector(".row");
+          if (card && !card.classList.contains(cls("done"))) {
+            card.classList.add(cls("done"));
+            const row = card.querySelector(sel(".row"));
             if (row) clear(row, h("em", {}, event.answered ? "Answered elsewhere." : "Timed out unanswered."));
           }
           const sessionId = String(event.session ?? "");
@@ -1344,7 +1354,7 @@ var Librarian = (() => {
           const out = await this.api.tool("answer", { question_id: id, answer: value }, sessionId);
           if (out.error) throw new Error(String(out.detail ?? out.error));
           clear(row, h("em", {}, out.resumed ? `Answered: \u201C${value}\u201D` : `Recorded: \u201C${value}\u201D - send a message to carry the thread on.`));
-          card.classList.add("done");
+          card.classList.add(cls("done"));
           if (out.session) this.hooks.onSession(out.session);
         } catch (e) {
           clear(
@@ -2445,7 +2455,7 @@ var Librarian = (() => {
           const out = await this.api.post("/api/keys", { provider: select.value, key: input.value, overwrite });
           input.value = "";
           status.textContent = out.check?.ok ? out.check.status : `Saved, but the provider said: ${out.check?.error ?? "no answer"}`;
-          status.className = `note inline ${out.check?.ok ? "ok" : "err"}`;
+          status.className = cls(`note inline ${out.check?.ok ? "ok" : "err"}`);
           await this.refresh();
           keys.splice(0, keys.length, ...this.state().keys ?? []);
           const msg = status.textContent;
@@ -2467,7 +2477,7 @@ var Librarian = (() => {
             status.textContent = "";
           } else {
             status.textContent = e.message;
-            status.className = "note inline err";
+            status.className = cls("note inline err");
           }
         }
       };
@@ -2514,17 +2524,17 @@ var Librarian = (() => {
                   await this.refresh();
                   if (out.available === false) {
                     migrationStatus.textContent = String(out.detail ?? "No operating-system keychain is available yet.");
-                    migrationStatus.className = "note inline err";
+                    migrationStatus.className = cls("note inline err");
                   } else if (out.fallback_retained) {
                     migrationStatus.textContent = String(out.detail ?? "Migrated, but the old fallback file remains.");
-                    migrationStatus.className = "note inline err";
+                    migrationStatus.className = cls("note inline err");
                   } else {
                     migrationStatus.textContent = out.already_secure ? "Keys are already in the operating-system keychain." : "Saved keys moved to the operating-system keychain.";
-                    migrationStatus.className = "note inline ok";
+                    migrationStatus.className = cls("note inline ok");
                   }
                 } catch (e) {
                   migrationStatus.textContent = e.message;
-                  migrationStatus.className = "note inline err";
+                  migrationStatus.className = cls("note inline err");
                 }
               } }, "Migrate")
             )
@@ -2589,11 +2599,11 @@ var Librarian = (() => {
               await this.api.post("/api/agent-profile", { id: select.value });
               await this.refresh();
               status.textContent = "Applied to subsequent agent turns.";
-              status.className = "note inline ok";
+              status.className = cls("note inline ok");
             } catch (e) {
               select.value = selected;
               status.textContent = e.message;
-              status.className = "note inline err";
+              status.className = cls("note inline err");
             }
           };
           const active = out.active ?? {};
@@ -2757,11 +2767,11 @@ var Librarian = (() => {
               try {
                 await this.api.post("/api/profiles", { profile });
                 editorStatus.textContent = "Saved as a new profile revision.";
-                editorStatus.className = "note inline ok";
+                editorStatus.className = cls("note inline ok");
                 await reload();
               } catch (e) {
                 editorStatus.textContent = e.message;
-                editorStatus.className = "note inline err";
+                editorStatus.className = cls("note inline err");
               }
             };
             clear(
@@ -3059,13 +3069,13 @@ var Librarian = (() => {
             const contract = s.adapter && typeof s.adapter === "object" ? s.adapter : {};
             const contractLabel = !s.model ? "" : contract.adapter?.id ? ` \xB7 ${String(contract.adapter.id).replace(/_/g, " ")} \xB7 ${contract.status ?? "unreviewed"}` : " \xB7 no reviewed service contract";
             const test = async () => {
-              status.className = "note inline";
+              status.className = cls("note inline");
               status.textContent = "Testing: one small call\u2026";
               try {
                 const t = await this.api.post("/api/services/test", { slot: s.slot });
                 status.textContent = t.summary ?? (t.ok ? `Works: it read \u201C${t.read}\u201D.` : `Not working: ${t.error ?? `it read \u201C${t.read}\u201D`}`);
                 if (t.ok && t.audio) void new Audio(t.audio).play().catch(() => void 0);
-                status.className = `note inline ${t.ok ? "ok" : "err"}`;
+                status.className = cls(`note inline ${t.ok ? "ok" : "err"}`);
               } catch (e) {
                 status.textContent = e.message;
               }
@@ -3185,7 +3195,7 @@ var Librarian = (() => {
           await reload();
         } catch (e) {
           status.textContent = e.message;
-          status.className = "note inline err";
+          status.className = cls("note inline err");
         }
       };
       const setKey = async (overwrite = false) => {
@@ -3217,7 +3227,7 @@ var Librarian = (() => {
           status.textContent = models.length ? `${models.length} models discovered.` : "No models returned.";
         } catch (e) {
           status.textContent = e.message;
-          status.className = "note inline err";
+          status.className = cls("note inline err");
         }
       };
       const test = async () => {
@@ -3227,11 +3237,11 @@ var Librarian = (() => {
           const check = out.check ?? {};
           const category = String(check.failure_category ?? "");
           status.textContent = check.ok ? "Connection and model listing work." : category === "local_environment" ? "Local network policy blocked the Core \u2014 this is not a model result." : String(check.error ?? "Host test failed.");
-          status.className = `note inline ${check.ok ? "ok" : "err"}`;
+          status.className = cls(`note inline ${check.ok ? "ok" : "err"}`);
           await reload();
         } catch (e) {
           status.textContent = e.message;
-          status.className = "note inline err";
+          status.className = cls("note inline err");
         }
       };
       const probe = async (checkpointId = "") => {
@@ -3250,7 +3260,7 @@ var Librarian = (() => {
           });
           const run = out.run ?? {};
           status.textContent = run.outcome === "pass" ? `L1 tool-call probe passed for ${probeRole} (Screened).` : `L1 probe: ${run.detail ?? run.outcome ?? "did not pass"}`;
-          status.className = `note inline ${run.outcome === "pass" ? "ok" : "err"}`;
+          status.className = cls(`note inline ${run.outcome === "pass" ? "ok" : "err"}`);
           clear(confirm2);
           await reload();
         } catch (e) {
@@ -3274,7 +3284,7 @@ var Librarian = (() => {
             ));
           } else {
             status.textContent = e.message;
-            status.className = "note inline err";
+            status.className = cls("note inline err");
           }
         }
       };
@@ -3434,7 +3444,7 @@ var Librarian = (() => {
           await reload();
         } catch (e) {
           status.textContent = e.message;
-          status.className = "note inline err";
+          status.className = cls("note inline err");
         }
       };
       return h(
@@ -3591,11 +3601,11 @@ var Librarian = (() => {
       const status = h("span", { class: "note inline", role: "status" });
       const busy = (label) => {
         status.textContent = label;
-        status.className = "note inline";
+        status.className = cls("note inline");
       };
       const fail = (e) => {
         status.textContent = e.message;
-        status.className = "note inline err";
+        status.className = cls("note inline err");
       };
       const curatedCard = (skill) => {
         const installed = servers[skill.id];
@@ -3863,15 +3873,15 @@ var Librarian = (() => {
               const out = await this.api.post("/api/keys", { provider: c.key, key: input.value.trim(), overwrite: true });
               input.value = "";
               said.textContent = out.check?.ok ? out.check.status : `Saved, but the provider said: ${out.check?.error ?? "no answer"}`;
-              said.className = `note inline ${out.check?.ok ? "ok" : "err"}`;
+              said.className = cls(`note inline ${out.check?.ok ? "ok" : "err"}`);
               await this.refresh();
-              const line = row.closest(".srv");
-              line?.querySelector(".dot")?.setAttribute("class", "dot");
-              const detail = line?.querySelector(".key-detail");
+              const line = row.closest(sel(".srv"));
+              line?.querySelector(sel(".dot"))?.setAttribute("class", cls("dot"));
+              const detail = line?.querySelector(sel(".key-detail"));
               if (detail) detail.textContent = " \xB7 saved in this computer's key store";
             } catch (e) {
               said.textContent = e.message;
-              said.className = "note inline err";
+              said.className = cls("note inline err");
             }
           };
           input.onkeydown = (e) => {
@@ -4350,9 +4360,9 @@ var Librarian = (() => {
         return;
       }
       const rendered = render(doc.text, (t) => void this.open(t), { frontmatter: true });
-      const own = Array.from(rendered.children).find((el) => !el.matches("table.props"));
-      const titled = own?.tagName === "H2" && own.textContent?.trim().toLowerCase() === String(doc.name).toLowerCase();
-      if (titled) own.remove();
+      const own2 = Array.from(rendered.children).find((el) => !el.matches(sel("table.props")));
+      const titled = own2?.tagName === "H2" && own2.textContent?.trim().toLowerCase() === String(doc.name).toLowerCase();
+      if (titled) own2.remove();
       clear(this.body, h("article", { class: "doc" }, h("h1", { class: "doc-title" }, doc.name), rendered));
       this.body.scrollTop = 0;
     }
@@ -4417,8 +4427,8 @@ var Librarian = (() => {
       if (on) void this.paintMenu();
     }
     async paintMenu() {
-      const item = (label, small, action, cls = "") => h("button", {
-        class: `menuitem ${cls}`,
+      const item = (label, small, action, cls2 = "") => h("button", {
+        class: `menuitem ${cls2}`,
         role: "menuitem",
         onclick: action
       }, label, small ? h("small", {}, small) : null);
@@ -4636,7 +4646,7 @@ var Librarian = (() => {
           this.showMenu(false);
           if (movedName !== doc.name) this.onMoved(doc.name, movedName);
           await this.open(moved);
-          this.body.querySelector("article.doc")?.prepend(h(
+          this.body.querySelector(sel("article.doc"))?.prepend(h(
             "div",
             { class: "note moved", role: "status" },
             `Moved from ${doc.path}. `,
@@ -4886,7 +4896,7 @@ var Librarian = (() => {
     async showOffering(id) {
       this.selected = id;
       this.detailLocked = false;
-      this.list.querySelectorAll(".item").forEach((b) => b.classList.remove("sel"));
+      this.list.querySelectorAll(sel(".item")).forEach((b) => b.classList.remove(cls("sel")));
       clear(this.detail, h("p", { class: "dim" }, "Loading\u2026"));
       let r;
       try {
@@ -4953,7 +4963,7 @@ var Librarian = (() => {
       }
       const waiting = Number(b.waiting ?? 0);
       const running = b.status === "running";
-      const start = (label, args, cls = "primary") => h("button", { class: cls, onclick: async (e) => {
+      const start = (label, args, cls2 = "primary") => h("button", { class: cls2, onclick: async (e) => {
         e.currentTarget.disabled = true;
         try {
           const out = await this.api.tool("process_approved", { ...args, background: true });
@@ -5037,7 +5047,7 @@ var Librarian = (() => {
     async show(id) {
       this.selected = id;
       this.detailLocked = false;
-      this.list.querySelectorAll(".item").forEach((b) => b.classList.remove("sel"));
+      this.list.querySelectorAll(sel(".item")).forEach((b) => b.classList.remove(cls("sel")));
       clear(this.detail, h("p", { class: "dim" }, "Loading\u2026"));
       let item;
       try {
@@ -5145,7 +5155,7 @@ var Librarian = (() => {
       const queued = item.review?.queued ?? [];
       const missing = item.readiness ?? [];
       const st = String(item.status ?? "staged");
-      const btn = (label, d, cls = "ghost", title = "") => h("button", { class: cls, onclick: decide(d), ...title ? { title } : {} }, label);
+      const btn = (label, d, cls2 = "ghost", title = "") => h("button", { class: cls2, onclick: decide(d), ...title ? { title } : {} }, label);
       const proc = item.processing ?? {};
       const interrupted = item.promotion_progress && !item.promotion_progress.completed_at;
       const buttons = interrupted ? [btn("Finish acceptance", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : item.revision_of ? [btn("Accept", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : st === "enriched" ? [btn("Accept into library", "accept", "primary"), btn("Reject", "reject"), btn("Defer", "defer")] : st === "partial" ? [
@@ -5922,7 +5932,7 @@ var Librarian = (() => {
             { class: "row2 tight" },
             h("button", { class: "ghost", title: "Logged only: it never changes ranking", onclick: () => {
               void feedback(r, "dismissed", rank);
-              card.classList.add("dismissed");
+              card.classList.add(cls("dismissed"));
             } }, "Not relevant")
           )
         );
@@ -5948,7 +5958,7 @@ var Librarian = (() => {
 
   // src/main.ts
   function relinkChat(log, oldName, newName, open) {
-    log.querySelectorAll("a.wl").forEach((a) => {
+    log.querySelectorAll(sel("a.wl")).forEach((a) => {
       const target = a.title;
       const parts = target.split("/");
       if (parts[parts.length - 1].replace(/\.md$/i, "").toLowerCase() !== oldName.toLowerCase()) return;
@@ -6236,8 +6246,8 @@ var Librarian = (() => {
     }
     showPane(on) {
       this.paneOpen = on;
-      this.body.classList.toggle("pane-open", on);
-      this.body.classList.toggle("pane-closed", !on);
+      this.body.classList.toggle(cls("pane-open"), on);
+      this.body.classList.toggle(cls("pane-closed"), !on);
       this.paneButton.setAttribute("aria-pressed", String(on));
       remember("pane", on ? "open" : "closed");
     }
@@ -6268,7 +6278,7 @@ var Librarian = (() => {
         return;
       }
       this.stopEvents = this.api.events(this.state.event_stream, (event) => this.onEvent(event), (live) => {
-        this.live.className = `live ${live ? "on" : "off"}`;
+        this.live.className = cls(`live ${live ? "on" : "off"}`);
         this.live.textContent = live ? "\u25CF" : "\u25CB reconnecting";
         if (live) void this.refresh();
       });
@@ -6500,7 +6510,7 @@ var Librarian = (() => {
     renderAttachments() {
       const has = this.attachments.length > 0;
       this.attachRow.hidden = !has;
-      this.msgBox.classList.toggle("has-attachments", has);
+      this.msgBox.classList.toggle(cls("has-attachments"), has);
       clear(this.attachRow, this.attachments.map((a, i) => h(
         "span",
         { class: "attach-chip" },
@@ -6709,7 +6719,7 @@ var Librarian = (() => {
     }
   }
   function mount(root, opts) {
-    root.classList.add("librarian-root", `host-${opts.host}`);
+    root.classList.add(cls("librarian-root"), cls(`host-${opts.host}`));
     const app = new App(root, opts);
     void app.start();
     return { insert: (text) => app.insert(text), dispose: () => app.dispose() };

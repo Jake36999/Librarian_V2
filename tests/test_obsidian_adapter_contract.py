@@ -39,9 +39,28 @@ def test_shared_popovers_do_not_collide_with_obsidian_host_css() -> None:
     assert 'class: `model-card${' in panels
     assert 'class: `card${' not in panels
     assert ".lib-app .lib-popover { display: block;" in css
-    assert ".lib-app .model-card { display: block;" in css
+    assert ".lib-app .lib-model-card { display: block;" in css
     assert "height: auto" in css and "white-space: normal" in css
     assert ".lib-app .popover" not in css
+
+
+def _selector_classes(css: str) -> set[str]:
+    import re
+    selectors = "".join(re.split(r"\{[^{}]*\}", re.sub(r"/\*.*?\*/", "", css, flags=re.S)))
+    return set(re.findall(r"\.(-?[A-Za-z_][\w-]*)", selectors))
+
+
+def test_every_owned_class_is_namespaced_in_both_stylesheets() -> None:
+    """MF-007 (incoming): host rules such as `.title`, `.badge` or `.tabs`
+    cannot match an owned element, because no owned class is bare."""
+    host_owned = {"view-content"}                  # Obsidian's ItemView container
+    for rel in ("ui/src/style.css", "obsidian/dist/styles.css"):
+        css = (ROOT / rel).read_text(encoding="utf-8")
+        bare = {name for name in _selector_classes(css)
+                if not name.startswith(("lib-", "librarian-")) and name not in host_owned}
+        assert not bare, f"{rel}: {sorted(bare)}"
+    dom = (ROOT / "ui/src/dom.ts").read_text(encoding="utf-8")
+    assert "el.className = cls(String(value));" in dom
 
 
 def test_obsidian_opens_full_librarian_in_main_workspace_tab() -> None:

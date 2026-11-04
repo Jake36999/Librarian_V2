@@ -4,7 +4,7 @@
 // inside a note open here too.
 
 import type { Api } from "./api";
-import { clear, h } from "./dom";
+import { clear, h, sel } from "./dom";
 import { render } from "./markdown";
 import { reader, runIcon, speakerIcon } from "./speech";
 
@@ -130,7 +130,7 @@ export class DocPane {
     }
     const rendered = render(doc.text, (t) => void this.open(t), { frontmatter: true });
     // A note that opens with its own title heading keeps it as the title.
-    const own = Array.from(rendered.children).find((el) => !el.matches("table.props"));
+    const own = Array.from(rendered.children).find((el) => !el.matches(sel("table.props")));
     const titled = own?.tagName === "H2" && own.textContent?.trim().toLowerCase() === String(doc.name).toLowerCase();
     if (titled) own!.remove();
     clear(this.body, h("article", { class: "doc" }, h("h1", { class: "doc-title" }, doc.name), rendered));
@@ -349,7 +349,7 @@ export class DocPane {
         this.showMenu(false);
         if (movedName !== doc.name) this.onMoved(doc.name, movedName);
         await this.open(moved);
-        this.body.querySelector("article.doc")?.prepend(h("div", { class: "note moved", role: "status" },
+        this.body.querySelector(sel("article.doc"))?.prepend(h("div", { class: "note moved", role: "status" },
           `Moved from ${doc.path}. `,
           updated.length ? h("details", {}, h("summary", {},
             `Updated links in ${updated.length} note${updated.length === 1 ? "" : "s"}.`),

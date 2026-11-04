@@ -4,7 +4,7 @@
 
 import type { Api } from "./api";
 import { ApiError } from "./api";
-import { clear, h } from "./dom";
+import { clear, h, cls, sel } from "./dom";
 import { PROVIDERS } from "./panels";
 
 const PAGES = [["connections", "Connections"], ["context", "Working context"],
@@ -132,7 +132,7 @@ export class Settings {
         const out = await this.api.post("/api/keys", { provider: select.value, key: input.value, overwrite });
         input.value = "";
         status.textContent = out.check?.ok ? out.check.status : `Saved, but the provider said: ${out.check?.error ?? "no answer"}`;
-        status.className = `note inline ${out.check?.ok ? "ok" : "err"}`;
+        status.className = cls(`note inline ${out.check?.ok ? "ok" : "err"}`);
         await this.refresh();
         keys.splice(0, keys.length, ...(this.state().keys ?? []));
         const msg = status.textContent;
@@ -147,7 +147,7 @@ export class Settings {
           status.textContent = "";
         } else {
           status.textContent = (e as Error).message;
-          status.className = "note inline err";
+          status.className = cls("note inline err");
         }
       }
     };
@@ -179,17 +179,17 @@ export class Settings {
                 await this.refresh();
                 if (out.available === false) {
                   migrationStatus.textContent = String(out.detail ?? "No operating-system keychain is available yet.");
-                  migrationStatus.className = "note inline err";
+                  migrationStatus.className = cls("note inline err");
                 } else if (out.fallback_retained) {
                   migrationStatus.textContent = String(out.detail ?? "Migrated, but the old fallback file remains.");
-                  migrationStatus.className = "note inline err";
+                  migrationStatus.className = cls("note inline err");
                 } else {
                   migrationStatus.textContent = out.already_secure ? "Keys are already in the operating-system keychain." : "Saved keys moved to the operating-system keychain.";
-                  migrationStatus.className = "note inline ok";
+                  migrationStatus.className = cls("note inline ok");
                 }
               } catch (e) {
                 migrationStatus.textContent = (e as Error).message;
-                migrationStatus.className = "note inline err";
+                migrationStatus.className = cls("note inline err");
               }
             } }, "Migrate")))) }, "Move fallback keys to keychain") as HTMLButtonElement;
       clear(keyMigration, h("p", { class: "note" },
@@ -232,11 +232,11 @@ export class Settings {
             await this.api.post("/api/agent-profile", { id: select.value });
             await this.refresh();
             status.textContent = "Applied to subsequent agent turns.";
-            status.className = "note inline ok";
+            status.className = cls("note inline ok");
           } catch (e) {
             select.value = selected;
             status.textContent = (e as Error).message;
-            status.className = "note inline err";
+            status.className = cls("note inline err");
           }
         };
         const active = out.active ?? {};
@@ -312,11 +312,11 @@ export class Settings {
             try {
               await this.api.post("/api/profiles", { profile });
               editorStatus.textContent = "Saved as a new profile revision.";
-              editorStatus.className = "note inline ok";
+              editorStatus.className = cls("note inline ok");
               await reload();
             } catch (e) {
               editorStatus.textContent = (e as Error).message;
-              editorStatus.className = "note inline err";
+              editorStatus.className = cls("note inline err");
             }
           };
           clear(editor,
@@ -507,14 +507,14 @@ export class Settings {
             ? ` · ${String(contract.adapter.id).replace(/_/g, " ")} · ${contract.status ?? "unreviewed"}`
             : " · no reviewed service contract";
           const test = async () => {
-            status.className = "note inline";
+            status.className = cls("note inline");
             status.textContent = "Testing: one small call…";
             try {
               const t = await this.api.post("/api/services/test", { slot: s.slot });
               status.textContent = t.summary ?? (t.ok ? `Works: it read “${t.read}”.`
                 : `Not working: ${t.error ?? `it read “${t.read}”`}`);
               if (t.ok && t.audio) void new Audio(t.audio).play().catch(() => undefined);
-              status.className = `note inline ${t.ok ? "ok" : "err"}`;
+              status.className = cls(`note inline ${t.ok ? "ok" : "err"}`);
             } catch (e) {
               status.textContent = (e as Error).message;
             }
@@ -608,7 +608,7 @@ export class Settings {
         } });
         status.textContent = "Saved.";
         await reload();
-      } catch (e) { status.textContent = (e as Error).message; status.className = "note inline err"; }
+      } catch (e) { status.textContent = (e as Error).message; status.className = cls("note inline err"); }
     };
     const setKey = async (overwrite = false) => {
       try {
@@ -633,7 +633,7 @@ export class Settings {
         clear(discovered, models.length ? models.slice(0, 40).map((entry) => h("button", { class: "ghost", onclick: () => { model.value = String(entry.id); } }, String(entry.id)))
           : h("span", { class: "note inline" }, out.error ?? "No models returned."));
         status.textContent = models.length ? `${models.length} models discovered.` : "No models returned.";
-      } catch (e) { status.textContent = (e as Error).message; status.className = "note inline err"; }
+      } catch (e) { status.textContent = (e as Error).message; status.className = cls("note inline err"); }
     };
     const test = async () => {
       status.textContent = "Testing host…";
@@ -645,9 +645,9 @@ export class Settings {
           : category === "local_environment"
             ? "Local network policy blocked the Core — this is not a model result."
             : String(check.error ?? "Host test failed.");
-        status.className = `note inline ${check.ok ? "ok" : "err"}`;
+        status.className = cls(`note inline ${check.ok ? "ok" : "err"}`);
         await reload();
-      } catch (e) { status.textContent = (e as Error).message; status.className = "note inline err"; }
+      } catch (e) { status.textContent = (e as Error).message; status.className = cls("note inline err"); }
     };
     const probe = async (checkpointId = "") => {
       if (!model.value.trim()) { status.textContent = "Enter or discover a model id first."; return; }
@@ -659,7 +659,7 @@ export class Settings {
         const run = out.run ?? {};
         status.textContent = run.outcome === "pass" ? `L1 tool-call probe passed for ${probeRole} (Screened).`
           : `L1 probe: ${run.detail ?? run.outcome ?? "did not pass"}`;
-        status.className = `note inline ${run.outcome === "pass" ? "ok" : "err"}`;
+        status.className = cls(`note inline ${run.outcome === "pass" ? "ok" : "err"}`);
         clear(confirm);
         await reload();
       } catch (e) {
@@ -673,7 +673,7 @@ export class Settings {
                 await this.api.post("/api/checkpoints/resolve", { id: checkpoint.id, choice: "approve" });
                 await probe(checkpoint.id);
               } }, "Approve probe"))));
-        } else { status.textContent = (e as Error).message; status.className = "note inline err"; }
+        } else { status.textContent = (e as Error).message; status.className = cls("note inline err"); }
       }
     };
     const chooseLead = async (checkpointId = "", override = "") => {
@@ -758,7 +758,7 @@ export class Settings {
           protocol: "openai", base_url: base.value.trim(), auth_ref: auth.value.trim(), enabled: true,
           timeout: 120, concurrency_limit: 1, rate_limit: 0 } });
         await reload();
-      } catch (e) { status.textContent = (e as Error).message; status.className = "note inline err"; }
+      } catch (e) { status.textContent = (e as Error).message; status.className = cls("note inline err"); }
     };
     return h("div", { class: "host-card new-host" }, h("strong", {}, "Add OpenAI-compatible host"),
       h("div", { class: "host-grid" }, h("label", { class: "f" }, "Id", id), h("label", { class: "f" }, "Name", label),
@@ -866,8 +866,8 @@ export class Settings {
     const servers: Record<string, any> = data.servers ?? {};
     const toolSettings: Record<string, string> = data.tool_settings ?? {};
     const status = h("span", { class: "note inline", role: "status" });
-    const busy = (label: string) => { status.textContent = label; status.className = "note inline"; };
-    const fail = (e: unknown) => { status.textContent = (e as Error).message; status.className = "note inline err"; };
+    const busy = (label: string) => { status.textContent = label; status.className = cls("note inline"); };
+    const fail = (e: unknown) => { status.textContent = (e as Error).message; status.className = cls("note inline err"); };
 
     const curatedCard = (skill: typeof CURATED_SKILLS[number]) => {
       const installed = servers[skill.id];
@@ -1057,16 +1057,16 @@ export class Settings {
             const out = await this.api.post("/api/keys", { provider: c.key, key: input.value.trim(), overwrite: true });
             input.value = "";
             said.textContent = out.check?.ok ? out.check.status : `Saved, but the provider said: ${out.check?.error ?? "no answer"}`;
-            said.className = `note inline ${out.check?.ok ? "ok" : "err"}`;
+            said.className = cls(`note inline ${out.check?.ok ? "ok" : "err"}`);
             await this.refresh();
             // The row says so at once: its dot goes green and its detail names the store.
-            const line = row.closest(".srv");
-            line?.querySelector(".dot")?.setAttribute("class", "dot");
-            const detail = line?.querySelector(".key-detail");
+            const line = row.closest(sel(".srv"));
+            line?.querySelector(sel(".dot"))?.setAttribute("class", cls("dot"));
+            const detail = line?.querySelector(sel(".key-detail"));
             if (detail) detail.textContent = " · saved in this computer's key store";
           } catch (e) {
             said.textContent = (e as Error).message;
-            said.className = "note inline err";
+            said.className = cls("note inline err");
           }
         };
         input.onkeydown = (e) => { if (e.key === "Enter") void save(); };

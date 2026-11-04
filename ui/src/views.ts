@@ -3,7 +3,7 @@
 // call at their tier.
 
 import type { Api } from "./api";
-import { clear, h } from "./dom";
+import { clear, h, cls, sel } from "./dom";
 import { render } from "./markdown";
 
 // A model's `best_for`/`suggested_tier` are a clerk's first guess, not a
@@ -175,7 +175,7 @@ export class Staging {
   private async showOffering(id: string): Promise<void> {
     this.selected = id;
     this.detailLocked = false;
-    this.list.querySelectorAll(".item").forEach((b) => b.classList.remove("sel"));
+    this.list.querySelectorAll(sel(".item")).forEach((b) => b.classList.remove(cls("sel")));
     clear(this.detail, h("p", { class: "dim" }, "Loading…"));
     let r: any;
     try {
@@ -300,7 +300,7 @@ export class Staging {
   private async show(id: string): Promise<void> {
     this.selected = id;
     this.detailLocked = false;
-    this.list.querySelectorAll(".item").forEach((b) => b.classList.remove("sel"));
+    this.list.querySelectorAll(sel(".item")).forEach((b) => b.classList.remove(cls("sel")));
     clear(this.detail, h("p", { class: "dim" }, "Loading…"));
     let item: any;
     try {
@@ -959,7 +959,7 @@ export class Search {
         h("div", { class: "row2 tight" },
           h("button", { class: "ghost", title: "Logged only: it never changes ranking", onclick: () => {
             void feedback(r, "dismissed", rank);
-            card.classList.add("dismissed");
+            card.classList.add(cls("dismissed"));
           } }, "Not relevant")));
       return card;
     };

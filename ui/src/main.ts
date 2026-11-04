@@ -7,7 +7,7 @@ import { Api, type Event, type Options } from "./api";
 export type { Options } from "./api";
 import { AttachPanel } from "./attach";
 import { Chat, type Session } from "./chat";
-import { $, clear, h } from "./dom";
+import { $, clear, h, cls, sel } from "./dom";
 import { MODES, ModelTile, Popover, PROVIDERS, renderLibraries, renderModes, renderSessions, type Tier } from "./panels";
 import { Settings } from "./settings";
 import { DocPane } from "./pane";
@@ -20,7 +20,7 @@ type View = "chat" | "staging" | "search";
  *  nothing; each click target is captured when rendered, so replace them. */
 function relinkChat(log: HTMLElement, oldName: string, newName: string,
                     open: (target: string) => void): void {
-  log.querySelectorAll<HTMLAnchorElement>("a.wl").forEach((a) => {
+  log.querySelectorAll<HTMLAnchorElement>(sel("a.wl")).forEach((a) => {
     const target = a.title;
     const parts = target.split("/");
     if (parts[parts.length - 1].replace(/\.md$/i, "").toLowerCase() !== oldName.toLowerCase()) return;
@@ -253,8 +253,8 @@ class App {
 
   private showPane(on: boolean): void {
     this.paneOpen = on;
-    this.body.classList.toggle("pane-open", on);
-    this.body.classList.toggle("pane-closed", !on);
+    this.body.classList.toggle(cls("pane-open"), on);
+    this.body.classList.toggle(cls("pane-closed"), !on);
     this.paneButton.setAttribute("aria-pressed", String(on));
     remember("pane", on ? "open" : "closed");
   }
@@ -287,7 +287,7 @@ class App {
       return;
     }
     this.stopEvents = this.api.events(this.state.event_stream, (event) => this.onEvent(event), (live) => {
-      this.live.className = `live ${live ? "on" : "off"}`;
+      this.live.className = cls(`live ${live ? "on" : "off"}`);
       this.live.textContent = live ? "●" : "○ reconnecting";
       if (live) void this.refresh();
     });
@@ -521,7 +521,7 @@ class App {
   private renderAttachments(): void {
     const has = this.attachments.length > 0;
     this.attachRow.hidden = !has;
-    this.msgBox.classList.toggle("has-attachments", has);
+    this.msgBox.classList.toggle(cls("has-attachments"), has);
     clear(this.attachRow, this.attachments.map((a, i) => h("span", { class: "attach-chip" },
       fileIcon(), h("span", { class: "attach-name" }, a.label),
       h("button", { class: "attach-remove", "aria-label": `Remove ${a.label}`,
@@ -712,7 +712,7 @@ function recall(key: string): string {
 export interface Mounted { insert(text: string): void; dispose(): void }
 
 export function mount(root: HTMLElement, opts: Options): Mounted {
-  root.classList.add("librarian-root", `host-${opts.host}`);
+  root.classList.add(cls("librarian-root"), cls(`host-${opts.host}`));
   const app = new App(root, opts);
   void app.start();
   return { insert: (text) => app.insert(text), dispose: () => app.dispose() };

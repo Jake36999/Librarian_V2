@@ -4457,3 +4457,58 @@ and `test_core_catalog.py` (69 passed), and the full suite on 3.11 (1952 passed,
 
 Not verified: hosted CI, until the next push.
 
+### MF-007, incoming isolation: owned classes namespaced (2026-11-04)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-007 | implemented (both halves) | this commit | `ui/src/dom.ts`, `style.css`, the class sites in `chat.ts`, `main.ts`, `pane.ts`, `settings.ts`, `speech.ts` and `views.ts`; `ui/smoke.mjs`; `tests/test_obsidian_adapter_contract.py`; rebuilt bundles. |
+
+**The defect (G05).** Root scoping stopped the app's rules leaking out, but a
+host's rules could still reach in: Obsidian's or another plugin's `.title`,
+`.badge`, `.tabs`, `.page` or `.primary` matched the app's elements, because
+the app used those bare names.
+
+**Change.** Every owned class is namespaced in the DOM with `lib-`.
+- **One choke point.** `h()` passes its class attribute through `cls()`,
+  which prefixes each token not already `lib-` or `librarian-`. Source keeps
+  local names (`class: "title"`) and the DOM carries `lib-title`, much like
+  CSS modules. This covers the 849 `class:` sites, including ternaries,
+  template literals and names passed in by callers, without rewriting each one.
+- **The direct sites.** The 25 `className` assignments, 14 `classList` calls,
+  `setAttribute("class")` and the class-bearing `querySelector`, `closest` and
+  `matches` strings go through `cls()` or `sel()`. `sel()` namespaces the class
+  names in a selector.
+- **The stylesheet.** All 180 bare class names in `style.css` selectors are
+  now `.lib-*`. Comments and declarations are untouched. `.view-content` stays,
+  because it is Obsidian's own ItemView container; `librarian-*` stays too.
+  `obsidian/dist/styles.css` is rebuilt from it.
+- **The smoke test.** Its selectors were renamed. Quoted `has-text(...)` text
+  and `>> text=` segments are left as written, so a filename such as
+  `osquery.md` is not renamed.
+
+**Checks.**
+- The smoke test audits the live DOM after the whole run: no class under the
+  Librarian root lacks `lib-` or `librarian-`. It then injects a hostile host
+  sheet that hides `.title`, `.badge`, `.tabs`, `.page`, `.primary`, `.ghost`,
+  `.row`, `.item`, `.send` and more. The header title and the Send button stay
+  visible.
+- `test_every_owned_class_is_namespaced_in_both_stylesheets` checks the class
+  selectors of both `ui/src/style.css` and `obsidian/dist/styles.css`, and that
+  `h()` namespaces its class attribute.
+- The earlier hostile `.popover`/`.grid`/`.card` sheet and the model-card fix
+  are retained.
+
+**Limits.**
+- Namespacing does not make the app immune to hostile `!important` rules
+  aimed at the new names.
+- Element-level host rules, such as Obsidian's `button` heights, are not
+  class collisions. Only the existing owned baselines cover them. The packet's
+  other widths and overlay work is MF-008.
+
+**Verification:**
+- `npm.cmd --prefix ui run build` and `npm.cmd --prefix obsidian run build`
+  (type check and bundle);
+- `npm.cmd --prefix ui run smoke`: 46 steps passed (45 before);
+- `tests/test_obsidian_adapter_contract.py` and the wheel smoke: 13 passed;
+- full suite: 1953 passed, 2 skipped, 5 deselected in 633.71s (0:10:33) (exit 0, Python 3.11.3) (`suite-mf007b-py311.json`).
+

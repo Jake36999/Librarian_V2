@@ -5,6 +5,7 @@
 // so stopping spends nothing more, and its $2 cap is checked before every chunk.
 
 import type { Api } from "./api";
+import { cls } from "./dom";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -59,7 +60,7 @@ class Reader {
     const run = ++this.run;
     this.button = button;
     this.title = button.title;
-    button.classList.add("speaking");
+    button.classList.add(cls("speaking"));
     button.replaceChildren(stopIcon(size));
     try {
       const plan = await this.api!.post("/api/tts/plan", source);
@@ -101,7 +102,7 @@ class Reader {
 
   private reset(size = 13): void {
     if (this.button) {
-      this.button.classList.remove("speaking");
+      this.button.classList.remove(cls("speaking"));
       this.button.replaceChildren(speakerIcon(size));
       this.button.title = this.title;
     }
