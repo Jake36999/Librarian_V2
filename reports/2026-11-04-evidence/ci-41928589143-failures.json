@@ -1,0 +1,77 @@
+{
+ "source": "gh run view 41928589143 --log-failed (gh 2.103.3, authenticated as the repository owner)",
+ "retrieved_utc": "2026-11-04T23:05:03.5937855Z",
+ "run_id": 41928589143,
+ "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/41928589143",
+ "workflow": "Core CI",
+ "head_sha": "276b06791609c21c88b82f8b978ee1005a99ba6d",
+ "created": "2026-11-04T22:49:23Z",
+ "conclusion": "failure",
+ "jobs": [
+  {
+   "name": "adapters",
+   "conclusion": "success"
+  },
+  {
+   "name": "wheel-smoke (3.12)",
+   "conclusion": "success"
+  },
+  {
+   "name": "wheel-smoke (3.13)",
+   "conclusion": "success"
+  },
+  {
+   "name": "core (3.12)",
+   "conclusion": "failure"
+  },
+  {
+   "name": "wheel-smoke (3.11)",
+   "conclusion": "success"
+  },
+  {
+   "name": "core (3.13)",
+   "conclusion": "failure"
+  },
+  {
+   "name": "core (3.11)",
+   "conclusion": "failure"
+  }
+ ],
+ "log_bytes": 93723,
+ "log_sha256": "59ade4af88b0c8703a69e2961aea169515c57d71d81dbe216c7ea16ca16631e9",
+ "lanes": {
+  "core (3.11)": {
+   "summary": "1 failed, 1950 passed, 3 skipped, 5 deselected",
+   "failing": 1,
+   "file_changed_error": 0,
+   "selectors": {
+    "tests/test_windows_file_metadata.py::test_a_file_protected_by_icacls_still_counts": {
+     "outcome": "FAILED",
+     "message": "AssertionError: D:PAI(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;LA)"
+    }
+   }
+  },
+  "core (3.12)": {
+   "summary": "1 failed, 1950 passed, 3 skipped, 5 deselected, 5 warnings",
+   "failing": 1,
+   "file_changed_error": 0,
+   "selectors": {
+    "tests/test_windows_file_metadata.py::test_a_file_protected_by_icacls_still_counts": {
+     "outcome": "FAILED",
+     "message": "AssertionError: D:PAI(A;;FA;;;LA)(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;OW)"
+    }
+   }
+  },
+  "core (3.13)": {
+   "summary": "1 failed, 1950 passed, 3 skipped, 5 deselected, 5 warnings",
+   "failing": 1,
+   "file_changed_error": 0,
+   "selectors": {
+    "tests/test_windows_file_metadata.py::test_a_file_protected_by_icacls_still_counts": {
+     "outcome": "FAILED",
+     "message": "AssertionError: D:PAI(A;;FA;;;LA)(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;OW)"
+    }
+   }
+  }
+ }
+}

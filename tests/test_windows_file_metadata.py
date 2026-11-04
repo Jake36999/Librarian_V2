@@ -84,11 +84,21 @@ def test_a_protected_key_file_passes_with_or_without_an_integrity_label(tmp_path
 
 
 @windows
-def test_a_file_protected_by_icacls_still_counts(tmp_path):
-    """Key files protected before the API path keep passing the check."""
+def test_an_icacls_protected_file_is_judged_by_its_real_access_list(tmp_path):
+    """Key files protected the old way are judged by what icacls left.
+
+    Unelevated, `icacls /inheritance:r /grant:r` leaves the one entry. On
+    GitHub's elevated runner it kept explicit SYSTEM, Administrators and
+    OWNER RIGHTS entries - observed in run 41928589143 as
+    D:PAI(A;;FA;;;LA)(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;OW) - which is why the
+    hosted key-file check failed. Such a file is not owner-only, and
+    protecting it again through the API repairs it.
+    """
     secret = tmp_path / ".env"
     secret.write_text("", encoding="utf-8")
     principal = keys._windows_principal()
     subprocess.run(["icacls", str(secret), "/inheritance:r", "/grant:r", f"{principal}:F"],
                    capture_output=True, check=True)
-    assert keys.owner_only(secret), keys.dacl_sddl(secret)
+    left = keys.dacl_sddl(secret)
+    assert keys.owner_only(secret) is (left.count("(") == 1), left
+    assert keys._owner_only(secret) and keys.owner_only(secret), keys.dacl_sddl(secret)

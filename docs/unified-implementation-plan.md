@@ -514,7 +514,7 @@ settings, signing or publication.
 | REMED-06/07/08 | Implemented. The REMED-06 exit is met, and task-local timeout stopping was approved. The three uncertain G5 entries are liabilities for MF-002. |
 | ACCEPT-02 | Partial. One original item remains: three-client mixed traffic (MF-001). The owner noted on 2026-11-04 that official Claude Cowork support has ended, so the Claude side is Claude Code (or a subagent) acting as the MCP client. A final-candidate re-run is MF-045. |
 | ACCEPT-01/03, RELEASE-01 | Implemented. Release work continues as MF-044 (acceptance refresh), MF-046 and MF-047 (owner gates) and MF-043a–f (build and release evidence). |
-| Hosted CI | Run 41567602480 (2026-11-03): 1 failure on 3.11, 262 on 3.12 and on 3.13. After the MF-004 fix, run 41912301225: 2, 2 and 3, all key-file checks except one intermittent test on 3.13. The key-file check was reworked (§19); hosted CI is confirmed only by the next push. |
+| Hosted CI | Run 41567602480 (2026-11-03): 1, 262 and 262 failures on 3.11, 3.12 and 3.13. Run 41912301225: 2, 2 and 3. Run 41928589143: 1 each, a compatibility test whose premise the runner disproved; that test is corrected (MF-004, §19) and the result is read from the next run. |
 | §12 and §13 deferrals and decision gates | Retained: full HARNESS-09, DEPLOY-05, CORE-04B and the development-agent profile. Experiments MF-036–041 and MF-048 are conditional, each ending in keep, defer or reject. |
 
 **Order of work:**
@@ -4511,4 +4511,45 @@ the app used those bare names.
 - `npm.cmd --prefix ui run smoke`: 46 steps passed (45 before);
 - `tests/test_obsidian_adapter_contract.py` and the wheel smoke: 13 passed;
 - full suite: 1953 passed, 2 skipped, 5 deselected in 633.71s (0:10:33) (exit 0, Python 3.11.3) (`suite-mf007b-py311.json`).
+
+### MF-004, third pass: the runner's access list observed (2026-11-04)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-004 | implemented; hosted result read from the run this push starts | this commit | `tests/test_windows_file_metadata.py`. Evidence: `ci-41928589143-failures.json`, `suite-mf004d-py311.json`. |
+
+**Hosted run 41928589143, head `276b067`.** Each lane had 1,950 passed and 1
+failed. The failure was the same on every lane:
+`test_a_file_protected_by_icacls_still_counts`.
+- The API-based key-file protection passed on all three lanes, including
+  `test_keys_are_saved_confirmed_and_never_returned`, the original failure.
+- The intermittent 3.13 promotion test passed this time.
+
+**What the runner showed.** The new diagnostic printed the access list that
+`icacls /inheritance:r /grant:r <user>:F` leaves on the runner:
+- 3.12 and 3.13: `D:PAI(A;;FA;;;LA)(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;OW)`;
+- 3.11: `D:PAI(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;LA)`.
+
+The user is `LA`, the built-in Administrator account the runner runs as.
+SYSTEM, Administrators and OWNER RIGHTS keep explicit entries, so the
+icacls-protected file was never owner-only there. That is the original
+hosted cause. Unelevated on this machine, the same command leaves one entry.
+
+**Change.** The compatibility test assumed icacls always leaves one entry, and
+the runner disproved that. It now checks two things:
+- the key-file check matches the real access list: owner-only exactly when one
+  entry remains;
+- protecting the file again through the API makes it owner-only.
+
+The test was renamed `test_an_icacls_protected_file_is_judged_by_its_real_access_list`.
+An installation whose key file kept such extra entries gets it re-protected
+through the API on its next key save, because every fallback-file write
+protects the file. Nothing reports the file in between: the `_owner_only`
+docstring said `doctor` did, but no doctor check calls `owner_only`. The
+docstring is corrected.
+
+**Verification:** the key-file tests passed on 3.11 (13), 3.12 (12) and 3.13
+(12). Full suite: 1953 passed, 2 skipped, 5 deselected in 615.05s (0:10:15) (exit 0, Python 3.11.3) (`suite-mf004d-py311.json`). The run had already
+imported `keys.py` when its docstring was corrected; that edit changes no
+code.
 

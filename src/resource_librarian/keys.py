@@ -195,8 +195,9 @@ def _owner_only(path: Path) -> bool:
     """Windows has no POSIX modes - `chmod(0o600)` leaves the file readable by
     whatever the folder grants. Replace the access list with one protected
     entry for the current user, which is what 0600 means. The Windows API is
-    tried first and `icacls` second. False (never raised) when neither works;
-    `doctor` reports an unprotected file either way."""
+    tried first and `icacls` second. False (never raised) when neither works.
+    Every fallback-file write re-protects the file; nothing else re-checks it
+    between writes."""
     principal = _windows_principal()
     if not principal:
         return False
