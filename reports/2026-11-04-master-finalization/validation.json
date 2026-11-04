@@ -1,0 +1,129 @@
+{
+  "date": "2026-11-04",
+  "source_commit": "40ec923f5d7cb5612939b9fc456963b88e0af4a3",
+  "local_links_checked": 561,
+  "line_anchors_checked": 251,
+  "unique_master_packets": 75,
+  "dependency_graph_acyclic": true,
+  "sql_ddl_syntax": "passed",
+  "errors": [],
+  "report_hashes": {
+    "01-MASTER-SYSTEM-REPORT.md": "bd111b9729c3672f3b703c5b47e27b2b5257af293ee3e94562785f3c4be4fa93",
+    "02-UNIFIED-REQUIREMENTS-AND-SPECIFICATIONS.md": "c93f3842db40cfc0a8213c52bd00533c0ffe4714e1ce02237f201c53ba99ec61",
+    "03-MASTER-FINALIZATION-PLAN.md": "473091e4de665c747bbb1d655c4783d53f75bf28d6c1987aa377d812bf02be1d",
+    "04-PLAN-INTEGRATION-SUMMARY.md": "6ce671b3a8ea6fb9a92f11eb548ea89c3f5c8be1a6d0451032d1f94973d0fb2e"
+  },
+  "source_hashes": {
+    "D:\\Librarian_V2\\docs\\unified-implementation-plan.md": "f570182b385acaa13c14e3697480c60cd9cd2941948875e3ffc6c54c5f3cc854",
+    "D:\\Librarian_V2\\docs\\handoff-2026-10-31-codex.md": "cf00a8d3bedf4070cfad08c7d6d8d0a1a9dd3aba6f45558be40a209dfc67c8f0",
+    "D:\\Librarian_V2\\docs\\regression-manifest.md": "04511e91d5ccc9791d4446e7b387be43e6db3e1cf86dea07f77561f5ff98360b",
+    "D:\\Librarian_V2\\docs\\release-implementation-queue.md": "e39adf2092de9449b04c45646f1349ab4b4fd243588090c07524e60c2397ed31",
+    "D:\\Librarian_V2\\reports\\2026-10-31-accept02-windows-acceptance.md": "b71bcd363627aee7335f20d146d7244adb11d9cc2fc448bb16fd89cbb7748a1a",
+    "D:\\Librarian_V2\\reports\\2026-11-03-accept02-obsidian-dirty.json": "8be7488922e4273bca28d4efb0579f0e12f9f0740b23a58ef3c64e9379e979fe",
+    "D:\\Librarian_V2\\reports\\2026-11-03-accept02-obsidian-secretstorage.json": "c1331d250d274aa6f966b1c00270a90bb6a47315852ab50cd280907d1a5bbe84",
+    "D:\\Librarian_V2\\reports\\2026-11-03-accept02-external-handles.json": "db20ebf76bf7aec72299ec557e345278f9ce8ea1c9769f8e42cad019149527c1",
+    "D:\\Librarian_V2\\reports\\2026-10-30-g5-measurement.md": "a2d05f5d127c653e18f2f69ae1b75eeeec390e0ff64f017273513bf4a5dc78d0",
+    "D:\\Librarian_V2\\docs\\proposals\\memory-context-design-addendum.md": "26e258308ada5966cb62d1bd4c7ee2f9c6d239ec02b4f08cf356ac7d5f994ddd",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\EVOLVING-KNOWLEDGE-BENCHMARK.md": "3777e80500eac22e4fd35ab99170fcdc179b926037f0170f16b52b66d5032f0e",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\EVOLVING-KNOWLEDGE-REVIEW.md": "1da944580d53aadf3eb50c6fb880421d0338b237dc26edfc6d817dd79b385873",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\REQUIREMENTS-RESEARCH.md": "345e6b96ed9a9313740de2e98a620694fdf99cabe8696e55d5ea01ae01615e42",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\REVIEW.md": "30a7be75815a5a25bc29c8ef9f7cca9f0b54dbe499e7aabfd6c29e776d3d7ef5",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\consolidated\\01-SYSTEMS-ASSESSMENT.md": "d722a88ca900715b4f04c632ac805598f365c7327066a223e159a77c847804ba",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\consolidated\\02-DESIGN-DIRECTION.md": "0598167389ea4bce6148a100754082bb6f63aac909f5c2ef5559ce8e773d4141",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\consolidated\\03-RESEARCH-OBJECTIVES.md": "35e733cda082d27aa4ed453edb7878bf47aae09cd208a635b2bd55b244764d64",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\consolidated\\04-THEORY-OF-EVOLVING-KNOWLEDGE.md": "dda67af524b7a712bb0c93eae6ea27a84b53caca771e1aa4083cdaa6237b527d",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\consolidated\\README.md": "9891dfc4a51e7ee91e1ca952f0c09eb327b7d1f12d47afc0252f6719c00fad2f",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\data\\evolving-knowledge-scenarios.json": "182d0221489d8755ac130415282a3d460fe4c468baa7bd79a6da4c13078ca834",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\data\\local-extract-inventory.json": "743c135ae3f5383bc1badab7390ccd3208691d403bbdc47b5f72dc72798f65b5",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\data\\review-evidence.json": "adcbfa92a9f6411bb8ee04a3e462936a4301821ebfed3f47124cd387bd7ffe8c",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\formal-solutions\\FORMAL-CONTRACTS.md": "842c456b037328a810d5d08294e425ade4d9420d5bc4172e94f2a4570d450b3c",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\formal-solutions\\reference-model-results.json": "249c9c322ea606f80b7af7f7a2849478751a17e6cc14434edd27da891d0a4ade",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\formal-solutions\\RESEARCH-FINDINGS.md": "d38a5b6c0d5b94160ca1b7ab955be07812f7eeb7a8e86190cc67626e792ac7fd",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\formal-solutions\\TOOL-DECISIONS.md": "ebc2746c019ce32aa9980c535b4b6c5bcd6fbe475534ee002c0d91f2666a9533",
+    "D:\\Librarian_V2\\reports\\2026-11-03-memory-context-review\\formal-solutions\\tool-snapshots.json": "3deb5cfb2822a62125c0573bb5e0f44be7a9614b86b7bddf04323a04eb37f894",
+    "D:\\Librarian_V2\\reports\\2026-11-04-native-subsystem-review\\DESIGNS.md": "0a099787b24bdc44dad8047dc2bc9ab09b2ee424604c01b2b93d89545d9caa6f",
+    "D:\\Librarian_V2\\reports\\2026-11-04-native-subsystem-review\\PACKETS.md": "5b0abba168627b484a560872636d66ed82d92f35f589bcbea40321314286516f",
+    "D:\\Librarian_V2\\reports\\2026-11-04-native-subsystem-review\\REVIEW.md": "b85c3102c945712c454790e95f628138ff80f85ec20879490e9888b95680f620",
+    "D:\\Librarian_V2\\reports\\2026-11-04-native-subsystem-review\\VALIDATION.md": "112262b939cbf625cb53d28eb0afc5ab52b367b8b15da6a35cd6f7c7edbd8518",
+    "D:\\Librarian_V2\\reports\\2026-11-04-ui-framework-review\\review-evidence.json": "a557aa3fbd7c4866d576fef59cf55c6d1ab04e7bac7f64e48a53449562573864",
+    "D:\\Librarian_V2\\reports\\2026-11-04-ui-framework-review\\UI-DESIGNS.md": "3752218006cdfe0e31b1b5d59721af3a30343569ba42404cb1a847f9dee33967",
+    "D:\\Librarian_V2\\reports\\2026-11-04-ui-framework-review\\UI-PACKETS.md": "e6dc00b5e6d881642a5b20c3b11775ce56235e0f6ec74e4e575855f068bb7684",
+    "D:\\Librarian_V2\\reports\\2026-11-04-ui-framework-review\\UI-REVIEW.md": "470794ce9213f083aca6c35f1ff8e4c1b09861f35a3e436026200e7d8c2cffb7",
+    "D:\\Librarian_V2\\reports\\2026-11-03-development-tooling-review\\ASSESSMENT.md": "969346ea8700d789fb93c1f375a4a21869e798f8212fff5d00dad1ec9e4948c9",
+    "D:\\Librarian_V2\\reports\\2026-11-03-development-tooling-review\\evidence.json": "ed8416eee21f41e9b47eacdb739c14f2be579de800e0bb337375253e6ff3caee",
+    "D:\\Librarian_V2\\reports\\2026-11-03-development-tooling-review\\FRAMEWORK-AND-APPLICATION-PLAN.md": "d45e59db1bdda8562eaaed3945be29c420d802bb386832c1e51d3c9b3df2f3f2",
+    "D:\\Librarian_V2\\docs\\Development transcripts\\# Review Librarian V2 - chatgpt transcript -5.md": "982f6060a341bf46b385b5afb0847f38ade29aa43c34ab45c43666864253ad3e",
+    "D:\\Librarian_V2\\docs\\Development transcripts\\# Review Librarian V2 - chatgpt transcript -7.md": "f32c537d405f6afb0400218cbb2c84561a1d764354964a6be1bf84f88ab25af5",
+    "D:\\Librarian_V2\\docs\\Development transcripts\\# Review Librarian V2 - chatgpt transcript -meta6.md": "68dd38dee1c101e5f3c34c61e4dc4dee5550f89c1c9556db1460c884532128b8",
+    "D:\\Librarian_V2\\reports\\2026-11-04-review-assessment.md": "52a07b866630994bdd491191aecf0069dcf17163dba3f2fb153278fd268d9c6a",
+    "D:\\Librarian_V2\\reports\\2026-11-04-evidence\\suite-40ec923-clean.json": "c7f9aea0a1586116b1220be8be20e31813e2c4491cda05e289620eb849bc75d4",
+    "D:\\Librarian_V2\\reports\\2026-11-04-evidence\\suite-40ec923-clean.log": "80c3f125151c1ba0a5d54a752a14f54be2d5c23ab846c6a8c6b82f3a7ade315d",
+    "C:\\Users\\jakem\\Documents\\Codex\\2026-11-04\\help-me-set-up-web-app\\outputs\\research-synthesis.md": "4e68e385ce436df79a7587485f2aa4665ed34bddaf54d80fcba32202365e451f",
+    "C:\\Users\\jakem\\Documents\\Codex\\2026-11-04\\help-me-set-up-web-app\\outputs\\librarian-research-assessment.md": "bb36529de68262025f7fd55948c59dbd2285da9bb28b08516097221dacf8e10c",
+    "C:\\Users\\jakem\\Documents\\Codex\\2026-11-04\\help-me-set-up-web-app\\outputs\\settings-redesign-plan.md": "2064849c736c7ca2dc03413701c392e7d920048b9953e1fa35846b589b674300",
+    "C:\\Users\\jakem\\Documents\\Codex\\2026-11-04\\help-me-set-up-web-app\\outputs\\settings-layout-concept.png": "937c5d07f2b1463fea3f82cf8a47e3ae55097d20461c6017d7fe77d7fdfa8e8a"
+  },
+  "concept_copy_sha256": "937c5d07f2b1463fea3f82cf8a47e3ae55097d20461c6017d7fe77d7fdfa8e8a",
+  "concept_copy_matches_source": true,
+  "ledger_snapshot": {
+    "sha256": "3f52c99d01ce62e6ba1f88b8d120102f5bc72fff49757f7abd4bbf03b2bfae52",
+    "pools": {
+      "g5": {
+        "budget_usd": 8.0,
+        "committed_usd": 5.57622764
+      }
+    },
+    "uncertain_ids": [
+      "g5-6f67e1617aea",
+      "g5-6cc14337750d",
+      "g5-889befbf09d1"
+    ]
+  },
+  "delegation_ledger_snapshot": {
+    "path": "tmp/deepinfra-delegation/ledger.json",
+    "sha256": "16b6d8930c53e91c60f2261d881386bf1ec647313706b0bd9c69a6a7c17b286e",
+    "pool": "shared",
+    "budget_usd": 12.0,
+    "committed_usd": 0.1551861,
+    "remaining_usd": 11.8448139,
+    "calls": 11,
+    "uncertain_ids": [
+      "20261028T140820-4f1c3480"
+    ]
+  },
+  "suite_run": {
+    "command": [
+      "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "exit_code": 0,
+    "summary": "1939 passed, 2 skipped, 5 deselected in 597.42s (0:09:57)",
+    "head": "40ec923f5d7cb5612939b9fc456963b88e0af4a3",
+    "python": "3.11.3",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "log_sha256": "80c3f125151c1ba0a5d54a752a14f54be2d5c23ab846c6a8c6b82f3a7ade315d"
+  },
+  "not_run": [
+    "Playwright",
+    "Docker",
+    "paid provider calls",
+    "EKP benchmark",
+    "release"
+  ],
+  "planned_nonexistent_test_targets": [
+    "tests/test_capability_digest.py",
+    "tests/test_communities.py",
+    "tests/test_evolving_knowledge.py",
+    "tests/test_knowledge_support.py",
+    "tests/test_knowledge_temporal.py",
+    "tests/test_memory_retrieval.py",
+    "tests/test_memory_withdrawal.py",
+    "tests/test_staging_preview.py",
+    "tests/test_v1_fidelity.py",
+    "tests/test_worker_continuity.py"
+  ]
+}

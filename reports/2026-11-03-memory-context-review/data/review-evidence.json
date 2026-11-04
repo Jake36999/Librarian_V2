@@ -1,0 +1,37 @@
+{
+  "head": "40ec923f5d7cb5612939b9fc456963b88e0af4a3",
+  "local_extract_count": 59,
+  "context_growth": [
+    {
+      "rounds": 10,
+      "messages": 30,
+      "wire_chars": 140495,
+      "estimated_tokens_at_4_chars": 35124
+    },
+    {
+      "rounds": 50,
+      "messages": 150,
+      "wire_chars": 336775,
+      "estimated_tokens_at_4_chars": 84194
+    },
+    {
+      "rounds": 200,
+      "messages": 600,
+      "wire_chars": 1072925,
+      "estimated_tokens_at_4_chars": 268232
+    }
+  ],
+  "probe_limits": "Synthetic view() sizing only; not model accuracy, provider tokenization, a full invocation, or a valid audited event trace.",
+  "focused_tests": {
+    "passed": 84,
+    "seconds": 30.39,
+    "files": [
+      "test_audit_projection.py",
+      "test_result_handles.py",
+      "test_search.py",
+      "test_embed.py",
+      "test_audited_session.py",
+      "test_research_round.py"
+    ]
+  }
+}

@@ -1,0 +1,629 @@
+{
+  "assessed_at": "2026-11-03",
+  "repository": "Jake36999/Librarian_V2",
+  "revision": "40ec923f5d7cb5612939b9fc456963b88e0af4a3",
+  "scope": "Read-only source and remote assessment; reports added only",
+  "branch": {
+    "name": "master",
+    "protected": false,
+    "repository_rulesets": [],
+    "unknown": [
+      "release environment protection",
+      "default workflow token permissions"
+    ]
+  },
+  "run_history": [
+    {
+      "id": 41567602480,
+      "event": "push",
+      "sha": "40ec923f5d7cb5612939b9fc456963b88e0af4a3",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/41567602480",
+      "created_at": "2026-11-03T02:40:50Z",
+      "name": "Core CI"
+    },
+    {
+      "id": 41565052583,
+      "event": "push",
+      "sha": "8ebc979a61f45dcfbd49bca8cbab05999649e1f5",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/41565052583",
+      "created_at": "2026-11-03T02:16:14Z",
+      "name": "Core CI"
+    },
+    {
+      "id": 41564739119,
+      "event": "push",
+      "sha": "7adf42f4370db72b193fda35a20c69708370bac4",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/41564739119",
+      "created_at": "2026-11-03T02:13:15Z",
+      "name": "Core CI"
+    },
+    {
+      "id": 41524772560,
+      "event": "push",
+      "sha": "fa0839cee6568ba7e7486dc58df7fa6fa5827c05",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/41524772560",
+      "created_at": "2026-11-02T21:03:09Z",
+      "name": "Core CI"
+    },
+    {
+      "id": 41524496521,
+      "event": "push",
+      "sha": "7029c68db49f9f3b643249cc0b7eb202b4177c5e",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/41524496521",
+      "created_at": "2026-11-02T21:01:20Z",
+      "name": "Core CI"
+    },
+    {
+      "id": 41067907335,
+      "event": "push",
+      "sha": "a9be71bb5ebc7972df3f66e950c0fa9527be7cd8",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/41067907335",
+      "created_at": "2026-10-30T13:59:44Z",
+      "name": "Core CI"
+    },
+    {
+      "id": 40906356947,
+      "event": "dynamic",
+      "sha": "d52866f686c1127fe9f48fd098442ceb170c79bf",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/40906356947",
+      "created_at": "2026-10-29T15:55:01Z",
+      "name": "Graph Update: pip in /. #1663488304"
+    },
+    {
+      "id": 40906343501,
+      "event": "push",
+      "sha": "d52866f686c1127fe9f48fd098442ceb170c79bf",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/40906343501",
+      "created_at": "2026-10-29T15:54:56Z",
+      "name": "Core CI"
+    },
+    {
+      "id": 40721285191,
+      "event": "push",
+      "sha": "11bdd5b7c7ff9165928bf7f8998965a1b0934fef",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/40721285191",
+      "created_at": "2026-10-28T15:58:11Z",
+      "name": "Core CI"
+    },
+    {
+      "id": 40277366570,
+      "event": "push",
+      "sha": "41907716d45d77abceea59c07665257907d5b7eb",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/40277366570",
+      "created_at": "2026-10-26T06:00:45Z",
+      "name": "Core CI"
+    },
+    {
+      "id": 40277333069,
+      "event": "pull_request",
+      "sha": "7dd5ca43e706df8e25ac9cb2be2665fd52ef1606",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/40277333069",
+      "created_at": "2026-10-26T06:00:26Z",
+      "name": "Core CI"
+    },
+    {
+      "id": 40277241895,
+      "event": "push",
+      "sha": "7dd5ca43e706df8e25ac9cb2be2665fd52ef1606",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/40277241895",
+      "created_at": "2026-10-26T05:59:31Z",
+      "name": "Core CI"
+    },
+    {
+      "id": 40277223539,
+      "event": "push",
+      "sha": "7dd5ca43e706df8e25ac9cb2be2665fd52ef1606",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/40277223539",
+      "created_at": "2026-10-26T05:59:19Z",
+      "name": "Core CI"
+    },
+    {
+      "id": 39961012718,
+      "event": "dynamic",
+      "sha": "df71ada9b5a5adb6a91f4d9cc1eb37f98991377b",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/39961012718",
+      "created_at": "2026-10-23T13:25:02Z",
+      "name": "Graph Update: pip in /. #1647840752"
+    },
+    {
+      "id": 39960976259,
+      "event": "push",
+      "sha": "df71ada9b5a5adb6a91f4d9cc1eb37f98991377b",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/39960976259",
+      "created_at": "2026-10-23T13:24:46Z",
+      "name": "Core CI"
+    },
+    {
+      "id": 36561243208,
+      "event": "dynamic",
+      "sha": "3ddfa3aacd5c498636abe0fa679dc74b11081111",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/36561243208",
+      "created_at": "2026-09-29T11:21:35Z",
+      "name": "Graph Update: pip in /. #1597798844"
+    }
+  ],
+  "latest_jobs": [
+    {
+      "id": 125692783791,
+      "name": "core (3.13)",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_id": 41567602480,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install Core and tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run L0/Core suite",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ]
+    },
+    {
+      "id": 125692784078,
+      "name": "core (3.12)",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_id": 41567602480,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install Core and tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run L0/Core suite",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ]
+    },
+    {
+      "id": 125692784100,
+      "name": "wheel-smoke (3.13)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41567602480,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Build Core wheel",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Smoke clean installed wheel",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ]
+    },
+    {
+      "id": 125692784135,
+      "name": "adapters",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41567602480,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Build browser UI from lockfile",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Build Obsidian adapter from lockfile",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Build packaged adapter artifacts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Smoke packaged Browser and Cowork together",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ]
+    },
+    {
+      "id": 125692784222,
+      "name": "wheel-smoke (3.12)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41567602480,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Build Core wheel",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Smoke clean installed wheel",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ]
+    },
+    {
+      "id": 125692784232,
+      "name": "core (3.11)",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_id": 41567602480,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install Core and tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run L0/Core suite",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ]
+    },
+    {
+      "id": 125692784313,
+      "name": "wheel-smoke (3.11)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41567602480,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Build Core wheel",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Smoke clean installed wheel",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ]
+    }
+  ],
+  "core_summaries": [
+    {
+      "job_id": 125692784232,
+      "summary": [
+        "2026-11-03T02:48:23.5093829Z ===== 1 failed, 1937 passed, 3 skipped, 5 deselected in 416.07s (0:06:56) ====="
+      ]
+    },
+    {
+      "job_id": 125692784078,
+      "summary": [
+        "2026-11-03T02:52:33.7903712Z = 262 failed, 1671 passed, 3 skipped, 5 deselected, 5 warnings, 5 errors in 648.49s (0:10:48) ="
+      ]
+    },
+    {
+      "job_id": 125692783791,
+      "summary": [
+        "2026-11-03T02:52:10.8870791Z = 262 failed, 1671 passed, 3 skipped, 5 deselected, 5 warnings, 5 errors in 619.34s (0:10:19) ="
+      ]
+    }
+  ],
+  "local_checks": {
+    "python": "3.11.3",
+    "node": "24.13.0",
+    "npm": "11.21.0",
+    "powershell": "7.6.5",
+    "pip_check": "No broken requirements found",
+    "pytest": {
+      "command": ".venv\\Scripts\\python.exe -m pytest -q tests/test_release_versions.py tests/test_release_leads.py tests/test_installed_wheel_smoke.py tests/test_packaged_adapter_smoke.py tests/test_workbench_boundaries.py tests/test_sandbox.py",
+      "passed": 40,
+      "limitations": "Includes static script contracts and fake runners. Not full suite or real host acceptance."
+    }
+  }
+}

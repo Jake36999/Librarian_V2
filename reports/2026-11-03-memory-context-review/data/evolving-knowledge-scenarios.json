@@ -1,0 +1,93 @@
+{
+  "status": "proposed_not_executed",
+  "schema": "research_scenario_seeds_v1",
+  "date": "2026-11-03",
+  "notes": [
+    "All facts are invented benchmark ground truth, not claims about real products.",
+    "Events are abstract specifications, not Librarian API calls.",
+    "Expected assertions and future facts must remain hidden from the evaluated agent.",
+    "These seeds require a separately implemented adapter, scoring and held-out variants."
+  ],
+  "scenarios": [
+    {
+      "id": "EKP-01",
+      "name": "Goal pivot preserves historical evidence",
+      "initial": {"goal_revision": 1, "network": "allowed", "measurement": "method_A_latency_10_units_in_env_1", "recommendation": "method_A_uses_network"},
+      "events": [{"kind": "authorized_requirement_revision", "revision": 2, "network": "forbidden"}],
+      "probes": ["What is eligible now?", "Why did we previously choose A?", "Was the old measurement refuted?"],
+      "expected": ["A_inapplicable_to_current_goal", "old_rationale_resolvable", "old_measurement_not_refuted_by_goal_change"]
+    },
+    {
+      "id": "EKP-02",
+      "name": "Selective source revision",
+      "initial": {"supports": {"C1": [["E1_v1", "E2_v1"]], "C2": [["E3_v1"]]}},
+      "events": [{"kind": "source_revision", "old": "E1_v1", "new": "E1_v2", "effect": "old_support_for_C1_no_longer_current"}],
+      "probes": ["Can C1 close now?", "Can C2 still be used?", "What changed?"],
+      "expected": ["C1_needs_recheck", "C2_preserved", "revision_reason_recorded"]
+    },
+    {
+      "id": "EKP-03",
+      "name": "Alternative complete justifications",
+      "initial": {"supports": {"C1": [["E1_v1", "E2_v1"], ["E3_v1"]]}, "support_semantics": "outer_OR_inner_AND", "verified_sufficient_sets": true},
+      "events": [{"kind": "support_withdrawn", "id": "E1_v1"}],
+      "probes": ["Does C1 still have current sufficient support?", "Which basis is now usable?"],
+      "expected": ["C1_remains_supported_by_E3_v1", "incomplete_E1_E2_set_not_claimed_current"]
+    },
+    {
+      "id": "EKP-04",
+      "name": "Exploration is not adoption",
+      "initial": {"operative_goal": "offline_only", "revision": 1},
+      "events": [{"kind": "hypothetical_perspective", "perspective": "cloud_first", "adopted": false}, {"kind": "probe_before_adoption"}, {"kind": "authorized_goal_adoption", "goal": "cloud_allowed", "revision": 2}],
+      "probes": ["What is allowed before adoption?", "What is allowed after adoption?"],
+      "expected": ["offline_constraint_preserved_before_adoption", "scope_changes_only_at_revision_2", "comparison_history_retained"]
+    },
+    {
+      "id": "EKP-05",
+      "name": "Conditional failure becomes obsolete",
+      "initial": {"attempt": "recipe_R_failed_missing_tool_T", "environment": "v1_no_T"},
+      "events": [{"kind": "environment_revision", "version": "v2", "tool_T": "available"}, {"kind": "bounded_recipe_test", "result": "passes_named_check"}],
+      "probes": ["Should R remain banned?", "What does the earlier failure establish?"],
+      "expected": ["R_eligible_only_with_current_qualification", "old_failure_preserved_with_conditions", "no_universal_success_claim"]
+    },
+    {
+      "id": "EKP-06",
+      "name": "Scoped retrieval fallback",
+      "initial": {"projects": ["P1", "P2"], "similar_record": "P2_high_overlap", "allowed_scope": "P1"},
+      "events": [{"kind": "scoped_index_unavailable"}],
+      "probes": ["Find the current method for P1."],
+      "expected": ["no_P2_content_or_summary_leak", "no_unrestricted_fallback", "lookup_gap_visible"]
+    },
+    {
+      "id": "EKP-07",
+      "name": "Replication qualification is versioned",
+      "initial": {"recipe": "R1", "inputs": ["E1_v1"], "environment": "env_v1", "receipt": "R1_pass_env_v1"},
+      "events": [{"kind": "environment_revision", "new": "env_v2", "affected": "operator_O"}],
+      "probes": ["Is the previous run still recorded?", "Can R1 be declared replicated in env_v2?"],
+      "expected": ["old_receipt_retained", "current_qualification_requires_affected_checks", "unrelated_checks_not_erased", "execution_requires_existing_policy"]
+    },
+    {
+      "id": "EKP-08",
+      "name": "Versioned probes and actor separation",
+      "initial": {"agent_probe": "Q1_answered_under_E1_v1", "human_understanding": "no_record", "rubric_access": "evaluator_only"},
+      "events": [{"kind": "source_revision", "new": "E1_v2", "answer_changed": true}],
+      "probes": ["Is Q1 still a current probe?", "Did the person demonstrate understanding?"],
+      "expected": ["Q1_retired_or_revised", "no_human_understanding_from_agent_answer", "rubric_hidden", "probe_pass_not_execution_closure"]
+    },
+    {
+      "id": "EKP-09",
+      "name": "Concurrent stale results and duplicate merge",
+      "initial": {"parent_epoch": 1, "children": ["W1", "W2"], "input_epoch": 1},
+      "events": [{"kind": "parent_requirement_revision", "epoch": 2}, {"kind": "child_result", "id": "W1", "epoch": 1}, {"kind": "duplicate_child_result", "id": "W1"}, {"kind": "restart"}, {"kind": "child_result", "id": "W2", "epoch": 1}],
+      "probes": ["Can either child close current work?", "How many accepted effects did duplicate W1 create?"],
+      "expected": ["no_stale_closure", "no_duplicate_accepted_effect", "cost_reconciled_without_double_counting", "useful_old_material_requires_reassessment"]
+    },
+    {
+      "id": "EKP-10",
+      "name": "Archive return with unavailable evidence",
+      "initial": {"archived": "decision_D1", "references": ["E1_v1", "E2_v1"], "both_required": true},
+      "events": [{"kind": "unrelated_work"}, {"kind": "goal_returns_to_prior_family"}, {"kind": "evidence_unavailable", "id": "E2_v1"}],
+      "probes": ["Why did D1 make sense then?", "Can D1 be reused without qualification now?"],
+      "expected": ["historical_rationale_retained", "missing_required_evidence_disclosed", "no_unqualified_current_reuse", "archive_not_equated_with_falsehood"]
+    }
+  ]
+}

@@ -1,0 +1,769 @@
+[
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/agentai_survey.txt",
+    "sha256": "3ca90e5a875b25f81b67cd78a48a493462ec76bb8d9e90beff439c379ca8ba07",
+    "bytes": 131011,
+    "page_markers": 18,
+    "keyword_counts": {
+      "memory": 4,
+      "retriev": 10,
+      "context": 48,
+      "graph": 15,
+      "communicat": 13
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/api_distill.txt",
+    "sha256": "d69656a58b9b010ffdb29f4a3a813c077a365674a4cc1b086abf60c1604e74f2",
+    "bytes": 98995,
+    "page_markers": 30,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 57,
+      "context": 11,
+      "graph": 15,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/bbql.txt",
+    "sha256": "eae8db7655e4c40be0d7b9c09281af4b307052a89cb97e4531e381191553b82d",
+    "bytes": 31520,
+    "page_markers": 6,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 1,
+      "graph": 0,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/comm_efficient.txt",
+    "sha256": "e3580db57e7e4f14d2093adf8be970c1312168dd03de75a6191ba963a4c7145e",
+    "bytes": 71425,
+    "page_markers": 14,
+    "keyword_counts": {
+      "memory": 3,
+      "retriev": 0,
+      "context": 5,
+      "graph": 0,
+      "communicat": 130
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/confidence_tot.txt",
+    "sha256": "16e0d360efe4aa00196e6e2e9b6056966747b033ed44af2096fd4d7ca31f7c42",
+    "bytes": 98101,
+    "page_markers": 16,
+    "keyword_counts": {
+      "memory": 2,
+      "retriev": 0,
+      "context": 1,
+      "graph": 16,
+      "communicat": 4
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/cybersecurity.txt",
+    "sha256": "04ff647f37434538f3830de767dc58b41f194cea5743aedaf4569411ceef0968",
+    "bytes": 78407,
+    "page_markers": 12,
+    "keyword_counts": {
+      "memory": 4,
+      "retriev": 45,
+      "context": 11,
+      "graph": 6,
+      "communicat": 18
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/directed_drift.txt",
+    "sha256": "612b238af09547c0fb24fceaaa7022f71417f84f95be41d8f84df99b18ddb004",
+    "bytes": 68801,
+    "page_markers": 11,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 1,
+      "context": 2,
+      "graph": 2,
+      "communicat": 2
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/drift_compensation.txt",
+    "sha256": "536320ce890e28daca2f5f4c1ad28e64b23326f89c413cf1dec27dc885168210",
+    "bytes": 48036,
+    "page_markers": 10,
+    "keyword_counts": {
+      "memory": 6,
+      "retriev": 1,
+      "context": 0,
+      "graph": 2,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/embodied_tot.txt",
+    "sha256": "998590945a91b67026ea669a775713629536ab03b0c72485eac159764466e95a",
+    "bytes": 43353,
+    "page_markers": 8,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 0,
+      "graph": 0,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/fa_hrl.txt",
+    "sha256": "ee8a36e6623aed79fa5d1ea27d1691cc79787f76d9a69d626497c191903b2c99",
+    "bytes": 100834,
+    "page_markers": 18,
+    "keyword_counts": {
+      "memory": 12,
+      "retriev": 0,
+      "context": 11,
+      "graph": 3,
+      "communicat": 5
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/goal_decomp_users.txt",
+    "sha256": "47df88d4c44a8307a9bef4e8065c20f62b2f81a548b99cd6c46b43cc58a60ffa",
+    "bytes": 24741,
+    "page_markers": 12,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 1,
+      "context": 1,
+      "graph": 1,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/graph_filtering.txt",
+    "sha256": "7eb4271e7c3fd5b3d92547493998dd6833d0ea1df7c400901518c556227a9a68",
+    "bytes": 48901,
+    "page_markers": 9,
+    "keyword_counts": {
+      "memory": 2,
+      "retriev": 4,
+      "context": 11,
+      "graph": 91,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/hddlgym.txt",
+    "sha256": "8fc782bdaa68a133e793ac8d9e2daf90906b8e0b5d4aa4eea05d582ef6c7c428",
+    "bytes": 53775,
+    "page_markers": 10,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 8,
+      "graph": 1,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/hierarchical_goals.txt",
+    "sha256": "47edaf138a70501f048232e441dd9a6a4d9039d7c8704f705e6b4d603ecb1a4b",
+    "bytes": 61083,
+    "page_markers": 13,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 44,
+      "graph": 0,
+      "communicat": 1
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/homo_agenticus.txt",
+    "sha256": "787b15aa20872ba849262f2957440277f3770fae76cfbdf710fb1258f4432bfc",
+    "bytes": 110656,
+    "page_markers": 18,
+    "keyword_counts": {
+      "memory": 4,
+      "retriev": 0,
+      "context": 12,
+      "graph": 2,
+      "communicat": 11
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/hpr.txt",
+    "sha256": "34d7c1a73acf66bb52478c121c7041eabec150a3d002a5bf5f5f47ca5b978a13",
+    "bytes": 118549,
+    "page_markers": 25,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 1,
+      "context": 16,
+      "graph": 0,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/iac_guidance.txt",
+    "sha256": "d2c8c10e24ad5be9fc76ba1036c9b8da7031efeb724eea1d42dbe5df573a78d2",
+    "bytes": 131961,
+    "page_markers": 34,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 17,
+      "context": 23,
+      "graph": 23,
+      "communicat": 4
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/industrial_soft_sensors.txt",
+    "sha256": "735fa53d8de938c6b03b47f812bb1058ed40b0501c1f2b870c168c4c6bffcbf6",
+    "bytes": 60152,
+    "page_markers": 14,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 0,
+      "context": 3,
+      "graph": 1,
+      "communicat": 2
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/kv_management.txt",
+    "sha256": "8708a31e687750274d0e8313eb89482df70ddfbaf9ca4a4b62834ceed52122da",
+    "bytes": 88114,
+    "page_markers": 14,
+    "keyword_counts": {
+      "memory": 30,
+      "retriev": 15,
+      "context": 40,
+      "graph": 2,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/llm_co.txt",
+    "sha256": "77a89e64ab38416d7f1a86a2f7930f76d226b29010eef7ceaa758f208418a7ad",
+    "bytes": 136077,
+    "page_markers": 26,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 12,
+      "context": 12,
+      "graph": 22,
+      "communicat": 6
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/mask_guided.txt",
+    "sha256": "c4353f7d8d9a9c5b44fd569430ceb185e65f93b80a5c4ab9f0185b35bec52cc3",
+    "bytes": 426326,
+    "page_markers": 65,
+    "keyword_counts": {
+      "memory": 31,
+      "retriev": 5,
+      "context": 53,
+      "graph": 15,
+      "communicat": 2
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/miklipp_validation.txt",
+    "sha256": "843ba50a44a3484d2a51c24fb3b92c78ac6c32436bcd7470a2ed7058c73e7e9b",
+    "bytes": 11927,
+    "page_markers": 2,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 0,
+      "context": 0,
+      "graph": 0,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/mobile_kdr.txt",
+    "sha256": "e1e4a587688390345026b94ac9d59759e441e66d11b9dc6b365be507d2b18e54",
+    "bytes": 54185,
+    "page_markers": 9,
+    "keyword_counts": {
+      "memory": 9,
+      "retriev": 42,
+      "context": 6,
+      "graph": 6,
+      "communicat": 25
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/multiscale_graph.txt",
+    "sha256": "6a89ab6737de7f68d26138956e3e65f4c5bfc849c6b363c33eb5b0030445c6ff",
+    "bytes": 76508,
+    "page_markers": 15,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 1,
+      "context": 1,
+      "graph": 216,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/mutual_influence.txt",
+    "sha256": "f70121f517a2b15616921ddab8b29d606b05255fa71436152490ede4c1a1052c",
+    "bytes": 50142,
+    "page_markers": 13,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 3,
+      "graph": 3,
+      "communicat": 5
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/network_slicing.txt",
+    "sha256": "1d358e3b9a5b89070050f172b3070ef0596336d97314dea3b005b3f1de69ad07",
+    "bytes": 29771,
+    "page_markers": 5,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 1,
+      "graph": 0,
+      "communicat": 8
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/pedagogy.txt",
+    "sha256": "431ab514e543ca3abc995781e5c6993c014c82438c859c5ec14ddf446d0a196b",
+    "bytes": 21014,
+    "page_markers": 3,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 12,
+      "graph": 1,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/pql_analyzer.txt",
+    "sha256": "029670363584ab01b472ff87da88e1b68c9b94b14b5b11bd2e59f818d8c259f5",
+    "bytes": 88239,
+    "page_markers": 19,
+    "keyword_counts": {
+      "memory": 3,
+      "retriev": 3,
+      "context": 4,
+      "graph": 15,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/qrt.txt",
+    "sha256": "fbd9255e87f4c43ee4802905d3c29be84cef91bce3a6f3cd30b2bcd27d484507",
+    "bytes": 16263,
+    "page_markers": 3,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 0,
+      "graph": 0,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/reasoning_age.txt",
+    "sha256": "2c618eb348bb14b13cb2eaa1559a467471baeb4326cabd9946520b21373800b2",
+    "bytes": 158453,
+    "page_markers": 21,
+    "keyword_counts": {
+      "memory": 73,
+      "retriev": 16,
+      "context": 41,
+      "graph": 11,
+      "communicat": 21
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/reflectichain_full.txt",
+    "sha256": "479f01b1a8587592b056544e108ad60288d0531e796d988fb9ccdb2e17d0eb4a",
+    "bytes": 95811,
+    "page_markers": 29,
+    "keyword_counts": {
+      "memory": 18,
+      "retriev": 3,
+      "context": 16,
+      "graph": 7,
+      "communicat": 2
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_01.txt",
+    "sha256": "d29a3dca19c03b95667b1959f811cba15c067909c5d84006aab5a5eb629b824c",
+    "bytes": 208282,
+    "page_markers": 30,
+    "keyword_counts": {
+      "memory": 92,
+      "retriev": 47,
+      "context": 72,
+      "graph": 5,
+      "communicat": 47
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_02.txt",
+    "sha256": "1a6fec47034b4eb54e369f97ae0b658b17a8b8e8a3bb14c2927ca9d8e911041d",
+    "bytes": 96725,
+    "page_markers": 28,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 22,
+      "context": 22,
+      "graph": 189,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_03.txt",
+    "sha256": "40d7a41fe4cc6e8202b5f43575e2df2b27f80c1c4124343eea5158d5c2317030",
+    "bytes": 89021,
+    "page_markers": 16,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 1,
+      "graph": 11,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_04.txt",
+    "sha256": "7fb431ce60f9dd4e49f924a1ba544c73bf2523d95a76aa69008b0c19b8a5cc33",
+    "bytes": 68756,
+    "page_markers": 22,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 3,
+      "context": 4,
+      "graph": 129,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_05.txt",
+    "sha256": "13d2e84d2e831cf78e0791f29021386edda5379d19e967944cbedf21dad49ce6",
+    "bytes": 67850,
+    "page_markers": 15,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 0,
+      "graph": 0,
+      "communicat": 14
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_06.txt",
+    "sha256": "e192ad8b649fb4bf2d59db2b427a8c67b3419d26a399c5355bf7df759cbb629e",
+    "bytes": 130737,
+    "page_markers": 27,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 3,
+      "graph": 23,
+      "communicat": 3
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_07.txt",
+    "sha256": "3840cd135a237f6fe3ef456ce41f9579e1797418cea3e8e951984aee3f335cc6",
+    "bytes": 151398,
+    "page_markers": 38,
+    "keyword_counts": {
+      "memory": 12,
+      "retriev": 9,
+      "context": 19,
+      "graph": 9,
+      "communicat": 10
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_08.txt",
+    "sha256": "03f6ffc80d2c94f15a88e97c84835c95fa2651a643b6402e94deb0661b0d0811",
+    "bytes": 77321,
+    "page_markers": 12,
+    "keyword_counts": {
+      "memory": 2,
+      "retriev": 4,
+      "context": 1,
+      "graph": 179,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_09.txt",
+    "sha256": "9f97bc153d56448e4a4b7fceccb3c87b1ceba5e496f2e0752a7100535115694d",
+    "bytes": 83717,
+    "page_markers": 17,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 0,
+      "context": 1,
+      "graph": 0,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_10.txt",
+    "sha256": "8a70cfda1bed0391ea67bb5163d5e79cd36cbd87dbc3e34e239387b951e3b2b3",
+    "bytes": 67655,
+    "page_markers": 13,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 0,
+      "context": 0,
+      "graph": 4,
+      "communicat": 26
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_11.txt",
+    "sha256": "e9521e80b6fe7caa6e388494bd48cea41b7bc9135574f3dff813c5bf73d45421",
+    "bytes": 110828,
+    "page_markers": 18,
+    "keyword_counts": {
+      "memory": 5,
+      "retriev": 0,
+      "context": 7,
+      "graph": 21,
+      "communicat": 3
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_12.txt",
+    "sha256": "e2ab9fc60b8af74b1f155cde3f5757b8966307e4a5b1c6742581f6e39955752c",
+    "bytes": 98937,
+    "page_markers": 30,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 57,
+      "context": 11,
+      "graph": 15,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_13.txt",
+    "sha256": "c531589c76038e9a8debc7db56734b671c837466fc08fd7aa3930996d6edb9c6",
+    "bytes": 68522,
+    "page_markers": 19,
+    "keyword_counts": {
+      "memory": 5,
+      "retriev": 3,
+      "context": 62,
+      "graph": 161,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_14.txt",
+    "sha256": "f0af7ee5b5ab036e566134914e856fbdc0298c6e3e7556389ba28b7dd9788bec",
+    "bytes": 147632,
+    "page_markers": 34,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 2,
+      "graph": 0,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/sed.txt",
+    "sha256": "758467d19c9416478528c61b4db10505856343b41b6afc1c52a12f6146a8b224",
+    "bytes": 28841,
+    "page_markers": 5,
+    "keyword_counts": {
+      "memory": 4,
+      "retriev": 0,
+      "context": 7,
+      "graph": 1,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/soa_coordination.txt",
+    "sha256": "a5b3337db922a1f9a807fc8e633d553429c8d5551a34591425b4c2369d79bd84",
+    "bytes": 52234,
+    "page_markers": 10,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 1,
+      "graph": 3,
+      "communicat": 21
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/tms.txt",
+    "sha256": "e7b92bcdb707b9ee7e6a3540043122d5fa7c10fb61ca1f84ee1feb6f1257228f",
+    "bytes": 77353,
+    "page_markers": 16,
+    "keyword_counts": {
+      "memory": 6,
+      "retriev": 1,
+      "context": 2,
+      "graph": 17,
+      "communicat": 2
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/vikser.txt",
+    "sha256": "7083bd06ad661c35c57b5705d93a056db01e3b043927f0188ebf56f6348fabb7",
+    "bytes": 68967,
+    "page_markers": 13,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 1,
+      "context": 6,
+      "graph": 6,
+      "communicat": 3
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/visual_abduction.txt",
+    "sha256": "1a07af81636be4b56e58a7959db768a994773235944ccad5bbcf0b88f7050eb0",
+    "bytes": 95164,
+    "page_markers": 15,
+    "keyword_counts": {
+      "memory": 6,
+      "retriev": 26,
+      "context": 33,
+      "graph": 20,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-29-long-horizon-harness-research/data/paper_text/worker_study.txt",
+    "sha256": "bf338a03aea078c9935c78b41746064c74ff142dde6b0446c458a9ddc4339e94",
+    "bytes": 170764,
+    "page_markers": 56,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 9,
+      "context": 61,
+      "graph": 2,
+      "communicat": 24
+    }
+  },
+  {
+    "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-01.txt",
+    "sha256": "67c1794b20b3e3cef0c94ea367d82070a8ac47776b80062e14d9256e4106bb3c",
+    "bytes": 92400,
+    "page_markers": 16,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 0,
+      "context": 3,
+      "graph": 0,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-02.txt",
+    "sha256": "415d15dd5c6e347545923b5b2869dc4f37741c79d254bd8e909e52778eb56318",
+    "bytes": 21406,
+    "page_markers": 5,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 8,
+      "context": 11,
+      "graph": 4,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-03.txt",
+    "sha256": "3ec756cf88e482cf5d80f8c0949983ae3d9d493037bc4d49a00c8a7e69f22b23",
+    "bytes": 56433,
+    "page_markers": 10,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 16,
+      "graph": 1,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-04.txt",
+    "sha256": "7da467a803fdb4de35e93902f9f39a95edb2929d5b14c896450f6370ed3816be",
+    "bytes": 71005,
+    "page_markers": 19,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 25,
+      "context": 25,
+      "graph": 6,
+      "communicat": 1
+    }
+  },
+  {
+    "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-05.txt",
+    "sha256": "4f0ca324818133a608f6bed850aee5fb1dfcfa518386cb24bda2d8f026ef8ffa",
+    "bytes": 73037,
+    "page_markers": 15,
+    "keyword_counts": {
+      "memory": 3,
+      "retriev": 3,
+      "context": 19,
+      "graph": 9,
+      "communicat": 2
+    }
+  },
+  {
+    "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-06.txt",
+    "sha256": "74546bf1b9313e3215abae4ede3ccf1f541958daaa692c5a21cc68cbbf9fe007",
+    "bytes": 21334,
+    "page_markers": 6,
+    "keyword_counts": {
+      "memory": 1,
+      "retriev": 1,
+      "context": 2,
+      "graph": 1,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-07.txt",
+    "sha256": "36eef83c33071a9e4f25baecc861d9fee229590bea33d6411b5de285a14197c6",
+    "bytes": 13102,
+    "page_markers": 3,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 0,
+      "context": 2,
+      "graph": 1,
+      "communicat": 0
+    }
+  },
+  {
+    "path": "reports/2026-10-30-runtime-tooling-literature/data/paper_text/new-08.txt",
+    "sha256": "740bfe9dadd61c92e8b4330dd7e238d0ed4bfc8ab180c3d94bd97b76ea082de0",
+    "bytes": 18372,
+    "page_markers": 6,
+    "keyword_counts": {
+      "memory": 0,
+      "retriev": 4,
+      "context": 2,
+      "graph": 0,
+      "communicat": 0
+    }
+  }
+]

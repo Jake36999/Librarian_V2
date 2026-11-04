@@ -1,0 +1,35 @@
+{
+ "command": [
+  "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "D:\\Librarian_V2",
+ "exit_code": 0,
+ "summary": "1939 passed, 2 skipped, 5 deselected in 606.78s (0:10:06)",
+ "started_utc": "2026-11-04T17:49:17.408315+00:00",
+ "seconds": 607.8,
+ "head": "40ec923f5d7cb5612939b9fc456963b88e0af4a3",
+ "tracked_changes": [
+  "M docs/handoff-2026-10-31-codex.md",
+  " M docs/regression-manifest.md",
+  " M docs/terminology.md",
+  " M docs/unified-implementation-plan.md",
+  " M obsidian/dist/main.js",
+  " M obsidian/dist/styles.css",
+  " M src/resource_librarian/ui/app.css",
+  " M src/resource_librarian/ui/app.js",
+  " M ui/smoke.mjs",
+  " M ui/src/main.ts",
+  " M ui/src/settings.ts",
+  " M ui/src/style.css"
+ ],
+ "python": "3.11.3",
+ "executable": "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-mf003-005-007.log",
+ "log_sha256": "b204d7ab217a2a09ae29660b991f46843a46c81762e8c963428ccf1de5c7893b"
+}

@@ -1,0 +1,104 @@
+{
+  "status": "executed_abstract_finite_models_not_runtime_verification",
+  "assumptions": [
+    "atomic transitions",
+    "two workers",
+    "two parent revisions",
+    "at most two result deliveries per worker",
+    "one budgeted attempt per worker",
+    "declared support sets"
+  ],
+  "worker_guarded": {
+    "holds": true,
+    "states_seen": 97,
+    "transitions": 148
+  },
+  "worker_without_revision_guard": {
+    "holds": false,
+    "states_seen": 29,
+    "transitions": 34,
+    "counterexample": [
+      "dispatch worker 0 at revision 0",
+      "revise parent to 1",
+      "deliver worker 0: accept"
+    ],
+    "bad_state": [
+      1,
+      [
+        0,
+        -1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      true
+    ]
+  },
+  "worker_without_duplicate_guard": {
+    "holds": false,
+    "states_seen": 34,
+    "transitions": 40,
+    "counterexample": [
+      "dispatch worker 0 at revision 0",
+      "deliver worker 0: accept",
+      "deliver worker 0: accept"
+    ],
+    "bad_state": [
+      0,
+      [
+        0,
+        -1
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        2,
+        0
+      ],
+      false
+    ]
+  },
+  "budget_atomic": {
+    "holds": true,
+    "states_seen": 5,
+    "transitions": 6
+  },
+  "budget_check_then_write": {
+    "holds": false,
+    "states_seen": 14,
+    "transitions": 19,
+    "counterexample": [
+      "worker 0: precheck",
+      "worker 1: precheck",
+      "worker 0: commit old precheck",
+      "worker 1: commit old precheck"
+    ],
+    "bad_state": [
+      [
+        2,
+        2
+      ],
+      4,
+      0
+    ]
+  },
+  "support_sets": {
+    "boolean_valuations": 8,
+    "unknown_cases": 2,
+    "holds": true,
+    "flattening_counterexample": {
+      "a": false,
+      "b": false,
+      "c": true,
+      "qualified_support_exists": true,
+      "incorrect_flat_AND": false
+    }
+  }
+}

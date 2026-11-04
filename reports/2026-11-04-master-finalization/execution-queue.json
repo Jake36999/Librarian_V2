@@ -1,0 +1,2162 @@
+[
+  {
+    "id": "MF-001",
+    "wave": "0",
+    "aliases": "ACCEPT-02",
+    "title": "Close original mixed-client acceptance",
+    "lane": "HOST",
+    "files": [
+      "reports/2026-10-31-accept02-windows-acceptance.md"
+    ],
+    "deps": [],
+    "done": "Real Browser, Obsidian 1.12.7 or newly recorded version, and real Claude/Cowork MCP concurrently use one compatible Core in a disposable vault; one lease, ordered writes, valid JSONL, no SQLITE_BUSY, preserved dirty note, close/reconnect a client without replay; record exact candidate hashes and versions. Protocol smoke alone cannot close it.",
+    "tests": [
+      "test_mcp.py",
+      "test_core_mixed_acceptance.py",
+      "test_obsidian_adapter_contract.py"
+    ],
+    "extra": "Installed/real-host gate H; repeat on final artifacts in MF-045.",
+    "release": "required",
+    "milestone": "1",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-002",
+    "wave": "0",
+    "aliases": "REMED-06/08",
+    "title": "Reconcile measurement record and uncertain liabilities",
+    "lane": "DOC",
+    "files": [
+      "reports/2026-10-30-g5-measurement.md"
+    ],
+    "deps": [],
+    "done": "Preserve completed pilot and approved task-local timeout policy. Owner reconciles all three uncertain IDs from provider evidence or records still uncertain at full reservation; no automatic refund, rerun or reopening of the completed pilot.",
+    "tests": [
+      "test_paid_dispatch.py",
+      "test_remed08_measures.py"
+    ],
+    "extra": "Ledger is read-only for drafting; settlement requires owner evidence/decision, outside this pass.",
+    "release": "required",
+    "milestone": "1",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-003",
+    "wave": "0",
+    "aliases": "BASE-03/04/05; NAT-17",
+    "title": "Adopt status/crosswalk and terminology refresh",
+    "lane": "DOC",
+    "files": [
+      "docs/unified-implementation-plan.md",
+      "docs/regression-manifest.md",
+      "docs/terminology.md",
+      "docs/handoff-2026-10-31-codex.md"
+    ],
+    "deps": [],
+    "done": "After master-plan approval, current rows match latest progress entries; old rows explicitly historical; new packets/tests labeled planned; aliases and current release gates reconciled. No completed implementation is requeued.",
+    "tests": [
+      "test_source_identity.py"
+    ],
+    "extra": "Documentation only; current pass supplies proposed edits in document 04.",
+    "release": "required",
+    "milestone": "1",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-004",
+    "wave": "0",
+    "aliases": "DT-01",
+    "title": "Establish current CI acceptance evidence",
+    "lane": "BUILD",
+    "files": [
+      ".github/workflows/ci.yml",
+      "tests/test_app.py"
+    ],
+    "deps": [],
+    "done": "Recheck current hosted failures and identify exact failing tests before allocating edits; restore supported Python lanes and retain reports. Export actual branch-rule evidence or record external block; historical red CI is not asserted as current.",
+    "tests": [
+      "test_source_identity.py",
+      "test_app.py"
+    ],
+    "extra": "Exact failing selectors must come from fresh CI, not guessed from review. Provisional file ownership; confirm workflow paths at packet admission. Observed 2026-11-04 via the Actions API: Core CI fails its L0/Core suite step on Python 3.11, 3.12 and 3.13 at 40ec923 and on every push since 2026-10-29, while wheel smoke and adapters pass and the local suite passes (1,939 passed). Job logs need repository authentication.",
+    "release": "required",
+    "milestone": "1",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "observed 2026-11-04"
+  },
+  {
+    "id": "MF-005",
+    "wave": "1A",
+    "aliases": "UI-01; G01/G02",
+    "title": "Preserve composer and separate Stop",
+    "lane": "UI",
+    "files": [
+      "ui/src/main.ts"
+    ],
+    "deps": [],
+    "done": "409 and transport ambiguity retain submitted text/attachments; pending prevents duplicate POST; success clears only its snapshot; Enter while busy never cancels; explicit Stop waits for canonical outcome.",
+    "tests": [],
+    "extra": "B: admission/attachment/late-edit/cancel assertions.",
+    "release": "required",
+    "milestone": "2",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-006",
+    "wave": "1A",
+    "aliases": "UI-02; G19",
+    "title": "Make mutation feedback truthful",
+    "lane": "UI",
+    "files": [
+      "ui/src/main.ts",
+      "ui/src/panels.ts",
+      "obsidian/src/main.ts"
+    ],
+    "deps": [
+      "MF-005"
+    ],
+    "done": "Failed mode/effort/Forget/clear restores confirmed state and visible error; pending cancellation explicit; checkpoint resolution never retries effects; mount/meta failure offers ordinary retry without takeover.",
+    "tests": [
+      "test_obsidian_adapter_contract.py"
+    ],
+    "extra": "B; typed stale-lease recovery is the sole takeover path.",
+    "release": "required",
+    "milestone": "2",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-007",
+    "wave": "1A",
+    "aliases": "UI-03; G04/G05",
+    "title": "Isolate all owned CSS and DOM tokens",
+    "lane": "UI",
+    "files": [
+      "ui/src/style.css",
+      "ui/src/main.ts",
+      "ui/src/panels.ts",
+      "ui/src/chat.ts",
+      "ui/src/views.ts",
+      "ui/src/settings.ts",
+      "ui/src/pane.ts",
+      "ui/src/markdown.ts",
+      "ui/src/speech.ts",
+      "ui/src/attach.ts"
+    ],
+    "deps": [],
+    "done": "Both CSS directions checked against appendix inventory; every dialog branch rooted; high-collision owned classes and modifiers namespaced across emitters/selectors; foreign dialog unchanged; old model-card fix retained.",
+    "tests": [
+      "test_obsidian_adapter_contract.py"
+    ],
+    "extra": "B plus generated asset parity; exclusive UI-wide rename lease before other UI changes land.",
+    "release": "required",
+    "milestone": "2",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-008",
+    "wave": "1A",
+    "aliases": "UI-04; UI-05 prerequisite slice; G03",
+    "title": "Use root containers and minimum overlay lifecycle",
+    "lane": "UI",
+    "files": [
+      "ui/src/style.css",
+      "ui/src/main.ts",
+      "ui/src/panels.ts",
+      "ui/src/pane.ts"
+    ],
+    "deps": [
+      "MF-007"
+    ],
+    "done": "Named @container adapts at 320/420/760/1100 widths in a wide window; split is clamped; resize preserves drafts; overlay focus/instance IDs/listener disposal needed by session dialogs exists now. Remaining UI-05 ergonomics stays MF-025.",
+    "tests": [],
+    "extra": "B; 420px query >=280px; main >=360px when split fits; short-root height.",
+    "release": "required",
+    "milestone": "2",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-009",
+    "wave": "1A",
+    "aliases": "UI-07; G11/G12",
+    "title": "Expose legacy/stale lifecycle",
+    "lane": "UI",
+    "files": [
+      "ui/src/chat.ts",
+      "ui/src/panels.ts"
+    ],
+    "deps": [
+      "MF-008"
+    ],
+    "done": "Empty and nonempty legacy histories show read-only banner despite invalid empty string; new audited session is separate; historical results and changed files visible without invented path-to-predicate causality.",
+    "tests": [
+      "test_predicate_inspector.py",
+      "test_closure_lifecycle.py"
+    ],
+    "extra": "B uses real disposable Session fixtures, not just mocked business state.",
+    "release": "required",
+    "milestone": "2",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-010",
+    "wave": "1A",
+    "aliases": "UI-08; G13/G14; D3 bridge",
+    "title": "Show durable stop reasons and safe revision forms",
+    "lane": "SESSION",
+    "files": [
+      "src/resource_librarian/audit_projection.py",
+      "src/resource_librarian/session.py",
+      "src/resource_librarian/tools/sessions.py",
+      "ui/src/chat.ts",
+      "ui/src/api.ts"
+    ],
+    "deps": [
+      "MF-009"
+    ],
+    "done": "reason/source survive projection and session_status restart; text-only revision retains exact predicates/verifier parameters; refusal details and skeleton on demand; fits=false disables admission; no invented CAS for set_requirement.",
+    "tests": [
+      "test_audit_projection.py",
+      "test_admission_usability.py",
+      "test_predicate_inspector.py"
+    ],
+    "extra": "B; shared UI edits integrate under UI lease; bridge uses existing events, not a second log. REMED-08: three of eight MiMo sessions were parked whole, because the proposal named every requirement; the stop reason must say when a park left no independent work.",
+    "release": "required",
+    "milestone": "2",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-011",
+    "wave": "1B",
+    "aliases": "MEM-01/02; MC-01/02/16",
+    "title": "Measure and bound complete provider requests",
+    "lane": "CONTEXT",
+    "files": [
+      "src/resource_librarian/loop.py",
+      "src/resource_librarian/model_invocation.py",
+      "src/resource_librarian/audit_projection.py"
+    ],
+    "deps": [],
+    "done": "Post-render system/schema/continuation/history/evidence plus output reserve fit supported route bounds at 50/200 rounds or dispatch parks; protected constraints and tool pairs survive; counters record method/error margin without prompt leakage.",
+    "tests": [
+      "test_prompt_size.py",
+      "test_loop.py",
+      "test_audit_projection.py",
+      "test_prompt_layout.py",
+      "test_openai_chat_adapter.py",
+      "test_anthropic_messages_adapter.py"
+    ],
+    "extra": " REMED-07 measured 27,470 bytes (OpenAI-compatible) and 28,529 bytes (Anthropic) at 50 rounds: this is a missing guarantee, not an observed overflow.",
+    "release": "fix-or-disable",
+    "milestone": "2",
+    "blocking_if": "the capability ships enabled with the defect unfixed",
+    "fallback": "disable it, or mark it unsupported in the capability matrix with the limitation in the release notes",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-012",
+    "wave": "1B",
+    "aliases": "MEM-03; MEM-12 foundation; MC-03/06/07/14",
+    "title": "Make durable references cross restart and worker boundaries",
+    "lane": "CONTEXT",
+    "files": [
+      "src/resource_librarian/result_handles.py",
+      "src/resource_librarian/evidence.py",
+      "src/resource_librarian/tools/results.py"
+    ],
+    "deps": [
+      "MF-011"
+    ],
+    "done": "Durable reference resolves exact bytes after worker exit/Core restart through current authorization; legacy ephemeral handles stay isolated; changed/missing/expired/forbidden/withdrawn are distinct; no handle opens arbitrary files.",
+    "tests": [
+      "test_result_handles.py",
+      "test_evidence.py"
+    ],
+    "extra": "New durable cases extend existing target; cross-scope metadata must not leak.",
+    "release": "fix-or-disable",
+    "milestone": "2",
+    "blocking_if": "the capability ships enabled with the defect unfixed",
+    "fallback": "disable it, or mark it unsupported in the capability matrix with the limitation in the release notes",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-013",
+    "wave": "1B",
+    "aliases": "NAT-01",
+    "title": "Fingerprint deep-read chunks",
+    "lane": "INGEST",
+    "files": [
+      "src/resource_librarian/deep_read.py",
+      "src/resource_librarian/lens_gold.py"
+    ],
+    "deps": [],
+    "done": "Equal-count edits/reorders invalidate old extraction; text/chunker/representation identity governs reuse; count-only legacy progress is explicitly stale.",
+    "tests": [
+      "test_deep_read.py",
+      "test_lens_gold.py"
+    ],
+    "extra": "",
+    "release": "fix-or-disable",
+    "milestone": "2",
+    "blocking_if": "the capability ships enabled with the defect unfixed",
+    "fallback": "disable it, or mark it unsupported in the capability matrix with the limitation in the release notes",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-014",
+    "wave": "1B",
+    "aliases": "NAT-02",
+    "title": "Preserve document chunks through rename",
+    "lane": "INDEX",
+    "files": [
+      "src/resource_librarian/index.py",
+      "src/resource_librarian/document_identity.py"
+    ],
+    "deps": [],
+    "done": "One transaction reconciles identity/chunks before orphan deletion; unique move preserves IDs/FTS/vectors; edited attachments and ambiguous copies do not cross-attach; unsettled orphan chunks remain non-searchable and recoverable.",
+    "tests": [
+      "test_document_identity.py",
+      "test_core_index_service.py",
+      "test_embed.py"
+    ],
+    "extra": "",
+    "release": "fix-or-disable",
+    "milestone": "2",
+    "blocking_if": "the capability ships enabled with the defect unfixed",
+    "fallback": "disable it, or mark it unsupported in the capability matrix with the limitation in the release notes",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-015",
+    "wave": "1B",
+    "aliases": "NAT-04; DT-06 quota slice; G18",
+    "title": "Qualify disk-backed Docker quotas and admission",
+    "lane": "EXEC",
+    "files": [
+      "src/resource_librarian/sandbox.py",
+      "src/resource_librarian/workbench.py"
+    ],
+    "deps": [],
+    "done": "Actual Windows/WSL2 backend has verified disk-backed byte/inode enforcement for contained profile, setup/log/export/global caps, digest identity and preflight; unsupported backend refuses. Live rapid-write/tiny-file/concurrent floods meet limits. Polling alone is not a hard quota.",
+    "tests": [
+      "test_sandbox.py",
+      "test_workbench_boundaries.py",
+      "test_accept_workbench.py"
+    ],
+    "extra": "H Docker; no RAM-backed artifact tmpfs, no supervisor daemon. Backend remains a qualification gate, not assumed Docker Desktop capability.",
+    "release": "fix-or-disable",
+    "milestone": "3",
+    "blocking_if": "the capability ships enabled with the defect unfixed",
+    "fallback": "disable it, or mark it unsupported in the capability matrix with the limitation in the release notes",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-016",
+    "wave": "1B",
+    "aliases": "NAT-05; DT-06 teardown slice; G18",
+    "title": "Stop producers before bounded quarantine export",
+    "lane": "EXEC",
+    "files": [
+      "src/resource_librarian/sandbox.py",
+      "src/resource_librarian/workbench.py",
+      "src/resource_librarian/claim_run.py"
+    ],
+    "deps": [
+      "MF-015"
+    ],
+    "done": "No --rm; idempotent stop/kill plus verified stopped inspect precedes docker cp tar stream into private quarantine; links/escapes/truncation/size/count/depth rejected; cleanup_unknown blocks success; remove only after export disposition.",
+    "tests": [
+      "test_sandbox.py",
+      "test_claim_run.py",
+      "test_workbench_boundaries.py"
+    ],
+    "extra": "H Docker; stdout/stderr and I/O circuit-breakers retain bounded tails and declared overshoot.",
+    "release": "fix-or-disable",
+    "milestone": "3",
+    "blocking_if": "the capability ships enabled with the defect unfixed",
+    "fallback": "disable it, or mark it unsupported in the capability matrix with the limitation in the release notes",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-017",
+    "wave": "1B",
+    "aliases": "NAT-06",
+    "title": "Pin recursive workflow definition closure",
+    "lane": "RECIPE",
+    "files": [
+      "src/resource_librarian/workflows.py"
+    ],
+    "deps": [],
+    "done": "At start retain all reachable child definitions and route target digests; resume uses pinned bytes or refuses drift; cycle/unknown action rejected; no current-name child substitution.",
+    "tests": [
+      "test_workflows.py"
+    ],
+    "extra": "",
+    "release": "fix-or-disable",
+    "milestone": "3",
+    "blocking_if": "the capability ships enabled with the defect unfixed",
+    "fallback": "disable it, or mark it unsupported in the capability matrix with the limitation in the release notes",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-018",
+    "wave": "1B",
+    "aliases": "NAT-07",
+    "title": "Reconcile workflow and macro step effects",
+    "lane": "RECIPE",
+    "files": [
+      "src/resource_librarian/workflows.py",
+      "src/resource_librarian/tools/macros.py"
+    ],
+    "deps": [
+      "MF-017"
+    ],
+    "done": "Durable intent before dispatch and result after; crashes before/after effects resolve reusable/safe retry/outcome_unknown; mutating default never blindly repeats; Registry/Broker checks and expanded macro approval retained.",
+    "tests": [
+      "test_workflows.py",
+      "test_macro_permissions.py",
+      "test_operation_recovery.py"
+    ],
+    "extra": "",
+    "release": "fix-or-disable",
+    "milestone": "3",
+    "blocking_if": "the capability ships enabled with the defect unfixed",
+    "fallback": "disable it, or mark it unsupported in the capability matrix with the limitation in the release notes",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-019",
+    "wave": "1B",
+    "aliases": "NAT-11; MC-10 service portion",
+    "title": "Serialize service reservations including global TTS",
+    "lane": "SERVICE",
+    "files": [
+      "src/resource_librarian/service_routes.py",
+      "src/resource_librarian/tts.py",
+      "src/resource_librarian/stt.py"
+    ],
+    "deps": [],
+    "done": "Two vault Cores share a process-safe personal cap; reserve before send; retries and repairs charged; timeout/late result retains liability; cache/replay settles once; cancellation and error taxonomy retained.",
+    "tests": [
+      "test_tts.py",
+      "test_stt.py",
+      "test_service_routes.py",
+      "test_service_adapters.py"
+    ],
+    "extra": "",
+    "release": "fix-or-disable",
+    "milestone": "3",
+    "blocking_if": "the capability ships enabled with the defect unfixed",
+    "fallback": "disable it, or mark it unsupported in the capability matrix with the limitation in the release notes",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-020",
+    "wave": "1B",
+    "aliases": "NAT-13",
+    "title": "Bind migration and batch reuse to one byte snapshot",
+    "lane": "INGEST",
+    "files": [
+      "src/resource_librarian/v1_export.py",
+      "src/resource_librarian/batch.py"
+    ],
+    "deps": [],
+    "done": "Parse and evidence use same immutable read; content/stage/recipe/route identity enters batch key; mutations during waits cannot settle stale output; older completion cannot satisfy changed input.",
+    "tests": [
+      "test_v1_export.py",
+      "test_core_batch.py",
+      "test_core_source_batch.py"
+    ],
+    "extra": "",
+    "release": "fix-or-disable",
+    "milestone": "3",
+    "blocking_if": "the capability ships enabled with the defect unfixed",
+    "fallback": "disable it, or mark it unsupported in the capability matrix with the limitation in the release notes",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-021",
+    "wave": "2",
+    "aliases": "MEM-04/07; MC-06/07/08/09/10",
+    "title": "Structured worker handoff, merge and aggregate budget",
+    "lane": "CONTEXT",
+    "files": [
+      "src/resource_librarian/tools/delegate.py",
+      "src/resource_librarian/loop.py",
+      "src/resource_librarian/session.py"
+    ],
+    "deps": [
+      "MF-010",
+      "MF-011",
+      "MF-012",
+      "MF-019",
+      "MF-021a",
+      "MF-021b",
+      "MF-021c"
+    ],
+    "done": "Bounded typed request/result retains late caveats and evidence; parent reserves before parallel dispatch; current epoch/access/evidence checked at serialized merge; duplicate receipt accepted once; crash/uncertain charge stays unresolved.",
+    "tests": [
+      "test_shared_models.py",
+      "test_effort.py",
+      "test_session_events.py",
+      "test_result_handles.py",
+      "test_worker_continuity.py"
+    ],
+    "extra": "Add planned tests/test_worker_continuity.py; no writable worker authority. Umbrella: done when MF-021a, MF-021b, MF-021c are done and the condition holds end to end.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-022",
+    "wave": "2",
+    "aliases": "NAT-03",
+    "title": "Harden existing encoder recovery and counters",
+    "lane": "INDEX",
+    "files": [
+      "src/resource_librarian/embed.py",
+      "src/resource_librarian/promote.py",
+      "src/resource_librarian/tools/staging.py"
+    ],
+    "deps": [
+      "MF-014"
+    ],
+    "done": "Blocked encoder leaves both owners available; operation/source/representation CAS rejects stale completion; crash leaves pending recovery; actual inserted/skipped counts; no direct active-Core fallback.",
+    "tests": [
+      "test_core_source_batch.py",
+      "test_core_index_service.py",
+      "test_embed.py"
+    ],
+    "extra": "",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-023",
+    "wave": "2",
+    "aliases": "NAT-08; EK-06",
+    "title": "Pin claim recipes and qualify environment receipts",
+    "lane": "EXEC",
+    "files": [
+      "src/resource_librarian/claim_run.py",
+      "src/resource_librarian/workflows.py"
+    ],
+    "deps": [
+      "MF-016",
+      "MF-017",
+      "MF-018"
+    ],
+    "done": "Exact commit/tree/image mismatch refuses; latest means new-version test; outputs/input/verifier/environment digests retained; missing prerequisites could-not-run; evidence replay runs nothing.",
+    "tests": [
+      "test_claim_run.py",
+      "test_workbench_boundaries.py"
+    ],
+    "extra": "",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-024",
+    "wave": "2",
+    "aliases": "NAT-09; MC-10 role portion",
+    "title": "Correlate Clerk/Scribe/Scout work and receipts",
+    "lane": "SERVICE",
+    "files": [
+      "src/resource_librarian/clerk.py",
+      "src/resource_librarian/scribe.py",
+      "src/resource_librarian/scout.py",
+      "src/resource_librarian/tools/staging.py",
+      "src/resource_librarian/app.py",
+      "src/resource_librarian/tools/pace.py"
+    ],
+    "deps": [
+      "MF-019",
+      "MF-021",
+      "MF-022"
+    ],
+    "done": "Browser/MCP fallback/batch/worker attribution equivalent; cancellation prevents new inner dispatch; durable effort-log failure explicit; tasks cannot mutate each other limits; Clerk/Scribe prompts remain source-neutral.",
+    "tests": [
+      "test_clerk.py",
+      "test_clerk_routes.py",
+      "test_effort.py",
+      "test_e2_effort.py",
+      "test_role_route_bindings.py"
+    ],
+    "extra": "",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-025",
+    "wave": "2",
+    "aliases": "UI-05/06; G06/G21",
+    "title": "Complete focus, keys, tabs, splitter and touch",
+    "lane": "UI",
+    "files": [
+      "ui/src/main.ts",
+      "ui/src/panels.ts",
+      "ui/src/pane.ts",
+      "ui/src/settings.ts",
+      "ui/src/style.css"
+    ],
+    "deps": [
+      "MF-008",
+      "MF-010"
+    ],
+    "done": "Async overlays focus after load; Escape owned and restores trigger; native modal trap; unique mounts; no leaked listeners; arrow/Home/End tabs and keyboard splitter; touchcancel/drag suppresses clearing; reduced motion respected.",
+    "tests": [],
+    "extra": "B and real Obsidian capture-hotkey evidence H. Minimal prerequisite portion already MF-008.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-026",
+    "wave": "2",
+    "aliases": "UI-09; G07/G08/G09/G10",
+    "title": "Project operations and derived failures",
+    "lane": "UI",
+    "files": [
+      "ui/src/main.ts",
+      "ui/src/views.ts",
+      "ui/src/settings.ts",
+      "ui/src/api.ts"
+    ],
+    "deps": [
+      "MF-006",
+      "MF-025"
+    ],
+    "done": "SSE separated from writer/index/watcher/leases; accepted Markdown survives visible embedding failure; snapshots never fake progress; failed updates retain last-reported time; polling bounded/nonoverlapping/disposed; offline G5 is not runtime spend.",
+    "tests": [
+      "test_app.py"
+    ],
+    "extra": "B; general jobs/quarantine-history API remains deferred, not fabricated.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-027",
+    "wave": "2",
+    "aliases": "NAT-10 + UI-10; G15/G16/G17",
+    "title": "Bind review evidence and composed staging previews",
+    "lane": "REVIEW",
+    "files": [
+      "src/resource_librarian/reply_review.py",
+      "src/resource_librarian/app.py",
+      "src/resource_librarian/tools/staging.py",
+      "src/resource_librarian/promote.py",
+      "src/resource_librarian/loop.py",
+      "ui/src/chat.ts",
+      "ui/src/views.ts",
+      "ui/src/api.ts"
+    ],
+    "deps": [
+      "MF-012",
+      "MF-016",
+      "MF-023",
+      "MF-024",
+      "MF-026",
+      "MF-027a",
+      "MF-027b",
+      "MF-027c"
+    ],
+    "done": "reply_id/turn_id, exact path/revision, checked spans and bounded advisory lifecycle exposed; ambiguous basename unchecked; late review stays on original reply. staging_show composes exact preview with original CAS tokens; edits invalidate preview. Docker preflight disables unavailable Claim Run; receipts rendered only when real.",
+    "tests": [
+      "test_reply_review.py",
+      "test_prompt_size.py",
+      "test_audit_projection.py",
+      "test_staging_safety.py",
+      "test_core_source_promotion.py",
+      "test_staging_preview.py"
+    ],
+    "extra": "B; planned tests/test_staging_preview.py; taxonomy preview stays explicitly semantic unless exact prepared bytes are exposed. Umbrella: done when MF-027a, MF-027b, MF-027c are done and the condition holds end to end.",
+    "release": "fix-or-disable",
+    "milestone": "3",
+    "blocking_if": "the capability ships enabled with the defect unfixed",
+    "fallback": "disable it, or mark it unsupported in the capability matrix with the limitation in the release notes",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-028",
+    "wave": "2",
+    "aliases": "NAT-12",
+    "title": "Use common envelopes for PDF/OCR/search",
+    "lane": "SERVICE",
+    "files": [
+      "src/resource_librarian/pdf_markdown.py",
+      "src/resource_librarian/ocr.py",
+      "src/resource_librarian/websearch.py"
+    ],
+    "deps": [
+      "MF-019",
+      "MF-024"
+    ],
+    "done": "Raw/cleaned identities distinct, partial page coverage retained; cancel stops new pages; dispatched uncertainty keeps reservation; backend/route identity and error category explicit.",
+    "tests": [
+      "test_pdf_markdown.py",
+      "test_ocr.py",
+      "test_websearch.py",
+      "test_core_batch.py"
+    ],
+    "extra": "",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-029",
+    "wave": "2",
+    "aliases": "NAT-14",
+    "title": "Reconcile V1 identities, edges, attachments and history",
+    "lane": "INGEST",
+    "files": [
+      "src/resource_librarian/v1_export.py"
+    ],
+    "deps": [
+      "MF-020"
+    ],
+    "done": "Every fixture edge/attachment is preserved, excluded, transformed or unresolved with reason; aliases/renames/missing targets explicit; partial batches accumulate mappings; V1 unchanged; imported histories never become approvals.",
+    "tests": [
+      "test_v1_export.py",
+      "test_source_identity.py",
+      "test_v1_fidelity.py"
+    ],
+    "extra": "Add planned tests/test_v1_fidelity.py.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-030",
+    "wave": "2",
+    "aliases": "MC-03/06/09 continuity across MCP",
+    "title": "Qualify MCP restart, library switch and handoff boundaries",
+    "lane": "CONTEXT",
+    "files": [
+      "src/resource_librarian/mcp_client.py",
+      "src/resource_librarian/mcp_server.py"
+    ],
+    "deps": [
+      "MF-021",
+      "MF-024"
+    ],
+    "done": "Core-required constrained RPC retained; revoked access, child restart, server disconnect and library switch cannot leak old handles/results or duplicate accepted effects; outbound tools remain Broker-controlled.",
+    "tests": [
+      "test_mcp.py",
+      "test_mcp_client.py",
+      "test_mcp_library.py"
+    ],
+    "extra": "Owner Windows full suite and H; not a second implementation of CORE-04A.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-031",
+    "wave": "2",
+    "aliases": "UI-11; Settings step 3 model portion",
+    "title": "Make model selection role-explicit",
+    "lane": "UI",
+    "files": [
+      "ui/src/panels.ts",
+      "ui/src/settings.ts"
+    ],
+    "deps": [
+      "MF-006",
+      "MF-025"
+    ],
+    "done": "Lead/Notes/Small tasks selection preserves untouched slots and current override gate; visible clearing truthful about prefix/fallback; service clear never posts tiers; shared-default effects labeled.",
+    "tests": [
+      "test_role_route_bindings.py",
+      "test_app.py"
+    ],
+    "extra": "B; no new route authority.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-032",
+    "wave": "2",
+    "aliases": "UI-12; Settings steps 1/2",
+    "title": "Build Settings workspace and redistribute controls",
+    "lane": "UI",
+    "files": [
+      "ui/src/settings.ts",
+      "ui/src/main.ts",
+      "ui/src/style.css"
+    ],
+    "deps": [
+      "MF-025",
+      "MF-031"
+    ],
+    "done": "1120x820 maximum, 224px left rail, ten specified pages and scope labels; root-bound sizing, narrow selector, page-local Save/Cancel and retained edits; Settings and Choose models persist across Chat/Staging/Search.",
+    "tests": [],
+    "extra": "B; 420px leaf, short height, two mounts, dirty-close and library-switch cases.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-033",
+    "wave": "2",
+    "aliases": "UI-12; Settings step 3 remainder",
+    "title": "Simplify providers, tools and project access",
+    "lane": "UI",
+    "files": [
+      "ui/src/settings.ts"
+    ],
+    "deps": [
+      "MF-032"
+    ],
+    "done": "Provider summary/detail, separate save key/connection, no automatic paid probe; integration summaries and explicit library permissions; project read/write hierarchy; chat context label and custom length; warnings remain actionable.",
+    "tests": [],
+    "extra": "B; existing requests/settings semantics preserved.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-034",
+    "wave": "2",
+    "aliases": "UI-12; Settings step 4; visual Staging/Search",
+    "title": "Connect navigation, triage and research surfaces",
+    "lane": "UI",
+    "files": [
+      "ui/src/main.ts",
+      "ui/src/pane.ts",
+      "ui/src/views.ts",
+      "ui/src/settings.ts",
+      "ui/src/style.css"
+    ],
+    "deps": [
+      "MF-027",
+      "MF-032",
+      "MF-033",
+      "MF-034a",
+      "MF-034b",
+      "MF-034c"
+    ],
+    "done": "Note/Browse/Plan/This week view switch separated from note actions and audio; queue/form/evidence readable; empty Plan collapses; bulk defer and approve-for-processing return per-item outcomes, never bulk publish; query full first row, filters second; task/edits/return position retained.",
+    "tests": [],
+    "extra": "B; no new bulk endpoint required—bounded existing per-item decisions with current revisions. Umbrella: done when MF-034a, MF-034b, MF-034c are done and the condition holds end to end.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-035",
+    "wave": "2",
+    "aliases": "UI-13; Settings verification",
+    "title": "Qualify installed shared UI and adapter runtime",
+    "lane": "HOST",
+    "files": [
+      "tests/test_obsidian_adapter_contract.py",
+      "tests/fixtures/obsidian_ui_runtime.mjs",
+      "ui/packaged-smoke.mjs"
+    ],
+    "deps": [
+      "MF-005",
+      "MF-006",
+      "MF-007",
+      "MF-008",
+      "MF-009",
+      "MF-010",
+      "MF-051"
+    ],
+    "done": "Actual bundled adapter runtime drives retry/takeover/dispose assertions; installed CSS/JS containment passes; artifact hashes and protocol recorded; unmocked Search after faults passes; mocked rendering never counts as real-host success.",
+    "tests": [
+      "test_obsidian_adapter_contract.py"
+    ],
+    "extra": "B + H; planned runtime fixture must derive observations, not return expected constants.",
+    "release": "required",
+    "milestone": "4",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-036",
+    "wave": "3",
+    "aliases": "NAT-15; MEM-05/06/12; MC-04/05/13/14",
+    "title": "Integrate temporal revisions and versioned lessons",
+    "lane": "KNOWLEDGE",
+    "files": [
+      "src/resource_librarian/dik.py",
+      "src/resource_librarian/facts.py",
+      "src/resource_librarian/evidence.py",
+      "src/resource_librarian/schema.py",
+      "src/resource_librarian/index.py",
+      "src/resource_librarian/session.py"
+    ],
+    "deps": [
+      "MF-012",
+      "MF-013",
+      "MF-014",
+      "MF-020",
+      "MF-021",
+      "MF-029",
+      "MF-036a",
+      "MF-036b",
+      "MF-036c",
+      "MF-036d",
+      "MF-036e"
+    ],
+    "done": "Human YAML + immutable source snapshots + DIK sidecar lineage rebuild temporal SQL; valid-time/known-time and external edits honest; episode pointers scoped; lessons staged/qualified/versioned; withdrawal survives cache rebuild and invalidates in-flight use.",
+    "tests": [
+      "test_schema.py",
+      "test_revisions.py",
+      "test_session_events.py",
+      "test_dik.py",
+      "test_evidence.py",
+      "test_knowledge_temporal.py",
+      "test_memory_withdrawal.py"
+    ],
+    "extra": "Add planned tests/test_knowledge_temporal.py and tests/test_memory_withdrawal.py. No independent belief authority. Umbrella: done when MF-036a, MF-036b, MF-036c, MF-036d, MF-036e are done and the condition holds end to end.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-037",
+    "wave": "3",
+    "aliases": "NAT-16; MEM-10; HARNESS-09 conditional",
+    "title": "Add scoped support eligibility and measured selective invalidation",
+    "lane": "KNOWLEDGE",
+    "files": [
+      "src/resource_librarian/dik.py",
+      "src/resource_librarian/closure.py",
+      "src/resource_librarian/closure_audit.py",
+      "src/resource_librarian/audit_events.py",
+      "src/resource_librarian/agenda.py"
+    ],
+    "deps": [
+      "MF-036",
+      "MF-023"
+    ],
+    "done": "AND/OR sets preserve independent support; cycle/unknown/overflow stay unknown; closure named verifier unchanged; scope/lens pivot never rewrites source facts; agenda derives review tasks. Compare coarse epoch baseline before any selective closure optimization.",
+    "tests": [
+      "test_closure.py",
+      "test_closure_lifecycle.py",
+      "test_agenda.py",
+      "test_lens_use.py",
+      "test_knowledge_support.py"
+    ],
+    "extra": "Add planned tests/test_knowledge_support.py. Full HARNESS-09 activation remains separately gated; advisory scoped support can be tested first.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-038",
+    "wave": "3",
+    "aliases": "MEM-08; MC-11/15",
+    "title": "Evaluate bounded parent/section retrieval",
+    "lane": "RETRIEVAL",
+    "files": [
+      "src/resource_librarian/search.py",
+      "src/resource_librarian/ranking.py"
+    ],
+    "deps": [
+      "MF-011",
+      "MF-012",
+      "MF-036"
+    ],
+    "done": "Exact hit spans plus bounded parents disclose scope/coverage; negation/caveats/duplicates tested; lexical/hybrid/structural arms matched; retain baseline if no demonstrated benefit.",
+    "tests": [
+      "test_search.py",
+      "test_accept_ranking.py",
+      "test_memory_retrieval.py"
+    ],
+    "extra": "New tests/test_memory_retrieval.py for eligibility/coverage cases.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-039",
+    "wave": "3",
+    "aliases": "MEM-09; NAT-16 discovery follow-on",
+    "title": "Pilot V1 community orientation recovery",
+    "lane": "RETRIEVAL",
+    "files": [
+      "src/resource_librarian/communities.py",
+      "src/resource_librarian/search.py",
+      "src/resource_librarian/ranking.py"
+    ],
+    "deps": [
+      "MF-038"
+    ],
+    "done": "Snapshot/corpus/lens digests and stale status precede optional orient lane; factual summaries advisory; no model on ordinary reads; hubs cannot dominate; measured cross-topic benefit required.",
+    "tests": [
+      "test_communities.py",
+      "test_search.py",
+      "test_accept_ranking.py"
+    ],
+    "extra": "",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-040",
+    "wave": "3",
+    "aliases": "MEM-11; DEPLOY-05 adjacent, not activation",
+    "title": "Pilot DIK capability-sized code digest",
+    "lane": "KNOWLEDGE",
+    "files": [
+      "src/resource_librarian/dik.py"
+    ],
+    "deps": [
+      "MF-036",
+      "MF-037"
+    ],
+    "done": "Seed/import closure bounded with SCC handling, unresolved imports explicit and permitted roots enforced; compare file-reading baseline; static coverage not runtime semantics; do not activate broad structural indexing by implication.",
+    "tests": [
+      "test_dik.py",
+      "test_capability_digest.py"
+    ],
+    "extra": "Add planned tests/test_capability_digest.py; optional experiment may terminate with retain-baseline decision.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-041",
+    "wave": "3",
+    "aliases": "MC-12; EK-01..08; EKP-01..10",
+    "title": "Run deterministic evolving-knowledge benchmark and design held-out study",
+    "lane": "EVAL",
+    "files": [
+      "tests/test_evolving_knowledge.py",
+      "scripts/evolving_knowledge_benchmark.py"
+    ],
+    "deps": [
+      "MF-021",
+      "MF-023",
+      "MF-030",
+      "MF-036",
+      "MF-037",
+      "MF-038",
+      "MF-039",
+      "MF-040",
+      "MF-041a",
+      "MF-041b",
+      "MF-041c",
+      "MF-041d"
+    ],
+    "done": "All ten seeds translated into real interfaces, restart/scope/correction invariants pass; rubrics hidden; A/B/C/D cloned state and cost denominators frozen. E/F only after simpler arms. Behavioral paid results explicitly pending until budgeted runs; no learning claim from fixtures alone.",
+    "tests": [
+      "test_evolving_knowledge.py"
+    ],
+    "extra": "Both files planned. Exact future target: .venv/Scripts/python.exe -m pytest -q -p no:cacheprovider tests/test_evolving_knowledge.py. Umbrella: done when MF-041a, MF-041b, MF-041c, MF-041d are done and the condition holds end to end.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-042",
+    "wave": "1-3",
+    "aliases": "NAT-17; BASE sync",
+    "title": "Reconcile docs and Cowork contracts after each slice",
+    "lane": "DOC",
+    "files": [
+      "docs/regression-manifest.md",
+      "docs/unified-implementation-plan.md",
+      "plugin/skills"
+    ],
+    "deps": [
+      "MF-003"
+    ],
+    "done": "Actual tool/schema names, current tests, artifact provenance, partial/unknown limits and historical supersession updated for each delivered MF row; no quotas/learning/exactly-once claims without evidence.",
+    "tests": [
+      "test_mcp.py"
+    ],
+    "extra": "Continuous checkpoint, not a blocking dependency cycle; docs owner is sole canonical-plan editor.",
+    "release": "required",
+    "milestone": "4",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-043",
+    "wave": "0-4",
+    "aliases": "DT-02/03/04/05/07",
+    "title": "Harden reproducible build and release evidence",
+    "lane": "BUILD",
+    "files": [
+      ".github/workflows",
+      "pyproject.toml",
+      "requirements-dev.txt",
+      "scripts"
+    ],
+    "deps": [
+      "MF-004",
+      "MF-043a",
+      "MF-043b",
+      "MF-043c",
+      "MF-043d",
+      "MF-043e",
+      "MF-043f"
+    ],
+    "done": "Split into bounded build packets with exact files at admission: clean locks/toolchains, pinned CI permissions/input guards, retained test evidence, dependency/secret policy, SBOM/provenance verification, ownership/support/license decision. No certification claim from checklist.",
+    "tests": [
+      "test_release_versions.py",
+      "test_release_leads.py"
+    ],
+    "extra": "Release prerequisite; broad directories are planning ownership, never a worker write allowlist. DT-06 contained execution handled MF-015/016/023; autonomous DEV profile stays deferred. Umbrella: done when MF-043a, MF-043b, MF-043c, MF-043d, MF-043e, MF-043f are done and the condition holds end to end.",
+    "release": "required",
+    "milestone": "4",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-044",
+    "wave": "4",
+    "aliases": "ACCEPT-01/03; RELEASE-01 refresh",
+    "title": "Refresh acceptance matrix and truthful capabilities",
+    "lane": "HOST",
+    "files": [
+      "tests/test_acceptance_matrix.py",
+      "docs/capability-matrix.md",
+      "docs/release-implementation-queue.md"
+    ],
+    "deps": [
+      "MF-035",
+      "MF-042",
+      "MF-043",
+      "MF-051"
+    ],
+    "done": "Existing eight-workflow matrix retained and extended for new accepted scope; success/refusal/recovery/no-mutation cells cite real tests; capability/release docs reflect implemented and experimentally rejected features.",
+    "tests": [
+      "test_acceptance_matrix.py",
+      "test_accept_failures.py",
+      "test_accept_ranking.py",
+      "test_accept_workbench.py"
+    ],
+    "extra": "Completed original packets are refreshed, not declared previously missing.",
+    "release": "required",
+    "milestone": "4",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-045",
+    "wave": "4",
+    "aliases": "ACCEPT-02 final requalification",
+    "title": "Repeat real-host acceptance on final candidate",
+    "lane": "HOST",
+    "files": [
+      "reports/2026-10-31-accept02-windows-acceptance.md"
+    ],
+    "deps": [
+      "MF-001",
+      "MF-044"
+    ],
+    "done": "Freeze candidate hashes then repeat touched lifecycle/SecretStorage/CSS/dirty-note/three-client/Docker/rollback boundaries; full suite and explicit slow cases; earlier overlays cannot qualify new bytes.",
+    "tests": [
+      "test_host_lifecycle.py",
+      "test_shutdown.py",
+      "test_mcp.py",
+      "test_obsidian_adapter_contract.py"
+    ],
+    "extra": "H; retain actual host versions and failure evidence.",
+    "release": "required",
+    "milestone": "4",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-046",
+    "wave": "4",
+    "aliases": "RELEASE-02",
+    "title": "R0 freeze, R1 locks, R2 qualified routes",
+    "lane": "RELEASE",
+    "files": [
+      "docs/release-implementation-queue.md",
+      "release-manifest.json"
+    ],
+    "deps": [
+      "MF-044",
+      "MF-045"
+    ],
+    "done": "Owner R0 decision, clean exact source and SI/LC gates; locked wheelhouse, current L0-L3 exact-route evidence with expiry/budget. Candidate templates remain non-installable until gates pass.",
+    "tests": [
+      "test_release_versions.py",
+      "test_release_leads.py"
+    ],
+    "extra": "Externally blocked pending release owner, credentials and route budget; no paid action authorized by this plan.",
+    "release": "required",
+    "milestone": "5",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-047",
+    "wave": "4",
+    "aliases": "RELEASE-03",
+    "title": "R3 signing, R4 acceptance, R5 publication",
+    "lane": "RELEASE",
+    "files": [
+      "release-manifest.json"
+    ],
+    "deps": [
+      "MF-046"
+    ],
+    "done": "Protected signed payloads and verification/provenance pass; final signed Windows/adapter/rollback acceptance and supported hosted matrix pass; owner explicitly publishes and records rollback/watch procedure.",
+    "tests": [
+      "test_release_versions.py",
+      "test_release_leads.py"
+    ],
+    "extra": "Externally blocked; publication/signing are not performed in this synthesis.",
+    "release": "required",
+    "milestone": "5",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-048",
+    "wave": "decision",
+    "aliases": "HARNESS-08",
+    "title": "Optional Tier B experiment",
+    "lane": "EVAL",
+    "files": [
+      "docs/experiments"
+    ],
+    "deps": [
+      "MF-041"
+    ],
+    "done": "Owner predeclares held-out human labels, negative controls, false-completion/correction gain, cost/latency margin and cap; state-only/Tier A/Tier B compared; Tier B stays advisory and non-default without positive decision.",
+    "tests": [
+      "test_closure.py"
+    ],
+    "extra": "No proposed automatic adoption; exact experiment file declared at admission.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-049",
+    "wave": "decision",
+    "aliases": "DELEG-06",
+    "title": "Retain stop decision for small refactors",
+    "lane": "DOC",
+    "files": [
+      "docs/unified-implementation-plan.md"
+    ],
+    "deps": [
+      "MF-003"
+    ],
+    "done": "Record built pilot and E2-prime A0 lead-effort ratio 2.5; no autonomous controller expansion for small refactors. Further use needs a measured workload-specific go/narrow/stop case.",
+    "tests": [],
+    "extra": "Ordinary bounded drafting/review in budget plan does not revive autonomous controller.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-050",
+    "wave": "decision",
+    "aliases": "HARNESS-09 / DEPLOY-05 / CORE-04B / DEV-01..14",
+    "title": "Preserve deferred scope decisions",
+    "lane": "DOC",
+    "files": [
+      "docs/unified-implementation-plan.md"
+    ],
+    "deps": [
+      "MF-003"
+    ],
+    "done": "Record whether each remains deferred or receives a new bounded approved packet. HARNESS-09 prerequisites remain explicit; CORE-04B means managed bootstrap through the same Core, never direct vault ownership; structural index and writable developer profile not smuggled into pilots.",
+    "tests": [],
+    "extra": "Current plan defaults to deferred. These decisions do not block release when excluded from shipped scope.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-051",
+    "wave": "3-4",
+    "aliases": "Codex review 2026-11-04",
+    "title": "Freeze the selected release scope",
+    "lane": "RELEASE",
+    "files": [
+      "docs/unified-implementation-plan.md",
+      "docs/capability-matrix.md"
+    ],
+    "deps": [
+      "MF-002",
+      "MF-003",
+      "MF-004"
+    ],
+    "done": "One dated owner record lists every P1 packet (MF-011–020, MF-027) as fixed with its evidence, or disabled and stated as a limitation in the capability matrix; every optional track (MF-021–026, MF-028–034) as in or out of the release; experiments MF-036–041 and decisions MF-048–050 as outside the release. A packet recorded as in becomes a prerequisite of MF-035 and MF-044 through this record.",
+    "tests": [
+      "test_acceptance_matrix.py"
+    ],
+    "extra": "Owner decision; replaces the old transitive release graph.",
+    "release": "required",
+    "milestone": "3",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-021a",
+    "wave": "2",
+    "aliases": "MF-021",
+    "title": "Structured worker envelopes and handoff receipts",
+    "lane": "CONTEXT",
+    "files": [
+      "src/resource_librarian/tools/delegate.py",
+      "src/resource_librarian/loop.py",
+      "src/resource_librarian/session.py"
+    ],
+    "deps": [
+      "MF-010",
+      "MF-011",
+      "MF-012",
+      "MF-019"
+    ],
+    "done": "This slice of MF-021 (structured worker envelopes and handoff receipts) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_shared_models.py",
+      "test_effort.py",
+      "test_session_events.py",
+      "test_result_handles.py",
+      "test_worker_continuity.py"
+    ],
+    "extra": "Sub-packet of MF-021.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-021b",
+    "wave": "2",
+    "aliases": "MF-021",
+    "title": "Aggregate budget reservation across workers",
+    "lane": "CONTEXT",
+    "files": [
+      "src/resource_librarian/tools/delegate.py",
+      "src/resource_librarian/loop.py",
+      "src/resource_librarian/session.py"
+    ],
+    "deps": [
+      "MF-010",
+      "MF-011",
+      "MF-012",
+      "MF-019",
+      "MF-021a"
+    ],
+    "done": "This slice of MF-021 (aggregate budget reservation across workers) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_shared_models.py",
+      "test_effort.py",
+      "test_session_events.py",
+      "test_result_handles.py",
+      "test_worker_continuity.py"
+    ],
+    "extra": "Sub-packet of MF-021.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-021c",
+    "wave": "2",
+    "aliases": "MF-021",
+    "title": "Restart-safe parent merge",
+    "lane": "CONTEXT",
+    "files": [
+      "src/resource_librarian/tools/delegate.py",
+      "src/resource_librarian/loop.py",
+      "src/resource_librarian/session.py"
+    ],
+    "deps": [
+      "MF-010",
+      "MF-011",
+      "MF-012",
+      "MF-019",
+      "MF-021a"
+    ],
+    "done": "This slice of MF-021 (restart-safe parent merge) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_shared_models.py",
+      "test_effort.py",
+      "test_session_events.py",
+      "test_result_handles.py",
+      "test_worker_continuity.py"
+    ],
+    "extra": "Sub-packet of MF-021.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-027a",
+    "wave": "2",
+    "aliases": "MF-027",
+    "title": "Reply-review identity: full path, whole body, capped challenges",
+    "lane": "REVIEW",
+    "files": [
+      "src/resource_librarian/reply_review.py",
+      "src/resource_librarian/app.py",
+      "src/resource_librarian/tools/staging.py",
+      "src/resource_librarian/promote.py",
+      "src/resource_librarian/loop.py",
+      "ui/src/chat.ts",
+      "ui/src/views.ts",
+      "ui/src/api.ts"
+    ],
+    "deps": [
+      "MF-012",
+      "MF-016",
+      "MF-023",
+      "MF-024",
+      "MF-026"
+    ],
+    "done": "This slice of MF-027 (reply-review identity: full path, whole body, capped challenges) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_reply_review.py",
+      "test_prompt_size.py",
+      "test_audit_projection.py",
+      "test_staging_safety.py",
+      "test_core_source_promotion.py",
+      "test_staging_preview.py"
+    ],
+    "extra": "Sub-packet of MF-027.",
+    "release": "fix-or-disable",
+    "milestone": "3",
+    "blocking_if": "the capability ships enabled with the defect unfixed",
+    "fallback": "disable it, or mark it unsupported in the capability matrix with the limitation in the release notes",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-027b",
+    "wave": "2",
+    "aliases": "MF-027",
+    "title": "Exact composed staging preview",
+    "lane": "REVIEW",
+    "files": [
+      "src/resource_librarian/reply_review.py",
+      "src/resource_librarian/app.py",
+      "src/resource_librarian/tools/staging.py",
+      "src/resource_librarian/promote.py",
+      "src/resource_librarian/loop.py",
+      "ui/src/chat.ts",
+      "ui/src/views.ts",
+      "ui/src/api.ts"
+    ],
+    "deps": [
+      "MF-012",
+      "MF-016",
+      "MF-023",
+      "MF-024",
+      "MF-026"
+    ],
+    "done": "This slice of MF-027 (exact composed staging preview) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_reply_review.py",
+      "test_prompt_size.py",
+      "test_audit_projection.py",
+      "test_staging_safety.py",
+      "test_core_source_promotion.py",
+      "test_staging_preview.py"
+    ],
+    "extra": "Sub-packet of MF-027.",
+    "release": "fix-or-disable",
+    "milestone": "3",
+    "blocking_if": "the capability ships enabled with the defect unfixed",
+    "fallback": "disable it, or mark it unsupported in the capability matrix with the limitation in the release notes",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-027c",
+    "wave": "2",
+    "aliases": "MF-027",
+    "title": "Docker preflight before review execution",
+    "lane": "REVIEW",
+    "files": [
+      "src/resource_librarian/reply_review.py",
+      "src/resource_librarian/app.py",
+      "src/resource_librarian/tools/staging.py",
+      "src/resource_librarian/promote.py",
+      "src/resource_librarian/loop.py",
+      "ui/src/chat.ts",
+      "ui/src/views.ts",
+      "ui/src/api.ts"
+    ],
+    "deps": [
+      "MF-012",
+      "MF-016",
+      "MF-023",
+      "MF-024",
+      "MF-026"
+    ],
+    "done": "This slice of MF-027 (docker preflight before review execution) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_reply_review.py",
+      "test_prompt_size.py",
+      "test_audit_projection.py",
+      "test_staging_safety.py",
+      "test_core_source_promotion.py",
+      "test_staging_preview.py"
+    ],
+    "extra": "Sub-packet of MF-027.",
+    "release": "fix-or-disable",
+    "milestone": "3",
+    "blocking_if": "the capability ships enabled with the defect unfixed",
+    "fallback": "disable it, or mark it unsupported in the capability matrix with the limitation in the release notes",
+    "evidence": "source-supported, re-checked 2026-11-04"
+  },
+  {
+    "id": "MF-034a",
+    "wave": "2",
+    "aliases": "MF-034",
+    "title": "Navigation",
+    "lane": "UI",
+    "files": [
+      "ui/src/main.ts",
+      "ui/src/pane.ts",
+      "ui/src/views.ts",
+      "ui/src/settings.ts",
+      "ui/src/style.css"
+    ],
+    "deps": [
+      "MF-027",
+      "MF-032",
+      "MF-033"
+    ],
+    "done": "This slice of MF-034 (navigation) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [],
+    "extra": "Sub-packet of MF-034.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-034b",
+    "wave": "2",
+    "aliases": "MF-034",
+    "title": "Staging redesign",
+    "lane": "UI",
+    "files": [
+      "ui/src/main.ts",
+      "ui/src/pane.ts",
+      "ui/src/views.ts",
+      "ui/src/settings.ts",
+      "ui/src/style.css"
+    ],
+    "deps": [
+      "MF-027",
+      "MF-032",
+      "MF-033"
+    ],
+    "done": "This slice of MF-034 (staging redesign) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [],
+    "extra": "Sub-packet of MF-034.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-034c",
+    "wave": "2",
+    "aliases": "MF-034",
+    "title": "Search redesign",
+    "lane": "UI",
+    "files": [
+      "ui/src/main.ts",
+      "ui/src/pane.ts",
+      "ui/src/views.ts",
+      "ui/src/settings.ts",
+      "ui/src/style.css"
+    ],
+    "deps": [
+      "MF-027",
+      "MF-032",
+      "MF-033"
+    ],
+    "done": "This slice of MF-034 (search redesign) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [],
+    "extra": "Sub-packet of MF-034.",
+    "release": "if-selected",
+    "milestone": "6",
+    "blocking_if": "MF-051 selects it for the release",
+    "fallback": "leave it out of the release scope",
+    "evidence": "source-supported (review), not re-checked"
+  },
+  {
+    "id": "MF-036a",
+    "wave": "3",
+    "aliases": "MF-036",
+    "title": "Temporal revision event schema",
+    "lane": "KNOWLEDGE",
+    "files": [
+      "src/resource_librarian/dik.py",
+      "src/resource_librarian/facts.py",
+      "src/resource_librarian/evidence.py",
+      "src/resource_librarian/schema.py",
+      "src/resource_librarian/index.py",
+      "src/resource_librarian/session.py"
+    ],
+    "deps": [
+      "MF-012",
+      "MF-013",
+      "MF-014",
+      "MF-020",
+      "MF-021",
+      "MF-029"
+    ],
+    "done": "This slice of MF-036 (temporal revision event schema) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_schema.py",
+      "test_revisions.py",
+      "test_session_events.py",
+      "test_dik.py",
+      "test_evidence.py",
+      "test_knowledge_temporal.py",
+      "test_memory_withdrawal.py"
+    ],
+    "extra": "Sub-packet of MF-036.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-036b",
+    "wave": "3",
+    "aliases": "MF-036",
+    "title": "Manifests",
+    "lane": "KNOWLEDGE",
+    "files": [
+      "src/resource_librarian/dik.py",
+      "src/resource_librarian/facts.py",
+      "src/resource_librarian/evidence.py",
+      "src/resource_librarian/schema.py",
+      "src/resource_librarian/index.py",
+      "src/resource_librarian/session.py"
+    ],
+    "deps": [
+      "MF-012",
+      "MF-013",
+      "MF-014",
+      "MF-020",
+      "MF-021",
+      "MF-029",
+      "MF-036a"
+    ],
+    "done": "This slice of MF-036 (manifests) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_schema.py",
+      "test_revisions.py",
+      "test_session_events.py",
+      "test_dik.py",
+      "test_evidence.py",
+      "test_knowledge_temporal.py",
+      "test_memory_withdrawal.py"
+    ],
+    "extra": "Sub-packet of MF-036.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-036c",
+    "wave": "3",
+    "aliases": "MF-036",
+    "title": "SQLite projection",
+    "lane": "KNOWLEDGE",
+    "files": [
+      "src/resource_librarian/dik.py",
+      "src/resource_librarian/facts.py",
+      "src/resource_librarian/evidence.py",
+      "src/resource_librarian/schema.py",
+      "src/resource_librarian/index.py",
+      "src/resource_librarian/session.py"
+    ],
+    "deps": [
+      "MF-012",
+      "MF-013",
+      "MF-014",
+      "MF-020",
+      "MF-021",
+      "MF-029",
+      "MF-036a"
+    ],
+    "done": "This slice of MF-036 (sqlite projection) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_schema.py",
+      "test_revisions.py",
+      "test_session_events.py",
+      "test_dik.py",
+      "test_evidence.py",
+      "test_knowledge_temporal.py",
+      "test_memory_withdrawal.py"
+    ],
+    "extra": "Sub-packet of MF-036.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-036d",
+    "wave": "3",
+    "aliases": "MF-036",
+    "title": "Migration of existing records",
+    "lane": "KNOWLEDGE",
+    "files": [
+      "src/resource_librarian/dik.py",
+      "src/resource_librarian/facts.py",
+      "src/resource_librarian/evidence.py",
+      "src/resource_librarian/schema.py",
+      "src/resource_librarian/index.py",
+      "src/resource_librarian/session.py"
+    ],
+    "deps": [
+      "MF-012",
+      "MF-013",
+      "MF-014",
+      "MF-020",
+      "MF-021",
+      "MF-029",
+      "MF-036c"
+    ],
+    "done": "This slice of MF-036 (migration of existing records) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_schema.py",
+      "test_revisions.py",
+      "test_session_events.py",
+      "test_dik.py",
+      "test_evidence.py",
+      "test_knowledge_temporal.py",
+      "test_memory_withdrawal.py"
+    ],
+    "extra": "Sub-packet of MF-036.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-036e",
+    "wave": "3",
+    "aliases": "MF-036",
+    "title": "Lifecycle and withdrawal",
+    "lane": "KNOWLEDGE",
+    "files": [
+      "src/resource_librarian/dik.py",
+      "src/resource_librarian/facts.py",
+      "src/resource_librarian/evidence.py",
+      "src/resource_librarian/schema.py",
+      "src/resource_librarian/index.py",
+      "src/resource_librarian/session.py"
+    ],
+    "deps": [
+      "MF-012",
+      "MF-013",
+      "MF-014",
+      "MF-020",
+      "MF-021",
+      "MF-029",
+      "MF-036c"
+    ],
+    "done": "This slice of MF-036 (lifecycle and withdrawal) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_schema.py",
+      "test_revisions.py",
+      "test_session_events.py",
+      "test_dik.py",
+      "test_evidence.py",
+      "test_knowledge_temporal.py",
+      "test_memory_withdrawal.py"
+    ],
+    "extra": "Sub-packet of MF-036.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-041a",
+    "wave": "3",
+    "aliases": "MF-041",
+    "title": "Deterministic fixtures",
+    "lane": "EVAL",
+    "files": [
+      "tests/test_evolving_knowledge.py",
+      "scripts/evolving_knowledge_benchmark.py"
+    ],
+    "deps": [
+      "MF-021",
+      "MF-023",
+      "MF-030",
+      "MF-036",
+      "MF-037",
+      "MF-038",
+      "MF-039",
+      "MF-040"
+    ],
+    "done": "This slice of MF-041 (deterministic fixtures) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_evolving_knowledge.py"
+    ],
+    "extra": "Sub-packet of MF-041.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-041b",
+    "wave": "3",
+    "aliases": "MF-041",
+    "title": "Benchmark adapter",
+    "lane": "EVAL",
+    "files": [
+      "tests/test_evolving_knowledge.py",
+      "scripts/evolving_knowledge_benchmark.py"
+    ],
+    "deps": [
+      "MF-021",
+      "MF-023",
+      "MF-030",
+      "MF-036",
+      "MF-037",
+      "MF-038",
+      "MF-039",
+      "MF-040",
+      "MF-041a"
+    ],
+    "done": "This slice of MF-041 (benchmark adapter) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_evolving_knowledge.py"
+    ],
+    "extra": "Sub-packet of MF-041.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-041c",
+    "wave": "3",
+    "aliases": "MF-041",
+    "title": "Held-out study design",
+    "lane": "EVAL",
+    "files": [
+      "tests/test_evolving_knowledge.py",
+      "scripts/evolving_knowledge_benchmark.py"
+    ],
+    "deps": [
+      "MF-021",
+      "MF-023",
+      "MF-030",
+      "MF-036",
+      "MF-037",
+      "MF-038",
+      "MF-039",
+      "MF-040",
+      "MF-041b"
+    ],
+    "done": "This slice of MF-041 (held-out study design) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_evolving_knowledge.py"
+    ],
+    "extra": "Sub-packet of MF-041.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-041d",
+    "wave": "3",
+    "aliases": "MF-041",
+    "title": "Paid trial, only with its own owner approval and cap",
+    "lane": "EVAL",
+    "files": [
+      "tests/test_evolving_knowledge.py",
+      "scripts/evolving_knowledge_benchmark.py"
+    ],
+    "deps": [
+      "MF-021",
+      "MF-023",
+      "MF-030",
+      "MF-036",
+      "MF-037",
+      "MF-038",
+      "MF-039",
+      "MF-040",
+      "MF-041c"
+    ],
+    "done": "This slice of MF-041 (paid trial, only with its own owner approval and cap) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_evolving_knowledge.py"
+    ],
+    "extra": "Sub-packet of MF-041.",
+    "release": "outside release",
+    "milestone": "7",
+    "blocking_if": "never; it runs on its own approval",
+    "fallback": "defer, keep or reject by its own decision",
+    "evidence": "proposal"
+  },
+  {
+    "id": "MF-043a",
+    "wave": "0-4",
+    "aliases": "MF-043",
+    "title": "CI and toolchain",
+    "lane": "BUILD",
+    "files": [
+      ".github/workflows",
+      "pyproject.toml",
+      "requirements-dev.txt",
+      "scripts"
+    ],
+    "deps": [
+      "MF-004"
+    ],
+    "done": "This slice of MF-043 (ci and toolchain) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_release_versions.py",
+      "test_release_leads.py"
+    ],
+    "extra": "Sub-packet of MF-043.",
+    "release": "required",
+    "milestone": "4",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-043b",
+    "wave": "0-4",
+    "aliases": "MF-043",
+    "title": "Dependency locking",
+    "lane": "BUILD",
+    "files": [
+      ".github/workflows",
+      "pyproject.toml",
+      "requirements-dev.txt",
+      "scripts"
+    ],
+    "deps": [
+      "MF-004",
+      "MF-043a"
+    ],
+    "done": "This slice of MF-043 (dependency locking) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_release_versions.py",
+      "test_release_leads.py"
+    ],
+    "extra": "Sub-packet of MF-043.",
+    "release": "required",
+    "milestone": "4",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-043c",
+    "wave": "0-4",
+    "aliases": "MF-043",
+    "title": "Workflow security",
+    "lane": "BUILD",
+    "files": [
+      ".github/workflows",
+      "pyproject.toml",
+      "requirements-dev.txt",
+      "scripts"
+    ],
+    "deps": [
+      "MF-004",
+      "MF-043a"
+    ],
+    "done": "This slice of MF-043 (workflow security) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_release_versions.py",
+      "test_release_leads.py"
+    ],
+    "extra": "Sub-packet of MF-043.",
+    "release": "required",
+    "milestone": "4",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-043d",
+    "wave": "0-4",
+    "aliases": "MF-043",
+    "title": "Evidence retention",
+    "lane": "BUILD",
+    "files": [
+      ".github/workflows",
+      "pyproject.toml",
+      "requirements-dev.txt",
+      "scripts"
+    ],
+    "deps": [
+      "MF-004",
+      "MF-043a"
+    ],
+    "done": "This slice of MF-043 (evidence retention) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_release_versions.py",
+      "test_release_leads.py"
+    ],
+    "extra": "Sub-packet of MF-043.",
+    "release": "required",
+    "milestone": "4",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-043e",
+    "wave": "0-4",
+    "aliases": "MF-043",
+    "title": "Provenance and SBOM",
+    "lane": "BUILD",
+    "files": [
+      ".github/workflows",
+      "pyproject.toml",
+      "requirements-dev.txt",
+      "scripts"
+    ],
+    "deps": [
+      "MF-004",
+      "MF-043b"
+    ],
+    "done": "This slice of MF-043 (provenance and sbom) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_release_versions.py",
+      "test_release_leads.py"
+    ],
+    "extra": "Sub-packet of MF-043.",
+    "release": "required",
+    "milestone": "4",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  },
+  {
+    "id": "MF-043f",
+    "wave": "0-4",
+    "aliases": "MF-043",
+    "title": "Operating governance",
+    "lane": "BUILD",
+    "files": [
+      ".github/workflows",
+      "pyproject.toml",
+      "requirements-dev.txt",
+      "scripts"
+    ],
+    "deps": [
+      "MF-004"
+    ],
+    "done": "This slice of MF-043 (operating governance) meets its share of the parent condition, with its own focused test passing before it merges.",
+    "tests": [
+      "test_release_versions.py",
+      "test_release_leads.py"
+    ],
+    "extra": "Sub-packet of MF-043.",
+    "release": "required",
+    "milestone": "4",
+    "blocking_if": "always",
+    "fallback": "none",
+    "evidence": "process, no defect claim"
+  }
+]

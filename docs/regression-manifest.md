@@ -4,6 +4,39 @@
 owns task ordering and delivery status; this file makes the evidence command
 and expected boundary explicit.
 
+## Current status (2026-11-04)
+
+The dated rows further down are kept as history; read them with this table.
+Remaining work follows the adopted master finalization queue
+([execution queue](../reports/2026-11-04-master-finalization/execution-queue.json), plan §10.2).
+
+| Area | Current status | Note |
+| --- | --- | --- |
+| INDEX-05 | implemented (original scope) | The remaining host and release checks belong to ACCEPT-02 / MF-045 and RELEASE-03. The encoder-occupies-writer limitation is historical (resolved in `33fb3b5`). |
+| CORE-05 / INDEX batch rows below | historical | Serving-path debt is zero (`ded98c0`); the partial rows are dated snapshots. |
+| DEPLOY-01–04 / DEPLOY-05 | implemented / deferred | — |
+| HARNESS-01–07 / -08 / -09 | implemented / experimental / deferred | Real-session caveats are in the REMED-08 report. |
+| ACCEPT-02 | partial | Only the three-client mixed-traffic check (MF-001) remains. Obsidian, Docker and external-handle evidence is retained. |
+| RELEASE-01 / -02, -03 | implemented / blocked externally | — |
+| Hosted Core CI | failing (observed 2026-11-04) | MF-004. The local suite passes; see `reports/2026-11-04-evidence/suite-40ec923-clean.json`. |
+
+**New rows** are added one per MF packet when that packet is admitted, never
+before, so planned checks cannot be mistaken for evidence. Each row uses this
+schema:
+- MF id and original aliases;
+- delivery status;
+- source revision, and whether the tree was dirty;
+- focused command, and the full-regression result;
+- UI, installed and real-host gates;
+- fixture class (L0, scripted, real OS or live provider);
+- the invariant, or the failure injected;
+- artifact, receipt or report paths;
+- reviewer;
+- remaining limitation.
+
+Source-only smoke, installed protocol smoke and real-host observations go in
+separate cells.
+
 ## Rules
 
 - Run Python tests through the repository virtual environment:

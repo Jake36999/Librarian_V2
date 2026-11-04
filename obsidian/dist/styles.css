@@ -177,14 +177,14 @@
 .lib-app .readiness-chip.warn { border-color: var(--warn-line); color: var(--warn-ink); background: var(--warn-bg); }
 .lib-app .route-summary { margin: 0 0 8px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); font-size: 12px; }
 .lib-app .route-summary.warn { border-color: var(--warn-line); color: var(--warn-ink); background: var(--warn-bg); }
-.lib-app .dot, dialog .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: var(--ok); vertical-align: 1px; }
-.lib-app .dot.nokey, dialog .dot.nokey { background: var(--warn-line); } .lib-app .dot.off, dialog .dot.off { background: var(--stop-line); }
+.lib-app .dot, dialog.lib-dialog .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: var(--ok); vertical-align: 1px; }
+.lib-app .dot.nokey, dialog.lib-dialog .dot.nokey { background: var(--warn-line); } .lib-app .dot.off, dialog.lib-dialog .dot.off { background: var(--stop-line); }
 .lib-app .toast { font-size: 12.5px; color: var(--warn-ink); background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 7px; padding: 5px 9px; margin-bottom: 8px; }
 .lib-app .checkpoint { border-top: 1px solid var(--line); padding: 10px 0; }
 .lib-app .checkpoint:first-of-type { border-top: 0; padding-top: 2px; }
 .lib-app .checkpoint p { margin: 4px 0; color: var(--muted); overflow-wrap: anywhere; }
 .lib-app .checkpoint-evidence { margin: 7px 0; padding: 7px; max-height: 180px; overflow: auto; white-space: pre-wrap; font: 11.5px/1.4 var(--mono); border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
-.lib-app .locked, dialog .locked { color: var(--muted); }
+.lib-app .locked, dialog.lib-dialog .locked { color: var(--muted); }
 
 /* views beside the chat */
 .lib-app .view { overflow-y: auto; padding: 14px 16px; min-height: 0; }
@@ -228,43 +228,43 @@
 
 /* forms, shared by the dialogs */
 .lib-app input[type=text], .lib-app input[type=search], .lib-app input[type=password], .lib-app select, .lib-app textarea.f,
-dialog input[type=text], dialog input[type=password], dialog select, dialog textarea.f {
+dialog.lib-dialog input[type=text], dialog.lib-dialog input[type=password], dialog.lib-dialog select, dialog.lib-dialog textarea.f {
   width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--ink); font: inherit; }
-.lib-app textarea.f, dialog textarea.f { min-height: 90px; resize: vertical; }
+.lib-app textarea.f, dialog.lib-dialog textarea.f { min-height: 90px; resize: vertical; }
 .lib-app textarea.f.short { min-height: 60px; }
-.lib-app label.f, dialog label.f { display: block; font-size: 12.5px; color: var(--muted); margin: 10px 0 4px; }
-.lib-app .primary, dialog .primary { background: var(--accent); color: var(--on-accent); border: 0; border-radius: 7px; padding: 7px 14px; }
-.lib-app .row2, dialog .row2 { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
-.lib-app .row2.tight, dialog .row2.tight { margin-top: 0; flex-wrap: nowrap; }
-.lib-app .seg, dialog .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex: none; }
-.lib-app .seg button, dialog .seg button { border: 0; background: var(--panel); padding: 6px 14px; }
-.lib-app .seg button[aria-pressed="true"], dialog .seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
-.lib-app .note, dialog .note { font-size: 12.5px; color: var(--muted); margin-top: 10px; }
-.lib-app .note.inline, dialog .note.inline { margin: 0; }
+.lib-app label.f, dialog.lib-dialog label.f { display: block; font-size: 12.5px; color: var(--muted); margin: 10px 0 4px; }
+.lib-app .primary, dialog.lib-dialog .primary { background: var(--accent); color: var(--on-accent); border: 0; border-radius: 7px; padding: 7px 14px; }
+.lib-app .row2, dialog.lib-dialog .row2 { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+.lib-app .row2.tight, dialog.lib-dialog .row2.tight { margin-top: 0; flex-wrap: nowrap; }
+.lib-app .seg, dialog.lib-dialog .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex: none; }
+.lib-app .seg button, dialog.lib-dialog .seg button { border: 0; background: var(--panel); padding: 6px 14px; }
+.lib-app .seg button[aria-pressed="true"], dialog.lib-dialog .seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.lib-app .note, dialog.lib-dialog .note { font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+.lib-app .note.inline, dialog.lib-dialog .note.inline { margin: 0; }
 
-dialog.settings, dialog.reader { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--ink);
+dialog.lib-dialog.settings, dialog.lib-dialog.reader { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--ink);
   padding: 0; width: min(680px, calc(100vw - 32px)); box-shadow: var(--shadow);
   font: 14.5px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-dialog * { box-sizing: border-box; }
-dialog button { font: inherit; color: inherit; cursor: pointer; }
-dialog::backdrop { background: rgba(0,0,0,.35); }
-dialog .dlg-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
-dialog .ghost { background: transparent; border: 1px solid var(--line); border-radius: 7px; padding: 5px 10px; }
-dialog .push { margin-left: auto; }
-dialog .tabs { display: flex; gap: 2px; padding: 8px 14px 0; flex-wrap: wrap; }
-dialog .tabs button { border: 1px solid transparent; border-bottom: 0; background: transparent; border-radius: 7px 7px 0 0; padding: 6px 10px; color: var(--muted); }
-dialog .tabs button[aria-selected="true"] { border-color: var(--line); background: var(--bg); color: var(--ink); }
-dialog .page { padding: 14px; border-top: 1px solid var(--line); background: var(--bg); min-height: 280px; max-height: 70vh; overflow-y: auto; }
-dialog .page .pre { white-space: pre-wrap; }
-dialog .ok { color: var(--ok); } dialog .err, dialog .error { color: var(--stop-ink); }
-dialog .srv { display: flex; gap: 10px; align-items: center; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--line); }
-dialog .confirm { margin-top: 10px; border: 1px solid var(--stop-line); background: var(--stop-bg); color: var(--stop-ink); border-radius: 8px; padding: 10px; }
-dialog .host-card { margin-top: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--panel); }
-dialog .host-card.new-host { background: var(--accent-soft); }
-dialog .host-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 10px; }
-dialog .host-card input[type=number] { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--ink); font: inherit; }
-dialog .host-card code { color: var(--muted); font: 11px var(--mono); }
-@media (max-width: 540px) { dialog .host-grid { grid-template-columns: 1fr; } }
+dialog.lib-dialog * { box-sizing: border-box; }
+dialog.lib-dialog button { font: inherit; color: inherit; cursor: pointer; }
+dialog.lib-dialog::backdrop { background: rgba(0,0,0,.35); }
+dialog.lib-dialog .dlg-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+dialog.lib-dialog .ghost { background: transparent; border: 1px solid var(--line); border-radius: 7px; padding: 5px 10px; }
+dialog.lib-dialog .push { margin-left: auto; }
+dialog.lib-dialog .tabs { display: flex; gap: 2px; padding: 8px 14px 0; flex-wrap: wrap; }
+dialog.lib-dialog .tabs button { border: 1px solid transparent; border-bottom: 0; background: transparent; border-radius: 7px 7px 0 0; padding: 6px 10px; color: var(--muted); }
+dialog.lib-dialog .tabs button[aria-selected="true"] { border-color: var(--line); background: var(--bg); color: var(--ink); }
+dialog.lib-dialog .page { padding: 14px; border-top: 1px solid var(--line); background: var(--bg); min-height: 280px; max-height: 70vh; overflow-y: auto; }
+dialog.lib-dialog .page .pre { white-space: pre-wrap; }
+dialog.lib-dialog .ok { color: var(--ok); } dialog.lib-dialog .err, dialog.lib-dialog .error { color: var(--stop-ink); }
+dialog.lib-dialog .srv { display: flex; gap: 10px; align-items: center; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+dialog.lib-dialog .confirm { margin-top: 10px; border: 1px solid var(--stop-line); background: var(--stop-bg); color: var(--stop-ink); border-radius: 8px; padding: 10px; }
+dialog.lib-dialog .host-card { margin-top: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--panel); }
+dialog.lib-dialog .host-card.new-host { background: var(--accent-soft); }
+dialog.lib-dialog .host-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 10px; }
+dialog.lib-dialog .host-card input[type=number] { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--ink); font: inherit; }
+dialog.lib-dialog .host-card code { color: var(--muted); font: 11px var(--mono); }
+@media (max-width: 540px) { dialog.lib-dialog .host-grid { grid-template-columns: 1fr; } }
 .lib-app .msg code, .lib-app .plan code { font-family: var(--mono); font-size: .92em; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
 .lib-app .msg pre code { border: 0; padding: 0; background: transparent; }
 .lib-app header .ghost { white-space: nowrap; }
@@ -330,9 +330,9 @@ dialog .host-card code { color: var(--muted); font: 11px var(--mono); }
 .lib-app .doc table.props th, .lib-app .doc table.props td { border: 0; padding: 4px 18px 4px 0; }
 .lib-app .doc table.props th { color: var(--muted); font-weight: 400; white-space: nowrap; }
 .lib-app .doc table.props tr { border-bottom: 1px solid var(--line); }
-.lib-app .usage, dialog .usage { margin-top: 2px; }
-.lib-app .usage p, dialog .usage p { margin: 6px 0 0; }
-.lib-app .usage a, dialog .usage a { margin-left: 6px; }
+.lib-app .usage, dialog.lib-dialog .usage { margin-top: 2px; }
+.lib-app .usage p, dialog.lib-dialog .usage p { margin: 6px 0 0; }
+.lib-app .usage a, dialog.lib-dialog .usage a { margin-left: 6px; }
 
 /* The pane's Lenses section: name and a clipped source on one line, the adopt toggle at the end. */
 .lib-app .pane-lenses .desk-row { display: flex; align-items: center; gap: 6px; }
@@ -350,9 +350,9 @@ dialog .host-card code { color: var(--muted); font: 11px var(--mono); }
 .lib-app .offering-body { border: 1px solid var(--line); border-radius: 7px; padding: 4px 12px; margin: 8px 0; max-height: 60vh; overflow: auto; }
 
 /* Settings -> Library: a key row is a link that opens a box under the list to set it */
-.lib-app button.link, dialog button.link { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
-.lib-app button.link:hover, dialog button.link:hover, dialog button.link[aria-expanded="true"] { color: var(--accent); }
-dialog .key-entry .confirm { margin-top: 8px; }
+.lib-app button.link, dialog.lib-dialog button.link { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.lib-app button.link:hover, dialog.lib-dialog button.link:hover, dialog.lib-dialog button.link[aria-expanded="true"] { color: var(--accent); }
+dialog.lib-dialog .key-entry .confirm { margin-top: 8px; }
 
 /* The model tile: models recommended for the slot being chosen come first, marked */
 .lib-app .model-card.rec { border-color: var(--ok); }

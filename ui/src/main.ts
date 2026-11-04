@@ -69,6 +69,8 @@ class App {
     placeholder: "Ask the librarian. Enter sends, Shift+Enter adds a line.",
   }) as HTMLTextAreaElement;
   private attachments: { label: string; raw: string }[] = [];
+  private sending = false;      // a chat POST is in flight (MF-005)
+  private stopping = false;     // Stop was pressed; waiting for the Core's outcome
   private attachRow = h("div", { class: "attach-row", hidden: true });
   private msgBox = h("div", { class: "msg-box" });
   private modeButton = h("button", { class: "tb" });
@@ -163,7 +165,7 @@ class App {
         window.location.href = `obsidian://open?vault=${encodeURIComponent(String(this.state.vault ?? ""))}`;
       }),
     }, opts.host === "obsidian" ? "↗ Open in browser" : "↗ Open in Obsidian");
-    this.sendButton = h("button", { class: "send", onclick: () => this.send() }, "Send") as HTMLButtonElement;
+    this.sendButton = h("button", { class: "send", onclick: () => (this.state.busy ? this.stop() : this.send()) }, "Send") as HTMLButtonElement;
     this.effortInput.oninput = () => { this.effortValue.textContent = this.effortInput.value; };
     this.effortInput.onchange = async () => {
       try {
@@ -173,7 +175,7 @@ class App {
       } catch (e) { this.warn((e as Error).message); }
     };
     this.input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); void this.send(); }
+      if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!this.state.busy) void this.send(); }
     });
 
     const chatView = h("main", { class: "chatview" }, this.chat.log);
@@ -330,6 +332,7 @@ class App {
         break;
       case "turn_done": case "error":
         this.state.busy = false;
+        this.stopping = false;
         this.paintSendButton();
         break;
       case "action_started": case "action_progress": case "action_done": {
@@ -544,39 +547,66 @@ class App {
   }
 
   // -- actions ---------------------------------------------------------------
+  /** Send the composer's text. The draft stays until the server accepts it:
+   *  a refusal or a lost connection keeps text and attachments. Success
+   *  clears only what was sent, so anything typed while it was pending
+   *  survives (MF-005, G01). */
   private async send(): Promise<void> {
-    if (this.state.busy) {
-      try { await this.api.post("/api/chat/cancel", {}); }
-      catch (e) { this.warn((e as Error).message); }
-      return;
-    }
-    const text = this.input.value.trim();
+    if (this.state.busy || this.sending) return;
+    const raw = this.input.value;
+    const text = raw.trim();
     if (!text) return;
-    this.input.value = "";
-    this.attachments = [];
+    const sent = [...this.attachments];
+    if (!(await this.sendText(text))) return;
+    if (this.input.value === raw) this.input.value = "";
+    this.attachments = this.attachments.filter((a) => !sent.includes(a));
     this.renderAttachments();
-    await this.sendText(text);
   }
 
   /** The send path itself, shared by the composer and a message's Retry
-   *  button - which resends the same text without touching the composer. */
-  private async sendText(text: string): Promise<void> {
-    if (!text) return;
+   *  button - which resends the same text without touching the composer.
+   *  One request at a time: a second press while one is pending sends
+   *  nothing. True when the server accepted it. */
+  private async sendText(text: string): Promise<boolean> {
+    if (!text || this.sending) return false;
+    this.sending = true;
+    this.paintSendButton();
     try {
       await this.api.post("/api/chat", { text });
       this.state.busy = true;
-      this.paintSendButton();
+      return true;
     } catch (e) {
       const message = (e as Error).message;
       this.warn(message.includes("tier 1") ? "Choose a chat model first: click Model, then a model (it becomes tier 1)." : message);
+      return false;
+    } finally {
+      this.sending = false;
+      this.paintSendButton();
+    }
+  }
+
+  /** Stop the current reply. Only this button stops one; the reply is
+   *  stopped when the Core says so (turn_done or error), not when the
+   *  request is sent. */
+  private async stop(): Promise<void> {
+    if (!this.state.busy || this.stopping) return;
+    this.stopping = true;
+    this.paintSendButton();
+    try { await this.api.post("/api/chat/cancel", {}); }
+    catch (e) {
+      this.stopping = false;
+      this.paintSendButton();
+      this.warn((e as Error).message);
     }
   }
 
   private paintSendButton(): void {
     const busy = !!this.state.busy;
-    this.sendButton.textContent = busy ? "Stop" : "Send";
-    this.sendButton.setAttribute("aria-label", busy ? "Stop reply" : "Send message");
-    this.sendButton.title = busy ? "Stop the current reply" : "Send message";
+    this.sendButton.disabled = this.sending || this.stopping;
+    this.sendButton.setAttribute("aria-busy", String(this.sending || this.stopping));
+    this.sendButton.textContent = this.stopping ? "Stopping…" : busy ? "Stop" : "Send";
+    this.sendButton.setAttribute("aria-label", this.stopping ? "Stopping reply" : busy ? "Stop reply" : "Send message");
+    this.sendButton.title = this.stopping ? "Stopping the current reply" : busy ? "Stop the current reply" : "Send message";
   }
 
   private async attach(id: string): Promise<void> {

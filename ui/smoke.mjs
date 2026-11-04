@@ -26,6 +26,58 @@ const expect = async (cond, what) => { if (!(await cond)) throw new Error(`expec
 
 await page.goto(url);
 await page.waitForSelector("header nav");
+
+// MF-005: one send at a time, success clears only what was sent, Enter never
+// stops a reply, and Stop waits for the Core. The accepted send is faked, so
+// the page is reloaded afterwards to return to the Core's real state.
+let chatPosts = 0, cancelPosts = 0;
+page.on("request", (r) => {
+  if (r.method() !== "POST") return;
+  if (r.url().endsWith("/api/chat")) chatPosts++;
+  if (r.url().endsWith("/api/chat/cancel")) cancelPosts++;
+});
+{
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  await page.route("**/api/chat", async (route) => {
+    await gate;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ started: true }) });
+  });
+  await page.route("**/api/chat/cancel", (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
+  // The faked send starts no real turn, so the Core's state is shown as busy
+  // too; otherwise the next state refresh would correctly report idle.
+  await page.route("**/api/state", async (route) => {
+    try {
+      const real = await route.fetch();
+      await route.fulfill({ response: real, json: { ...(await real.json()), busy: true } });
+    } catch { /* the page reloaded while this was in flight */ }
+  });
+  await page.fill("#lib-msg", "first question");
+  await page.press("#lib-msg", "Enter");
+  await page.press("#lib-msg", "Enter");                  // still pending: sends nothing
+  await page.fill("#lib-msg", "a newer draft");
+  release();
+  await page.waitForSelector("button.send[aria-label='Stop reply']");
+  await expect(chatPosts === 1, "one chat request while one is pending");
+  await expect(page.inputValue("#lib-msg").then((v) => v === "a newer draft"),
+    "success clears only what was sent, not text typed meanwhile");
+  await page.press("#lib-msg", "Enter");
+  await page.waitForTimeout(300);
+  await expect(cancelPosts === 0, "Enter while a reply runs never stops it");
+  await expect(page.inputValue("#lib-msg").then((v) => v === "a newer draft"), "and leaves the draft alone");
+  await page.click("button.send");
+  await page.waitForSelector("button.send[aria-label='Stopping reply'][disabled]");
+  await expect(cancelPosts === 1, "Stop sends one cancel and then waits for the Core");
+  await page.unroute("**/api/chat");
+  await page.unroute("**/api/chat/cancel");
+  await page.unroute("**/api/state");
+  await page.reload();
+  await page.waitForSelector("header nav");
+  chatPosts = 0;
+  step("composer: one send at a time; Enter never stops; Stop waits for the outcome");
+}
+
 // Obsidian owns a generic `.popover` class and makes it a horizontal flex
 // container. The shared UI must namespace its own panels so host CSS cannot
 // turn the model picker's vertical sections into squeezed columns.
@@ -35,7 +87,10 @@ await page.addStyleTag({ content: ".popover, .grid { display: flex !important; f
 await page.fill("#lib-msg", "hello");
 await page.keyboard.press("Enter");
 await page.waitForSelector(".notice >> text=Choose a chat model first");
-step("sending without a model says what to do");
+await expect(page.inputValue("#lib-msg").then((v) => v === "hello"), "a refused send keeps the draft (MF-005)");
+await expect(chatPosts === 1, "a refused send is one request");
+await page.fill("#lib-msg", "");
+step("sending without a model says what to do, and keeps the draft");
 
 // Model tile: click order sets tiers; clicking again explains; right-click clears.
 await page.click(".toolbar .tb:nth-child(4)");
@@ -727,6 +782,28 @@ await expect(page.evaluate(() => document.body.textContent?.includes("Person acc
   "the inspector never presents person acceptance as verification");
 await expect(Boolean(auditedSession), "the audited smoke thread has an id");
 step("audited predicate inspector shows bindings and refreshes after a person review action");
+
+// MF-007: the app's dialog rules stay inside its own dialog. A host's or
+// another plugin's dialog keeps the browser's own styling.
+await expect(page.evaluate(() => {
+  const foreign = document.createElement("dialog");
+  foreign.innerHTML = "<div class='page tabs'><button class='ghost'>x</button><input type='text'></div>";
+  document.body.append(foreign);
+  foreign.show();
+  const child = foreign.querySelector("div"), button = foreign.querySelector("button"), input = foreign.querySelector("input");
+  const ok = getComputedStyle(child).boxSizing === "content-box"
+    && getComputedStyle(child).paddingTop === "0px"
+    && getComputedStyle(button).cursor !== "pointer"
+    && getComputedStyle(input).width !== getComputedStyle(foreign).width
+    && getComputedStyle(foreign).borderRadius !== "12px";
+  foreign.remove();
+  return ok;
+}), "a foreign dialog is not restyled by the Librarian's dialog rules");
+await expect(page.evaluate(() => {
+  const own = document.querySelector("dialog.lib-dialog.settings");
+  return !!own && getComputedStyle(own).borderRadius === "12px";
+}), "the Librarian's own settings dialog keeps its styling");
+step("dialog styles are rooted in the app's own dialog");
 
 // Phone width: nothing overflows sideways.
 await page.setViewportSize({ width: 390, height: 800 });

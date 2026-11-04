@@ -1,0 +1,102 @@
+{
+  "accessed": "2026-11-03",
+  "status": "source_screening_not_installed_or_benchmarked",
+  "notes": [
+    "Commit pins record inspected snapshots, not recommended releases.",
+    "Repository metadata license labels are screening data, not a complete dependency license audit.",
+    "Hypothesis LICENSE.txt specifies MPL-2.0 with exceptions; Anki LICENSE specifies AGPL-3.0-or-later with exceptions.",
+    "No live-library data or provider calls used."
+  ],
+  "repositories": [
+    {
+      "repo": "tlaplus/tlaplus",
+      "url": "https://github.com/tlaplus/tlaplus",
+      "branch": "master",
+      "license": "MIT",
+      "archived": false,
+      "pushed_at": "2026-11-02T16:56:43Z",
+      "commit": "dc6a944429fe3e26104d38f9ff792d2d5d83f307",
+      "commit_date": "2026-11-02T16:31:54Z"
+    },
+    {
+      "repo": "HypothesisWorks/hypothesis",
+      "url": "https://github.com/HypothesisWorks/hypothesis",
+      "branch": "master",
+      "license": "NOASSERTION",
+      "archived": false,
+      "pushed_at": "2026-11-01T00:06:00Z",
+      "commit": "30f73af87f587b6911042552e24f1dea2577988a",
+      "commit_date": "2026-10-30T23:39:01Z"
+    },
+    {
+      "repo": "xtdb/xtdb",
+      "url": "https://github.com/xtdb/xtdb",
+      "branch": "main",
+      "license": "MPL-2.0",
+      "archived": false,
+      "pushed_at": "2026-11-03T15:29:37Z",
+      "commit": "cf9ad735af92d8440441deb1fd39b6842c247ace",
+      "commit_date": "2026-11-03T14:51:46Z"
+    },
+    {
+      "repo": "temporalio/temporal",
+      "url": "https://github.com/temporalio/temporal",
+      "branch": "main",
+      "license": "MIT",
+      "archived": false,
+      "pushed_at": "2026-11-03T15:30:05Z",
+      "commit": "8ac42361480ce7df37aec4adab8d4358e8e1f278",
+      "commit_date": "2026-11-03T15:30:04Z"
+    },
+    {
+      "repo": "langchain-ai/langgraph",
+      "url": "https://github.com/langchain-ai/langgraph",
+      "branch": "main",
+      "license": "MIT",
+      "archived": false,
+      "pushed_at": "2026-11-03T14:13:53Z",
+      "commit": "3c916d750575b22c464790e9774494d810ccd322",
+      "commit_date": "2026-11-03T01:03:26Z"
+    },
+    {
+      "repo": "common-workflow-language/cwltool",
+      "url": "https://github.com/common-workflow-language/cwltool",
+      "branch": "main",
+      "license": "Apache-2.0",
+      "archived": false,
+      "pushed_at": "2026-11-03T07:53:06Z",
+      "commit": "959ce27ea0ea0d9b1d083fb34a47d46a22954852",
+      "commit_date": "2026-11-01T08:04:29Z"
+    },
+    {
+      "repo": "ankitects/anki",
+      "url": "https://github.com/ankitects/anki",
+      "branch": "main",
+      "license": "NOASSERTION",
+      "archived": false,
+      "pushed_at": "2026-11-03T14:57:04Z",
+      "commit": "1003906313766ef73f949d48fdeb074fe2a1f3b2",
+      "commit_date": "2026-11-03T14:57:01Z"
+    },
+    {
+      "repo": "microsoft/graphrag",
+      "url": "https://github.com/microsoft/graphrag",
+      "branch": "main",
+      "license": "MIT",
+      "archived": false,
+      "pushed_at": "2026-11-02T07:24:01Z",
+      "commit": "34b2b67ae4601ad0b47bcd179fbe3f2a23aa0857",
+      "commit_date": "2026-11-02T05:40:54Z"
+    },
+    {
+      "repo": "UKGovernmentBEIS/inspect_ai",
+      "url": "https://github.com/UKGovernmentBEIS/inspect_ai",
+      "branch": "main",
+      "license": "MIT",
+      "archived": false,
+      "pushed_at": "2026-11-03T15:31:58Z",
+      "commit": "de4b309791b2d4d49d3064f3c2760f37ba86cc92",
+      "commit_date": "2026-11-03T15:31:09Z"
+    }
+  ]
+}

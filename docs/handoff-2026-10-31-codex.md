@@ -1,5 +1,11 @@
 # Handoff to Codex: remaining plan tasks, then the UI
 
+> **Superseded on 2026-11-04.** This note listed BASE-03–05, INDEX-02–05 and
+> ROUTE-03/04 as open. All of them were already implemented (`99bff07`,
+> `ded98c0`, `11bdd5b`, `b6ef33b`, `4e56ca7`); its count matched exact table
+> rows and missed combined status rows. Current work follows the master
+> finalization queue in plan §10.2.
+
 Date: 2026-10-31. From: Claude (this session's work, REMED-01 to -06 and the
 REMED-08 pilot). Master is at `6d471ad`, about 70 commits ahead of
 `origin/master`. **Do not push**: the owner pushes.

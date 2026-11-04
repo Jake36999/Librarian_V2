@@ -30,7 +30,7 @@ const CURATED_SKILLS = [
 ] as const;
 
 export class Settings {
-  readonly dialog = h("dialog", { class: "settings", "aria-label": "Settings" }) as HTMLDialogElement;
+  readonly dialog = h("dialog", { class: "lib-dialog settings", "aria-label": "Settings" }) as HTMLDialogElement;
   private page: string = "connections";
   private body = h("section", { class: "page" });
   private tabs = h("div", { class: "tabs", role: "tablist" });

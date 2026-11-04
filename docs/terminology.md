@@ -50,5 +50,21 @@ delivery-status authority.
 | blocked externally | Completion requires a protected credential, signing material, provider budget, or target environment. |
 | retired | Explicitly excluded from V2. |
 
+`experimental` and `deferred` are qualifiers, not statuses: each needs an
+explicit decision (keep, defer or reject) recorded with its gate.
+
+### Release roles and evidence states (master finalization queue)
+
+| Term | Meaning |
+| --- | --- |
+| required | The row gates publication (MF-047), always. |
+| fix-or-disable | A P1 defect in a shipped capability. It blocks a release only if the capability ships enabled with the defect unfixed; otherwise the capability is disabled or stated as a limitation, through the MF-051 scope record. |
+| if-selected | Optional work that gates a release only when MF-051 selects it. |
+| outside release | Experiments and decisions that never gate a release; each runs on its own approval. |
+| observed | Seen happen, in a real host or a hosted service. |
+| source-supported | Shown by the code at a cited line; "re-checked" says when and by whom. |
+| process | A documentation, acceptance or decision task with no defect claim. |
+| proposal | A design or experiment not yet built. |
+
 Do not use `ready`, `qualified`, `verified`, or `complete` as substitutes for a
 delivery status.

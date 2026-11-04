@@ -1,0 +1,54 @@
+{
+  "revision": "40ec923f5d7cb5612939b9fc456963b88e0af4a3",
+  "date": "2026-11-04",
+  "probe_kind": "isolated demo; synthetic admission/theme/root-width faults; not real Obsidian",
+  "probe": {
+    "failedSend": {
+      "composer": "",
+      "message": "forced admission failure\n\u00e2\u0153\u2022",
+      "logContainsDraft": false
+    },
+    "narrowRoot": {
+      "window": 1440,
+      "root": 420,
+      "rootScroll": 635,
+      "headerWidth": 420,
+      "headerScroll": 635,
+      "panePosition": "static"
+    },
+    "foreignDialog": {
+      "font": "\"Times New Roman\"",
+      "boxSizing": "border-box",
+      "background": "rgb(255, 255, 255)"
+    },
+    "settingsFocus": {
+      "tag": "BUTTON",
+      "text": "Close"
+    },
+    "settingsClosed": true,
+    "popoverFocus": {
+      "hidden": false,
+      "tag": "BUTTON",
+      "text": "Choose models \u00e2\u2013\u00be"
+    },
+    "hostButton": {
+      "height": 32,
+      "scroll": 32
+    }
+  },
+  "css_rule_headers": 309,
+  "class_declarations": 113,
+  "checked_files": {
+    "ui/src/main.ts": "88f88db736627d7fb54143f256b6dc175b60080ffe1e4f09d8efee6c41de59a2",
+    "ui/src/panels.ts": "d72be1581f87eec034a19aa2eacf78cc92279e28d6d9128995efb08b8522dd46",
+    "ui/src/style.css": "25b62743f084cbce32c090f0ef1bfa6ba58f97f6abc560603aefe7453dc9689a",
+    "ui/smoke.mjs": "ff6f1cc5f5fd80f15e384de4cd505d46aa6b3cd6d60e459703ee9698f0387787",
+    "ui/packaged-smoke.mjs": "bcbb25cd4d3f8bbdfd442c126ceeed02c2d6311308c09b5840ab32cf8ed28df3",
+    "src/resource_librarian/ui/app.js": "b5e88c24ecf002fe55a4cf0d3f9d237ca7bfb1905457f7f977a2946f38812143",
+    "src/resource_librarian/ui/app.css": "25b62743f084cbce32c090f0ef1bfa6ba58f97f6abc560603aefe7453dc9689a",
+    "src/resource_librarian/ui/index.html": "105a96cb8d4b9792e1919d12a97eaeb2b005b6eb8873fe874babc90a0245fd88",
+    "obsidian/src/main.ts": "a80e066a47f54b1d9ae4b3367f1fd56ff3c1f4e1cb9597c5fdc69379329deff3",
+    "obsidian/src/core.ts": "c156a79957bd2a094e8416b7a13d000c21006b8c6afb5a6524e5e85712074b8c",
+    "tests/test_obsidian_adapter_contract.py": "9609685ab821066424413955e5e567cf3e846ad46e8b9842c311ffb48f606e5c"
+  }
+}
