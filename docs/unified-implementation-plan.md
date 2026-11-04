@@ -514,7 +514,7 @@ settings, signing or publication.
 | REMED-06/07/08 | Implemented. The REMED-06 exit is met, and task-local timeout stopping was approved. The three uncertain G5 entries are liabilities for MF-002. |
 | ACCEPT-02 | Partial. One original item remains: three-client mixed traffic (MF-001). The owner noted on 2026-11-04 that official Claude Cowork support has ended, so the Claude side is Claude Code (or a subagent) acting as the MCP client. A final-candidate re-run is MF-045. |
 | ACCEPT-01/03, RELEASE-01 | Implemented. Release work continues as MF-044 (acceptance refresh), MF-046 and MF-047 (owner gates) and MF-043a–f (build and release evidence). |
-| Hosted CI | Run 41567602480 (2026-11-03): 1, 262 and 262 failures on 3.11, 3.12 and 3.13. Run 41912301225: 2, 2 and 3. Run 41928589143: 1 each, a compatibility test whose premise the runner disproved; that test is corrected (MF-004, §19) and the result is read from the next run. |
+| Hosted CI | Core is green on 3.11, 3.12 and 3.13 at `5261203` (run 41932890363), after 1/262/262 failures on 2026-11-03 (MF-004, §19). That run's adapters job failed on a packaged-smoke selector the MF-007 rename left stale; it is fixed and confirmed by the next run. |
 | §12 and §13 deferrals and decision gates | Retained: full HARNESS-09, DEPLOY-05, CORE-04B and the development-agent profile. Experiments MF-036–041 and MF-048 are conditional, each ending in keep, defer or reject. |
 
 **Order of work:**
@@ -4608,4 +4608,36 @@ cancels and decisions say so". Every refusal is mocked as a 409 from the Core.
 - `npm.cmd --prefix ui run smoke`: 47 steps passed;
 - `tests/test_obsidian_adapter_contract.py`: 8 passed;
 - full suite: 1954 passed, 2 skipped, 5 deselected in 606.02s (0:10:06) (exit 0, Python 3.11.3) (`suite-mf006-py311.json`).
+
+### MF-004 hosted result; MF-007 packaged-smoke selector (2026-11-04)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-004 | implemented; Core green on hosted CI | `2602512`, `276b067`, `5261203` | `ci-41932890363.json`. |
+| MF-007 | follow-up fix | this commit | `ui/packaged-smoke.mjs`, `ui/smoke.mjs`. |
+
+**Hosted run 41932890363, head `5261203`.** Core passed on 3.11, 3.12 and 3.13,
+and so did all three wheel-smoke jobs. That meets MF-004's packet: hosted CI was
+red at 1/262/262 failures on 2026-11-03.
+
+The adapters job failed. `ui/packaged-smoke.mjs:170` timed out waiting for
+`.view.search .results`, a class selector the MF-007 rename (`808ee39`)
+namespaced. I renamed `ui/smoke.mjs` but missed the second browser script.
+
+**Fix.** The selector is now `.lib-view.lib-search .lib-results`. `ui/smoke.mjs`
+asserts that same selector exists after a real search, so the two scripts stay
+in step. Every other selector in the packaged smoke is a role, an
+`aria-label`, an element or `button.lib-switch`, which needs no change.
+`src/resource_librarian/library_picker.py` is a separate standalone page with
+its own stylesheet, so it is outside the rename.
+
+**Verification.**
+- `npm.cmd --prefix ui run smoke`: 47 steps passed, with the new assertion.
+- `tests/test_packaged_adapter_smoke.py`: 5 passed.
+- The full packaged-adapter smoke (`scripts/smoke-packaged-adapters.ps1`) was
+  not run here. Its build script needs PowerShell 7 (`IO.Compression.ZipArchive`),
+  and this machine has only Windows PowerShell 5.1. The adapters job of the
+  next hosted run is its check.
+- The Python suite was not rerun: only the two browser scripts changed, and
+  pytest runs neither. Its last run, at `75b4df4`, was 1,954 passed.
 

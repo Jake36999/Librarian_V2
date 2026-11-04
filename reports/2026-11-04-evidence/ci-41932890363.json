@@ -1,0 +1,44 @@
+{
+ "source": "gh run view 41932890363 (+ --log-failed for the adapters job; gh 2.103.3)",
+ "retrieved_utc": "2026-11-04T23:37:25.9052347Z",
+ "run_id": 41932890363,
+ "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/41932890363",
+ "workflow": "Core CI",
+ "head_sha": "52612033d2057d63c629e45043866ebff2f1a856",
+ "created": "2026-11-04T23:20:10Z",
+ "conclusion": "failure",
+ "jobs": [
+  {
+   "name": "wheel-smoke (3.11)",
+   "conclusion": "success"
+  },
+  {
+   "name": "core (3.11)",
+   "conclusion": "success"
+  },
+  {
+   "name": "core (3.12)",
+   "conclusion": "success"
+  },
+  {
+   "name": "core (3.13)",
+   "conclusion": "success"
+  },
+  {
+   "name": "wheel-smoke (3.12)",
+   "conclusion": "success"
+  },
+  {
+   "name": "adapters",
+   "conclusion": "failure"
+  },
+  {
+   "name": "wheel-smoke (3.13)",
+   "conclusion": "success"
+  }
+ ],
+ "adapters_failure": "ui/packaged-smoke.mjs:170:14 TimeoutError: the packaged browser smoke still selected '.view.search .results', a class name MF-007 (808ee39) namespaced to '.lib-view.lib-search .lib-results'",
+ "log_bytes": 4818,
+ "log_sha256": "8180c8624b901c0b9b7105831f75b1538f5aadb28a10137c11766743f68075c6",
+ "lanes": {}
+}

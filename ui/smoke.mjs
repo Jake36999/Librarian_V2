@@ -387,6 +387,8 @@ await page.keyboard.press("Enter");
 // SM-1: everything, grouped by the intent that answered; result-derived facets; tiles that
 // say how much of each source was read; a click opens the note beside it.
 await page.waitForSelector(".lib-search .lib-tile >> text=osquery");
+// ui/packaged-smoke.mjs waits on this selector; keep the two in step (MF-007).
+await expect(page.$(".lib-view.lib-search .lib-results").then(Boolean), "the packaged smoke's search-results selector exists");
 await expect(page.isVisible(".lib-search .lib-group h3 >> text=Sources"), "everything is grouped by intent");
 await expect(page.isVisible(".lib-search >> text=Ran: orient, pattern, made"), "which intents ran is said");
 await expect(page.isVisible(".lib-search .lib-tile .lib-depth >> text=read:"), "a tile shows its read depth");

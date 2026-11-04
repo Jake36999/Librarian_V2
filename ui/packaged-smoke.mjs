@@ -168,7 +168,7 @@ try {
   const searchBody = await searchResponse.json();
   if (searchBody.error) throw new Error(`read-only search failed: ${searchBody.error}`);
   await page.waitForFunction(() => {
-    const results = document.querySelector(".view.search .results");
+    const results = document.querySelector(".lib-view.lib-search .lib-results");
     return results && !results.textContent?.includes("Searching…");
   });
   if (errors.length) throw new Error(`browser errors:\n${errors.join("\n")}`);
