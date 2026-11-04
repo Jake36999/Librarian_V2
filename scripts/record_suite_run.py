@@ -20,7 +20,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def git(*args: str) -> str:
-    return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+    # Trailing newlines only: a porcelain status line starts with a
+    # meaningful space (" M" is a worktree change, "M " a staged one).
+    return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True).stdout.rstrip("\n")
 
 
 def main(argv: list[str]) -> int:

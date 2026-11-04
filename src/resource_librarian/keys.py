@@ -111,16 +111,28 @@ def _owner_only(path: Path) -> bool:
     return done.returncode == 0
 
 
+# An integrity label ("Mandatory Label\High Mandatory Level:(NW)") is a SACL
+# entry, not an access grant. icacls lists it with the grants; its flags are
+# only ever no-write-up, no-read-up and no-execute-up, in any display language,
+# after any inheritance flags.
+_LABEL_ONLY = re.compile(r":(?:\((?:OI|CI|IO|NP|I)\))*\(N[WRX](?:,N[WRX])*\)\s*$")
+
+
 def owner_only(path: Path) -> bool:
     """Whether `path` is readable by its owner alone - POSIX mode 600, or on
-    Windows an ACL with no inherited entries and one explicit grant."""
+    Windows an ACL with no inherited entries and one explicit grant.
+
+    A file created by an elevated process carries an explicit integrity
+    label, which icacls prints like a grant; it is not one (MF-004).
+    """
     if os.name != "nt":
         return oct(path.stat().st_mode)[-3:] == "600"
     try:
         done = subprocess.run(["icacls", str(path)], capture_output=True, text=True, timeout=15)
     except (OSError, subprocess.SubprocessError):
         return False
-    grants = [line for line in done.stdout.splitlines()[:-1] if ":" in line and "(" in line]
+    grants = [line for line in done.stdout.splitlines()[:-1]
+              if ":" in line and "(" in line and not _LABEL_ONLY.search(line)]
     return done.returncode == 0 and len(grants) == 1 and "(I)" not in grants[0]
 
 

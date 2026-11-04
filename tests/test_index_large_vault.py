@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pytest
 
+from resource_librarian.file_access import file_identity
 import resource_librarian.index as index_module
 from resource_librarian.index import Index, IndexService
 from resource_librarian.notes import iter_paths
@@ -37,7 +38,7 @@ def _large_note(number: int) -> str:
 def _metadata(path: Path) -> tuple[int, int, str]:
     stat = path.stat()
     return stat.st_mtime_ns, stat.st_size, \
-        f"{stat.st_dev}:{stat.st_ino}:{stat.st_ctime_ns}"
+        file_identity(stat)
 
 
 def _assert_exact_tree(index: Index) -> None:

@@ -17,6 +17,7 @@ from pathlib import Path
 
 import pytest
 
+from resource_librarian.file_access import file_identity
 from resource_librarian.app import App, build
 from resource_librarian.coordination import VaultCoordinator
 from resource_librarian.keys import KeyStore
@@ -37,7 +38,7 @@ def _note(name: str, value: str) -> str:
 def _metadata(path: Path) -> tuple[int, int, str]:
     stat = path.stat()
     return stat.st_mtime_ns, stat.st_size, \
-        f"{stat.st_dev}:{stat.st_ino}:{stat.st_ctime_ns}"
+        file_identity(stat)
 
 
 def _normalized_hash(path: Path) -> str:

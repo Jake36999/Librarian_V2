@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 
 from resource_librarian.app import App
+from resource_librarian.file_access import file_identity
 from resource_librarian.coordination import LeaseHeldError, StaleLeaseError, VaultCoordinator
 from resource_librarian.host import HostManager, STOP_EXIT_SECONDS
 from resource_librarian.keys import KeyStore
@@ -253,7 +254,7 @@ def test_crash_after_mutation_before_done_recovers_without_replay(vault, tmp_pat
             assert row is not None
             assert row["hash"] == hashlib.sha256(text.encode("utf-8")).hexdigest()[:24]
             assert (row["mtime_ns"], row["size"]) == (stat.st_mtime_ns, stat.st_size)
-            assert row["file_identity"] == f"{stat.st_dev}:{stat.st_ino}:{stat.st_ctime_ns}"
+            assert row["file_identity"] == file_identity(stat)
             baseline_path = vault.root / "Notes" / "Baseline.md"
             baseline_text = baseline_path.read_text(encoding="utf-8", errors="replace")
             baseline = index.note_row("Baseline")
@@ -395,7 +396,7 @@ def test_authenticated_host_force_stop_preserves_pending_recovery_evidence(
             assert row is not None
             assert row["hash"] == hashlib.sha256(text.encode("utf-8")).hexdigest()[:24]
             assert (row["mtime_ns"], row["size"]) == (stat.st_mtime_ns, stat.st_size)
-            assert row["file_identity"] == f"{stat.st_dev}:{stat.st_ino}:{stat.st_ctime_ns}"
+            assert row["file_identity"] == file_identity(stat)
             for table in ("chunk", "facet", "link", "component"):
                 assert index.conn.execute(
                     f"SELECT COUNT(*) FROM {table} AS child LEFT JOIN note "

@@ -1,0 +1,30 @@
+{
+ "command": [
+  "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone",
+ "exit_code": 0,
+ "summary": "1942 passed, 2 skipped, 5 deselected in 594.22s (0:09:54)",
+ "started_utc": "2026-11-04T20:16:36.026495+00:00",
+ "seconds": 595.3,
+ "head": "6b73fd654cb478d49bf4cbbf81fed7256a97dcca",
+ "tracked_changes": [
+  "M src/resource_librarian/file_access.py",
+  " M src/resource_librarian/index.py",
+  " M src/resource_librarian/keys.py",
+  " M tests/test_core_process_interruption.py",
+  " M tests/test_index_large_vault.py",
+  " M tests/test_index_snapshot_consistency.py",
+  " M tests/test_index_sustained_traffic.py"
+ ],
+ "python": "3.11.3",
+ "executable": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-mf004-py311.log",
+ "log_sha256": "0226d6e2a597718272c50089c09d15a1789f1cf71ee4ab4560659321f8ad9a7a"
+}

@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from resource_librarian.coordination import atomic_write_text
-from resource_librarian.file_access import FileChangedError, read_bytes_snapshot
+from resource_librarian.file_access import FileChangedError, file_identity, read_bytes_snapshot
 from resource_librarian.index import Index, IndexService
 
 from conftest import add_source
@@ -25,7 +25,7 @@ def _assert_note_snapshot(index: Index, path: Path) -> None:
     assert row["hash"] == hashlib.sha256(text.encode("utf-8")).hexdigest()[:24]
     assert (row["mtime"], row["size"]) == (stat.st_mtime, stat.st_size)
     assert row["mtime_ns"] == stat.st_mtime_ns
-    assert row["file_identity"] == f"{stat.st_dev}:{stat.st_ino}:{stat.st_ctime_ns}"
+    assert row["file_identity"] == file_identity(stat)
 
 
 def _assert_no_orphan_metadata(index: Index) -> None:

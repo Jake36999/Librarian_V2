@@ -29,11 +29,38 @@ class FileSnapshot:
     size: int
     device: int
     inode: int
-    ctime_ns: int
+    ctime_ns: int       # identity_time_ns(): creation time on Windows
 
     @property
     def identity(self) -> str:
         return f"{self.device}:{self.inode}:{self.ctime_ns}"
+
+
+def identity_time_ns(stat: os.stat_result) -> int:
+    """The time that, with device and inode, names one file.
+
+    POSIX: ``st_ctime_ns``, the inode change time, as ever.  Windows: the
+    creation time.  Up to Python 3.11 that was ``st_ctime``; from 3.12
+    ``st_ctime`` is the NTFS change time and creation is ``st_birthtime``.
+    The change time ``os.stat`` reports can trail the one ``os.fstat``
+    reports for the same unchanged file (measured 1 ms behind, for as long
+    as a test ran), so comparing it across the two calls made every freshly
+    written note look changed (MF-004).
+    """
+    if os.name == "nt":
+        birth = getattr(stat, "st_birthtime_ns", None)
+        if birth is not None:
+            return int(birth)
+    return stat.st_ctime_ns
+
+
+def file_identity(stat: os.stat_result) -> str:
+    """The ``device:inode:time`` string the index stores for a file."""
+    return f"{stat.st_dev}:{stat.st_ino}:{identity_time_ns(stat)}"
+
+
+def _key(stat: os.stat_result) -> tuple[int, int, int, int, int]:
+    return (stat.st_dev, stat.st_ino, identity_time_ns(stat), stat.st_mtime_ns, stat.st_size)
 
 
 class FileChangedError(OSError):
@@ -80,17 +107,12 @@ def read_bytes_snapshot(path: Path) -> FileSnapshot:
                 verified = data
             after = os.fstat(descriptor()) if callable(descriptor) else path.stat()
         named = path.stat()
-    before_key = (before.st_dev, before.st_ino, before.st_ctime_ns,
-                  before.st_mtime_ns, before.st_size)
-    after_key = (after.st_dev, after.st_ino, after.st_ctime_ns,
-                 after.st_mtime_ns, after.st_size)
-    named_key = (named.st_dev, named.st_ino, named.st_ctime_ns,
-                 named.st_mtime_ns, named.st_size)
-    if data != verified or before_key != after_key or after_key != named_key:
+    after_key = _key(after)
+    if data != verified or _key(before) != after_key or after_key != _key(named):
         raise FileChangedError("file changed while its index snapshot was being read")
     return FileSnapshot(data=data, mtime=after.st_mtime, mtime_ns=after.st_mtime_ns,
                         size=after.st_size, device=after.st_dev, inode=after.st_ino,
-                        ctime_ns=after.st_ctime_ns)
+                        ctime_ns=identity_time_ns(after))
 
 
 def read_text(path: Path, *, encoding: str = "utf-8", errors: str = "strict") -> str:

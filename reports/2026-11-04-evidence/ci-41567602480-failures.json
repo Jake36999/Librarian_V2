@@ -1,0 +1,2183 @@
+{
+ "source": "gh run view 41567602480 --log-failed (gh 2.103.3, authenticated as the repository owner)",
+ "retrieved_utc": "2026-11-04T20:17:18.2519982Z",
+ "run_id": 41567602480,
+ "url": "https://github.com/Jake36999/Librarian_V2/actions/runs/41567602480",
+ "workflow": "Core CI",
+ "head_sha": "40ec923f5d7cb5612939b9fc456963b88e0af4a3",
+ "created": "2026-11-03T02:40:50Z",
+ "conclusion": "failure",
+ "jobs": [
+  {
+   "name": "core (3.13)",
+   "conclusion": "failure"
+  },
+  {
+   "name": "core (3.12)",
+   "conclusion": "failure"
+  },
+  {
+   "name": "wheel-smoke (3.13)",
+   "conclusion": "success"
+  },
+  {
+   "name": "adapters",
+   "conclusion": "success"
+  },
+  {
+   "name": "wheel-smoke (3.12)",
+   "conclusion": "success"
+  },
+  {
+   "name": "core (3.11)",
+   "conclusion": "failure"
+  },
+  {
+   "name": "wheel-smoke (3.11)",
+   "conclusion": "success"
+  }
+ ],
+ "branch_rules": {
+  "GET repos/Jake36999/Librarian_V2/branches/master": "{\"name\":\"master\",\"protected\":false}",
+  "GET .../branches/master/protection": "404 Branch not protected",
+  "GET .../rulesets": "[]",
+  "GET .../rules/branches/master": "[]"
+ },
+ "log_bytes": 2033954,
+ "log_sha256": "aa52607d1f674651d0c674d64c16810aa514aa26d53b4a6d57620bc7700efea8",
+ "lanes": {
+  "core (3.11)": {
+   "summary": "1 failed, 1937 passed, 3 skipped, 5 deselected",
+   "failing": 1,
+   "file_changed_error": 0,
+   "selectors": {
+    "tests/test_app.py::test_keys_are_saved_confirmed_and_never_returned": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert (True and False)"
+    }
+   }
+  },
+  "core (3.12)": {
+   "summary": "262 failed, 1671 passed, 3 skipped, 5 deselected, 5 warnings, 5 errors",
+   "failing": 263,
+   "file_changed_error": 85,
+   "selectors": {
+    "tests/test_agenda.py::test_buckets_by_due_date_relative_to_today": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == ['overdue']"
+    },
+    "tests/test_agenda.py::test_multiple_notes_are_all_scanned": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert set() == {'from a', 'from b'}"
+    },
+    "tests/test_agenda.py::test_scan_function_accepts_an_explicit_today": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == ['x']"
+    },
+    "tests/test_agenda.py::test_scan_sorts_each_bucket_by_due_date": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == ['sooner one', 'later one']"
+    },
+    "tests/test_agenda.py::test_the_boundary_of_this_week_is_inclusive_of_six_days_out": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == ['day six']"
+    },
+    "tests/test_app.py::test_keys_are_saved_confirmed_and_never_returned": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert (True and False)"
+    },
+    "tests/test_app.py::test_models_shows_profiled_queued_and_unprofiled": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert (True is True and 'Tier_2' == 'Tier_3'"
+    },
+    "tests/test_arguments.py::test_a_pursuit_kind_is_read_as_the_one_permitted_value_it_starts": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...'session': {'session': '20261103-0243-8a49a9', 'purpose': 'start_pursuit', 'project': 'Uni', 'mode': 'l"
+    },
+    "tests/test_arguments.py::test_assumptions_settled_by_the_way_models_say_it": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...'session': {'session': '20261103-0243-0dcfaf', 'purpose': 'start_pursuit', 'project': 'Uni', 'mode': 'l"
+    },
+    "tests/test_assumptions.py::test_a_settlement_must_be_something_this_session_did": {
+     "outcome": "ERROR",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...session': '20261103-0243-f18417', 'purpose': 'start_pursuit', 'project': 'Databases Course', 'mode': 'l"
+    },
+    "tests/test_assumptions.py::test_an_empty_list_says_nothing_is_assumed_and_costs_no_budget": {
+     "outcome": "ERROR",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...session': '20261103-0243-59830e', 'purpose': 'start_pursuit', 'project': 'Databases Course', 'mode': 'l"
+    },
+    "tests/test_assumptions.py::test_an_unverifiable_assumption_follows_the_thread_as_a_caveat": {
+     "outcome": "ERROR",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...session': '20261103-0243-85196c', 'purpose': 'start_pursuit', 'project': 'Databases Course', 'mode': 'l"
+    },
+    "tests/test_assumptions.py::test_going_back_to_the_phase_asks_again": {
+     "outcome": "ERROR",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...session': '20261103-0243-821277', 'purpose': 'start_pursuit', 'project': 'Databases Course', 'mode': 'l"
+    },
+    "tests/test_assumptions.py::test_the_phase_waits_for_the_assumptions": {
+     "outcome": "ERROR",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...session': '20261103-0243-dcf703', 'purpose': 'start_pursuit', 'project': 'Databases Course', 'mode': 'l"
+    },
+    "tests/test_authoring.py::test_a_note_a_person_edited_is_never_replaced": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'written'"
+    },
+    "tests/test_authoring.py::test_a_note_is_written_indexed_and_findable_and_its_path_returned": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'written'"
+    },
+    "tests/test_authoring.py::test_a_write_inside_a_session_is_listed_with_its_path_in_any_phase": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'path'"
+    },
+    "tests/test_authoring.py::test_an_existing_note_is_not_overwritten_without_replace": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_authoring.py::test_archive_moves_a_note_and_keeps_it": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'archived'"
+    },
+    "tests/test_authoring.py::test_edit_appends_or_replaces_a_section_and_sets_fields": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_authoring.py::test_edit_refuses_typed_library_notes_and_protected_fields": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_authoring.py::test_only_notes_and_project_folders_are_writable": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'written'"
+    },
+    "tests/test_authoring.py::test_update_project_changes_stage_goal_and_disqualifiers": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_broker.py::test_allow_for_session_and_tool_settings": {
+     "outcome": "FAILED",
+     "message": "assert 'error' not in {'error': 'invalid_arguments', 'tool': 'log_use', 'detail': \"no note named 'osquery'\", 'session': {'session': '20261103-0243-97fd77', 'purpose': 'apply', 'project': '', 'mode': 'reader', ...}}"
+    },
+    "tests/test_claim_run.py::test_a_challenge_with_a_failing_input_is_kept_for_a_person_and_never_run": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0243-62583f', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_closure.py::test_a_successful_write_is_not_repeated_under_the_same_contract": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_closure.py::test_a_write_on_the_contracts_target_is_allowed_and_recorded": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0243-75577f', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_core_catalog.py::test_catalogue_is_person_tier_and_model_cards_never_qualify_routes": {
+     "outcome": "FAILED",
+     "message": "assert 0 == 2"
+    },
+    "tests/test_core_catalog.py::test_catalogue_uses_core_sql_and_writer_files_and_retains_public_contract": {
+     "outcome": "FAILED",
+     "message": "assert {'provider': ...ovider.md']}]} == {'provider': ... 'failed': []}"
+    },
+    "tests/test_core_catalog.py::test_concurrent_adoptions_never_replace_each_others_sources": {
+     "outcome": "FAILED",
+     "message": "AssertionError: [{'provider': 'testprovider', 'written': 0, 'already_held': 0, 'failed': [{'name': 'widget-a - testprovider', 'error':...ply the change, or resolve the write-conflict checkpoint', 'refused': 'DOCUMENT_ACTIVE', 'completed_pat"
+    },
+    "tests/test_core_catalog.py::test_failed_vector_batch_rolls_back_before_other_core_work": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'not_findable'"
+    },
+    "tests/test_core_catalog.py::test_hosted_embedding_first_start_is_not_triggered_by_catalogue_adoption": {
+     "outcome": "FAILED",
+     "message": "assert (0 == 1)"
+    },
+    "tests/test_core_catalog.py::test_io_failure_retains_partial_marker_and_status_survives_restart": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'needs_attention'"
+    },
+    "tests/test_core_catalog.py::test_mid_promotion_conflict_reports_partial_paths_and_leaves_attention_marker": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_core_catalog.py::test_source_embedding_io_releases_core_worker_and_validates_results[changed]": {
+     "outcome": "FAILED",
+     "message": "assert []"
+    },
+    "tests/test_core_catalog.py::test_source_embedding_io_releases_core_worker_and_validates_results[invalid]": {
+     "outcome": "FAILED",
+     "message": "assert []"
+    },
+    "tests/test_core_catalog.py::test_source_embedding_io_releases_core_worker_and_validates_results[valid]": {
+     "outcome": "FAILED",
+     "message": "assert []"
+    },
+    "tests/test_core_catalog.py::test_unrelated_human_lease_does_not_block_catalogue": {
+     "outcome": "FAILED",
+     "message": "assert 0 == 2"
+    },
+    "tests/test_core_concurrency.py::test_chat_desk_touches_use_the_core_writer": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_concurrent_loopback_clients_refresh_checkpoint_and_auxiliary_stores[0]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_concurrent_loopback_clients_refresh_checkpoint_and_auxiliary_stores[1]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_concurrent_loopback_clients_refresh_checkpoint_and_auxiliary_stores[2]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_core_note_read_closes_before_prepared_writer_replaces_it[get_note]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_core_note_read_closes_before_prepared_writer_replaces_it[load]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_core_note_read_closes_before_prepared_writer_replaces_it[pane]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_core_note_read_closes_before_prepared_writer_replaces_it[upsert]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_obsidian_typing_only_blocks_affected_note_and_requires_explicit_retry": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_index_service.py::test_authoring_and_project_writes_keep_sqlite_on_core_and_markdown_on_writer": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0244-d42f8c', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_core_index_service.py::test_project_validation_refreshes_a_changed_content_model_on_core": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_index_service.py::test_session_offering_walk_uses_core_index_without_holding_it_during_review": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0244-1212e4', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_core_mixed_acceptance.py::test_agent_does_not_gain_taxonomy_authority_from_mixed_batch": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'topic-a', 'refused': 'PERSON_CONFIRMS', 'detail': 'a person accepts taxonomy changes'}, {'id': 'n...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_failed_source_is_not_refiled_by_a_later_topic_before_person_review": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 'interrupted work' in 'topic acceptance interrupted (FileChangedError); inspect completed writes'"
+    },
+    "tests/test_core_mixed_acceptance.py::test_failed_topic_does_not_overwrite_an_outside_edit_to_its_staged_record": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_mixed_acceptance.py::test_import_source_collision_never_replaces_earlier_work_or_moves_inputs[False]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...r item; review and finish it individually before modifying it'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_import_source_collision_never_replaces_earlier_work_or_moves_inputs[True]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'import-a', 'error': 'acceptance batch interrupted (FileChangedError)', 'completed_paths': ['Sourc...run: acceptance batch interrupted; review before trying again'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_imported_concept_backlinks_are_within_explicitly_approved_scope": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'import-a', 'error': 'acceptance batch interrupted (FileChangedError)', 'completed_paths': ['Conce...run: acceptance batch interrupted; review before trying again'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_imported_source_can_be_refiled_later_in_same_reviewed_batch": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'import-a', 'error': 'acceptance batch interrupted (FileChangedError)', 'completed_paths': ['Sourc...run: acceptance batch interrupted; review before trying again'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_later_topic_cannot_reuse_an_earlier_topics_generated_filename": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_mixed_acceptance.py::test_replanning_cannot_expand_approved_targets_or_dependencies[False]": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'status'"
+    },
+    "tests/test_core_mixed_acceptance.py::test_replanning_cannot_expand_approved_targets_or_dependencies[True]": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'status'"
+    },
+    "tests/test_core_mixed_acceptance.py::test_revision_then_topic_preserves_new_claims_during_refiling": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'rev-a', 'error': 'acceptance batch interrupted (FileChangedError)', 'completed_paths': ['Sources/...run: acceptance batch interrupted; review before trying again'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_same_topic_twice_never_overwrites_first_row": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'topic-a', 'error': 'topic acceptance interrupted (FileChangedError); inspect completed writes', '...' is already a topic (or too close to one): ['Alpha Studies']\"}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_separate_lens_store_and_import_keep_normal_mixed_decision_contract": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_mixed_acceptance.py::test_source_and_topic_use_explicit_order_with_original_inputs_retained[False]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_mixed_acceptance.py::test_source_and_topic_use_explicit_order_with_original_inputs_retained[True]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_mixed_acceptance.py::test_stopped_index_between_topics_preserves_first_result_and_stops_later_work": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_mixed_acceptance.py::test_topic_partial_progress_is_item_local_and_resumes_after_restart": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'topic-a', 'error': 'topic acceptance interrupted (FileChangedError); inspect completed writes', '...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_two_topics_keep_both_rows_and_use_core_sql_and_writer_effects": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_mixed_acceptance.py::test_two_topics_refiling_same_source_preserve_prose_and_order": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_process_interruption.py::test_authenticated_host_force_stop_preserves_pending_recovery_evidence": {
+     "outcome": "FAILED",
+     "message": "AssertionError: interruption worker exited 1: Traceback (most recent call last):"
+    },
+    "tests/test_core_process_interruption.py::test_crash_after_mutation_before_done_recovers_without_replay": {
+     "outcome": "FAILED",
+     "message": "AssertionError: interruption worker exited 1: Traceback (most recent call last):"
+    },
+    "tests/test_core_source_batch.py::test_bad_item_does_not_hide_a_valid_item_or_mutate_its_inputs": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'no-such-item', 'error': \"no staged item 'no-such-item'\"}, {'id': 'second', 'error': 'second has n...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_batch_preview_reserves_the_same_destinations_as_accept": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_batch_uses_core_and_writer_and_keeps_both_generated_links": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_duplicate_item_ids_report_second_decision_without_recopying": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_duplicate_proposed_name_is_refused_before_its_attachment_copy[document]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou... in this batch has the same destination; accept it separately'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_duplicate_proposed_name_is_refused_before_its_attachment_copy[repository]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou... in this batch has the same destination; accept it separately'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_edit_after_first_accept_reports_its_result_and_aborts_remaining_items": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_missing_origin_does_not_invent_a_session_or_hide_accepted_results": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_original_session_is_kept_per_source_not_shared_across_batch": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_stopped_index_between_items_retains_results_and_never_copies_later_inputs": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_two_queued_batches_cannot_reapply_the_same_items": {
+     "outcome": "FAILED",
+     "message": "AssertionError: [{'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['So...all), so it was not overwritten: read it again and reapply the change, or resolve the write-conflict ch"
+    },
+    "tests/test_core_source_batch.py::test_unrelated_edit_does_not_block_bulk_source_acceptance": {
+     "outcome": "FAILED",
+     "message": "assert 0 == 2"
+    },
+    "tests/test_core_source_promotion.py::test_embedding_failure_does_not_overwrite_edit_after_publication": {
+     "outcome": "FAILED",
+     "message": "assert (False)"
+    },
+    "tests/test_core_source_promotion.py::test_existing_attachment_destination_is_not_replaced": {
+     "outcome": "FAILED",
+     "message": "assert 0 == 1"
+    },
+    "tests/test_core_source_promotion.py::test_interrupted_acceptance_can_be_explicitly_finished_after_restart[person-copy]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_promotion.py::test_interrupted_acceptance_can_be_explicitly_finished_after_restart[person-source]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_promotion.py::test_interrupted_acceptance_can_be_explicitly_finished_after_restart[reviewed-copy]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_promotion.py::test_interrupted_acceptance_can_be_explicitly_finished_after_restart[reviewed-source]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_promotion.py::test_post_write_crash_window_leaves_authoritative_pending_marker": {
+     "outcome": "FAILED",
+     "message": "assert (0 == 1)"
+    },
+    "tests/test_core_source_promotion.py::test_preflight_failure_never_copies_an_attachment[duplicate]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_promotion.py::test_progress_does_not_overwrite_staged_human_edits_on_failure": {
+     "outcome": "FAILED",
+     "message": "IndexError: list index out of range"
+    },
+    "tests/test_core_source_promotion.py::test_source_accept_owns_sql_and_files_and_copies_without_relocating_inputs": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_promotion.py::test_source_embedding_failure_is_nonfatal_truthful_and_persisted": {
+     "outcome": "FAILED",
+     "message": "assert (0 == 1)"
+    },
+    "tests/test_core_source_promotion.py::test_source_encoder_releases_writer_and_reconciles_public_result": {
+     "outcome": "FAILED",
+     "message": "assert False"
+    },
+    "tests/test_core_source_promotion.py::test_unrelated_note_stays_editable_during_acceptance": {
+     "outcome": "FAILED",
+     "message": "assert 0 == 1"
+    },
+    "tests/test_core_taxonomy.py::test_changed_partial_topic_row_cannot_be_silently_trusted": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_core_taxonomy.py::test_edit_starting_mid_refile_stops_next_write_and_keeps_completed_work[edit]": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_core_taxonomy.py::test_edit_starting_mid_refile_stops_next_write_and_keeps_completed_work[lease]": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_core_taxonomy.py::test_partial_topic_acceptance_is_reviewable_and_resumable_after_restart": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_core_taxonomy.py::test_partial_topic_io_failure_keeps_resume_metadata": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'staging_decide', 'detail': \"TaxonomyInterruptedError: file changed while its index snapshot was being read; completed Markdown writes: ['About/Topics.md']; review before retrying\"}"
+    },
+    "tests/test_core_taxonomy.py::test_permission_wait_cannot_adopt_changed_targets_or_taxonomy[source]": {
+     "outcome": "FAILED",
+     "message": "assert 'written' in {'error': 'failed', 'tool': 'views_refresh', 'detail': \"TaxonomyInterruptedError: file changed while its index snapshot was being read; completed Markdown writes: ['Indexes/Topic - Data.md']; review before retrying\"}"
+    },
+    "tests/test_core_taxonomy.py::test_permission_wait_cannot_adopt_changed_targets_or_taxonomy[taxonomy]": {
+     "outcome": "FAILED",
+     "message": "assert 'written' in {'error': 'failed', 'tool': 'views_refresh', 'detail': \"TaxonomyInterruptedError: file changed while its index snapshot was being read; completed Markdown writes: ['Indexes/Topic - Data.md']; review before retrying\"}"
+    },
+    "tests/test_core_taxonomy.py::test_permission_wait_cannot_adopt_changed_targets_or_taxonomy[view]": {
+     "outcome": "FAILED",
+     "message": "assert 'written' in {'error': 'failed', 'tool': 'views_refresh', 'detail': \"TaxonomyInterruptedError: file changed while its index snapshot was being read; completed Markdown writes: ['Indexes/Topic - Data.md']; review before retrying\"}"
+    },
+    "tests/test_core_taxonomy.py::test_preparation_is_invocation_local_and_not_persisted": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'results'"
+    },
+    "tests/test_core_taxonomy.py::test_refile_and_views_keep_sql_and_files_on_their_owners": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'results'"
+    },
+    "tests/test_core_taxonomy.py::test_reproposing_topics_does_not_replace_partially_applied_person_changes": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_core_taxonomy.py::test_simultaneous_refiles_do_not_exchange_prepared_contents": {
+     "outcome": "FAILED",
+     "message": "AssertionError: [{'error': 'failed', 'tool': 'refile_source', 'detail': \"TaxonomyInterruptedError: file changed while its index snapsh...all), so it was not overwritten: read it again and reapply the change, or resolve the write-conflict ch"
+    },
+    "tests/test_core_taxonomy.py::test_single_topic_acceptance_preserves_person_flow_and_sql_ownership[False]": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'accepted'"
+    },
+    "tests/test_core_taxonomy.py::test_single_topic_acceptance_preserves_person_flow_and_sql_ownership[True]": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'accepted'"
+    },
+    "tests/test_core_taxonomy.py::test_topic_aliases_cannot_inject_taxonomy_rows": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'accepted'"
+    },
+    "tests/test_core_taxonomy.py::test_unrelated_note_lease_does_not_block_refiling": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'results'"
+    },
+    "tests/test_core_upkeep.py::test_upkeep_uses_core_queries_without_worker_owned_io": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'checked': 0, 'drifted': 0, 'warnings': 0, 'results': [], ...}"
+    },
+    "tests/test_deep_read.py::test_a_model_cannot_merge_a_revision_into_a_persons_note": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'bridges-1795b4', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: [...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_deep_read.py::test_a_persons_topic_correction_wins_and_must_be_accepted_first": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_deep_read.py::test_an_accepted_source_is_deep_read_as_a_revision_the_person_merges": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'bridges-1795b4', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: [...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_deep_read.py::test_core_deep_read_copies_schema_and_note_before_clerk_io": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'bridges-1795b4', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: [...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_deep_read.py::test_intake_picks_a_topic_from_the_accepted_list": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_deep_read.py::test_rejecting_a_revision_leaves_the_accepted_note_and_its_file_alone": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'bridges-1795b4', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: [...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_desk.py::test_desk_pin_refuses_an_unknown_note_or_pursuit": {
+     "outcome": "FAILED",
+     "message": "assert ('invalid_arguments' == 'invalid_arguments'"
+    },
+    "tests/test_desk.py::test_desk_pin_shows_up_first_and_never_decays": {
+     "outcome": "FAILED",
+     "message": "assert {'error': 'in...roject first'} == {'project': '...ote': 'Alpha'}"
+    },
+    "tests/test_desk.py::test_desk_show_limits_the_working_set": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'working_set'"
+    },
+    "tests/test_desk.py::test_desk_show_never_mixes_a_different_pursuits_sessions_in": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'working_set'"
+    },
+    "tests/test_desk.py::test_desk_show_picks_up_a_pursuits_own_session_uses_and_writes": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'working_set'"
+    },
+    "tests/test_desk.py::test_desk_touch_ranks_the_most_recently_touched_first": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'working_set'"
+    },
+    "tests/test_desk.py::test_desk_unpin_stops_it_decaying_but_leaves_it_on_the_desk": {
+     "outcome": "FAILED",
+     "message": "assert {'error': 'in...roject first'} == {'project': '...pinned': True}"
+    },
+    "tests/test_dik.py::test_an_accepted_document_is_rebuilt_from_its_file": {
+     "outcome": "FAILED",
+     "message": "IndexError: list index out of range"
+    },
+    "tests/test_dik.py::test_an_accepted_note_is_rebuilt_and_its_sections_offered_as_a_revision": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'results'"
+    },
+    "tests/test_dik.py::test_the_batch_records_data_and_the_note_labels_origins": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_document_identity.py::test_a_deleted_document_is_forgotten_and_a_new_one_is_new": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert None not in (None, 'doc-d5a3825fbd3bc848')"
+    },
+    "tests/test_document_identity.py::test_a_hard_link_is_one_file_under_two_paths": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'file identity'"
+    },
+    "tests/test_document_identity.py::test_a_move_that_rewrote_the_file_is_recognised_by_its_bytes": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 'doc-4be8e7d7815ab9b0' == None"
+    },
+    "tests/test_document_identity.py::test_a_move_to_another_folder_keeps_it_even_when_edited_in_the_same_breath": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert None == 'doc-12519adb52dff53c'"
+    },
+    "tests/test_document_identity.py::test_an_obsidian_style_rename_keeps_the_document": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert None == 'doc-317b1c8b34ae2e64'"
+    },
+    "tests/test_domain_packs.py::test_a_new_kind_added_to_the_content_model_promotes_with_no_code_change": {
+     "outcome": "FAILED",
+     "message": "resource_librarian.file_access.FileChangedError: file changed while its index snapshot was being read"
+    },
+    "tests/test_embed.py::test_cache_is_by_content": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert ('' == '' and 'Beta' == 'Alpha Renamed'"
+    },
+    "tests/test_eval_slices.py::test_every_tagged_slice_is_reported_with_its_own_n": {
+     "outcome": "FAILED",
+     "message": "assert 0.0 == 1.0"
+    },
+    "tests/test_handoff.py::test_an_accepted_source_joins_its_session_undecided": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'handoff'"
+    },
+    "tests/test_handoff.py::test_an_application_records_leads_apart_and_queues_the_fetchable": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'invalid_arguments', 'tool': 'log_use', 'detail': \"no note named 'osquery'\", 'session': {'session': '20261103-0247-91fb81', 'purpose': 'apply', 'project': '', 'mode': 'reader', ...}}"
+    },
+    "tests/test_hardening.py::test_a_pursuits_agenda_and_activity_are_its_own": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == ['my task']"
+    },
+    "tests/test_hardening.py::test_an_older_model_without_the_note_shape_is_named_and_write_note_says_so": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'findable'"
+    },
+    "tests/test_hardening.py::test_anything_on_the_agenda_can_be_checked_off_and_rescheduled": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'invalid_arguments', 'tool': 'task_done', 'detail': \"no note named 'T2'; names are exact, including owner prefixes\"}"
+    },
+    "tests/test_hardening.py::test_consolidation_needs_an_understanding_recorded_in_that_phase": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert False == 'consolidate'"
+    },
+    "tests/test_hardening.py::test_dropping_a_task_from_a_crlf_note_leaves_no_stray_carriage_return": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert (b'drop me' not in b'---\\r\\ntype: project\\r\\nstatus: active\\r\\nstage: active\\r\\n---\\r\\n\\r\\n## Milestones\\r\\n- [ ] keep\\r\\n- [ ] drop me\\r\\n- [ ] also keep\\r\\n')"
+    },
+    "tests/test_hardening.py::test_task_text_cannot_open_a_section_or_fake_a_date": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'task'"
+    },
+    "tests/test_index.py::test_build_roles_facets_links": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert (True and 'the index ha...later changes' == 'the index ha...er been built'"
+    },
+    "tests/test_index.py::test_refresh_reads_only_changes": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == ['Sources/rep...ory/Alpha.md']"
+    },
+    "tests/test_index_external_file_handle.py::test_foreign_markdown_handle_fails_one_write_then_explicit_retry_converges": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_index_external_sqlite_handle.py::test_foreign_reader_pins_wal_without_blocking_core_progress": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 0 == 1"
+    },
+    "tests/test_index_snapshot_consistency.py::test_initial_rebuild_reconciles_a_rename_during_its_walk": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 'Sources/repository/Alpha Renamed.md' in ['About/Domain Packs.md', 'About/Domain Register.md', 'About/Note Content Model.md', 'About/Recommended Plugins.md', 'About/Source Documentation Standard.md', 'About/Topics.md'"
+    },
+    "tests/test_index_snapshot_consistency.py::test_refresh_rechecks_metadata_changed_after_an_upsert": {
+     "outcome": "FAILED",
+     "message": "assert False"
+    },
+    "tests/test_index_snapshot_consistency.py::test_refresh_reconciles_a_rename_between_scan_and_upsert": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == ['Sources/rep...a Renamed.md']"
+    },
+    "tests/test_index_snapshot_consistency.py::test_schema_v2_index_migrates_then_rebuilds_without_orphans": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 'the content ...later changes' == 'the content ...ormat changed'"
+    },
+    "tests/test_ingest_service.py::test_a_mechanical_pdf_is_cleaned_in_the_batch_and_read_from_the_clean_copy": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_ingest_service.py::test_a_papers_open_access_pdf_is_fetched_by_the_batch": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_ingest_service.py::test_a_scanned_pdf_is_flagged_as_needing_ocr_and_its_note_says_so": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_intake.py::test_model_capture_to_catalogued": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_intake.py::test_paper_capture_to_catalogued": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_intake.py::test_pdf_in_inbox_to_catalogued": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_intake.py::test_repository_capture_to_catalogued": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_learn.py::test_practice_requires_every_focus_concept_practised": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'understanding_record', 'detail': 'FileChangedError: file changed while its index snapshot...ing read', 'session': {'session': '20261103-0247-bcfc1a', 'purpose': 'learn', 'project': '', 'mode': 'l"
+    },
+    "tests/test_learn.py::test_review_due_opens_one_parked_learn_session_per_due_concept": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'task_add', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_learn.py::test_understanding_due_reads_review_tasks_off_the_concept_note": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'invalid_arguments', 'tool': 'task_add', 'detail': \"no note named 'Query Planning'; names are exact, including owner prefixes\"}"
+    },
+    "tests/test_learn.py::test_walks_goal_to_next": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'understanding_record', 'detail': 'FileChangedError: file changed while its index snapshot...ing read', 'session': {'session': '20261103-0247-becdd0', 'purpose': 'learn', 'project': '', 'mode': 'l"
+    },
+    "tests/test_library_tools.py::test_note_move_between_folders_without_renaming": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'note_move', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_library_tools.py::test_note_move_renames_updates_links_and_reindexes": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'note_move', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_lifecycle.py::test_accepting_as_captured_says_so_on_the_note": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'coverage'"
+    },
+    "tests/test_lifecycle.py::test_the_batch_reads_and_reviews_then_waits_for_acceptance": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'status'"
+    },
+    "tests/test_lifecycle.py::test_unfinished_work_is_partial_never_enriched": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_loop.py::test_compact_bundle_keeps_the_required_project_bootstrap_action": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert ('create_project',) == ()"
+    },
+    "tests/test_loop.py::test_rewind_is_blocked_past_a_vault_write": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 0 == 2"
+    },
+    "tests/test_loop.py::test_the_desk_gives_the_loop_titles_not_content": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert ('On the desk' in '')"
+    },
+    "tests/test_loop.py::test_the_same_session_through_the_loop_and_the_registry_leaves_the_same_artefacts": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0248-e67dfc', 'purpose': 'add_project', 'project': '', 'mode'"
+    },
+    "tests/test_loop.py::test_the_scribe_writes_the_prose_and_never_sees_the_working_context": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0248-1db857', 'purpose': 'add_project', 'project': '', 'mode'"
+    },
+    "tests/test_m0_fixes.py::test_a_closest_passage_is_never_a_heading": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0248-08d065', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_m0_fixes.py::test_a_misnamed_source_is_answered_with_the_closest_names": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0248-2e0128', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_m0_fixes.py::test_a_project_without_a_note_is_settled_in_frame": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...': '20261103-0248-70981c', 'purpose': 'explore', 'project': 'BSc Computer Science at UCLan', 'mode': 'l"
+    },
+    "tests/test_m0_fixes.py::test_a_quote_not_found_is_answered_with_the_closest_passage": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0248-2e5c13', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_m0_fixes.py::test_a_source_staged_but_not_accepted_is_named_as_such": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0248-109e13', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_m0_fixes.py::test_a_staged_offering_holds_synthesise_until_it_is_promoted": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0248-cbdb3d', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_m0_fixes.py::test_the_desk_finds_the_project_beside_a_note_of_the_same_name": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0248-44f285', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_macro_permissions.py::test_macro_permissions_wait_outside_writer_and_keep_completed_work": {
+     "outcome": "FAILED",
+     "message": "_queue.Empty"
+    },
+    "tests/test_mcp.py::test_an_mcp_write_to_a_note_being_edited_becomes_a_conflict_checkpoint": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'created'"
+    },
+    "tests/test_mcp.py::test_in_ask_mode_an_mcp_write_waits_for_a_person": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0248-aa2251', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_mcp.py::test_mcp_writes_go_through_the_core_writer_as_mcp": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0248-6a80d1', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_mcp.py::test_the_same_session_through_mcp_and_the_core_leaves_the_same_artefacts": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0248-1aebb5', 'purpose': 'add_project', 'project': '', 'mode'"
+    },
+    "tests/test_mechanical_closure.py::test_a_bounded_write_completes_after_its_verifiers_and_a_clean_audit": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-65abab', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_mechanical_closure.py::test_an_out_of_scope_change_is_a_violation_and_cannot_complete": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-14c469', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_mechanical_closure.py::test_an_out_of_scope_tool_write_is_refused_and_leaves_the_audit_clean": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-187e47', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_mechanical_closure.py::test_boundary_staged_passes_a_staging_round_and_fails_a_direct_write": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-55a103', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_mechanical_closure.py::test_the_audit_phase_waits_for_the_target_audit": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-bd1ad7', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_mechanical_closure.py::test_unrelated_edits_elsewhere_do_not_touch_the_audit": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-4f6159', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_mechanical_closure.py::test_verified_is_refused_without_a_clean_audit_even_by_a_direct_append": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-de0088', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_model_catalog.py::test_adopt_writes_accepted_sources_once_not_twice": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert {'provider': ...being read'}]} == {'provider': ... 'failed': []}"
+    },
+    "tests/test_mvp_fixes.py::test_ingested_and_accepted_sources_are_tracked_on_their_session": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert ([{'id': 'acme-rowstream-500067', 'source': 'acme - rowstream', 'status': 'staged', 'path': '', ...}] and 'staged' == 'accepted'"
+    },
+    "tests/test_offering_view.py::test_a_decision_is_promote_or_decline_and_names_a_staged_draft": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-dc2a90', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_offering_view.py::test_a_draft_left_staged_by_a_closed_session_can_still_be_promoted": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-8341a9', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_offering_view.py::test_a_staged_draft_is_listed_and_shown_in_full": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0249-7e8471', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_offering_view.py::test_decline_keeps_the_draft_and_the_agent_cannot_promote_it_after": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-9fcd3c', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_offering_view.py::test_promote_answers_the_sessions_question_and_moves_the_draft": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-c3b2c4', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_offering_view.py::test_promote_offering_by_the_agent_is_unchanged": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-f3326c', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_offering_view.py::test_the_view_over_the_local_api": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-950d76', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_orchestration.py::test_learn_and_apply_can_create_the_project_they_are_for": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0250-37831f', 'purpose': 'learn', 'project': '', 'mode': 'lib"
+    },
+    "tests/test_projects.py::test_an_application_keeps_project_work_apart_with_a_pointer_from_the_project": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 'refused' == 'invalid_arguments'"
+    },
+    "tests/test_pursuits.py::test_create_project_defaults_pursuit_kind_and_writes_new_sections": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'created'"
+    },
+    "tests/test_pursuits.py::test_create_project_takes_pursuit_kind_started_horizon_and_goal": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'created'"
+    },
+    "tests/test_pursuits.py::test_task_add_appends_a_dated_checkbox_to_milestones": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'task'"
+    },
+    "tests/test_pursuits.py::test_task_done_checks_off_a_matching_open_task": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'done'"
+    },
+    "tests/test_pursuits.py::test_task_done_refuses_when_nothing_matches": {
+     "outcome": "FAILED",
+     "message": "assert ('invalid_arguments' == 'invalid_arguments'"
+    },
+    "tests/test_research_loop.py::test_a_session_cannot_close_claiming_no_gaps_over_a_gap": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'invalid_arguments', 'tool': 'add_candidate', 'detail': \"no note named 'duckdb'\", 'session': {'session': '20261103-0250-d7c0cb', 'purpose': 'explore', 'project': '', 'mode': 'librarian', ...}}"
+    },
+    "tests/test_research_loop.py::test_coverage_verdicts_are_earned_and_context_is_not_an_answer": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'invalid_arguments', 'tool': 'add_candidate', 'detail': \"no note named 'painter'\", 'session': {'session': '20261103-0250-237c9c', 'purpose': 'explore', 'project': '', 'mode': 'librarian', ...}}"
+    },
+    "tests/test_review_gate.py::test_a_challenge_goes_back_to_the_lead_model_with_the_passages_words": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-50c050', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_review_gate.py::test_a_claim_the_passage_supports_is_staged_with_the_review_recorded": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-338d9f', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_review_gate.py::test_a_fails_without_a_counter_quote_from_the_passage_is_not_counted": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-9446bc', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_review_gate.py::test_a_kept_challenge_is_shown_and_only_a_person_promotes_it": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-a0057f', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_review_gate.py::test_without_review_turned_on_nothing_is_asked": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-cbb783', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_revisions.py::test_a_persons_own_edit_needs_no_revision": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'edit_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_revisions.py::test_a_promotion_declares_where_it_writes": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0250-0d9145', 'purpose': 'add_project', 'project': '', 'mode'"
+    },
+    "tests/test_revisions.py::test_a_read_hands_out_a_revision_and_each_write_the_next": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_revisions.py::test_a_replace_needs_a_revision_and_a_new_note_needs_none": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 'error' not in {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_revisions.py::test_a_revision_is_bound_to_its_session_caller_and_core": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_revisions.py::test_an_external_edit_between_read_and_write_becomes_a_conflict_checkpoint": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_revisions.py::test_moves_and_promotions_declare_their_targets": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 'error' not in {'error': 'failed', 'tool': 'archive_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_revisions.py::test_offline_the_same_check_runs_without_a_writer": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_search.py::test_caveat_earns_no_coverage": {
+     "outcome": "FAILED",
+     "message": "ValueError: 'osquery' is not in list"
+    },
+    "tests/test_search_contract.py::test_all_answers_each_intent_in_its_own_shape_and_says_which_ran": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'made'"
+    },
+    "tests/test_search_contract.py::test_max_age_days_filters_on_the_sources_own_date": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert ('osquery' in [])"
+    },
+    "tests/test_search_contract.py::test_what_the_library_made_is_findable": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert {} == {'Agile Resou...Plan': 'note'}"
+    },
+    "tests/test_search_grains.py::test_a_pattern_shows_its_examples_and_neighbours": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert ['tailer'] == ['rowstream', 'tailer']"
+    },
+    "tests/test_search_grains.py::test_a_repository_result_says_where_inside_it_the_query_matched": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'joinplan'"
+    },
+    "tests/test_sessions.py::test_add_project_walk": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0251-ef605a', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_sessions.py::test_apply_as_a_reader": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'record_application', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0251-43ceb3', 'purpose': 'apply', 'project': '', 'mode': "
+    },
+    "tests/test_sessions.py::test_suggest_reads_the_project_and_never_writes_it": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_sessions.py::test_the_envelope_carries_the_project_once_set": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0251-65bfe3', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_shared_models.py::test_a_new_library_sees_the_shipped_and_the_remembered_profiles": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'profile'"
+    },
+    "tests/test_staging.py::test_agent_needs_the_vault_setting": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_staging.py::test_concept_accept_writes_a_note_a_person_can_be_found_by": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'results'"
+    },
+    "tests/test_staging.py::test_not_findable_is_loud": {
+     "outcome": "FAILED",
+     "message": "resource_librarian.file_access.FileChangedError: file changed while its index snapshot was being read"
+    },
+    "tests/test_staging.py::test_person_accepts_and_it_is_catalogued": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'status'"
+    },
+    "tests/test_staging.py::test_sensitive_is_never_accepted_by_an_agent": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'status'"
+    },
+    "tests/test_staging_safety.py::test_an_agent_needs_its_own_note_revision_but_an_explicit_person_action_remains_compatible": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'accepted'"
+    },
+    "tests/test_staging_safety.py::test_changed_staged_content_invalidates_the_review_even_when_note_is_unchanged": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'accepted'"
+    },
+    "tests/test_staging_safety.py::test_revision_sqlite_stays_on_core_and_file_write_stays_on_writer": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'accepted'"
+    },
+    "tests/test_staging_safety.py::test_staged_revision_token_cannot_authorize_a_note_write": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'created'"
+    },
+    "tests/test_staging_safety.py::test_staging_dependency_operation_log_remains_readable_after_restart": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'accepted'"
+    },
+    "tests/test_staging_safety.py::test_two_queued_acceptances_cannot_reapply_one_revision": {
+     "outcome": "FAILED",
+     "message": "assert 0 == 1"
+    },
+    "tests/test_start_pursuit.py::test_plan_accepts_no_dates_as_an_alternative": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...sion': '20261103-0251-b6070e', 'purpose': 'start_pursuit', 'project': 'Open Ended Research', 'mode': 'l"
+    },
+    "tests/test_start_pursuit.py::test_walks_frame_to_check_out": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...session': '20261103-0251-91f4b3', 'purpose': 'start_pursuit', 'project': 'Databases Course', 'mode': 'l"
+    },
+    "tests/test_structure.py::test_intake_records_it_as_evidence_and_writes_access_points": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_taxonomy.py::test_a_proposal_close_to_an_accepted_topic_is_marked": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert {'id': 'topic.../Topics.md']}} == {'id': 'topic...t Monitoring'}"
+    },
+    "tests/test_taxonomy.py::test_accepting_writes_the_row_and_files_its_members": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'topic'"
+    },
+    "tests/test_taxonomy.py::test_only_a_person_accepts_a_topic": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_taxonomy.py::test_proposals_are_staged_with_real_members_only": {
+     "outcome": "FAILED",
+     "message": "assert (1 == 1 and 3 == 4)"
+    },
+    "tests/test_taxonomy.py::test_refiling_and_views_use_accepted_topics_only": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'written'"
+    },
+    "tests/test_upkeep.py::test_the_work_is_searchable_staging_sessions_and_activity": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0252-a33e99', 'purpose': 'explore', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_v1_export.py::test_accepted_notes_keep_everything_v1_had": {
+     "outcome": "FAILED",
+     "message": "resource_librarian.file_access.FileChangedError: file changed while its index snapshot was being read"
+    },
+    "tests/test_validation_fixtures.py::test_source_fixture_uses_vault_kind_and_core_owned_index": {
+     "outcome": "FAILED",
+     "message": "resource_librarian.validation_fixtures.FixturePreflightError: fixture is not discoverable through the Core-owned index service"
+    },
+    "tests/test_weekly_review.py::test_reflection_accept_appends_to_reflections_and_is_person_only": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_weekly_review.py::test_reflection_draft_is_grounded_in_what_was_passed_and_never_written": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_weekly_review.py::test_task_route_drop_reschedule_keep": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_weekly_review.py::test_task_route_needs_a_person": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_weekly_review.py::test_the_weekly_review_pipeline_gathers_and_drafts_end_to_end": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_workspace_documents.py::test_unfrontmattered_documents_are_workspace_documents": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert {'api/README....ace_document'} == {'README.md':...ace_document'}"
+    }
+   }
+  },
+  "core (3.13)": {
+   "summary": "262 failed, 1671 passed, 3 skipped, 5 deselected, 5 warnings, 5 errors",
+   "failing": 264,
+   "file_changed_error": 86,
+   "selectors": {
+    "tests/test_agenda.py::test_buckets_by_due_date_relative_to_today": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == ['overdue']"
+    },
+    "tests/test_agenda.py::test_multiple_notes_are_all_scanned": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert set() == {'from a', 'from b'}"
+    },
+    "tests/test_agenda.py::test_scan_function_accepts_an_explicit_today": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == ['x']"
+    },
+    "tests/test_agenda.py::test_scan_sorts_each_bucket_by_due_date": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == ['sooner one', 'later one']"
+    },
+    "tests/test_agenda.py::test_the_boundary_of_this_week_is_inclusive_of_six_days_out": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == ['day six']"
+    },
+    "tests/test_app.py::test_keys_are_saved_confirmed_and_never_returned": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert (True and False)"
+    },
+    "tests/test_app.py::test_models_shows_profiled_queued_and_unprofiled": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert (True is True and 'Tier_2' == 'Tier_3'"
+    },
+    "tests/test_arguments.py::test_a_pursuit_kind_is_read_as_the_one_permitted_value_it_starts": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...'session': {'session': '20261103-0243-1ec839', 'purpose': 'start_pursuit', 'project': 'Uni', 'mode': 'l"
+    },
+    "tests/test_arguments.py::test_assumptions_settled_by_the_way_models_say_it": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...'session': {'session': '20261103-0243-194925', 'purpose': 'start_pursuit', 'project': 'Uni', 'mode': 'l"
+    },
+    "tests/test_assumptions.py::test_a_settlement_must_be_something_this_session_did": {
+     "outcome": "ERROR",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...session': '20261103-0243-8016ad', 'purpose': 'start_pursuit', 'project': 'Databases Course', 'mode': 'l"
+    },
+    "tests/test_assumptions.py::test_an_empty_list_says_nothing_is_assumed_and_costs_no_budget": {
+     "outcome": "ERROR",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...session': '20261103-0243-4941ee', 'purpose': 'start_pursuit', 'project': 'Databases Course', 'mode': 'l"
+    },
+    "tests/test_assumptions.py::test_an_unverifiable_assumption_follows_the_thread_as_a_caveat": {
+     "outcome": "ERROR",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...session': '20261103-0243-6ece06', 'purpose': 'start_pursuit', 'project': 'Databases Course', 'mode': 'l"
+    },
+    "tests/test_assumptions.py::test_going_back_to_the_phase_asks_again": {
+     "outcome": "ERROR",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...session': '20261103-0243-4b95ee', 'purpose': 'start_pursuit', 'project': 'Databases Course', 'mode': 'l"
+    },
+    "tests/test_assumptions.py::test_the_phase_waits_for_the_assumptions": {
+     "outcome": "ERROR",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...session': '20261103-0243-d7edfa', 'purpose': 'start_pursuit', 'project': 'Databases Course', 'mode': 'l"
+    },
+    "tests/test_authoring.py::test_a_note_a_person_edited_is_never_replaced": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'written'"
+    },
+    "tests/test_authoring.py::test_a_note_is_written_indexed_and_findable_and_its_path_returned": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'written'"
+    },
+    "tests/test_authoring.py::test_a_write_inside_a_session_is_listed_with_its_path_in_any_phase": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'path'"
+    },
+    "tests/test_authoring.py::test_an_existing_note_is_not_overwritten_without_replace": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_authoring.py::test_archive_moves_a_note_and_keeps_it": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'archived'"
+    },
+    "tests/test_authoring.py::test_edit_appends_or_replaces_a_section_and_sets_fields": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_authoring.py::test_edit_refuses_typed_library_notes_and_protected_fields": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_authoring.py::test_only_notes_and_project_folders_are_writable": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'written'"
+    },
+    "tests/test_authoring.py::test_update_project_changes_stage_goal_and_disqualifiers": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_claim_run.py::test_a_challenge_with_a_failing_input_is_kept_for_a_person_and_never_run": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0243-ea3495', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_closure.py::test_a_successful_write_is_not_repeated_under_the_same_contract": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_closure.py::test_a_write_on_the_contracts_target_is_allowed_and_recorded": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0244-7f65f9', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_core_catalog.py::test_active_human_target_refuses_before_evidence_or_source_and_surfaces_checkpoint[Concepts/Widget.md]": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'checkpoint'"
+    },
+    "tests/test_core_catalog.py::test_catalogue_is_person_tier_and_model_cards_never_qualify_routes": {
+     "outcome": "FAILED",
+     "message": "assert 0 == 2"
+    },
+    "tests/test_core_catalog.py::test_catalogue_uses_core_sql_and_writer_files_and_retains_public_contract": {
+     "outcome": "FAILED",
+     "message": "assert {'provider': ...ovider.md']}]} == {'provider': ... 'failed': []}"
+    },
+    "tests/test_core_catalog.py::test_concurrent_adoptions_never_replace_each_others_sources": {
+     "outcome": "FAILED",
+     "message": "AssertionError: [{'provider': 'testprovider', 'written': 0, 'already_held': 0, 'failed': [{'name': 'widget-a - testprovider', 'error':...ply the change, or resolve the write-conflict checkpoint', 'refused': 'DOCUMENT_ACTIVE', 'completed_pat"
+    },
+    "tests/test_core_catalog.py::test_failed_vector_batch_rolls_back_before_other_core_work": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'not_findable'"
+    },
+    "tests/test_core_catalog.py::test_hosted_embedding_first_start_is_not_triggered_by_catalogue_adoption": {
+     "outcome": "FAILED",
+     "message": "assert (0 == 1)"
+    },
+    "tests/test_core_catalog.py::test_io_failure_retains_partial_marker_and_status_survives_restart": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'needs_attention'"
+    },
+    "tests/test_core_catalog.py::test_mid_promotion_conflict_reports_partial_paths_and_leaves_attention_marker": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_core_catalog.py::test_source_embedding_io_releases_core_worker_and_validates_results[changed]": {
+     "outcome": "FAILED",
+     "message": "assert []"
+    },
+    "tests/test_core_catalog.py::test_source_embedding_io_releases_core_worker_and_validates_results[invalid]": {
+     "outcome": "FAILED",
+     "message": "assert []"
+    },
+    "tests/test_core_catalog.py::test_source_embedding_io_releases_core_worker_and_validates_results[valid]": {
+     "outcome": "FAILED",
+     "message": "assert []"
+    },
+    "tests/test_core_catalog.py::test_unrelated_human_lease_does_not_block_catalogue": {
+     "outcome": "FAILED",
+     "message": "assert 0 == 2"
+    },
+    "tests/test_core_concurrency.py::test_chat_desk_touches_use_the_core_writer": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_concurrent_loopback_clients_refresh_checkpoint_and_auxiliary_stores[0]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_concurrent_loopback_clients_refresh_checkpoint_and_auxiliary_stores[1]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_concurrent_loopback_clients_refresh_checkpoint_and_auxiliary_stores[2]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_core_note_read_closes_before_prepared_writer_replaces_it[get_note]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_core_note_read_closes_before_prepared_writer_replaces_it[load]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_core_note_read_closes_before_prepared_writer_replaces_it[pane]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_core_note_read_closes_before_prepared_writer_replaces_it[upsert]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_concurrency.py::test_obsidian_typing_only_blocks_affected_note_and_requires_explicit_retry": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_index_service.py::test_authoring_and_project_writes_keep_sqlite_on_core_and_markdown_on_writer": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0244-10cb95', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_core_index_service.py::test_core_backed_taxonomy_and_ranking_use_callback_index_access": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == [{'id': 'topi...'sources': 2}]"
+    },
+    "tests/test_core_index_service.py::test_project_validation_refreshes_a_changed_content_model_on_core": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_core_index_service.py::test_session_offering_walk_uses_core_index_without_holding_it_during_review": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0244-217287', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_core_mixed_acceptance.py::test_agent_does_not_gain_taxonomy_authority_from_mixed_batch": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'topic-a', 'refused': 'PERSON_CONFIRMS', 'detail': 'a person accepts taxonomy changes'}, {'id': 'n...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_failed_source_is_not_refiled_by_a_later_topic_before_person_review": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 'interrupted work' in 'topic acceptance interrupted (FileChangedError); inspect completed writes'"
+    },
+    "tests/test_core_mixed_acceptance.py::test_failed_topic_does_not_overwrite_an_outside_edit_to_its_staged_record": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_mixed_acceptance.py::test_import_source_collision_never_replaces_earlier_work_or_moves_inputs[False]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...r item; review and finish it individually before modifying it'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_import_source_collision_never_replaces_earlier_work_or_moves_inputs[True]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'import-a', 'error': 'acceptance batch interrupted (FileChangedError)', 'completed_paths': ['Sourc...run: acceptance batch interrupted; review before trying again'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_imported_concept_backlinks_are_within_explicitly_approved_scope": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'import-a', 'error': 'acceptance batch interrupted (FileChangedError)', 'completed_paths': ['Conce...run: acceptance batch interrupted; review before trying again'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_imported_source_can_be_refiled_later_in_same_reviewed_batch": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'import-a', 'error': 'acceptance batch interrupted (FileChangedError)', 'completed_paths': ['Sourc...run: acceptance batch interrupted; review before trying again'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_later_member_lease_blocks_before_any_topic_row_is_added": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'topic-a', 'error': 'topic acceptance interrupted (FileChangedError); inspect completed writes', '...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_later_topic_cannot_reuse_an_earlier_topics_generated_filename": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_mixed_acceptance.py::test_replanning_cannot_expand_approved_targets_or_dependencies[False]": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'status'"
+    },
+    "tests/test_core_mixed_acceptance.py::test_replanning_cannot_expand_approved_targets_or_dependencies[True]": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'status'"
+    },
+    "tests/test_core_mixed_acceptance.py::test_revision_then_topic_preserves_new_claims_during_refiling": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'rev-a', 'error': 'acceptance batch interrupted (FileChangedError)', 'completed_paths': ['Sources/...run: acceptance batch interrupted; review before trying again'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_same_topic_twice_never_overwrites_first_row": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'topic-a', 'error': 'topic acceptance interrupted (FileChangedError); inspect completed writes', '...' is already a topic (or too close to one): ['Alpha Studies']\"}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_separate_lens_store_and_import_keep_normal_mixed_decision_contract": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_mixed_acceptance.py::test_source_and_topic_use_explicit_order_with_original_inputs_retained[False]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_mixed_acceptance.py::test_source_and_topic_use_explicit_order_with_original_inputs_retained[True]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_mixed_acceptance.py::test_stopped_index_between_topics_preserves_first_result_and_stops_later_work": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_mixed_acceptance.py::test_topic_partial_progress_is_item_local_and_resumes_after_restart": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'topic-a', 'error': 'topic acceptance interrupted (FileChangedError); inspect completed writes', '...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_mixed_acceptance.py::test_two_topics_keep_both_rows_and_use_core_sql_and_writer_effects": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_mixed_acceptance.py::test_two_topics_refiling_same_source_preserve_prose_and_order": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {"
+    },
+    "tests/test_core_process_interruption.py::test_authenticated_host_force_stop_preserves_pending_recovery_evidence": {
+     "outcome": "FAILED",
+     "message": "AssertionError: interruption worker exited 1: Traceback (most recent call last):"
+    },
+    "tests/test_core_process_interruption.py::test_crash_after_mutation_before_done_recovers_without_replay": {
+     "outcome": "FAILED",
+     "message": "AssertionError: interruption worker exited 1: Traceback (most recent call last):"
+    },
+    "tests/test_core_source_batch.py::test_bad_item_does_not_hide_a_valid_item_or_mutate_its_inputs": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'no-such-item', 'error': \"no staged item 'no-such-item'\"}, {'id': 'second', 'error': 'second has n...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_batch_preview_reserves_the_same_destinations_as_accept": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_batch_uses_core_and_writer_and_keeps_both_generated_links": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_duplicate_item_ids_report_second_decision_without_recopying": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_duplicate_proposed_name_is_refused_before_its_attachment_copy[document]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou... in this batch has the same destination; accept it separately'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_duplicate_proposed_name_is_refused_before_its_attachment_copy[repository]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou... in this batch has the same destination; accept it separately'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_edit_after_first_accept_reports_its_result_and_aborts_remaining_items": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_missing_origin_does_not_invent_a_session_or_hide_accepted_results": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_original_session_is_kept_per_source_not_shared_across_batch": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_stopped_index_between_items_retains_results_and_never_copies_later_inputs": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_batch.py::test_two_queued_batches_cannot_reapply_the_same_items": {
+     "outcome": "FAILED",
+     "message": "AssertionError: [{'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['So...all), so it was not overwritten: read it again and reapply the change, or resolve the write-conflict ch"
+    },
+    "tests/test_core_source_batch.py::test_unrelated_edit_does_not_block_bulk_source_acceptance": {
+     "outcome": "FAILED",
+     "message": "assert 0 == 2"
+    },
+    "tests/test_core_source_promotion.py::test_embedding_failure_does_not_overwrite_edit_after_publication": {
+     "outcome": "FAILED",
+     "message": "assert (False)"
+    },
+    "tests/test_core_source_promotion.py::test_existing_attachment_destination_is_not_replaced": {
+     "outcome": "FAILED",
+     "message": "assert 0 == 1"
+    },
+    "tests/test_core_source_promotion.py::test_human_target_lease_blocks_before_any_copy[Concepts/Widget.md]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_promotion.py::test_interrupted_acceptance_can_be_explicitly_finished_after_restart[person-copy]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_promotion.py::test_interrupted_acceptance_can_be_explicitly_finished_after_restart[person-source]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_promotion.py::test_interrupted_acceptance_can_be_explicitly_finished_after_restart[reviewed-copy]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_promotion.py::test_interrupted_acceptance_can_be_explicitly_finished_after_restart[reviewed-source]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_promotion.py::test_post_write_crash_window_leaves_authoritative_pending_marker": {
+     "outcome": "FAILED",
+     "message": "assert (0 == 1)"
+    },
+    "tests/test_core_source_promotion.py::test_preflight_failure_never_copies_an_attachment[duplicate]": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_promotion.py::test_progress_does_not_overwrite_staged_human_edits_on_failure": {
+     "outcome": "FAILED",
+     "message": "IndexError: list index out of range"
+    },
+    "tests/test_core_source_promotion.py::test_source_accept_owns_sql_and_files_and_copies_without_relocating_inputs": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'new-widget', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: ['Sou...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_core_source_promotion.py::test_source_embedding_failure_is_nonfatal_truthful_and_persisted": {
+     "outcome": "FAILED",
+     "message": "assert (0 == 1)"
+    },
+    "tests/test_core_source_promotion.py::test_source_encoder_releases_writer_and_reconciles_public_result": {
+     "outcome": "FAILED",
+     "message": "assert False"
+    },
+    "tests/test_core_source_promotion.py::test_unrelated_note_stays_editable_during_acceptance": {
+     "outcome": "FAILED",
+     "message": "assert 0 == 1"
+    },
+    "tests/test_core_taxonomy.py::test_changed_partial_topic_row_cannot_be_silently_trusted": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_core_taxonomy.py::test_edit_starting_mid_refile_stops_next_write_and_keeps_completed_work[edit]": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_core_taxonomy.py::test_edit_starting_mid_refile_stops_next_write_and_keeps_completed_work[lease]": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_core_taxonomy.py::test_partial_topic_acceptance_is_reviewable_and_resumable_after_restart": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_core_taxonomy.py::test_partial_topic_io_failure_keeps_resume_metadata": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'staging_decide', 'detail': \"TaxonomyInterruptedError: file changed while its index snapshot was being read; completed Markdown writes: ['About/Topics.md']; review before retrying\"}"
+    },
+    "tests/test_core_taxonomy.py::test_permission_wait_cannot_adopt_changed_targets_or_taxonomy[source]": {
+     "outcome": "FAILED",
+     "message": "assert 'written' in {'error': 'failed', 'tool': 'views_refresh', 'detail': \"TaxonomyInterruptedError: file changed while its index snapshot was being read; completed Markdown writes: ['Indexes/Topic - Data.md']; review before retrying\"}"
+    },
+    "tests/test_core_taxonomy.py::test_permission_wait_cannot_adopt_changed_targets_or_taxonomy[taxonomy]": {
+     "outcome": "FAILED",
+     "message": "assert 'written' in {'error': 'failed', 'tool': 'views_refresh', 'detail': \"TaxonomyInterruptedError: file changed while its index snapshot was being read; completed Markdown writes: ['Indexes/Topic - Data.md']; review before retrying\"}"
+    },
+    "tests/test_core_taxonomy.py::test_permission_wait_cannot_adopt_changed_targets_or_taxonomy[view]": {
+     "outcome": "FAILED",
+     "message": "assert 'written' in {'error': 'failed', 'tool': 'views_refresh', 'detail': \"TaxonomyInterruptedError: file changed while its index snapshot was being read; completed Markdown writes: ['Indexes/Topic - Data.md']; review before retrying\"}"
+    },
+    "tests/test_core_taxonomy.py::test_preparation_is_invocation_local_and_not_persisted": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'results'"
+    },
+    "tests/test_core_taxonomy.py::test_refile_and_views_keep_sql_and_files_on_their_owners": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'results'"
+    },
+    "tests/test_core_taxonomy.py::test_reproposing_topics_does_not_replace_partially_applied_person_changes": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'refused'"
+    },
+    "tests/test_core_taxonomy.py::test_simultaneous_refiles_do_not_exchange_prepared_contents": {
+     "outcome": "FAILED",
+     "message": "AssertionError: [{'error': 'failed', 'tool': 'refile_source', 'detail': \"TaxonomyInterruptedError: file changed while its index snapsh...its index snapshot was being read; completed Markdown writes: ['Indexes/Topic - Systems.md']; review be"
+    },
+    "tests/test_core_taxonomy.py::test_single_topic_acceptance_preserves_person_flow_and_sql_ownership[False]": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'accepted'"
+    },
+    "tests/test_core_taxonomy.py::test_single_topic_acceptance_preserves_person_flow_and_sql_ownership[True]": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'accepted'"
+    },
+    "tests/test_core_taxonomy.py::test_topic_aliases_cannot_inject_taxonomy_rows": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'accepted'"
+    },
+    "tests/test_core_taxonomy.py::test_unrelated_note_lease_does_not_block_refiling": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'results'"
+    },
+    "tests/test_core_upkeep.py::test_upkeep_uses_core_queries_without_worker_owned_io": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'rebuilt': 0, 'revisions_staged': 0, 'results': []}"
+    },
+    "tests/test_deep_read.py::test_a_model_cannot_merge_a_revision_into_a_persons_note": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'bridges-1795b4', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: [...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_deep_read.py::test_a_persons_topic_correction_wins_and_must_be_accepted_first": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_deep_read.py::test_an_accepted_source_is_deep_read_as_a_revision_the_person_merges": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'bridges-1795b4', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: [...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_deep_read.py::test_core_deep_read_copies_schema_and_note_before_clerk_io": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'bridges-1795b4', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: [...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_deep_read.py::test_intake_picks_a_topic_from_the_accepted_list": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_deep_read.py::test_rejecting_a_revision_leaves_the_accepted_note_and_its_file_alone": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'results': [{'id': 'bridges-1795b4', 'error': \"promotion interrupted (PromotionInterruptedError); completed writes: [...spect completed work, then explicitly finish or reconcile it.'}], 'accepted': 0, 'not_findable': [], 'r"
+    },
+    "tests/test_desk.py::test_desk_pin_refuses_an_unknown_note_or_pursuit": {
+     "outcome": "FAILED",
+     "message": "assert ('invalid_arguments' == 'invalid_arguments'"
+    },
+    "tests/test_desk.py::test_desk_pin_shows_up_first_and_never_decays": {
+     "outcome": "FAILED",
+     "message": "assert {'error': 'in...roject first'} == {'project': '...ote': 'Alpha'}"
+    },
+    "tests/test_desk.py::test_desk_show_limits_the_working_set": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'working_set'"
+    },
+    "tests/test_desk.py::test_desk_show_never_mixes_a_different_pursuits_sessions_in": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'working_set'"
+    },
+    "tests/test_desk.py::test_desk_show_picks_up_a_pursuits_own_session_uses_and_writes": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'working_set'"
+    },
+    "tests/test_desk.py::test_desk_touch_ranks_the_most_recently_touched_first": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'working_set'"
+    },
+    "tests/test_desk.py::test_desk_unpin_stops_it_decaying_but_leaves_it_on_the_desk": {
+     "outcome": "FAILED",
+     "message": "assert {'error': 'in...roject first'} == {'project': '...pinned': True}"
+    },
+    "tests/test_dik.py::test_an_accepted_document_is_rebuilt_from_its_file": {
+     "outcome": "FAILED",
+     "message": "IndexError: list index out of range"
+    },
+    "tests/test_dik.py::test_an_accepted_note_is_rebuilt_and_its_sections_offered_as_a_revision": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'results'"
+    },
+    "tests/test_dik.py::test_the_batch_records_data_and_the_note_labels_origins": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_document_identity.py::test_a_deleted_document_is_forgotten_and_a_new_one_is_new": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert None not in (None, 'doc-f5aec98f7f9d51b7')"
+    },
+    "tests/test_document_identity.py::test_a_hard_link_is_one_file_under_two_paths": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'file identity'"
+    },
+    "tests/test_document_identity.py::test_a_move_that_rewrote_the_file_is_recognised_by_its_bytes": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert None == 'doc-15f475e433e8e348'"
+    },
+    "tests/test_document_identity.py::test_a_move_to_another_folder_keeps_it_even_when_edited_in_the_same_breath": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert None == 'doc-778480acb03019ae'"
+    },
+    "tests/test_document_identity.py::test_an_obsidian_style_rename_keeps_the_document": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == [{'doc_id': N...le identity'}]"
+    },
+    "tests/test_domain_packs.py::test_a_new_kind_added_to_the_content_model_promotes_with_no_code_change": {
+     "outcome": "FAILED",
+     "message": "resource_librarian.file_access.FileChangedError: file changed while its index snapshot was being read"
+    },
+    "tests/test_embed.py::test_cache_is_by_content": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert ('' == '' and 'Beta' == 'Alpha Renamed'"
+    },
+    "tests/test_eval_slices.py::test_every_tagged_slice_is_reported_with_its_own_n": {
+     "outcome": "FAILED",
+     "message": "assert 0.0 == 1.0"
+    },
+    "tests/test_handoff.py::test_an_accepted_source_joins_its_session_undecided": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'handoff'"
+    },
+    "tests/test_handoff.py::test_an_application_records_leads_apart_and_queues_the_fetchable": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'record_application', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0247-4dee6c', 'purpose': 'apply', 'project': '', 'mode': "
+    },
+    "tests/test_hardening.py::test_a_pursuits_agenda_and_activity_are_its_own": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == ['my task']"
+    },
+    "tests/test_hardening.py::test_an_older_model_without_the_note_shape_is_named_and_write_note_says_so": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'findable'"
+    },
+    "tests/test_hardening.py::test_anything_on_the_agenda_can_be_checked_off_and_rescheduled": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'invalid_arguments', 'tool': 'task_done', 'detail': \"no note named 'T2'; names are exact, including owner prefixes\"}"
+    },
+    "tests/test_hardening.py::test_consolidation_needs_an_understanding_recorded_in_that_phase": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert False == 'consolidate'"
+    },
+    "tests/test_hardening.py::test_task_text_cannot_open_a_section_or_fake_a_date": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'task'"
+    },
+    "tests/test_index.py::test_build_roles_facets_links": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert (True and 'the index ha...later changes' == 'the index ha...er been built'"
+    },
+    "tests/test_index.py::test_refresh_reads_only_changes": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == ['Sources/rep...ory/Alpha.md']"
+    },
+    "tests/test_index_external_file_handle.py::test_foreign_markdown_handle_fails_one_write_then_explicit_retry_converges": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_index_external_sqlite_handle.py::test_foreign_reader_pins_wal_without_blocking_core_progress": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 0 == 1"
+    },
+    "tests/test_index_snapshot_consistency.py::test_initial_rebuild_reconciles_a_rename_during_its_walk": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 'Sources/repository/Alpha Renamed.md' in ['About/Domain Packs.md', 'About/Domain Register.md', 'About/Recommended Plugins.md', 'About/Rules.md', 'About/Source Documentation Standard.md', 'About/Topics.md', ...]"
+    },
+    "tests/test_index_snapshot_consistency.py::test_refresh_rechecks_metadata_changed_after_an_upsert": {
+     "outcome": "FAILED",
+     "message": "assert False"
+    },
+    "tests/test_index_snapshot_consistency.py::test_refresh_reconciles_a_rename_between_scan_and_upsert": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert [] == ['Sources/rep...a Renamed.md']"
+    },
+    "tests/test_index_snapshot_consistency.py::test_schema_v2_index_migrates_then_rebuilds_without_orphans": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 'the content ...later changes' == 'the content ...ormat changed'"
+    },
+    "tests/test_ingest_service.py::test_a_mechanical_pdf_is_cleaned_in_the_batch_and_read_from_the_clean_copy": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_ingest_service.py::test_a_papers_open_access_pdf_is_fetched_by_the_batch": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_ingest_service.py::test_a_scanned_pdf_is_flagged_as_needing_ocr_and_its_note_says_so": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_intake.py::test_model_capture_to_catalogued": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_intake.py::test_paper_capture_to_catalogued": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_intake.py::test_pdf_in_inbox_to_catalogued": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_intake.py::test_repository_capture_to_catalogued": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_learn.py::test_practice_requires_every_focus_concept_practised": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'invalid_arguments', 'tool': 'understanding_record', 'detail': \"no concept named 'Query Planning'; names are exact\", 'session': {'session': '20261103-0248-60e38a', 'purpose': 'learn', 'project': '', 'mode': 'librar"
+    },
+    "tests/test_learn.py::test_review_due_opens_one_parked_learn_session_per_due_concept": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'task_add', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_learn.py::test_understanding_due_reads_review_tasks_off_the_concept_note": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'task_add', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_learn.py::test_walks_goal_to_next": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'understanding_record', 'detail': 'FileChangedError: file changed while its index snapshot...ing read', 'session': {'session': '20261103-0248-aa6fa7', 'purpose': 'learn', 'project': '', 'mode': 'l"
+    },
+    "tests/test_library_tools.py::test_note_move_between_folders_without_renaming": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'invalid_arguments', 'tool': 'note_move', 'detail': \"no note named 'Alpha'; names are exact, including owner prefixes\"}"
+    },
+    "tests/test_library_tools.py::test_note_move_renames_updates_links_and_reindexes": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'note_move', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_lifecycle.py::test_accepting_as_captured_says_so_on_the_note": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'coverage'"
+    },
+    "tests/test_lifecycle.py::test_the_batch_reads_and_reviews_then_waits_for_acceptance": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'status'"
+    },
+    "tests/test_lifecycle.py::test_unfinished_work_is_partial_never_enriched": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_loop.py::test_compact_bundle_keeps_the_required_project_bootstrap_action": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert ('create_project',) == ()"
+    },
+    "tests/test_loop.py::test_rewind_is_blocked_past_a_vault_write": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 0 == 2"
+    },
+    "tests/test_loop.py::test_the_desk_gives_the_loop_titles_not_content": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert ('On the desk' in '')"
+    },
+    "tests/test_loop.py::test_the_same_session_through_the_loop_and_the_registry_leaves_the_same_artefacts": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0248-d27bb2', 'purpose': 'add_project', 'project': '', 'mode'"
+    },
+    "tests/test_loop.py::test_the_scribe_writes_the_prose_and_never_sees_the_working_context": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0248-e42310', 'purpose': 'add_project', 'project': '', 'mode'"
+    },
+    "tests/test_m0_fixes.py::test_a_closest_passage_is_never_a_heading": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0248-84c028', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_m0_fixes.py::test_a_misnamed_source_is_answered_with_the_closest_names": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0248-0bf9e4', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_m0_fixes.py::test_a_project_without_a_note_is_settled_in_frame": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...': '20261103-0248-152ba8', 'purpose': 'explore', 'project': 'BSc Computer Science at UCLan', 'mode': 'l"
+    },
+    "tests/test_m0_fixes.py::test_a_quote_not_found_is_answered_with_the_closest_passage": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0248-628557', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_m0_fixes.py::test_a_source_staged_but_not_accepted_is_named_as_such": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0248-689806', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_m0_fixes.py::test_a_staged_offering_holds_synthesise_until_it_is_promoted": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0248-36aea3', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_m0_fixes.py::test_the_desk_finds_the_project_beside_a_note_of_the_same_name": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0248-8ce975', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_macro_permissions.py::test_macro_permissions_wait_outside_writer_and_keep_completed_work": {
+     "outcome": "FAILED",
+     "message": "_queue.Empty"
+    },
+    "tests/test_mcp.py::test_an_mcp_write_to_a_note_being_edited_becomes_a_conflict_checkpoint": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'created'"
+    },
+    "tests/test_mcp.py::test_in_ask_mode_an_mcp_write_waits_for_a_person": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0249-771c7a', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_mcp.py::test_mcp_writes_go_through_the_core_writer_as_mcp": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0249-e1f6d3', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_mcp.py::test_the_same_session_through_mcp_and_the_core_leaves_the_same_artefacts": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-5d9d95', 'purpose': 'add_project', 'project': '', 'mode'"
+    },
+    "tests/test_mechanical_closure.py::test_a_bounded_write_completes_after_its_verifiers_and_a_clean_audit": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-c6643a', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_mechanical_closure.py::test_an_out_of_scope_change_is_a_violation_and_cannot_complete": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-fb5bcc', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_mechanical_closure.py::test_an_out_of_scope_tool_write_is_refused_and_leaves_the_audit_clean": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-f96930', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_mechanical_closure.py::test_boundary_staged_passes_a_staging_round_and_fails_a_direct_write": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-cd209a', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_mechanical_closure.py::test_the_audit_phase_waits_for_the_target_audit": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-48eed8', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_mechanical_closure.py::test_unrelated_edits_elsewhere_do_not_touch_the_audit": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-1652c9', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_mechanical_closure.py::test_verified_is_refused_without_a_clean_audit_even_by_a_direct_append": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-72f9a5', 'purpose': 'audited', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_model_catalog.py::test_adopt_writes_accepted_sources_once_not_twice": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert {'provider': ...being read'}]} == {'provider': ... 'failed': []}"
+    },
+    "tests/test_mvp_fixes.py::test_ingested_and_accepted_sources_are_tracked_on_their_session": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert ([{'id': 'acme-rowstream-500067', 'source': 'acme - rowstream', 'status': 'staged', 'path': '', ...}] and 'staged' == 'accepted'"
+    },
+    "tests/test_offering_view.py::test_a_decision_is_promote_or_decline_and_names_a_staged_draft": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0249-771fd2', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_offering_view.py::test_a_draft_left_staged_by_a_closed_session_can_still_be_promoted": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0249-0d11fa', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_offering_view.py::test_a_staged_draft_is_listed_and_shown_in_full": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0249-cf5472', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_offering_view.py::test_decline_keeps_the_draft_and_the_agent_cannot_promote_it_after": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0249-edc481', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_offering_view.py::test_promote_answers_the_sessions_question_and_moves_the_draft": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0249-6b6c03', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_offering_view.py::test_promote_offering_by_the_agent_is_unchanged": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0249-a4e2f3', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_offering_view.py::test_the_view_over_the_local_api": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0249-d5f90f', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_orchestration.py::test_learn_and_apply_can_create_the_project_they_are_for": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0249-3c86a5', 'purpose': 'learn', 'project': '', 'mode': 'lib"
+    },
+    "tests/test_projects.py::test_an_application_keeps_project_work_apart_with_a_pointer_from_the_project": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'recorded'"
+    },
+    "tests/test_pursuits.py::test_create_project_defaults_pursuit_kind_and_writes_new_sections": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'created'"
+    },
+    "tests/test_pursuits.py::test_create_project_takes_pursuit_kind_started_horizon_and_goal": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'created'"
+    },
+    "tests/test_pursuits.py::test_task_add_appends_a_dated_checkbox_to_milestones": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'task'"
+    },
+    "tests/test_pursuits.py::test_task_done_checks_off_a_matching_open_task": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'done'"
+    },
+    "tests/test_pursuits.py::test_task_done_refuses_when_nothing_matches": {
+     "outcome": "FAILED",
+     "message": "assert ('invalid_arguments' == 'invalid_arguments'"
+    },
+    "tests/test_research_loop.py::test_coverage_verdicts_are_earned_and_context_is_not_an_answer": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'invalid_arguments', 'tool': 'add_candidate', 'detail': \"no note named 'osquery'\", 'session': {'session': '20261103-0250-006256', 'purpose': 'explore', 'project': '', 'mode': 'librarian', ...}}"
+    },
+    "tests/test_review_gate.py::test_a_challenge_goes_back_to_the_lead_model_with_the_passages_words": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-4a0fb2', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_review_gate.py::test_a_claim_the_passage_supports_is_staged_with_the_review_recorded": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-25e896', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_review_gate.py::test_a_fails_without_a_counter_quote_from_the_passage_is_not_counted": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-d1e0a6', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_review_gate.py::test_a_kept_challenge_is_shown_and_only_a_person_promotes_it": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-757eaa', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_review_gate.py::test_without_review_turned_on_nothing_is_asked": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-f5435f', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_revisions.py::test_a_persons_own_edit_needs_no_revision": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'edit_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_revisions.py::test_a_promotion_declares_where_it_writes": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0250-329721', 'purpose': 'add_project', 'project': '', 'mode'"
+    },
+    "tests/test_revisions.py::test_a_read_hands_out_a_revision_and_each_write_the_next": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_revisions.py::test_a_replace_needs_a_revision_and_a_new_note_needs_none": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 'error' not in {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_revisions.py::test_a_revision_is_bound_to_its_session_caller_and_core": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_revisions.py::test_an_external_edit_between_read_and_write_becomes_a_conflict_checkpoint": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_revisions.py::test_moves_and_promotions_declare_their_targets": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert 'error' not in {'error': 'failed', 'tool': 'archive_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_revisions.py::test_offline_the_same_check_runs_without_a_writer": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'revision'"
+    },
+    "tests/test_search.py::test_caveat_earns_no_coverage": {
+     "outcome": "FAILED",
+     "message": "ValueError: 'osquery' is not in list"
+    },
+    "tests/test_search.py::test_facets_only_vary": {
+     "outcome": "FAILED",
+     "message": "assert ('license_class' in {})"
+    },
+    "tests/test_search.py::test_intents": {
+     "outcome": "FAILED",
+     "message": "IndexError: list index out of range"
+    },
+    "tests/test_search_contract.py::test_all_answers_each_intent_in_its_own_shape_and_says_which_ran": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'made'"
+    },
+    "tests/test_search_contract.py::test_what_the_filters_removed_is_a_list": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'removed_by_filters'"
+    },
+    "tests/test_search_contract.py::test_what_the_library_made_is_findable": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert {'Agile Resou...': 'offering'} == {'Agile Resou...Plan': 'note'}"
+    },
+    "tests/test_search_grains.py::test_a_datasets_access_points_show_when_they_were_checked_apart_from_rank": {
+     "outcome": "FAILED",
+     "message": "IndexError: list index out of range"
+    },
+    "tests/test_search_grains.py::test_a_pattern_shows_its_examples_and_neighbours": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert ['Event Sourcing'] == ['Write-Ahead...ent Sourcing']"
+    },
+    "tests/test_sessions.py::test_add_project_walk": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0250-c36b76', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_sessions.py::test_apply_as_a_reader": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'record_application', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0250-9deee8', 'purpose': 'apply', 'project': '', 'mode': "
+    },
+    "tests/test_sessions.py::test_suggest_reads_the_project_and_never_writes_it": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_sessions.py::test_the_envelope_carries_the_project_once_set": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...ad', 'session': {'session': '20261103-0251-56a58d', 'purpose': 'add_project', 'project': '', 'mode': 'l"
+    },
+    "tests/test_staging.py::test_agent_needs_the_vault_setting": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_staging.py::test_concept_accept_writes_a_note_a_person_can_be_found_by": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'results'"
+    },
+    "tests/test_staging.py::test_not_findable_is_loud": {
+     "outcome": "FAILED",
+     "message": "resource_librarian.file_access.FileChangedError: file changed while its index snapshot was being read"
+    },
+    "tests/test_staging.py::test_person_accepts_and_it_is_catalogued": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'status'"
+    },
+    "tests/test_staging.py::test_sensitive_is_never_accepted_by_an_agent": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'status'"
+    },
+    "tests/test_staging_safety.py::test_an_agent_needs_its_own_note_revision_but_an_explicit_person_action_remains_compatible": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'accepted'"
+    },
+    "tests/test_staging_safety.py::test_changed_staged_content_invalidates_the_review_even_when_note_is_unchanged": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'accepted'"
+    },
+    "tests/test_staging_safety.py::test_revision_sqlite_stays_on_core_and_file_write_stays_on_writer": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'accepted'"
+    },
+    "tests/test_staging_safety.py::test_staged_revision_token_cannot_authorize_a_note_write": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'created'"
+    },
+    "tests/test_staging_safety.py::test_staging_dependency_operation_log_remains_readable_after_restart": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'accepted'"
+    },
+    "tests/test_staging_safety.py::test_two_queued_acceptances_cannot_reapply_one_revision": {
+     "outcome": "FAILED",
+     "message": "assert 0 == 1"
+    },
+    "tests/test_start_pursuit.py::test_plan_accepts_no_dates_as_an_alternative": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...sion': '20261103-0251-488880', 'purpose': 'start_pursuit', 'project': 'Open Ended Research', 'mode': 'l"
+    },
+    "tests/test_start_pursuit.py::test_walks_frame_to_check_out": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was b...session': '20261103-0251-207dab', 'purpose': 'start_pursuit', 'project': 'Databases Course', 'mode': 'l"
+    },
+    "tests/test_structure.py::test_intake_records_it_as_evidence_and_writes_access_points": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'promotion'"
+    },
+    "tests/test_taxonomy.py::test_a_proposal_close_to_an_accepted_topic_is_marked": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert {'id': 'topic.../Topics.md']}} == {'id': 'topic...t Monitoring'}"
+    },
+    "tests/test_taxonomy.py::test_accepting_writes_the_row_and_files_its_members": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'results'"
+    },
+    "tests/test_taxonomy.py::test_refiling_and_views_use_accepted_topics_only": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'written'"
+    },
+    "tests/test_upkeep.py::test_freshness_reports_drift_and_never_edits_a_note": {
+     "outcome": "FAILED",
+     "message": "KeyError: 'gamma'"
+    },
+    "tests/test_upkeep.py::test_the_work_is_searchable_staging_sessions_and_activity": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'write_note', 'detail': 'FileChangedError: file changed while its index snapshot was being read', 'session': {'session': '20261103-0251-5893f8', 'purpose': 'explore', 'project': '', 'mode': 'libra"
+    },
+    "tests/test_v1_export.py::test_accepted_notes_keep_everything_v1_had": {
+     "outcome": "FAILED",
+     "message": "resource_librarian.file_access.FileChangedError: file changed while its index snapshot was being read"
+    },
+    "tests/test_validation_fixtures.py::test_source_fixture_uses_vault_kind_and_core_owned_index": {
+     "outcome": "FAILED",
+     "message": "resource_librarian.validation_fixtures.FixturePreflightError: fixture is not discoverable through the Core-owned index service"
+    },
+    "tests/test_weekly_review.py::test_reflection_accept_appends_to_reflections_and_is_person_only": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_weekly_review.py::test_reflection_draft_is_grounded_in_what_was_passed_and_never_written": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_weekly_review.py::test_task_route_drop_reschedule_keep": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_weekly_review.py::test_task_route_needs_a_person": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_weekly_review.py::test_the_weekly_review_pipeline_gathers_and_drafts_end_to_end": {
+     "outcome": "FAILED",
+     "message": "AssertionError: {'error': 'failed', 'tool': 'create_project', 'detail': 'FileChangedError: file changed while its index snapshot was being read'}"
+    },
+    "tests/test_workspace_documents.py::test_unfrontmattered_documents_are_workspace_documents": {
+     "outcome": "FAILED",
+     "message": "AssertionError: assert {'api/README....ace_document'} == {'README.md':...ace_document'}"
+    }
+   }
+  }
+ }
+}

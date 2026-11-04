@@ -36,7 +36,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, TypeVar
 
 from . import notes, schema
-from .file_access import FileChangedError, file_access, read_bytes_snapshot
+from .file_access import FileChangedError, file_access, file_identity, read_bytes_snapshot
 from .rules import Refusal
 from .vault import Vault, now_iso
 
@@ -459,7 +459,7 @@ class Index:
                 try:
                     with file_access(path):
                         stat = path.stat()
-                    identity = f"{stat.st_dev}:{stat.st_ino}:{stat.st_ctime_ns}"
+                    identity = file_identity(stat)
                     if known.get(rel) == (stat.st_mtime_ns, stat.st_size, identity):
                         seen.add(rel)
                         unchanged += 1
@@ -507,7 +507,7 @@ class Index:
                     stat = path.stat()
             except FileNotFoundError:
                 continue
-            identity = f"{stat.st_dev}:{stat.st_ino}:{stat.st_ctime_ns}"
+            identity = file_identity(stat)
             rows[rel] = (stat.st_mtime_ns, stat.st_size, identity)
         return rows
 

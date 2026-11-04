@@ -514,7 +514,7 @@ settings, signing or publication.
 | REMED-06/07/08 | Implemented. The REMED-06 exit is met, and task-local timeout stopping was approved. The three uncertain G5 entries are liabilities for MF-002. |
 | ACCEPT-02 | Partial. One original item remains: three-client mixed traffic (MF-001). The owner noted on 2026-11-04 that official Claude Cowork support has ended, so the Claude side is Claude Code (or a subagent) acting as the MCP client. A final-candidate re-run is MF-045. |
 | ACCEPT-01/03, RELEASE-01 | Implemented. Release work continues as MF-044 (acceptance refresh), MF-046 and MF-047 (owner gates) and MF-043a–f (build and release evidence). |
-| Hosted CI | Observed red on 2026-11-04: Core CI fails its suite step on Python 3.11, 3.12 and 3.13 while the local suite passes. Restoring it is MF-004. |
+| Hosted CI | Observed red on 2026-11-04 (run 41567602480): 1 failure on 3.11, 262 on 3.12 and on 3.13. Both causes were reproduced and fixed locally on all three versions (MF-004, §19); hosted CI is confirmed only by the next push. |
 | §12 and §13 deferrals and decision gates | Retained: full HARNESS-09, DEPLOY-05, CORE-04B and the development-agent profile. Experiments MF-036–041 and MF-048 are conditional, each ending in keep, defer or reject. |
 
 **Order of work:**
@@ -4321,4 +4321,77 @@ Namespacing them touches every emitter and selector across ten files.
 
 The demo server's connection-reset tracebacks during the smoke run are its
 own logging of closed browser connections. They are not failures.
+
+### MF-004, hosted Core CI (2026-11-04)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-004 | implemented locally; hosted CI unconfirmed until the next push | this commit | `src/resource_librarian/file_access.py`, `index.py`, `keys.py`; new `tests/test_windows_file_metadata.py`. Evidence in `reports/2026-11-04-evidence/`. |
+
+**The hosted failures.** `gh` was installed and signed in by the owner, and the
+failed job logs of run 41567602480 (head `40ec923`) were read. They are kept as
+`ci-41567602480-failures.json`: every failing selector per lane, the summary
+lines, the job conclusions and the SHA-256 of the downloaded log.
+- Python 3.11: 1 failed, 1,937 passed.
+- Python 3.12 and 3.13: 262 failed, 1,671 passed, 5 errors each.
+
+**Cause 1, Python 3.12+ on Windows (262 failures).** From 3.12, Windows
+`st_ctime` is the NTFS change time; creation time moved to `st_birthtime`.
+For a freshly written, unchanged file, `os.stat` reported a change time 1 ms
+behind the one `os.fstat` reported, and it stayed behind. The index's snapshot
+read compares the open handle with the path, and its stored identity
+(`device:inode:ctime`) is compared with a path stat on refresh. So every newly
+written note raised `FileChangedError` or never settled. Rebuild and refresh
+skip such files, so the remaining failures (KeyErrors, notes not found,
+"the Markdown tree remained active") followed from notes missing from the
+index.
+
+Reproduced with Python 3.12.13 and 3.13.14 installed by `uv` into the
+scratchpad, in a clean clone. A probe showed `st_ctime_ns` differing between
+`fstat` and `stat` while `st_birthtime_ns`, the device, the inode, the mtime and
+the size agreed. So this is a Python-version difference, not the hosted runner.
+
+**Fix:** `file_access.identity_time_ns()` uses the creation time on Windows and
+`st_ctime_ns` on POSIX, unchanged. It drives the snapshot's three comparisons,
+the stored identity and the refresh comparison (`file_identity()`).
+- On Python 3.11 the identity string is unchanged, so existing indexes see no
+  churn.
+- Under 3.12+ the volume serial is 64-bit rather than 32-bit, so the first
+  refresh after a Python upgrade re-reads each note once. A note whose content
+  is unchanged gets a metadata-only update.
+
+**Cause 2, the elevated runner (the 3.11 failure, also on 3.12 and 3.13).**
+GitHub's `runneradmin` runs elevated, and an elevated process gives each file
+it creates an explicit High integrity label. `icacls` prints that label
+("Mandatory Label\High Mandatory Level:(NW)") among the grants, so
+`keys.owner_only()` counted two grants and rejected a correctly protected key
+file.
+
+Reproduced unelevated by lowering a protected file to a Low label, which
+`icacls` prints the same way. **Fix:** label-only lines, whose flags are only
+NW, NR or NX, are not counted as grants, in any display language. A real
+second grant still fails the check (tested with Everyone:R).
+
+**Branch rules (packet requirement).** `master` reports `protected: false`. Its
+protection endpoint answers 404 "Branch not protected", and the repository and
+branch rulesets are empty. This is recorded in the CI evidence file.
+
+**Verification:** the full suite in a clean clone at `6b73fd6` with this change
+applied, using `scripts/record_suite_run.py`:
+- Python 3.11: 1942 passed, 2 skipped, 5 deselected in 594.22s (0:09:54) (exit 0, Python 3.11.3), `suite-mf004-py311.json`;
+- Python 3.12: 1942 passed, 2 skipped, 5 deselected, 5 warnings in 639.21s (0:10:39) (exit 0, Python 3.12.13), `suite-mf004-py312.json`;
+- Python 3.13: 1942 passed, 2 skipped, 5 deselected, 5 warnings in 598.92s (0:09:58) (exit 0, Python 3.13.14), `suite-mf004-py313.json`.
+
+Each record lists the seven modified tracked files the run tested; the new test
+file was untracked, so the records do not list it. In these three
+records the first status line lost its leading space ("M" for " M"), because the
+recorder trimmed git's output; this commit fixes that in `record_suite_run.py`.
+
+**Observed, not in this packet:** the five warnings on 3.12 and 3.13, also present
+in hosted CI, are one `DeprecationWarning` from `workbench.py:294`. It extracts a
+tar archive without a `filter=` argument, and Python 3.14 changes that default
+to filter archives.
+
+Not verified: hosted CI itself. The packet closes when the first push after
+this commit shows Core green on all three lanes.
 
