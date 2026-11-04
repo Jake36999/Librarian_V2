@@ -1,0 +1,30 @@
+{
+ "command": [
+  "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "D:\\Librarian_V2",
+ "exit_code": 0,
+ "summary": "1954 passed, 2 skipped, 5 deselected in 606.02s (0:10:06)",
+ "started_utc": "2026-11-04T23:25:37.720435+00:00",
+ "seconds": 607.1,
+ "head": "52612033d2057d63c629e45043866ebff2f1a856",
+ "tracked_changes": [
+  " M obsidian/dist/main.js",
+  " M obsidian/src/main.ts",
+  " M src/resource_librarian/ui/app.js",
+  " M tests/test_obsidian_adapter_contract.py",
+  " M ui/smoke.mjs",
+  " M ui/src/main.ts",
+  " M ui/src/panels.ts"
+ ],
+ "python": "3.11.3",
+ "executable": "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-mf006-py311.log",
+ "log_sha256": "a0b52ac4cd665a10d4b936354c16e88e88eeb6374fa8389ccc1cee946a1670b4"
+}

@@ -70,6 +70,7 @@ class App {
   }) as HTMLTextAreaElement;
   private attachments: { label: string; raw: string }[] = [];
   private sending = false;      // a chat POST is in flight (MF-005)
+  private cancelling = new Set<string>();   // workflow runs with a cancel requested (MF-006)
   private stopping = false;     // Stop was pressed; waiting for the Core's outcome
   private attachRow = h("div", { class: "attach-row", hidden: true });
   private msgBox = h("div", { class: "msg-box" });
@@ -172,7 +173,11 @@ class App {
         const chosen = await this.api.post("/api/effort", { level: Number(this.effortInput.value) });
         this.state.effort = chosen;
         this.paintEffort();
-      } catch (e) { this.warn((e as Error).message); }
+      } catch (e) {
+        // MF-006: the slider returns to the level the Core confirmed.
+        this.paintEffort();
+        this.warn(`Effort not changed: ${(e as Error).message}`);
+      }
     };
     this.input.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!this.state.busy) void this.send(); }
@@ -418,13 +423,22 @@ class App {
         ? h("p", { class: "checkpoint-help" },
             "Review the named note in its editor. Resolving this card records your decision only; it does not retry the blocked write. Repeat the original action after the editor is quiet.")
         : null;
+      // MF-006: one resolution per press. The card's choices stay disabled
+      // while the Core records it, and come back only if it was refused.
+      const buttons: HTMLButtonElement[] = [];
       const resolve = async (choice: string) => {
+        if (buttons.some((b) => b.disabled)) return;
+        buttons.forEach((b) => { b.disabled = true; });
         try {
           await this.api.post("/api/checkpoints/resolve", { id: row.id, choice });
-          await this.refreshCheckpoints();
-          if (choice === "retry_after_review") this.warn(
-            "Review recorded. The blocked write was not retried; repeat the original action after the editor is quiet.");
-        } catch (e) { this.warn((e as Error).message); }
+        } catch (e) {
+          buttons.forEach((b) => { b.disabled = false; });
+          this.warn(`Decision not recorded: ${(e as Error).message}`);
+          return;
+        }
+        if (choice === "retry_after_review") this.warn(
+          "Review recorded. The blocked write was not retried; repeat the original action after the editor is quiet.");
+        await this.refreshCheckpoints();
       };
       return h("section", { class: "checkpoint" },
         h("strong", {}, String(row.type ?? "Decision").replace(/_/g, " ")),
@@ -433,8 +447,9 @@ class App {
         h("div", { class: "row2" }, ...(Array.isArray(row.choices) ? row.choices : []).map((choice: string) =>
           // The Core declares the safe default.  Array order is presentation
           // history, not an instruction to make an approval action primary.
-          h("button", { class: choice === row.default ? "primary" : "ghost", onclick: () => void resolve(choice) },
-            choice === "retry_after_review" ? "Mark reviewed; retry manually" : choice.replace(/_/g, " ")))));
+          buttons[buttons.push(h("button", { class: choice === row.default ? "primary" : "ghost",
+            onclick: () => void resolve(choice) },
+            choice === "retry_after_review" ? "Mark reviewed; retry manually" : choice.replace(/_/g, " ")) as HTMLButtonElement) - 1])));
     };
     clear(this.checkpoints.el,
       h("h4", {}, "Decisions waiting for you"),
@@ -443,11 +458,24 @@ class App {
 
   private paintChips(): void {
     const running = ((this.state.actions ?? []) as any[]).filter((a) => a.status === "running" || a.status === "paused");
+    // MF-006: a requested cancel stays visibly pending until the Core reports
+    // the run stopped (its chip goes) or refuses the request.
+    for (const id of [...this.cancelling]) {
+      if (!running.some((a) => a.id === id && a.status === "running")) this.cancelling.delete(id);
+    }
     clear(this.chips, running.map((a) => h("span", { class: "chip" },
       `${a.name} · ${a.status === "paused" ? `paused${a.reason ? `: ${a.reason}` : ""}` : `${a.steps} steps`}`,
-      a.status === "running" ? h("button", { "aria-label": `Cancel ${a.name}`, onclick: async () => {
-        try { await this.api.post(`/api/actions/${a.id}/cancel`); } catch (e) { this.warn((e as Error).message); }
-      } }, "✕") : null)));
+      a.status !== "running" ? null : this.cancelling.has(a.id)
+        ? h("button", { "aria-label": `Cancelling ${a.name}`, "aria-busy": "true", disabled: true }, "Cancelling…")
+        : h("button", { "aria-label": `Cancel ${a.name}`, onclick: async () => {
+            this.cancelling.add(a.id);
+            this.paintChips();
+            try { await this.api.post(`/api/actions/${a.id}/cancel`); } catch (e) {
+              this.cancelling.delete(a.id);
+              this.paintChips();
+              this.warn(`${a.name} was not cancelled: ${(e as Error).message}`);
+            }
+          } }, "✕"))));
   }
 
   private setSession(session: Session): void {

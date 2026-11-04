@@ -4553,3 +4553,59 @@ docstring is corrected.
 imported `keys.py` when its docstring was corrected; that edit changes no
 code.
 
+### MF-006, truthful mutation feedback (2026-11-04)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-006 | implemented | this commit | `ui/src/main.ts`, `ui/src/panels.ts`, `obsidian/src/main.ts`; one new smoke step; one new adapter contract test. |
+
+The defects (G19) were controls that showed more than the Core had confirmed.
+Each now shows the confirmed state, or says plainly what is pending or refused.
+- **Mode.** A refused change left the clicked radio checked, showing a mode
+  the Core had refused. It now reselects the last mode the Core accepted and
+  says "Mode not changed: …".
+  The last accepted mode is tracked, so a second change restores the right one.
+- **Effort.** A refused save left the slider on the unsaved level. It now
+  repaints the confirmed level and says "Effort not changed: …".
+- **Forget a library.** The rejection was swallowed (`.catch(() => undefined)`)
+  and the list re-rendered as if it had worked. Now the button is disabled
+  while the request runs. A refusal keeps the row, re-enables the button and
+  names the library and the reason.
+- **Clear model selection.** "Selection cleared" was set before the save, so
+  a failure could say it had cleared. `save()` now reports success, and the
+  toast follows it.
+- **Switching library with work running.** The button said "let it finish in
+  the background". The Core does keep the old library's work running
+  (`App.retire`), but this window never reports its outcome, and the work can
+  still fail. The button now reads "Switch anyway", and the note says the
+  outcome will not be shown here and that switching back shows it.
+- **Cancelling a workflow.** The ✕ gave no feedback. A pressed cancel now shows
+  "Cancelling…", disabled and `aria-busy`, until the Core reports the run
+  stopped. A refusal restores ✕ and says why.
+- **Resolving a checkpoint.** The card's choices are disabled while the
+  decision is recorded, so one press records one decision. A refusal restores
+  them and says "Decision not recorded: …". Resolving still records the
+  decision only. The write-conflict text already says it never retries the
+  blocked write; that is unchanged and still contract-tested.
+- **Obsidian mount check.** If the Core failed the `/api/meta` check, the view
+  said it could not mount and offered nothing. It now offers "Try again", an
+  ordinary retry, with `render(false)`. Only a typed stale lease offers
+  takeover, as before.
+
+**Smoke step** "refused changes roll back to the confirmed state; pending
+cancels and decisions say so". Every refusal is mocked as a 409 from the Core.
+- **Effort:** a refused change returns the slider to the confirmed level.
+- **Mode:** a refused change keeps the confirmed radio selected.
+- **Forget:** a refusal keeps the row and its button usable.
+- **Checkpoint:** while the decision is being recorded, the card's choices
+  are disabled. After the refusal they are enabled again, and exactly one
+  request was sent.
+- **Cancel:** a mocked running workflow shows "Cancelling…", disabled, and
+  stays that way after the Core accepts the request.
+
+**Verification:**
+- both bundles type-check and build;
+- `npm.cmd --prefix ui run smoke`: 47 steps passed;
+- `tests/test_obsidian_adapter_contract.py`: 8 passed;
+- full suite: 1954 passed, 2 skipped, 5 deselected in 606.02s (0:10:06) (exit 0, Python 3.11.3) (`suite-mf006-py311.json`).
+

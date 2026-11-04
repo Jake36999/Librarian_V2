@@ -89,12 +89,22 @@ export class Popover {
 export function renderModes(pop: Popover, api: Api, mode: string, queued: string[],
                             pipelines: string[], report: (msg: string) => void,
                             needs: Record<string, Record<string, { type: string }>> = {}): void {
+  let confirmed = mode;                       // the last mode the Core accepted
   const group = h("div", { role: "radiogroup", "aria-label": "Permission mode" },
     MODES.map(([value, label, help]) => h("label", { class: "opt" },
       h("input", {
         type: "radio", name: "librarian-mode", value, checked: value === mode,
-        onchange: async () => {
-          try { await api.post("/api/mode", { mode: value }); } catch (e) { report((e as Error).message); }
+        onchange: async (event: Event) => {
+          try {
+            await api.post("/api/mode", { mode: value });
+            confirmed = value;
+          } catch (e) {
+            // MF-006: a refused change leaves the confirmed mode selected.
+            const radios = (event.target as HTMLInputElement).closest("[role=radiogroup]")
+              ?.querySelectorAll<HTMLInputElement>("input[name=librarian-mode]") ?? [];
+            radios.forEach((radio) => { radio.checked = radio.value === confirmed; });
+            report(`Mode not changed: ${(e as Error).message}`);
+          }
         },
       }),
       h("span", {}, label, h("small", {}, help)))));
@@ -310,7 +320,7 @@ export class ModelTile {
       detail ? h("span", { class: "dim" }, ` · ${detail}`) : null);
   }
 
-  private async save(tiers: Tier[], override = ""): Promise<void> {
+  private async save(tiers: Tier[], override = ""): Promise<boolean> {
     try {
       await this.api.post("/api/tiers", { tiers, ...(override ? { override } : {}) });
       this.pendingLead = null;
@@ -322,10 +332,12 @@ export class ModelTile {
       // not-so-briefly) look unpicked to this same click's own next step.
       this.setTiers(tiers);
       void this.refreshReadiness(++this.readinessEpoch);
+      return true;
     } catch (e) {
       const body = ((e as ApiError).body ?? {}) as Record<string, unknown>;
       if (body.needs_override) this.pendingLead = { tiers, lead: String(body.lead ?? "") };
       this.toast = (e as Error).message;
+      return false;
     }
   }
 
@@ -350,8 +362,8 @@ export class ModelTile {
   }
 
   private async clearAll(): Promise<void> {
-    this.toast = "Selection cleared. Click models in order again.";
-    await this.save([]);
+    // MF-006: say it was cleared only once the Core accepted it.
+    if (await this.save([])) this.toast = "Selection cleared. Click models in order again.";
     this.render();
   }
 
@@ -528,8 +540,12 @@ export async function renderLibraries(pop: Popover, api: Api, current: string): 
           Array.isArray(running.actions) && running.actions.length ? `${running.actions.length} workflow(s) running` : "",
           running.waiting_on_person ? `${running.waiting_on_person} question(s) waiting for you` : ""].filter(Boolean);
         clear(status, `${current} still has ${parts.join(", ")}. `,
-          h("button", { class: "ghost", onclick: () => void go(path, true) }, "Switch anyway - let it finish in the background"),
-          h("small", {}, " Unanswered questions time out and park their thread, so it can be resumed later."));
+          h("button", { class: "ghost", onclick: () => void go(path, true) }, "Switch anyway"),
+          // MF-006: the work keeps running, but its outcome is not reported
+          // here - it may still fail. Say so rather than promise completion.
+          h("small", {}, ` Its running work keeps going in the background, but this window will not show whether`
+            + ` it succeeds or fails; switch back to ${current} to check. Unanswered questions time out`
+            + ` and park their thread, so it can be resumed later.`));
       } else {
         clear(status, h("span", { class: "error" }, err.message));
       }
@@ -548,8 +564,17 @@ export async function renderLibraries(pop: Popover, api: Api, current: string): 
           onclick: () => void go(l.path) },
           `${l.current ? "✓ " : ""}${l.name}`, h("small", {}, l.missing ? " · folder missing" : ` · opened ${when(l.last_opened)}`)),
         l.current ? null : h("button", { class: "icon-btn", title: "Remove from this list (the library itself is untouched)",
-          "aria-label": `Forget ${l.name}`, onclick: async () => {
-            await api.post("/api/libraries/forget", { path: l.path }).catch(() => undefined);
+          "aria-label": `Forget ${l.name}`, onclick: async (event: Event) => {
+            // MF-006: a refused Forget keeps the row and says why.
+            const button = event.currentTarget as HTMLButtonElement;
+            button.disabled = true;
+            try {
+              await api.post("/api/libraries/forget", { path: l.path });
+            } catch (e) {
+              button.disabled = false;
+              clear(status, h("span", { class: "error" }, `${l.name} was not forgotten: ${(e as Error).message}`));
+              return;
+            }
             void renderLibraries(pop, api, current);
           } }, "✕")))
         : h("p", { class: "dim" }, "Only this library so far."),

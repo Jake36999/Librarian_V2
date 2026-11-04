@@ -246,7 +246,10 @@ class LibrarianView extends ItemView {
     } catch (e) {
       this.plugin.forgetCore(core);
       root.empty();
-      root.createEl("p", { text: `The Librarian Core cannot mount safely: ${(e as Error).message}` });
+      const box = root.createDiv({ cls: "librarian-missing" });
+      box.createEl("p", { text: `The Librarian Core cannot mount safely: ${(e as Error).message}` });
+      // MF-006: an ordinary retry. Only a typed stale lease offers takeover.
+      new Setting(box).addButton((b) => b.setButtonText("Try again").onClick(() => this.render(false)));
       return;
     }
     root.empty();

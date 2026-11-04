@@ -1683,6 +1683,7 @@ var Librarian = (() => {
     }
   };
   function renderModes(pop, api, mode, queued, pipelines, report, needs = {}) {
+    let confirmed = mode;
     const group = h(
       "div",
       { role: "radiogroup", "aria-label": "Permission mode" },
@@ -1694,11 +1695,16 @@ var Librarian = (() => {
           name: "librarian-mode",
           value,
           checked: value === mode,
-          onchange: async () => {
+          onchange: async (event) => {
             try {
               await api.post("/api/mode", { mode: value });
+              confirmed = value;
             } catch (e) {
-              report(e.message);
+              const radios = event.target.closest("[role=radiogroup]")?.querySelectorAll("input[name=librarian-mode]") ?? [];
+              radios.forEach((radio) => {
+                radio.checked = radio.value === confirmed;
+              });
+              report(`Mode not changed: ${e.message}`);
             }
           }
         }),
@@ -1930,10 +1936,12 @@ var Librarian = (() => {
         this.pendingLead = null;
         this.setTiers(tiers);
         void this.refreshReadiness(++this.readinessEpoch);
+        return true;
       } catch (e) {
         const body = e.body ?? {};
         if (body.needs_override) this.pendingLead = { tiers, lead: String(body.lead ?? "") };
         this.toast = e.message;
+        return false;
       }
     }
     overridePrompt() {
@@ -1966,8 +1974,7 @@ var Librarian = (() => {
       );
     }
     async clearAll() {
-      this.toast = "Selection cleared. Click models in order again.";
-      await this.save([]);
+      if (await this.save([])) this.toast = "Selection cleared. Click models in order again.";
       this.render();
     }
     async pick(provider, model) {
@@ -2176,8 +2183,10 @@ var Librarian = (() => {
           clear(
             status,
             `${current} still has ${parts.join(", ")}. `,
-            h("button", { class: "ghost", onclick: () => void go(path, true) }, "Switch anyway - let it finish in the background"),
-            h("small", {}, " Unanswered questions time out and park their thread, so it can be resumed later.")
+            h("button", { class: "ghost", onclick: () => void go(path, true) }, "Switch anyway"),
+            // MF-006: the work keeps running, but its outcome is not reported
+            // here - it may still fail. Say so rather than promise completion.
+            h("small", {}, ` Its running work keeps going in the background, but this window will not show whether it succeeds or fails; switch back to ${current} to check. Unanswered questions time out and park their thread, so it can be resumed later.`)
           );
         } else {
           clear(status, h("span", { class: "error" }, err.message));
@@ -2217,8 +2226,16 @@ var Librarian = (() => {
             class: "icon-btn",
             title: "Remove from this list (the library itself is untouched)",
             "aria-label": `Forget ${l.name}`,
-            onclick: async () => {
-              await api.post("/api/libraries/forget", { path: l.path }).catch(() => void 0);
+            onclick: async (event) => {
+              const button = event.currentTarget;
+              button.disabled = true;
+              try {
+                await api.post("/api/libraries/forget", { path: l.path });
+              } catch (e) {
+                button.disabled = false;
+                clear(status, h("span", { class: "error" }, `${l.name} was not forgotten: ${e.message}`));
+                return;
+              }
               void renderLibraries(pop, api, current);
             }
           }, "\u2715")
@@ -5992,6 +6009,8 @@ var Librarian = (() => {
       this.attachments = [];
       this.sending = false;
       // a chat POST is in flight (MF-005)
+      this.cancelling = /* @__PURE__ */ new Set();
+      // workflow runs with a cancel requested (MF-006)
       this.stopping = false;
       // Stop was pressed; waiting for the Core's outcome
       this.attachRow = h("div", { class: "attach-row", hidden: true });
@@ -6149,7 +6168,8 @@ var Librarian = (() => {
           this.state.effort = chosen;
           this.paintEffort();
         } catch (e) {
-          this.warn(e.message);
+          this.paintEffort();
+          this.warn(`Effort not changed: ${e.message}`);
         }
       };
       this.input.addEventListener("keydown", (e) => {
@@ -6401,16 +6421,25 @@ var Librarian = (() => {
           { class: "checkpoint-help" },
           "Review the named note in its editor. Resolving this card records your decision only; it does not retry the blocked write. Repeat the original action after the editor is quiet."
         ) : null;
+        const buttons = [];
         const resolve = async (choice) => {
+          if (buttons.some((b) => b.disabled)) return;
+          buttons.forEach((b) => {
+            b.disabled = true;
+          });
           try {
             await this.api.post("/api/checkpoints/resolve", { id: row.id, choice });
-            await this.refreshCheckpoints();
-            if (choice === "retry_after_review") this.warn(
-              "Review recorded. The blocked write was not retried; repeat the original action after the editor is quiet."
-            );
           } catch (e) {
-            this.warn(e.message);
+            buttons.forEach((b) => {
+              b.disabled = false;
+            });
+            this.warn(`Decision not recorded: ${e.message}`);
+            return;
           }
+          if (choice === "retry_after_review") this.warn(
+            "Review recorded. The blocked write was not retried; repeat the original action after the editor is quiet."
+          );
+          await this.refreshCheckpoints();
         };
         return h(
           "section",
@@ -6422,11 +6451,14 @@ var Librarian = (() => {
           h("div", { class: "row2" }, ...(Array.isArray(row.choices) ? row.choices : []).map((choice) => (
             // The Core declares the safe default.  Array order is presentation
             // history, not an instruction to make an approval action primary.
-            h(
+            buttons[buttons.push(h(
               "button",
-              { class: choice === row.default ? "primary" : "ghost", onclick: () => void resolve(choice) },
+              {
+                class: choice === row.default ? "primary" : "ghost",
+                onclick: () => void resolve(choice)
+              },
               choice === "retry_after_review" ? "Mark reviewed; retry manually" : choice.replace(/_/g, " ")
-            )
+            )) - 1]
           )))
         );
       };
@@ -6438,17 +6470,24 @@ var Librarian = (() => {
     }
     paintChips() {
       const running = (this.state.actions ?? []).filter((a) => a.status === "running" || a.status === "paused");
+      for (const id of [...this.cancelling]) {
+        if (!running.some((a) => a.id === id && a.status === "running")) this.cancelling.delete(id);
+      }
       clear(this.chips, running.map((a) => h(
         "span",
         { class: "chip" },
         `${a.name} \xB7 ${a.status === "paused" ? `paused${a.reason ? `: ${a.reason}` : ""}` : `${a.steps} steps`}`,
-        a.status === "running" ? h("button", { "aria-label": `Cancel ${a.name}`, onclick: async () => {
+        a.status !== "running" ? null : this.cancelling.has(a.id) ? h("button", { "aria-label": `Cancelling ${a.name}`, "aria-busy": "true", disabled: true }, "Cancelling\u2026") : h("button", { "aria-label": `Cancel ${a.name}`, onclick: async () => {
+          this.cancelling.add(a.id);
+          this.paintChips();
           try {
             await this.api.post(`/api/actions/${a.id}/cancel`);
           } catch (e) {
-            this.warn(e.message);
+            this.cancelling.delete(a.id);
+            this.paintChips();
+            this.warn(`${a.name} was not cancelled: ${e.message}`);
           }
-        } }, "\u2715") : null
+        } }, "\u2715")
       )));
     }
     setSession(session) {

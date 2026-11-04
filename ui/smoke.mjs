@@ -824,6 +824,96 @@ await page.addStyleTag({ content: ".title, .badge, .tabs, .page, .primary, .ghos
 await expect(page.isVisible(".lib-app header .lib-title"), "the header title survives a host .title rule");
 await expect(page.isVisible("button.lib-send"), "the send button survives host .send/.primary rules");
 step("owned classes are namespaced; host generic rules do not match them");
+await page.reload();
+await page.waitForSelector(".lib-toolbar .lib-effort input");
+
+// MF-006: a refused change rolls back to what the Core confirmed, and says so.
+// Refusals are 409s, which the console-error collector above already expects.
+const refuse = (error, status = 409) => (route) => route.fulfill({ status, contentType: "application/json",
+  body: JSON.stringify({ error }) });
+await page.waitForFunction(() => (document.querySelector(".lib-toolbar .lib-effort")?.getAttribute("title") ?? "").startsWith("Effort up to"));
+const confirmedEffort = await page.inputValue(".lib-toolbar .lib-effort input");
+await page.route("**/api/effort", refuse("effort store unavailable"));
+await page.$eval(".lib-toolbar .lib-effort input", (el, now) => {
+  el.value = now === "3" ? "4" : "3";
+  el.dispatchEvent(new Event("input"));
+  el.dispatchEvent(new Event("change"));
+}, confirmedEffort);
+await page.waitForSelector(".lib-notice >> text=Effort not changed");
+await expect(page.inputValue(".lib-toolbar .lib-effort input").then((v) => v === confirmedEffort),
+  "a refused effort change returns the slider to the confirmed level");
+await page.unroute("**/api/effort");
+
+await page.route("**/api/mode", refuse("a reply is running", 409));
+await page.click(".lib-toolbar .lib-tb:nth-child(3)");
+const confirmedMode = await page.$eval("input[name=librarian-mode]:checked", (el) => el.value);
+const otherMode = await page.$eval("input[name=librarian-mode]:not(:checked)", (el) => el.value);
+await page.click(`input[name=librarian-mode][value=${otherMode}]`);
+await page.waitForSelector(".lib-notice >> text=Mode not changed");
+await expect(page.$eval("input[name=librarian-mode]:checked", (el) => el.value).then((v) => v === confirmedMode),
+  "a refused mode change leaves the confirmed mode selected");
+await page.keyboard.press("Escape");
+await page.unroute("**/api/mode");
+
+await page.route("**/api/libraries", (route) => route.fulfill({ status: 200, contentType: "application/json",
+  body: JSON.stringify({ libraries: [
+    { path: "C:/smoke/current", name: "Current", last_opened: "2026-11-04T10:00:00", current: true, missing: false },
+    { path: "C:/smoke/other", name: "Other", last_opened: "2026-11-03T10:00:00", current: false, missing: false }] }) }));
+await page.route("**/api/libraries/forget", refuse("the library list is read-only"));
+await page.click("button.lib-switch");
+await page.click("#lib-libraries button[aria-label='Forget Other']");
+await page.waitForSelector("#lib-libraries >> text=Other was not forgotten");
+await expect(page.isEnabled("#lib-libraries button[aria-label='Forget Other']"), "a refused Forget keeps its row usable");
+await page.keyboard.press("Escape");
+await page.unroute("**/api/libraries");
+await page.unroute("**/api/libraries/forget");
+
+let resolvePosts = 0;
+await page.route(/\/api\/checkpoints\?pending=1/, (route) => route.fulfill({ status: 200, contentType: "application/json",
+  body: JSON.stringify({ checkpoints: [{ id: "cp-smoke", type: "write_conflict", scope: "Notes/A.md",
+    choices: ["retry_after_review", "cancel"], default: "cancel", evidence: {} }] }) }));
+let releaseResolve;
+await page.route("**/api/checkpoints/resolve", async (route) => {
+  resolvePosts += 1;
+  await new Promise((done) => { releaseResolve = done; });
+  await refuse("the decision log is busy")(route);
+});
+await page.click("button[title='Decisions waiting for you']");
+await page.click("#lib-checkpoints .lib-checkpoint button >> text=cancel");
+await expect(page.isDisabled("#lib-checkpoints .lib-checkpoint button >> text=Mark reviewed; retry manually"),
+  "a decision's choices are disabled while it is being recorded");
+releaseResolve();
+await page.waitForSelector(".lib-notice >> text=Decision not recorded");
+await expect(page.isEnabled("#lib-checkpoints .lib-checkpoint button >> text=cancel"), "a refused decision can be made again");
+await expect(resolvePosts === 1, "one press records one decision");
+await page.keyboard.press("Escape");
+await page.unroute(/\/api\/checkpoints\?pending=1/);
+await page.unroute("**/api/checkpoints/resolve");
+
+let releaseCancel;
+await page.route("**/api/state", async (route) => {
+  try {
+    const response = await route.fetch();
+    const body = await response.json();
+    body.actions = [{ id: "run-smoke", name: "smoke-flow", status: "running", steps: 2 }];
+    await route.fulfill({ response, json: body });
+  } catch { /* the page moved on */ }
+});
+await page.route("**/api/actions/run-smoke/cancel", async (route) => {
+  await new Promise((done) => { releaseCancel = done; });
+  await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ cancelled: true }) });
+});
+await page.reload();
+await page.click("button[aria-label='Cancel smoke-flow']");
+await page.waitForSelector("button[aria-label='Cancelling smoke-flow'][disabled]");
+releaseCancel();
+await expect(page.isVisible("button[aria-label='Cancelling smoke-flow']"),
+  "an accepted cancel stays pending until the Core reports the run stopped");
+await page.unroute("**/api/state");
+await page.unroute("**/api/actions/run-smoke/cancel");
+await page.reload();
+await page.waitForSelector(".lib-toolbar .lib-effort input");
+step("refused changes roll back to the confirmed state; pending cancels and decisions say so");
 
 // Phone width: nothing overflows sideways.
 await page.setViewportSize({ width: 390, height: 800 });

@@ -93,3 +93,13 @@ def test_obsidian_retry_uses_takeover_only_for_a_typed_stale_lease() -> None:
     assert "e instanceof StaleCoreLease" in main
     assert "this.render(staleLease)" in main
     assert "ensureCore(takeover = false)" in main
+
+
+def test_a_failed_mount_check_offers_an_ordinary_retry() -> None:
+    """MF-006: a Core that fails the /api/meta check can be retried without
+    takeover; before, the view said it could not mount and offered nothing."""
+    main = (ROOT / "obsidian/src/main.ts").read_text(encoding="utf-8")
+    failed = main.index("The Librarian Core cannot mount safely")
+    branch = main[failed:main.index("return;", failed)]
+    assert 'setButtonText("Try again")' in branch
+    assert "this.render(false)" in branch
