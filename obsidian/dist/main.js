@@ -5790,7 +5790,7 @@ var Search = class {
     };
     this.el.append(
       h("div", { class: "view-head" }, h("strong", {}, "Search")),
-      h("div", { class: "row2 tight" }, query, scope, intent, age, h("button", { class: "primary", onclick: run }, "Search")),
+      h("div", { class: "row2 tight search-bar" }, query, scope, intent, age, h("button", { class: "primary", onclick: run }, "Search")),
       h("div", { class: "split" }, this.facets, this.results)
     );
   }

@@ -18,7 +18,7 @@ Remaining work follows the adopted master finalization queue
 | HARNESS-01–07 / -08 / -09 | implemented / experimental / deferred | Real-session caveats are in the REMED-08 report. |
 | ACCEPT-02 | partial | Only the three-client mixed-traffic check (MF-001) remains. Obsidian, Docker and external-handle evidence is retained. |
 | RELEASE-01 / -02, -03 | implemented / blocked externally | — |
-| Hosted Core CI | passing at `5261203` (run 41932890363, 2026-11-04) | MF-004. Core green on 3.11, 3.12 and 3.13 (`ci-41932890363.json`). The adapters job then failed on a stale packaged-smoke selector, now fixed. One intermittent 3.13 promotion test remains undiagnosed. |
+| Hosted Core CI | passing on every job at `31016a8` (run 41935470867, 2026-11-04) | MF-004. One intermittent 3.13 promotion test remains undiagnosed. |
 
 **New rows** are added one per MF packet when that packet is admitted, never
 before, so planned checks cannot be mistaken for evidence. Each row uses this

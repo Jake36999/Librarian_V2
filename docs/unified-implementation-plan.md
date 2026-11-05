@@ -514,7 +514,7 @@ settings, signing or publication.
 | REMED-06/07/08 | Implemented. The REMED-06 exit is met, and task-local timeout stopping was approved. The three uncertain G5 entries are liabilities for MF-002. |
 | ACCEPT-02 | Partial. One original item remains: three-client mixed traffic (MF-001). The owner noted on 2026-11-04 that official Claude Cowork support has ended, so the Claude side is Claude Code (or a subagent) acting as the MCP client. A final-candidate re-run is MF-045. |
 | ACCEPT-01/03, RELEASE-01 | Implemented. Release work continues as MF-044 (acceptance refresh), MF-046 and MF-047 (owner gates) and MF-043a–f (build and release evidence). |
-| Hosted CI | Core is green on 3.11, 3.12 and 3.13 at `5261203` (run 41932890363), after 1/262/262 failures on 2026-11-03 (MF-004, §19). That run's adapters job failed on a packaged-smoke selector the MF-007 rename left stale; it is fixed and confirmed by the next run. |
+| Hosted CI | Green on every job at `31016a8` (run 41935470867, 2026-11-04): Core on 3.11, 3.12 and 3.13, wheel smoke and adapters. It was red since 2026-10-29 (MF-004, §19). |
 | §12 and §13 deferrals and decision gates | Retained: full HARNESS-09, DEPLOY-05, CORE-04B and the development-agent profile. Experiments MF-036–041 and MF-048 are conditional, each ending in keep, defer or reject. |
 
 **Order of work:**
@@ -4640,4 +4640,54 @@ its own stylesheet, so it is outside the rename.
   next hosted run is its check.
 - The Python suite was not rerun: only the two browser scripts changed, and
   pytest runs neither. Its last run, at `75b4df4`, was 1,954 passed.
+
+### MF-008 part 1: layout follows the root, not the window (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-008 | partial (container queries and Search width; the split clamp and overlay lifecycle remain) | this commit | `ui/src/style.css`, `ui/src/views.ts`; one smoke step; one contract test. |
+
+**Hosted CI is green on every job** at `31016a8` (run 41935470867), for the
+first time since 2026-10-29: Core on 3.11, 3.12 and 3.13, wheel smoke and the
+adapters job. That confirms the packaged-smoke selector fix.
+
+**The defect (G03).** Every width rule keyed on the window
+(`@media (max-width: …)`), and popover widths used `100vw`. A narrow Obsidian
+split in a wide window kept the desktop layout.
+
+**Change.**
+- The Librarian root is now a named container
+  (`container: librarian / inline-size`).
+- All six width rules are `@container librarian (max-width: …)`, and the four
+  `vw` sizes are `cqi`, relative to the root. The breakpoints are unchanged:
+  900, 820, 1000, 540 and 520px. The only `@media` left is the dark-mode one.
+- **The Search bar.** In a 420px root, its query shrank to 71px beside three
+  selects and a button. The bar now wraps: the query has a 280px basis, at
+  most 100%, and the filters move under it.
+
+**Smoke step** "the layout follows the root's width, not the window's; drafts
+survive". In a 1440×900 window it sizes the root and checks:
+- **1100px:** full header.
+- **760px:** compact, with no breadcrumb.
+- **420px:** narrow, with no title.
+- **320px:** nothing overflows sideways.
+- **Search at 420px:** the query is at least 280px wide.
+- **The draft:** typed before resizing, it is still there after the resizes
+  and a switch to Search and back.
+
+`test_width_rules_follow_the_librarian_root_not_the_window` checks both
+stylesheets: the root container is declared, no `@media` rule keys on width,
+and no `vw` unit is used.
+
+**Remaining in MF-008.**
+- Clamp the saved split to the root's room: pane at least 300px, main at least
+  360px when both fit.
+- The minimum overlay lifecycle: focus, mount-unique IDs and listener disposal.
+
+**Verification:**
+- both bundles type-check and build;
+- `npm.cmd --prefix ui run smoke`: 48 steps passed;
+- `tests/test_obsidian_adapter_contract.py`: 9 passed;
+- full suite: 1,955 passed, 2 skipped, 5 deselected (exit 0,
+  `suite-mf008a-py311.json`).
 

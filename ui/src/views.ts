@@ -846,7 +846,7 @@ export class Search {
       ? this.run(query.value, intent.value, Number(age.value)) : this.runWork(query.value);
     query.onkeydown = (e) => { if (e.key === "Enter") run(); };
     this.el.append(h("div", { class: "view-head" }, h("strong", {}, "Search")),
-      h("div", { class: "row2 tight" }, query, scope, intent, age, h("button", { class: "primary", onclick: run }, "Search")),
+      h("div", { class: "row2 tight search-bar" }, query, scope, intent, age, h("button", { class: "primary", onclick: run }, "Search")),
       h("div", { class: "split" }, this.facets, this.results));
   }
 

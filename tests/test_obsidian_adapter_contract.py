@@ -63,6 +63,18 @@ def test_every_owned_class_is_namespaced_in_both_stylesheets() -> None:
     assert "el.className = cls(String(value));" in dom
 
 
+def test_width_rules_follow_the_librarian_root_not_the_window() -> None:
+    """MF-008: a narrow Obsidian split in a wide window gets the narrow layout,
+    so no rule may key on the window's width or size in viewport-width units."""
+    import re
+    for rel in ("ui/src/style.css", "obsidian/dist/styles.css"):
+        css = (ROOT / rel).read_text(encoding="utf-8")
+        assert "container: librarian / inline-size;" in css, rel
+        assert not re.search(r"@media[^{]*width", css), rel
+        assert not re.search(r"\d+vw\b", css), rel
+        assert "@container librarian (max-width:" in css, rel
+
+
 def test_obsidian_opens_full_librarian_in_main_workspace_tab() -> None:
     main = (ROOT / "obsidian/src/main.ts").read_text(encoding="utf-8")
 

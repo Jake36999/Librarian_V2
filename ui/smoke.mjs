@@ -917,6 +917,37 @@ await page.reload();
 await page.waitForSelector(".lib-toolbar .lib-effort input");
 step("refused changes roll back to the confirmed state; pending cancels and decisions say so");
 
+// MF-008: the layout follows the Librarian's own root, not the window, so a
+// narrow Obsidian split in a wide window gets the narrow layout. A draft
+// survives every resize.
+await page.setViewportSize({ width: 1440, height: 900 });
+const draft = "a draft that must survive resizing";
+await page.fill("#lib-msg", draft);
+const atRootWidth = async (width) => page.evaluate((w) => {
+  const root = document.getElementById("librarian-root");
+  root.style.width = w ? `${w}px` : "";
+  const shown = (sel) => { const el = root.querySelector(sel); return !!el && getComputedStyle(el).display !== "none"; };
+  return { crumb: shown("header .lib-crumb"), title: shown("header .lib-title"),
+           overflow: root.scrollWidth > root.clientWidth + 1 };
+}, width);
+const at1100 = await atRootWidth(1100);
+await expect(at1100.crumb && at1100.title && !at1100.overflow, `1100px root keeps the full header ${JSON.stringify(at1100)}`);
+const at760 = await atRootWidth(760);
+await expect(!at760.crumb && at760.title && !at760.overflow, `760px root in a 1440px window is compact ${JSON.stringify(at760)}`);
+const at420 = await atRootWidth(420);
+await expect(!at420.crumb && !at420.title && !at420.overflow, `420px root is narrow ${JSON.stringify(at420)}`);
+const at320 = await atRootWidth(320);
+await expect(!at320.overflow, `320px root does not overflow sideways ${JSON.stringify(at320)}`);
+await atRootWidth(420);
+await page.click(".lib-app nav button:has-text('Search')");
+const searchWidth = await page.$eval(".lib-search input[type=search]", (el) => el.getBoundingClientRect().width);
+await expect(searchWidth >= 280, `the Search input keeps at least 280px in a 420px root (${searchWidth}px)`);
+await page.click(".lib-app nav button:has-text('Chat')");
+await expect(page.inputValue("#lib-msg").then((v) => v === draft), "the draft survives resizing and switching views");
+await atRootWidth(0);
+await page.fill("#lib-msg", "");
+step("the layout follows the root's width, not the window's; drafts survive");
+
 // Phone width: nothing overflows sideways.
 await page.setViewportSize({ width: 390, height: 800 });
 await expect(page.evaluate(() => document.documentElement.scrollWidth <= 391), "no horizontal scroll at phone width");
