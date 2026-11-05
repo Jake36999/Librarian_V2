@@ -7318,7 +7318,7 @@ var App = class {
         if (!this.state.busy) void this.send();
       }
     });
-    const chatView = h("main", { class: "chatview" }, this.chat.log);
+    const chatView = h("main", { class: "chatview" }, this.chat.log, this.attachPop.el);
     this.views = { chat: chatView, staging: this.staging.el, search: this.search.el };
     const navButton = (v, label) => h("button", {
       role: "tab",
@@ -7347,8 +7347,7 @@ var App = class {
       this.msgBox,
       h("div", { class: "toolbar" }, attachButton, this.modeButton, this.modelButton, this.effortControl, elsewhere, this.sendButton),
       this.modes.el,
-      this.models.el,
-      this.attachPop.el
+      this.models.el
     );
     this.paneButton = h("button", {
       class: "icon-btn",

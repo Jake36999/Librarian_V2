@@ -241,6 +241,49 @@ await page.waitForFunction(() => document.querySelector("#lib-msg").value.includ
 await page.fill("#lib-msg", "");
 step("the paperclip attaches a file into Inbox/, and links an existing note, both inserted into the message");
 
+// A long vault listing used to grow above the top of the host and clip its first entries.
+const longListing = Array.from({length:120}, (_, i) => ({
+  kind:"file", name:`Scroll fixture ${i + 1}`, path:`Scroll fixture ${i + 1}.md`,
+}));
+await page.route("**/api/files?dir=", route => route.fulfill({json:{dir:"", entries:longListing}}));
+const originalSize = page.viewportSize();
+for (const size of [{width:1200,height:820}, {width:497,height:450}]) {
+  await page.setViewportSize(size);
+  if (size.width === 497 && await page.getByRole("button", {name:"Close the pane"}).isVisible()) {
+    await page.getByRole("button", {name:"Close the pane"}).click();
+  }
+  const trigger = page.getByRole("button", {name:"Attach", exact:true});
+  await trigger.click();
+  const tile = page.getByRole("dialog", {name:"Attach", exact:true});
+  await tile.getByRole("menuitem", {name:"Scroll fixture 120",exact:true}).waitFor({state:"attached"});
+  const geometry = await tile.evaluate(el => {
+    const box = el.getBoundingClientRect(), area = el.parentElement.getBoundingClientRect();
+    return { fits:box.top >= area.top && box.bottom <= area.bottom && box.left >= area.left && box.right <= area.right,
+      scrollable:el.scrollHeight > el.clientHeight, chatScroll:el.parentElement.querySelector(".lib-log").scrollTop };
+  });
+  await expect(geometry.fits && geometry.scrollable, `paperclip fits and scrolls at ${size.width}x${size.height}`);
+  console.log("Paperclip geometry", size, geometry);
+  await tile.hover();
+  await page.mouse.wheel(0, 10000);
+  await page.waitForFunction(() => {
+    const el = document.querySelector(".lib-popover.lib-attach");
+    return el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+  });
+  await expect(await page.locator(".lib-log").evaluate(el => el.scrollTop) === geometry.chatScroll,
+    "scrolling the paperclip leaves the conversation in place");
+  if (size.width === 1200) {
+    await page.keyboard.press("Escape");
+    await expect(await trigger.evaluate(el => el === document.activeElement), "Escape returns to the paperclip");
+  } else {
+    await tile.getByRole("menuitem", {name:"Scroll fixture 120",exact:true}).click();
+    await expect((await page.inputValue("#lib-msg")).includes("[[Scroll fixture 120]]"), "last note links to the draft");
+    await page.fill("#lib-msg", "");
+  }
+}
+await page.unroute("**/api/files?dir=");
+await page.setViewportSize(originalSize);
+step("a 120-note paperclip list scrolls independently on desktop and in a short narrow view");
+
 // Settings: save a key, then overwriting asks first; the key never shows.
 // OpenAI, not the default DeepInfra tab: the demo core profiles a DeepInfra
 // model with its own key, so DeepInfra already has one saved here.

@@ -200,7 +200,7 @@ class App {
       if (e.key === "Enter" && !e.shiftKey && !e.altKey && !e.isComposing && (e.ctrlKey || e.metaKey) === (preference("send") === "modified")) { e.preventDefault(); if (!this.state.busy) void this.send(); }
     });
 
-    const chatView = h("main", { class: "chatview" }, this.chat.log);
+    const chatView = h("main", { class: "chatview" }, this.chat.log, this.attachPop.el);
     this.views = { chat: chatView, staging: this.staging.el, search: this.search.el };
     const navButton = (v: View, label: string) => h("button", {
       role: "tab", onkeydown: (event: globalThis.Event) => {
@@ -216,7 +216,7 @@ class App {
     clear(this.msgBox, this.attachRow, this.input);
     const composer = h("div", { class: "composer" }, this.chips, this.msgBox,
       h("div", { class: "toolbar" }, attachButton, this.modeButton, this.modelButton, this.effortControl, elsewhere, this.sendButton),
-      this.modes.el, this.models.el, this.attachPop.el);
+      this.modes.el, this.models.el);
 
     this.paneButton = h("button", { class: "icon-btn", title: "Plan and notes beside the chat",
       "aria-label": "Show the document pane", onclick: () => this.showPane(!this.paneOpen) }, paneIcon()) as HTMLButtonElement;

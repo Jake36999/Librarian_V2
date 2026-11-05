@@ -55,7 +55,7 @@
 .lib-app .lib-body { flex: 1 1 auto; display: flex; min-height: 0; position: relative; --pane-w: 46%; }
 .lib-app .lib-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
 .lib-app main.lib-chatview, .lib-app .lib-view { flex: 1 1 auto; min-height: 0; }
-.lib-app main.lib-chatview { display: flex; flex-direction: column; }
+.lib-app main.lib-chatview { position: relative; display: flex; flex-direction: column; }
 .lib-app .lib-resizer { flex: none; width: 5px; cursor: col-resize; background: transparent; border-left: 1px solid var(--line); touch-action: none; }
 .lib-app .lib-resizer:hover { background: var(--accent-soft); }
 .lib-app .lib-pane { flex: none; width: var(--pane-w); min-width: 300px; max-width: 72%; display: flex; flex-direction: column; min-height: 0; background: var(--bg); }
@@ -156,6 +156,17 @@
 .lib-app header .lib-popover { bottom: auto; top: 100%; margin: 6px 0 0; width: min(380px, calc(100cqi - 32px)); max-height: 60vh; overflow-y: auto; }
 .lib-app .lib-popover h4 { margin: 4px 0 6px; font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 .lib-app .lib-popover h4.lib-gap { margin-top: 12px; }
+/* Anchor the paperclip to the space above the composer, including in short split panes. */
+.lib-app .lib-popover.lib-attach {
+  bottom: 0;
+  left: max(16px, calc((100% - 860px) / 2));
+  width: min(420px, calc(100% - 32px));
+  max-height: min(32rem, calc(100% - 16px));
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  overflow-wrap: anywhere;
+}
 .lib-app .lib-popover.lib-modes { left: 16px; width: min(380px, calc(100cqi - 32px)); }
 .lib-app .lib-opt { display: flex; gap: 8px; align-items: flex-start; padding: 6px; border-radius: 7px; cursor: pointer; }
 .lib-app .lib-opt:hover { background: var(--accent-soft); }
