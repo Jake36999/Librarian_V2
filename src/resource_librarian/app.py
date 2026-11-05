@@ -4196,15 +4196,28 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
             except ApiError as exc:
                 return self._json(exc.status, exc.body)
 
+        def _refuse_unread(self, payload: dict[str, Any]) -> None:
+            """Answer a refused POST after reading its body. Closing a socket
+            with unread request bytes makes Windows reset the connection, so
+            the client saw an abort instead of this 403 (hosted CI run
+            41960440242). A body over the cap is not read; the connection then
+            closes after the answer instead."""
+            length = int(self.headers.get("Content-Length") or 0)
+            if 0 < length <= MAX_BODY:
+                self.rfile.read(length)
+            elif length:
+                self.close_connection = True
+            self._json(403, payload)
+
         def do_POST(self) -> None:                          # noqa: N802
             url = urlparse(self.path)
             if not self._host_ok():
-                return self._json(403, {"error": "refused: not a loopback host"})
+                return self._refuse_unread({"error": "refused: not a loopback host"})
             if not self._origin_ok():
-                return self._json(403, {"error": "refused: a page on another origin"})
+                return self._refuse_unread({"error": "refused: a page on another origin"})
             if not self._token_ok(parse_qs(url.query)):
-                return self._json(403, {"error": "refused: missing or stale page token; "
-                                                 "reload the page"})
+                return self._refuse_unread({"error": "refused: missing or stale page token; "
+                                                     "reload the page"})
             try:
                 if url.path == "/api/attach":
                     with app._counted_mutation(f"the HTTP mutation {url.path!r}"):

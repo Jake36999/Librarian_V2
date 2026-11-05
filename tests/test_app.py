@@ -974,3 +974,34 @@ def test_a_one_shot_proposal_alone_does_not_screen_a_route(served, monkeypatch):
     assert result["run"]["outcome"] == "fail"
     assert "continuation_repeated_tool_call" in result["run"]["probe_validation"]["failure_codes"]
     assert result["status"]["qualification"]["status"] != "screened"
+
+
+def test_a_refused_post_is_answered_after_its_body_is_read(served):
+    """A refusal used to answer and close with the request body unread, so
+    Windows could reset the connection and the client saw an abort, not the
+    403 (hosted run 41960440242). Deterministically: with half a body sent,
+    the server must still be reading, not already answering."""
+    import socket
+    _app, client, _model = served
+    port = int(client.base.rsplit(":", 1)[1])
+    body = json.dumps({"text": "x" * 20_000}).encode()
+    for refusal in ({"Origin": "https://evil.example", "X-Librarian-Token": client.token},
+                    {"X-Librarian-Token": "wrong"}):
+        head = "".join(f"{k}: {v}\r\n" for k, v in {
+            "Host": f"127.0.0.1:{port}", "Content-Type": "application/json",
+            "Content-Length": str(len(body)), **refusal}.items())
+        with socket.create_connection(("127.0.0.1", port), timeout=10) as sock:
+            sock.sendall(f"POST /api/chat HTTP/1.1\r\n{head}\r\n".encode() + body[:1000])
+            sock.settimeout(0.5)
+            with pytest.raises(socket.timeout):
+                sock.recv(1)                         # no answer while the body is unread
+            sock.settimeout(10)
+            sock.sendall(body[1000:])
+            answer = b""
+            while b"\r\n\r\n" not in answer or not answer.rstrip().endswith(b"}"):
+                chunk = sock.recv(65536)
+                if not chunk:
+                    break
+                answer += chunk
+        assert answer.split(b"\r\n", 1)[0].split()[1] == b"403"
+        assert json.loads(answer.split(b"\r\n\r\n", 1)[1])["error"].startswith("refused:")

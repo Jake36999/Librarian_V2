@@ -1,0 +1,25 @@
+{
+ "command": [
+  "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "D:\\Librarian_V2",
+ "exit_code": 0,
+ "summary": "1970 passed, 2 skipped, 5 deselected in 656.95s (0:10:56)",
+ "started_utc": "2026-11-05T03:32:45.472566+00:00",
+ "seconds": 658.0,
+ "head": "51679694d7d7fe45d69f762ae387b957987a4c6d",
+ "tracked_changes": [
+  " M src/resource_librarian/app.py",
+  " M tests/test_app.py"
+ ],
+ "python": "3.11.3",
+ "executable": "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-refuse-drain-py311.log",
+ "log_sha256": "5335d2b78515b40fca7f0b5009b07930e6b11bf26cedcb7bba5ffbb29ad5c760"
+}

@@ -5029,3 +5029,37 @@ guarantee, not an observed overflow.
 passed (8). Full suite: 1969 passed, 2 skipped, 5 deselected in 615.07s (0:10:15) (exit 0, Python 3.11.3)
 (`reports/2026-11-05-evidence/suite-mf011-py311.json`).
 
+### A refused POST could reach the client as a reset (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| (HTTP defect found by hosted CI) | fixed | this commit | `src/resource_librarian/app.py`; `tests/test_app.py`. |
+
+**Observed.** Hosted run 41960440242, head `5167969` (MF-011), failed one test
+on 3.13; every other job passed:
+`test_mcp.py::test_the_core_endpoint_needs_the_token_a_loopback_host_and_its_own_origin`.
+The client got `ConnectionAbortedError` (WinError 10053) instead of the 403 for
+a bad-origin request.
+
+**Cause.** `do_POST` refused a bad host, origin or token with a 403 before
+reading the request body. Closing a socket with unread request bytes makes
+Windows reset the connection, so a client, or a browser, could see an abort
+instead of the refusal. It is a real defect, not only a test flake.
+
+**Fix.** `_refuse_unread` reads the body before answering a refused POST, up to
+the existing 1 MB cap. A larger body is not read; the connection closes after
+the answer instead.
+
+**Check.** `test_a_refused_post_is_answered_after_its_body_is_read` sends a
+refused POST with half its body, then checks the server has not answered
+within 0.5 seconds, because it is still reading. It then sends the rest and
+gets a clean 403. This is deterministic, unlike the reset itself:
+- with the fix, it passes;
+- against the previous `app.py`, it fails;
+- the earlier large-body form of the test passed against both, so it was
+  replaced.
+
+**Verification:** full suite: 1970 passed, 2 skipped, 5 deselected in 656.95s (0:10:56) (exit 0, Python 3.11.3)
+(`reports/2026-11-05-evidence/suite-refuse-drain-py311.json`). MF-011's hosted
+run is otherwise green.
+
