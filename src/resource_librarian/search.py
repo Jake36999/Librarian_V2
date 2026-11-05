@@ -807,7 +807,9 @@ def _in_text(engine: Engine, query: str, limit: int, source: str) -> Response:
                       _why(h, ""), 1.0 / h.rank,
                       {"note": h.note, "page": h.heading, "excerpt": h.excerpt,
                        "matched": list(h.matched)}) for h in hits]
-    total = engine.conn.execute("SELECT COUNT(*) FROM chunk WHERE role = 'document'").fetchone()[0]
+    total = engine.conn.execute(                   # searchable text only (MF-014)
+        "SELECT COUNT(*) FROM chunk c JOIN note n ON n.path = c.path "
+        "WHERE c.role = 'document'").fetchone()[0]
     response = Response(intent="in_text", results=results, matched=len(hits), tier_reached=3)
     if not total:
         response.advisories.append("no document text is indexed in this vault yet")

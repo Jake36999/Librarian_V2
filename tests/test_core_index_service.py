@@ -364,3 +364,30 @@ def test_project_validation_refreshes_a_changed_content_model_on_core(vault):
         assert "created" in created, created
     finally:
         app.close_runtime()
+
+
+def test_a_rename_on_the_core_worker_keeps_document_text_searchable(vault):
+    """MF-014: through the Core's IndexService, a renamed Source keeps its attachment's
+    text, chunk ids included, and the in_text search finds it under the new name."""
+    from resource_librarian.text import sync_documents
+    doc = vault.root / "Sources" / "document" / "files" / "manual.txt"
+    doc.parent.mkdir(parents=True)
+    doc.write_text("The calibration procedure uses a reference thermistor. " * 6)
+    note = add_source(vault.root, "Manual", "A device manual.", kind_folder="document",
+                      extra_fm="file: Sources/document/files/manual.txt")
+    service = IndexService(vault)
+    ctx = Context(tier="curate", vault=vault, extras={"index_service": service})
+    try:
+        service.refresh()
+        service.run(sync_documents)
+        ids = lambda: service.run(lambda ix: [r[0] for r in ix.conn.execute(  # noqa: E731
+            "SELECT id FROM chunk WHERE role = 'document' ORDER BY id")])
+        before = ids()
+        note.rename(note.with_name("Field Manual.md"))
+        report = service.refresh()
+        found = library.search_tool(ctx, "thermistor calibration", intent="in_text")
+        after = ids()
+    finally:
+        service.close()
+    assert report.document_text["carried"] and after == before
+    assert [r["fields"]["note"] for r in found["results"]] == ["Field Manual"]

@@ -122,7 +122,7 @@ def sync_documents(index: Index) -> dict[str, Any]:
     cache_dir = vault.derived / "text"
     report: dict[str, Any] = {"indexed": [], "unchanged": 0, "problems": []}
     rows = index.conn.execute(
-        "SELECT name, frontmatter FROM note WHERE shape = 'source' AND frontmatter LIKE ?",
+        "SELECT name, path, frontmatter FROM note WHERE shape = 'source' AND frontmatter LIKE ?",
         ('%"file"%',)).fetchall()
     for row in rows:
         rel = str(json.loads(row["frontmatter"]).get("file") or "").strip()
@@ -136,9 +136,10 @@ def sync_documents(index: Index) -> dict[str, Any]:
         stat = path.stat()
         stamp = f"{rel}|{stat.st_size}|{stat.st_mtime}"
         key = f"doc:{row['name']}"
+        # By path, not name: a vanished note's orphaned text can share the name (MF-014).
         has_chunks = index.conn.execute(
-            "SELECT 1 FROM chunk WHERE note = ? AND role = 'document' LIMIT 1",
-            (row["name"],)).fetchone()
+            "SELECT 1 FROM chunk WHERE path = ? AND role = 'document' LIMIT 1",
+            (row["path"],)).fetchone()
         if index._meta(key) == stamp and has_chunks:
             report["unchanged"] += 1
             continue
@@ -147,7 +148,8 @@ def sync_documents(index: Index) -> dict[str, Any]:
             report["problems"].append({"note": row["name"], "file": rel,
                                        "problem": result.error})
             continue
-        chunks = index.add_document_text(row["name"], result.pages, commit=False)
+        chunks = index.add_document_text(row["name"], result.pages, commit=False,
+                                         attachment=(rel, _file_hash(path)))
         index._set_meta(key, stamp)
         entry = {"note": row["name"], "pages": len(result.pages), "chunks": chunks}
         if result.empty_pages:

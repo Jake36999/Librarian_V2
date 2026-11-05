@@ -149,12 +149,16 @@ class RefreshReport:
     rebuilt: bool = False
     reason: str = ""
     moved: list[dict[str, str]] = field(default_factory=list)   # DEPLOY-04
+    # MF-014: what happened to vanished notes' document text: carried, kept, purged.
+    document_text: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {"upserted": len(self.upserted), "unchanged": self.unchanged,
                 "removed": len(self.removed), "rebuilt": self.rebuilt, "reason": self.reason,
                 "sample": self.upserted[:10],
-                **({"moved": self.moved[:20]} if self.moved else {})}
+                **({"moved": self.moved[:20]} if self.moved else {}),
+                **({"document_text": {k: v[:20] for k, v in self.document_text.items()}}
+                   if self.document_text else {})}
 
 
 # ------------------------------------------------------------------ chunking
@@ -390,9 +394,14 @@ class Index:
         return True
 
     def add_document_text(self, note_name: str, pages: list[str], *,
-                          commit: bool = True) -> int:
+                          commit: bool = True,
+                          attachment: tuple[str, str] | None = None) -> int:
         """Chunk a document's pages under its Source note, replacing any
-        earlier text for that note. Returns the number of chunks."""
+        earlier text for that note. Returns the number of chunks.
+
+        `attachment` is (the attached file as the note names it, the SHA of
+        its bytes) - what the pages were read from. Without it the text is
+        never carried to another note when this one moves (MF-014)."""
         row = self.conn.execute("SELECT path FROM note WHERE name = ? AND shape = 'source'",
                                 (note_name,)).fetchone()
         if not row:
@@ -404,6 +413,10 @@ class Index:
                   for number, page in enumerate(pages, 1) for piece in split_text(page)
                   if len(piece.strip()) >= 20]
         self._insert_chunks(row["path"], note_name, chunks, start=10_000)
+        rel, digest = attachment or ("", "")
+        self.conn.execute(
+            "INSERT OR REPLACE INTO document_text(path, note, attachment, attachment_hash, "
+            "added_at) VALUES (?, ?, ?, ?, ?)", (row["path"], note_name, rel, digest, now_iso()))
         if commit:
             self.conn.commit()
         return len(chunks)
@@ -476,7 +489,10 @@ class Index:
                 elif not changed:
                     unchanged += 1
             for rel in sorted(set(known) - seen):
-                self._delete_rows(rel, keep_documents=False)
+                # MF-014: a vanished note's document text is not deleted here.
+                # With no note row it is unsearchable; whether it moved is
+                # decided below, once the whole tree has been seen.
+                self._delete_rows(rel)
                 if rel not in report.removed:
                     report.removed.append(rel)
             self.conn.commit()
@@ -487,11 +503,206 @@ class Index:
         if not settled:
             report.reason = "the Markdown tree remained active; refresh again to observe later changes"
         # DEPLOY-04: only now, with the whole tree seen, can a vanished path and a
-        # new one be recognised as one document that moved.
+        # new one be recognised as one document that moved. Identity and the
+        # document text that follows it are one transaction: a failure part way
+        # leaves both as they were, for the next refresh to settle.
         from .document_identity import reconcile
-        report.moved = reconcile(self.conn)
+        try:
+            self._mark_orphaned_text()
+            report.moved = reconcile(self.conn)
+            report.document_text = self._settle_document_text(report.moved, settled)
+        except BaseException:
+            self.conn.rollback()
+            raise
         self.conn.commit()
         return report
+
+    # -- document text across moves (MF-014) ----------------------------------
+    def _live_paths(self) -> set[str]:
+        return {r["path"] for r in self.conn.execute("SELECT path FROM note")}
+
+    def _attachment(self, rel: str) -> tuple[str, Path | None]:
+        """The file a live note attaches (its `file`), and where it is now."""
+        row = self.conn.execute("SELECT frontmatter FROM note WHERE path = ?", (rel,)).fetchone()
+        if row is None:
+            return "", None
+        attached = str(json.loads(row["frontmatter"]).get("file") or "").strip()
+        if not attached:
+            return "", None
+        path = (self.vault.root / attached).resolve()
+        if self.vault.root not in path.parents or not path.is_file():
+            return attached, None
+        return attached, path
+
+    def _legacy_manifest(self, name: str) -> tuple[str, str]:
+        """What text indexed before MF-014 was read from, when it can still be shown.
+
+        The sync stamp kept the attachment's path, size and mtime at reading
+        time. If the file is still exactly that, its bytes are the ones read;
+        otherwise the source of the text is unknown and it is never carried.
+        """
+        from .text import _file_hash
+        stamp = self._meta(f"doc:{name}")
+        parts = stamp.rsplit("|", 2)
+        if len(parts) != 3:
+            return "", ""
+        attached, size, mtime = parts
+        path = (self.vault.root / attached).resolve()
+        if self.vault.root not in path.parents or not path.is_file():
+            return attached, ""
+        stat = path.stat()
+        if f"{stat.st_size}" != size or f"{stat.st_mtime}" != mtime:
+            return attached, ""
+        return attached, _file_hash(path)
+
+    def _mark_orphaned_text(self) -> None:
+        """Record, for document text whose note is gone, that note's identity keys.
+
+        Called before `reconcile` deletes the vanished document rows, so the
+        keys survive for a later refresh. Text indexed before MF-014 gets its
+        manifest from the sync stamp.
+        """
+        live = self._live_paths()
+        paths = [r["path"] for r in self.conn.execute(
+            "SELECT DISTINCT path FROM chunk WHERE role = 'document'")]
+        manifests = {r["path"]: dict(r) for r in self.conn.execute("SELECT * FROM document_text")}
+        for rel in paths:
+            if rel in live:
+                continue
+            manifest = manifests.get(rel)
+            if manifest is None:
+                name = self.conn.execute("SELECT note FROM chunk WHERE path = ? AND "
+                                         "role = 'document' LIMIT 1", (rel,)).fetchone()["note"]
+                attached, digest = self._legacy_manifest(name)
+                self.conn.execute(
+                    "INSERT INTO document_text(path, note, attachment, attachment_hash, "
+                    "added_at) VALUES (?, ?, ?, ?, ?)", (rel, name, attached, digest, now_iso()))
+                manifest = {"orphaned_at": ""}
+            if manifest.get("orphaned_at"):
+                continue
+            keys = self.conn.execute("SELECT file_key, byte_hash FROM document WHERE path = ?",
+                                     (rel,)).fetchone()
+            self.conn.execute(
+                "UPDATE document_text SET orphaned_at = ?, file_key = ?, byte_hash = ? "
+                "WHERE path = ?", (now_iso(), keys["file_key"] if keys else "",
+                                   keys["byte_hash"] if keys else "", rel))
+
+    def _settle_document_text(self, moves: list[dict[str, str]],
+                              settled: bool) -> dict[str, list[dict[str, Any]]]:
+        """Carry, keep or purge each orphan's document text.
+
+        - Carried, chunk ids and all (so FTS rows and vectors stay), to the
+          one candidate that holds no document text of its own and whose
+          attachment is the very bytes the text was read from. A candidate is
+          the note its identity moved to, or, failing that, a live note with
+          its identity keys.
+        - Kept, unsearchable, while more than one candidate qualifies (never
+          guess between copies), or while the tree was still changing.
+        - Purged otherwise: the note is gone, or its attachment changed.
+        """
+        from .text import _file_hash
+        live = self._live_paths()
+        moved_to = {m["from"]: m["to"] for m in moves}
+        with_text = {r["path"] for r in self.conn.execute(
+            "SELECT DISTINCT path FROM chunk WHERE role = 'document'")}
+        out: dict[str, list[dict[str, Any]]] = {}
+        hashes: dict[str, str] = {}
+
+        def holds(rel: str, digest: str) -> bool:
+            if not digest or rel in with_text:
+                return False
+            if rel not in hashes:
+                _, path = self._attachment(rel)
+                hashes[rel] = _file_hash(path) if path is not None else ""
+            return hashes[rel] == digest
+
+        orphans = [dict(r) for r in self.conn.execute(
+            "SELECT * FROM document_text ORDER BY path")]
+        for orphan in orphans:
+            rel = orphan["path"]
+            if rel in live:
+                if orphan["orphaned_at"]:
+                    # A note is back at an orphan's own path. Its text rejoins it
+                    # only if it attaches the same bytes; anything else would
+                    # hand one note's text to another.
+                    _, path = self._attachment(rel)
+                    if orphan["attachment_hash"] and path is not None and \
+                            _file_hash(path) == orphan["attachment_hash"]:
+                        self.conn.execute(
+                            "UPDATE document_text SET orphaned_at = '', orphan_reason = '', "
+                            "file_key = '', byte_hash = '' WHERE path = ?", (rel,))
+                        out.setdefault("carried", []).append({"from": rel, "to": rel})
+                    else:
+                        self._purge_document_text(orphan)
+                        with_text.discard(rel)
+                        out.setdefault("purged", []).append({
+                            "from": rel, "reason": "a different note now has its path"})
+                continue
+            chunks = self.conn.execute("SELECT COUNT(*) FROM chunk WHERE path = ? AND "
+                                       "role = 'document'", (rel,)).fetchone()[0]
+            if not chunks:
+                self.conn.execute("DELETE FROM document_text WHERE path = ?", (rel,))
+                continue
+            if rel in moved_to:
+                candidates = [moved_to[rel]]
+            else:
+                found = set()
+                for key in ("file_key", "byte_hash"):
+                    if orphan[key]:
+                        found |= {r["path"] for r in self.conn.execute(
+                            f"SELECT path FROM document WHERE {key} = ?", (orphan[key],))
+                            if r["path"] in live}
+                candidates = sorted(found)
+            eligible = [c for c in candidates if holds(c, orphan["attachment_hash"])]
+            entry = {"from": rel, "chunks": chunks}
+            if len(eligible) == 1:
+                self._carry_document_text(orphan, eligible[0])
+                with_text.add(eligible[0])
+                out.setdefault("carried", []).append({**entry, "to": eligible[0]})
+            elif len(eligible) > 1:
+                reason = f"{len(eligible)} notes hold the same attachment: not guessed"
+                self.conn.execute("UPDATE document_text SET orphan_reason = ? WHERE path = ?",
+                                  (reason, rel))
+                out.setdefault("kept", []).append({**entry, "reason": reason})
+            elif candidates or settled:
+                self._purge_document_text(orphan)
+                reason = ("its note moved, but the attachment is not the one the text was "
+                          "read from" if candidates else "its note is gone")
+                out.setdefault("purged", []).append({**entry, "reason": reason})
+            else:
+                reason = "the tree was still changing; settled by a later refresh"
+                self.conn.execute("UPDATE document_text SET orphan_reason = ? WHERE path = ?",
+                                  (reason, rel))
+                out.setdefault("kept", []).append({**entry, "reason": reason})
+        return out
+
+    def _carry_document_text(self, orphan: dict[str, Any], to: str) -> None:
+        name = self.conn.execute("SELECT name FROM note WHERE path = ?", (to,)).fetchone()["name"]
+        attached, path = self._attachment(to)
+        self.conn.execute("UPDATE chunk SET path = ?, note = ? WHERE path = ? AND "
+                          "role = 'document'", (to, name, orphan["path"]))
+        self.conn.execute("DELETE FROM document_text WHERE path = ?", (to,))
+        self.conn.execute(
+            "UPDATE document_text SET path = ?, note = ?, attachment = ?, orphaned_at = '', "
+            "orphan_reason = '', file_key = '', byte_hash = '' WHERE path = ?",
+            (to, name, attached, orphan["path"]))
+        # The sync stamp follows, so the attachment is not read again for nothing.
+        if path is not None:
+            stat = path.stat()
+            self._set_meta(f"doc:{name}", f"{attached}|{stat.st_size}|{stat.st_mtime}")
+        self._forget_stamp(orphan["note"], keep=name)
+
+    def _purge_document_text(self, orphan: dict[str, Any]) -> None:
+        ids = [r["id"] for r in self.conn.execute(
+            "SELECT id FROM chunk WHERE path = ? AND role = 'document'", (orphan["path"],))]
+        self._delete_chunk_ids(ids)
+        self.conn.execute("DELETE FROM document_text WHERE path = ?", (orphan["path"],))
+        self._forget_stamp(orphan["note"])
+
+    def _forget_stamp(self, name: str, keep: str = "") -> None:
+        if name and name != keep and not self.conn.execute(
+                "SELECT 1 FROM note WHERE name = ?", (name,)).fetchone():
+            self.conn.execute("DELETE FROM meta WHERE key = ?", (f"doc:{name}",))
 
     def _indexed_metadata(self) -> dict[str, tuple[int, int, str]]:
         return {r["path"]: (r["mtime_ns"], r["size"], r["file_identity"]) for r in
@@ -513,13 +724,14 @@ class Index:
 
     def rebuild(self) -> RefreshReport:
         """Everything from the notes. Document text and embeddings survive,
-        because both are keyed to content that a rebuild does not change."""
-        documents = [dict(r) for r in self.conn.execute(
-            "SELECT note, heading, text, ordinal FROM chunk WHERE role = 'document' "
-            "ORDER BY note, ordinal")]
-        for table in ("note", "chunk", "facet", "link", "component"):
+        because both are keyed to content that a rebuild does not change.
+        Document text stays where it is, ids and all (MF-014): re-attaching it
+        by note name handed it to whichever note had that name."""
+        for table in ("note", "facet", "link", "component"):
             self.conn.execute(f"DELETE FROM {table}")
-        self.conn.execute("DELETE FROM chunk_fts")
+        self.conn.execute("DELETE FROM chunk_fts WHERE rowid IN "
+                          "(SELECT id FROM chunk WHERE role != 'document')")
+        self.conn.execute("DELETE FROM chunk WHERE role != 'document'")
         self._model = None
         self._adopted_cache = None
         report = RefreshReport(rebuilt=True)
@@ -529,15 +741,6 @@ class Index:
             except (FileNotFoundError, FileChangedError):
                 continue
             report.upserted.append(path.relative_to(self.vault.root).as_posix())
-        by_note: dict[str, list[dict]] = {}
-        for doc in documents:
-            by_note.setdefault(doc["note"], []).append(doc)
-        for name, rows in by_note.items():
-            row = self.conn.execute("SELECT path FROM note WHERE name = ?", (name,)).fetchone()
-            if row:
-                self._insert_chunks(row["path"], name,
-                                    [Chunk(r["heading"], "document", r["text"]) for r in rows],
-                                    start=10_000)
         self._set_meta("model_hash", self._model_hash())
         self._set_meta("built_at", now_iso())
         self.conn.commit()
@@ -568,7 +771,12 @@ class Index:
             "SELECT shape, COUNT(*) AS n FROM note GROUP BY shape")}
         return {"notes": count("SELECT COUNT(*) FROM note"), "by_shape": shapes,
                 "chunks": count("SELECT COUNT(*) FROM chunk WHERE role != 'document'"),
-                "document_chunks": count("SELECT COUNT(*) FROM chunk WHERE role = 'document'"),
+                # Searchable document text only; an orphan's waits to be settled (MF-014).
+                "document_chunks": count("SELECT COUNT(*) FROM chunk c JOIN note n ON "
+                                         "n.path = c.path WHERE c.role = 'document'"),
+                "orphaned_document_chunks": count(
+                    "SELECT COUNT(*) FROM chunk c WHERE c.role = 'document' AND NOT EXISTS "
+                    "(SELECT 1 FROM note n WHERE n.path = c.path)"),
                 "embeddings": count("SELECT COUNT(*) FROM embedding"),
                 "unparsed": count("SELECT COUNT(*) FROM note WHERE parse_error != ''"),
                 "duplicate_names": self.duplicate_names(),

@@ -5211,3 +5211,75 @@ a part whose text later changed stay staged for a person to decide.
 **Verification:** full suite: 1991 passed, 2 skipped, 5 deselected in 632.94s (0:10:32) (exit 0, Python 3.11.3)
 (`reports/2026-11-05-evidence/suite-mf013-py311.json`).
 
+### MF-014 document text survives a rename (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-014 (NAT-02) | implemented | this commit | `src/resource_librarian/index.py`, `document_identity.py`, `text.py`, `search.py`; `tests/test_document_identity.py`, `tests/test_embed.py`, `tests/test_core_index_service.py`. |
+
+**Before.** When a Source note's path vanished, `refresh` deleted its document
+text (the attachment's pages, `role = 'document'` chunks) at once and
+committed. Identity reconciliation ran afterwards, so a rename kept the
+document id but lost the text. Searching then synced documents, which read
+the attachment again into new chunks. A rename made with `note_move` left the
+old chunks behind as well: on the previous code the chunk list after a rename
+and a search was `[65, 69]`, not `[65]`.
+
+**Now.** A vanished note's text is not deleted with its note. With no live
+note to join, search and vectors cannot see it. After the whole tree has
+been seen, one transaction runs three steps:
+1. record the vanished notes' identity keys;
+2. reconcile identities;
+3. settle each orphaned text in one of three ways:
+   - **carried**, chunk ids and all, so FTS rows and vectors stay. It goes to
+     the one candidate that holds no text of its own and whose attachment
+     has the exact bytes the text was read from. The candidate is the note
+     its identity moved to, or else a live note with its identity keys.
+     The sync stamp follows, so the attachment is not read again.
+   - **kept** (unsearchable, recoverable) while two or more notes qualify,
+     never guessed between, or while the tree was still changing. A later
+     refresh settles it: after a copy is deleted, the remaining note gets
+     the original chunks.
+   - **purged** when the note is gone or its attachment changed.
+
+A failure at any point rolls back both identity and text. The next refresh
+redoes the whole move.
+
+**Supporting changes.**
+- **Manifest:** a new `document_text` table records what each note's text
+  was read from (attachment path and SHA). `sync_documents` writes it and
+  checks for existing text by path, not name.
+- **Text indexed before MF-014** gets its manifest from the sync stamp, and
+  only while the attachment's size and mtime still match.
+- **Re-created path:** a note back at an orphan's old path rejoins the text
+  only if it attaches the same bytes.
+- **`rebuild`** now leaves document text in place by path, ids and all. It
+  used to re-attach it by note name, which handed it to whichever note had
+  that name first.
+- **`stats`** counts only searchable document text, plus
+  `orphaned_document_chunks`. The `in_text` "nothing indexed" advisory
+  counts only live text.
+
+**Tests.**
+- **`test_document_identity.py`:** 8 new cases:
+  - a rename keeps ids, FTS rowids and search, and nothing is read again;
+  - an edited attachment is not carried;
+  - copies are kept unsearchable until exactly one remains;
+  - an injected failure rolls the whole move back;
+  - text waits while the tree is still changing;
+  - legacy text is carried only while its stamp matches;
+  - a rebuild leaves text in place despite a duplicate name;
+  - the `note_move` tool keeps the same chunks.
+- **`test_embed.py`:** vectors are kept (prune drops nothing, nothing
+  re-embeds).
+- **`test_core_index_service.py`:** a rename through the Core worker.
+
+All 10 fail on the previous code.
+
+**Verification:** full suite: 2001 passed, 2 skipped, 5 deselected in 664.30s (0:11:04) (exit 0, Python 3.11.3)
+(`reports/2026-11-05-evidence/suite-mf014-py311.json`). It ran in a clean clone
+of `896369d` plus only this commit's seven files, as the record's
+`tracked_changes` shows. The shared working tree held another session's
+uncommitted Settings work at the time, and a run there failed one
+width-rule test because of it (`ui/src/style.css:410`, `100vw`).
+

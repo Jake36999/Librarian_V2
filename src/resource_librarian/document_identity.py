@@ -15,6 +15,11 @@ document that vanished from one path and appeared at another keeps its id
 only on an unambiguous layer-1 or layer-2 match. Otherwise the new path is a
 new document. Duplicates are reported with the layer that matched and why.
 Nothing is ever merged, moved or deleted.
+
+A Source note's document text (its attachment's pages) follows the same
+decision, in the same transaction (MF-014, `Index._settle_document_text`):
+it moves, chunk ids and all, only to the one matching note whose attachment
+holds the bytes the text was read from.
 """
 from __future__ import annotations
 
@@ -41,6 +46,23 @@ CREATE TABLE IF NOT EXISTS document (
 );
 CREATE INDEX IF NOT EXISTS idx_document_file ON document(file_key);
 CREATE INDEX IF NOT EXISTS idx_document_bytes ON document(byte_hash);
+
+-- MF-014: what a note's document text (role 'document' chunks) was read
+-- from. A move carries the text only to a note holding these same bytes.
+-- While a vanished note's text waits to be settled it is an orphan: kept,
+-- unsearchable (no live note joins it), with the vanished note's identity
+-- keys, so a later refresh can still attach it.
+CREATE TABLE IF NOT EXISTS document_text (
+  path            TEXT PRIMARY KEY,
+  note            TEXT NOT NULL,
+  attachment      TEXT NOT NULL,
+  attachment_hash TEXT NOT NULL,         -- '' when unknown: never carried
+  added_at        TEXT NOT NULL,
+  orphaned_at     TEXT NOT NULL DEFAULT '',
+  orphan_reason   TEXT NOT NULL DEFAULT '',
+  file_key        TEXT NOT NULL DEFAULT '',
+  byte_hash       TEXT NOT NULL DEFAULT ''
+);
 """
 
 

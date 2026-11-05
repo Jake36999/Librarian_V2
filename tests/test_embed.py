@@ -27,6 +27,35 @@ def test_cache_is_by_content(vault):
         assert why == "" and names[0] == "Alpha Renamed"
 
 
+def test_a_renamed_sources_document_text_keeps_its_vectors(vault):
+    """MF-014: the attachment's text moves with its note, so its vectors are still used:
+    a prune finds nothing to drop and nothing needs embedding again."""
+    from resource_librarian.text import sync_documents
+    doc = vault.root / "Sources" / "document" / "files" / "manual.txt"
+    doc.parent.mkdir(parents=True)
+    doc.write_text("The calibration procedure uses a reference thermistor. " * 6)
+    path = add_source(vault.root, "Manual", "A device manual.", kind_folder="document",
+                      extra_fm="file: Sources/document/files/manual.txt")
+    with Index(vault) as ix:
+        ix.refresh()
+        sync_documents(ix)
+        vs = VectorSearch.from_spec(ix, "hash:64")
+        assert vs.sync() > 0
+
+        def text_vectors():
+            return ix.conn.execute(
+                "SELECT COUNT(*) FROM chunk c JOIN note n ON n.path = c.path JOIN embedding e "
+                "ON e.hash = c.hash AND e.model = ? WHERE c.role = 'document'",
+                (vs.model,)).fetchone()[0]
+
+        before = text_vectors()
+        assert before > 0
+        path.rename(path.with_name("Field Manual.md"))
+        ix.refresh()
+        assert vs.prune() == 0 and vs.sync() == 0
+        assert text_vectors() == before
+
+
 def test_unavailable_is_loud(vault):
     add_source(vault.root, "Alpha", "x")
     with Index(vault) as ix:
