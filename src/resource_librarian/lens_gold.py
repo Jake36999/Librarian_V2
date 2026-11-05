@@ -8,10 +8,12 @@ labels are per chunk, exactly as the deep read chunks that text:
 - `none`: this passage teaches no stance (a true negative, so precision is measured on
   labelled passages instead of only bounded).
 
-Each label keeps a digest of the chunk's text. A change to the chunker or to the text
-marks the label **stale** - reported, never silently moved to whatever chunk now has that
-number. A source with no chunk labels falls back to its phrase rule (`phrases`, the first
-three sources' original rule), and the report says which rule each source used.
+Each label keeps a digest of the chunk's text and the chunker it was made under. A change
+to the chunker or to the text marks the label **stale** - reported, never silently moved to
+whatever chunk now has that number. When a stale label's exact text is now one other
+chunk (a reorder), the report says where (`found_at`) for the owner to relabel; it is still
+not moved. A source with no chunk labels falls back to its phrase rule (`phrases`, the
+first three sources' original rule), and the report says which rule each source used.
 
 A source's text is either a file (`file`, relative to the repository root, read whole as
 lens_eval always read it) or a library's Source note (`vault` + `note`), read the way the
@@ -40,9 +42,15 @@ def digest(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
 
 
+def chunker() -> str:
+    """The chunker labels are made under: the deep read's own (MF-013)."""
+    return f"{deep_read.CHUNKER}@{deep_read.CHUNK_CHARS}"
+
+
 def load(path: Path) -> dict[str, Any]:
     if not path.is_file():
-        return {"version": GOLD_VERSION, "chunk_chars": deep_read.CHUNK_CHARS, "sources": {}}
+        return {"version": GOLD_VERSION, "chunk_chars": deep_read.CHUNK_CHARS,
+                "chunker": chunker(), "sources": {}}
     data = json.loads(path.read_text(encoding="utf-8"))
     data.setdefault("sources", {})
     return data
@@ -118,7 +126,7 @@ def mark(data: dict[str, Any], key: str, index: int, label: str, chunk_list: lis
         entry["labels"].pop(str(index), None)
     elif label in LABELS:
         entry["labels"][str(index)] = {"label": label, "digest": digest(chunk_list[index].text),
-                                       "by": by, "at": now_iso()}
+                                       "chunker": chunker(), "by": by, "at": now_iso()}
     else:
         raise ValueError(f"a label is one of {LABELS} or skip")
     entry["updated_at"] = now_iso()
@@ -158,10 +166,22 @@ def status(data: dict[str, Any], root: Path) -> list[dict[str, Any]]:
             continue
         labels = entry.get("labels") or {}
         fresh = judged(entry, cl)
+        stale = sorted(int(i) for i in labels if int(i) not in fresh)
         row.update(chunks=len(cl), gold=sum(fresh.values()),
-                   none=sum(not v for v in fresh.values()),
-                   stale=sorted(int(i) for i in labels if int(i) not in fresh),
+                   none=sum(not v for v in fresh.values()), stale=stale,
                    proposed=sum(1 for lab in labels.values() if lab.get("by") != "owner"))
+        # Where a stale label's exact text is now, when it is exactly one other chunk:
+        # said for the owner to relabel, never applied.
+        at: dict[str, list[int]] = {}
+        for c in cl:
+            at.setdefault(digest(c.text), []).append(c.index)
+        found = {str(i): at[labels[str(i)]["digest"]][0] for i in stale
+                 if len(at.get(labels[str(i)]["digest"], [])) == 1}
+        if found:
+            row["found_at"] = found
+        made = sorted({str(lab.get("chunker") or "unrecorded") for lab in labels.values()})
+        if any(m != chunker() for m in made):
+            row["chunker_changed"] = {"labels_made_with": made, "now": chunker()}
         out.append(row)
     return out
 

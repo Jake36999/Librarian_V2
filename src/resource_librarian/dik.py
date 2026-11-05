@@ -431,7 +431,8 @@ def rebuild(vault: Vault, conn, source: str = "", limit: int = 20, *,
             pages = [t for _, t in units] or doc_text.extract(
                 vault.root / fm["file"], vault.derived / "text").pages
             chunks = reading.chunk(units)
-            record = document(vault, name, pages, (item.get("deep_read") or {}).get("read"),
+            # Only readings that still match this text (MF-013).
+            record = document(vault, name, pages, reading.read_parts(vault, item, chunks),
                               [(c.first_page, c.last_page) for c in chunks], revision)
         else:
             out.append({"source": name, "status": "skipped",

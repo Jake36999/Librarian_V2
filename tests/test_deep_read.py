@@ -143,6 +143,130 @@ def test_with_no_clerk_the_tasks_wait_and_nothing_counts_as_read(staged, monkeyp
     assert list((ctx.vault.work("queue") / "clerk").glob("*.json"))
 
 
+# -- MF-013: a reading is reused only for the same text ---------------------------
+
+CABLES = "Cable-stayed bridges hang the deck from towers with straight cables."
+ARCHES = "Arch bridges push the deck's whole load outward into both abutments."
+
+
+def read_whole(ctx, item_id):
+    out = REGISTRY.call("deep_read", {"item_id": item_id, "max_chunks": 20}, ctx)
+    assert "error" not in out and out["remaining"] == 0, out
+    return out
+
+
+def rewrite(ctx, item_id, text):
+    """Change the staged item's own attached text, as a re-extraction or edit would."""
+    item = StagingStore(ctx.vault).load(item_id)
+    (ctx.vault.root / item["file"]).write_text(text, encoding="utf-8")
+
+
+def parts(ctx, item_id):
+    item = StagingStore(ctx.vault).load(item_id)
+    return item, deep_read.chunk(deep_read.source_units(ctx.vault, item))
+
+
+def test_an_edit_that_keeps_the_part_count_cannot_inherit_old_claims(staged):
+    ctx, item_id = staged
+    first = read_whole(ctx, item_id)
+    rewrite(ctx, item_id, BOOK.replace(CABLES, ARCHES))
+    item, chunks = parts(ctx, item_id)
+    assert len(chunks) == first["chunks"] == 4                   # the count alone looks unchanged
+
+    again = REGISTRY.call("deep_read", {"item_id": item_id}, ctx)
+
+    assert again["this_call"] == 1                               # only the changed part
+    assert again["text_changed"]["reused"] == 3 and again["text_changed"]["dropped"] == 1
+    claims = StagingStore(ctx.vault).load(item_id)["sections"]["Claims"]
+    assert "Arch bridges push the deck" in claims and "Cable-stayed" not in claims
+    assert again["lenses_total"] == 1                            # the stance's part was reused
+
+
+def test_a_reorder_moves_each_reading_with_its_own_text(staged):
+    ctx, item_id = staged
+    read_whole(ctx, item_id)
+    paragraphs = BOOK.split("\n\n")
+    reordered = "\n\n".join([paragraphs[2], paragraphs[0], paragraphs[1], *paragraphs[3:]])
+    rewrite(ctx, item_id, reordered)
+
+    again = REGISTRY.call("deep_read", {"item_id": item_id}, ctx)
+
+    assert again["this_call"] == 0 and again["text_changed"]["reused"] == 4
+    item = StagingStore(ctx.vault).load(item_id)
+    record = item["deep_read"]
+    assert record["read"]["0"]["points"] == ["Steel trusses spread a load across many members"]
+    assert record["read"]["1"]["points"] == ["Bridges carry loads across a gap by routing "
+                                             "force into the ground"]
+    claims = item["sections"]["Claims"].splitlines()
+    assert claims[0] == "- Steel trusses spread a load across many members (p. 1)"
+    assert record["document"]["order"] == record["order"]        # the whole-text pass ran again
+
+
+def test_a_new_chunker_or_recipe_reads_every_part_again(staged, monkeypatch):
+    ctx, item_id = staged
+    read_whole(ctx, item_id)
+    monkeypatch.setattr(deep_read, "CHUNKER", "paragraph-pack/2")
+    out = REGISTRY.call("deep_read", {"item_id": item_id, "max_chunks": 20}, ctx)
+    assert out["this_call"] == 4 and out["text_changed"]["identity_changed"] is True
+
+    before = deep_read.recipe()
+    original = clerk.limits
+    monkeypatch.setattr(clerk, "limits", lambda text: clerk.Task(
+        original(text).kind, text, original(text).question + " Be brief."))
+    assert deep_read.recipe() != before
+    assert REGISTRY.call("deep_read", {"item_id": item_id, "max_chunks": 20},
+                         ctx)["this_call"] == 4
+
+
+def test_count_only_progress_is_stale_everywhere_it_is_used(staged):
+    from resource_librarian.staging import coverage_of
+    ctx, item_id = staged
+    read_whole(ctx, item_id)
+    store = StagingStore(ctx.vault)
+    item = store.load(item_id)
+    # What a deep read recorded before MF-013: a count and index-keyed readings.
+    item["deep_read"] = {"chunks": 4, "lenses": item["deep_read"]["lenses"],
+                         "read": {i: {k: v for k, v in entry.items() if k != "key"}
+                                  for i, entry in item["deep_read"]["read"].items()}}
+    store.save(item)
+    rewrite(ctx, item_id, BOOK.replace(CABLES, ARCHES))         # same count, different text
+    item = store.load(item_id)
+
+    assert deep_read.progress(item)["stale"] and deep_read.read_parts(ctx.vault, item) == {}
+    coverage, notes = coverage_of(item)
+    assert coverage == "captured" and any("recorded only how many parts" in n for n in notes)
+
+    out = REGISTRY.call("deep_read", {"item_id": item_id, "max_chunks": 20}, ctx)
+
+    assert out["stale"]["parts_dropped"] == 4 and out["this_call"] == 4
+    claims = store.load(item_id)["sections"]["Claims"]
+    assert "Arch bridges push the deck" in claims and "Cable-stayed" not in claims
+
+
+def test_claims_from_changed_text_are_cleared_while_it_waits_to_be_read(staged):
+    ctx, item_id = staged
+    read_whole(ctx, item_id)
+    rewrite(ctx, item_id, BOOK.replace(" the ", " a "))         # every part's text changes
+    ctx.extras.pop("clerk")                                      # nothing can be read now
+
+    out = REGISTRY.call("deep_read", {"item_id": item_id, "max_chunks": 20}, ctx)
+
+    assert out["read"] == 0 and out["text_changed"]["dropped"] == 4
+    sections = StagingStore(ctx.vault).load(item_id)["sections"]
+    assert "Claims" not in sections and "Evidence & Limits" not in sections
+
+
+def test_data_records_use_only_readings_of_the_current_text(staged):
+    ctx, item_id = staged
+    read_whole(ctx, item_id)
+    item, chunks = parts(ctx, item_id)
+    assert set(deep_read.read_parts(ctx.vault, item, chunks)) == {"0", "1", "2", "3"}
+
+    rewrite(ctx, item_id, BOOK.replace(CABLES, ARCHES))         # not read again yet
+    item, chunks = parts(ctx, item_id)
+    assert set(deep_read.read_parts(ctx.vault, item, chunks)) == {"0", "1", "2"}
+
+
 # -- intake itself reads better ------------------------------------------------
 
 def add_topic(vault, name: str) -> None:

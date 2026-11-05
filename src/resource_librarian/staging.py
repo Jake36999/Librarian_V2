@@ -77,8 +77,11 @@ def coverage_of(item: dict[str, Any]) -> tuple[str, list[str]]:
     q = (item.get("intake") or {}).get("quality") or {}
     flagged = [f"capture: {q['reason']}"] if q.get("verdict") in (
         "needs_ocr", "js_shell", "partial", "no_access_point") else []
-    read = item.get("deep_read") or {}
-    chunks, done = int(read.get("chunks") or 0), len(read.get("read") or {})
+    from .deep_read import progress
+    read = progress(item)
+    chunks, done = read["chunks"], read["read"]
+    if read["stale"]:                       # MF-013: count-only progress shows no text read
+        return "captured", [CAPTURED, f"read: {read['stale']}"] + flagged
     if chunks and done >= chunks:
         return "full", ["not reviewed in a batch: the Bottom Line is from capture or a person"
                         ] + flagged
@@ -1083,9 +1086,11 @@ def summary(item: dict[str, Any]) -> dict[str, Any]:
                    reviewed=bool(item.get("review")),
                    drafted=((item.get("review") or {}).get("draft") or {}).get("status") == "ok",
                    fit=((item.get("review") or {}).get("fit") or {}).get("recommendation", ""))
-        read = item.get("deep_read")
-        if read:
-            row["deep_read"] = f"{len(read.get('read') or {})}/{read.get('chunks', 0)}"
+        if item.get("deep_read"):
+            from .deep_read import progress
+            read = progress(item)
+            row["deep_read"] = f"{read['read']}/{read['chunks']}" + \
+                (", earlier progress stale" if read["stale"] else "")
         for key in ("ref", "note", "requested_by", "failure", "batch", "processing"):
             if item.get(key):
                 row[key] = item[key]

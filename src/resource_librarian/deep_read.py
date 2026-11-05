@@ -69,6 +69,7 @@ text's claims and limits, not just its opening.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -92,6 +93,14 @@ MAX_LENSES = 12                     # per source, over every call (V1's `limit`)
 SECTION_BULLETS = 40                # per rebuilt section; the rest stay in the record
 MAX_DISCARDS = 200                  # kept on the item; older ones roll off
 TEXT_KEYS = ("text",)               # what an evidence record's payload holds as prose
+# MF-013 (NAT-01): a part's earlier reading is reused only for the same text,
+# packed by the same chunker, from the same representation, read by the same
+# recipe. Bump CHUNKER whenever `chunk` or `_pieces` packs text differently.
+CHUNKER = "paragraph-pack/1"
+RECORD_VERSION = 2
+STALE_LEGACY = ("an earlier deep read recorded only how many parts it read, not which text, "
+                "so an edit that kept the same number of parts would have kept the old "
+                "readings; that progress is stale and the text is read again")
 
 
 @dataclass
@@ -118,6 +127,12 @@ def source_units(vault: Vault, item: dict[str, Any]) -> list[tuple[int, str]]:
     item's own `sections` - those may already carry an agent's own writing,
     and a lens is mined from the source, not from a machine's account of it
     (E8)."""
+    return source(vault, item)[1]
+
+
+def source(vault: Vault, item: dict[str, Any]) -> tuple[str, list[tuple[int, str]]]:
+    """`source_units`, and which representation they came from: the cleaned
+    copy (`clean_file`), the attached file (`file`) or the evidence prose."""
     for key in ("clean_file", "file"):                  # a cleaned copy first (P3b)
         if not item.get(key):
             continue
@@ -125,7 +140,12 @@ def source_units(vault: Vault, item: dict[str, Any]) -> list[tuple[int, str]]:
         if path.is_file():
             result = text.extract(path, vault.derived / "text")
             if not result.error:
-                return [(n, page) for n, page in enumerate(result.pages, 1) if page.strip()]
+                return key, [(n, page) for n, page in enumerate(result.pages, 1)
+                             if page.strip()]
+    return "evidence", _evidence_units(vault, item)
+
+
+def _evidence_units(vault: Vault, item: dict[str, Any]) -> list[tuple[int, str]]:
     store = EvidenceStore(vault)
     units: list[tuple[int, str]] = []
     for ref in item.get("evidence") or []:
@@ -211,6 +231,129 @@ def _locate(chunk_text: str, quote: str) -> int:
     return clerk.locate(quote, chunk_text)      # as `quoted` matched it: case, dashes, hyphens
 
 
+# ------------------------------------------------- what a reading is of
+
+def _sha(material: Any) -> str:
+    data = material if isinstance(material, str) else json.dumps(
+        material, sort_keys=True, ensure_ascii=False, default=str)
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()
+
+
+def recipe() -> str:
+    """The extraction a part's reading stands for: the four first-step clerk
+    tasks (points, limits, terms, stance), their instructions, schemas and
+    checks. A change to any of them makes every earlier reading not reusable."""
+    tasks = (clerk.points(""), clerk.limits(""), clerk.terms(""), clerk.lens_perspective(""))
+    return _sha([[t.kind.name, t.kind.schema, t.kind.chunk_chars, list(t.kind.bullet_fields),
+                  list(t.kind.quote_fields), t.question] for t in tasks])[:16]
+
+
+def identity(representation: str) -> dict[str, Any]:
+    return {"chunker": CHUNKER, "chunk_chars": CHUNK_CHARS, "representation": representation,
+            "recipe": recipe()}
+
+
+def part_keys(ident: dict[str, Any], chunks: list[Chunk]) -> list[str]:
+    """Each part's reuse key: its exact text under `ident`. Two parts with the
+    same text share a key, and their reading, wherever they are."""
+    return [_sha({**ident, "text": c.text})[:24] for c in chunks]
+
+
+def order_of(keys: list[str]) -> str:
+    """The whole text's identity: every part's key, in reading order."""
+    return _sha("\n".join(keys))[:24]
+
+
+def _headings(item: dict[str, Any], sections_of: dict[str, str]) -> tuple[str, str]:
+    """Which of the item's sections take the parts' claims and limits."""
+    points_to = "Claims" if "Claims" in sections_of else "Reading Notes"
+    limits_to = "Evidence & Limits" if "Evidence & Limits" in sections_of else "Reading Notes"
+    if item.get("source_kind", "") == "repository" and "Claims" not in sections_of:
+        points_to = "Reading Notes"
+    return points_to, limits_to
+
+
+def _carry(old: dict[str, Any] | None, chunks: list[Chunk], keys: list[str],
+           ident: dict[str, Any], item: dict[str, Any],
+           sections_of: dict[str, str]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Earlier progress, carried onto the text as it is now.
+
+    A part's reading is kept only where a part with the same key still exists,
+    and it moves with that text: an edit that keeps the number of parts, or a
+    reorder, cannot hand one part's claims to another. Count-only progress
+    from before MF-013 cannot show which text it read, so it is stale: dropped,
+    said so, and its parts read again. Returns (record, what changed).
+    """
+    order = order_of(keys)
+    base = {"version": RECORD_VERSION, "identity": ident, "order": order,
+            "chunks": len(chunks)}
+    if not old:
+        return {**base, "read": {}, "lenses": [], "discards": [], "sections": []}, {}
+    if old.get("version") != RECORD_VERSION:
+        earlier = [e for e in (old.get("read") or {}).values() if isinstance(e, dict)]
+        stale = {"reason": STALE_LEGACY, "at": now_iso(), "parts_dropped": len(earlier)}
+        # The sections it rebuilt hold those readings' claims: clear them too,
+        # but only a section it actually filled (one with no bullets kept
+        # whatever was there before).
+        points_to, limits_to = _headings(item, sections_of)
+        written = sorted({heading for label, heading in (("points", points_to),
+                                                         ("limits", limits_to))
+                          if any(e.get(label) for e in earlier)})
+        return {**base, "read": {}, "lenses": [], "discards": list(old.get("discards") or []),
+                "sections": written, "stale": stale}, {"stale": stale}
+    earlier = {str(k): v for k, v in (old.get("read") or {}).items() if isinstance(v, dict)}
+    by_key: dict[str, dict[str, Any]] = {}
+    for entry in earlier.values():
+        if entry.get("key"):
+            by_key.setdefault(entry["key"], entry)
+    read = {str(c.index): {**by_key[k], "locator": c.locator}
+            for c, k in zip(chunks, keys) if k in by_key}
+    record = {**old, **base, "read": read}
+    record.pop("stale", None)
+    record.setdefault("lenses", [])
+    record.setdefault("discards", [])
+    record.setdefault("sections", [])
+    change: dict[str, Any] = {}
+    if old.get("order") != order or old.get("identity") != ident:
+        current = set(keys)
+        change = {"at": now_iso(), "reused": len(read),
+                  "dropped": sum(1 for e in earlier.values() if e.get("key") not in current),
+                  **({"identity_changed": True} if old.get("identity") != ident else {})}
+        record["changed"] = change
+    return record, ({"text_changed": change} if change else {})
+
+
+def read_parts(vault: Vault, item: dict[str, Any],
+               chunks: list[Chunk] | None = None) -> dict[str, dict[str, Any]]:
+    """The item's recorded readings that still match its text, by part index.
+
+    For anything that uses a deep read's claims without running one (Data
+    records, coverage): a part whose text, chunker, representation or recipe
+    changed since it was read matches nothing, and count-only progress
+    matches nothing at all.
+    """
+    record = item.get("deep_read") or {}
+    if record.get("version") != RECORD_VERSION:
+        return {}
+    representation, units = source(vault, item)
+    chunks = chunk(units) if chunks is None else chunks
+    keys = part_keys(identity(representation), chunks)
+    read = record.get("read") or {}
+    return {str(c.index): read[str(c.index)] for c, k in zip(chunks, keys)
+            if isinstance(read.get(str(c.index)), dict) and read[str(c.index)].get("key") == k}
+
+
+def progress(item: dict[str, Any]) -> dict[str, Any]:
+    """Parts and parts read, as last recorded, and whether that record is stale."""
+    record = item.get("deep_read") or {}
+    if not record:
+        return {"chunks": 0, "read": 0, "stale": ""}
+    if record.get("version") != RECORD_VERSION:
+        return {"chunks": int(record.get("chunks") or 0), "read": 0, "stale": STALE_LEGACY}
+    return {"chunks": int(record.get("chunks") or 0), "read": len(record.get("read") or {}),
+            "stale": ""}
+
+
 # ------------------------------------------------------------------ the read
 
 def deep_read(vault: Vault, item_id: str, endpoint: clerk.Endpoint | None, *,
@@ -228,14 +371,15 @@ def deep_read(vault: Vault, item_id: str, endpoint: clerk.Endpoint | None, *,
     local = clerk.is_local(endpoint)
     if local:
         max_chunks = min(max_chunks, LOCAL_MAX_CHUNKS)
-    chunks = chunk(source_units(vault, item))
+    representation, units = source(vault, item)
+    chunks = chunk(units)
     if not chunks:
         raise TypeError(f"{item_id} has no text to read: no attached file with a text layer, "
                         f"and no prose in its evidence")
-    record = item.get("deep_read") or {}
-    if record.get("chunks") != len(chunks):              # the text changed: start over
-        record = {"chunks": len(chunks), "read": {}, "lenses": []}
-    record.setdefault("discards", [])                     # E7; older records predate it
+    ident = identity(representation)
+    keys = part_keys(ident, chunks)
+    order = order_of(keys)
+    record, carried = _carry(item.get("deep_read"), chunks, keys, ident, item, sections_of or {})
     read: dict[str, Any] = record["read"]
     todo = [c for c in chunks if str(c.index) not in read][:max(1, max_chunks)]
     queue = vault.work("queue") / "clerk"
@@ -369,14 +513,16 @@ def deep_read(vault: Vault, item_id: str, endpoint: clerk.Endpoint | None, *,
 
     for c in todo:
         if c.index not in waiting:
-            read[str(c.index)] = notes[c.index]
-    # C4: once the whole text is read, one pass over all of it.
+            read[str(c.index)] = {**notes[c.index], "key": keys[c.index]}
+    # C4: once the whole text is read, one pass over all of it - again whenever
+    # the text as a whole (its parts, in order) is no longer the one it read.
     document: dict[str, Any] = {}
     if lenses and len(read) == len(chunks) and \
-            (record.get("document") or {}).get("chunks") != len(chunks):
+            (record.get("document") or {}).get("order") != order:
         document = _document_pass(store, item, record, chunks, endpoint, queue, discard)
         if document.pop("done", False):
-            record["document"] = {"chunks": len(chunks), "at": now_iso(), **document}
+            record["document"] = {"chunks": len(chunks), "order": order, "at": now_iso(),
+                                  **document}
         touched += document.get("staged", []) + document.get("corroborated", [])
         staged += document.get("staged", [])
     record["lenses"] = list(dict.fromkeys(record["lenses"] + touched))
@@ -385,7 +531,7 @@ def deep_read(vault: Vault, item_id: str, endpoint: clerk.Endpoint | None, *,
     item["deep_read"] = record
     rebuilt = _rebuild_sections(item, chunks, sections_of or {})
     store.save(item)
-    return {"id": item_id, "chunks": len(chunks), "read": len(read),
+    return {"id": item_id, "chunks": len(chunks), "read": len(read), **carried,
             "remaining": len(chunks) - len(read), "this_call": len(todo) - len(waiting),
             "waiting_on_clerk": len(waiting), "lenses_staged": staged,
             "lenses_corroborated": corroborated,
@@ -773,21 +919,20 @@ def _resolve_probes(store: StagingStore, item: dict[str, Any],
 def _rebuild_sections(item: dict[str, Any], chunks: list[Chunk],
                       sections_of: dict[str, str]) -> dict[str, int]:
     """The item's claims and limits sections, from every chunk read so far,
-    in reading order, each bullet with the pages it came from."""
-    kind = item.get("source_kind", "")
-    points_to = "Claims" if "Claims" in sections_of else "Reading Notes"
-    limits_to = "Evidence & Limits" if "Evidence & Limits" in sections_of else "Reading Notes"
-    if kind == "repository" and "Claims" not in sections_of:
-        points_to = "Reading Notes"
+    in reading order, each bullet with the pages it came from. A section an
+    earlier rebuild wrote that now has nothing read behind it is cleared, so
+    claims from text that changed do not stay on the item (MF-013)."""
+    points_to, limits_to = _headings(item, sections_of)
     collected: dict[str, list[str]] = {}
-    read = item["deep_read"]["read"]
+    record = item["deep_read"]
+    read = record["read"]
     for c in chunks:
         note = read.get(str(c.index))
         if not note:
             continue
         for label, heading in (("points", points_to), ("limits", limits_to)):
             collected.setdefault(heading, []).extend(
-                f"- {b} ({note['locator']})" for b in note.get(label, []))
+                f"- {b} ({c.locator})" for b in note.get(label, []))
     sections = item.setdefault("sections", {})
     counts: dict[str, int] = {}
     for heading, bullets in collected.items():
@@ -800,4 +945,8 @@ def _rebuild_sections(item: dict[str, Any], chunks: list[Chunk],
                          f"item's deep-read record)")
         sections[heading] = "\n".join(shown)
         counts[heading] = len(bullets)
+    for heading in record.get("sections") or []:
+        if heading not in counts:
+            sections.pop(heading, None)
+    record["sections"] = sorted(counts)
     return counts

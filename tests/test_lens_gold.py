@@ -27,6 +27,42 @@ def gold(tmp_path):
     return tmp_path, data
 
 
+def test_a_reordered_label_is_stale_and_says_where_its_text_went(gold):
+    """MF-013: a reorder never hands a label to whatever chunk now has its number; the
+    report names the one chunk that now holds its exact text, for the owner to relabel."""
+    root, data = gold
+    entry = data["sources"]["repairs"]
+    cl = lens_gold.chunks(entry, root)
+    at = next(c.index for c in cl if STANCE in c.text)
+    lens_gold.mark(data, "repairs", at, "gold", cl)
+    assert entry["labels"][str(at)]["chunker"] == lens_gold.chunker()
+
+    parts = book().split("\n\n")
+    first, rest = parts[:3], parts[3:]                     # chapter 0: heading, body, filler
+    (root / "book.md").write_text("\n\n".join(rest + first), encoding="utf-8")
+    moved = lens_gold.chunks(entry, root)
+    now = next(c.index for c in moved if STANCE in c.text)
+    assert now != at and len(moved) == len(cl)
+
+    row = lens_gold.status(data, root)[0]
+    assert row["stale"] == [at] and row["gold"] == 0
+    assert row["found_at"] == {str(at): now}
+    assert lens_gold.judged(entry, moved) == {}             # reported, not applied
+
+
+def test_labels_made_under_another_chunker_are_reported(gold, monkeypatch):
+    root, data = gold
+    entry = data["sources"]["repairs"]
+    cl = lens_gold.chunks(entry, root)
+    lens_gold.mark(data, "repairs", 0, "none", cl)
+    assert "chunker_changed" not in lens_gold.status(data, root)[0]
+
+    monkeypatch.setattr(deep_read, "CHUNKER", "paragraph-pack/2")
+    row = lens_gold.status(data, root)[0]
+    assert row["chunker_changed"]["now"] == "paragraph-pack/2@6000"
+    assert row["chunker_changed"]["labels_made_with"] == ["paragraph-pack/1@6000"]
+
+
 def test_labels_are_per_chunk_and_a_changed_text_makes_them_stale(gold):
     root, data = gold
     entry = data["sources"]["repairs"]

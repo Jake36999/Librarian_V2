@@ -254,7 +254,7 @@ def _lenses(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     """Lens extraction happens as the text is read; this stage says what it staged, so it is
     never a hidden side effect - each lens waits in Staging -> Lenses for its own review."""
     staged = list(((item.get("deep_read") or {}).get("lenses")) or [])
-    if not (item.get("deep_read") or {}).get("read"):
+    if not reading.progress(item)["read"]:          # count-only (stale) progress read nothing
         return {"status": "not_applicable", "reason": "nothing was read, so nothing to draw "
                                                       "lenses from"}
     return {"status": "complete", "staged": len(staged),
@@ -277,8 +277,10 @@ def _data(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
         units = _commit(ctx, lambda: reading.source_units(ctx.vault, item))
         pages = [t for _, t in units]
         chunks = reading.chunk(units)
-        record = dik.document(ctx.vault, item["name"], pages,
-                              (item.get("deep_read") or {}).get("read"),
+        # Only readings of the text as it is now (MF-013): a chapter is never
+        # credited with claims read from text that has since changed.
+        parts = _commit(ctx, lambda: reading.read_parts(ctx.vault, item, chunks))
+        record = dik.document(ctx.vault, item["name"], pages, parts,
                               [(c.first_page, c.last_page) for c in chunks],
                               str(item.get("captured_at") or ""))
     elif kind == "model":

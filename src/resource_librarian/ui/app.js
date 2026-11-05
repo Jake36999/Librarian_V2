@@ -5347,7 +5347,7 @@ var Librarian = (() => {
       };
       const dr = item.deep_read;
       const readCount = dr ? Object.keys(dr.read ?? {}).length : 0;
-      const readLine = dr ? `Deep read: ${readCount} of ${dr.chunks} parts read${dr.lenses?.length ? `, ${dr.lenses.length} lens${dr.lenses.length === 1 ? "" : "es"} staged` : ""}.` : "Only the opening of this source has been read.";
+      const readLine = !dr ? "Only the opening of this source has been read." : dr.version !== 2 ? "Deep read: earlier progress recorded only how many parts were read, not which text, so it is stale. Deep read again to read the text as it is now." : `Deep read: ${readCount} of ${dr.chunks} parts read${dr.lenses?.length ? `, ${dr.lenses.length} lens${dr.lenses.length === 1 ? "" : "es"} staged` : ""}.`;
       const sections = Object.entries(item.sections ?? {}).filter(([, t]) => t);
       const queued = item.review?.queued ?? [];
       const missing = item.readiness ?? [];

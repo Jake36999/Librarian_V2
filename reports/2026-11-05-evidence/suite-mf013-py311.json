@@ -1,0 +1,32 @@
+{
+ "command": [
+  "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "D:\\Librarian_V2",
+ "exit_code": 0,
+ "summary": "1991 passed, 2 skipped, 5 deselected in 632.94s (0:10:32)",
+ "started_utc": "2026-11-05T10:32:15.411724+00:00",
+ "seconds": 634.0,
+ "head": "bc30910bbe27382106b5baa4b056d6458cc4d6c9",
+ "tracked_changes": [
+  " M src/resource_librarian/batch.py",
+  " M src/resource_librarian/deep_read.py",
+  " M src/resource_librarian/dik.py",
+  " M src/resource_librarian/lens_gold.py",
+  " M src/resource_librarian/staging.py",
+  " M src/resource_librarian/ui/app.js",
+  " M tests/test_deep_read.py",
+  " M tests/test_lens_gold.py",
+  " M ui/src/views.ts"
+ ],
+ "python": "3.11.3",
+ "executable": "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-mf013-py311.log",
+ "log_sha256": "1275dbd71f22f825588116c34ddbff715e788eb9607399e1de22e3440f64c62d"
+}

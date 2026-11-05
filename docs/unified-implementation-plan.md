@@ -5145,3 +5145,69 @@ is kept; it is reported as changed.
 **Verification:** full suite: 1983 passed, 2 skipped, 5 deselected in 616.99s (0:10:16) (exit 0, Python 3.11.3)
 (`reports/2026-11-05-evidence/suite-mf012-py311.json`).
 
+### MF-013 deep-read parts are fingerprinted (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-013 (NAT-01) | implemented | this commit | `src/resource_librarian/deep_read.py`, `lens_gold.py`; `staging.py`, `batch.py`, `dik.py`, `ui/src/views.ts`; `tests/test_deep_read.py`, `tests/test_lens_gold.py`. |
+
+**Before.** A deep read kept its progress keyed only by part number, and
+started over only when the number of parts changed. An edit that kept the
+same number of parts kept every old reading, so the item's Claims and Limits
+sections, its Data records and its coverage all described text that was no
+longer there. Measured on the previous `deep_read.py`: after a same-count
+edit, a second deep read read 0 parts (the new test expects 1) and the old
+claim stayed in Claims.
+
+**Reuse key.** Each part's reading now carries a key: its exact text, plus the
+chunker (`CHUNKER`, `CHUNK_CHARS`), the representation it came from (cleaned
+copy, attached file or evidence prose) and the recipe. The recipe is a digest
+of the four first-step clerk tasks: their instructions, schemas and checks.
+- **On every call** readings are carried onto the current parts by key. A
+  reading moves with its own text, so a reorder reuses every part and an edit
+  re-reads only the changed one.
+- **When the chunker or the recipe changes**, nothing is reused.
+- **The whole-text pass** is keyed by the ordered list of part keys, so it
+  runs again after any edit or reorder.
+- **Sections:** a Claims or Limits section a rebuild filled, but which now has
+  nothing read behind it, is cleared rather than left showing old claims.
+- **Reported:** the call says what changed (`text_changed`: reused, dropped,
+  `identity_changed`).
+
+**Count-only records are stale.** A record without part keys (format before
+version 2) cannot show which text it read. Each place now treats it as stale:
+- the next deep read drops it, says so (`stale`), clears the sections it filled
+  and reads every part again;
+- `coverage_of` reports `captured` with the reason;
+- the staging row says "earlier progress stale";
+- the item view says so instead of "N of M parts read".
+
+**Other readers.** Data records (`batch._data`, `dik` rebuild) now take
+`read_parts`: only readings whose key matches the current text at that part,
+so a chapter is never credited with claims from changed text.
+
+**Lens gold set.** Labels already went stale when their text changed. Each
+label now also records the chunker it was made under. `status` reports
+`chunker_changed`, and for a stale label whose exact text is now exactly one
+other chunk (a reorder), `found_at` names that chunk for the owner to relabel.
+The label is still never moved.
+
+**Tests.**
+- **`test_deep_read.py`:** 6 new cases:
+  - a same-count edit re-reads only the changed part, and its old claim is gone;
+  - a reorder moves each reading with its text and re-runs the whole-text pass;
+  - a new chunker or recipe re-reads everything;
+  - count-only progress is stale for coverage, Data and the next read;
+  - stale sections are cleared while the clerk is unavailable;
+  - `read_parts` drops a changed part.
+- **`test_lens_gold.py`:** 2 cases (reorder reported, chunker change reported).
+- **Other checks:** the UI was rebuilt and the smoke test passes.
+
+**Not done here.** A part read with lenses off is not re-read when lenses are
+turned on (unchanged behaviour). The lens-chain steps after the first are not
+in the recipe, so a change to them does not re-read parts. Lenses staged from
+a part whose text later changed stay staged for a person to decide.
+
+**Verification:** full suite: 1991 passed, 2 skipped, 5 deselected in 632.94s (0:10:32) (exit 0, Python 3.11.3)
+(`reports/2026-11-05-evidence/suite-mf013-py311.json`).
+
