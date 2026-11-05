@@ -45,6 +45,7 @@ from typing import Any
 from . import notes
 from .coordination import atomic_write_text
 from .evidence import EvidenceStore
+from .file_access import read_bytes_snapshot
 from .staging import StagingStore
 from .vault import Vault, jsonl_lines, now_iso
 
@@ -276,8 +277,13 @@ def stage(v1_root: Path, vault: Vault, limit: int = 0,
         if selected and row["v1_path"] not in selected:
             continue
         path = v1_root / row["v1_path"]
-        raw = path.read_text(encoding="utf-8")
-        note = notes.load(path)
+        # One read (MF-020): the evidence kept and the fields staged come from
+        # the same bytes, so a V1 edit in between cannot make them disagree.
+        raw = read_bytes_snapshot(path).data.decode("utf-8")
+        raw = raw.replace("\r\n", "\n").replace("\r", "\n")     # as read_text read it
+        frontmatter, body, error = notes.parse(raw)
+        note = notes.Note(name=path.stem, path=path, frontmatter=frontmatter, body=body,
+                          parse_error=error)
         record = evidence.put("v1_note", f"v1:{row['v1_path']}", {
             "path": row["v1_path"], "uuid": str(note.frontmatter.get("uuid") or ""),
             "sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest(), "text": raw})

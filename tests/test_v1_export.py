@@ -153,3 +153,36 @@ def test_accepted_notes_keep_everything_v1_had(vault, tmp_path):
     assert written.frontmatter["type"] == "application" and \
         written.frontmatter["v1_type"] == "application_record"
     assert "Host inventory." in written.body
+
+
+def test_the_staged_fields_and_their_evidence_come_from_one_read(vault, tmp_path, monkeypatch):
+    """MF-020: the evidence text and the staged fields were two reads of the V1 file, so an
+    edit between them staged fields the kept evidence does not say."""
+    v1 = v1_tree(tmp_path / "v1")
+    target = (v1 / "01-Resources" / "acme - rowstream.md").resolve()
+    original, planned = Path.read_text, v1_export.plan
+    armed = []                                          # only once staging has begun
+
+    def plan(*args, **kwargs):
+        out = planned(*args, **kwargs)
+        armed.append(True)
+        return out
+
+    def read_then_edited(self, *args, **kwargs):
+        text = original(self, *args, **kwargs)
+        if armed and Path(self).resolve() == target:    # V1 changes right after this read
+            target.write_text(REPO.replace("github_stars: 42", "github_stars: 99"),
+                              encoding="utf-8")
+            armed.clear()
+        return text
+
+    monkeypatch.setattr(v1_export, "plan", plan)
+    monkeypatch.setattr(Path, "read_text", read_then_edited)
+    v1_export.stage(v1, vault, paths=["01-Resources/acme - rowstream.md"])
+
+    item = next(i for i in staging.StagingStore(vault).items() if i["name"] == "acme - rowstream")
+    record = EvidenceStore(vault).get(item["evidence"][0]["id"])
+    kept = notes.parse(record.payload["text"])[0]
+    assert item["fields"]["github_stars"] == kept["github_stars"]
+    assert record.payload["sha256"] == hashlib.sha256(
+        record.payload["text"].encode("utf-8")).hexdigest()

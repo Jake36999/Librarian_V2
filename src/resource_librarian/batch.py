@@ -15,6 +15,18 @@ stopped early) - never enriched with a stage outstanding. A partial item can be 
 again: its finished stages are carried over and only the rest run. Either waits for the
 separate "Accept into library", which records the coverage on the note.
 
+A completed stage is carried over only for the same input (MF-020). Each
+completion records a key covering:
+- the item's source as it then was: evidence ids, URL, kind, name, and the
+  attached and cleaned files' bytes;
+- the stage and every stage before it, each with its recipe;
+- for model-backed stages, the model route.
+
+Reuse, within a run or from an earlier one, needs an identical key, and a
+completion with no key from before MF-020 is not reused. If the source
+changes while a stage runs, its result is recorded `stale`, not complete, so
+it cannot satisfy the next run.
+
 The stages call registered tools through the registry, as any other action does (§7).
 Project context (the brief, the need) never reaches them: the fit judgement was made at
 capture, apart from the reading (§4.4).
@@ -37,6 +49,14 @@ from .workflows import RunStore
 
 NAME = "process-approved"
 MAX_READ_CALLS = 40                  # deep_read is chunked; enough calls for a long book
+# MF-020: bump a stage's recipe when what it does changes; the read stage's
+# comes from deep_read itself (its first-step clerk tasks).
+STAGE_RECIPES = {"validate": "1", "parse": "1", "lenses": "1", "data": "1", "relate": "1",
+                 "metadata": "1", "review": "1"}
+MODEL_STAGES = frozenset({"parse", "read", "relate", "review"})
+# What processing itself writes to the item it reads: excluded from the
+# mid-stage change check for the stage that writes it.
+OWN_FILES = {"parse": ("file", "clean_file")}
 
 _LIVE: dict[str, tuple[str, threading.Thread | None, threading.Event]] = {}
 _GUARD = threading.RLock()
@@ -93,6 +113,51 @@ def _assert_active(ctx: Context, item: dict[str, Any]) -> None:
     run_id = ctx.extras.get("_batch_run")
     if run_id and (item.get("status") != "processing" or item.get("batch") != run_id):
         raise TypeError("the staged item's decision changed during processing; review it before resuming")
+
+
+def _source_identity(vault: Vault, item: dict[str, Any],
+                     skip: tuple[str, ...] = ()) -> dict[str, Any]:
+    """What the stages read of an item and do not themselves decide (MF-020)."""
+    identity: dict[str, Any] = {
+        "evidence": sorted(str(e.get("id") or "") for e in item.get("evidence") or []
+                           if isinstance(e, dict)),
+        **{key: str(item.get(key) or "") for key in ("canonical_url", "kind", "source_kind",
+                                                     "name")}}
+    for key in ("file", "clean_file"):
+        rel = str(item.get(key) or "")
+        if key not in skip:
+            identity[key] = f"{rel}:{fingerprint(vault.root / rel)}" if rel else ""
+    return identity
+
+
+def _route_identity(ctx: Context) -> str:
+    """The models a model-backed stage would use, as a short fingerprint."""
+    from . import service_routes
+    from .tools.staging import clerk_endpoint
+    try:
+        endpoint = clerk_endpoint(ctx)
+    except Exception:                                    # noqa: BLE001 - unset is a route too
+        endpoint = None
+    clerk_id = "" if endpoint is None else \
+        f"{type(endpoint).__name__}:{getattr(endpoint, 'model', '') or getattr(endpoint, 'name', '')}"
+    try:
+        ocr = service_routes.resolve(ctx.vault, "ocr")
+    except Exception:                                    # noqa: BLE001
+        ocr = None
+    ocr_id = f"{ocr.provider}:{ocr.model}" if ocr is not None else ""
+    return fingerprint_bytes(json.dumps([clerk_id, ocr_id]).encode("utf-8"))
+
+
+def _stage_key(identity: dict[str, Any], stage: str, route: str) -> str:
+    """A stage's completion key: its input and every stage up to it, with recipes."""
+    chain = []
+    for name, _fn in STAGES:
+        recipe = reading.recipe() if name == "read" else STAGE_RECIPES.get(name, "1")
+        chain.append([name, recipe, route if name in MODEL_STAGES else ""])
+        if name == stage:
+            break
+    return fingerprint_bytes(json.dumps({"source": identity, "chain": chain},
+                                        sort_keys=True).encode("utf-8"))
 
 
 def _item_precondition(ctx: Context, item: dict[str, Any]) -> dict[str, str]:
@@ -550,18 +615,27 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
         done = {(e["item"], e["stage"]): e for e in runs.events(run_id) if e["type"] == "done"}
         finished = {e["item"] for e in runs.events(run_id) if e["type"] == "item"}
         last = ""
+        route = _route_identity(ctx)
         for item_id in items:
             if item_id in finished:
                 continue
             results: dict[str, dict[str, Any]] = {}
             prior = (store.load(item_id).get("processing") or {})
             for stage, fn in STAGES:
-                _assert_active(ctx, store.load(item_id))
-                if (item_id, stage) in done:                  # resumed: never done twice
-                    results[stage] = done[(item_id, stage)]
+                current = store.load(item_id)
+                _assert_active(ctx, current)
+                own = OWN_FILES.get(stage, ())
+                # Taken before the stage runs: a later read would see later bytes.
+                before = _source_identity(ctx.vault, current, own)
+                key = _stage_key(_source_identity(ctx.vault, current), stage, route)
+                logged = done.get((item_id, stage))
+                if logged is not None and logged.get("key") == key:   # resumed: never twice
+                    results[stage] = logged
                     continue
-                if (prior.get("stages") or {}).get(stage) == "complete":   # an earlier run's
+                if (prior.get("stages") or {}).get(stage) == "complete" and \
+                        (prior.get("keys") or {}).get(stage) == key:  # an earlier run's, same input
                     results[stage] = {"status": "complete", "carried": prior.get("run", ""),
+                                      "key": key,
                                       **({"coverage": prior["read_coverage"]}
                                          if stage == "read" and prior.get("read_coverage")
                                          else {})}
@@ -579,6 +653,18 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
                     result = fn(ctx, store.load(item_id))
                 except Exception as exc:                      # noqa: BLE001 - one item
                     result = {"status": "failed", "reason": f"{type(exc).__name__}: {exc}"}
+                # The source changed while this stage waited (a model, a fetch): what
+                # it produced describes the old input and must not count as done.
+                if result.get("status") == "complete":
+                    try:
+                        after = store.load(item_id)
+                    except (OSError, TypeError, ValueError):
+                        after = None
+                    if after is None or _source_identity(ctx.vault, after, own) != before:
+                        result = {"status": "stale", "was": "complete",
+                                  "reason": "the item's source changed while this stage ran; "
+                                            "run the batch again to read it as it is now"}
+                result = {**result, "key": key}
                 runs.append(run_id, {"type": "done", "item": item_id, "stage": stage,
                                      **result})
                 results[stage] = result
@@ -614,10 +700,13 @@ def _finish_item(store: StagingStore, runs: RunStore, run_id: str, item_id: str,
         raise TypeError("the person's staged-item decision changed; processing did not replace it")
     failed = next((s for s, r in results.items() if r.get("status") == "failed"), "")
     incomplete = [f"{s}: {r.get('reason') or r['status']}" for s, r in results.items()
-                  if r.get("status") in ("partial", "queued", "skipped")]
+                  if r.get("status") in ("partial", "queued", "skipped", "stale")]
     coverage = (results.get("read") or {}).get("coverage", "")
     item["processing"] = {"run": run_id, "at": now_iso(),
                           "stages": {s: r.get("status") for s, r in results.items()},
+                          # MF-020: what each completion was for, so only the same input reuses it.
+                          "keys": {s: r["key"] for s, r in results.items()
+                                   if r.get("status") == "complete" and r.get("key")},
                           "coverage": "full" if not incomplete and not failed else
                           (f"partial {coverage}" if coverage else "partial"),
                           **({"read_coverage": coverage} if coverage else {}),

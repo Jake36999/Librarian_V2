@@ -386,3 +386,88 @@ def test_start_audit_failure_does_not_leave_a_phantom_live_batch(core, monkeypat
     assert not batch.live(core.vault)
     assert batch.status(core.vault)["status"] == "interrupted"
     assert core.writer.interrupted_operations()
+
+
+# -- MF-020: a completion is reused only for the same input ----------------------
+
+def _attached(core, name="new-model", text="the original text", **values):
+    attached = core.vault.root / "Inbox" / f"{name}.txt"
+    attached.parent.mkdir(parents=True, exist_ok=True)
+    attached.write_text(text, encoding="utf-8")
+    return _item(core, name, file=f"Inbox/{name}.txt", **values), attached
+
+
+def _approve_again(core, item_id):
+    def again():
+        store = StagingStore(core.vault)
+        fresh = store.load(item_id)
+        fresh["status"] = "approved"
+        fresh.pop("batch", None)
+        store.save(fresh)
+    core.writer.submit(again, caller="test-approve")
+
+
+def _counting_stage(calls):
+    def step(ctx, source):
+        calls.append(source["id"])
+        return {"status": "complete"}
+    return step
+
+
+def test_an_earlier_completion_is_reused_only_for_the_same_source(core, monkeypatch):
+    item, attached = _attached(core)
+    calls = []
+    monkeypatch.setattr(batch, "STAGES", [("read", _counting_stage(calls))])
+    assert core.person_call("process_approved", {})["status"] == "finished"
+    assert StagingStore(core.vault).load(item["id"])["processing"]["keys"]["read"]
+
+    _approve_again(core, item["id"])
+    core.person_call("process_approved", {})
+    assert calls == [item["id"]]                          # same bytes: carried over
+
+    attached.write_text("an edited text", encoding="utf-8")
+    _approve_again(core, item["id"])
+    core.person_call("process_approved", {})
+    assert calls == [item["id"], item["id"]]              # changed: read again
+
+
+def test_a_resumed_run_redoes_a_stage_whose_input_changed(core, monkeypatch):
+    item, attached = _attached(core)
+    calls = []
+
+    def step(ctx, source):
+        calls.append(source["id"])
+        if len(calls) == 1:
+            ctx.extras["cancel"].set()
+        return {"status": "complete"}
+
+    monkeypatch.setattr(batch, "STAGES", [("read", step)])
+    out = core.person_call("process_approved", {})
+    assert out["status"] == "cancelled"
+    attached.write_text("replaced while the run was stopped", encoding="utf-8")
+    resumed = core.person_call("process_approved", {"resume": out["run"]})
+    assert resumed["status"] == "finished" and calls == [item["id"], item["id"]]
+
+
+def test_a_source_change_during_a_stage_is_not_counted_as_done(core, monkeypatch):
+    item, attached = _attached(core)
+
+    def slow_read(ctx, source):
+        attached.write_text("changed while the model was reading", encoding="utf-8")
+        return {"status": "complete"}
+
+    monkeypatch.setattr(batch, "STAGES", [("read", slow_read)])
+    core.person_call("process_approved", {})
+    after = StagingStore(core.vault).load(item["id"])
+    assert after["status"] == "partial" and after["processing"]["stages"]["read"] == "stale"
+    assert "read" not in after["processing"]["keys"]
+    assert any("source changed while this stage ran" in n
+               for n in after["processing"]["not_examined"])
+
+
+def test_a_completion_from_before_mf020_has_no_key_and_is_not_reused(core, monkeypatch):
+    item, _ = _attached(core, processing={"run": "batch-old", "stages": {"read": "complete"}})
+    calls = []
+    monkeypatch.setattr(batch, "STAGES", [("read", _counting_stage(calls))])
+    core.person_call("process_approved", {})
+    assert calls == [item["id"]]

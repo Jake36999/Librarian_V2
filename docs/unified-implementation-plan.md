@@ -5471,3 +5471,54 @@ now expects a reserve line and a settle line.
 (`reports/2026-11-05-evidence/suite-mf019-py311.json`, a clean clone of
 `d190969` plus this commit's files).
 
+### MF-020 V1 import and batch reuse are bound to one input (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-020 (NAT-13) | implemented | this commit | `src/resource_librarian/v1_export.py`, `batch.py`; `tests/test_v1_export.py`, `tests/test_core_batch.py`. |
+
+**V1 import, before.** Staging a V1 note read it twice: once as the evidence
+text, then again to parse the fields. An edit in between staged fields that
+the kept evidence does not say. Measured on the previous `v1_export.py`: the
+staged `github_stars` was 99 while the evidence said 42.
+
+**V1 import, now.** One snapshot read. Its bytes are decoded once and then
+both kept as evidence and parsed for the fields.
+
+**Batch, before.** A stage was skipped if this run had already completed it,
+or if an earlier run had marked it complete, with no check that the item's
+input was unchanged. So an older completion satisfied a changed source.
+
+**Batch, now.** Each completion records a key covering:
+- the item's source (evidence ids, URL, kind, name, and the attached and
+  cleaned files' bytes);
+- the stage and every stage before it, each with its recipe (the read
+  stage's is `deep_read.recipe()`);
+- for model-backed stages, the clerk and OCR route.
+
+**Reuse needs an identical key.** That applies within a resumed run and from
+an earlier run's `processing.keys`. A completion recorded before MF-020 has
+no key, so it is not reused.
+
+**A change mid-stage.** If the source changes while a stage runs, its result
+is recorded `stale`, not complete. The item ends `partial`, and the reason is
+listed under what was not examined. The parse stage's own attachment and
+cleaned copy are excluded from that check.
+
+**Tests.**
+- **`test_core_batch.py`:** 4 new cases:
+  - an earlier completion is reused for the same bytes and not after an edit;
+  - a resumed run redoes a stage whose input changed;
+  - a change during a stage is not counted as done;
+  - a completion with no key is not reused.
+- **`test_v1_export.py`:** 1 new case: the staged fields and their evidence
+  come from one read.
+
+All 5 fail on the previous code. Writing them caught a bug in this change:
+the "before" identity must be taken before the stage runs, not at comparison
+time.
+
+**Verification:** full suite: 2022 passed, 2 skipped, 5 deselected in 629.57s (0:10:29) (exit 0, Python 3.11.3)
+(`reports/2026-11-05-evidence/suite-mf020-py311.json`, a clean clone of
+`d40ea08` plus this commit's files).
+
