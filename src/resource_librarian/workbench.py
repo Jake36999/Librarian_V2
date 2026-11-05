@@ -9,6 +9,12 @@ Isolation policy (REMED-04).  Every container a Docker engagement starts is
 built from `CONTAINED`: no network, every capability dropped, no privilege
 gain.  Each phase then adds only what it needs, and says why:
 
+Every one of those containers lives as `containers.Producer` (MF-016):
+- created and started attached, never `--rm`;
+- its output held to a bounded tail;
+- one stop on its deadline, a cancelled turn, or too much output;
+- shown stopped before anything is taken from it, then removed.
+
 - **provision** (`_docker_stage`, output volume): read-only root, runs as root
   with FOWNER alone, to make the root-owned output volume writable by the
   unprivileged runner.
@@ -22,11 +28,15 @@ gain.  Each phase then adds only what it needs, and says why:
   The output volume is mounted only when `sandbox_output` is allowed: nothing
   caps it while the run writes (MF-015, owner 2026-11-05; see `sandbox.py`).
   Without it the run keeps what it prints, and nothing is exported.
-- **export** (`_archive_outputs`): a read-only helper that is never started.
-  The output volume streams out as a tar and is checked member by member
-  before anything is written here: regular files and folders only, no path
-  outside the engagement's folder, at most MAX_OUTPUT_FILES files and
-  MAX_OUTPUT_BYTES in all.  Over a limit, the export stops and says so.
+- **export** (`_archive_outputs`): from the execution container itself, once it
+  is shown stopped; the stopped filesystem is never restarted.
+  - The output volume streams out as a tar into a private quarantine.
+  - Each member is checked before anything is written: regular files and
+    folders only, with names safe here, and at most MAX_OUTPUT_FILES entries
+    and MAX_OUTPUT_BYTES in all.
+  - Only if every member passes, and the container is then removed, does it
+    replace the engagement's folder. Otherwise nothing is kept, and the reason
+    is named.
 
 Docker's default seccomp profile applies; it is relied on, not asserted.
 What any process prints is held to its last `sandbox.CAPTURE_BYTES` per
@@ -184,25 +194,13 @@ def _run(args: list[str], timeout: float) -> subprocess.CompletedProcess:
     return run_bounded(args, timeout)
 
 
-@contextlib.contextmanager
+_run.supervised = True                  # type: ignore[attr-defined]  # the real Docker
+
+
 def _stream(args: list[str], timeout: float):
-    """A command's stdout as a binary stream, read as it is produced and never
-    held whole; the command is killed on leaving, or after `timeout`."""
-    import threading
-    process = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                               stderr=subprocess.DEVNULL)
-    timer = threading.Timer(timeout, process.kill)
-    timer.start()
-    try:
-        yield process.stdout
-    finally:
-        timer.cancel()
-        if process.poll() is None:
-            process.kill()
-        with contextlib.suppress(subprocess.TimeoutExpired):
-            process.wait(timeout=30)
-        if process.stdout is not None:
-            process.stdout.close()
+    """A command's stdout as a binary stream, never held whole (`containers.stream`)."""
+    from .containers import stream
+    return stream(args, timeout)
 
 
 def _volume_name(engagement: Engagement, kind: str) -> str:
@@ -421,6 +419,20 @@ class _WindowsJob:
             self.handle = None
 
 
+def _helper(engagement: Engagement, kind: str, runner: Runner) -> Any:
+    from .containers import Producer
+    return Producer(f"librarian-{kind}-{engagement.id[-8:]}-{secrets.token_hex(3)}", runner,
+                    kind=f"workbench-{kind}")
+
+
+def _finished(producer: Any, capture: Any, what: str) -> None:
+    """A helper's run, removed, and shown to have done its job; otherwise why not."""
+    producer.dispose()
+    if capture.exit_code != 0 or not producer.succeeded:
+        why = capture.stderr.strip()[-300:] or producer.stop_reason or producer.state
+        raise RuntimeError(f"{what}: {why}")
+
+
 def _docker_stage(engagement: Engagement, repo_key: str, image: str, runner: Runner) -> tuple[str, str]:
     """Copy source bytes into a named Linux volume without bind-mounting NTFS."""
     source_volume, output_volume = _volume_name(engagement, "source"), _volume_name(engagement, "output")
@@ -428,186 +440,125 @@ def _docker_stage(engagement: Engagement, repo_key: str, image: str, runner: Run
         made = runner(["docker", "volume", "create", volume], 60)
         if getattr(made, "returncode", 1) != 0:
             raise RuntimeError(f"could not create Docker volume {volume}: {str(getattr(made, 'stderr', ''))[-300:]}")
-    # Named volumes are root-owned when Docker creates them.  Initialise only
-    # the disposable output volume before dropping the execution container to
-    # its unprivileged uid; otherwise a correctly unprivileged run cannot
-    # write any declared result at all.
-    # provision: root with FOWNER alone, so chmod works on the volume root.
-    output_init = runner(["docker", "run", "--rm", *CONTAINED, "--cap-add", "FOWNER",
-                          *HELPER_LIMITS, "--read-only", "--user", "0:0",
-                          "--mount", f"type=volume,src={output_volume},dst=/output",
-                          image, "sh", "-c", "chmod 1777 /output"], 90)
-    if getattr(output_init, "returncode", 1) != 0:
-        raise RuntimeError("could not initialise controlled Docker output volume: " +
-                           str(getattr(output_init, "stderr", ""))[-300:])
     archive, archive_hash = _download_archive(repo_key, engagement.pinned_revision)
-    container = f"librarian-stage-{engagement.id[-8:]}"
     try:
+        # The archive is checked before any container exists.
         _check_archive(archive)
+        # Named volumes are root-owned when Docker creates them.  Initialise only
+        # the disposable output volume before dropping the execution container to
+        # its unprivileged uid; otherwise a correctly unprivileged run cannot
+        # write any declared result at all.
+        # provision: root with FOWNER alone, so chmod works on the volume root.
+        provision = _helper(engagement, "provision", runner)
+        done = provision.execute([*CONTAINED, "--cap-add", "FOWNER", *HELPER_LIMITS,
+                                  "--read-only", "--user", "0:0",
+                                  "--mount", f"type=volume,src={output_volume},dst=/output"],
+                                 image, ["sh", "-c", "chmod 1777 /output"], deadline=90)
+        _finished(provision, done, "could not initialise controlled Docker output volume")
+        stage = _helper(engagement, "stage", runner)
+
+        def copy_in() -> str:
+            copied = runner(["docker", "cp", str(archive), f"{stage.name}:/tmp/source.tar.gz"], 90)
+            if getattr(copied, "returncode", 1) != 0:
+                return ("could not copy archive into Linux volume: " +
+                        str(getattr(copied, "stderr", ""))[-300:])
+            return ""
+
         # stage: root without capabilities; -o keeps tar from restoring owners.
-        made = runner(["docker", "create", "--name", container, *CONTAINED, *HELPER_LIMITS,
-                       "--user", "0:0",
-                       "--mount", f"type=volume,src={source_volume},dst=/source",
-                       image, "sh", "-c",
-                       "tar -xzof /tmp/source.tar.gz -C /source --strip-components=1"], 90)
-        if getattr(made, "returncode", 1) != 0:
-            raise RuntimeError(f"could not create source staging helper: {str(getattr(made, 'stderr', ''))[-300:]}")
-        copied = runner(["docker", "cp", str(archive), f"{container}:/tmp/source.tar.gz"], 90)
-        if getattr(copied, "returncode", 1) != 0:
-            raise RuntimeError(f"could not copy archive into Linux volume: {str(getattr(copied, 'stderr', ''))[-300:]}")
-        unpacked = runner(["docker", "start", "-a", container], 300)
-        if getattr(unpacked, "returncode", 1) != 0:
-            raise RuntimeError(f"could not unpack pinned archive: {str(getattr(unpacked, 'stderr', ''))[-300:]}")
+        done = stage.execute([*CONTAINED, *HELPER_LIMITS, "--user", "0:0",
+                              "--mount", f"type=volume,src={source_volume},dst=/source"],
+                             image, ["sh", "-c",
+                                     "tar -xzof /tmp/source.tar.gz -C /source --strip-components=1"],
+                             deadline=300, before_start=copy_in)
+        _finished(stage, done, "could not unpack pinned archive")
         return source_volume, archive_hash
     finally:
-        runner(["docker", "rm", "-f", container], 30)
         with contextlib.suppress(OSError):
             archive.unlink()
 
 
-def _archive_outputs(vault: Vault, engagement: Engagement, image: str,
-                     runner: Runner) -> dict[str, Any]:
-    """Export a managed output volume into the engagement's folder, checked before
-    it lands (REMED-04).
+def _archive_outputs(vault: Vault, engagement: Engagement, producer: Any) -> dict[str, Any]:
+    """Export the output volume from the stopped execution container, checked before any
+    of it is kept (REMED-04; MF-016).
 
-    The volume streams out as a tar (`docker cp ... -`). Each member is checked
-    before a byte is written: regular files and folders only, nothing outside
-    the folder, and the file count and total size held to MAX_OUTPUT_FILES and
-    MAX_OUTPUT_BYTES by the sizes the tar declares and the bytes it carries.
-    Over a limit the export stops, keeps what already fit and says so; a link,
-    device or unsafe path is refused and named. Before this, the whole volume
-    was copied here first and only then measured (Codex review W1)."""
-    output_volume = _volume_name(engagement, "output")
+    `docker cp <container>:/workspace/output -` streams a tar into a private quarantine,
+    checked member by member before a byte is written (`containers.check_tar`). Only if
+    every member passes, and the container is then removed, does it replace the
+    engagement's folder. Otherwise nothing is kept: a link, device, unsafe name or a
+    limit names why, and what arrived stays in quarantine for a person."""
+    from . import containers
     destination = vault.derived / "engagements" / engagement.id / "output"
-    # The volume is the record of every run's outputs; this folder mirrors it.
-    shutil.rmtree(destination, ignore_errors=True)
-    destination.mkdir(parents=True, exist_ok=True)
-    home = destination.resolve()
-    container = f"librarian-output-{engagement.id[-8:]}"
+    held = vault.librarian / "quarantine" / "engagements"
+    quarantine = held / f"{engagement.id}-{secrets.token_hex(3)}"
+    report = producer.export_to("/workspace/output", quarantine, max_bytes=MAX_OUTPUT_BYTES,
+                                max_entries=MAX_OUTPUT_FILES, stream_with=_stream)
+    producer.dispose()
+    accepted = report["accepted"] and producer.state == "disposed"
     records: list[dict[str, Any]] = []
-    refused: list[str] = []
-    exported: dict[str, Path] = {}          # relative name -> the file written here
-    report: dict[str, Any] = {"complete": False, "stopped": ""}
-    total = 0
-    try:
-        # export: a read-only helper that is never started.
-        made = runner(["docker", "create", "--name", container, *CONTAINED, "--read-only",
-                       "--mount", f"type=volume,src={output_volume},dst=/output,readonly", image,
-                       "true"], 60)
-        if getattr(made, "returncode", 1) != 0:
-            report["stopped"] = ("could not create the export helper: " +
-                                 str(getattr(made, "stderr", ""))[-300:])
-            return {"artifacts": [], "export": report}
-        with _stream(["docker", "cp", f"{container}:/output", "-"], EXPORT_SECONDS) as pipe, \
-                tarfile.open(fileobj=pipe, mode="r|") as bundle:
-            for member in bundle:
-                raw = member.name.replace("\\", "/")
-                parts = [part for part in raw.split("/") if part not in ("", ".")]
-                if parts[:1] == ["output"]:
-                    parts = parts[1:]
-                if not parts:
-                    continue
-                rel = "/".join(parts)
-                if raw.startswith("/") or ".." in parts or any(":" in part for part in parts):
-                    refused.append(f"{raw}: a path outside the engagement's folder")
-                    continue
-                if member.isdir():
-                    (destination / rel).mkdir(parents=True, exist_ok=True)
-                    continue
-                # A hard link is a second name for a file: the stream carries the
-                # bytes once and the other name as a link (found live: a run's
-                # own `ln` lost the original name). Copied from what is already
-                # exported here, and counted; a link to anything else is refused.
-                linked = None
-                if member.islnk():
-                    link = [part for part in member.linkname.replace("\\", "/").split("/")
-                            if part not in ("", ".")]
-                    linked = exported.get("/".join(link[1:] if link[:1] == ["output"] else link))
-                    if linked is None:
-                        refused.append(f"{rel}: a hard link to a file not exported")
-                        continue
-                elif not member.isreg():
-                    refused.append(f"{rel}: not a regular file (a symbolic link, device or pipe)")
-                    continue
-                size = linked.stat().st_size if linked is not None else max(0, member.size)
-                if len(records) >= MAX_OUTPUT_FILES:
-                    report["stopped"] = f"more than {MAX_OUTPUT_FILES} files"
-                    break
-                if total + size > MAX_OUTPUT_BYTES:
-                    report["stopped"] = (f"{rel} would take the export past "
-                                         f"{MAX_OUTPUT_BYTES:,} bytes")
-                    break
-                target = destination / rel
-                if home not in target.resolve().parents:
-                    refused.append(f"{rel}: a path outside the engagement's folder")
-                    continue
-                source = linked.open("rb") if linked is not None else bundle.extractfile(member)
-                digest, written = hashlib.sha256(), 0
-                try:
-                    target.parent.mkdir(parents=True, exist_ok=True)
-                    with source, target.open("xb") as out:
-                        while written < size:
-                            block = source.read(min(64 * 1024, size - written))
-                            if not block:
-                                break
-                            out.write(block)
-                            digest.update(block)
-                            written += len(block)
-                except OSError as exc:
-                    with contextlib.suppress(OSError):
-                        target.unlink()
-                    refused.append(f"{rel}: could not be written here ({type(exc).__name__})")
-                    continue
-                total += written
-                exported[rel] = target
-                records.append({"path": target.relative_to(vault.root).as_posix(),
-                                "bytes": written, "sha256": digest.hexdigest()[:20]})
-            else:
-                report["complete"] = True
-    except (tarfile.TarError, OSError) as exc:
-        report["stopped"] = f"the export stream failed: {type(exc).__name__}: {exc}"
-    finally:
-        runner(["docker", "rm", "-f", container], 30)
-    report.update(files=len(records), bytes=total, refused=refused[:50])
-    return {"artifacts": records, "export": report}
+    kept_in = ""
+    if accepted:
+        # The volume is the record of every run's outputs; this folder mirrors it.
+        containers.promote(quarantine, destination)
+        records = [{"path": (destination / f["name"]).relative_to(vault.root).as_posix(),
+                    "bytes": f["bytes"], "sha256": f["sha256"][:20]} for f in report["files"]]
+    else:
+        if quarantine.is_dir():
+            kept_in = quarantine.relative_to(vault.root).as_posix()
+        containers.prune(held)
+    stopped = report["stopped"]
+    if not accepted and not stopped:
+        stopped = ("refused: " + "; ".join(report["rejected"][:3]) if report["rejected"] else
+                   f"the container is {producer.state}")
+    return {"artifacts": records, "export": {
+        "complete": accepted, "files": len(report["files"]), "bytes": report["bytes"],
+        "entries": report["entries"], "refused": report["rejected"][:50], "stopped": stopped,
+        "quarantine": kept_in}}
 
 
 def _docker_execute(vault: Vault, engagement: Engagement, command: list[str], image: str,
                     runner: Runner, keep_output: bool = True,
-                    permission: str = "") -> dict[str, Any]:
+                    permission: str = "", cancel: Any = None) -> dict[str, Any]:
     """Run the command. Without `keep_output` (MF-015: `sandbox_output` not allowed) no
     output volume is mounted and nothing is exported: the run keeps what it prints."""
     repo = _repository(vault, engagement.source)
     source_volume, archive_hash = _docker_stage(engagement, repo["repo_key"], image, runner)
     output_volume = _volume_name(engagement, "output")
-    name = f"librarian-engage-{engagement.id[-8:]}"
+    producer = _helper(engagement, "engage", runner)
     output = ["--mount", f"type=volume,src={output_volume},dst=/workspace/output"] \
         if keep_output else []
-    args = ["docker", "run", "--rm", "--name", name, *CONTAINED, "--read-only",
-            "--tmpfs", "/tmp:rw,size=128m", "--memory", "2g", "--cpus", "2", "--pids-limit", "128",
-            "--user", "10001:10001",
-            "--mount", f"type=volume,src={source_volume},dst=/workspace/source,readonly",
-            *output, "--workdir", "/workspace", image, *command]
+    flags = [*CONTAINED, "--read-only", "--tmpfs", "/tmp:rw,size=128m", "--memory", "2g",
+             "--cpus", "2", "--pids-limit", "128", "--user", "10001:10001",
+             "--mount", f"type=volume,src={source_volume},dst=/workspace/source,readonly",
+             *output, "--workdir", "/workspace"]
     try:
-        done = runner(args, 930)
-        result = {"exit_code": int(getattr(done, "returncode", -1)),
-                  "stdout": str(getattr(done, "stdout", ""))[-8000:],
-                  "stderr": str(getattr(done, "stderr", ""))[-8000:], "archive_sha256": archive_hash,
-                  "source_volume": source_volume, "output_volume": output_volume,
-                  "isolation_tier": "docker_isolated"}
-        if getattr(done, "produced", None):
-            result["output_bytes"] = done.produced      # what it printed, before the tail
-    except subprocess.TimeoutExpired:
-        runner(["docker", "kill", name], 30)
-        result = {"exit_code": -1, "stdout": "", "stderr": "stopped after 900s", "archive_sha256": archive_hash,
-                  "source_volume": source_volume, "output_volume": output_volume,
-                  "isolation_tier": "docker_isolated"}
-    if not keep_output:
-        result.update(artifacts=[], export={
-            "complete": False, "files": 0, "bytes": 0, "refused": [],
-            "stopped": f"no output was kept: writing it was not permitted ({permission})"})
-        return result
-    result.update(_archive_outputs(vault, engagement, image, runner))
+        capture = producer.execute(flags, image, command, deadline=900, cancel=cancel,
+                                   io_limit=2 * MAX_OUTPUT_BYTES if keep_output else None)
+        stderr = capture.stderr
+        if producer.stop_reason == "deadline":
+            stderr = (stderr + "\nstopped after 900s").lstrip("\n")
+        elif producer.stop_reason:
+            stderr = (stderr + f"\nstopped: {producer.stop_reason}").lstrip("\n")
+        result = {"exit_code": capture.exit_code if capture.exit_code is not None else -1,
+                  "stdout": capture.stdout[-8000:], "stderr": stderr[-8000:],
+                  "archive_sha256": archive_hash, "source_volume": source_volume,
+                  "output_volume": output_volume, "isolation_tier": "docker_isolated",
+                  "output_bytes": capture.produced, "stopped": producer.stop_reason}
+        if not keep_output:
+            producer.dispose()
+            result.update(artifacts=[], export={
+                "complete": False, "files": 0, "bytes": 0, "refused": [],
+                "stopped": f"no output was kept: writing it was not permitted ({permission})"})
+        else:
+            result.update(_archive_outputs(vault, engagement, producer))
+    except BaseException:
+        with contextlib.suppress(Exception):
+            if producer.state not in ("disposed", "cleanup_unknown"):
+                producer.stop("error")
+                producer.settle()
+                producer.dispose()
+        raise
+    result["execution"] = producer.record()
+    result["succeeded"] = producer.succeeded and (not keep_output or result["export"]["complete"])
     return result
 
 
@@ -744,7 +695,8 @@ def start(vault: Vault, engagement_id: str, *, choice: str, command: list[str] |
         engagement.state, engagement.isolation_tier = "running", "docker_isolated"
         store.put(engagement, "started")
         result = _docker_execute(vault, engagement, command, image, runner or _run,
-                                 keep_output=keep, permission=permission)
+                                 keep_output=keep, permission=permission,
+                                 cancel=(getattr(ctx, "extras", None) or {}).get("cancel"))
     elif choice == "non_isolated_host_exec":
         if not confirm_non_isolated:
             raise Refusal("EXECUTION_SANDBOX_ONLY", "host execution is non_isolated_host_exec; explicitly confirm its weaker guarantee")
@@ -756,7 +708,10 @@ def start(vault: Vault, engagement_id: str, *, choice: str, command: list[str] |
     run_id = f"run-{secrets.token_hex(6)}"
     engagement.run_ids.append(run_id)
     engagement.artifacts.extend(result.pop("artifacts", []))
-    engagement.state = "completed" if result.get("exit_code") == 0 else "paused"
+    # MF-016: a Docker run is complete only once its container was shown stopped and
+    # removed, and its output (if kept) passed the export whole.
+    engagement.state = ("completed" if result.get("exit_code") == 0 and
+                        result.pop("succeeded", True) else "paused")
     engagement.audit_trace.append({"at": now_iso(), "event": "run", "run_id": run_id,
                                    "choice": choice, "result": {k: v for k, v in result.items()
                                                                      if k not in ("stdout", "stderr")}})

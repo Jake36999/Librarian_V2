@@ -960,6 +960,22 @@ class Loop:
 
     # -- a turn --------------------------------------------------------------
     def send(self, text: str, cancel: threading.Event | None = None) -> Turn:
+        """One turn. Its `cancel` event is in the tools' context while it runs, so a long
+        tool (a sandbox run, MF-016) can stop when the person stops the turn."""
+        if cancel is None:
+            return self._send(text, None)
+        missing = object()
+        before = self.ctx.extras.get("cancel", missing)
+        self.ctx.extras["cancel"] = cancel
+        try:
+            return self._send(text, cancel)
+        finally:
+            if before is missing:
+                self.ctx.extras.pop("cancel", None)
+            else:
+                self.ctx.extras["cancel"] = before
+
+    def _send(self, text: str, cancel: threading.Event | None) -> Turn:
         self._answering, self.challenges = self.challenges, []    # this turn answers them
         self._turn_reserved_tokens = 0
         self._turn_reserved_cost = 0.0

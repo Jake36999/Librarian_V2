@@ -20,8 +20,13 @@ The owner's four decisions, enforced here:
 
 The container: the repository's shallow clone mounted read-only, the runner's folder read-only,
 a 64 MB `/tmp`, no network, no capabilities, an unprivileged user, memory, CPU and process
-limits, no environment from this machine (so no keys), removed when it stops; a run that
-outlives its timeout is killed. The clone is the default branch at depth 1; its tree is
+limits, no environment from this machine (so no keys). Its life is `containers.Producer`'s
+(MF-016):
+- created, started attached and never `--rm`;
+- what it prints is held to a bounded tail;
+- its deadline or too much output requests one stop;
+- it is shown stopped, killed if it has to be, and then removed.
+If it cannot be shown stopped and removed, the run is "could not run", whatever it printed. The clone is the default branch at depth 1; its tree is
 compared with the tree the library surveyed, and the result says which version ran.
 
 Every outcome is kept: the run's record in `.librarian/claims/runnable.jsonl` and an
@@ -29,6 +34,7 @@ Every outcome is kept: the run's record in `.librarian/claims/runnable.jsonl` an
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
@@ -39,6 +45,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Callable
 
+from . import containers
 from .rules import Refusal
 from .vault import Vault, jsonl_lines, now_iso
 
@@ -197,7 +204,11 @@ class RunnableStore:
 # ------------------------------------------------------------------ the sandbox
 
 def _run(args: list[str], timeout: float) -> subprocess.CompletedProcess:
-    return subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+    from .sandbox import run_bounded
+    return run_bounded(args, timeout)
+
+
+_run.supervised = True                  # type: ignore[attr-defined]  # the real Docker
 
 
 def docker_status(runner: Callable[..., Any] | None = None) -> tuple[bool, str]:
@@ -234,10 +245,12 @@ def repository_of(vault: Vault, source: str) -> dict[str, Any]:
     return {"url": url, "repo_key": key, "surveyed_tree": tree}
 
 
-def command(name: str, checkout: Path, job: Path) -> list[str]:
-    """The container, built here in code; every flag is a control."""
-    return ["docker", "run", "--rm", "--name", name,
-            "--network", "none",                       # no egress, no dependency fetching
+COMMAND = ["python", "-I", "/job/runner.py"]
+
+
+def container_flags(checkout: Path, job: Path) -> list[str]:
+    """The container's controls, built here in code; every flag is one."""
+    return ["--network", "none",                       # no egress, no dependency fetching
             "--memory", MEMORY, "--cpus", CPUS, "--pids-limit", "128",
             "--read-only", "--tmpfs", "/tmp:rw,size=64m",
             "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
@@ -245,13 +258,16 @@ def command(name: str, checkout: Path, job: Path) -> list[str]:
             "-e", "HOME=/tmp", "-e", "PYTHONDONTWRITEBYTECODE=1",
             "--mount", f"type=bind,source={checkout},target=/src,readonly",
             "--mount", f"type=bind,source={job},target=/job,readonly",
-            "--workdir", "/src", IMAGE, "python", "-I", "/job/runner.py"]
+            "--workdir", "/src"]
+
+
+STOPPED = ("timeout", "cancelled", "output_limit", "cleanup_unknown")
 
 
 def judge(fi: dict[str, Any], outcome: dict[str, Any]) -> tuple[str, str]:
     """confirmed / not_confirmed / could_not_run, and why."""
     stage = outcome.get("stage")
-    if stage in ("import", "lookup") or outcome.get("error") == "timeout":
+    if stage in ("import", "lookup") or outcome.get("error") in STOPPED:
         why = f"{outcome.get('error')}: {outcome.get('message', '')}".strip()
         if outcome.get("error") == "ModuleNotFoundError":
             why += " (the sandbox has no network, so only the standard library and the " \
@@ -318,20 +334,40 @@ def run(vault: Vault, run_id: str, *, runner: Callable[..., Any] | None = None,
                 {"call": fi["call"], "args": fi["args"], "kwargs": fi["kwargs"],
                  "paths": paths}), encoding="utf-8")
             (job / "runner.py").write_text(RUNNER, encoding="utf-8")
-            name = f"librarian-run-{run_id}-{now_iso()[11:19].replace(':', '')}"
+            name = f"librarian-run-{run_id}-{now_iso()[11:19].replace(':', '')}-{os.urandom(2).hex()}"
+            producer = containers.Producer(name, runner, kind="claim")
             try:
-                done = runner(command(name, checkout, job), TIMEOUT + 30)
-                outcome = parse(getattr(done, "stdout", ""))
-                if outcome.get("stage") == "none" and getattr(done, "returncode", 0):
-                    outcome["message"] = (str(getattr(done, "stderr", "")).strip()[-400:]
-                                          or outcome["message"])
-            except subprocess.TimeoutExpired:
-                try:
-                    runner(["docker", "kill", name], 30)
-                except Exception:                           # noqa: BLE001
-                    pass
+                capture = producer.execute(container_flags(checkout, job), IMAGE, COMMAND,
+                                           deadline=TIMEOUT + 30)
+                producer.dispose()
+            except BaseException:
+                with contextlib.suppress(Exception):
+                    if producer.state not in ("disposed", "cleanup_unknown"):
+                        producer.stop("error")
+                        producer.settle()
+                        producer.dispose()
+                raise
+            execution = producer.record()
+            outcome = parse(capture.stdout)
+            if outcome.get("stage") == "none" and capture.exit_code:
+                outcome["message"] = capture.stderr.strip()[-400:] or outcome["message"]
+            if producer.stop_reason == "deadline":
                 outcome = {"stage": "none", "error": "timeout",
                            "message": f"still running after {TIMEOUT + 30}s; stopped"}
+            elif producer.stop_reason == "output_limit":
+                outcome = {"stage": "none", "error": "output_limit",
+                           "message": f"it printed more than "
+                                      f"{containers.STREAM_LIMIT_BYTES // (1024 * 1024)} MB; "
+                                      f"stopped"}
+            elif producer.stop_reason:
+                outcome = {"stage": "none", "error": "cancelled",
+                           "message": f"stopped ({producer.stop_reason})"}
+            if not producer.succeeded:
+                # MF-016: what it printed may be true, but a container not shown stopped
+                # and removed is never a verdict.
+                outcome = {"stage": "none", "error": "cleanup_unknown",
+                           "message": f"its container could not be shown stopped and removed "
+                                      f"({name}); `docker rm -f {name}` removes it"}
         finally:
             shutil.rmtree(job, ignore_errors=True)
     verdict, detail = judge(fi, outcome)
@@ -339,7 +375,8 @@ def run(vault: Vault, run_id: str, *, runner: Callable[..., Any] | None = None,
         "call": fi["call"], "args": fi["args"], "kwargs": fi["kwargs"],
         "expected": {"expect": fi["expect"], "value": fi["value"]},
         "image": IMAGE, "network": "none", "commit": commit, "tree": tree,
-        "surveyed_tree": repo["surveyed_tree"], "outcome": outcome, "verdict": verdict})
+        "surveyed_tree": repo["surveyed_tree"], "outcome": outcome, "verdict": verdict,
+        "execution": execution})
     result = {"verdict": verdict, "detail": detail[:600], "version": version,
               "commit": commit, "evidence": evidence.id, "by": "person"}
     store.record(run_id, result)

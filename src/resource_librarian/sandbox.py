@@ -9,33 +9,49 @@ Who runs what:
   a script - `.py`, `.sh` - never for a note or text), and a claim's failing input
   (`claim_run.py`).
 
-Every run, whoever starts it, gets a fresh container that is removed when it stops: no
-network, no capabilities, an unprivileged user, a read-only root, its code and inputs
-mounted read-only, a small `/tmp`, memory, CPU, process and time limits, and nothing from
-this machine's environment (no keys). Containers share nothing: each run has its own
-folders.
+Every run, whoever starts it, gets a fresh container of its own: no network, no
+capabilities, an unprivileged user, a read-only root, its code and inputs mounted read-only,
+a small `/tmp`, memory, CPU, process and time limits, and nothing from this machine's
+environment (no keys). Containers share nothing: each run has its own folders.
 
-**The landing pad.** The only place a run can write outside its container is its own
-`/landing`, which is `.librarian/sandbox/landing/<run>/` here. After the run, that folder is
-checked: symbolic links are removed, the total is held to LANDING_MAX_BYTES and the file
-count to LANDING_MAX_FILES (what is over is deleted and said), and every file is listed
-with its size and digest. Nothing on the pad is ever executed, imported, indexed or moved
-by the app: the model may read a text file from it (`sandbox_read`), and moving anything
-out is a person's act.
+**Its life** (MF-016; see `containers.py`). The container is created, started attached and
+supervised here, never with `--rm`:
+- What it prints is counted and held to a bounded tail.
+- Its deadline, a cancelled turn, or output past its limit requests one stop.
+- It is inspected and shown stopped (killed if it has to be) before anything leaves it.
+- Then it is removed.
+A run whose container cannot be shown stopped and removed ends `cleanup_unknown`. That run
+is never `completed`, and nothing it wrote is kept.
 
-**Output is its own permission** (owner, 2026-11-05; MF-015). Those limits are checked
-after the run. While it runs, nothing caps what it writes to the pad: the pad is a folder
-on this machine, and no Docker option limits a bind mount. Docker Desktop on WSL2 also
-ignores `--storage-opt size`: measured 2026-11-05, 60 MiB was written under a 20 MB cap. So a run
-gets a writable pad only when `sandbox_output` is allowed. That is a write of its own,
-asked about in every mode (`broker.ALWAYS_ASK`) and refused in Plan mode. Allowing the run,
-or any earlier write, never grants it. Refused or unanswered, the run still goes ahead
-with no writable pad: it keeps what it prints, but no file it writes is kept. A Workbench
+**The landing pad.** The only place a run can write outside its small `/tmp` is its own
+`/landing`, an anonymous volume removed with the container. After the run stops, `/landing`
+streams out as a tar into a private quarantine (`.librarian/quarantine/sandbox/<run>`) and
+each member is checked before it is written:
+- regular files and folders only, with names safe on this machine;
+- at most LANDING_MAX_FILES entries and LANDING_MAX_BYTES in all.
+Only if all of it passes is it moved to `.librarian/sandbox/landing/<run>/`, and every
+file is listed with its size and digest. Otherwise nothing is kept, and what arrived stays
+in quarantine for a person (the newest few are kept). Nothing on the pad is ever executed,
+imported, indexed or moved by the app. The model may read a text file from it
+(`sandbox_read`); moving anything out is a person's act.
+
+**Output is its own permission** (owner, 2026-11-05; MF-015). Those limits hold for what is
+kept, not for what the run writes while it runs:
+- Docker Desktop on WSL2 ignores `--storage-opt size`: measured 2026-11-05, 60 MiB was
+  written under a 20 MB cap.
+- A volume has no cap of its own.
+So a run gets a writable `/landing` only when `sandbox_output` is allowed. That is a write
+of its own:
+- asked about in every mode (`broker.ALWAYS_ASK`) and refused in Plan mode;
+- allowing the run, or any earlier write, never grants it.
+While it runs, its disk writes are sampled, and past IO_LIMIT_BYTES a stop is requested.
+That is a monitor, not a quota. Refused or unanswered, the run still goes ahead with no
+writable pad: it keeps what it prints, but no file it writes is kept. A Workbench
 engagement's output volume is gated the same way.
 
-The image is `librarian-sandbox:1`, built once from `sandbox/Dockerfile` (python:3.11-slim
-and an unprivileged user); without a running Docker there is no run, and no fallback to
-this machine.
+The image is `librarian-sandbox:2`, built once from `sandbox/Dockerfile`: python:3.11-slim,
+an unprivileged user, and a `/landing` that user owns. Without a running Docker there is no
+run, and no fallback to this machine.
 """
 from __future__ import annotations
 
@@ -48,13 +64,14 @@ import subprocess
 from pathlib import Path
 from typing import Any, Callable
 
+from . import containers
 from .rules import Refusal
 from .vault import Vault, now_iso
 
-IMAGE = "librarian-sandbox:1"
+IMAGE = "librarian-sandbox:2"
 BASE_IMAGE = "python:3.11-slim"
 DOCKERFILE = f"""FROM {BASE_IMAGE}
-RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin runner
+RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin runner && mkdir -p /landing && chown 10001:10001 /landing
 USER runner
 WORKDIR /work
 """
@@ -63,6 +80,8 @@ MEMORY = "1g"
 CPUS = "1"
 LANDING_MAX_BYTES = 50 * 1024 * 1024
 LANDING_MAX_FILES = 200
+# Writes past this are stopped: more than twice what could be kept is not output.
+IO_LIMIT_BYTES = 2 * LANDING_MAX_BYTES
 READ_MAX_BYTES = 200_000
 CODE_MAX_CHARS = 100_000
 SCRIPTS = {".py": "python", ".sh": "shell"}
@@ -134,6 +153,9 @@ def _run(args: list[str], timeout: float) -> subprocess.CompletedProcess:
     return run_bounded(args, timeout)
 
 
+_run.supervised = True                  # type: ignore[attr-defined]  # the real Docker
+
+
 def docker_status(runner: Runner | None = None) -> tuple[bool, str]:
     if runner is None and shutil.which("docker") is None:
         return False, "Docker is not installed"
@@ -196,52 +218,43 @@ def output_permission(ctx: Any, where: str, after_run: str) -> tuple[bool, str]:
         return False, f"{refusal.code}: {refusal.detail}"
 
 
-def command(name: str, job: Path, landing: Path | None, inputs: Path | None, language: str,
-            entry: str) -> list[str]:
-    """The container, built here in code; every flag is a control.
+def quarantine_root(vault: Vault) -> Path:
+    return vault.librarian / "quarantine" / "sandbox"
 
-    With no `landing` (its output not permitted) nothing writable is mounted: the code
-    runs in its small `/tmp`, and what it writes there goes with the container.
+
+def container_flags(job: Path, landing: bool, inputs: Path | None, language: str) -> list[str]:
+    """The container's controls, built here in code; every flag is one.
+
+    With `landing` (its output permitted) `/landing` is an anonymous volume of its own,
+    removed with the container: nothing the run writes reaches this machine except
+    through the checked export. Without it nothing writable is mounted: the code runs in
+    its small `/tmp`, and what it writes there goes with the container.
     """
-    args = ["docker", "run", "--rm", "--name", name,
-            "--network", "none",                       # air-gapped
+    args = ["--network", "none",                       # air-gapped
             "--memory", MEMORY, "--cpus", CPUS, "--pids-limit", "128",
             "--read-only", "--tmpfs", "/tmp:rw,size=64m",
             "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
             "--user", "10001:10001",
             "-e", "HOME=/tmp", "-e", "PYTHONDONTWRITEBYTECODE=1",
             "--mount", f"type=bind,source={job},target=/job,readonly"]
-    if landing is not None:
-        args += ["--mount", f"type=bind,source={landing},target=/landing"]
+    if landing:
+        args += ["--mount", "type=volume,target=/landing"]
     if inputs is not None:
         args += ["--mount", f"type=bind,source={inputs},target=/inputs,readonly"]
-    return args + ["--workdir", "/landing" if landing is not None else "/tmp", IMAGE,
-                   *INTERPRETER[language], f"/job/{entry}"]
+    return args + ["--workdir", "/landing" if landing else "/tmp"]
 
 
-def _check_landing(landing: Path) -> tuple[list[dict[str, Any]], list[str]]:
-    """The pad after a run: links removed, size and count held, every file listed."""
-    notes: list[str] = []
-    files: list[dict[str, Any]] = []
-    total = 0
-    for path in sorted(landing.rglob("*")):
-        if path.is_symlink():
-            path.unlink()
-            notes.append(f"removed a link: {path.relative_to(landing).as_posix()}")
-            continue
-        if not path.is_file():
-            continue
-        size = path.stat().st_size
-        rel = path.relative_to(landing).as_posix()
-        if total + size > LANDING_MAX_BYTES or len(files) >= LANDING_MAX_FILES:
-            path.unlink()
-            notes.append(f"removed {rel}: over the pad's limit ({LANDING_MAX_FILES} files, "
-                         f"{LANDING_MAX_BYTES // (1024 * 1024)} MB)")
-            continue
-        total += size
-        files.append({"name": rel, "bytes": size,
-                      "sha256": hashlib.sha256(path.read_bytes()).hexdigest()[:16]})
-    return files, notes
+def _log(vault: Vault, row: dict[str, Any]) -> None:
+    log = vault.librarian / "sandbox" / "runs.jsonl"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    with log.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row) + "\n")
+
+
+STOPPED = {"deadline": "stopped after {timeout}s",
+           "cancelled": "stopped: the turn was cancelled",
+           "output_limit": "stopped: it printed more than {limit} MB",
+           "io_limit": "stopped: it wrote more than {io} MB to disk"}
 
 
 def run(vault: Vault, code: str, language: str, by: str, inputs: list[str] | None = None,
@@ -249,7 +262,8 @@ def run(vault: Vault, code: str, language: str, by: str, inputs: list[str] | Non
         ctx: Any = None) -> dict[str, Any]:
     """One run in a fresh container. `inputs` are library files, copied in read-only.
 
-    `ctx` carries the permission broker that decides `sandbox_output` for this run."""
+    `ctx` carries the permission broker that decides `sandbox_output` for this run, and
+    the turn's cancel event, if it has one."""
     runner = runner or _run          # looked up when called, so a test can stand in for it
     if language not in INTERPRETER:
         raise TypeError(f"language is one of {sorted(INTERPRETER)}")
@@ -263,13 +277,11 @@ def run(vault: Vault, code: str, language: str, by: str, inputs: list[str] | Non
     base = vault.librarian / "sandbox" / "runs" / run_id
     keep, permission = output_permission(
         ctx, f".librarian/sandbox/landing/{run_id}",
-        f"links removed, then held to {LANDING_MAX_FILES} files and "
+        f"exported only once the run is stopped, and only if all of it passes: no links, "
+        f"no unsafe names, at most {LANDING_MAX_FILES} entries and "
         f"{LANDING_MAX_BYTES // (1024 * 1024)} MB")
     job = base / "job"
-    landing = landing_root(vault) / run_id if keep else None
     job.mkdir(parents=True)
-    if landing is not None:
-        landing.mkdir(parents=True)
     entry = "main.py" if language == "python" else "main.sh"
     (job / entry).write_text(code, encoding="utf-8")
     staged_inputs = None
@@ -282,37 +294,82 @@ def run(vault: Vault, code: str, language: str, by: str, inputs: list[str] | Non
                 raise TypeError(f"no library file {rel!r} to copy in")
             shutil.copy2(source, staged_inputs / source.name)
     name = f"librarian-sandbox-{run_id}"
-    timed_out = False
+    producer = containers.Producer(name, runner, kind="sandbox")
+    _log(vault, {"run": run_id, "state": "reserved", "container": name, "at": now_iso()})
+    extras = getattr(ctx, "extras", None) or {}
+    files: list[dict[str, Any]] = []
+    notes: list[str] = []
+    report: dict[str, Any] | None = None
+    quarantined = ""
+    landing = landing_root(vault) / run_id
     try:
-        done = runner(command(name, job, landing, staged_inputs, language, entry),
-                      min(int(timeout), 900) + 30)
-        code_out, stdout, stderr = (getattr(done, "returncode", -1),
-                                    str(getattr(done, "stdout", "")),
-                                    str(getattr(done, "stderr", "")))
-    except subprocess.TimeoutExpired:
-        timed_out = True
-        try:
-            runner(["docker", "kill", name], 30)
-        except Exception:                                   # noqa: BLE001
-            pass
-        code_out, stdout, stderr = -1, "", f"stopped after {timeout}s"
+        capture = producer.execute(
+            container_flags(job, keep, staged_inputs, language), IMAGE,
+            [*INTERPRETER[language], f"/job/{entry}"], deadline=min(int(timeout), 900) + 5,
+            cancel=extras.get("cancel"), io_limit=IO_LIMIT_BYTES if keep else None)
+        if keep:
+            quarantine = quarantine_root(vault) / run_id
+            report = producer.export_to("/landing", quarantine, max_bytes=LANDING_MAX_BYTES,
+                                        max_entries=LANDING_MAX_FILES)
+        producer.dispose()
+        if keep and report is not None:
+            if report["accepted"] and producer.state == "disposed":
+                containers.promote(quarantine, landing)
+                files = [{"name": f["name"], "bytes": f["bytes"], "sha256": f["sha256"][:16]}
+                         for f in report["files"]]
+            else:
+                why = report["stopped"] or "; ".join(report["rejected"][:5])
+                if producer.state == "cleanup_unknown":
+                    why = "the container could not be shown stopped and removed"
+                notes.append(f"nothing this run wrote was kept: {why}")
+                if quarantine.is_dir():
+                    quarantined = quarantine.relative_to(vault.root).as_posix()
+                    notes.append(f"what arrived is held for a person in {quarantined} (the "
+                                 f"newest {containers.QUARANTINE_KEEP} are kept)")
+                containers.prune(quarantine_root(vault))
+    except BaseException:
+        # Whatever went wrong here, the container is not left running.
+        with contextlib.suppress(Exception):
+            if producer.state not in ("disposed", "cleanup_unknown"):
+                producer.stop("error")
+                producer.settle()
+                producer.dispose()
+        raise
     finally:
         shutil.rmtree(job, ignore_errors=True)
-    files, notes = _check_landing(landing) if landing is not None else ([], [])
-    if landing is None:
+    if not keep:
         notes.append("no file this run wrote was kept: writing its output was not "
                      f"permitted ({permission})")
+    stderr = capture.stderr
+    if producer.stop_reason in STOPPED:
+        said = STOPPED[producer.stop_reason].format(
+            timeout=timeout, limit=containers.STREAM_LIMIT_BYTES // (1024 * 1024),
+            io=IO_LIMIT_BYTES // (1024 * 1024))
+        notes.append(said)
+        stderr = (stderr + "\n" + said).lstrip("\n")
+    if producer.state == "cleanup_unknown":
+        notes.append("this run is not a success: its container could not be shown stopped "
+                     f"and removed ({name}); `docker rm -f {name}` removes it")
+    kept = bool(files) or (report is not None and report["accepted"] and landing.is_dir())
     record = {"run": run_id, "by": by, "label": label, "language": language,
-              "exit_code": code_out, "timed_out": timed_out, "network": "none",
-              "inputs": inputs or [],
-              "landing": f".librarian/sandbox/landing/{run_id}" if landing is not None else "",
-              "output": {"kept": landing is not None, "permission": permission},
-              "files": files, "notes": notes, "at": now_iso()}
-    log = vault.librarian / "sandbox" / "runs.jsonl"
-    with log.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps({**record, "code_sha256":
-                                 hashlib.sha256(code.encode()).hexdigest()[:16]}) + "\n")
-    return {**record, "stdout": stdout[-OUTPUT_CHARS:], "stderr": stderr[-OUTPUT_CHARS:]}
+              "exit_code": capture.exit_code if capture.exit_code is not None else -1,
+              "timed_out": producer.stop_reason == "deadline",
+              "stopped": producer.stop_reason,
+              # Complete only if it ended by itself, was shown stopped and removed, and
+              # what it wrote (if that was allowed) was kept whole.
+              "completed": producer.succeeded and not producer.stop_reason and
+              capture.exit_code == 0 and (not keep or kept),
+              "network": "none", "inputs": inputs or [],
+              "landing": f".librarian/sandbox/landing/{run_id}" if kept else "",
+              "output": {"allowed": keep, "kept": kept, "permission": permission,
+                         **({"export": {k: report[k] for k in
+                                        ("accepted", "entries", "bytes", "stopped")} |
+                             {"refused": report["rejected"][:20]}} if report else {}),
+                         "quarantine": quarantined},
+              "files": files, "notes": notes, "execution": producer.record(), "at": now_iso()}
+    _log(vault, {**record, "state": producer.state,
+                 "code_sha256": hashlib.sha256(code.encode()).hexdigest()[:16]})
+    return {**record, "stdout": capture.stdout[-OUTPUT_CHARS:], "stderr": stderr[-OUTPUT_CHARS:]}
 
 
 def read_landed(vault: Vault, run_id: str, name: str) -> dict[str, Any]:

@@ -5623,3 +5623,142 @@ All 4 fail on the previous code. The existing Auto-mode sandbox test now sets
   local task output. It was overwritten, the key-loading method was replaced, and the
   owner was asked to rotate the key.
 
+### MF-016 stop producers before a bounded quarantine export (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-016 (NAT-05; DT-06 teardown slice; G18) | implemented | this commit | `src/resource_librarian/containers.py` (new), `sandbox.py`, `claim_run.py`, `workbench.py`, `loop.py`; real-Docker qualification `reports/2026-11-05-evidence/mf016-docker-qualification.json` (its script is beside it). |
+
+**One lifecycle for every container.** `containers.Producer` now runs:
+- sandbox runs;
+- claim runs;
+- all three Workbench containers: provision, stage and execute.
+
+Its states are N-05's: reserved, created, running, stop_requested,
+stopped_verified, export_quarantine, then validated or rejected, then disposed.
+A run whose container cannot be shown stopped ends cleanup_unknown instead.
+- **No `--rm` anywhere.** A container is created, then started attached, with
+  `--log-driver none`. Docker's default log file has no size cap, so the
+  attached stream here is the only copy.
+- **One idempotent stop.** Four things request it:
+  - the deadline;
+  - the turn's cancel, which `Loop.send` now puts in the tools' context;
+  - output past 8 MiB on a stream;
+  - streamed `docker stats` disk writes past the run's I/O limit.
+
+  A limit stop has no grace (`docker stop -t 0`). A deadline or cancel gets 2 s.
+- **Shown stopped before anything leaves it.** The container is inspected.
+  - If it is still running: stop, inspect, then kill and `docker wait`, then
+    inspect again.
+  - If it cannot be shown stopped, it is cleanup_unknown: nothing is exported,
+    a forced removal is tried, and the run is never `completed` or a claim
+    verdict.
+- **Checked export.** `docker cp <container>:<path> -` streams from the stopped
+  producer into `.librarian/quarantine/<kind>/<run>`.
+  - Each member is checked before it is written. Refused:
+    - absolute, drive or escaping paths, or anything outside the folder;
+    - `:` and the other characters Windows reserves;
+    - a trailing dot or space, or a device name;
+    - symbolic and hard links, devices, pipes and sparse files;
+    - duplicate or case-colliding names, or a file used as a folder;
+    - more than 16 levels, a 255-byte name or a 400-character path.
+  - Folders count as entries. The byte and entry budget is checked before each
+    write, each file is hashed while it streams, and a short stream is refused.
+  - All or nothing: an export is promoted only after the container's
+    `docker rm -v` succeeds.
+  - A refused export stays in quarantine, the newest 20 per kind, and the run
+    record names it.
+- **Sandbox.** `/landing` is a per-run anonymous volume, not a bind-mounted
+  host folder. Image `librarian-sandbox:2` gives the runner a `/landing` of its
+  own, and the volume goes with the container. MF-015's `sandbox_output` gate
+  is unchanged.
+- **Claim runs.** Output capture is now bounded; it was an unbounded
+  `subprocess.run`. Cleanup_unknown, a stop or an output limit all give "could
+  not run", whatever the runner printed. The evidence record carries
+  `execution`.
+- **Workbench.**
+  - The export comes from the stopped execution container; the separate
+    export helper is gone.
+  - The archive is checked before any container exists.
+  - An engagement is `completed` only when all of these hold: exit 0, shown
+    stopped and removed, and its output, if kept, passed whole. Otherwise it is
+    paused.
+
+**What a person sees change.**
+- A run's output is kept whole or not at all. Before, over-limit files were
+  deleted and the rest kept, symbolic links were deleted, and Workbench copied
+  hard links.
+- Records gain these fields:
+  - `execution`: states, a timeline, the stop reason, capture counts and
+    teardown;
+  - `stopped`, `completed`, `output.allowed`, `output.export` and
+    `output.quarantine`.
+
+The UI reads `files`, `landing`, `output.kept`, `timed_out` and `notes`, which
+are unchanged. Showing `stopped` and `completed` is front-end work.
+
+**Measured on real Docker.** Docker 29.8.1 on WSL2, overlayfs, Python 3.11.3,
+through `sandbox.run`:
+
+| Case | Stop | Stop requested → shown stopped | Whole run | Result |
+| --- | --- | --- | --- | --- |
+| benign, 3 files in 2 folders | — | — | 1.6 s | exported; all 3 hashes match the bytes written |
+| print flood | output limit | 0.52 → 0.89 s | 1.7 s | 9,437,184 B received (limit + tolerance), 65,536 B kept |
+| sleeps past its deadline (5 s + 5 s start allowance) | deadline | 10.25 → 12.72 s | 13.5 s | — |
+| ignores SIGTERM | deadline | 10.25 → 12.72 s | 13.5 s | killed after the 2 s grace |
+| disk flood with fsync | I/O limit (100 MiB) | 1.83 → 2.28 s | 6.9 s | 278 MB at the last reading: at least 173 MB over |
+| disk flood into the page cache | I/O limit | 2.03 → 2.39 s | 24.0 s | 1.25 GB counted as write-back went on; removal took 21 s |
+| symbolic link on the pad | — | — | 1.6 s | the whole export refused, held in quarantine |
+
+No containers and no dangling volumes were left.
+
+**Found while qualifying, and fixed:**
+1. Stopping intake without ending the attached client held `docker stop` to its
+   own 32 s timeout (34 s run). The client is now ended at the cut.
+2. `docker stats --no-stream` takes about 2 s a call, giving only 2 readings in
+   30 s. The monitor now reads streamed `docker stats`, about one reading a
+   second.
+3. A 2 s grace let a disk flood keep writing. Limit stops now kill at once.
+4. Removing a volume holding several GB took 34 s against a 60 s timeout.
+   Removal now has 300 s, and the container is inspected again before a
+   removal is called failed.
+
+**Limits, stated.**
+- **Output:** the bound is enforced. This machine receives at most limit +
+  1 MiB + one 64 KiB read per stream (measured exactly at the bound).
+- **Disk writes are sampled, not contained.** The measured overshoot was
+  0.17–1.15 GB here, and no tolerance is promised. MF-015's owner decision
+  stands.
+- **Qualification coverage:** only the sandbox path ran on real Docker. Claim
+  runs and Workbench share `Producer`, but their lifecycles were checked with
+  the scripted Docker (`tests/docker_fake.py`) only.
+- **Crash leftovers:** a container left by a crashed app process is labelled
+  `librarian.producer=<kind>`, and the `reserved` line in
+  `.librarian/sandbox/runs.jsonl` names it. Nothing removes it automatically.
+
+**Tests.** 107 in the five files; `tests/test_containers.py` is new (30 cases).
+- **Supervisor:**
+  - the flood bound and its single stop;
+  - the deadline, cancel and I/O stops;
+  - a client that will not leave, and a cut that ends it;
+  - streamed readings and stats parsing.
+- **Producer:**
+  - one stop however often it is asked;
+  - a name in use removes nothing;
+  - a container that never started has no exit code.
+- **check_tar:** implicit folders, eight unsafe-member cases, the byte budget
+  before a write, nothing written after a refusal, and quarantine retention.
+- **The turn's cancel:** present in the tools' context only during the turn.
+- **Sandbox, claim run and Workbench**, on a scripted Docker that answers every
+  lifecycle verb:
+  - the verb order;
+  - deadline, stubborn and unkillable containers, and failed inspection and
+    removal;
+  - unsafe members;
+  - cancel, and no verdict or success after cleanup_unknown.
+
+Run against the previous code in a clean clone, all 46 changed or new cases in
+the four caller files fail. `test_containers.py` cannot be imported there.
+
+**Verification:** full suite: 2082 passed, 2 skipped, 5 deselected in 667.83s (0:11:07) (exit 0, Python 3.11.3)
+(`reports/2026-11-05-evidence/suite-mf016-py311.json`, a clean clone of `64a267d` plus this commit's files).

@@ -4,7 +4,6 @@ import json
 import subprocess
 import sys
 from contextlib import contextmanager
-from types import SimpleNamespace
 
 import pytest
 
@@ -14,6 +13,7 @@ from resource_librarian.loop import narrowed
 from resource_librarian.registry import REGISTRY, Context
 
 from conftest import add_source
+from docker_fake import Docker
 from test_review_gate import CLAIM, SUMMARY, reviewing, to_synthesise
 from test_sessions import OSQUERY_LINE, Model, library  # noqa: F401  (fixture)
 
@@ -121,17 +121,13 @@ def cloned(root):
     yield root
 
 
-class FakeDocker:
-    def __init__(self, outcome=None, running=True):
-        self.calls, self.outcome, self.running = [], outcome, running
+class FakeDocker(Docker):
+    """The scripted Docker, its run printing the runner's marked result."""
 
-    def __call__(self, args, timeout):
-        self.calls.append(args)
-        if args[:2] == ["docker", "info"]:
-            return SimpleNamespace(returncode=0 if self.running else 1, stdout="29.4.3",
-                                   stderr="")
-        return SimpleNamespace(returncode=0, stderr="",
-                               stdout="noise\n" + claim_run.MARK + json.dumps(self.outcome))
+    def __init__(self, outcome=None, running=True, **script):
+        super().__init__(running=running, **script,
+                         stdout="noise\n" + claim_run.MARK + json.dumps(outcome))
+        self.outcome = outcome
 
 
 def test_a_run_is_contained_and_its_verdict_kept_as_evidence(library, repo):
@@ -142,10 +138,13 @@ def test_a_run_is_contained_and_its_verdict_kept_as_evidence(library, repo):
                          "qualified": "builtins.ValueError", "message": "no such day"})
     out = claim_run.run(library, run_id, runner=docker, cloner=lambda url: cloned(repo))
     assert out["verdict"] == "confirmed" and out["version"] == "the surveyed version"
-    run = docker.calls[-1]
+    run = docker.create_args()
     for flag in (["--network", "none"], ["--cap-drop", "ALL"], ["--user", "65534:65534"],
-                 ["--read-only"], ["--rm"]):
+                 ["--read-only"], ["--log-driver", "none"]):
         assert any(run[i:i + len(flag)] == flag for i in range(len(run))), flag
+    assert "--rm" not in run and not docker.status             # MF-016: shown stopped, removed
+    assert [v for v in docker.verbs() if v in ("create", "start", "inspect", "rm")] == \
+        ["create", "start", "inspect", "rm"]
     assert f"type=bind,source={repo},target=/src,readonly" in run
     assert [a for a in run if a.startswith("DEEPINFRA") or "KEY" in a] == []
     assert run[-4:] == [claim_run.IMAGE, "python", "-I", "/job/runner.py"]
@@ -153,6 +152,31 @@ def test_a_run_is_contained_and_its_verdict_kept_as_evidence(library, repo):
     assert record.kind == "execution" and record.payload["verdict"] == "confirmed"
     assert record.payload["network"] == "none"
     assert store.get(run_id)["verdict"] == "confirmed"
+    assert record.payload["execution"]["state"] == "disposed"
+
+
+CONFIRMING = {"stage": "call", "raised": "ValueError", "qualified": "builtins.ValueError",
+              "message": "no such day"}
+
+
+@pytest.mark.parametrize("trouble", [dict(rm_fails=True), dict(inspect_fails=True),
+                                     dict(hang=True, stubborn=99, unkillable=True)])
+def test_a_container_not_shown_stopped_and_removed_gives_no_verdict(library, repo, trouble):
+    """MF-016: what it printed may say "confirmed", but cleanup_unknown blocks success."""
+    run_id = claim_run.RunnableStore(library).add("c", "Dates", GOOD, "reply")
+    out = claim_run.run(library, run_id, runner=FakeDocker(CONFIRMING, **trouble),
+                        cloner=lambda url: cloned(repo))
+    assert out["verdict"] == "could_not_run" and "cleanup_unknown" in out["detail"]
+    record = EvidenceStore(library).get(out["evidence"])
+    assert record.payload["execution"]["state"] == "cleanup_unknown"
+
+
+def test_a_run_past_its_deadline_is_stopped_and_could_not_run(library, repo):
+    run_id = claim_run.RunnableStore(library).add("c", "Dates", GOOD, "reply")
+    docker = FakeDocker(CONFIRMING, hang=True)
+    out = claim_run.run(library, run_id, runner=docker, cloner=lambda url: cloned(repo))
+    assert out["verdict"] == "could_not_run" and "timeout" in out["detail"]
+    assert docker.count("stop") == 1 and not docker.status
 
 
 @pytest.mark.parametrize("outcome, verdict", [

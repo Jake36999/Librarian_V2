@@ -1,0 +1,806 @@
+{
+ "at": "2026-11-05T16:38:57+0000",
+ "python": "3.11.3",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "docker": "29.8.1 linux",
+ "storage_driver": "overlayfs",
+ "head": "64a267dfca2bd039222c35c00ef4988d309b4f7b",
+ "limits": {
+  "stream_limit": 8388608,
+  "stream_tolerance": 1048576,
+  "read_block": 65536,
+  "io_limit": 104857600,
+  "io_poll_seconds": 2.0,
+  "stop_grace": 2,
+  "landing_max_bytes": 52428800
+ },
+ "cases": {
+  "benign": {
+   "exit_code": 0,
+   "timed_out": false,
+   "stopped": "",
+   "completed": true,
+   "landing": ".librarian/sandbox/landing/20261105T163858-58318f",
+   "files": [
+    {
+     "name": "a.txt",
+     "bytes": 6,
+     "sha256": "b6a98d9ce9a2d914"
+    },
+    {
+     "name": "d/b.bin",
+     "bytes": 10240,
+     "sha256": "e96760a87768717b"
+    },
+    {
+     "name": "d/e/c.csv",
+     "bytes": 8,
+     "sha256": "81bf9fa83c6f7f15"
+    }
+   ],
+   "notes": [],
+   "seconds": 1.59,
+   "execution": {
+    "execution_v": 2,
+    "container": "librarian-sandbox-20261105T163858-58318f",
+    "state": "disposed",
+    "states": [
+     "reserved",
+     "created",
+     "running",
+     "stopped_verified",
+     "export_quarantine",
+     "validated",
+     "disposed"
+    ],
+    "timeline": [
+     [
+      "reserved",
+      0.0
+     ],
+     [
+      "created",
+      0.22
+     ],
+     [
+      "running",
+      0.22
+     ],
+     [
+      "stopped_verified",
+      0.78
+     ],
+     [
+      "export_quarantine",
+      0.78
+     ],
+     [
+      "validated",
+      0.95
+     ],
+     [
+      "disposed",
+      1.11
+     ]
+    ],
+    "stop": "",
+    "exit_code": 0,
+    "oom_killed": false,
+    "teardown": {
+     "removed": true
+    },
+    "capture": {
+     "produced": {
+      "stdout": 12,
+      "stderr": 0
+     },
+     "retained": {
+      "stdout": 12,
+      "stderr": 0
+     },
+     "limit": 8388608,
+     "tolerance": 1048576,
+     "cut": [],
+     "overshoot": 0,
+     "io": {
+      "limit": 104857600,
+      "every": 0.25,
+      "samples": 0,
+      "failed": 1,
+      "written": 0,
+      "method": "docker stats block I/O, sampled about once a second; not a quota",
+      "overshoot_at_least": 0,
+      "docker_readings": 0
+     }
+    }
+   },
+   "output": {
+    "allowed": true,
+    "kept": true,
+    "permission": "no broker",
+    "export": {
+     "accepted": true,
+     "entries": 5,
+     "bytes": 10254,
+     "stopped": "",
+     "refused": []
+    },
+    "quarantine": ""
+   },
+   "stdout_chars": 12,
+   "stderr_tail": "",
+   "container_left": "",
+   "hashes_match": true,
+   "files_match": true
+  },
+  "print_flood": {
+   "exit_code": 137,
+   "timed_out": false,
+   "stopped": "output_limit",
+   "completed": false,
+   "landing": ".librarian/sandbox/landing/20261105T163900-8af68c",
+   "files": [],
+   "notes": [
+    "stopped: it printed more than 8 MB"
+   ],
+   "seconds": 1.7,
+   "execution": {
+    "execution_v": 2,
+    "container": "librarian-sandbox-20261105T163900-8af68c",
+    "state": "disposed",
+    "states": [
+     "reserved",
+     "created",
+     "running",
+     "stop_requested",
+     "stopped_verified",
+     "export_quarantine",
+     "validated",
+     "disposed"
+    ],
+    "timeline": [
+     [
+      "reserved",
+      0.0
+     ],
+     [
+      "created",
+      0.2
+     ],
+     [
+      "running",
+      0.2
+     ],
+     [
+      "stop_requested",
+      0.52
+     ],
+     [
+      "stopped_verified",
+      0.89
+     ],
+     [
+      "export_quarantine",
+      0.89
+     ],
+     [
+      "validated",
+      1.06
+     ],
+     [
+      "disposed",
+      1.22
+     ]
+    ],
+    "stop": "output_limit",
+    "exit_code": 137,
+    "oom_killed": false,
+    "teardown": {
+     "removed": true
+    },
+    "detail": [
+     "output_limit"
+    ],
+    "capture": {
+     "produced": {
+      "stdout": 9437184,
+      "stderr": 0
+     },
+     "retained": {
+      "stdout": 65536,
+      "stderr": 0
+     },
+     "limit": 8388608,
+     "tolerance": 1048576,
+     "cut": [
+      "stdout"
+     ],
+     "overshoot": 1048576,
+     "io": {
+      "limit": 104857600,
+      "every": 0.25,
+      "samples": 0,
+      "failed": 1,
+      "written": 0,
+      "method": "docker stats block I/O, sampled about once a second; not a quota",
+      "overshoot_at_least": 0,
+      "docker_readings": 0
+     }
+    }
+   },
+   "output": {
+    "allowed": true,
+    "kept": true,
+    "permission": "no broker",
+    "export": {
+     "accepted": true,
+     "entries": 0,
+     "bytes": 0,
+     "stopped": "",
+     "refused": []
+    },
+    "quarantine": ""
+   },
+   "stdout_chars": 8000,
+   "stderr_tail": "stopped: it printed more than 8 MB",
+   "container_left": ""
+  },
+  "deadline": {
+   "exit_code": 137,
+   "timed_out": true,
+   "stopped": "deadline",
+   "completed": false,
+   "landing": ".librarian/sandbox/landing/20261105T163902-c486bd",
+   "files": [],
+   "notes": [
+    "stopped after 5s"
+   ],
+   "seconds": 13.52,
+   "execution": {
+    "execution_v": 2,
+    "container": "librarian-sandbox-20261105T163902-c486bd",
+    "state": "disposed",
+    "states": [
+     "reserved",
+     "created",
+     "running",
+     "stop_requested",
+     "stopped_verified",
+     "export_quarantine",
+     "validated",
+     "disposed"
+    ],
+    "timeline": [
+     [
+      "reserved",
+      0.0
+     ],
+     [
+      "created",
+      0.22
+     ],
+     [
+      "running",
+      0.22
+     ],
+     [
+      "stop_requested",
+      10.25
+     ],
+     [
+      "stopped_verified",
+      12.72
+     ],
+     [
+      "export_quarantine",
+      12.72
+     ],
+     [
+      "validated",
+      12.88
+     ],
+     [
+      "disposed",
+      13.05
+     ]
+    ],
+    "stop": "deadline",
+    "exit_code": 137,
+    "oom_killed": false,
+    "teardown": {
+     "removed": true
+    },
+    "detail": [
+     "deadline"
+    ],
+    "capture": {
+     "produced": {
+      "stdout": 9,
+      "stderr": 0
+     },
+     "retained": {
+      "stdout": 9,
+      "stderr": 0
+     },
+     "limit": 8388608,
+     "tolerance": 1048576,
+     "cut": [],
+     "overshoot": 0,
+     "io": {
+      "limit": 104857600,
+      "every": 0.25,
+      "samples": 45,
+      "failed": 2,
+      "written": 0,
+      "method": "docker stats block I/O, sampled about once a second; not a quota",
+      "overshoot_at_least": 0,
+      "docker_readings": 24
+     }
+    }
+   },
+   "output": {
+    "allowed": true,
+    "kept": true,
+    "permission": "no broker",
+    "export": {
+     "accepted": true,
+     "entries": 0,
+     "bytes": 0,
+     "stopped": "",
+     "refused": []
+    },
+    "quarantine": ""
+   },
+   "stdout_chars": 9,
+   "stderr_tail": "stopped after 5s",
+   "container_left": ""
+  },
+  "ignores_sigterm": {
+   "exit_code": 137,
+   "timed_out": true,
+   "stopped": "deadline",
+   "completed": false,
+   "landing": ".librarian/sandbox/landing/20261105T163916-a14398",
+   "files": [],
+   "notes": [
+    "stopped after 5s"
+   ],
+   "seconds": 13.52,
+   "execution": {
+    "execution_v": 2,
+    "container": "librarian-sandbox-20261105T163916-a14398",
+    "state": "disposed",
+    "states": [
+     "reserved",
+     "created",
+     "running",
+     "stop_requested",
+     "stopped_verified",
+     "export_quarantine",
+     "validated",
+     "disposed"
+    ],
+    "timeline": [
+     [
+      "reserved",
+      0.0
+     ],
+     [
+      "created",
+      0.22
+     ],
+     [
+      "running",
+      0.22
+     ],
+     [
+      "stop_requested",
+      10.25
+     ],
+     [
+      "stopped_verified",
+      12.72
+     ],
+     [
+      "export_quarantine",
+      12.72
+     ],
+     [
+      "validated",
+      12.88
+     ],
+     [
+      "disposed",
+      13.03
+     ]
+    ],
+    "stop": "deadline",
+    "exit_code": 137,
+    "oom_killed": false,
+    "teardown": {
+     "removed": true
+    },
+    "detail": [
+     "deadline"
+    ],
+    "capture": {
+     "produced": {
+      "stdout": 17,
+      "stderr": 0
+     },
+     "retained": {
+      "stdout": 17,
+      "stderr": 0
+     },
+     "limit": 8388608,
+     "tolerance": 1048576,
+     "cut": [],
+     "overshoot": 0,
+     "io": {
+      "limit": 104857600,
+      "every": 0.25,
+      "samples": 45,
+      "failed": 2,
+      "written": 0,
+      "method": "docker stats block I/O, sampled about once a second; not a quota",
+      "overshoot_at_least": 0,
+      "docker_readings": 24
+     }
+    }
+   },
+   "output": {
+    "allowed": true,
+    "kept": true,
+    "permission": "no broker",
+    "export": {
+     "accepted": true,
+     "entries": 0,
+     "bytes": 0,
+     "stopped": "",
+     "refused": []
+    },
+    "quarantine": ""
+   },
+   "stdout_chars": 17,
+   "stderr_tail": "stopped after 5s",
+   "container_left": ""
+  },
+  "disk_flood_fsync": {
+   "exit_code": 137,
+   "timed_out": false,
+   "stopped": "io_limit",
+   "completed": false,
+   "landing": "",
+   "files": [],
+   "notes": [
+    "nothing this run wrote was kept: flood.bin would take it past 52,428,800 bytes",
+    "what arrived is held for a person in .librarian/quarantine/sandbox/20261105T163929-994b36 (the newest 20 are kept)",
+    "stopped: it wrote more than 100 MB to disk"
+   ],
+   "seconds": 6.94,
+   "execution": {
+    "execution_v": 2,
+    "container": "librarian-sandbox-20261105T163929-994b36",
+    "state": "disposed",
+    "states": [
+     "reserved",
+     "created",
+     "running",
+     "stop_requested",
+     "stopped_verified",
+     "export_quarantine",
+     "rejected",
+     "disposed"
+    ],
+    "timeline": [
+     [
+      "reserved",
+      0.0
+     ],
+     [
+      "created",
+      0.22
+     ],
+     [
+      "running",
+      0.22
+     ],
+     [
+      "stop_requested",
+      1.83
+     ],
+     [
+      "stopped_verified",
+      2.28
+     ],
+     [
+      "export_quarantine",
+      2.28
+     ],
+     [
+      "rejected",
+      2.36
+     ],
+     [
+      "disposed",
+      6.49
+     ]
+    ],
+    "stop": "io_limit",
+    "exit_code": 137,
+    "oom_killed": false,
+    "teardown": {
+     "removed": true
+    },
+    "detail": [
+     "io_limit",
+     "flood.bin would take it past 52,428,800 bytes"
+    ],
+    "capture": {
+     "produced": {
+      "stdout": 0,
+      "stderr": 0
+     },
+     "retained": {
+      "stdout": 0,
+      "stderr": 0
+     },
+     "limit": 8388608,
+     "tolerance": 1048576,
+     "cut": [],
+     "overshoot": 0,
+     "io": {
+      "limit": 104857600,
+      "every": 0.25,
+      "samples": 5,
+      "failed": 2,
+      "written": 278000000,
+      "method": "docker stats block I/O, sampled about once a second; not a quota",
+      "overshoot_at_least": 173142400,
+      "docker_readings": 3
+     }
+    }
+   },
+   "output": {
+    "allowed": true,
+    "kept": false,
+    "permission": "no broker",
+    "export": {
+     "accepted": false,
+     "entries": 0,
+     "bytes": 0,
+     "stopped": "flood.bin would take it past 52,428,800 bytes",
+     "refused": []
+    },
+    "quarantine": ".librarian/quarantine/sandbox/20261105T163929-994b36"
+   },
+   "stdout_chars": 0,
+   "stderr_tail": "stopped: it wrote more than 100 MB to disk",
+   "container_left": ""
+  },
+  "disk_flood_cached": {
+   "exit_code": 137,
+   "timed_out": false,
+   "stopped": "io_limit",
+   "completed": false,
+   "landing": "",
+   "files": [],
+   "notes": [
+    "nothing this run wrote was kept: flood.bin would take it past 52,428,800 bytes",
+    "what arrived is held for a person in .librarian/quarantine/sandbox/20261105T163936-227e77 (the newest 20 are kept)",
+    "stopped: it wrote more than 100 MB to disk"
+   ],
+   "seconds": 23.98,
+   "execution": {
+    "execution_v": 2,
+    "container": "librarian-sandbox-20261105T163936-227e77",
+    "state": "disposed",
+    "states": [
+     "reserved",
+     "created",
+     "running",
+     "stop_requested",
+     "stopped_verified",
+     "export_quarantine",
+     "rejected",
+     "disposed"
+    ],
+    "timeline": [
+     [
+      "reserved",
+      0.0
+     ],
+     [
+      "created",
+      0.22
+     ],
+     [
+      "running",
+      0.22
+     ],
+     [
+      "stop_requested",
+      2.03
+     ],
+     [
+      "stopped_verified",
+      2.39
+     ],
+     [
+      "export_quarantine",
+      2.39
+     ],
+     [
+      "rejected",
+      2.45
+     ],
+     [
+      "disposed",
+      23.53
+     ]
+    ],
+    "stop": "io_limit",
+    "exit_code": 137,
+    "oom_killed": false,
+    "teardown": {
+     "removed": true
+    },
+    "detail": [
+     "io_limit",
+     "flood.bin would take it past 52,428,800 bytes"
+    ],
+    "capture": {
+     "produced": {
+      "stdout": 0,
+      "stderr": 0
+     },
+     "retained": {
+      "stdout": 0,
+      "stderr": 0
+     },
+     "limit": 8388608,
+     "tolerance": 1048576,
+     "cut": [],
+     "overshoot": 0,
+     "io": {
+      "limit": 104857600,
+      "every": 0.25,
+      "samples": 5,
+      "failed": 2,
+      "written": 1250000000,
+      "method": "docker stats block I/O, sampled about once a second; not a quota",
+      "overshoot_at_least": 1145142400,
+      "docker_readings": 3
+     }
+    }
+   },
+   "output": {
+    "allowed": true,
+    "kept": false,
+    "permission": "no broker",
+    "export": {
+     "accepted": false,
+     "entries": 0,
+     "bytes": 0,
+     "stopped": "flood.bin would take it past 52,428,800 bytes",
+     "refused": []
+    },
+    "quarantine": ".librarian/quarantine/sandbox/20261105T163936-227e77"
+   },
+   "stdout_chars": 0,
+   "stderr_tail": "stopped: it wrote more than 100 MB to disk",
+   "container_left": ""
+  },
+  "hostile_link": {
+   "exit_code": 0,
+   "timed_out": false,
+   "stopped": "",
+   "completed": false,
+   "landing": "",
+   "files": [],
+   "notes": [
+    "nothing this run wrote was kept: passwd: a symbolic link",
+    "what arrived is held for a person in .librarian/quarantine/sandbox/20261105T164000-ab9088 (the newest 20 are kept)"
+   ],
+   "seconds": 1.56,
+   "execution": {
+    "execution_v": 2,
+    "container": "librarian-sandbox-20261105T164000-ab9088",
+    "state": "disposed",
+    "states": [
+     "reserved",
+     "created",
+     "running",
+     "stopped_verified",
+     "export_quarantine",
+     "rejected",
+     "disposed"
+    ],
+    "timeline": [
+     [
+      "reserved",
+      0.0
+     ],
+     [
+      "created",
+      0.2
+     ],
+     [
+      "running",
+      0.2
+     ],
+     [
+      "stopped_verified",
+      0.78
+     ],
+     [
+      "export_quarantine",
+      0.78
+     ],
+     [
+      "rejected",
+      0.94
+     ],
+     [
+      "disposed",
+      1.09
+     ]
+    ],
+    "stop": "",
+    "exit_code": 0,
+    "oom_killed": false,
+    "teardown": {
+     "removed": true
+    },
+    "detail": [
+     "passwd: a symbolic link"
+    ],
+    "capture": {
+     "produced": {
+      "stdout": 0,
+      "stderr": 0
+     },
+     "retained": {
+      "stdout": 0,
+      "stderr": 0
+     },
+     "limit": 8388608,
+     "tolerance": 1048576,
+     "cut": [],
+     "overshoot": 0,
+     "io": {
+      "limit": 104857600,
+      "every": 0.25,
+      "samples": 0,
+      "failed": 1,
+      "written": 0,
+      "method": "docker stats block I/O, sampled about once a second; not a quota",
+      "overshoot_at_least": 0,
+      "docker_readings": 0
+     }
+    }
+   },
+   "output": {
+    "allowed": true,
+    "kept": false,
+    "permission": "no broker",
+    "export": {
+     "accepted": false,
+     "entries": 1,
+     "bytes": 2,
+     "stopped": "",
+     "refused": [
+      "passwd: a symbolic link"
+     ]
+    },
+    "quarantine": ".librarian/quarantine/sandbox/20261105T164000-ab9088"
+   },
+   "stdout_chars": 0,
+   "stderr_tail": "",
+   "container_left": ""
+  }
+ },
+ "image": "sha256:763dc38fe5669be8ed61d4f863b8a7182d71c930355ac9f6aea5c25a67bda47d",
+ "leftover_containers": [],
+ "new_dangling_volumes": []
+}

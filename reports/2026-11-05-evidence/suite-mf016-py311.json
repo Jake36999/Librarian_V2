@@ -1,0 +1,32 @@
+{
+ "command": [
+  "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone",
+ "exit_code": 0,
+ "summary": "2082 passed, 2 skipped, 5 deselected in 667.83s (0:11:07)",
+ "started_utc": "2026-11-05T16:45:42.967671+00:00",
+ "seconds": 668.9,
+ "head": "64a267dfca2bd039222c35c00ef4988d309b4f7b",
+ "tracked_changes": [
+  " M docs/unified-implementation-plan.md",
+  " M src/resource_librarian/claim_run.py",
+  " M src/resource_librarian/loop.py",
+  " M src/resource_librarian/sandbox.py",
+  " M src/resource_librarian/workbench.py",
+  " M tests/test_accept_workbench.py",
+  " M tests/test_claim_run.py",
+  " M tests/test_sandbox.py",
+  " M tests/test_workbench_boundaries.py"
+ ],
+ "python": "3.11.3",
+ "executable": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-mf016-py311.log",
+ "log_sha256": "7e639d5ec53d0db7f302c0ada9cd309d3c09e712c3e3ebcc88eea31a8743e45c"
+}

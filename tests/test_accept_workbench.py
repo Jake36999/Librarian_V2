@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import sys
 import tarfile
-from types import SimpleNamespace
 
 import pytest
 
@@ -13,6 +12,8 @@ from resource_librarian import tools  # noqa: F401  (registers tools)
 from resource_librarian.registry import REGISTRY, Context
 from resource_librarian.rules import Refusal
 from resource_librarian.workbench import Engagement, EngagementStore
+
+from docker_fake import Docker
 
 IMAGE = "example/image@sha256:" + "a" * 64
 
@@ -67,41 +68,52 @@ def test_success_host_execution_is_labelled_non_isolated_with_its_warning(pinned
     assert stored.audit_trace[-1]["result"]["isolation_tier"] == "non_isolated_host_exec"
 
 
+def exported(vault, engagement, producer):
+    producer.dispose()
+    return {"artifacts": [], "export": {"complete": True}}
+
+
 def test_success_docker_execution_is_labelled_isolated(pinned, monkeypatch):
-    calls = []
-
-    def runner(args, timeout):
-        calls.append(args)
-        return SimpleNamespace(returncode=0, stdout="ran", stderr="")
-
+    runner = Docker(stdout="ran")
     monkeypatch.setattr(sandbox, "docker_status", lambda runner=None: (True, "docker ready"))
     monkeypatch.setattr(workbench, "_docker_stage", lambda *_: ("src-volume", "archive-hash"))
-    monkeypatch.setattr(workbench, "_archive_outputs",
-                        lambda *_: {"artifacts": [], "export": {"complete": True}})
+    monkeypatch.setattr(workbench, "_archive_outputs", exported)
     out = workbench.start(pinned, "eng-accept", choice="docker_isolated", command=["true"],
                           image=IMAGE, person_confirmed=True, runner=runner)
-    assert out["isolation_tier"] == "docker_isolated"
-    assert EngagementStore(pinned).get("eng-accept").isolation_tier == "docker_isolated"
-    run = calls[-1]
-    assert run[:2] == ["docker", "run"] and "--network" in run and "none" in run
+    assert out["isolation_tier"] == "docker_isolated" and out["stdout"] == "ran"
+    stored = EngagementStore(pinned).get("eng-accept")
+    assert stored.isolation_tier == "docker_isolated" and stored.state == "completed"
+    run = runner.create_args()
+    assert "--network" in run and "none" in run and "--rm" not in run
+    assert out["execution"]["state"] == "disposed"
+
+
+def test_a_docker_run_not_shown_stopped_is_paused_never_completed(pinned, monkeypatch):
+    """MF-016: cleanup_unknown blocks the success label, whatever the exit code said."""
+    runner = Docker(stdout="ran", inspect_fails=True)
+    monkeypatch.setattr(sandbox, "docker_status", lambda runner=None: (True, "docker ready"))
+    monkeypatch.setattr(workbench, "_docker_stage", lambda *_: ("src-volume", "archive-hash"))
+    out = workbench.start(pinned, "eng-accept", choice="docker_isolated", command=["true"],
+                          image=IMAGE, person_confirmed=True, runner=runner)
+    assert out["exit_code"] == 0 and out["execution"]["state"] == "cleanup_unknown"
+    assert out["export"]["complete"] is False and "cp" not in runner.verbs()
+    stored = EngagementStore(pinned).get("eng-accept")
+    assert stored.state == "paused" and stored.artifacts == []
 
 
 def test_a_docker_run_without_output_permission_mounts_and_exports_nothing(pinned, monkeypatch):
     """MF-015 (owner, 2026-11-05): the output volume has no cap while the run writes, so
     it is mounted only when `sandbox_output` is allowed, which a person decides apart."""
     from resource_librarian.broker import Broker
-    calls, asked = [], []
+    asked = []
+    runner = Docker(stdout="ran")
 
-    def runner(args, timeout):
-        calls.append(args)
-        return SimpleNamespace(returncode=0, stdout="ran", stderr="")
-
-    def exported(*_):
+    def refused(*_):
         raise AssertionError("nothing may be exported without the output permission")
 
     monkeypatch.setattr(sandbox, "docker_status", lambda runner=None: (True, "docker ready"))
     monkeypatch.setattr(workbench, "_docker_stage", lambda *_: ("src-volume", "archive-hash"))
-    monkeypatch.setattr(workbench, "_archive_outputs", exported)
+    monkeypatch.setattr(workbench, "_archive_outputs", refused)
     broker = Broker("auto", timeout=5)
 
     def listen(event):
@@ -115,7 +127,8 @@ def test_a_docker_run_without_output_permission_mounts_and_exports_nothing(pinne
                           image=IMAGE, person_confirmed=True, runner=runner, ctx=ctx)
 
     assert asked == ["sandbox_output"] and out["exit_code"] == 0
-    assert not any("dst=/workspace/output" in arg for arg in calls[-1])
+    assert not any("dst=/workspace/output" in arg for arg in runner.create_args())
+    assert "cp" not in runner.verbs() and not runner.status        # removed all the same
     assert out["export"]["complete"] is False and "not permitted" in out["export"]["stopped"]
 
 
