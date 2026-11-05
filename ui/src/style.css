@@ -369,3 +369,63 @@ dialog.lib-dialog .lib-key-entry .lib-confirm { margin-top: 8px; }
 /* The model tile: models recommended for the slot being chosen come first, marked */
 .lib-app .lib-model-card.lib-rec { border-color: var(--ok); }
 .lib-app .lib-model-card .lib-rec-label { color: var(--ok); font-size: 11.5px; font-weight: 600; margin-top: 3px; }
+
+/* Settings uses the mounted library's width, including in a narrow host split. */
+dialog.lib-dialog.lib-settings {
+  box-sizing: border-box; width: min(1120px, calc(100cqi - 32px));
+  height: min(820px, calc(100dvh - 48px));
+  background: var(--bg);
+}
+dialog.lib-settings[open] { display: flex; flex-direction: column; overflow: hidden; }
+dialog.lib-settings .lib-dlg-head { padding: 16px 24px; background: var(--panel); }
+dialog.lib-settings .lib-dlg-head strong { font-size: 21px; }
+dialog.lib-settings .lib-settings-library { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+dialog.lib-settings .lib-settings-layout { flex: 1; min-height: 0; display: grid; grid-template-columns: 224px minmax(0,1fr); }
+dialog.lib-settings .lib-settings-nav { overflow-y: auto; padding: 18px 10px; border-right: 1px solid var(--line); background: color-mix(in srgb,var(--bg) 84%,var(--accent) 16%); }
+dialog.lib-settings .lib-settings-nav h3 { margin: 24px 10px 8px; font-size: 11px; letter-spacing: .03em; text-transform: uppercase; color: var(--muted); }
+dialog.lib-settings .lib-settings-nav h3:first-child { margin-top: 0; }
+dialog.lib-settings .lib-settings-nav button { display: block; width: 100%; height: auto; text-align: left; padding: 7px 10px; border: 0; border-inline-start: 3px solid transparent; border-radius: 5px; background: transparent; box-shadow: none; }
+dialog.lib-settings .lib-settings-nav button:hover { background: var(--accent-soft); }
+dialog.lib-settings .lib-settings-nav button[aria-current=page] { border-color: var(--accent); background: color-mix(in srgb,var(--accent-soft) 85%,var(--accent)); color: var(--accent); font-weight: 650; }
+dialog.lib-settings > select { display: none; }
+dialog.lib-settings .lib-settings-content { min-width: 0; overflow: auto; padding: 20px clamp(18px,3cqi,40px) 28px; overflow-wrap: anywhere; }
+dialog.lib-settings .lib-settings-content h2 { font-size: 24px; margin: 0 0 2px; }
+dialog.lib-settings .lib-settings-content h3 { font-size: 17px; margin: 18px 0 6px; }
+dialog.lib-settings .lib-settings-intro, dialog.lib-settings .lib-settings-help { margin: 0 0 12px; color: var(--muted); }
+dialog.lib-settings .lib-settings-scope, dialog.lib-settings .lib-settings-service { padding: 8px 14px; border: 1px solid var(--line); border-radius: 7px; background: var(--accent-soft); margin: 6px 0; }
+dialog.lib-settings .lib-settings-scope small, dialog.lib-settings .lib-settings-role small { display: block; color: var(--muted); }
+dialog.lib-settings .lib-settings-role { display: grid; grid-template-columns: 1.15fr 1fr auto; align-items: center; gap: 12px; padding: 8px 16px; margin: 7px 0; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+dialog.lib-settings .lib-settings-role button { min-width: 90px; }
+dialog.lib-settings .lib-settings-role button:disabled { color: var(--muted); opacity: .65; cursor: default; }
+dialog.lib-settings .lib-settings-assignment { font-size: 13px; color: var(--muted); }
+dialog.lib-settings .lib-settings-service { background: color-mix(in srgb,var(--bg) 94%,var(--accent)); padding: 0; }
+dialog.lib-settings summary { cursor: pointer; }
+dialog.lib-settings .lib-settings-service summary { padding: 10px 14px; }
+dialog.lib-settings .lib-settings-service summary strong { display: inline-block; width: 31%; min-width: 150px; }
+dialog.lib-settings .lib-settings-service small { color: var(--muted); }
+dialog.lib-settings .lib-settings-service-body { padding: 8px 14px; border-top: 1px solid var(--line); }
+dialog.lib-settings .lib-settings-service-body > button { margin: 4px; }
+dialog.lib-settings .lib-settings-more { margin-top: 16px; }
+@container librarian (max-width: 800px) {
+  dialog.lib-dialog.lib-settings { width: calc(100cqi - 12px); height: calc(100dvh - 16px); }
+  dialog.lib-settings .lib-settings-nav { display: none; }
+  dialog.lib-settings .lib-settings-layout { display: flex; flex-direction: column; }
+  dialog.lib-settings .lib-settings-content { padding: 12px 16px 24px; }
+  dialog.lib-dialog.lib-settings > select { display: block; width: calc(100% - 32px); margin: 8px 16px; }
+  dialog.lib-settings .lib-settings-role { grid-template-columns: minmax(0,1fr) auto; }
+  dialog.lib-settings .lib-settings-role button:disabled { color: var(--muted); opacity: .65; cursor: default; }
+dialog.lib-settings .lib-settings-assignment { grid-column: 1; }
+  dialog.lib-settings .lib-settings-role button { grid-column: 2; grid-row: 1 / span 2; min-width: 60px; }
+  dialog.lib-settings .lib-settings-service summary strong { width: auto; }
+  dialog.lib-settings .lib-settings-service summary small { display: block; }
+  dialog.lib-settings .lib-srv, dialog.lib-settings .lib-row2.lib-tight { flex-wrap: wrap; }
+}
+dialog.lib-settings .lib-dlg-head input[type=search] { min-width:0; max-width:15rem; margin-inline-start:auto; padding:6px; }
+dialog.lib-settings .lib-settings-results { max-height:12rem; overflow:auto; padding:8px; }
+dialog.lib-settings [hidden] { display:none; }
+.lib-app .lib-evidence-demand .lib-columns { grid-template-columns:minmax(0,1fr); }
+.lib-app .lib-review-evidence summary { cursor:pointer; }
+@container librarian (max-width:540px) {
+  dialog.lib-settings .lib-dlg-head { flex-wrap:wrap; }
+  dialog.lib-settings .lib-dlg-head input[type=search] { order:1; width:100%; max-width:none; }
+}

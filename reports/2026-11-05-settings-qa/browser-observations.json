@@ -1,0 +1,29 @@
+{
+  "sections": [
+    "Providers & keys",
+    "Tools & integrations",
+    "Models & services",
+    "Chat behaviour",
+    "Review & promotion",
+    "Project access",
+    "Methods & lenses",
+    "Topics & organisation",
+    "Agent profiles",
+    "Health & diagnostics"
+  ],
+  "promotion": {
+    "displayed": "person",
+    "reloaded": "agent"
+  },
+  "access": {
+    "displayed": false,
+    "reloaded": true
+  },
+  "contextAfterNavigation": "saved fixture",
+  "customPressed": [
+    "Long"
+  ],
+  "topicAfterNavigation": "Original topic",
+  "duplicateServiceTestRequests": 2,
+  "settingsVisibleFromSearch": false
+}

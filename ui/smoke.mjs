@@ -93,7 +93,7 @@ await page.fill("#lib-msg", "");
 step("sending without a model says what to do, and keeps the draft");
 
 // Model tile: click order sets tiers; clicking again explains; right-click clears.
-await page.click(".lib-toolbar .lib-tb:nth-child(4)");
+await page.click("button[aria-controls='lib-models']");
 await page.waitForSelector("#lib-models .lib-model-card");
 await expect(page.evaluate(() => {
   const panel = document.querySelector("#lib-models");
@@ -145,7 +145,7 @@ step("a turn streams into the rail and the plan");
 await page.fill("#lib-msg", "make the project");
 await page.keyboard.press("Enter");
 await page.waitForSelector(".lib-perm:not(.lib-done)");
-await page.click(".lib-toolbar .lib-tb:nth-child(3)");
+await page.click("button[aria-controls='lib-modes']");
 await page.check("input[name=librarian-mode][value=auto]");
 await page.waitForSelector(".lib-perm.lib-done >> text=released by the switch to auto");
 await page.waitForSelector(".lib-msg >> text=written");
@@ -238,7 +238,50 @@ step("the paperclip attaches a file into Inbox/, and links an existing note, bot
 // Settings: save a key, then overwriting asks first; the key never shows.
 // OpenAI, not the default DeepInfra tab: the demo core profiles a DeepInfra
 // model with its own key, so DeepInfra already has one saved here.
-await page.click(".lib-tb.lib-icon");
+await page.click("button[aria-label='Settings']");
+const settings = page.getByRole("dialog", { name: "Settings", exact: true });
+const section = (name) => settings.getByRole("navigation").getByRole("button", { name, exact: true }).click();
+await settings.getByRole("heading", {name: "Models & services", exact:true}).waitFor();
+// Library controls: refuse privilege changes and verify the value on screen.
+await section("Review & promotion");
+const promo = settings.locator("#lib-promo");
+const originalPolicy = await promo.inputValue();
+await page.route("**/api/library", route => route.request().method() === "POST"
+  ? route.fulfill({status:409,json:{error:"Refused by fixture"}}) : route.continue());
+await promo.selectOption(originalPolicy === "agent" ? "person" : "agent");
+await settings.getByText(/Change failed: Refused by fixture/).waitFor();
+await expect((await promo.inputValue()) === originalPolicy, "refused promotion returns to confirmed policy");
+await page.unroute("**/api/library");
+await section("Project access");
+await page.route("**/api/projects/enable", route => route.fulfill({status:409,json:{error:"Refused by fixture"}}));
+await settings.locator("#lib-projects-on").check();
+await settings.getByText(/Showing current permissions/).waitFor();
+await expect(!(await settings.locator("#lib-projects-on").isChecked()), "refused project change re-reads Core");
+await page.unroute("**/api/projects/enable");
+await section("Chat behaviour");
+await settings.getByLabel("Context for chat replies").fill("Draft retained across sections");
+await section("Models & services"); await section("Chat behaviour");
+await expect(await settings.getByLabel("Context for chat replies").inputValue() === "Draft retained across sections","chat draft survived");
+await settings.getByRole("button",{name:"Discard unsaved edits"}).click();
+await settings.getByLabel("Find a setting").fill("TTS");
+await settings.getByRole("button",{name:"Read aloud / text to speech (TTS)"}).click();
+await settings.locator(".lib-slot-tts[open]").waitFor();
+await settings.locator(".lib-slot-tts summary").click();
+await section("Commands & shortcuts");
+await settings.getByLabel("Shortcut for Focus Search",{exact:true}).selectOption("J");
+await settings.getByLabel("Shortcut for Open Settings",{exact:true}).selectOption("J");
+await settings.getByText("Already assigned to Focus Search").waitFor();
+await settings.getByRole("button",{name:"Close",exact:true}).click();
+await page.locator("#lib-msg").focus(); await page.keyboard.press("Alt+Shift+j");
+await expect(await page.locator("#lib-msg").evaluate(el=>el===document.activeElement),"shortcut ignored while typing");
+await page.getByRole("tab",{name:"Chat",exact:true}).focus(); await page.keyboard.press("Alt+Shift+j");
+await page.getByRole("searchbox",{name:"Search query"}).waitFor();
+await page.getByRole("button",{name:"Settings",exact:true}).click();
+await settings.getByLabel("Shortcut for Focus Search",{exact:true}).selectOption("");
+await settings.getByRole("button",{name:"Close",exact:true}).click(); await page.getByRole("tab",{name:"Chat",exact:true}).click();
+await page.getByRole("button",{name:"Settings",exact:true}).click();
+step("Settings reconciles policy errors, retains drafts, finds TTS, and scopes configurable shortcuts");
+await section("Providers & keys");
 await page.selectOption("#lib-provider", "openai");
 await page.fill("#lib-key", "sk-demo-SECRET-9999");
 await page.click("dialog.lib-settings button:has-text('Save key')");
@@ -252,16 +295,16 @@ await page.click("dialog.lib-settings button:has-text('Check usage')");
 await page.waitForSelector("dialog.lib-settings .lib-usage a:has-text('View on the provider')");
 await expect(page.isVisible("dialog.lib-settings .lib-usage >> text=has no usage endpoint"),
   "no usage endpoint says so plainly, alongside the dashboard link");
-await page.click("dialog.lib-settings [role=tab]:has-text('Working context')");
+await section("Chat behaviour");
 await page.fill("#lib-sys", "A thesis on host monitoring");
 await page.click("dialog.lib-settings .lib-seg button:has-text('Short')");
 await page.click("dialog.lib-settings .lib-seg button:has-text('Coach')");
 await page.click("dialog.lib-settings button:has-text('Save')");
 await page.waitForSelector("dialog.lib-settings >> text=Saved.");
-await page.click("dialog.lib-settings [role=tab]:has-text('Working context')");
+await section("Chat behaviour");
 await expect(page.isVisible("dialog.lib-settings .lib-seg button[aria-pressed=true]:has-text('Coach')"),
   "the stance choice is saved and shown pressed on reopening the page");
-await page.click("dialog.lib-settings [role=tab]:has-text('Library')");
+await section("Health & diagnostics");
 await page.waitForSelector("dialog.lib-settings .lib-srv");
 step("settings: key saved and confirmed, usage falls back to a dashboard link, context and library shown");
 
@@ -275,6 +318,7 @@ step("settings: a key row opens a box to set that key in place");
 
 // Lens packs (roadmap §4 C3): a standard pack is listed, not accepted; Accept
 // installs its lenses, and the pack then shows as accepted.
+await section("Methods & lenses");
 await page.waitForSelector("dialog.lib-settings .lib-lens-packs .lib-srv:has-text('tool-choice')");
 await page.click("dialog.lib-settings .lib-lens-packs .lib-srv:has-text('tool-choice') button:has-text('Accept')");
 await page.waitForSelector("dialog.lib-settings .lib-lens-packs >> text=tool-choice: 10 lens(es) installed");
@@ -289,7 +333,7 @@ step("lens packs: a standard pack is accepted from Settings → Library, and its
 // fills the hand-add form from it without connecting anything; a hand-added
 // server (the test fixture, a real stdio subprocess) connects and lists its
 // tools; per-tool permission and the enable toggle both reach the API.
-await page.click("dialog.lib-settings [role=tab]:has-text('MCP servers')");
+await section("Tools & integrations");
 await page.waitForSelector("dialog.lib-settings .lib-srv >> text=Semantic Scholar");
 await page.click("dialog.lib-settings button:has-text('Search')");
 await page.waitForSelector("dialog.lib-settings .lib-browse-results .lib-srv >> text=Weather MCP");
@@ -312,7 +356,8 @@ await page.waitForSelector("dialog.lib-settings .lib-srv-block button:has-text('
 step("MCP servers: curated skill listed, a hand-added server connects and lists tools, per-tool permission and disable both work");
 
 // Service models (R17, slot 4): chosen with the same model tile, kept with the library.
-await page.click("dialog.lib-settings [role=tab]:has-text('Connections')");
+await section("Models & services");
+for (const slot of ["ocr", "tts", "embeddings"]) await settings.locator(".lib-slot-" + slot + " summary").click();
 await page.waitForSelector("dialog.lib-settings .lib-slot-ocr >> text=Qwen/Qwen3.5-397B-A17B");
 await expect(page.isVisible("dialog.lib-settings .lib-slot-ocr >> text=(default)"), "the assigned default is marked");
 await expect(page.isVisible("dialog.lib-settings .lib-slot-tts >> text=hexgrad/Kokoro-82M"), "slot 5 (text to speech) holds its default");
@@ -333,6 +378,7 @@ step("right-click empties a service slot");
 
 // An exact custom host can be selected without adding it to preset provider
 // tiles. This is an assignment only; the smoke test makes no provider request.
+await section("Providers & keys");
 await page.fill("dialog.lib-settings input[aria-label='New host id']", "smoke-vision");
 await page.fill("dialog.lib-settings input[aria-label='New host display name']", "Smoke Vision");
 await page.fill("dialog.lib-settings input[aria-label='New host base URL']", "http://127.0.0.1:11998/v1");
@@ -341,6 +387,7 @@ await page.waitForSelector("dialog.lib-settings .lib-host-card:has-text('Smoke V
 await page.fill("dialog.lib-settings input[aria-label='Model on Smoke Vision']", "custom-vision");
 await page.selectOption("dialog.lib-settings select[aria-label='Service slot on Smoke Vision']", "ocr");
 await page.click("dialog.lib-settings .lib-host-card:has-text('Smoke Vision') button:has-text('Use for service')");
+await section("Models & services");
 await page.waitForSelector("dialog.lib-settings .lib-slot-ocr >> text=custom-vision");
 await expect(page.isVisible("dialog.lib-settings .lib-slot-ocr >> text=smoke-vision"), "the exact custom host is visible");
 await page.click("dialog.lib-settings .lib-slot-ocr", { button: "right" });
@@ -348,7 +395,7 @@ await page.waitForSelector("dialog.lib-settings .lib-slot-ocr >> text=none chose
 step("custom service assignment stays explicit and uses the existing Connections controls");
 
 // Research Pipeline §6.1: project access is a person's switch, off by default.
-await page.click("dialog.lib-settings [role=tab]:has-text('Projects')");
+await section("Project access");
 await page.waitForSelector("dialog.lib-settings >> text=Enable project access");
 await expect(page.isChecked("#lib-projects-on").then((on) => !on), "project access starts off");
 await expect(page.isVisible("dialog.lib-settings >> text=No project folders yet."), "no folder is allowed until a person adds one");
@@ -471,7 +518,7 @@ await page.waitForSelector(".lib-staging .lib-evidence");
 await page.click(".lib-staging button:has-text('Approve for ingestion')");
 await page.waitForSelector(".lib-staging >> text=Approved for ingestion: it waits for the batch");
 await page.waitForSelector(".lib-staging .lib-batch-banner >> text=1 source approved and awaiting ingestion.");
-await page.click(".lib-staging .lib-batch-banner button:has-text('Click here to begin')");
+await page.click(".lib-staging .lib-batch-banner button:has-text('Process approved sources')");
 await page.waitForFunction(() => {
   const text = document.querySelector(".lib-staging .lib-batch-banner")?.textContent ?? "";
   return !text.includes("Processing") && !text.includes("awaiting ingestion");
@@ -536,7 +583,7 @@ step("a lens is adopted into the thread from the ⋮ menu, under the name it was
 // Model profiling: an unprofiled model can be profiled (staged like any other
 // source); a model already profiled with tool_calling: false can't lead a
 // session, but can still be tier 2 or 3.
-await page.click(".lib-toolbar .lib-tb:nth-child(4)");
+await page.click("button[aria-controls='lib-models']");
 await page.waitForSelector("#lib-models section:has-text('DeepInfra') .lib-model-card");
 await expect(page.isVisible("#lib-models .lib-model-card:has-text('acme/no-tools-model') >> text=no tool calling"),
   "a profiled model shows its real specs, not 'unprofiled'");
@@ -566,7 +613,7 @@ await page.fill("#lib-solves", "A cheap default for high-volume sub-agent work."
 await page.click(".lib-staging button:has-text('Accept')");
 await page.waitForSelector(".lib-staging >> text=Accepted");
 await page.click(".lib-app nav button:has-text('Chat')");
-await page.click(".lib-toolbar .lib-tb:nth-child(4)");
+await page.click("button[aria-controls='lib-models']");
 await page.waitForSelector("#lib-models section:has-text('DeepInfra') .lib-model-card:has-text('openai/gpt-oss-20b') >> text=Tier 3");
 await expect(page.isVisible("#lib-models .lib-model-card:has-text('openai/gpt-oss-20b') >> text=131k ctx"),
   "the accepted model now shows its measured specs in the tile");
@@ -627,7 +674,7 @@ step("a staged offering: read in full in Staging -> Offerings, then promoted fro
 // (d) the review-due action opens a parked learn session for the review that fell due.
 await page.click(".lib-app nav button:has-text('Chat')");
 await page.click(".lib-toolbar .lib-tb:has-text('Modes')");
-await page.click("#lib-modes .lib-menuitem:has-text('review-due')");
+await page.click("#lib-modes .lib-menuitem:has-text('Review due concepts')");
 await page.waitForFunction(async () => {
   const token = document.querySelector("meta[name=librarian-token]")?.getAttribute("content") ?? "";
   const r = await fetch("/api/tool/list_sessions", { method: "POST", headers: { "Content-Type": "application/json",
@@ -647,14 +694,16 @@ await page.route("**/api/tool/model_catalog_status", (route) => route.fulfill({ 
 await page.route("**/api/tool/model_catalog_adopt", (route) => route.fulfill({ status: 200,
   contentType: "application/json", body: JSON.stringify({ provider: "fixture-provider", written: 0,
     already_held: 1, failed: [{ name: "Conflicted fixture model", error: "Earlier writes remain; review before retrying" }] }) }));
-await page.click(".lib-tb.lib-icon");
-await page.click("dialog.lib-settings [role=tab]:has-text('Library')");
+await page.click("button[aria-label='Settings']");
+await section("Models & services");
+await settings.getByText("Model catalogues and qualification", {exact:true}).click();
 await page.waitForSelector("dialog.lib-settings .lib-model-catalogs >> text=Review incomplete/unfindable Source notes");
 await page.click("dialog.lib-settings .lib-model-catalogs button:has-text('Adopt the rest')");
 await page.waitForSelector("dialog.lib-settings .lib-model-catalogs >> text=Earlier writes remain; review before retrying");
 await page.unroute("**/api/tool/model_catalog_status");
 await page.unroute("**/api/tool/model_catalog_adopt");
 step("catalogue adoption surfaces incomplete Source notes and retained partial-write failures");
+await section("Topics & organisation");
 await page.waitForSelector("dialog.lib-settings input[aria-label='Topic name']");
 await page.route("**/api/tool/views_refresh", (route) => route.fulfill({ status: 200,
   contentType: "application/json", body: JSON.stringify({ error: "refused", refused: "DOCUMENT_ACTIVE",
@@ -847,7 +896,7 @@ await expect(page.inputValue(".lib-toolbar .lib-effort input").then((v) => v ===
 await page.unroute("**/api/effort");
 
 await page.route("**/api/mode", refuse("a reply is running", 409));
-await page.click(".lib-toolbar .lib-tb:nth-child(3)");
+await page.click("button[aria-controls='lib-modes']");
 const confirmedMode = await page.$eval("input[name=librarian-mode]:checked", (el) => el.value);
 const otherMode = await page.$eval("input[name=librarian-mode]:not(:checked)", (el) => el.value);
 await page.click(`input[name=librarian-mode][value=${otherMode}]`);

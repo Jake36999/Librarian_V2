@@ -1,3 +1,4 @@
+import { preference, remember } from "./commands";
 // Beside the chat: staging review (each draft beside its evidence), search, and
 // a note reader. Every button here is the person's own decision, sent as a tool
 // call at their tier.
@@ -33,11 +34,16 @@ export class Staging {
   // SSE echo of this same decision, or someone else's) must not wipe it.
   private detailLocked = false;
   private paintKinds: () => void = () => {};
+  private evidenceMode = h("select", {"aria-label":"Review evidence layout"}, h("option",{value:"beside"},"Evidence beside draft"), h("option",{value:"demand"},"Evidence on demand")) as HTMLSelectElement;
+  private stopped = false;
+  dispose(): void { this.stopped = true; window.clearTimeout(this.poll); }
   private pending = "";                      // an offering to open once the list loads
 
   constructor(private api: Api, private openNote: (name: string) => void,
               private currentSession: () => string = () => "",
-              private onSessionUpdate: (session: Record<string, any>) => void = () => {}) {
+              private onSessionUpdate: (session: Record<string, any>) => void = () => {},
+              private openModels: () => void = () => {}, private onBatch: (event: "start" | "finish") => void = () => {},
+              private routeHint: () => string = () => "") {
     const kinds = h("div", { class: "seg", role: "group", "aria-label": "Kind" });
     const statuses = h("select", { "aria-label": "Which sources", onchange: () => {
       this.status = statuses.value; this.selected = ""; void this.load(true);
@@ -82,7 +88,14 @@ export class Staging {
       } }, "Scan for concepts");
     paint();
     this.paintKinds = paint;
-    this.el.append(h("div", { class: "view-head" }, h("strong", {}, "Staging review"), kinds, statuses,
+    this.evidenceMode.value = preference("evidence","beside");
+    const layout = () => this.el.classList.toggle("lib-evidence-demand", this.evidenceMode.value === "demand");
+    layout();
+    this.evidenceMode.onchange = () => { remember("evidence",this.evidenceMode.value); layout();
+      const evidence = this.detail.querySelector("details.lib-review-evidence") as HTMLDetailsElement | null;
+      if (evidence) evidence.open = this.evidenceMode.value === "beside";
+    };
+    this.el.append(h("div", { class: "view-head" }, h("strong", {}, "Staging review"), kinds, statuses, this.evidenceMode,
       h("button", { class: "ghost", onclick: () => void this.load(true) }, "Refresh"), scan, propose),
       this.banner,
       h("div", { class: "split" }, this.list, this.detail));
@@ -224,6 +237,13 @@ export class Staging {
   /** Approving a source only queues it: a person begins the batch here, and nothing
    * else starts it (Research Pipeline §4.2). The count is the approved set not yet
    * started; while a batch runs, later approvals are counted apart, for the next run. */
+  async focusBatch(id: string): Promise<void> {
+    await this.paintBanner();
+    const button = this.banner.querySelector<HTMLButtonElement>(`[data-command="${id}"]`);
+    if (button) { button.focus(); return; }
+    this.banner.append(h("p", {class:"note"}, "This batch action is unavailable for the current queue."));
+  }
+
   private async paintBanner(): Promise<void> {
     let b: any;
     try {
@@ -232,18 +252,20 @@ export class Staging {
       clear(this.banner);
       return;
     }
+    if (this.stopped) return;
     const waiting = Number(b.waiting ?? 0);
     const running = b.status === "running";
-    const start = (label: string, args: Record<string, unknown>, cls = "primary") =>
-      h("button", { class: cls, onclick: async (e: Event) => {
-        (e.currentTarget as HTMLButtonElement).disabled = true;
+    const start = (id: string, label: string, args: Record<string, unknown>, cls = "primary") =>
+      h("button", { class: cls, "data-command": id, onclick: async (e: Event) => {
+        const button = e.currentTarget as HTMLButtonElement; button.disabled = true;
         try {
           const out = await this.api.tool("process_approved", { ...args, background: true });
           if (out.error || out.refused) throw new Error(String(out.detail ?? out.refused ?? out.error));
         } catch (err) {
           this.banner.append(h("p", { class: "error" }, (err as Error).message));
-          return;
+          button.disabled = false; return;
         }
+        this.onBatch("start");
         void this.paintBanner();
       } }, label);
     const rows: HTMLElement[] = [];
@@ -252,9 +274,13 @@ export class Staging {
       rows.push(h("div", { class: "row2 tight" },
         h("span", {}, h("strong", {}, `Processing ${b.processed ?? 0} of ${b.total ?? 0}`),
           cur.item ? ` · ${cur.item}: ${cur.stage}${cur.detail ? ` - ${cur.detail}` : ""}` : ""),
-        h("button", { class: "ghost", onclick: async () => {
-          await this.api.tool("batch_cancel", {});
-          void this.paintBanner();
+        h("button", { class: "ghost", "data-command": "stop", onclick: async (e: Event) => {
+          const button = e.currentTarget as HTMLButtonElement; button.disabled = true;
+          try {
+            const result = await this.api.tool("batch_cancel", {});
+            if (result.error || result.refused) throw Error(String(result.detail ?? result.error ?? result.refused));
+            await this.paintBanner();
+          } catch (err) { button.disabled = false; this.banner.append(h("p",{class:"error"},(err as Error).message)); }
         } }, "Stop after this stage")));
       if (waiting) rows.push(h("p", { class: "note inline" }, `${waiting} more approved, waiting for the next run.`));
     } else {
@@ -266,22 +292,24 @@ export class Staging {
       if (unfinished && ["interrupted", "cancelled", "failed"].includes(b.status)) {
         rows.push(h("div", { class: "row2 tight" },
           h("span", {}, `The last batch stopped${b.detail ? ` (${b.detail})` : ""} with sources unfinished.`),
-          start("Resume it", { resume: b.run }, "ghost")));
+          start("resume", "Resume it", { resume: b.run }, "ghost")));
       }
       if (waiting) {
         rows.push(h("div", { class: "row2 tight" },
           h("strong", {}, waiting === 1 ? "1 source approved and awaiting ingestion."
             : `${waiting} sources approved and awaiting ingestion.`),
-          start("Click here to begin", {})));
+          start("approved", "Process approved sources", {})));
       }
       const onModel = Number(b.waiting_on_model ?? 0);
       if (onModel) {
         rows.push(h("div", { class: "row2 tight" },
           h("span", {}, `${onModel} source${onModel === 1 ? " has" : "s have"} reading steps that waited for a model. `
             + "With models chosen (Choose models), run just those steps:"),
-          start("Run the waiting steps", { retry_waiting: true }, "ghost")));
+          start("retry", "Run the waiting steps", { retry_waiting: true }, "ghost")));
       }
     }
+    if (rows.length && !running) rows.push(h("small", {class:"note"}, this.routeHint() + " Estimated cost and total content sent are unknown before the run."));
+    if (this.wasRunning && !running && b.status === "finished") this.onBatch("finish");
     clear(this.banner, rows.length ? h("div", { class: "warn" }, rows) : null);
     window.clearTimeout(this.poll);
     if (running) this.poll = window.setTimeout(() => void this.paintBanner(), 2000);
@@ -483,7 +511,7 @@ export class Staging {
           : ": its whole text read. Accepting merges its Claims and Evidence & Limits into that note (the previous text is kept on this item); rejecting leaves the note as it is.") : null,
       queued.length ? h("p", { class: "warn" },
         `⏳ Waiting on a clerk model for: ${queued.join(", ")}. Choose a tier 3 model under Model, `,
-        "set [clerk] in the vault's config, or run the clerk agent, then “Redraft” below.") : null,
+        h("button", {class:"ghost",onclick:this.openModels},"Configure reviewer model")) : null,
       (item.intake_notes ?? []).length ? h("p", { class: "note" }, `Intake could not read everything: ${(item.intake_notes as string[]).join("; ")}.`) : null,
       missing.length ? h("p", { class: "warn" }, `Still missing before this is catalogued fully: ${missing.join(", ")}.`) : null,
       h("div", { class: "columns" },
@@ -509,7 +537,7 @@ export class Staging {
                   dr ? "Continue deep read" : "Deep read")
               : null),
           status),
-        h("div", {},
+        h("details", {class:"review-evidence", open:this.evidenceMode.value === "beside"}, h("summary", {}, "View source evidence"),
           sections.length ? h("label", { class: "f" }, "What was read") : null,
           sections.length ? h("div", { class: "sections" }, sections.map(([heading, body]) =>
             h("section", {}, h("h4", {}, heading), render(body, this.openNote)))) : null,
@@ -854,6 +882,10 @@ export class Search {
       h("div", { class: "split" }, this.facets, this.results));
   }
 
+  activity(): void {
+    const scope = this.el.querySelector<HTMLSelectElement>('select[aria-label="Search in"]')!;
+    scope.value = "activity"; scope.dispatchEvent(new Event("change")); this.focus();
+  }
   focus(): void { (this.el.querySelector("input") as HTMLInputElement | null)?.focus(); }
 
   /** Staging, sessions or activity (search_work): where was that seen? */

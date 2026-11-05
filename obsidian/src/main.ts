@@ -4,6 +4,7 @@
 
 import { App, ItemView, Notice, Plugin, PluginSettingTab, SecretComponent, Setting, TFile, MarkdownView,
          WorkspaceLeaf, FileSystemAdapter } from "obsidian";
+import { COMMANDS } from "../../ui/src/commands";
 import { mount, type Mounted } from "../../ui/src/main";
 import { CoreNotFound, KEY_ENV, STOP_EXIT_MS, StaleCoreLease, start, type Running } from "./core";
 
@@ -28,6 +29,13 @@ export default class LibrarianPlugin extends Plugin {
     this.settings = { ...DEFAULTS, ...(await this.loadData()) };
     this.registerView(VIEW, (leaf) => new LibrarianView(leaf, this));
     this.addRibbonIcon("library", "Open the librarian", () => this.activate());
+    for (const [id, name] of Object.entries(COMMANDS)) {
+      this.addCommand({ id: "command-" + id, name, checkCallback: checking => {
+        if (document.activeElement?.closest("textarea, input, select, [contenteditable=true], .cm-content")) return false;
+        if (!checking) void this.activate().then(view => view?.command(id));
+        return true;
+      } });
+    }
     this.addCommand({ id: "open", name: "Open the librarian", callback: () => this.activate() });
     this.addCommand({
       id: "ask-about-note", name: "Ask about this note",
@@ -266,6 +274,8 @@ class LibrarianView extends ItemView {
     });
     this.startHeartbeat(core);
   }
+
+  command(id: string): void { this.mounted?.command(id); }
 
   insert(text: string): void {
     this.mounted?.insert(text);

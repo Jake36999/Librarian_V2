@@ -1,14 +1,31 @@
-// + Settings: Connections, Working context, MCP servers, Library.
+import { researchSetups } from "./presets";
+// Settings groups configuration by task and shows the active library in the header.
 // A key goes to the core once and never comes back: only whether one is saved
 // and its last four characters.
 
 import type { Api } from "./api";
 import { ApiError } from "./api";
 import { clear, h, cls, sel } from "./dom";
+import { COMMANDS, preference, remember, shortcutPage } from "./commands";
 import { PROVIDERS } from "./panels";
 
-const PAGES = [["connections", "Connections"], ["context", "Working context"],
-               ["mcp", "MCP servers"], ["library", "Library"], ["projects", "Projects"]] as const;
+const GROUPS = [
+  ["Environment", [["commands", "Commands & shortcuts"], ["connections", "Providers & keys"], ["mcp", "Tools & integrations"]]],
+  ["Current library", [["models", "Models & services"], ["context", "Chat behaviour"],
+    ["review", "Review & promotion"], ["projects", "Project access"], ["methods", "Methods & lenses"],
+    ["topics", "Topics & organisation"]]],
+  ["Advanced", [["profiles", "Agent profiles"], ["health", "Health & diagnostics"]]],
+] as const;
+
+const CHAT_ROLES = [
+  ["Lead", "Plans and coordinates the research session"],
+  ["Notes", "Writes source descriptions and notes"],
+  ["Small tasks / reviewer", "Handles bounded tasks and advisory checks"],
+] as const;
+
+const SERVICE_NAMES: Record<string, string> = {
+  ocr: "Document reading / OCR", tts: "Read aloud", stt: "Speech recognition", embeddings: "Semantic search",
+};
 
 // Curated MCP servers, evaluated for fit with a research vault (Co-work
 // Roadmap §3): stdio, no separate install step (uvx/npx -y fetch on first
@@ -31,35 +48,163 @@ const CURATED_SKILLS = [
 
 export class Settings {
   readonly dialog = h("dialog", { class: "lib-dialog settings", "aria-label": "Settings" }) as HTMLDialogElement;
-  private page: string = "connections";
-  private body = h("section", { class: "page" });
-  private tabs = h("div", { class: "tabs", role: "tablist" });
+  private page = "models";
+  private body = h("section", { class: "settings-content" });
+  private libraryName = h("span", { class: "settings-library" });
+  private compact = h("select", { "aria-label": "Settings section" }) as HTMLSelectElement;
+  private links = new Map<string, HTMLButtonElement>();
+  private drafts = new Map<string, Node[]>();
+  private dirty = false;
+  private draftLibrary = "";
+  private searchResults = h("div", {class:"settings-results", hidden:true});
+  private search = h("input", {type:"search", placeholder:"Find a setting", "aria-label":"Find a setting"}) as HTMLInputElement;
+  private expandedServices = new Set<string>();
 
   constructor(private api: Api, private state: () => Record<string, any>,
               private refresh: () => Promise<void>, private manageKeys?: () => void,
-              private chooseService?: (slot: string, label: string,
-                                       current?: { provider: string; model: string }) => void) {
+              private chooseModel?: (slot: string, label: string,
+                current?: { provider: string; model: string }, role?: number) => void, private native = false, private runCommand: (id: string) => void = () => {},
+              private fieldId: (base: string) => string = base => base) {
+    const nav = h("nav", { class: "settings-nav", "aria-label": "Settings sections" });
+    for (const [group, pages] of GROUPS) {
+      const options = h("optgroup", { label: group });
+      nav.append(h("h3", {}, group));
+      for (const [id, label] of pages) {
+        const link = h("button", { type: "button", onclick: () => this.open(id) }, label) as HTMLButtonElement;
+        this.links.set(id, link);
+        nav.append(link);
+        options.append(h("option", { value: id }, label));
+      }
+      this.compact.append(options);
+    }
+    this.search.oninput = () => this.findSettings();
+    this.body.addEventListener("input", e => {
+      if ((this.page === "context" || this.page === "topics") && e.target instanceof HTMLElement &&
+          e.target.closest("input,textarea,select")) this.dirty = true;
+    });
+    this.compact.onchange = () => this.open(this.compact.value);
     this.dialog.append(
-      h("div", { class: "dlg-head" }, h("strong", {}, "Settings"),
+      h("header", { class: "dlg-head" }, h("strong", {}, "Settings"), this.libraryName, this.search,
         h("button", { class: "ghost push", onclick: () => this.dialog.close() }, "Close")),
-      this.tabs, this.body);
+      this.searchResults, this.compact, h("div", { class: "settings-layout" }, nav, this.body));
   }
 
   open(page = this.page): void {
+    const library = String(this.state().vault_path ?? this.state().vault ?? "");
+    if (library !== this.draftLibrary) { this.drafts.clear(); this.dirty = false; this.draftLibrary = library; }
+    if (this.dirty) this.drafts.set(this.page, Array.from(this.body.childNodes));
     this.page = page;
-    this.render();
+    this.search.value = ""; this.searchResults.hidden = true;
+    const draft = this.drafts.get(page);
+    this.dirty = !!draft;
+    if (draft) { clear(this.body, draft); this.updateNav(); }
+    else this.render();
     if (!this.dialog.open) this.dialog.showModal();
   }
 
+  syncState(): void {
+    const state = this.state(), tiers = state.tiers ?? [];
+    const library = state.vault_name || state.vault;
+    this.libraryName.textContent = library ? `Library: ${library}` : "Opening library…";
+    if (this.page !== "models") return;
+    this.body.querySelectorAll(".lib-settings-role").forEach((row, i) => {
+      const selected = tiers[i], fallback = tiers[tiers.length - 1];
+      const assignment = row.querySelector(".lib-settings-assignment")!;
+      assignment.textContent = selected ? `${selected.model} · ${PROVIDERS[selected.provider] ?? selected.provider}`
+        : i > tiers.length ? `Choose ${CHAT_ROLES[i - 1][0]} first` + (fallback ? ` · currently uses ${fallback.model}` : "")
+        : fallback ? `Uses ${fallback.model}` : "No model selected";
+      row.querySelector("button")!.disabled = !library || i > tiers.length;
+    });
+  }
+
+  private updateNav(): void {
+    for (const [id, link] of this.links) {
+      if (id === this.page) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    }
+    this.compact.value = this.page;
+  }
+
+  private controlsPage(): HTMLElement {
+    const choice = (key: string, label: string, options: string[][]) =>
+      h("label", {class:"f"}, label, h("select",{ onchange:(event: Event) => remember(key,(event.target as HTMLSelectElement).value)},
+        options.map(([value,name]) => h("option",{value,selected:preference(key,options[0][0]) === value},name))));
+    return h("div", {}, choice("job-start","When an ingestion job starts",[["stay","Stay on this page"],["activity","Open Activity search"]]),
+      choice("batch-notice","When an observed batch finishes",[["quiet","Keep the result in Staging"],["on","Also show an in-app notice"]]),
+      shortcutPage(this.native, this.runCommand, this.api, this.state()));
+  }
+
+  private findSettings(): void {
+    const q = this.search.value.trim().toLowerCase();
+    const items: [string,string,string?][] = [
+      ...Array.from(this.links, ([id,link]): [string,string] => [id, link.textContent ?? id]),
+      ["models","Read aloud / text to speech (TTS)","tts"], ["models","Speech recognition (STT)","stt"],
+      ["models","Semantic search / embeddings","embeddings"], ["models","Document reading / OCR","ocr"],
+      ["models","Clerk / small tasks / reviewer","role"], ["projects","Folder permissions and editing"],
+      ["review","Who can promote sources?"], ["context","Send shortcut and response length"], ["models","Named research presets","preset"], ["context","View active context and session lenses","active"],
+      ["connections","API keys and billing"], ...Object.values(COMMANDS).map((name): [string,string] => ["commands",name]),
+    ];
+    const found = items.filter(([,label]) => label.toLowerCase().includes(q));
+    this.searchResults.hidden = !q;
+    clear(this.searchResults, found.length ? found.map(([id,label,target]) => h("button", {class:"ghost", onclick: () => {
+      const service = target && Object.hasOwnProperty.call(SERVICE_NAMES,target) ? target : "";
+      if (service) this.expandedServices.add(service);
+      this.open(id);
+      if (target === "role") this.body.querySelector<HTMLElement>('[aria-label="Choose Small tasks / reviewer model"]')?.focus();
+      if (id === "commands") Array.from(this.body.querySelectorAll("strong")).find(el => el.textContent === label)?.closest(".lib-settings-role")?.querySelector("button")?.focus();
+      if (service) this.focusService = service;
+      if (target === "preset" || target === "active") {
+        const detail = Array.from(this.body.querySelectorAll("details")).find(d => d.querySelector("summary")?.textContent === (target === "preset" ? "Named research presets" : "View active context"));
+        if (detail) { detail.open = true; detail.querySelector("summary")?.focus(); }
+      }
+    }}, label)) : h("span", {role:"status"}, "No matching settings."));
+  }
+  private focusService = "";
+
   render(): void {
-    clear(this.tabs, PAGES.map(([id, label]) => h("button", {
-      role: "tab", "aria-selected": String(id === this.page),
-      onclick: () => { this.page = id; this.render(); },
-    }, label)));
-    const page = { connections: () => this.connections(), context: () => this.context(),
-                   mcp: () => this.mcp(), library: () => this.library(),
-                   projects: () => this.projectsPage() }[this.page];
-    clear(this.body, page ? page() : null);
+    this.updateNav();
+    const pages: Record<string, () => HTMLElement> = {
+      commands: () => this.controlsPage(), models: () => this.modelsPage(), connections: () => this.connections(), mcp: () => this.mcp(),
+      context: () => this.context(), projects: () => this.projectsPage(), profiles: () => this.agentProfiles(),
+      review: () => this.library(false), health: () => this.library(true),
+      topics: () => { const host = h("div", { class: "topics" }); void this.paintTopics(host); return host; },
+      methods: () => {
+        const profile = h("div"), packs = h("div", { class: "lens-packs" });
+        void this.paintProfile(profile); void this.paintPacks(packs);
+        return h("div", {}, profile, h("h3", {}, "Lens packs"), packs);
+      },
+    };
+    clear(this.body, h("h2", {}, this.links.get(this.page)?.textContent ?? "Settings"), pages[this.page]());
+    if (this.page === "context" || this.page === "topics") this.body.append(h("button", {class:"ghost", onclick: () => {
+      this.drafts.delete(this.page); this.dirty = false; this.render();
+    }}, "Discard unsaved edits"));
+    this.syncState();
+    this.body.scrollTop = 0;
+  }
+
+  private modelsPage(): HTMLElement {
+    const catalogues = h("div", { class: "model-catalogs" });
+    const more = h("details", { class: "settings-more" }, h("summary", {}, "Model catalogues and qualification"));
+    more.addEventListener("toggle", () => {
+      if ((more as HTMLDetailsElement).open && more.childElementCount === 1) {
+        more.append(catalogues, this.releaseLeadSetup());
+        void this.paintModelCatalogs(catalogues);
+      }
+    });
+    return h("div", {},
+      h("p", { class: "settings-intro" }, "Choose the models that perform each kind of work."),
+      h("p", { class: "settings-scope" }, "Chat-model changes also update defaults used by libraries without their own choices.",
+        h("small", {}, "Service assignments remain specific to this library.")),
+      h("h3", {}, "Chat roles"),
+      CHAT_ROLES.map(([label, job], i) => {
+        return h("div", { class: "settings-role" },
+          h("div", {}, h("strong", {}, label), h("small", {}, job)),
+          h("span", { class: "settings-assignment" }),
+          h("button", { class: "ghost", "aria-label": `Choose ${label} model`,
+            onclick: () => { this.dialog.close(); this.chooseModel?.("chat", label, this.state().tiers?.[i], i); } }, "Choose"));
+      }),
+      h("h3", {}, "Supporting services"), h("p", { class: "settings-help" }, "Expand a service to choose its model or check its configuration."),
+      this.serviceModels(), more, researchSetups(this.api, this.state, this.refresh));
   }
 
   // -- page 1 --------------------------------------------------------------
@@ -76,15 +221,15 @@ export class Settings {
         h("div", { class: "row2" }, h("button", { class: "primary", onclick: () => { this.dialog.close(); this.manageKeys?.(); } },
           "Choose keys in the plugin's settings")),
         h("p", { class: "note" }, "After changing a key, the plugin restarts the core so it takes effect."),
-        this.serviceModels(), this.releaseLeadSetup(), this.agentProfiles(), this.hostRegistry());
+        this.hostRegistry());
     }
     // Model providers, then the web search backends (keys.SEARCH_KEYS): web_search uses
     // Brave, else Tavily, else a SearXNG instance, else Wikipedia only.
     const LABELS: Record<string, string> = { ...PROVIDERS, tavily: "Tavily (web search)",
       brave: "Brave Search (web search)", github: "GitHub (repository intake)" };
-    const select = h("select", { id: "lib-provider" },
+    const select = h("select", { id: this.fieldId("lib-provider") },
       Object.entries(LABELS).map(([id, label]) => h("option", { value: id }, label))) as HTMLSelectElement;
-    const input = h("input", { type: "password", id: "lib-key", autocomplete: "off", placeholder: "Paste a key" }) as HTMLInputElement;
+    const input = h("input", { type: "password", id: this.fieldId("lib-key"), autocomplete: "off", placeholder: "Paste a key" }) as HTMLInputElement;
     const status = h("span", { class: "note inline", role: "status" });
     const confirmBox = h("div");
     const save = h("button", { class: "primary" }, "Save key") as HTMLButtonElement;
@@ -199,15 +344,15 @@ export class Settings {
       h("div", { class: "row2" }, migrate, migrationStatus));
     }
     const page = h("div", {},
-      h("label", { class: "f", for: "lib-provider" }, "Provider"), select,
-      h("label", { class: "f", for: "lib-key" }, "Connect API key"), input,
+      h("label", { class: "f", for: this.fieldId("lib-provider") }, "Provider"), select,
+      h("label", { class: "f", for: this.fieldId("lib-key") }, "Connect API key"), input,
       h("div", { class: "row2" }, save, remove, status), confirmBox,
       h("p", { class: "note" }, `Keys are kept by the core (${this.state().key_backend ?? "securely"}), never in the vault. `,
         "They never come back to this page: only whether one is saved, and its last four characters."),
       keyMigration,
       h("label", { class: "f" }, "Usage & billing"),
       h("div", { class: "row2" }, checkUsage), usageBox,
-      this.serviceModels(), this.releaseLeadSetup(), this.agentProfiles(), this.hostRegistry());
+      this.hostRegistry());
     show();
     return page;
   }
@@ -377,12 +522,21 @@ export class Settings {
     const host = h("div", {}, h("p", { class: "dim" }, "Loading…"));
     const status = h("span", { class: "note inline", role: "status" });
     const paint = (data: any) => {
-      const toggle = h("input", { type: "checkbox", id: "lib-projects-on", checked: !!data.enabled,
+      const toggle = h("input", { type: "checkbox", id: this.fieldId("lib-projects-on"), checked: !!data.enabled,
         onchange: async (e: globalThis.Event) => {
-          try { paint(await this.api.post("/api/projects/enable", { enabled: (e.target as HTMLInputElement).checked })); }
-          catch (err) { status.textContent = (err as Error).message; }
+          await changePermission(e, "/api/projects/enable", { enabled: (e.target as HTMLInputElement).checked }, !!data.enabled);
         } }) as HTMLInputElement;
-      const path = h("input", { type: "text", class: "f", id: "lib-project-path",
+      const changePermission = async (event: Event, url: string, body: object, previous: boolean, done = "") => {
+        const box = event.currentTarget as HTMLInputElement;
+        box.disabled = true;
+        try { paint(await this.api.post(url, body)); status.textContent = done; }
+        catch (err) {
+          box.checked = previous;
+          try { paint(await this.api.get("/api/projects")); status.textContent = "Change failed. Showing current permissions. " + (err as Error).message; }
+          catch { status.textContent = "Could not verify permissions. Showing last confirmed value."; }
+        } finally { box.disabled = false; }
+      };
+      const path = h("input", { type: "text", class: "f", id: this.fieldId("lib-project-path"),
         placeholder: "Full path to the project folder, e.g. D:\\code\\my-app" }) as HTMLInputElement;
       const project = h("input", { type: "text", "aria-label": "Project note",
         placeholder: "Its Project note's name (optional)" }) as HTMLInputElement;
@@ -408,13 +562,13 @@ export class Settings {
           data.enabled && r.exists ? h("button", { class: "ghost", onclick: act("/api/projects/scan", { id: r.id }, "Scanned.") }, "Scan") : null,
           h("label", { class: "inline project-writes", title: "Separate from reading: the librarian may then propose one change at a time (a snippet replaced or a new file), shown as a diff; you approve each one, and each is logged with a backup in librarian-app/logs/." },
             h("input", { type: "checkbox", checked: !!r.writes, "aria-label": `Allow edits in ${r.path}`,
-              onchange: (e: globalThis.Event) => act("/api/projects/writes",
+              onchange: (e: globalThis.Event) => changePermission(e, "/api/projects/writes",
                 { id: r.id, allowed: (e.target as HTMLInputElement).checked },
-                (e.target as HTMLInputElement).checked ? "Edits allowed: each one is still asked." : "Edits withdrawn.")() }),
+                !!r.writes, (e.target as HTMLInputElement).checked ? "Edits allowed: each one is still asked." : "Edits withdrawn.") }),
             " Allow edits"),
           h("button", { class: "ghost", onclick: act("/api/projects/remove", { id: r.id }) }, "Remove this project")))
           : h("p", { class: "dim" }, "No project folders yet."),
-        h("label", { class: "f", for: "lib-project-path" }, "Add a project folder"), path,
+        h("label", { class: "f", for: this.fieldId("lib-project-path") }, "Add a project folder"), path,
         h("div", { class: "row2 tight" }, project,
           h("button", { class: "primary", onclick: () => act("/api/projects/add",
             { path: path.value.trim(), project: project.value.trim() }, "Added: its librarian-app/ is ready.")() }, "Add"),
@@ -496,8 +650,8 @@ export class Settings {
         clear(host, h("p", { class: "error" }, (e as Error).message));
         return;
       }
-      clear(host, h("label", { class: "f" }, "Service models"),
-        (out.slots ?? []).map((s: any) => {
+      clear(host,
+        (out.slots ?? []).sort((a: any, b: any) => Object.keys(SERVICE_NAMES).indexOf(a.slot) - Object.keys(SERVICE_NAMES).indexOf(b.slot)).map((s: any) => {
           const status = h("span", { class: "note inline", role: "status" });
           const current = s.model
             ? `${s.model} · ${PROVIDERS[s.provider] ?? s.provider}${s.default ? " (default)" : ""}`
@@ -506,7 +660,10 @@ export class Settings {
           const contractLabel = !s.model ? "" : contract.adapter?.id
             ? ` · ${String(contract.adapter.id).replace(/_/g, " ")} · ${contract.status ?? "unreviewed"}`
             : " · no reviewed service contract";
-          const test = async () => {
+          const test = async (event: Event) => {
+            const button = event.currentTarget as HTMLButtonElement;
+            if (button.disabled) return;
+            button.disabled = true;
             status.className = cls("note inline");
             status.textContent = "Testing: one small call…";
             try {
@@ -518,8 +675,13 @@ export class Settings {
             } catch (e) {
               status.textContent = (e as Error).message;
             }
+            finally { button.disabled = false; }
           };
-          return h("div", { class: `srv service slot-${s.slot}`,
+          return h("details", { class: `settings-service slot-${s.slot}`, open: this.expandedServices.has(s.slot),
+            ontoggle: (e: Event) => {
+              const row = e.currentTarget as HTMLDetailsElement;
+              if (row.isConnected) { if (row.open) this.expandedServices.add(s.slot); else this.expandedServices.delete(s.slot); }
+            },
             title: s.built && s.model ? "Right-click to empty this slot" : "",
             oncontextmenu: async (e: Event) => {
               if (!s.built || !s.model) return;
@@ -529,20 +691,25 @@ export class Settings {
                 this.render();
               } catch (err) { status.textContent = (err as Error).message; }
             } },
-            h("span", { class: "badge" }, String(s.number)),
+            h("summary", {}, h("strong", {}, SERVICE_NAMES[s.slot] ?? s.label), h("small", {}, s.job)),
+            h("div", { class: "settings-service-body" },
             h("span", {}, h("strong", {}, s.label), ` · ${current}`, h("span", { class: "dim" }, ` · ${s.job}`),
               contractLabel ? h("span", { class: "dim" }, contractLabel) : null,
               s.route_status === "unavailable" ? h("span", { class: "note err" }, ` · ${s.route_error ?? "route unavailable"}`) : null,
               s.cap_usd !== undefined ? h("span", { class: "dim" }, ` · spent $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null),
-            s.built && this.chooseService ? h("button", { class: "ghost", onclick: () => {
+            s.built && this.chooseModel ? h("button", { class: "ghost", onclick: () => {
               this.dialog.close();
-              this.chooseService!(s.slot, s.label, { provider: s.provider, model: s.model });
+              this.chooseModel!(s.slot, s.label, { provider: s.provider, model: s.model });
             } }, "Choose…") : null,
-            s.built && s.model ? h("button", { class: "ghost", onclick: test }, "Test") : null,
+            s.built && s.model ? h("button", { class: "ghost", onclick: test }, "Test model (one call)") : null,
             status,
-            s.slot === "embeddings" ? this.embeddingsBlock(s, () => this.render()) : null);
+            s.slot === "embeddings" ? this.embeddingsBlock(s, () => this.render()) : null));
         }),
         h("p", { class: "note" }, "Each does one kind of job with its own request format, and is kept with this library. An empty slot is never filled by a chat model."));
+      if (this.focusService && host.isConnected) {
+        host.querySelector<HTMLElement>(".lib-slot-" + this.focusService + " summary")?.focus();
+        this.focusService = "";
+      }
     })();
     return host;
   }
@@ -812,25 +979,42 @@ export class Settings {
   // -- page 2 --------------------------------------------------------------
   private context(): HTMLElement {
     const s = this.state();
-    const text = h("textarea", { class: "f", id: "lib-sys", placeholder: "What will you be working on?" }) as HTMLTextAreaElement;
+    const text = h("textarea", { class: "f", id: this.fieldId("lib-sys"), placeholder: "What will you be working on?" }) as HTMLTextAreaElement;
     text.value = s.working_context ?? "";
     let length: string = s.reply_length ?? "long";
     const custom = h("input", { type: "text", placeholder: "custom", "aria-label": "Custom reply length",
       value: ["long", "short"].includes(length) ? "" : length }) as HTMLInputElement;
     const seg = h("div", { class: "seg", role: "group", "aria-label": "In-chat responses" });
-    const paint = () => clear(seg, ["long", "short"].map((v) => h("button", {
-      "aria-pressed": String(length === v), onclick: () => { length = v; custom.value = ""; paint(); },
+    let customMode = !["long","short"].includes(length);
+    custom.hidden = !customMode;
+    const paint = () => clear(seg, ["long", "short", "custom"].map((v) => h("button", {
+      "aria-pressed": String(customMode ? v === "custom" : length === v), onclick: () => { this.dirty = true; customMode = v === "custom"; custom.hidden = !customMode; length = v; paint(); if (customMode) custom.focus(); },
     }, v[0].toUpperCase() + v.slice(1))));
     paint();
     let stance: string = s.stance ?? "answer";
     const stanceSeg = h("div", { class: "seg", role: "group", "aria-label": "Stance" });
     const paintStance = () => clear(stanceSeg, ["answer", "coach"].map((v) => h("button", {
-      "aria-pressed": String(stance === v), onclick: () => { stance = v; paintStance(); },
+      "aria-pressed": String(stance === v), onclick: () => { this.dirty = true; stance = v; paintStance(); },
     }, v[0].toUpperCase() + v.slice(1))));
     paintStance();
     const status = h("span", { class: "note inline", role: "status" });
+    const thread = s.session;
+    const active = h("details", {}, h("summary", {}, "View active context"),
+      h("p", {}, "Library chat instructions: " + (s.working_context || "none saved")),
+      h("p", {}, "Active session: " + (thread?.session || "none")));
+    if (thread?.session) active.addEventListener("toggle", async () => {
+      if (!(active as HTMLDetailsElement).open || active.childElementCount > 3) return;
+      const lenses = h("p", {}, "Reading session lenses…"); active.append(lenses);
+      try { const view = await this.api.tool("session_status", {}, thread.session);
+        if (view.error) throw Error(String(view.detail ?? view.error));
+        lenses.textContent = "Lenses adopted in this session: " + ((view.lenses ?? []).join(", ") || "none");
+      } catch (err) { lenses.textContent = "Could not read session lenses: " + (err as Error).message; }
+    });
     return h("div", {},
-      h("label", { class: "f", for: "lib-sys" }, "System prompt"), text,
+      h("label", {class:"f"}, "Send shortcut on this device", h("select", {onchange:(e: Event) => remember("send",(e.target as HTMLSelectElement).value)},
+        h("option",{value:"enter",selected:preference("send") !== "modified"},"Enter"),
+        h("option",{value:"modified",selected:preference("send") === "modified"},"Ctrl / Cmd + Enter"))),
+      h("label", { class: "f", for: this.fieldId("lib-sys") }, "Context for chat replies"), text,
       h("label", { class: "f" }, "In-chat responses"),
       h("div", { class: "row2 tight" }, seg, custom),
       h("label", { class: "f" }, "Stance"),
@@ -838,13 +1022,19 @@ export class Settings {
       h("p", { class: "note" }, "Answer replies directly. Coach asks before telling and gives a hint before an answer - a `learn` session always uses Coach, whatever this is set to."),
       h("div", { class: "row2" }, h("button", { class: "primary", onclick: async () => {
         try {
-          await this.api.post("/api/context", { working_context: text.value,
-            reply_length: custom.value.trim() || length, stance });
+          if (customMode && !custom.value.trim()) { status.textContent = "Enter a custom reply length."; custom.focus(); return; }
+          const submitted = { working_context: text.value, reply_length: customMode ? custom.value.trim() : length, stance };
+          await this.api.post("/api/context", submitted);
           await this.refresh();
+          if (submitted.working_context !== text.value || submitted.reply_length !== (customMode ? custom.value.trim() : length) || submitted.stance !== stance) {
+            status.textContent = "Previous changes saved. New edits are still unsaved."; return;
+          }
+          this.drafts.delete("context"); if (this.page === "context" && text.isConnected) this.dirty = false;
+          active.querySelector("p")!.textContent = "Library chat instructions: " + (submitted.working_context || "none saved");
           status.textContent = "Saved.";
         } catch (e) { status.textContent = (e as Error).message; }
       } }, "Save"), status),
-      h("p", { class: "note" }, "This shapes chat replies only. Notes, concepts and offerings are written by the tier 2 model without it, so how you like replies never changes how the catalogue is written."));
+      active, h("p", { class: "note" }, "This shapes chat replies only. Notes, concepts and offerings are written by the tier 2 model without it, so how you like replies never changes how the catalogue is written."));
   }
 
   // -- page 3 --------------------------------------------------------------
@@ -1022,23 +1212,29 @@ export class Settings {
   }
 
   // -- page 4 --------------------------------------------------------------
-  private library(): HTMLElement {
+  private library(health: boolean): HTMLElement {
     const host = h("div", {}, h("p", { class: "dim" }, "Loading…"));
-    const packs = h("div", { class: "lens-packs" }, h("p", { class: "dim" }, "Loading…"));
-    const catalogs = h("div", { class: "model-catalogs" }, h("p", { class: "dim" }, "Loading…"));
-    const profile = h("div", { class: "library-profile" });
-    const topics = h("div", { class: "topics" }, h("p", { class: "dim" }, "Loading…"));
     this.api.get("/api/library").then((lib) => {
-      const promo = h("select", { id: "lib-promo" },
+      const promo = h("select", { id: this.fieldId("lib-promo") },
         [["person", "person (default): a person accepts every promotion"], ["agent", "agent: the librarian may promote, except sensitive material"]]
           .map(([v, label]) => h("option", { value: v, selected: lib.promotion?.mode === v }, label))) as HTMLSelectElement;
       const status = h("span", { class: "note inline", role: "status" });
+      let confirmed = promo.value;
       promo.onchange = async () => {
-        try { await this.api.post("/api/library", { promotion_mode: promo.value }); status.textContent = "Saved to the vault's config."; }
-        catch (e) { status.textContent = (e as Error).message; }
+        promo.disabled = true;
+        try {
+          await this.api.post("/api/library", {promotion_mode: promo.value});
+          confirmed = promo.value; status.textContent = "Saved to the vault's config.";
+        } catch (error) {
+          try {
+            confirmed = (await this.api.get("/api/library")).promotion.mode;
+            status.textContent = `Change failed: ${(error as Error).message}. Current promotion policy: ${confirmed}.`;
+          } catch { status.textContent = "Could not confirm the current policy. Showing the last confirmed value."; }
+          promo.value = confirmed;
+        } finally { promo.disabled = false; }
       };
       // A key row in the list below opens a box under the list to set that key in place
-      // (owner, 2026-10-02): the same key store as Settings -> Connections.
+      // (owner, 2026-10-02): the same key store as Settings → Providers & keys.
       const keyBox = h("div", { class: "key-entry" });
       let opened: HTMLElement | null = null;
       const keyEntry = (c: any, row: HTMLElement) => {
@@ -1076,13 +1272,13 @@ export class Settings {
             h("button", { class: "primary", onclick: () => void save() }, "Save key"),
             h("button", { class: "ghost", onclick: () => keyEntry(c, row) }, "Cancel")),
           said,
-          h("small", { class: "dim" }, "Kept in this computer's key store, never in a library. Settings -> Connections lists every key.")));
+          h("small", { class: "dim" }, "Kept in this computer's key store, never in a library. Settings → Providers & keys lists every key.")));
         input.focus();
       };
       // §4 G3: a second model checks claims against the notes they cite (O4, O5).
       const reviewStatus = h("span", { class: "note inline", role: "status" });
       const reviewBox = (key: string, label: string, hint: string) => {
-        const box = h("input", { type: "checkbox", id: `lib-${key}` }) as HTMLInputElement;
+        const box = h("input", { type: "checkbox", id: this.fieldId(`lib-${key}`) }) as HTMLInputElement;
         box.checked = !!lib.clerk?.[key];
         box.onchange = async () => {
           try {
@@ -1093,10 +1289,24 @@ export class Settings {
             reviewStatus.textContent = (e as Error).message;
           }
         };
-        return h("div", { class: "srv" }, box, h("label", { for: `lib-${key}` }, h("strong", {}, label), h("span", { class: "dim" }, ` · ${hint}`)));
+        return h("div", { class: "srv" }, box, h("label", { for: this.fieldId(`lib-${key}`) }, h("strong", {}, label), h("span", { class: "dim" }, ` · ${hint}`)));
       };
-      clear(host,
-        h("label", { class: "f", for: "lib-promo" }, "Promotion"), h("div", { class: "row2 tight" }, promo, status),
+      if (!health) {
+        const access = h("div", {}, h("p", {}, "Reading current permissions…"));
+        void Promise.allSettled([this.api.get("/api/projects"), this.api.get("/api/mcp")]).then(([projects,mcp]) => {
+          const folders = projects.status === "fulfilled" ? projects.value : null;
+          const tools = mcp.status === "fulfilled" ? mcp.value : null;
+          const enabled = tools ? Object.entries<any>(tools.servers ?? {}).filter(([,s]) => s.enabled && s.library_enabled !== false) : [];
+          clear(access, h("h3", {}, "What can the librarian do here?"),
+            h("p", {}, folders ? folders.enabled ? "Project access enabled. Folders allowing edit proposals: " +
+              ((folders.roots ?? []).filter((r:any) => r.writes).map((r:any) => r.path).join(", ") || "none") + ". Each change requires approval." : "Project access is off." : "Project access could not be verified."),
+            h("button",{class:"ghost",onclick:()=>this.open("projects")},"Manage folder permissions"),
+            h("p", {}, tools ? "Enabled external servers: " + (enabled.map(([name,s]) => name + (s.connected ? " (connected)" : " (disconnected)")).join(", ") || "none") +
+              ". Each tool uses its Allow, Ask or Deny rule." : "External tool access could not be verified."),
+            h("button",{class:"ghost",onclick:()=>this.open("mcp")},"Manage external tools"));
+        });
+        clear(host, access,
+        h("label", { class: "f", for: this.fieldId("lib-promo") }, "Promotion"), h("div", { class: "row2 tight" }, promo, status),
         h("label", { class: "f" }, "Review"),
         reviewBox("review_replies", "Check replies",
           "the claims a reply makes about the notes it links are checked against those notes; the verdict shows under the reply"),
@@ -1106,7 +1316,10 @@ export class Settings {
         h("label", { class: "f" }, "Distribution posture"),
         h("p", {}, String(lib.usage?.distribution_posture ?? "private"), h("span", { class: "dim" }, " · set in the vault's config")),
         h("label", { class: "f" }, "Clerk route"),
-        h("p", {}, lib.clerk?.provider ? `configured: ${lib.clerk.provider}` : "tier 3 model, else queued"),
+        h("p", {}, lib.clerk?.provider ? `configured: ${lib.clerk.provider}` : "tier 3 model, else queued"));
+        return;
+      }
+      clear(host,
         h("label", { class: "f" }, "Capabilities on this install"),
         (lib.doctor ?? []).map((c: any) => h("div", { class: "srv" },
           h("span", { class: `dot ${c.ok ? "" : c.required ? "off" : "nokey"}` }),
@@ -1115,18 +1328,7 @@ export class Settings {
                 "aria-expanded": "false", onclick: (e: Event) => keyEntry(c, e.currentTarget as HTMLElement) },
                 h("strong", {}, c.name))
             : h("strong", {}, c.name), h("span", { class: "key-detail" }, ` · ${c.detail ?? ""}`)))),
-        keyBox,
-        profile,
-        h("label", { class: "f" }, "Topics"),
-        topics,
-        h("label", { class: "f" }, "Lens packs"),
-        packs,
-        h("label", { class: "f" }, "Model catalogues"),
-        catalogs);
-      void this.paintTopics(topics);
-      void this.paintPacks(packs);
-      void this.paintModelCatalogs(catalogs);
-      void this.paintProfile(profile);
+        keyBox);
     }).catch((e) => clear(host, h("p", { class: "error" }, (e as Error).message)));
     return host;
   }
@@ -1138,7 +1340,7 @@ export class Settings {
     // not leave a stale form clickable while its replacement is fetched.
     clear(host, h("p", { class: "dim" }, "Loading topics…"));
     const status = h("span", { class: "note inline", role: "status" });
-    const reload = () => void this.paintTopics(host);
+    const reload = () => { this.drafts.delete("topics"); if (host.isConnected) this.dirty = false; void this.paintTopics(host); };
     let out: any;
     try {
       out = await this.api.tool("topics_list", {});

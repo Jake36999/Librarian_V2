@@ -1,0 +1,20 @@
+# Settings QA · 5 November 2026
+
+Tested the working tree based on 896369d, including the local Settings redesign, in standalone Edge at 1200 × 900 using Playwright and a disposable demo Core. The repository browser smoke suite passed. The focused checks below exercise a library owner's configuration and content-management tasks. [Browser observations](browser-observations.json)
+
+| Priority | Journey and observed result | Recommended change and acceptance test |
+|---|---|---|
+| P1 | Enable agent promotion, then switch to person-only with POST /api/library returning 409. The error appears, but the selector reads person. Navigate away and back and it reads agent. [Handler](../../ui/src/settings.ts:1118) | Disable the selector while saving. On definite refusal restore the confirmed value and say which policy still applies. On an ambiguous transport failure reread the policy before claiming an outcome. Assert the on-screen value matches a fresh GET before navigating. |
+| P1 | Enable project access, then attempt to revoke it with POST /api/projects/enable returning 409. The checkbox clears while the Core continues to allow access. Reopening shows it checked. [Handler](../../ui/src/settings.ts:463) | Apply the same reconciliation to the master switch. Also exercise per-folder write permissions, which have a separate handler. Test both directions and repeated clicks while pending. |
+| P2 | Save chat context, type a revision, visit Models & services and return. The saved text survives but the revision disappears without a prompt. Editing a synthetic topic proposal's name and visiting Methods & lenses likewise restores the original topic name. [Navigation](../../ui/src/settings.ts:65) · [Proposal editor](../../ui/src/settings.ts:1243) | Preserve dirty forms during section changes or offer Stay and Discard. For topics, keep the reviewed revision with the draft and retain the stale-revision check. Never auto-accept a proposal to save a draft. Test sidebar, compact selector, Close and Escape separately. |
+| P2 | Expand OCR and double-click Test while its response is pending. Two POST /api/services/test requests reach the intercepted route. Real cost and provider execution were outside this test. [Test action](../../ui/src/settings.ts:590) | Label the operation “Test model (one call)”, lock the button until settlement and allow a deliberate retry on failure. Assert one request per double-click. |
+| P2 | Close Settings and switch to Search. The Settings button is no longer visible because it lives inside the Chat composer. [Trigger](../../ui/src/main.ts:124) · [View switch](../../ui/src/main.ts:540) | Place a labelled Settings action in the shared header. From a missing-model warning, open Models & services directly and return to the same item. Test entry and return from Chat, Search and Staging. |
+| P3 | Type “three bullets” in Custom reply length. Long remains visibly pressed although Save gives the custom text precedence. [Chat behaviour](../../ui/src/settings.ts:899) | Present Long, Short and Custom as mutually exclusive options. On reopen show the selected option and saved custom text. |
+
+## Controls worth preserving
+
+All ten sidebar destinations opened with the matching page heading. The existing smoke suite exercised key save and overwrite confirmation, lens pack acceptance, service assignment and clearing, opt-in project access and separate folder editing permission. Content management checks also passed for stale proposal rejection, preserving edited text on conflict, explicit reload before acceptance, index rewrite refusal and partial catalogue adoption errors.
+
+## Scope of evidence
+
+The two permission tests saved the initial settings through the real demo Core, intercepted only the subsequent write, then let the page read the Core again. The topic draft test used a fixed proposal response. The duplicate-call test supplied delayed success responses. These checks establish client behavior under controlled conditions. Native Obsidian interactions and live provider execution remain untested in this pass. No application source edits were made for the audit.

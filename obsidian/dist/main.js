@@ -87,6 +87,103 @@ function when(iso) {
   return text.slice(0, 16).replace("T", " ");
 }
 
+// ../ui/src/commands.ts
+var COMMANDS = {
+  settings: "Open Settings",
+  search: "Focus Search",
+  staging: "Open Staging",
+  sessions: "Open Sessions",
+  checkpoints: "Open Checkpoints",
+  intake: "Set up sources for this library",
+  "clear-enrichment-backlog": "Process enrichment backlog",
+  "deep-read-staged": "Deep-read staged sources",
+  "review-conversation": "Suggest sources from this conversation",
+  "review-due": "Review due concepts",
+  "weekly-review": "Draft weekly pursuit review",
+  approved: "Process approved sources",
+  retry: "Retry steps waiting for a model",
+  resume: "Resume interrupted batch",
+  stop: "Stop after current stage"
+};
+function preference(key, fallback = "") {
+  try {
+    return localStorage.getItem("librarian.ui." + key) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+function remember(key, value) {
+  localStorage.setItem("librarian.ui." + key, value);
+}
+function shortcutPage(native, open, api, state) {
+  const panel = h("div"), status = h("p", { role: "status" });
+  const options = Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+  const controls = /* @__PURE__ */ new Map();
+  const explain = (id, text, available = true) => {
+    const control = controls.get(id);
+    control.hint.textContent = text;
+    control.button.disabled = !available;
+  };
+  const row = (id, label) => {
+    const binding = h(
+      "select",
+      { "aria-label": "Shortcut for " + label },
+      h("option", { value: "" }, "Unassigned"),
+      options.map((key) => h("option", { value: key }, "Alt + Shift + " + key))
+    );
+    binding.value = preference("key." + id);
+    binding.onchange = () => {
+      const conflict = binding.value && Object.keys(COMMANDS).find((other) => other !== id && preference("key." + other) === binding.value);
+      if (conflict) {
+        status.textContent = "Already assigned to " + COMMANDS[conflict];
+        binding.value = preference("key." + id);
+        return;
+      }
+      try {
+        remember("key." + id, binding.value);
+        status.textContent = "Shortcut saved.";
+      } catch {
+        status.textContent = "Could not save this browser preference.";
+        binding.value = preference("key." + id);
+      }
+    };
+    const hint = h("small"), button = h("button", { class: "ghost", onclick: (e) => {
+      e.stopPropagation();
+      open(id);
+    } }, "Open");
+    controls.set(id, { hint, button });
+    return h("div", { class: "settings-role" }, h("div", {}, h("strong", {}, label), hint), native ? null : binding, button);
+  };
+  clear(
+    panel,
+    h("p", {}, native ? "Assign keys in Obsidian Settings \u2192 Hotkeys. Search for Librarian." : "Shortcuts apply to this browser address. Select Unassigned to clear a binding. Workflow shortcuts open the action for review."),
+    status,
+    Object.entries(COMMANDS).map(([id, label]) => row(id, label))
+  );
+  const batchKeys = ["approved", "retry", "resume", "stop"];
+  batchKeys.forEach((id) => explain(id, "Checking this library\u2019s queue\u2026", false));
+  void api.tool("batch_status", {}).then((b) => {
+    if (b.error) throw Error();
+    const running = b.status === "running";
+    explain("approved", `${b.waiting ?? 0} approved sources waiting.`, !running && b.waiting > 0);
+    explain("retry", `${b.waiting_on_model ?? 0} sources waiting for a model.`, !running && b.waiting_on_model > 0);
+    const resume = ["failed", "cancelled", "interrupted"].includes(b.status) && b.items?.some((i) => i.status === "processing");
+    explain("resume", resume ? "Unfinished run: " + b.run : "No interrupted batch to resume.", !!resume);
+    explain("stop", running ? "Active batch: " + b.run : "No batch running.", running);
+  }).catch(() => batchKeys.forEach((id) => explain(id, "Queue status unavailable.", false)));
+  explain("review-conversation", state.session?.session ? "Conversation: " + state.session.session : "Start a conversation first.", !!state.session?.session);
+  explain("weekly-review", "Choose the pursuit in the action panel before starting.");
+  void api.tool("understanding_due", {}).then((out) => {
+    if (Array.isArray(out.due)) explain("review-due", `${out.due.length} due review tasks. Opens up to five parked sessions and skips existing reviews.`, out.due.length > 0);
+  }).catch(() => explain("review-due", "Due count unavailable."));
+  for (const [id, status2] of [["deep-read-staged", "staged"], ["clear-enrichment-backlog", "queued"]]) {
+    void api.tool("staging_list", { kind: "source", status: status2, limit: 1 }).then((out) => {
+      if (typeof out.total === "number") explain(id, `${out.total} sources in the ${status2} queue. Review the action before starting.`);
+    }).catch(() => explain(id, "Queue count unavailable."));
+  }
+  return panel;
+}
+
 // ../ui/src/speech.ts
 var NS = "http://www.w3.org/2000/svg";
 function icon(paths, size = 13) {
@@ -666,7 +763,7 @@ function providerFailureCopy(event) {
     case "credentials":
       return {
         heading: "The selected route rejected its credentials",
-        advice: "Check the key and host under + \u2192 Connections, then retry."
+        advice: "Check the key and host under Settings \u2192 Providers & keys, then retry."
       };
     case "route_configuration":
       return {
@@ -691,13 +788,13 @@ function providerFailureCopy(event) {
     case "provider_rejected":
       return {
         heading: "The provider rejected this request",
-        advice: "Check the selected host and model under + \u2192 Connections, then retry."
+        advice: "Check the selected host and model under Settings \u2192 Providers & keys, then retry."
       };
     default: {
       const slow = /did not answer within|busy|HTTP (429|50[234])/.test(String(event.error));
       return {
         heading: "The selected route could not answer",
-        advice: slow ? "Nothing was switched. Retry in a moment, or choose a faster model for slot 1 yourself." : "Check the key and the model under + \u2192 Connections, then retry."
+        advice: slow ? "Nothing was switched. Retry in a moment, or choose a faster model for slot 1 yourself." : "Check the key and the model under Settings \u2192 Providers & keys, then retry."
       };
     }
   }
@@ -1775,7 +1872,8 @@ var MODES = [
   ["auto", "Auto", "Writes within the phase gate and the vault's settings. Sensitive material still waits for you."]
 ];
 var ACTIONS = {
-  "clear-enrichment-backlog": ["Clear enrichment backlog", "Fetch, describe and stage everything queued. Background, cancellable."],
+  "review-due": [COMMANDS["review-due"], "Open parked learning sessions for concepts due for review."],
+  "clear-enrichment-backlog": [COMMANDS["clear-enrichment-backlog"], "Fetch, describe and stage everything queued. Background, cancellable."],
   "deep-read-staged": ["Deep-read staged sources", "Read each staged source's whole text: claims and limits with pages, and lenses to review. Background, cancellable."],
   "review-conversation": ["Review this conversation for sources", "A bounded snapshot of recent turns \u2192 suggested sources. Writes nothing."],
   "weekly-review": ["Weekly review of a pursuit", "Its tasks, what was read and written, its desk \u2192 a drafted reflection for you to read. Writes nothing until you accept it."]
@@ -1857,7 +1955,7 @@ var Popover = class {
     this.observer = null;
   }
 };
-function renderModes(pop, api, mode, queued, pipelines, report, needs = {}, radioName = "librarian-mode") {
+function renderModes(pop, api, mode, queued, pipelines, report, needs = {}, radioName = "librarian-mode", scope = "") {
   let confirmed = mode;
   const group = h(
     "div",
@@ -1915,7 +2013,7 @@ function renderModes(pop, api, mode, queued, pipelines, report, needs = {}, radi
       } else {
         el = h("input", { type: "text", class: "f", placeholder: key });
       }
-      el.id = `queue-${name}-${key}`;
+      el.id = `${radioName}-queue-${name}-${key}`;
       fields[key] = el;
       return h("div", {}, h("label", { class: "f", for: el.id }, key === "project" ? "Pursuit" : key), el);
     }));
@@ -1934,7 +2032,7 @@ function renderModes(pop, api, mode, queued, pipelines, report, needs = {}, radi
           }
           void run(name, inputs);
         } }, "Start"),
-        h("button", { class: "ghost", onclick: () => renderModes(pop, api, mode, queued, pipelines, report, needs) }, "Back")
+        h("button", { class: "ghost", onclick: () => renderModes(pop, api, mode, queued, pipelines, report, needs, radioName, scope) }, "Back")
       )
     );
   };
@@ -1943,14 +2041,15 @@ function renderModes(pop, api, mode, queued, pipelines, report, needs = {}, radi
     h("h4", {}, "Permission mode"),
     group,
     h("h4", { class: "gap" }, "Queue an action"),
+    scope ? h("p", { class: "note" }, scope) : null,
     queued.map((name) => h(
       "button",
-      { class: "menuitem", onclick: start2(name) },
-      (ACTIONS[name] ?? [name])[0],
+      { class: "menuitem", "data-command": name, onclick: start2(name) },
+      COMMANDS[name] ?? (ACTIONS[name] ?? [name])[0],
       h("small", {}, (ACTIONS[name] ?? ["", "A pipeline."])[1])
     )),
     extra.length ? h("h4", { class: "gap" }, "This vault's pipelines") : null,
-    extra.map((name) => h("button", { class: "menuitem", onclick: start2(name) }, name))
+    extra.map((name) => h("button", { class: "menuitem", "data-command": name, onclick: start2(name) }, COMMANDS[name] ?? name))
   );
 }
 var VISION = /(-vl\b|vl-|vision|ocr|gemma-[34]|qwen3\.[5-9]|llama-4|pixtral|llava|inkling|glimmer)/i;
@@ -1989,14 +2088,33 @@ var ModelTile = class {
     this.slot = null;
     this.showAll = false;
   }
-  startSlot(name, label, done, current) {
-    this.slot = { name, label, done, current };
+  recentKey() {
+    return "recent." + (this.slot?.role ?? this.slot?.name ?? "chat");
+  }
+  recordRecent(provider, model) {
+    try {
+      const key = this.recentKey(), rows = JSON.parse(preference(key, "[]"));
+      remember(key, JSON.stringify([provider + "/" + model, ...rows.filter((x) => x !== provider + "/" + model)].slice(0, 5)));
+    } catch {
+    }
+  }
+  startSlot(name, label, done, current, role) {
+    this.pendingLead = null;
+    this.slot = { name, label, done, current, role };
     this.showAll = false;
     this.filter = "";
     this.toast = "";
   }
+  cancelSlot() {
+    if (!this.slot) return false;
+    const done = this.slot.done;
+    this.endSlot();
+    done();
+    return true;
+  }
   endSlot() {
     this.slot = null;
+    this.pendingLead = null;
   }
   /** Right-click on the slot's own model: the slot is emptied (never filled by a chat
    *  model - R17). */
@@ -2013,8 +2131,26 @@ var ModelTile = class {
   }
   async pickSlot(provider, model) {
     const slot = this.slot;
+    if (slot.role !== void 0) {
+      const tiers = [...this.tiers()];
+      const entry = this.listings.get(provider)?.models?.find((m) => m.id === model);
+      if (slot.role > tiers.length) this.toast = "Choose the preceding role first.";
+      else if (slot.role === 0 && entry?.profile?.tool_calling === false) this.toast = "This model does not support the tools required to lead.";
+      else {
+        tiers[slot.role] = { provider, model };
+        if (await this.save(tiers)) {
+          this.recordRecent(provider, model);
+          this.endSlot();
+          slot.done();
+          return;
+        }
+      }
+      this.render();
+      return;
+    }
     try {
       await this.api.post("/api/services", { slot: slot.name, provider, model });
+      this.recordRecent(provider, model);
       this.slot = null;
       slot.done();
     } catch (e) {
@@ -2064,12 +2200,12 @@ var ModelTile = class {
     return pending;
   }
   readinessChips(provider, model) {
-    if (this.slot) return null;
+    if (this.slot && this.slot.role === void 0) return null;
     const row = this.routeReadiness(provider, model);
     if (!row) return null;
     const tiers = this.tiers();
     const selected = tiers.findIndex((t) => sameHost(t.provider, provider) && t.model === model);
-    const role = ["lead", "scribe", "clerk"][selected >= 0 ? selected : Math.min(tiers.length, 2)];
+    const role = ["lead", "scribe", "clerk"][this.slot?.role ?? (selected >= 0 ? selected : Math.min(tiers.length, 2))];
     const evidence = row.qualification_by_role?.[role] ?? (row.role === role ? row.qualification : null);
     const qualification = evidence?.status ?? "evidence pending";
     const workflow = row.core_workflow ?? row.workflow_ready ?? row.workflow;
@@ -2107,9 +2243,10 @@ var ModelTile = class {
   }
   async save(tiers, override = "") {
     try {
-      await this.api.post("/api/tiers", { tiers, ...override ? { override } : {} });
+      const consent = override ? { override } : {};
+      const saved = this.slot?.role === 0 ? await this.api.post("/api/lead", { route: tiers[0], ...consent }) : await this.api.post("/api/tiers", { tiers, ...consent });
       this.pendingLead = null;
-      this.setTiers(tiers);
+      this.setTiers(saved.tiers ?? tiers);
       void this.refreshReadiness(++this.readinessEpoch);
       return true;
     } catch (e) {
@@ -2137,7 +2274,12 @@ var ModelTile = class {
         reason,
         h("button", { class: "primary", onclick: async () => {
           this.toast = "";
-          await this.save(pending.tiers, reason.value.trim() || "chosen by the person");
+          if (await this.save(pending.tiers, reason.value.trim() || "chosen by the person") && this.slot?.role !== void 0) {
+            const done = this.slot.done;
+            this.endSlot();
+            done();
+            return;
+          }
           this.render();
         } }, "Use it as lead anyway"),
         h("button", { class: "ghost", onclick: () => {
@@ -2217,14 +2359,21 @@ var ModelTile = class {
     const grids = h("div", {});
     if (this.slot) {
       const slot = this.slot;
+      const quick = preference("model-view") === "quick";
+      let recent = [];
+      try {
+        recent = JSON.parse(preference(this.recentKey(), "[]"));
+      } catch {
+      }
+      const recentOptions = Object.keys(PROVIDERS).flatMap((p) => (this.listings.get(p)?.models ?? []).filter((m) => recent.includes(p + "/" + m.id)).map((m) => h("button", { class: "ghost", onclick: () => this.pick(p, m.id) }, m.id + " \xB7 " + PROVIDERS[p])));
       clear(
         this.pop.el,
         h(
           "div",
           { class: "tierbar" },
           h("strong", {}, `Choose the ${slot.label} model`),
-          h("span", { class: "dim" }, this.showAll ? "Every model is listed. Click one." : `${SLOT_KIND[slot.name]?.label ?? "Matching models"} are listed (by profile, or by name). Click one.`),
-          h(
+          slot.role !== void 0 ? null : h("span", { class: "dim" }, this.showAll ? "Every model is listed. Click one." : `${SLOT_KIND[slot.name]?.label ?? "Matching models"} are listed (by profile, or by name). Click one.`),
+          slot.role !== void 0 ? null : h(
             "button",
             { class: "ghost", onclick: () => {
               this.showAll = !this.showAll;
@@ -2233,16 +2382,22 @@ var ModelTile = class {
             this.showAll ? `${SLOT_KIND[slot.name]?.label ?? "Matching models"} only` : "Show all"
           ),
           h("button", { class: "ghost", onclick: () => {
-            this.slot = null;
+            this.endSlot();
             slot.done();
           } }, "Cancel")
         ),
-        slot.current?.model ? h("p", { class: "dim" }, `Now: ${slot.current.model}. Right-click it to empty the slot.`) : null,
+        h("button", { class: "ghost", onclick: () => {
+          remember("model-view", quick ? "detailed" : "quick");
+          this.render();
+        } }, quick ? "Compare all models" : "Quick selection"),
+        quick ? h("div", {}, h("h4", {}, "Recently assigned to this role"), recentOptions.length ? recentOptions : h("p", {}, "No recent selection is available. Choose Compare all models.")) : null,
+        slot.role !== void 0 ? this.overridePrompt() : null,
+        slot.role === void 0 && slot.current?.model ? h("p", { class: "dim" }, `Now: ${slot.current.model}. Right-click it to empty the slot.`) : null,
         this.toast ? h("div", { class: "toast", role: "status" }, this.toast) : null,
-        filter,
-        grids
+        quick ? null : filter,
+        quick ? null : grids
       );
-      this.renderGrids(grids);
+      if (!quick) this.renderGrids(grids);
       return;
     }
     clear(
@@ -2265,7 +2420,7 @@ var ModelTile = class {
       filter,
       grids,
       h("h4", {}, "OCR \xB7 Text to speech \xB7 Embeddings \xB7 Speech to text"),
-      h("p", { class: "note locked" }, "These have their own slots (4 OCR, 5 Text to speech, 6 Embeddings, 7 Speech to text) in Settings \u2192 Connections, each chosen with this same tile and kept with the library."),
+      h("p", { class: "note locked" }, "These have their own assignments in Settings \u2192 Models & services, each chosen with this same tile and kept with the library."),
       h("p", { class: "note" }, "Models come from each provider's live listing. A profiled model (a Source of kind model) shows its suggested tier and best-for tags (a first guess to confirm or correct), plus context, price and tool calling; an unprofiled one can be profiled, which stages it for your review like any other source. The adapter line is protocol evidence, not a reliability verdict: run the route probe before treating an unverified tool path as ready.")
     );
     this.renderGrids(grids);
@@ -2282,7 +2437,7 @@ var ModelTile = class {
     clear(host, Object.entries(PROVIDERS).map(([p, label]) => {
       const listing = this.listings.get(p) ?? { status: "\u2026", models: [] };
       const models = listing.models.filter(matches).filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true)).map((m, i) => ({ m, i })).sort((a, b) => Number(recommended(b.m)) - Number(recommended(a.m)) || a.i - b.i).map(({ m }) => m);
-      const status = listing.status === "ready" ? `${listing.models.length} model${listing.models.length === 1 ? "" : "s"}` : listing.status === "no key" ? "no key saved (+ \u2192 Connections)" : listing.status === "offline" ? "offline: the local server is not running" : listing.error ? `error: ${listing.error}` : listing.status;
+      const status = listing.status === "ready" ? `${listing.models.length} model${listing.models.length === 1 ? "" : "s"}` : listing.status === "no key" ? "no key saved (Settings \u2192 Providers & keys)" : listing.status === "offline" ? "offline: the local server is not running" : listing.error ? `error: ${listing.error}` : listing.status;
       return h(
         "section",
         { class: "model-provider" },
@@ -2290,7 +2445,7 @@ var ModelTile = class {
         models.length ? h("div", { class: "model-grid" }, models.slice(0, 60).map((m) => {
           const inSlot = sameHost(this.slot?.current?.provider, p) && this.slot?.current?.model === m.id;
           const at = this.slot ? inSlot ? 0 : -1 : tiers.findIndex((t) => sameHost(t.provider, p) && t.model === m.id);
-          const clear2 = () => this.slot ? this.clearSlot() : this.clearAll();
+          const clear2 = () => this.slot?.role !== void 0 ? void 0 : this.slot ? this.clearSlot() : this.clearAll();
           const rec = at < 0 && recommended(m);
           const readiness = this.readinessChips(p, String(m.id));
           const card = h(
@@ -2298,7 +2453,7 @@ var ModelTile = class {
             {
               class: `model-card${at >= 0 ? " sel" : ""}${rec ? " rec" : ""}`,
               "aria-pressed": at >= 0 ? "true" : "false",
-              title: at >= 0 ? this.slot ? "Right-click (or Delete) to empty this slot" : "Right-click (or Delete) to clear the chosen models" : m.profile && m.profile.tool_calling === false ? "Profiled as not supporting tool calling: can still lead as tier 2 or 3" : "",
+              title: this.slot?.role !== void 0 ? void 0 : at >= 0 ? this.slot ? "Right-click (or Delete) to empty this slot" : "Right-click (or Delete) to clear the chosen models" : m.profile && m.profile.tool_calling === false ? "Profiled as not supporting tool calling: can still lead as tier 2 or 3" : "",
               onclick: () => this.pick(p, m.id),
               oncontextmenu: (e) => {
                 if (at >= 0) {
@@ -2434,51 +2589,168 @@ async function renderSessions(pop, api, attach, reset, library = "this library",
   try {
     const out = await api.tool("list_sessions");
     const rows = out.sessions ?? [];
-    clear(
-      pop.el,
-      h(
-        "button",
-        { class: "menuitem", onclick: () => {
-          pop.show(false);
-          reset();
-        } },
-        "New conversation",
-        h("small", {}, "The librarian opens a thread when it needs one.")
-      ),
-      h("h4", { class: "gap", title: libraryPath ? `Kept in ${libraryPath}` : "" }, `Threads in ${library}`),
-      rows.length ? rows.map((s) => h(
-        "button",
-        {
-          class: "menuitem",
-          onclick: () => {
+    const sort = h("select", { "aria-label": "Sort sessions" }, h("option", { value: "created" }, "Newest created"), h("option", { value: "parked" }, "Parked first"));
+    sort.value = preference("session-order", "created");
+    const paint = () => {
+      rows.sort((a, b) => (sort.value === "parked" ? Number(b.status === "parked") - Number(a.status === "parked") : 0) || String(b.opened_at).localeCompare(String(a.opened_at)));
+      clear(
+        pop.el,
+        h(
+          "button",
+          { class: "menuitem", onclick: () => {
             pop.show(false);
-            attach(s.id);
-          }
-        },
-        `${s.project || s.question || s.purpose}`,
-        h("small", {}, `${s.purpose} \xB7 ${s.status} \xB7 ${s.phase} \xB7 ${when(s.opened_at)}`),
-        // MF-009: opening a halted audit history views it; it does not resume it.
-        s.audit_history ? h(
-          "small",
-          { class: "warn-text" },
-          ` \xB7 read-only ${s.audit_history} audit history`
-        ) : null
-      )) : h("p", { class: "dim" }, "No threads in this library yet."),
-      h("small", { class: "dim" }, "Another library's threads are under that library: switch to it from the library menu.")
-    );
+            reset();
+          } },
+          "New conversation",
+          h("small", {}, "The librarian opens a thread when it needs one.")
+        ),
+        h("h4", { class: "gap", title: libraryPath ? `Kept in ${libraryPath}` : "" }, `Threads in ${library}`),
+        sort,
+        rows.length ? rows.map((s) => h(
+          "button",
+          {
+            class: "menuitem",
+            onclick: () => {
+              pop.show(false);
+              attach(s.id);
+            }
+          },
+          `${s.project || s.question || s.purpose}`,
+          h("small", {}, `${s.purpose} \xB7 ${s.status} \xB7 ${s.phase} \xB7 ${when(s.opened_at)}`),
+          // MF-009: opening a halted audit history views it; it does not resume it.
+          s.audit_history ? h(
+            "small",
+            { class: "warn-text" },
+            ` \xB7 read-only ${s.audit_history} audit history`
+          ) : null
+        )) : h("p", { class: "dim" }, "No threads in this library yet."),
+        h("small", { class: "dim" }, "Another library's threads are under that library: switch to it from the library menu.")
+      );
+    };
+    sort.onchange = () => {
+      remember("session-order", sort.value);
+      paint();
+      sort.focus();
+    };
+    paint();
   } catch (e) {
     clear(pop.el, h("p", { class: "error" }, `Could not list threads: ${e.message}`));
   }
 }
 
+// ../ui/src/presets.ts
+function researchSetups(api, state, refresh) {
+  const root = h("details", {}, h("summary", {}, "Named research presets"));
+  const list2 = h("div"), preview = h("div"), status = h("p", { role: "status" });
+  const name = h("input", { type: "text", "aria-label": "New preset name", placeholder: "Preset name" });
+  const read = () => JSON.parse(preference("research-setups", "[]"));
+  const snapshot = (title) => {
+    const s = state();
+    return {
+      name: title,
+      context: s.working_context ?? "",
+      length: s.reply_length ?? "long",
+      stance: s.stance ?? "answer",
+      tiers: (s.tiers ?? []).map((t) => ({ provider: t.provider, model: t.model, ...t.host_id ? { host_id: t.host_id } : {} }))
+    };
+  };
+  function inspect(setup) {
+    const now = snapshot(""), library = String(state().vault_path ?? state().vault);
+    const roleNames = ["Lead", "Notes", "Small tasks"];
+    const format = (s) => s.tiers.map((r, i) => roleNames[i] + ": " + (r.host_id ?? r.provider) + " / " + r.model).join("; ") || "No explicit roles";
+    const apply = (roles) => async (e) => {
+      const button = e.currentTarget;
+      button.disabled = true;
+      try {
+        if (library !== String(state().vault_path ?? state().vault)) throw Error("Library changed. Preview the preset again.");
+        if (roles) await api.post("/api/tiers", { tiers: setup.tiers });
+        else await api.post("/api/context", { working_context: setup.context, reply_length: setup.length, stance: setup.stance });
+        await refresh();
+        status.textContent = (roles ? "Model roles" : "Chat preferences") + " applied to " + (state().vault_name || state().vault) + ".";
+        inspect(setup);
+      } catch (err) {
+        status.textContent = err.message;
+        button.disabled = false;
+      }
+    };
+    clear(
+      preview,
+      h("h4", {}, setup.name + " \u2192 " + (state().vault_name || state().vault)),
+      h("p", {}, "Saved chat instructions: ", now.context || "(empty)", " \u2192 ", setup.context || "(empty)"),
+      h("p", {}, now.length + " / " + now.stance + " \u2192 " + setup.length + " / " + setup.stance),
+      h("button", { class: "ghost", onclick: apply(false) }, "Apply chat preferences"),
+      h("p", {}, format(now) + " \u2192 " + format(setup)),
+      h("small", {}, "Role changes also update defaults for libraries without their own choices."),
+      h("button", { class: "ghost", onclick: apply(true) }, "Apply model roles")
+    );
+  }
+  function paint() {
+    try {
+      clear(list2, read().map((setup) => h(
+        "div",
+        { class: "row2" },
+        h("strong", {}, setup.name),
+        h("button", { class: "ghost", onclick: () => inspect(setup) }, "Preview"),
+        h("button", { class: "ghost", onclick: () => {
+          remember("research-setups", JSON.stringify(read().filter((row) => row.name !== setup.name)));
+          clear(preview);
+          paint();
+        } }, "Remove preset")
+      )));
+    } catch {
+      status.textContent = "Saved presets could not be read.";
+    }
+  }
+  root.append(
+    h("p", {}, "Save this library\u2019s current chat instructions, length, stance and model roles in this browser. Preview changes before applying them to another library at this address."),
+    name,
+    h("button", { class: "ghost", onclick: () => {
+      try {
+        const rows = read(), title = name.value.trim();
+        if (!title || rows.some((r) => r.name === title)) {
+          status.textContent = "Enter a unique preset name.";
+          return;
+        }
+        remember("research-setups", JSON.stringify([...rows, snapshot(title)]));
+        name.value = "";
+        status.textContent = "Preset saved.";
+        paint();
+      } catch {
+        status.textContent = "Could not save the preset in this browser.";
+      }
+    } }, "Save current settings as preset"),
+    list2,
+    preview,
+    status
+  );
+  paint();
+  return root;
+}
+
 // ../ui/src/settings.ts
-var PAGES = [
-  ["connections", "Connections"],
-  ["context", "Working context"],
-  ["mcp", "MCP servers"],
-  ["library", "Library"],
-  ["projects", "Projects"]
+var GROUPS = [
+  ["Environment", [["commands", "Commands & shortcuts"], ["connections", "Providers & keys"], ["mcp", "Tools & integrations"]]],
+  ["Current library", [
+    ["models", "Models & services"],
+    ["context", "Chat behaviour"],
+    ["review", "Review & promotion"],
+    ["projects", "Project access"],
+    ["methods", "Methods & lenses"],
+    ["topics", "Topics & organisation"]
+  ]],
+  ["Advanced", [["profiles", "Agent profiles"], ["health", "Health & diagnostics"]]]
 ];
+var CHAT_ROLES = [
+  ["Lead", "Plans and coordinates the research session"],
+  ["Notes", "Writes source descriptions and notes"],
+  ["Small tasks / reviewer", "Handles bounded tasks and advisory checks"]
+];
+var SERVICE_NAMES = {
+  ocr: "Document reading / OCR",
+  tts: "Read aloud",
+  stt: "Speech recognition",
+  embeddings: "Semantic search"
+};
 var CURATED_SKILLS = [
   {
     id: "semantic-scholar",
@@ -2507,49 +2779,222 @@ var CURATED_SKILLS = [
   }
 ];
 var Settings = class {
-  constructor(api, state, refresh, manageKeys, chooseService) {
+  constructor(api, state, refresh, manageKeys, chooseModel, native = false, runCommand = () => {
+  }, fieldId = (base) => base) {
     this.api = api;
     this.state = state;
     this.refresh = refresh;
     this.manageKeys = manageKeys;
-    this.chooseService = chooseService;
+    this.chooseModel = chooseModel;
+    this.native = native;
+    this.runCommand = runCommand;
+    this.fieldId = fieldId;
     this.dialog = h("dialog", { class: "lib-dialog settings", "aria-label": "Settings" });
-    this.page = "connections";
-    this.body = h("section", { class: "page" });
-    this.tabs = h("div", { class: "tabs", role: "tablist" });
+    this.page = "models";
+    this.body = h("section", { class: "settings-content" });
+    this.libraryName = h("span", { class: "settings-library" });
+    this.compact = h("select", { "aria-label": "Settings section" });
+    this.links = /* @__PURE__ */ new Map();
+    this.drafts = /* @__PURE__ */ new Map();
+    this.dirty = false;
+    this.draftLibrary = "";
+    this.searchResults = h("div", { class: "settings-results", hidden: true });
+    this.search = h("input", { type: "search", placeholder: "Find a setting", "aria-label": "Find a setting" });
+    this.expandedServices = /* @__PURE__ */ new Set();
+    this.focusService = "";
+    const nav = h("nav", { class: "settings-nav", "aria-label": "Settings sections" });
+    for (const [group, pages] of GROUPS) {
+      const options = h("optgroup", { label: group });
+      nav.append(h("h3", {}, group));
+      for (const [id, label] of pages) {
+        const link2 = h("button", { type: "button", onclick: () => this.open(id) }, label);
+        this.links.set(id, link2);
+        nav.append(link2);
+        options.append(h("option", { value: id }, label));
+      }
+      this.compact.append(options);
+    }
+    this.search.oninput = () => this.findSettings();
+    this.body.addEventListener("input", (e) => {
+      if ((this.page === "context" || this.page === "topics") && e.target instanceof HTMLElement && e.target.closest("input,textarea,select")) this.dirty = true;
+    });
+    this.compact.onchange = () => this.open(this.compact.value);
     this.dialog.append(
       h(
-        "div",
+        "header",
         { class: "dlg-head" },
         h("strong", {}, "Settings"),
+        this.libraryName,
+        this.search,
         h("button", { class: "ghost push", onclick: () => this.dialog.close() }, "Close")
       ),
-      this.tabs,
-      this.body
+      this.searchResults,
+      this.compact,
+      h("div", { class: "settings-layout" }, nav, this.body)
     );
   }
   open(page = this.page) {
+    const library = String(this.state().vault_path ?? this.state().vault ?? "");
+    if (library !== this.draftLibrary) {
+      this.drafts.clear();
+      this.dirty = false;
+      this.draftLibrary = library;
+    }
+    if (this.dirty) this.drafts.set(this.page, Array.from(this.body.childNodes));
     this.page = page;
-    this.render();
+    this.search.value = "";
+    this.searchResults.hidden = true;
+    const draft = this.drafts.get(page);
+    this.dirty = !!draft;
+    if (draft) {
+      clear(this.body, draft);
+      this.updateNav();
+    } else this.render();
     if (!this.dialog.open) this.dialog.showModal();
   }
-  render() {
-    clear(this.tabs, PAGES.map(([id, label]) => h("button", {
-      role: "tab",
-      "aria-selected": String(id === this.page),
-      onclick: () => {
-        this.page = id;
-        this.render();
+  syncState() {
+    const state = this.state(), tiers = state.tiers ?? [];
+    const library = state.vault_name || state.vault;
+    this.libraryName.textContent = library ? `Library: ${library}` : "Opening library\u2026";
+    if (this.page !== "models") return;
+    this.body.querySelectorAll(".lib-settings-role").forEach((row, i) => {
+      const selected = tiers[i], fallback = tiers[tiers.length - 1];
+      const assignment = row.querySelector(".lib-settings-assignment");
+      assignment.textContent = selected ? `${selected.model} \xB7 ${PROVIDERS[selected.provider] ?? selected.provider}` : i > tiers.length ? `Choose ${CHAT_ROLES[i - 1][0]} first` + (fallback ? ` \xB7 currently uses ${fallback.model}` : "") : fallback ? `Uses ${fallback.model}` : "No model selected";
+      row.querySelector("button").disabled = !library || i > tiers.length;
+    });
+  }
+  updateNav() {
+    for (const [id, link2] of this.links) {
+      if (id === this.page) link2.setAttribute("aria-current", "page");
+      else link2.removeAttribute("aria-current");
+    }
+    this.compact.value = this.page;
+  }
+  controlsPage() {
+    const choice = (key, label, options) => h("label", { class: "f" }, label, h(
+      "select",
+      { onchange: (event) => remember(key, event.target.value) },
+      options.map(([value, name]) => h("option", { value, selected: preference(key, options[0][0]) === value }, name))
+    ));
+    return h(
+      "div",
+      {},
+      choice("job-start", "When an ingestion job starts", [["stay", "Stay on this page"], ["activity", "Open Activity search"]]),
+      choice("batch-notice", "When an observed batch finishes", [["quiet", "Keep the result in Staging"], ["on", "Also show an in-app notice"]]),
+      shortcutPage(this.native, this.runCommand, this.api, this.state())
+    );
+  }
+  findSettings() {
+    const q = this.search.value.trim().toLowerCase();
+    const items = [
+      ...Array.from(this.links, ([id, link2]) => [id, link2.textContent ?? id]),
+      ["models", "Read aloud / text to speech (TTS)", "tts"],
+      ["models", "Speech recognition (STT)", "stt"],
+      ["models", "Semantic search / embeddings", "embeddings"],
+      ["models", "Document reading / OCR", "ocr"],
+      ["models", "Clerk / small tasks / reviewer", "role"],
+      ["projects", "Folder permissions and editing"],
+      ["review", "Who can promote sources?"],
+      ["context", "Send shortcut and response length"],
+      ["models", "Named research presets", "preset"],
+      ["context", "View active context and session lenses", "active"],
+      ["connections", "API keys and billing"],
+      ...Object.values(COMMANDS).map((name) => ["commands", name])
+    ];
+    const found = items.filter(([, label]) => label.toLowerCase().includes(q));
+    this.searchResults.hidden = !q;
+    clear(this.searchResults, found.length ? found.map(([id, label, target]) => h("button", { class: "ghost", onclick: () => {
+      const service = target && Object.hasOwnProperty.call(SERVICE_NAMES, target) ? target : "";
+      if (service) this.expandedServices.add(service);
+      this.open(id);
+      if (target === "role") this.body.querySelector('[aria-label="Choose Small tasks / reviewer model"]')?.focus();
+      if (id === "commands") Array.from(this.body.querySelectorAll("strong")).find((el) => el.textContent === label)?.closest(".lib-settings-role")?.querySelector("button")?.focus();
+      if (service) this.focusService = service;
+      if (target === "preset" || target === "active") {
+        const detail = Array.from(this.body.querySelectorAll("details")).find((d) => d.querySelector("summary")?.textContent === (target === "preset" ? "Named research presets" : "View active context"));
+        if (detail) {
+          detail.open = true;
+          detail.querySelector("summary")?.focus();
+        }
       }
-    }, label)));
-    const page = {
+    } }, label)) : h("span", { role: "status" }, "No matching settings."));
+  }
+  render() {
+    this.updateNav();
+    const pages = {
+      commands: () => this.controlsPage(),
+      models: () => this.modelsPage(),
       connections: () => this.connections(),
-      context: () => this.context(),
       mcp: () => this.mcp(),
-      library: () => this.library(),
-      projects: () => this.projectsPage()
-    }[this.page];
-    clear(this.body, page ? page() : null);
+      context: () => this.context(),
+      projects: () => this.projectsPage(),
+      profiles: () => this.agentProfiles(),
+      review: () => this.library(false),
+      health: () => this.library(true),
+      topics: () => {
+        const host = h("div", { class: "topics" });
+        void this.paintTopics(host);
+        return host;
+      },
+      methods: () => {
+        const profile = h("div"), packs = h("div", { class: "lens-packs" });
+        void this.paintProfile(profile);
+        void this.paintPacks(packs);
+        return h("div", {}, profile, h("h3", {}, "Lens packs"), packs);
+      }
+    };
+    clear(this.body, h("h2", {}, this.links.get(this.page)?.textContent ?? "Settings"), pages[this.page]());
+    if (this.page === "context" || this.page === "topics") this.body.append(h("button", { class: "ghost", onclick: () => {
+      this.drafts.delete(this.page);
+      this.dirty = false;
+      this.render();
+    } }, "Discard unsaved edits"));
+    this.syncState();
+    this.body.scrollTop = 0;
+  }
+  modelsPage() {
+    const catalogues = h("div", { class: "model-catalogs" });
+    const more = h("details", { class: "settings-more" }, h("summary", {}, "Model catalogues and qualification"));
+    more.addEventListener("toggle", () => {
+      if (more.open && more.childElementCount === 1) {
+        more.append(catalogues, this.releaseLeadSetup());
+        void this.paintModelCatalogs(catalogues);
+      }
+    });
+    return h(
+      "div",
+      {},
+      h("p", { class: "settings-intro" }, "Choose the models that perform each kind of work."),
+      h(
+        "p",
+        { class: "settings-scope" },
+        "Chat-model changes also update defaults used by libraries without their own choices.",
+        h("small", {}, "Service assignments remain specific to this library.")
+      ),
+      h("h3", {}, "Chat roles"),
+      CHAT_ROLES.map(([label, job], i) => {
+        return h(
+          "div",
+          { class: "settings-role" },
+          h("div", {}, h("strong", {}, label), h("small", {}, job)),
+          h("span", { class: "settings-assignment" }),
+          h("button", {
+            class: "ghost",
+            "aria-label": `Choose ${label} model`,
+            onclick: () => {
+              this.dialog.close();
+              this.chooseModel?.("chat", label, this.state().tiers?.[i], i);
+            }
+          }, "Choose")
+        );
+      }),
+      h("h3", {}, "Supporting services"),
+      h("p", { class: "settings-help" }, "Expand a service to choose its model or check its configuration."),
+      this.serviceModels(),
+      more,
+      researchSetups(this.api, this.state, this.refresh)
+    );
   }
   // -- page 1 --------------------------------------------------------------
   connections() {
@@ -2575,9 +3020,6 @@ var Settings = class {
           "Choose keys in the plugin's settings"
         )),
         h("p", { class: "note" }, "After changing a key, the plugin restarts the core so it takes effect."),
-        this.serviceModels(),
-        this.releaseLeadSetup(),
-        this.agentProfiles(),
         this.hostRegistry()
       );
     }
@@ -2589,10 +3031,10 @@ var Settings = class {
     };
     const select = h(
       "select",
-      { id: "lib-provider" },
+      { id: this.fieldId("lib-provider") },
       Object.entries(LABELS).map(([id, label]) => h("option", { value: id }, label))
     );
-    const input = h("input", { type: "password", id: "lib-key", autocomplete: "off", placeholder: "Paste a key" });
+    const input = h("input", { type: "password", id: this.fieldId("lib-key"), autocomplete: "off", placeholder: "Paste a key" });
     const status = h("span", { class: "note inline", role: "status" });
     const confirmBox = h("div");
     const save = h("button", { class: "primary" }, "Save key");
@@ -2751,9 +3193,9 @@ var Settings = class {
     const page = h(
       "div",
       {},
-      h("label", { class: "f", for: "lib-provider" }, "Provider"),
+      h("label", { class: "f", for: this.fieldId("lib-provider") }, "Provider"),
       select,
-      h("label", { class: "f", for: "lib-key" }, "Connect API key"),
+      h("label", { class: "f", for: this.fieldId("lib-key") }, "Connect API key"),
       input,
       h("div", { class: "row2" }, save, remove, status),
       confirmBox,
@@ -2767,9 +3209,6 @@ var Settings = class {
       h("label", { class: "f" }, "Usage & billing"),
       h("div", { class: "row2" }, checkUsage),
       usageBox,
-      this.serviceModels(),
-      this.releaseLeadSetup(),
-      this.agentProfiles(),
       this.hostRegistry()
     );
     show();
@@ -3066,20 +3505,34 @@ var Settings = class {
     const paint = (data) => {
       const toggle = h("input", {
         type: "checkbox",
-        id: "lib-projects-on",
+        id: this.fieldId("lib-projects-on"),
         checked: !!data.enabled,
         onchange: async (e) => {
-          try {
-            paint(await this.api.post("/api/projects/enable", { enabled: e.target.checked }));
-          } catch (err) {
-            status.textContent = err.message;
-          }
+          await changePermission(e, "/api/projects/enable", { enabled: e.target.checked }, !!data.enabled);
         }
       });
+      const changePermission = async (event, url, body, previous, done = "") => {
+        const box = event.currentTarget;
+        box.disabled = true;
+        try {
+          paint(await this.api.post(url, body));
+          status.textContent = done;
+        } catch (err) {
+          box.checked = previous;
+          try {
+            paint(await this.api.get("/api/projects"));
+            status.textContent = "Change failed. Showing current permissions. " + err.message;
+          } catch {
+            status.textContent = "Could not verify permissions. Showing last confirmed value.";
+          }
+        } finally {
+          box.disabled = false;
+        }
+      };
       const path2 = h("input", {
         type: "text",
         class: "f",
-        id: "lib-project-path",
+        id: this.fieldId("lib-project-path"),
         placeholder: "Full path to the project folder, e.g. D:\\code\\my-app"
       });
       const project = h("input", {
@@ -3129,17 +3582,19 @@ var Settings = class {
               type: "checkbox",
               checked: !!r.writes,
               "aria-label": `Allow edits in ${r.path}`,
-              onchange: (e) => act(
+              onchange: (e) => changePermission(
+                e,
                 "/api/projects/writes",
                 { id: r.id, allowed: e.target.checked },
+                !!r.writes,
                 e.target.checked ? "Edits allowed: each one is still asked." : "Edits withdrawn."
-              )()
+              )
             }),
             " Allow edits"
           ),
           h("button", { class: "ghost", onclick: act("/api/projects/remove", { id: r.id }) }, "Remove this project")
         )) : h("p", { class: "dim" }, "No project folders yet."),
-        h("label", { class: "f", for: "lib-project-path" }, "Add a project folder"),
+        h("label", { class: "f", for: this.fieldId("lib-project-path") }, "Add a project folder"),
         path2,
         h(
           "div",
@@ -3260,13 +3715,15 @@ var Settings = class {
       }
       clear(
         host,
-        h("label", { class: "f" }, "Service models"),
-        (out.slots ?? []).map((s) => {
+        (out.slots ?? []).sort((a, b) => Object.keys(SERVICE_NAMES).indexOf(a.slot) - Object.keys(SERVICE_NAMES).indexOf(b.slot)).map((s) => {
           const status = h("span", { class: "note inline", role: "status" });
           const current = s.model ? `${s.model} \xB7 ${PROVIDERS[s.provider] ?? s.provider}${s.default ? " (default)" : ""}` : s.built ? "none chosen" : "planned";
           const contract = s.adapter && typeof s.adapter === "object" ? s.adapter : {};
           const contractLabel = !s.model ? "" : contract.adapter?.id ? ` \xB7 ${String(contract.adapter.id).replace(/_/g, " ")} \xB7 ${contract.status ?? "unreviewed"}` : " \xB7 no reviewed service contract";
-          const test = async () => {
+          const test = async (event) => {
+            const button = event.currentTarget;
+            if (button.disabled) return;
+            button.disabled = true;
             status.className = cls("note inline");
             status.textContent = "Testing: one small call\u2026";
             try {
@@ -3276,12 +3733,22 @@ var Settings = class {
               status.className = cls(`note inline ${t.ok ? "ok" : "err"}`);
             } catch (e) {
               status.textContent = e.message;
+            } finally {
+              button.disabled = false;
             }
           };
           return h(
-            "div",
+            "details",
             {
-              class: `srv service slot-${s.slot}`,
+              class: `settings-service slot-${s.slot}`,
+              open: this.expandedServices.has(s.slot),
+              ontoggle: (e) => {
+                const row = e.currentTarget;
+                if (row.isConnected) {
+                  if (row.open) this.expandedServices.add(s.slot);
+                  else this.expandedServices.delete(s.slot);
+                }
+              },
               title: s.built && s.model ? "Right-click to empty this slot" : "",
               oncontextmenu: async (e) => {
                 if (!s.built || !s.model) return;
@@ -3294,28 +3761,36 @@ var Settings = class {
                 }
               }
             },
-            h("span", { class: "badge" }, String(s.number)),
+            h("summary", {}, h("strong", {}, SERVICE_NAMES[s.slot] ?? s.label), h("small", {}, s.job)),
             h(
-              "span",
-              {},
-              h("strong", {}, s.label),
-              ` \xB7 ${current}`,
-              h("span", { class: "dim" }, ` \xB7 ${s.job}`),
-              contractLabel ? h("span", { class: "dim" }, contractLabel) : null,
-              s.route_status === "unavailable" ? h("span", { class: "note err" }, ` \xB7 ${s.route_error ?? "route unavailable"}`) : null,
-              s.cap_usd !== void 0 ? h("span", { class: "dim" }, ` \xB7 spent $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null
-            ),
-            s.built && this.chooseService ? h("button", { class: "ghost", onclick: () => {
-              this.dialog.close();
-              this.chooseService(s.slot, s.label, { provider: s.provider, model: s.model });
-            } }, "Choose\u2026") : null,
-            s.built && s.model ? h("button", { class: "ghost", onclick: test }, "Test") : null,
-            status,
-            s.slot === "embeddings" ? this.embeddingsBlock(s, () => this.render()) : null
+              "div",
+              { class: "settings-service-body" },
+              h(
+                "span",
+                {},
+                h("strong", {}, s.label),
+                ` \xB7 ${current}`,
+                h("span", { class: "dim" }, ` \xB7 ${s.job}`),
+                contractLabel ? h("span", { class: "dim" }, contractLabel) : null,
+                s.route_status === "unavailable" ? h("span", { class: "note err" }, ` \xB7 ${s.route_error ?? "route unavailable"}`) : null,
+                s.cap_usd !== void 0 ? h("span", { class: "dim" }, ` \xB7 spent $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null
+              ),
+              s.built && this.chooseModel ? h("button", { class: "ghost", onclick: () => {
+                this.dialog.close();
+                this.chooseModel(s.slot, s.label, { provider: s.provider, model: s.model });
+              } }, "Choose\u2026") : null,
+              s.built && s.model ? h("button", { class: "ghost", onclick: test }, "Test model (one call)") : null,
+              status,
+              s.slot === "embeddings" ? this.embeddingsBlock(s, () => this.render()) : null
+            )
           );
         }),
         h("p", { class: "note" }, "Each does one kind of job with its own request format, and is kept with this library. An empty slot is never filled by a chat model.")
       );
+      if (this.focusService && host.isConnected) {
+        host.querySelector(".lib-slot-" + this.focusService + " summary")?.focus();
+        this.focusService = "";
+      }
     })();
     return host;
   }
@@ -3725,7 +4200,7 @@ var Settings = class {
   // -- page 2 --------------------------------------------------------------
   context() {
     const s = this.state();
-    const text = h("textarea", { class: "f", id: "lib-sys", placeholder: "What will you be working on?" });
+    const text = h("textarea", { class: "f", id: this.fieldId("lib-sys"), placeholder: "What will you be working on?" });
     text.value = s.working_context ?? "";
     let length = s.reply_length ?? "long";
     const custom = h("input", {
@@ -3735,12 +4210,17 @@ var Settings = class {
       value: ["long", "short"].includes(length) ? "" : length
     });
     const seg = h("div", { class: "seg", role: "group", "aria-label": "In-chat responses" });
-    const paint = () => clear(seg, ["long", "short"].map((v) => h("button", {
-      "aria-pressed": String(length === v),
+    let customMode = !["long", "short"].includes(length);
+    custom.hidden = !customMode;
+    const paint = () => clear(seg, ["long", "short", "custom"].map((v) => h("button", {
+      "aria-pressed": String(customMode ? v === "custom" : length === v),
       onclick: () => {
+        this.dirty = true;
+        customMode = v === "custom";
+        custom.hidden = !customMode;
         length = v;
-        custom.value = "";
         paint();
+        if (customMode) custom.focus();
       }
     }, v[0].toUpperCase() + v.slice(1))));
     paint();
@@ -3749,16 +4229,43 @@ var Settings = class {
     const paintStance = () => clear(stanceSeg, ["answer", "coach"].map((v) => h("button", {
       "aria-pressed": String(stance === v),
       onclick: () => {
+        this.dirty = true;
         stance = v;
         paintStance();
       }
     }, v[0].toUpperCase() + v.slice(1))));
     paintStance();
     const status = h("span", { class: "note inline", role: "status" });
+    const thread = s.session;
+    const active = h(
+      "details",
+      {},
+      h("summary", {}, "View active context"),
+      h("p", {}, "Library chat instructions: " + (s.working_context || "none saved")),
+      h("p", {}, "Active session: " + (thread?.session || "none"))
+    );
+    if (thread?.session) active.addEventListener("toggle", async () => {
+      if (!active.open || active.childElementCount > 3) return;
+      const lenses = h("p", {}, "Reading session lenses\u2026");
+      active.append(lenses);
+      try {
+        const view = await this.api.tool("session_status", {}, thread.session);
+        if (view.error) throw Error(String(view.detail ?? view.error));
+        lenses.textContent = "Lenses adopted in this session: " + ((view.lenses ?? []).join(", ") || "none");
+      } catch (err) {
+        lenses.textContent = "Could not read session lenses: " + err.message;
+      }
+    });
     return h(
       "div",
       {},
-      h("label", { class: "f", for: "lib-sys" }, "System prompt"),
+      h("label", { class: "f" }, "Send shortcut on this device", h(
+        "select",
+        { onchange: (e) => remember("send", e.target.value) },
+        h("option", { value: "enter", selected: preference("send") !== "modified" }, "Enter"),
+        h("option", { value: "modified", selected: preference("send") === "modified" }, "Ctrl / Cmd + Enter")
+      )),
+      h("label", { class: "f", for: this.fieldId("lib-sys") }, "Context for chat replies"),
       text,
       h("label", { class: "f" }, "In-chat responses"),
       h("div", { class: "row2 tight" }, seg, custom),
@@ -3767,17 +4274,27 @@ var Settings = class {
       h("p", { class: "note" }, "Answer replies directly. Coach asks before telling and gives a hint before an answer - a `learn` session always uses Coach, whatever this is set to."),
       h("div", { class: "row2" }, h("button", { class: "primary", onclick: async () => {
         try {
-          await this.api.post("/api/context", {
-            working_context: text.value,
-            reply_length: custom.value.trim() || length,
-            stance
-          });
+          if (customMode && !custom.value.trim()) {
+            status.textContent = "Enter a custom reply length.";
+            custom.focus();
+            return;
+          }
+          const submitted = { working_context: text.value, reply_length: customMode ? custom.value.trim() : length, stance };
+          await this.api.post("/api/context", submitted);
           await this.refresh();
+          if (submitted.working_context !== text.value || submitted.reply_length !== (customMode ? custom.value.trim() : length) || submitted.stance !== stance) {
+            status.textContent = "Previous changes saved. New edits are still unsaved.";
+            return;
+          }
+          this.drafts.delete("context");
+          if (this.page === "context" && text.isConnected) this.dirty = false;
+          active.querySelector("p").textContent = "Library chat instructions: " + (submitted.working_context || "none saved");
           status.textContent = "Saved.";
         } catch (e) {
           status.textContent = e.message;
         }
       } }, "Save"), status),
+      active,
       h("p", { class: "note" }, "This shapes chat replies only. Notes, concepts and offerings are written by the tier 2 model without it, so how you like replies never changes how the catalogue is written.")
     );
   }
@@ -4024,25 +4541,32 @@ var Settings = class {
     );
   }
   // -- page 4 --------------------------------------------------------------
-  library() {
+  library(health) {
     const host = h("div", {}, h("p", { class: "dim" }, "Loading\u2026"));
-    const packs = h("div", { class: "lens-packs" }, h("p", { class: "dim" }, "Loading\u2026"));
-    const catalogs = h("div", { class: "model-catalogs" }, h("p", { class: "dim" }, "Loading\u2026"));
-    const profile = h("div", { class: "library-profile" });
-    const topics = h("div", { class: "topics" }, h("p", { class: "dim" }, "Loading\u2026"));
     this.api.get("/api/library").then((lib) => {
       const promo = h(
         "select",
-        { id: "lib-promo" },
+        { id: this.fieldId("lib-promo") },
         [["person", "person (default): a person accepts every promotion"], ["agent", "agent: the librarian may promote, except sensitive material"]].map(([v, label]) => h("option", { value: v, selected: lib.promotion?.mode === v }, label))
       );
       const status = h("span", { class: "note inline", role: "status" });
+      let confirmed = promo.value;
       promo.onchange = async () => {
+        promo.disabled = true;
         try {
           await this.api.post("/api/library", { promotion_mode: promo.value });
+          confirmed = promo.value;
           status.textContent = "Saved to the vault's config.";
-        } catch (e) {
-          status.textContent = e.message;
+        } catch (error) {
+          try {
+            confirmed = (await this.api.get("/api/library")).promotion.mode;
+            status.textContent = `Change failed: ${error.message}. Current promotion policy: ${confirmed}.`;
+          } catch {
+            status.textContent = "Could not confirm the current policy. Showing the last confirmed value.";
+          }
+          promo.value = confirmed;
+        } finally {
+          promo.disabled = false;
         }
       };
       const keyBox = h("div", { class: "key-entry" });
@@ -4097,13 +4621,13 @@ var Settings = class {
             h("button", { class: "ghost", onclick: () => keyEntry(c, row) }, "Cancel")
           ),
           said,
-          h("small", { class: "dim" }, "Kept in this computer's key store, never in a library. Settings -> Connections lists every key.")
+          h("small", { class: "dim" }, "Kept in this computer's key store, never in a library. Settings \u2192 Providers & keys lists every key.")
         ));
         input.focus();
       };
       const reviewStatus = h("span", { class: "note inline", role: "status" });
       const reviewBox = (key, label, hint) => {
-        const box = h("input", { type: "checkbox", id: `lib-${key}` });
+        const box = h("input", { type: "checkbox", id: this.fieldId(`lib-${key}`) });
         box.checked = !!lib.clerk?.[key];
         box.onchange = async () => {
           try {
@@ -4114,28 +4638,49 @@ var Settings = class {
             reviewStatus.textContent = e.message;
           }
         };
-        return h("div", { class: "srv" }, box, h("label", { for: `lib-${key}` }, h("strong", {}, label), h("span", { class: "dim" }, ` \xB7 ${hint}`)));
+        return h("div", { class: "srv" }, box, h("label", { for: this.fieldId(`lib-${key}`) }, h("strong", {}, label), h("span", { class: "dim" }, ` \xB7 ${hint}`)));
       };
+      if (!health) {
+        const access = h("div", {}, h("p", {}, "Reading current permissions\u2026"));
+        void Promise.allSettled([this.api.get("/api/projects"), this.api.get("/api/mcp")]).then(([projects, mcp]) => {
+          const folders = projects.status === "fulfilled" ? projects.value : null;
+          const tools = mcp.status === "fulfilled" ? mcp.value : null;
+          const enabled = tools ? Object.entries(tools.servers ?? {}).filter(([, s]) => s.enabled && s.library_enabled !== false) : [];
+          clear(
+            access,
+            h("h3", {}, "What can the librarian do here?"),
+            h("p", {}, folders ? folders.enabled ? "Project access enabled. Folders allowing edit proposals: " + ((folders.roots ?? []).filter((r) => r.writes).map((r) => r.path).join(", ") || "none") + ". Each change requires approval." : "Project access is off." : "Project access could not be verified."),
+            h("button", { class: "ghost", onclick: () => this.open("projects") }, "Manage folder permissions"),
+            h("p", {}, tools ? "Enabled external servers: " + (enabled.map(([name, s]) => name + (s.connected ? " (connected)" : " (disconnected)")).join(", ") || "none") + ". Each tool uses its Allow, Ask or Deny rule." : "External tool access could not be verified."),
+            h("button", { class: "ghost", onclick: () => this.open("mcp") }, "Manage external tools")
+          );
+        });
+        clear(
+          host,
+          access,
+          h("label", { class: "f", for: this.fieldId("lib-promo") }, "Promotion"),
+          h("div", { class: "row2 tight" }, promo, status),
+          h("label", { class: "f" }, "Review"),
+          reviewBox(
+            "review_replies",
+            "Check replies",
+            "the claims a reply makes about the notes it links are checked against those notes; the verdict shows under the reply"
+          ),
+          reviewBox(
+            "review_offerings",
+            "Check drafted offerings",
+            "each claim is checked before the draft is staged; a challenged claim kept by the librarian needs you to promote it"
+          ),
+          h("p", { class: "note" }, "Run by the small-tasks model (tier 3), or `route_review` under [clerk]. A high effort setting also turns these on for its turns. ", reviewStatus),
+          h("label", { class: "f" }, "Distribution posture"),
+          h("p", {}, String(lib.usage?.distribution_posture ?? "private"), h("span", { class: "dim" }, " \xB7 set in the vault's config")),
+          h("label", { class: "f" }, "Clerk route"),
+          h("p", {}, lib.clerk?.provider ? `configured: ${lib.clerk.provider}` : "tier 3 model, else queued")
+        );
+        return;
+      }
       clear(
         host,
-        h("label", { class: "f", for: "lib-promo" }, "Promotion"),
-        h("div", { class: "row2 tight" }, promo, status),
-        h("label", { class: "f" }, "Review"),
-        reviewBox(
-          "review_replies",
-          "Check replies",
-          "the claims a reply makes about the notes it links are checked against those notes; the verdict shows under the reply"
-        ),
-        reviewBox(
-          "review_offerings",
-          "Check drafted offerings",
-          "each claim is checked before the draft is staged; a challenged claim kept by the librarian needs you to promote it"
-        ),
-        h("p", { class: "note" }, "Run by the small-tasks model (tier 3), or `route_review` under [clerk]. A high effort setting also turns these on for its turns. ", reviewStatus),
-        h("label", { class: "f" }, "Distribution posture"),
-        h("p", {}, String(lib.usage?.distribution_posture ?? "private"), h("span", { class: "dim" }, " \xB7 set in the vault's config")),
-        h("label", { class: "f" }, "Clerk route"),
-        h("p", {}, lib.clerk?.provider ? `configured: ${lib.clerk.provider}` : "tier 3 model, else queued"),
         h("label", { class: "f" }, "Capabilities on this install"),
         (lib.doctor ?? []).map((c) => h(
           "div",
@@ -4152,19 +4697,8 @@ var Settings = class {
             h("strong", {}, c.name)
           ) : h("strong", {}, c.name), h("span", { class: "key-detail" }, ` \xB7 ${c.detail ?? ""}`))
         )),
-        keyBox,
-        profile,
-        h("label", { class: "f" }, "Topics"),
-        topics,
-        h("label", { class: "f" }, "Lens packs"),
-        packs,
-        h("label", { class: "f" }, "Model catalogues"),
-        catalogs
+        keyBox
       );
-      void this.paintTopics(topics);
-      void this.paintPacks(packs);
-      void this.paintModelCatalogs(catalogs);
-      void this.paintProfile(profile);
     }).catch((e) => clear(host, h("p", { class: "error" }, e.message)));
     return host;
   }
@@ -4173,7 +4707,11 @@ var Settings = class {
   async paintTopics(host) {
     clear(host, h("p", { class: "dim" }, "Loading topics\u2026"));
     const status = h("span", { class: "note inline", role: "status" });
-    const reload = () => void this.paintTopics(host);
+    const reload = () => {
+      this.drafts.delete("topics");
+      if (host.isConnected) this.dirty = false;
+      void this.paintTopics(host);
+    };
     let out;
     try {
       out = await this.api.tool("topics_list", {});
@@ -4915,11 +5453,16 @@ var untag = (s) => s.replace(/_/g, " ");
 var Staging = class {
   // an offering to open once the list loads
   constructor(api, openNote, currentSession = () => "", onSessionUpdate = () => {
-  }) {
+  }, openModels = () => {
+  }, onBatch = () => {
+  }, routeHint = () => "") {
     this.api = api;
     this.openNote = openNote;
     this.currentSession = currentSession;
     this.onSessionUpdate = onSessionUpdate;
+    this.openModels = openModels;
+    this.onBatch = onBatch;
+    this.routeHint = routeHint;
     this.el = h("div", { class: "view staging" });
     this.list = h("div", { class: "items", role: "listbox", "aria-label": "Staged items" });
     this.detail = h("div", { class: "detail" });
@@ -4938,6 +5481,8 @@ var Staging = class {
     this.detailLocked = false;
     this.paintKinds = () => {
     };
+    this.evidenceMode = h("select", { "aria-label": "Review evidence layout" }, h("option", { value: "beside" }, "Evidence beside draft"), h("option", { value: "demand" }, "Evidence on demand"));
+    this.stopped = false;
     this.pending = "";
     const kinds = h("div", { class: "seg", role: "group", "aria-label": "Kind" });
     const statuses = h("select", { "aria-label": "Which sources", onchange: () => {
@@ -4996,6 +5541,15 @@ var Staging = class {
     }, "Scan for concepts");
     paint();
     this.paintKinds = paint;
+    this.evidenceMode.value = preference("evidence", "beside");
+    const layout = () => this.el.classList.toggle("lib-evidence-demand", this.evidenceMode.value === "demand");
+    layout();
+    this.evidenceMode.onchange = () => {
+      remember("evidence", this.evidenceMode.value);
+      layout();
+      const evidence = this.detail.querySelector("details.lib-review-evidence");
+      if (evidence) evidence.open = this.evidenceMode.value === "beside";
+    };
     this.el.append(
       h(
         "div",
@@ -5003,6 +5557,7 @@ var Staging = class {
         h("strong", {}, "Staging review"),
         kinds,
         statuses,
+        this.evidenceMode,
         h("button", { class: "ghost", onclick: () => void this.load(true) }, "Refresh"),
         scan,
         propose
@@ -5010,6 +5565,10 @@ var Staging = class {
       this.banner,
       h("div", { class: "split" }, this.list, this.detail)
     );
+  }
+  dispose() {
+    this.stopped = true;
+    window.clearTimeout(this.poll);
   }
   /** `reset`: an explicit visit (opening the view, Refresh, switching kind) —
    * always shows the placeholder when nothing is selected. Left false, an
@@ -5161,6 +5720,15 @@ var Staging = class {
   /** Approving a source only queues it: a person begins the batch here, and nothing
    * else starts it (Research Pipeline §4.2). The count is the approved set not yet
    * started; while a batch runs, later approvals are counted apart, for the next run. */
+  async focusBatch(id) {
+    await this.paintBanner();
+    const button = this.banner.querySelector(`[data-command="${id}"]`);
+    if (button) {
+      button.focus();
+      return;
+    }
+    this.banner.append(h("p", { class: "note" }, "This batch action is unavailable for the current queue."));
+  }
   async paintBanner() {
     let b;
     try {
@@ -5169,17 +5737,21 @@ var Staging = class {
       clear(this.banner);
       return;
     }
+    if (this.stopped) return;
     const waiting = Number(b.waiting ?? 0);
     const running = b.status === "running";
-    const start2 = (label, args, cls2 = "primary") => h("button", { class: cls2, onclick: async (e) => {
-      e.currentTarget.disabled = true;
+    const start2 = (id, label, args, cls2 = "primary") => h("button", { class: cls2, "data-command": id, onclick: async (e) => {
+      const button = e.currentTarget;
+      button.disabled = true;
       try {
         const out = await this.api.tool("process_approved", { ...args, background: true });
         if (out.error || out.refused) throw new Error(String(out.detail ?? out.refused ?? out.error));
       } catch (err) {
         this.banner.append(h("p", { class: "error" }, err.message));
+        button.disabled = false;
         return;
       }
+      this.onBatch("start");
       void this.paintBanner();
     } }, label);
     const rows = [];
@@ -5194,9 +5766,17 @@ var Staging = class {
           h("strong", {}, `Processing ${b.processed ?? 0} of ${b.total ?? 0}`),
           cur.item ? ` \xB7 ${cur.item}: ${cur.stage}${cur.detail ? ` - ${cur.detail}` : ""}` : ""
         ),
-        h("button", { class: "ghost", onclick: async () => {
-          await this.api.tool("batch_cancel", {});
-          void this.paintBanner();
+        h("button", { class: "ghost", "data-command": "stop", onclick: async (e) => {
+          const button = e.currentTarget;
+          button.disabled = true;
+          try {
+            const result = await this.api.tool("batch_cancel", {});
+            if (result.error || result.refused) throw Error(String(result.detail ?? result.error ?? result.refused));
+            await this.paintBanner();
+          } catch (err) {
+            button.disabled = false;
+            this.banner.append(h("p", { class: "error" }, err.message));
+          }
         } }, "Stop after this stage")
       ));
       if (waiting) rows.push(h("p", { class: "note inline" }, `${waiting} more approved, waiting for the next run.`));
@@ -5214,7 +5794,7 @@ var Staging = class {
           "div",
           { class: "row2 tight" },
           h("span", {}, `The last batch stopped${b.detail ? ` (${b.detail})` : ""} with sources unfinished.`),
-          start2("Resume it", { resume: b.run }, "ghost")
+          start2("resume", "Resume it", { resume: b.run }, "ghost")
         ));
       }
       if (waiting) {
@@ -5222,7 +5802,7 @@ var Staging = class {
           "div",
           { class: "row2 tight" },
           h("strong", {}, waiting === 1 ? "1 source approved and awaiting ingestion." : `${waiting} sources approved and awaiting ingestion.`),
-          start2("Click here to begin", {})
+          start2("approved", "Process approved sources", {})
         ));
       }
       const onModel = Number(b.waiting_on_model ?? 0);
@@ -5231,10 +5811,12 @@ var Staging = class {
           "div",
           { class: "row2 tight" },
           h("span", {}, `${onModel} source${onModel === 1 ? " has" : "s have"} reading steps that waited for a model. With models chosen (Choose models), run just those steps:`),
-          start2("Run the waiting steps", { retry_waiting: true }, "ghost")
+          start2("retry", "Run the waiting steps", { retry_waiting: true }, "ghost")
         ));
       }
     }
+    if (rows.length && !running) rows.push(h("small", { class: "note" }, this.routeHint() + " Estimated cost and total content sent are unknown before the run."));
+    if (this.wasRunning && !running && b.status === "finished") this.onBatch("finish");
     clear(this.banner, rows.length ? h("div", { class: "warn" }, rows) : null);
     window.clearTimeout(this.poll);
     if (running) this.poll = window.setTimeout(() => void this.paintBanner(), 2e3);
@@ -5358,7 +5940,7 @@ var Staging = class {
     };
     const dr = item.deep_read;
     const readCount = dr ? Object.keys(dr.read ?? {}).length : 0;
-    const readLine = dr ? `Deep read: ${readCount} of ${dr.chunks} parts read${dr.lenses?.length ? `, ${dr.lenses.length} lens${dr.lenses.length === 1 ? "" : "es"} staged` : ""}.` : "Only the opening of this source has been read.";
+    const readLine = !dr ? "Only the opening of this source has been read." : dr.version !== 2 ? "Deep read: earlier progress recorded only how many parts were read, not which text, so it is stale. Deep read again to read the text as it is now." : `Deep read: ${readCount} of ${dr.chunks} parts read${dr.lenses?.length ? `, ${dr.lenses.length} lens${dr.lenses.length === 1 ? "" : "es"} staged` : ""}.`;
     const sections = Object.entries(item.sections ?? {}).filter(([, t]) => t);
     const queued = item.review?.queued ?? [];
     const missing = item.readiness ?? [];
@@ -5443,7 +6025,7 @@ var Staging = class {
         "p",
         { class: "warn" },
         `\u23F3 Waiting on a clerk model for: ${queued.join(", ")}. Choose a tier 3 model under Model, `,
-        "set [clerk] in the vault's config, or run the clerk agent, then \u201CRedraft\u201D below."
+        h("button", { class: "ghost", onclick: this.openModels }, "Configure reviewer model")
       ) : null,
       (item.intake_notes ?? []).length ? h("p", { class: "note" }, `Intake could not read everything: ${item.intake_notes.join("; ")}.`) : null,
       missing.length ? h("p", { class: "warn" }, `Still missing before this is catalogued fully: ${missing.join(", ")}.`) : null,
@@ -5486,8 +6068,9 @@ var Staging = class {
           status
         ),
         h(
-          "div",
-          {},
+          "details",
+          { class: "review-evidence", open: this.evidenceMode.value === "beside" },
+          h("summary", {}, "View source evidence"),
           sections.length ? h("label", { class: "f" }, "What was read") : null,
           sections.length ? h("div", { class: "sections" }, sections.map(([heading, body]) => h("section", {}, h("h4", {}, heading), render(body, this.openNote)))) : null,
           h("label", { class: "f" }, "Evidence"),
@@ -5974,6 +6557,12 @@ var Search = class {
       h("div", { class: "split" }, this.facets, this.results)
     );
   }
+  activity() {
+    const scope = this.el.querySelector('select[aria-label="Search in"]');
+    scope.value = "activity";
+    scope.dispatchEvent(new Event("change"));
+    this.focus();
+  }
   focus() {
     this.el.querySelector("input")?.focus();
   }
@@ -6177,6 +6766,7 @@ function relinkChat(log, oldName, newName, open) {
 }
 var App = class {
   constructor(root, opts) {
+    this.root = root;
     this.ids = claimInstance();
     this.state = {};
     // Bumped whenever this tab learns newer tiers than a fetch in flight could
@@ -6225,21 +6815,35 @@ var App = class {
       "aria-label": "Effort"
     });
     this.effortControl = h("label", { class: "effort tb" }, "Effort ", this.effortInput, this.effortValue);
+    this.batchNotice = h("div", { class: "notice", role: "status", hidden: true });
     this.notice = h("div", { class: "notice", role: "alert", hidden: true });
     this.paneOpen = true;
     this.stopEvents = null;
     this.onDocumentKey = (e) => {
+      if (this.opts.host === "website" && e.altKey && e.shiftKey && !e.ctrlKey && !e.metaKey && !e.repeat && !e.isComposing && !e.defaultPrevented && !this.settings.dialog.open && e.target instanceof Element && (this.root.contains(e.target) || e.target === document.body && document.querySelectorAll(".librarian-root").length === 1) && !e.target.closest("input, textarea, select, [contenteditable], [role=textbox], dialog, [role=dialog]")) {
+        const key = e.code.replace(/^(Key|Digit)/, "");
+        const id = key && Object.keys(COMMANDS).find((id2) => preference("key." + id2) === key);
+        if (id) {
+          e.preventDefault();
+          this.command(id);
+          return;
+        }
+      }
       if (e.key !== "Escape") return;
       const open = this.popovers().filter((p) => p.open);
       if (!open.length) return;
-      open.forEach((p) => p.show(false));
+      open.forEach((p) => {
+        if (p !== this.models || !this.tile.cancelSlot()) p.show(false);
+      });
       e.preventDefault();
       e.stopPropagation();
     };
     this.onDocumentClick = (e) => {
       const path2 = e.composedPath();
       for (const p of [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop]) {
-        if (p.open && !path2.includes(p.el) && !path2.includes(p.button)) p.show(false);
+        if (p.open && !path2.includes(p.el) && !path2.includes(p.button)) {
+          if (p !== this.models || !this.tile.cancelSlot()) p.show(false);
+        }
       }
     };
     this.api = new Api(opts);
@@ -6267,7 +6871,32 @@ var App = class {
       this.api,
       openNote,
       () => this.session?.session ?? "",
-      (session) => this.setSession(session)
+      (session) => this.setSession(session),
+      () => this.settings.open("models"),
+      (event) => {
+        if (event === "start" && preference("job-start") === "activity") {
+          this.show("search");
+          this.search.activity();
+        }
+        if (event === "finish" && preference("batch-notice") === "on") {
+          this.batchNotice.hidden = false;
+          clear(
+            this.batchNotice,
+            this.libraryName() + ": ingestion batch finished. ",
+            h("button", { class: "ghost", onclick: () => {
+              this.batchNotice.hidden = true;
+              this.show("staging");
+            } }, "View batch"),
+            h("button", { class: "ghost", onclick: () => {
+              this.batchNotice.hidden = true;
+            } }, "Dismiss")
+          );
+        }
+      },
+      () => {
+        const tiers = this.state.tiers ?? [], route = tiers[2] ?? tiers[1] ?? tiers[0];
+        return "Library: " + this.libraryName() + ". " + (route ? "Chat small-task selection: " + route.provider + " / " + route.model + ". Individual steps can use other routes." : "No chat model selected.");
+      }
     );
     this.search = new Search(this.api, openNote);
     this.pane = new DocPane(
@@ -6285,14 +6914,17 @@ var App = class {
       () => this.state,
       () => this.refresh(),
       opts.manageKeys,
-      (slot, label) => void this.chooseService(slot, label)
+      (slot, label, current, role) => void this.chooseService(slot, label, current, role),
+      opts.host === "obsidian",
+      (id) => this.command(id),
+      (base) => this.ids.id(base)
     );
-    const plus = h("button", {
-      class: "tb icon",
+    const settingsButton = h("button", {
+      class: "ghost",
       title: "Settings",
       "aria-label": "Settings",
       onclick: () => this.settings.open()
-    }, "+");
+    }, "Settings");
     this.modes = new Popover(this.ids.id("lib-modes"), "Modes", this.modeButton, "lib-modes");
     this.models = new Popover(this.ids.id("lib-models"), "Model", this.modelButton, "lib-models");
     const sessionsButton = h("button", { class: "ghost" }, "Sessions \u25BE");
@@ -6375,7 +7007,7 @@ var App = class {
       }
     };
     this.input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+      if (e.key === "Enter" && !e.shiftKey && !e.altKey && !e.isComposing && (e.ctrlKey || e.metaKey) === (preference("send") === "modified")) {
         e.preventDefault();
         if (!this.state.busy) void this.send();
       }
@@ -6397,7 +7029,7 @@ var App = class {
       { class: "composer" },
       this.chips,
       this.msgBox,
-      h("div", { class: "toolbar" }, plus, attachButton, this.modeButton, this.modelButton, this.effortControl, elsewhere, this.sendButton),
+      h("div", { class: "toolbar" }, attachButton, this.modeButton, this.modelButton, this.effortControl, elsewhere, this.sendButton),
       this.modes.el,
       this.models.el,
       this.attachPop.el
@@ -6418,7 +7050,7 @@ var App = class {
     this.body = h(
       "div",
       { class: "lib-body" },
-      h("div", { class: "lib-main" }, this.notice, chatView, this.staging.el, this.search.el, composer),
+      h("div", { class: "lib-main" }, this.notice, this.batchNotice, chatView, this.staging.el, this.search.el, composer),
       resizer,
       this.pane.el
     );
@@ -6436,6 +7068,7 @@ var App = class {
           this.title,
           this.crumb,
           h("nav", { role: "tablist", "aria-label": "Views" }, Object.values(this.nav)),
+          settingsButton,
           this.live,
           this.paneButton
         ),
@@ -6478,7 +7111,7 @@ var App = class {
     this.body.classList.toggle(cls("pane-open"), on);
     this.body.classList.toggle(cls("pane-closed"), !on);
     this.paneButton.setAttribute("aria-pressed", String(on));
-    remember("pane", on ? "open" : "closed");
+    remember2("pane", on ? "open" : "closed");
   }
   /** Apply the saved split clamped to the current room; returns the width
    *  applied (0 when none is saved and the stylesheet's default applies). */
@@ -6501,7 +7134,7 @@ var App = class {
     const up = () => {
       handle.removeEventListener("pointermove", move);
       this.savedPaneWidth = this.applyPaneWidth();
-      remember("pane-w", `${this.savedPaneWidth}px`);
+      remember2("pane-w", `${this.savedPaneWidth}px`);
     };
     handle.addEventListener("pointermove", move);
     handle.addEventListener("pointerup", up, { once: true });
@@ -6529,6 +7162,7 @@ var App = class {
     const fresh = await this.api.get("/api/state");
     if (this.tiersEpoch !== epoch) fresh.tiers = this.state.tiers;
     this.state = fresh;
+    if (this.settings.dialog.open) this.settings.syncState();
     this.paintSendButton();
     this.libraryButton.textContent = `${this.libraryName()} \u25BE`;
     this.libraryButton.title = `Switch library - this is ${this.libraryName()} (${String(this.state.vault_path ?? "")})`;
@@ -6552,6 +7186,7 @@ var App = class {
         break;
       case "tiers_changed":
         this.state.tiers = event.tiers;
+        if (this.settings.dialog.open) this.settings.syncState();
         this.tiersEpoch++;
         this.paintToolbar();
         if (this.models.open) this.tile.render();
@@ -6614,7 +7249,8 @@ var App = class {
       this.pipelines,
       (msg) => this.warn(msg),
       this.state.queued_inputs ?? {},
-      this.ids.id("librarian-mode")
+      this.ids.id("librarian-mode"),
+      this.libraryName() + " \xB7 " + (this.session?.session ?? "no active conversation")
     );
     const pending = (this.state.pending_checkpoints ?? []).length;
     this.checkpointButton.textContent = pending ? `Checkpoints (${pending}) \u25BE` : "Checkpoints \u25BE";
@@ -6729,22 +7365,60 @@ var App = class {
   libraryName() {
     return String(this.state.vault_name ?? this.state.vault ?? "Librarian");
   }
-  show(view) {
+  command(id) {
+    if (!(id in COMMANDS)) return;
+    if (id === "settings") {
+      this.settings.open();
+      return;
+    }
+    this.settings.dialog.close();
+    if (id === "search") {
+      this.show("search");
+      return;
+    }
+    if (id === "sessions" || id === "checkpoints") {
+      const pop = id === "sessions" ? this.sessions : this.checkpoints;
+      if (!pop.open) pop.button.click();
+      return;
+    }
+    if (["staging", "approved", "resume", "retry", "stop"].includes(id)) {
+      this.show("staging");
+      if (id === "staging") this.staging.el.querySelector("button")?.focus();
+      else void this.staging.focusBatch(id);
+      return;
+    }
+    this.show("chat");
+    if (id === "intake") {
+      this.attachPop.button.click();
+      this.warn("Attach a source file for this library, then ask the librarian to capture it for review in Staging.");
+      return;
+    }
+    if (!this.modes.open) this.toggle(this.modes);
+    const button = this.modes.el.querySelector(`[data-command="${id}"]`);
+    if (button) {
+      button.focus();
+      button.scrollIntoView({ block: "nearest" });
+    } else this.warn("This workflow is unavailable in " + this.libraryName() + ".");
+  }
+  show(view, refresh = true) {
     this.view = view;
     for (const [v, el] of Object.entries(this.views)) el.hidden = v !== view;
     for (const [v, b] of Object.entries(this.nav)) b.setAttribute("aria-selected", String(v === view));
     this.composer.hidden = view !== "chat";
-    if (view === "staging") void this.staging.load(true);
+    if (view === "staging" && refresh) void this.staging.load(true);
     if (view === "search") this.search.focus();
   }
   /** R17: Settings' "Choose…" for a service slot opens the model tile to pick one model
    *  for it; picking (or Cancel) returns to Settings. */
-  async chooseService(slot, label, current) {
+  async chooseService(slot, label, current, role) {
     await new Promise((resolve2) => window.setTimeout(resolve2, 0));
+    const origin = this.view;
+    this.show("chat");
     this.tile.startSlot(slot, label, () => {
       if (this.models.open) this.toggle(this.models);
-      this.settings.open("connections");
-    }, current?.model ? current : void 0);
+      this.show(origin, false);
+      this.settings.open("models");
+    }, current?.model ? current : void 0, role);
     if (!this.models.open) this.toggle(this.models);
     await this.refresh();
     await this.tile.refresh();
@@ -6915,6 +7589,7 @@ var App = class {
     this.stopEvents = null;
     this.bodyObserver?.disconnect();
     this.bodyObserver = null;
+    this.staging.dispose();
     this.pane.dispose();
     this.attachPanel.dispose();
     this.popovers().forEach((p) => p.dispose());
@@ -6971,7 +7646,7 @@ function fileIcon() {
   }
   return svg;
 }
-function remember(key, value) {
+function remember2(key, value) {
   try {
     localStorage.setItem(`librarian:${key}`, value);
   } catch {
@@ -6988,7 +7663,7 @@ function mount(root, opts) {
   root.classList.add(cls("librarian-root"), cls(`host-${opts.host}`));
   const app = new App(root, opts);
   void app.start();
-  return { insert: (text) => app.insert(text), dispose: () => app.dispose() };
+  return { command: (id) => app.command(id), insert: (text) => app.insert(text), dispose: () => app.dispose() };
 }
 var auto = typeof document !== "undefined" ? document.getElementById("librarian-root") : null;
 if (auto) {
@@ -7202,6 +7877,13 @@ var LibrarianPlugin = class extends import_obsidian.Plugin {
     this.settings = { ...DEFAULTS, ...await this.loadData() };
     this.registerView(VIEW, (leaf) => new LibrarianView(leaf, this));
     this.addRibbonIcon("library", "Open the librarian", () => this.activate());
+    for (const [id, name] of Object.entries(COMMANDS)) {
+      this.addCommand({ id: "command-" + id, name, checkCallback: (checking) => {
+        if (document.activeElement?.closest("textarea, input, select, [contenteditable=true], .cm-content")) return false;
+        if (!checking) void this.activate().then((view) => view?.command(id));
+        return true;
+      } });
+    }
     this.addCommand({ id: "open", name: "Open the librarian", callback: () => this.activate() });
     this.addCommand({
       id: "ask-about-note",
@@ -7433,6 +8115,9 @@ var LibrarianView = class extends import_obsidian.ItemView {
       }
     });
     this.startHeartbeat(core);
+  }
+  command(id) {
+    this.mounted?.command(id);
   }
   insert(text) {
     this.mounted?.insert(text);

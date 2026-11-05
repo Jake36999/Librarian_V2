@@ -2,6 +2,7 @@
 // #librarian-root and the page token in the page) and by the Obsidian plugin
 // (it calls Librarian.mount with its own options).
 
+import { COMMANDS, preference } from "./commands";
 import { reader } from "./speech";
 import { Api, type Event, type Options } from "./api";
 export type { Options } from "./api";
@@ -88,9 +89,10 @@ class App {
   private sendButton: HTMLButtonElement;
   private views: Record<View, HTMLElement>;
   private nav: Record<View, HTMLButtonElement>;
+  private batchNotice = h("div", {class:"notice", role:"status", hidden:true});
   private notice = h("div", { class: "notice", role: "alert", hidden: true });
 
-  constructor(root: HTMLElement, opts: Options) {
+  constructor(private root: HTMLElement, opts: Options) {
     this.api = new Api(opts);
     const openNote = (target: string) => void this.openDoc(target);
     reader.init(this.api, (message) => this.warn(message));
@@ -110,7 +112,18 @@ class App {
       openOffering: (id) => { this.staging.focusOffering(id); this.show("staging"); },
     });
     this.staging = new Staging(this.api, openNote, () => this.session?.session ?? "",
-      (session) => this.setSession(session));
+      (session) => this.setSession(session), () => this.settings.open("models"), event => {
+        if (event === "start" && preference("job-start") === "activity") { this.show("search"); this.search.activity(); }
+        if (event === "finish" && preference("batch-notice") === "on") {
+          this.batchNotice.hidden = false;
+          clear(this.batchNotice, this.libraryName() + ": ingestion batch finished. ",
+            h("button", {class:"ghost",onclick:()=>{this.batchNotice.hidden=true;this.show("staging");}}, "View batch"),
+            h("button", {class:"ghost",onclick:()=>{this.batchNotice.hidden=true;}}, "Dismiss"));
+        }
+      }, () => {
+        const tiers = this.state.tiers ?? [], route = tiers[2] ?? tiers[1] ?? tiers[0];
+        return "Library: " + this.libraryName() + ". " + (route ? "Chat small-task selection: " + route.provider + " / " + route.model + ". Individual steps can use other routes." : "No chat model selected.");
+      });
     this.search = new Search(this.api, openNote);
     this.pane = new DocPane(this.api, this.chat.plan, () => String(this.state.vault ?? ""),
       () => this.showPane(false),
@@ -119,10 +132,10 @@ class App {
       () => this.session?.session ?? "");
     this.opts = opts;
     this.settings = new Settings(this.api, () => this.state, () => this.refresh(), opts.manageKeys,
-      (slot, label) => void this.chooseService(slot, label));
+      (slot, label, current, role) => void this.chooseService(slot, label, current, role), opts.host === "obsidian", id => this.command(id), base => this.ids.id(base));
 
-    const plus = h("button", { class: "tb icon", title: "Settings", "aria-label": "Settings",
-      onclick: () => this.settings.open() }, "+");
+    const settingsButton = h("button", { class: "ghost", title: "Settings", "aria-label": "Settings",
+      onclick: () => this.settings.open() }, "Settings");
     this.modes = new Popover(this.ids.id("lib-modes"), "Modes", this.modeButton, "lib-modes");
     this.models = new Popover(this.ids.id("lib-models"), "Model", this.modelButton, "lib-models");
     const sessionsButton = h("button", { class: "ghost" }, "Sessions ▾");
@@ -184,7 +197,7 @@ class App {
       }
     };
     this.input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!this.state.busy) void this.send(); }
+      if (e.key === "Enter" && !e.shiftKey && !e.altKey && !e.isComposing && (e.ctrlKey || e.metaKey) === (preference("send") === "modified")) { e.preventDefault(); if (!this.state.busy) void this.send(); }
     });
 
     const chatView = h("main", { class: "chatview" }, this.chat.log);
@@ -196,7 +209,7 @@ class App {
 
     clear(this.msgBox, this.attachRow, this.input);
     const composer = h("div", { class: "composer" }, this.chips, this.msgBox,
-      h("div", { class: "toolbar" }, plus, attachButton, this.modeButton, this.modelButton, this.effortControl, elsewhere, this.sendButton),
+      h("div", { class: "toolbar" }, attachButton, this.modeButton, this.modelButton, this.effortControl, elsewhere, this.sendButton),
       this.modes.el, this.models.el, this.attachPop.el);
 
     this.paneButton = h("button", { class: "icon-btn", title: "Plan and notes beside the chat",
@@ -205,7 +218,7 @@ class App {
       title: "Drag to resize" });
     resizer.addEventListener("pointerdown", (e) => this.resize(e as PointerEvent, resizer));
     this.body = h("div", { class: "lib-body" },
-      h("div", { class: "lib-main" }, this.notice, chatView, this.staging.el, this.search.el, composer),
+      h("div", { class: "lib-main" }, this.notice, this.batchNotice, chatView, this.staging.el, this.search.el, composer),
       resizer, this.pane.el);
     clear(root,
       h("div", { class: `lib-app host-${opts.host}` },
@@ -213,7 +226,7 @@ class App {
           h("div", { class: "anchor" }, sessionsButton, this.sessions.el),
           h("div", { class: "anchor" }, this.checkpointButton, this.checkpoints.el),
           this.title, this.crumb,
-          h("nav", { role: "tablist", "aria-label": "Views" }, Object.values(this.nav)), this.live,
+          h("nav", { role: "tablist", "aria-label": "Views" }, Object.values(this.nav)), settingsButton, this.live,
           this.paneButton),
         this.body),
       this.settings.dialog);
@@ -243,10 +256,18 @@ class App {
   private readonly onDocumentKey = (e: KeyboardEvent) => {
     // MF-008: Escape closes this mount's open popovers and is consumed. With
     // none open it passes by, so the host and other views keep their keys.
+    if (this.opts.host === "website" && e.altKey && e.shiftKey && !e.ctrlKey && !e.metaKey && !e.repeat &&
+        !e.isComposing && !e.defaultPrevented && !this.settings.dialog.open && e.target instanceof Element &&
+        (this.root.contains(e.target) || (e.target === document.body && document.querySelectorAll(".librarian-root").length === 1)) &&
+        !e.target.closest("input, textarea, select, [contenteditable], [role=textbox], dialog, [role=dialog]")) {
+      const key = e.code.replace(/^(Key|Digit)/, "");
+      const id = key && Object.keys(COMMANDS).find(id => preference("key." + id) === key);
+      if (id) { e.preventDefault(); this.command(id); return; }
+    }
     if (e.key !== "Escape") return;
     const open = this.popovers().filter((p) => p.open);
     if (!open.length) return;
-    open.forEach((p) => p.show(false));
+    open.forEach((p) => { if (p !== this.models || !this.tile.cancelSlot()) p.show(false); });
     e.preventDefault();
     e.stopPropagation();
   };
@@ -258,7 +279,9 @@ class App {
     // detaches its own target, which is still inside.
     const path = e.composedPath();
     for (const p of [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop]) {
-      if (p.open && !path.includes(p.el) && !path.includes(p.button)) p.show(false);
+      if (p.open && !path.includes(p.el) && !path.includes(p.button)) {
+        if (p !== this.models || !this.tile.cancelSlot()) p.show(false);
+      }
     }
   };
 
@@ -336,6 +359,7 @@ class App {
     const fresh = await this.api.get("/api/state");
     if (this.tiersEpoch !== epoch) fresh.tiers = this.state.tiers;     // newer than this answer
     this.state = fresh;
+    if (this.settings.dialog.open) this.settings.syncState();
     this.paintSendButton();
     this.libraryButton.textContent = `${this.libraryName()} ▾`;
     this.libraryButton.title = `Switch library - this is ${this.libraryName()} (${String(this.state.vault_path ?? "")})`;
@@ -363,6 +387,7 @@ class App {
         break;
       case "tiers_changed":
         this.state.tiers = event.tiers;
+        if (this.settings.dialog.open) this.settings.syncState();
         this.tiersEpoch++;
         this.paintToolbar();
         if (this.models.open) this.tile.render();
@@ -428,7 +453,8 @@ class App {
       ? [h("span", { class: "badge" }, "1"), ` ${tier.model} · ${PROVIDERS[tier.provider] ?? tier.provider}`]
       : "Choose models", " ▾");
     renderModes(this.modes, this.api, this.state.mode, this.state.queued_actions ?? [], this.pipelines,
-      (msg) => this.warn(msg), this.state.queued_inputs ?? {}, this.ids.id("librarian-mode"));
+      (msg) => this.warn(msg), this.state.queued_inputs ?? {}, this.ids.id("librarian-mode"),
+      this.libraryName() + " · " + (this.session?.session ?? "no active conversation"));
     const pending = ((this.state.pending_checkpoints ?? []) as any[]).length;
     this.checkpointButton.textContent = pending ? `Checkpoints (${pending}) ▾` : "Checkpoints ▾";
     if (this.checkpoints.open) this.renderCheckpoints();
@@ -531,26 +557,57 @@ class App {
     return String(this.state.vault_name ?? this.state.vault ?? "Librarian");
   }
 
-  private show(view: View): void {
+  command(id: string): void {
+    if (!(id in COMMANDS)) return;
+    if (id === "settings") { this.settings.open(); return; }
+    this.settings.dialog.close();
+    if (id === "search") { this.show("search"); return; }
+    if (id === "sessions" || id === "checkpoints") {
+      const pop = id === "sessions" ? this.sessions : this.checkpoints;
+      if (!pop.open) pop.button.click();
+      return;
+    }
+    if (["staging","approved","resume","retry","stop"].includes(id)) {
+      this.show("staging");
+      if (id === "staging") this.staging.el.querySelector("button")?.focus();
+      else void this.staging.focusBatch(id);
+      return;
+    }
+    this.show("chat");
+    if (id === "intake") {
+      this.attachPop.button.click();
+      this.warn("Attach a source file for this library, then ask the librarian to capture it for review in Staging.");
+      return;
+    }
+    if (!this.modes.open) this.toggle(this.modes);
+    const button = this.modes.el.querySelector<HTMLButtonElement>(`[data-command="${id}"]`);
+    if (button) { button.focus(); button.scrollIntoView({block:"nearest"}); }
+    else this.warn("This workflow is unavailable in " + this.libraryName() + ".");
+  }
+
+  private show(view: View, refresh = true): void {
     this.view = view;
     for (const [v, el] of Object.entries(this.views)) el.hidden = v !== view;
     for (const [v, b] of Object.entries(this.nav)) b.setAttribute("aria-selected", String(v === view));
     this.composer.hidden = view !== "chat";
-    if (view === "staging") void this.staging.load(true);
+    if (view === "staging" && refresh) void this.staging.load(true);
     if (view === "search") this.search.focus();
   }
 
   /** R17: Settings' "Choose…" for a service slot opens the model tile to pick one model
    *  for it; picking (or Cancel) returns to Settings. */
   private async chooseService(slot: string, label: string,
-                              current?: { provider: string; model: string }): Promise<void> {
+                              current?: { provider: string; model: string }, role?: number): Promise<void> {
     // After the click that asked for it has finished: that click is still on its way up
     // to the document, whose click-outside handler would close a popover opened now.
     await new Promise((resolve) => window.setTimeout(resolve, 0));
+    const origin = this.view;
+    this.show("chat");
     this.tile.startSlot(slot, label, () => {
       if (this.models.open) this.toggle(this.models);
-      this.settings.open("connections");
-    }, current?.model ? current : undefined);
+      this.show(origin, false);
+      this.settings.open("models");
+    }, current?.model ? current : undefined, role);
     if (!this.models.open) this.toggle(this.models);
     await this.refresh();
     await this.tile.refresh();
@@ -711,6 +768,7 @@ class App {
     this.bodyObserver?.disconnect();
     this.bodyObserver = null;
     // MF-008: nothing this mount registered outlives it.
+    this.staging.dispose();
     this.pane.dispose();
     this.attachPanel.dispose();
     this.popovers().forEach((p) => p.dispose());
@@ -776,13 +834,13 @@ function recall(key: string): string {
   try { return localStorage.getItem(`librarian:${key}`) ?? ""; } catch { return ""; }
 }
 
-export interface Mounted { insert(text: string): void; dispose(): void }
+export interface Mounted { command(id: string): void; insert(text: string): void; dispose(): void }
 
 export function mount(root: HTMLElement, opts: Options): Mounted {
   root.classList.add(cls("librarian-root"), cls(`host-${opts.host}`));
   const app = new App(root, opts);
   void app.start();
-  return { insert: (text) => app.insert(text), dispose: () => app.dispose() };
+  return { command: id => app.command(id), insert: (text) => app.insert(text), dispose: () => app.dispose() };
 }
 
 // The website: the core serves the page with its token in a meta tag.

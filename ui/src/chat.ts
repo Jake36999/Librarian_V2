@@ -80,7 +80,7 @@ function providerFailureCopy(event: Event): { heading: string; advice: string } 
         advice: "This is a Windows or local security-environment issue, not a model-quality result. Check Host status or local network policy, then retry." };
     case "credentials":
       return { heading: "The selected route rejected its credentials",
-        advice: "Check the key and host under + → Connections, then retry." };
+        advice: "Check the key and host under Settings → Providers & keys, then retry." };
     case "route_configuration":
       return { heading: "The selected route needs attention",
         advice: "Check the host, exact model, and qualification status in the Model Tile, then retry." };
@@ -95,13 +95,13 @@ function providerFailureCopy(event: Event): { heading: string; advice: string } 
         advice: "Check the host URL and network access; this does not assess model quality." };
     case "provider_rejected":
       return { heading: "The provider rejected this request",
-        advice: "Check the selected host and model under + → Connections, then retry." };
+        advice: "Check the selected host and model under Settings → Providers & keys, then retry." };
     default: {
       const slow = /did not answer within|busy|HTTP (429|50[234])/.test(String(event.error));
       return { heading: "The selected route could not answer",
         advice: slow
           ? "Nothing was switched. Retry in a moment, or choose a faster model for slot 1 yourself."
-          : "Check the key and the model under + → Connections, then retry." };
+          : "Check the key and the model under Settings → Providers & keys, then retry." };
     }
   }
 }
