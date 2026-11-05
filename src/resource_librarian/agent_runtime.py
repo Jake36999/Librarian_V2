@@ -711,10 +711,55 @@ def _precondition_error(macro: Macro, inputs: dict[str, Any]) -> str:
 def _checkpoint_scope(macro: Macro, inputs: dict[str, Any]) -> str:
     # A resolved approval belongs to one exact expanded plan.  The digest
     # keeps it short and prevents reuse after source/query arguments change.
-    relevant = {key: value for key, value in inputs.items() if key != "checkpoint_id"}
+    # `unknown_step` is a person's answer about an interrupted step, not part
+    # of what was approved.
+    relevant = {key: value for key, value in inputs.items()
+                if key not in ("checkpoint_id", "unknown_step")}
     encoded = json.dumps({"inputs": relevant, "plan": _expanded_plan(macro, inputs)},
                          sort_keys=True, default=str, ensure_ascii=False)
     return f"macro:{macro.id}:v{macro.version}:{hashlib.sha256(encoded.encode()).hexdigest()[:16]}"
+
+
+UNKNOWN_STEP_CHOICES = ("retry", "applied")
+
+
+class MacroJournal:
+    """One approved write-capable macro run's step log (MF-018).
+
+    Keyed by its approval checkpoint. A resolved checkpoint is never reused,
+    so running the macro again with that checkpoint continues the same run.
+    Each step logs `dispatch` before it runs and `done` (or `stopped`, for a
+    refusal or question) after. A done step is reused, not repeated. A step
+    dispatched with no outcome may or may not have taken effect.
+    """
+
+    def __init__(self, vault: Any, checkpoint_id: str):
+        from .workflows import RunStore
+        self.store = RunStore(vault)
+        self.run_id = f"macro-{checkpoint_id}"
+
+    def state(self) -> tuple[dict[int, dict[str, Any]], bool]:
+        from .workflows import DefinitionError
+        try:
+            events = self.store.events(self.run_id)
+        except DefinitionError:                     # no log yet: a fresh run
+            return {}, False
+        steps: dict[int, dict[str, Any]] = {}
+        completed = False
+        for event in events:
+            kind = event.get("type")
+            if kind == "dispatch":
+                steps[int(event["index"])] = {"state": "dispatched"}
+            elif kind == "done":
+                steps[int(event["index"])] = {"state": "done", "result": event.get("result")}
+            elif kind == "stopped":
+                steps[int(event["index"])] = {"state": "stopped"}
+            elif kind == "completed":
+                completed = True
+        return steps, completed
+
+    def append(self, event: dict[str, Any]) -> None:
+        self.store.append(self.run_id, event)
 
 
 def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, Any]:
@@ -755,6 +800,27 @@ def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, 
             return {"macro": plan, "status": "awaiting_checkpoint", "resumable": True,
                     "detail": "A person must approve this expanded write-capable macro before it starts.",
                     "checkpoint": checkpoint}
+    # MF-018: an approved write-capable run keeps a durable step log, so a
+    # stop part way never turns into blindly repeating a completed write.
+    journal = MacroJournal(ctx.vault, checkpoint_id) \
+        if macro.write_capable and ctx.vault is not None else None
+    recorded, finished = journal.state() if journal is not None else ({}, False)
+    unknown_choice = str(inputs.get("unknown_step") or "")
+    if unknown_choice:
+        if unknown_choice not in UNKNOWN_STEP_CHOICES:
+            raise TypeError(f"unknown_step is one of {list(UNKNOWN_STEP_CHOICES)}")
+        if ctx.tier != "curate":
+            from .rules import Refusal
+            raise Refusal("PERSON_CONFIRMS", "whether an interrupted step took effect is a "
+                                             "person's call")
+    if finished:
+        return {"macro": plan, "status": "completed", "reused": True,
+                "steps": [{"tool": step.tool, "result": (recorded.get(i) or {}).get("result"),
+                           "reused": True} for i, step in enumerate(macro.steps)],
+                "detail": "this approved run already completed; nothing was repeated"}
+    if journal is not None and not recorded:
+        journal.append({"type": "started", "macro": macro.id, "version": macro.version,
+                        "scope": scope})
     steps = []
     # Registry.call enforces the compact active bundle for ordinary model
     # calls.  A macro is the explicitly approved exception, so scope its
@@ -767,7 +833,8 @@ def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, 
     except (TypeError, ValueError):
         ctx.extras["macro_expansion_depth"] = 1
     try:
-        for step in macro.steps:
+        from .workflows import _summary
+        for index, step in enumerate(macro.steps):
             if step.tool not in REGISTRY:
                 return {"error": "macro_unavailable", "detail": f"{step.tool} is not registered"}
             # This is the audited bundle-expansion boundary: callers see only
@@ -778,16 +845,57 @@ def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, 
             # item_ids needs a list for the existing staging API.
             if step.tool == "staging_decide" and isinstance(args.get("item_ids"), str):
                 args["item_ids"] = [args["item_ids"]]
+            prior = recorded.get(index) or {}
+            if prior.get("state") == "done":
+                steps.append({"tool": step.tool, "arguments": args, "result": prior["result"],
+                              "reused": True})
+                continue
+            if prior.get("state") == "dispatched" and journal is not None:
+                spec = REGISTRY.get(step.tool)
+                if unknown_choice == "applied":
+                    result = {"outcome_unknown": True, "recorded_as": "applied", "by": "person"}
+                    journal.append({"type": "done", "index": index, "tool": step.tool,
+                                    "result": result})
+                    steps.append({"tool": step.tool, "arguments": args, "result": result})
+                    continue
+                if not (spec.effect == "read" or spec.idempotent) and unknown_choice != "retry":
+                    return {"macro": plan, "steps": steps, "status": "outcome_unknown",
+                            "resumable": True,
+                            "next_action": {
+                                "tool": step.tool, "arguments": args,
+                                "completed_steps": len(steps),
+                                "options": list(UNKNOWN_STEP_CHOICES),
+                                "detail": "This step was sent but its result was never "
+                                          "recorded, so it may or may not have taken effect. A "
+                                          "person checks, then runs the macro again with the "
+                                          "same checkpoint_id and unknown_step 'retry' (send "
+                                          "it again) or 'applied' (record it as done)."}}
+            if journal is not None:
+                journal.append({"type": "dispatch", "index": index, "tool": step.tool,
+                                "arguments": args})
             result = REGISTRY.call(step.tool, args, ctx)
             steps.append({"tool": step.tool, "arguments": args, "result": result})
             if "error" in result or "refused" in result or result.get("needs_person"):
+                if journal is not None:
+                    journal.append({"type": "stopped", "index": index, "tool": step.tool})
                 return {"macro": plan, "steps": steps, "status": "paused", "resumable": True,
                         "next_action": {"tool": step.tool, "arguments": args,
                                         "completed_steps": len(steps) - 1,
-                                        "detail": "Resolve the refusal or question before retrying this step. "
-                                                  "Restarting the whole macro reruns completed steps."},
+                                        "detail": "Resolve the refusal or question, then run "
+                                                  "the macro again with the same "
+                                                  "checkpoint_id: completed steps are reused, "
+                                                  "not repeated."
+                                                  if journal is not None else
+                                                  "Resolve the refusal or question before "
+                                                  "retrying this step. This macro only reads, "
+                                                  "so running it again repeats only reads."},
                         **({"checkpoint": result["checkpoint"]}
                            if isinstance(result.get("checkpoint"), dict) else {})}
+            if journal is not None:
+                journal.append({"type": "done", "index": index, "tool": step.tool,
+                                "result": _summary(result)})
+        if journal is not None:
+            journal.append({"type": "completed"})
         return {"macro": plan, "steps": steps, "status": "completed"}
     finally:
         if previous_depth:

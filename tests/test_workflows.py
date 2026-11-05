@@ -457,3 +457,89 @@ def test_a_closure_refuses_a_cycle_and_an_unknown_name(vault):
     gap = Fixed(wf("aa", "zz"))
     with pytest.raises(workflows.DefinitionError, match="no workflow or pipeline named 'zz'"):
         workflows.closure(gap.get("aa"), gap)
+
+
+# -- MF-018: a step that stopped part way is never repeated blindly ---------------
+
+WRITES = """
+workflow: write-then-list
+purpose: write one note, then list staging
+steps:
+  - id: note
+    action: write_note
+    args: {folder: Notes, name: Run note, body: written once}
+  - id: after
+    action: staging_list
+    args: {kind: source}
+"""
+
+
+class Crash(Exception):
+    """The app stopping after an action took effect, before its result was logged."""
+
+
+def crash_after(monkeypatch, tool):
+    """Run `tool` for real once, then stop the run; count every call to it."""
+    calls = []
+    original = REGISTRY.call
+
+    def call(name, arguments, ctx):
+        result = original(name, arguments, ctx)
+        if name == tool:
+            calls.append(dict(arguments or {}))
+            if len(calls) == 1:
+                raise Crash("stopped part way")
+        return result
+
+    monkeypatch.setattr(REGISTRY, "call", call)
+    return calls
+
+
+def a_run(vault, name, ctx, **arguments):
+    out = REGISTRY.call("run_workflow", {"name": name, **arguments}, ctx)
+    assert out["error"] == "failed" and "stopped part way" in out["detail"], out
+    return [p.stem for p in (vault.librarian / "runs").glob("*.jsonl")][0]
+
+
+def test_a_write_that_stopped_part_way_waits_for_a_person(vault, monkeypatch):
+    saved(vault, WRITES)
+    calls = crash_after(monkeypatch, "write_note")
+    run_id = a_run(vault, "write-then-list", agent(vault))
+    assert (vault.root / "Notes" / "Run note.md").is_file()      # it took effect
+    assert [e["type"] for e in workflows.RunStore(vault).events(run_id)][-1] == "dispatch"
+
+    held = REGISTRY.call("run_resume", {"run_id": run_id}, agent(vault))
+    assert held["status"] == "paused" and held["reason"] == "outcome_unknown", held
+    assert held["at"] == "note" and held["options"] == ["retry", "applied"]
+    assert len(calls) == 1                                       # not sent again
+
+    done = REGISTRY.call("run_resume", {"run_id": run_id, "choices": {"note": "applied"}},
+                         person(vault))
+    assert done["status"] == "finished", done
+    assert len(calls) == 1 and done["steps"]["note"]["recorded_as"] == "applied"
+
+
+def test_a_person_may_send_an_interrupted_write_again(vault, monkeypatch):
+    saved(vault, WRITES)
+    calls = crash_after(monkeypatch, "write_note")
+    run_id = a_run(vault, "write-then-list", agent(vault))
+    (vault.root / "Notes" / "Run note.md").unlink()               # the person checked: no note
+    bad = REGISTRY.call("run_resume", {"run_id": run_id, "choices": {"note": "maybe"}},
+                        person(vault))
+    assert "choose one of ['retry', 'applied']" in bad["detail"]
+
+    done = REGISTRY.call("run_resume", {"run_id": run_id, "choices": {"note": "retry"}},
+                         person(vault))
+    assert done["status"] == "finished", done
+    assert len(calls) == 2 and (vault.root / "Notes" / "Run note.md").is_file()
+
+
+def test_an_interrupted_read_is_simply_run_again(vault, monkeypatch):
+    saved(vault, GOOD)
+    calls = crash_after(monkeypatch, "search")
+    run_id = a_run(vault, "find-and-review", agent(vault), inputs={"query": "x"})
+
+    done = REGISTRY.call("run_resume", {"run_id": run_id}, agent(vault))
+
+    assert done["status"] == "finished", done
+    assert len(calls) == 2                                       # a read: safe to repeat

@@ -120,3 +120,77 @@ def test_macro_nested_in_writer_refuses_before_asking_permission(core):
         caller="invalid-nesting", timeout=2)
     assert result["refused"] == "ORCHESTRATION_CONTEXT"
     assert not core.broker.pending()
+
+
+# -- MF-018: an approved macro run is resumed, never blindly repeated -------------
+
+class Crash(Exception):
+    """The app stopping after a step took effect, before its result was logged."""
+
+
+def approved_two_notes(core):
+    core.set_mode("auto")
+    inputs = {"first": "First note", "second": "Second note"}
+    checkpoint = core.person_call("macro_run", {"macro": "two_notes", "inputs": inputs})["checkpoint"]
+    core._serialized("approve-macro", lambda: core.checkpoints.resolve(checkpoint["id"], "approve"))
+    return {**inputs, "checkpoint_id": checkpoint["id"]}
+
+
+def watch_writes(monkeypatch, *, refuse_second_once=False, crash_first_once=False):
+    writes = []
+    original = REGISTRY.call
+
+    def call(name, arguments, ctx):
+        if name != "write_note":
+            return original(name, arguments, ctx)
+        writes.append(arguments["name"])
+        if refuse_second_once and arguments["name"] == "Second note" and \
+                writes.count("Second note") == 1:
+            return {"error": "refused", "refused": "PERMISSION_DENIED", "detail": "not now"}
+        result = original(name, arguments, ctx)
+        if crash_first_once and writes == ["First note"]:
+            raise Crash("stopped part way")
+        return result
+
+    monkeypatch.setattr(REGISTRY, "call", call)
+    return writes
+
+
+def test_running_an_approved_macro_again_reuses_its_completed_steps(core, monkeypatch):
+    inputs = approved_two_notes(core)
+    writes = watch_writes(monkeypatch, refuse_second_once=True)
+    paused = core.person_call("macro_run", {"macro": "two_notes", "inputs": inputs})
+    assert paused["status"] == "paused" and "reused, not repeated" in \
+        paused["next_action"]["detail"]
+
+    resumed = core.person_call("macro_run", {"macro": "two_notes", "inputs": inputs})
+    assert resumed["status"] == "completed", resumed
+    assert resumed["steps"][0]["reused"] is True
+    assert writes == ["First note", "Second note", "Second note"]   # the first, once
+
+    again = core.person_call("macro_run", {"macro": "two_notes", "inputs": inputs})
+    assert again["status"] == "completed" and again["reused"] is True
+    assert len(writes) == 3                                         # nothing repeated
+
+
+def test_an_interrupted_macro_write_waits_for_a_person(core, monkeypatch):
+    inputs = approved_two_notes(core)
+    writes = watch_writes(monkeypatch, crash_first_once=True)
+    stopped = core.person_call("macro_run", {"macro": "two_notes", "inputs": inputs})
+    assert stopped["error"] == "failed" and "stopped part way" in stopped["detail"]
+    assert (core.vault.root / "Notes" / "First note.md").is_file()
+
+    held = core.person_call("macro_run", {"macro": "two_notes", "inputs": inputs})
+    assert held["status"] == "outcome_unknown" and held["next_action"]["options"] == [
+        "retry", "applied"]
+    assert writes == ["First note"]                                 # not sent again
+    ctx = Context(tier="contribute", vault=core.vault, extras=core._extras())
+    agent = REGISTRY.call("macro_run", {"macro": "two_notes",
+                                        "inputs": {**inputs, "unknown_step": "applied"}}, ctx)
+    assert agent["refused"] == "PERSON_CONFIRMS"
+
+    done = core.person_call("macro_run", {"macro": "two_notes",
+                                          "inputs": {**inputs, "unknown_step": "applied"}})
+    assert done["status"] == "completed", done
+    assert writes == ["First note", "Second note"]
+    assert done["steps"][0]["result"]["recorded_as"] == "applied"

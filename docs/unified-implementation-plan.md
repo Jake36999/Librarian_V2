@@ -5363,3 +5363,55 @@ All 6 fail on the previous `workflows.py`.
 (`reports/2026-11-05-evidence/suite-mf017-py311.json`, a clean clone of
 `1bbbf6c` plus this commit's two files).
 
+### MF-018 workflow and macro steps are never repeated blindly (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-018 (NAT-07) | implemented | this commit | `src/resource_librarian/workflows.py`, `agent_runtime.py`; `docs/macro-runtime.md`; `tests/test_workflows.py`, `tests/test_macro_permissions.py`. |
+
+**Before.**
+- **Workflows:** an action ran before its `done` record was written. If the
+  app stopped in between, the effect was applied but unrecorded, and a resume
+  ran it again.
+- **Macros:** they kept no log. Running a paused write-capable macro again
+  reran its completed writes, as the runtime note said.
+
+**Workflows now.** Each action logs a durable `dispatch` record (fsynced)
+before it runs, then `done` after. On resume:
+- a done step is reused;
+- a step dispatched with no result is run again if it is a read or declared
+  idempotent;
+- otherwise the run pauses as `outcome_unknown`, naming the step and the
+  options. A person decides with `run_resume(choices={key: "retry" |
+  "applied"})`: `applied` records it as done without sending it, and
+  `retry` sends it again. Any other value is refused.
+
+**Macros now.** An approved write-capable run keeps a step journal keyed by
+its approval checkpoint, which is never reused once resolved.
+- Running it again with that checkpoint reuses done steps and retries stopped
+  ones (refusals and questions).
+- A completed run repeats nothing.
+- A step dispatched with no outcome returns `outcome_unknown` until a person
+  passes `unknown_step` `retry` or `applied`. An agent passing it is refused.
+  It is left out of the approved scope, so the approval still matches.
+- Registry, broker, phase and approval checks are unchanged: every sent step
+  goes through `Registry.call`.
+
+**Scope.** This makes changing steps at most once unless a person says
+otherwise, not exactly once (that would need idempotent tools).
+`docs/macro-runtime.md` says so.
+
+**Tests.** 5 new cases, in `test_workflows.py` and `test_macro_permissions.py`:
+- **workflows:** an interrupted write waits for a person and `applied` does
+  not resend it; `retry` sends it again and a bad choice is refused; an
+  interrupted read is simply run again;
+- **macros:** an approved run reuses its completed steps, and a completed run
+  repeats nothing; an interrupted macro write waits for a person, and an
+  agent cannot answer for one.
+
+4 fail on the previous code. The read case passes on both, as it should.
+
+**Verification:** full suite: 2012 passed, 2 skipped, 5 deselected in 619.21s (0:10:19) (exit 0, Python 3.11.3)
+(`reports/2026-11-05-evidence/suite-mf018-py311.json`, a clean clone of
+`306bc4e` plus this commit's files).
+

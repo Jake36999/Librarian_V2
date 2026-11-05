@@ -29,6 +29,13 @@ text of every definition it can reach (its own, each workflow step and each
 route target, recursively, `closure`), each of which must be accepted. It then
 runs only those texts, never whatever a name means now. A resume runs the
 same pinned texts, and refuses if any of them has since changed or gone.
+
+Each action step logs `dispatch` before it runs and `done` after (MF-018).
+A resume reuses a done step's result. A step dispatched with no recorded
+result (the app stopped part way) is run again only if it is a read or
+declared idempotent. A step that changes something is never repeated
+blindly: the run pauses as `outcome_unknown`, and a person checks and
+chooses `retry` or `applied`.
 """
 from __future__ import annotations
 
@@ -56,6 +63,7 @@ REF = re.compile(r"^(inputs|steps|item)(\.[A-Za-z0-9_\-]+)*$")
 CONDITIONS = ("is", "in", "empty")
 MAX_EACH = 200
 ITEM_CHARS = 3000
+UNKNOWN_CHOICES = ("retry", "applied")      # MF-018: a person's call on an unrecorded step
 INPUT_TYPES = {"string": str, "integer": int, "boolean": bool, "list": list, "object": dict,
                "number": (int, float)}
 
@@ -657,6 +665,10 @@ class Runner:
         self.memo: dict[str, Any] = {}           # step key -> logged result, for resume
         # What this run executes: its pinned definitions once it has started.
         self.definitions: Library = library
+        # MF-018: steps dispatched with no recorded result, and a person's
+        # decision about each (retry | applied).
+        self.unknown: dict[str, dict[str, Any]] = {}
+        self.resolutions: dict[str, str] = {}
 
     # -- entry points --------------------------------------------------------
     def start(self, name: str, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -717,12 +729,26 @@ class Runner:
                                   "; ".join(report["errors"]))
         self.definitions = pinned
         self.run_id = run_id
+        dispatched: dict[str, dict[str, Any]] = {}
         for e in events:
             if e["type"] == "done":
                 self.memo[e["key"]] = e["result"]
             if e["type"] == "routed":
                 self.memo[f"route:{e['key']}"] = e["option"]
+            if e["type"] == "dispatch":
+                dispatched[e["key"]] = e
+            if e["type"] == "resolved":
+                self.resolutions[e["key"]] = e["option"]
+        self.unknown = {k: e for k, e in dispatched.items() if k not in self.memo}
         for key, option in (choices or {}).items():
+            if key in self.unknown:
+                if option not in UNKNOWN_CHOICES:
+                    raise DefinitionError(f"{key} was sent but its result was never recorded: "
+                                          f"choose one of {list(UNKNOWN_CHOICES)}")
+                self.resolutions[key] = option
+                self.store.append(run_id, {"type": "resolved", "key": key, "option": option,
+                                           "by": "person"})
+                continue
             self.memo[f"route:{key}"] = option
             self.store.append(run_id, {"type": "routed", "key": key, "option": option,
                                        "reason": "chosen by a person", "by": "person"})
@@ -755,9 +781,9 @@ class Runner:
         except RunPaused as paused:
             self.store.append(self.run_id, {"type": "paused", "step": paused.step,
                                             **paused.detail})
-            return {"run": self.run_id, "status": "paused", "at": paused.step, **paused.detail,
+            return {"run": self.run_id, "status": "paused", "at": paused.step,
                     "next": "configure a routing model and run_resume, or choose the route "
-                            "by hand with run_resume(choices={...})"}
+                            "by hand with run_resume(choices={...})", **paused.detail}
         except RunFailed as failed:
             self.store.append(self.run_id, {"type": "failed", "step": failed.step,
                                             "result": failed.result})
@@ -809,6 +835,29 @@ class Runner:
                 args = resolve(step.get("args") or {}, scope)
             except KeyError as exc:
                 raise RunFailed(key, {"error": "failed", "detail": str(exc)}) from exc
+            spec = REGISTRY.get(step["action"]) if step["action"] in REGISTRY else None
+            if key in self.unknown:
+                choice = self.resolutions.get(key)
+                if choice == "applied":
+                    result = {"outcome_unknown": True, "recorded_as": "applied", "by": "person"}
+                    self._record(key, step["action"], result)
+                    return result
+                safe = spec is not None and (spec.effect == "read" or spec.idempotent)
+                if not safe and choice != "retry":
+                    raise RunPaused(key, {
+                        "reason": "outcome_unknown",
+                        "detail": f"{step['action']} was sent but its result was never "
+                                  f"recorded, so it may or may not have taken effect",
+                        "action": step["action"], "options": list(UNKNOWN_CHOICES),
+                        "next": f"a person checks, then run_resume(choices={{{key!r}: 'retry'}}) "
+                                f"to send it again or {{{key!r}: 'applied'}} to record it as done"})
+                self.unknown.pop(key)
+            # Durable before the effect, so a stop part way is never mistaken
+            # for a step that did not start.
+            self.store.append(self.run_id, {
+                "type": "dispatch", "key": key, "action": step["action"],
+                "effect": spec.effect if spec else "",
+                "idempotent": bool(spec.idempotent) if spec else False})
             result = REGISTRY.call(step["action"], args, self.ctx)
             if "error" in result and step.get("on_error") != "continue":
                 self.store.append(self.run_id, {"type": "step", "key": key,

@@ -1,0 +1,28 @@
+{
+ "command": [
+  "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone",
+ "exit_code": 0,
+ "summary": "2012 passed, 2 skipped, 5 deselected in 619.21s (0:10:19)",
+ "started_utc": "2026-11-05T12:19:20.470950+00:00",
+ "seconds": 620.3,
+ "head": "306bc4e03b2e72f4c9847acd5820180a30ddcf25",
+ "tracked_changes": [
+  " M docs/macro-runtime.md",
+  " M src/resource_librarian/agent_runtime.py",
+  " M src/resource_librarian/workflows.py",
+  " M tests/test_macro_permissions.py",
+  " M tests/test_workflows.py"
+ ],
+ "python": "3.11.3",
+ "executable": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-mf018-py311.log",
+ "log_sha256": "b3ecf9959a889cb9ed674da1c0742a81e6424578315dc62dde537625e1561c2b"
+}

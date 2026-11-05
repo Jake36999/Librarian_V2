@@ -31,6 +31,24 @@ fresh review after this upgrade.
 An error, refusal, or unanswered person decision pauses the macro. Completed
 durable work remains intact. The response identifies the refused step,
 arguments, completed-step count and its conflict checkpoint when present.
-This is manual recovery guidance, not automatic exactly-once macro resume:
-restarting a macro reruns completed steps. A persistent resume cursor and
-automatic retries are not claimed by this change.
+
+**Step journal (MF-018).** An approved write-capable run keeps a durable step
+log, `.librarian/runs/macro-<checkpoint id>.jsonl`. Each step logs `dispatch`
+before it runs, then `done` after it, or `stopped` for a refusal or question.
+Running the macro again with the same `checkpoint_id` continues that run:
+- **A done step** is reused, not repeated.
+- **A stopped step** is tried again.
+- **A completed run** returns its record and repeats nothing.
+- **A step dispatched with no outcome** (the app stopped part way) may or may
+  not have taken effect:
+  - a read or idempotent step is simply run again;
+  - a step that changes something returns `outcome_unknown`. A person then
+    checks and runs the macro again with `unknown_step` set to `retry` or
+    `applied`. An agent cannot give that answer, and it is not part of the
+    approved scope.
+
+Read-only macros keep no log: running one again repeats only reads.
+Workflows and pipelines follow the same rule through `run_resume` choices
+(`workflows.py`). This is at-most-once for changing steps unless a person says
+otherwise, not exactly-once: exactly-once would need each tool to be
+idempotent.
