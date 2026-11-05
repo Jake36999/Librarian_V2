@@ -49,13 +49,29 @@ export class DocPane {
             onclick: () => this.onClose() }, "✕")),
         this.menu),
       this.body);
-    document.addEventListener("click", (e) => {
-      if (!this.menu.hidden && !e.composedPath().includes(this.menu) && !e.composedPath().includes(this.menuButton)) {
-        this.showMenu(false);
-      }
-    });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") this.showMenu(false); });
+    // MF-008: named, so dispose() removes them; they used to outlive a remount.
+    document.addEventListener("click", this.onDocumentClick);
+    document.addEventListener("keydown", this.onDocumentKey);
     this.showPlan();
+  }
+
+  private readonly onDocumentClick = (e: MouseEvent) => {
+    if (!this.menu.hidden && !e.composedPath().includes(this.menu) && !e.composedPath().includes(this.menuButton)) {
+      this.showMenu(false);
+    }
+  };
+
+  /** Escape closes the open menu and is consumed; otherwise it passes by. */
+  private readonly onDocumentKey = (e: KeyboardEvent) => {
+    if (e.key !== "Escape" || this.menu.hidden) return;
+    this.showMenu(false);
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  dispose(): void {
+    document.removeEventListener("click", this.onDocumentClick);
+    document.removeEventListener("keydown", this.onDocumentKey);
   }
 
   get showingPlan(): boolean { return this.current.kind === "plan"; }

@@ -40,6 +40,15 @@ var OWNED_PREFIX = "lib-";
 function own(token2) {
   return token2.startsWith(OWNED_PREFIX) || token2.startsWith("librarian-") ? token2 : OWNED_PREFIX + token2;
 }
+var liveMounts = /* @__PURE__ */ new Set();
+function claimInstance() {
+  let n = 1;
+  while (liveMounts.has(n)) n++;
+  liveMounts.add(n);
+  return { n, id: (base) => n === 1 ? base : `${base}-${n}`, release: () => {
+    liveMounts.delete(n);
+  } };
+}
 function cls(value) {
   return value.split(/\s+/).filter(Boolean).map(own).join(" ");
 }
@@ -307,6 +316,10 @@ var AttachPanel = class {
     });
     this.fileInput.addEventListener("change", () => void this.chosen());
     document.body.append(this.fileInput);
+  }
+  /** MF-008: the hidden picker lives on <body>; a remount must not leave it. */
+  dispose() {
+    this.fileInput.remove();
   }
   /** Called each time the popover opens: start back at the vault root. */
   render() {
@@ -1678,22 +1691,41 @@ function adapterMeta(m) {
   return parts.join(" \xB7 ");
 }
 var Popover = class {
-  constructor(id, label, button) {
+  /** `id` is mount-unique; `kind` is the stable class the stylesheet targets. */
+  constructor(id, label, button, kind = "") {
     this.button = button;
-    this.el = h("div", { class: "lib-popover", id, hidden: true, role: "dialog", "aria-label": label });
+    this.observer = null;
+    this.el = h("div", { class: `lib-popover ${kind}`, id, hidden: true, role: "dialog", "aria-label": label });
     button.setAttribute("aria-haspopup", "true");
     button.setAttribute("aria-expanded", "false");
+    button.setAttribute("aria-controls", id);
+    if (typeof MutationObserver !== "undefined") {
+      this.observer = new MutationObserver(() => {
+        if (this.open && !this.el.contains(document.activeElement)) this.focusFirst();
+      });
+      this.observer.observe(this.el, { childList: true });
+    }
   }
   get open() {
     return !this.el.hidden;
   }
+  focusFirst() {
+    this.el.querySelector("input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])")?.focus();
+  }
   show(on) {
+    const wasOpen = this.open;
+    const focusInside = this.el.contains(document.activeElement);
     this.el.hidden = !on;
     this.button.setAttribute("aria-expanded", String(on));
-    if (on) this.el.querySelector("input, button")?.focus();
+    if (on) this.focusFirst();
+    else if (wasOpen && focusInside) this.button.focus();
+  }
+  dispose() {
+    this.observer?.disconnect();
+    this.observer = null;
   }
 };
-function renderModes(pop, api, mode, queued, pipelines, report, needs = {}) {
+function renderModes(pop, api, mode, queued, pipelines, report, needs = {}, radioName = "librarian-mode") {
   let confirmed = mode;
   const group = h(
     "div",
@@ -1703,7 +1735,7 @@ function renderModes(pop, api, mode, queued, pipelines, report, needs = {}) {
       { class: "opt" },
       h("input", {
         type: "radio",
-        name: "librarian-mode",
+        name: radioName,
         value,
         checked: value === mode,
         onchange: async (event) => {
@@ -1711,7 +1743,7 @@ function renderModes(pop, api, mode, queued, pipelines, report, needs = {}) {
             await api.post("/api/mode", { mode: value });
             confirmed = value;
           } catch (e) {
-            const radios = event.target.closest("[role=radiogroup]")?.querySelectorAll("input[name=librarian-mode]") ?? [];
+            const radios = event.target.closest("[role=radiogroup]")?.querySelectorAll(`input[name="${radioName}"]`) ?? [];
             radios.forEach((radio) => {
               radio.checked = radio.value === confirmed;
             });
@@ -4256,6 +4288,18 @@ var DocPane = class {
     this.recent = [];
     this.current = { kind: "plan" };
     this.browsing = "";
+    this.onDocumentClick = (e) => {
+      if (!this.menu.hidden && !e.composedPath().includes(this.menu) && !e.composedPath().includes(this.menuButton)) {
+        this.showMenu(false);
+      }
+    };
+    /** Escape closes the open menu and is consumed; otherwise it passes by. */
+    this.onDocumentKey = (e) => {
+      if (e.key !== "Escape" || this.menu.hidden) return;
+      this.showMenu(false);
+      e.preventDefault();
+      e.stopPropagation();
+    };
     this.menuButton.onclick = () => this.toggleMenu();
     this.el.append(
       h(
@@ -4279,15 +4323,13 @@ var DocPane = class {
       ),
       this.body
     );
-    document.addEventListener("click", (e) => {
-      if (!this.menu.hidden && !e.composedPath().includes(this.menu) && !e.composedPath().includes(this.menuButton)) {
-        this.showMenu(false);
-      }
-    });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") this.showMenu(false);
-    });
+    document.addEventListener("click", this.onDocumentClick);
+    document.addEventListener("keydown", this.onDocumentKey);
     this.showPlan();
+  }
+  dispose() {
+    document.removeEventListener("click", this.onDocumentClick);
+    document.removeEventListener("keydown", this.onDocumentKey);
   }
   get showingPlan() {
     return this.current.kind === "plan";
@@ -5997,6 +6039,7 @@ function relinkChat(log, oldName, newName, open) {
 }
 var App = class {
   constructor(root, opts) {
+    this.ids = claimInstance();
     this.state = {};
     // Bumped whenever this tab learns newer tiers than a fetch in flight could
     // hold (its own pick, or a `tiers_changed` event): a `/api/state` answer
@@ -6013,7 +6056,8 @@ var App = class {
     this.live = h("span", { class: "live", role: "status", title: "Connection to the core" });
     this.chips = h("div", { class: "chips", "aria-label": "Queued actions" });
     this.input = h("textarea", {
-      id: "lib-msg",
+      id: this.ids.id("lib-msg"),
+      class: "composer-text",
       "aria-label": "Message",
       placeholder: "Ask the librarian. Enter sends, Shift+Enter adds a line."
     });
@@ -6022,6 +6066,9 @@ var App = class {
     // a chat POST is in flight (MF-005)
     this.cancelling = /* @__PURE__ */ new Set();
     // workflow runs with a cancel requested (MF-006)
+    this.savedPaneWidth = 0;
+    // the person's split preference, px (MF-008)
+    this.bodyObserver = null;
     this.stopping = false;
     // Stop was pressed; waiting for the Core's outcome
     this.attachRow = h("div", { class: "attach-row", hidden: true });
@@ -6044,7 +6091,12 @@ var App = class {
     this.paneOpen = true;
     this.stopEvents = null;
     this.onDocumentKey = (e) => {
-      if (e.key === "Escape") [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop].forEach((p) => p.show(false));
+      if (e.key !== "Escape") return;
+      const open = this.popovers().filter((p) => p.open);
+      if (!open.length) return;
+      open.forEach((p) => p.show(false));
+      e.preventDefault();
+      e.stopPropagation();
     };
     this.onDocumentClick = (e) => {
       const path2 = e.composedPath();
@@ -6102,12 +6154,12 @@ var App = class {
       "aria-label": "Settings",
       onclick: () => this.settings.open()
     }, "+");
-    this.modes = new Popover("lib-modes", "Modes", this.modeButton);
-    this.models = new Popover("lib-models", "Model", this.modelButton);
+    this.modes = new Popover(this.ids.id("lib-modes"), "Modes", this.modeButton, "lib-modes");
+    this.models = new Popover(this.ids.id("lib-models"), "Model", this.modelButton, "lib-models");
     const sessionsButton = h("button", { class: "ghost" }, "Sessions \u25BE");
-    this.sessions = new Popover("lib-sessions", "Sessions", sessionsButton);
-    this.libraries = new Popover("lib-libraries", "Libraries", this.libraryButton);
-    this.checkpoints = new Popover("lib-checkpoints", "Checkpoints", this.checkpointButton);
+    this.sessions = new Popover(this.ids.id("lib-sessions"), "Sessions", sessionsButton, "lib-sessions");
+    this.libraries = new Popover(this.ids.id("lib-libraries"), "Libraries", this.libraryButton, "lib-libraries");
+    this.checkpoints = new Popover(this.ids.id("lib-checkpoints"), "Checkpoints", this.checkpointButton, "lib-checkpoints");
     this.libraryButton.onclick = () => {
       this.toggle(this.libraries);
       if (this.libraries.open) void renderLibraries(this.libraries, this.api, this.libraryName());
@@ -6127,7 +6179,7 @@ var App = class {
       title: "Attach a file, or link a note or folder",
       "aria-label": "Attach"
     }, "\u{1F4CE}");
-    this.attachPop = new Popover("lib-attach", "Attach", attachButton);
+    this.attachPop = new Popover(this.ids.id("lib-attach"), "Attach", attachButton, "lib-attach");
     this.attachPanel = new AttachPanel(
       this.attachPop,
       this.api,
@@ -6256,10 +6308,17 @@ var App = class {
     document.addEventListener("keydown", this.onDocumentKey);
     document.addEventListener("click", this.onDocumentClick);
     this.show("chat");
-    const width = recall("pane-w");
-    if (width) this.body.style.setProperty("--pane-w", width);
+    this.savedPaneWidth = parseInt(recall("pane-w"), 10) || 0;
+    this.applyPaneWidth();
+    if (typeof ResizeObserver !== "undefined") {
+      this.bodyObserver = new ResizeObserver(() => this.applyPaneWidth());
+      this.bodyObserver.observe(this.body);
+    }
     const saved = recall("pane");
     this.showPane(saved ? saved === "open" : (root.clientWidth || window.innerWidth) >= 1e3);
+  }
+  popovers() {
+    return [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop];
   }
   // -- the document pane -------------------------------------------------------
   /** A [[link]]: in Obsidian the real note opens; elsewhere it opens beside the chat. */
@@ -6282,17 +6341,28 @@ var App = class {
     this.paneButton.setAttribute("aria-pressed", String(on));
     remember("pane", on ? "open" : "closed");
   }
+  /** Apply the saved split clamped to the current room; returns the width
+   *  applied (0 when none is saved and the stylesheet's default applies). */
+  applyPaneWidth() {
+    if (!this.savedPaneWidth) return 0;
+    const handle = this.body.querySelector(".lib-resizer")?.offsetWidth ?? 0;
+    const room = this.body.clientWidth - handle;
+    const width = room > 0 ? Math.max(300, Math.min(this.savedPaneWidth, room - 360)) : this.savedPaneWidth;
+    this.body.style.setProperty("--pane-w", `${Math.round(width)}px`);
+    return Math.round(width);
+  }
   resize(start2, handle) {
     start2.preventDefault();
     handle.setPointerCapture(start2.pointerId);
     const rect = this.body.getBoundingClientRect();
     const move = (e) => {
-      const width = Math.min(Math.max(rect.right - e.clientX, 300), rect.width - 360);
-      this.body.style.setProperty("--pane-w", `${Math.round(width)}px`);
+      this.savedPaneWidth = Math.round(rect.right - e.clientX);
+      this.applyPaneWidth();
     };
     const up = () => {
       handle.removeEventListener("pointermove", move);
-      remember("pane-w", this.body.style.getPropertyValue("--pane-w"));
+      this.savedPaneWidth = this.applyPaneWidth();
+      remember("pane-w", `${this.savedPaneWidth}px`);
     };
     handle.addEventListener("pointermove", move);
     handle.addEventListener("pointerup", up, { once: true });
@@ -6404,7 +6474,8 @@ var App = class {
       this.state.queued_actions ?? [],
       this.pipelines,
       (msg) => this.warn(msg),
-      this.state.queued_inputs ?? {}
+      this.state.queued_inputs ?? {},
+      this.ids.id("librarian-mode")
     );
     const pending = (this.state.pending_checkpoints ?? []).length;
     this.checkpointButton.textContent = pending ? `Checkpoints (${pending}) \u25BE` : "Checkpoints \u25BE";
@@ -6703,6 +6774,12 @@ var App = class {
   dispose() {
     this.stopEvents?.();
     this.stopEvents = null;
+    this.bodyObserver?.disconnect();
+    this.bodyObserver = null;
+    this.pane.dispose();
+    this.attachPanel.dispose();
+    this.popovers().forEach((p) => p.dispose());
+    this.ids.release();
     document.removeEventListener("keydown", this.onDocumentKey);
     document.removeEventListener("click", this.onDocumentClick);
   }

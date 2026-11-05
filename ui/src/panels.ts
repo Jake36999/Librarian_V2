@@ -68,19 +68,43 @@ function adapterMeta(m: any): string {
 
 export class Popover {
   readonly el: HTMLElement;
-  constructor(id: string, label: string, readonly button: HTMLElement) {
+  private observer: MutationObserver | null = null;
+  /** `id` is mount-unique; `kind` is the stable class the stylesheet targets. */
+  constructor(id: string, label: string, readonly button: HTMLElement, kind = "") {
     // Do not use the generic class `popover`: Obsidian owns that class too and
     // gives it a horizontal flex layout, which crushes this shared UI's model
     // picker into narrow columns inside an Obsidian view.
-    this.el = h("div", { class: "lib-popover", id, hidden: true, role: "dialog", "aria-label": label });
+    this.el = h("div", { class: `lib-popover ${kind}`, id, hidden: true, role: "dialog", "aria-label": label });
     button.setAttribute("aria-haspopup", "true");
     button.setAttribute("aria-expanded", "false");
+    button.setAttribute("aria-controls", id);
+    // MF-008: content usually arrives after the popover opens. When it does,
+    // focus its first usable control - unless focus is already inside.
+    if (typeof MutationObserver !== "undefined") {
+      this.observer = new MutationObserver(() => {
+        if (this.open && !this.el.contains(document.activeElement)) this.focusFirst();
+      });
+      this.observer.observe(this.el, { childList: true });
+    }
   }
   get open(): boolean { return !this.el.hidden; }
+  private focusFirst(): void {
+    (this.el.querySelector("input:not([disabled]), select:not([disabled]), textarea:not([disabled]), "
+      + "button:not([disabled])") as HTMLElement | null)?.focus();
+  }
   show(on: boolean): void {
+    const wasOpen = this.open;
+    const focusInside = this.el.contains(document.activeElement);
     this.el.hidden = !on;
     this.button.setAttribute("aria-expanded", String(on));
-    if (on) (this.el.querySelector("input, button") as HTMLElement | null)?.focus();
+    if (on) this.focusFirst();
+    // Closing hands focus back to the trigger, but only if it was inside:
+    // a click elsewhere keeps the focus it moved to.
+    else if (wasOpen && focusInside) this.button.focus();
+  }
+  dispose(): void {
+    this.observer?.disconnect();
+    this.observer = null;
   }
 }
 
@@ -88,12 +112,13 @@ export class Popover {
 
 export function renderModes(pop: Popover, api: Api, mode: string, queued: string[],
                             pipelines: string[], report: (msg: string) => void,
-                            needs: Record<string, Record<string, { type: string }>> = {}): void {
+                            needs: Record<string, Record<string, { type: string }>> = {},
+                            radioName = "librarian-mode"): void {
   let confirmed = mode;                       // the last mode the Core accepted
   const group = h("div", { role: "radiogroup", "aria-label": "Permission mode" },
     MODES.map(([value, label, help]) => h("label", { class: "opt" },
       h("input", {
-        type: "radio", name: "librarian-mode", value, checked: value === mode,
+        type: "radio", name: radioName, value, checked: value === mode,
         onchange: async (event: Event) => {
           try {
             await api.post("/api/mode", { mode: value });
@@ -101,7 +126,7 @@ export function renderModes(pop: Popover, api: Api, mode: string, queued: string
           } catch (e) {
             // MF-006: a refused change leaves the confirmed mode selected.
             const radios = (event.target as HTMLInputElement).closest("[role=radiogroup]")
-              ?.querySelectorAll<HTMLInputElement>("input[name=librarian-mode]") ?? [];
+              ?.querySelectorAll<HTMLInputElement>(`input[name="${radioName}"]`) ?? [];
             radios.forEach((radio) => { radio.checked = radio.value === confirmed; });
             report(`Mode not changed: ${(e as Error).message}`);
           }

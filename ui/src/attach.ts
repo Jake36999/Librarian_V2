@@ -21,6 +21,9 @@ export class AttachPanel {
     document.body.append(this.fileInput);
   }
 
+  /** MF-008: the hidden picker lives on <body>; a remount must not leave it. */
+  dispose(): void { this.fileInput.remove(); }
+
   /** Called each time the popover opens: start back at the vault root. */
   render(): void {
     this.browsing = "";

@@ -948,6 +948,54 @@ await atRootWidth(0);
 await page.fill("#lib-msg", "");
 step("the layout follows the root's width, not the window's; drafts survive");
 
+// MF-008: a saved split wider than the root's room is clamped (pane >= 300px,
+// chat >= 360px) without overwriting the person's saved preference.
+await page.evaluate(() => {
+  localStorage.setItem("librarian:pane-w", "1200px");
+  localStorage.setItem("librarian:pane", "open");
+});
+await page.reload();
+await page.waitForSelector(".lib-pane");
+const splitAt = async (width) => page.evaluate(async (w) => {
+  const root = document.getElementById("librarian-root");
+  root.style.width = w ? `${w}px` : "";
+  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+  const main = root.querySelector(".lib-main").getBoundingClientRect().width;
+  const pane = root.querySelector(".lib-pane").getBoundingClientRect().width;
+  return { main, pane, saved: localStorage.getItem("librarian:pane-w") };
+}, width);
+const split1100 = await splitAt(1100);
+await expect(split1100.main >= 360 && split1100.pane >= 300 && split1100.saved === "1200px",
+  `a 1200px saved split in an 1100px root keeps the chat usable ${JSON.stringify(split1100)}`);
+const split1000 = await splitAt(1000);
+await expect(split1000.main >= 360 && split1000.pane >= 300,
+  `and in a 1000px root ${JSON.stringify(split1000)}`);
+await splitAt(0);
+await page.evaluate(() => localStorage.removeItem("librarian:pane-w"));
+step("a saved split is clamped to the root's room and the preference is kept");
+
+// MF-008: an overlay focuses its first control once its content arrives, and
+// Escape closes it, is consumed, and hands focus back to its trigger. With
+// nothing open, Escape passes by untouched.
+await page.evaluate(() => {
+  window.__lastEscape = null;
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape") window.__lastEscape = e; }, true);
+});
+await page.click("button.lib-switch");
+await page.waitForFunction(() => {
+  const pop = document.getElementById("lib-libraries");
+  return !!pop && !pop.hidden && pop.contains(document.activeElement) && document.activeElement !== pop;
+});
+await page.keyboard.press("Escape");
+await expect(page.evaluate(() => document.getElementById("lib-libraries").hidden
+  && document.activeElement?.classList.contains("lib-switch")
+  && window.__lastEscape?.defaultPrevented === true),
+  "Escape closes the popover, is consumed, and returns focus to its trigger");
+await page.keyboard.press("Escape");
+await expect(page.evaluate(() => window.__lastEscape?.defaultPrevented === false),
+  "with nothing open, Escape is left to the host");
+step("overlays focus their content, and Escape closes, is consumed and restores focus");
+
 // Phone width: nothing overflows sideways.
 await page.setViewportSize({ width: 390, height: 800 });
 await expect(page.evaluate(() => document.documentElement.scrollWidth <= 391), "no horizontal scroll at phone width");

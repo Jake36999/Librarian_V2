@@ -7,7 +7,7 @@ import { Api, type Event, type Options } from "./api";
 export type { Options } from "./api";
 import { AttachPanel } from "./attach";
 import { Chat, type Session } from "./chat";
-import { $, clear, h, cls, sel } from "./dom";
+import { $, claimInstance, clear, h, cls, sel } from "./dom";
 import { MODES, ModelTile, Popover, PROVIDERS, renderLibraries, renderModes, renderSessions, type Tier } from "./panels";
 import { Settings } from "./settings";
 import { DocPane } from "./pane";
@@ -31,6 +31,7 @@ function relinkChat(log: HTMLElement, oldName: string, newName: string,
 }
 
 class App {
+  private readonly ids = claimInstance();     // mount-unique IDs (MF-008); first so fields can use it
   private api: Api;
   private state: Record<string, any> = {};
   // Bumped whenever this tab learns newer tiers than a fetch in flight could
@@ -65,12 +66,14 @@ class App {
   private live = h("span", { class: "live", role: "status", title: "Connection to the core" });
   private chips = h("div", { class: "chips", "aria-label": "Queued actions" });
   private input = h("textarea", {
-    id: "lib-msg", "aria-label": "Message",
+    id: this.ids.id("lib-msg"), class: "composer-text", "aria-label": "Message",
     placeholder: "Ask the librarian. Enter sends, Shift+Enter adds a line.",
   }) as HTMLTextAreaElement;
   private attachments: { label: string; raw: string }[] = [];
   private sending = false;      // a chat POST is in flight (MF-005)
   private cancelling = new Set<string>();   // workflow runs with a cancel requested (MF-006)
+  private savedPaneWidth = 0;                // the person's split preference, px (MF-008)
+  private bodyObserver: ResizeObserver | null = null;
   private stopping = false;     // Stop was pressed; waiting for the Core's outcome
   private attachRow = h("div", { class: "attach-row", hidden: true });
   private msgBox = h("div", { class: "msg-box" });
@@ -119,12 +122,12 @@ class App {
 
     const plus = h("button", { class: "tb icon", title: "Settings", "aria-label": "Settings",
       onclick: () => this.settings.open() }, "+");
-    this.modes = new Popover("lib-modes", "Modes", this.modeButton);
-    this.models = new Popover("lib-models", "Model", this.modelButton);
+    this.modes = new Popover(this.ids.id("lib-modes"), "Modes", this.modeButton, "lib-modes");
+    this.models = new Popover(this.ids.id("lib-models"), "Model", this.modelButton, "lib-models");
     const sessionsButton = h("button", { class: "ghost" }, "Sessions ▾");
-    this.sessions = new Popover("lib-sessions", "Sessions", sessionsButton);
-    this.libraries = new Popover("lib-libraries", "Libraries", this.libraryButton);
-    this.checkpoints = new Popover("lib-checkpoints", "Checkpoints", this.checkpointButton);
+    this.sessions = new Popover(this.ids.id("lib-sessions"), "Sessions", sessionsButton, "lib-sessions");
+    this.libraries = new Popover(this.ids.id("lib-libraries"), "Libraries", this.libraryButton, "lib-libraries");
+    this.checkpoints = new Popover(this.ids.id("lib-checkpoints"), "Checkpoints", this.checkpointButton, "lib-checkpoints");
     this.libraryButton.onclick = () => {
       this.toggle(this.libraries);
       if (this.libraries.open) void renderLibraries(this.libraries, this.api, this.libraryName());
@@ -134,7 +137,7 @@ class App {
       (tiers) => { this.state.tiers = tiers; this.tiersEpoch++; });
     const attachButton = h("button", { class: "tb icon", title: "Attach a file, or link a note or folder",
       "aria-label": "Attach" }, "📎");
-    this.attachPop = new Popover("lib-attach", "Attach", attachButton);
+    this.attachPop = new Popover(this.ids.id("lib-attach"), "Attach", attachButton, "lib-attach");
     this.attachPanel = new AttachPanel(this.attachPop, this.api, (text) => this.insertIntoComposer(text),
       (file, raw) => this.addAttachment(file.name, raw));
     attachButton.onclick = () => { this.toggle(this.attachPop); if (this.attachPop.open) this.attachPanel.render(); };
@@ -218,8 +221,15 @@ class App {
     document.addEventListener("keydown", this.onDocumentKey);
     document.addEventListener("click", this.onDocumentClick);
     this.show("chat");
-    const width = recall("pane-w");
-    if (width) this.body.style.setProperty("--pane-w", width);
+    // MF-008: the saved split is a preference; what is applied is clamped to
+    // the room this root has now (pane >= 300px, chat >= 360px), and follows
+    // the root as it resizes. The preference itself is kept for wider roots.
+    this.savedPaneWidth = parseInt(recall("pane-w"), 10) || 0;
+    this.applyPaneWidth();
+    if (typeof ResizeObserver !== "undefined") {
+      this.bodyObserver = new ResizeObserver(() => this.applyPaneWidth());
+      this.bodyObserver.observe(this.body);
+    }
     // Open by default where there is room for both; the choice is remembered.
     const saved = recall("pane");
     this.showPane(saved ? saved === "open" : (root.clientWidth || window.innerWidth) >= 1000);
@@ -230,9 +240,18 @@ class App {
   private paneOpen = true;
   private stopEvents: (() => void) | null = null;
   private readonly onDocumentKey = (e: KeyboardEvent) => {
-    if (e.key === "Escape") [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop]
-      .forEach((p) => p.show(false));
+    // MF-008: Escape closes this mount's open popovers and is consumed. With
+    // none open it passes by, so the host and other views keep their keys.
+    if (e.key !== "Escape") return;
+    const open = this.popovers().filter((p) => p.open);
+    if (!open.length) return;
+    open.forEach((p) => p.show(false));
+    e.preventDefault();
+    e.stopPropagation();
   };
+  private popovers(): Popover[] {
+    return [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop];
+  }
   private readonly onDocumentClick = (e: MouseEvent) => {
     // The dispatch path, not `contains`: a click that re-renders the popover
     // detaches its own target, which is still inside.
@@ -264,17 +283,29 @@ class App {
     remember("pane", on ? "open" : "closed");
   }
 
+  /** Apply the saved split clamped to the current room; returns the width
+   *  applied (0 when none is saved and the stylesheet's default applies). */
+  private applyPaneWidth(): number {
+    if (!this.savedPaneWidth) return 0;
+    const handle = this.body.querySelector<HTMLElement>(".lib-resizer")?.offsetWidth ?? 0;
+    const room = this.body.clientWidth - handle;
+    const width = room > 0 ? Math.max(300, Math.min(this.savedPaneWidth, room - 360)) : this.savedPaneWidth;
+    this.body.style.setProperty("--pane-w", `${Math.round(width)}px`);
+    return Math.round(width);
+  }
+
   private resize(start: PointerEvent, handle: HTMLElement): void {
     start.preventDefault();
     handle.setPointerCapture(start.pointerId);
     const rect = this.body.getBoundingClientRect();
     const move = (e: PointerEvent) => {
-      const width = Math.min(Math.max(rect.right - e.clientX, 300), rect.width - 360);
-      this.body.style.setProperty("--pane-w", `${Math.round(width)}px`);
+      this.savedPaneWidth = Math.round(rect.right - e.clientX);
+      this.applyPaneWidth();
     };
     const up = () => {
       handle.removeEventListener("pointermove", move as EventListener);
-      remember("pane-w", this.body.style.getPropertyValue("--pane-w"));
+      this.savedPaneWidth = this.applyPaneWidth();     // a drag saves what it shows
+      remember("pane-w", `${this.savedPaneWidth}px`);
     };
     handle.addEventListener("pointermove", move as EventListener);
     handle.addEventListener("pointerup", up, { once: true });
@@ -396,7 +427,7 @@ class App {
       ? [h("span", { class: "badge" }, "1"), ` ${tier.model} · ${PROVIDERS[tier.provider] ?? tier.provider}`]
       : "Choose models", " ▾");
     renderModes(this.modes, this.api, this.state.mode, this.state.queued_actions ?? [], this.pipelines,
-      (msg) => this.warn(msg), this.state.queued_inputs ?? {});
+      (msg) => this.warn(msg), this.state.queued_inputs ?? {}, this.ids.id("librarian-mode"));
     const pending = ((this.state.pending_checkpoints ?? []) as any[]).length;
     this.checkpointButton.textContent = pending ? `Checkpoints (${pending}) ▾` : "Checkpoints ▾";
     if (this.checkpoints.open) this.renderCheckpoints();
@@ -676,6 +707,13 @@ class App {
   dispose(): void {
     this.stopEvents?.();
     this.stopEvents = null;
+    this.bodyObserver?.disconnect();
+    this.bodyObserver = null;
+    // MF-008: nothing this mount registered outlives it.
+    this.pane.dispose();
+    this.attachPanel.dispose();
+    this.popovers().forEach((p) => p.dispose());
+    this.ids.release();
     document.removeEventListener("keydown", this.onDocumentKey);
     document.removeEventListener("click", this.onDocumentClick);
   }

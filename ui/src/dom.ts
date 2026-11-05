@@ -14,6 +14,21 @@ function own(token: string): string {
   return token.startsWith(OWNED_PREFIX) || token.startsWith("librarian-") ? token : OWNED_PREFIX + token;
 }
 
+// MF-008: per-mount identity for IDs and radio-group names. The first live
+// mount keeps the plain names; a second concurrent mount suffixes them, so a
+// label, radio group or aria reference never crosses into another mount. A
+// disposed mount frees its slot, so a remount gets the plain names back.
+const liveMounts = new Set<number>();
+
+export interface Instance { readonly n: number; id(base: string): string; release(): void }
+
+export function claimInstance(): Instance {
+  let n = 1;
+  while (liveMounts.has(n)) n++;
+  liveMounts.add(n);
+  return { n, id: (base) => (n === 1 ? base : `${base}-${n}`), release: () => { liveMounts.delete(n); } };
+}
+
 /** Namespace a space-separated list of owned class names. */
 export function cls(value: string): string {
   return value.split(/\s+/).filter(Boolean).map(own).join(" ");

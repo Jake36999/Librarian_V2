@@ -4691,3 +4691,63 @@ and no `vw` unit is used.
 - full suite: 1,955 passed, 2 skipped, 5 deselected (exit 0,
   `suite-mf008a-py311.json`).
 
+### MF-008 parts 2-3: clamped split and the minimum overlay lifecycle (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-008 | implemented | this commit, with `c193a6b` | `ui/src/main.ts`, `panels.ts`, `pane.ts`, `attach.ts`, `dom.ts`, `style.css`; two smoke steps; one contract test. |
+
+**The split (part 2).** A saved split width was applied as saved, so a
+1200px preference left the chat a sliver in an 1100px root. The CSS cap was
+72%, which left 28% for the chat.
+- The saved width is now a preference. What is applied is clamped to the
+  room the root has now: pane at least 300px, chat at least 360px, after the
+  resizer's own width.
+- A ResizeObserver on the body re-clamps as the root resizes, and the
+  preference is restored when there is room again.
+- A drag saves the width it shows.
+
+**The overlay lifecycle (part 3).** This is the minimum the session dialogs
+in MF-009 and MF-010 need.
+- **Disposal.** The document pane's `click` and `keydown` listeners were
+  anonymous and outlived `dispose()`, so each Obsidian re-render added
+  another pair. The attach panel's hidden file input stayed on `<body>`. Both
+  are released now. `App.dispose()` also disconnects the split observer and
+  each popover's observer, and frees the mount's ID slot.
+- **Mount-unique IDs.** `claimInstance()` in `dom.ts` gives the first live
+  mount the plain names and suffixes a second concurrent mount, and a
+  disposed mount frees its slot. It now covers the popovers' IDs (with
+  `aria-controls` on their triggers), the composer's ID and the mode
+  radio-group name. The stylesheet targeted `#lib-msg`, `#lib-modes` and
+  `#lib-models`; it now uses classes, which every mount carries.
+- **Focus.** A popover focuses its first usable control once its content
+  arrives, which is often after it opens, unless focus is already inside.
+  Closing returns focus to the trigger, but only if focus was inside, so a
+  click elsewhere keeps the focus it moved to.
+- **Escape.** It closes this mount's open popovers or the pane menu and is
+  consumed (`preventDefault`, `stopPropagation`). With nothing open it passes
+  by, so the host keeps its keys.
+
+**Checks.**
+- Smoke step "a saved split is clamped to the root's room and the preference
+  is kept". A 1200px saved split in 1100px and 1000px roots leaves the chat at
+  least 360px and the pane at least 300px, and the stored preference is still
+  1200px.
+- Smoke step "overlays focus their content, and Escape closes, is consumed and
+  restores focus". The Libraries popover takes focus inside once loaded.
+  Escape closes it, is consumed and returns focus to its button. A second
+  Escape is not consumed.
+- `test_a_remount_leaves_no_listener_picker_or_id_behind` checks the dispose
+  path and the named listeners in source. The page cannot observe a second
+  mount, so that path is contract-tested, not exercised.
+
+**Left for MF-025** (UI-05 ergonomics): roving tabindex and splitter keys,
+touch long-press, and mount-unique IDs for the settings dialog's and views'
+form fields, which still use fixed IDs.
+
+**Verification:**
+- both bundles type-check and build;
+- `npm.cmd --prefix ui run smoke`: 50 steps passed;
+- `tests/test_obsidian_adapter_contract.py`: 10 passed;
+- full suite: 1956 passed, 2 skipped, 5 deselected in 628.68s (0:10:28) (exit 0, Python 3.11.3) (`reports/2026-11-05-evidence/suite-mf008bc-py311.json`).
+

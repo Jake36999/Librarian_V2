@@ -32,7 +32,7 @@ def test_shared_popovers_do_not_collide_with_obsidian_host_css() -> None:
     panels = (ROOT / "ui/src/panels.ts").read_text(encoding="utf-8")
     css = (ROOT / "ui/src/style.css").read_text(encoding="utf-8")
 
-    assert 'class: "lib-popover"' in panels
+    assert 'class: `lib-popover ${kind}`' in panels
     assert 'class: "popover"' not in panels
     assert 'class: "model-grid"' in panels
     assert 'class: "grid"' not in panels
@@ -61,6 +61,25 @@ def test_every_owned_class_is_namespaced_in_both_stylesheets() -> None:
         assert not bare, f"{rel}: {sorted(bare)}"
     dom = (ROOT / "ui/src/dom.ts").read_text(encoding="utf-8")
     assert "el.className = cls(String(value));" in dom
+
+
+def test_a_remount_leaves_no_listener_picker_or_id_behind() -> None:
+    """MF-008: Obsidian re-renders the view by disposing and remounting, so
+    everything a mount registers outside its own DOM is released."""
+    main = (ROOT / "ui/src/main.ts").read_text(encoding="utf-8")
+    pane = (ROOT / "ui/src/pane.ts").read_text(encoding="utf-8")
+    attach = (ROOT / "ui/src/attach.ts").read_text(encoding="utf-8")
+    dispose = main[main.index("  dispose(): void {"):]
+    dispose = dispose[:dispose.index("\n  }")]
+    for call in ("this.pane.dispose()", "this.attachPanel.dispose()", "p.dispose()",
+                 "this.ids.release()", "this.bodyObserver?.disconnect()",
+                 'document.removeEventListener("keydown", this.onDocumentKey)'):
+        assert call in dispose, call
+    assert 'document.removeEventListener("click", this.onDocumentClick)' in pane
+    assert 'document.removeEventListener("keydown", this.onDocumentKey)' in pane
+    assert "document.addEventListener(\"click\", (e)" not in pane          # no anonymous document listener
+    assert "this.fileInput.remove()" in attach
+    assert 'id: this.ids.id("lib-msg")' in main and 'this.ids.id("librarian-mode")' in main
 
 
 def test_width_rules_follow_the_librarian_root_not_the_window() -> None:
