@@ -164,7 +164,8 @@ def test_evidence_collision_is_never_repaired_or_overwritten(core, monkeypatch):
 
 def test_unrelated_human_lease_does_not_block_catalogue(core):
     core.document_leases.heartbeat("Notes/working-note.md", editor="Obsidian", dirty=True)
-    assert _adopt(core)["written"] == 2
+    adopted = _adopt(core)
+    assert adopted["written"] == 2, adopted.get("failed")       # names an interruption's cause
 
 
 @pytest.mark.parametrize("closed", ["index", "writer"])
@@ -183,7 +184,8 @@ def test_catalogue_is_person_tier_and_model_cards_never_qualify_routes(core):
     ctx = _ctx(core)
     ctx.tier = "contribute"
     assert REGISTRY.call("model_catalog_adopt", {"provider": "testprovider"}, ctx)["refused"] == "TIER_REFUSED"
-    assert _adopt(core)["written"] == 2
+    adopted = _adopt(core)
+    assert adopted["written"] == 2, adopted.get("failed")       # names an interruption's cause
     assert (core.qualifications.runs, core.qualifications.qualifications) == before
     assert (path.read_bytes() if path.exists() else None) == previous
 

@@ -61,7 +61,8 @@ def test_batch_uses_core_and_writer_and_keeps_both_generated_links(core, monkeyp
     monkeypatch.setattr(library, "Index", forbidden)
     before = [p.read_bytes() for p in [*_originals(core), second]]
     out = _accept(core)
-    assert out["accepted"] == 2, out
+    # The interruption text names its cause; show it untruncated (MF-004 diagnosis).
+    assert out["accepted"] == 2, [r.get("error") or r.get("detail") for r in out["results"]]
     assert set(sql) == {core.index_service._thread}
     assert [p.read_bytes() for p in [*_originals(core), second]] == before
     assert notes.load(_source(core)).frontmatter["file"].endswith("/paper.pdf")
@@ -89,7 +90,8 @@ def test_batch_preview_reserves_the_same_destinations_as_accept(core):
     assert not _copies(core)
     assert all(_store(core).path(i).read_bytes() == raw for i, raw in state.items())
     out = _accept(core)
-    assert out["accepted"] == 2, out
+    # The interruption text names its cause; show it untruncated (MF-004 diagnosis).
+    assert out["accepted"] == 2, [r.get("error") or r.get("detail") for r in out["results"]]
     assert [notes.load(core.vault.root / r["promotion"]["path"]).frontmatter["file"] for r in out["results"]] == paths
 
 
@@ -291,7 +293,8 @@ def test_missing_origin_does_not_invent_a_session_or_hide_accepted_results(core)
     core.writer.submit(lambda: _store(core).save({**_store(core).load("new-widget"),
                                                "found_for": {"session": "missing-origin"}}))
     out = _accept(core)
-    assert out["accepted"] == 2, out
+    # The interruption text names its cause; show it untruncated (MF-004 diagnosis).
+    assert out["accepted"] == 2, [r.get("error") or r.get("detail") for r in out["results"]]
     assert out["results"][0]["handoff_warning"]["error"] == "SESSION_REQUIRED"
     assert not SessionStore(core.vault).path("missing-origin").exists()
     assert notes.load(_source(core)).frontmatter["session"] == "missing-origin"

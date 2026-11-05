@@ -4806,3 +4806,33 @@ all 51 steps. It is recorded here in case it recurs.
 - `npm.cmd --prefix ui run smoke`: 51 steps passed;
 - full suite: 1957 passed, 2 skipped, 5 deselected in 625.94s (0:10:25) (exit 0, Python 3.11.3) (`reports/2026-11-05-evidence/suite-mf009-py311.json`).
 
+### Intermittent acceptance interruptions on hosted CI (2026-11-05, open)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| (unassigned) | open, diagnostics only | this commit | `tests/test_core_source_batch.py`, `tests/test_core_catalog.py`, `tests/test_core_source_promotion.py`. |
+
+**Observed.** Hosted run 41944402182 (head `a756166`) failed 2 tests on
+Python 3.12; 3.11 and 3.13 passed:
+- `test_core_source_batch.py::test_batch_uses_core_and_writer_and_keeps_both_generated_links`
+  accepted 1 of 2 items, and the other was refused as interrupted ("inspect
+  completed work, then explicitly finish or reconcile it");
+- `test_core_catalog.py::test_catalogue_is_person_tier_and_model_cards_never_qualify_routes`
+  wrote 1 of 2 notes.
+
+This is the family of `test_unrelated_note_stays_editable_during_acceptance`:
+an acceptance stops partway, after durable writes. It has now been seen on
+hosted 3.12 and 3.13 and once in a local full 3.13 run. On local 3.12.13, six
+repetitions of both files passed, with a probe that logs every interruption's
+root cause.
+
+**Why the cause is still unknown.** `PromotionInterruptedError` now names its
+original cause (the MF-004 second pass), but pytest truncated the assertion
+message just before that name.
+
+**Change.** The acceptance assertions in the three files now print each item's
+error text instead of the whole truncated result, so the next hosted failure
+names its cause. No product code changed. The three files passed on 3.11
+(91 passed); the full suite was not rerun for this test-message-only change.
+The next step is to diagnose from that cause and give the fix its own packet.
+

@@ -88,7 +88,7 @@ def test_source_accept_owns_sql_and_files_and_copies_without_relocating_inputs(c
     monkeypatch.setattr(library, "Index", forbidden)
     originals = [p.read_bytes() for p in _originals(core)]
     out = _accept(core)
-    assert out["accepted"] == 1, out
+    assert out["accepted"] == 1, [r.get("error") or r.get("detail") for r in out["results"]]
     assert files and set(sql) == {core.index_service._thread}
     assert [p.read_bytes() for p in _originals(core)] == originals
     note = notes.load(_source(core))
@@ -248,7 +248,7 @@ def test_existing_attachment_destination_is_not_replaced(core):
     dest.parent.mkdir(parents=True)
     dest.write_bytes(b"Another source's attachment")
     out = _accept(core)
-    assert out["accepted"] == 1, out
+    assert out["accepted"] == 1, [r.get("error") or r.get("detail") for r in out["results"]]
     assert dest.read_bytes() == b"Another source's attachment"
     assert notes.load(_source(core)).frontmatter["file"].endswith("paper (2).pdf")
 
@@ -265,7 +265,7 @@ def test_human_target_lease_blocks_before_any_copy(core, target):
 def test_unrelated_note_stays_editable_during_acceptance(core):
     core.document_leases.heartbeat("Project/docs/working.md", editor="Obsidian", dirty=True)
     out = _accept(core)
-    assert out["accepted"] == 1, out
+    assert out["accepted"] == 1, [r.get("error") or r.get("detail") for r in out["results"]]
 
 
 @pytest.mark.parametrize("rel", [".librarian/config.toml", ".git/config", "../outside.pdf"])
