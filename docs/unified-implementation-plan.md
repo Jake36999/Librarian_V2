@@ -4751,3 +4751,58 @@ form fields, which still use fixed IDs.
 - `tests/test_obsidian_adapter_contract.py`: 10 passed;
 - full suite: 1956 passed, 2 skipped, 5 deselected in 628.68s (0:10:28) (exit 0, Python 3.11.3) (`reports/2026-11-05-evidence/suite-mf008bc-py311.json`).
 
+### MF-009, legacy and stale audit histories (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-009 | implemented | this commit | `ui/src/chat.ts`, `ui/src/panels.ts`, `ui/src/main.ts`, `src/resource_librarian/session.py`; one smoke step; one real-fixture test. |
+
+**The defects (G11, G12).**
+- The legacy banner read `view.invalid ?? view.legacy`. The Core always sends
+  `invalid`, as `""` when the history is sound, so a legacy history never
+  showed its banner.
+- An empty history returned before reaching the banner.
+- The Sessions list could not tell a read-only history from a live one.
+- Edits recorded in `session.audit.external_edits` were not shown.
+
+**Change.**
+- **The banner.** The inspector reads whichever of `invalid` and `legacy` is
+  non-empty. A halted history shows its read-only banner whether or not it
+  records requirements. An empty one adds "This history records no
+  requirements."
+- **No actions, a separate thread.** A halted history offers no review actions.
+  The banner offers "Start a new thread", which opens a fresh conversation
+  through the existing reset and leaves the history as it is.
+- **Changed files.** "Files changed after earlier checks" lists each recorded
+  edit's path, source, deletion and epoch. It says every edit advanced the
+  epoch and staled every earlier check, "not only those that read the changed
+  file". It does not pair paths with predicates.
+- **The Sessions list.** Each row from `SessionStore.list()` now carries
+  `audit_history` (`legacy` or `invalid`) when its audit history is halted.
+  The popover labels such a row "read-only … audit history", so opening it
+  reads as viewing, not resuming.
+
+**Checks.**
+- `test_a_legacy_history_is_named_read_only_in_listings_and_the_inspector` in
+  `tests/test_closure_lifecycle.py` builds a real audited session and rewrites
+  its log into the pre-cutover format. The projection then has `invalid == ""`
+  beside a non-empty `legacy` and `actionable: false`. The listing row says
+  `audit_history: legacy`, and other rows carry no such field.
+- Smoke step "legacy audit histories are read-only and say so; changed files
+  are listed without invented causes". It feeds the UI that same payload shape.
+  - **Empty history:** the banner shows, with "no requirements".
+  - **Non-empty history:** the requirement stays visible, with no review
+    actions.
+  - **Both:** the changed file is listed with the epoch caveat, and the new
+    thread is offered.
+  - **Sessions:** the popover labels the row.
+
+**Observed once, not reproduced.** The earlier audited-inspector smoke step
+timed out once waiting for `R1.p2` after "Request evidence". The rerun passed
+all 51 steps. It is recorded here in case it recurs.
+
+**Verification:**
+- both bundles type-check and build;
+- `npm.cmd --prefix ui run smoke`: 51 steps passed;
+- full suite: 1957 passed, 2 skipped, 5 deselected in 625.94s (0:10:25) (exit 0, Python 3.11.3) (`reports/2026-11-05-evidence/suite-mf009-py311.json`).
+

@@ -1362,7 +1362,11 @@ class SessionStore:
             s = self.load(path.stem)
             out.append({"id": s.id, "purpose": s.purpose, "project": s.project,
                         "question": s.question, "status": s.status, "phase": s.phase,
-                        "opened_at": s.opened_at})
+                        "opened_at": s.opened_at,
+                        # MF-009: a listing says which audit histories are
+                        # read-only, so opening one is not mistaken for resuming it.
+                        **({"audit_history": "invalid" if s.audit.invalid else "legacy"}
+                           if s.audit.halted else {})})
         return out
 
 

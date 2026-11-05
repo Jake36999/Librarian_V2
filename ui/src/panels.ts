@@ -630,7 +630,10 @@ export async function renderSessions(pop: Popover, api: Api, attach: (id: string
       rows.length ? rows.map((s) => h("button", {
         class: "menuitem", onclick: () => { pop.show(false); attach(s.id); },
       }, `${s.project || s.question || s.purpose}`,
-        h("small", {}, `${s.purpose} · ${s.status} · ${s.phase} · ${when(s.opened_at)}`)))
+        h("small", {}, `${s.purpose} · ${s.status} · ${s.phase} · ${when(s.opened_at)}`),
+        // MF-009: opening a halted audit history views it; it does not resume it.
+        s.audit_history ? h("small", { class: "warn-text" },
+          ` · read-only ${s.audit_history} audit history`) : null))
         : h("p", { class: "dim" }, "No threads in this library yet."),
       h("small", { class: "dim" }, "Another library's threads are under that library: switch to it from the library menu."));
   } catch (e) {

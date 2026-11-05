@@ -264,3 +264,18 @@ def test_a_stale_result_is_never_cited_after_a_change(lead, evidence, vault):
     lead.ok("reduce_round")
     for reduction in lead.audit().reductions:
         assert not set(reduction["results"]) & old
+
+
+def test_a_legacy_history_is_named_read_only_in_listings_and_the_inspector(lead, evidence, vault):
+    """MF-009: the projection the UI reads, from a real session log. The
+    inspector always carries `invalid` ('' when sound), so the UI must read
+    `legacy` past an empty `invalid`; the listing names the history read-only."""
+    to_audit(lead, evidence)
+    lead.ok("reduce_round")
+    rewrite(vault, lead.ctx.session, without_contract)
+    store = SessionStore(vault)
+    view = store.load(lead.ctx.session).to_dict(vault)["predicate_inspector"]
+    assert view["invalid"] == "" and view["legacy"] and view["actionable"] is False
+    row = next(r for r in store.list() if r["id"] == lead.ctx.session)
+    assert row["audit_history"] == "legacy"
+    assert all("audit_history" not in r for r in store.list() if r["id"] != lead.ctx.session)

@@ -996,6 +996,56 @@ await expect(page.evaluate(() => window.__lastEscape?.defaultPrevented === false
   "with nothing open, Escape is left to the host");
 step("overlays focus their content, and Escape closes, is consumed and restores focus");
 
+// MF-009: a legacy audit history is read-only and says so, empty or not, even
+// though the Core sends `invalid: ""` beside `legacy`. File edits are listed
+// without claiming which requirement they affected. The payload has the shape
+// tests/test_closure_lifecycle.py reads from a real legacy session log.
+const legacyText = "a verified reduction of 'R1' names no contract: preserved for review, not current evidence";
+const legacyAs = (requirements) => async (route) => {
+  try {
+    const response = await route.fetch();
+    const body = await response.json();
+    const base = body.session ?? { session: "legacy-smoke", purpose: "audited", status: "parked", phase: "frame" };
+    body.session = { ...base, predicate_inspector: { actionable: false, invalid: "", legacy: legacyText,
+      scope: "exact predicates", requirements },
+      audit: { ...(base.audit ?? {}), external_edits: [{ path: "Notes/A.md", fingerprint: "", source: "obsidian", epoch: 2 }] } };
+    await route.fulfill({ response, json: body });
+  } catch { /* the page moved on */ }
+};
+await page.route("**/api/state", legacyAs([]));
+await page.reload();
+await page.evaluate(() => { const pane = document.querySelector(".lib-pane"); if (pane && getComputedStyle(pane).display === "none") document.querySelector("button[aria-label='Show the document pane']")?.click(); });
+await page.waitForSelector(".lib-predicate-inspector >> text=This audit history is legacy and is read-only");
+await expect(page.isVisible(".lib-predicate-inspector >> text=This history records no requirements."),
+  "an empty legacy history still shows its read-only banner");
+await expect(page.isVisible(".lib-predicate-inspector button:has-text('Start a new thread')"),
+  "a halted history offers a separate new thread");
+await expect(page.isVisible(".lib-predicate-inspector .lib-inspector-edits code:has-text('Notes/A.md')"),
+  "the changed file is listed");
+await expect(page.isVisible(".lib-predicate-inspector .lib-inspector-edits >> text=not only those that read the changed file"),
+  "the list does not claim which requirement a change affected");
+await page.unroute("**/api/state");
+await page.route("**/api/state", legacyAs([{ id: "R1", text: "The quoted evidence is present.",
+  closure: "authoritative", revision: 1, status: "stale", artifacts: [], predicates: [] }]));
+await page.reload();
+await page.waitForSelector(".lib-predicate-inspector >> text=This audit history is legacy and is read-only");
+await expect(page.isVisible(".lib-predicate-inspector .lib-requirement-card >> text=The quoted evidence is present."),
+  "a nonempty legacy history keeps its requirements visible");
+await expect(page.locator(".lib-predicate-inspector button:has-text('Request evidence')").count().then((n) => n === 0),
+  "a read-only history offers no review actions");
+await page.unroute("**/api/state");
+await page.route("**/api/tool/list_sessions", (route) => route.fulfill({ status: 200, contentType: "application/json",
+  body: JSON.stringify({ sessions: [{ id: "legacy-smoke", purpose: "audited", status: "parked", phase: "frame",
+    opened_at: "2026-10-28T10:00:00", question: "an older audited thread", audit_history: "legacy" }] }) }));
+await page.reload();
+await page.click(".lib-app header button:has-text('Sessions')");
+await page.waitForSelector("#lib-sessions >> text=read-only legacy audit history");
+await page.keyboard.press("Escape");
+await page.unroute("**/api/tool/list_sessions");
+await page.reload();
+await page.waitForSelector("header nav");
+step("legacy audit histories are read-only and say so; changed files are listed without invented causes");
+
 // Phone width: nothing overflows sideways.
 await page.setViewportSize({ width: 390, height: 800 });
 await expect(page.evaluate(() => document.documentElement.scrollWidth <= 391), "no horizontal scroll at phone width");

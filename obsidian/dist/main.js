@@ -1113,9 +1113,11 @@ var Chat = class {
     const view = session?.predicate_inspector;
     if (!view) return null;
     const requirements = inspectorRequirements(view);
-    if (!requirements.length) return null;
-    const actionable = view.actionable !== false && session.status !== "closed";
-    const halted = String(view.invalid ?? view.legacy ?? "");
+    const invalid = String(view.invalid || "");
+    const halted = invalid || String(view.legacy || "");
+    if (!requirements.length && !halted) return null;
+    const actionable = view.actionable !== false && session.status !== "closed" && !halted;
+    const edits = Array.isArray(session.audit?.external_edits) ? session.audit.external_edits : [];
     return h(
       "section",
       { class: "predicate-inspector", "aria-label": "Requirement predicates" },
@@ -1126,10 +1128,18 @@ var Chat = class {
         "Checks support only the exact predicate shown. Person acceptance is a separate judgment; it is not verification."
       ),
       halted ? h(
-        "p",
-        { class: "warn-text" },
-        `This audit history is ${view.invalid ? "invalid" : "legacy"} and is read-only: ${halted}`
+        "div",
+        { class: "inspector-halted", role: "status" },
+        h(
+          "p",
+          { class: "warn-text" },
+          `This audit history is ${invalid ? "invalid" : "legacy"} and is read-only: ${halted}`
+        ),
+        h("p", { class: "dim" }, "It stays as it is. New audited work starts in a separate thread."),
+        this.hooks.newThread ? h("button", { class: "ghost", onclick: () => this.hooks.newThread?.() }, "Start a new thread") : null
       ) : null,
+      !requirements.length ? h("p", { class: "dim" }, "This history records no requirements.") : null,
+      edits.length ? changedFiles(edits) : null,
       requirements.map((requirement) => {
         const rid = String(requirement.id ?? requirement.requirement_id ?? "Requirement");
         const closure = String(requirement.closure ?? "");
@@ -1562,6 +1572,20 @@ function predicateRows(value, requirementId) {
 }
 function safeClass(value) {
   return value.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-|-$/g, "") || "unknown";
+}
+function changedFiles(edits) {
+  return h(
+    "div",
+    { class: "inspector-edits" },
+    h("h4", {}, "Files changed after earlier checks"),
+    h("p", { class: "dim" }, "Each change advanced the audit epoch, so every requirement checked before it is stale, not only those that read the changed file."),
+    h("ul", {}, edits.map((edit) => h(
+      "li",
+      {},
+      h("code", {}, String(edit.path ?? "")),
+      ` \xB7 ${String(edit.source ?? "edited")}${edit.fingerprint === "" ? " \xB7 deleted" : ""}${edit.epoch !== void 0 ? ` \xB7 epoch ${String(edit.epoch)}` : ""}`
+    )))
+  );
 }
 function statusLabel(value) {
   const labels = {
@@ -2324,7 +2348,13 @@ async function renderSessions(pop, api, attach, reset, library = "this library",
           }
         },
         `${s.project || s.question || s.purpose}`,
-        h("small", {}, `${s.purpose} \xB7 ${s.status} \xB7 ${s.phase} \xB7 ${when(s.opened_at)}`)
+        h("small", {}, `${s.purpose} \xB7 ${s.status} \xB7 ${s.phase} \xB7 ${when(s.opened_at)}`),
+        // MF-009: opening a halted audit history views it; it does not resume it.
+        s.audit_history ? h(
+          "small",
+          { class: "warn-text" },
+          ` \xB7 read-only ${s.audit_history} audit history`
+        ) : null
       )) : h("p", { class: "dim" }, "No threads in this library yet."),
       h("small", { class: "dim" }, "Another library's threads are under that library: switch to it from the library menu.")
     );
@@ -6112,6 +6142,7 @@ var App = class {
       effectOf: (tool) => this.effects.get(tool) ?? "write",
       onSession: (s) => this.setSession(s),
       resend: (text) => void this.sendText(text),
+      newThread: () => void this.reset(),
       continueSession: () => void this.sendText("Continue the current research session from its next step. Read session_status first, complete the open work, and report any information you cannot verify as a gap. Do not claim the session or requested work is complete while session_status still shows open items."),
       openModelPicker: () => {
         this.toggle(this.models);

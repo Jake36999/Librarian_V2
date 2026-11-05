@@ -19,6 +19,8 @@ export interface ChatHooks {
   continueSession(): void;
   /** Opens the existing model picker; it never changes a route on its own. */
   openModelPicker?(): void;
+  /** Starts a fresh conversation; a halted audit history is left as it is. */
+  newThread?(): void;
   /** Staging -> Offerings, opened at one staged draft. */
   openOffering?(id: string): void;
 }
@@ -437,16 +439,28 @@ export class Chat {
     const view = session?.predicate_inspector as Record<string, any> | undefined;
     if (!view) return null;
     const requirements = inspectorRequirements(view);
-    if (!requirements.length) return null;
-    const actionable = view.actionable !== false && session.status !== "closed";
-    const halted = String(view.invalid ?? view.legacy ?? "");
+    // MF-009: the Core always sends `invalid`, as "" when the history is sound,
+    // so read whichever is non-empty. A halted history says so even when it
+    // records no requirements.
+    const invalid = String(view.invalid || "");
+    const halted = invalid || String(view.legacy || "");
+    if (!requirements.length && !halted) return null;
+    const actionable = view.actionable !== false && session.status !== "closed" && !halted;
+    const edits = (Array.isArray(session.audit?.external_edits) ? session.audit.external_edits : []) as any[];
 
     return h("section", { class: "predicate-inspector", "aria-label": "Requirement predicates" },
       h("h3", {}, "Requirements"),
       h("p", { class: "dim inspector-scope" },
         "Checks support only the exact predicate shown. Person acceptance is a separate judgment; it is not verification."),
-      halted ? h("p", { class: "warn-text" },
-        `This audit history is ${view.invalid ? "invalid" : "legacy"} and is read-only: ${halted}`) : null,
+      halted ? h("div", { class: "inspector-halted", role: "status" },
+        h("p", { class: "warn-text" },
+          `This audit history is ${invalid ? "invalid" : "legacy"} and is read-only: ${halted}`),
+        h("p", { class: "dim" }, "It stays as it is. New audited work starts in a separate thread."),
+        this.hooks.newThread
+          ? h("button", { class: "ghost", onclick: () => this.hooks.newThread?.() }, "Start a new thread")
+          : null) : null,
+      !requirements.length ? h("p", { class: "dim" }, "This history records no requirements.") : null,
+      edits.length ? changedFiles(edits) : null,
       requirements.map((requirement) => {
         const rid = String(requirement.id ?? requirement.requirement_id ?? "Requirement");
         const closure = String(requirement.closure ?? "");
@@ -799,6 +813,20 @@ function predicateRows(value: unknown, requirementId: string): Record<string, an
 
 function safeClass(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-|-$/g, "") || "unknown";
+}
+
+/** MF-009: the file edits the Core recorded (`audit.external_edits`). Every
+ *  edit advances the audit epoch, which stales every earlier check, so the
+ *  list names what changed without claiming which requirement it affected. */
+function changedFiles(edits: any[]): HTMLElement {
+  return h("div", { class: "inspector-edits" },
+    h("h4", {}, "Files changed after earlier checks"),
+    h("p", { class: "dim" }, "Each change advanced the audit epoch, so every requirement checked before it is"
+      + " stale, not only those that read the changed file."),
+    h("ul", {}, edits.map((edit) => h("li", {},
+      h("code", {}, String(edit.path ?? "")),
+      ` · ${String(edit.source ?? "edited")}${edit.fingerprint === "" ? " · deleted" : ""}`
+        + `${edit.epoch !== undefined ? ` · epoch ${String(edit.epoch)}` : ""}`))));
 }
 
 function statusLabel(value: string): string {

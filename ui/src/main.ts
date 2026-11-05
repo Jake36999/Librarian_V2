@@ -99,6 +99,7 @@ class App {
       effectOf: (tool) => this.effects.get(tool) ?? "write",
       onSession: (s) => this.setSession(s),
       resend: (text) => void this.sendText(text),
+      newThread: () => void this.reset(),
       continueSession: () => void this.sendText("Continue the current research session from its next step. Read session_status first, complete the open work, and report any information you cannot verify as a gap. Do not claim the session or requested work is complete while session_status still shows open items."),
       openModelPicker: () => {
         this.toggle(this.models);
