@@ -1,0 +1,3227 @@
+{
+ "method": "one MiMo-V2.6-Pro reader call per source (scripts/run_check.py); every quote checked against the fetched text, strictly and letters-and-digits leniently",
+ "charged_usd": 0.5129,
+ "quotes": {
+  "total": 241,
+  "found": 239,
+  "strict": 229
+ },
+ "results": [
+  {
+   "source": "comm_efficient.txt",
+   "kind": "local",
+   "claim_id": "c1",
+   "where": [
+    "REVIEW.md:94"
+   ],
+   "claim": "| Communication-efficient multiagent cooperation, `comm_efficient.txt`, pp.1–4 | Goal-oriented, interpretable messages under a communication budget | Use a minimal worker packet and structured result, then retrieve supporting detail on demand. The experiment is robot navigation; it does not validate LLM software-agent performance or a fixed packet size. |",
+   "verdict": "supported",
+   "location": "Abstract (PDF page 1); Section II-B (PDF page 4)",
+   "note": "The source explicitly proposes goal-oriented, human-interpretable feature messages selected under a bandwidth budget, and evaluates them in multi-robot navigation, matching the attributed content.",
+   "quotes": [
+    {
+     "quote": "we propose a goal-oriented human-interpretable feature communication protocol, enabling robots to transmit only the most semantically important features",
+     "strict": false,
+     "found": false
+    },
+    {
+     "quote": "The size of the message must satisfy the bandwidth constraints,",
+     "strict": false,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152007-346f384b"
+  },
+  {
+   "source": "https://arxiv.org/abs/2307.03172",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "REVIEW.md:108"
+   ],
+   "claim": "- **Lost in the Middle** demonstrates position-sensitive retrieval/use of evidence in long contexts. Proposed transfer: measure constraint survival with relevant evidence at the beginning, middle and end, and vary distractors. Its tested models do not establish how current qualified Librarian routes behave. [Paper](https://arxiv.org/abs/2307.03172).",
+   "verdict": "supported",
+   "location": "Abstract",
+   "note": "The abstract attributes position-sensitive evidence use to multi-document QA and key-value retrieval, with best performance at context beginning or end and degradation in the middle. The proposed transfer and Librarian-route caveat are design inferences, not judged.",
+   "quotes": [
+    {
+     "quote": "We find that performance can degrade significantly when changing the position of relevant information, indicating that current language models do not robustly make use of information in long input contexts.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "performance is often highest when relevant information occurs at the beginning or end of the input context, and significantly degrades when models must access relevant information in the middle of long contexts",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "[2307.03172] Lost in the Middle: How Language Models Use Long Contexts",
+   "run_id": "20261105T152007-6489bbea"
+  },
+  {
+   "source": "https://arxiv.org/abs/2404.06654v3",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "REQUIREMENTS-RESEARCH.md:30"
+   ],
+   "claim": "| S8 — [RULER, v3 abstract](https://arxiv.org/abs/2404.06654v3) | Adds multi-needle, tracing and aggregation tasks beyond a single needle, demonstrating that advertised context length and useful context are distinct in tested models. | Abstract-level screening in this pass; synthetic tasks and older models. Require route-specific context evaluation, not any historical model's context threshold. |",
+   "verdict": "supported",
+   "location": "Abstract",
+   "note": "Abstract states multi-needle variations plus new multi-hop tracing and aggregation categories, and shows claimed context sizes (32K+) diverge from maintained performance in the 17 tested models.",
+   "quotes": [
+    {
+     "quote": "RULER expands upon the vanilla NIAH test to encompass variations with diverse types and quantities of needles.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "While these models all claim context sizes of 32K tokens or greater, only half of them can maintain satisfactory performance at the length of 32K.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "[2404.06654v3] RULER: What's the Real Context Size of Your Long-Context Language Models?",
+   "run_id": "20261105T152007-b835a558"
+  },
+  {
+   "source": "https://arxiv.org/html/2404.16130v2",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/04-THEORY-OF-EVOLVING-KNOWLEDGE.md:102"
+   ],
+   "claim": "Retrieval ranking also serves a limited purpose. Lexical, vector and graph methods help locate candidate material. Their scores should not decide truth, permission or applicability. Those checks belong around retrieval and use. Graph-based summaries may help broad synthesis, while precise lookup may favour direct source retrieval; published GraphRAG results concern particular question types rather than universal superiority. [GraphRAG](https://arxiv.org/html/2404.16130v2).",
+   "verdict": "supported",
+   "location": "Abstract; Section 1 Introduction",
+   "note": "The source scopes gains to global sensemaking questions and ~1M-token datasets, and says vector RAG suits localized queries; this matches the claim that results are not universal superiority.",
+   "quotes": [
+    {
+     "quote": "For a class of global sensemaking questions over datasets in the 1 million token range, we show that GraphRAG leads to substantial improvements over a conventional RAG baseline for both the comprehensiveness and diversity of generated answers.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "This conventional approach, which we collectively call vector RAG, works well for queries that can be answered with information localized within a small set of records.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "From Local to Global: A GraphRAG Approach to Query-Focused Summarization",
+   "run_id": "20261105T152007-6e0b5153"
+  },
+  {
+   "source": "https://arxiv.org/html/2404.16130v2",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:106"
+   ],
+   "claim": "GraphRAG's evidence is strongest for corpus-wide sensemaking; its reported comparisons favor global methods for comprehensiveness/diversity, while vector retrieval is more direct. That does not establish a general advantage for exact lookup, temporal corrections or access control. [GraphRAG v2, §5](https://arxiv.org/html/2404.16130v2).",
+   "verdict": "supported",
+   "location": "Section 5.1 Experiment 1 (Results); Section 6.1 Limitations",
+   "note": "Reported win rates favor global methods on comprehensiveness/diversity while vector RAG wins directness; the paper limits evaluation to sensemaking questions over two ~1M-token corpora, so no broader advantage is established.",
+   "quotes": [
+    {
+     "quote": "global approaches significantly outperformed conventional vector RAG (SS) in both comprehensiveness and diversity criteria across datasets",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Our use of directness as a validity test confirmed that vector RAG produces the most direct responses across all comparisons.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "From Local to Global: A GraphRAG Approach to Query-Focused Summarization",
+   "run_id": "20261105T152007-6e0b5153"
+  },
+  {
+   "source": "https://arxiv.org/html/2409.07429v1",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/03-RESEARCH-OBJECTIVES.md:55"
+   ],
+   "claim": "**Explore:** current workflow and claim-check tools first; artifact manifests, environment capture, reproducible workflow engines and parameterized skill libraries. [Agent Workflow Memory](https://arxiv.org/html/2409.07429v1) motivates procedure abstraction, but its web-task evidence does not establish research reproducibility.",
+   "verdict": "supported",
+   "location": "Abstract",
+   "note": "AWM is motivated as learning reusable task workflows, i.e., procedure abstraction, and all evidence is web navigation; the source makes no research-reproducibility claims.",
+   "quotes": [
+    {
+     "quote": "a method for inducing commonly reused routines, i.e., workflows",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "We experiment on two major web navigation benchmarks — Mind2Web and WebArena",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Agent Workflow Memory",
+   "run_id": "20261105T152014-b5a1406b"
+  },
+  {
+   "source": "https://arxiv.org/html/2409.07429v1",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:91"
+   ],
+   "claim": "| **Workflow induction:** AWM abstracts reusable routines from completed experiences. [AWM v1, §2, §§3–5](https://arxiv.org/html/2409.07429v1) | Extract a candidate parameterized recipe from several application episodes; compile eligible parts into the existing closed workflow language and validate on held-out tasks. | Web-navigation results do not establish general research replication; descriptive workflows and executable actions need separate qualification. |",
+   "verdict": "supported",
+   "location": "§1 Introduction and §2.3 Inducing and Using Workflows",
+   "note": "Induction is from past experiences/trajectories and abstracts example-specific values; the recipe-compilation and held-out-validation steps are the reviewer's design inference, not attributed content.",
+   "quotes": [
+    {
+     "quote": "AWM induces workflows from agent trajectories by extracting reusable routines",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "we enhance workflow generality by abstracting out example-specific contexts",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Agent Workflow Memory",
+   "run_id": "20261105T152014-b5a1406b"
+  },
+  {
+   "source": "https://arxiv.org/html/2410.10813v2",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "REQUIREMENTS-RESEARCH.md:23"
+   ],
+   "claim": "| S1 — [LongMemEval, v2](https://arxiv.org/html/2410.10813v2), §§4–5 | Separates memory values, retrieval keys, queries and reading. Summary/fact-only values lose information in most tested settings; temporal retrieval and structured reading address different problems. | A conversational benchmark, not a task-execution guarantee. Keep resolvable original episodes; test indexing and answer use separately. |",
+   "verdict": "supported",
+   "location": "Sections 4.2 and 5.2",
+   "note": "The four control points are value, key, query and reading strategy; time-aware query expansion targets temporal retrieval (Section 5.4) while JSON/CoN targets reading (Section 5.5).",
+   "quotes": [
+    {
+     "quote": "We identify four crucial control points for long-term memory of chat assistants, as illustrated in Figure 4.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "replacing sessions or rounds with extracted summaries or facts negatively impacts QA performance due to information loss.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "LongMemEval: Benchmarking Chat Assist-ants on Long-Term Interactive Memory",
+   "run_id": "20261105T152015-2e63c3ce"
+  },
+  {
+   "source": "https://arxiv.org/html/2410.10813v2",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "REVIEW.md:107"
+   ],
+   "claim": "- **LongMemEval** evaluates recall, cross-session reasoning, temporal reasoning, updates and abstention. Its experiments distinguish storing original interaction rounds from compressing everything into isolated facts: compression can lose information, while expanded retrieval keys can still help. Proposed transfer: retain original episodes as values and test enriched keys as a derived index, alongside temporal filters. These results concern its benchmark and models, not a guaranteed Librarian improvement. [Paper, §§3–5](https://arxiv.org/html/2410.10813v2).",
+   "verdict": "supported",
+   "location": "Sections 3.2, 5.2 and 5.3",
+   "note": "The paper's 'information extraction' is the recall ability; fact compression loses information except for multi-session reasoning, while fact-augmented key expansion improves recall and QA.",
+   "quotes": [
+    {
+     "quote": "LongMemEval consists of 500 manually created questions to test five core memory abilities: information extraction, multi-session reasoning, temporal reasoning, knowledge updates, and abstention.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "the compressed information is concatenated with the original value to form the key during indexing",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "LongMemEval: Benchmarking Chat Assist-ants on Long-Term Interactive Memory",
+   "run_id": "20261105T152015-2e63c3ce"
+  },
+  {
+   "source": "https://arxiv.org/html/2501.13956v1",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/03-RESEARCH-OBJECTIVES.md:15"
+   ],
+   "claim": "**Explore:** existing Session/evidence/SQLite projections; event-sourced and temporal stores; provenance schemas; source-addressed artifact systems; temporal graph memory patterns described by [Zep](https://arxiv.org/html/2501.13956v1) and [PROV-DM](https://www.w3.org/TR/prov-dm/). A named paper is a research starting point, not an endorsement of its current implementation.",
+   "verdict": "supported",
+   "location": "Abstract; Section 2 Knowledge Graph Construction",
+   "note": "Zep is presented as a temporal knowledge graph memory architecture with episodic, semantic and community layers. The claim's design-review inferences are not judged here.",
+   "quotes": [
+    {
+     "quote": "a temporally-aware knowledge graph engine that dynamically synthesizes both unstructured conversational data and structured business data while maintaining historical relationships",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "This graph comprises three hierarchical tiers of subgraphs: an episode subgraph, a semantic entity subgraph, and a community subgraph.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Zep: A Temporal Knowledge Graph Architecture for Agent Memory",
+   "run_id": "20261105T152029-4392c299"
+  },
+  {
+   "source": "https://arxiv.org/html/2501.13956v1",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "REQUIREMENTS-RESEARCH.md:32"
+   ],
+   "claim": "| S10 — [Zep, v1](https://arxiv.org/html/2501.13956v1), §§2.1–2.2.3 | Describes source episodes, semantic records and separate system-time/validity-time semantics. Some provenance connections are described but not directly evaluated in the paper. | Vendor-authored architecture; contradiction resolution uses an LLM. Borrow explicit temporal meanings without copying autonomous invalidation or requiring its service. |",
+   "verdict": "supported",
+   "location": "Section 2.1 Episodes; Section 2.2.3 Temporal Extraction and Edge Invalidation",
+   "note": "Episodes, semantic entities/facts, and distinct transaction-time versus validity-time timestamps are described; episode-to-fact provenance links are explicitly left unevaluated. Contradiction resolution via LLM is also stated in §2.2.3.",
+   "quotes": [
+    {
+     "quote": "Zep implements a bi-temporal model, where timeline TT represents the chronological ordering of events, and timeline T′T^{\\prime} represents the transactional order of Zep’s data ingestion.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "While these connections are not directly examined in this paper’s experiments, they will be explored in future work.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Zep: A Temporal Knowledge Graph Architecture for Agent Memory",
+   "run_id": "20261105T152029-4392c299"
+  },
+  {
+   "source": "https://arxiv.org/html/2501.13956v1",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "REVIEW.md:109"
+   ],
+   "claim": "- **Zep** describes episodic/semantic layers and temporal fact invalidation. Proposed transfer: distinguish when something was recorded from when it applies, preserve superseded assertions and support “as of” retrieval. The architecture and vendor-authored benchmark do not establish a need to adopt its service or graph database. [Paper, §§2–3](https://arxiv.org/html/2501.13956v1).",
+   "verdict": "supported",
+   "location": "Section 2 Knowledge Graph Construction; Section 2.2.3 Temporal Extraction and Edge Invalidation",
+   "note": "The paper describes episodic/semantic layers and temporal fact invalidation. The claim's transfer and adoption inferences are not judged.",
+   "quotes": [
+    {
+     "quote": "The dual storage of both raw episodic data and derived semantic entity information mirrors psychological models of human memory.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "When the system identifies temporally overlapping contradictions, it invalidates the affected edges by setting their tinvalidt_{\\text{invalid}} to the tvalidt_{\\text{valid}} of the invalidating edge.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Zep: A Temporal Knowledge Graph Architecture for Agent Memory",
+   "run_id": "20261105T152029-4392c299"
+  },
+  {
+   "source": "https://arxiv.org/html/2502.12110v1",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "REVIEW.md:110"
+   ],
+   "claim": "- **A-Mem** proposes structured memory notes, semantic links and evolving descriptions. Proposed transfer: experiment with suggested links and derived retrieval metadata. Keep originals and versions intact; do not let automatic evolution rewrite user requirements or accepted facts. Its findings do not establish safe autonomous memory rewriting in this product. [Paper, §3](https://arxiv.org/html/2502.12110v1).",
+   "verdict": "supported",
+   "location": "§3 Methodolodgy, 3.1 Note Construction and 3.3 Memory Evolution",
+   "note": "The source proposes structured notes with LLM-generated keywords, tags and contextual descriptions, embedding-based semantic links, and evolution of existing memories' context, keywords and tags. The transfer and safety inferences are not attributed claims and are not judged.",
+   "quotes": [
+    {
+     "quote": "we construct structured memory notes that capture both explicit information and LLM-generated contextual understanding.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "the system determines whether to update its context, keywords, and tags.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "A-Mem: Agentic Memory for LLM Agents",
+   "run_id": "20261105T152038-c6c1e6c2"
+  },
+  {
+   "source": "https://arxiv.org/html/2503.03704v1",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "REQUIREMENTS-RESEARCH.md:29"
+   ],
+   "claim": "| S7 — [MINJA, v1](https://arxiv.org/html/2503.03704v1), §§1,3–4 | Demonstrates malicious memory records induced through ordinary query interaction in its evaluated agents. A model-authored stored response can carry attacker influence into later work. | Threat model and evaluated agents differ from Librarian; published attack rates are not product-risk estimates. Preserve input lineage through summaries and reuse; storage alone must not increase trust. |",
+   "verdict": "supported",
+   "location": "Abstract; Section 3 Threat Model",
+   "note": "MINJA injects malicious records via queries and output observations only, evaluated on RAP, EHRAgent, and a QA agent. The later-work trust implication is a design inference, not attributed to the source.",
+   "quotes": [
+    {
+     "quote": "we propose a novel Memory INJection Attack, MINJA, that enables the injection of malicious records into the memory bank by only interacting with the agent via queries and output observations.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "The attacker behaves like a regular user who cannot directly manipulate any part of the agent beyond what is accessible to them.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "A Practical Memory Injection Attack against LLM Agents",
+   "run_id": "20261105T152039-b9ebf859"
+  },
+  {
+   "source": "https://arxiv.org/html/2503.13657v3",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/03-RESEARCH-OBJECTIVES.md:25"
+   ],
+   "claim": "**Explore:** provider-aware request accounting, structured working-state projections, reference-based expansion, durable result stores, checkpoint/resume systems and typed worker-result envelopes. Examine context engineering guidance alongside failure evidence from [MAST](https://arxiv.org/html/2503.13657v3); distinguish communication defects from reasoning defects.",
+   "verdict": "supported",
+   "location": "Section 4 (The Multi-Agent System Failure Taxonomy)",
+   "note": "MAST supplies failure evidence and separates inter-agent communication/coordination failures (FC2) from base-LLM limitations and from system-design and verification failures; reasoning-action mismatch is its own mode (FM-2.6).",
+   "quotes": [
+    {
+     "quote": "FC2 covers failures in agent coordination.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "We acknowledge that some MAS failures can stem from fundamental limitations of current LLMs, such as hallucination or instruction following.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Why Do Multi-Agent LLM Systems Fail?",
+   "run_id": "20261105T152053-0477d219"
+  },
+  {
+   "source": "https://arxiv.org/html/2503.13657v3",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "REQUIREMENTS-RESEARCH.md:28"
+   ],
+   "claim": "| S6 — [Why Do Multi-Agent LLM Systems Fail? / MAST, v3](https://arxiv.org/html/2503.13657v3), §4 and Appendix A | Separates history loss, missing communication, ignored agent input, incorrect assumptions and verification failures. Similar visible failures can have different causes. | Observational taxonomy and partly automated annotation; not proof that typed messages eliminate failures. Require inspectable handoffs and independent merge checks. |",
+   "verdict": "supported",
+   "location": "Section 4 and Appendix A",
+   "note": "History loss (FM-1.4), information withholding (FM-2.4), ignored input (FM-2.5), wrong assumptions (FM-2.2) and verification failures (FC3) are distinct modes; annotation is partly LLM-as-a-Judge, so the taxonomy is observational, not proof about typed messages.",
+   "quotes": [
+    {
+     "quote": "proceeding with wrong assumptions instead of seeking clarification (FM-2.2, 6.80%)",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "similar surface behaviors (e.g., missing information) can stem from different root causes like withholding (FM-2.4), ignoring input (FM-2.5), or context mismanagement (FM-1.4)",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Why Do Multi-Agent LLM Systems Fail?",
+   "run_id": "20261105T152053-0477d219"
+  },
+  {
+   "source": "https://arxiv.org/html/2504.07952v1",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/03-RESEARCH-OBJECTIVES.md:35"
+   ],
+   "claim": "**Explore:** incremental playbooks, episodic/semantic/procedural memory, bounded curation and failure-conditioned lessons. Starting sources: [ACE](https://arxiv.org/html/2510.04618v1), [ReasoningBank](https://arxiv.org/html/2509.25140v1), [Dynamic Cheatsheet](https://arxiv.org/html/2504.07952v1). Inspect implementation and feedback-label assumptions before selecting a prototype.",
+   "verdict": "supported",
+   "location": "1 Introduction",
+   "note": "DC is a fitting starting source: it proposes curated, evolving memory with lessons drawn from successes and failures, and states it needs no ground-truth labels or human feedback. The episodic/semantic/procedural taxonomy is the reviewer's framing, not attributed content.",
+   "quotes": [
+    {
+     "quote": "DC dynamically curates a compact library of reusable strategies, solution sketches, and code snippets.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "if an error surfaces, DC may revise or prune faulty heuristics.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Dynamic Cheatsheet: Test-Time Learning with Adaptive Memory",
+   "run_id": "20261105T152137-bf553914"
+  },
+  {
+   "source": "https://arxiv.org/html/2504.07952v1",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:92"
+   ],
+   "claim": "| **Adaptive external notes:** Dynamic Cheatsheet curates strategies without weight updates. [DC v1, §2 and discussion](https://arxiv.org/html/2504.07952v1) | A simple bounded project playbook is an affordable baseline before elaborate graphs. Compare against retrieval of original episodes. | Model curation lacks ground-truth correctness in the described method. Avoid replacing the entire durable record with a short rewritten summary. |",
+   "verdict": "supported",
+   "location": "2 Dynamic Cheatsheet (DC) Methodology, 2.1.2 Memory Curation Step",
+   "note": "Both attributed points hold: curation is external and parameter-free, and the curator self-assesses correctness without ground-truth labels. The playbook-baseline and durable-record sentences are design inferences and were not judged.",
+   "quotes": [
+    {
+     "quote": "Rather than fine-tuning the underlying weights, DC tracks successes and failures of the model at test time",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Cur does not have access to ground-truth labels; so, it has to assess the correctness and efficiency of the solutions by itself before updating the memory.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Dynamic Cheatsheet: Test-Time Learning with Adaptive Memory",
+   "run_id": "20261105T152137-bf553914"
+  },
+  {
+   "source": "https://arxiv.org/html/2505.11942v1",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/03-RESEARCH-OBJECTIVES.md:75"
+   ],
+   "claim": "**Explore:** adapters for [MemoryArena](https://arxiv.org/html/2602.16313v1), [MemoryAgentBench](https://arxiv.org/html/2507.05257v3), [LifelongAgentBench](https://arxiv.org/html/2505.11942v1) and [Evo-Memory](https://arxiv.org/html/2511.20857v1), plus versioned local research projects. Assess dataset terms, runnable dependencies, scoring fidelity and tool-policy compatibility before importing anything.",
+   "verdict": "supported",
+   "location": "Abstract; §6.1 Experimental Setup",
+   "note": "The claim is mainly a design instruction; the only content attributed to this source is that LifelongAgentBench is an importable benchmark with datasets, code, license terms and automatic scoring, all present here. Tool-policy compatibility is not discussed.",
+   "quotes": [
+    {
+     "quote": "We present LifelongAgentBench, the first unified benchmark designed to systematically assess the lifelong learning ability of LLM agents.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Code is based on Huggingface Transformers and PyTorch, with a distributed RPC-based framework for modular deployment.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "LifelongAgentBench: Evaluating LLM Agents as Lifelong Learners",
+   "run_id": "20261105T152155-4b9ce21a"
+  },
+  {
+   "source": "https://arxiv.org/html/2505.11942v1",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "consolidated/04-THEORY-OF-EVOLVING-KNOWLEDGE.md:146"
+   ],
+   "claim": "Measure current correctness, historical recall, adaptation delay, preservation of unaffected knowledge and total acquisition/retrieval/curation/checking cost. Chronological splits and hidden scoring prevent future answers from becoming part of the memory being evaluated. Replay research already shows that benefit depends on the model and amount of experience supplied. [LifelongAgentBench](https://arxiv.org/html/2505.11942v1).",
+   "verdict": "supported",
+   "location": "§1 Introduction (key insights); §6.3 Effect of Model Backbone and Task Difficulty",
+   "note": "The source attributes replay benefit to model size, architecture, task complexity and amount of experience, matching the claim. The chronological-split/hidden-scoring design is a Librarian inference and is not judged.",
+   "quotes": [
+    {
+     "quote": "its impact in agent settings varies significantly depending on model size, architecture, and task complexity",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Increasing the volume of past experience does not always improve performance and can even degrade it due to irrelevant information and context length limitations.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "LifelongAgentBench: Evaluating LLM Agents as Lifelong Learners",
+   "run_id": "20261105T152155-4b9ce21a"
+  },
+  {
+   "source": "https://arxiv.org/html/2505.11942v1",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "EVOLVING-KNOWLEDGE-BENCHMARK.md:14"
+   ],
+   "claim": "These questions adapt the sequential-transfer emphasis of [LifelongAgentBench](https://arxiv.org/html/2505.11942v1), the evolving-memory framing of [Evo-Memory](https://arxiv.org/html/2511.20857v1), and the interdependent-action emphasis of [MemoryArena](https://arxiv.org/html/2602.16313v1). They add controlled goal/perspective/requirements changes specific to Librarian. None is a claim of reproducing those benchmarks.",
+   "verdict": "supported",
+   "location": "§1 Introduction; §5.3 Differences from Prior Benchmarks",
+   "note": "Sequential execution and cross-task skill transfer are central to the benchmark, so 'sequential-transfer emphasis' is faithful. The adaptation to Librarian's questions is a design inference and is not judged.",
+   "quotes": [
+    {
+     "quote": "LifelongAgentBench systematically tests agents’ abilities to acquire atomic skills, transfer them across tasks, and maintain stable performance over long sequences of dependent tasks.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "LifelongAgentBench enforces strict sequential execution to preserve the integrity of experience accumulation and transfer learning assessments.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "LifelongAgentBench: Evaluating LLM Agents as Lifelong Learners",
+   "run_id": "20261105T152155-4b9ce21a"
+  },
+  {
+   "source": "https://arxiv.org/html/2505.11942v1",
+   "kind": "web",
+   "claim_id": "c4",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:94"
+   ],
+   "claim": "| **Skill-grounded continual tasks:** LifelongAgentBench uses ordered, related tasks and observable verification. [LifelongAgentBench v1, §§3–6](https://arxiv.org/html/2505.11942v1) | Measure task transfer and interference under repeatable environment resets; retain memory while resetting incidental task state. | SQL/OS/KG environments are useful mechanics tests, not substitutes for research synthesis or evolving user intent. |",
+   "verdict": "supported",
+   "location": "§1 Introduction (four key innovations); §5.3 Differences from Prior Benchmarks",
+   "note": "Ordered, related tasks and observable/automatic verification are both stated. The reset-versus-memory design and the SQL/OS/KG scope caveat are Librarian inferences and are not judged.",
+   "quotes": [
+    {
+     "quote": "Tasks are skill-grounded and explicitly designed to quantify inter-task relatedness, enabling rigorous analysis of knowledge transfer and catastrophic forgetting.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Each environment includes automatic label verification (e.g., SQL query validation, OS state hashing, SPARQL output verification) to ensure objective and reproducible evaluation.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "LifelongAgentBench: Evaluating LLM Agents as Lifelong Learners",
+   "run_id": "20261105T152155-4b9ce21a"
+  },
+  {
+   "source": "https://arxiv.org/html/2505.11942v1",
+   "kind": "web",
+   "claim_id": "c5",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:98"
+   ],
+   "claim": "**Empirical caution:** LifelongAgentBench reports model- and replay-size-dependent effects, including degradation. More historical experience is therefore a treatment to test, not an assumed improvement. [LifelongAgentBench v1, §§6.2–6.3](https://arxiv.org/html/2505.11942v1).",
+   "verdict": "supported",
+   "location": "§6.3 Effect of Model Backbone and Task Difficulty; §1 Introduction (key insights)",
+   "note": "The source reports model-dependent and replay-size-dependent effects, including degradation (e.g. Qwen2.5-32B-Instruct drops from 0.82 without replay). Treating replay as a treatment to test is a design inference and is not judged.",
+   "quotes": [
+    {
+     "quote": "For strong base models such as Qwen2.5-7B-Instruct and Qwen2.5-32B-Instruct, the performance gain from adding prior experience is small or even negative.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Increasing the volume of past experience does not always improve performance and can even degrade it due to irrelevant information and context length limitations.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "LifelongAgentBench: Evaluating LLM Agents as Lifelong Learners",
+   "run_id": "20261105T152155-4b9ce21a"
+  },
+  {
+   "source": "https://arxiv.org/html/2507.05257v3",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/03-RESEARCH-OBJECTIVES.md:75"
+   ],
+   "claim": "**Explore:** adapters for [MemoryArena](https://arxiv.org/html/2602.16313v1), [MemoryAgentBench](https://arxiv.org/html/2507.05257v3), [LifelongAgentBench](https://arxiv.org/html/2505.11942v1) and [Evo-Memory](https://arxiv.org/html/2511.20857v1), plus versioned local research projects. Assess dataset terms, runnable dependencies, scoring fidelity and tool-policy compatibility before importing anything.",
+   "verdict": "supported",
+   "location": "Abstract and Section 1 (Contributions)",
+   "note": "The source is the MemoryAgentBench benchmark paper and states code/datasets are open-sourced; the adapter/import and tool-policy assessment steps are the review's own plan, not attributed content.",
+   "quotes": [
+    {
+     "quote": "We introduce MemoryAgentBench, a new benchmark specifically designed for memory agents.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Framework: We provide a unified evaluation framework, and open-source the codebase and datasets to encourage reproducibility and further research.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Evaluating Memory in LLM Agents via Incremental Multi-Turn Interactions",
+   "run_id": "20261105T152157-ef728f45"
+  },
+  {
+   "source": "https://arxiv.org/html/2507.05257v3",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:98"
+   ],
+   "claim": "Earlier sources still provide useful complementary tests: [MemoryArena](https://arxiv.org/html/2602.16313v1) for interdependent multi-session tasks, [MemoryAgentBench](https://arxiv.org/html/2507.05257v3) for update/forgetting, and [MemDev-Bench](https://arxiv.org/html/2610.27524v1) for memory applicability and harmful transfer. Benchmark results must be kept tied to their routes, task distributions and feedback policies; no literature score becomes a Librarian target by default.",
+   "verdict": "supported",
+   "location": "Section 1 (Introduction)",
+   "note": "The source explicitly targets update/forgetting via its Selective Forgetting competency and the new FactConsolidation dataset.",
+   "quotes": [
+    {
+     "quote": "(4) Selective Forgetting (SF): The skill to revise, overwrite, or remove previously stored information when faced with contradictory evidence",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "we also introduce two new datasets: EventQA and FactConsolidation, designed to evaluate accurate retrieval and selective forgetting, respectively.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Evaluating Memory in LLM Agents via Incremental Multi-Turn Interactions",
+   "run_id": "20261105T152157-ef728f45"
+  },
+  {
+   "source": "https://arxiv.org/html/2507.05257v3",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "REQUIREMENTS-RESEARCH.md:24"
+   ],
+   "claim": "| S2 — [MemoryAgentBench, v3](https://arxiv.org/html/2507.05257v3), §3 and Appendix K | Evaluates incremental acquisition, retrieval, learning, long-range understanding and selective forgetting. Its update task supplies an explicit chronological overwrite rule, which remains challenging. | Later-wins is a benchmark policy, not a universal truth rule. Make update authority explicit and test multi-hop effects of corrections. |",
+   "verdict": "supported",
+   "location": "Abstract; Section 3.3 (Prompt Formulation and Interaction Protocol); Section 4.2",
+   "note": "Incremental acquisition is the benchmark's multi-turn ingestion format rather than a fifth named competency; the chronological overwrite rule is explicit and multi-hop updates remain hard (max 7%).",
+   "quotes": [
+    {
+     "quote": "we identify four core competencies essential for memory agents: accurate retrieval, test-time learning, long-range understanding, and selective forgetting.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "The agents are mandated to solve conflicts by finding the newest fact",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "We observe that all methods fail on the multi-hop situation (with achieving at most 7% accuracy).",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Evaluating Memory in LLM Agents via Incremental Multi-Turn Interactions",
+   "run_id": "20261105T152157-ef728f45"
+  },
+  {
+   "source": "https://arxiv.org/html/2509.25140v1",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/02-DESIGN-DIRECTION.md:35"
+   ],
+   "claim": "Localized updates are motivated by [ACE](https://arxiv.org/html/2510.04618v1); success/failure lessons by [ReasoningBank](https://arxiv.org/html/2509.25140v1). Their results motivate experiments rather than establish that an LLM-generated lesson is correct. Preserve original episodes and avoid granting remembered text privileged instruction authority.",
+   "verdict": "supported",
+   "location": "Abstract; §3.2 ReasoningBank",
+   "note": "The success/failure lesson attribution is faithful; the caution that lessons are not proven correct is a design inference, not judged here.",
+   "quotes": [
+    {
+     "quote": "distills generalizable reasoning strategies from an agent’s self-judged successful and failed experiences",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "successful experiences contribute validated strategies, while failed ones supply counterfactual signals and pitfalls that help sharpen guardrails",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "ReasoningBank: Scaling Agent Self-Evolving with Reasoning Memory",
+   "run_id": "20261105T152239-a60ed856"
+  },
+  {
+   "source": "https://arxiv.org/html/2509.25140v1",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "consolidated/03-RESEARCH-OBJECTIVES.md:35"
+   ],
+   "claim": "**Explore:** incremental playbooks, episodic/semantic/procedural memory, bounded curation and failure-conditioned lessons. Starting sources: [ACE](https://arxiv.org/html/2510.04618v1), [ReasoningBank](https://arxiv.org/html/2509.25140v1), [Dynamic Cheatsheet](https://arxiv.org/html/2504.07952v1). Inspect implementation and feedback-label assumptions before selecting a prototype.",
+   "verdict": "partly",
+   "location": "Appendix A.1 Prompts Used for ReasoningBank; Appendix E Limitations",
+   "note": "ReasoningBank supports failure-conditioned lessons and bounded extraction (at most three items per trajectory), but does not implement episodic/semantic/procedural memory; Appendix E says such architectures were not compared.",
+   "quotes": [
+    {
+     "quote": "the output format is constrained to at most three memory items expressed in a structured Markdown format",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "we did not extensively compare with other memory architectures such as episodic or hierarchical memory",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "ReasoningBank: Scaling Agent Self-Evolving with Reasoning Memory",
+   "run_id": "20261105T152239-a60ed856"
+  },
+  {
+   "source": "https://arxiv.org/html/2509.25140v1",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "consolidated/04-THEORY-OF-EVOLVING-KNOWLEDGE.md:83"
+   ],
+   "claim": "Modern work on incremental playbooks and reasoning memory offers evidence that external lessons can help particular agent tasks. It also identifies failure modes: poor reflection can produce harmful context, and model-generated success labels can be noisy. [ACE](https://arxiv.org/html/2510.04618v1); [ReasoningBank](https://arxiv.org/html/2509.25140v1).",
+   "verdict": "partly",
+   "location": "Appendix E Limitations; §4.2 Results of ReasoningBank",
+   "note": "Noisy model-generated success labels are acknowledged in Appendix E, but 'poor reflection can produce harmful context' is not stated in this source; evidence covers web browsing and SWE benchmarks only.",
+   "quotes": [
+    {
+     "quote": "it may introduce noise when tasks are ambiguous or when the judge model itself errs",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "ReasoningBank consistently outperforms baselines across LLM backbones on all datasets.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "ReasoningBank: Scaling Agent Self-Evolving with Reasoning Memory",
+   "run_id": "20261105T152239-a60ed856"
+  },
+  {
+   "source": "https://arxiv.org/html/2509.25140v1",
+   "kind": "web",
+   "claim_id": "c4",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:90"
+   ],
+   "claim": "| **Reasoning lessons from success and failure:** ReasoningBank constructs reusable strategies and pitfalls from trajectories. [ReasoningBank v1, §3, Appendices C/D](https://arxiv.org/html/2509.25140v1) | Store a method, conditions, failure signature and recovery action. Use existing exact/bounded checks for outcome labels when available. | Its proxy success labels use an LLM judge; adding an item is not proof it generalizes. Do not import memory as privileged system instructions. |",
+   "verdict": "supported",
+   "location": "§3.2 ReasoningBank",
+   "note": "Faithful; the LLM-judge proxy labels appear in §3.2 and Appendices A.2/E, not Appendices C/D, but the attributed content itself is correct.",
+   "quotes": [
+    {
+     "quote": "successful experiences contribute validated strategies, while failed ones supply counterfactual signals and pitfalls that help sharpen guardrails",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "we adopt an LLM-as-a-judge (Gu et al., 2024) to label outcomes as success or failure given the query and trajectory, without access to any ground-truth",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "ReasoningBank: Scaling Agent Self-Evolving with Reasoning Memory",
+   "run_id": "20261105T152239-a60ed856"
+  },
+  {
+   "source": "https://arxiv.org/html/2509.25140v1",
+   "kind": "web",
+   "claim_id": "c5",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:58"
+   ],
+   "claim": "**Modern empirical support:** ACE uses localized updates instead of wholesale context rewriting; its authors warn that a weak reflector can produce harmful context. ReasoningBank extracts strategies from successes and failures but acknowledges noisy LLM-judge labels. These are useful prototypes, not truth guarantees. [ACE v1, §3 and Appendix B](https://arxiv.org/html/2510.04618v1); [ReasoningBank v1, Appendix E](https://arxiv.org/html/2509.25140v1).",
+   "verdict": "supported",
+   "location": "Appendix E Limitations",
+   "note": "Faithful: Appendix E explicitly attributes success/failure signals to an LLM-as-a-judge and acknowledges resulting label noise.",
+   "quotes": [
+    {
+     "quote": "In our implementation, success and failure signals for trajectories are determined by an LLM-as-a-judge.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "it may introduce noise when tasks are ambiguous or when the judge model itself errs",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "ReasoningBank: Scaling Agent Self-Evolving with Reasoning Memory",
+   "run_id": "20261105T152239-a60ed856"
+  },
+  {
+   "source": "https://arxiv.org/html/2510.04618v1",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/02-DESIGN-DIRECTION.md:35"
+   ],
+   "claim": "Localized updates are motivated by [ACE](https://arxiv.org/html/2510.04618v1); success/failure lessons by [ReasoningBank](https://arxiv.org/html/2509.25140v1). Their results motivate experiments rather than establish that an LLM-generated lesson is correct. Preserve original episodes and avoid granting remembered text privileged instruction authority.",
+   "verdict": "supported",
+   "location": "§3.1 Incremental Delta Updates",
+   "note": "ACE does motivate localized, incremental updates. The statements about lesson correctness and instruction authority are design inferences, not attributed source content.",
+   "quotes": [
+    {
+     "quote": "A core design principle of ACE is to represent context as a collection of structured, itemized bullets, rather than a single monolithic prompt.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Rather than regenerating contexts in full, ACE incrementally produces compact delta contexts",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Agentic Context Engineering: Evolving Contexts for Self-ImprovingLanguage Models",
+   "run_id": "20261105T152252-697f7cc0"
+  },
+  {
+   "source": "https://arxiv.org/html/2510.04618v1",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "consolidated/03-RESEARCH-OBJECTIVES.md:35"
+   ],
+   "claim": "**Explore:** incremental playbooks, episodic/semantic/procedural memory, bounded curation and failure-conditioned lessons. Starting sources: [ACE](https://arxiv.org/html/2510.04618v1), [ReasoningBank](https://arxiv.org/html/2509.25140v1), [Dynamic Cheatsheet](https://arxiv.org/html/2504.07952v1). Inspect implementation and feedback-label assumptions before selecting a prototype.",
+   "verdict": "supported",
+   "location": "§3 Agentic Context Engineering (ACE); §3.2 Grow-and-Refine",
+   "note": "ACE supports incremental playbooks and bounded curation (grow-and-refine, de-duplication). The episodic/semantic/procedural memory taxonomy is not presented by ACE; it is not attributed to ACE specifically here.",
+   "quotes": [
+    {
+     "quote": "ACE treats contexts as evolving playbooks that continuously accumulate, refine, and organize strategies over time.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "A de-duplication step then prunes redundancy by comparing bullets via semantic embeddings.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Agentic Context Engineering: Evolving Contexts for Self-ImprovingLanguage Models",
+   "run_id": "20261105T152252-697f7cc0"
+  },
+  {
+   "source": "https://arxiv.org/html/2510.04618v1",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "consolidated/04-THEORY-OF-EVOLVING-KNOWLEDGE.md:83"
+   ],
+   "claim": "Modern work on incremental playbooks and reasoning memory offers evidence that external lessons can help particular agent tasks. It also identifies failure modes: poor reflection can produce harmful context, and model-generated success labels can be noisy. [ACE](https://arxiv.org/html/2510.04618v1); [ReasoningBank](https://arxiv.org/html/2509.25140v1).",
+   "verdict": "supported",
+   "location": "§4 Results; Appendix B Limitations and Challenges",
+   "note": "ACE reports gains on particular agent tasks and explicitly warns that a weak Reflector can yield noisy or harmful context. Noisy success labels are attributed to the other source, not judged here.",
+   "quotes": [
+    {
+     "quote": "It boosts accuracy on the AppWorld benchmark by up to 17.1% by learning to engineer better contexts from execution feedback alone, without needing ground-truth labels.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "if the Reflector fails to extract meaningful insights from generated traces or outcomes, the constructed context may become noisy or even harmful.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Agentic Context Engineering: Evolving Contexts for Self-ImprovingLanguage Models",
+   "run_id": "20261105T152252-697f7cc0"
+  },
+  {
+   "source": "https://arxiv.org/html/2510.04618v1",
+   "kind": "web",
+   "claim_id": "c4",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:89"
+   ],
+   "claim": "| **Incremental playbooks:** ACE uses identified entries and localized updates; it reports information loss from repeated monolithic rewriting. [ACE v1, §3, Appendix B](https://arxiv.org/html/2510.04618v1) | Derive a small proposed lesson delta from application evidence; merge through staging; retain source links and rollback. Compare to append-only episodes and whole-summary rewrites. | Quality depends on the reflector; reported gains do not justify three always-on model roles. Helpful/harmful counters are usage evidence, not truth. |",
+   "verdict": "supported",
+   "location": "§3.1 Incremental Delta Updates; §2.2 Limitations of Existing Context Adaptation Methods (Context Collapse)",
+   "note": "Identified entries and localized updates are in §3.1; the reported information loss from monolithic rewriting is the context-collapse case study in §2.2, not Appendix B. The risk-column statements are design inferences.",
+   "quotes": [
+    {
+     "quote": "metadata, including a unique identifier and counters tracking how often it was marked helpful or harmful",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "the model tends to compress it into much shorter, less informative summaries, causing a dramatic loss of information.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Agentic Context Engineering: Evolving Contexts for Self-ImprovingLanguage Models",
+   "run_id": "20261105T152252-697f7cc0"
+  },
+  {
+   "source": "https://arxiv.org/html/2510.04618v1",
+   "kind": "web",
+   "claim_id": "c5",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:58"
+   ],
+   "claim": "**Modern empirical support:** ACE uses localized updates instead of wholesale context rewriting; its authors warn that a weak reflector can produce harmful context. ReasoningBank extracts strategies from successes and failures but acknowledges noisy LLM-judge labels. These are useful prototypes, not truth guarantees. [ACE v1, §3 and Appendix B](https://arxiv.org/html/2510.04618v1); [ReasoningBank v1, Appendix E](https://arxiv.org/html/2509.25140v1).",
+   "verdict": "supported",
+   "location": "§3.1 Incremental Delta Updates; §4.4 Results on Domain-Specific Benchmark and Appendix B",
+   "note": "ACE replaces full rewrites with incremental deltas and warns that weak reflection or unreliable feedback can produce noisy or harmful context.",
+   "quotes": [
+    {
+     "quote": "Rather than regenerating contexts in full, ACE incrementally produces compact delta contexts",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "the constructed context can be polluted by spurious or misleading signals",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Agentic Context Engineering: Evolving Contexts for Self-ImprovingLanguage Models",
+   "run_id": "20261105T152252-697f7cc0"
+  },
+  {
+   "source": "https://arxiv.org/html/2511.20857v1",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/03-RESEARCH-OBJECTIVES.md:75"
+   ],
+   "claim": "**Explore:** adapters for [MemoryArena](https://arxiv.org/html/2602.16313v1), [MemoryAgentBench](https://arxiv.org/html/2507.05257v3), [LifelongAgentBench](https://arxiv.org/html/2505.11942v1) and [Evo-Memory](https://arxiv.org/html/2511.20857v1), plus versioned local research projects. Assess dataset terms, runnable dependencies, scoring fidelity and tool-policy compatibility before importing anything.",
+   "verdict": "supported",
+   "location": "Abstract",
+   "note": "The source presents Evo-Memory as a benchmark/framework; the adapter, dependency and licensing assessments are Librarian-side design work, not attributed claims.",
+   "quotes": [
+    {
+     "quote": "we introduce Evo-Memory, a comprehensive streaming benchmark and framework for evaluating self-evolving memory in LLM agents.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "We unify and implement over ten representative memory modules and evaluate them across 10 diverse multi-turn goal-oriented and single-turn reasoning and QA datasets.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Evo-Memory: Benchmarking LLM Agent Test-time Learning with Self-Evolving Memory",
+   "run_id": "20261105T152340-6f0af83f"
+  },
+  {
+   "source": "https://arxiv.org/html/2511.20857v1",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "EVOLVING-KNOWLEDGE-BENCHMARK.md:14"
+   ],
+   "claim": "These questions adapt the sequential-transfer emphasis of [LifelongAgentBench](https://arxiv.org/html/2505.11942v1), the evolving-memory framing of [Evo-Memory](https://arxiv.org/html/2511.20857v1), and the interdependent-action emphasis of [MemoryArena](https://arxiv.org/html/2602.16313v1). They add controlled goal/perspective/requirements changes specific to Librarian. None is a claim of reproducing those benchmarks.",
+   "verdict": "supported",
+   "location": "Abstract",
+   "note": "The evolving-memory framing is faithful; the controlled goal/perspective changes are explicitly local additions, not attributed to this source.",
+   "quotes": [
+    {
+     "quote": "Evo-Memory structures datasets into sequential task streams, requiring LLMs to search, adapt, and evolve memory after each interaction.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "a streaming benchmark and framework for evaluating self-evolving memory in LLM agents",
+     "strict": false,
+     "found": false
+    }
+   ],
+   "source_title": "Evo-Memory: Benchmarking LLM Agent Test-time Learning with Self-Evolving Memory",
+   "run_id": "20261105T152340-6f0af83f"
+  },
+  {
+   "source": "https://arxiv.org/html/2511.20857v1",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:93"
+   ],
+   "claim": "| **Streaming memory refinement:** Evo-Memory separates update, retrieval and contextual construction in sequential task streams. [Evo-Memory v1, §§3–4](https://arxiv.org/html/2511.20857v1) | Evaluate whether learned methods help later related tasks and remain useful after a shift; compare raw replay, selective retrieval and curated lessons. | Its task streams do not by themselves establish realistic user-goal revision behavior; add local controlled pivots. |",
+   "verdict": "supported",
+   "location": "§3.1 Problem Formulation; §3.1 Dataset Preparation",
+   "note": "The source separates update (U), retrieval (R) and contextual construction (C) over sequential task streams; the user-goal-pivot caveat is a Librarian design note, not attributed content.",
+   "quotes": [
+    {
+     "quote": "where F is the base LLM, U is the memory update pipeline, R is the retrieval module, and C is the contextual construction mechanism that transforms retrieved content into the final working context.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Evo-Memory restructures conventional static datasets into streaming task sequences, enabling evaluation of how LLMs reuse and evolve memory over time.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Evo-Memory: Benchmarking LLM Agent Test-time Learning with Self-Evolving Memory",
+   "run_id": "20261105T152340-6f0af83f"
+  },
+  {
+   "source": "https://arxiv.org/html/2602.16313v1",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/03-RESEARCH-OBJECTIVES.md:75"
+   ],
+   "claim": "**Explore:** adapters for [MemoryArena](https://arxiv.org/html/2602.16313v1), [MemoryAgentBench](https://arxiv.org/html/2507.05257v3), [LifelongAgentBench](https://arxiv.org/html/2505.11942v1) and [Evo-Memory](https://arxiv.org/html/2511.20857v1), plus versioned local research projects. Assess dataset terms, runnable dependencies, scoring fidelity and tool-policy compatibility before importing anything.",
+   "verdict": "supported",
+   "location": "Abstract; §4.2 Evaluation Metrics",
+   "note": "The source presents MemoryArena as a released benchmark with defined SR/PS scoring. Dataset licensing terms are not specified beyond the arXiv license, so that due-diligence item cannot be resolved from this text.",
+   "quotes": [
+    {
+     "quote": "MemoryArena is released at https://memoryarena.github.io/.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "We also report the Task Success Rate (SR), which measures the percentage of tasks that are fully solved.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Benchmarking Agent Memory in Interdependent Multi-Session Agentic Tasks",
+   "run_id": "20261105T152356-4f75902c"
+  },
+  {
+   "source": "https://arxiv.org/html/2602.16313v1",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "EVOLVING-KNOWLEDGE-BENCHMARK.md:14"
+   ],
+   "claim": "These questions adapt the sequential-transfer emphasis of [LifelongAgentBench](https://arxiv.org/html/2505.11942v1), the evolving-memory framing of [Evo-Memory](https://arxiv.org/html/2511.20857v1), and the interdependent-action emphasis of [MemoryArena](https://arxiv.org/html/2602.16313v1). They add controlled goal/perspective/requirements changes specific to Librarian. None is a claim of reproducing those benchmarks.",
+   "verdict": "supported",
+   "location": "Abstract; §2 Related Works",
+   "note": "The interdependent-action emphasis is faithful; the Librarian-specific goal/perspective changes are design inferences and are not judged.",
+   "quotes": [
+    {
+     "quote": "The benchmark consists of human-crafted agentic tasks with explicitly interdependent subtasks,",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "MemoryArena is the first one designed to assess agent memory using sequential subtasks with causal dependencies across sessions.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Benchmarking Agent Memory in Interdependent Multi-Session Agentic Tasks",
+   "run_id": "20261105T152356-4f75902c"
+  },
+  {
+   "source": "https://arxiv.org/html/2602.16313v1",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:98"
+   ],
+   "claim": "Earlier sources still provide useful complementary tests: [MemoryArena](https://arxiv.org/html/2602.16313v1) for interdependent multi-session tasks, [MemoryAgentBench](https://arxiv.org/html/2507.05257v3) for update/forgetting, and [MemDev-Bench](https://arxiv.org/html/2610.27524v1) for memory applicability and harmful transfer. Benchmark results must be kept tied to their routes, task distributions and feedback policies; no literature score becomes a Librarian target by default.",
+   "verdict": "supported",
+   "location": "Abstract; §2 Related Works",
+   "note": "Characterizing MemoryArena as interdependent multi-session tasks matches the source; the instruction to tie scores to routes and feedback policies is a design inference, not judged.",
+   "quotes": [
+    {
+     "quote": "We introduce MemoryArena, a unified evaluation gym for benchmarking agent memory in multi-session Memory-Agent-Environment loops.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "MemoryArena enforces cross-task causal dependence and evaluates memory through end-to-end sequential task completion",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Benchmarking Agent Memory in Interdependent Multi-Session Agentic Tasks",
+   "run_id": "20261105T152356-4f75902c"
+  },
+  {
+   "source": "https://arxiv.org/html/2602.16313v1",
+   "kind": "web",
+   "claim_id": "c4",
+   "where": [
+    "REQUIREMENTS-RESEARCH.md:26"
+   ],
+   "claim": "| S4 — [MemoryArena, v1](https://arxiv.org/html/2602.16313v1), §§3–4 | Tests interdependent multi-session actions rather than recall alone. Performance decays with dependency depth; some precise-reuse tasks favor retrieval over heavier abstraction. | Benchmark environments and selected task/model combinations. Add chained real-work fixtures and preserve exact intermediate evidence where needed. |",
+   "verdict": "supported",
+   "location": "§4.4 Results on Interdependent Subtasks",
+   "note": "Depth decay is shown in Figure 3/@k analysis; the retrieval-over-abstraction finding is scoped to tasks requiring precise reuse of earlier subtask information, e.g. formal reasoning and group travel planning.",
+   "quotes": [
+    {
+     "quote": "all evaluated methods exhibit a decay with no method maintaining a consistent flat region across environments",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "retrieval-based approaches are consistently more robust than agents with external memory that rely on heavier information consolidation and abstraction",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Benchmarking Agent Memory in Interdependent Multi-Session Agentic Tasks",
+   "run_id": "20261105T152356-4f75902c"
+  },
+  {
+   "source": "https://arxiv.org/html/2604.20006v1",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "REQUIREMENTS-RESEARCH.md:25"
+   ],
+   "claim": "| S3 — [Memora, v1](https://arxiv.org/html/2604.20006v1), §§4.2,6 | Evaluates remembering, recommendations and reasoning with evolving memories. The error analysis distinguishes incomplete retrieval from continued use of invalid memories. | Constructed personalized conversations and model-based scoring limit transfer. Measure both missing current information and inclusion of obsolete information. |",
+   "verdict": "supported",
+   "location": "§3.5 Questions and Evaluation Criteria; §6 Error Analysis",
+   "note": "The benchmark covers the three named tasks over evolving memories, and §6 explicitly separates outdated-memory reuse (16/25 recommendation errors) from partial retrieval (e.g., 18/25 remembering errors).",
+   "quotes": [
+    {
+     "quote": "Questions are organized into three tasks: Remembering, Reasoning, and Recommending.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Recommendation errors are primarily driven by the failures to forget outdated memory and partial memory retrieval.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "From Recall to Forgetting: Benchmarking Long-Term Memory for Personalized Agents",
+   "run_id": "20261105T152402-6242a9d9"
+  },
+  {
+   "source": "https://arxiv.org/html/2609.14138v1",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/03-RESEARCH-OBJECTIVES.md:85"
+   ],
+   "claim": "**Explore:** V1 community orientation and dependency digests; current V2 hybrid retrieval; graph-guided source expansion; deterministic versus learned replay/retention policies. [LIMBO](https://arxiv.org/html/2609.14138v1) and [TokenWorth](https://arxiv.org/html/2610.26453v1) are recent research starting points with benchmark-specific assumptions.",
+   "verdict": "supported",
+   "location": "Abstract and §IV-A Setup",
+   "note": "LIMBO is a recent preprint contrasting fixed (deterministic) replay policies with a learned online selector, evaluated under benchmark-specific signals: binary correctness and measured cost on LifelongAgentBench.",
+   "quotes": [
+    {
+     "quote": "Existing approaches allocate these resources using fixed replay policies, regardless of whether replay is beneficial for the current task.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "We evaluate on LifelongAgentBench (LAB) [10] using DB (SQL) and OS (bash) environments, each with the 500-task sequential slice released with LAB.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "LIMBO: Lifelong Inference-Time Memory and Budget Optimization for LLM Agents",
+   "run_id": "20261105T152404-496b7dfc"
+  },
+  {
+   "source": "https://arxiv.org/html/2609.14138v1",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:95"
+   ],
+   "claim": "| **Adaptive replay budgets:** LIMBO chooses replay mode and compute allowance using a contextual bandit. [LIMBO v1, §§III–IV](https://arxiv.org/html/2609.14138v1) | First compare deterministic no-replay/episode/recipe policies at matched budgets; later test a learned selector if telemetry warrants it. | Recent preprint and benchmark-specific rewards; optimization must never remove mandatory constraints or override policy. |",
+   "verdict": "supported",
+   "location": "§I Introduction and §III-D LIMBO Controller",
+   "note": "The source attributes exactly this: a contextual bandit jointly choosing replay/memory mode and compute budget per task, updated online from observed correctness and cost.",
+   "quotes": [
+    {
+     "quote": "For each incoming task, LIMBO selects a memory strategy and compute budget using a lightweight contextual bandit based on prompt and runtime features.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Each primitive specifies a replay mode, token budget, maximum round count, and tool call budget.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "LIMBO: Lifelong Inference-Time Memory and Budget Optimization for LLM Agents",
+   "run_id": "20261105T152404-496b7dfc"
+  },
+  {
+   "source": "https://arxiv.org/html/2610.26453v1",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/03-RESEARCH-OBJECTIVES.md:85"
+   ],
+   "claim": "**Explore:** V1 community orientation and dependency digests; current V2 hybrid retrieval; graph-guided source expansion; deterministic versus learned replay/retention policies. [LIMBO](https://arxiv.org/html/2609.14138v1) and [TokenWorth](https://arxiv.org/html/2610.26453v1) are recent research starting points with benchmark-specific assumptions.",
+   "verdict": "supported",
+   "location": "Section 5.1 (Experimental Setup)",
+   "note": "The source is a recent preprint whose evidence is benchmark- and budget-specific, and it explicitly disclaims robustness beyond the fixed budget, matching the 'benchmark-specific assumptions' characterization.",
+   "quotes": [
+    {
+     "quote": "These results characterize effectiveness under this fixed stringent budget; we do not claim robustness across a range of budget levels.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "We conduct our main evaluation on three environments from LifelongAgentBench",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Remembering Has a Price: Learning Memory Worth under Resource Constraints",
+   "run_id": "20261105T152409-dc14bf94"
+  },
+  {
+   "source": "https://arxiv.org/html/2610.26453v1",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:96"
+   ],
+   "claim": "| **Memory utility estimates:** TokenWorth studies query-dependent memory value and resource-limited lifecycle decisions. [TokenWorth v1, §§3–5](https://arxiv.org/html/2610.26453v1) | Log marginal task benefit and full memory costs before considering learned retention/ranking. | Recent preprint; estimated utility is neither epistemic correctness nor permission, and cannot evict canonical requirements. |",
+   "verdict": "supported",
+   "location": "Abstract and Section 4.1 (Overview)",
+   "note": "The source studies query-dependent memory worth and applies it to retrieval plus bounded memory-bank admission, replacement, and eviction, exactly as attributed.",
+   "quotes": [
+    {
+     "quote": "TokenWorth, a lightweight online memory framework that learns query-dependent memory worth from sparse execution feedback",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "The learned worth is used to guide both memory retrieval and bounded memory-bank management.",
+     "strict": false,
+     "found": true
+    }
+   ],
+   "source_title": "Remembering Has a Price: Learning Memory Worth under Resource Constraints",
+   "run_id": "20261105T152409-dc14bf94"
+  },
+  {
+   "source": "https://arxiv.org/html/2610.27524v1",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:98"
+   ],
+   "claim": "Earlier sources still provide useful complementary tests: [MemoryArena](https://arxiv.org/html/2602.16313v1) for interdependent multi-session tasks, [MemoryAgentBench](https://arxiv.org/html/2507.05257v3) for update/forgetting, and [MemDev-Bench](https://arxiv.org/html/2610.27524v1) for memory applicability and harmful transfer. Benchmark results must be kept tied to their routes, task distributions and feedback policies; no literature score becomes a Librarian target by default.",
+   "verdict": "supported",
+   "location": "Section 4.3 (Attribution of Memory-Induced Regressions) and Section 1 (Introduction)",
+   "note": "The benchmark explicitly measures memory-induced regressions such as misapplied transfer and frames memory applicability as a key challenge, matching the attributed scope.",
+   "quotes": [
+    {
+     "quote": "Misapplied transfer. Agents apply a historical solution to the wrong component or stage.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "These results suggest that future memory systems should preserve process information and reassess memory applicability against current task context.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "1 Introduction",
+   "run_id": "20261105T152410-82d51e81"
+  },
+  {
+   "source": "https://arxiv.org/html/2610.27524v1",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "REQUIREMENTS-RESEARCH.md:27"
+   ],
+   "claim": "| S5 — [MemDev-Bench, v1](https://arxiv.org/html/2610.27524v1), §§4.3–6 | Finds historical guidance can produce compatibility mismatches, misapplied transfer, scope expansion and persistence despite counter-evidence. Raw trajectories expose useful process details that compressed records can omit. | Recent preprint; experiments use one agent/model configuration and a SWE-bench Verified subset. Treat applicability and process preservation as hypotheses to test outside coding. |",
+   "verdict": "supported",
+   "location": "Sections 4.3-4.4; limitation stated in Section 6 (Conclusion and Limitations)",
+   "note": "All four failure modes, the raw-trajectory process-detail finding, and the stated limitation to one agent-model configuration and the SWE-bench Verified subset match the source.",
+   "quotes": [
+    {
+     "quote": "Compatibility mismatch. Agents adopt memory whose assumptions do not fit the current task.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "This abstraction can lose information about the sequence of code inspection, failed attempts, revisions, and test outcomes, whereas FullTraj retains these events in execution order.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "1 Introduction",
+   "run_id": "20261105T152410-82d51e81"
+  },
+  {
+   "source": "https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/02-DESIGN-DIRECTION.md:47"
+   ],
+   "claim": "A general knowledge graph need not be acyclic. Execution plans and versioned derivations need defined cycle handling. Preserve independently sufficient justifications: required premises are conjunctive, alternative complete support sets are disjunctive. If dependency coverage is unknown, use conservative invalidation rather than assume no dependency. Formal support semantics and provenance vocabulary offer useful patterns, not an automatic truth oracle. [Reiter and de Kleer](https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf); [W3C PROV-DM](https://www.w3.org/TR/prov-dm/).",
+   "verdict": "partly",
+   "location": "Sections 2.1–2.2, page 2",
+   "note": "Source supports conjunctive hypotheses and alternative minimal supports, but says nothing about acyclic knowledge graphs, cycle handling, versioned derivations, or conservative invalidation.",
+   "quotes": [
+    {
+     "quote": "Explanations are conjunctions of ground literals.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "The task of a CMS is to determine all minimal support clauses for C with respect to C.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152421-afdc0d6d"
+  },
+  {
+   "source": "https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "consolidated/04-THEORY-OF-EVOLVING-KNOWLEDGE.md:51"
+   ],
+   "claim": "Assumption-based truth maintenance studies how conclusions depend on assumptions. Provenance algebra provides formal ways to express how evidence combines in defined query systems. These are foundations for tracking support, rather than tools that decide whether arbitrary natural-language statements are true. [Reiter and de Kleer](https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf); [Green, Karvounarakis and Tannen](https://web.cs.ucdavis.edu/~green/papers/pods07.pdf).",
+   "verdict": "supported",
+   "location": "Section 5, page 5",
+   "note": "Source characterizes ATMS as computing minimal supports of a queried symbol relative to transmitted justifications and distinguished assumptions.",
+   "quotes": [
+    {
+     "quote": "Moreover, the ATMS requires that the propositional symbols have a distinguished subset called assumptions.",
+     "strict": false,
+     "found": true
+    },
+    {
+     "quote": "In de Kleer’s approach, the Reasoner is constrained to transmit to the ATMS only Horn clauses.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152421-afdc0d6d"
+  },
+  {
+   "source": "https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:81"
+   ],
+   "claim": "This is a bounded engineering adaptation of assumption-based truth maintenance: conclusions carry the conditions under which they hold. The formal literature supplies explicit support/context semantics, not an automatic truth engine for extracted natural-language claims. [Reiter and de Kleer, AAAI 1987, §§1–2](https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf). W3C PROV supplies vocabulary for entities, activities, derivation, revision and invalidation; using those distinctions does not require an RDF store. [PROV-DM, §§5.1–5.2](https://www.w3.org/TR/prov-dm/).",
+   "verdict": "supported",
+   "location": "Sections 1 and 2.1, pages 1–2",
+   "note": "Sections 1–2 define supports as the conditions under which a clause follows; the natural-language limitation is a scope statement, not a source claim.",
+   "quotes": [
+    {
+     "quote": "S is a minimal support for C with respect to C iff no proper subset of S is a support for C with respect to C.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "A query takes the form of a propositional clause C.",
+     "strict": false,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152421-afdc0d6d"
+  },
+  {
+   "source": "https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf",
+   "kind": "web",
+   "claim_id": "c4",
+   "where": [
+    "formal-solutions/FORMAL-CONTRACTS.md:27"
+   ],
+   "claim": "The formal inspiration is [provenance semirings](https://web.cs.ucdavis.edu/~green/papers/pods07.pdf) and [assumption-based maintenance](https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf). This limited application does not claim complete negation, probabilistic confidence, natural-language entailment or automated conflict resolution. Support combinations can grow exponentially; cap enumeration and report incomplete coverage rather than silently discard alternatives.",
+   "verdict": "supported",
+   "location": "Section 4.2, page 5",
+   "note": "Source states prime implicants can be exponentially numerous and MIN-SUPPORTS computation is NP-hard; capping enumeration is a design choice, not attributed content.",
+   "quotes": [
+    {
+     "quote": "It can be shown that there are Boolean functions in n variables with exponentially (in n) many prime implicants.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "This is potentially an explosive approach.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152421-afdc0d6d"
+  },
+  {
+   "source": "https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf",
+   "kind": "web",
+   "claim_id": "c5",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:66"
+   ],
+   "claim": "**Formal foundation:** assumption-based truth maintenance associates conclusions with supporting assumptions. Provenance semirings formalize how alternatives and joint dependencies combine for positive relational queries; the factorization theorem explains how annotations can be evaluated under different semirings. These results concern formal inputs and operators, not arbitrary prose claims. [Reiter and de Kleer, 1987](https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf); [Green et al., PODS 2007, §§3–4](https://web.cs.ucdavis.edu/~green/papers/pods07.pdf).",
+   "verdict": "supported",
+   "location": "Section 5, pages 5–6",
+   "note": "Source ties ATMS labels to minimal supports over assumptions; semiring factorization content belongs to the other cited source.",
+   "quotes": [
+    {
+     "quote": "Moreover, the ATMS requires that the propositional symbols have a distinguished subset called assumptions.",
+     "strict": false,
+     "found": true
+    },
+    {
+     "quote": "This set is what de Kleer calls a consistent, sound, complete and minimal label for Q.",
+     "strict": false,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152421-afdc0d6d"
+  },
+  {
+   "source": "https://cormack.uwaterloo.ca/cormacksigir09-rrf.pdf",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:104"
+   ],
+   "claim": "**Established empirical method:** reciprocal rank fusion combines ranked lists without requiring a learned fusion model, with positive TREC/LETOR results in the original study. It does not guarantee relevant or correct results for every query. V2 already has this general mechanism. [Cormack et al., SIGIR 2009](https://cormack.uwaterloo.ca/cormacksigir09-rrf.pdf).",
+   "verdict": "supported",
+   "location": "Abstract and Section 1 (RECIPROCAL RANK FUSION)",
+   "note": "RRF is an unsupervised scoring formula needing no learned fusion model, with positive TREC and LETOR 3 results. The source claims only empirical improvements, not per-query guarantees, so the stated limitation is consistent with it.",
+   "quotes": [
+    {
+     "quote": "unsupervised methods are attractiv e because they require no training examples",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "This result is demonstrated by using RRF to combine the results of several TREC experiments, and to build a meta-learner that ranks the LETOR 3 dataset better than any previously reported method.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152424-642ae758"
+  },
+  {
+   "source": "https://docs.ankiweb.net/manual/deck-options#fsrs",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:86"
+   ],
+   "claim": "**Established tooling:** Anki's FSRS schedules human reviews using review history and a retention/workload trade-off. This is relevant to the existing personal review workflow, not a demonstrated decay model for hosted language models. [Anki FSRS documentation](https://docs.ankiweb.net/manual/deck-options#fsrs).",
+   "verdict": "supported",
+   "location": "FSRS > FSRS Parameters / A Short Guide",
+   "note": "The source describes FSRS as scheduling reviews from review history and explicitly states the retention/workload trade-off. The language-model comparison is a design inference and is not judged.",
+   "quotes": [
+    {
+     "quote": "The FSRS optimizer uses machine learning to learn your memory patterns and\nfind parameters that best fit your review history.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Higher retention leads to shorter intervals and more reviews per day.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Deck Options - Anki Docs",
+   "run_id": "20261105T152424-2ab7abaf"
+  },
+  {
+   "source": "https://docs.langchain.com/oss/python/langgraph/persistence",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:48"
+   ],
+   "claim": "Temporal documents why activities can repeat when work succeeds but the completion report is lost; application/service idempotency remains necessary. LangGraph distinguishes per-thread checkpoints from cross-thread stores; checkpointing alone does not define correct lesson reuse. [Temporal activity semantics](https://docs.temporal.io/activity-definition); [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence).",
+   "verdict": "supported",
+   "location": "Checkpointer vs. store",
+   "note": "The source explicitly separates thread-scoped checkpoints from cross-thread stores. The lesson-reuse statement is a design inference for another system and was not judged.",
+   "quotes": [
+    {
+     "quote": "Checkpointers persist a thread’s graph state as checkpoints.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Stores persist application-defined data outside the graph state.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Persistence - Docs by LangChain",
+   "run_id": "20261105T152445-70a41fd8"
+  },
+  {
+   "source": "https://docs.temporal.io/activity-definition",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/04-THEORY-OF-EVOLVING-KNOWLEDGE.md:110"
+   ],
+   "claim": "Acceptance must also be atomic: checking a revision and then recording acceptance in an unrelated later step leaves room for a change between the two. A stable receipt identity prevents duplicate deliveries from becoming duplicate accepted work. Durable workflow documentation illustrates why completion reports can be lost and activities retried even after an external action succeeded. [Temporal activity semantics](https://docs.temporal.io/activity-definition).",
+   "verdict": "supported",
+   "location": "Idempotency",
+   "note": "The source explicitly describes a lost completion report causing retry after the external action succeeded, and the duplicate-charge consequence.",
+   "quotes": [
+    {
+     "quote": "The Activity function completes successfully, but the Worker crashes just before it notifies the Temporal Service.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "If the Activity is not idempotent, this could have negative consequences, such as duplicate charges in a payment processing scenario.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Activity Definition | Temporal Documentation",
+   "run_id": "20261105T152446-d70bde3d"
+  },
+  {
+   "source": "https://docs.temporal.io/activity-definition",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "formal-solutions/FORMAL-CONTRACTS.md:41"
+   ],
+   "claim": "A transaction spanning only SQLite cannot make arbitrary filesystem/remote changes atomic. Reconcile existing event/Writer ownership with a journaled operation and projection watermark. [SQLite isolation](https://www.sqlite.org/isolation.html) and [Temporal's retry discussion](https://docs.temporal.io/activity-definition) establish the relevant implementation boundaries.",
+   "verdict": "partly",
+   "location": "Activity retry policy; Idempotency",
+   "note": "The source supports that retries can repeat or partially repeat multi-step work. It says nothing about SQLite transactions or filesystem/remote atomicity boundaries; that scope is not established here.",
+   "quotes": [
+    {
+     "quote": "However, the Activity may be executed multiple times and may even partially complete more than once during this process.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Imagine that the first two steps succeed, but the third step fails due to a permissions issue. During retry, the entire Activity—and therefore each of the three steps—is executed again.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Activity Definition | Temporal Documentation",
+   "run_id": "20261105T152446-d70bde3d"
+  },
+  {
+   "source": "https://docs.temporal.io/activity-definition",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:48"
+   ],
+   "claim": "Temporal documents why activities can repeat when work succeeds but the completion report is lost; application/service idempotency remains necessary. LangGraph distinguishes per-thread checkpoints from cross-thread stores; checkpointing alone does not define correct lesson reuse. [Temporal activity semantics](https://docs.temporal.io/activity-definition); [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence).",
+   "verdict": "supported",
+   "location": "Idempotency",
+   "note": "The source documents lost completion reports causing retries after success, and states idempotency keys are enforced by the called service, so application/service idempotency remains necessary.",
+   "quotes": [
+    {
+     "quote": "The Activity function completes successfully, but the Worker crashes just before it notifies the Temporal Service.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "These are enforced by the service you are calling from your Activity, not by the Activity itself.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Activity Definition | Temporal Documentation",
+   "run_id": "20261105T152446-d70bde3d"
+  },
+  {
+   "source": "https://docs.xtdb.com/about/time-in-xtdb.html",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/04-THEORY-OF-EVOLVING-KNOWLEDGE.md:39"
+   ],
+   "claim": "Bitemporal modelling distinguishes **when information applies** from **when the system learned it**. These are often different. The distinction is implemented explicitly in temporal database systems such as XTDB. [XTDB time model](https://docs.xtdb.com/about/time-in-xtdb.html).",
+   "verdict": "supported",
+   "location": "System time; Valid time",
+   "note": "The source explicitly separates system time (database-maintained) from valid time (real-world applicability), matching the claim.",
+   "quotes": [
+    {
+     "quote": "System time alone doesn’t solve all temporal problems - it’s often necessary to additionally track the time period where these facts are considered valid in the real world.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Users (rightly) have no control over system-time - the database maintains this timeline.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Time in XTDB | XTDB",
+   "run_id": "20261105T152457-337a949a"
+  },
+  {
+   "source": "https://docs.xtdb.com/about/time-in-xtdb.html",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "formal-solutions/FORMAL-CONTRACTS.md:17"
+   ],
+   "claim": "Use three-valued results where inputs can be unknown. Unknown applicability blocks verified closure but can remain visibly tentative research material. Historical retrieval can show an inapplicable old version, with status and current access preserved. These are proposed domain policies built on the [bitemporal distinction](https://docs.xtdb.com/about/time-in-xtdb.html), not guarantees supplied by timestamps alone.",
+   "verdict": "supported",
+   "location": "System time",
+   "note": "Only the bitemporal distinction is attributed to this source; the three-valued and research-status policies are explicitly framed as proposed domain policies, not judged here.",
+   "quotes": [
+    {
+     "quote": "Then, when you really need it, the full temporal history remains available and easily queryable.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "If we later delete the entity at time T6, it will no longer be returned as the current state, but we can still time-travel to retrieve the previous versions.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Time in XTDB | XTDB",
+   "run_id": "20261105T152457-337a949a"
+  },
+  {
+   "source": "https://docs.xtdb.com/about/time-in-xtdb.html",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:32"
+   ],
+   "claim": "**Established solution:** distinguish system time (when a record entered the system) from valid time (when it is asserted to apply). This supports both “what do we now believe applied last month?” and “what did we believe last month?” XTDB implements these as separate timelines; its documentation also warns that database validity must be mapped carefully to domain semantics. [XTDB time model](https://docs.xtdb.com/about/time-in-xtdb.html); [SQL semantics](https://docs.xtdb.com/quickstart/sql-overview.html).",
+   "verdict": "partly",
+   "location": "Behind the scenes; Bitemporality in XTDB",
+   "note": "The two timelines, the two questions, and separate timelines are supported. However, this page contains no warning that database validity must be mapped carefully to domain semantics; that detail may belong to the separately cited SQL page.",
+   "quotes": [
+    {
+     "quote": "Behind the scenes, XTDB is maintaining both the system-time and valid-time timelines for Mike’s address.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "What’s the history of my database, as we thought it was at the time?",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Time in XTDB | XTDB",
+   "run_id": "20261105T152457-337a949a"
+  },
+  {
+   "source": "https://docs.xtdb.com/quickstart/sql-overview.html",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:32"
+   ],
+   "claim": "**Established solution:** distinguish system time (when a record entered the system) from valid time (when it is asserted to apply). This supports both “what do we now believe applied last month?” and “what did we believe last month?” XTDB implements these as separate timelines; its documentation also warns that database validity must be mapped carefully to domain semantics. [XTDB time model](https://docs.xtdb.com/about/time-in-xtdb.html); [SQL semantics](https://docs.xtdb.com/quickstart/sql-overview.html).",
+   "verdict": "supported",
+   "location": "Section “Valid-Time is for advanced time-travel”",
+   "note": "The two questions are demonstrated by the “What did you know?” and “When did you know it?” examples, and the bitemporal combination is described as producing auditable history. The domain-semantics caution is stated explicitly.",
+   "quotes": [
+    {
+     "quote": "In addition to system-time versioning, SQL:2011 also defines ‘application-time’ versioning. XTDB applies this versioning to all tables and refers to it as valid-time.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Note that valid-time as provided by XTDB is specifically about the validity (or “effective from” time) of a given row in the table, and not necessarily some other domain conception of time (unless you carefully model it 1:1).",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "SQL Quickstart | XTDB",
+   "run_id": "20261105T152502-3c4d36ee"
+  },
+  {
+   "source": "https://github.com/HypothesisWorks/hypothesis/blob/30f73af87f587b6911042552e24f1dea2577988a/LICENSE.txt",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/TOOL-DECISIONS.md:10"
+   ],
+   "claim": "| Hypothesis | MPL-2.0, with exceptions | **Prototype as a development test dependency** | Stateful rules can exercise actual Python interfaces against a simpler model. Generated tests do not constitute an exhaustive proof. | [30f73af87f58](https://github.com/HypothesisWorks/hypothesis/blob/30f73af87f587b6911042552e24f1dea2577988a/LICENSE.txt) |",
+   "verdict": "partly",
+   "location": "LICENSE.txt (entire file; no page markers)",
+   "note": "The MPL-2.0 with exceptions attribution is accurate. However, LICENSE.txt says nothing about stateful rules, Python interfaces, simpler models, or exhaustive proof; those statements are not supported by this source.",
+   "quotes": [
+    {
+     "quote": "under the Mozilla Public License v 2.0",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "dual licensed with the original license",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "hypothesis/LICENSE.txt at 30f73af87f587b6911042552e24f1dea2577988a · HypothesisWorks/hypothesis · GitHub",
+   "run_id": "20261105T152634-aa26cb64"
+  },
+  {
+   "source": "https://github.com/UKGovernmentBEIS/inspect_ai/blob/de4b309791b2d4d49d3064f3c2760f37ba86cc92/README.md",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/TOOL-DECISIONS.md:17"
+   ],
+   "claim": "| Inspect | MIT | **Prototype in an isolated evaluation environment** | Python >=3.11 fits V2's declared range, but dependency compatibility was not resolved. Adapter must preserve route/tool behavior and include every worker's cost. | [de4b309791b2](https://github.com/UKGovernmentBEIS/inspect_ai/blob/de4b309791b2d4d49d3064f3c2760f37ba86cc92/README.md) |",
+   "verdict": "unsupported",
+   "location": "README opening paragraph and 'To work on development of Inspect' section",
+   "note": "The README states neither an MIT license nor Python >=3.11; its only version requirement is uv 0.11.8 or later. It describes Inspect as an evaluation framework, not an 'isolated evaluation environment'.",
+   "quotes": [
+    {
+     "quote": "Welcome to Inspect, a framework for large language model evaluations created by the [UK AI Security Institute](https://aisi.gov.uk/).",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "install [uv](https://docs.astral.sh/uv/) (0.11.8 or later), clone the repository, and sync the development environment from the checked-in lockfile:",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "inspect_ai/README.md at de4b309791b2d4d49d3064f3c2760f37ba86cc92 · UKGovernmentBEIS/inspect_ai · GitHub",
+   "run_id": "20261105T152648-e0300121"
+  },
+  {
+   "source": "https://github.com/ankitects/anki/blob/1003906313766ef73f949d48fdeb074fe2a1f3b2/LICENSE",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/TOOL-DECISIONS.md:15"
+   ],
+   "claim": "| Anki | AGPL-3.0-or-later, with exceptions | **Optional human-review integration** | Use for the person's review history, with versioned source links. Do not conflate card success with agent execution competence or copy its scheduling into agent expiry. | [100390631376](https://github.com/ankitects/anki/blob/1003906313766ef73f949d48fdeb074fe2a1f3b2/LICENSE) |",
+   "verdict": "supported",
+   "location": "LICENSE, opening paragraph",
+   "note": "The source states AGPL v3 or later and enumerates exceptions: BSD-3 user contributions, plus CC BY 4.0, MIT, Apache 2, BSD 3 clause, LGPL and public-domain items, and CC BY-SA 4.0 docs.",
+   "quotes": [
+    {
+     "quote": "Anki is licensed under the GNU Affero General Public License, version 3 or later, with portions contributed by Anki users licensed under the BSD-3 license (see CONTRIBUTORS).",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "anki/LICENSE at 1003906313766ef73f949d48fdeb074fe2a1f3b2 · ankitects/anki · GitHub",
+   "run_id": "20261105T152731-1700db04"
+  },
+  {
+   "source": "https://github.com/common-workflow-language/cwltool/blob/959ce27ea0ea0d9b1d083fb34a47d46a22954852/README.rst",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/TOOL-DECISIONS.md:14"
+   ],
+   "claim": "| cwltool | Apache-2.0 | **Evaluate optional interchange/validation** | CWL reference runner; inspected Windows guidance uses WSL2/Docker. Keep existing registered-tool runtime as the default execution boundary. | [959ce27ea0ea](https://github.com/common-workflow-language/cwltool/blob/959ce27ea0ea0d9b1d083fb34a47d46a22954852/README.rst) |",
+   "verdict": "partly",
+   "location": "MS Windows users",
+   "note": "The reference-runner role and WSL2/Docker Windows guidance are supported, but the Apache-2.0 license is not stated anywhere in this README text, so that attribution cannot be verified here.",
+   "quotes": [
+    {
+     "quote": "This is the reference implementation of the `Common Workflow Language open",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Install Windows Subsystem for Linux 2 and Docker Desktop",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "cwltool/README.rst at 959ce27ea0ea0d9b1d083fb34a47d46a22954852 · common-workflow-language/cwltool · GitHub",
+   "run_id": "20261105T152745-b5d8c2bb"
+  },
+  {
+   "source": "https://github.com/langchain-ai/langgraph/blob/3c916d750575b22c464790e9774494d810ccd322/README.md",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/TOOL-DECISIONS.md:13"
+   ],
+   "claim": "| LangGraph | MIT | **Reference patterns; defer runtime replacement** | Checkpoint/store abstractions overlap current Session/workflow responsibilities. A migration would need policy, replay and revision equivalence tests. | [3c916d750575](https://github.com/langchain-ai/langgraph/blob/3c916d750575b22c464790e9774494d810ccd322/README.md) |",
+   "verdict": "partly",
+   "location": "Header badges; 'Why use LangGraph?' section",
+   "note": "MIT licensing is accurate, but the README never mentions checkpoint or store abstractions; it describes durable execution, memory, and persistence. Overlap with Session/workflow and migration-test needs are the reviewer's inference.",
+   "quotes": [
+    {
+     "quote": "https://opensource.org/licenses/MIT",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Create truly stateful agents with both short-term working memory for ongoing reasoning and long-term persistent memory across sessions.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "langgraph/README.md at 3c916d750575b22c464790e9774494d810ccd322 · langchain-ai/langgraph · GitHub",
+   "run_id": "20261105T152746-1f889939"
+  },
+  {
+   "source": "https://github.com/microsoft/graphrag/blob/34b2b67ae4601ad0b47bcd179fbe3f2a23aa0857/README.md",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:108"
+   ],
+   "claim": "The inspected Microsoft GraphRAG README now describes the project as largely in maintenance mode. This materially weakens the case for making it a new central dependency, despite recent repository activity. [Pinned README](https://github.com/microsoft/graphrag/blob/34b2b67ae4601ad0b47bcd179fbe3f2a23aa0857/README.md).",
+   "verdict": "supported",
+   "location": "Warning block at top of README",
+   "note": "The README explicitly states maintenance mode and no new features; the dependency-adoption inference is a design judgment and is not assessed.",
+   "quotes": [
+    {
+     "quote": "This project is largely in maintenance mode, and won't be accepting new PRs or implementing new features.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "graphrag/README.md at 34b2b67ae4601ad0b47bcd179fbe3f2a23aa0857 · microsoft/graphrag · GitHub",
+   "run_id": "20261105T152805-66e8baf7"
+  },
+  {
+   "source": "https://github.com/microsoft/graphrag/blob/34b2b67ae4601ad0b47bcd179fbe3f2a23aa0857/README.md",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "formal-solutions/TOOL-DECISIONS.md:16"
+   ],
+   "claim": "| Microsoft GraphRAG | MIT | **Defer central adoption; narrow retrieval experiment only** | Pinned README explicitly describes maintenance mode. Published evidence concerns global sensemaking, not general temporal memory correctness. | [34b2b67ae460](https://github.com/microsoft/graphrag/blob/34b2b67ae4601ad0b47bcd179fbe3f2a23aa0857/README.md) |",
+   "verdict": "partly",
+   "location": "Warning block at top of README; Repository Guidance",
+   "note": "Maintenance mode is explicitly stated. But the README says nothing about 'global sensemaking' or 'temporal memory correctness'; it only links to external blog/paper and describes knowledge graph memory structures for LLM outputs.",
+   "quotes": [
+    {
+     "quote": "This project is largely in maintenance mode, and won't be accepting new PRs or implementing new features.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "This repository presents a methodology for using knowledge graph memory structures to enhance LLM outputs.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "graphrag/README.md at 34b2b67ae4601ad0b47bcd179fbe3f2a23aa0857 · microsoft/graphrag · GitHub",
+   "run_id": "20261105T152805-66e8baf7"
+  },
+  {
+   "source": "https://github.com/temporalio/temporal/blob/8ac42361480ce7df37aec4adab8d4358e8e1f278/README.md",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/TOOL-DECISIONS.md:12"
+   ],
+   "claim": "| Temporal server | MIT | **Defer runtime replacement** | Adds a durable orchestration service. Useful if distributed scheduling/recovery becomes an unmet requirement; external effects still need idempotency and reconciliation. | [8ac42361480c](https://github.com/temporalio/temporal/blob/8ac42361480ce7df37aec4adab8d4358e8e1f278/README.md) |",
+   "verdict": "supported",
+   "location": "Introduction; License",
+   "note": "The README describes Temporal as a durable execution platform whose server resiliently executes Workflows and retries failed operations, and it is MIT-licensed. The idempotency/reconciliation and 'defer runtime replacement' remarks are design inferences, not judged.",
+   "quotes": [
+    {
+     "quote": "Temporal is a durable execution platform that enables developers to build scalable applications without sacrificing productivity or reliability.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "[MIT License](https://github.com/temporalio/temporal/blob/main/LICENSE)",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "temporal/README.md at 8ac42361480ce7df37aec4adab8d4358e8e1f278 · temporalio/temporal · GitHub",
+   "run_id": "20261105T152815-753aba22"
+  },
+  {
+   "source": "https://github.com/tlaplus/tlaplus",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/FORMAL-CONTRACTS.md:88"
+   ],
+   "claim": "Useful tools: [TLA+ CLI tools](https://github.com/tlaplus/tlaplus) and [Hypothesis stateful testing](https://hypothesis.readthedocs.io/en/latest/stateful.html). Neither was installed or run in this pass; only the supplied finite Python reference models were executed.",
+   "verdict": "supported",
+   "location": "Overview / Use",
+   "note": "The source identifies itself as the TLA+ CLI tools repository. The 'useful tools' framing and the statement that nothing was installed or run are the reviewer's own inferences, not attributed source content.",
+   "quotes": [
+    {
+     "quote": "This repository hosts the core TLA⁺ command line interface (CLI) Tools and the Toolbox integrated development environment (IDE).",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Get tla2tools.jar from the releases to use the tools from the command line.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "GitHub - tlaplus/tlaplus: TLC is a model checker for specifications written in TLA+. The TLA+Toolbox is an IDE for TLA+. · GitHub",
+   "run_id": "20261105T152820-55f323cd"
+  },
+  {
+   "source": "https://github.com/tlaplus/tlaplus/blob/dc6a944429fe3e26104d38f9ff792d2d5d83f307/README.md",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/TOOL-DECISIONS.md:9"
+   ],
+   "claim": "| TLA+/TLC | MIT | **Use for a focused design model** | CLI requires Java 11+; keep outside runtime. Inspected README says Eclipse Toolbox is unmaintained; prefer CLI/editor integration. | [dc6a944429fe](https://github.com/tlaplus/tlaplus/blob/dc6a944429fe3e26104d38f9ff792d2d5d83f307/README.md) |",
+   "verdict": "supported",
+   "location": "Use section",
+   "note": "Both attributed facts are stated: Java 11+ requirement and the unmaintained Eclipse Toolbox. The source says \"TLA⁺ tools\" generally rather than \"CLI\" specifically, but the CLI tools are included; \"keep outside runtime\" and \"prefer CLI/editor\" are design inferences, not judged.",
+   "quotes": [
+    {
+     "quote": "The TLA⁺ tools require Java 11+ to run.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "The Eclipse-based TLA⁺ Toolbox GUI is also available from this repository, but it is currently unmaintained.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "tlaplus/README.md at dc6a944429fe3e26104d38f9ff792d2d5d83f307 · tlaplus/tlaplus · GitHub",
+   "run_id": "20261105T152829-d85fea28"
+  },
+  {
+   "source": "https://github.com/xtdb/xtdb/blob/cf9ad735af92d8440441deb1fd39b6842c247ace/README.adoc",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/TOOL-DECISIONS.md:11"
+   ],
+   "claim": "| XTDB | MPL-2.0-or-later per README | **Borrow semantics; defer migration** | Separate database deployment and data model. Temporal query support does not supply domain truth, access policy or withdrawal propagation automatically. | [cf9ad735af92](https://github.com/xtdb/xtdb/blob/cf9ad735af92d8440441deb1fd39b6842c247ace/README.adoc) |",
+   "verdict": "supported",
+   "location": "License and Copyright",
+   "note": "The README states MPL version 2 or any later version, matching MPL-2.0-or-later. The remaining statements are design inferences, not attributed source content.",
+   "quotes": [
+    {
+     "quote": "XTDB is licensed under the Mozilla Public License, version 2 or (at your option) any later version.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "xtdb/README.adoc at cf9ad735af92d8440441deb1fd39b6842c247ace · xtdb/xtdb · GitHub",
+   "run_id": "20261105T152829-292183dd"
+  },
+  {
+   "source": "https://hypothesis.readthedocs.io/en/latest/stateful.html",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/FORMAL-CONTRACTS.md:88"
+   ],
+   "claim": "Useful tools: [TLA+ CLI tools](https://github.com/tlaplus/tlaplus) and [Hypothesis stateful testing](https://hypothesis.readthedocs.io/en/latest/stateful.html). Neither was installed or run in this pass; only the supplied finite Python reference models were executed.",
+   "verdict": "supported",
+   "location": "Stateful tests",
+   "note": "The source documents Hypothesis stateful testing as a way to generate and run action sequences; the claim's other statements concern the review's own actions, not this source.",
+   "quotes": [
+    {
+     "quote": "Hypothesis instead tries to generate not just data but entire tests.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Stateful tests - Hypothesis 6.170.14 documentationContentsMenuExpandLight modeDark modeAuto light/dark, in light modeAuto light/dark, in dark mode",
+   "run_id": "20261105T152841-3c31c656"
+  },
+  {
+   "source": "https://hypothesis.readthedocs.io/en/latest/stateful.html",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:94"
+   ],
+   "claim": "**Established tooling:** Hypothesis stateful testing generates sequences of actions and checks invariants against a reference model. It finds and minimizes counterexamples but is not exhaustive verification. [Hypothesis stateful documentation](https://hypothesis.readthedocs.io/en/latest/stateful.html).",
+   "verdict": "partly",
+   "location": "Rule-based state machines / Invariants",
+   "note": "Generating failing action sequences is right. But invariants are user-defined functions run after every step, not checks against a reference model (the model comparison is only one example). Minimization is only implied by 'a very short program'; 'not exhaustive verification' is not stated.",
+   "quotes": [
+    {
+     "quote": "Hypothesis will try to find sequences of those actions that result in a failure.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Hypothesis provides a decorator that marks a function to be run after every step.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Stateful tests - Hypothesis 6.170.14 documentationContentsMenuExpandLight modeDark modeAuto light/dark, in light modeAuto light/dark, in dark mode",
+   "run_id": "20261105T152841-3c31c656"
+  },
+  {
+   "source": "https://inspect.aisi.org.uk/",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:96"
+   ],
+   "claim": "Inspect provides composable agent evaluations and an agent bridge. Its bridge redirects model calls, so integration must verify route fidelity rather than silently evaluate a different calling path. [Inspect](https://inspect.aisi.org.uk/); [agent bridge](https://inspect.aisi.org.uk/agent-bridge.html).",
+   "verdict": "not_in_text",
+   "location": "agent-bridge.html (linked page not included in provided text)",
+   "note": "The provided homepage text supports composable agent evaluations, but says nothing about an agent bridge redirecting model calls; that behavior is attributed to agent-bridge.html, which is not in this text and cannot be judged.",
+   "quotes": [],
+   "source_title": "Inspect",
+   "run_id": "20261105T152844-2c07419e"
+  },
+  {
+   "source": "https://inspect.aisi.org.uk/agent-bridge.html",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:96"
+   ],
+   "claim": "Inspect provides composable agent evaluations and an agent bridge. Its bridge redirects model calls, so integration must verify route fidelity rather than silently evaluate a different calling path. [Inspect](https://inspect.aisi.org.uk/); [agent bridge](https://inspect.aisi.org.uk/agent-bridge.html).",
+   "verdict": "supported",
+   "location": "Overview; Agent Bridge",
+   "note": "The source states the bridge routes/redirects agents' native model calls to the current Inspect model provider. The 'composable agent evaluations' phrase is attributed to the Inspect homepage, not this page; the route-fidelity inference is not judged.",
+   "quotes": [
+    {
+     "quote": "Agents are bridged into Inspect such that their native model calling functions are routed through the current Inspect model provider.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Run your custom Python agent within the agent_bridge() context manager which redirects OpenAI calls to the current Inspect model provider.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Agent Bridge – Inspect",
+   "run_id": "20261105T152850-a1f8deb8"
+  },
+  {
+   "source": "https://lamport.azurewebsites.net/tla/formal-methods-amazon.pdf",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/04-THEORY-OF-EVOLVING-KNOWLEDGE.md:118"
+   ],
+   "claim": "These are suitable targets for state-machine specification and model checking. Such methods analyse transition rules; they do not establish the truth of a worker's research conclusions. [AWS experience with formal methods](https://lamport.azurewebsites.net/tla/formal-methods-amazon.pdf).",
+   "verdict": "supported",
+   "location": "Precise Designs, page 2",
+   "note": "The source describes TLA+ specifying legal behaviors and TLC exhaustively checking traces, i.e. analyzing transition rules. The statement about research conclusions is the reviewer's inference, not attributed content.",
+   "quotes": [
+    {
+     "quote": "A TLA+ specification describes the set of all possible legal behaviors (execution traces) of a system.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "a tool which takes a TLA+ specification and exhaustively checks the desired correctness properties across all of the possible execution traces.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152904-e9f95b61"
+  },
+  {
+   "source": "https://lamport.azurewebsites.net/tla/formal-methods-amazon.pdf",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:44"
+   ],
+   "claim": "**Established solution:** model dispatch, completion, revision, acceptance, retry and reservation as state transitions, with machine-checkable invariants. AWS reports using TLA+ and model checking to find subtle distributed-system design bugs. This is strong evidence for the engineering method, not proof of Librarian's implementation. [Newcombe et al., 2014](https://lamport.azurewebsites.net/tla/formal-methods-amazon.pdf).",
+   "verdict": "supported",
+   "location": "pages 3 and 8",
+   "note": "The source reports TLA+/model checking finding subtle design bugs in AWS distributed systems. The workflow state-transition prescription and the Librarian caveat are the reviewer's inferences.",
+   "quotes": [
+    {
+     "quote": "So far we have used TLA+ on 10 large complex real-world systems.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Model checking revealed two subtle bugs in the algorithm, and allowed F.Z. to verify fixes for both bugs.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152904-e9f95b61"
+  },
+  {
+   "source": "https://pubmed.ncbi.nlm.nih.gov/21252317/",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/02-DESIGN-DIRECTION.md:53"
+   ],
+   "claim": "Maintain separate identities for human understanding, agent assessment and possible future training data. Human cards can support recall and application. Agent probes should measure closed-context recall, retrieval-assisted answers and actual task execution separately, with versioned evidence and hidden scoring criteria. Passing a card does not establish procedural competence; repeatedly presenting cards does not update a frozen model's weights. Human retrieval-practice evidence supports a separate human learning feature, not an agent forgetting schedule. [Primary human study](https://pubmed.ncbi.nlm.nih.gov/21252317/).",
+   "verdict": "supported",
+   "location": "Abstract",
+   "note": "The abstract attributes a human learning benefit to retrieval practice, including comprehension and inference outcomes; it says nothing about agent memory, so the claim's separation of the two is faithful.",
+   "quotes": [
+    {
+     "quote": "Here, we show that practicing retrieval produces greater gains in meaningful learning than elaborative studying with concept mapping.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "The advantage of retrieval practice was observed with test questions that assessed comprehension and required students to make inferences.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152906-15d0bd78"
+  },
+  {
+   "source": "https://pubmed.ncbi.nlm.nih.gov/21252317/",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "EVOLVING-KNOWLEDGE-BENCHMARK.md:91"
+   ],
+   "claim": "For human cards, run a separate consented learning assessment if desired: delayed recall/application under a defined schedule. Do not mix a human learning effect with an agent-memory outcome. Human retrieval-practice findings motivate this separate feature, not an agent cache-expiry rule. [Primary study](https://pubmed.ncbi.nlm.nih.gov/21252317/).",
+   "verdict": "supported",
+   "location": "Abstract",
+   "note": "The source supports retrieval practice as a human learning intervention. The consent, delayed schedule and separation from agent outcomes are the reviewer's design proposals, not attributed findings.",
+   "quotes": [
+    {
+     "quote": "Retrieval practice is an effective tool to promote conceptual learning about science.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Our findings support the theory that retrieval practice enhances learning by retrieval-specific mechanisms rather than by elaborative study processes.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152906-15d0bd78"
+  },
+  {
+   "source": "https://pubmed.ncbi.nlm.nih.gov/21252317/",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:116"
+   ],
+   "claim": "1. **Human learning:** build on existing Understanding/review tasks. Cards should reference a concept/source version and ask for recall, explanation or application; the person's answers remain separate from agent answers. Human retrieval-practice and spacing experiments support this direction for learners. They do not establish model-agent memory improvements or a universal review schedule. [Karpicke and Blunt 2011](https://pubmed.ncbi.nlm.nih.gov/21252317/), [Karpicke and Bauernschmidt 2011](https://pubmed.ncbi.nlm.nih.gov/21574747/).",
+   "verdict": "partly",
+   "location": "Abstract",
+   "note": "The retrieval-practice support for learners is faithful to this source. This study compares retrieval practice with elaborative studying plus concept mapping; it reports no spacing manipulation, so spacing evidence must come from the other cited study.",
+   "quotes": [
+    {
+     "quote": "Here, we show that practicing retrieval produces greater gains in meaningful learning than elaborative studying with concept mapping.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "The advantage of retrieval practice generalized across texts identical to those commonly found in science education.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152906-15d0bd78"
+  },
+  {
+   "source": "https://pubmed.ncbi.nlm.nih.gov/21574747/",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:116"
+   ],
+   "claim": "1. **Human learning:** build on existing Understanding/review tasks. Cards should reference a concept/source version and ask for recall, explanation or application; the person's answers remain separate from agent answers. Human retrieval-practice and spacing experiments support this direction for learners. They do not establish model-agent memory improvements or a universal review schedule. [Karpicke and Blunt 2011](https://pubmed.ncbi.nlm.nih.gov/21252317/), [Karpicke and Bauernschmidt 2011](https://pubmed.ncbi.nlm.nih.gov/21574747/).",
+   "verdict": "supported",
+   "location": "Abstract",
+   "note": "The source is a human experiment showing retrieval practice and spacing improve long-term retention, and it reports no superior relative schedule, consistent with the stated limits on universal schedules and model-agent memory.",
+   "quotes": [
+    {
+     "quote": "Repeated retrieval enhances long-term retention, and spaced repetition also enhances retention.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Repeated spaced retrieval had powerful effects on retention, but the relative schedule of repeated tests had no discernible impact.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Spaced retrieval: absolute spacing enhances learning regardless of relative ",
+   "run_id": "20261105T152908-8b030ac3"
+  },
+  {
+   "source": "https://web.cs.ucdavis.edu/~green/papers/pods07.pdf",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/04-THEORY-OF-EVOLVING-KNOWLEDGE.md:51"
+   ],
+   "claim": "Assumption-based truth maintenance studies how conclusions depend on assumptions. Provenance algebra provides formal ways to express how evidence combines in defined query systems. These are foundations for tracking support, rather than tools that decide whether arbitrary natural-language statements are true. [Reiter and de Kleer](https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf); [Green, Karvounarakis and Tannen](https://web.cs.ucdavis.edu/~green/papers/pods07.pdf).",
+   "verdict": "supported",
+   "location": "Section 1 (Introduction), page 1",
+   "note": "Faithful: the paper formalizes how annotations combine in RA+ and datalog query semantics via semirings and polynomials. It says nothing about deciding truth of natural-language statements; the ATMS half belongs to the other cited source.",
+   "quotes": [
+    {
+     "quote": "symbolic representation is that of polynomials.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "propose to use polynomials to capture provenance.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152916-293ed9fa"
+  },
+  {
+   "source": "https://web.cs.ucdavis.edu/~green/papers/pods07.pdf",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "formal-solutions/FORMAL-CONTRACTS.md:27"
+   ],
+   "claim": "The formal inspiration is [provenance semirings](https://web.cs.ucdavis.edu/~green/papers/pods07.pdf) and [assumption-based maintenance](https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf). This limited application does not claim complete negation, probabilistic confidence, natural-language entailment or automated conflict resolution. Support combinations can grow exponentially; cap enumeration and report incomplete coverage rather than silently discard alternatives.",
+   "verdict": "supported",
+   "location": "Section 4 (Definition 4.1), page 4; Section 11, page 10",
+   "note": "The attributed content, provenance semirings as formal basis, is faithful, and negation is indeed left as future work. The limitation list and enumeration cap concern the proposed application, not this source; the source does handle probabilistic databases via event tables.",
+   "quotes": [
+    {
+     "quote": "semiring for I is the semiring of polynomials with variables",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "require axiomatizing an additional operation akin to",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152916-293ed9fa"
+  },
+  {
+   "source": "https://web.cs.ucdavis.edu/~green/papers/pods07.pdf",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:66"
+   ],
+   "claim": "**Formal foundation:** assumption-based truth maintenance associates conclusions with supporting assumptions. Provenance semirings formalize how alternatives and joint dependencies combine for positive relational queries; the factorization theorem explains how annotations can be evaluated under different semirings. These results concern formal inputs and operators, not arbitrary prose claims. [Reiter and de Kleer, 1987](https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf); [Green et al., PODS 2007, §§3–4](https://web.cs.ucdavis.edu/~green/papers/pods07.pdf).",
+   "verdict": "supported",
+   "location": "Section 3 (Definition 3.2), page 3; Section 4 (Theorem 4.3), page 4",
+   "note": "Faithful: RA+ is the generalized positive algebra on K-relations, and Theorem 4.3 factors K-relation semantics through provenance polynomials, with Evalv evaluating annotations in any commutative semiring.",
+   "quotes": [
+    {
+     "quote": "The operations of the positive algebra are",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "any semiring K factors through the semantics of the same in",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T152916-293ed9fa"
+  },
+  {
+   "source": "https://www.anthropic.com/research/effective-context-engineering-for-ai-agents",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "REQUIREMENTS-RESEARCH.md:31"
+   ],
+   "claim": "| S9 — [Anthropic: Effective context engineering](https://www.anthropic.com/research/effective-context-engineering-for-ai-agents), 29 September 2025, compaction/note-taking/subagent sections | Describes compaction, durable notes, isolated exploration and condensed handoffs; warns that aggressive compression can omit subtle details. | Vendor engineering guidance, not an independent controlled comparison. Test selection fidelity and retain rehydration paths; do not import a fixed summary size or file count. |",
+   "verdict": "supported",
+   "location": "Context engineering for long-horizon tasks (Compaction, Structured note-taking, Sub-agent architectures)",
+   "note": "All attributed elements are present: compaction, notes persisted outside the context window and reloaded later, sub-agents with isolated context returning condensed summaries, and the explicit warning about aggressive compaction losing subtle context.",
+   "quotes": [
+    {
+     "quote": "Compaction is the practice of taking a conversation nearing the context window limit, summarizing its contents, and reinitiating a new context window with the summary.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "overly aggressive compaction can result in the loss of subtle but critical context whose importance only becomes apparent later",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Each subagent might explore extensively, using tens of thousands of tokens or more, but returns only a condensed, distilled summary of its work (often 1,000-2,000 tokens).",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Effective context engineering for AI agents \\ Anthropic",
+   "run_id": "20261105T152955-7d6a2aef"
+  },
+  {
+   "source": "https://www.commonwl.org/v1.2/Workflow.html",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/04-THEORY-OF-EVOLVING-KNOWLEDGE.md:126"
+   ],
+   "claim": "Workflow standards such as CWL define dependency and input/output semantics; provenance packaging such as Workflow Run RO-Crate records execution context and products. These offer useful contracts without requiring Librarian to replace its workflow runtime. [CWL v1.2.1](https://www.commonwl.org/v1.2/Workflow.html); [Workflow Run RO-Crate](https://www.researchobject.org/workflow-run-crate/).",
+   "verdict": "supported",
+   "location": "4. Workflow; 3.1 Execution concepts",
+   "note": "The source defines input/output parameters and dependency semantics via source/outputSource links forming a DAG. RO-Crate and Librarian statements are design inferences, not judged.",
+   "quotes": [
+    {
+     "quote": "Dependencies between parameters are expressed using the source",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "A workflow is a process characterized by multiple subprocess steps,",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Common Workflow Language (CWL) Workflow Description, v1.2.1",
+   "run_id": "20261105T153000-140d56bd"
+  },
+  {
+   "source": "https://www.commonwl.org/v1.2/Workflow.html",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "formal-solutions/FORMAL-CONTRACTS.md:67"
+   ],
+   "claim": "Use [CWL](https://www.commonwl.org/v1.2/Workflow.html) as an execution-contract reference and [Workflow Run RO-Crate](https://www.researchobject.org/workflow-run-crate/) for optional exchange of run evidence. A content hash identifies bytes under its collision assumptions; it does not prove authorship, permission or correctness.",
+   "verdict": "supported",
+   "location": "1.5 Purpose; 2.2 Syntax",
+   "note": "The source defines a data and execution model and a document format, consistent with serving as an execution-contract reference. Hash and RO-Crate statements are not attributed to this source.",
+   "quotes": [
+    {
+     "quote": "This specification is intended to define a data and execution model for Workflows that can be implemented on top of a",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "CWL documents must consist of an object or array of objects represented using",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Common Workflow Language (CWL) Workflow Description, v1.2.1",
+   "run_id": "20261105T153000-140d56bd"
+  },
+  {
+   "source": "https://www.commonwl.org/v1.2/Workflow.html",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:76"
+   ],
+   "claim": "**Established solution:** CWL v1.2.1 defines workflow inputs/outputs, data dependencies and execution ordering, with conformance tests. It supplies a concrete exchange contract for computational workflows. It does not establish that the method being executed is correct. [CWL Workflow specification v1.2.1](https://www.commonwl.org/v1.2/Workflow.html).",
+   "verdict": "supported",
+   "location": "4. Workflow; 1.1 Introduction to the CWL Workflow standard v1.2.1",
+   "note": "Inputs/outputs are typed fields, dependencies and ordering are specified, and conformance tests are part of the standard. The source makes no claim that executed methods are correct.",
+   "quotes": [
+    {
+     "quote": "When there is a dependency, the workflow engine must execute the preceding",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "and adds additional conformance tests.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Common Workflow Language (CWL) Workflow Description, v1.2.1",
+   "run_id": "20261105T153000-140d56bd"
+  },
+  {
+   "source": "https://www.commonwl.org/v1.2/Workflow.html",
+   "kind": "web",
+   "claim_id": "c4",
+   "where": [
+    "formal-solutions/TOOL-DECISIONS.md:28"
+   ],
+   "claim": "| [CWL v1.2.1](https://www.commonwl.org/v1.2/Workflow.html) | Typed inputs/outputs and explicit dependency contract for replication recipes | Do not claim CWL conformance for an incomplete custom subset |",
+   "verdict": "supported",
+   "location": "4.1 WorkflowInputParameter; 4. Workflow",
+   "note": "Typed input/output parameters and explicit dependency links are specified. The conformance-subset warning is a design inference, not attributed content.",
+   "quotes": [
+    {
+     "quote": "Specify valid types of data that may be assigned to this parameter.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Dependencies between parameters are expressed using the source",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Common Workflow Language (CWL) Workflow Description, v1.2.1",
+   "run_id": "20261105T153000-140d56bd"
+  },
+  {
+   "source": "https://www.iiia.csic.es/~enric/papers/Aamodt_1994_Case.pdf",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/04-THEORY-OF-EVOLVING-KNOWLEDGE.md:77"
+   ],
+   "claim": "Case-based reasoning provides an established account of learning from experience: retrieve a relevant case, reuse or adapt it, evaluate and revise the solution, then retain useful experience. Evaluation is part of the cycle, not an optional step after storage. [Aamodt and Plaza, §3.3](https://www.iiia.csic.es/~enric/papers/Aamodt_1994_Case.pdf).",
+   "verdict": "supported",
+   "location": "§3.3 The CBR cycle (page 6)",
+   "note": "The four REs are stated as the cycle, and revision/testing occurs before RETAIN, so evaluation is inside the cycle rather than an optional post-storage step.",
+   "quotes": [
+    {
+     "quote": "1. RETRIEVE the most similar case or cases",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Through the REVISE process this solution is tested for success, e.g. by being applied to the real world environment or evaluated by a teacher, and repaired if failed.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153025-a157a950"
+  },
+  {
+   "source": "https://www.iiia.csic.es/~enric/papers/Aamodt_1994_Case.pdf",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:56"
+   ],
+   "claim": "**Established solution:** case-based reasoning explicitly separates retrieval, reuse, revision through evaluation, and retention. Its foundational account treats adaptation and testing as essential, rather than assuming that similarity makes an earlier solution correct. It also identifies domain dependence. [Aamodt and Plaza, 1994, §§3.3–3.5](https://www.iiia.csic.es/~enric/papers/Aamodt_1994_Case.pdf).",
+   "verdict": "partly",
+   "location": "§3.4 A hierarchy of CBR tasks (page 7) and §6.1 Copy (page 13)",
+   "note": "Separation of the four tasks, evaluation-based revision, and domain dependence are as stated. But adaptation is not essential: Copy is a listed reuse subtask, called a trivial type of reuse in simple classification tasks.",
+   "quotes": [
+    {
+     "quote": "All the four tasks are necessary in order to perform the top-level task.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "The possible subtasks of Reuse are Copy and Adapt.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153025-a157a950"
+  },
+  {
+   "source": "https://www.microsoft.com/en-us/research/publication/build-systems-la-carte/",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/04-THEORY-OF-EVOLVING-KNOWLEDGE.md:67"
+   ],
+   "claim": "Build systems offer a useful analogy: an output depends on inputs, and a relevant input change may require recomputation. Research on build systems separates the order of computation from the decision about whether recomputation is necessary. [Build Systems à la Carte](https://www.microsoft.com/en-us/research/publication/build-systems-la-carte/).",
+   "verdict": "not_in_text",
+   "location": "Publication page abstract (no page markers in provided text)",
+   "note": "Only the webpage abstract is provided. The input-change/recomputation analogy and the separation of computation order from rebuild decisions are not in the abstract and would appear in the paper body, which is absent.",
+   "quotes": [],
+   "source_title": "Build systems a la carte - Microsoft ResearchYour Privacy Choices Opt-Out IconYour Privacy Choices Opt-Out Icon",
+   "run_id": "20261105T153109-66ce0f24"
+  },
+  {
+   "source": "https://www.microsoft.com/en-us/research/publication/build-systems-la-carte/",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:70"
+   ],
+   "claim": "Build-system research separates scheduling from rebuild decisions and defines consistency with declared computations. Its correctness conditions depend on assumptions including acyclic tasks; nondeterministic tasks require a modified account. [Build Systems à la Carte, author draft, §3.6 and §6.3](https://www.microsoft.com/en-us/research/wp-content/uploads/2018/03/build-systems-5ab0f42d0f937.pdf). The inspected PDF is marked under review; the [publisher listing](https://www.microsoft.com/en-us/research/publication/build-systems-la-carte/) identifies the subsequent ICFP 2018 publication.",
+   "verdict": "not_in_text",
+   "location": "Author draft PDF §3.6 and §6.3 (not present in provided text)",
+   "note": "The cited PDF sections are not in the provided text; only the publication-page abstract is available. The ICFP'18 listing detail is visible, but the correctness, acyclic-task, and nondeterministic-task claims cannot be judged.",
+   "quotes": [],
+   "source_title": "Build systems a la carte - Microsoft ResearchYour Privacy Choices Opt-Out IconYour Privacy Choices Opt-Out Icon",
+   "run_id": "20261105T153109-66ce0f24"
+  },
+  {
+   "source": "https://www.microsoft.com/en-us/research/wp-content/uploads/2018/03/build-systems-5ab0f42d0f937.pdf",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:70"
+   ],
+   "claim": "Build-system research separates scheduling from rebuild decisions and defines consistency with declared computations. Its correctness conditions depend on assumptions including acyclic tasks; nondeterministic tasks require a modified account. [Build Systems à la Carte, author draft, §3.6 and §6.3](https://www.microsoft.com/en-us/research/wp-content/uploads/2018/03/build-systems-5ab0f42d0f937.pdf). The inspected PDF is marked under review; the [publisher listing](https://www.microsoft.com/en-us/research/publication/build-systems-la-carte/) identifies the subsequent ICFP 2018 publication.",
+   "verdict": "supported",
+   "location": "§3.6 (page 11) and §6.3 (page 22)",
+   "note": "The paper separates dependency order from rebuild decisions, defines correctness as consistency with the task, states the acyclic-task assumption, and says nondeterministic tasks require an adjusted correctness definition.",
+   "quotes": [
+    {
+     "quote": "These choices turn out to be orthogonal, which leads us to a new classification of the design space (§4.3).",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "All build systems discussed in this paper are correct only under the assumption that the given task description is acyclic.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Handling such tasks is possible in our framework, but requires an adjustment of the correctness definition (§3.6)",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153118-d2e6b76b"
+  },
+  {
+   "source": "https://www.researchobject.org/ro-crate/specification/1.1/",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:78"
+   ],
+   "claim": "Workflow Run RO-Crate packages execution provenance and associated inputs, outputs and code at different levels of detail; its Process profile can be used without adopting a workflow engine. [Workflow Run RO-Crate](https://www.researchobject.org/workflow-run-crate/); [RO-Crate 1.1 metadata specification](https://www.researchobject.org/ro-crate/specification/1.1/).",
+   "verdict": "not_in_text",
+   "location": "Front matter and Contents (no page markers present)",
+   "note": "Only the title block, publication metadata and table of contents were extracted. Nothing here describes Workflow Run RO-Crate, its Process profile, or levels of execution detail, so the attributed content cannot be judged from this text.",
+   "quotes": [],
+   "source_title": "RO-Crate 1.1 | Research Object Crate (RO-Crate)",
+   "run_id": "20261105T153138-a70ea3fe"
+  },
+  {
+   "source": "https://www.researchobject.org/ro-crate/specification/1.1/",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "formal-solutions/TOOL-DECISIONS.md:29"
+   ],
+   "claim": "| [RO-Crate 1.1](https://www.researchobject.org/ro-crate/specification/1.1/) and [Workflow Run RO-Crate](https://www.researchobject.org/workflow-run-crate/) | Export run artifacts and their execution context | Interchange packaging does not itself reproduce a result; 1.1 is the inspected version, not a claim it is newest |",
+   "verdict": "not_in_text",
+   "location": "Front matter and Contents (no page markers present)",
+   "note": "The extracted text contains only metadata and a contents list; it does not state that RO-Crate exports run artifacts or execution context. The version note is consistent with the metadata but is a review caveat, not attributed source content.",
+   "quotes": [],
+   "source_title": "RO-Crate 1.1 | Research Object Crate (RO-Crate)",
+   "run_id": "20261105T153138-a70ea3fe"
+  },
+  {
+   "source": "https://www.researchobject.org/workflow-run-crate/",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/04-THEORY-OF-EVOLVING-KNOWLEDGE.md:126"
+   ],
+   "claim": "Workflow standards such as CWL define dependency and input/output semantics; provenance packaging such as Workflow Run RO-Crate records execution context and products. These offer useful contracts without requiring Librarian to replace its workflow runtime. [CWL v1.2.1](https://www.commonwl.org/v1.2/Workflow.html); [Workflow Run RO-Crate](https://www.researchobject.org/workflow-run-crate/).",
+   "verdict": "supported",
+   "location": "WRROC Profiles",
+   "note": "The WRROC attribution is faithful: it captures execution provenance and bundles inputs, outputs and code. CWL semantics and the Librarian runtime point are attributed elsewhere or are design inference, not judged.",
+   "quotes": [
+    {
+     "quote": "capture the provenance of the execution of computational workflows at different levels of granularity and bundle together all their associated products (inputs, outputs, code, etc.)",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Workflow Run RO-Crate is a working group for defining RO-Crate profiles for capturing the provenance of an execution of a computational workflow.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Workflow Run RO-Crate | RO-Crate profiles to capture the provenance of workflow runs",
+   "run_id": "20261105T153139-24102d9b"
+  },
+  {
+   "source": "https://www.researchobject.org/workflow-run-crate/",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "formal-solutions/FORMAL-CONTRACTS.md:67"
+   ],
+   "claim": "Use [CWL](https://www.commonwl.org/v1.2/Workflow.html) as an execution-contract reference and [Workflow Run RO-Crate](https://www.researchobject.org/workflow-run-crate/) for optional exchange of run evidence. A content hash identifies bytes under its collision assumptions; it does not prove authorship, permission or correctness.",
+   "verdict": "supported",
+   "location": "WRROC Profiles",
+   "note": "The source supports using WRROC to record workflow-run provenance and products. The content-hash caveat and the recommendation to use it optionally are design inferences, not attributed claims about this source.",
+   "quotes": [
+    {
+     "quote": "capture the provenance of the execution of computational workflows at different levels of granularity and bundle together all their associated products (inputs, outputs, code, etc.)",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Workflow Run RO-Crate | RO-Crate profiles to capture the provenance of workflow runs",
+   "run_id": "20261105T153139-24102d9b"
+  },
+  {
+   "source": "https://www.researchobject.org/workflow-run-crate/",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:78"
+   ],
+   "claim": "Workflow Run RO-Crate packages execution provenance and associated inputs, outputs and code at different levels of detail; its Process profile can be used without adopting a workflow engine. [Workflow Run RO-Crate](https://www.researchobject.org/workflow-run-crate/); [RO-Crate 1.1 metadata specification](https://www.researchobject.org/ro-crate/specification/1.1/).",
+   "verdict": "supported",
+   "location": "WRROC Profiles; Implementations & examples",
+   "note": "Both attributed points match: provenance plus inputs, outputs and code at varying granularity, and the Process Crate profile is explicitly implementable outside workflow systems.",
+   "quotes": [
+    {
+     "quote": "capture the provenance of the execution of computational workflows at different levels of granularity and bundle together all their associated products (inputs, outputs, code, etc.)",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "The Process Crate profile can also be implemented outside workflow systems",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Workflow Run RO-Crate | RO-Crate profiles to capture the provenance of workflow runs",
+   "run_id": "20261105T153139-24102d9b"
+  },
+  {
+   "source": "https://www.researchobject.org/workflow-run-crate/",
+   "kind": "web",
+   "claim_id": "c4",
+   "where": [
+    "formal-solutions/TOOL-DECISIONS.md:29"
+   ],
+   "claim": "| [RO-Crate 1.1](https://www.researchobject.org/ro-crate/specification/1.1/) and [Workflow Run RO-Crate](https://www.researchobject.org/workflow-run-crate/) | Export run artifacts and their execution context | Interchange packaging does not itself reproduce a result; 1.1 is the inspected version, not a claim it is newest |",
+   "verdict": "supported",
+   "location": "WRROC Profiles",
+   "note": "Exporting run artifacts with execution context matches the source's bundling of products and execution provenance. The non-reproduction caveat and the note about version 1.1 are review commentary, not attributed content.",
+   "quotes": [
+    {
+     "quote": "bundle together all their associated products (inputs, outputs, code, etc.)",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "capture the provenance of the execution of computational workflows at different levels of granularity",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Workflow Run RO-Crate | RO-Crate profiles to capture the provenance of workflow runs",
+   "run_id": "20261105T153139-24102d9b"
+  },
+  {
+   "source": "https://www.sqlite.org/isolation.html",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/FORMAL-CONTRACTS.md:41"
+   ],
+   "claim": "A transaction spanning only SQLite cannot make arbitrary filesystem/remote changes atomic. Reconcile existing event/Writer ownership with a journaled operation and projection watermark. [SQLite isolation](https://www.sqlite.org/isolation.html) and [Temporal's retry discussion](https://docs.temporal.io/activity-definition) establish the relevant implementation boundaries.",
+   "verdict": "unsupported",
+   "location": "Isolation In SQLite (opening paragraph); Isolation And Concurrency",
+   "note": "The source only discusses visibility of database changes between connections and journal-based rollback; it never addresses filesystem or remote side effects, so it does not establish that SQLite transactions cannot make such changes atomic.",
+   "quotes": [
+    {
+     "quote": "The \"isolation\" property of a database determines when changes made to the database by one operation become visible to other concurrent operations.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "SQLite implements isolation and concurrency control (and atomicity) using transient journal files that appear in the same directory as the database file.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Isolation In SQLite",
+   "run_id": "20261105T153212-5aaeca6d"
+  },
+  {
+   "source": "https://www.sqlite.org/isolation.html",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:36"
+   ],
+   "claim": "SQLite provides serializable transactions by serializing writers, and snapshot reads in WAL mode. These are useful for atomic local acceptance, but do not automatically coordinate a Markdown write, database update and remote side effect. [SQLite isolation](https://www.sqlite.org/isolation.html). Use the existing Writer/event authority with a durable operation identity and recoverable projection watermark; do not introduce a second independent source of truth.",
+   "verdict": "supported",
+   "location": "Isolation Between Database Connections; Isolation And Concurrency",
+   "note": "Both attributed SQLite properties are stated directly; the coordination and source-of-truth recommendations are design inferences not judged here.",
+   "quotes": [
+    {
+     "quote": "SQLite implements serializable transactions by actually serializing the writes.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "In WAL mode, SQLite exhibits \"snapshot isolation\".",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "Isolation In SQLite",
+   "run_id": "20261105T153212-5aaeca6d"
+  },
+  {
+   "source": "https://www.w3.org/TR/2013/REC-prov-dm-20130430/",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "formal-solutions/RESEARCH-FINDINGS.md:38"
+   ],
+   "claim": "Use PROV's entity/activity/derivation/revision distinctions for evidence identity and interchange. Provenance describes where a statement came from, not whether it is true. [W3C PROV-DM, 2013 Recommendation](https://www.w3.org/TR/2013/REC-prov-dm-20130430/).",
+   "verdict": "partly",
+   "location": "Section 2.2.1.1 Subtyping; Section 1. Introduction",
+   "note": "Entity/activity/derivation/revision distinctions are faithful. But the source never limits provenance to origin 'not whether it is true'; it says provenance supports assessments of quality, reliability, trustworthiness and trust judgements.",
+   "quotes": [
+    {
+     "quote": "is a derivation for which the resulting entity is a revised version of some original.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "provenance can help those users to make trust judgements.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "PROV-DM: The PROV Data Model",
+   "run_id": "20261105T153215-1e32d063"
+  },
+  {
+   "source": "https://www.w3.org/TR/2013/REC-prov-dm-20130430/",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "formal-solutions/TOOL-DECISIONS.md:27"
+   ],
+   "claim": "| [PROV-DM, 2013 Recommendation](https://www.w3.org/TR/2013/REC-prov-dm-20130430/) | Source/derivation/revision identity and optional provenance interchange | A vocabulary, not an authorization or truth engine |",
+   "verdict": "partly",
+   "location": "Section 1. Introduction; Section 5.2.4 Primary Source",
+   "note": "Derivation, revision, primary-source relations and interchange are supported. PROV-DM calls itself a conceptual data model; it never states it is 'not an authorization or truth engine', nor that interchange is optional.",
+   "quotes": [
+    {
+     "quote": "domain and application specific representations of provenance to be translated into such a data model",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "produced by some agent with direct experience and knowledge about the topic",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "PROV-DM: The PROV Data Model",
+   "run_id": "20261105T153215-1e32d063"
+  },
+  {
+   "source": "https://www.w3.org/TR/prov-dm/",
+   "kind": "web",
+   "claim_id": "c1",
+   "where": [
+    "consolidated/02-DESIGN-DIRECTION.md:47"
+   ],
+   "claim": "A general knowledge graph need not be acyclic. Execution plans and versioned derivations need defined cycle handling. Preserve independently sufficient justifications: required premises are conjunctive, alternative complete support sets are disjunctive. If dependency coverage is unknown, use conservative invalidation rather than assume no dependency. Formal support semantics and provenance vocabulary offer useful patterns, not an automatic truth oracle. [Reiter and de Kleer](https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf); [W3C PROV-DM](https://www.w3.org/TR/prov-dm/).",
+   "verdict": "unsupported",
+   "location": "Section 2.1.2 (Derivation); Section 1 (Introduction)",
+   "note": "PROV-DM says nothing about knowledge-graph acyclicity, cycle handling, or conjunctive/disjunctive justification sets; it explicitly leaves derivation conditions unspecified. Only the general trust-assessment framing is present.",
+   "quotes": [
+    {
+     "quote": "PROV does not attempt to specify the conditions under which derivations exist; rather, derivation is considered to have been determined by unspecified means.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "provenance can help those users to make trust judgements.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "PROV-DM: The PROV Data Model",
+   "run_id": "20261105T153219-b998daf6"
+  },
+  {
+   "source": "https://www.w3.org/TR/prov-dm/",
+   "kind": "web",
+   "claim_id": "c2",
+   "where": [
+    "consolidated/03-RESEARCH-OBJECTIVES.md:15"
+   ],
+   "claim": "**Explore:** existing Session/evidence/SQLite projections; event-sourced and temporal stores; provenance schemas; source-addressed artifact systems; temporal graph memory patterns described by [Zep](https://arxiv.org/html/2501.13956v1) and [PROV-DM](https://www.w3.org/TR/prov-dm/). A named paper is a research starting point, not an endorsement of its current implementation.",
+   "verdict": "partly",
+   "location": "Section 5 (PROV-DM Types and Relations); Section 4 (Illustration of PROV-DM by an Example)",
+   "note": "PROV-DM does define a provenance schema with optional times and graph-structured descriptions, but it does not describe \"temporal graph memory patterns\" or any memory/store architecture.",
+   "quotes": [
+    {
+     "quote": "The first component is the only one comprising time-related concepts.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "a graphical illustration shows a provenance description forming a directed graph",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "PROV-DM: The PROV Data Model",
+   "run_id": "20261105T153219-b998daf6"
+  },
+  {
+   "source": "https://www.w3.org/TR/prov-dm/",
+   "kind": "web",
+   "claim_id": "c3",
+   "where": [
+    "EVOLVING-KNOWLEDGE-REVIEW.md:81"
+   ],
+   "claim": "This is a bounded engineering adaptation of assumption-based truth maintenance: conclusions carry the conditions under which they hold. The formal literature supplies explicit support/context semantics, not an automatic truth engine for extracted natural-language claims. [Reiter and de Kleer, AAAI 1987, §§1–2](https://cdn.aaai.org/AAAI/1987/AAAI87-033.pdf). W3C PROV supplies vocabulary for entities, activities, derivation, revision and invalidation; using those distinctions does not require an RDF store. [PROV-DM, §§5.1–5.2](https://www.w3.org/TR/prov-dm/).",
+   "verdict": "supported",
+   "location": "Section 5.1 (Component 1: Entities and Activities); Appendix A (Cross-References to PROV-O and PROV-N)",
+   "note": "Sections 5.1-5.2 define Entity, Activity, Invalidation, Derivation and Revision; PROV-DM is a conceptual model with multiple serializations, so an RDF store is not required.",
+   "quotes": [
+    {
+     "quote": "The first component of PROV-DM is concerned with entities and activities, and their interrelations",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "PROV-DM is a conceptual data model which can be serialized in various ways.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "PROV-DM: The PROV Data Model",
+   "run_id": "20261105T153219-b998daf6"
+  },
+  {
+   "source": "kv_management.txt",
+   "kind": "local",
+   "claim_id": "c1",
+   "where": [
+    "REVIEW.md:96"
+   ],
+   "claim": "| CoKV, `kv_management.txt`, pp.1–3 | Attention-head-level KV allocation | Defer. It concerns inference internals, not durable memory, worker state or source retrieval. Hosted API clients cannot assume access to these controls. |",
+   "verdict": "supported",
+   "location": "PDF page 2, Introduction (Motivation)",
+   "note": "The source explicitly describes head-level KV cache budget allocation as prior work and as CoKV's mechanism, allocating per-head (or per-GQA-group) cache budgets by importance scores.",
+   "quotes": [
+    {
+     "quote": "This behavioral diversity has led to approaches that dynamically allocate the KV cache budget across heads.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Leveraging principles from game theory, CoKV dynamically allocates KV cache budgets according to this evaluation.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153223-9fdb8b1a"
+  },
+  {
+   "source": "mobile_kdr.txt",
+   "kind": "local",
+   "claim_id": "c1",
+   "where": [
+    "REVIEW.md:90"
+   ],
+   "claim": "| Knowledge-Driven Reasoning for Mobile Agentic AI, `mobile_kdr.txt`, pp.2–3 and knowledge-exposure experiment | Separate episode information, bounded task context and reusable knowledge; selective activation | Index prior episodes and validated procedures, activate only relevant records. Its UAV/mobile setting does not establish Librarian token savings or a universal optimal context size. |",
+   "verdict": "supported",
+   "location": "Section II.A, page 3",
+   "note": "The source explicitly separates episode-scoped information, within-episode context, and persistent reusable knowledge, and calls for relevance-aware activation of a budgeted knowledge subset. The Librarian-specific caveats are design inferences and were not judged.",
+   "quotes": [
+    {
+     "quote": "Context is the within-episode working pack assembled to condition inference for the current task, and it expires with the episode.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "utilization through relevance-aware activation that injects a budgeted subset of knowledge into the reasoning trajectory.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153234-5da75c09"
+  },
+  {
+   "source": "mutual_influence.txt",
+   "kind": "local",
+   "claim_id": "c1",
+   "where": [
+    "REVIEW.md:95"
+   ],
+   "claim": "| Mutual Influence, `mutual_influence.txt`, p.7 | Distinguish agreement from outcome validity | Retain independent evidence and disagreements when merging workers. The paper finds agreement effects but no statistically significant approval-rate change in that comparison. Consensus should not become a verifier. |",
+   "verdict": "supported",
+   "location": "Section 5.1 (Results), PDF page 7",
+   "note": "Agreement rose 0.19 to 0.50 (W = 276, p < 0.001), while approval-rate changes were not significant in either normal or adversarial regime.",
+   "quotes": [
+    {
+     "quote": "in cross–role agreement was significant (Wilcoxon W =",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "We did not observe a statistically significant change",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153656-5de47ee9"
+  },
+  {
+   "source": "new-01.txt",
+   "kind": "local",
+   "claim_id": "c1",
+   "where": [
+    "REVIEW.md:98"
+   ],
+   "claim": "| WASABI, new corpus `new-01.txt`, pp.2–8 | Retry lifecycle and cleanup testing | Test interrupted memory writes, uncertain worker completion and duplicate merge/retry. Use configured local limits, not the paper's probe constants. |",
+   "verdict": "partly",
+   "location": "§2.4 (PDF p.5) and §3.1.2 (PDF p.7)",
+   "note": "Core is right: the paper tests retry cleanup/state-reset and job-tracking bugs. But its example is interrupted HDFS file writes, not memory writes; it says nothing about duplicate merge/retry; and it deliberately uses probe constants K=1/100 and 15 minutes, exceeding configured thresholds.",
+   "quotes": [
+    {
+     "quote": "files previously written are not cleaned up, so attempts to rewrite these files will fail",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "The latter number is chosen to safely exceed all application-configured thresholds.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153240-d1848f57"
+  },
+  {
+   "source": "new-03.txt",
+   "kind": "local",
+   "claim_id": "c1",
+   "where": [
+    "REVIEW.md:99"
+   ],
+   "claim": "| MCP-Secure, new corpus `new-03.txt`, pp.3–5,9 | Host mediation and scoped tool effects | Recheck current permission whenever memory is rehydrated or passed to a worker. The source's restricted evaluation and static metadata are not comprehensive multiagent security evidence. |",
+   "verdict": "supported",
+   "location": "Section VII (LIMITATIONS AND MITIGATION STRATEGIES), subsections C and D, PDF page 9",
+   "note": "The source itself limits its evidence to single-agent sessions and static tool metadata, so characterizing it as not comprehensive multiagent security evidence is faithful. The permission-recheck advice is a design inference and was not judged.",
+   "quotes": [
+    {
+     "quote": "Our experiments evaluate single-agent sessions in isolation.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "MCP-Secure enforces scoped access and read-only semantics based on static tool metadata.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153301-f7b19d96"
+  },
+  {
+   "source": "reflectichain_full.txt",
+   "kind": "local",
+   "claim_id": "c1",
+   "where": [
+    "REVIEW.md:97"
+   ],
+   "claim": "| ReflectiChain, `sed.txt` and `reflectichain_full.txt`, taxonomy/results | Test scope narrowing, exceptions, temporal relaxation and priority inversion | Add memory-compaction and handoff drift cases. Versions are not independent replications, and results do not justify always-on reflection. |",
+   "verdict": "supported",
+   "location": "Section 7.8 Failure Case Taxonomy, PDF page 16",
+   "note": "The source's six-type drift taxonomy explicitly includes Exception Injection, Temporal Relaxation, Scope Narrowing, and Priority Inversion, so the attributed taxonomy content is faithful.",
+   "quotes": [
+    {
+     "quote": "Exception Injection: Inventing “temporary” justifications for violations",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Temporal Relaxation: Deferring compliance to a future step",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Scope Narrowing: Limiting the perceived applicability of a constraint",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Priority Inversion: Explicitly ranking task success above constraint compliance",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153656-d3983aff"
+  },
+  {
+   "source": "remaining_02.txt",
+   "kind": "local",
+   "claim_id": "c1",
+   "where": [
+    "REQUIREMENTS-RESEARCH.md:34"
+   ],
+   "claim": "Local corroboration: [LLM-S2KG extract](/D:/Librarian_V2/reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_02.txt), pp.10–12,24–25; [CoACL extract](/D:/Librarian_V2/reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_04.txt), p.19 Appendix A.3; [STAGE extract](/D:/Librarian_V2/reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_13.txt), p.6. They support provenance-bearing graph retrieval, explicit unresolved links and retaining original text. They do not establish graph-derived truth, reliable causal inference, or a universal graph-token selector.",
+   "verdict": "partly",
+   "location": "Section 3.4.1 (p. 10); Section 3.3 (p. 9)",
+   "note": "Provenance metadata and original-text evidence retrieval are supported. The source does not describe explicit unresolved links; the nearest content is one-to-many node alignment \"leaving the selection of edges to subsequent query contexts\" (p. 25).",
+   "quotes": [
+    {
+     "quote": "keywords are stored in a structured format that retains metadata about their source document and paragraph position",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "the mechanism retrieves the most relevant original text fragment as supporting evidence",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153310-5fda7fa3"
+  },
+  {
+   "source": "remaining_02.txt",
+   "kind": "local",
+   "claim_id": "c2",
+   "where": [
+    "REVIEW.md:91"
+   ],
+   "claim": "| LLM-S2KG, `remaining_02.txt`, p.10 provenance, pp.11–12 representation, pp.24–25 limits | Document/paragraph provenance and structural context alongside semantic associations | Use evidence spans and section parents in retrieval. The paper explicitly acknowledges relationship inversions and uses symmetric/undirected semantic labels in its representation; do not copy that representation for directed dependencies or causal assertions. Presence of a graph or quote does not validate a claim. |",
+   "verdict": "supported",
+   "location": "Section 3.4.1 (pp. 10-11); Conclusions (p. 24)",
+   "note": "Provenance metadata, structural parent-child/sequential context, and symmetric undirected labels are stated. Relationship inversions are acknowledged as hallucination errors, e.g. misinterpreting \"inhibit\" as \"promote\" (p. 24).",
+   "quotes": [
+    {
+     "quote": "keywords are stored in a structured format that retains metadata about their source document and paragraph position",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "two keyword nodes connected by a single undirected edge that is annotated with a symmetric semantic label",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153310-5fda7fa3"
+  },
+  {
+   "source": "remaining_04.txt",
+   "kind": "local",
+   "claim_id": "c1",
+   "where": [
+    "REQUIREMENTS-RESEARCH.md:34"
+   ],
+   "claim": "Local corroboration: [LLM-S2KG extract](/D:/Librarian_V2/reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_02.txt), pp.10–12,24–25; [CoACL extract](/D:/Librarian_V2/reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_04.txt), p.19 Appendix A.3; [STAGE extract](/D:/Librarian_V2/reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_13.txt), p.6. They support provenance-bearing graph retrieval, explicit unresolved links and retaining original text. They do not establish graph-derived truth, reliable causal inference, or a universal graph-token selector.",
+   "verdict": "unsupported",
+   "location": "Appendix A.3 (page 19)",
+   "note": "A.3 excludes low-confidence edges from the refined graph; it does not propose provenance-bearing retrieval, explicit unresolved links, or retaining original text. Those attributions are not in this source.",
+   "quotes": [
+    {
+     "quote": "the corresponding candidate edge is treated as a low-confidence connection and excluded from the refined graph structure",
+     "strict": false,
+     "found": true
+    },
+    {
+     "quote": "a conservative filtering strategy is adopted",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153316-88cf5249"
+  },
+  {
+   "source": "remaining_04.txt",
+   "kind": "local",
+   "claim_id": "c2",
+   "where": [
+    "REVIEW.md:92"
+   ],
+   "claim": "| CoACL, `remaining_04.txt`, p.19 Appendix A.3 | Conservative handling of ambiguous candidate edges | Keep inferred links proposed/unresolved until supported. Apply this to advisory links, never silently drop mandatory user requirements. This is graph-learning research, not a validated agent-memory policy. |",
+   "verdict": "supported",
+   "location": "Appendix A.3 (page 19)",
+   "note": "Appendix A.3 describes conservative filtering of ambiguous LLM judgments; the proposed/unresolved-link policy and its application to advisory links are the review's design inference, not source content.",
+   "quotes": [
+    {
+     "quote": "LLMs may occasionally produce ambiguous or uncertain judgments in complex semantic reasoning tasks.",
+     "strict": false,
+     "found": true
+    },
+    {
+     "quote": "To mitigate the impact of such behavior, a conservative filtering strategy is adopted.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153316-88cf5249"
+  },
+  {
+   "source": "remaining_13.txt",
+   "kind": "local",
+   "claim_id": "c1",
+   "where": [
+    "REQUIREMENTS-RESEARCH.md:34"
+   ],
+   "claim": "Local corroboration: [LLM-S2KG extract](/D:/Librarian_V2/reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_02.txt), pp.10–12,24–25; [CoACL extract](/D:/Librarian_V2/reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_04.txt), p.19 Appendix A.3; [STAGE extract](/D:/Librarian_V2/reports/2026-10-29-long-horizon-harness-research/data/paper_text/remaining_13.txt), p.6. They support provenance-bearing graph retrieval, explicit unresolved links and retaining original text. They do not establish graph-derived truth, reliable causal inference, or a universal graph-token selector.",
+   "verdict": "partly",
+   "location": "Section 3.2.1 (page 6)",
+   "note": "STAGE p.6 supports only the original-text fallback. It says nothing about provenance-bearing graph retrieval or explicit unresolved links; those come from the other extracts. The negative caveat is consistent with this source.",
+   "quotes": [
+    {
+     "quote": "Malformed outputs and empty generations are filtered by simple format checking, and nodes that fail this step fall back to their original text only.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153328-dac34149"
+  },
+  {
+   "source": "remaining_13.txt",
+   "kind": "local",
+   "claim_id": "c2",
+   "where": [
+    "REVIEW.md:93"
+   ],
+   "claim": "| STAGE, `remaining_13.txt`, p.6 and pp.9–10,16 | Original-text fallback and bounded structural context | Preserve source text if enrichment fails; evaluate bounded graph-neighbor expansion. Its learned token selector and GNN training are not needed for a hosted API implementation. |",
+   "verdict": "supported",
+   "location": "Section 3.2.1 (page 6); Section 4.5 (page 14); Section 5.2 (page 16)",
+   "note": "Both attributed elements are faithful: fallback to original text on failed enrichment, and bounded structural context under a fixed token budget. The hosted-API remark is a design inference and is not judged.",
+   "quotes": [
+    {
+     "quote": "Malformed outputs and empty generations are filtered by simple format checking, and nodes that fail this step fall back to their original text only.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Instead, it enlarges the sampled structural view and the raw candidate context, while the final PLM input remains bounded by the token budget.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153328-dac34149"
+  },
+  {
+   "source": "sed.txt",
+   "kind": "local",
+   "claim_id": "c1",
+   "where": [
+    "REVIEW.md:97"
+   ],
+   "claim": "| ReflectiChain, `sed.txt` and `reflectichain_full.txt`, taxonomy/results | Test scope narrowing, exceptions, temporal relaxation and priority inversion | Add memory-compaction and handoff drift cases. Versions are not independent replications, and results do not justify always-on reflection. |",
+   "verdict": "partly",
+   "location": "Section IV.D, page 4",
+   "note": "The source's taxonomy has three categories: goal drift, exception injection, temporal relaxation. \"Scope narrowing\" and \"priority inversion\" are not categories it names; \"exceptions\" maps only loosely to exception injection.",
+   "quotes": [
+    {
+     "quote": "they systematically reinterpret instructions via (1) goal drift, (2) exception injection, and (3) temporal relaxation.",
+     "strict": false,
+     "found": true
+    },
+    {
+     "quote": "To investigate why even ReflAct exhibits RCS degradation, we analyze 200 high-pressure trajectories.",
+     "strict": false,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153656-b5534447"
+  },
+  {
+   "source": "tms.txt",
+   "kind": "local",
+   "claim_id": "c1",
+   "where": [
+    "REVIEW.md:89"
+   ],
+   "claim": "| TMS, `tms.txt`, pp.2–6, especially p.6 continuity/resume discussion | Persistent goal/task structure plus execution feedback | Reuse the Session requirement tree, replay and explicit next work. The prototype does not establish a generally optimal scheduler, recursive planning policy or autonomous root-goal creation. |",
+   "verdict": "supported",
+   "location": "Section 4.3 (PDF pages 5-6)",
+   "note": "The source describes a persistent Tree of Thoughts with save/resume initialization and execution-feedback-driven refinement, matching the attributed content. Statements about what the other prototype establishes are design inferences and were not judged.",
+   "quotes": [
+    {
+     "quote": "These predefined trees act as memories for the TMS, capturing previous trajectories and enabling more efficient future reasoning.",
+     "strict": true,
+     "found": true
+    },
+    {
+     "quote": "Additionally, TMS supports both fresh problem-solving and resuming from memory, enabling continuity in long-term projects.",
+     "strict": true,
+     "found": true
+    }
+   ],
+   "source_title": "",
+   "run_id": "20261105T153347-fef1d9be"
+  }
+ ]
+}

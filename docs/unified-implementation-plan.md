@@ -5592,3 +5592,34 @@ All 4 fail on the previous code. The existing Auto-mode sandbox test now sets
 (`reports/2026-11-05-evidence/suite-mf015-py311.json`, a clean clone of
 `bce35ef` plus this commit's files).
 
+### Review pass: Codex UI brief, literature check, memory scope, state assessment (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| (owner request) | delivered | this commit | `reports/2026-11-05-codex-ui-wave/PROMPT.md`; `reports/2026-11-05-review-pass/`. Documents only; no code changed. |
+
+- **Codex brief:** the next UI wave, in order, from the 2026-11-04 UI/UX review
+  transcript and its packets.
+  - It starts with reconciling `bce35ef`.
+  - It then covers MF-025, MF-031, MF-033, MF-034a/b/c, MF-026, the screenshot
+    polish, and the backend results now needing UI.
+  - It ends with the in-repo share of MF-035.
+  - It includes the shared-checkout rules.
+- **Literature check:** the 2026-11-03 memory review's 126 cited claims against 67
+  sources (54 fetched, 13 local).
+  - Results: 98 supported, 19 partly, 4 unsupported and 5 not judgeable; 239 of 241
+    quotes found by script; 8 of 8 sampled verdicts confirmed by hand; $0.513 of
+    DeepInfra reading.
+  - All 20 cited arXiv papers exist and match their names.
+  - The overreaches sit in the "formal solutions" and "tool decisions" layer, where
+    the review's own design rules are cited to sources that do not state them.
+- **Memory improvements:** W1 to W6, ranked. W1 (an itemized working state through
+  compaction and restart) closes MC-02, which is not met today.
+- **State assessment:**
+  - 9 of the 24 release-critical rows are done.
+  - Wave 1B is complete except MF-016.
+  - MF-043a-f is the unstarted backend work on the release path.
+- **Incident:** a malformed shell line printed a fragment of the DeepInfra key into a
+  local task output. It was overwritten, the key-loading method was replaced, and the
+  owner was asked to rotate the key.
+
