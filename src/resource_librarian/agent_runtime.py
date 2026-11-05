@@ -271,6 +271,12 @@ class AgentProfile:
             if value is not None and (not isinstance(value, list) or
                                       not all(isinstance(item, str) and item.strip() for item in value)):
                 raise ValueError(f"route_policy.{key} is a list of non-empty strings")
+        # MF-011: the route's context window, when its catalogue entry has none
+        # (a local or custom model). It only ever narrows what is sent.
+        context_tokens = self.route_policy.get("context_tokens")
+        if context_tokens is not None and (isinstance(context_tokens, bool) or
+                                           not isinstance(context_tokens, int) or context_tokens < 1024):
+            raise ValueError("route_policy.context_tokens is a whole number of tokens, at least 1024")
         rate_card = self.route_policy.get("rate_card")
         if rate_card is not None and not isinstance(rate_card, dict):
             raise ValueError("route_policy.rate_card is an object")

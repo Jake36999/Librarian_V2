@@ -1,0 +1,26 @@
+{
+ "command": [
+  "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "D:\\Librarian_V2",
+ "exit_code": 0,
+ "summary": "1969 passed, 2 skipped, 5 deselected in 615.07s (0:10:15)",
+ "started_utc": "2026-11-05T03:04:48.138407+00:00",
+ "seconds": 616.1,
+ "head": "51ccacf86492fbedee92d2ceb904922dfe6b57fe",
+ "tracked_changes": [
+  " M src/resource_librarian/agent_runtime.py",
+  " M src/resource_librarian/app.py",
+  " M src/resource_librarian/loop.py"
+ ],
+ "python": "3.11.3",
+ "executable": "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-mf011-py311.log",
+ "log_sha256": "a48b089e32c9a938c392775d1d95eb3cdd86f5181ebc469d809f02d0420d6966"
+}

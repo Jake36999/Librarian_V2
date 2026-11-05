@@ -128,6 +128,17 @@ RESULT_CHARS = 16_000
 KEEP_RESULTS = 6
 OLD_RESULT_CHARS = 700
 OLD_ARGUMENT_CHARS = 300
+# MF-011: compaction bounds each old result, not the whole request. Every
+# dispatched request - system prompt, tool schemas, the whole rendered
+# history - plus its output reserve must fit the route's context window.
+# A route's window comes from its profile (`route_policy.context_tokens`) or
+# its catalogued model (`context_length`); an unknown one gets 128k tokens,
+# the common window of current hosted models - a smaller local model should
+# declare its own. The estimate is the budget check's (canonical JSON
+# characters / 4), with a margin for tokenizers that count more densely.
+DEFAULT_CONTEXT_TOKENS = 131_072
+CONTEXT_MARGIN = 0.20
+CONTEXT_METHOD = "canonical JSON characters / 4, with a 20% margin"
 # Upkeep tools: offered outside a session and in its last phase, not while it is working -
 # none was called in any M0 run, and together they are a quarter of the tool list.
 # `capabilities` still names every tool.
@@ -365,6 +376,9 @@ class Turn:
     # local Windows/network policy faults must not become model reliability
     # evidence or trigger an implied route change in the UI.
     failure_category: str = ""
+    # MF-011: the last request's size counters - estimate, bound, reserve,
+    # method, rounds trimmed. Counts only, never prompt text.
+    request: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {k: v for k, v in self.__dict__.items() if v or k in ("reply", "steps")}
@@ -408,6 +422,8 @@ class Loop:
         self.profile_validation_rules: tuple[str, ...] = ()
         self._turn_reserved_tokens = 0
         self._turn_reserved_cost = 0.0
+        # MF-011: the route's context window in tokens; 0 = unknown, use the default.
+        self.context_limit = 0
         # A helper agent's allowlist (tools/delegate.py): only these are offered, and a call
         # to anything else is refused here, not merely hidden.
         self.only: frozenset[str] | None = None
@@ -518,6 +534,49 @@ class Loop:
         self._turn_reserved_tokens += reserved_tokens
         self._turn_reserved_cost += reserved_cost
         return True, ""
+
+    def _fit_context(self, system: str, view: list[dict[str, Any]], tools: list[ToolDef]
+                     ) -> tuple[str, list[dict[str, Any]], dict[str, Any]]:
+        """Fit the whole request into the route's context window (MF-011).
+
+        What is cut, oldest first, is whole middle rounds: a user message and
+        everything up to the next one, so a tool call never loses its result.
+        The first round (the original ask), the current turn with its library
+        context, the system prompt and the tool schemas are never cut. When
+        even they do not fit, `parked` is set and nothing is sent."""
+        bound = self.context_limit or DEFAULT_CONTEXT_TOKENS
+        reserve = self.profile_output_budget
+        usable = int(bound * (1 - CONTEXT_MARGIN)) - reserve
+        fixed = self._token_estimate({"system": system, "tools": [t.__dict__ for t in tools]})
+        sizes = [self._token_estimate(m) for m in view]
+        report: dict[str, Any] = {"method": CONTEXT_METHOD, "bound": bound,
+                                  "bound_source": "route" if self.context_limit else "default",
+                                  "reserve": reserve, "estimated": fixed + sum(sizes),
+                                  "trimmed_rounds": 0}
+        if report["estimated"] <= usable:
+            return system, view, report
+        starts = [i for i, m in enumerate(view) if m.get("role") == "user"]
+        tail = starts[-1] if starts else len(view)
+        if tail > 0 and str(view[tail - 1].get("content") or "").startswith(CONTEXT_HEADER):
+            tail -= 1                                   # the library context goes with its turn
+        rounds = [(starts[k], starts[k + 1]) for k in range(1, len(starts) - 1)
+                  if starts[k + 1] <= tail]
+        removed: set[int] = set()
+        notice_cost = 40                                # the omission notice below
+        for first, after in rounds:
+            removed.update(range(first, after))
+            report["trimmed_rounds"] += 1
+            kept = fixed + notice_cost + sum(s for i, s in enumerate(sizes) if i not in removed)
+            if kept <= usable:
+                report["estimated"] = kept
+                notice = (f"{report['trimmed_rounds']} earlier round(s) of this conversation are "
+                          "omitted from this request to fit the model's context window; "
+                          "session_status keeps the full record.")
+                return (f"{system}\n\n{notice}",
+                        [m for i, m in enumerate(view) if i not in removed], report)
+        report["estimated"] = fixed + sum(s for i, s in enumerate(sizes) if i not in removed)
+        report["parked"] = True
+        return system, view, report
 
     # -- what the model sees -------------------------------------------------
     def stable_prefix(self) -> str:
@@ -933,6 +992,18 @@ class Loop:
             preflight = self._workflow_preflight(tools)
             if preflight is not None:
                 return self._stop_for_workflow_preflight(turn, preflight)
+            system, view, turn.request = self._fit_context(system, view, tools)
+            if turn.request.get("parked"):
+                fit = turn.request
+                turn.stopped = "context_budget"
+                turn.error = (f"this request needs about {fit['estimated']} tokens plus a "
+                              f"{fit['reserve']}-token reply, over this route's {fit['bound']}-token "
+                              f"window ({fit['method']}). The first request, the current turn "
+                              "and the session's constraints are never cut: start a new thread "
+                              "or choose a model with a larger context window")
+                self.on_event({"type": "stopped", "reason": "context_budget", "error": turn.error,
+                               "request": fit})
+                return turn
             allowed, reason = self._reserve_profile_budget(system, view, tools)
             if not allowed:
                 turn.stopped, turn.error = "profile_budget", reason

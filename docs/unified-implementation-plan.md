@@ -4970,3 +4970,62 @@ is silent. The remaining batch assertion now prints its items' errors too.
 **Verification:** the acceptance files passed (92). Full suite: 1961 passed, 2 skipped, 5 deselected in 606.75s (0:10:06) (exit 0, Python 3.11.3)
 (`reports/2026-11-05-evidence/suite-interrupt-log-py311.json`).
 
+### MF-011, a complete-request bound (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-011 | implemented | this commit | `src/resource_librarian/loop.py`, `app.py`, `agent_runtime.py`; new `tests/test_request_fit.py`. |
+
+**The defect (MEM-01/02).** Compaction bounded each old tool result, but
+nothing bounded the whole request. The system prompt, the tool schemas, the
+complete rendered history and the reply reserve together had no ceiling.
+REMED-07 measured 27,470 and 28,529 bytes at 50 rounds. That was a missing
+guarantee, not an observed overflow.
+
+**Change.**
+- **Measure, then fit.** Before every dispatch, `Loop._fit_context` measures
+  the whole request with the budget check's own estimate: canonical JSON
+  characters / 4, with a 20% margin for denser tokenizers, plus the reply
+  reserve. Over the route's window, it drops whole middle rounds, oldest
+  first. A round is a user message and everything up to the next one, so a
+  tool call never loses its result.
+- **What is never cut.** The first round (the original ask), the current turn
+  with its library context, the system prompt and the tool schemas. When
+  rounds are dropped, the system prompt says how many were omitted and that
+  `session_status` keeps the full record.
+- **Park.** If even the uncut parts do not fit, the turn stops with
+  `context_budget` before sending anything, and says why and what to do.
+- **The route's window.** It comes from the profile's
+  `route_policy.context_tokens`, validated as a whole number of at least 1,024,
+  or else the catalogued model's `context_length`. An unknown route gets
+  131,072 tokens, the common window of current hosted models. A first try at
+  32,768 parked a legitimate 28-step single turn in `test_loop.py`, so a
+  smaller local model should declare its own window.
+- **Counters.** `Turn.request` records the estimate, bound, bound source,
+  reserve, method and rounds trimmed. It holds counts only, never prompt text,
+  and reaches `turn_done`.
+
+**Checks** (`tests/test_request_fit.py`):
+- **50 and 200 rounds, both adapters.** Through the OpenAI-compatible and
+  Anthropic real HTTP serializers, with the bound set so history must be
+  trimmed. On the wire, `ceil(sent_bytes / 4)` plus the reserve is within the
+  bound. The first history marker, the newest round and the current message
+  are retained, and the counters carry no prompt text.
+- **Tool pairs.** After trimming, every kept tool call has its result and
+  every result its call. The omission notice is in the system prompt.
+- **A request that cannot fit** stops with `context_budget` and nothing is
+  sent.
+- **Route windows.** A profile's `context_tokens` is validated, and the App
+  prefers it to the catalogue's `context_length`. With neither, it is 0, so
+  the default applies.
+
+**Limits.**
+- The estimate is a bound by construction, not a tokenizer count. The margin
+  is a stated assumption about tokenizer density, not a measurement per model.
+- One very long single turn cannot be trimmed, because a round is never split,
+  so it parks. Splitting a turn's own tool exchanges is not done.
+
+**Verification:** the packet's seven test files passed (70), and the new file
+passed (8). Full suite: 1969 passed, 2 skipped, 5 deselected in 615.07s (0:10:15) (exit 0, Python 3.11.3)
+(`reports/2026-11-05-evidence/suite-mf011-py311.json`).
+

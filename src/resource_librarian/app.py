@@ -2192,14 +2192,23 @@ class App:
         direct = policy.get("rate_card") if isinstance(policy, dict) else None
         if isinstance(direct, dict):
             return direct
-        if not route:
+        known = self._route_catalogue_entry(route)
+        incoming, outgoing = known.get("price_input_per_1m"), known.get("price_output_per_1m")
+        if incoming is None or outgoing is None:
             return None
+        return {"price_input_per_1m": incoming, "price_output_per_1m": outgoing}
+
+    def _route_catalogue_entry(self, route: dict[str, Any] | None) -> dict[str, Any]:
+        """The catalogued model profile a route's known preset names, or {}.
+        A custom endpoint's facts must come from its profile, never a guess."""
+        if not route:
+            return {}
         provider = str(route.get("provider") or "").casefold()
         model = str(route.get("model") or "").casefold()
         if not provider or not model:
-            return None
+            return {}
         if route.get("host_id") and not str(route["host_id"]).startswith("preset-"):
-            return None  # custom endpoint pricing must be explicitly supplied by the profile
+            return {}
         if provider.startswith("preset-") and provider[7:] in PRESETS:
             family = provider[7:]
             host = self.hosts.get(provider)
@@ -2208,11 +2217,21 @@ class App:
                     host.protocol == preset.get("protocol"):
                 provider = family
         catalogues = {**_shipped_profiles(), **_remembered_profiles(), **self._model_sources()}
-        known = catalogues.get((provider, model)) or {}
-        incoming, outgoing = known.get("price_input_per_1m"), known.get("price_output_per_1m")
-        if incoming is None or outgoing is None:
-            return None
-        return {"price_input_per_1m": incoming, "price_output_per_1m": outgoing}
+        return catalogues.get((provider, model)) or {}
+
+    def _route_context_limit(self, route: dict[str, Any] | None, profile: Any) -> int:
+        """MF-011: the route's context window in tokens, or 0 when unknown (the
+        loop then uses its default). A profile's `route_policy.context_tokens`
+        wins; otherwise the catalogued model's `context_length`."""
+        policy = getattr(profile, "route_policy", {}) or {}
+        for value in ((policy.get("context_tokens") if isinstance(policy, dict) else None),
+                      self._route_catalogue_entry(route).get("context_length")):
+            try:
+                if value is not None and int(value) > 0:
+                    return int(value)
+            except (TypeError, ValueError):
+                continue
+        return 0
 
     def _background_endpoint_route(self, endpoint: Any,
                                    fallback_route: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -2407,6 +2426,7 @@ class App:
         if self.loop is not None:
             self.loop.ctx.extras["agent_profile"] = profile.id
             self.loop.configure_profile(profile, rate_card=self._route_rate_card(route, profile))
+            self.loop.context_limit = self._route_context_limit(route, profile)   # MF-011
             level = self.loop.ctx.extras.get("effort") or {}
             self.loop.turn_seconds = self.loop.cap_turn_seconds(level.get("turn_seconds"))
         self.hub.publish({"type": "agent_profile_changed", "profile": profile.public()})
@@ -2575,6 +2595,7 @@ class App:
             self.loop.ctx.extras.update(self._extras())
         level = self.loop.ctx.extras["effort"]
         self.loop.configure_profile(profile, rate_card=self._route_rate_card(route, profile))
+        self.loop.context_limit = self._route_context_limit(route, profile)   # MF-011
         # The provider layer itself never silently swaps models.  A bounded
         # retry policy is carried only by the host wrapper, if this route has
         # one; an unwrapped legacy provider retains its established behaviour.
