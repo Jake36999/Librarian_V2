@@ -5415,3 +5415,59 @@ otherwise, not exactly once (that would need idempotent tools).
 (`reports/2026-11-05-evidence/suite-mf018-py311.json`, a clean clone of
 `306bc4e` plus this commit's files).
 
+### MF-019 the speech spend cap holds across callers and Cores (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-019 (NAT-11; MC-10 service portion) | implemented (TTS); STT has no prices to cap | this commit | `src/resource_librarian/tts.py`, `coordination.py`; `tests/test_tts.py`. |
+
+**Before.** `speak()` read the total spend, checked the $2 cap, sent the
+request, then recorded the cost. The ledger is the person's own, shared by
+every library. So two callers, or two vault Cores, could both pass the check
+and both spend.
+
+**Now.**
+- **Cross-process lock:** `coordination.exclusive_file_lock` is a new lock:
+  a process-local queue, then an OS lock on one byte, released by the OS if
+  a holder crashes.
+- **Reserve before send:** under that lock, a chunk reserves its estimate
+  before it is sent. Nothing is admitted that would pass the cap counting
+  other open reservations, so the refusal still comes before anything is
+  sent.
+- **Settle once:** the reservation then settles exactly once (a second
+  close changes nothing), in one of three ways:
+  - **charged** at the reported cost, as soon as a result comes back;
+  - **released** only when the request certainly cost nothing: refused
+    before it was sent, an HTTP 4xx, the model busy after its retries,
+    connection refused or the name unresolved. `TtsNotSent` is a
+    `TtsError` with the same messages, so the existing error handling is
+    unchanged.
+  - **kept as a liability** (`outcome: unknown`) when the outcome is
+    unknown: a timeout, a reset, a 5xx, or a result that arrived after the
+    route changed.
+- **Retries:** asking again after an unknown outcome is a new reservation,
+  so the retry is charged too.
+- **Replay:** one chunk asked for twice at once is sent once; the second
+  caller waits, then plays the cache.
+- **Compatibility:** ledger lines from before MF-019 still count as charges.
+
+**Not done here.** The service register has no STT prices, so speech to text
+has no dollar cap to reserve against. Adding one is a product decision.
+"Repairs" in the packet have no TTS counterpart.
+
+**Tests.** 5 new cases in `test_tts.py`:
+- two concurrent callers, where exactly one fits, cannot both spend;
+- a second process's open reservation counts, and its lock makes this
+  process wait;
+- an unknown outcome keeps its charge, a 4xx releases it, and asking again
+  is charged again;
+- a late result after a route change is still owed;
+- a reservation settles once, and a replayed chunk is sent once.
+
+All 5 fail on the previous code. The test pinning the ledger's line format
+now expects a reserve line and a settle line.
+
+**Verification:** full suite: 2017 passed, 2 skipped, 5 deselected in 631.54s (0:10:31) (exit 0, Python 3.11.3)
+(`reports/2026-11-05-evidence/suite-mf019-py311.json`, a clean clone of
+`d190969` plus this commit's files).
+

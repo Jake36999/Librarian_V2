@@ -17,14 +17,30 @@ model, voice and text, so reading a thing again costs nothing. Spend is kept in 
 own `tts-spend.jsonl` - across libraries - and a chunk that would take it past `CAP_USD`
 ($2.00, the owner's limit) is refused before anything is sent; the actual cost each call
 reports is what is recorded.
+
+The cap holds across threads and across every Core of this person (MF-019).
+Under one cross-process lock, a chunk *reserves* its estimate before it is
+sent, and nothing that would pass the cap, counting other in-flight
+reservations, is admitted. Afterwards the reservation settles exactly once:
+- at the cost the call reported;
+- released, when the request certainly was not charged (refused before it was
+  sent, a 4xx, the model busy after its retries);
+- kept as a liability, when the outcome is unknown (a timeout, a dropped
+  connection, a 5xx, a result that arrived after the route changed).
+
+Asking again after an unknown outcome is a new reservation, so a retry is
+charged too. Speech to text has no reviewed prices, so it has no cap here.
 """
 from __future__ import annotations
 
 import base64
+import contextlib
 import hashlib
 import json
 import os
 import re
+import secrets
+import threading
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -63,6 +79,10 @@ AUDIO_EXT = {"audio/mp3": "mp3", "audio/mpeg": "mp3", "audio/wav": "wav", "audio
 
 class TtsError(RuntimeError):
     """Said to the person as it is: no model, an unknown price, the cap, or the call failed."""
+
+
+class TtsNotSent(TtsError):
+    """The request certainly was not charged: refused before or by the provider."""
 
 
 def choice(vault: Vault) -> dict[str, str]:
@@ -115,25 +135,96 @@ def chunks(text: str, size: int = CHUNK_CHARS) -> list[str]:
 
 # ------------------------------------------------------------------ the money
 
+LOCK_SECONDS = 10.0
+
+
 def ledger_path() -> Path:
     from .keys import config_dir
     return config_dir() / "tts-spend.jsonl"
 
 
-def spent() -> float:
+def _entries() -> list[dict[str, Any]]:
     path = ledger_path()
     if not path.is_file():
-        return 0.0
-    return sum(json.loads(line).get("cost_usd", 0.0)
-               for line in jsonl_lines(path.read_text(encoding="utf-8")) if line.strip())
+        return []
+    return [json.loads(line) for line in jsonl_lines(path.read_text(encoding="utf-8"))
+            if line.strip()]
 
 
-def _record(cost: float, chars: int, model: str, mode: str) -> None:
+def committed(entries: list[dict[str, Any]]) -> float:
+    """What counts against the cap: every charge, plus every reservation not yet
+    settled or released. A reservation whose outcome is unknown keeps counting."""
+    total, reserved, settled, released = 0.0, {}, {}, set()
+    for entry in entries:
+        kind = entry.get("type", "charge")              # a line from before MF-019
+        rid = str(entry.get("id") or "")
+        if kind == "charge":
+            total += float(entry.get("cost_usd") or 0.0)
+        elif kind == "reserve":
+            reserved[rid] = float(entry.get("amount") or 0.0)
+        elif kind == "settle" and rid not in settled and rid not in released:
+            settled[rid] = float(entry.get("cost_usd") or 0.0)
+        elif kind == "release" and rid not in settled:
+            released.add(rid)
+    open_ = sum(amount for rid, amount in reserved.items()
+                if rid not in settled and rid not in released)
+    return total + sum(settled.values()) + open_
+
+
+def spent() -> float:
+    return committed(_entries())
+
+
+def _append(entry: dict[str, Any]) -> None:
     path = ledger_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps({"t": now_iso(), "cost_usd": cost, "chars": chars,
-                                 "model": model, "mode": mode}) + "\n")
+        handle.write(json.dumps({"t": now_iso(), **entry}) + "\n")
+        handle.flush()
+        with contextlib.suppress(OSError):
+            os.fsync(handle.fileno())
+
+
+@contextlib.contextmanager
+def _ledger() -> Any:
+    from .coordination import FileLockTimeout, exclusive_file_lock
+    try:
+        with exclusive_file_lock(ledger_path().with_suffix(".lock"), timeout=LOCK_SECONDS):
+            yield
+    except FileLockTimeout as exc:
+        raise TtsNotSent("the speech spend ledger is busy in another window or library; "
+                         "try again in a moment") from exc
+
+
+def reserve(amount: float, chars: int, model: str, mode: str) -> tuple[str, float]:
+    """Hold `amount` against the cap before sending; refused if it would not fit."""
+    with _ledger():
+        so_far = committed(_entries())
+        if so_far + amount > CAP_USD:
+            raise TtsNotSent(f"text to speech has spent ${so_far:.2f} of its ${CAP_USD:.2f} "
+                             f"cap; this part would cost ${amount:.4f}")
+        rid = secrets.token_hex(8)
+        _append({"type": "reserve", "id": rid, "amount": amount, "chars": chars,
+                 "model": model, "mode": mode})
+    return rid, so_far
+
+
+def _close(rid: str, entry: dict[str, Any]) -> bool:
+    """Settle or release a reservation, once; a second close changes nothing."""
+    with _ledger():
+        for row in _entries():
+            if row.get("id") == rid and row.get("type") in ("settle", "release"):
+                return False
+        _append({**entry, "id": rid})
+    return True
+
+
+def settle(rid: str, cost: float, outcome: str = "charged") -> bool:
+    return _close(rid, {"type": "settle", "cost_usd": cost, "outcome": outcome})
+
+
+def release(rid: str, why: str) -> bool:
+    return _close(rid, {"type": "release", "why": why[:200]})
 
 
 def estimate(text: str, model: str) -> float:
@@ -204,12 +295,21 @@ def _post(url: str, body: dict[str, Any], key: str,
                 if pauses:
                     (sleep or time.sleep)(pauses.pop(0))
                     continue
-                raise TtsError(f"the speech model is busy at DeepInfra (HTTP {exc.code}, tried "
-                               f"{len(BUSY_RETRIES) + 1} times): try again in a minute, or "
-                               f"choose another speech model in Settings -> Connections, "
-                               f"slot 5") from exc
-            raise TtsError(f"HTTP {exc.code}: {detail}") from exc
-        except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+                raise TtsNotSent(f"the speech model is busy at DeepInfra (HTTP {exc.code}, "
+                                 f"tried {len(BUSY_RETRIES) + 1} times): try again in a minute, "
+                                 f"or choose another speech model in Settings -> Connections, "
+                                 f"slot 5") from exc
+            # A 4xx is a refusal of the request; a 5xx may have done the work.
+            error = TtsNotSent if exc.code < 500 else TtsError
+            raise error(f"HTTP {exc.code}: {detail}") from exc
+        except urllib.error.URLError as exc:
+            import socket
+            # Refused or unresolved: nothing reached the model. Anything else
+            # (a reset, a timeout) may have, so its outcome is unknown.
+            error = TtsNotSent if isinstance(exc.reason, (ConnectionRefusedError, socket.gaierror)) \
+                else TtsError
+            raise error(f"the speech model is not reachable: {exc}") from exc
+        except (TimeoutError, ConnectionError) as exc:
             raise TtsError(f"the speech model is not reachable: {exc}") from exc
 
 
@@ -233,35 +333,75 @@ def speak(vault: Vault, text: str, mode: str = "message",
     voice = str(body.get("preset_voice") or "")
     digest = hashlib.sha256(f"{model}|{voice}|{text}".encode("utf-8")).hexdigest()[:24]
     folder = vault.derived / "tts"
+    # One chunk asked for twice at once (a replay while it is still being
+    # spoken) is sent once: the second waits, then plays the cached audio.
+    with _chunk_lock(f"{folder}|{digest}"):
+        cached = _cached(folder, digest)
+        if cached is not None:
+            return cached
+        return _speak_once(vault, text, mode, model, body, folder, digest, post)
+
+
+_chunk_locks: dict[str, threading.Lock] = {}
+_chunk_locks_guard = threading.Lock()
+
+
+@contextlib.contextmanager
+def _chunk_lock(key: str) -> Any:
+    with _chunk_locks_guard:
+        lock = _chunk_locks.setdefault(key, threading.Lock())
+    with lock:
+        yield
+
+
+def _cached(folder: Path, digest: str) -> dict[str, Any] | None:
     for ext, mime in (("mp3", "audio/mp3"), ("wav", "audio/wav"), ("ogg", "audio/ogg"),
                       ("flac", "audio/flac"), ("opus", "audio/opus")):
         cache = folder / f"{digest}.{ext}"
         if cache.is_file():
             return {"audio": _data_uri(mime, cache.read_bytes()), "cost_usd": 0.0,
                     "cached": True, "spent_usd": round(spent(), 6), "cap_usd": CAP_USD}
+    return None
+
+
+def _speak_once(vault: Vault, text: str, mode: str, model: str, body: dict[str, Any],
+                folder: Path, digest: str, post: Callable[..., dict[str, Any]] | None
+                ) -> dict[str, Any]:
     cost = estimate(text, model)
-    so_far = spent()
-    if so_far + cost > CAP_USD:
-        raise TtsError(f"text to speech has spent ${so_far:.2f} of its ${CAP_USD:.2f} cap; this "
-                       f"part would cost ${cost:.4f}")
+    rid, so_far = reserve(cost, len(text), model, mode)
+    sent = False
     try:
         route = service_routes.resolve(vault, "tts", validate=True)
         if route is None or route.model != model:
             raise service_routes.ServiceRouteError("speech assignment changed; restart the operation")
         key = os.environ.get(route.key_env, "")
         if not key:
-            raise TtsError(f"{route.key_env} is not set (Settings -> Connections)")
-        out = service_routes.run(vault, route, lambda: (post or _post)(
-            f"{route.native_base()}/{model}", body, key))
-    except (service_routes.ServiceRouteError, ProviderError) as exc:
-        raise TtsError(str(exc)) from exc
+            raise TtsNotSent(f"{route.key_env} is not set (Settings -> Connections)")
+
+        def send() -> dict[str, Any]:
+            nonlocal sent
+            sent = True
+            return (post or _post)(f"{route.native_base()}/{model}", body, key)
+
+        out = service_routes.run(vault, route, send)
+    except BaseException as exc:
+        # Released only when the request certainly cost nothing; otherwise the
+        # reservation stays as a liability (a timeout, a reset, a late result).
+        if isinstance(exc, TtsNotSent) or not sent:
+            release(rid, f"{type(exc).__name__}: {exc}")
+        else:
+            settle(rid, cost, outcome="unknown")
+        if isinstance(exc, (service_routes.ServiceRouteError, ProviderError)):
+            raise TtsError(str(exc)) from exc
+        raise
+    # A result came back, so the work was done: its cost is owed from here on,
+    # whatever the audio turns out to be.
+    actual = float((out.get("inference_status") or {}).get("cost") or cost)
+    settle(rid, actual)
     audio = str(out.get("audio") or "")
     if not audio.startswith("data:audio"):
         raise TtsError(f"the model returned no audio ({str(out)[:200]})")
     mime, raw = _playable(audio)
-    # Only Kokoro reports its cost; for the rest the register's price is what is recorded.
-    actual = float((out.get("inference_status") or {}).get("cost") or cost)
-    _record(actual, len(text), model, mode)
     folder.mkdir(parents=True, exist_ok=True)
     (folder / f"{digest}.{AUDIO_EXT.get(mime, 'bin')}").write_bytes(raw)
     return {"audio": _data_uri(mime, raw), "cost_usd": actual, "cached": False,

@@ -339,6 +339,66 @@ class VaultCoordinator:
         self.release()
 
 
+class FileLockTimeout(TimeoutError):
+    """Another process (or thread) held a shared lock for longer than allowed."""
+
+
+_file_lock_guards: dict[str, threading.Lock] = {}
+_file_lock_guards_lock = threading.Lock()
+
+
+@contextlib.contextmanager
+def exclusive_file_lock(path: Path, timeout: float = 10.0) -> Iterator[None]:
+    """Hold `path` exclusively across threads and processes (MF-019).
+
+    For short read-check-append sections of a ledger shared by every Core of
+    one person, such as the speech spend ledger. A process-local lock queues
+    this process's threads first. The OS lock on one byte then excludes other
+    processes, which stays correct if a holder crashes, because the OS
+    releases it.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    key = os.path.normcase(str(path.resolve()))
+    with _file_lock_guards_lock:
+        guard = _file_lock_guards.setdefault(key, threading.Lock())
+    deadline = time.monotonic() + timeout
+    if not guard.acquire(timeout=max(0.0, timeout)):
+        raise FileLockTimeout(f"{path.name} stayed locked for {timeout:.0f}s")
+    try:
+        with open(path, "a+b") as handle:
+            # Windows enforces the lock on reads, so the size is checked, never
+            # the locked byte itself; an append writes past it.
+            if os.fstat(handle.fileno()).st_size == 0:
+                handle.write(b"0")
+                handle.flush()
+            handle.seek(0)
+            while True:
+                try:
+                    if msvcrt is not None:
+                        msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                    elif fcntl is not None:  # pragma: no cover - POSIX CI support
+                        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except OSError:
+                    if time.monotonic() >= deadline:
+                        raise FileLockTimeout(
+                            f"{path.name} stayed locked by another process for "
+                            f"{timeout:.0f}s") from None
+                    time.sleep(0.02)
+            try:
+                yield
+            finally:
+                handle.seek(0)
+                if msvcrt is not None:
+                    with contextlib.suppress(OSError):
+                        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+                elif fcntl is not None:  # pragma: no cover - POSIX CI support
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+    finally:
+        guard.release()
+
+
 def atomic_write_text(path: Path, text: str, encoding: str = "utf-8") -> None:
     """Atomically replace a text file in its own directory."""
     path.parent.mkdir(parents=True, exist_ok=True)

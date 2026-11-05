@@ -1,0 +1,26 @@
+{
+ "command": [
+  "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone",
+ "exit_code": 0,
+ "summary": "2017 passed, 2 skipped, 5 deselected in 631.54s (0:10:31)",
+ "started_utc": "2026-11-05T12:36:04.141430+00:00",
+ "seconds": 632.9,
+ "head": "d190969e9cf130bf7af1c82f1de5010306ab8c65",
+ "tracked_changes": [
+  " M src/resource_librarian/coordination.py",
+  " M src/resource_librarian/tts.py",
+  " M tests/test_tts.py"
+ ],
+ "python": "3.11.3",
+ "executable": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-mf019-py311.log",
+ "log_sha256": "76fb280f9f80ddeff1818aea9075b91de3720aa74baefefaf6b00a0351e9838f"
+}

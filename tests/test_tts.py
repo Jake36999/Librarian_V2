@@ -47,7 +47,141 @@ def test_a_chunk_is_spoken_once_kept_and_its_real_cost_recorded(vault, ledger):
     assert log[0][1] == {"text": "Hello, reader.", "output_format": "mp3",
                          "preset_voice": "af_bella"}
     rows = [json.loads(line) for line in ledger.read_text().splitlines()]
-    assert len(rows) == 1 and rows[0]["cost_usd"] == pytest.approx(14 * 0.99 / 1e6)
+    # MF-019: a reservation before the call, settled once with the real cost.
+    assert [r["type"] for r in rows] == ["reserve", "settle"]
+    assert rows[0]["id"] == rows[1]["id"] and rows[1]["outcome"] == "charged"
+    assert rows[1]["cost_usd"] == pytest.approx(14 * 0.99 / 1e6)
+    assert tts.spent() == pytest.approx(14 * 0.99 / 1e6)
+
+
+def cost_of(text):
+    return len(text) * 0.99 / 1e6
+
+
+def test_concurrent_callers_cannot_spend_past_the_cap_together(vault, ledger):
+    """MF-019: both used to read the same spend, pass the check and send."""
+    import threading
+    first, second = "The first part to read.", "Another part to read."
+    ledger.parent.mkdir(parents=True)
+    ledger.write_text(json.dumps({"cost_usd": tts.CAP_USD - 1.5 * cost_of(first)}) + "\n")
+    go, outcomes, log = threading.Event(), [], []
+
+    def slow_post(url, body, key):
+        log.append(body["text"])
+        go.wait(2)                                  # both would be in flight at once
+        return {"audio": MP3, "inference_status": {"cost": cost_of(body["text"])}}
+
+    def speak(text):
+        try:
+            outcomes.append(("ok", tts.speak(vault, text, "message", post=slow_post)))
+        except tts.TtsError as exc:
+            outcomes.append(("refused", str(exc)))
+
+    threads = [threading.Thread(target=speak, args=(t,)) for t in (first, second)]
+    for thread in threads:
+        thread.start()
+    threading.Event().wait(0.5)
+    go.set()
+    for thread in threads:
+        thread.join(5)
+
+    assert sorted(kind for kind, _ in outcomes) == ["ok", "refused"], outcomes
+    assert len(log) == 1 and tts.spent() <= tts.CAP_USD
+    assert any("cap" in str(detail) for kind, detail in outcomes if kind == "refused")
+
+
+def test_another_cores_open_reservation_and_lock_hold_across_processes(vault, ledger):
+    import os
+    import subprocess
+    import sys
+    import time
+    from pathlib import Path
+    src = Path(__file__).resolve().parents[1] / "src"
+    child = subprocess.Popen(
+        [sys.executable, "-c",
+         "import time\n"
+         "from resource_librarian import tts\n"
+         "from resource_librarian.coordination import exclusive_file_lock\n"
+         f"tts.reserve({tts.CAP_USD - 0.000001}, 10, 'm', 'message')\n"
+         "with exclusive_file_lock(tts.ledger_path().with_suffix('.lock')):\n"
+         "    print('locked', flush=True)\n"
+         "    time.sleep(1.5)\n"],
+        stdout=subprocess.PIPE, text=True,
+        env={**os.environ, "PYTHONPATH": str(src)})
+    try:
+        assert child.stdout.readline().strip() == "locked"
+        started = time.monotonic()
+        with pytest.raises(tts.TtsError, match="cap"):
+            tts.reserve(cost_of("Hello."), 6, "m", "message")
+        waited = time.monotonic() - started
+    finally:
+        child.wait(10)
+    assert waited >= 0.8                      # it queued behind the other process's lock
+    assert child.returncode == 0
+
+
+def test_an_unknown_outcome_keeps_its_reservation_a_refusal_releases_it(vault, ledger):
+    text = "A sentence to read."
+
+    def timed_out(url, body, key):
+        raise tts.TtsError("the speech model is not reachable: timed out")
+
+    def refused(url, body, key):
+        raise tts.TtsNotSent("HTTP 400: bad request")
+
+    with pytest.raises(tts.TtsError, match="timed out"):
+        tts.speak(vault, text, "message", post=timed_out)
+    assert tts.spent() == pytest.approx(cost_of(text))          # it may have been charged
+
+    with pytest.raises(tts.TtsNotSent, match="HTTP 400"):
+        tts.speak(vault, "Something else to read.", "message", post=refused)
+    assert tts.spent() == pytest.approx(cost_of(text))          # released: nothing owed
+
+    out = tts.speak(vault, text, "message", post=fake_post([]))  # asked again: a new charge
+    assert not out["cached"]
+    assert tts.spent() == pytest.approx(2 * cost_of(text))
+    outcomes = [json.loads(line).get("outcome") for line in ledger.read_text().splitlines()]
+    assert outcomes.count("unknown") == 1 and outcomes.count("charged") == 1
+
+
+def test_a_result_that_arrives_after_the_route_changed_is_still_owed(vault, ledger,
+                                                                      monkeypatch):
+    from resource_librarian import service_routes
+
+    def late(vault_, route, call):
+        call()
+        raise service_routes.ServiceRouteError("tts assignment changed; restart the operation")
+
+    monkeypatch.setattr(service_routes, "run", late)
+    log = []
+    with pytest.raises(tts.TtsError, match="assignment changed"):
+        tts.speak(vault, "Late words.", "message", post=fake_post(log))
+    assert len(log) == 1 and tts.spent() == pytest.approx(cost_of("Late words."))
+
+
+def test_a_reservation_settles_once_and_a_replay_is_sent_once(vault, ledger):
+    import threading
+    rid, _ = tts.reserve(0.01, 5, "m", "message")
+    assert tts.settle(rid, 0.004) is True and tts.release(rid, "late") is False
+    assert tts.settle(rid, 0.5) is False and tts.spent() == pytest.approx(0.004)
+
+    log, gate = [], threading.Event()
+
+    def slow(url, body, key):
+        log.append(body["text"])
+        gate.wait(2)
+        return {"audio": MP3, "inference_status": {"cost": cost_of(body["text"])}}
+
+    results = []
+    threads = [threading.Thread(target=lambda: results.append(
+        tts.speak(vault, "Read me twice.", "message", post=slow))) for _ in range(2)]
+    for thread in threads:
+        thread.start()
+    threading.Event().wait(0.3)
+    gate.set()
+    for thread in threads:
+        thread.join(5)
+    assert len(log) == 1 and sorted(r["cached"] for r in results) == [False, True]
 
 
 def test_the_cap_refuses_before_anything_is_sent(vault, ledger):
