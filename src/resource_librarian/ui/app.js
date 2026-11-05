@@ -705,6 +705,10 @@ var Librarian = (() => {
       this.working = null;
       this.outcomeCard = null;
       this.lastUserText = "";
+      // MF-010: the inspector is rebuilt on every state update, so what the person
+      // opened and typed is kept here, by requirement, across rebuilds.
+      this.disclosures = /* @__PURE__ */ new Set();
+      this.drafts = /* @__PURE__ */ new Map();
       this.empty();
     }
     empty() {
@@ -1152,12 +1156,87 @@ var Librarian = (() => {
               closure ? `${closureLabel(closure)} \xB7 ` : "",
               `revision ${String(requirement.revision ?? 1)}`
             ),
+            requirement.stop ? stopReasonView(requirement.stop) : null,
             predicates.map((predicate) => this.predicateRow(predicate, rid)),
+            actionable && (status === "blocked" || status === "failed") ? this.reviseForm(session, requirement, actionStatus) : null,
             !actionable ? null : this.inspectorActions(session, rid, closure, artifacts, actionStatus),
             actionStatus
           );
-        })
+        }),
+        actionable && session.purpose === "audited" ? this.skeletonView() : null
       );
+    }
+    disclosure(key, summary, ...body) {
+      return h("details", {
+        class: "inspector-disclosure",
+        open: this.disclosures.has(key),
+        ontoggle: (e) => {
+          if (e.currentTarget.open) this.disclosures.add(key);
+          else this.disclosures.delete(key);
+        }
+      }, h("summary", {}, summary), ...body);
+    }
+    /** MF-010: a blocked or failed requirement reopens by revision. Only its
+     *  wording changes here: the predicates, the closure and every verifier the
+     *  person named, with its parameters, are sent back exactly as projected. */
+    reviseForm(session, requirement, status) {
+      const rid = String(requirement.id ?? "");
+      const original = String(requirement.text ?? "");
+      const predicates = Array.isArray(requirement.predicates) ? requirement.predicates : [];
+      const verifiers = {};
+      for (const p of predicates) {
+        if (p?.verifier?.id) verifiers[String(p.text)] = { verifier: String(p.verifier.id), params: { ...p.subject ?? {} } };
+      }
+      const text = h("textarea", { class: "f short", "aria-label": `Revised wording for ${rid}` });
+      text.value = this.drafts.get(rid) ?? original;
+      const save = h("button", { class: "ghost" }, "Revise and reopen");
+      const sync = () => {
+        save.disabled = !text.value.trim() || text.value.trim() === original.trim();
+      };
+      text.oninput = () => {
+        this.drafts.set(rid, text.value);
+        sync();
+      };
+      sync();
+      save.onclick = () => {
+        this.drafts.delete(rid);
+        void this.inspectorAction(session, "set_requirement", {
+          requirement_id: rid,
+          text: text.value.trim(),
+          closure: String(requirement.closure ?? "authoritative"),
+          predicates: predicates.map((p) => String(p.text)),
+          verifiers
+        }, save, status);
+      };
+      return this.disclosure(
+        `revise:${rid}`,
+        "Revise the wording and reopen",
+        h("p", { class: "dim" }, "Only the wording changes. The predicates and the verifiers you named, with their parameters, are kept exactly. A revision reopens the requirement and makes earlier results stale."),
+        text,
+        h("div", { class: "inspector-action-row" }, save)
+      );
+    }
+    /** MF-010: the contract skeleton, read only when the person opens it. */
+    skeletonView() {
+      const body = h("div", { class: "inspector-skeleton" }, h("p", { class: "dim" }, "Loading\u2026"));
+      const load = async () => {
+        try {
+          const out = await this.api.get("/api/session/skeleton");
+          clear(body, out.skeleton ? h("pre", { class: "checkpoint-evidence" }, JSON.stringify(out.skeleton, null, 2)) : h("p", { class: "dim" }, `No skeleton: ${String(out.reason ?? "none is being prepared")}.`));
+        } catch (e) {
+          clear(body, h("p", { class: "error" }, e.message));
+        }
+      };
+      const view = this.disclosure("skeleton", "Contract skeleton", h(
+        "p",
+        { class: "dim" },
+        "admit_contract's arguments built from your bindings alone. A predicate with no verifier you named is listed under needs, never guessed."
+      ), body);
+      view.addEventListener("toggle", () => {
+        if (view.open) void load();
+      });
+      if (view.open) void load();
+      return view;
     }
     predicateRow(predicate, requirementId) {
       const result = predicate.latest_result ?? predicate.result ?? {};
@@ -1293,7 +1372,11 @@ var Librarian = (() => {
       try {
         const sessionId = String(session?.session ?? "");
         const out = await this.api.tool(tool, args, sessionId);
-        if (out.error || out.refused) throw new Error(String(out.detail ?? out.refused ?? out.error));
+        if (out.error || out.refused) {
+          button.disabled = false;
+          clear(status, refusalView(out));
+          return;
+        }
         const fresh = await this.api.tool("session_status", {}, sessionId);
         if (fresh.error || fresh.refused) throw new Error(String(fresh.detail ?? fresh.refused ?? fresh.error));
         this.hooks.onSession(fresh);
@@ -1619,8 +1702,33 @@ var Librarian = (() => {
     const t = text.trim();
     return t ? t[0].toUpperCase() + t.slice(1) + (/[.!?]$/.test(t) ? "" : ".") : "";
   }
+  function refusalView(r) {
+    const known = /* @__PURE__ */ new Set(["error", "refused", "rule", "detail", "tool"]);
+    const extra = Object.fromEntries(Object.entries(r).filter(([k]) => !known.has(k)));
+    return h(
+      "span",
+      { class: "error" },
+      `refused (${String(r.refused ?? r.error)}): ${String(r.detail ?? "")}`,
+      Object.keys(extra).length ? h(
+        "details",
+        { class: "refusal-details" },
+        h("summary", {}, "Details"),
+        h("pre", {}, JSON.stringify(extra, null, 2))
+      ) : null
+    );
+  }
+  function stopReasonView(stop) {
+    const who = stop.by === "person" ? "you" : stop.by === "core" ? "the Core" : String(stop.by ?? "the Core");
+    return h(
+      "p",
+      { class: "inspector-stop" },
+      h("strong", {}, `${stop.status === "failed" ? "Failed" : "Stopped"}, by ${who}`),
+      stop.reason ? `: ${String(stop.reason)}` : "",
+      stop.epoch !== void 0 ? ` (epoch ${String(stop.epoch)})` : ""
+    );
+  }
   function summarise(tool, r, openNote) {
-    if (r.error === "refused") return h("span", {}, `refused (${r.refused}): ${r.detail ?? ""}`);
+    if (r.error === "refused" || r.refused) return refusalView(r);
     if (r.error) return h("span", {}, `failed: ${r.detail ?? r.error}`);
     if (Array.isArray(r.results)) {
       const found = r.results.slice(0, 3).filter((x) => x.name);

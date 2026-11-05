@@ -75,6 +75,14 @@ def admit_contract(ctx: Context, contract_id: str, requirements: list[str],
                    write: list[str] | None = None, read: list[str] | None = None,
                    verifiers: dict | None = None, operations: list[str] | None = None) -> dict:
     session = _audited(ctx)
+    # MF-010: the Manager's latest view of this session did not fit its budget,
+    # so any plan drawn from it was made without the whole set of constraints.
+    latest_view = session.manager_views[-1] if session.manager_views else None
+    if latest_view is not None and latest_view.get("fits") is False:
+        raise Refusal("PROJECTION_DOES_NOT_FIT",
+                      "the latest audit_projection did not fit its token budget; split or "
+                      "narrow the requirements, then call audit_projection again",
+                      {"round": latest_view.get("round")})
     existing = session.audit.contracts.get(contract_id)
     event = {"type": "contract", "id": contract_id,
              "revision": existing["revision"] + 1 if existing else 1,

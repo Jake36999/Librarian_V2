@@ -1046,6 +1046,71 @@ await page.reload();
 await page.waitForSelector("header nav");
 step("legacy audit histories are read-only and say so; changed files are listed without invented causes");
 
+// MF-010: a stopped requirement shows who stopped it and why; a text-only
+// revision sends back the exact predicates and verifier parameters (checked
+// against the real Core); a refusal keeps its structured details on demand;
+// the contract skeleton is read only when opened.
+const coreCall = (name, args = {}) => page.evaluate(async ([n, a, s]) => {
+  const token = document.querySelector("meta[name=librarian-token]")?.getAttribute("content") ?? "";
+  const response = await fetch(`/api/tool/${n}`, { method: "POST", headers: {
+    "Content-Type": "application/json", "X-Librarian-Token": token }, body: JSON.stringify({ arguments: a, session: s }) });
+  return response.json();
+}, [name, args, auditedSession]);
+const bindings = (view) => {
+  const r1 = view.predicate_inspector.requirements.find((r) => r.id === "R1");
+  return { revision: r1.revision, closure: r1.closure,
+    predicates: r1.predicates.map((p) => ({ text: p.text, verifier: p.verifier?.id ?? "", subject: p.subject ?? {} })) };
+};
+const before = bindings(await coreCall("session_status"));
+const stopText = "no progress in 3 interactions (3 questions, 0 refused calls): parked for the person";
+await page.route("**/api/state", async (route) => {
+  try {
+    const response = await route.fetch();
+    const body = await response.json();
+    if (body.session?.predicate_inspector) {
+      body.session.predicate_inspector.requirements = body.session.predicate_inspector.requirements.map((r) =>
+        r.id === "R1" ? { ...r, status: "blocked", stop: { status: "blocked", by: "core", epoch: 1, reason: stopText } } : r);
+    }
+    await route.fulfill({ response, json: body });
+  } catch { /* the page moved on */ }
+});
+await page.reload();
+await page.evaluate(() => { const pane = document.querySelector(".lib-pane"); if (pane && getComputedStyle(pane).display === "none") document.querySelector("button[aria-label='Show the document pane']")?.click(); });
+await page.waitForSelector(".lib-predicate-inspector .lib-inspector-stop >> text=Stopped, by the Core");
+await expect(page.isVisible(`.lib-predicate-inspector .lib-inspector-stop >> text=${stopText}`), "the stop reason is shown");
+await page.click(".lib-predicate-inspector summary:has-text('Revise the wording and reopen')");
+await page.fill("textarea[aria-label='Revised wording for R1']", "The quoted evidence is present, word for word.");
+const revised = page.waitForResponse((r) => r.url().endsWith("/api/tool/set_requirement") && r.request().method() === "POST");
+await page.click(".lib-predicate-inspector button:has-text('Revise and reopen')");
+await revised;
+await page.unroute("**/api/state");
+const after = bindings(await coreCall("session_status"));
+await expect(after.revision === before.revision + 1, `the revision reopened R1 (${before.revision} -> ${after.revision})`);
+await expect(JSON.stringify(after.predicates) === JSON.stringify(before.predicates) && after.closure === before.closure,
+  `a text-only revision keeps the exact predicates, verifiers and parameters ${JSON.stringify({ before, after })}`);
+await page.route("**/api/tool/request_evidence", (route) => route.fulfill({ status: 200, contentType: "application/json",
+  body: JSON.stringify({ error: "refused", refused: "AUDIT_EVENT_INVALID", detail: "that requirement is not open",
+    details: { kind: "unknown_id", known: ["R1"] } }) }));
+await page.reload();
+await page.waitForSelector(".lib-predicate-inspector");
+await page.fill("input[aria-label='Evidence needed for R1']", "a second quote");
+await page.click(".lib-predicate-inspector button:has-text('Request evidence')");
+await page.waitForSelector(".lib-predicate-inspector >> text=refused (AUDIT_EVENT_INVALID): that requirement is not open");
+await page.click(".lib-predicate-inspector .lib-refusal-details summary");
+await expect(page.isVisible(".lib-predicate-inspector .lib-refusal-details pre >> text=unknown_id"),
+  "the refusal's structured details are there on demand");
+await page.unroute("**/api/tool/request_evidence");
+let skeletonReads = 0;
+page.on("request", (r) => { if (r.url().includes("/api/session/skeleton")) skeletonReads += 1; });
+await expect(skeletonReads === 0, "the skeleton is not read until it is opened");
+await page.click(".lib-predicate-inspector summary:has-text('Contract skeleton')");
+await page.waitForFunction(() => {
+  const body = document.querySelector(".lib-inspector-skeleton");
+  return !!body && (!!body.querySelector("pre") || (body.textContent ?? "").startsWith("No skeleton"));
+});
+await expect(skeletonReads === 1, "opening the skeleton reads it once");
+step("stop reasons, exact text-only revision, refusal details and the skeleton on demand");
+
 // Phone width: nothing overflows sideways.
 await page.setViewportSize({ width: 390, height: 800 });
 await expect(page.evaluate(() => document.documentElement.scrollWidth <= 391), "no horizontal scroll at phone width");

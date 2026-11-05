@@ -1766,18 +1766,23 @@ def park_stalled(vault: Vault, session_id: str) -> dict[str, Any] | None:
     dependent = [r for r in scope if audit.requirement_status(r) not in settled]
     if not dependent:
         return None
+    independent = [r for r in sorted(audit.requirements)
+                   if r not in dependent and audit.requirement_status(r) not in settled]
+    # MF-010 / REMED-08: when the proposal named every open requirement, the
+    # park leaves nothing to work on; the reason says so rather than implying
+    # independent work continues.
+    left = (f"; {', '.join(independent)} stay open for independent work" if independent else
+            "; no other requirement is open, so the whole session waits on the person")
     reason = (f"no progress in {count} interactions ({session.stall['questions']} questions, "
               f"{session.stall['refusals']} refused calls) since the last check, contract or "
               f"reduction (limit {limit}): parked for the person, who reopens it by revising "
-              "the requirement")
+              f"the requirement{left}")
     for rid in dependent:
         store.append_audit(session_id, {
             "type": "reduction", "requirement": rid, "status": "blocked", "results": [],
             "by": "core", "epoch": audit.epoch, "reason": reason,
             "contract": audit.current_contract if contract and rid in contract["requirements"]
             else ""})
-    independent = [r for r in sorted(audit.requirements)
-                   if r not in dependent and audit.requirement_status(r) not in settled]
     return {"parked": dependent, "reason": reason, "independent": independent}
 
 

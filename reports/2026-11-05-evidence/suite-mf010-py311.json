@@ -1,0 +1,36 @@
+{
+ "command": [
+  "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "D:\\Librarian_V2",
+ "exit_code": 0,
+ "summary": "1960 passed, 2 skipped, 5 deselected in 614.44s (0:10:14)",
+ "started_utc": "2026-11-05T01:39:08.639926+00:00",
+ "seconds": 615.5,
+ "head": "0476dcbcc539dd090fd3a17c465bb981bb46db7e",
+ "tracked_changes": [
+  " M obsidian/dist/main.js",
+  " M obsidian/dist/styles.css",
+  " M src/resource_librarian/app.py",
+  " M src/resource_librarian/audit_events.py",
+  " M src/resource_librarian/audit_projection.py",
+  " M src/resource_librarian/rules.py",
+  " M src/resource_librarian/session.py",
+  " M src/resource_librarian/tools/audited.py",
+  " M src/resource_librarian/ui/app.js",
+  " M tests/test_admission_usability.py",
+  " M ui/smoke.mjs",
+  " M ui/src/chat.ts",
+  " M ui/src/style.css"
+ ],
+ "python": "3.11.3",
+ "executable": "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-mf010-py311.log",
+ "log_sha256": "8d4533757685a91a35c72288561a5df5e3b07162ca18a8fb3a636601523e6e55"
+}

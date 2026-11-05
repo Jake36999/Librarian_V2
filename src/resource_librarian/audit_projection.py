@@ -155,7 +155,9 @@ def _essential(session: Any, manifest: dict[str, Any], vault: Any) -> dict[str, 
             "ids": {f"{rid}.{req['ids'][p]}": p for p in req["predicates"]
                     if p in (req.get("ids") or {})},
             # The verifier the person named for a predicate: the plan must use it.
-            **({"verifiers": dict(req["verifiers"])} if req.get("verifiers") else {})}
+            **({"verifiers": dict(req["verifiers"])} if req.get("verifiers") else {}),
+            # MF-010: why a blocked or failed requirement stopped, and who stopped it.
+            **({"stop": stop} if (stop := audit_events.stop_reason(audit, rid)) else {})}
     contract = None
     if audit.current_contract:
         c = audit.contracts[audit.current_contract]

@@ -678,6 +678,23 @@ def _statements(state: AuditState, requirement: str) -> list[str]:
     return out
 
 
+def stop_reason(state: AuditState, requirement: str) -> dict[str, Any] | None:
+    """Why a blocked or failed requirement stopped, and who stopped it (MF-010).
+
+    The reduction that set its current status, folded from the log like every
+    other fact here, so it survives a restart and reads the same in
+    `session_status`, the inspector and the Manager projection."""
+    status = state.requirement_status(requirement)
+    if status not in ("blocked", "failed"):
+        return None
+    for r in reversed(state.reductions):
+        if r["requirement"] == requirement and r["status"] == status:
+            return {"status": status, "by": r["by"], "epoch": r["epoch"],
+                    **({"reason": r["reason"]} if r.get("reason") else {}),
+                    **({"contract": r["contract"]} if r.get("contract") else {})}
+    return None
+
+
 def _person_actions(state: AuditState, requirement: str) -> list[dict[str, Any]]:
     return [{k: v for k, v in r.items() if k in ("status", "artifact", "rejected", "reason")}
             for r in state.reductions if r["requirement"] == requirement and r["by"] == "person"
@@ -803,6 +820,7 @@ def predicate_inspector(state: AuditState) -> dict[str, Any]:
                           for ident in referenced_artifacts],
             "predicates": predicates,
             **({"person": person_view} if person_view is not None else {}),
+            **({"stop": stop} if (stop := stop_reason(state, requirement)) else {}),
         })
     return {"actionable": not bool(state.halted), "invalid": state.invalid,
             **({"legacy": state.legacy} if state.legacy else {}),
@@ -826,7 +844,9 @@ def summary(state: AuditState) -> dict[str, Any]:
                              **({"established": _statements(state, r)}
                                 if _statements(state, r) else {}),
                              **({"person": _person_actions(state, r)}
-                                if _person_actions(state, r) else {})}
+                                if _person_actions(state, r) else {}),
+                             **({"stop": stop_reason(state, r)}
+                                if stop_reason(state, r) else {})}
                          for r in state.requirements},
         "scope": SCOPE,
         "contracts": {c: {"revision": v["revision"], "requirements": v["requirements"],

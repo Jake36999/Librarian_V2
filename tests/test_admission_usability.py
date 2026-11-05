@@ -216,3 +216,45 @@ def test_the_stall_count_survives_a_restart(lead, evidence, limit):
     resumed.ok("resume_session", session_id=lead.ctx.session)
     assert state(lead).stall == {"questions": 2, "refusals": 0}
     assert json.dumps(state(lead).stall)
+
+
+# --- MF-010: durable stop reasons, and admission only from a view that fits ---------------
+
+def _stall(lead, limit):
+    asked = None
+    for n in range(limit):
+        asked = lead.ok("ask_user", question=f"Which source should I use, version {n}?")
+        lead.person("answer", question_id=asked["question_id"], answer="Work from the requirements.")
+    return asked["stalled"]
+
+
+def test_a_park_reason_and_its_source_survive_a_restart_in_every_view(lead, evidence, limit):
+    to_preflight(lead, evidence, step=("R1",))
+    stalled = _stall(lead, limit)
+    assert stalled["reason"].endswith("R2 stay open for independent work")
+    view = SessionStore(lead.ctx.vault).load(lead.ctx.session).to_dict(lead.ctx.vault)  # a restart's read
+    stop = view["audit"]["requirements"]["R1"]["stop"]
+    assert stop["status"] == "blocked" and stop["by"] == "core"
+    assert stop["reason"] == stalled["reason"]
+    inspector = {r["id"]: r for r in view["predicate_inspector"]["requirements"]}
+    assert inspector["R1"]["stop"] == stop and "stop" not in inspector["R2"]
+    assert lead.ok("audit_projection")["requirements"]["R1"]["stop"] == stop
+
+
+def test_a_park_that_leaves_no_independent_work_says_so(lead, evidence, limit):
+    to_preflight(lead, evidence)                       # the proposal names R1 and R2
+    stalled = _stall(lead, limit)
+    assert stalled["parked"] == ["R1", "R2"] and stalled["independent"] == []
+    assert "no other requirement is open, so the whole session waits on the person" in stalled["reason"]
+
+
+def test_a_contract_is_admitted_only_from_a_manager_view_that_fits(lead, evidence):
+    to_preflight(lead, evidence)
+    args = contract_skeleton(state(lead), lead.ctx.vault)["arguments"]
+    SessionStore(lead.ctx.vault).append(lead.ctx.session, {
+        "type": "manager_view", "digest": "d", "round": 1, "fits": False, "bundles": {}})
+    out = lead("admit_contract", **args)
+    assert out["refused"] == "PROJECTION_DOES_NOT_FIT" and "C1" not in lead.audit().contracts
+    assert lead.ok("audit_projection")["fits"] is True             # a view that fits
+    lead.ok("admit_contract", **args)
+    assert "C1" in lead.audit().contracts

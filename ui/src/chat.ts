@@ -474,11 +474,76 @@ export class Chat {
           requirement.text ? h("p", {}, String(requirement.text)) : null,
           h("p", { class: "dim inspector-meta" },
             closure ? `${closureLabel(closure)} · ` : "", `revision ${String(requirement.revision ?? 1)}`),
+          requirement.stop ? stopReasonView(requirement.stop) : null,
           predicates.map((predicate) => this.predicateRow(predicate, rid)),
+          actionable && (status === "blocked" || status === "failed")
+            ? this.reviseForm(session, requirement, actionStatus) : null,
           !actionable ? null
             : this.inspectorActions(session, rid, closure, artifacts, actionStatus),
           actionStatus);
-      }));
+      }),
+      actionable && session.purpose === "audited" ? this.skeletonView() : null);
+  }
+
+  // MF-010: the inspector is rebuilt on every state update, so what the person
+  // opened and typed is kept here, by requirement, across rebuilds.
+  private disclosures = new Set<string>();
+  private drafts = new Map<string, string>();
+
+  private disclosure(key: string, summary: string, ...body: (Node | null)[]): HTMLElement {
+    return h("details", { class: "inspector-disclosure", open: this.disclosures.has(key),
+      ontoggle: (e: globalThis.Event) => {
+        if ((e.currentTarget as HTMLDetailsElement).open) this.disclosures.add(key);
+        else this.disclosures.delete(key);
+      } }, h("summary", {}, summary), ...body);
+  }
+
+  /** MF-010: a blocked or failed requirement reopens by revision. Only its
+   *  wording changes here: the predicates, the closure and every verifier the
+   *  person named, with its parameters, are sent back exactly as projected. */
+  private reviseForm(session: Session, requirement: Record<string, any>, status: HTMLElement): HTMLElement {
+    const rid = String(requirement.id ?? "");
+    const original = String(requirement.text ?? "");
+    const predicates = (Array.isArray(requirement.predicates) ? requirement.predicates : []) as any[];
+    const verifiers: Record<string, unknown> = {};
+    for (const p of predicates) {
+      if (p?.verifier?.id) verifiers[String(p.text)] = { verifier: String(p.verifier.id), params: { ...(p.subject ?? {}) } };
+    }
+    const text = h("textarea", { class: "f short", "aria-label": `Revised wording for ${rid}` }) as HTMLTextAreaElement;
+    text.value = this.drafts.get(rid) ?? original;
+    const save = h("button", { class: "ghost" }, "Revise and reopen") as HTMLButtonElement;
+    const sync = () => { save.disabled = !text.value.trim() || text.value.trim() === original.trim(); };
+    text.oninput = () => { this.drafts.set(rid, text.value); sync(); };
+    sync();
+    save.onclick = () => {
+      this.drafts.delete(rid);
+      void this.inspectorAction(session, "set_requirement", {
+        requirement_id: rid, text: text.value.trim(), closure: String(requirement.closure ?? "authoritative"),
+        predicates: predicates.map((p) => String(p.text)), verifiers }, save, status);
+    };
+    return this.disclosure(`revise:${rid}`, "Revise the wording and reopen",
+      h("p", { class: "dim" }, "Only the wording changes. The predicates and the verifiers you named, with their "
+        + "parameters, are kept exactly. A revision reopens the requirement and makes earlier results stale."),
+      text, h("div", { class: "inspector-action-row" }, save));
+  }
+
+  /** MF-010: the contract skeleton, read only when the person opens it. */
+  private skeletonView(): HTMLElement {
+    const body = h("div", { class: "inspector-skeleton" }, h("p", { class: "dim" }, "Loading…"));
+    const load = async () => {
+      try {
+        const out = await this.api.get("/api/session/skeleton");
+        clear(body, out.skeleton
+          ? h("pre", { class: "checkpoint-evidence" }, JSON.stringify(out.skeleton, null, 2))
+          : h("p", { class: "dim" }, `No skeleton: ${String(out.reason ?? "none is being prepared")}.`));
+      } catch (e) { clear(body, h("p", { class: "error" }, (e as Error).message)); }
+    };
+    const view = this.disclosure("skeleton", "Contract skeleton", h("p", { class: "dim" },
+      "admit_contract's arguments built from your bindings alone. A predicate with no verifier you named is "
+        + "listed under needs, never guessed."), body);
+    view.addEventListener("toggle", () => { if ((view as HTMLDetailsElement).open) void load(); });
+    if ((view as HTMLDetailsElement).open) void load();
+    return view;
   }
 
   private predicateRow(predicate: Record<string, any>, requirementId: string): HTMLElement {
@@ -578,7 +643,12 @@ export class Chat {
     try {
       const sessionId = String(session?.session ?? "");
       const out = await this.api.tool(tool, args, sessionId);
-      if (out.error || out.refused) throw new Error(String(out.detail ?? out.refused ?? out.error));
+      if (out.error || out.refused) {
+        // MF-010: a refusal keeps its code and structured details, on demand.
+        button.disabled = false;
+        clear(status, refusalView(out));
+        return;
+      }
       const fresh = await this.api.tool("session_status", {}, sessionId);
       if (fresh.error || fresh.refused) throw new Error(String(fresh.detail ?? fresh.refused ?? fresh.error));
       this.hooks.onSession(fresh as Session);
@@ -873,8 +943,25 @@ function sentence(text: string): string {
 }
 
 /** One past-tense line for a tool result. */
+/** MF-010: why something was refused - its code and detail in line, and any
+ *  structured fields (`details`, contract ids, paths) behind a disclosure. */
+function refusalView(r: Record<string, any>): HTMLElement {
+  const known = new Set(["error", "refused", "rule", "detail", "tool"]);
+  const extra = Object.fromEntries(Object.entries(r).filter(([k]) => !known.has(k)));
+  return h("span", { class: "error" }, `refused (${String(r.refused ?? r.error)}): ${String(r.detail ?? "")}`,
+    Object.keys(extra).length ? h("details", { class: "refusal-details" }, h("summary", {}, "Details"),
+      h("pre", {}, JSON.stringify(extra, null, 2))) : null);
+}
+
+function stopReasonView(stop: Record<string, any>): HTMLElement {
+  const who = stop.by === "person" ? "you" : stop.by === "core" ? "the Core" : String(stop.by ?? "the Core");
+  return h("p", { class: "inspector-stop" },
+    h("strong", {}, `${stop.status === "failed" ? "Failed" : "Stopped"}, by ${who}`),
+    stop.reason ? `: ${String(stop.reason)}` : "", stop.epoch !== undefined ? ` (epoch ${String(stop.epoch)})` : "");
+}
+
 export function summarise(tool: string, r: Record<string, any>, openNote: (name: string) => void): Node {
-  if (r.error === "refused") return h("span", {}, `refused (${r.refused}): ${r.detail ?? ""}`);
+  if (r.error === "refused" || r.refused) return refusalView(r);
   if (r.error) return h("span", {}, `failed: ${r.detail ?? r.error}`);
   if (Array.isArray(r.results)) {
     const found = r.results.slice(0, 3).filter((x: any) => x.name);

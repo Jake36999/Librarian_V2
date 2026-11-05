@@ -2744,6 +2744,25 @@ class App:
         self.hub.publish({"type": "session_attached", "session": self.session_view()})
         return {"attached": session_id, "session": self.session_view()}
 
+    def contract_skeleton(self) -> dict[str, Any]:
+        """MF-010: the attached audited thread's contract skeleton, for the person
+        to read on demand. A plain read: unlike `audit_projection`, it records no
+        `manager_view` event and is no model's view."""
+        session_id = self.loop.ctx.session if self.loop is not None else None
+        if not session_id:
+            return {"skeleton": None, "reason": "no thread is attached"}
+        from .audit_projection import SKELETON_PHASES, contract_skeleton
+        session = SessionStore(self.vault).load(session_id)
+        skeleton = contract_skeleton(session, self.vault)
+        if skeleton is not None:
+            return {"session": session_id, "skeleton": skeleton}
+        why = ("this thread is not audited" if session.purpose != "audited" else
+               "its audit history is read-only" if session.audit.halted else
+               f"a skeleton is built in {' and '.join(SKELETON_PHASES)}; this thread is in "
+               f"{session.phase}" if session.phase not in SKELETON_PHASES else
+               "no open requirement needs a contract")
+        return {"session": session_id, "skeleton": None, "reason": why}
+
     def session_view(self) -> dict[str, Any] | None:
         session = self.loop.ctx.session if self.loop is not None else None
         if not session:
@@ -4074,6 +4093,8 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                     return self._json(200, app.meta())
                 if url.path == "/api/state":
                     return self._json(200, app.state())
+                if url.path == "/api/session/skeleton":
+                    return self._json(200, app.contract_skeleton())
                 if url.path == "/api/tools":
                     return self._json(200, {"tools": [
                         {"name": s.name, "purpose": s.card.purpose, "effect": s.effect,

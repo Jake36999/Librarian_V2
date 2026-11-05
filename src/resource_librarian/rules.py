@@ -116,6 +116,10 @@ _RULES = [
          "While an audited contract executes, each call must be an operation the contract "
          "allows, on its targets, within the size limit, and not a repeat of a write that "
          "already succeeded. Nothing was done."),
+    Rule("PROJECTION_DOES_NOT_FIT", "sessions",
+         "A contract is admitted only from a Manager view that fits its budget whole: no "
+         "constraint is cut to fit. Split or narrow the requirements, then view the "
+         "session again. Nothing was admitted."),
     Rule("COMPOSITION_REFUSED", "sessions",
          "Calls that are each allowed must not combine into one the contract does not allow: "
          "after untrusted input, a contract may only read and stage drafts for the person. "

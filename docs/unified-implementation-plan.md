@@ -4836,3 +4836,77 @@ names its cause. No product code changed. The three files passed on 3.11
 (91 passed); the full suite was not rerun for this test-message-only change.
 The next step is to diagnose from that cause and give the fix its own packet.
 
+### MF-010, durable stop reasons and safe revision (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-010 | implemented | this commit | `audit_events.py`, `audit_projection.py`, `session.py`, `tools/audited.py`, `rules.py`, `app.py`, `ui/src/chat.ts`, `ui/src/style.css`; three Core tests; one smoke step. |
+
+**The defects (G13, G14).**
+- A blocked requirement showed a badge but no reason, source or way to reopen
+  it. The stall-park reason existed only in the reduction event, and no view
+  projected it.
+- The UI dropped a structured refusal's `details`, and had no contract
+  skeleton.
+- Admission ignored a Manager view that did not fit its budget.
+
+**Change, in the Core.**
+- **`audit_events.stop_reason()`.** It returns the reduction that set a
+  blocked or failed requirement's current status: `by`, `reason`, `epoch` and
+  `contract`. It is folded from the log, so it survives a restart. It is
+  projected as `stop` in the `session_status` audit summary, the predicate
+  inspector and the Manager projection (`audit_projection`).
+- **The park reason (REMED-08).** `park_stalled` now works out independent work
+  before writing the reason. The reason ends "R2 stay open for independent
+  work", or, when the proposal named every open requirement, "no other
+  requirement is open, so the whole session waits on the person".
+- **Admission.** `admit_contract` refuses with the new rule
+  `PROJECTION_DOES_NOT_FIT` while the Manager's latest view has
+  `fits: False`. A view that fits, after the requirements are split or
+  narrowed, admits again.
+- **The skeleton.** `GET /api/session/skeleton` returns the attached thread's
+  contract skeleton, or why there is none. It is a plain read: unlike
+  `audit_projection`, it records no `manager_view` event and no model sees it.
+  `session_status` does not grow.
+- **`set_requirement` is unchanged.** No compare-and-swap argument was added.
+
+**Change, in the UI.**
+- **Stop reason.** A blocked or failed card shows "Stopped, by the Core: …"
+  or "by you", with its epoch.
+- **Revising.** "Revise the wording and reopen" sends `set_requirement` with
+  the new text and everything else exactly as projected: the predicates in
+  order, the closure, and each named verifier with its parameters.
+- **Refusals.** A refusal shows its code and detail, with its structured
+  fields (`details`, ids) behind a "Details" disclosure. This applies in the
+  inspector and in the chat rail (`summarise`).
+- **Skeleton.** "Contract skeleton" reads `/api/session/skeleton` only when
+  opened.
+- **Rebuilds.** The inspector rebuilds on every state update, so its open
+  disclosures and the revision draft are kept per requirement across rebuilds.
+
+**Checks.**
+- `tests/test_admission_usability.py`:
+  - `test_a_park_reason_and_its_source_survive_a_restart_in_every_view`:
+    after a real stall park and a fresh load, `stop` is identical in the
+    summary, the inspector and the Manager projection, and absent from the
+    still-open R2;
+  - `test_a_park_that_leaves_no_independent_work_says_so`;
+  - `test_a_contract_is_admitted_only_from_a_manager_view_that_fits`.
+- Smoke step "stop reasons, exact text-only revision, refusal details and the
+  skeleton on demand", on the real audited thread:
+  - A blocked R1 shows its stop reason.
+  - The revise form reopened it on the real Core. The revision rose by one,
+    and the closure, predicates, verifiers and parameters read back from
+    `session_status` match the revision before.
+  - A refusal's details open on demand.
+  - The skeleton is not read until it is opened, then read once.
+
+**Not in this packet.** The rest of G14: the inspector rebuilding its DOM and
+opening every non-pass predicate. Only the new disclosures keep their state.
+That ergonomic work is MF-025.
+
+**Verification:**
+- both bundles type-check and build;
+- `npm.cmd --prefix ui run smoke`: 52 steps passed;
+- full suite: 1960 passed, 2 skipped, 5 deselected in 614.44s (0:10:14) (exit 0, Python 3.11.3) (`reports/2026-11-05-evidence/suite-mf010-py311.json`).
+
