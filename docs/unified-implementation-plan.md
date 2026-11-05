@@ -5522,3 +5522,20 @@ time.
 (`reports/2026-11-05-evidence/suite-mf020-py311.json`, a clean clone of
 `d40ea08` plus this commit's files).
 
+### A liveness bound a loaded runner missed (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| (test tolerance) | fixed | this commit | `tests/test_person_waits.py`. |
+
+Hosted run 42030044973 (head `d40ea08`, MF-019) failed one job, core 3.11,
+on one test: `test_a_question_asked_in_a_coordinated_core_gets_its_answer`. It
+asserted an answer arrives within 3 s, and took 3.36 s. The rerun passed every
+job; locally the test takes 0.64 s. The bound exists to catch a held writer,
+which would stall the answer for the 20 s broker timeout (the question itself
+waits 600 s), so it is now 10 s. No product code changed.
+
+**Verification:** full suite: 2022 passed, 2 skipped, 5 deselected in 621.93s (0:10:21) (exit 0, Python 3.11.3)
+(`reports/2026-11-05-evidence/suite-wait-bound-py311.json`, a clean clone of
+`5713330` plus this file).
+

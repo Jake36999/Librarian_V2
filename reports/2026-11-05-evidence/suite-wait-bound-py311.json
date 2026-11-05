@@ -1,0 +1,24 @@
+{
+ "command": [
+  "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone",
+ "exit_code": 0,
+ "summary": "2022 passed, 2 skipped, 5 deselected in 621.93s (0:10:21)",
+ "started_utc": "2026-11-05T13:12:51.682599+00:00",
+ "seconds": 623.0,
+ "head": "57133308b192794b1e7154e9fabca1b0f5551301",
+ "tracked_changes": [
+  " M tests/test_person_waits.py"
+ ],
+ "python": "3.11.3",
+ "executable": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-wait-bound-py311.log",
+ "log_sha256": "dd2a3433807292ad2fdacab2f0b10173e7b15e65fc2d943326b9d0a598d86b74"
+}

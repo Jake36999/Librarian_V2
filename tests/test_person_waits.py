@@ -89,7 +89,10 @@ def test_a_question_asked_in_a_coordinated_core_gets_its_answer(core):
     started = time.monotonic()
     answered = core.person_call("answer", {"question_id": "q1", "answer": "this one"}, sid)
     thread.join(10)
-    assert time.monotonic() - started < 3
+    # A held writer would stall this for the 20 s broker timeout (the question itself
+    # waits 600 s); 3 s was missed once on a loaded hosted runner (3.36 s, run
+    # 42030044973, passed on rerun), so the bound keeps that meaning with room.
+    assert time.monotonic() - started < 10
     assert answered["resumed"] is True
     assert "error" not in out["ask"], out["ask"]
 
