@@ -23,6 +23,12 @@ apply exactly as if a model had called it.
 A run is an append-only log (`.librarian/runs/<id>.jsonl`). A routing step
 whose model is unavailable pauses the run; `resume` continues it later, and a
 person may choose the route by hand instead.
+
+A run is pinned to its definitions (MF-017). At start it records the exact
+text of every definition it can reach (its own, each workflow step and each
+route target, recursively, `closure`), each of which must be accepted. It then
+runs only those texts, never whatever a name means now. A resume runs the
+same pinned texts, and refuses if any of them has since changed or gone.
 """
 from __future__ import annotations
 
@@ -182,6 +188,81 @@ class Library:
         return {"saved": path.relative_to(self.vault.root).as_posix(), "kind": d.kind,
                 "accepted": accepted_by_person, "warnings": report["warnings"],
                 "tier": report["tier"]}
+
+
+def _children(d: Definition) -> list[str]:
+    """The workflows a definition names: its workflow steps and route targets."""
+    names: list[str] = []
+    for step in d.data.get("steps") or []:
+        if not isinstance(step, dict):
+            continue
+        if "workflow" in step:
+            names.append(str(step["workflow"]))
+        route = step.get("route")
+        options = route.get("options") if isinstance(route, dict) else None
+        for spec in (options or {}).values() if isinstance(options, dict) else []:
+            if isinstance(spec, dict) and "workflow" in spec:
+                names.append(str(spec["workflow"]))
+    return list(dict.fromkeys(names))
+
+
+def closure(d: Definition, library: Library) -> dict[str, Definition]:
+    """Every definition a run of `d` can reach, by name, `d` included.
+
+    An unknown name and a definition that reaches itself are refused, so a
+    run never starts on a closure it could not finish.
+    """
+    found: dict[str, Definition] = {}
+
+    def visit(node: Definition, chain: tuple[str, ...]) -> None:
+        if node.name in chain:
+            raise DefinitionError(" -> ".join(chain + (node.name,)) +
+                                  ": a definition cannot reach itself")
+        if node.name in found:
+            return
+        found[node.name] = node
+        for name in _children(node):
+            visit(library.get(name), chain + (node.name,))
+
+    visit(d, ())
+    return found
+
+
+class Pinned(Library):
+    """A run's own definitions: the exact texts it started with, and only those."""
+
+    def __init__(self, vault: Vault | None, definitions: dict[str, Definition]):
+        super().__init__(vault)
+        self.definitions = dict(definitions)
+
+    def all(self) -> dict[str, Definition]:
+        return dict(self.definitions)
+
+    def get(self, name: str) -> Definition:
+        found = self.definitions.get(name)
+        if found is None:
+            raise DefinitionError(f"{name!r} is not one of this run's pinned definitions")
+        return found
+
+    def is_accepted(self, d: Definition) -> bool:
+        return True                 # every pinned definition was accepted when the run started
+
+    @staticmethod
+    def record(definitions: dict[str, Definition]) -> dict[str, dict[str, str]]:
+        return {name: {"kind": d.kind, "origin": d.origin, "digest": d.digest, "text": d.text}
+                for name, d in definitions.items()}
+
+    @classmethod
+    def restore(cls, vault: Vault | None, pins: dict[str, Any]) -> "Pinned":
+        definitions: dict[str, Definition] = {}
+        for name, pin in pins.items():
+            d = parse(str(pin.get("text") or ""))
+            if d.name != name or d.digest != pin.get("digest"):
+                raise DefinitionError(f"run log: the pinned text of {name!r} does not match "
+                                      f"its digest")
+            d.origin = str(pin.get("origin") or "")
+            definitions[name] = d
+        return cls(vault, definitions)
 
 
 # --------------------------------------------------------------- validation
@@ -358,7 +439,8 @@ def _check_workflow_ref(name: str, args: Any, where: str, library: Library, erro
         return
     inner = validate(target, library, seen)
     if inner["errors"]:
-        errors.append(f"{where}: workflow {name!r} is itself invalid")
+        errors.append(f"{where}: workflow {name!r} is itself invalid ("
+                      + "; ".join(inner["errors"][:3]) + ")")
     tiers.append(inner["tier"])
     declared = target.data.get("inputs") or {}
     for key in set(args if isinstance(args, dict) else {}) - set(declared):
@@ -573,6 +655,8 @@ class Runner:
         self.store = RunStore(ctx.vault)
         self.run_id = ""
         self.memo: dict[str, Any] = {}           # step key -> logged result, for resume
+        # What this run executes: its pinned definitions once it has started.
+        self.definitions: Library = library
 
     # -- entry points --------------------------------------------------------
     def start(self, name: str, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -580,9 +664,13 @@ class Runner:
         report = validate(d, self.library)
         if report["errors"]:
             raise DefinitionError("invalid: " + "; ".join(report["errors"]))
-        if self.require_accepted and not self.library.is_accepted(d):
-            raise Refusal("PERSON_CONFIRMS", f"{name!r} has not been accepted by a person "
-                                             f"(or was edited since); accept_workflow first")
+        members = closure(d, self.library)
+        unaccepted = [m.name for m in members.values() if not self.library.is_accepted(m)]
+        if self.require_accepted and unaccepted:
+            which = (f"{name!r} has" if unaccepted == [name] else
+                     f"{', '.join(repr(n) for n in unaccepted)} (which {name!r} runs) have")
+            raise Refusal("PERSON_CONFIRMS", f"{which} not been accepted by a person (or "
+                                             f"were edited since); accept_workflow first")
         if TIERS.index(report["tier"]) > TIERS.index(self.ctx.tier):
             raise Refusal("TIER_REFUSED", f"{name!r} needs {report['tier']!r}; this caller "
                                           f"is at {self.ctx.tier!r}")
@@ -591,7 +679,9 @@ class Runner:
         self.run_id = f"{stamp}-{name}-{secrets.token_hex(2)}"
         self.store.append(self.run_id, {"type": "started", "name": name, "kind": d.kind,
                                         "digest": d.digest, "inputs": values,
+                                        "closure": Pinned.record(members),
                                         "session": self.ctx.session or ""})
+        self.definitions = Pinned(self.ctx.vault, members)
         return self._execute(d, values)
 
     def resume(self, run_id: str, choices: dict[str, str] | None = None) -> dict[str, Any]:
@@ -599,10 +689,33 @@ class Runner:
         start = events[0]
         if events[-1]["type"] in ("finished", "failed"):
             raise DefinitionError(f"run {run_id} is {events[-1]['type']}")
-        d = self.library.get(start["name"])
+        if "closure" in start:
+            pinned = Pinned.restore(self.ctx.vault, start["closure"])
+        else:
+            # A run started before MF-017 recorded only its own digest. Its
+            # children would be looked up by today's names, so a run that has
+            # any cannot be resumed faithfully.
+            current = self.library.get(start["name"])
+            if _children(current):
+                raise DefinitionError(f"run {run_id} started before the workflows it runs "
+                                      f"were pinned, so a resume could run different ones; "
+                                      f"start a new run")
+            pinned = Pinned(self.ctx.vault, {current.name: current})
+        current = self.library.all()
+        drifted = sorted(n for n, d in pinned.definitions.items()
+                         if n not in current or current[n].digest != d.digest)
+        if drifted:
+            raise DefinitionError(f"{', '.join(repr(n) for n in drifted)} changed or went "
+                                  f"after this run started; start a new run")
+        d = pinned.get(start["name"])
         if d.digest != start["digest"]:
             raise DefinitionError(f"{start['name']!r} was edited after this run started; "
                                   f"start a new run")
+        report = validate(d, pinned)                # e.g. an action no longer registered
+        if report["errors"]:
+            raise DefinitionError("this run's definitions are no longer valid: " +
+                                  "; ".join(report["errors"]))
+        self.definitions = pinned
         self.run_id = run_id
         for e in events:
             if e["type"] == "done":
@@ -709,7 +822,7 @@ class Runner:
 
     def _workflow(self, name: str, args: dict[str, Any], scope: dict[str, Any],
                   key: str) -> dict[str, Any]:
-        target = self.library.get(name)
+        target = self.definitions.get(name)          # the pinned text, never today's name
         values = self._inputs(target, resolve(args, scope))
         inner = self._steps(target, values, prefix=f"{key}/")
         result = {"status": "finished", "results": inner["steps"],

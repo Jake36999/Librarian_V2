@@ -5283,3 +5283,83 @@ of `896369d` plus only this commit's seven files, as the record's
 uncommitted Settings work at the time, and a run there failed one
 width-rule test because of it (`ui/src/style.css:410`, `100vw`).
 
+### MF-015 Docker disk quotas: measured, needs an owner decision (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-015 (NAT-04; DT-06 quota slice; G18) | blocked: owner decision | — | Measured on this machine's backend; no code changed. |
+
+**The defect is real.** Both write paths are capped only after the run:
+- the sandbox landing pad is a bind-mounted host folder, and its 50 MB /
+  200-file cap is checked after the run (`sandbox.py`, `_check_landing`);
+- the Workbench output volume lives on the Docker VM's disk, which on Docker
+  Desktop is a growable file on the Windows drive, and is bounded only when
+  it is exported (`workbench.py`, `_archive_outputs`).
+
+Until then a run can write without limit.
+
+**Measured backend.** Docker 29.8.1, Docker Desktop on the WSL2 kernel
+6.18.54.1, with the containerd overlayfs snapshotter.
+- **Size cap ignored.** `docker run --storage-opt size=20m ...` is
+  accepted, `df` inside shows the full 1007 GB, and a 60 MiB write
+  succeeded.
+- **No other route.** The local images contain no filesystem tools, and a
+  fixed-size loop filesystem per run would need a privileged helper
+  container.
+
+So this backend offers no disk-backed byte or inode cap. The packet also rules
+out RAM-backed artifact tmpfs and a supervisor daemon.
+
+**Decision needed (the packet's own fallback).** Either:
+1. **disable** the writable landing pad and Workbench outputs on a backend
+   that fails a live quota probe (runs keep stdout and a scratch `/tmp`); or
+2. **mark it unsupported** in the capability matrix, with the limitation in
+   the release notes.
+
+MF-016 depends on MF-015 and waits with it.
+
+### MF-017 workflow runs are pinned to their definitions (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-017 | implemented | this commit | `src/resource_librarian/workflows.py`; `tests/test_workflows.py`. |
+
+**Before.** A run recorded only its own digest. Each child workflow (a
+pipeline's workflow steps and its route targets) was looked up by its current
+name when it ran, so a child edited mid-run or before a resume silently
+substituted new steps. An agent's run also never checked that a child was
+accepted.
+
+**Now.**
+- **At start** `closure` collects every definition the run can reach,
+  recursively; an unknown name or a definition that reaches itself is
+  refused. Each must be accepted (for an agent's run), or the run does not
+  start and the refusal names the unaccepted ones.
+- **The start event** records each definition's kind, origin, digest and
+  exact text.
+- **While running,** the runner executes only those pinned texts (`Pinned`),
+  never a current-name lookup.
+- **On resume:**
+  - the pinned texts are restored, and each is checked against its digest;
+  - the resume is refused if any has since changed or gone;
+  - the pinned set is validated again, so an action unregistered since the
+    start is refused.
+  - A run logged before MF-017 that has children cannot be resumed
+    faithfully, so it is refused with that reason.
+- **Clearer errors:** a child's validation error now includes the child's own
+  errors, not just "is itself invalid".
+
+**Tests.** 6 new cases:
+- a child edited mid-run still runs as it started;
+- a resume refuses drift, and runs the pinned child once restored;
+- an unaccepted child stops an agent's run before it starts;
+- an unpinned (legacy) or tampered run log is not resumed;
+- an unregistered action refuses a resume;
+- `closure` refuses a cycle and an unknown name.
+
+All 6 fail on the previous `workflows.py`.
+
+**Verification:** full suite: 2007 passed, 2 skipped, 5 deselected in 630.22s (0:10:30) (exit 0, Python 3.11.3)
+(`reports/2026-11-05-evidence/suite-mf017-py311.json`, a clean clone of
+`1bbbf6c` plus this commit's two files).
+

@@ -297,3 +297,163 @@ def test_steps_obey_the_session_phase_gate(vault):
     assert ok["status"] == "finished", ok
     assert REGISTRY.call("session_status", {}, ctx)["briefs"]["B1"]["disqualifiers"] == \
         ["needs a GPU"]
+
+
+# -- MF-017: a run is pinned to the definitions it started with -------------------
+
+CHILD_A = """
+workflow: child-a
+purpose: list the staged sources
+steps:
+  - id: listed
+    action: staging_list
+    args: {kind: source}
+"""
+CHILD_B = """
+workflow: child-b
+purpose: the version the run started with
+steps:
+  - id: original
+    action: staging_list
+    args: {kind: source}
+"""
+CHILD_B_EDITED = CHILD_B.replace("id: original", "id: edited")
+PAUSING = """
+pipeline: pinned-run
+purpose: run one child, then ask whether to run another
+steps:
+  - id: first
+    workflow: child-a
+  - id: next
+    route:
+      decide: reason
+      question: carry on?
+      options:
+        go: {workflow: child-b, when_to_choose: always}
+        stop: {end: true, when_to_choose: never}
+"""
+STRAIGHT = """
+pipeline: pinned-now
+purpose: run one child, then the other, by declaration
+steps:
+  - id: first
+    workflow: child-a
+  - id: next
+    route:
+      decide: declared
+      options:
+        go: {workflow: child-b}
+        stop: {end: true, when: {from: steps.first.status, is: never}}
+      otherwise: go
+"""
+
+
+def child_b(vault):
+    return vault.librarian / "workflows" / "child-b.yaml"
+
+
+def saved(vault, *texts, by=None):
+    for text in texts:
+        out = REGISTRY.call("save_workflow", {"yaml_text": text}, by or person(vault))
+        assert "error" not in out, out
+
+
+def ran_keys(vault, run_id):
+    return [e["key"] for e in workflows.RunStore(vault).events(run_id) if e["type"] == "done"]
+
+
+def test_a_child_edited_during_the_run_still_runs_as_it_started(vault):
+    saved(vault, CHILD_A, CHILD_B, STRAIGHT)
+
+    def edit_child_b(event):
+        if event["step"] == "first/listed":
+            child_b(vault).write_text(CHILD_B_EDITED, encoding="utf-8")
+
+    out = REGISTRY.call("run_pipeline", {"name": "pinned-now"},
+                        person(vault, router=workflows.Router(None), progress=edit_child_b))
+
+    assert out["status"] == "finished", out
+    assert "next->go/original" in ran_keys(vault, out["run"])
+    assert not any(k.endswith("/edited") for k in ran_keys(vault, out["run"]))
+    started = workflows.RunStore(vault).events(out["run"])[0]
+    assert set(started["closure"]) == {"pinned-now", "child-a", "child-b"}
+
+
+def test_a_resume_runs_the_pinned_children_or_refuses_drift(vault):
+    saved(vault, CHILD_A, CHILD_B, PAUSING)
+    ctx = person(vault, router=workflows.Router(None))
+    paused = REGISTRY.call("run_pipeline", {"name": "pinned-run"}, ctx)
+    assert paused["status"] == "paused" and paused["at"] == "next", paused
+
+    child_b(vault).write_text(CHILD_B_EDITED, encoding="utf-8")
+    refused = REGISTRY.call("run_resume", {"run_id": paused["run"], "choices": {"next": "go"}},
+                            ctx)
+    assert "'child-b' changed or went after this run started" in refused["detail"]
+
+    child_b(vault).write_text(CHILD_B, encoding="utf-8")         # back as it was
+    done = REGISTRY.call("run_resume", {"run_id": paused["run"], "choices": {"next": "go"}},
+                         ctx)
+    assert done["status"] == "finished", done
+    assert "next->go/original" in ran_keys(vault, paused["run"])
+
+
+def test_a_child_no_person_accepted_stops_the_run_before_it_starts(vault):
+    saved(vault, CHILD_A)
+    saved(vault, CHILD_B, by=agent(vault))                       # saved, not accepted
+    saved(vault, PAUSING)
+    # An agent's run (a person's own run is its own acceptance).
+    out = REGISTRY.call("run_pipeline", {"name": "pinned-run"},
+                        agent(vault, router=workflows.Router(None)))
+    assert out["refused"] == "PERSON_CONFIRMS" and "'child-b'" in out["detail"]
+    assert not list((vault.librarian / "runs").glob("*.jsonl"))
+
+
+def test_an_unpinned_or_tampered_run_log_is_not_resumed(vault):
+    saved(vault, CHILD_A, CHILD_B, PAUSING)
+    store = workflows.RunStore(vault)
+    library = workflows.Library(vault)
+    store.append("legacy-run", {"type": "started", "name": "pinned-run", "kind": "pipeline",
+                                "digest": library.get("pinned-run").digest, "inputs": {}})
+    store.append("legacy-run", {"type": "paused", "step": "next"})
+    ctx = person(vault, router=workflows.Router(None))
+    legacy = REGISTRY.call("run_resume", {"run_id": "legacy-run"}, ctx)
+    assert "started before the workflows it runs were pinned" in legacy["detail"]
+
+    paused = REGISTRY.call("run_pipeline", {"name": "pinned-run"}, ctx)
+    log = store.path(paused["run"])
+    lines = log.read_text(encoding="utf-8").splitlines()
+    lines[0] = lines[0].replace("id: original", "id: swapped")   # the text, not its digest
+    log.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    tampered = REGISTRY.call("run_resume", {"run_id": paused["run"], "choices": {"next": "go"}},
+                             ctx)
+    assert "does not match its digest" in tampered["detail"]
+
+
+def test_a_resume_refuses_an_action_that_is_no_longer_registered(vault, monkeypatch):
+    saved(vault, CHILD_A, CHILD_B, PAUSING)
+    ctx = person(vault, router=workflows.Router(None))
+    paused = REGISTRY.call("run_pipeline", {"name": "pinned-run"}, ctx)
+    monkeypatch.delitem(REGISTRY._tools, "staging_list")         # noqa: SLF001
+    out = REGISTRY.call("run_resume", {"run_id": paused["run"], "choices": {"next": "go"}}, ctx)
+    assert "no longer valid" in out["detail"] and "staging_list" in out["detail"]
+
+
+def test_a_closure_refuses_a_cycle_and_an_unknown_name(vault):
+    def wf(name, child):
+        return workflows.parse(f"workflow: {name}\npurpose: p\nsteps:\n"
+                               f"  - id: s\n    workflow: {child}\n")
+
+    class Fixed(workflows.Library):
+        def __init__(self, *defs):
+            super().__init__(None)
+            self.defs = {d.name: d for d in defs}
+
+        def all(self):
+            return dict(self.defs)
+
+    loop = Fixed(wf("aa", "bb"), wf("bb", "aa"))
+    with pytest.raises(workflows.DefinitionError, match="aa -> bb -> aa"):
+        workflows.closure(loop.get("aa"), loop)
+    gap = Fixed(wf("aa", "zz"))
+    with pytest.raises(workflows.DefinitionError, match="no workflow or pipeline named 'zz'"):
+        workflows.closure(gap.get("aa"), gap)
