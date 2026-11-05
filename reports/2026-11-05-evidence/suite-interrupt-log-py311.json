@@ -1,0 +1,26 @@
+{
+ "command": [
+  "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "D:\\Librarian_V2",
+ "exit_code": 0,
+ "summary": "1961 passed, 2 skipped, 5 deselected in 606.75s (0:10:06)",
+ "started_utc": "2026-11-05T02:33:23.813719+00:00",
+ "seconds": 607.8,
+ "head": "166c3b3b4704b51ed592a7fb80cc6d86e6f5deca",
+ "tracked_changes": [
+  " M src/resource_librarian/promote.py",
+  " M tests/test_core_source_batch.py",
+  " M tests/test_core_source_promotion.py"
+ ],
+ "python": "3.11.3",
+ "executable": "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-interrupt-log-py311.log",
+ "log_sha256": "6d266fda75bd36122d0104a51d417c21cdf77b1ae1929cb09be88710e62f1c74"
+}

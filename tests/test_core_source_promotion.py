@@ -527,3 +527,18 @@ def test_a_rewrapped_interruption_names_its_original_cause():
     inner = promotion.PromotionInterruptedError(OSError("disk"), ["Sources/document/New Widget.md"])
     outer = promotion.PromotionInterruptedError(inner, ["Sources/document/New Widget.md", "x.md"])
     assert outer.cause_name == "OSError" and "promotion interrupted (OSError)" in str(outer)
+
+
+def test_an_interruption_logs_where_it_broke_but_never_its_message(caplog):
+    def deep():
+        raise OSError("provider said: SECRET-PAYLOAD")
+    try:
+        deep()
+    except OSError as exc:
+        with caplog.at_level("WARNING", logger="resource_librarian.promote"):
+            promotion.PromotionInterruptedError(exc, ["Sources/a.md"])
+            promotion.PromotionInterruptedError(promotion.PromotionInterruptedError(exc, []), [])
+    logged = [r.getMessage() for r in caplog.records]
+    assert len(logged) == 2                               # a re-wrap logs nothing more
+    assert "promotion interrupted by OSError after 1 completed write(s)" in logged[0]
+    assert "deep" in logged[0] and "SECRET-PAYLOAD" not in " ".join(logged)

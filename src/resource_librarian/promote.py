@@ -24,9 +24,11 @@ from __future__ import annotations
 
 import json
 import hashlib
+import logging
 import os
 import re
 import secrets
+import traceback
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -38,6 +40,8 @@ from .index import Index
 from .rules import Refusal
 from .search import Engine, search
 from .vault import Vault, now_iso
+
+_log = logging.getLogger(__name__)
 
 UNFILED = "Unfiled"
 EVIDENCE_HEADING = "Evidence"
@@ -350,6 +354,15 @@ class PromotionInterruptedError(RuntimeError):
         # not arbitrary messages or source text.
         super().__init__(f"promotion interrupted ({self.cause_name}); completed writes: "
                          f"{self.completed_paths}; review before retrying")
+        if not isinstance(cause, PromotionInterruptedError):
+            # Where it broke, for diagnosis: the cause's type and the frames it
+            # was raised through - file, line and function only, never its
+            # message, which may carry a provider payload.
+            frames = traceback.extract_tb(cause.__traceback__)[-8:]
+            _log.warning("promotion interrupted by %s after %d completed write(s) at %s",
+                         type(cause).__name__, len(self.completed_paths),
+                         " <- ".join(f"{Path(f.filename).name}:{f.lineno} {f.name}"
+                                     for f in reversed(frames)) or "(no traceback)")
 
 
 def prepare(vault: Vault, draft: Draft, index_call: Callable, *, resume: dict | None = None) -> dict:

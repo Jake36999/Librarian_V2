@@ -4939,3 +4939,34 @@ Both remain bounded, so a real hang still fails. No product code changed. Both
 files pass locally (52 and 70 passed with the other app tests). The full
 suite was not rerun for this test-bound change.
 
+### Interrupted acceptances: now on every lane; their cause is logged (2026-11-05, open)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| (unassigned) | open, diagnostics | this commit | `src/resource_librarian/promote.py`, `tests/test_core_source_promotion.py`, `tests/test_core_source_batch.py`. |
+
+**Observed.** Hosted run 41954324262, head `166c3b3`, failed one test on 3.11,
+and 3.12 and 3.13 passed:
+`test_core_source_batch.py::test_original_session_is_kept_per_source_not_shared_across_batch`.
+It accepted 1 of 2 items, and the other stopped as interrupted. This family
+has now failed on 3.11, 3.12 and 3.13, in four different tests across three
+hosted runs: 41912301225, 41944402182 and 41954324262. Its assertion was one I had not yet changed to print the cause,
+so the cause was truncated again.
+
+**Change.** When a `PromotionInterruptedError` wraps a real cause, it logs a
+warning:
+- the cause's type;
+- how many writes had completed;
+- the last eight frames it was raised through, as file, line and function.
+
+It never logs the cause's message, which may carry a provider payload; that
+is the same rule as the error text. A re-wrap logs nothing more. pytest shows
+captured warnings with any failure, so the next hosted occurrence names the
+cause, whatever test it is in. The Core's own log gains the same diagnosis.
+`test_an_interruption_logs_where_it_broke_but_never_its_message` checks the
+type, the frame and the count, the absence of the message, and that a re-wrap
+is silent. The remaining batch assertion now prints its items' errors too.
+
+**Verification:** the acceptance files passed (92). Full suite: 1961 passed, 2 skipped, 5 deselected in 606.75s (0:10:06) (exit 0, Python 3.11.3)
+(`reports/2026-11-05-evidence/suite-interrupt-log-py311.json`).
+

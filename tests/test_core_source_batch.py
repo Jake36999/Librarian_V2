@@ -187,7 +187,7 @@ def test_original_session_is_kept_per_source_not_shared_across_batch(core):
             _store(core).save(item)
     core.writer.submit(origins)
     out = _accept(core)
-    assert out.get("accepted") == 2, out
+    assert out.get("accepted") == 2, [r.get("error") or r.get("detail") for r in out["results"]]
     assert [notes.load(core.vault.root / r["promotion"]["path"]).frontmatter["session"] for r in out["results"]] == session_ids
 
 
