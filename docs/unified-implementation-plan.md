@@ -5539,3 +5539,56 @@ waits 600 s), so it is now 10 s. No product code changed.
 (`reports/2026-11-05-evidence/suite-wait-bound-py311.json`, a clean clone of
 `5713330` plus this file).
 
+### MF-015 uncapped run output is its own permission (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-015 (NAT-04; DT-06 quota slice; G18) | implemented as the owner decided: a permission gate, not a verified disk cap | this commit | `src/resource_librarian/broker.py`, `sandbox.py`, `workbench.py`, `tools/sandbox.py`, `tools/workbench.py`; `tests/test_sandbox.py`, `tests/test_accept_workbench.py`. |
+
+**The decision (owner, 2026-11-05).** The measured state was recorded earlier
+today: this Docker Desktop backend ignores `--storage-opt size`, and nothing
+caps the bind-mounted landing pad or the Workbench output volume while a run
+writes. The owner chose neither plain disabling nor shipping unmarked. A
+run's writable output is an action like writing a file, gated through
+permissions, and not an automatic consequence of having allowed the agent's
+run.
+
+**Now.**
+- **Its own permission:** `sandbox_output` is in `broker.ALWAYS_ASK`.
+  - It is asked in every mode, Auto included, and Plan mode refuses it.
+  - No session grant covers it, and allowing the run itself does not
+    either. Only setting `sandbox_output` itself to Allow
+    (`/api/tool-setting`) skips the question.
+- **What the person sees:** the request says where the run would write, that
+  nothing caps it while it runs, and what is checked afterwards.
+- **Sandbox runs** (`sandbox_run`, and a person's `sandbox_run_file`) ask
+  once Docker is confirmed available:
+  - **allowed:** the landing pad is mounted, as before;
+  - **refused or unanswered:** the run still goes ahead with nothing
+    writable mounted, working in its small `/tmp`. It keeps what it prints,
+    keeps no file, and says so in `notes` and in `output.kept`.
+- **Workbench Docker engagements** ask the same before execution. Without it
+  the output volume is not mounted and nothing is exported.
+- **Unchanged:** claim runs mount nothing writable, so they are not gated.
+
+**Not done.** No backend here enforces a disk-backed cap, so the packet's
+"verified byte/inode enforcement" is not met. The gate makes running uncapped
+a person's explicit choice instead. The Settings permissions list does not
+show `sandbox_output` yet; that UI belongs to the parallel Settings work.
+MF-016 (stop producers before a quarantined export) is next in this lane.
+
+**Tests.** 4 new cases:
+- keeping a run's files is asked separately, even in Auto;
+- a refusal still runs the code but keeps no file and mounts nothing
+  writable;
+- allowing the run for the session does not allow its output, and Plan mode
+  never reaches the question;
+- a Workbench run without the permission mounts and exports nothing.
+
+All 4 fail on the previous code. The existing Auto-mode sandbox test now sets
+`sandbox_output` to Allow, as a person can.
+
+**Verification:** full suite: 2026 passed, 2 skipped, 5 deselected in 672.48s (0:11:12) (exit 0, Python 3.11.3)
+(`reports/2026-11-05-evidence/suite-mf015-py311.json`, a clean clone of
+`bce35ef` plus this commit's files).
+

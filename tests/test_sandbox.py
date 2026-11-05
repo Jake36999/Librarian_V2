@@ -28,10 +28,10 @@ class FakeDocker:
         if args[:2] == ["docker", "build"]:
             self.image = True
             return SimpleNamespace(returncode=0, stdout="", stderr="")
-        landing = next(a for a in args if a.endswith("target=/landing")).split(",")[1][7:]
+        pad = next((a for a in args if a.endswith("target=/landing")), None)
         from pathlib import Path
-        for name, data in self.writes.items():
-            (Path(landing) / name).write_bytes(data)
+        for name, data in self.writes.items() if pad is not None else ():
+            (Path(pad.split(",")[1][7:]) / name).write_bytes(data)
         return SimpleNamespace(returncode=0, stdout=self.stdout, stderr="")
 
 
@@ -90,7 +90,10 @@ def test_the_agent_is_asked_and_plan_mode_never_runs(vault, monkeypatch):
     planning = Context(tier="contribute", vault=vault, extras={"broker": Broker("plan")})
     out = REGISTRY.call("sandbox_run", {"code": "print(1)"}, planning)
     assert out["refused"] == "PERMISSION_DENIED"
-    auto = Context(tier="contribute", vault=vault, extras={"broker": Broker("auto")})
+    # MF-015: keeping a run's files is its own permission, asked even in Auto; set to
+    # Allow here, as a person can set it.
+    auto = Context(tier="contribute", vault=vault, extras={
+        "broker": Broker("auto", tool_settings={"sandbox_output": "allow"})})
     assert REGISTRY.call("sandbox_run", {"code": "print(1)"}, auto)["exit_code"] == 0
     # a person's run of a script file: only a script, and only a person
     write_note(vault.root, "Notes/plan.md", "type: note", "not a script")
@@ -112,3 +115,78 @@ def test_the_pane_lists_and_shows_scripts_as_code(served):
     assert script["script"] is True
     shown = client.get("/api/file?path=Notes/tally.py")[1]
     assert shown["script"] == "python" and shown["text"] == "print(2 + 2)\n"
+
+
+# -- MF-015 (owner, 2026-11-05): keeping a run's files is a write of its own --------
+
+def gated(monkeypatch, docker):
+    monkeypatch.setattr(sandbox, "_run", docker)
+    monkeypatch.setattr(sandbox, "docker_status", lambda runner=None: (True, "fake"))
+    monkeypatch.setattr(sandbox, "ensure_image", lambda v, runner=None: sandbox.IMAGE)
+
+
+def answering(broker, **answers):
+    """A person answering by tool name; records every request and its always_ask flag."""
+    asked = []
+
+    def listen(event):
+        if event.get("type") == "permission_request":
+            asked.append((event["tool"], bool(event.get("always_ask"))))
+            broker.answer(event["id"], answers.get(event["tool"], "deny"))
+
+    broker.subscribe(listen)
+    return asked
+
+
+def writable(args):
+    return [a for a in args if a.startswith("type=bind") and not a.endswith(",readonly")]
+
+
+def test_keeping_a_runs_files_is_asked_separately_even_in_auto(vault, monkeypatch):
+    docker = FakeDocker(writes={"out.txt": b"6\n"})
+    gated(monkeypatch, docker)
+    broker = Broker("auto", timeout=5)
+    asked = answering(broker, sandbox_output="allow_once")
+    ctx = Context(tier="contribute", vault=vault, extras={"broker": broker})
+
+    out = REGISTRY.call("sandbox_run", {"code": "print(6)"}, ctx)
+
+    assert asked == [("sandbox_output", True)]       # the run itself was Auto's to allow
+    assert out["output"]["kept"] is True and out["files"][0]["name"] == "out.txt"
+    assert len(writable(docker.calls[-1])) == 1
+
+
+def test_a_refused_output_still_runs_but_keeps_no_files(vault, monkeypatch):
+    docker = FakeDocker(writes={"out.txt": b"6\n"})
+    gated(monkeypatch, docker)
+    broker = Broker("auto", timeout=5)
+    answering(broker, sandbox_output="deny")
+    ctx = Context(tier="contribute", vault=vault, extras={"broker": broker})
+
+    out = REGISTRY.call("sandbox_run", {"code": "print(6)"}, ctx)
+
+    run = docker.calls[-1]
+    assert out["exit_code"] == 0 and out["stdout"] == "hello\n"     # it still ran
+    assert writable(run) == [] and run[run.index("--workdir") + 1] == "/tmp"
+    assert out["output"]["kept"] is False and out["files"] == [] and out["landing"] == ""
+    assert "not permitted" in out["notes"][-1]
+    assert not any(sandbox.landing_root(vault).glob("*"))
+
+
+def test_allowing_the_run_for_the_session_does_not_allow_its_output(vault, monkeypatch):
+    gated(monkeypatch, FakeDocker())
+    broker = Broker("ask", timeout=5)
+    asked = answering(broker, sandbox_run="allow_session", sandbox_output="allow_session")
+    ctx = Context(tier="contribute", vault=vault, extras={"broker": broker})
+    REGISTRY.call("open_session", {"purpose": "explore", "question": "q"}, ctx)
+
+    REGISTRY.call("sandbox_run", {"code": "print(1)"}, ctx)
+    REGISTRY.call("sandbox_run", {"code": "print(2)"}, ctx)
+
+    assert [tool for tool, _ in asked] == ["sandbox_run", "sandbox_output", "sandbox_output"]
+
+    planning = Context(tier="contribute", vault=vault, extras={"broker": Broker("plan")})
+    plan_asked = answering(planning.extras["broker"])
+    assert REGISTRY.call("sandbox_run", {"code": "print(1)"}, planning)["refused"] == \
+        "PERMISSION_DENIED"
+    assert plan_asked == []                           # never got as far as the output

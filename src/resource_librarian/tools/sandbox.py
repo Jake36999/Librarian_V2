@@ -14,12 +14,13 @@ from ..registry import Card, Context, tool
                 "No network, no keys, nothing of this machine but the library files you name "
                 "in `inputs` (read-only, at /inputs). The only place it can write is its "
                 "landing pad (the working folder): read a text file from there with "
-                "sandbox_read; nothing that lands is ever run or imported. Asked like any write"))
+                "sandbox_read; nothing that lands is ever run or imported. Asked like any write, "
+                "and keeping the files it writes is asked again, separately (sandbox_output)"))
 def sandbox_run(ctx: Context, code: str, language: Literal["python", "shell"] = "python",
                 inputs: list[str] | None = None, timeout: int = 60) -> dict:
     from .. import sandbox
     return sandbox.run(ctx.vault, code, language, by="agent", inputs=inputs or [],
-                       timeout=max(5, min(int(timeout), 300)))
+                       timeout=max(5, min(int(timeout), 300)), ctx=ctx)
 
 
 @tool("sandbox_read", tier="consult", effect="read",
@@ -46,4 +47,4 @@ def sandbox_run_file(ctx: Context, path: str) -> dict:
     if language is None or not target.is_file():
         raise TypeError(f"{path!r} is not a script file (.py or .sh) in the library")
     return sandbox.run(ctx.vault, target.read_text(encoding="utf-8", errors="replace"),
-                       language, by="person", label=path)
+                       language, by="person", label=path, ctx=ctx)

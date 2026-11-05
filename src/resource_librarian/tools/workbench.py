@@ -96,7 +96,8 @@ def engagement_start(ctx: Context, engagement_id: str,
                     "checkpoint": checkpoint,
                     "detail": "Approve or cancel the execution checkpoint, then rerun with its checkpoint_id."}
     return workbench.start(ctx.vault, engagement_id, choice=choice, command=command or [], image=image,
-                           confirm_non_isolated=confirm_non_isolated, person_confirmed=True)
+                           confirm_non_isolated=confirm_non_isolated, person_confirmed=True,
+                           ctx=ctx)
 
 
 @REGISTRY.tool("engagement_close", tier="curate", effect="write", scope="library",

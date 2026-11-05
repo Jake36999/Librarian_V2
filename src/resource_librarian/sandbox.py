@@ -23,6 +23,16 @@ with its size and digest. Nothing on the pad is ever executed, imported, indexed
 by the app: the model may read a text file from it (`sandbox_read`), and moving anything
 out is a person's act.
 
+**Output is its own permission** (owner, 2026-11-05; MF-015). Those limits are checked
+after the run. While it runs, nothing caps what it writes to the pad: the pad is a folder
+on this machine, and no Docker option limits a bind mount. Docker Desktop on WSL2 also
+ignores `--storage-opt size`: measured 2026-11-05, 60 MiB was written under a 20 MB cap. So a run
+gets a writable pad only when `sandbox_output` is allowed. That is a write of its own,
+asked about in every mode (`broker.ALWAYS_ASK`) and refused in Plan mode. Allowing the run,
+or any earlier write, never grants it. Refused or unanswered, the run still goes ahead
+with no writable pad: it keeps what it prints, but no file it writes is kept. A Workbench
+engagement's output volume is gated the same way.
+
 The image is `librarian-sandbox:1`, built once from `sandbox/Dockerfile` (python:3.11-slim
 and an unprivileged user); without a running Docker there is no run, and no fallback to
 this machine.
@@ -157,9 +167,42 @@ def landing_root(vault: Vault) -> Path:
     return vault.librarian / "sandbox" / "landing"
 
 
-def command(name: str, job: Path, landing: Path, inputs: Path | None, language: str,
+OUTPUT_PERMISSION = "sandbox_output"
+UNCAPPED = ("nothing limits what the run writes while it runs: Docker cannot cap a folder "
+            "shared with this machine")
+
+
+def output_permission(ctx: Any, where: str, after_run: str) -> tuple[bool, str]:
+    """Whether a run may write files with no disk cap while it runs, and how that was decided.
+
+    Asked through the permission broker as its own write, `sandbox_output`, in every mode
+    and whatever was allowed before. With no broker (a direct, CLI or test call, where the
+    registry has none either), it is allowed, as every write is there.
+    """
+    from .registry import Card, ToolSpec
+    broker = getattr(ctx, "extras", {}).get("broker") if ctx is not None else None
+    if broker is None:
+        return True, "no broker"
+    spec = ToolSpec(OUTPUT_PERMISSION, fn=lambda *args, **kwargs: None, tier="contribute",
+                    effect="write",
+                    card=Card("Let a container run write files to its output folder",
+                              "a sandbox run or a Workbench engagement is about to start",
+                              "No disk cap applies while it runs; the output is checked "
+                              "after it"))
+    try:
+        return True, broker.check(spec, {"writes_to": where, "while_running": UNCAPPED,
+                                         "after_the_run": after_run}, ctx)
+    except Refusal as refusal:
+        return False, f"{refusal.code}: {refusal.detail}"
+
+
+def command(name: str, job: Path, landing: Path | None, inputs: Path | None, language: str,
             entry: str) -> list[str]:
-    """The container, built here in code; every flag is a control."""
+    """The container, built here in code; every flag is a control.
+
+    With no `landing` (its output not permitted) nothing writable is mounted: the code
+    runs in its small `/tmp`, and what it writes there goes with the container.
+    """
     args = ["docker", "run", "--rm", "--name", name,
             "--network", "none",                       # air-gapped
             "--memory", MEMORY, "--cpus", CPUS, "--pids-limit", "128",
@@ -167,11 +210,13 @@ def command(name: str, job: Path, landing: Path, inputs: Path | None, language: 
             "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
             "--user", "10001:10001",
             "-e", "HOME=/tmp", "-e", "PYTHONDONTWRITEBYTECODE=1",
-            "--mount", f"type=bind,source={job},target=/job,readonly",
-            "--mount", f"type=bind,source={landing},target=/landing"]
+            "--mount", f"type=bind,source={job},target=/job,readonly"]
+    if landing is not None:
+        args += ["--mount", f"type=bind,source={landing},target=/landing"]
     if inputs is not None:
         args += ["--mount", f"type=bind,source={inputs},target=/inputs,readonly"]
-    return args + ["--workdir", "/landing", IMAGE, *INTERPRETER[language], f"/job/{entry}"]
+    return args + ["--workdir", "/landing" if landing is not None else "/tmp", IMAGE,
+                   *INTERPRETER[language], f"/job/{entry}"]
 
 
 def _check_landing(landing: Path) -> tuple[list[dict[str, Any]], list[str]]:
@@ -200,8 +245,11 @@ def _check_landing(landing: Path) -> tuple[list[dict[str, Any]], list[str]]:
 
 
 def run(vault: Vault, code: str, language: str, by: str, inputs: list[str] | None = None,
-        timeout: int = TIMEOUT, runner: Runner | None = None, label: str = "") -> dict[str, Any]:
-    """One run in a fresh container. `inputs` are library files, copied in read-only."""
+        timeout: int = TIMEOUT, runner: Runner | None = None, label: str = "",
+        ctx: Any = None) -> dict[str, Any]:
+    """One run in a fresh container. `inputs` are library files, copied in read-only.
+
+    `ctx` carries the permission broker that decides `sandbox_output` for this run."""
     runner = runner or _run          # looked up when called, so a test can stand in for it
     if language not in INTERPRETER:
         raise TypeError(f"language is one of {sorted(INTERPRETER)}")
@@ -213,9 +261,15 @@ def run(vault: Vault, code: str, language: str, by: str, inputs: list[str] | Non
     ensure_image(vault, runner)
     run_id = f"{now_iso()[:19].replace(':', '').replace('-', '')}-{secrets.token_hex(3)}"
     base = vault.librarian / "sandbox" / "runs" / run_id
-    job, landing = base / "job", landing_root(vault) / run_id
+    keep, permission = output_permission(
+        ctx, f".librarian/sandbox/landing/{run_id}",
+        f"links removed, then held to {LANDING_MAX_FILES} files and "
+        f"{LANDING_MAX_BYTES // (1024 * 1024)} MB")
+    job = base / "job"
+    landing = landing_root(vault) / run_id if keep else None
     job.mkdir(parents=True)
-    landing.mkdir(parents=True)
+    if landing is not None:
+        landing.mkdir(parents=True)
     entry = "main.py" if language == "python" else "main.sh"
     (job / entry).write_text(code, encoding="utf-8")
     staged_inputs = None
@@ -244,10 +298,15 @@ def run(vault: Vault, code: str, language: str, by: str, inputs: list[str] | Non
         code_out, stdout, stderr = -1, "", f"stopped after {timeout}s"
     finally:
         shutil.rmtree(job, ignore_errors=True)
-    files, notes = _check_landing(landing)
+    files, notes = _check_landing(landing) if landing is not None else ([], [])
+    if landing is None:
+        notes.append("no file this run wrote was kept: writing its output was not "
+                     f"permitted ({permission})")
     record = {"run": run_id, "by": by, "label": label, "language": language,
               "exit_code": code_out, "timed_out": timed_out, "network": "none",
-              "inputs": inputs or [], "landing": f".librarian/sandbox/landing/{run_id}",
+              "inputs": inputs or [],
+              "landing": f".librarian/sandbox/landing/{run_id}" if landing is not None else "",
+              "output": {"kept": landing is not None, "permission": permission},
               "files": files, "notes": notes, "at": now_iso()}
     log = vault.librarian / "sandbox" / "runs.jsonl"
     with log.open("a", encoding="utf-8") as handle:

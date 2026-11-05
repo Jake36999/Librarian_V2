@@ -86,6 +86,39 @@ def test_success_docker_execution_is_labelled_isolated(pinned, monkeypatch):
     assert run[:2] == ["docker", "run"] and "--network" in run and "none" in run
 
 
+def test_a_docker_run_without_output_permission_mounts_and_exports_nothing(pinned, monkeypatch):
+    """MF-015 (owner, 2026-11-05): the output volume has no cap while the run writes, so
+    it is mounted only when `sandbox_output` is allowed, which a person decides apart."""
+    from resource_librarian.broker import Broker
+    calls, asked = [], []
+
+    def runner(args, timeout):
+        calls.append(args)
+        return SimpleNamespace(returncode=0, stdout="ran", stderr="")
+
+    def exported(*_):
+        raise AssertionError("nothing may be exported without the output permission")
+
+    monkeypatch.setattr(sandbox, "docker_status", lambda runner=None: (True, "docker ready"))
+    monkeypatch.setattr(workbench, "_docker_stage", lambda *_: ("src-volume", "archive-hash"))
+    monkeypatch.setattr(workbench, "_archive_outputs", exported)
+    broker = Broker("auto", timeout=5)
+
+    def listen(event):
+        if event.get("type") == "permission_request":
+            asked.append(event["tool"])
+            broker.answer(event["id"], "deny")
+
+    broker.subscribe(listen)
+    ctx = Context(tier="curate", vault=pinned, extras={"broker": broker})
+    out = workbench.start(pinned, "eng-accept", choice="docker_isolated", command=["true"],
+                          image=IMAGE, person_confirmed=True, runner=runner, ctx=ctx)
+
+    assert asked == ["sandbox_output"] and out["exit_code"] == 0
+    assert not any("dst=/workspace/output" in arg for arg in calls[-1])
+    assert out["export"]["complete"] is False and "not permitted" in out["export"]["stopped"]
+
+
 @pytest.mark.parametrize("kwargs,code", [
     (dict(choice="non_isolated_host_exec", command=ok(), person_confirmed=True),
      "EXECUTION_SANDBOX_ONLY"),            # the weaker guarantee was not confirmed

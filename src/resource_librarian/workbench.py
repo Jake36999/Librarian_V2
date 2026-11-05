@@ -19,6 +19,9 @@ gain.  Each phase then adds only what it needs, and says why:
   `docker cp` places the archive.
 - **execute** (`_docker_execute`): read-only root, a small /tmp, the
   unprivileged runner uid, the source read-only, memory, CPU and process limits.
+  The output volume is mounted only when `sandbox_output` is allowed: nothing
+  caps it while the run writes (MF-015, owner 2026-11-05; see `sandbox.py`).
+  Without it the run keeps what it prints, and nothing is exported.
 - **export** (`_archive_outputs`): a read-only helper that is never started.
   The output volume streams out as a tar and is checked member by member
   before anything is written here: regular files and folders only, no path
@@ -570,17 +573,21 @@ def _archive_outputs(vault: Vault, engagement: Engagement, image: str,
 
 
 def _docker_execute(vault: Vault, engagement: Engagement, command: list[str], image: str,
-                    runner: Runner) -> dict[str, Any]:
+                    runner: Runner, keep_output: bool = True,
+                    permission: str = "") -> dict[str, Any]:
+    """Run the command. Without `keep_output` (MF-015: `sandbox_output` not allowed) no
+    output volume is mounted and nothing is exported: the run keeps what it prints."""
     repo = _repository(vault, engagement.source)
     source_volume, archive_hash = _docker_stage(engagement, repo["repo_key"], image, runner)
     output_volume = _volume_name(engagement, "output")
     name = f"librarian-engage-{engagement.id[-8:]}"
+    output = ["--mount", f"type=volume,src={output_volume},dst=/workspace/output"] \
+        if keep_output else []
     args = ["docker", "run", "--rm", "--name", name, *CONTAINED, "--read-only",
             "--tmpfs", "/tmp:rw,size=128m", "--memory", "2g", "--cpus", "2", "--pids-limit", "128",
             "--user", "10001:10001",
             "--mount", f"type=volume,src={source_volume},dst=/workspace/source,readonly",
-            "--mount", f"type=volume,src={output_volume},dst=/workspace/output",
-            "--workdir", "/workspace", image, *command]
+            *output, "--workdir", "/workspace", image, *command]
     try:
         done = runner(args, 930)
         result = {"exit_code": int(getattr(done, "returncode", -1)),
@@ -595,6 +602,11 @@ def _docker_execute(vault: Vault, engagement: Engagement, command: list[str], im
         result = {"exit_code": -1, "stdout": "", "stderr": "stopped after 900s", "archive_sha256": archive_hash,
                   "source_volume": source_volume, "output_volume": output_volume,
                   "isolation_tier": "docker_isolated"}
+    if not keep_output:
+        result.update(artifacts=[], export={
+            "complete": False, "files": 0, "bytes": 0, "refused": [],
+            "stopped": f"no output was kept: writing it was not permitted ({permission})"})
+        return result
     result.update(_archive_outputs(vault, engagement, image, runner))
     return result
 
@@ -704,7 +716,7 @@ def _host_execute(vault: Vault, engagement: Engagement, command: list[str]) -> d
 
 def start(vault: Vault, engagement_id: str, *, choice: str, command: list[str] | None = None,
           image: str = "", confirm_non_isolated: bool = False, person_confirmed: bool = False,
-          runner: Runner | None = None) -> dict[str, Any]:
+          runner: Runner | None = None, ctx: Any = None) -> dict[str, Any]:
     store = EngagementStore(vault)
     engagement = store.get(engagement_id)
     if engagement.state not in ("proposed", "paused"):
@@ -724,9 +736,15 @@ def start(vault: Vault, engagement_id: str, *, choice: str, command: list[str] |
         if not ok:
             raise Refusal("EXECUTION_SANDBOX_ONLY", detail + "; choose inspect-only, retry Docker, or explicitly use non-isolated host execution")
         image = _require_image(image)
+        # MF-015: the output volume has no disk cap while the run writes to it.
+        keep, permission = sandbox.output_permission(
+            ctx, f"the engagement's Docker output volume ({_volume_name(engagement, 'output')})",
+            f"exported only after checks, at most {MAX_OUTPUT_FILES} files and "
+            f"{MAX_OUTPUT_BYTES // (1024 * 1024)} MB")
         engagement.state, engagement.isolation_tier = "running", "docker_isolated"
         store.put(engagement, "started")
-        result = _docker_execute(vault, engagement, command, image, runner or _run)
+        result = _docker_execute(vault, engagement, command, image, runner or _run,
+                                 keep_output=keep, permission=permission)
     elif choice == "non_isolated_host_exec":
         if not confirm_non_isolated:
             raise Refusal("EXECUTION_SANDBOX_ONLY", "host execution is non_isolated_host_exec; explicitly confirm its weaker guarantee")

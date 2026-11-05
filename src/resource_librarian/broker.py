@@ -64,7 +64,9 @@ class Request:
 # granted for the session, unless that tool itself is set to Allow (Research Pipeline §6.1:
 # project writes pass the broker, Ask/Allow/Deny). Their request carries the arguments in
 # full (to ASK_SHOWN characters each), so the person sees the change they are approving.
-ALWAYS_ASK = frozenset({"project_edit"})
+# `sandbox_output` (owner, 2026-11-05; MF-015): letting a container run write files with
+# no disk cap while it runs. A write of its own, never implied by allowing the run.
+ALWAYS_ASK = frozenset({"project_edit", "sandbox_output"})
 ASK_SHOWN = 4000
 
 

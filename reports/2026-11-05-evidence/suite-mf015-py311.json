@@ -1,0 +1,30 @@
+{
+ "command": [
+  "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone",
+ "exit_code": 0,
+ "summary": "2026 passed, 2 skipped, 5 deselected in 672.48s (0:11:12)",
+ "started_utc": "2026-11-05T15:02:51.908170+00:00",
+ "seconds": 673.7,
+ "head": "bce35ef9d64d57109aceef51b11d806052d98cd2",
+ "tracked_changes": [
+  " M src/resource_librarian/broker.py",
+  " M src/resource_librarian/sandbox.py",
+  " M src/resource_librarian/tools/sandbox.py",
+  " M src/resource_librarian/tools/workbench.py",
+  " M src/resource_librarian/workbench.py",
+  " M tests/test_accept_workbench.py",
+  " M tests/test_sandbox.py"
+ ],
+ "python": "3.11.3",
+ "executable": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-mf015-py311.log",
+ "log_sha256": "463a6bd210dad1ff0c1762cf2ed6a26ae17a460cebb0f150d067ffdd65491e00"
+}
