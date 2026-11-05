@@ -9,6 +9,8 @@ a vault. What the librarian keeps there is split by whether it can be rebuilt:
     .librarian/staging/        proposals awaiting a decision (tracked)
     .librarian/quarantine/     what intake rejected, with the reason (tracked)
     .librarian/eval/           this vault's own retrieval questions and scenarios (tracked)
+    .librarian/references/     durable result references: where to read again and the
+                               digest to match, never the content (tracked)
     .librarian/derived/        index, vectors, extracted text (ignored; delete
                                it and `index` rebuilds it)
     .evidence/                 the data layer, as fetched (tracked, never edited)
@@ -35,7 +37,7 @@ PROJECT_NAME = re.compile(r"[^A-Za-z0-9 &_.,()'+-]")    # notes.SAFE_NAME's alph
 NOTE_FOLDERS = ("Projects", "Sources", "Concepts", "Offerings", "Applications",
                 "Inbox", "Indexes", "About")
 SOURCE_KINDS = ("repository", "paper", "dataset", "document", "page", "standard", "model")
-WORK_FOLDERS = ("sessions", "queue", "staging", "quarantine", "eval")
+WORK_FOLDERS = ("sessions", "queue", "staging", "quarantine", "eval", "references")
 UNFILED = "Unfiled"
 TOPIC_ROW = re.compile(r"^\|\s*([^|]+?)\s*\|")
 

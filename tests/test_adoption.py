@@ -63,7 +63,8 @@ def test_adopting_writes_operational_state_only_and_keeps_every_document(docs):
     state = sorted(p.relative_to(docs / ".librarian").as_posix()
                    for p in (docs / ".librarian").rglob("*"))
     assert state == sorted(["config.toml", "content-roots.json", ".gitignore", "derived",
-                            "sessions", "queue", "staging", "quarantine", "eval"])
+                            "sessions", "queue", "staging", "quarantine", "eval",
+                            "references"])
     assert not any(p.suffix == ".md" for p in (docs / ".librarian").rglob("*"))
     vault = Vault.find(docs)
     assert vault.exists() and vault.config()["vault"]["name"] == "Team docs"

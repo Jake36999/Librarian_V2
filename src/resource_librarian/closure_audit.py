@@ -32,9 +32,9 @@ def _plain(text: str) -> str:
 
 
 def _evidence(vault: Vault, ident: str) -> dict[str, Any] | None:
-    for path in vault.evidence.glob(f"*/{ident}.json"):
-        return json.loads(path.read_text(encoding="utf-8"))
-    return None
+    from .evidence import EvidenceStore
+    path = EvidenceStore(vault).locate(ident)     # None for anything but a real record id
+    return json.loads(path.read_text(encoding="utf-8")) if path is not None else None
 
 
 def _strings(value: Any) -> list[str]:

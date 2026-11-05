@@ -5063,3 +5063,85 @@ gets a clean 403. This is deterministic, unlike the reset itself:
 (`reports/2026-11-05-evidence/suite-refuse-drain-py311.json`). MF-011's hosted
 run is otherwise green.
 
+### MF-012 durable references cross restart and worker boundaries (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-012 (MEM-03; MEM-12 foundation; MC-03/06/07/14) | implemented | this commit | `src/resource_librarian/result_handles.py`, `tools/results.py`, `evidence.py`; `tests/test_result_handles.py`, `tests/test_evidence.py`. |
+
+**Before.** An oversized `get_note`, `read_source_file` or `search` result came
+back as a `sha256:` handle held in the Loop's memory. A helper's handles ended
+with the helper, and a restart lost them all, so a parent could not reopen the
+evidence a helper cited.
+
+**Durable references.** An oversized `get_note` or `read_source_file` result
+now also carries a `ref:` reference, and the retrieval hint points at it.
+- **What is kept:** a record in `.librarian/references/`: the tool, its
+  arguments pinned to the exact note or file read, and the SHA-256 of the
+  result without its per-caller envelope (session, outcome, revision token).
+  No content is written to disk.
+- **Resolving:** `read_result` re-runs that read through the registry, so the
+  reader's current tier, profile, project access, helper allowlist and
+  session gates all apply. It returns the bytes only when they hash to the
+  recorded digest. The re-read is exempt from the turn's tool bundle only,
+  like a macro's inner calls, and only for that one recorded read.
+- **When it cannot:** a `REFERENCE_UNRESOLVED` refusal with one of seven
+  statuses: changed, missing, expired, forbidden, withdrawn, unavailable
+  (the host did not answer) and unknown (no such record in this library). A
+  forbidden or unknown answer names no note, size or digest.
+- **Lifetimes:** `sha256:` handles stay Loop-local. A handle from an ended
+  Loop is now refused as `expired`, not as a bad argument. A reference lapses
+  90 days after the read it cites was last made. Search results stay
+  ephemeral, and their projection says so.
+- **Helpers:** each `delegate` result lists the references its helper minted
+  (up to 12: id, tool, size), and the helper brief asks it to cite them.
+
+**Withdrawal (MEM-12 foundation).** `withdraw_reference` (curate tier, a
+person's action) writes a tombstone. The reference then stops resolving for
+every Loop, after a restart too, and nothing is read for it. A later
+identical read does not revive it. The record stays for audit, and the note
+or file is untouched: this is retrieval withdrawal, not deletion.
+
+**No handle opens a file.** A reference's tool must be `get_note` or
+`read_source_file`, and its record must hash to its own id; a malformed id is
+refused before any path is formed. A forged record naming `read_file`, and a
+record whose arguments were edited, both resolve as `unknown` without a read.
+
+**Evidence ids (defect found here).** Three lookups globbed on a caller-given
+id without checking it: `EvidenceStore.get`, `closure._evidence_readable` and
+`closure_audit._evidence`. An id of `*` matched whichever record the glob
+found first. (The two audit-target collectors filtered the id first; they now
+use the same lookup.) Measured on the previous code: `get("*")`,
+`closure_audit._evidence(vault, "*")` and `_evidence_readable(vault, "*", ...)`
+all matched. So an audited contract's `read_evidence("*")` could pass the
+scope check and then read a record outside its targets, and a quote or
+integrity check could be judged against the wrong record. `EvidenceStore.locate`
+now accepts only a 32-hex id and finds one file, with no pattern matching. Every
+lookup goes through it. `read_evidence` also refuses a record that no longer
+matches its id (`EVIDENCE_IS_NEVER_EDITED`, status changed) instead of serving
+edited text.
+
+**Tests.** 11 new MF-012 cases in `test_result_handles.py`:
+- exact bytes after Loop exit and a fresh Core (one re-read, then paging);
+- after a real `delegate` helper exits;
+- changed and missing, never returning new bytes;
+- expired, without a read;
+- forbidden and cross-library unknown, with no metadata;
+- the bundle exemption;
+- withdrawal, which survives restart and is not revived;
+- forged and tampered records;
+- search staying ephemeral;
+- a `read_source_file` reference resolved again, and unavailable when the
+  host fails.
+
+Plus 2 evidence cases in `test_evidence.py`, both failing on the previous
+code. One updated case: an ended Loop's handle is `expired`.
+
+**Not done here.** Withdrawing a note or source itself, and propagating that
+to search, vectors and summaries, is MF-036. No UI surface offers withdrawal
+yet. A changed source's cited version cannot be reopened, because no snapshot
+is kept; it is reported as changed.
+
+**Verification:** full suite: 1983 passed, 2 skipped, 5 deselected in 616.99s (0:10:16) (exit 0, Python 3.11.3)
+(`reports/2026-11-05-evidence/suite-mf012-py311.json`).
+

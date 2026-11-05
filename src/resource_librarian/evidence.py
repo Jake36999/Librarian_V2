@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator
@@ -32,6 +33,14 @@ KINDS = ("survey", "metadata", "readme", "abstract", "pdf_text", "page",
 # Keys that would carry framing into the data layer.
 FRAMING_KEYS = frozenset({"project", "brief", "brief_id", "session", "session_id",
                           "need", "disqualifiers", "purpose", "why", "topic", "framing"})
+# A record id is the first 32 hex characters of its content hash. Anything else
+# names no record: an id is never a path or a glob pattern (MF-012), so `*`
+# cannot stand in for whichever record a lookup happens to find first.
+RECORD_ID = re.compile(r"[0-9a-f]{32}")
+
+
+def is_record_id(value: object) -> bool:
+    return isinstance(value, str) and RECORD_ID.fullmatch(value) is not None
 
 
 @dataclass(frozen=True)
@@ -99,12 +108,27 @@ class EvidenceStore:
             atomic_write_text(path, json.dumps(record.to_dict(), ensure_ascii=False, indent=1))
         return record
 
-    def get(self, record_id: str) -> Record | None:
-        for path in self.vault.evidence.glob(f"*/{record_id}.json"):
-            data = json.loads(path.read_text(encoding="utf-8"))
-            return Record(data["id"], data["kind"], data["source"], data["fetched_at"],
-                          data["payload"])
+    def locate(self, record_id: str) -> Path | None:
+        """The one file a well-formed id names, or None. No pattern matching."""
+        if not is_record_id(record_id):
+            return None
+        try:
+            folders = sorted(p for p in self.vault.evidence.iterdir() if p.is_dir())
+        except OSError:
+            return None
+        for folder in folders:
+            path = folder / f"{record_id}.json"
+            if path.is_file():
+                return path
         return None
+
+    def get(self, record_id: str) -> Record | None:
+        path = self.locate(record_id)
+        if path is None:
+            return None
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return Record(data["id"], data["kind"], data["source"], data["fetched_at"],
+                      data["payload"])
 
     def iter(self, kind: str | None = None) -> Iterator[Record]:
         pattern = f"{kind}/*.json" if kind else "*/*.json"

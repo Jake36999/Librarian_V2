@@ -394,7 +394,11 @@ class Loop:
         self.ctx = Context(tier=tier, vault=vault, extras=dict(extras or {}))
         # Handles never cross Loop instances: knowing a digest must not grant a
         # different caller access to this conversation's retrieved content.
-        self._result_handles = ResultHandleStore()
+        # Durable references (MF-012) are different: they live in the vault and
+        # any Loop may reopen one, but only by reading its source again through
+        # `_reread_reference`, as this Loop may read now.
+        self._result_handles = ResultHandleStore(vault)
+        self._result_handles.call = self._reread_reference
         self.ctx.extras["_result_handles"] = self._result_handles
         if scribe == "provider":
             self.ctx.extras.setdefault(
@@ -1114,4 +1118,16 @@ class Loop:
         limits = self.ctx.extras.pop("turn_limits", None)
         if limits:                      # set_effort: this reply's own step and time limits
             self.max_steps, self.turn_seconds = limits[0], self.cap_turn_seconds(limits[1])
-        return self._result_handles.project(name, result)
+        return self._result_handles.project(name, result, arguments)
+
+    def _reread_reference(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        """A durable reference's source, read again as this Loop may read now.
+
+        The helper allowlist applies as it does to any call; the registry
+        applies everything else. The result is not projected: the caller
+        compares its bytes with the reference's digest.
+        """
+        if self.only is not None and name not in self.only:
+            refusal = Refusal("TIER_REFUSED", f"{name!r} is not one of this helper's tools")
+            return {"error": "refused", **refusal.to_dict()}
+        return REGISTRY.call(name, arguments, self.ctx)

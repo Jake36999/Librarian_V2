@@ -204,9 +204,11 @@ def _bound_reads(vault: Any, params: dict[str, Any]) -> set[str]:
             out.update([value] if value.endswith(".md") and (vault.root / value).is_file()
                        else _note_paths(vault, value))
     ident = params.get("evidence")
-    if isinstance(ident, str) and ident.strip().replace("-", "").replace("_", "").isalnum():
-        out.update(p.relative_to(vault.root).as_posix()
-                   for p in vault.evidence.glob(f"*/{ident.strip()}.json"))
+    if isinstance(ident, str):
+        from .evidence import EvidenceStore
+        located = EvidenceStore(vault).locate(ident.strip())
+        if located is not None:
+            out.add(located.relative_to(vault.root).as_posix())
     return out
 
 

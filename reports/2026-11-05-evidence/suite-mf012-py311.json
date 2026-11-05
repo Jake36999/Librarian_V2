@@ -1,0 +1,38 @@
+{
+ "command": [
+  "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "D:\\Librarian_V2",
+ "exit_code": 0,
+ "summary": "1983 passed, 2 skipped, 5 deselected in 616.99s (0:10:16)",
+ "started_utc": "2026-11-05T09:32:39.320716+00:00",
+ "seconds": 618.0,
+ "head": "5365beb9952265af5d45f7c66705e7ab6d50138d",
+ "tracked_changes": [
+  " M src/resource_librarian/audit_projection.py",
+  " M src/resource_librarian/closure.py",
+  " M src/resource_librarian/closure_audit.py",
+  " M src/resource_librarian/evidence.py",
+  " M src/resource_librarian/loop.py",
+  " M src/resource_librarian/registry.py",
+  " M src/resource_librarian/result_handles.py",
+  " M src/resource_librarian/rules.py",
+  " M src/resource_librarian/tools/audited.py",
+  " M src/resource_librarian/tools/delegate.py",
+  " M src/resource_librarian/tools/results.py",
+  " M src/resource_librarian/vault.py",
+  " M tests/test_adoption.py",
+  " M tests/test_evidence.py",
+  " M tests/test_result_handles.py"
+ ],
+ "python": "3.11.3",
+ "executable": "D:\\Librarian_V2\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-mf012-py311.log",
+ "log_sha256": "08e20faa22b9f7dbd946278e734907becd2b33d1a99d6a2c7487525f19a09958"
+}

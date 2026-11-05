@@ -289,9 +289,12 @@ def _evidence_readable(vault: Any, ident: str, readable: list[str]) -> bool:
     """An evidence record is readable when its own file is targeted, or when a
     note within the targets cites it."""
     from . import notes
-    for path in vault.evidence.glob(f"*/{ident}.json"):
-        if _covered(path.relative_to(vault.root).as_posix(), readable):
-            return True
+    from .evidence import EvidenceStore, is_record_id
+    if not is_record_id(ident):
+        return False                    # an id is never a pattern standing for any record
+    path = EvidenceStore(vault).locate(ident)
+    if path is not None and _covered(path.relative_to(vault.root).as_posix(), readable):
+        return True
     root = vault.root
     for target in readable:
         target = str(target).replace("\\", "/")

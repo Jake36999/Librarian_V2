@@ -346,11 +346,14 @@ class Registry:
             # OpenAI-compatible servers and malformed/replayed responses.
             # Audited macros are the one deliberate expansion path: their
             # fixed, traced inner calls mark themselves below rather than
-            # silently reopening the whole registry to the model.
+            # silently reopening the whole registry to the model. A durable
+            # reference's re-read (result_handles.py) is the other: one named
+            # read tool, with the recorded arguments, never the model's.
             active_bundle = ctx.extras.get("active_bundle")
             if ctx.extras.get("enforce_active_bundle") and \
                     ctx.extras.get("caller_kind") != "person" and \
-                    not ctx.extras.get("macro_expansion_depth"):
+                    not ctx.extras.get("macro_expansion_depth") and \
+                    ctx.extras.get("reference_rehydration") != name:
                 allowed = set(active_bundle) if isinstance(active_bundle, (set, frozenset, list, tuple)) else set()
                 if name not in allowed:
                     offered = ", ".join(sorted(allowed)) or "no tools"

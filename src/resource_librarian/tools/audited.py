@@ -231,10 +231,18 @@ def verify_grain(ctx: Context, requirement: str, predicate: str = "",
                 "(offset)"))
 def read_evidence(ctx: Context, evidence_id: str, offset: int = 0, max_chars: int = 6000) -> dict:
     from ..evidence import EvidenceStore
-    record = EvidenceStore(ctx.vault).get(str(evidence_id).strip())
+    store = EvidenceStore(ctx.vault)
+    record = store.get(str(evidence_id).strip())
     if record is None:
         raise TypeError(f"no evidence record {evidence_id!r}; a note's frontmatter lists its "
                         "evidence ids")
+    if not store.intact(record):
+        # Content-addressed: an id whose content no longer hashes to it was
+        # edited after it was stored. Its text is not what any note cited.
+        raise Refusal("EVIDENCE_IS_NEVER_EDITED",
+                      "this record no longer matches its id: it was edited after it was "
+                      "stored, so its text is not returned",
+                      {"evidence": record.id, "status": "changed"})
     limit = max(500, min(int(max_chars), 20_000))
     start = max(0, int(offset))
     fields = {}
@@ -270,9 +278,6 @@ def audit_targets(ctx: Context) -> dict:
     return {"target_audit": ident, **found}
 
 
-_EVIDENCE_ID = re.compile(r"[\w.-]{1,120}")
-
-
 def _inputs(ctx: Context, params: dict[str, Any]) -> dict[str, str]:
     """The files a check read, by fingerprint (REMED-03): a later change to one,
     by any route, stales the result. A note named by path or by name, a source
@@ -290,9 +295,11 @@ def _inputs(ctx: Context, params: dict[str, Any]) -> dict[str, str]:
             else:
                 paths.update(closure._note_paths(vault, value))
     ident = params.get("evidence")
-    if isinstance(ident, str) and _EVIDENCE_ID.fullmatch(ident.strip()):
-        paths.update(p.relative_to(vault.root).as_posix()
-                     for p in vault.evidence.glob(f"*/{ident.strip()}.json"))
+    if isinstance(ident, str):
+        from ..evidence import EvidenceStore
+        located = EvidenceStore(vault).locate(ident.strip())
+        if located is not None:
+            paths.add(located.relative_to(vault.root).as_posix())
     out = {}
     for rel in sorted(paths)[:20]:
         try:

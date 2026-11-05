@@ -45,6 +45,11 @@ _RULES = [
     Rule("RUN_BEFORE_CLAIM", "truth",
          "A capability is not reported as available until it has produced a "
          "result, an answer or a recorded refusal on this install."),
+    Rule("REFERENCE_UNRESOLVED", "truth",
+         "A cited result returns the exact bytes it was cited for, read again under the "
+         "reader's current access, or says why it cannot: changed, missing, expired, "
+         "forbidden, withdrawn, unavailable or unknown. Different bytes are never returned "
+         "in its place."),
     # --- framing -----------------------------------------------------------
     Rule("DATA_IS_UNFRAMED", "framing",
          "What a source contains and says is recorded with no knowledge of any "

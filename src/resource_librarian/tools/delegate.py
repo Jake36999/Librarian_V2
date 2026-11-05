@@ -22,7 +22,10 @@ HELPER_BRIEF = (
     "Look in the library first (search, get_note), then outside it (web_search, read_url). "
     "You only read: you cannot open a session, save, capture or change anything. Stop when "
     "you can answer. End with: what you found, where (note names or URLs, exactly), and what "
-    "you could not find.")
+    "you could not find. Cite the ref: reference of any oversized read you relied on: the "
+    "librarian can reopen it after you finish; a sha256: handle ends with you.")
+# How many of a helper's durable references its result lists (MF-012).
+MAX_HELPER_REFERENCES = 12
 
 
 @tool("delegate", tier="contribute", effect="read", open_world=True,
@@ -105,8 +108,13 @@ def delegate(ctx: Context, questions: list[str], tier: Literal[1, 2] = 2) -> dic
             return {"question": question, "answer": "", "error": f"{type(exc).__name__}: {exc}"}
         finally:
             release()
+        # The helper's Loop, and every sha256: handle in it, ends here. Its
+        # durable references outlive it: read_result reopens one under the
+        # reader's own access, so listing them grants nothing new.
+        minted = helper._result_handles.minted[-MAX_HELPER_REFERENCES:]  # noqa: SLF001
         return {"question": question, "answer": (turn.reply or "")[:4000],
                 "tools": [c["tool"] for c in turn.calls], "steps": turn.steps,
+                **({"references": [dict(item) for item in minted]} if minted else {}),
                 **({"stopped": turn.stopped} if turn.stopped else {}),
                 **({"error": turn.error} if turn.error else {})}
 
