@@ -238,8 +238,10 @@ def test_watcher_thread_survives_scan_oserror_and_processes_next_edit(watched, m
 
     monkeypatch.setattr(watcher, "scan_once", scan)
     watcher.start()
-    assert failed.wait(3)
-    assert retried.wait(3)
+    # Liveness bounds for the watcher's own poll cycle; a loaded CI runner
+    # missed 3s (hosted run 41951229222).
+    assert failed.wait(15)
+    assert retried.wait(15)
     assert watcher.health()["status"] == "ready"
     assert watcher._thread.is_alive()
     assert "Notes/Watched.md" in leases._changed

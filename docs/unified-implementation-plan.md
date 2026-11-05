@@ -4910,3 +4910,32 @@ That ergonomic work is MF-025.
 - `npm.cmd --prefix ui run smoke`: 52 steps passed;
 - full suite: 1960 passed, 2 skipped, 5 deselected in 614.44s (0:10:14) (exit 0, Python 3.11.3) (`reports/2026-11-05-evidence/suite-mf010-py311.json`).
 
+### Hosted CI timing flakes; two liveness bounds widened (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| (CI reliability) | test bounds widened | this commit | `tests/test_app.py`, `tests/test_watcher_recovery.py`. |
+
+**Hosted run 41951229222, head `fd9586c` (MF-010).** The first attempt failed
+2 tests on 3.13, both timeouts; every other job passed:
+- `test_app.py::test_the_persons_own_calls_and_settings`: `POST /api/library`
+  exceeded the test client's 10-second `urlopen` timeout. Settings writes go
+  through the Core's serialized writer and can wait behind other writes.
+- `test_watcher_recovery.py::test_watcher_thread_survives_scan_oserror_and_processes_next_edit`:
+  the watcher's first poll did not arrive within 3 seconds.
+
+That run took 12 minutes 17 seconds, against about 10 minutes for the others.
+Re-running the failed job (attempt 2) passed every job. So MF-010 is green on
+hosted CI, and these two were runner timing, not defects. They differ from the
+open acceptance-interruption family, which stops partway after durable
+writes.
+
+**Change.** Two liveness bounds, which no assertion depends on beyond
+"eventually":
+- the app tests' HTTP client timeout: 10s to 30s;
+- the watcher test's waits: 3s to 15s.
+
+Both remain bounded, so a real hang still fails. No product code changed. Both
+files pass locally (52 and 70 passed with the other app tests). The full
+suite was not rerun for this test-bound change.
+

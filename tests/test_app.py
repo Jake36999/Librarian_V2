@@ -34,7 +34,9 @@ class Client:
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(self.base + path, data=data, method=method, headers=head)
         try:
-            with urllib.request.urlopen(req, timeout=10) as response:
+            # A liveness bound, not a speed check: a loaded CI runner queues
+            # serialized writes behind others (hosted run 41951229222).
+            with urllib.request.urlopen(req, timeout=30) as response:
                 raw = response.read()
                 kind = response.headers.get("Content-Type", "")
                 return response.status, (json.loads(raw) if "json" in kind else raw.decode())
@@ -52,7 +54,9 @@ class Client:
         head = {"X-Librarian-Token": self.token} if token else {}
         req = urllib.request.Request(self.base + path, data=data, method="POST", headers=head)
         try:
-            with urllib.request.urlopen(req, timeout=10) as response:
+            # A liveness bound, not a speed check: a loaded CI runner queues
+            # serialized writes behind others (hosted run 41951229222).
+            with urllib.request.urlopen(req, timeout=30) as response:
                 return response.status, json.loads(response.read())
         except urllib.error.HTTPError as exc:
             return exc.code, json.loads(exc.read() or b"{}")
