@@ -13,8 +13,8 @@ const RECENT = 8;
 export class DocPane {
   readonly el = h("aside", { class: "lib-pane", "aria-label": "Document" });
   private crumbs = h("div", { class: "pane-crumbs" });
-  private menuButton = h("button", { class: "icon-btn", title: "Plan, recent notes and folders",
-    "aria-label": "Documents menu", "aria-haspopup": "true", "aria-expanded": "false" }, "⋮");
+  private menuButton = h("button", { class: "icon-btn", title: "Note actions",
+    "aria-label": "Note actions", "aria-haspopup": "true", "aria-expanded": "false" }, "⋮");
   private menu = h("div", { class: "pane-menu", hidden: true, role: "menu" });
   // Text to speech, mode B: read the open document aloud (slot 5).
   // A person's run (EXECUTION_SANDBOX_ONLY): only for a script file (.py, .sh) - never a
@@ -30,7 +30,10 @@ export class DocPane {
     } }, speakerIcon());
   private body = h("div", { class: "pane-body" });
   private recent: { path: string; name: string }[] = [];
-  private current: { kind: "plan" } | { kind: "agenda" } | { kind: "doc"; path: string; name: string } = { kind: "plan" };
+  private version = 0;
+  private switcher = h("div",{class:"pane-views",role:"group","aria-label":"Pane view"});
+  private compact = h("select",{"aria-label":"Pane view"}) as HTMLSelectElement;
+  private current: {kind:"browse"} | { kind: "plan" } | { kind: "agenda" } | { kind: "doc"; path: string; name: string } = { kind: "plan" };
   private browsing = "";
 
   /** `onMoved`: a note was renamed, so links to it elsewhere (the chat) can follow.
@@ -42,7 +45,19 @@ export class DocPane {
               private currentProject: () => string = () => "",
               private currentSession: () => string = () => "") {
     this.menuButton.onclick = () => this.toggleMenu();
-    this.el.append(
+    const change = (view: string) => {
+      this.showMenu(false);
+      if (view === "Note" && this.recent.length) void this.open(this.recent[0].path);
+      else if (view === "Plan") this.showPlan();
+      else if (view === "This week") void this.showAgenda();
+      else void this.showBrowse();
+    };
+    for (const view of ["Note","Browse","Plan","This week"]) {
+      this.switcher.append(h("button",{class:"ghost",onclick:()=>change(view)},view));
+      this.compact.append(h("option",{value:view},view));
+    }
+    this.compact.onchange = () => change(this.compact.value);
+    this.el.append(this.switcher,h("label",{class:"pane-view-select"},"View ",this.compact),
       h("div", { class: "pane-head" }, this.crumbs,
         h("div", { class: "pane-actions" }, this.runButton, this.speakButton, this.menuButton,
           h("button", { class: "icon-btn", title: "Close the pane", "aria-label": "Close the pane",
@@ -64,7 +79,7 @@ export class DocPane {
   /** Escape closes the open menu and is consumed; otherwise it passes by. */
   private readonly onDocumentKey = (e: KeyboardEvent) => {
     if (e.key !== "Escape" || this.menu.hidden) return;
-    this.showMenu(false);
+    this.showMenu(false); this.menuButton.focus();
     e.preventDefault();
     e.stopPropagation();
   };
@@ -76,8 +91,19 @@ export class DocPane {
 
   get showingPlan(): boolean { return this.current.kind === "plan"; }
 
+  private mark(view: string): void {
+    this.version++;
+    this.compact.value = view;
+    this.compact.options[0].disabled = !this.recent.length && view !== "Note";
+    this.switcher.querySelectorAll("button").forEach(b=>{
+      b.disabled = b.textContent === "Note" && this.compact.options[0].disabled;
+      b.setAttribute("aria-pressed", String(b.textContent === view));
+    });
+    this.menuButton.hidden = view !== "Note";
+    this.showMenu(false);
+  }
   showPlan(): void {
-    this.current = { kind: "plan" };
+    this.mark("Plan"); this.current = { kind: "plan" };
     this.speakButton.hidden = true;
     this.runButton.hidden = true;
     clear(this.crumbs, h("span", { class: "crumb-here" }, "Plan"),
@@ -89,7 +115,7 @@ export class DocPane {
   /** "This week": every open, dated task across the vault, computed fresh -
    *  no daemon, nothing kept in sync (Co-work Roadmap 2C). */
   async showAgenda(): Promise<void> {
-    this.current = { kind: "agenda" };
+    this.mark("This week"); const version = this.version; this.current = { kind: "agenda" };
     this.speakButton.hidden = true;
     this.runButton.hidden = true;
     clear(this.crumbs, h("span", { class: "crumb-here" }, "This week"),
@@ -97,6 +123,7 @@ export class DocPane {
     clear(this.body, h("p", { class: "dim pad" }, "Loading…"));
     try {
       const out = await this.api.tool("agenda", {});
+      if (version !== this.version) return;
       if (out.error) throw new Error(String(out.detail ?? out.error));
       const groups: [string, string][] = [["overdue", "Overdue"], ["today", "Today"],
         ["this_week", "This week"], ["later", "Later"], ["undated", "No date"]];
@@ -112,26 +139,30 @@ export class DocPane {
       clear(this.body, h("div", { class: "pad agenda" },
         empty ? h("p", { class: "dim" }, "Nothing open with a checkbox anywhere in the vault.") : sections));
     } catch (e) {
-      clear(this.body, h("div", { class: "pad" }, h("p", { class: "error" }, (e as Error).message)));
+      if (version === this.version) clear(this.body, h("div", { class: "pad" }, h("p", { class: "error" }, (e as Error).message)));
     }
     this.body.scrollTop = 0;
   }
 
   /** A vault path (with or without .md) or a bare note name. */
   async open(target: string): Promise<void> {
+    const version = ++this.version; this.menuButton.hidden = this.speakButton.hidden = this.runButton.hidden = true;
     clear(this.body, h("p", { class: "dim pad" }, `Opening ${target}…`));
     let doc: any;
     try {
       doc = await this.api.get(`/api/file?path=${encodeURIComponent(target)}`);
     } catch (e) {
+      if (version !== this.version) return;
       clear(this.crumbs, h("span", { class: "crumb-here" }, target));
       clear(this.body, h("div", { class: "pad" }, h("p", { class: "error" }, (e as Error).message),
-        h("p", { class: "dim" }, "Names are exact. Browse with ⋮, or ask the librarian for the path.")));
+        h("p", { class: "dim" }, "Names are exact. Choose Browse, or ask the librarian for the path.")));
       return;
     }
-    this.current = { kind: "doc", path: doc.path, name: doc.name };
+    if (version !== this.version) return;
+    this.mark("Note"); this.current = { kind: "doc", path: doc.path, name: doc.name };
     this.speakButton.hidden = Boolean(doc.script);         // code is run, not read aloud
     this.runButton.hidden = !doc.script;
+    this.browsing = doc.path.split("/").slice(0,-1).join("/");
     this.recent = [{ path: doc.path, name: doc.name }, ...this.recent.filter((r) => r.path !== doc.path)].slice(0, RECENT);
     const project = this.currentProject();
     if (project) this.api.tool("desk_touch", { project, note: doc.name }).catch(() => undefined);
@@ -170,7 +201,7 @@ export class DocPane {
           h("h4", {}, `Run ${r.run}: exit ${r.exit_code}${r.timed_out ? " (stopped: too long)" : ""}`),
           r.stdout ? h("pre", { class: "code" }, h("code", {}, r.stdout)) : null,
           r.stderr ? h("pre", { class: "code err" }, h("code", {}, r.stderr)) : null,
-          h("p", { class: "dim" }, files.length
+          h("p", { class: "dim" }, r.output?.kept === false ? "Output was not kept. See the run notes below." : files.length
             ? `Landed in ${r.landing}: ${files.map((f) => `${f.name} (${f.bytes} bytes)`).join(", ")}. Nothing there is run or imported.`
             : "Nothing landed."),
           ...(r.notes ?? []).map((n: string) => h("p", { class: "dim" }, n)));
@@ -191,7 +222,7 @@ export class DocPane {
       } else {
         const dir = parts.slice(0, i + 1).join("/");
         out.push(h("button", { class: "crumb-dir", title: `Browse ${dir}`,
-          onclick: () => { this.browsing = dir; this.showMenu(true); } }, part));
+          onclick: () => { this.browsing = dir; void this.showBrowse(); } }, part));
       }
     });
     clear(this.crumbs, out);
@@ -214,20 +245,28 @@ export class DocPane {
   private async paintMenu(): Promise<void> {
     const item = (label: string, small: string, action: () => void, cls = "") => h("button", {
       class: `menuitem ${cls}`, role: "menuitem", onclick: action }, label, small ? h("small", {}, small) : null);
-    const folder = h("div", { class: "pane-folder" }, h("p", { class: "dim" }, "Loading…"));
     const vault = this.vaultName();
     const obsidian = this.current.kind === "doc" && vault
       ? `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(this.current.path)}` : "";
     const doc = this.current.kind === "doc" ? this.current : null;
-    const project = this.currentProject();
-    const desk = h("div", { class: "pane-desk" }, h("p", { class: "dim" }, "Loading…"));
-    const session = this.currentSession();
-    const lenses = h("div", { class: "pane-lenses" }, h("p", { class: "dim" }, "Loading…"));
-    clear(this.menu,
-      item("Plan", "the session this chat is working in", () => { this.showMenu(false); this.showPlan(); }),
-      item("This week", "open, dated tasks across the vault", () => { this.showMenu(false); void this.showAgenda(); }),
-      obsidian ? h("a", { class: "menuitem", href: obsidian, role: "menuitem" }, "Open this note in Obsidian") : null,
-      doc ? item("Rename or move…", "links to it across the vault follow", () => this.paintMove(doc), "move") : null,
+    if (!doc) return;
+    clear(this.menu, obsidian ? h("a",{class:"menuitem",href:obsidian,role:"menuitem"},"Open this note in Obsidian") : null,
+      item("Rename or move…","Links follow the note",()=>this.paintMove(doc),"move"),
+      item("Copy path",doc.path,async()=>{try {await navigator.clipboard.writeText(doc.path);this.showMenu(false);this.menuButton.focus();}
+        catch {this.menu.append(h("p",{role:"status"},doc.path));}}));
+    this.menu.querySelector<HTMLElement>("a,button")?.focus();
+  }
+
+  private async showBrowse(): Promise<void> {
+    const doc = this.recent[0] ?? null;
+    this.current = {kind:"browse"}; this.mark("Browse");
+    this.runButton.hidden = this.speakButton.hidden = true;
+    clear(this.crumbs,"Browse");
+    const browser = h("div",{class:"pane-browser pad"}); clear(this.body,browser);
+    const item = (label:string,small:string,action:()=>void,cls="") => h("button",{class:"menuitem "+cls,onclick:action},label,small ? h("small",{},small) : null);
+    const folder = h("div",{class:"pane-folder"}), desk = h("div",{class:"pane-desk"}), lenses=h("div",{class:"pane-lenses"});
+    const project=this.currentProject(), session=this.currentSession();
+    clear(browser,
       project ? h("h4", {}, `Desk — ${project}`) : null,
       project ? desk : null,
       session ? h("h4", {}, "Lenses — this thread") : null,
@@ -235,15 +274,14 @@ export class DocPane {
       this.recent.length ? h("h4", {}, "Recent") : null,
       this.recent.map((r) => item(r.name, r.path, () => { this.showMenu(false); void this.open(r.path); })),
       h("h4", {}, "Browse"), folder);
-    (this.menu.querySelector("button") as HTMLElement | null)?.focus();
     try {
       const listing = await this.api.get(`/api/files?dir=${encodeURIComponent(this.browsing)}`);
       const up = listing.dir ? listing.dir.split("/").slice(0, -1).join("/") : null;
       clear(folder,
         h("div", { class: "folder-path" }, `/${listing.dir}`),
-        up !== null ? item(`↑ ${up ? up.split("/").pop() : "the vault"}`, "", () => { this.browsing = up; void this.paintMenu(); }, "dir up") : null,
+        up !== null ? item(`↑ ${up ? up.split("/").pop() : "the vault"}`, "", () => { this.browsing = up; void this.showBrowse(); }, "dir up") : null,
         (listing.entries as any[]).map((e) => e.kind === "dir"
-          ? item(`${e.name}/`, "", () => { this.browsing = e.path; void this.paintMenu(); }, "dir")
+          ? item(`${e.name}/`, "", () => { this.browsing = e.path; void this.showBrowse(); }, "dir")
           : item(e.name, "", () => { this.showMenu(false); void this.open(e.path); }, "file")),
         listing.entries.length ? null : h("p", { class: "dim" }, "No notes here."));
     } catch (e) {

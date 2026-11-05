@@ -239,6 +239,8 @@ export class ModelTile {
     const done = this.slot.done; this.endSlot(); done(); return true;
   }
 
+  dispose(): void { window.clearTimeout(this.press); this.endSlot(); }
+
   endSlot(): void { this.slot = null; this.pendingLead = null; }
 
   /** Right-click on the slot's own model: the slot is emptied (never filled by a chat
@@ -550,16 +552,20 @@ export class ModelTile {
           const clear = () => this.slot?.role !== undefined ? undefined : (this.slot ? this.clearSlot() : this.clearAll());
           const rec = at < 0 && recommended(m);
           const readiness = this.readinessChips(p, String(m.id));
+          let dragged = false, held = false;
           const card = h("button", {
             class: `model-card${at >= 0 ? " sel" : ""}${rec ? " rec" : ""}`, "aria-pressed": at >= 0 ? "true" : "false",
             title: this.slot?.role !== undefined ? undefined : at >= 0 ? (this.slot ? "Right-click (or Delete) to empty this slot"
               : "Right-click (or Delete) to clear the chosen models")
               : m.profile && m.profile.tool_calling === false
               ? "Profiled as not supporting tool calling: can still lead as tier 2 or 3" : "",
-            onclick: () => this.pick(p, m.id),
+            onclick: (e: Event) => { if (held || dragged) { held = dragged = false; e.preventDefault(); return; } void this.pick(p,m.id); },
             oncontextmenu: (e: Event) => { if (at >= 0) { e.preventDefault(); void clear(); } },
             onkeydown: (e: Event) => { if (at >= 0 && (e as KeyboardEvent).key === "Delete") void clear(); },
-            ontouchstart: () => { if (at >= 0) this.press = window.setTimeout(() => void clear(), 600); },
+            ontouchstart: () => { held = dragged = false; window.clearTimeout(this.press);
+              if (at >= 0) this.press = window.setTimeout(() => { held = true; if (card.isConnected && this.pop.open) void clear(); },600); },
+            ontouchmove: () => { dragged = true; window.clearTimeout(this.press); },
+            ontouchcancel: () => { dragged = true; window.clearTimeout(this.press); },
             ontouchend: () => window.clearTimeout(this.press),
           },
           at >= 0 && !this.slot ? h("span", { class: "badge" }, String(at + 1)) : null,

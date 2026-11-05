@@ -65,6 +65,7 @@ export class Settings {
               private chooseModel?: (slot: string, label: string,
                 current?: { provider: string; model: string }, role?: number) => void, private native = false, private runCommand: (id: string) => void = () => {},
               private fieldId: (base: string) => string = base => base) {
+    this.dialog.addEventListener("close", () => { if (!this.dialog.open) this.stopHealth(); });
     const nav = h("nav", { class: "settings-nav", "aria-label": "Settings sections" });
     for (const [group, pages] of GROUPS) {
       const options = h("optgroup", { label: group });
@@ -90,6 +91,7 @@ export class Settings {
   }
 
   open(page = this.page): void {
+    this.stopHealth();
     const library = String(this.state().vault_path ?? this.state().vault ?? "");
     if (library !== this.draftLibrary) { this.drafts.clear(); this.dirty = false; this.draftLibrary = library; }
     if (this.dirty) this.drafts.set(this.page, Array.from(this.body.childNodes));
@@ -114,6 +116,7 @@ export class Settings {
         : i > tiers.length ? `Choose ${CHAT_ROLES[i - 1][0]} first` + (fallback ? ` · currently uses ${fallback.model}` : "")
         : fallback ? `Uses ${fallback.model}` : "No model selected";
       row.querySelector("button")!.disabled = !library || i > tiers.length;
+      const reset = row.querySelector<HTMLButtonElement>(".lib-clear-role"); if (reset) reset.hidden = !selected;
     });
   }
 
@@ -123,6 +126,47 @@ export class Settings {
       else link.removeAttribute("aria-current");
     }
     this.compact.value = this.page;
+  }
+
+  private healthTimer = 0;
+  private healthRequest?: AbortController;
+
+  stopHealth(): void {
+    window.clearTimeout(this.healthTimer);
+    this.healthRequest?.abort();
+    this.healthRequest = undefined;
+  }
+
+  private coreHealth(): HTMLElement {
+    this.stopHealth();
+    const controller = new AbortController();
+    this.healthRequest = controller;
+    const summary = h("div"), status = h("p", {class:"note", role:"status"}, "Checking Core health…");
+    const poll = async () => {
+      try {
+        const snapshots = await Promise.allSettled([
+          this.api.get("/api/meta", controller.signal), this.api.get("/api/documents", controller.signal),
+        ]);
+        if (controller.signal.aborted) return;
+        const [meta, documents] = snapshots.map(snapshot => {
+          if (snapshot.status === "rejected") throw snapshot.reason;
+          return snapshot.value;
+        });
+        const health = meta.non_secret_health;
+        if (!health || !Array.isArray(documents.leases)) throw new Error("Incomplete health response");
+        clear(summary, h("p", {}, `Writer: ${health.writer} · Index: ${health.index} · Watcher: ${health.watcher?.status ?? "unknown"} · Vault lease: ${health.vault_lease}`),
+          h("p", {}, `Active document leases: ${documents.leases.length}`),
+          documents.leases.map((lease: {path:string; editor:string; dirty:boolean}) =>
+            h("div", {}, `${lease.path} · ${lease.editor} · ${lease.dirty ? "unsaved edits" : "clean"}`)));
+        status.textContent = `Last successful check: ${new Date().toLocaleTimeString()}`;
+      } catch (e) {
+        if (controller.signal.aborted) return;
+        status.textContent = (status.textContent ?? "").split(" · Refresh failed")[0] + " · Refresh failed: " + (e as Error).message;
+      }
+      if (!controller.signal.aborted) this.healthTimer = window.setTimeout(poll, 10000);
+    };
+    void poll();
+    return h("section", {}, h("h3", {}, "Core and active documents"), summary, status);
   }
 
   private controlsPage(): HTMLElement {
@@ -166,7 +210,7 @@ export class Settings {
     const pages: Record<string, () => HTMLElement> = {
       commands: () => this.controlsPage(), models: () => this.modelsPage(), connections: () => this.connections(), mcp: () => this.mcp(),
       context: () => this.context(), projects: () => this.projectsPage(), profiles: () => this.agentProfiles(),
-      review: () => this.library(false), health: () => this.library(true),
+      review: () => this.library(false), health: () => h("div", {}, this.coreHealth(), this.library(true)),
       topics: () => { const host = h("div", { class: "topics" }); void this.paintTopics(host); return host; },
       methods: () => {
         const profile = h("div"), packs = h("div", { class: "lens-packs" });
@@ -194,14 +238,23 @@ export class Settings {
     return h("div", {},
       h("p", { class: "settings-intro" }, "Choose the models that perform each kind of work."),
       h("p", { class: "settings-scope" }, "Chat-model changes also update defaults used by libraries without their own choices.",
-        h("small", {}, "Service assignments remain specific to this library.")),
+        h("small", {}, "Service assignments remain specific to this library. Effort changes also update the shared default.")),
       h("h3", {}, "Chat roles"),
       CHAT_ROLES.map(([label, job], i) => {
         return h("div", { class: "settings-role" },
           h("div", {}, h("strong", {}, label), h("small", {}, job)),
           h("span", { class: "settings-assignment" }),
           h("button", { class: "ghost", "aria-label": `Choose ${label} model`,
-            onclick: () => { this.dialog.close(); this.chooseModel?.("chat", label, this.state().tiers?.[i], i); } }, "Choose"));
+            onclick: () => { this.dialog.close(); this.chooseModel?.("chat", label, this.state().tiers?.[i], i); } }, "Choose"),
+          h("button",{class:"ghost clear-role",onclick:async(e:Event)=>{
+            const button = e.currentTarget as HTMLButtonElement;
+            const tiers = this.state().tiers ?? [];
+            const names = CHAT_ROLES.slice(i,tiers.length).map(([name])=>name).join(", ");
+            if (!window.confirm("Clear these assignments: " + names + "? " + (i ? "Later roles will use the preceding model." : "No chat model will be selected.") + " Shared defaults will also change.")) return;
+            button.disabled = true;
+            try { await this.api.post("/api/tiers",{tiers:tiers.slice(0,i)}); await this.refresh(); this.render(); }
+            catch(err) { button.after(h("span",{role:"alert"},(err as Error).message)); button.disabled = false; }
+          }},"Clear from this role"));
       }),
       h("h3", {}, "Supporting services"), h("p", { class: "settings-help" }, "Expand a service to choose its model or check its configuration."),
       this.serviceModels(), more, researchSetups(this.api, this.state, this.refresh));
@@ -660,6 +713,10 @@ export class Settings {
           const contractLabel = !s.model ? "" : contract.adapter?.id
             ? ` · ${String(contract.adapter.id).replace(/_/g, " ")} · ${contract.status ?? "unreviewed"}`
             : " · no reviewed service contract";
+          const clearService = async () => {
+            try { await this.api.post("/api/services",{slot:s.slot,provider:"",model:""}); this.render(); }
+            catch(err) { status.textContent = (err as Error).message; }
+          };
           const test = async (event: Event) => {
             const button = event.currentTarget as HTMLButtonElement;
             if (button.disabled) return;
@@ -696,13 +753,13 @@ export class Settings {
             h("span", {}, h("strong", {}, s.label), ` · ${current}`, h("span", { class: "dim" }, ` · ${s.job}`),
               contractLabel ? h("span", { class: "dim" }, contractLabel) : null,
               s.route_status === "unavailable" ? h("span", { class: "note err" }, ` · ${s.route_error ?? "route unavailable"}`) : null,
-              s.cap_usd !== undefined ? h("span", { class: "dim" }, ` · spent $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null),
+              s.cap_usd !== undefined ? h("span", { class: "dim" }, ` · spent or held $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null),
             s.built && this.chooseModel ? h("button", { class: "ghost", onclick: () => {
               this.dialog.close();
               this.chooseModel!(s.slot, s.label, { provider: s.provider, model: s.model });
             } }, "Choose…") : null,
             s.built && s.model ? h("button", { class: "ghost", onclick: test }, "Test model (one call)") : null,
-            status,
+            s.built && s.model ? h("button",{class:"ghost",onclick:clearService},"Clear service model") : null, status,
             s.slot === "embeddings" ? this.embeddingsBlock(s, () => this.render()) : null));
         }),
         h("p", { class: "note" }, "Each does one kind of job with its own request format, and is kept with this library. An empty slot is never filled by a chat model."));
@@ -727,7 +784,7 @@ export class Settings {
           h("label", { class: "f" }, "Personal model hosts"),
           h("p", { class: "note" }, "Hosts contain endpoints and rate limits, never credentials. " +
             "A custom endpoint is OpenAI-compatible in V2; test it before assigning it to an agent profile."),
-          hosts.map((row) => this.hostCard(row, reload)),
+          hosts.map((row) => h("details", {class:"host-details"},h("summary",{},row.display_name || row.id," · ",row.enabled ? "enabled" : "disabled"),this.hostCard(row,reload))),
           this.newHostCard(reload));
       } catch (e) {
         clear(root, h("p", { class: "error" }, (e as Error).message));
@@ -1189,10 +1246,12 @@ export class Settings {
       s.unpinned ? h("p", { class: "note err" }, `Not pinned: ${s.unpinned}`) : null,
       s.changed_since_enabled ? h("p", { class: "note" }, "Its definition changed after this library turned it on - still on here; worth a look.") : null,
       (s.tool_names ?? []).length
-        ? h("div", { class: "tool-perms" }, (s.tool_names as string[]).map(toolRow))
+        ? h("details", { class: "tool-perms" }, h("summary",{},`Permissions for ${name} (${s.tool_names.length} tools)`), (s.tool_names as string[]).map(toolRow))
         : null));
 
     return h("div", {},
+      h("h3", {}, "Sandbox output"), h("p", {}, "Keep files a sandbox or Workbench run writes. Disk usage is uncapped during execution; files are checked afterwards. Permission to run a script is separate. Ask applies in Auto mode too."),
+      toolRow("sandbox_output"),
       h("label", { class: "f" }, "Skills registry"),
       h("p", { class: "note" }, "Installed once for you, then enabled per library, off until you turn it on: a history library and a software library each choose their own tools."),
       CURATED_SKILLS.map(curatedCard),

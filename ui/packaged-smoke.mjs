@@ -156,8 +156,22 @@ try {
     if (!successfulApi.has(required)) throw new Error(`packaged UI did not complete ${required}`);
   }
 
-  await page.getByRole("tab", { name: "Search" }).click();
+  const staging = page.getByRole("tab", { name: "Staging" });
+  await staging.click();
+  await page.getByRole("button", {name:"Settings", exact:true}).click();
+  const settings = page.getByRole("dialog", {name:"Settings"});
+  await settings.getByRole("button", {name:"Health & diagnostics"}).click();
+  await settings.getByText(/Last successful check/).waitFor();
+  await page.keyboard.press("Escape");
+  await staging.focus();
+  await staging.press("End");
+  if (await page.getByRole("tab", {name:"Search"}).getAttribute("aria-selected") !== "true")
+    throw new Error("End should select Search from Staging");
   const query = page.getByRole("searchbox", { name: "Search query" });
+  const queryBounds = await query.boundingBox();
+  const filters = await page.getByRole("group", {name:"Search filters"}).boundingBox();
+  if (!queryBounds || !filters || filters.y < queryBounds.y + queryBounds.height)
+    throw new Error("Search filters must follow the query row");
   await query.fill("packaged-browser-smoke-no-match");
   const [searchResponse] = await Promise.all([
     page.waitForResponse((response) =>
@@ -172,6 +186,16 @@ try {
     return results && !results.textContent?.includes("Searching…");
   });
   if (errors.length) throw new Error(`browser errors:\n${errors.join("\n")}`);
+
+  await page.evaluate(() => {
+    const root = document.getElementById("librarian-root");
+    root.style.width = "420px";
+    if (root.scrollWidth > root.clientWidth + 1) throw new Error("Installed bundle overflows a narrow root");
+    const foreignClasses = [...root.querySelectorAll("[class]")].flatMap(node => [...node.classList])
+      .filter(name => !name.startsWith("lib-") && !name.startsWith("librarian-"));
+    if (foreignClasses.length) throw new Error("Unscoped installed DOM classes: " + foreignClasses.join(", "));
+    root.style.width = "";
+  });
 
   const evidence = {
     url,

@@ -429,3 +429,49 @@ dialog.lib-settings [hidden] { display:none; }
   dialog.lib-settings .lib-dlg-head { flex-wrap:wrap; }
   dialog.lib-settings .lib-dlg-head input[type=search] { order:1; width:100%; max-width:none; }
 }
+.lib-app .lib-pane { container: librarian-pane / inline-size; }
+.lib-app .lib-pane-views { display:flex; gap:4px; padding:6px; }
+.lib-app .lib-pane-views [aria-pressed=true] { background:var(--accent-soft); font-weight:650; }
+.lib-app .lib-pane-view-select { display:none; }
+.lib-app .lib-pane-browser .lib-menuitem { display:block; text-align:left; width:100%; }
+@container librarian-pane (max-width:460px) {
+  .lib-app .lib-pane-views { display:none; }
+  .lib-app .lib-pane-view-select { display:flex; gap:8px; padding:6px; align-items:center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lib-app *, dialog.lib-dialog * { animation-duration:0s !important; transition-duration:0s !important; scroll-behavior:auto !important; }
+}
+
+.lib-app .lib-staging { container: librarian-review / inline-size; }
+.lib-app .lib-review-toolbar select { width: auto; max-width: 100%; }
+.lib-app .lib-queue-count { margin-inline-start: .4em; font-variant-numeric: tabular-nums; }
+.lib-app .lib-items { background: var(--bg); }
+.lib-app .lib-item[aria-selected=true] { box-shadow: inset 3px 0 var(--accent); }
+.lib-app .lib-evidence { background: var(--bg); font: inherit; overflow-wrap: anywhere; }
+.lib-app .lib-search .lib-search-bar { display: grid; grid-template-columns: minmax(0,1fr) auto; }
+.lib-app .lib-search .lib-search-bar input[type=search] { min-width: 0; }
+.lib-app .lib-search-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 8px 14px; }
+.lib-app .lib-search-filters select { width: auto; max-width: 100%; min-width: 0; }
+@container librarian-review (max-width: 900px) {
+  .lib-app .lib-staging .lib-columns { grid-template-columns: minmax(0,1fr); }
+}
+@container librarian-review (max-width: 640px) {
+  .lib-app .lib-staging .lib-split { grid-template-columns: minmax(0,1fr); }
+}
+
+@container librarian (max-width: 960px) {
+  .lib-app > header { flex-wrap: wrap; row-gap: 6px; }
+}
+
+.lib-app .lib-staging .lib-items, .lib-app .lib-evidence,
+.lib-app .lib-model-card:not(.lib-sel) { background: color-mix(in srgb, var(--panel) 92%, var(--muted)); }
+.lib-app .lib-staging .lib-items { padding: 6px; border-radius: 8px; align-self: start; }
+.lib-app .lib-ghost, dialog.lib-dialog .lib-ghost {
+  background-color: color-mix(in srgb, var(--panel) 96%, var(--muted));
+  border-color: color-mix(in srgb, var(--muted) 85%, var(--panel));
+}
+
+dialog.lib-settings .lib-settings-role .lib-clear-role { grid-column: 3; grid-row: auto; min-width: 0; }
+@container librarian (max-width: 800px) {
+  dialog.lib-settings .lib-settings-role .lib-clear-role { grid-column: 2; grid-row: 3; }
+}

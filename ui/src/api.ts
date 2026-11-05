@@ -22,9 +22,9 @@ export type EventCursor = { epoch?: string; last_seq?: number };
 export class Api {
   constructor(private opts: Options) {}
 
-  private async request(method: string, path: string, body?: unknown): Promise<any> {
+  private async request(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<any> {
     const response = await fetch(this.opts.base + path, {
-      method,
+      method, signal,
       headers: { "Content-Type": "application/json", "X-Librarian-Token": this.opts.token },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
@@ -33,7 +33,7 @@ export class Api {
     return data;
   }
 
-  get(path: string): Promise<any> { return this.request("GET", path); }
+  get(path: string, signal?: AbortSignal): Promise<any> { return this.request("GET", path, undefined, signal); }
   post(path: string, body: unknown = {}): Promise<any> { return this.request("POST", path, body); }
 
   /** The composer's paperclip: raw bytes, not JSON - too large and the wrong shape. */
@@ -60,6 +60,7 @@ export class Api {
     let epoch = typeof cursor?.epoch === "string" ? cursor.epoch : "";
     let source: EventSource | null = null;
     let closed = false;
+    let reconnect = 0;
     const open = () => {
       const url = `${this.opts.base}/api/events?token=${encodeURIComponent(this.opts.token)}` +
         `&since=${last}&epoch=${encodeURIComponent(epoch)}`;
@@ -69,7 +70,7 @@ export class Api {
       source.onerror = () => {
         onStatus(false);
         source?.close();
-        if (!closed) setTimeout(open, 1500);
+        if (!closed) reconnect = window.setTimeout(open, 1500);
       };
       const handle = (message: MessageEvent) => {
         const event = JSON.parse(message.data) as Event;
@@ -90,7 +91,7 @@ export class Api {
       for (const type of EVENT_TYPES) source.addEventListener(type, handle as EventListener);
     };
     open();
-    return () => { closed = true; source?.close(); };
+    return () => { closed = true; window.clearTimeout(reconnect); source?.close(); };
   }
 }
 

@@ -216,6 +216,39 @@ export class Chat {
     }
   }
 
+  private uncertainRun(run: Record<string, any>): HTMLElement | null {
+    const paused = run.last ?? run;
+    const step = paused.step ?? paused.at;
+    if (run.status !== "paused" || paused.reason !== "outcome_unknown" || !run.run || !step) return null;
+    const card = h("section", {class:"warn"});
+    const actions = h("div", {class:"row2"});
+    const status = h("p", {role:"status"});
+    const resolve = async (choice: string) => {
+      actions.querySelectorAll("button").forEach(button => { button.disabled = true; });
+      try {
+        const current = await this.api.tool("run_status", {run_id:run.run});
+        if (current.status !== "paused" || current.last?.step !== step ||
+            current.last.reason !== "outcome_unknown" || !current.last.options?.includes(choice)) {
+          status.textContent = "The run has changed. Inspect its current status.";
+          return;
+        }
+        const result = await this.api.tool("run_resume", {run_id:run.run, choices:{[step]:choice}});
+        if (result.error) throw new Error(String(result.detail ?? result.error));
+        status.textContent = `Run ${run.run}: ${result.status}.`;
+        const next = this.uncertainRun(result);
+        if (next) card.append(next);
+      } catch (e) {
+        status.textContent = `Check the run status before trying again. ${(e as Error).message}`;
+      }
+    };
+    for (const [value,label] of [["applied","Record step as already applied"],["retry","Send this step again"]]) {
+      if (paused.options?.includes(value)) actions.append(h("button", {onclick:()=>void resolve(value)},label));
+    }
+    card.append(h("strong", {}, "Step outcome unknown"), h("p", {}, `Run ${run.run} · Step ${step}. ${paused.detail}`),
+      h("p", {}, "Check the destination before deciding. Sending the step again can repeat its effect."), actions, status);
+    return card;
+  }
+
   handle(event: Event): void {
     switch (event.type) {
       case "user":
@@ -241,6 +274,16 @@ export class Chat {
         const line = waiting.shift() ?? h("div", { class: "tool" }, h("code", {}, tool));
         const result = (event.result ?? {}) as Record<string, any>;
         clear(line, h("code", {}, tool), " · ", summarise(tool, result, this.hooks.openNote));
+        if (["run_workflow","run_pipeline","run_resume","run_status"].includes(tool)) {
+          const card = this.uncertainRun(result);
+          if (card) line.append(card);
+        }
+        if (result.status === "outcome_unknown" && result.next_action) {
+          const action = result.next_action;
+          line.append(h("section", {class:"warn"}, h("strong", {}, "Macro step outcome unknown"),
+            h("p", {}, `${action.completed_steps} steps completed · ${action.tool}`),
+            h("p", {}, String(action.detail))));
+        }
         if (result.error) line.classList.add(cls("refused"));
         if (!line.isConnected) this.append(line);
         if (result.session) this.hooks.onSession(result.session);
@@ -697,7 +740,9 @@ export class Chat {
     const card = h("div", { class: "perm", role: "group", "aria-label": "Permission needed" },
       h("strong", {}, "Permission needed"), " · ", h("code", {}, String(event.tool)),
       ` wants to ${event.effect === "read" ? "run" : "write"}`,
-      detail ? h("div", { class: "dim" }, detail) : null,
+      event.tool === "sandbox_output" ? h("div",{},h("strong",{},"Keep the files this run writes?"),
+        h("p",{},"Destination: ",String(args.writes_to ?? "unreported")),h("p",{},"During execution: ",String(args.while_running ?? "unreported")),
+        h("p",{},"After execution: ",String(args.after_the_run ?? "unreported"))) : detail ? h("div", { class: "dim" }, detail) : null,
       diff,
       event.always_ask ? h("div", { class: "dim" }, "Asked before every change: allowing it applies this one only.") : null,
       h("div", { class: "row" },

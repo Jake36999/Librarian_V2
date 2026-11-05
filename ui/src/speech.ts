@@ -60,10 +60,13 @@ class Reader {
     const run = ++this.run;
     this.button = button;
     this.title = button.title;
+    button.dataset.readLabel = button.getAttribute("aria-label") ?? this.title;
+    button.setAttribute("aria-label","Stop reading aloud"); button.setAttribute("aria-pressed","true");
     button.classList.add(cls("speaking"));
     button.replaceChildren(stopIcon(size));
     try {
       const plan = await this.api!.post("/api/tts/plan", source);
+      if (run !== this.run) return;
       let next = this.api!.post("/api/tts/chunk", { plan: plan.plan, index: 0 });
       for (let i = 0; i < plan.count && run === this.run; i++) {
         const got = await next;
@@ -104,7 +107,7 @@ class Reader {
     if (this.button) {
       this.button.classList.remove(cls("speaking"));
       this.button.replaceChildren(speakerIcon(size));
-      this.button.title = this.title;
+      this.button.title = this.title; this.button.setAttribute("aria-label",this.button.dataset.readLabel ?? this.title); this.button.setAttribute("aria-pressed","false");
     }
     this.button = null;
   }

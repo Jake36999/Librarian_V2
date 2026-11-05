@@ -2,6 +2,7 @@
 // (tests/ui_demo_core.py). Needs `playwright-core` and a Chromium:
 //   node smoke.mjs <url> [chromium-path]
 // Every step asserts; any page error fails the run.
+import "./obsidian-view-smoke.mjs";
 import { chromium } from "playwright-core";
 import { mkdtempSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
@@ -138,6 +139,8 @@ await page.keyboard.press("Enter");
 await page.waitForSelector(".lib-msg >> text=exposes the operating system");
 await page.waitForSelector(".lib-working", { state: "detached" });      // the turn is done, not just its text
 await expect(page.isVisible(".lib-tool >> text=opened a thread"), "the rail shows the session opening");
+await expect(page.isHidden(".lib-pane"), "the default pane leaves room for the primary workspace");
+await page.getByRole("button", {name:"Show the document pane"}).click();
 await expect(page.isVisible(".lib-pane .lib-plan >> text=Frame"), "the plan shows the phases beside the chat");
 step("a turn streams into the rail and the plan");
 
@@ -161,36 +164,40 @@ await expect(page.isVisible(".lib-pane .lib-doc table.lib-props >> text=reposito
 await expect(page.isVisible(".lib-msg-wrap:not(.lib-user) .lib-msg-actions button[aria-label='Read aloud']"), "a reply can be read aloud");
 await expect(page.isVisible(".lib-pane .lib-pane-actions button[aria-label='Read this document']"), "the open document can be read aloud");
 await expect(page.isVisible(".lib-pane .lib-pane-crumbs >> text=osquery.md"), "the path shows as breadcrumbs");
-await page.click(".lib-pane button[aria-label='Documents menu']");
-await page.click(".lib-pane-menu .lib-menuitem.lib-up");
-await page.click(".lib-pane-menu .lib-menuitem.lib-up");
-await page.click(".lib-pane-menu .lib-menuitem.lib-dir:has-text('Projects/')");
-await page.click(".lib-pane-menu .lib-menuitem.lib-file:has-text('Host Watch')");
+async function paneView(name) {
+  const compact = page.locator(".lib-pane select[aria-label='Pane view']");
+  if (await compact.isVisible()) await compact.selectOption(name);
+  else await page.locator(".lib-pane-views").getByRole("button",{name,exact:true}).click();
+}
+await paneView("Browse");
+await page.click(".lib-pane-browser .lib-menuitem.lib-up");
+await page.click(".lib-pane-browser .lib-menuitem.lib-up");
+await page.click(".lib-pane-browser .lib-menuitem.lib-dir:has-text('Projects/')");
+await page.click(".lib-pane-browser .lib-menuitem.lib-file:has-text('Host Watch')");
 await page.waitForSelector(".lib-pane .lib-doc-title >> text=Host Watch");
 step("a [[link]] opens the note beside the chat; ⋮ browses folders and returns to the plan");
 
 // The Desk: opening a note on this pursuit's thread touches it onto the
 // desk automatically; pinning keeps one there for good.
-await page.click(".lib-pane button[aria-label='Documents menu']");
-await page.waitForSelector(".lib-pane-menu >> text=Desk — Host Watch");
-await page.waitForSelector(".lib-pane-menu .lib-desk-row:has-text('osquery')");   // the async desk fetch
-await expect(page.isVisible(".lib-pane-menu .lib-desk-row:has-text('Host Watch')"), "the pursuit's own note is on its desk too");
-await expect(page.isVisible('.lib-pane-menu .lib-menuitem.lib-pin >> text=Pin "Host Watch"'), "the open note can be pinned from here");
-await page.click('.lib-pane-menu button[aria-label="Pin osquery"]');
-await page.waitForSelector('.lib-pane-menu button[aria-label="Unpin osquery"]');
+await paneView("Browse");
+await page.waitForSelector(".lib-pane-browser >> text=Desk — Host Watch");
+await page.waitForSelector(".lib-pane-browser .lib-desk-row:has-text('osquery')");   // the async desk fetch
+await expect(page.isVisible(".lib-pane-browser .lib-desk-row:has-text('Host Watch')"), "the pursuit's own note is on its desk too");
+await expect(page.isVisible('.lib-pane-browser .lib-menuitem.lib-pin >> text=Pin "Host Watch"'), "the open note can be pinned from here");
+await page.click('.lib-pane-browser button[aria-label="Pin osquery"]');
+await page.waitForSelector('.lib-pane-browser button[aria-label="Unpin osquery"]');
 step("opening a note on a pursuit's thread touches its desk; pinning keeps it there for good");
 
 // The agenda: "This week" scans every note's own checkboxes, seeded (in the
 // demo core) on notes that already exist, with no dependence on this walk.
-await page.click(".lib-pane-menu .lib-menuitem:has-text('This week')");
+await paneView("This week");
 await page.waitForSelector(".lib-pane .lib-agenda >> text=osquery");
 await expect(page.isVisible(".lib-pane .lib-agenda >> text=check for a new stable release"), "a dated task shows under its bucket");
 await expect(page.isVisible(".lib-pane .lib-agenda h4:has-text('No date')"), "an undated task gets its own bucket");
 await expect(page.isVisible(".lib-pane .lib-agenda >> text=review the changelog"), "the undated task itself is shown");
 step("This week scans every note's checkboxes and buckets them by due date");
 
-await page.click(".lib-pane button[aria-label='Documents menu']");
-await page.click(".lib-pane-menu .lib-menuitem:has-text('Plan')");
+await paneView("Plan");
 await page.waitForSelector(".lib-pane .lib-plan >> text=Frame");
 await expect(page.evaluate(() => {
   const composer = document.querySelector(".lib-composer").getBoundingClientRect();
@@ -201,7 +208,7 @@ step("⋮ returns to the plan; the composer stays docked at the bottom");
 // ⋮ → Rename or move: the note moves, the chat's link to it follows; then back.
 await page.click(".lib-msg .lib-wl:has-text('osquery')");
 await page.waitForSelector('.lib-pane .lib-doc-title >> text="osquery"');
-await page.click(".lib-pane button[aria-label='Documents menu']");
+await page.click(".lib-pane button[aria-label='Note actions']");
 await page.click(".lib-pane-menu .lib-menuitem:has-text('Rename or move')");
 await page.fill("#lib-mv-name", "osquery host");
 await page.click(".lib-pane-menu .lib-move-form button:has-text('Move')");
@@ -209,13 +216,12 @@ await page.waitForSelector('.lib-pane .lib-doc-title >> text="osquery host"');
 await expect(page.isVisible(".lib-pane .lib-pane-crumbs >> text=osquery host.md"), "the breadcrumbs show the new name");
 await expect(page.isVisible(".lib-pane .lib-doc .lib-moved"), "the pane says what moved");
 await expect(page.isVisible(".lib-msg .lib-wl:has-text('osquery host')"), "the chat's link followed the rename");
-await page.click(".lib-pane button[aria-label='Documents menu']");
+await page.click(".lib-pane button[aria-label='Note actions']");
 await page.click(".lib-pane-menu .lib-menuitem:has-text('Rename or move')");
 await page.fill("#lib-mv-name", "osquery");
 await page.click(".lib-pane-menu .lib-move-form button:has-text('Move')");
 await page.waitForSelector('.lib-pane .lib-doc-title >> text="osquery"');
-await page.click(".lib-pane button[aria-label='Documents menu']");
-await page.click(".lib-pane-menu .lib-menuitem:has-text('Plan')");
+await paneView("Plan");
 step("⋮ renames a note in place, and links to it follow");
 
 // The composer's paperclip: attach a file (it lands in Inbox/, a plain path
@@ -349,6 +355,7 @@ await page.fill("dialog.lib-settings input[placeholder='command, e.g. npx']", PY
 await page.fill("dialog.lib-settings input[placeholder='args, space-separated']", FAKE_MCP);
 await page.click("dialog.lib-settings button:has-text('Add and accept')");
 await page.waitForSelector("dialog.lib-settings .lib-srv-block:has-text('2 tools')");
+await settings.getByText("Permissions for fake (2 tools)",{exact:true}).click();
 await page.click("dialog.lib-settings .lib-tool-perms .lib-row2:has-text('fake__echo') button:has-text('Deny')");
 await page.waitForSelector("dialog.lib-settings .lib-tool-perms .lib-row2:has-text('fake__echo') button[aria-pressed=true]:has-text('Deny')");
 await page.click("dialog.lib-settings .lib-srv-block button:has-text('Disable')");
@@ -383,7 +390,8 @@ await page.fill("dialog.lib-settings input[aria-label='New host id']", "smoke-vi
 await page.fill("dialog.lib-settings input[aria-label='New host display name']", "Smoke Vision");
 await page.fill("dialog.lib-settings input[aria-label='New host base URL']", "http://127.0.0.1:11998/v1");
 await page.click("dialog.lib-settings button:has-text('Add host')");
-await page.waitForSelector("dialog.lib-settings .lib-host-card:has-text('Smoke Vision')");
+await page.waitForSelector("dialog.lib-settings .lib-host-details > summary:has-text('Smoke Vision')");
+await settings.locator(".lib-host-details > summary").filter({hasText:"Smoke Vision"}).click();
 await page.fill("dialog.lib-settings input[aria-label='Model on Smoke Vision']", "custom-vision");
 await page.selectOption("dialog.lib-settings select[aria-label='Service slot on Smoke Vision']", "ocr");
 await page.click("dialog.lib-settings .lib-host-card:has-text('Smoke Vision') button:has-text('Use for service')");
@@ -467,6 +475,18 @@ await page.unroute("**/api/tool/batch_status");
 await page.click(".lib-app nav button:has-text('Chat')");
 step("a failed batch stays visible with explicit resume, not a silent success");
 await page.click(".lib-app nav button:has-text('Staging')");
+// Exercise the missing-reviewer branch without replacing source data or calling a paid model.
+await page.route("**/api/tool/staging_show", async route => {
+  const response = await route.fetch();
+  const source = await response.json();
+  await route.fulfill({response, json:{...source, review:{...source.review, queued:["draft"]}}});
+});
+await page.click(".lib-staging .lib-item");
+await page.getByRole("button", {name:"Configure reviewer model"}).click();
+await settings.getByRole("heading", {name:"Models & services"}).waitFor();
+await settings.getByRole("button", {name:/Choose Small tasks/i}).waitFor();
+await settings.getByRole("button", {name:"Close", exact:true}).click();
+await page.unroute("**/api/tool/staging_show");
 await page.click(".lib-staging .lib-item");
 await page.waitForSelector(".lib-staging .lib-evidence");
 await expect(page.isVisible(".lib-staging >> text=Only the opening of this source has been read"), "the unread state is said");
@@ -570,13 +590,13 @@ step("sessions list and attach");
 
 // Adoption (C3): the ⋮ menu lists this thread's lenses - the edited one under
 // its new name, and the accepted pack's - and a person adopts one into the thread.
-await page.click(".lib-pane button[aria-label='Documents menu']");
-await page.waitForSelector(".lib-pane-menu >> text=Lenses — this thread");
-await page.waitForSelector(".lib-pane-menu .lib-lens-name:has-text('Change-stream first, as I put it')");
-await expect(page.isVisible(".lib-pane-menu .lib-lens-name:has-text('The Least-Privilege-First Lens')"),
+await paneView("Browse");
+await page.waitForSelector(".lib-pane-browser >> text=Lenses — this thread");
+await page.waitForSelector(".lib-pane-browser .lib-lens-name:has-text('Change-stream first, as I put it')");
+await expect(page.isVisible(".lib-pane-browser .lib-lens-name:has-text('The Least-Privilege-First Lens')"),
   "the accepted pack's lenses are offered too");
-await page.click('.lib-pane-menu button[aria-label="Adopt Change-stream first, as I put it"]');
-await page.waitForSelector('.lib-pane-menu button[aria-label="Drop Change-stream first, as I put it"]');
+await page.click('.lib-pane-browser button[aria-label="Adopt Change-stream first, as I put it"]');
+await page.waitForSelector('.lib-pane-browser button[aria-label="Drop Change-stream first, as I put it"]');
 await page.keyboard.press("Escape");
 step("a lens is adopted into the thread from the ⋮ menu, under the name it was accepted with");
 
@@ -1019,6 +1039,10 @@ await expect(split1100.main >= 360 && split1100.pane >= 300 && split1100.saved =
 const split1000 = await splitAt(1000);
 await expect(split1000.main >= 360 && split1000.pane >= 300,
   `and in a 1000px root ${JSON.stringify(split1000)}`);
+await page.getByRole("separator", {name:"Document pane width"}).press("Home");
+await expect(await page.locator(".lib-resizer").getAttribute("aria-valuenow") === "300", "keyboard separator reaches the 300px minimum");
+await page.getByRole("separator", {name:"Document pane width"}).press("ArrowLeft");
+await expect(await page.locator(".lib-resizer").getAttribute("aria-valuenow") === "324", "keyboard separator increases pane width");
 await splitAt(0);
 await page.evaluate(() => localStorage.removeItem("librarian:pane-w"));
 step("a saved split is clamped to the root's room and the preference is kept");

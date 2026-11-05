@@ -123,7 +123,7 @@ class App {
       }, () => {
         const tiers = this.state.tiers ?? [], route = tiers[2] ?? tiers[1] ?? tiers[0];
         return "Library: " + this.libraryName() + ". " + (route ? "Chat small-task selection: " + route.provider + " / " + route.model + ". Individual steps can use other routes." : "No chat model selected.");
-      });
+      }, () => String(this.state.vault_path || this.state.vault || ""));
     this.search = new Search(this.api, openNote);
     this.pane = new DocPane(this.api, this.chat.plan, () => String(this.state.vault ?? ""),
       () => this.showPane(false),
@@ -203,7 +203,13 @@ class App {
     const chatView = h("main", { class: "chatview" }, this.chat.log);
     this.views = { chat: chatView, staging: this.staging.el, search: this.search.el };
     const navButton = (v: View, label: string) => h("button", {
-      role: "tab", onclick: () => this.show(v) }, label) as HTMLButtonElement;
+      role: "tab", onkeydown: (event: globalThis.Event) => {
+        const e = event as KeyboardEvent;
+        const names = Object.keys(this.nav) as View[], index = names.indexOf(v);
+        const next = e.key === "Home" ? 0 : e.key === "End" ? names.length-1 :
+          e.key === "ArrowRight" ? (index+1)%names.length : e.key === "ArrowLeft" ? (index+names.length-1)%names.length : -1;
+        if (next >= 0) { e.preventDefault(); this.show(names[next]); this.nav[names[next]].focus(); }
+      }, onclick: () => this.show(v) }, label) as HTMLButtonElement;
     this.nav = { chat: navButton("chat", "Chat"), staging: navButton("staging", "Staging"),
                  search: navButton("search", "Search") };
 
@@ -215,7 +221,15 @@ class App {
     this.paneButton = h("button", { class: "icon-btn", title: "Plan and notes beside the chat",
       "aria-label": "Show the document pane", onclick: () => this.showPane(!this.paneOpen) }, paneIcon()) as HTMLButtonElement;
     const resizer = h("div", { class: "lib-resizer", role: "separator", "aria-orientation": "vertical",
-      title: "Drag to resize" });
+      tabindex: "0", "aria-label": "Document pane width", title: "Drag or use arrow keys to resize" });
+    resizer.addEventListener("keydown", (e) => {
+      const room = this.body.clientWidth - resizer.offsetWidth;
+      const now = this.pane.el.getBoundingClientRect().width;
+      const widths: Record<string,number> = {Home:300, End:room-360, ArrowLeft:now+24, ArrowRight:now-24};
+      if (!(e.key in widths)) return;
+      e.preventDefault(); this.savedPaneWidth = widths[e.key]; this.savedPaneWidth = this.applyPaneWidth();
+      remember("pane-w",String(this.savedPaneWidth)+"px");
+    });
     resizer.addEventListener("pointerdown", (e) => this.resize(e as PointerEvent, resizer));
     this.body = h("div", { class: "lib-body" },
       h("div", { class: "lib-main" }, this.notice, this.batchNotice, chatView, this.staging.el, this.search.el, composer),
@@ -226,7 +240,7 @@ class App {
           h("div", { class: "anchor" }, sessionsButton, this.sessions.el),
           h("div", { class: "anchor" }, this.checkpointButton, this.checkpoints.el),
           this.title, this.crumb,
-          h("nav", { role: "tablist", "aria-label": "Views" }, Object.values(this.nav)), settingsButton, this.live,
+          h("nav", { role: "tablist", "aria-label": "Views" }, Object.values(this.nav)), settingsButton, h("button",{class:"ghost",onclick:()=>this.settings.open("models")},"Models"), this.live,
           this.paneButton),
         this.body),
       this.settings.dialog);
@@ -246,7 +260,7 @@ class App {
     }
     // Open by default where there is room for both; the choice is remembered.
     const saved = recall("pane");
-    this.showPane(saved ? saved === "open" : (root.clientWidth || window.innerWidth) >= 1000);
+    this.showPane(saved === "open");
   }
 
   private composer: HTMLElement;
@@ -310,11 +324,15 @@ class App {
   /** Apply the saved split clamped to the current room; returns the width
    *  applied (0 when none is saved and the stylesheet's default applies). */
   private applyPaneWidth(): number {
-    if (!this.savedPaneWidth) return 0;
+    const separator = this.body.querySelector<HTMLElement>(".lib-resizer");
+    separator?.setAttribute("aria-valuemin","300");
+    separator?.setAttribute("aria-valuemax",String(Math.max(300,this.body.clientWidth-(separator.offsetWidth||5)-360)));
+    if (!this.savedPaneWidth) { separator?.setAttribute("aria-valuenow", String(Math.round(this.pane.el.getBoundingClientRect().width))); return 0; }
     const handle = this.body.querySelector<HTMLElement>(".lib-resizer")?.offsetWidth ?? 0;
     const room = this.body.clientWidth - handle;
     const width = room > 0 ? Math.max(300, Math.min(this.savedPaneWidth, room - 360)) : this.savedPaneWidth;
     this.body.style.setProperty("--pane-w", `${Math.round(width)}px`);
+    separator?.setAttribute("aria-valuenow",String(Math.round(width)));
     return Math.round(width);
   }
 
@@ -348,6 +366,8 @@ class App {
     }
     this.stopEvents = this.api.events(this.state.event_stream, (event) => this.onEvent(event), (live) => {
       this.live.className = cls(`live ${live ? "on" : "off"}`);
+      this.live.setAttribute("aria-label", live ? "Event stream connected" : "Event stream reconnecting");
+      this.live.title = live ? "Event stream connected" : "Event stream reconnecting";
       this.live.textContent = live ? "●" : "○ reconnecting";
       if (live) void this.refresh();
     });
@@ -543,11 +563,11 @@ class App {
     this.session = session;
     this.chat.renderPlan(session);
     if (!session) {
-      this.title.textContent = this.libraryName();
+      this.title.textContent = "";
       this.crumb.textContent = "no thread";
       return;
     }
-    this.title.textContent = session.project || session.question || this.libraryName();
+    this.title.textContent = session.project || session.question || "";
     this.crumb.textContent = `${session.purpose ?? ""} · phase: ${session.phase ?? ""}${session.status && session.status !== "open" ? ` · ${session.status}` : ""}`;
   }
 
@@ -588,7 +608,7 @@ class App {
   private show(view: View, refresh = true): void {
     this.view = view;
     for (const [v, el] of Object.entries(this.views)) el.hidden = v !== view;
-    for (const [v, b] of Object.entries(this.nav)) b.setAttribute("aria-selected", String(v === view));
+    for (const [v, b] of Object.entries(this.nav)) { b.setAttribute("aria-selected", String(v === view)); b.tabIndex = v === view ? 0 : -1; }
     this.composer.hidden = view !== "chat";
     if (view === "staging" && refresh) void this.staging.load(true);
     if (view === "search") this.search.focus();
@@ -768,9 +788,11 @@ class App {
     this.bodyObserver?.disconnect();
     this.bodyObserver = null;
     // MF-008: nothing this mount registered outlives it.
+    this.settings.stopHealth();
     this.staging.dispose();
     this.pane.dispose();
     this.attachPanel.dispose();
+    this.tile.dispose();
     this.popovers().forEach((p) => p.dispose());
     this.ids.release();
     document.removeEventListener("keydown", this.onDocumentKey);

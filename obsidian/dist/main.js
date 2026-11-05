@@ -234,10 +234,14 @@ var Reader = class {
     const run = ++this.run;
     this.button = button;
     this.title = button.title;
+    button.dataset.readLabel = button.getAttribute("aria-label") ?? this.title;
+    button.setAttribute("aria-label", "Stop reading aloud");
+    button.setAttribute("aria-pressed", "true");
     button.classList.add(cls("speaking"));
     button.replaceChildren(stopIcon(size));
     try {
       const plan = await this.api.post("/api/tts/plan", source);
+      if (run !== this.run) return;
       let next = this.api.post("/api/tts/chunk", { plan: plan.plan, index: 0 });
       for (let i = 0; i < plan.count && run === this.run; i++) {
         const got = await next;
@@ -279,6 +283,8 @@ var Reader = class {
       this.button.classList.remove(cls("speaking"));
       this.button.replaceChildren(speakerIcon(size));
       this.button.title = this.title;
+      this.button.setAttribute("aria-label", this.button.dataset.readLabel ?? this.title);
+      this.button.setAttribute("aria-pressed", "false");
     }
     this.button = null;
   }
@@ -297,9 +303,10 @@ var Api = class {
   constructor(opts) {
     this.opts = opts;
   }
-  async request(method, path2, body) {
+  async request(method, path2, body, signal) {
     const response = await fetch(this.opts.base + path2, {
       method,
+      signal,
       headers: { "Content-Type": "application/json", "X-Librarian-Token": this.opts.token },
       body: body === void 0 ? void 0 : JSON.stringify(body)
     });
@@ -307,8 +314,8 @@ var Api = class {
     if (!response.ok) throw new ApiError(response.status, data);
     return data;
   }
-  get(path2) {
-    return this.request("GET", path2);
+  get(path2, signal) {
+    return this.request("GET", path2, void 0, signal);
   }
   post(path2, body = {}) {
     return this.request("POST", path2, body);
@@ -335,6 +342,7 @@ var Api = class {
     let epoch = typeof cursor?.epoch === "string" ? cursor.epoch : "";
     let source = null;
     let closed = false;
+    let reconnect = 0;
     const open = () => {
       const url = `${this.opts.base}/api/events?token=${encodeURIComponent(this.opts.token)}&since=${last}&epoch=${encodeURIComponent(epoch)}`;
       source = new EventSource(url);
@@ -343,7 +351,7 @@ var Api = class {
       source.onerror = () => {
         onStatus(false);
         source?.close();
-        if (!closed) setTimeout(open, 1500);
+        if (!closed) reconnect = window.setTimeout(open, 1500);
       };
       const handle = (message) => {
         const event = JSON.parse(message.data);
@@ -363,6 +371,7 @@ var Api = class {
     open();
     return () => {
       closed = true;
+      window.clearTimeout(reconnect);
       source?.close();
     };
   }
@@ -924,6 +933,44 @@ var Chat = class {
       this.working = null;
     }
   }
+  uncertainRun(run) {
+    const paused = run.last ?? run;
+    const step = paused.step ?? paused.at;
+    if (run.status !== "paused" || paused.reason !== "outcome_unknown" || !run.run || !step) return null;
+    const card = h("section", { class: "warn" });
+    const actions = h("div", { class: "row2" });
+    const status = h("p", { role: "status" });
+    const resolve2 = async (choice) => {
+      actions.querySelectorAll("button").forEach((button) => {
+        button.disabled = true;
+      });
+      try {
+        const current = await this.api.tool("run_status", { run_id: run.run });
+        if (current.status !== "paused" || current.last?.step !== step || current.last.reason !== "outcome_unknown" || !current.last.options?.includes(choice)) {
+          status.textContent = "The run has changed. Inspect its current status.";
+          return;
+        }
+        const result = await this.api.tool("run_resume", { run_id: run.run, choices: { [step]: choice } });
+        if (result.error) throw new Error(String(result.detail ?? result.error));
+        status.textContent = `Run ${run.run}: ${result.status}.`;
+        const next = this.uncertainRun(result);
+        if (next) card.append(next);
+      } catch (e) {
+        status.textContent = `Check the run status before trying again. ${e.message}`;
+      }
+    };
+    for (const [value, label] of [["applied", "Record step as already applied"], ["retry", "Send this step again"]]) {
+      if (paused.options?.includes(value)) actions.append(h("button", { onclick: () => void resolve2(value) }, label));
+    }
+    card.append(
+      h("strong", {}, "Step outcome unknown"),
+      h("p", {}, `Run ${run.run} \xB7 Step ${step}. ${paused.detail}`),
+      h("p", {}, "Check the destination before deciding. Sending the step again can repeat its effect."),
+      actions,
+      status
+    );
+    return card;
+  }
   handle(event) {
     switch (event.type) {
       case "user":
@@ -954,6 +1001,20 @@ var Chat = class {
         const line = waiting.shift() ?? h("div", { class: "tool" }, h("code", {}, tool));
         const result = event.result ?? {};
         clear(line, h("code", {}, tool), " \xB7 ", summarise(tool, result, this.hooks.openNote));
+        if (["run_workflow", "run_pipeline", "run_resume", "run_status"].includes(tool)) {
+          const card = this.uncertainRun(result);
+          if (card) line.append(card);
+        }
+        if (result.status === "outcome_unknown" && result.next_action) {
+          const action = result.next_action;
+          line.append(h(
+            "section",
+            { class: "warn" },
+            h("strong", {}, "Macro step outcome unknown"),
+            h("p", {}, `${action.completed_steps} steps completed \xB7 ${action.tool}`),
+            h("p", {}, String(action.detail))
+          ));
+        }
         if (result.error) line.classList.add(cls("refused"));
         if (!line.isConnected) this.append(line);
         if (result.session) this.hooks.onSession(result.session);
@@ -1534,7 +1595,14 @@ var Chat = class {
       " \xB7 ",
       h("code", {}, String(event.tool)),
       ` wants to ${event.effect === "read" ? "run" : "write"}`,
-      detail ? h("div", { class: "dim" }, detail) : null,
+      event.tool === "sandbox_output" ? h(
+        "div",
+        {},
+        h("strong", {}, "Keep the files this run writes?"),
+        h("p", {}, "Destination: ", String(args.writes_to ?? "unreported")),
+        h("p", {}, "During execution: ", String(args.while_running ?? "unreported")),
+        h("p", {}, "After execution: ", String(args.after_the_run ?? "unreported"))
+      ) : detail ? h("div", { class: "dim" }, detail) : null,
       diff,
       event.always_ask ? h("div", { class: "dim" }, "Asked before every change: allowing it applies this one only.") : null,
       h(
@@ -2112,6 +2180,10 @@ var ModelTile = class {
     done();
     return true;
   }
+  dispose() {
+    window.clearTimeout(this.press);
+    this.endSlot();
+  }
   endSlot() {
     this.slot = null;
     this.pendingLead = null;
@@ -2448,13 +2520,21 @@ var ModelTile = class {
           const clear2 = () => this.slot?.role !== void 0 ? void 0 : this.slot ? this.clearSlot() : this.clearAll();
           const rec = at < 0 && recommended(m);
           const readiness = this.readinessChips(p, String(m.id));
+          let dragged = false, held = false;
           const card = h(
             "button",
             {
               class: `model-card${at >= 0 ? " sel" : ""}${rec ? " rec" : ""}`,
               "aria-pressed": at >= 0 ? "true" : "false",
               title: this.slot?.role !== void 0 ? void 0 : at >= 0 ? this.slot ? "Right-click (or Delete) to empty this slot" : "Right-click (or Delete) to clear the chosen models" : m.profile && m.profile.tool_calling === false ? "Profiled as not supporting tool calling: can still lead as tier 2 or 3" : "",
-              onclick: () => this.pick(p, m.id),
+              onclick: (e) => {
+                if (held || dragged) {
+                  held = dragged = false;
+                  e.preventDefault();
+                  return;
+                }
+                void this.pick(p, m.id);
+              },
               oncontextmenu: (e) => {
                 if (at >= 0) {
                   e.preventDefault();
@@ -2465,7 +2545,20 @@ var ModelTile = class {
                 if (at >= 0 && e.key === "Delete") void clear2();
               },
               ontouchstart: () => {
-                if (at >= 0) this.press = window.setTimeout(() => void clear2(), 600);
+                held = dragged = false;
+                window.clearTimeout(this.press);
+                if (at >= 0) this.press = window.setTimeout(() => {
+                  held = true;
+                  if (card.isConnected && this.pop.open) void clear2();
+                }, 600);
+              },
+              ontouchmove: () => {
+                dragged = true;
+                window.clearTimeout(this.press);
+              },
+              ontouchcancel: () => {
+                dragged = true;
+                window.clearTimeout(this.press);
               },
               ontouchend: () => window.clearTimeout(this.press)
             },
@@ -2801,7 +2894,11 @@ var Settings = class {
     this.searchResults = h("div", { class: "settings-results", hidden: true });
     this.search = h("input", { type: "search", placeholder: "Find a setting", "aria-label": "Find a setting" });
     this.expandedServices = /* @__PURE__ */ new Set();
+    this.healthTimer = 0;
     this.focusService = "";
+    this.dialog.addEventListener("close", () => {
+      if (!this.dialog.open) this.stopHealth();
+    });
     const nav = h("nav", { class: "settings-nav", "aria-label": "Settings sections" });
     for (const [group, pages] of GROUPS) {
       const options = h("optgroup", { label: group });
@@ -2834,6 +2931,7 @@ var Settings = class {
     );
   }
   open(page = this.page) {
+    this.stopHealth();
     const library = String(this.state().vault_path ?? this.state().vault ?? "");
     if (library !== this.draftLibrary) {
       this.drafts.clear();
@@ -2862,6 +2960,8 @@ var Settings = class {
       const assignment = row.querySelector(".lib-settings-assignment");
       assignment.textContent = selected ? `${selected.model} \xB7 ${PROVIDERS[selected.provider] ?? selected.provider}` : i > tiers.length ? `Choose ${CHAT_ROLES[i - 1][0]} first` + (fallback ? ` \xB7 currently uses ${fallback.model}` : "") : fallback ? `Uses ${fallback.model}` : "No model selected";
       row.querySelector("button").disabled = !library || i > tiers.length;
+      const reset = row.querySelector(".lib-clear-role");
+      if (reset) reset.hidden = !selected;
     });
   }
   updateNav() {
@@ -2870,6 +2970,45 @@ var Settings = class {
       else link2.removeAttribute("aria-current");
     }
     this.compact.value = this.page;
+  }
+  stopHealth() {
+    window.clearTimeout(this.healthTimer);
+    this.healthRequest?.abort();
+    this.healthRequest = void 0;
+  }
+  coreHealth() {
+    this.stopHealth();
+    const controller = new AbortController();
+    this.healthRequest = controller;
+    const summary = h("div"), status = h("p", { class: "note", role: "status" }, "Checking Core health\u2026");
+    const poll = async () => {
+      try {
+        const snapshots = await Promise.allSettled([
+          this.api.get("/api/meta", controller.signal),
+          this.api.get("/api/documents", controller.signal)
+        ]);
+        if (controller.signal.aborted) return;
+        const [meta, documents] = snapshots.map((snapshot) => {
+          if (snapshot.status === "rejected") throw snapshot.reason;
+          return snapshot.value;
+        });
+        const health = meta.non_secret_health;
+        if (!health || !Array.isArray(documents.leases)) throw new Error("Incomplete health response");
+        clear(
+          summary,
+          h("p", {}, `Writer: ${health.writer} \xB7 Index: ${health.index} \xB7 Watcher: ${health.watcher?.status ?? "unknown"} \xB7 Vault lease: ${health.vault_lease}`),
+          h("p", {}, `Active document leases: ${documents.leases.length}`),
+          documents.leases.map((lease) => h("div", {}, `${lease.path} \xB7 ${lease.editor} \xB7 ${lease.dirty ? "unsaved edits" : "clean"}`))
+        );
+        status.textContent = `Last successful check: ${(/* @__PURE__ */ new Date()).toLocaleTimeString()}`;
+      } catch (e) {
+        if (controller.signal.aborted) return;
+        status.textContent = (status.textContent ?? "").split(" \xB7 Refresh failed")[0] + " \xB7 Refresh failed: " + e.message;
+      }
+      if (!controller.signal.aborted) this.healthTimer = window.setTimeout(poll, 1e4);
+    };
+    void poll();
+    return h("section", {}, h("h3", {}, "Core and active documents"), summary, status);
   }
   controlsPage() {
     const choice = (key, label, options) => h("label", { class: "f" }, label, h(
@@ -2931,7 +3070,7 @@ var Settings = class {
       projects: () => this.projectsPage(),
       profiles: () => this.agentProfiles(),
       review: () => this.library(false),
-      health: () => this.library(true),
+      health: () => h("div", {}, this.coreHealth(), this.library(true)),
       topics: () => {
         const host = h("div", { class: "topics" });
         void this.paintTopics(host);
@@ -2970,7 +3109,7 @@ var Settings = class {
         "p",
         { class: "settings-scope" },
         "Chat-model changes also update defaults used by libraries without their own choices.",
-        h("small", {}, "Service assignments remain specific to this library.")
+        h("small", {}, "Service assignments remain specific to this library. Effort changes also update the shared default.")
       ),
       h("h3", {}, "Chat roles"),
       CHAT_ROLES.map(([label, job], i) => {
@@ -2986,7 +3125,22 @@ var Settings = class {
               this.dialog.close();
               this.chooseModel?.("chat", label, this.state().tiers?.[i], i);
             }
-          }, "Choose")
+          }, "Choose"),
+          h("button", { class: "ghost clear-role", onclick: async (e) => {
+            const button = e.currentTarget;
+            const tiers = this.state().tiers ?? [];
+            const names = CHAT_ROLES.slice(i, tiers.length).map(([name]) => name).join(", ");
+            if (!window.confirm("Clear these assignments: " + names + "? " + (i ? "Later roles will use the preceding model." : "No chat model will be selected.") + " Shared defaults will also change.")) return;
+            button.disabled = true;
+            try {
+              await this.api.post("/api/tiers", { tiers: tiers.slice(0, i) });
+              await this.refresh();
+              this.render();
+            } catch (err) {
+              button.after(h("span", { role: "alert" }, err.message));
+              button.disabled = false;
+            }
+          } }, "Clear from this role")
         );
       }),
       h("h3", {}, "Supporting services"),
@@ -3720,6 +3874,14 @@ var Settings = class {
           const current = s.model ? `${s.model} \xB7 ${PROVIDERS[s.provider] ?? s.provider}${s.default ? " (default)" : ""}` : s.built ? "none chosen" : "planned";
           const contract = s.adapter && typeof s.adapter === "object" ? s.adapter : {};
           const contractLabel = !s.model ? "" : contract.adapter?.id ? ` \xB7 ${String(contract.adapter.id).replace(/_/g, " ")} \xB7 ${contract.status ?? "unreviewed"}` : " \xB7 no reviewed service contract";
+          const clearService = async () => {
+            try {
+              await this.api.post("/api/services", { slot: s.slot, provider: "", model: "" });
+              this.render();
+            } catch (err) {
+              status.textContent = err.message;
+            }
+          };
           const test = async (event) => {
             const button = event.currentTarget;
             if (button.disabled) return;
@@ -3773,13 +3935,14 @@ var Settings = class {
                 h("span", { class: "dim" }, ` \xB7 ${s.job}`),
                 contractLabel ? h("span", { class: "dim" }, contractLabel) : null,
                 s.route_status === "unavailable" ? h("span", { class: "note err" }, ` \xB7 ${s.route_error ?? "route unavailable"}`) : null,
-                s.cap_usd !== void 0 ? h("span", { class: "dim" }, ` \xB7 spent $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null
+                s.cap_usd !== void 0 ? h("span", { class: "dim" }, ` \xB7 spent or held $${Number(s.spent_usd ?? 0).toFixed(2)} of its $${Number(s.cap_usd).toFixed(2)} cap`) : null
               ),
               s.built && this.chooseModel ? h("button", { class: "ghost", onclick: () => {
                 this.dialog.close();
                 this.chooseModel(s.slot, s.label, { provider: s.provider, model: s.model });
               } }, "Choose\u2026") : null,
               s.built && s.model ? h("button", { class: "ghost", onclick: test }, "Test model (one call)") : null,
+              s.built && s.model ? h("button", { class: "ghost", onclick: clearService }, "Clear service model") : null,
               status,
               s.slot === "embeddings" ? this.embeddingsBlock(s, () => this.render()) : null
             )
@@ -3807,7 +3970,7 @@ var Settings = class {
           root,
           h("label", { class: "f" }, "Personal model hosts"),
           h("p", { class: "note" }, "Hosts contain endpoints and rate limits, never credentials. A custom endpoint is OpenAI-compatible in V2; test it before assigning it to an agent profile."),
-          hosts.map((row) => this.hostCard(row, reload)),
+          hosts.map((row) => h("details", { class: "host-details" }, h("summary", {}, row.display_name || row.id, " \xB7 ", row.enabled ? "enabled" : "disabled"), this.hostCard(row, reload))),
           this.newHostCard(reload)
         );
       } catch (e) {
@@ -4509,11 +4672,14 @@ var Settings = class {
       s.error ? h("p", { class: "note err" }, s.error) : null,
       s.unpinned ? h("p", { class: "note err" }, `Not pinned: ${s.unpinned}`) : null,
       s.changed_since_enabled ? h("p", { class: "note" }, "Its definition changed after this library turned it on - still on here; worth a look.") : null,
-      (s.tool_names ?? []).length ? h("div", { class: "tool-perms" }, s.tool_names.map(toolRow)) : null
+      (s.tool_names ?? []).length ? h("details", { class: "tool-perms" }, h("summary", {}, `Permissions for ${name} (${s.tool_names.length} tools)`), s.tool_names.map(toolRow)) : null
     ));
     return h(
       "div",
       {},
+      h("h3", {}, "Sandbox output"),
+      h("p", {}, "Keep files a sandbox or Workbench run writes. Disk usage is uncapped during execution; files are checked afterwards. Permission to run a script is separate. Ask applies in Auto mode too."),
+      toolRow("sandbox_output"),
       h("label", { class: "f" }, "Skills registry"),
       h("p", { class: "note" }, "Installed once for you, then enabled per library, off until you turn it on: a history library and a software library each choose their own tools."),
       CURATED_SKILLS.map(curatedCard),
@@ -4934,8 +5100,8 @@ var DocPane = class {
     this.crumbs = h("div", { class: "pane-crumbs" });
     this.menuButton = h("button", {
       class: "icon-btn",
-      title: "Plan, recent notes and folders",
-      "aria-label": "Documents menu",
+      title: "Note actions",
+      "aria-label": "Note actions",
       "aria-haspopup": "true",
       "aria-expanded": "false"
     }, "\u22EE");
@@ -4962,6 +5128,9 @@ var DocPane = class {
     }, speakerIcon());
     this.body = h("div", { class: "pane-body" });
     this.recent = [];
+    this.version = 0;
+    this.switcher = h("div", { class: "pane-views", role: "group", "aria-label": "Pane view" });
+    this.compact = h("select", { "aria-label": "Pane view" });
     this.current = { kind: "plan" };
     this.browsing = "";
     this.onDocumentClick = (e) => {
@@ -4973,11 +5142,26 @@ var DocPane = class {
     this.onDocumentKey = (e) => {
       if (e.key !== "Escape" || this.menu.hidden) return;
       this.showMenu(false);
+      this.menuButton.focus();
       e.preventDefault();
       e.stopPropagation();
     };
     this.menuButton.onclick = () => this.toggleMenu();
+    const change = (view) => {
+      this.showMenu(false);
+      if (view === "Note" && this.recent.length) void this.open(this.recent[0].path);
+      else if (view === "Plan") this.showPlan();
+      else if (view === "This week") void this.showAgenda();
+      else void this.showBrowse();
+    };
+    for (const view of ["Note", "Browse", "Plan", "This week"]) {
+      this.switcher.append(h("button", { class: "ghost", onclick: () => change(view) }, view));
+      this.compact.append(h("option", { value: view }, view));
+    }
+    this.compact.onchange = () => change(this.compact.value);
     this.el.append(
+      this.switcher,
+      h("label", { class: "pane-view-select" }, "View ", this.compact),
       h(
         "div",
         { class: "pane-head" },
@@ -5010,7 +5194,19 @@ var DocPane = class {
   get showingPlan() {
     return this.current.kind === "plan";
   }
+  mark(view) {
+    this.version++;
+    this.compact.value = view;
+    this.compact.options[0].disabled = !this.recent.length && view !== "Note";
+    this.switcher.querySelectorAll("button").forEach((b) => {
+      b.disabled = b.textContent === "Note" && this.compact.options[0].disabled;
+      b.setAttribute("aria-pressed", String(b.textContent === view));
+    });
+    this.menuButton.hidden = view !== "Note";
+    this.showMenu(false);
+  }
   showPlan() {
+    this.mark("Plan");
     this.current = { kind: "plan" };
     this.speakButton.hidden = true;
     this.runButton.hidden = true;
@@ -5025,6 +5221,8 @@ var DocPane = class {
   /** "This week": every open, dated task across the vault, computed fresh -
    *  no daemon, nothing kept in sync (Co-work Roadmap 2C). */
   async showAgenda() {
+    this.mark("This week");
+    const version = this.version;
     this.current = { kind: "agenda" };
     this.speakButton.hidden = true;
     this.runButton.hidden = true;
@@ -5036,6 +5234,7 @@ var DocPane = class {
     clear(this.body, h("p", { class: "dim pad" }, "Loading\u2026"));
     try {
       const out = await this.api.tool("agenda", {});
+      if (version !== this.version) return;
       if (out.error) throw new Error(String(out.detail ?? out.error));
       const groups = [
         ["overdue", "Overdue"],
@@ -5066,29 +5265,35 @@ var DocPane = class {
         empty ? h("p", { class: "dim" }, "Nothing open with a checkbox anywhere in the vault.") : sections
       ));
     } catch (e) {
-      clear(this.body, h("div", { class: "pad" }, h("p", { class: "error" }, e.message)));
+      if (version === this.version) clear(this.body, h("div", { class: "pad" }, h("p", { class: "error" }, e.message)));
     }
     this.body.scrollTop = 0;
   }
   /** A vault path (with or without .md) or a bare note name. */
   async open(target) {
+    const version = ++this.version;
+    this.menuButton.hidden = this.speakButton.hidden = this.runButton.hidden = true;
     clear(this.body, h("p", { class: "dim pad" }, `Opening ${target}\u2026`));
     let doc;
     try {
       doc = await this.api.get(`/api/file?path=${encodeURIComponent(target)}`);
     } catch (e) {
+      if (version !== this.version) return;
       clear(this.crumbs, h("span", { class: "crumb-here" }, target));
       clear(this.body, h(
         "div",
         { class: "pad" },
         h("p", { class: "error" }, e.message),
-        h("p", { class: "dim" }, "Names are exact. Browse with \u22EE, or ask the librarian for the path.")
+        h("p", { class: "dim" }, "Names are exact. Choose Browse, or ask the librarian for the path.")
       ));
       return;
     }
+    if (version !== this.version) return;
+    this.mark("Note");
     this.current = { kind: "doc", path: doc.path, name: doc.name };
     this.speakButton.hidden = Boolean(doc.script);
     this.runButton.hidden = !doc.script;
+    this.browsing = doc.path.split("/").slice(0, -1).join("/");
     this.recent = [{ path: doc.path, name: doc.name }, ...this.recent.filter((r) => r.path !== doc.path)].slice(0, RECENT);
     const project = this.currentProject();
     if (project) this.api.tool("desk_touch", { project, note: doc.name }).catch(() => void 0);
@@ -5130,7 +5335,7 @@ var DocPane = class {
           h("h4", {}, `Run ${r.run}: exit ${r.exit_code}${r.timed_out ? " (stopped: too long)" : ""}`),
           r.stdout ? h("pre", { class: "code" }, h("code", {}, r.stdout)) : null,
           r.stderr ? h("pre", { class: "code err" }, h("code", {}, r.stderr)) : null,
-          h("p", { class: "dim" }, files.length ? `Landed in ${r.landing}: ${files.map((f) => `${f.name} (${f.bytes} bytes)`).join(", ")}. Nothing there is run or imported.` : "Nothing landed."),
+          h("p", { class: "dim" }, r.output?.kept === false ? "Output was not kept. See the run notes below." : files.length ? `Landed in ${r.landing}: ${files.map((f) => `${f.name} (${f.bytes} bytes)`).join(", ")}. Nothing there is run or imported.` : "Nothing landed."),
           ...(r.notes ?? []).map((n) => h("p", { class: "dim" }, n))
         );
       }
@@ -5153,7 +5358,7 @@ var DocPane = class {
           title: `Browse ${dir}`,
           onclick: () => {
             this.browsing = dir;
-            this.showMenu(true);
+            void this.showBrowse();
           }
         }, part));
       }
@@ -5178,26 +5383,39 @@ var DocPane = class {
       role: "menuitem",
       onclick: action
     }, label, small ? h("small", {}, small) : null);
-    const folder = h("div", { class: "pane-folder" }, h("p", { class: "dim" }, "Loading\u2026"));
     const vault = this.vaultName();
     const obsidian = this.current.kind === "doc" && vault ? `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(this.current.path)}` : "";
     const doc = this.current.kind === "doc" ? this.current : null;
-    const project = this.currentProject();
-    const desk = h("div", { class: "pane-desk" }, h("p", { class: "dim" }, "Loading\u2026"));
-    const session = this.currentSession();
-    const lenses = h("div", { class: "pane-lenses" }, h("p", { class: "dim" }, "Loading\u2026"));
+    if (!doc) return;
     clear(
       this.menu,
-      item("Plan", "the session this chat is working in", () => {
-        this.showMenu(false);
-        this.showPlan();
-      }),
-      item("This week", "open, dated tasks across the vault", () => {
-        this.showMenu(false);
-        void this.showAgenda();
-      }),
       obsidian ? h("a", { class: "menuitem", href: obsidian, role: "menuitem" }, "Open this note in Obsidian") : null,
-      doc ? item("Rename or move\u2026", "links to it across the vault follow", () => this.paintMove(doc), "move") : null,
+      item("Rename or move\u2026", "Links follow the note", () => this.paintMove(doc), "move"),
+      item("Copy path", doc.path, async () => {
+        try {
+          await navigator.clipboard.writeText(doc.path);
+          this.showMenu(false);
+          this.menuButton.focus();
+        } catch {
+          this.menu.append(h("p", { role: "status" }, doc.path));
+        }
+      })
+    );
+    this.menu.querySelector("a,button")?.focus();
+  }
+  async showBrowse() {
+    const doc = this.recent[0] ?? null;
+    this.current = { kind: "browse" };
+    this.mark("Browse");
+    this.runButton.hidden = this.speakButton.hidden = true;
+    clear(this.crumbs, "Browse");
+    const browser = h("div", { class: "pane-browser pad" });
+    clear(this.body, browser);
+    const item = (label, small, action, cls2 = "") => h("button", { class: "menuitem " + cls2, onclick: action }, label, small ? h("small", {}, small) : null);
+    const folder = h("div", { class: "pane-folder" }), desk = h("div", { class: "pane-desk" }), lenses = h("div", { class: "pane-lenses" });
+    const project = this.currentProject(), session = this.currentSession();
+    clear(
+      browser,
       project ? h("h4", {}, `Desk \u2014 ${project}`) : null,
       project ? desk : null,
       session ? h("h4", {}, "Lenses \u2014 this thread") : null,
@@ -5210,7 +5428,6 @@ var DocPane = class {
       h("h4", {}, "Browse"),
       folder
     );
-    this.menu.querySelector("button")?.focus();
     try {
       const listing = await this.api.get(`/api/files?dir=${encodeURIComponent(this.browsing)}`);
       const up = listing.dir ? listing.dir.split("/").slice(0, -1).join("/") : null;
@@ -5219,11 +5436,11 @@ var DocPane = class {
         h("div", { class: "folder-path" }, `/${listing.dir}`),
         up !== null ? item(`\u2191 ${up ? up.split("/").pop() : "the vault"}`, "", () => {
           this.browsing = up;
-          void this.paintMenu();
+          void this.showBrowse();
         }, "dir up") : null,
         listing.entries.map((e) => e.kind === "dir" ? item(`${e.name}/`, "", () => {
           this.browsing = e.path;
-          void this.paintMenu();
+          void this.showBrowse();
         }, "dir") : item(e.name, "", () => {
           this.showMenu(false);
           void this.open(e.path);
@@ -5455,7 +5672,7 @@ var Staging = class {
   constructor(api, openNote, currentSession = () => "", onSessionUpdate = () => {
   }, openModels = () => {
   }, onBatch = () => {
-  }, routeHint = () => "") {
+  }, routeHint = () => "", libraryKey = () => "") {
     this.api = api;
     this.openNote = openNote;
     this.currentSession = currentSession;
@@ -5463,6 +5680,7 @@ var Staging = class {
     this.openModels = openModels;
     this.onBatch = onBatch;
     this.routeHint = routeHint;
+    this.libraryKey = libraryKey;
     this.el = h("div", { class: "view staging" });
     this.list = h("div", { class: "items", role: "listbox", "aria-label": "Staged items" });
     this.detail = h("div", { class: "detail" });
@@ -5479,6 +5697,9 @@ var Staging = class {
     // opens something else or explicitly refreshes: an automatic reload (the
     // SSE echo of this same decision, or someone else's) must not wipe it.
     this.detailLocked = false;
+    this.restoredLibrary = "";
+    this.resumeScroll = null;
+    this.listRequest = 0;
     this.paintKinds = () => {
     };
     this.evidenceMode = h("select", { "aria-label": "Review evidence layout" }, h("option", { value: "beside" }, "Evidence beside draft"), h("option", { value: "demand" }, "Evidence on demand"));
@@ -5488,6 +5709,7 @@ var Staging = class {
     const statuses = h("select", { "aria-label": "Which sources", onchange: () => {
       this.status = statuses.value;
       this.selected = "";
+      this.savePosition();
       void this.load(true);
     } }, [
       ["staged", "Captured, to review"],
@@ -5498,12 +5720,18 @@ var Staging = class {
       ["failed", "Failed"],
       ["deferred", "Deferred"]
     ].map(([v, label]) => h("option", { value: v }, label)));
+    this.statuses = statuses;
+    this.el.addEventListener("scroll", () => this.savePosition(), { passive: true });
     const paint = () => {
-      clear(kinds, [["source", "Sources"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) => h("button", { "aria-pressed": String(this.kind === v), onclick: () => {
+      const focusedKind = kinds.contains(document.activeElement) ? document.activeElement.dataset.kind : "";
+      clear(kinds, [["source", "Sources"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) => h("button", { "data-kind": v, "aria-pressed": String(this.kind === v), onclick: () => {
+        this.selected = "";
         this.kind = v;
+        this.savePosition();
         paint();
         void this.load(true);
-      } }, label)));
+      } }, label, h("span", { class: "queue-count", title: v === "source" ? "Sources in selected filter" : "Waiting for review" }, String(v === "offering" ? this.waitingOfferings ?? "\u2026" : this.counts ? this.counts[v]?.[v === "source" ? this.status : "staged"] ?? 0 : "\u2026")))));
+      if (focusedKind) kinds.querySelector(`[data-kind="${focusedKind}"]`)?.focus({ preventScroll: true });
       scan.style.display = this.kind === "concept" ? "" : "none";
       propose.style.display = this.kind === "topic" ? "" : "none";
       statuses.style.display = this.kind === "source" ? "" : "none";
@@ -5551,11 +5779,11 @@ var Staging = class {
       if (evidence) evidence.open = this.evidenceMode.value === "beside";
     };
     this.el.append(
+      h("div", { class: "view-head" }, h("strong", {}, "Staging review"), kinds),
+      h("p", { class: "note" }, "Review captured material before adding it to this library."),
       h(
         "div",
-        { class: "view-head" },
-        h("strong", {}, "Staging review"),
-        kinds,
+        { class: "view-head review-toolbar" },
         statuses,
         this.evidenceMode,
         h("button", { class: "ghost", onclick: () => void this.load(true) }, "Refresh"),
@@ -5566,6 +5794,44 @@ var Staging = class {
       h("div", { class: "split" }, this.list, this.detail)
     );
   }
+  savePosition() {
+    if (!this.restoredLibrary || this.resumeScroll !== null) return;
+    try {
+      sessionStorage.setItem("librarian.queue." + this.restoredLibrary, JSON.stringify({
+        kind: this.kind,
+        status: this.status,
+        selected: this.selected,
+        scroll: this.el.scrollTop
+      }));
+    } catch {
+    }
+  }
+  restorePosition() {
+    const key = this.libraryKey();
+    if (!key || key === this.restoredLibrary) return;
+    this.restoredLibrary = key;
+    if (this.pending) return;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem("librarian.queue." + key) ?? "null");
+      if (!saved || !["source", "lens", "concept", "topic", "offering", "import"].includes(saved.kind) || !Array.from(this.statuses.options).some((option) => option.value === saved.status)) return;
+      this.kind = saved.kind;
+      this.statuses.value = this.status = saved.status;
+      this.selected = String(saved.selected ?? "");
+      this.resumeScroll = Number(saved.scroll) || 0;
+      this.paintKinds();
+    } catch {
+    }
+  }
+  async finishRestore(ids) {
+    if (this.resumeScroll === null) return;
+    const scroll = this.resumeScroll;
+    if (this.selected && ids.includes(this.selected)) {
+      if (this.kind === "offering") await this.showOffering(this.selected);
+      else await this.show(this.selected);
+    } else this.selected = "";
+    this.resumeScroll = null;
+    this.el.scrollTop = scroll;
+  }
   dispose() {
     this.stopped = true;
     window.clearTimeout(this.poll);
@@ -5575,12 +5841,26 @@ var Staging = class {
    * automatic reload (another surface's decision arriving over the event
    * stream) refreshes the list without wiping a just-shown outcome message. */
   async load(reset = false) {
+    this.restorePosition();
+    const request = ++this.listRequest;
     if (reset) this.detailLocked = false;
     clear(this.list, h("p", { class: "dim" }, "Loading\u2026"));
-    if (this.kind === "offering") return this.loadOfferings();
+    if (this.kind === "offering") return this.loadOfferings(request);
     try {
       const status = this.kind === "source" ? this.status : "staged";
       const out = await this.api.tool("staging_list", { kind: this.kind, status, limit: 50 });
+      if (request !== this.listRequest || this.stopped) return;
+      if (out.error) throw new Error(String(out.detail ?? out.error));
+      this.counts = out.counts;
+      this.paintKinds();
+      if (this.waitingOfferings === void 0 || reset) {
+        void this.api.get("/api/offerings/staged").then((data) => {
+          if (request !== this.listRequest || this.stopped || !Array.isArray(data.offerings)) return;
+          this.waitingOfferings = data.offerings.filter((row) => row.status !== "declined").length;
+          this.paintKinds();
+        }).catch(() => {
+        });
+      }
       const items = out.items ?? [];
       clear(
         this.list,
@@ -5588,6 +5868,7 @@ var Staging = class {
         items.length ? items.map((item) => h(
           "button",
           {
+            "data-item": item.id,
             class: `item${item.id === this.selected ? " sel" : ""}`,
             role: "option",
             "aria-selected": String(item.id === this.selected),
@@ -5603,6 +5884,7 @@ var Staging = class {
           ]).filter(Boolean).join(" \xB7 "))
         )) : h("p", { class: "dim" }, "Nothing here.")
       );
+      await this.finishRestore(items.map((item) => item.id));
       if (!this.selected && !this.detailLocked) {
         clear(this.detail, h("p", { class: "dim" }, "Choose an item to see its draft beside its evidence."));
       }
@@ -5621,17 +5903,21 @@ var Staging = class {
   /** Offering drafts wait in staging/offerings/ until promoted: listed here so a person
    * reads one before answering "promote it?" (Test Report A2 b). Not staging items -
    * each belongs to the session that drafted it, and its decision is recorded there. */
-  async loadOfferings() {
+  async loadOfferings(request) {
     try {
       const out = await this.api.get("/api/offerings/staged");
+      if (request !== this.listRequest || this.stopped) return;
       const rows = out.offerings ?? [];
       const waiting = rows.filter((r) => r.status !== "declined").length;
+      this.waitingOfferings = waiting;
+      this.paintKinds();
       clear(
         this.list,
         h("p", { class: "dim" }, `${waiting} waiting${rows.length > waiting ? ` \xB7 ${rows.length - waiting} declined` : ""}`),
         rows.length ? rows.map((r) => h(
           "button",
           {
+            "data-item": r.offering,
             class: `item${r.offering === this.selected ? " sel" : ""}`,
             role: "option",
             "aria-selected": String(r.offering === this.selected),
@@ -5647,6 +5933,7 @@ var Staging = class {
           ].filter(Boolean).join(" \xB7 "))
         )) : h("p", { class: "dim" }, "No offering waits to be promoted.")
       );
+      await this.finishRestore(rows.map((row) => row.offering));
       if (this.pending) {
         const id = this.pending;
         this.pending = "";
@@ -5662,8 +5949,13 @@ var Staging = class {
   }
   async showOffering(id) {
     this.selected = id;
+    this.savePosition();
     this.detailLocked = false;
-    this.list.querySelectorAll(sel(".item")).forEach((b) => b.classList.remove(cls("sel")));
+    this.list.querySelectorAll(sel(".item")).forEach((button) => {
+      const selected = button.dataset.item === id;
+      button.classList.toggle(cls("sel"), selected);
+      button.setAttribute("aria-selected", String(selected));
+    });
     clear(this.detail, h("p", { class: "dim" }, "Loading\u2026"));
     let r;
     try {
@@ -5672,6 +5964,7 @@ var Staging = class {
       clear(this.detail, h("p", { class: "error" }, e.message));
       return;
     }
+    if (this.selected !== id || this.stopped) return;
     const status = h("div", { role: "status" });
     const decide = (d) => async () => {
       try {
@@ -5836,8 +6129,13 @@ var Staging = class {
   }
   async show(id) {
     this.selected = id;
+    this.savePosition();
     this.detailLocked = false;
-    this.list.querySelectorAll(sel(".item")).forEach((b) => b.classList.remove(cls("sel")));
+    this.list.querySelectorAll(sel(".item")).forEach((button) => {
+      const selected = button.dataset.item === id;
+      button.classList.toggle(cls("sel"), selected);
+      button.setAttribute("aria-selected", String(selected));
+    });
     clear(this.detail, h("p", { class: "dim" }, "Loading\u2026"));
     let item;
     try {
@@ -5847,6 +6145,7 @@ var Staging = class {
       clear(this.detail, h("p", { class: "error" }, e.message));
       return;
     }
+    if (this.stopped || this.selected !== id) return;
     if (item.kind === "lens") return this.showLens(item);
     if (item.kind === "concept") return this.showConcept(item);
     if (item.kind === "topic") return this.showTopic(item);
@@ -5904,7 +6203,11 @@ var Staging = class {
         if (r.session && r.session.session === this.currentSession()) this.onSessionUpdate(r.session);
         await this.load();
         this.detailLocked = true;
-        clear(this.detail, h("p", { class: "ok", role: "status" }, `${item.name}: ${outcome}`));
+        clear(
+          this.detail,
+          h("p", { class: "ok", role: "status" }, `${item.name}: ${outcome}`),
+          (r.embedding_warnings ?? []).map((w) => h("p", { class: "warn" }, `Derived embeddings \xB7 ${w.stage}: ${w.error}. ${w.next}`))
+        );
       } catch (e) {
         this.decisionError(status, id, e);
       }
@@ -5994,6 +6297,7 @@ var Staging = class {
       ),
       item.sensitivity === "review" ? h("p", { class: "warn" }, "\u2691 Marked sensitive: only a person accepts it, and only a person clears the mark.") : null,
       stage,
+      st === "staged" && !item.revision_of ? h("p", { class: "note" }, "Approve for ingestion queues a full read. Accept as captured publishes the current material with its limited coverage.") : null,
       interrupted ? h(
         "div",
         { class: "warn", role: "note" },
@@ -6553,7 +6857,8 @@ var Search = class {
     };
     this.el.append(
       h("div", { class: "view-head" }, h("strong", {}, "Search")),
-      h("div", { class: "row2 tight search-bar" }, query, scope, intent, age, h("button", { class: "primary", onclick: run }, "Search")),
+      h("div", { class: "row2 tight search-bar" }, query, h("button", { class: "primary", onclick: run }, "Search")),
+      h("div", { class: "search-filters", role: "group", "aria-label": "Search filters" }, scope, intent, age),
       h("div", { class: "split" }, this.facets, this.results)
     );
   }
@@ -6896,7 +7201,8 @@ var App = class {
       () => {
         const tiers = this.state.tiers ?? [], route = tiers[2] ?? tiers[1] ?? tiers[0];
         return "Library: " + this.libraryName() + ". " + (route ? "Chat small-task selection: " + route.provider + " / " + route.model + ". Individual steps can use other routes." : "No chat model selected.");
-      }
+      },
+      () => String(this.state.vault_path || this.state.vault || "")
     );
     this.search = new Search(this.api, openNote);
     this.pane = new DocPane(
@@ -7016,6 +7322,16 @@ var App = class {
     this.views = { chat: chatView, staging: this.staging.el, search: this.search.el };
     const navButton = (v, label) => h("button", {
       role: "tab",
+      onkeydown: (event) => {
+        const e = event;
+        const names = Object.keys(this.nav), index = names.indexOf(v);
+        const next = e.key === "Home" ? 0 : e.key === "End" ? names.length - 1 : e.key === "ArrowRight" ? (index + 1) % names.length : e.key === "ArrowLeft" ? (index + names.length - 1) % names.length : -1;
+        if (next >= 0) {
+          e.preventDefault();
+          this.show(names[next]);
+          this.nav[names[next]].focus();
+        }
+      },
       onclick: () => this.show(v)
     }, label);
     this.nav = {
@@ -7044,7 +7360,19 @@ var App = class {
       class: "lib-resizer",
       role: "separator",
       "aria-orientation": "vertical",
-      title: "Drag to resize"
+      tabindex: "0",
+      "aria-label": "Document pane width",
+      title: "Drag or use arrow keys to resize"
+    });
+    resizer.addEventListener("keydown", (e) => {
+      const room = this.body.clientWidth - resizer.offsetWidth;
+      const now = this.pane.el.getBoundingClientRect().width;
+      const widths = { Home: 300, End: room - 360, ArrowLeft: now + 24, ArrowRight: now - 24 };
+      if (!(e.key in widths)) return;
+      e.preventDefault();
+      this.savedPaneWidth = widths[e.key];
+      this.savedPaneWidth = this.applyPaneWidth();
+      remember2("pane-w", String(this.savedPaneWidth) + "px");
     });
     resizer.addEventListener("pointerdown", (e) => this.resize(e, resizer));
     this.body = h(
@@ -7069,6 +7397,7 @@ var App = class {
           this.crumb,
           h("nav", { role: "tablist", "aria-label": "Views" }, Object.values(this.nav)),
           settingsButton,
+          h("button", { class: "ghost", onclick: () => this.settings.open("models") }, "Models"),
           this.live,
           this.paneButton
         ),
@@ -7087,7 +7416,7 @@ var App = class {
       this.bodyObserver.observe(this.body);
     }
     const saved = recall("pane");
-    this.showPane(saved ? saved === "open" : (root.clientWidth || window.innerWidth) >= 1e3);
+    this.showPane(saved === "open");
   }
   popovers() {
     return [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop];
@@ -7116,11 +7445,18 @@ var App = class {
   /** Apply the saved split clamped to the current room; returns the width
    *  applied (0 when none is saved and the stylesheet's default applies). */
   applyPaneWidth() {
-    if (!this.savedPaneWidth) return 0;
+    const separator = this.body.querySelector(".lib-resizer");
+    separator?.setAttribute("aria-valuemin", "300");
+    separator?.setAttribute("aria-valuemax", String(Math.max(300, this.body.clientWidth - (separator.offsetWidth || 5) - 360)));
+    if (!this.savedPaneWidth) {
+      separator?.setAttribute("aria-valuenow", String(Math.round(this.pane.el.getBoundingClientRect().width)));
+      return 0;
+    }
     const handle = this.body.querySelector(".lib-resizer")?.offsetWidth ?? 0;
     const room = this.body.clientWidth - handle;
     const width = room > 0 ? Math.max(300, Math.min(this.savedPaneWidth, room - 360)) : this.savedPaneWidth;
     this.body.style.setProperty("--pane-w", `${Math.round(width)}px`);
+    separator?.setAttribute("aria-valuenow", String(Math.round(width)));
     return Math.round(width);
   }
   resize(start2, handle) {
@@ -7152,6 +7488,8 @@ var App = class {
     }
     this.stopEvents = this.api.events(this.state.event_stream, (event) => this.onEvent(event), (live) => {
       this.live.className = cls(`live ${live ? "on" : "off"}`);
+      this.live.setAttribute("aria-label", live ? "Event stream connected" : "Event stream reconnecting");
+      this.live.title = live ? "Event stream connected" : "Event stream reconnecting";
       this.live.textContent = live ? "\u25CF" : "\u25CB reconnecting";
       if (live) void this.refresh();
     });
@@ -7353,11 +7691,11 @@ var App = class {
     this.session = session;
     this.chat.renderPlan(session);
     if (!session) {
-      this.title.textContent = this.libraryName();
+      this.title.textContent = "";
       this.crumb.textContent = "no thread";
       return;
     }
-    this.title.textContent = session.project || session.question || this.libraryName();
+    this.title.textContent = session.project || session.question || "";
     this.crumb.textContent = `${session.purpose ?? ""} \xB7 phase: ${session.phase ?? ""}${session.status && session.status !== "open" ? ` \xB7 ${session.status}` : ""}`;
   }
   /** The open library by its own name: two libraries made by new-vault.ps1 share the
@@ -7403,7 +7741,10 @@ var App = class {
   show(view, refresh = true) {
     this.view = view;
     for (const [v, el] of Object.entries(this.views)) el.hidden = v !== view;
-    for (const [v, b] of Object.entries(this.nav)) b.setAttribute("aria-selected", String(v === view));
+    for (const [v, b] of Object.entries(this.nav)) {
+      b.setAttribute("aria-selected", String(v === view));
+      b.tabIndex = v === view ? 0 : -1;
+    }
     this.composer.hidden = view !== "chat";
     if (view === "staging" && refresh) void this.staging.load(true);
     if (view === "search") this.search.focus();
@@ -7589,9 +7930,11 @@ var App = class {
     this.stopEvents = null;
     this.bodyObserver?.disconnect();
     this.bodyObserver = null;
+    this.settings.stopHealth();
     this.staging.dispose();
     this.pane.dispose();
     this.attachPanel.dispose();
+    this.tile.dispose();
     this.popovers().forEach((p) => p.dispose());
     this.ids.release();
     document.removeEventListener("keydown", this.onDocumentKey);

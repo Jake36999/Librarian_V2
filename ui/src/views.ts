@@ -33,6 +33,50 @@ export class Staging {
   // opens something else or explicitly refreshes: an automatic reload (the
   // SSE echo of this same decision, or someone else's) must not wipe it.
   private detailLocked = false;
+  private restoredLibrary = "";
+  private statuses: HTMLSelectElement;
+  private resumeScroll: number | null = null;
+
+  private savePosition(): void {
+    if (!this.restoredLibrary || this.resumeScroll !== null) return;
+    try {
+      sessionStorage.setItem("librarian.queue." + this.restoredLibrary, JSON.stringify({
+        kind:this.kind, status:this.status, selected:this.selected, scroll:this.el.scrollTop,
+      }));
+    } catch { /* Storage can be unavailable in an embedded view. */ }
+  }
+
+  private restorePosition(): void {
+    const key = this.libraryKey();
+    if (!key || key === this.restoredLibrary) return;
+    this.restoredLibrary = key;
+    if (this.pending) return;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem("librarian.queue." + key) ?? "null");
+      if (!saved || !["source","lens","concept","topic","offering","import"].includes(saved.kind) ||
+          !Array.from(this.statuses.options).some(option => option.value === saved.status)) return;
+      this.kind = saved.kind;
+      this.statuses.value = this.status = saved.status;
+      this.selected = String(saved.selected ?? "");
+      this.resumeScroll = Number(saved.scroll) || 0;
+      this.paintKinds();
+    } catch { /* Old or unavailable preferences can be ignored. */ }
+  }
+
+  private async finishRestore(ids: string[]): Promise<void> {
+    if (this.resumeScroll === null) return;
+    const scroll = this.resumeScroll;
+    if (this.selected && ids.includes(this.selected)) {
+      if (this.kind === "offering") await this.showOffering(this.selected);
+      else await this.show(this.selected);
+    } else this.selected = "";
+    this.resumeScroll = null;
+    this.el.scrollTop = scroll;
+  }
+
+  private counts?: Record<string, Record<string, number>>;
+  private waitingOfferings?: number;
+  private listRequest = 0;
   private paintKinds: () => void = () => {};
   private evidenceMode = h("select", {"aria-label":"Review evidence layout"}, h("option",{value:"beside"},"Evidence beside draft"), h("option",{value:"demand"},"Evidence on demand")) as HTMLSelectElement;
   private stopped = false;
@@ -43,18 +87,22 @@ export class Staging {
               private currentSession: () => string = () => "",
               private onSessionUpdate: (session: Record<string, any>) => void = () => {},
               private openModels: () => void = () => {}, private onBatch: (event: "start" | "finish") => void = () => {},
-              private routeHint: () => string = () => "") {
+              private routeHint: () => string = () => "", private libraryKey: () => string = () => "") {
     const kinds = h("div", { class: "seg", role: "group", "aria-label": "Kind" });
     const statuses = h("select", { "aria-label": "Which sources", onchange: () => {
-      this.status = statuses.value; this.selected = ""; void this.load(true);
+      this.status = statuses.value; this.selected = ""; this.savePosition(); void this.load(true);
     } }, [["staged", "Captured, to review"], ["approved", "Approved, awaiting ingestion"],
           ["enriched", "Ingested, ready to accept"], ["partial", "Ingested with gaps"],
           ["queued", "Queued for capture"],
           ["failed", "Failed"], ["deferred", "Deferred"]]
       .map(([v, label]) => h("option", { value: v }, label))) as HTMLSelectElement;
+    this.statuses = statuses;
+    this.el.addEventListener("scroll", () => this.savePosition(), {passive:true});
     const paint = () => {
+      const focusedKind = kinds.contains(document.activeElement) ? (document.activeElement as HTMLElement).dataset.kind : "";
       clear(kinds, [["source", "Sources"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) =>
-        h("button", { "aria-pressed": String(this.kind === v), onclick: () => { this.kind = v; paint(); void this.load(true); } }, label)));
+        h("button", { "data-kind": v, "aria-pressed": String(this.kind === v), onclick: () => { this.selected = ""; this.kind = v; this.savePosition(); paint(); void this.load(true); } }, label, h("span", { class: "queue-count", title: v === "source" ? "Sources in selected filter" : "Waiting for review" }, String(v === "offering" ? this.waitingOfferings ?? "…" : this.counts ? this.counts[v]?.[v === "source" ? this.status : "staged"] ?? 0 : "…")))));
+      if (focusedKind) kinds.querySelector<HTMLButtonElement>(`[data-kind="${focusedKind}"]`)?.focus({preventScroll:true});
       scan.style.display = this.kind === "concept" ? "" : "none";
       propose.style.display = this.kind === "topic" ? "" : "none";
       statuses.style.display = this.kind === "source" ? "" : "none";
@@ -95,7 +143,9 @@ export class Staging {
       const evidence = this.detail.querySelector("details.lib-review-evidence") as HTMLDetailsElement | null;
       if (evidence) evidence.open = this.evidenceMode.value === "beside";
     };
-    this.el.append(h("div", { class: "view-head" }, h("strong", {}, "Staging review"), kinds, statuses, this.evidenceMode,
+    this.el.append(h("div", { class: "view-head" }, h("strong", {}, "Staging review"), kinds),
+      h("p", { class: "note" }, "Review captured material before adding it to this library."),
+      h("div", { class: "view-head review-toolbar" }, statuses, this.evidenceMode,
       h("button", { class: "ghost", onclick: () => void this.load(true) }, "Refresh"), scan, propose),
       this.banner,
       h("div", { class: "split" }, this.list, this.detail));
@@ -106,17 +156,30 @@ export class Staging {
    * automatic reload (another surface's decision arriving over the event
    * stream) refreshes the list without wiping a just-shown outcome message. */
   async load(reset = false): Promise<void> {
+    this.restorePosition();
+    const request = ++this.listRequest;
     if (reset) this.detailLocked = false;
     clear(this.list, h("p", { class: "dim" }, "Loading…"));
-    if (this.kind === "offering") return this.loadOfferings();
+    if (this.kind === "offering") return this.loadOfferings(request);
     try {
       const status = this.kind === "source" ? this.status : "staged";
       const out = await this.api.tool("staging_list", { kind: this.kind, status, limit: 50 });
+      if (request !== this.listRequest || this.stopped) return;
+      if (out.error) throw new Error(String(out.detail ?? out.error));
+      this.counts = out.counts;
+      this.paintKinds();
+      if (this.waitingOfferings === undefined || reset) {
+        void this.api.get("/api/offerings/staged").then(data => {
+          if (request !== this.listRequest || this.stopped || !Array.isArray(data.offerings)) return;
+          this.waitingOfferings = data.offerings.filter((row: {status: string}) => row.status !== "declined").length;
+          this.paintKinds();
+        }).catch(() => {});
+      }
       const items = (out.items ?? []) as any[];
       clear(this.list,
         h("p", { class: "dim" }, `${out.total ?? items.length} ${status === "staged" ? "waiting" : status}`),
         items.length ? items.map((item) => h("button", {
-          class: `item${item.id === this.selected ? " sel" : ""}`, role: "option",
+          "data-item": item.id, class: `item${item.id === this.selected ? " sel" : ""}`, role: "option",
           "aria-selected": String(item.id === this.selected), onclick: () => this.show(item.id),
         }, item.sensitivity === "review" ? h("span", { class: "flag", title: "sensitive: a person decides" }, "⚑ ") : null,
           item.name || item.id,
@@ -135,6 +198,7 @@ export class Staging {
             : [item.topic, item.drafted ? "drafted" : item.reviewed ? "draft queued" : "no draft yet",
                item.deep_read ? `read ${item.deep_read}` : "", item.fit]).filter(Boolean).join(" · "))))
           : h("p", { class: "dim" }, "Nothing here."));
+      await this.finishRestore(items.map(item => item.id));
       if (!this.selected && !this.detailLocked) {
         clear(this.detail, h("p", { class: "dim" }, "Choose an item to see its draft beside its evidence."));
       }
@@ -155,15 +219,18 @@ export class Staging {
   /** Offering drafts wait in staging/offerings/ until promoted: listed here so a person
    * reads one before answering "promote it?" (Test Report A2 b). Not staging items -
    * each belongs to the session that drafted it, and its decision is recorded there. */
-  private async loadOfferings(): Promise<void> {
+  private async loadOfferings(request: number): Promise<void> {
     try {
       const out = await this.api.get("/api/offerings/staged");
+      if (request !== this.listRequest || this.stopped) return;
       const rows = (out.offerings ?? []) as any[];
       const waiting = rows.filter((r) => r.status !== "declined").length;
+      this.waitingOfferings = waiting;
+      this.paintKinds();
       clear(this.list,
         h("p", { class: "dim" }, `${waiting} waiting${rows.length > waiting ? ` · ${rows.length - waiting} declined` : ""}`),
         rows.length ? rows.map((r) => h("button", {
-          class: `item${r.offering === this.selected ? " sel" : ""}`, role: "option",
+          "data-item": r.offering, class: `item${r.offering === this.selected ? " sel" : ""}`, role: "option",
           "aria-selected": String(r.offering === this.selected), onclick: () => void this.showOffering(r.offering),
         }, r.challenged ? h("span", { class: "flag", title: "a claim the review challenged was kept: yours to weigh" }, "⚑ ") : null,
           r.title,
@@ -171,6 +238,7 @@ export class Staging {
             r.question ? "asked: promote?" : r.status === "declined" ? "declined" : "",
             r.session_status === "closed" ? "session closed" : ""].filter(Boolean).join(" · "))))
           : h("p", { class: "dim" }, "No offering waits to be promoted."));
+      await this.finishRestore(rows.map(row => row.offering));
       if (this.pending) {
         const id = this.pending;
         this.pending = "";
@@ -187,8 +255,13 @@ export class Staging {
 
   private async showOffering(id: string): Promise<void> {
     this.selected = id;
+    this.savePosition();
     this.detailLocked = false;
-    this.list.querySelectorAll(sel(".item")).forEach((b) => b.classList.remove(cls("sel")));
+    this.list.querySelectorAll<HTMLElement>(sel(".item")).forEach(button => {
+      const selected = button.dataset.item === id;
+      button.classList.toggle(cls("sel"), selected);
+      button.setAttribute("aria-selected", String(selected));
+    });
     clear(this.detail, h("p", { class: "dim" }, "Loading…"));
     let r: any;
     try {
@@ -197,6 +270,7 @@ export class Staging {
       clear(this.detail, h("p", { class: "error" }, (e as Error).message));
       return;
     }
+    if (this.selected !== id || this.stopped) return;
     const status = h("div", { role: "status" });
     const decide = (d: string) => async () => {
       try {
@@ -327,8 +401,13 @@ export class Staging {
 
   private async show(id: string): Promise<void> {
     this.selected = id;
+    this.savePosition();
     this.detailLocked = false;
-    this.list.querySelectorAll(sel(".item")).forEach((b) => b.classList.remove(cls("sel")));
+    this.list.querySelectorAll<HTMLElement>(sel(".item")).forEach(button => {
+      const selected = button.dataset.item === id;
+      button.classList.toggle(cls("sel"), selected);
+      button.setAttribute("aria-selected", String(selected));
+    });
     clear(this.detail, h("p", { class: "dim" }, "Loading…"));
     let item: any;
     try {
@@ -338,6 +417,7 @@ export class Staging {
       clear(this.detail, h("p", { class: "error" }, (e as Error).message));
       return;
     }
+    if (this.stopped || this.selected !== id) return;
     if (item.kind === "lens") return this.showLens(item);
     if (item.kind === "concept") return this.showConcept(item);
     if (item.kind === "topic") return this.showTopic(item);
@@ -391,7 +471,9 @@ export class Staging {
         if (r.session && r.session.session === this.currentSession()) this.onSessionUpdate(r.session);
         await this.load();                                   // the list, without it
         this.detailLocked = true;
-        clear(this.detail, h("p", { class: "ok", role: "status" }, `${item.name}: ${outcome}`));
+        clear(this.detail, h("p", { class: "ok", role: "status" }, `${item.name}: ${outcome}`),
+          (r.embedding_warnings ?? []).map((w: {stage:string; error:string; next:string}) =>
+            h("p", {class:"warn"}, `Derived embeddings · ${w.stage}: ${w.error}. ${w.next}`)));
       } catch (e) {
         this.decisionError(status, id, e);
       }
@@ -494,6 +576,7 @@ export class Staging {
         item.canonical_url ? h("a", { href: item.canonical_url, target: "_blank", rel: "noreferrer noopener" }, "source ↗") : null),
       item.sensitivity === "review" ? h("p", { class: "warn" }, "⚑ Marked sensitive: only a person accepts it, and only a person clears the mark.") : null,
       stage,
+      st === "staged" && !item.revision_of ? h("p", {class:"note"}, "Approve for ingestion queues a full read. Accept as captured publishes the current material with its limited coverage.") : null,
       interrupted ? h("div", { class: "warn", role: "note" },
         h("p", {}, "Acceptance was interrupted. Review the completed work before finishing with the same approved content. Changed content needs a source revision, not an overwrite."),
         h("p", {}, `Completed paths: ${(item.promotion_progress.completed_paths ?? []).join(", ") || "inspect the operation log"}.`),
@@ -878,7 +961,8 @@ export class Search {
       ? this.run(query.value, intent.value, Number(age.value)) : this.runWork(query.value);
     query.onkeydown = (e) => { if (e.key === "Enter") run(); };
     this.el.append(h("div", { class: "view-head" }, h("strong", {}, "Search")),
-      h("div", { class: "row2 tight search-bar" }, query, scope, intent, age, h("button", { class: "primary", onclick: run }, "Search")),
+      h("div", { class: "row2 tight search-bar" }, query, h("button", { class: "primary", onclick: run }, "Search")),
+      h("div", { class: "search-filters", role: "group", "aria-label": "Search filters" }, scope, intent, age),
       h("div", { class: "split" }, this.facets, this.results));
   }
 
