@@ -118,6 +118,9 @@ def model(system, messages, tools):
     last = messages[-1]
     if last["role"] == "user":
         text = last["content"]
+        if "macro" in text:
+            # A run whose first step was sent but never recorded (seeded below).
+            return Reply(tool_calls=[ToolCall("m1", "macro_run", _MACRO_RUN)])
         if "project" in text:
             return Reply(text="I'll frame it.", tool_calls=[ToolCall("p1", "create_project", {
                 "name": "Host Watch", "stage": "idea", "summary": "Watch our hosts."})])
@@ -129,6 +132,8 @@ def model(system, messages, tools):
     tool_turns = [m for m in messages if m["role"] == "tool"]
     if tool_turns and tool_turns[-1]["name"] == "create_project":
         return Reply(text="The project note is **written**: [[Host Watch]].")
+    if tool_turns and tool_turns[-1]["name"] == "macro_run":
+        return Reply(text="The macro is waiting on you: one step's outcome is unknown.")
     return Reply(text="The catalogue holds [[Sources/repository/osquery]], which exposes the operating system "
                       "as SQL tables.\n\n| Source | Fit |\n| --- | --- |\n| osquery | strong |\n| duckdb | partial |\n\n"
                       "- [x] searched the catalogue\n- [ ] check fleet-scale performance")
@@ -180,6 +185,27 @@ app = App(vault, token="demo", keys=KeyStore(use_keyring=False),
           provider_for=lambda choice: deepinfra_provider if choice.get("provider") == "deepinfra"
                                      else local_provider,
           broker_timeout=120)
+
+# A write-capable macro whose approved run sent its first step and never recorded
+# the outcome (the app stopped part way), so a message with "macro" in it shows the
+# outcome-unknown card, answered through its recovery handle (Codex UI ask 2).
+from resource_librarian import agent_runtime as _runtime
+_runtime.MACROS["demo_two_notes"] = _runtime.Macro("demo_two_notes", 1, "Two demo notes", (
+    _runtime.MacroStep("write_note", {"folder": "Notes", "name": "$first", "body": "First"}),
+    _runtime.MacroStep("write_note", {"folder": "Notes", "name": "$second", "body": "Second"}),
+), True)
+_macro_inputs = {"first": "Macro first note", "second": "Macro second note"}
+_macro_checkpoint = app._serialized("demo-macro-checkpoint", lambda: app.checkpoints.ensure(
+    "macro_expansion", _runtime._checkpoint_scope(_runtime.MACROS["demo_two_notes"], _macro_inputs),
+    evidence=_runtime._expanded_plan(_runtime.MACROS["demo_two_notes"], _macro_inputs),
+    choices=["approve", "cancel"], default="cancel", requester="agent"))
+app._serialized("demo-macro-approve", lambda: app.checkpoints.resolve(_macro_checkpoint["id"], "approve"))
+_macro_journal = _runtime.MacroJournal(vault, _macro_checkpoint["id"])
+_macro_journal.append({"type": "started", "macro": "demo_two_notes", "version": 1,
+                       "scope": _runtime._checkpoint_scope(_runtime.MACROS["demo_two_notes"], _macro_inputs),
+                       "inputs": _macro_inputs})
+_macro_journal.append({"type": "dispatch", "index": 0, "tool": "write_note", "arguments": {}})
+_MACRO_RUN = {"macro": "demo_two_notes", "inputs": {**_macro_inputs, "checkpoint_id": _macro_checkpoint["id"]}}
 
 # The person's own "Profile this model" click needs a real fetcher and clerk
 # endpoint, which this demo's chat provider does not carry; give ingest its own.
@@ -292,5 +318,9 @@ if app.mcp is not None:
 app.person_call = person_call
 
 server = build(app, 0)
+# A run started by hand (not by run-smoke.mjs, which stops its own) can be told to
+# end itself: on Windows a stopped shell does not stop the venv's interpreter child.
+if os.environ.get("LIBRARIAN_DEMO_SECONDS"):
+    threading.Timer(float(os.environ["LIBRARIAN_DEMO_SECONDS"]), lambda: os._exit(0)).start()
 print(json.dumps({"url": f"http://127.0.0.1:{server.server_address[1]}/"}), flush=True)
 server.serve_forever()

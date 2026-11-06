@@ -104,7 +104,9 @@ def test_macro_approval_never_overrides_a_denied_step_or_plan_mode(core):
 
 def test_only_reviewed_first_party_workflows_can_orchestrate_writer_operations():
     assert [name for name in REGISTRY.names() if REGISTRY.get(name).orchestrates] == [
-        "macro_run", "model_catalog_adopt", "process_approved"]
+        "macro_resolve", "macro_run", "model_catalog_adopt", "process_approved"]
+    # macro_resolve only re-enters run_macro with the inputs a run's log recorded.
+    assert REGISTRY.get("macro_resolve").tier == "curate"
     assert REGISTRY.get("process_approved").tier == "curate"
     assert REGISTRY.get("model_catalog_adopt").tier == "curate"
     external = ToolSpec("external", lambda ctx: {}, "consult", "write", Card("External"),
@@ -194,3 +196,68 @@ def test_an_interrupted_macro_write_waits_for_a_person(core, monkeypatch):
     assert done["status"] == "completed", done
     assert writes == ["First note", "Second note"]
     assert done["steps"][0]["result"]["recorded_as"] == "applied"
+
+
+# -- Codex UI ask 2: a recovery handle that holds after a reconnect ------------------
+
+def held_on_unknown(core, monkeypatch):
+    inputs = approved_two_notes(core)
+    writes = watch_writes(monkeypatch, crash_first_once=True)
+    core.person_call("macro_run", {"macro": "two_notes", "inputs": inputs})
+    held = core.person_call("macro_run", {"macro": "two_notes", "inputs": inputs})
+    return inputs, writes, held
+
+
+def test_an_unknown_outcome_carries_a_recovery_handle(core, monkeypatch):
+    inputs, _, held = held_on_unknown(core, monkeypatch)
+    assert held["recovery"] == {"checkpoint_id": inputs["checkpoint_id"], "step": 0,
+                                "tool": "write_note", "macro": "two_notes",
+                                "options": ["retry", "applied"]}
+    status = core.person_call("macro_status", {"checkpoint_id": inputs["checkpoint_id"]})
+    assert status["status"] == "outcome_unknown" and status["step"] == 0
+    assert status["inputs_recorded"] is True and status["options"] == ["retry", "applied"]
+
+
+def test_a_person_resolves_it_by_handle_with_the_inputs_the_log_recorded(core, monkeypatch):
+    inputs, writes, held = held_on_unknown(core, monkeypatch)
+    handle = held["recovery"]
+    done = core.person_call("macro_resolve", {"checkpoint_id": handle["checkpoint_id"],
+                                              "step": handle["step"], "choice": "applied"})
+    assert done["status"] == "completed", done
+    assert writes == ["First note", "Second note"]                  # the first, never again
+    assert core.person_call("macro_status", {
+        "checkpoint_id": handle["checkpoint_id"]})["status"] == "completed"
+
+
+def test_a_stale_handle_changes_nothing(core, monkeypatch):
+    inputs, writes, held = held_on_unknown(core, monkeypatch)
+    handle = held["recovery"]
+    wrong = core.person_call("macro_resolve", {"checkpoint_id": handle["checkpoint_id"],
+                                               "step": 1, "choice": "retry"})
+    assert wrong["status"] == "changed" and writes == ["First note"]
+    first = core.person_call("macro_resolve", {"checkpoint_id": handle["checkpoint_id"],
+                                               "step": 0, "choice": "applied"})
+    assert first["status"] == "completed"
+    again = core.person_call("macro_resolve", {"checkpoint_id": handle["checkpoint_id"],
+                                               "step": 0, "choice": "retry"})
+    assert again["status"] == "changed" and writes == ["First note", "Second note"]
+
+
+def test_only_a_person_resolves_by_handle(core, monkeypatch):
+    _, writes, held = held_on_unknown(core, monkeypatch)
+    ctx = Context(tier="contribute", vault=core.vault, extras=core._extras())
+    agent = REGISTRY.call("macro_resolve", {"checkpoint_id": held["recovery"]["checkpoint_id"],
+                                            "step": 0, "choice": "applied"}, ctx)
+    assert agent.get("refused") in ("TIER_REFUSED", "PERSON_CONFIRMS") and writes == ["First note"]
+
+
+def test_a_step_still_being_sent_is_never_offered_for_an_answer(core, monkeypatch):
+    inputs, _, _ = held_on_unknown(core, monkeypatch)
+    from resource_librarian.agent_runtime import MacroJournal
+    MacroJournal(core.vault, inputs["checkpoint_id"]).append(
+        {"type": "dispatch", "index": 1, "tool": "write_note", "arguments": {}})
+    status = core.person_call("macro_status", {"checkpoint_id": inputs["checkpoint_id"]})
+    assert status["status"] == "running_or_interrupted"
+    out = core.person_call("macro_resolve", {"checkpoint_id": inputs["checkpoint_id"],
+                                             "step": 1, "choice": "applied"})
+    assert out["status"] == "changed"

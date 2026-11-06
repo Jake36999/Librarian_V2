@@ -5762,3 +5762,110 @@ the four caller files fail. `test_containers.py` cannot be imported there.
 
 **Verification:** full suite: 2082 passed, 2 skipped, 5 deselected in 667.83s (0:11:07) (exit 0, Python 3.11.3)
 (`reports/2026-11-05-evidence/suite-mf016-py311.json`, a clean clone of `64a267d` plus this commit's files).
+
+### Codex UI asks: ticked staging triage and macro recovery handles (2026-11-05)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| Codex ask 1 (MF-034b bulk triage) | implemented | this commit | `tools/staging.py`, `ui/src/views.ts`, `ui/src/style.css`; `tests/test_staging_triage.py`; `ui/smoke.mjs` step "several sources decided by ticking". |
+| Codex ask 2 (macro recovery after a reconnect) | implemented | this commit | `agent_runtime.py`, `tools/macros.py`, `ui/src/chat.ts`; `tests/test_macro_permissions.py`; `tests/ui_demo_core.py` scenario; `ui/smoke.mjs` step "answered by its recovery handle". |
+
+The owner asked for both, front end included (2026-11-05). Bulk approval is a
+multi-select: no "approve all", and no opening each item in turn.
+
+**Ask 1: approve or defer several sources, each as the person saw it.**
+- **Core: approve and defer now have a write intent.** Before, they had none and
+  ignored any `staged_revision`. Now the item's own record is checked inside
+  the write boundary:
+  - against the revision the person brings, from `staging_show` or a list row;
+  - otherwise against its state when dispatched.
+
+  A record that changed since is refused (`DOCUMENT_ACTIVE`, with the usual
+  write-conflict checkpoint) and left untouched. A revision sent with several
+  items is refused (`REVISION_REQUIRED`): each item is decided with its own.
+- **Core: each row of `staging_list` carries `staged_revision`,** issued from
+  the same bytes the row shows.
+- **UI:** a checkbox beside each source wherever approve or defer applies, and
+  a bar over the list:
+  - "N ticked", "Approve N ticked", a reason box with "Defer N ticked", and
+    "Clear";
+  - each button appears only where that decision applies;
+  - nothing is enabled until something is ticked.
+
+  Each ticked source is sent on its own with its row's revision, and the result
+  is shown per source: decided, changed since listed (named and left alone), or
+  refused with its reason. Every sent item is unticked afterwards, so a changed
+  one is looked at again before it is decided. A deferral without a reason is
+  not sent.
+
+**Ask 2: answer a paused macro step after a reconnect.**
+- **Run log:** an approved write-capable run now records its bound inputs in its
+  `started` event. Returning `outcome_unknown` writes a marker, so the log
+  shows a run waiting on a person apart from a step still being sent.
+- **Paused result:** it carries `recovery: {checkpoint_id, step, tool, macro,
+  options}`.
+- **`macro_status`** (read tool) gives where a run stands, from its log:
+  - `completed`;
+  - `paused`;
+  - `outcome_unknown`, with its step and options;
+  - `running_or_interrupted`;
+  - `not_started`.
+- **`macro_resolve`** (person-only tool) applies `retry` or `applied`:
+  - It re-enters the run with the inputs the log recorded, never inputs a
+    client sends.
+  - It answers `changed`, and does nothing, when the run is no longer waiting
+    on that step.
+  - A run logged before this change has no recorded inputs, so it is
+    `not_recoverable` and keeps the old `macro_run` path.
+- **The chat card** for a paused macro step has "Record step as already applied"
+  and "Send this step again".
+  - Each re-checks `macro_status` before it acts.
+  - Both lock once the run has been answered.
+  - The workflow run card next to it had buttons with no class: unreadable,
+    light text on the browser's grey. Both cards now use the ghost style.
+
+**Checked in the built-in browser** against the demo Core (`tests/ui_demo_core.py`):
+- **Triage:**
+  - Two sources were ticked, and one was changed from "another tab" through the
+    page's own API.
+  - "Approve 2 ticked" approved one and named the other as changed, leaving it
+    staged.
+  - Defer refused without a reason and deferred with one.
+  - The Deferred filter shows Approve only.
+  - At phone width the bar wraps without overflow.
+- **Macro card:**
+  - "run the macro" showed the card. Asking again returned the same card
+    without resending the step.
+  - "Record step as already applied" completed the run. The first note was
+    recorded as applied, not written; the second was written once.
+- **Fixed during the check:** the approve button had no class and was
+  unreadable, and the macro buttons needed the ghost style.
+
+**Demo and smoke.**
+- The demo Core seeds an approved two-note macro whose first step was sent and
+  never recorded. A message containing "macro" makes its scripted model run it.
+- It also takes an optional `LIBRARIAN_DEMO_SECONDS` and exits after that long:
+  on Windows, stopping the shell does not stop the venv's interpreter child.
+- `ui/smoke.mjs` gains both flows as steps. Triage uses fixture routes, as the
+  partial-source step does; the macro step goes through the real Core.
+
+**Tests.**
+- `tests/test_staging_triage.py`, 5 cases:
+  - rows carry their revision;
+  - a changed item is refused and untouched while the others are decided;
+  - defer is checked the same way;
+  - a revision belongs to one item;
+  - a decision without a revision still works.
+- `tests/test_macro_permissions.py`, 5 new cases:
+  - the handle;
+  - resolving by handle with the logged inputs;
+  - a stale handle changes nothing;
+  - only a person resolves;
+  - a step still being sent is never offered.
+- The reviewed list of orchestrating tools gains `macro_resolve`, which only
+  re-enters `run_macro`.
+
+**Verification:** full suite: 2092 passed, 2 skipped, 5 deselected in 698.08s (0:11:38) (exit 0, Python 3.11.3)
+(`reports/2026-11-05-evidence/suite-triage-py311.json`, a clean clone of `7a7bcb6` plus this commit's files). Against the previous code, 10 of the 11 new or changed cases fail; the one that
+passes is the no-revision regression check. UI smoke (`ui/run-smoke.mjs`): all steps passed,
+both new steps included.

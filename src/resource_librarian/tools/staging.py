@@ -164,8 +164,18 @@ def staging_list(ctx: Context, kind: Literal["", "source", "lens", "concept", "t
                  limit: int = 25, offset: int = 0) -> dict:
     store = _store(ctx)
     rows = [staging.summary(i) for i in store.items(kind, status)]
-    return {"counts": store.counts(), "total": len(rows),
-            "items": rows[offset:offset + limit]}
+    page = []
+    for row in rows[offset:offset + limit]:
+        # Each row on the page carries the revision it shows, read from the same
+        # bytes, so a person can approve or defer it straight from the list.
+        try:
+            item, state, observed = _snapshot(ctx, str(row["id"]))
+        except (TypeError, ValueError, OSError):
+            page.append(row)
+            continue
+        page.append({**staging.summary(item),
+                     "staged_revision": revisions.issue(ctx, state, observed)})
+    return {"counts": store.counts(), "total": len(rows), "items": page}
 
 
 @tool("staging_show", tier="consult", effect="read",
@@ -259,7 +269,7 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
     within their approved file footprint.
     """
     decision = kwargs.get("decision")
-    if kwargs.get("dry_run") or decision not in ("accept", "reject"):
+    if kwargs.get("dry_run") or decision not in ("accept", "reject", "approve", "defer"):
         return None
     # The registry's existing 100-item list bound fits recovery's 200
     # fingerprints: at most one staged record and one destination per item.
@@ -271,6 +281,21 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
             snapshots[item["id"]] = (state, observed)
         except TypeError:
             continue  # Preserve the domain's per-item invalid-ID result.
+    if decision in ("approve", "defer"):
+        # Approve and defer rewrite only the item's own record. It is checked inside
+        # the write boundary, against the revision the person saw if they bring one
+        # (from staging_show, or a staging_list row). A record that changed since is
+        # refused and left untouched, so a UI can send each selected item on its own
+        # and report each result.
+        token = str(kwargs.get("staged_revision") or "")
+        if token and len(kwargs.get("item_ids") or []) != 1:
+            raise Refusal("REVISION_REQUIRED", "a staged_revision applies to one staged item: "
+                                               "decide each item with its own")
+        observed = []
+        for item in items:
+            state, stamp = snapshots[item["id"]]
+            observed.append((state, revisions.redeem(ctx, token, state) if token else stamp))
+        return WriteIntent(tuple(state for state, _ in observed), observed=tuple(observed))
     if decision == "reject":
         targets, absent, observed, plans = [], [], [], {}
         store = _store(ctx)

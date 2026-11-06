@@ -761,6 +761,77 @@ class MacroJournal:
     def append(self, event: dict[str, Any]) -> None:
         self.store.append(self.run_id, event)
 
+    def events(self) -> list[dict[str, Any]]:
+        from .workflows import DefinitionError
+        try:
+            return self.store.events(self.run_id)
+        except DefinitionError:
+            return []
+
+
+def _bound_inputs(inputs: dict[str, Any]) -> dict[str, Any]:
+    """The inputs a run was approved with: not the checkpoint, not a person's answer."""
+    return {key: value for key, value in inputs.items()
+            if key not in ("checkpoint_id", "unknown_step")}
+
+
+def macro_status(vault: Any, checkpoint_id: str) -> dict[str, Any]:
+    """Where an approved write-capable macro run stands, from its own step log.
+
+    `outcome_unknown` is reported only when the run itself last returned it: a step
+    still being sent looks the same in the log until then, and is never offered for a
+    person's answer. The recovery handle names the run by its checkpoint and step; the
+    inputs it resumes with are the ones its log recorded, never ones a client sends.
+    """
+    journal = MacroJournal(vault, checkpoint_id)
+    events = journal.events()
+    out: dict[str, Any] = {"checkpoint_id": checkpoint_id, "run": journal.run_id}
+    if not events:
+        return {**out, "status": "not_started"}
+    started = next((e for e in events if e.get("type") == "started"), {})
+    steps, finished = journal.state()
+    out.update(macro=str(started.get("macro") or ""), version=started.get("version"),
+               completed_steps=sum(1 for step in steps.values() if step["state"] == "done"),
+               inputs_recorded=isinstance(started.get("inputs"), dict))
+    last = events[-1]
+    if finished:
+        return {**out, "status": "completed"}
+    if last.get("type") == "outcome_unknown":
+        index = int(last.get("index", -1))
+        return {**out, "status": "outcome_unknown", "step": index,
+                "tool": str(last.get("tool") or ""), "options": list(UNKNOWN_STEP_CHOICES)}
+    if last.get("type") == "stopped":
+        return {**out, "status": "paused", "step": int(last.get("index", -1)),
+                "tool": str(last.get("tool") or "")}
+    return {**out, "status": "running_or_interrupted",
+            "detail": "a step was sent and nothing has come back yet: if no run is going "
+                      "on, run the macro again with this checkpoint_id to find out"}
+
+
+def resolve_macro(ctx: Context, checkpoint_id: str, step: int, choice: str) -> dict[str, Any]:
+    """A person's answer about a step whose outcome is unknown, applied to the run as
+    its log recorded it (Codex UI ask 2). Refused if the run has moved on."""
+    if choice not in UNKNOWN_STEP_CHOICES:
+        raise TypeError(f"choice is one of {list(UNKNOWN_STEP_CHOICES)}")
+    if ctx.tier != "curate":
+        from .rules import Refusal
+        raise Refusal("PERSON_CONFIRMS", "whether an interrupted step took effect is a "
+                                         "person's call")
+    current = macro_status(ctx.vault, checkpoint_id)
+    if current["status"] != "outcome_unknown" or current.get("step") != int(step):
+        return {"status": "changed", "current": current,
+                "detail": "the run is no longer waiting on that step: look at its current "
+                          "status before deciding anything"}
+    started = next((e for e in MacroJournal(ctx.vault, checkpoint_id).events()
+                    if e.get("type") == "started"), {})
+    inputs = started.get("inputs")
+    if not isinstance(inputs, dict) or current["macro"] not in MACROS:
+        return {"status": "not_recoverable", "current": current,
+                "detail": "this run's log does not record its inputs: run macro_run with "
+                          "the original inputs, the same checkpoint_id and unknown_step"}
+    return run_macro(ctx, current["macro"], {**inputs, "checkpoint_id": checkpoint_id,
+                                             "unknown_step": choice})
+
 
 def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, Any]:
     """Execute an audited macro through the normal registry one step at a time."""
@@ -820,7 +891,7 @@ def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, 
                 "detail": "this approved run already completed; nothing was repeated"}
     if journal is not None and not recorded:
         journal.append({"type": "started", "macro": macro.id, "version": macro.version,
-                        "scope": scope})
+                        "scope": scope, "inputs": _bound_inputs(inputs)})
     steps = []
     # Registry.call enforces the compact active bundle for ordinary model
     # calls.  A macro is the explicitly approved exception, so scope its
@@ -859,8 +930,15 @@ def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, 
                     steps.append({"tool": step.tool, "arguments": args, "result": result})
                     continue
                 if not (spec.effect == "read" or spec.idempotent) and unknown_choice != "retry":
+                    # Marked in the log, so a later look (another tab, a reconnect)
+                    # knows the run is waiting on a person, not still sending.
+                    journal.append({"type": "outcome_unknown", "index": index,
+                                    "tool": step.tool})
                     return {"macro": plan, "steps": steps, "status": "outcome_unknown",
                             "resumable": True,
+                            "recovery": {"checkpoint_id": checkpoint_id, "step": index,
+                                         "tool": step.tool, "macro": macro.id,
+                                         "options": list(UNKNOWN_STEP_CHOICES)},
                             "next_action": {
                                 "tool": step.tool, "arguments": args,
                                 "completed_steps": len(steps),

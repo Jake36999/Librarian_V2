@@ -1,0 +1,37 @@
+{
+ "command": [
+  "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone",
+ "exit_code": 0,
+ "summary": "2092 passed, 2 skipped, 5 deselected in 698.08s (0:11:38)",
+ "started_utc": "2026-11-06T02:32:43.658011+00:00",
+ "seconds": 699.2,
+ "head": "7a7bcb6490abe9708abab53cbae0ec917f65b39c",
+ "tracked_changes": [
+  " M docs/unified-implementation-plan.md",
+  " M obsidian/dist/main.js",
+  " M obsidian/dist/styles.css",
+  " M src/resource_librarian/agent_runtime.py",
+  " M src/resource_librarian/tools/macros.py",
+  " M src/resource_librarian/tools/staging.py",
+  " M src/resource_librarian/ui/app.css",
+  " M src/resource_librarian/ui/app.js",
+  " M tests/test_macro_permissions.py",
+  " M tests/ui_demo_core.py",
+  " M ui/smoke.mjs",
+  " M ui/src/chat.ts",
+  " M ui/src/style.css",
+  " M ui/src/views.ts"
+ ],
+ "python": "3.11.3",
+ "executable": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-triage-py311.log",
+ "log_sha256": "196a4ac916f3d72e01d1c08a136d796dcfd91383557c48690b4478230bd80063"
+}

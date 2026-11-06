@@ -215,6 +215,12 @@
 .lib-app .lib-item { text-align: left; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 6px 9px; }
 .lib-app .lib-item.lib-sel { border-color: var(--accent); background: var(--accent-soft); }
 .lib-app .lib-item small { display: block; color: var(--muted); }
+.lib-app .lib-item-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 6px; }
+.lib-app .lib-item-row > input[type=checkbox] { margin: 9px 0 0 2px; inline-size: 16px; block-size: 16px; accent-color: var(--accent); }
+.lib-app .lib-bulk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 6px 0; }
+.lib-app .lib-bulk-bar input[type=text] { flex: 0 1 220px; min-inline-size: 120px; }
+.lib-app .lib-bulk-bar button:disabled { opacity: .55; cursor: default; }
+.lib-app .lib-bulk-outcome ul { margin: 4px 0 8px; padding-inline-start: 18px; }
 .lib-app .lib-flag { color: var(--stop-ink); }
 .lib-app .lib-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
 @container librarian (max-width: 1000px) { .lib-app .lib-columns { grid-template-columns: minmax(0, 1fr); } }

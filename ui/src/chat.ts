@@ -242,10 +242,56 @@ export class Chat {
       }
     };
     for (const [value,label] of [["applied","Record step as already applied"],["retry","Send this step again"]]) {
-      if (paused.options?.includes(value)) actions.append(h("button", {onclick:()=>void resolve(value)},label));
+      if (paused.options?.includes(value)) actions.append(h("button", {class:"ghost", onclick:()=>void resolve(value)},label));
     }
     card.append(h("strong", {}, "Step outcome unknown"), h("p", {}, `Run ${run.run} · Step ${step}. ${paused.detail}`),
       h("p", {}, "Check the destination before deciding. Sending the step again can repeat its effect."), actions, status);
+    return card;
+  }
+
+  /** A macro step whose outcome is unknown. A person checks the destination, then
+   * answers by the run's recovery handle (its checkpoint and step); Core resumes with
+   * the inputs the run's log recorded. The run is looked at again first, so a card that
+   * is stale (another tab answered, or a reconnect replayed it) changes nothing. */
+  private uncertainMacro(result: Record<string, any>): HTMLElement {
+    const action = result.next_action ?? {};
+    const handle = result.recovery;
+    const card = h("section", {class:"warn"}, h("strong", {}, "Macro step outcome unknown"),
+      h("p", {}, `${action.completed_steps ?? 0} steps completed · ${action.tool ?? handle?.tool ?? ""}`));
+    if (!handle?.checkpoint_id) {
+      card.append(h("p", {}, String(action.detail ?? "")));
+      return card;
+    }
+    card.append(h("p", {}, "Check the destination before deciding. Sending the step again can repeat its effect."));
+    const actions = h("div", {class:"row2"});
+    const status = h("p", {role:"status"});
+    const buttons = () => Array.from(actions.querySelectorAll("button")) as HTMLButtonElement[];
+    const resolve = async (choice: string) => {
+      buttons().forEach(button => { button.disabled = true; });
+      try {
+        const current = await this.api.tool("macro_status", {checkpoint_id: handle.checkpoint_id});
+        if (current.status !== "outcome_unknown" || current.step !== handle.step ||
+            !(current.options ?? []).includes(choice)) {
+          status.textContent = current.status === "completed" ? "This macro run has already completed."
+            : "The run has changed. Look at its current status before deciding.";
+          return;
+        }
+        const out = await this.api.tool("macro_resolve",
+          {checkpoint_id: handle.checkpoint_id, step: handle.step, choice});
+        if (out.error) throw new Error(String(out.detail ?? out.error));
+        status.textContent = out.status === "completed" ? "Recorded. The macro run completed."
+          : out.status === "changed" ? "The run has changed. Look at its current status before deciding."
+          : `The macro run is ${out.status}.${out.next_action?.detail ? ` ${out.next_action.detail}` : ""}`;
+        if (out.status === "outcome_unknown" && out.recovery) card.append(this.uncertainMacro(out));
+      } catch (e) {
+        status.textContent = `Look at the run's status before trying again. ${(e as Error).message}`;
+        buttons().forEach(button => { button.disabled = false; });
+      }
+    };
+    for (const [value, label] of [["applied", "Record step as already applied"], ["retry", "Send this step again"]]) {
+      if ((handle.options ?? []).includes(value)) actions.append(h("button", {class: "ghost", onclick: () => void resolve(value)}, label));
+    }
+    card.append(actions, status);
     return card;
   }
 
@@ -279,10 +325,7 @@ export class Chat {
           if (card) line.append(card);
         }
         if (result.status === "outcome_unknown" && result.next_action) {
-          const action = result.next_action;
-          line.append(h("section", {class:"warn"}, h("strong", {}, "Macro step outcome unknown"),
-            h("p", {}, `${action.completed_steps} steps completed · ${action.tool}`),
-            h("p", {}, String(action.detail))));
+          line.append(this.uncertainMacro(result));
         }
         if (result.error) line.classList.add(cls("refused"));
         if (!line.isConnected) this.append(line);

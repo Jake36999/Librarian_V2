@@ -949,7 +949,7 @@ var Librarian = (() => {
         }
       };
       for (const [value, label] of [["applied", "Record step as already applied"], ["retry", "Send this step again"]]) {
-        if (paused.options?.includes(value)) actions.append(h("button", { onclick: () => void resolve(value) }, label));
+        if (paused.options?.includes(value)) actions.append(h("button", { class: "ghost", onclick: () => void resolve(value) }, label));
       }
       card.append(
         h("strong", {}, "Step outcome unknown"),
@@ -958,6 +958,57 @@ var Librarian = (() => {
         actions,
         status
       );
+      return card;
+    }
+    /** A macro step whose outcome is unknown. A person checks the destination, then
+     * answers by the run's recovery handle (its checkpoint and step); Core resumes with
+     * the inputs the run's log recorded. The run is looked at again first, so a card that
+     * is stale (another tab answered, or a reconnect replayed it) changes nothing. */
+    uncertainMacro(result) {
+      const action = result.next_action ?? {};
+      const handle = result.recovery;
+      const card = h(
+        "section",
+        { class: "warn" },
+        h("strong", {}, "Macro step outcome unknown"),
+        h("p", {}, `${action.completed_steps ?? 0} steps completed \xB7 ${action.tool ?? handle?.tool ?? ""}`)
+      );
+      if (!handle?.checkpoint_id) {
+        card.append(h("p", {}, String(action.detail ?? "")));
+        return card;
+      }
+      card.append(h("p", {}, "Check the destination before deciding. Sending the step again can repeat its effect."));
+      const actions = h("div", { class: "row2" });
+      const status = h("p", { role: "status" });
+      const buttons = () => Array.from(actions.querySelectorAll("button"));
+      const resolve = async (choice) => {
+        buttons().forEach((button) => {
+          button.disabled = true;
+        });
+        try {
+          const current = await this.api.tool("macro_status", { checkpoint_id: handle.checkpoint_id });
+          if (current.status !== "outcome_unknown" || current.step !== handle.step || !(current.options ?? []).includes(choice)) {
+            status.textContent = current.status === "completed" ? "This macro run has already completed." : "The run has changed. Look at its current status before deciding.";
+            return;
+          }
+          const out = await this.api.tool(
+            "macro_resolve",
+            { checkpoint_id: handle.checkpoint_id, step: handle.step, choice }
+          );
+          if (out.error) throw new Error(String(out.detail ?? out.error));
+          status.textContent = out.status === "completed" ? "Recorded. The macro run completed." : out.status === "changed" ? "The run has changed. Look at its current status before deciding." : `The macro run is ${out.status}.${out.next_action?.detail ? ` ${out.next_action.detail}` : ""}`;
+          if (out.status === "outcome_unknown" && out.recovery) card.append(this.uncertainMacro(out));
+        } catch (e) {
+          status.textContent = `Look at the run's status before trying again. ${e.message}`;
+          buttons().forEach((button) => {
+            button.disabled = false;
+          });
+        }
+      };
+      for (const [value, label] of [["applied", "Record step as already applied"], ["retry", "Send this step again"]]) {
+        if ((handle.options ?? []).includes(value)) actions.append(h("button", { class: "ghost", onclick: () => void resolve(value) }, label));
+      }
+      card.append(actions, status);
       return card;
     }
     handle(event) {
@@ -995,14 +1046,7 @@ var Librarian = (() => {
             if (card) line.append(card);
           }
           if (result.status === "outcome_unknown" && result.next_action) {
-            const action = result.next_action;
-            line.append(h(
-              "section",
-              { class: "warn" },
-              h("strong", {}, "Macro step outcome unknown"),
-              h("p", {}, `${action.completed_steps} steps completed \xB7 ${action.tool}`),
-              h("p", {}, String(action.detail))
-            ));
+            line.append(this.uncertainMacro(result));
           }
           if (result.error) line.classList.add(cls("refused"));
           if (!line.isConnected) this.append(line);
@@ -5656,6 +5700,8 @@ var Librarian = (() => {
   ];
   var TIERS = ["Tier_1", "Tier_2", "Tier_3"];
   var untag = (s) => s.replace(/_/g, " ");
+  var APPROVABLE = ["staged", "deferred", "failed", "partial"];
+  var DEFERRABLE = ["staged", "approved", "enriched", "partial"];
   var Staging = class {
     // an offering to open once the list loads
     constructor(api, openNote, currentSession = () => "", onSessionUpdate = () => {
@@ -5688,6 +5734,39 @@ var Librarian = (() => {
       this.detailLocked = false;
       this.restoredLibrary = "";
       this.resumeScroll = null;
+      // Several sources decided at once: the person ticks the ones they mean, never an
+      // "approve all", and never opening each in turn. Each ticked item is sent on its
+      // own with the revision its row showed, so one that changed since is refused and
+      // left untouched while the rest go through (owner, 2026-11-05).
+      this.picked = /* @__PURE__ */ new Set();
+      this.rows = /* @__PURE__ */ new Map();
+      this.bulkCount = h("span", { class: "dim" });
+      this.bulkReason = h("input", {
+        type: "text",
+        placeholder: "Reason, to defer",
+        "aria-label": "Reason for deferring the ticked items"
+      });
+      this.bulkApprove = h("button", { type: "button", class: "primary", onclick: () => void this.decideTicked("approve") });
+      this.bulkDefer = h("button", { type: "button", class: "ghost", onclick: () => void this.decideTicked("defer") });
+      this.bulkClear = h("button", { type: "button", class: "ghost", onclick: () => {
+        this.picked.clear();
+        this.list.querySelectorAll("input[type=checkbox]").forEach((box) => {
+          box.checked = false;
+        });
+        this.paintBulk();
+      } }, "Clear");
+      this.bulkStatus = h("span", { role: "status" });
+      this.bulk = h(
+        "div",
+        { class: "bulk-bar", role: "group", "aria-label": "Decide the ticked sources" },
+        this.bulkCount,
+        this.bulkApprove,
+        this.bulkReason,
+        this.bulkDefer,
+        this.bulkClear,
+        this.bulkStatus
+      );
+      this.bulkStatusFilter = "";
       this.listRequest = 0;
       this.paintKinds = () => {
       };
@@ -5780,8 +5859,10 @@ var Librarian = (() => {
           propose
         ),
         this.banner,
+        this.bulk,
         h("div", { class: "split" }, this.list, this.detail)
       );
+      this.bulk.hidden = true;
     }
     savePosition() {
       if (!this.restoredLibrary || this.resumeScroll !== null) return;
@@ -5825,6 +5906,68 @@ var Librarian = (() => {
       this.stopped = true;
       window.clearTimeout(this.poll);
     }
+    /** The bar over the list: how many are ticked, and what can be done with them. */
+    paintBulk() {
+      const status = this.bulkStatusFilter;
+      const on = this.kind === "source" && (APPROVABLE.includes(status) || DEFERRABLE.includes(status));
+      this.bulk.hidden = !on;
+      if (!on) return;
+      const n = this.picked.size;
+      this.bulkCount.textContent = n ? `${n} ticked` : "Tick sources to decide several at once";
+      this.bulkApprove.textContent = `Approve ${n || ""} ticked`.replace("  ", " ");
+      this.bulkDefer.textContent = `Defer ${n || ""} ticked`.replace("  ", " ");
+      this.bulkApprove.hidden = !APPROVABLE.includes(status);
+      this.bulkDefer.hidden = this.bulkReason.hidden = !DEFERRABLE.includes(status);
+      for (const button of [this.bulkApprove, this.bulkDefer, this.bulkClear]) button.disabled = n === 0;
+    }
+    /** Send each ticked source on its own, with the revision its row showed; report each. */
+    async decideTicked(decision) {
+      const ids = [...this.picked].filter((id) => this.rows.has(id));
+      if (!ids.length) return;
+      const reason = this.bulkReason.value.trim();
+      if (decision === "defer" && !reason) {
+        this.bulkStatus.textContent = "A deferral needs its reason.";
+        this.bulkReason.focus();
+        return;
+      }
+      for (const button of [this.bulkApprove, this.bulkDefer, this.bulkClear]) button.disabled = true;
+      this.bulkStatus.textContent = `Sending ${ids.length}\u2026`;
+      const done = [], changed = [], refused = [];
+      for (const id of ids) {
+        const row = this.rows.get(id) ?? {};
+        const name = String(row.name || id);
+        try {
+          const out = await this.api.tool("staging_decide", {
+            item_ids: [id],
+            decision,
+            ...decision === "defer" ? { reason } : {},
+            ...row.staged_revision ? { staged_revision: row.staged_revision } : {}
+          });
+          const r = (out.results ?? [])[0] ?? out;
+          if (out.refused === "DOCUMENT_ACTIVE") changed.push(name);
+          else if (out.error || r.error || r.refused) {
+            refused.push(`${name}: ${String(r.detail ?? r.refused ?? out.detail ?? out.error ?? r.error)}`);
+          } else done.push(name);
+        } catch (e) {
+          refused.push(`${name}: ${e.message}`);
+        }
+        this.picked.delete(id);
+      }
+      this.bulkStatus.textContent = "";
+      if (decision === "defer" && !changed.length && !refused.length) this.bulkReason.value = "";
+      await this.load();
+      this.detailLocked = true;
+      const verb = decision === "approve" ? "Approved" : "Deferred";
+      clear(this.detail, h(
+        "div",
+        { class: "bulk-outcome", role: "status" },
+        h("p", { class: done.length ? "ok" : "dim" }, `${verb} ${done.length} of ${ids.length}.` + (decision === "approve" && done.length ? " They wait for the batch above: nothing is in the library yet." : "")),
+        done.length ? h("ul", {}, done.map((name) => h("li", {}, name))) : null,
+        changed.length ? h("p", { class: "warn" }, `Changed since this list was shown, so left untouched: ${changed.join(", ")}. Open each to see what changed before deciding it.`) : null,
+        refused.length ? h("p", { class: "error" }, "Not decided:") : null,
+        refused.length ? h("ul", {}, refused.map((text) => h("li", {}, text))) : null
+      ));
+    }
     /** `reset`: an explicit visit (opening the view, Refresh, switching kind) —
      * always shows the placeholder when nothing is selected. Left false, an
      * automatic reload (another surface's decision arriving over the event
@@ -5834,6 +5977,8 @@ var Librarian = (() => {
       const request = ++this.listRequest;
       if (reset) this.detailLocked = false;
       clear(this.list, h("p", { class: "dim" }, "Loading\u2026"));
+      this.bulkStatusFilter = this.kind === "source" ? this.status : "";
+      this.paintBulk();
       if (this.kind === "offering") return this.loadOfferings(request);
       try {
         const status = this.kind === "source" ? this.status : "staged";
@@ -5845,22 +5990,45 @@ var Librarian = (() => {
         if (this.waitingOfferings === void 0 || reset) {
           void this.api.get("/api/offerings/staged").then((data) => {
             if (request !== this.listRequest || this.stopped || !Array.isArray(data.offerings)) return;
-            this.waitingOfferings = data.offerings.filter((row) => row.status !== "declined").length;
+            this.waitingOfferings = data.offerings.filter((row2) => row2.status !== "declined").length;
             this.paintKinds();
           }).catch(() => {
           });
         }
         const items = out.items ?? [];
+        this.rows = new Map(items.map((item) => [String(item.id), item]));
+        this.bulkStatusFilter = status;
+        for (const id of [...this.picked]) if (!this.rows.has(id)) this.picked.delete(id);
+        const ticking = this.kind === "source" && (APPROVABLE.includes(status) || DEFERRABLE.includes(status));
+        this.list.setAttribute("role", ticking ? "list" : "listbox");
+        const row = (item, button) => ticking ? h(
+          "div",
+          { class: "item-row", role: "listitem" },
+          h("input", {
+            type: "checkbox",
+            "data-tick": item.id,
+            checked: this.picked.has(String(item.id)),
+            "aria-label": `Tick ${item.name || item.id}`,
+            onchange: (event) => {
+              const box = event.target;
+              if (box.checked) this.picked.add(String(item.id));
+              else this.picked.delete(String(item.id));
+              this.bulkStatus.textContent = "";
+              this.paintBulk();
+            }
+          }),
+          button
+        ) : button;
+        this.paintBulk();
         clear(
           this.list,
           h("p", { class: "dim" }, `${out.total ?? items.length} ${status === "staged" ? "waiting" : status}`),
-          items.length ? items.map((item) => h(
+          items.length ? items.map((item) => row(item, h(
             "button",
             {
               "data-item": item.id,
               class: `item${item.id === this.selected ? " sel" : ""}`,
-              role: "option",
-              "aria-selected": String(item.id === this.selected),
+              ...ticking ? { "aria-current": item.id === this.selected ? "true" : void 0 } : { role: "option", "aria-selected": String(item.id === this.selected) },
               onclick: () => this.show(item.id)
             },
             item.sensitivity === "review" ? h("span", { class: "flag", title: "sensitive: a person decides" }, "\u2691 ") : null,
@@ -5871,7 +6039,7 @@ var Librarian = (() => {
               item.deep_read ? `read ${item.deep_read}` : "",
               item.fit
             ]).filter(Boolean).join(" \xB7 "))
-          )) : h("p", { class: "dim" }, "Nothing here.")
+          ))) : h("p", { class: "dim" }, "Nothing here.")
         );
         await this.finishRestore(items.map((item) => item.id));
         if (!this.selected && !this.detailLocked) {
@@ -5943,7 +6111,9 @@ var Librarian = (() => {
       this.list.querySelectorAll(sel(".item")).forEach((button) => {
         const selected = button.dataset.item === id;
         button.classList.toggle(cls("sel"), selected);
-        button.setAttribute("aria-selected", String(selected));
+        if (button.getAttribute("role") === "option") button.setAttribute("aria-selected", String(selected));
+        else if (selected) button.setAttribute("aria-current", "true");
+        else button.removeAttribute("aria-current");
       });
       clear(this.detail, h("p", { class: "dim" }, "Loading\u2026"));
       let r;
@@ -6123,7 +6293,9 @@ var Librarian = (() => {
       this.list.querySelectorAll(sel(".item")).forEach((button) => {
         const selected = button.dataset.item === id;
         button.classList.toggle(cls("sel"), selected);
-        button.setAttribute("aria-selected", String(selected));
+        if (button.getAttribute("role") === "option") button.setAttribute("aria-selected", String(selected));
+        else if (selected) button.setAttribute("aria-current", "true");
+        else button.removeAttribute("aria-current");
       });
       clear(this.detail, h("p", { class: "dim" }, "Loading\u2026"));
       let item;

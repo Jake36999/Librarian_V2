@@ -34,3 +34,32 @@ def execute_macro(ctx: Context, macro: str, inputs: dict[str, Any]) -> dict[str,
     if not isinstance(inputs, dict):
         raise TypeError("inputs is an object")
     return run_macro(ctx, macro, inputs)
+
+
+@REGISTRY.tool("macro_status", tier="consult", effect="read",
+               card=Card("Where an approved macro run stands, by its checkpoint: completed, "
+                         "paused, or waiting on a person because a step's outcome is unknown.",
+                         "before answering for a macro step whose outcome is unknown, "
+                         "including after a reconnect"),
+               returns=("status", "step", "options"))
+def show_macro_status(ctx: Context, checkpoint_id: str) -> dict[str, Any]:
+    """Read-only, from the run's own step log."""
+    from ..agent_runtime import macro_status
+    if not str(checkpoint_id).strip():
+        raise TypeError("checkpoint_id is the macro run's approval checkpoint")
+    return macro_status(ctx.vault, str(checkpoint_id))
+
+
+@REGISTRY.tool("macro_resolve", tier="curate", effect="vault_write",
+               card=Card("A person's answer for a macro step whose outcome is unknown: "
+                         "record it as applied, or send it again.",
+                         "a person has checked whether an interrupted macro step took effect",
+                         "Uses the inputs the run's log recorded; refused if the run has "
+                         "moved on from that step"),
+               scope="session", idempotent=False, returns=("status", "steps"),
+               orchestrates=True)
+def resolve_macro_step(ctx: Context, checkpoint_id: str, step: int,
+                       choice: str) -> dict[str, Any]:
+    """Only a person decides whether an interrupted step took effect."""
+    from ..agent_runtime import resolve_macro
+    return resolve_macro(ctx, str(checkpoint_id), int(step), str(choice))

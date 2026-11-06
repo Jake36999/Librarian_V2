@@ -15,6 +15,10 @@ const BEST_FOR_TAGS = ["Talking_Fast", "Long_Conversations", "Small_Coding_Tasks
 const TIERS = ["Tier_1", "Tier_2", "Tier_3"];
 const untag = (s: string) => s.replace(/_/g, " ");
 
+// Sources a person may approve, or defer, by ticking several in the list (MF-034b).
+const APPROVABLE = ["staged", "deferred", "failed", "partial"];
+const DEFERRABLE = ["staged", "approved", "enriched", "partial"];
+
 // -- staging review ------------------------------------------------------------
 
 export class Staging {
@@ -36,6 +40,26 @@ export class Staging {
   private restoredLibrary = "";
   private statuses: HTMLSelectElement;
   private resumeScroll: number | null = null;
+  // Several sources decided at once: the person ticks the ones they mean, never an
+  // "approve all", and never opening each in turn. Each ticked item is sent on its
+  // own with the revision its row showed, so one that changed since is refused and
+  // left untouched while the rest go through (owner, 2026-11-05).
+  private picked = new Set<string>();
+  private rows = new Map<string, any>();
+  private bulkCount = h("span", { class: "dim" });
+  private bulkReason = h("input", { type: "text", placeholder: "Reason, to defer",
+    "aria-label": "Reason for deferring the ticked items" }) as HTMLInputElement;
+  private bulkApprove = h("button", { type: "button", class: "primary", onclick: () => void this.decideTicked("approve") }) as HTMLButtonElement;
+  private bulkDefer = h("button", { type: "button", class: "ghost", onclick: () => void this.decideTicked("defer") }) as HTMLButtonElement;
+  private bulkClear = h("button", { type: "button", class: "ghost", onclick: () => {
+    this.picked.clear();
+    this.list.querySelectorAll<HTMLInputElement>("input[type=checkbox]").forEach(box => { box.checked = false; });
+    this.paintBulk();
+  } }, "Clear") as HTMLButtonElement;
+  private bulkStatus = h("span", { role: "status" });
+  private bulk = h("div", { class: "bulk-bar", role: "group", "aria-label": "Decide the ticked sources" },
+    this.bulkCount, this.bulkApprove, this.bulkReason, this.bulkDefer, this.bulkClear, this.bulkStatus);
+  private bulkStatusFilter = "";
 
   private savePosition(): void {
     if (!this.restoredLibrary || this.resumeScroll !== null) return;
@@ -147,8 +171,69 @@ export class Staging {
       h("p", { class: "note" }, "Review captured material before adding it to this library."),
       h("div", { class: "view-head review-toolbar" }, statuses, this.evidenceMode,
       h("button", { class: "ghost", onclick: () => void this.load(true) }, "Refresh"), scan, propose),
-      this.banner,
+      this.banner, this.bulk,
       h("div", { class: "split" }, this.list, this.detail));
+    this.bulk.hidden = true;
+  }
+
+  /** The bar over the list: how many are ticked, and what can be done with them. */
+  private paintBulk(): void {
+    const status = this.bulkStatusFilter;
+    const on = this.kind === "source" && (APPROVABLE.includes(status) || DEFERRABLE.includes(status));
+    this.bulk.hidden = !on;
+    if (!on) return;
+    const n = this.picked.size;
+    this.bulkCount.textContent = n ? `${n} ticked` : "Tick sources to decide several at once";
+    this.bulkApprove.textContent = `Approve ${n || ""} ticked`.replace("  ", " ");
+    this.bulkDefer.textContent = `Defer ${n || ""} ticked`.replace("  ", " ");
+    this.bulkApprove.hidden = !APPROVABLE.includes(status);
+    this.bulkDefer.hidden = this.bulkReason.hidden = !DEFERRABLE.includes(status);
+    for (const button of [this.bulkApprove, this.bulkDefer, this.bulkClear]) button.disabled = n === 0;
+  }
+
+  /** Send each ticked source on its own, with the revision its row showed; report each. */
+  private async decideTicked(decision: "approve" | "defer"): Promise<void> {
+    const ids = [...this.picked].filter(id => this.rows.has(id));
+    if (!ids.length) return;
+    const reason = this.bulkReason.value.trim();
+    if (decision === "defer" && !reason) {
+      this.bulkStatus.textContent = "A deferral needs its reason.";
+      this.bulkReason.focus();
+      return;
+    }
+    for (const button of [this.bulkApprove, this.bulkDefer, this.bulkClear]) button.disabled = true;
+    this.bulkStatus.textContent = `Sending ${ids.length}…`;
+    const done: string[] = [], changed: string[] = [], refused: string[] = [];
+    for (const id of ids) {
+      const row = this.rows.get(id) ?? {};
+      const name = String(row.name || id);
+      try {
+        const out = await this.api.tool("staging_decide", { item_ids: [id], decision,
+          ...(decision === "defer" ? { reason } : {}),
+          ...(row.staged_revision ? { staged_revision: row.staged_revision } : {}) });
+        const r = (out.results ?? [])[0] ?? out;
+        if (out.refused === "DOCUMENT_ACTIVE") changed.push(name);
+        else if (out.error || r.error || r.refused) {
+          refused.push(`${name}: ${String(r.detail ?? r.refused ?? out.detail ?? out.error ?? r.error)}`);
+        } else done.push(name);
+      } catch (e) {
+        refused.push(`${name}: ${(e as Error).message}`);
+      }
+      // Decided or not, it is unticked: one that changed needs a fresh look first.
+      this.picked.delete(id);
+    }
+    this.bulkStatus.textContent = "";
+    if (decision === "defer" && !changed.length && !refused.length) this.bulkReason.value = "";
+    await this.load();
+    this.detailLocked = true;
+    const verb = decision === "approve" ? "Approved" : "Deferred";
+    clear(this.detail, h("div", { class: "bulk-outcome", role: "status" },
+      h("p", { class: done.length ? "ok" : "dim" }, `${verb} ${done.length} of ${ids.length}.` +
+        (decision === "approve" && done.length ? " They wait for the batch above: nothing is in the library yet." : "")),
+      done.length ? h("ul", {}, done.map(name => h("li", {}, name))) : null,
+      changed.length ? h("p", { class: "warn" }, `Changed since this list was shown, so left untouched: ${changed.join(", ")}. Open each to see what changed before deciding it.`) : null,
+      refused.length ? h("p", { class: "error" }, "Not decided:") : null,
+      refused.length ? h("ul", {}, refused.map(text => h("li", {}, text))) : null));
   }
 
   /** `reset`: an explicit visit (opening the view, Refresh, switching kind) —
@@ -160,6 +245,8 @@ export class Staging {
     const request = ++this.listRequest;
     if (reset) this.detailLocked = false;
     clear(this.list, h("p", { class: "dim" }, "Loading…"));
+    this.bulkStatusFilter = this.kind === "source" ? this.status : "";
+    this.paintBulk();
     if (this.kind === "offering") return this.loadOfferings(request);
     try {
       const status = this.kind === "source" ? this.status : "staged";
@@ -176,11 +263,30 @@ export class Staging {
         }).catch(() => {});
       }
       const items = (out.items ?? []) as any[];
+      // Ticks belong to this list as shown: a source no longer in it is unticked.
+      this.rows = new Map(items.map(item => [String(item.id), item]));
+      this.bulkStatusFilter = status;
+      for (const id of [...this.picked]) if (!this.rows.has(id)) this.picked.delete(id);
+      const ticking = this.kind === "source" && (APPROVABLE.includes(status) || DEFERRABLE.includes(status));
+      this.list.setAttribute("role", ticking ? "list" : "listbox");
+      const row = (item: any, button: HTMLElement) => ticking
+        ? h("div", { class: "item-row", role: "listitem" },
+            h("input", { type: "checkbox", "data-tick": item.id, checked: this.picked.has(String(item.id)),
+              "aria-label": `Tick ${item.name || item.id}`, onchange: (event: Event) => {
+                const box = event.target as HTMLInputElement;
+                if (box.checked) this.picked.add(String(item.id)); else this.picked.delete(String(item.id));
+                this.bulkStatus.textContent = "";
+                this.paintBulk();
+              } }), button)
+        : button;
+      this.paintBulk();
       clear(this.list,
         h("p", { class: "dim" }, `${out.total ?? items.length} ${status === "staged" ? "waiting" : status}`),
-        items.length ? items.map((item) => h("button", {
-          "data-item": item.id, class: `item${item.id === this.selected ? " sel" : ""}`, role: "option",
-          "aria-selected": String(item.id === this.selected), onclick: () => this.show(item.id),
+        items.length ? items.map((item) => row(item, h("button", {
+          "data-item": item.id, class: `item${item.id === this.selected ? " sel" : ""}`,
+          ...(ticking ? { "aria-current": item.id === this.selected ? "true" : undefined }
+            : { role: "option", "aria-selected": String(item.id === this.selected) }),
+          onclick: () => this.show(item.id),
         }, item.sensitivity === "review" ? h("span", { class: "flag", title: "sensitive: a person decides" }, "⚑ ") : null,
           item.name || item.id,
           h("small", {}, (item.kind === "lens"
@@ -196,7 +302,7 @@ export class Staging {
             : item.status === "failed"
             ? [`failed at ${item.failure?.stage ?? "?"}`]
             : [item.topic, item.drafted ? "drafted" : item.reviewed ? "draft queued" : "no draft yet",
-               item.deep_read ? `read ${item.deep_read}` : "", item.fit]).filter(Boolean).join(" · "))))
+               item.deep_read ? `read ${item.deep_read}` : "", item.fit]).filter(Boolean).join(" · ")))))
           : h("p", { class: "dim" }, "Nothing here."));
       await this.finishRestore(items.map(item => item.id));
       if (!this.selected && !this.detailLocked) {
@@ -260,7 +366,9 @@ export class Staging {
     this.list.querySelectorAll<HTMLElement>(sel(".item")).forEach(button => {
       const selected = button.dataset.item === id;
       button.classList.toggle(cls("sel"), selected);
-      button.setAttribute("aria-selected", String(selected));
+      if (button.getAttribute("role") === "option") button.setAttribute("aria-selected", String(selected));
+      else if (selected) button.setAttribute("aria-current", "true");
+      else button.removeAttribute("aria-current");
     });
     clear(this.detail, h("p", { class: "dim" }, "Loading…"));
     let r: any;
@@ -406,7 +514,9 @@ export class Staging {
     this.list.querySelectorAll<HTMLElement>(sel(".item")).forEach(button => {
       const selected = button.dataset.item === id;
       button.classList.toggle(cls("sel"), selected);
-      button.setAttribute("aria-selected", String(selected));
+      if (button.getAttribute("role") === "option") button.setAttribute("aria-selected", String(selected));
+      else if (selected) button.setAttribute("aria-current", "true");
+      else button.removeAttribute("aria-current");
     });
     clear(this.detail, h("p", { class: "dim" }, "Loading…"));
     let item: any;

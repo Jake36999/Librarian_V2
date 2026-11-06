@@ -850,6 +850,82 @@ await page.unroute("**/api/tool/staging_list");
 await page.click(".lib-app nav button:has-text('Chat')");
 step("interrupted source acceptance shows retained originals, completed paths and an explicit finish action");
 
+// Several sources decided at once (owner, 2026-11-05; Codex UI ask 1): the person
+// ticks the ones they mean - there is no "approve all", and no opening each in turn.
+// Each ticked source is its own call with the revision its row showed; one that
+// changed since is named and left alone. Only the UI responses are mocked here;
+// tests/test_staging_triage.py checks the Core's side.
+const tickRows = ["Triage one", "Triage two", "Triage three"].map((name, i) => ({
+  id: `triage-${i}`, name, kind: "source", status: "staged", staged_revision: `rev1.row-${i}` }));
+const tickDecided = new Set();
+const tickCalls = [];
+await page.route("**/api/tool/staging_list", (route) => route.fulfill({ status: 200,
+  contentType: "application/json", body: JSON.stringify({ counts: { source: { staged: 3 } },
+    total: 3, items: tickRows.filter((row) => !tickDecided.has(row.id)) }) }));
+await page.route("**/api/tool/staging_decide", (route) => {
+  const args = JSON.parse(route.request().postData() ?? "{}").arguments ?? {};
+  tickCalls.push(args);
+  const id = (args.item_ids ?? [])[0];
+  if (id === "triage-1") return route.fulfill({ status: 200, contentType: "application/json",
+    body: JSON.stringify({ error: "refused", refused: "DOCUMENT_ACTIVE",
+      detail: "changed after it was read" }) });
+  tickDecided.add(id);
+  return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+    results: [{ id, status: args.decision === "approve" ? "approved" : "deferred" }] }) });
+});
+await page.click(".lib-app nav button:has-text('Staging')");
+await page.click(".lib-staging .lib-seg button:has-text('Sources')");
+await page.selectOption(".lib-staging select[aria-label='Which sources']", "staged");
+await page.waitForSelector(".lib-staging .lib-item:has-text('Triage one')");
+await expect(page.locator(".lib-staging button:has-text('Approve all')").count().then((n) => n === 0),
+  "there is no approve-all");
+await expect(page.locator(".lib-staging .lib-bulk-bar button:has-text('Approve')").isDisabled(),
+  "nothing can be approved before something is ticked");
+await page.check(".lib-staging input[aria-label='Tick Triage one']");
+await page.check(".lib-staging input[aria-label='Tick Triage two']");
+await page.click(".lib-staging .lib-bulk-bar button:has-text('Approve 2 ticked')");
+await page.waitForSelector(".lib-staging .lib-bulk-outcome >> text=Approved 1 of 2.");
+await expect(page.isVisible(".lib-staging .lib-bulk-outcome >> text=left untouched: Triage two"),
+  "the source that changed since it was listed is named and left alone");
+await expect(tickCalls.length === 2 && tickCalls.every((call) => call.item_ids.length === 1),
+  "each ticked source is sent on its own");
+await expect(tickCalls[0].staged_revision === "rev1.row-0" && tickCalls[1].staged_revision === "rev1.row-1",
+  "each carries the revision its own row showed");
+await expect(!tickCalls.some((call) => call.item_ids[0] === "triage-2"), "an unticked source is not decided");
+await expect(page.isChecked(".lib-staging input[aria-label='Tick Triage two']").then((on) => !on),
+  "the changed source is unticked: it needs a fresh look before it is decided");
+await page.check(".lib-staging input[aria-label='Tick Triage three']");
+await page.click(".lib-staging .lib-bulk-bar button:has-text('Defer 1 ticked')");
+await page.waitForSelector(".lib-staging .lib-bulk-bar >> text=A deferral needs its reason.");
+await expect(tickCalls.length === 2, "no deferral is sent without its reason");
+await page.fill(".lib-staging .lib-bulk-bar input[aria-label='Reason for deferring the ticked items']", "later edition");
+await page.click(".lib-staging .lib-bulk-bar button:has-text('Defer 1 ticked')");
+await page.waitForSelector(".lib-staging .lib-bulk-outcome >> text=Deferred 1 of 1.");
+await expect(tickCalls[2].decision === "defer" && tickCalls[2].reason === "later edition",
+  "the deferral carries its reason");
+await page.unroute("**/api/tool/staging_decide");
+await page.unroute("**/api/tool/staging_list");
+await page.click(".lib-app nav button:has-text('Chat')");
+step("several sources decided by ticking: one call each with its own revision; a changed one is named and untouched");
+
+// Codex UI ask 2: a macro step whose outcome is unknown is answered through the run's
+// recovery handle, after the run is looked at again. The demo core seeds an approved
+// run whose first step was sent and never recorded; this goes through the real Core.
+const macroCard = ".lib-tool .lib-warn:has-text('Macro step outcome unknown')";
+await page.fill("#lib-msg", "run the macro");
+await page.keyboard.press("Enter");
+await page.waitForSelector(`.lib-perm:not(.lib-done), ${macroCard}`);
+if (await page.isVisible(".lib-perm:not(.lib-done)")) {
+  await page.click(".lib-perm:not(.lib-done) button:has-text('Allow once')");
+}
+await page.waitForSelector(`${macroCard} button:has-text('Record step as already applied')`);
+await page.waitForSelector(".lib-working", { state: "detached" });
+await page.click(`${macroCard} button:has-text('Record step as already applied')`);
+await page.waitForSelector(`${macroCard} >> text=Recorded. The macro run completed.`);
+await expect(page.locator(`${macroCard} button:has-text('Send this step again')`).isDisabled(),
+  "an answered card cannot be answered again");
+step("a macro step whose outcome is unknown is answered by its recovery handle");
+
 // UX-01: an audited thread exposes the Core's per-predicate projection in the
 // plan pane.  A review action uses the existing person tool, then the UI
 // explicitly refreshes session_status and renders the revised requirement.
