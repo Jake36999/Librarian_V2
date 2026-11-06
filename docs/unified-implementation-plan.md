@@ -5988,3 +5988,10 @@ both new steps included.
 (`reports/2026-11-06-evidence/suite-mf043-py311.json`, a clean clone of `3b3de57` plus this
 commit's files). Against the old workflows, 17 of the 18 workflow cases fail (the 18th only
 checks both files exist). Hosted CI on this commit is the run-time check of the workflows.
+
+**Hosted CI on `40eaf7d`** (run 42155945083) passed core and wheel-smoke on all three
+Pythons and kept the test evidence for 90 days; the Node 20 warnings are gone. The
+adapters job failed: `build-release.ps1` splatted `--no-isolation` as single characters
+(PowerShell unrolls a one-item array returned from `if`). Fixed in the next commit with
+`@(...)`, checked locally through the script, with a regression case in
+`tests/test_ci_workflows.py`.

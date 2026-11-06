@@ -172,3 +172,11 @@ def test_the_build_lock_agrees_with_the_dev_lock():
     build, dev = pins("requirements-build.txt"), pins("requirements-dev.txt")
     assert {"build", "setuptools", "wheel"} <= set(build)
     assert {name: dev.get(name) for name in build} == build
+
+
+def test_the_release_builder_passes_the_isolation_switch_as_one_argument():
+    """Hosted CI, 2026-11-06: `$x = if (...) { @("--no-isolation") }` unrolls to a string,
+    and splatting a string passes its characters one by one."""
+    script = (ROOT / "scripts" / "build-release.ps1").read_text(encoding="utf-8")
+    assert '$buildIsolation = @(if ($NoBuildIsolation) { "--no-isolation" })' in script
+    assert "-m build @buildIsolation --wheel" in script

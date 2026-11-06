@@ -141,7 +141,9 @@ if (-not $SkipTests) {
     Invoke-Native "Core test suite" { & $Python -m pytest }
 }
 
-$buildIsolation = if ($NoBuildIsolation) { @("--no-isolation") } else { @() }
+# @() keeps a one-item result an array: splatting a bare string would pass its
+# characters one by one (seen in hosted CI, 2026-11-06).
+$buildIsolation = @(if ($NoBuildIsolation) { "--no-isolation" })
 Invoke-Native "Core wheel build" { & $Python -m build @buildIsolation --wheel --outdir (Join-Path $OutDir "core") $Root }
 $wheel = Get-ChildItem (Join-Path $OutDir "core") -Filter "*.whl" -File |
     Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
