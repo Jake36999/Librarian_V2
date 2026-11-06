@@ -379,6 +379,10 @@ class Turn:
     # MF-011: the last request's size counters - estimate, bound, reserve,
     # method, rounds trimmed. Counts only, never prompt text.
     request: dict[str, Any] = field(default_factory=dict)
+    # MF-027a: which turn this was, and which reply it ended with, so a review that
+    # arrives later is bound to that reply and not to whichever came last.
+    turn_id: str = ""
+    reply_id: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {k: v for k, v in self.__dict__.items() if v or k in ("reply", "steps")}
@@ -457,6 +461,9 @@ class Loop:
         # carried into the next turn's prompt once (`reply_review`).
         self.challenges: list[dict[str, Any]] = []
         self._answering: list[dict[str, Any]] = []
+        # The turn most recently started (MF-027a): a late review is carried into
+        # the next prompt only while its own turn is still the latest.
+        self.current_turn_id = ""
 
     # -- profile runtime limits ---------------------------------------------
     def configure_profile(self, profile: Any, *, rate_card: dict[str, Any] | None = None) -> None:
@@ -894,7 +901,7 @@ class Loop:
         return out
 
     # -- the transcript --------------------------------------------------------
-    def _persist(self, role: str, text: str) -> None:
+    def _persist(self, role: str, text: str, reply_id: str = "") -> None:
         """Record a person-visible turn to the open session's own log, so a
         reopened thread can replay it (`Session.messages`). Buffered until a
         session id exists; a logging fault never breaks the turn itself. The
@@ -902,7 +909,8 @@ class Loop:
         own contribution is already the last thing in `self.messages`."""
         if not text:
             return
-        self._pending_messages.append({"role": role, "text": text, "boundary": len(self.messages)})
+        self._pending_messages.append({"role": role, "text": text, "boundary": len(self.messages),
+                                       **({"reply_id": reply_id} if reply_id else {})})
         self._flush_pending()
 
     def _flush_pending(self) -> None:
@@ -982,7 +990,9 @@ class Loop:
         self.messages.append({"role": "user", "content": text})
         self.on_event({"type": "user", "text": text})
         self._persist("user", text)
-        turn = Turn()
+        import secrets
+        turn = Turn(turn_id=f"t-{secrets.token_hex(6)}")
+        self.current_turn_id = turn.turn_id
         started = time.monotonic()
         # Pin a route/adaptor/expectation snapshot for this walk.  App only
         # changes ``self.provider`` between turns, but this also protects a
@@ -1066,11 +1076,15 @@ class Loop:
                 self.on_event({"type": "stopped", "reason": "cancelled"})
                 return turn
             self.messages.append(reply.message())
+            final = not reply.tool_calls
+            reply_id = f"r-{secrets.token_hex(6)}" if final and reply.text else ""
             if reply.text:
-                self.on_event({"type": "text", "text": reply.text})
-                self._persist("assistant", reply.text)
-            if not reply.tool_calls:
-                turn.reply = reply.text
+                self.on_event({"type": "text", "text": reply.text,
+                               **({"reply_id": reply_id, "turn_id": turn.turn_id}
+                                  if reply_id else {})})
+                self._persist("assistant", reply.text, reply_id=reply_id)
+            if final:
+                turn.reply, turn.reply_id = reply.text, reply_id
                 return turn
             self.refused_last_step = False
             # The trace names the model behind each call (Requirements Addendum R3).

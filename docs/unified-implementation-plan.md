@@ -5995,3 +5995,104 @@ adapters job failed: `build-release.ps1` splatted `--no-isolation` as single cha
 (PowerShell unrolls a one-item array returned from `if`). Fixed in the next commit with
 `@(...)`, checked locally through the script, with a regression case in
 `tests/test_ci_workflows.py`.
+
+### MF-027a-c: bound reply reviews, exact staging previews, Claim Run preflight (2026-11-06)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-027a Reply-review identity | implemented (Core + chat binding) | this commit | `reply_review.py`, `loop.py`, `app.py`, `ui/src/chat.ts`; `tests/test_reply_review_binding.py`, `tests/test_reply_review.py`. |
+| MF-027b Exact composed staging preview | implemented (Core); before/after display is UI work | this commit | `staging.py` `compose_revision`, `tools/staging.py` `_preview`, `staging_preview`; `tests/test_staging_preview.py` (the file the plan named). |
+| MF-027c Docker preflight before Claim Run | implemented | this commit | `claim_run.preflight`, tool `claim_run_preflight`, `GET /api/claims/preflight`, `ui/src/chat.ts` Run button. |
+
+The owner chose to take MF-027's Core dependencies now. The packet's formal
+dependencies MF-023 and MF-024 are not done. These slices do not need them, but the
+umbrella MF-027 stays open until they are.
+
+**MF-027a: a review is bound to its reply and to the exact note.**
+- **Ids.** Each turn has a `turn_id`, and its final reply a `reply_id`. Both are on
+  the final `text` event and on `turn_done`, and the reply's session `message`
+  event keeps the `reply_id`.
+- **Exact notes.**
+  - Links resolve to one root-relative path. `[[Folder/Note]]` must match it. A
+    bare `[[Note]]` must match exactly one note; two notes of one name make it
+    `ambiguous`, so it is left unchecked and never guessed by basename.
+  - Every row about a real note carries `note_path`, `source_revision` (the
+    fingerprint of the bytes checked) and `coverage`: span, total length,
+    complete or truncated.
+- **Unread is not silent.** Only the first 5,000 characters are read. On a longer
+  note, an `unsupported` verdict is reported as `partly_checked`, never as a
+  challenge. A counter-quote contradiction still stands.
+- **One cap.** Missing-link challenges spend the same cap as claim checks: a reply
+  with 20 invented links and a cap of 3 gives 3 challenges and counts 17 unchecked.
+  `tests/test_reply_review.py` was updated for this; it assumed the old, uncapped
+  missing links.
+- **Kept and carried.**
+  - The verdict is kept in the session's own log as a `reply_reviewed` event.
+  - It reaches the next prompt only if no newer turn has started. Otherwise it is
+    marked `late` and stays advice on its own reply.
+- **Chat.** It places the verdict beside the reply with that id, or under "On an
+  earlier reply". It names ambiguous links and partly checked claims, and says a
+  late review will not reach the librarian.
+
+**MF-027b: the preview is what the accept writes, composed by the same code.**
+- **`staging_show`** now returns `preview` with `kind`, `path`,
+  `current_markdown`, `composed_markdown`, `sections`, `source_revision`,
+  `staged_revision`, `dependency_digest`, `preview_digest`, `set_on_accept`,
+  `status` and `authorizes: false`.
+- **Revisions.** The merge moved into `staging.compose_revision`, which accepting
+  a revision now calls too. Measured: the accepted note's bytes equal
+  `composed_markdown` byte for byte. The accept also turns the note's CRLF into
+  LF; that is old behaviour, and the preview now shows it.
+- **New sources.** The preview is `prepare_source`'s own note text, also used by
+  dry runs. It equals what the accept writes apart from `catalogued_at`, which is
+  stamped when it is accepted.
+- **Edits.** `staging_preview(item_id, bottom_line, what_it_solves, fields)` gives
+  the preview for the person's edited values, with a fresh `staged_revision`.
+- **When there is no exact preview,** the status says why, with nothing to
+  accept from:
+  - `needs_person`: an agent, under person promotion;
+  - `conflict`;
+  - `needs_input`;
+  - `semantic`: kinds whose writes are not exposed byte for byte.
+- **Defect found and fixed.** Accepting a new source with a **stale**
+  `staged_revision` used to succeed: the source plan re-read the staged record,
+  and its fresh fingerprint overrode the redeemed one. The redeemed revision now
+  wins, so a record changed since it was read is refused (`DOCUMENT_ACTIVE`).
+
+**MF-027c: no Run while Docker cannot run it.**
+- **The check.** `claim_run.preflight()` returns `available` and `detail`. It is
+  held for 15 s and re-asked with `fresh`, and served as the tool
+  `claim_run_preflight` and as `GET /api/claims/preflight`.
+- **The Run button.** It checks first. While Docker is unavailable it is disabled,
+  says why, and offers "Check again". It re-checks at the click and sends no run
+  request while Docker is unavailable.
+- **Verdicts** are shown only when the run left execution evidence.
+
+**Not covered here:**
+- The before/after preview display in Staging is front-end work for Codex; the
+  API is above and in `reports/2026-11-06-core-handoff/FOR-CODEX.md`.
+- The chat binding and the Run button's preflight are covered by Core tests and
+  the type-check, not by a browser walk: the smoke has no injected review event.
+- Taxonomy (topic) previews stay semantic, as the spec allows.
+
+**Tests:**
+- `tests/test_staging_preview.py`, 4 cases:
+  - byte-exact revision;
+  - new source exact but its stamp;
+  - an edit needs a fresh preview, and a stale token is refused;
+  - an agent gets `needs_person`.
+- `tests/test_reply_review_binding.py`, 8 cases:
+  - ambiguous and exact paths;
+  - unread text against a real contradiction;
+  - the shared cap;
+  - reply ids and carrying;
+  - kept in the session log;
+  - a late review stays on its reply;
+  - the cached and fresh preflight;
+  - the preflight endpoint.
+
+**Verification:** full suite: 2127 passed, 2 skipped, 5 deselected in 683.20s (0:11:23) (exit 0, Python 3.11.3)
+(`reports/2026-11-06-evidence/suite-mf027-py311.json`, a clean clone of `9dbf575` plus this
+commit's files). The first full run raised one warning: the review thread assumed a loop with `ctx`,
+and `tests/test_shutdown.py` passes a bare stand-in. Guarded with `getattr`; this run has none. Against
+the previous code all 13 new or changed cases fail. UI smoke: all steps passed.

@@ -958,26 +958,17 @@ REVISED_SECTIONS = ("Claims", "Evidence & Limits", "Reading Notes",
                     "Components", "How It Fits Together", "Chapters", "How The Chapters Relate")
 
 
-def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: dict[str, Any],
-                     decided_by: str, mode: str, *, index_call: Callable | None = None, guard=None) -> dict[str, Any]:
-    """A deep read of an *accepted* source (roadmap §4 C2) is staged as a
-    revision, never written straight into the person's note. Accepting it
-    merges the sections the deep read rebuilt (what the text claims, and its
-    stated limits, each with pages) into the accepted note, keeping each
-    section's previous text on this item so the merge can be undone by hand.
-    Rejecting or deferring only closes it: the file belongs to the accepted
-    note, so nothing is moved to quarantine."""
-    if decision in ("reject", "defer"):
-        item["status"] = "rejected" if decision == "reject" else "deferred"
-        item["history"].append(entry)
-        store.save(item)
-        return {"id": item["id"], "status": item["status"]}
-    if mode != "agent" and decided_by != "person":
-        raise Refusal("PERSON_CONFIRMS", "a revision rewrites sections of an accepted note: a "
-                                         "person accepts it")
+def compose_revision(store, item: dict[str, Any]) -> dict[str, Any]:
+    """What accepting a staged revision writes, composed without writing it (MF-027b).
+
+    Accepting the revision writes exactly `composed`, and staging_show's preview shows
+    exactly this too: one composition, not a browser approximation. `current` and
+    `fingerprint` are the accepted note's bytes as read."""
+    from .coordination import fingerprint_bytes
     path = store.vault.safe_relative(str(item["revision_of"]))
     if not path.is_file():
         raise TypeError(f"{item['revision_of']} no longer exists")
+    raw = path.read_bytes()
     note = notes.load(path)
     if note.frontmatter.get("type") != "source":
         raise TypeError("a staged source revision must target a source note")
@@ -996,9 +987,36 @@ def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: 
         merged.append(heading)
     if item.get("revision_kind") == "dik":
         note.frontmatter["dik"] = item.get("dik", "")
+        stamped = []
     else:
         note.frontmatter["deep_read"] = now_iso()[:10]
-    text = notes.render(note.frontmatter, body)
+        stamped = ["deep_read"]
+    return {"path": path, "rel": path.relative_to(store.vault.root).as_posix(),
+            "current": raw.decode("utf-8", "replace"), "fingerprint": fingerprint_bytes(raw),
+            "composed": notes.render(note.frontmatter, body), "merged": merged,
+            "previous": previous, "set_on_accept": stamped}
+
+
+def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: dict[str, Any],
+                     decided_by: str, mode: str, *, index_call: Callable | None = None, guard=None) -> dict[str, Any]:
+    """A deep read of an *accepted* source (roadmap §4 C2) is staged as a
+    revision, never written straight into the person's note. Accepting it
+    merges the sections the deep read rebuilt (what the text claims, and its
+    stated limits, each with pages) into the accepted note, keeping each
+    section's previous text on this item so the merge can be undone by hand.
+    Rejecting or deferring only closes it: the file belongs to the accepted
+    note, so nothing is moved to quarantine."""
+    if decision in ("reject", "defer"):
+        item["status"] = "rejected" if decision == "reject" else "deferred"
+        item["history"].append(entry)
+        store.save(item)
+        return {"id": item["id"], "status": item["status"]}
+    if mode != "agent" and decided_by != "person":
+        raise Refusal("PERSON_CONFIRMS", "a revision rewrites sections of an accepted note: a "
+                                         "person accepts it")
+    composed = compose_revision(store, item)
+    path, text = composed["path"], composed["composed"]
+    previous, merged = composed["previous"], composed["merged"]
     if guard is None:
         atomic_write_text(path, text)
     else:

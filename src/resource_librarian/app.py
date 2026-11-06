@@ -2664,7 +2664,8 @@ class App:
                     self._turn_cancel = None
             self.hub.publish(event)
             if event["type"] == "turn_done" and event.get("reply"):
-                self._review_reply(loop, str(event["reply"]))
+                self._review_reply(loop, str(event["reply"]), str(event.get("reply_id") or ""),
+                                   str(event.get("turn_id") or ""))
         threading.Thread(target=turn, daemon=True, name="librarian-turn").start()
         return {"accepted": True}
 
@@ -2677,10 +2678,14 @@ class App:
 
     WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
 
-    def _review_reply(self, loop: Loop, reply: str) -> None:
+    def _review_reply(self, loop: Loop, reply: str, reply_id: str = "", turn_id: str = "") -> None:
         """§4 G3 on chat replies (`reply_review`): after the reply, never
         before it; the verdict is its own event, and a challenge waits for the
-        lead model's next prompt."""
+        lead model's next prompt.
+
+        MF-027a: the verdict names the reply it reviewed and is kept in that
+        session's log. Its challenges reach the next prompt only if no newer turn
+        has started since; a late verdict stays on its own reply, marked late."""
         from . import effort, reply_review
         level = effort.profile(self.settings.data.get("effort"))
         if not (reply_review.enabled(self.vault) or level["review_replies"]):
@@ -2703,13 +2708,26 @@ class App:
                 try:
                     try:
                         out = reply_review.review_reply(self.vault, reply, clerk_endpoint(ctx),
-                                                        max_claims=max(1, level["review_claims"]))
+                                                        max_claims=max(1, level["review_claims"]),
+                                                        reply_id=reply_id, turn_id=turn_id)
                     except Exception as exc:                # noqa: BLE001
                         out = {"status": f"error: {type(exc).__name__}", "held": 0,
                                "unchecked": 0, "challenged": []}
                     if out is None:
                         return
-                    loop.challenges = list(out.get("challenged") or [])
+                    out.update(reply_id=reply_id, turn_id=turn_id)
+                    current = not turn_id or getattr(loop, "current_turn_id", "") == turn_id
+                    out["carried_to_next_prompt"] = bool(current and out.get("challenged"))
+                    if current:
+                        loop.challenges = list(out.get("challenged") or [])
+                    else:
+                        out["late"] = True          # a newer turn began: advice on its own reply only
+                    session = getattr(getattr(loop, "ctx", None), "session", None)
+                    if session:
+                        try:
+                            SessionStore(self.vault).append(session, {"type": "reply_reviewed", **out})
+                        except Exception:           # noqa: BLE001  the review is advice; keep going
+                            out["log_warning"] = "not kept in the session log"
                     self.hub.publish({"type": "reply_reviewed", **out})
                 finally:
                     self._end_mutation()
@@ -4172,8 +4190,14 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                     return self._json(200, {"offerings": staged_offerings(app.vault)})
                 if url.path == "/api/claims/runs":
                     from . import claim_run
+                    check = claim_run.preflight()
                     return self._json(200, {"runs": claim_run.RunnableStore(app.vault).list(),
-                                            "docker": claim_run.docker_status()[1]})
+                                            "docker": check["detail"], "preflight": check})
+                if url.path == "/api/claims/preflight":
+                    # MF-027c: asked before "Run it" is offered; `fresh` re-asks Docker.
+                    from . import claim_run
+                    return self._json(200, claim_run.preflight(
+                        fresh=(query.get("fresh") or [""])[0] in ("1", "true")))
                 if url.path == "/api/libraries":
                     from . import libraries
                     return self._json(200, {"libraries": libraries.known(app.vault),

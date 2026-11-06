@@ -1,0 +1,35 @@
+{
+ "command": [
+  "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone",
+ "exit_code": 0,
+ "summary": "2127 passed, 2 skipped, 5 deselected in 683.20s (0:11:23)",
+ "started_utc": "2026-11-06T23:36:58.063249+00:00",
+ "seconds": 684.4,
+ "head": "9dbf5755f20496bba14a86bb943c345b10f86020",
+ "tracked_changes": [
+  " M docs/unified-implementation-plan.md",
+  " M obsidian/dist/main.js",
+  " M src/resource_librarian/app.py",
+  " M src/resource_librarian/claim_run.py",
+  " M src/resource_librarian/loop.py",
+  " M src/resource_librarian/reply_review.py",
+  " M src/resource_librarian/staging.py",
+  " M src/resource_librarian/tools/staging.py",
+  " M src/resource_librarian/tools/upkeep.py",
+  " M src/resource_librarian/ui/app.js",
+  " M tests/test_reply_review.py",
+  " M ui/src/chat.ts"
+ ],
+ "python": "3.11.3",
+ "executable": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-mf027-py311.log",
+ "log_sha256": "d36667f6ab5e15785de3209a8d8759f1778292081eb2ddcfcaea1c679309e383"
+}

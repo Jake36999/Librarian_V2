@@ -83,6 +83,15 @@ def run_claim_input(ctx: Context, run_id: str) -> dict:
     return claim_run.run(ctx.vault, run_id)
 
 
+@tool("claim_run_preflight", tier="consult", effect="read",
+      returns=("available", "detail"),
+      card=Card("Whether a challenged claim can be run now: Docker answering, or why not",
+                "before offering a person Run it on a challenge"))
+def claim_run_preflight(ctx: Context, fresh: bool = False) -> dict:
+    from .. import claim_run
+    return claim_run.preflight(fresh=bool(fresh))
+
+
 @tool("list_claim_runs", tier="consult", effect="read",
       returns=("runs",),
       card=Card("Challenged claims that carry a failing input, and what running them showed",

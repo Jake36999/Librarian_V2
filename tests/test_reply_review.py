@@ -89,8 +89,13 @@ def test_a_linked_note_no_claim_was_listed_about_is_counted_unchecked(vault):
 
 def test_claims_past_the_limit_are_counted_not_dropped(vault):
     add_source(vault.root, "osquery", LINE)
-    out = reply_review.review_reply(vault, REPLY, clerk.Scripted(reviewer), max_claims=1)
+    out = reply_review.review_reply(vault, REPLY, clerk.Scripted(reviewer), max_claims=2)
     assert out["over_limit"] == 1 and out["unchecked"] == 1 and out["held"] == 1
+    # MF-027a: a missing-link challenge spends the same cap. With room for one, the
+    # invented [[Nowhere]] takes it and both osquery claims are counted, not checked.
+    out = reply_review.review_reply(vault, REPLY, clerk.Scripted(reviewer), max_claims=1)
+    assert [c["verdict"] for c in out["challenged"]] == ["not_found"]
+    assert out["over_limit"] == 2 and out["unchecked"] == 2 and out["held"] == 0
 
 
 def test_the_extraction_prompt_names_denials_and_restrictions_as_claims():

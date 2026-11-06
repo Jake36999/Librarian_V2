@@ -211,6 +211,26 @@ def _run(args: list[str], timeout: float) -> subprocess.CompletedProcess:
 _run.supervised = True                  # type: ignore[attr-defined]  # the real Docker
 
 
+PREFLIGHT_SECONDS = 15.0
+_preflight: dict[str, Any] = {}
+
+
+def preflight(runner: Callable[..., Any] | None = None, *, fresh: bool = False) -> dict[str, Any]:
+    """Whether a claim can be run now (MF-027c): Docker answering, and why not if it is
+    not. A UI asks this before it offers "Run it", and sends no run while it is
+    unavailable. Held for PREFLIGHT_SECONDS, so a list of challenges asks Docker once."""
+    import time
+    now = time.monotonic()
+    if not fresh and runner is None and _preflight and now - _preflight["_at"] < PREFLIGHT_SECONDS:
+        return {k: v for k, v in _preflight.items() if not k.startswith("_")}
+    ok, detail = docker_status(runner)
+    out = {"available": ok, "detail": detail, "checked_at": now_iso()}
+    if runner is None:
+        _preflight.clear()
+        _preflight.update(out, _at=now)
+    return out
+
+
 def docker_status(runner: Callable[..., Any] | None = None) -> tuple[bool, str]:
     if shutil.which("docker") is None and runner is None:
         return False, "Docker is not installed"

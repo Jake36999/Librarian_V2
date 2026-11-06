@@ -178,6 +178,61 @@ def staging_list(ctx: Context, kind: Literal["", "source", "lens", "concept", "t
     return {"counts": store.counts(), "total": len(rows), "items": page}
 
 
+def _digest(value: Any) -> str:
+    import hashlib
+    return hashlib.sha256(json.dumps(value, sort_keys=True, default=str).encode("utf-8")).hexdigest()
+
+
+def _preview(ctx: Context, item: dict, state: str, observed: str, staged_token: str,
+             bottom_line: str, what_it_solves: str, fields: dict | None) -> dict:
+    """What accepting this item would write, composed by the same server code the accept
+    runs, with no writes (MF-027b; spec U-B3).
+
+    `preview_digest` names this exact preview; it authorizes nothing. The revision tokens
+    stay the only authority, and an accept is refused when they are stale, as before. Any
+    edit to the proposal needs a fresh preview (`staging_preview`). Fields the accept
+    stamps at that moment are named in `set_on_accept`. A kind whose writes are not
+    exposed byte for byte is said to be semantic, never shown as exact."""
+    kind = "revision" if item.get("revision_of") else str(item.get("kind") or "")
+    try:
+        if item.get("revision_of"):
+            composed = staging.compose_revision(_store(ctx), item)
+            out = {"kind": "revision", "path": composed["rel"], "current_markdown": composed["current"],
+                   "composed_markdown": composed["composed"], "sections": composed["merged"],
+                   "source_revision": revisions.issue(ctx, composed["rel"], composed["fingerprint"]),
+                   "set_on_accept": composed["set_on_accept"], "dependencies": []}
+        elif kind == "source":
+            plan = staging.prepare_source(
+                _store(ctx), item, bottom_line, what_it_solves,
+                "person" if ctx.extras.get("caller_kind") == "person" else "agent",
+                str((item.get("found_for") or {}).get("session") or ctx.session or ""),
+                fields or {}, IndexGateway(ctx, include_vectors=False).run)
+            body = notes.parse(plan["text"])[1]
+            out = {"kind": "new_source", "path": plan["path"], "current_markdown": "",
+                   "composed_markdown": plan["text"],
+                   "sections": re.findall(r"^## (.+)$", body, flags=re.M),
+                   "source_revision": "", "set_on_accept": ["catalogued_at"],
+                   "dependencies": sorted(p for p, _ in plan["observed"]
+                                          if p not in (plan["path"], state))}
+            out["dependency_digest"] = _digest([pair for pair in plan["observed"]
+                                                if pair[0] not in (plan["path"], state)])
+        else:
+            return {"kind": kind, "status": "semantic",
+                    "detail": "this kind's accepted writes are not exposed byte for byte; review "
+                              "it by its content above"}
+    except Refusal as refusal:
+        person = refusal.code in ("PERSON_CONFIRMS", "SENSITIVITY_REVIEW")
+        return {"kind": kind, "status": "needs_person" if person else "conflict",
+                "refused": refusal.code, "detail": refusal.detail}
+    except TypeError as exc:
+        return {"kind": kind, "status": "needs_input", "detail": str(exc)}
+    out.setdefault("dependency_digest", _digest([]))
+    out.update(status="exact", staged_revision=staged_token, authorizes=False)
+    out["preview_digest"] = _digest([out["path"], out["composed_markdown"], observed,
+                                     out["dependency_digest"]])
+    return out
+
+
 @tool("staging_show", tier="consult", effect="read",
       card=Card("One staged item in full, with its evidence and any review",
                 "deciding an item"))
@@ -192,7 +247,24 @@ def staging_show(ctx: Context, item_id: str) -> dict:
         path = ctx.vault.safe_relative(str(destination))
         rel = path.relative_to(ctx.vault.root).as_posix()
         out["revision"] = revisions.issue_current(ctx, rel)
+    draft = (out.get("review") or {}).get("draft") or {}
+    out["preview"] = _preview(ctx, item, state, observed, out["staged_revision"],
+                              str(draft.get("bottom_line") or ""),
+                              str(draft.get("what_it_solves") or ""), None)
     return out
+
+
+@tool("staging_preview", tier="consult", effect="read",
+      card=Card("What accepting a staged item would write, with the person's own edits",
+                "a person edited a staged item's Bottom Line, what it solves or fields",
+                "Composed by the same code the accept runs; writes nothing and authorizes "
+                "nothing"))
+def staging_preview(ctx: Context, item_id: str, bottom_line: str = "", what_it_solves: str = "",
+                    fields: dict | None = None) -> dict:
+    item, state, observed = _snapshot(ctx, item_id)
+    token = revisions.issue(ctx, state, observed)
+    return {"id": item_id, "staged_revision": token,
+            "preview": _preview(ctx, item, state, observed, token, bottom_line, what_it_solves, fields)}
 
 
 @tool("staging_review", tier="contribute", effect="write", scope="session", open_world=True,
@@ -330,10 +402,11 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
     if len(items) > 1 and (kwargs.get("revision") or kwargs.get("staged_revision")):
         raise Refusal("REVISION_REQUIRED", "a revision token applies to one staged revision; accept it separately")
     targets, absent, observed = [], [], []
+    redeemed: dict[str, str] = {}
     for item in items:
         state, stamp = snapshots[item["id"]]
         if len(items) == 1 and kwargs.get("staged_revision"):
-            stamp = revisions.redeem(ctx, str(kwargs["staged_revision"]), state)
+            stamp = redeemed[state] = revisions.redeem(ctx, str(kwargs["staged_revision"]), state)
         observed.append((state, stamp))
     for item in supported:
         if item.get("revision_of"):
@@ -415,6 +488,11 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
             raise TypeError("topic acceptance exceeds the 200-file recovery bound; accept without filing "
                             "its sources, then refile them in smaller batches")
         prepared = {"operation": "stage_topic", "topic_plan": topic_plan}
+    # MF-027b: the revision the person read stays the authority. A preparation step
+    # re-reads the staged record and records its fingerprint now; listed after it, the
+    # redeemed one wins (dict keeps the last), so a record changed since it was read is
+    # refused, never silently re-approved at its new content.
+    observed = [*observed, *redeemed.items()]
     return WriteIntent(tuple(dict.fromkeys(targets)), replaces=replacing,
                        absent=tuple(absent), observed=tuple(observed), prepared=prepared)
 

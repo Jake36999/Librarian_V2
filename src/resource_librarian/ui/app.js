@@ -1018,9 +1018,12 @@ var Librarian = (() => {
           this.append(this.bubble("user", this.lastUserText));
           this.setWorking(true);
           break;
-        case "text":
-          this.append(this.bubble("assistant", String(event.text ?? "")));
+        case "text": {
+          const bubble = this.bubble("assistant", String(event.text ?? ""));
+          if (event.reply_id) bubble.dataset.replyId = String(event.reply_id);
+          this.append(bubble);
           break;
+        }
         case "tool_call": {
           const tool = String(event.tool);
           const write = this.hooks.effectOf(tool) !== "read";
@@ -1085,9 +1088,13 @@ var Librarian = (() => {
           const silent = event.not_extracted ?? [];
           const over = Number(event.over_limit ?? 0);
           if (!held && !challenged.length && !unchecked && !event.status) break;
-          this.append(h(
+          const ambiguous = event.ambiguous ?? [];
+          const partly = event.partly_checked ?? [];
+          const target = event.reply_id ? Array.from(this.log.querySelectorAll("[data-reply-id]")).find((el) => el.dataset.replyId === String(event.reply_id)) : void 0;
+          const note = h(
             "div",
-            { class: "note reviewed" },
+            { class: "note reviewed", ...event.reply_id ? { "data-review-of": String(event.reply_id) } : {} },
+            event.reply_id && !target ? h("div", { class: "dim small" }, "On an earlier reply:") : null,
             event.status ? `The review could not run (${event.status}).` : `Checked against the notes it cites: ${held} held${unchecked ? `, ${unchecked} unchecked` : ""}${challenged.length ? `, ${challenged.length} challenged` : ""}.`,
             challenged.length ? h("ul", {}, challenged.map((c) => h(
               "li",
@@ -1105,8 +1112,12 @@ var Librarian = (() => {
             ))) : null,
             silent.length ? h("div", { class: "dim small" }, `Nothing it says about ${silent.map((n) => `[[${n}]]`).join(", ")} was picked out to check.`) : null,
             over ? h("div", { class: "dim small" }, `${over} more claim${over === 1 ? " was" : "s were"} past the review limit (the effort setting) and not checked.`) : null,
-            challenged.length ? h("div", { class: "dim small" }, "The librarian sees these challenges in its next reply.") : null
-          ));
+            ambiguous.length ? h("div", { class: "dim small" }, `Not checked: ${ambiguous.map((n) => `[[${n}]]`).join(", ")} matches more than one note. Link it by its folder to have it checked.`) : null,
+            partly.length ? h("ul", { class: "dim small" }, partly.map((p) => h("li", {}, `\u201C${p.claim}\u201D \u2014 ${p.note_path}: ${p.reason}.`))) : null,
+            challenged.length ? h("div", { class: "dim small" }, event.late ? "This review finished after a newer turn began, so the librarian will not see these challenges. It is advice, not a verdict." : "The librarian sees these challenges in its next reply. It is advice, not a verdict.") : null
+          );
+          if (target) target.after(note);
+          else this.append(note);
           break;
         }
         case "workflow_preflight": {
@@ -1587,26 +1598,45 @@ var Librarian = (() => {
         clear(status, h("span", { class: "error" }, error.message));
       }
     }
-    /** G3: a person's "Run it" - one function call in a Docker sandbox with no network. The
-     *  verdict (confirmed / not confirmed / could not run) replaces the button. */
+    /** G3: a person's "Run it" - one function call in a Docker sandbox with no network.
+     *  MF-027c: Docker is checked first, and while it is unavailable the button says why and
+     *  sends nothing. A verdict replaces the button only when the run left execution evidence. */
     runButton(runId) {
       const out = h("span", { class: "run-claim" });
+      const why = h("span", { class: "dim small" });
       const button = h("button", {
         class: "ghost",
         title: "Runs this one call in a Docker container with no network and the repository read-only. Needs Docker Desktop running.",
         onclick: async () => {
           button.disabled = true;
+          if (!await ready(true)) return;
           clear(out, h("span", { class: "dim" }, "running in the sandbox\u2026"));
           try {
             const r = await this.api.post("/api/claims/run", { id: runId });
             if (r.error) clear(out, h("span", { class: "error" }, String(r.detail ?? r.error)));
+            else if (!r.evidence) clear(out, h("span", { class: "error" }, "The run left no evidence, so there is no verdict to show."));
             else clear(out, h("strong", {}, String(r.verdict).replace(/_/g, " ")), ` \u2014 ${r.detail} (${r.version})`);
           } catch (e) {
             clear(out, h("span", { class: "error" }, e.message));
           }
         }
       }, "Run it");
-      clear(out, button);
+      const again = h("button", { class: "ghost", hidden: true, onclick: () => void ready(true) }, "Check again");
+      const ready = async (fresh) => {
+        let check;
+        try {
+          check = await this.api.get(`/api/claims/preflight${fresh ? "?fresh=1" : ""}`);
+        } catch (e) {
+          check = { available: false, detail: e.message };
+        }
+        const ok = check.available === true;
+        button.disabled = !ok;
+        again.hidden = ok;
+        why.textContent = ok ? "" : ` Docker is not available: ${String(check.detail ?? "no answer")}`;
+        return ok;
+      };
+      clear(out, button, why, again);
+      void ready(false);
       return out;
     }
     permission(event) {
