@@ -80,8 +80,10 @@ def test_supported_python_and_release_workflows_run_the_artifact_smoke() -> None
     release = RELEASE_WORKFLOW.read_text(encoding="utf-8")
 
     assert "wheel-smoke:" in ci
-    assert 'python: ["3.11", "3.12", "3.13"]' in ci
-    assert "python -m build --wheel --outdir wheel-out ." in ci
+    # MF-043a: every supported minor (requires-python >=3.11,<3.14), each pinned to an
+    # exact patch; MF-043b: built with the hash-locked tools, isolation off.
+    assert 'python: ["3.11.9", "3.12.10", "3.13.17"]' in ci
+    assert "python -m build --no-isolation --wheel --outdir wheel-out ." in ci
     assert "./scripts/smoke-installed-wheel.ps1" in ci
 
     assert release.count("./scripts/smoke-installed-wheel.ps1") == 2

@@ -5869,3 +5869,122 @@ multi-select: no "approve all", and no opening each item in turn.
 (`reports/2026-11-05-evidence/suite-triage-py311.json`, a clean clone of `7a7bcb6` plus this commit's files). Against the previous code, 10 of the 11 new or changed cases fail; the one that
 passes is the no-revision regression check. UI smoke (`ui/run-smoke.mjs`): all steps passed,
 both new steps included.
+
+### MF-043a-f build and release hardening (2026-11-06)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| MF-043a CI and toolchain | implemented | this commit | `.github/workflows/ci.yml`, `release.yml`; `tests/test_ci_workflows.py`. Hosted CI on this commit is the run-time check. |
+| MF-043b Dependency locking | implemented | this commit | `requirements-dev.txt`, `requirements-build.txt` (from `requirements-build.in`), `scripts/build-release.ps1 -NoBuildIsolation`. Installed hash-checked on Python 3.11, 3.12 and 3.13 here. |
+| MF-043c Workflow security | implemented | this commit | Both workflows; `tests/test_ci_workflows.py`. |
+| MF-043d Evidence retention | implemented | this commit | `ci.yml` core job: JUnit XML and `pip freeze`, uploaded `if: always()` for 90 days. |
+| MF-043e Provenance and SBOM | implemented, not yet run | this commit | `scripts/make_sbom.py`, `tests/test_sbom.py`; `release.yml` attests and verifies. The release workflow has not run: dispatching it publishes attestations (see below). |
+| MF-043f Operating governance | **blocked: owner decision** | — | `reports/2026-11-06-mf043/GOVERNANCE-DECISIONS.md`: licence, ownership, support and security reporting. Measured: the repository is public with no licence. |
+
+**MF-043a: exact runner and toolchain.**
+- **Runner and Python.** `windows-2025` and Python 3.11.9, 3.12.10 and 3.13.17 are
+  what `windows-latest` and the floating versions resolved to on 2026-11-05
+  (hosted logs, run 42101953713). Pinning them changes nothing today and stops
+  silent drift.
+- **Node.** The adapters job pins Node 22.23.4; it used the runner's default before.
+- **Timeouts and concurrency.** Every job has a timeout, and CI runs are grouped
+  per ref.
+
+**MF-043b: hash-locked installs.**
+- **The locks.** `requirements-dev.txt` holds 51 packages, every one pinned with
+  SHA-256 hashes. It covers:
+  - the runtime dependencies;
+  - the `dev` extra;
+  - the build tools (`build`, `setuptools`, `wheel`).
+
+  `requirements-build.txt` holds the build tools alone, constrained to the same
+  versions.
+- **Installs.** CI installs only from these, with `--require-hashes`, then the
+  project with `--no-deps --no-build-isolation`.
+- **Builds.** Wheels build with `--no-isolation`, so setuptools comes from the
+  lock and not from an isolated environment's fresh download. `build-release.ps1`
+  takes this as an opt-in `-NoBuildIsolation`, so local use is unchanged.
+- **Measured here.** In a clean venv each for 3.11.3, 3.12.13 and 3.13.14:
+  - the locked install works, and `pip check` finds no broken requirements;
+  - a 39-test sample passes;
+  - the wheel builds with isolation off from the build lock.
+- **Limit.** The lock was resolved on Windows and Python 3.11, so it carries no
+  environment markers. A few pure-Python backports install on 3.12 and 3.13
+  without being needed; harmless, as measured.
+
+**MF-043c: workflow security.**
+- **Token.** It only reads (`contents: read`). Only the two release jobs that attest
+  may also mint an OIDC token and write attestations.
+- **Actions.** Every action is pinned to a commit, with its major release in a
+  comment. Each moved to its first Node 24 major, because the hosted logs warned
+  that `checkout@v4` and `setup-python@v5` target the deprecated Node 20:
+  - checkout v5;
+  - setup-python v6;
+  - upload-artifact v6;
+  - setup-node v5;
+  - attest-build-provenance v3.
+- **Checkout** keeps no credentials (`persist-credentials: false`).
+- **No `${{ }}` in any script.** Dispatch inputs, the matrix version and the signing
+  thumbprint reach scripts as environment variables. The stable job checks each
+  dispatch path before the build uses it:
+  - letters, digits and `. _ - /` only;
+  - no `..`;
+  - it stays inside the repository;
+  - it exists.
+
+**MF-043d: evidence.** The core job writes `junit-py<version>.xml` and
+`pip-freeze-py<version>.txt` into `test-evidence/`. It uploads them as
+`test-evidence-core-<version>` whatever the outcome, kept 90 days.
+
+**MF-043e: SBOM and provenance.**
+- **`scripts/make_sbom.py`** writes CycloneDX 1.5 and keeps what ships apart from
+  what built it:
+  - **required:** the wheel's runtime requirements. With a release hash lock,
+    every pinned package appears with its hashes. Without one (a candidate), each
+    appears by name and specifier, marked unresolved.
+  - **excluded:** the hash-locked build tools, and the npm packages the bundles
+    were built with, with their lockfile integrity.
+- **Measured** on this tree's wheel: 2 required, 6 build tools and 42 npm
+  packages.
+- **The release workflow** writes `release-out/sbom.cdx.json`, attests build
+  provenance for the artifacts listed below, then runs `gh attestation verify` on
+  each before the upload:
+  - the wheel;
+  - the Obsidian and Cowork zips;
+  - the host and installer scripts;
+  - the release manifest;
+  - the SBOM.
+
+  In the stable job this happens after Authenticode signing. `verify-release.ps1`
+  checks only manifest-listed files, so the later SBOM does not disturb it.
+- **Not run yet.** The repository is public, so its attestations go to Sigstore's
+  public transparency log. Dispatching even a candidate publishes that record, so
+  it waits for the owner.
+
+**Tests.**
+- `tests/test_ci_workflows.py`, 18 cases:
+  - permissions;
+  - commit pins with release comments;
+  - checkout credentials;
+  - exact runners, Python and Node, and timeouts;
+  - no expression in a script;
+  - hash-locked installs and isolation-off builds;
+  - evidence upload;
+  - the dispatch-input guard;
+  - attest then verify;
+  - each lock fully pinned with hashes and covering everything `pyproject.toml`
+    declares;
+  - the build lock agreeing with the dev lock.
+- `tests/test_sbom.py`, 4 cases:
+  - a candidate lists runtime requirements as unresolved;
+  - a stable lock pins everything with its hashes;
+  - a lock missing a requirement is refused;
+  - the output is deterministic.
+- `tests/test_installed_wheel_smoke.py` pinned the old workflow text. It now
+  expects the exact-patch matrix and the isolation-off build; its point (every
+  supported Python smokes a freshly built wheel) is unchanged.
+
+**Verification:** full suite: 2114 passed, 2 skipped, 5 deselected in 661.16s (0:11:01) (exit 0, Python 3.11.3)
+(`reports/2026-11-06-evidence/suite-mf043-py311.json`, a clean clone of `3b3de57` plus this
+commit's files). Against the old workflows, 17 of the 18 workflow cases fail (the 18th only
+checks both files exist). Hosted CI on this commit is the run-time check of the workflows.

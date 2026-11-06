@@ -26,19 +26,40 @@ on:
   push:
     tags: ["v*"]
 
+# MF-043 (see ci.yml for the rules, which tests/test_ci_workflows.py checks). On top
+# of those, only the jobs that attest their artifacts may mint an OIDC token and
+# write attestations. Dispatch inputs reach scripts as environment variables and
+# are checked as repository-relative paths before anything uses them.
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   candidate:
-    runs-on: windows-latest
+    runs-on: windows-2025
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
-          python-version: "3.13"
-      - name: Install release build tools
-        run: python -m pip install -e ".[dev]" build pip-tools
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13.17"
+      - name: Install release build tools from the hash lock
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check --require-hashes -r requirements-dev.txt
+          python -m pip install --disable-pip-version-check --no-deps --no-build-isolation -e .
       - name: Build all release artifacts
         shell: pwsh
-        run: ./scripts/build-release.ps1 -Python python -OutDir release-out
+        run: ./scripts/build-release.ps1 -Python python -OutDir release-out -NoBuildIsolation
       - name: Smoke candidate Core wheel
         shell: pwsh
         run: |
@@ -60,11 +81,42 @@ jobs:
             -Wheel $wheel[0].FullName `
             -CoworkZip (Resolve-Path release-out/cowork/librarian-cowork.zip).Path `
             -WorkRoot (Join-Path $env:RUNNER_TEMP "librarian-candidate-packaged-adapters")
+      - name: Software bill of materials
+        shell: pwsh
+        run: |
+          $wheel = @(Get-ChildItem -LiteralPath release-out/core -Filter *.whl -File)[0]
+          python scripts/make_sbom.py --wheel $wheel.FullName --out release-out/sbom.cdx.json `
+            --build-lock requirements-build.txt --npm-lock ui/package-lock.json --npm-lock obsidian/package-lock.json
+      - name: Attest build provenance
+        id: attest
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: |
+            release-out/core/*.whl
+            release-out/obsidian/*.zip
+            release-out/cowork/*.zip
+            release-out/host/*.ps1
+            release-out/installer/*.ps1
+            release-out/release-manifest.json
+            release-out/sbom.cdx.json
+      - name: Verify the attestations
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          $subjects = @(Get-ChildItem -LiteralPath release-out/core, release-out/cowork, release-out/obsidian -File) +
+            @(Get-Item -LiteralPath release-out/release-manifest.json, release-out/sbom.cdx.json)
+          foreach ($subject in $subjects) {
+            gh attestation verify $subject.FullName --repo $env:REPOSITORY
+            if ($LASTEXITCODE -ne 0) { throw "No valid provenance for $($subject.Name)." }
+          }
       - name: Upload non-installable candidate bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: librarian-candidate-${{ github.ref_name }}
           path: release-out
+          retention-days: 90
 
   stable:
     # A tag produces a reviewable candidate.  Stable publication is an
@@ -73,22 +125,49 @@ jobs:
     # treat checked-in candidate data as a production release.
     if: github.event_name == 'workflow_dispatch' && inputs.stable_release
     needs: candidate
-    runs-on: windows-latest
+    runs-on: windows-2025
+    timeout-minutes: 60
     environment: stable-release
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    env:
+      RELEASE_LEADS: ${{ inputs.release_leads_path }}
+      REQUIREMENTS_LOCK: ${{ inputs.requirements_lock_path }}
+      WHEELHOUSE: ${{ inputs.wheelhouse_path }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
-          python-version: "3.13"
-      - name: Install release build tools
-        run: python -m pip install -e ".[dev]" build
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13.17"
+      - name: Check the release inputs are repository paths
+        shell: pwsh
+        run: |
+          $root = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE).TrimEnd('\') + '\'
+          foreach ($name in "RELEASE_LEADS", "REQUIREMENTS_LOCK", "WHEELHOUSE") {
+            $value = [Environment]::GetEnvironmentVariable($name)
+            if ($value -notmatch '^[A-Za-z0-9][A-Za-z0-9._/-]*$' -or $value -match '(^|/)\.\.(/|$)') {
+              throw "$name must be a repository-relative path of letters, digits and . _ - /: '$value'"
+            }
+            $full = [IO.Path]::GetFullPath((Join-Path $env:GITHUB_WORKSPACE $value))
+            if (-not $full.StartsWith($root, [StringComparison]::OrdinalIgnoreCase)) { throw "$name leaves the repository." }
+            if (-not (Test-Path -LiteralPath $full)) { throw "$name does not exist: $value" }
+          }
+      - name: Install release build tools from the hash lock
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check --require-hashes -r requirements-dev.txt
+          python -m pip install --disable-pip-version-check --no-deps --no-build-isolation -e .
       - name: Build evidence-backed stable bundle
         shell: pwsh
         run: >
-          ./scripts/build-release.ps1 -Python python -OutDir release-out -Stable
-          -ReleaseLeads "${{ inputs.release_leads_path }}"
-          -RequirementsLock "${{ inputs.requirements_lock_path }}"
-          -Wheelhouse "${{ inputs.wheelhouse_path }}"
+          ./scripts/build-release.ps1 -Python python -OutDir release-out -Stable -NoBuildIsolation
+          -ReleaseLeads $env:RELEASE_LEADS
+          -RequirementsLock $env:REQUIREMENTS_LOCK
+          -Wheelhouse $env:WHEELHOUSE
       - name: Smoke stable Core wheel before signing
         shell: pwsh
         run: |
@@ -134,11 +213,44 @@ jobs:
           }
       - name: Sign and verify stable bundle
         shell: pwsh
+        env:
+          CERTIFICATE_THUMBPRINT: ${{ steps.signing.outputs.thumbprint }}
         run: |
-          ./scripts/sign-release.ps1 -ReleaseRoot release-out -CertificateThumbprint "${{ steps.signing.outputs.thumbprint }}"
+          ./scripts/sign-release.ps1 -ReleaseRoot release-out -CertificateThumbprint $env:CERTIFICATE_THUMBPRINT
           ./scripts/verify-release.ps1 -ReleaseRoot release-out
+      - name: Software bill of materials
+        shell: pwsh
+        run: |
+          $wheel = @(Get-ChildItem -LiteralPath release-out/core -Filter *.whl -File)[0]
+          python scripts/make_sbom.py --wheel $wheel.FullName --out release-out/sbom.cdx.json `
+            --lock release-out/requirements.release.lock --build-lock requirements-build.txt `
+            --npm-lock ui/package-lock.json --npm-lock obsidian/package-lock.json
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: |
+            release-out/core/*.whl
+            release-out/obsidian/*.zip
+            release-out/cowork/*.zip
+            release-out/host/*.ps1
+            release-out/installer/*.ps1
+            release-out/release-manifest.json
+            release-out/sbom.cdx.json
+      - name: Verify the attestations
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          $subjects = @(Get-ChildItem -LiteralPath release-out/core, release-out/cowork, release-out/obsidian -File) +
+            @(Get-Item -LiteralPath release-out/release-manifest.json, release-out/sbom.cdx.json)
+          foreach ($subject in $subjects) {
+            gh attestation verify $subject.FullName --repo $env:REPOSITORY
+            if ($LASTEXITCODE -ne 0) { throw "No valid provenance for $($subject.Name)." }
+          }
       - name: Upload verified stable bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: librarian-release-${{ github.ref_name }}
           path: release-out
+          retention-days: 90

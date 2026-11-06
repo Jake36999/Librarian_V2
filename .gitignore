@@ -65,3 +65,6 @@ reports/2026-10-29-long-horizon-harness-research/data/remaining-packet-*.txt
 reports/2026-10-30-runtime-tooling-literature/data/paper_text/
 reports/2026-10-30-runtime-tooling-literature/data/page_views/
 /docs/Development transcripts/
+
+# CI evidence written by the core job (MF-043d); uploaded, never committed
+test-evidence/

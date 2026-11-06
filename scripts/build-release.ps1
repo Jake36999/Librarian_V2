@@ -23,7 +23,11 @@ param(
     [string]$RequirementsLock = "",
     [string]$Wheelhouse = "",
     [switch]$SkipTests,
-    [switch]$SkipUi
+    [switch]$SkipUi,
+    # CI and release builds (MF-043b): build with the hash-locked setuptools already
+    # installed (requirements-build.txt or requirements-dev.txt), not with whatever an
+    # isolated build environment would fetch.
+    [switch]$NoBuildIsolation
 )
 
 $ErrorActionPreference = "Stop"
@@ -137,7 +141,8 @@ if (-not $SkipTests) {
     Invoke-Native "Core test suite" { & $Python -m pytest }
 }
 
-Invoke-Native "Core wheel build" { & $Python -m build --wheel --outdir (Join-Path $OutDir "core") $Root }
+$buildIsolation = if ($NoBuildIsolation) { @("--no-isolation") } else { @() }
+Invoke-Native "Core wheel build" { & $Python -m build @buildIsolation --wheel --outdir (Join-Path $OutDir "core") $Root }
 $wheel = Get-ChildItem (Join-Path $OutDir "core") -Filter "*.whl" -File |
     Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
 if (-not $wheel) { throw "The Core wheel was not created." }

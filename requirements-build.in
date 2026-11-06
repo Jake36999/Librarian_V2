@@ -1,0 +1,5 @@
+# Build tooling for CI and release builds: python -m build --no-isolation uses
+# exactly these, hash-locked into requirements-build.txt.
+build>=1.2
+setuptools>=68
+wheel

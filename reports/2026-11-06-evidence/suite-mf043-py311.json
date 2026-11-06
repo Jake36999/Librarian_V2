@@ -1,0 +1,29 @@
+{
+ "command": [
+  "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone",
+ "exit_code": 0,
+ "summary": "2114 passed, 2 skipped, 5 deselected in 661.16s (0:11:01)",
+ "started_utc": "2026-11-06T03:08:57.793887+00:00",
+ "seconds": 662.3,
+ "head": "3b3de570f7c62f09ff36629347754e6b3799cbb9",
+ "tracked_changes": [
+  " M .github/workflows/ci.yml",
+  " M .github/workflows/release.yml",
+  " M .gitignore",
+  " M docs/unified-implementation-plan.md",
+  " M scripts/build-release.ps1",
+  " M tests/test_installed_wheel_smoke.py"
+ ],
+ "python": "3.11.3",
+ "executable": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-mf043-py311.log",
+ "log_sha256": "e0e0c4cbce842c10b70ccc21fc93ac14b235429486cca0a9ba3fabed26adca6c"
+}
