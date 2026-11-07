@@ -513,7 +513,8 @@ class PromotionGuard:
                 self.check()
             if self.leases is not None:
                 self.leases.assert_writable([destination])
-            os.replace(temp, target)
+            from .file_access import replace as replace_file
+            replace_file(temp, target)
             self.expected[destination] = self.expected[source]
             self.completed.append(destination)
             if declared:

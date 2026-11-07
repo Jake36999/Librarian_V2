@@ -1,0 +1,27 @@
+{
+ "command": [
+  "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone",
+ "exit_code": 0,
+ "summary": "2130 passed, 2 skipped, 5 deselected in 687.35s (0:11:27)",
+ "started_utc": "2026-11-07T00:07:46.788638+00:00",
+ "seconds": 688.6,
+ "head": "294d15b10f51fd6334da2dd497cf47dd01b6f7fb",
+ "tracked_changes": [
+  " M docs/unified-implementation-plan.md",
+  " M src/resource_librarian/coordination.py",
+  " M src/resource_librarian/file_access.py",
+  " M src/resource_librarian/promote.py"
+ ],
+ "python": "3.11.3",
+ "executable": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-replace-py311.log",
+ "log_sha256": "31c6b93379a734d2ed86ca5ca35a6413469202b82d6e0e4db765c5e528c77c9e"
+}

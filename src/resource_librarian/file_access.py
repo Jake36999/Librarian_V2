@@ -67,6 +67,28 @@ class FileChangedError(OSError):
     """A path stopped naming the file whose bytes were just read."""
 
 
+# Hosted CI, 2026-11-07 (the "promotion interrupted" intermittent, three runs before):
+# os.replace raised PermissionError on a just-written note. Another process (a virus
+# scan or the search indexer reading the new file) briefly held the destination. On
+# Windows the replacement is retried a few times, about 1 s in all, and then the error
+# stands. Elsewhere a PermissionError is a real one and is never retried.
+RETRY_REPLACE = os.name == "nt"
+REPLACE_WAITS = (0.02, 0.04, 0.08, 0.16, 0.25, 0.25, 0.25)
+
+
+def replace(source: Path, destination: Path) -> None:
+    """os.replace, waiting out a brief hold on the destination (see above)."""
+    import time
+    for wait in (*REPLACE_WAITS, None) if RETRY_REPLACE else (None,):
+        try:
+            os.replace(source, destination)
+            return
+        except PermissionError:
+            if wait is None:
+                raise
+            time.sleep(wait)
+
+
 def file_access(path: Path) -> Any:
     """One reentrant lock per canonical path, reclaimed after its last user."""
     key = os.path.normcase(str(path.resolve()))

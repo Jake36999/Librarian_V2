@@ -29,6 +29,7 @@ from typing import Any, Callable, Iterator, TypeVar
 
 from . import __version__, process_identity
 from .file_access import file_access
+from .file_access import replace as replace_file
 from .rules import Refusal
 from .vault import Vault, now_iso
 
@@ -410,7 +411,7 @@ def atomic_write_text(path: Path, text: str, encoding: str = "utf-8") -> None:
             with contextlib.suppress(OSError):
                 os.fsync(handle.fileno())
         with file_access(path):
-            os.replace(temp, path)
+            replace_file(temp, path)
     finally:
         with contextlib.suppress(OSError):
             temp.unlink()
@@ -427,7 +428,7 @@ def atomic_write_bytes(path: Path, data: bytes) -> None:
             with contextlib.suppress(OSError):
                 os.fsync(handle.fileno())
         with file_access(path):
-            os.replace(temp, path)
+            replace_file(temp, path)
     finally:
         with contextlib.suppress(OSError):
             temp.unlink()

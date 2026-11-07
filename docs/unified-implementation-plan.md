@@ -6096,3 +6096,47 @@ umbrella MF-027 stays open until they are.
 commit's files). The first full run raised one warning: the review thread assumed a loop with `ctx`,
 and `tests/test_shutdown.py` passes a bare stand-in. Guarded with `getattr`; this run has none. Against
 the previous code all 13 new or changed cases fail. UI smoke: all steps passed.
+
+### Hosted intermittent diagnosed: a brief hold on a just-written note (2026-11-07)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| "promotion interrupted" hosted intermittent (MF-004 follow-up) | fixed, by a bounded retry | this commit | `file_access.replace`, used by `coordination.atomic_write_text` and `atomic_write_bytes` and by the promotion copy in `promote.py`; `tests/test_file_replace.py`. |
+
+**Measured.** Hosted CI on `294d15b` (run 42314300786) failed in two places:
+- **core 3.13:** two tests in `tests/test_core_source_batch.py`. With the
+  diagnostics from `51ccacf`, the log names the cause for the first time:
+  `promotion interrupted by PermissionError after 9 completed write(s) at
+  coordination.py:413 atomic_write_text`, which is `os.replace` onto a
+  just-written index note.
+- **core 3.12:** `tests/test_library_picker.py`, a dropped local connection
+  (WinError 10053).
+
+Neither code path changed in `294d15b`. Locally, both files pass 3 times out of 3
+on 3.13.14 and on 3.12.13; the full suite passes on 3.11. The failed jobs were
+rerun.
+
+**Cause, plausible but not observed directly.** `file_access` serializes the
+Core's own threads, not other processes. On a Windows runner a virus scan or the
+search indexer can open a just-written file for a moment. `os.replace` onto it
+then raises `PermissionError`, and the promotion stops part way: the intermittent
+seen three times before.
+
+**Fix.**
+- `file_access.replace` retries `os.replace` on `PermissionError`, on Windows
+  only, with waits of 0.02 to 0.25 s (about 1.05 s in all).
+- A lasting hold still raises, with the old bytes intact and no temp file left.
+- On other systems a `PermissionError` is a real one and is never retried.
+
+**Not claimed.** That this removes the intermittent. Only its absence over later
+hosted runs can show that.
+
+**Tests.** `tests/test_file_replace.py`, 3 cases:
+- a brief hold is waited out;
+- a lasting hold fails and leaves the old bytes;
+- elsewhere a permission error is never retried.
+
+**Verification:** full suite: 2130 passed, 2 skipped, 5 deselected in 687.35s (0:11:27) (exit 0, Python 3.11.3)
+(`reports/2026-11-07-evidence/suite-replace-py311.json`, a clean clone of `294d15b` plus this
+commit's files). The rerun of the failed jobs on unchanged `294d15b` passed every job, which
+confirms both failures were intermittent. `tests/test_file_replace.py` errors on the previous code.
