@@ -77,15 +77,14 @@ starts one.
 |---|---|---|
 | `CORE_REQUIRED: no vault` | the MCP process has no library | set `--vault` and restart the client |
 | `CORE_REQUIRED: no Librarian Core is running` | nothing serves that library | `host start --vault …`, or ask the person to open it |
-| `vault_in_use` when launching the app | a Core already owns the library | use that Core: `host status`, or reopen its window (see the known defect below) |
-| `stale_vault_lease` | a Core stopped without releasing the library | the person checks nothing is running, then launches with `--takeover`. **Never take over on your own.** |
+| `{"attached": url}` when launching the app | the library's Core was already running | nothing: that Core was opened, no second one was built |
+| `vault_in_use` when launching the app | a live process holds the library but does not answer at its address | the message names the process; the person closes it, then opens the library again |
+| `stale_vault_lease` | a Core stopped without releasing the library | the app shows the person a takeover page (`takeover_page`); headless or Host launches print this line instead. **Never take over on your own.** |
 | `requires screened qualification for role '…'` | that helper route has no evidence (section 2) | ask the person to qualify the route |
 
-**Known defect (2026-11-12).** Closing the browser tab leaves the Core running, by
-design. Launching the app again then refuses with `vault_in_use` instead of
-reopening the running Core (`app.py:4641`). Until that is fixed, use
-`host status` to find the running Core's address, or `host stop` and start again.
-The fix is scoped in `reports/2026-11-12-progress/LIBRARY-ACCESS-API-SCOPE.md`.
+**Reopening (fixed 2026-11-12).** Closing the browser tab leaves the Core running,
+by design. Launching the app again, or opening the library from the picker, now
+opens that running Core (`reopen.running_core`) instead of refusing.
 
 ## 2. Helper sub-agents
 

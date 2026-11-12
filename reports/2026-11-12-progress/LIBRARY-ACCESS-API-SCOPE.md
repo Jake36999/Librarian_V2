@@ -35,6 +35,9 @@ It replaces none of them.
 
 ## 2. The fix for reopening (small, do first)
 
+**Done 2026-11-12 (A1):** `reopen.py`, `app.serve`, `library_picker.launch`;
+see the plan's progress log. The rest of this scope is still a proposal.
+
 **In `app.serve`,** before building an `App`:
 - **Core alive:** if `connection.load(vault.root)` names a live process
   (`process_identity.is_alive`) and its URL answers `/api/meta` on loopback,

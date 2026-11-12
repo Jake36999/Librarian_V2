@@ -408,6 +408,15 @@ def create(name: str = "", parent: str = "", folder: str = "", profile: str = ""
 def launch(path: str) -> dict[str, Any]:
     """Start the full app at the library containing `path`, on a free port of its own;
     its address once it is listening. Replaced in tests."""
+    # A library still open from an earlier tab is opened where it runs; a
+    # second Core would only meet its lease.
+    from . import reopen
+    try:
+        running = reopen.running_core(path)
+    except reopen.CoreUnreachable as exc:
+        raise PickerError(str(exc)) from None
+    if running is not None:
+        return {"url": running, "path": str(Path(path).resolve()), "attached": True}
     # --vault is a top-level option, so it goes before the `app` subcommand. The
     # picker still holds its own port while the child starts, hence port 0.
     cmd = [sys.executable, "-m", "resource_librarian", "--vault", path, "app", "--port", "0"]
@@ -422,6 +431,12 @@ def launch(path: str) -> dict[str, Any]:
         data = json.loads(line)
     except json.JSONDecodeError:
         data = None
+    if isinstance(data, dict) and data.get("attached"):
+        return {"url": data["attached"], "path": data.get("vault", path), "attached": True}
+    if isinstance(data, dict) and data.get("takeover_page"):
+        # A stale lease: the child waits on its page for the person's answer.
+        return {"url": data["takeover_page"], "path": data.get("vault", path),
+                "stale_lease": True}
     if not isinstance(data, dict) or not data.get("listening"):
         if proc.poll() is None:
             proc.terminate()

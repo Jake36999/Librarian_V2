@@ -6140,3 +6140,63 @@ hosted runs can show that.
 (`reports/2026-11-07-evidence/suite-replace-py311.json`, a clean clone of `294d15b` plus this
 commit's files). The rerun of the failed jobs on unchanged `294d15b` passed every job, which
 confirms both failures were intermittent. `tests/test_file_replace.py` errors on the previous code.
+
+### A1: reopening a library opens its running Core; a stale lease asks the person (2026-11-12)
+
+| Task | Status | Commit | Evidence and notes |
+| --- | --- | --- | --- |
+| A1 of `reports/2026-11-12-progress/LIBRARY-ACCESS-API-SCOPE.md` (the owner's reopen defect) | implemented | this commit | new `reopen.py`; `app.serve`; `library_picker.launch`; `tests/test_app_reopen.py` |
+
+**The defect.** Closing the browser tab leaves the Core running, by design.
+Launching the app again built a second `App`, met the live lease, printed
+`vault_in_use` and exited. `host start` already checked the connection record
+first; the app launch path and the picker did not.
+
+**Change.**
+- `reopen.running_core(root)` reads the library's connection record. If its
+  process is alive (`process_identity.is_alive` with the start identity) and
+  the loopback URL answers the authenticated `/api/meta`, it returns that URL.
+- `app.serve` calls it before building an `App`. On a running Core it prints
+  `{"attached": url, "vault": …}`, opens the browser if asked, and exits 0. No
+  second lease is attempted.
+- A live process that does not answer (or a non-loopback record) is refused as
+  `vault_in_use`, naming the process. It is never a reason to start a second Core.
+- **Stale lease.** `serve` puts the decision to the person on a one-question
+  page (`reopen.TakeoverPage`) at the app's own port. The page shows the stopped
+  process's pid and start time, and offers "Take over and open" or "Leave it
+  closed". The page's token and Origin check are as strict as the picker's.
+  Taking over rebuilds the `App` with `takeover=True` on the same port, so the
+  page's reload lands on the library. An unanswered page stops after 30 minutes.
+- Host-managed launches (`LIBRARIAN_HOST_MANAGED=1`) and explicit `--takeover`
+  launches keep the old `stale_vault_lease` JSON line: nobody would see a page.
+- `library_picker.launch` makes the same check before starting a child. It
+  also follows a child's `attached` or `takeover_page` line, so the picker's
+  page navigates to the running library or to the takeover page.
+- The startup lines now go through `_announce`, which ignores a closed pipe:
+  the picker exits after handing off, while its child may still be waiting on
+  the takeover page.
+
+**Not changed.** No agent path can take over: the router (A2-A4) is not built,
+and the MCP server still refuses with `CORE_REQUIRED`.
+
+**Tests.** `tests/test_app_reopen.py`, 9 cases:
+- a real in-process Core: `serve` attaches and opens its URL, and `App` is
+  never built a second time;
+- a live PID with an unreachable URL: refused by name;
+- a record whose process start differs: not attached to;
+- a stale lease: the page refuses a wrong token, takes over only on "Take
+  over", and never on "Leave it closed";
+- host-managed: the JSON line and no page;
+- the picker: opens a running library without a child, refuses an unreachable
+  one by name, and forwards a child's takeover page.
+
+**Checked by hand on real processes** (a scratch library, its own config dir):
+- a Core started with `app --port 0`, then `app` again for the same library:
+  exit 0 and `{"attached": "http://127.0.0.1:51559/"}`, the first Core's address;
+- that Core terminated, then `app` again: a `takeover_page` line naming the
+  stopped pid 36164. Answering "takeover" on the page gave a `listening` line on
+  the same port, and that address then served the library.
+
+**Verification:** full suite: 2139 passed, 2 skipped, 5 deselected in 655.93s (0:10:55) (exit 0, Python 3.11.3)
+(`reports/2026-11-12-evidence/suite-a1.json`, a clean clone of `6c79979` plus this
+commit's files).

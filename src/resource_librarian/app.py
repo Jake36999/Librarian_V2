@@ -4619,6 +4619,16 @@ def build(app: App, port: int = 0) -> Server:
     return server
 
 
+def _announce(payload: dict[str, Any]) -> None:
+    """One JSON line for whoever started this process (the Host, the picker).
+    A launcher that has since exited leaves a closed pipe; that never stops
+    the app."""
+    try:
+        print(json.dumps(payload), flush=True)
+    except (OSError, ValueError):
+        pass
+
+
 def serve(vault_path: str | None, port: int = 8323, token: str = "",
           open_browser: bool = False, *, takeover: bool = False) -> int:
     import os
@@ -4627,20 +4637,55 @@ def serve(vault_path: str | None, port: int = 8323, token: str = "",
     except Refusal:
         from .library_picker import serve_picker
         return serve_picker(port, open_browser)
+    from . import reopen
+    host_managed = os.environ.get("LIBRARIAN_HOST_MANAGED") == "1"
+    # Closing the tab leaves the Core running. Reopening the library opens
+    # that Core; a second one would only meet the live lease and stop.
     try:
-        app = App(vault, token=token or os.environ.get("LIBRARIAN_TOKEN", ""), coordinate=True,
-                  takeover=takeover or os.environ.get("LIBRARIAN_VAULT_TAKEOVER") == "1",
-                  secret_source="obsidian" if os.environ.get("LIBRARIAN_SECRET_SOURCE") == "obsidian"
-                  else "desktop",
-                  host_managed=os.environ.get("LIBRARIAN_HOST_MANAGED") == "1")
-    except StaleLeaseError as exc:
-        print(json.dumps({"error": "stale_vault_lease", "detail": str(exc),
-                          "takeover": "rerun Librarian app with --takeover after checking the old Core"}),
-              flush=True)
+        running = reopen.running_core(vault.root)
+    except reopen.CoreUnreachable as exc:
+        _announce({"error": "vault_in_use", "detail": str(exc)})
         return 2
-    except LeaseHeldError as exc:
-        print(json.dumps({"error": "vault_in_use", "detail": str(exc)}), flush=True)
-        return 2
+    if running is not None:
+        _announce({"attached": running, "vault": str(vault.root)})
+        if open_browser:
+            import webbrowser
+            webbrowser.open(running)
+        return 0
+    takeover = takeover or os.environ.get("LIBRARIAN_VAULT_TAKEOVER") == "1"
+    while True:
+        try:
+            app = App(vault, token=token or os.environ.get("LIBRARIAN_TOKEN", ""), coordinate=True,
+                      takeover=takeover,
+                      secret_source="obsidian"
+                      if os.environ.get("LIBRARIAN_SECRET_SOURCE") == "obsidian" else "desktop",
+                      host_managed=host_managed)
+            break
+        except StaleLeaseError as exc:
+            if host_managed or takeover:
+                # Headless: nobody would see a page. The Host reports this line.
+                _announce({"error": "stale_vault_lease", "detail": str(exc),
+                           "takeover": "rerun Librarian app with --takeover after "
+                                       "checking the old Core"})
+                return 2
+            # A person decides whether the old Core is really gone: ask on a
+            # page at this app's own address, so its reload opens the library.
+            page = reopen.TakeoverPage(port, name=vault.root.name, detail=str(exc))
+            port = page.server_address[1]
+            _announce({"stale_vault_lease": True, "takeover_page": page.url,
+                       "vault": str(vault.root), "detail": str(exc)})
+            if open_browser:
+                import webbrowser
+                webbrowser.open(page.url)
+            choice = page.wait()
+            if choice != "takeover":
+                _announce({"error": "stale_vault_lease", "detail": str(exc),
+                           "decision": choice or "no answer"})
+                return 2
+            takeover, open_browser = True, False      # the page reloads into the library
+        except LeaseHeldError as exc:
+            _announce({"error": "vault_in_use", "detail": str(exc)})
+            return 2
     from . import libraries
     try:
         libraries.remember(vault)
@@ -4659,7 +4704,7 @@ def serve(vault_path: str | None, port: int = 8323, token: str = "",
                        protocol_version=PROTOCOL_VERSION, secret_source=app.secret_source)
     # The host that started the core reads this line to find the port.
     started = {"listening": url, "vault": str(vault.root)}
-    print(json.dumps(started), flush=True)
+    _announce(started)
     if open_browser:
         import webbrowser
         webbrowser.open(url)

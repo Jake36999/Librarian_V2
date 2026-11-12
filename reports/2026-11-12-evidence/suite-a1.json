@@ -1,0 +1,25 @@
+{
+ "command": [
+  "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+  "-m",
+  "pytest",
+  "-q",
+  "-p",
+  "no:cacheprovider"
+ ],
+ "cwd": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone",
+ "exit_code": 0,
+ "summary": "2139 passed, 2 skipped, 5 deselected in 655.93s (0:10:55)",
+ "started_utc": "2026-11-12T10:50:35.448316+00:00",
+ "seconds": 657.4,
+ "head": "6c799794ef2eb9a871538dce4c8984f99988847b",
+ "tracked_changes": [
+  " M src/resource_librarian/app.py",
+  " M src/resource_librarian/library_picker.py"
+ ],
+ "python": "3.11.3",
+ "executable": "C:\\Users\\jakem\\AppData\\Local\\Temp\\claude\\4770644ade8fbf0e\\5cdfa51f-d524-4ca1-8edc-cdc48a75c2f4\\scratchpad\\ci-clone\\.venv\\Scripts\\python.exe",
+ "platform": "Windows-10-10.0.26200-SP0",
+ "log": "suite-a1.log",
+ "log_sha256": "6b1c8a2b5de9e852bc0690e7a17cf6d43593acea786ea0d377edd6a480f778aa"
+}
