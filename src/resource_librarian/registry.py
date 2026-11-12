@@ -615,7 +615,7 @@ def coerce(spec: ToolSpec, arguments: dict[str, Any]) -> tuple[dict[str, Any], l
     out: dict[str, Any] = {}
     changed: list[str] = []
     for key, value in arguments.items():
-        schema = properties[key]
+        schema = _argument_schema(properties[key], schema_obj)
         kind = schema.get("type")
         if kind == "boolean":
             if isinstance(value, str):
@@ -687,6 +687,25 @@ def coerce(spec: ToolSpec, arguments: dict[str, Any]) -> tuple[dict[str, Any], l
                 text = matches[0]
             out[key] = text
     return out, changed
+
+
+def _argument_schema(schema: dict, root: dict) -> dict:
+    """Resolve local JSON pointers before coercion; never fetch external schemas."""
+    seen = set()
+    while '$ref' in schema:
+        ref = schema['$ref']
+        if not isinstance(ref, str) or not ref.startswith('#/') or ref in seen:
+            raise TypeError('SCHEMA_REF_INVALID: only acyclic local references are supported')
+        seen.add(ref); target = root
+        try:
+            for part in ref[2:].split('/'):
+                target = target[part.replace('~1','/').replace('~0','~')]
+        except (KeyError, TypeError):
+            raise TypeError('SCHEMA_REF_INVALID: unresolved local reference') from None
+        if not isinstance(target, dict):
+            raise TypeError('SCHEMA_REF_INVALID: reference must name a schema object')
+        schema = {**target, **{k:v for k,v in schema.items() if k != '$ref'}}
+    return schema
 
 
 def _literal(value: Any, kind: type) -> Any:
