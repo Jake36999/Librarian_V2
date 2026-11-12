@@ -45,6 +45,13 @@ from .registry import REGISTRY, Card, ToolSpec, clip
 
 CALL_TIMEOUT = 30.0
 MAX_EXTERNAL_RESULT = 8_000
+
+
+def external_result_limit(context_tokens: int | None) -> int:
+    """Bound external results using the active route's declared window (G7)."""
+    if type(context_tokens) is not int or context_tokens <= 131_072:
+        return MAX_EXTERNAL_RESULT
+    return min(160_000, context_tokens * 12 // 100)
 CONFIG_NAME = "mcp.json"
 ACCEPTED_NAME = "mcp_accepted.json"
 _ENV_REF = re.compile(r"^\$\{([A-Z_][A-Z0-9_]*)\}$")
@@ -131,6 +138,8 @@ def digest(definition: dict[str, Any]) -> str:
 
 def _result_text(result: Any) -> str:
     structured = getattr(result, "structured_content", None)
+    if structured is None:
+        structured = getattr(result, 'structuredContent', None)
     if structured is not None:
         try:
             return json.dumps(structured, ensure_ascii=False, default=str)
@@ -457,23 +466,60 @@ class McpManager:
 
     def _make_fn(self, server: str, tool_name: str):
         def fn(ctx, **kwargs) -> dict[str, Any]:
-            return self.call_tool(server, tool_name, kwargs)
+            return self.call_tool(server, tool_name, kwargs,
+                                  limit_chars=ctx.extras.get('external_result_limit'))
         return fn
 
     # -- calling -------------------------------------------------------------
-    def call_tool(self, server: str, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    def call_tool(self, server: str, tool_name: str, arguments: dict[str, Any],
+                  *, limit_chars: int | None = None) -> dict[str, Any]:
+        limit = MAX_EXTERNAL_RESULT if limit_chars is None else limit_chars
+        if type(limit) is not int or not MAX_EXTERNAL_RESULT <= limit <= 160_000:
+            raise ValueError('limit_chars must be 8000..160000')
         client = self._clients.get(server)
+        definition = self.servers().get(server)
+        library = self._library_file()
+        def admitted():
+            current = self.servers().get(server)
+            return (current is not None and definition is not None and current.get('enabled', True)
+                    and self.is_accepted(server, current) and self.enabled_here(server)
+                    and digest(current) == digest(definition) and self._library_file() == library
+                    and self._clients.get(server) is client)
+        def changed():
+            return dict(error='access_changed', server=server, tool=tool_name,
+                        detail='The MCP connection, server approval or library scope changed; result withheld.')
         if client is None or self._portal is None:
             return {"error": "unavailable", "server": server,
                     "detail": f"{server!r} is not connected"}
+        if not admitted():
+            return changed()
         try:
             result = self._portal.call(client.call_tool, tool_name, arguments)
         except Exception as exc:                                # noqa: BLE001
             return {"error": "failed", "server": server, "tool": tool_name,
                     "detail": f"{type(exc).__name__}: {clip(str(exc), 400)}"}
-        return {"server": server, "tool": tool_name, "untrusted": True,
-                "is_error": bool(getattr(result, "is_error", False)),
-                "content": clip(_result_text(result), MAX_EXTERNAL_RESULT)}
+        if not admitted():
+            return changed()
+        text = _result_text(result)
+        structured = getattr(result, 'structured_content', None) is not None or getattr(result, 'structuredContent', None) is not None
+        if not structured:
+            try:
+                structured = isinstance(json.loads(text), (dict, list))
+            except (ValueError, TypeError):
+                pass
+        if structured and len(text) > limit:
+            detail = dict(code='EXTERNAL_RESULT_TOO_LARGE', retryable=True,
+                          message='Structured MCP result withheld intact. Reduce the budget or page size.',
+                          original_characters=len(text), limit_characters=limit)
+            return dict(server=server, tool=tool_name, untrusted=True, is_error=True,
+                        error='result_too_large', truncated=True, structured_result_withheld=True,
+                        content=json.dumps({'error': detail}, separators=(',', ':')))
+        wrapped = dict(server=server, tool=tool_name, untrusted=True,
+                       is_error=bool(getattr(result, 'is_error', getattr(result, 'isError', False))),
+                       content=text if structured else clip(text, limit))
+        if len(text) > limit:
+            wrapped['truncated'] = True
+        return wrapped
 
     def tool_names(self, server: str) -> list[str]:
         return list(self._tool_names.get(server, []))

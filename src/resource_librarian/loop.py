@@ -1132,6 +1132,8 @@ class Loop:
     def call(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """One tool call, as a surface makes it: the loop's thread in, and the
         thread the call opened, resumed or closed out."""
+        from .mcp_client import external_result_limit
+        self.ctx.extras['external_result_limit'] = external_result_limit(self.context_limit)
         if self.only is not None and name not in self.only:
             refusal = Refusal("TIER_REFUSED", f"{name!r} is not one of this helper's tools "
                                               f"({', '.join(sorted(self.only))}): helpers "
