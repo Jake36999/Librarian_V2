@@ -355,7 +355,9 @@ class Registry:
                     not ctx.extras.get("macro_expansion_depth") and \
                     ctx.extras.get("reference_rehydration") != name:
                 allowed = set(active_bundle) if isinstance(active_bundle, (set, frozenset, list, tuple)) else set()
-                if name not in allowed:
+                packet_fetch = (ctx.extras.get('plan_packet_fetch') == name and spec.external
+                    and spec.effect == 'read' and name.rsplit('__',1)[-1] in {'compile_task_packet','list_graphs'})
+                if name not in allowed and not packet_fetch:
                     offered = ", ".join(sorted(allowed)) or "no tools"
                     raise Refusal("TOOL_BUNDLE_REFUSED",
                                   f"{name!r} is not in this turn's task-sized tool bundle "
