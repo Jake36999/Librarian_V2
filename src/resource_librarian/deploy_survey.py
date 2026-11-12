@@ -27,8 +27,13 @@ for writing. Only `.librarian/config.toml` is read, to classify a collision.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
+import shlex
+import shutil
 import stat
+import subprocess
+import tempfile
 import tomllib
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -72,7 +77,11 @@ class Survey:
     version: int = SURVEY_VERSION
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        out = asdict(self)
+        geo = getattr(self, "geo_grapher", None)
+        if geo:
+            out["geo_grapher"] = geo
+        return out
 
 
 def is_link(entry: os.DirEntry | Path) -> bool:
@@ -216,7 +225,49 @@ def survey(folder: Path | str) -> Survey:
     _modes(out, empty=not seen)
     out.fingerprint = _digest(out, seen)
     out.entries = sorted(seen)     # not reported; DEPLOY-02 compares them before and after
+    geo = _geo_grapher_preview(root) if out.exists else None
+    if geo is not None:
+        out.geo_grapher = geo      # reported only when GEOGRAPHER_INIT is set; outside the fingerprint
     return out
+
+
+GEOGRAPHER_TIMEOUT = 60
+
+
+def _geo_grapher_preview(root: Path) -> dict[str, Any] | None:
+    """Ask Geo-Grapher for a read-only partition plan of `root` (workspace-init-v1).
+
+    Runs only when GEOGRAPHER_INIT names a command. It calls `init-workspace ... --plan-out -`
+    and never `--apply`/`--yes`, so nothing is ingested. Its throwaway catalog lives in a
+    temporary folder outside `root` that is removed afterwards.
+    """
+    cmd = os.environ.get("GEOGRAPHER_INIT", "").strip()
+    if not cmd:
+        return None
+    scratch = Path(tempfile.mkdtemp(prefix="librarian-geographer-"))
+    try:
+        argv = [a.strip('"') for a in shlex.split(cmd, posix=False)] + [
+            "init-workspace", "--root", str(root), "--catalog", str(scratch / "catalog.sqlite"), "--plan-out", "-"]
+        try:
+            done = subprocess.run(argv, capture_output=True, timeout=GEOGRAPHER_TIMEOUT,
+                                  stdin=subprocess.DEVNULL)
+        except (OSError, ValueError) as exc:
+            return {"error": "GEOGRAPHER_INIT_UNAVAILABLE", "detail": str(exc)[:300], "command": cmd}
+        except subprocess.TimeoutExpired:
+            return {"error": "GEOGRAPHER_INIT_TIMEOUT", "detail": f"no plan within {GEOGRAPHER_TIMEOUT} s",
+                    "command": cmd}
+        if done.returncode != 0:
+            detail = (done.stderr or done.stdout).decode("utf-8", "replace").strip()
+            return {"error": "GEOGRAPHER_INIT_FAILED", "detail": detail[:300], "command": cmd}
+        try:
+            plan = json.loads(done.stdout.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError) as exc:
+            return {"error": "GEOGRAPHER_INIT_BAD_OUTPUT", "detail": str(exc)[:300], "command": cmd}
+        if not isinstance(plan, dict) or plan.get("plan_version") != "workspace-init-v1":
+            return {"error": "GEOGRAPHER_INIT_BAD_OUTPUT", "detail": "not a workspace-init-v1 plan", "command": cmd}
+        return {"plan": plan, "command": cmd}
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
 
 
 def _modes(out: Survey, *, empty: bool) -> None:
