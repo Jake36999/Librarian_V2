@@ -292,7 +292,9 @@ uvx --refresh-package geo-grapher --from output/phase67-gates/wave4/frontdoor-fi
 
 ## 12. Current verdict — 2026-11-13
 
-**NOT READY after local continuation.** The new candidate passes C14, installed-wheel presets, real-store browser and full Geo/Librarian verification (§15). Local search fixes address inflection, missing comment-block support and rank displacement during packing. The failed registered code cycle remains **5/15**; no new model cycle has validated this changed product. Core remains stopped, so role qualification and the six-task pilot remain pending. Neither branch is merged or pushed. §16 records a concrete proposed cycle awaiting fresh owner authorisation.
+**NOT READY after the owner-authorised continuation cycle.** Results are **2/5, 5/5, 5/5 = 12/15**. The aggregate threshold passes, but the requirement that **each run ≥3/5 fails**. No fourth run was made. All 15 questions have zero wrong-graph calls and zero withheld results; average calls/question is 5.8, with two rejected entity-ID calls in run 1. §16 retains every row, receipt and diagnosis. The earlier 5/15 cycle remains separate.
+
+The candidate's C14, installed-wheel presets, real-store browser and full Geo/Librarian verification still pass (§15); its sealed product and harness inputs did not change during the new cycle. Core remains stopped, so role qualification and the six-task pilot remain pending. Neither branch is merged or pushed. Further model evaluation is stopped at the registered escalation point.
 
 ### Review-2 verdict — retained
 
@@ -451,10 +453,68 @@ The three reviewed constants still rank first for exact-name lookup, return thei
 
 No new paid code benchmark was run. Pool commitment is **$4.47978915 of $10** after this worker and review; remaining approximately $5.5202. Acceptance remains open: changed-product code quality is unmeasured, the earlier cycle failed, Core/role readiness blocks the live pilot, and owner hands-on/firewall decisions remain. Both branches remain unmerged pending owner approval.
 
-## 16. Proposed changed-product code cycle — awaiting owner authorisation
+## 16. Registered changed-product code cycle — owner authorised before execution
+
+The original proposal is retained below. The owner's explicit approval is recorded after it, before execution.
+
+### Original proposal — retained
 
 This is a reviewable proposal, **not permission to execute**. Review 2 §3 required stopping and escalating after the failed cycle. The local continuation changes retrieval, documentary support and packing; testing this changed product needs a separately authorised cycle, rather than a fourth attempt on the old cycle.
 
 Freeze the final candidate wheel/hash and librarian-v2 snapshot from §15, the same five CODE_BENCH questions/markers, Qwen3-Coder-480B, declared 1,048,576-token window, library-scoped lead preset and 12-step limit. Run exactly three independent fresh-library attempts without intervening changes. Preserve all rows in new `code-continuation-cycle-run1.json` through `run3.json`, with per-call logs and separate cost receipts. Pass only if each ≥3/5, total ≥12/15, zero withheld, zero wrong-graph calls and ≤8 average calls/question across all 15 questions. No best-of, changed scoring or fourth attempt. On failure, stop and escalate again.
 
 Planning cost approximately **$0.50**, charged to the existing $10 pool (about $5.52 currently remains). The owner must explicitly approve this proposed cycle before it runs. The six-task pilot independently waits for the Resource-Library roles in §10; approving a benchmark does not qualify or replace those routes and does not approve a merge.
+
+### Owner authorisation and execution seal
+
+The owner explicitly answered **“Authorize the three-run cycle”** to the §16 approval question. This authorises exactly the proposed three attempts, with all frozen settings and pass marks above, paid from the existing pool. No merge or runtime-role qualification is authorised by that answer.
+
+Runner: `scripts/run_wave4_continuation_cycle.py`. Frozen wheel SHA256 `07870422dcc7c758079929379ceb78015d6f8599a5016e13f093d8b1a25b3864`; frozen librarian-v2 snapshot `snapshot:1703964f018a8f5981c139069836a87178098924bd94383d5788c083bb89c9bf`; catalog `D:/Librarian_V2/tmp/geo-grapher-wave4-continuation-stores/catalog.sqlite`. The runner refuses prior outputs, creates an exclusive seal, verifies wheel/snapshot and hashes the unchanged harness files before/after every attempt. The seal records the same five question/marker pairs and settings. Every attempt uses the harness's fresh temporary library and default 12-step limit. No product changes will be made during the cycle. This authorisation and runner are committed before any paid attempt.
+
+Registered continuation run 1: **2/5**, 7.4 calls/question, 0 wrong-graph, 0 withheld, 2 tool errors; metered planning-rate cost **$0.1769609** across 40 HTTP attempts. First file: `code-continuation-cycle-run1.json`.
+
+Registered continuation run 2: **5/5**, 5.0 calls/question, 0 wrong-graph, 0 withheld, 0 tool errors; metered planning-rate cost **$0.1222044** across 30 HTTP attempts. First file: `code-continuation-cycle-run2.json`.
+
+Registered continuation run 3: **5/5**, 5.0 calls/question, 0 wrong-graph, 0 withheld, 0 tool errors; metered planning-rate cost **$0.1303790** across 30 HTTP attempts. First file: `code-continuation-cycle-run3.json`.
+
+Continuation cycle verdict: **FAIL; escalate; no extra model run**, 12/15 markers; 5.80 calls/question across all 15 questions. All three rows above are retained.
+
+### Completed cycle assessment — no fourth run
+
+Preregistration and explicit owner authorisation were committed in **`69fabcb` before dispatch**. All three independent attempts completed on the same sealed wheel, snapshot, questions, marker criterion, model and harness. The exclusive seal and before/after checks passed. There were **87 tool calls**, **85 successful and two rejected**, with **13/15 final answers**; run 1 exhausted the 12-step limit on two questions. No tuning, repair, rescoring, replayed model answer or extra attempt occurred.
+
+| Run | Markers | Calls/question | Wrong graph | Withheld | Tool errors | Cost at stored rates |
+|---|---:|---:|---:|---:|---:|---:|
+| 1 | **2/5** | 7.4 | 0 | 0 | 2 | $0.1769609 |
+| 2 | **5/5** | 5.0 | 0 | 0 | 0 | $0.1222044 |
+| 3 | **5/5** | 5.0 | 0 | 0 | 0 | $0.1303790 |
+
+Every condition is required: per-run ≥3/5 **FAIL**; aggregate ≥12/15 **PASS exactly 12**; zero wrong-graph **PASS**; zero withheld **PASS**; mean ≤8 calls/question **PASS, 5.8**. The two 5/5 rows do not supersede run 1. Tool errors remain diagnostics rather than a newly invented acceptance condition.
+
+| Frozen question marker | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| HELPER_TOOLS | PASS | PASS | PASS |
+| lead_agents | MISS | PASS | PASS |
+| run_one | MISS | PASS | PASS |
+| MAX_EXTERNAL_RESULT | PASS | PASS | PASS |
+| DEFAULT_CONTEXT_TOKENS | MISS | PASS | PASS |
+
+Cycle cost **$0.4295443**, across **100 metered HTTP attempts**, all completed with API-usage estimates; there are no uncertain/reserve-only charges in this cycle. Each run retains its `-cost.json` receipt with the original ledger IDs. Pool commitment is now **$4.90933345 / $10**, about **$5.0907** remaining. These stored-rate estimates are not invoices.
+
+`code-continuation-cycle-audit.json` verifies settings, questions, the step limit, unchanged frozen inputs, unique receipt IDs and the aggregate calculation. Raw results and per-call logs are `code-continuation-cycle-run{1,2,3}.json`; the sealed-input record, summary and separate source-selection diagnosis remain alongside them. All earlier cycle/result files remain intact.
+
+### Evidence-based diagnosis and limits
+
+`code-continuation-cycle-diagnosis.json` records the questions, query arguments, requested canonical entities, original source metadata, rejected calls and bounded answer excerpts. It establishes the following run-1 failures:
+
+- Concurrency: the delegate function's content request succeeded. The final answer described `ThreadPoolExecutor(max_workers=len(asked))` and omitted the upstream `lead_agents` cap, so it misses the frozen marker. The saved logs do not establish which exact source lines were delivered.
+- Clerk: searches led through `next_task`, `task_key`, `Router.for_task`, small helpers, the Clerk file and `run`/`_run`; no direct `run_one` content request was made. The question reached 12 steps with no final answer. A file-span selection containing `run_one` is not proof its defining lines appeared in the returned page.
+- Fallback window: a `DEFAULT_CONTEXT_TOKENS` content request succeeded, followed by further reads/searches, two IDs absent from the snapshot and the step limit with no answer. Both invalid-ID calls were correctly rejected. Their errors supplied placeholder examples rather than real scoped choices, leaving a concrete recovery-usability issue to investigate.
+
+The benchmark deliberately removes `tool_text` from saved result rows. Therefore successful calls and selected source spans do **not** prove exact delivered page contents; no separate code retrieval score is invented and paper option (a) is not applied to code. Before further retrieval tuning, a useful follow-up is bounded response-coverage metadata (returned entity/chunk IDs, actual line ranges, truncation and hashes), then inspection of Clerk ranking, ID-error recovery and final-answer completion at the step limit. Those are proposed investigations, not changes or additional paid runs made here. Two 5/5 runs demonstrate that this product/model combination can complete all five questions; this cycle still fails its registered stability condition.
+
+Each startup log also retains the same rejected `server/discover` probe, followed by normal tool listing and calls. This compatibility warning is separate from agent tool-call errors and is not silently erased or counted as an answer marker. Harness question wall-time totals were **203.8 s, 112.4 s and 1,049.5 s**; those include provider/runtime time and are not the local C14 timing. No cause for the slow third run is asserted beyond the recorded timings.
+
+### Stop and remaining owner work
+
+The runner exited **1 for the failed gate**, after completing all three runs. No production code changed after the passing full suites and final-wheel QA in §15, so those results remain attached to this exact candidate; no redundant suite rerun or new package build is claimed. Core was checked read-only again and remains stopped; no qualification call, live pilot, production-lead question, route substitution, merge or push was performed. Exact Resource-Library steps remain in §10. Further evaluation or repair requires the owner's direction; this authorisation is fully used.

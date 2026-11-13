@@ -3178,5 +3178,129 @@
     "merged": false,
     "pushed": false,
     "implementation_commit": "fe75697"
+  },
+  "continuation_cycle_2026_11_13": {
+    "authorised": true,
+    "owner_answer": "Authorize the three-run cycle",
+    "registration": "PHASE67_WAVE4_GATE.md section 16",
+    "executed": true,
+    "runs_expected": 3,
+    "wheel_sha256": "07870422dcc7c758079929379ceb78015d6f8599a5016e13f093d8b1a25b3864",
+    "snapshot": "snapshot:1703964f018a8f5981c139069836a87178098924bd94383d5788c083bb89c9bf",
+    "criteria": {
+      "runs": 3,
+      "minimum_each": 3,
+      "minimum_total": 12,
+      "total": 15,
+      "maximum_wrong_graph": 0,
+      "maximum_withheld": 0,
+      "maximum_average_calls_per_question": 8,
+      "estimated_usd": 0.5
+    },
+    "runner": "scripts/run_wave4_continuation_cycle.py",
+    "registration_commit": "69fabcb",
+    "summary": {
+      "seal_file": "code-continuation-cycle-seal.json",
+      "runs": [
+        {
+          "run": 1,
+          "file": "code-continuation-cycle-run1.json",
+          "markers": 2,
+          "calls": 37,
+          "wrong_graph": 0,
+          "withheld": 0,
+          "tool_errors": 2,
+          "cost_usd": 0.1769609
+        },
+        {
+          "run": 2,
+          "file": "code-continuation-cycle-run2.json",
+          "markers": 5,
+          "calls": 25,
+          "wrong_graph": 0,
+          "withheld": 0,
+          "tool_errors": 0,
+          "cost_usd": 0.12220439999999998
+        },
+        {
+          "run": 3,
+          "file": "code-continuation-cycle-run3.json",
+          "markers": 5,
+          "calls": 25,
+          "wrong_graph": 0,
+          "withheld": 0,
+          "tool_errors": 0,
+          "cost_usd": 0.130379
+        }
+      ],
+      "total_markers": 12,
+      "total": 15,
+      "calls_per_question": 5.8,
+      "passed": false
+    },
+    "audit": {
+      "frozen_inputs_unchanged": true,
+      "questions_settings_and_step_limit_verified": true,
+      "runs": [
+        {
+          "run": 1,
+          "answered": 3,
+          "max_steps": 2,
+          "wall_seconds": 203.8,
+          "markers": 2,
+          "tool_errors": 2
+        },
+        {
+          "run": 2,
+          "answered": 5,
+          "max_steps": 0,
+          "wall_seconds": 112.4,
+          "markers": 5,
+          "tool_errors": 0
+        },
+        {
+          "run": 3,
+          "answered": 5,
+          "max_steps": 0,
+          "wall_seconds": 1049.5,
+          "markers": 5,
+          "tool_errors": 0
+        }
+      ],
+      "metered_http_attempts": 100,
+      "receipt_statuses": {
+        "completed": 100
+      },
+      "cost_basis": {
+        "api_usage_estimate": 100
+      },
+      "cycle_cost_usd": 0.42954430000000005,
+      "pool": {
+        "budget_usd": 10.0,
+        "committed_usd": 4.90933345
+      },
+      "criteria": {
+        "each_run_at_least_3": false,
+        "aggregate_at_least_12": true,
+        "wrong_graph_zero": true,
+        "withheld_zero": true,
+        "average_calls_at_most_8": true
+      },
+      "tool_errors_total": 2,
+      "extra_runs": 0,
+      "no_product_changes_during_cycle": true
+    },
+    "diagnosis_file": "output/phase67-gates/wave4/code-continuation-cycle-diagnosis.json",
+    "gate_passed": false,
+    "failed_condition": "each run >= 3/5; run 1 scored 2/5",
+    "cycle_cost_usd": 0.4295443,
+    "extra_runs": 0,
+    "stopped_at_escalation": true,
+    "pilot_executed": false,
+    "core_alive": false,
+    "qualification_call_sent": false,
+    "merged": false,
+    "pushed": false,
+    "previous_candidate_checks_unchanged": true
   }
 }
