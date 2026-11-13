@@ -1,0 +1,33 @@
+{
+  "track": "post-wave4-code-quality",
+  "baseline_commit": "d670d201d0b03572b6a8bc2c6079aac2da233fa6",
+  "seed": 20261113,
+  "writer_model": "XiaomiMiMo/MiMo-V2.6-Flash",
+  "writer_run_id": "20261113T133512-0c9c4d6e",
+  "writer_cost_usd": 0.00059836,
+  "snapshots": {
+    "librarian-v2": "snapshot:1703964f018a8f5981c139069836a87178098924bd94383d5788c083bb89c9bf",
+    "ToolSet": "snapshot:f5029b6bf601fcb2896a3c494e30dc306ced8624436d9334a9f9000931e1abee"
+  },
+  "author_format_repairs": 2,
+  "author_raw_sha256": "d12484552886b215a1b2eefe65db823a26b1184d863adb3ac9c5846a6cd2efce",
+  "author_identifier_anonymizations": 1,
+  "counts": {
+    "constants": 10,
+    "functions": 10,
+    "behaviors": 5
+  },
+  "strata": {
+    "librarian-v2": 13,
+    "ToolSet": 12
+  },
+  "eligibility": "unique nontrivial identifiers; >=100-char own docs; no tests/vendor/generated/external; exclude dev markers/docs; exact static documented callees for behavior; fixed per-graph quotas",
+  "files": {
+    "output\\phase67-gates\\code-quality-track\\heldout.samples.sealed.json": "7ece2703bf68d9c2f31d2f16bb3646adaf232b2deb085406f1010c3de6ff6543",
+    "output\\phase67-gates\\code-quality-track\\heldout.questions.sealed.json": "1332c60995b08c64d331b31bd7ac6397c11902761099de98bf90bc456d50f324",
+    "output\\phase67-gates\\code-quality-track\\heldout.answers.sealed.json": "cca6611f30400265bca4d6659cb0be94e46dcd2f254377a7ff6fc4561bc61730"
+  },
+  "writer_packet_sha256": "3d8e1d51b0dcda816fbaeca04bdb73b3b19e7dad40ad09f7261c6a45f20cce0c",
+  "blindness": "Implementing lead does not inspect samples, questions or answer key before final cycle; author receives redacted documentation only.",
+  "product_changes_before_seal": false
+}
