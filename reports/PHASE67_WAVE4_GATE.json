@@ -569,5 +569,1513 @@
       "code_run2_usd": 0.1760749,
       "review_usd": 0.0021204
     }
+  },
+  "review2_2026_11_13": {
+    "verdict": "NOT_READY",
+    "engineering_commit": "16a0c59",
+    "preregistration_commit": "4522115",
+    "ui_commit": "2c042f0",
+    "registration": "PHASE67_WAVE4_GATE.md section 13",
+    "cycle": {
+      "runs": [
+        {
+          "run": 1,
+          "file": "code-review2-cycle-run1.json",
+          "markers": 1,
+          "calls": 23,
+          "wrong_graph": 0,
+          "withheld": 0,
+          "tool_errors": 0,
+          "cost_usd": 0.0997139
+        },
+        {
+          "run": 2,
+          "file": "code-review2-cycle-run2.json",
+          "markers": 1,
+          "calls": 29,
+          "wrong_graph": 0,
+          "withheld": 0,
+          "tool_errors": 0,
+          "cost_usd": 0.15093059999999997
+        },
+        {
+          "run": 3,
+          "file": "code-review2-cycle-run3.json",
+          "markers": 3,
+          "calls": 26,
+          "wrong_graph": 0,
+          "withheld": 0,
+          "tool_errors": 0,
+          "cost_usd": 0.13087769999999999
+        }
+      ],
+      "total_markers": 5,
+      "total": 15,
+      "calls_per_question": 5.2,
+      "passed": false
+    },
+    "cycle_cost_usd": 0.3815221999999999,
+    "extra_model_runs": 0,
+    "diagnosis": [
+      {
+        "run": 1,
+        "question": "What tool set may research helpers use? Cite the defining code.",
+        "markers": [
+          "HELPER_TOOLS"
+        ],
+        "found": [],
+        "queries": [
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"tool set for research helpers\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:ac8a9bc73ee3b2365b0c3eb1ee2aa557d8fcd6c1c3017a6a964b30f8a5f08bcf",
+            "qualified_name": "src/resource_librarian/broker.py.Broker.set_tool",
+            "span": [
+              111,
+              114
+            ],
+            "source_span_contains_marker": false
+          }
+        ],
+        "top_error_reasons": []
+      },
+      {
+        "run": 1,
+        "question": "What does delegate use to cap concurrent tier 1 helpers? Cite the code.",
+        "markers": [
+          "lead_agents"
+        ],
+        "found": [],
+        "queries": [
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"delegate cap concurrent tier 1 helpers\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:9551466b8e6eb027a4271f362b617b6ef945cddfcf185301621fd60a75e1d339",
+            "qualified_name": "src/resource_librarian/tools/delegate.py.delegate",
+            "span": [
+              40,
+              123
+            ],
+            "source_span_contains_marker": true
+          }
+        ],
+        "top_error_reasons": []
+      },
+      {
+        "run": 1,
+        "question": "How does the Clerk run and check one task? Cite the code.",
+        "markers": [
+          "run_one"
+        ],
+        "found": [],
+        "queries": [
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"Clerk task execution\"}",
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"Clerk task checking\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:731e986e81bd9b0311d1a8ce0f64c6969c209d2c990feb1081cc7abd76d223fa",
+            "qualified_name": "src/resource_librarian/clerk.py.next_task",
+            "span": [
+              1536,
+              1545
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:699af1e17e69f7f33331972bc8b0094b6e3f2138ab584504905b56e124e84186",
+            "qualified_name": "src/resource_librarian/clerk.py:1549-1550",
+            "span": [
+              1549,
+              1550
+            ],
+            "source_span_contains_marker": false
+          }
+        ],
+        "top_error_reasons": []
+      },
+      {
+        "run": 1,
+        "question": "How are external MCP structured results bounded? Cite the code.",
+        "markers": [
+          "MAX_EXTERNAL_RESULT"
+        ],
+        "found": [
+          "MAX_EXTERNAL_RESULT"
+        ],
+        "queries": [
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"external MCP structured results bounded\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:0bb68e89186c2bf3f1b3dafa13d1518d8f1b818aa4d6c351155500d7f403a22e",
+            "qualified_name": "src/resource_librarian/mcp_client.py.MAX_EXTERNAL_RESULT",
+            "span": [
+              47,
+              47
+            ],
+            "source_span_contains_marker": true
+          },
+          {
+            "entity_id": "entity:7bcf11421bde3d00f94c44be3645b18456cfc441f60918671728f771d3a5d4d0",
+            "qualified_name": "src/resource_librarian/mcp_client.py._structured_content",
+            "span": [
+              132,
+              136
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:6704249e18a6b2aa6bc82af66c8630adcf60983ec1a8b30692985273b89c2936",
+            "qualified_name": "src/resource_librarian/sandbox.py:140-141",
+            "span": [
+              140,
+              141
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:2d49582811c929b4bb12f4a968bd7b4c5702950e114d2d4aac919b7c1a3dd019",
+            "qualified_name": "src/resource_librarian/sandbox.py.run_bounded",
+            "span": [
+              139,
+              149
+            ],
+            "source_span_contains_marker": false
+          }
+        ],
+        "top_error_reasons": []
+      },
+      {
+        "run": 1,
+        "question": "How does the loop choose its fallback context window? Cite the code.",
+        "markers": [
+          "DEFAULT_CONTEXT_TOKENS"
+        ],
+        "found": [],
+        "queries": [
+          "{\"graph_id\": \"g_1bbebca16afc45c39b2f2f8a\", \"query\": \"loop fallback context window\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:f2781a4d6c28bb74bb55673098ca0da0a6bfc92140995b5be45e2dc0091517d9",
+            "qualified_name": "src/resource_librarian/loop.py.Loop.library_context",
+            "span": [
+              665,
+              690
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:7b3c63913b7b79b76233906f72df03d345c3551ee66969fb3aa93db1b5368ec4",
+            "qualified_name": "src/resource_librarian/loop.py.Loop.context_message",
+            "span": [
+              692,
+              703
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:4e3e79f9d66cc3e9626033cb3c0be69d77d5f39cc9cd991d30131d8d2cea6ec6",
+            "qualified_name": "src/resource_librarian/loop.py.CONTEXT_HEADER",
+            "span": [
+              248,
+              252
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:2092c436d191c784a5ddd8a0f5032b337136ad182c1b9ec9a7763bd9b14a2de4",
+            "qualified_name": "src/resource_librarian/loop.py.CONTEXT_MARGIN",
+            "span": [
+              140,
+              140
+            ],
+            "source_span_contains_marker": false
+          }
+        ],
+        "top_error_reasons": []
+      },
+      {
+        "run": 2,
+        "question": "What tool set may research helpers use? Cite the defining code.",
+        "markers": [
+          "HELPER_TOOLS"
+        ],
+        "found": [],
+        "queries": [
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"tool set for research helpers\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:ac8a9bc73ee3b2365b0c3eb1ee2aa557d8fcd6c1c3017a6a964b30f8a5f08bcf",
+            "qualified_name": "src/resource_librarian/broker.py.Broker.set_tool",
+            "span": [
+              111,
+              114
+            ],
+            "source_span_contains_marker": false
+          }
+        ],
+        "top_error_reasons": []
+      },
+      {
+        "run": 2,
+        "question": "What does delegate use to cap concurrent tier 1 helpers? Cite the code.",
+        "markers": [
+          "lead_agents"
+        ],
+        "found": [],
+        "queries": [
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"delegate cap concurrent tier 1 helpers\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:9551466b8e6eb027a4271f362b617b6ef945cddfcf185301621fd60a75e1d339",
+            "qualified_name": "src/resource_librarian/tools/delegate.py.delegate",
+            "span": [
+              40,
+              123
+            ],
+            "source_span_contains_marker": true
+          }
+        ],
+        "top_error_reasons": []
+      },
+      {
+        "run": 2,
+        "question": "How does the Clerk run and check one task? Cite the code.",
+        "markers": [
+          "run_one"
+        ],
+        "found": [],
+        "queries": [
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"Clerk task execution\"}",
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"Clerk task checking validation\"}",
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"Clerk task execution endpoint\"}",
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"Clerk task run execution\"}",
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"Clerk task validation checking\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:731e986e81bd9b0311d1a8ce0f64c6969c209d2c990feb1081cc7abd76d223fa",
+            "qualified_name": "src/resource_librarian/clerk.py.next_task",
+            "span": [
+              1536,
+              1545
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:7173779a62d5b6a478e511ffe1a95bb5c20a0b76edbe1cfac9937455a5e0f582",
+            "qualified_name": "src/resource_librarian/clerk.py.task_key",
+            "span": [
+              1494,
+              1498
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:5d6ffef16761f347735099a12daa741cb328269d6ce7ee6172c5cf2d1890f793",
+            "qualified_name": "src/resource_librarian/tools/staging.py.clerk_endpoint",
+            "span": [
+              125,
+              136
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:77f8a2f3029ced4b533e736e78793023700cd3e6922efe6215d86fbe6aebccd7",
+            "qualified_name": "src/resource_librarian/clerk.py.run",
+            "span": [
+              1443,
+              1463
+            ],
+            "source_span_contains_marker": true
+          },
+          {
+            "entity_id": "entity:731e986e81bd9b0311d1a8ce0f64c6969c209d2c990feb1081cc7abd76d223fa",
+            "qualified_name": "src/resource_librarian/clerk.py.next_task",
+            "span": [
+              1536,
+              1545
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:ed311db5dcfc9e9fc589e8d6910eb60e62f3069b8ec9306039326fb59ec40bc0",
+            "qualified_name": "src/resource_librarian/clerk.py:1495-1496",
+            "span": [
+              1495,
+              1496
+            ],
+            "source_span_contains_marker": false
+          }
+        ],
+        "top_error_reasons": []
+      },
+      {
+        "run": 2,
+        "question": "How are external MCP structured results bounded? Cite the code.",
+        "markers": [
+          "MAX_EXTERNAL_RESULT"
+        ],
+        "found": [
+          "MAX_EXTERNAL_RESULT"
+        ],
+        "queries": [
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"external MCP structured results bounded\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:0bb68e89186c2bf3f1b3dafa13d1518d8f1b818aa4d6c351155500d7f403a22e",
+            "qualified_name": "src/resource_librarian/mcp_client.py.MAX_EXTERNAL_RESULT",
+            "span": [
+              47,
+              47
+            ],
+            "source_span_contains_marker": true
+          },
+          {
+            "entity_id": "entity:7bcf11421bde3d00f94c44be3645b18456cfc441f60918671728f771d3a5d4d0",
+            "qualified_name": "src/resource_librarian/mcp_client.py._structured_content",
+            "span": [
+              132,
+              136
+            ],
+            "source_span_contains_marker": false
+          }
+        ],
+        "top_error_reasons": []
+      },
+      {
+        "run": 2,
+        "question": "How does the loop choose its fallback context window? Cite the code.",
+        "markers": [
+          "DEFAULT_CONTEXT_TOKENS"
+        ],
+        "found": [],
+        "queries": [
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"loop fallback context window\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:f2781a4d6c28bb74bb55673098ca0da0a6bfc92140995b5be45e2dc0091517d9",
+            "qualified_name": "src/resource_librarian/loop.py.Loop.library_context",
+            "span": [
+              665,
+              690
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:7b3c63913b7b79b76233906f72df03d345c3551ee66969fb3aa93db1b5368ec4",
+            "qualified_name": "src/resource_librarian/loop.py.Loop.context_message",
+            "span": [
+              692,
+              703
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:4e3e79f9d66cc3e9626033cb3c0be69d77d5f39cc9cd991d30131d8d2cea6ec6",
+            "qualified_name": "src/resource_librarian/loop.py.CONTEXT_HEADER",
+            "span": [
+              248,
+              252
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:2092c436d191c784a5ddd8a0f5032b337136ad182c1b9ec9a7763bd9b14a2de4",
+            "qualified_name": "src/resource_librarian/loop.py.CONTEXT_MARGIN",
+            "span": [
+              140,
+              140
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:6aa746365841e8f0ebf3fcdb956a7260a68190244ce3633df7cdcce8cc46f74a",
+            "qualified_name": "src/resource_librarian/loop.py.CONTEXT_POLICY",
+            "span": [
+              253,
+              259
+            ],
+            "source_span_contains_marker": false
+          }
+        ],
+        "top_error_reasons": []
+      },
+      {
+        "run": 3,
+        "question": "What tool set may research helpers use? Cite the defining code.",
+        "markers": [
+          "HELPER_TOOLS"
+        ],
+        "found": [],
+        "queries": [
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"tool set for research helpers\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:ac8a9bc73ee3b2365b0c3eb1ee2aa557d8fcd6c1c3017a6a964b30f8a5f08bcf",
+            "qualified_name": "src/resource_librarian/broker.py.Broker.set_tool",
+            "span": [
+              111,
+              114
+            ],
+            "source_span_contains_marker": false
+          }
+        ],
+        "top_error_reasons": []
+      },
+      {
+        "run": 3,
+        "question": "What does delegate use to cap concurrent tier 1 helpers? Cite the code.",
+        "markers": [
+          "lead_agents"
+        ],
+        "found": [
+          "lead_agents"
+        ],
+        "queries": [
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"delegate cap concurrent tier 1 helpers\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:9551466b8e6eb027a4271f362b617b6ef945cddfcf185301621fd60a75e1d339",
+            "qualified_name": "src/resource_librarian/tools/delegate.py.delegate",
+            "span": [
+              40,
+              123
+            ],
+            "source_span_contains_marker": true
+          }
+        ],
+        "top_error_reasons": []
+      },
+      {
+        "run": 3,
+        "question": "How does the Clerk run and check one task? Cite the code.",
+        "markers": [
+          "run_one"
+        ],
+        "found": [
+          "run_one"
+        ],
+        "queries": [
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"Clerk task execution\"}",
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"Clerk task checking\"}",
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"Clerk run task implementation\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:731e986e81bd9b0311d1a8ce0f64c6969c209d2c990feb1081cc7abd76d223fa",
+            "qualified_name": "src/resource_librarian/clerk.py.next_task",
+            "span": [
+              1536,
+              1545
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:699af1e17e69f7f33331972bc8b0094b6e3f2138ab584504905b56e124e84186",
+            "qualified_name": "src/resource_librarian/clerk.py:1549-1550",
+            "span": [
+              1549,
+              1550
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:77f8a2f3029ced4b533e736e78793023700cd3e6922efe6215d86fbe6aebccd7",
+            "qualified_name": "src/resource_librarian/clerk.py.run",
+            "span": [
+              1443,
+              1463
+            ],
+            "source_span_contains_marker": true
+          },
+          {
+            "entity_id": "entity:c7799ebc9015206d37b762e59b928c25cc5c7b0be1e49dfde9117994110f31cb",
+            "qualified_name": "src/resource_librarian/clerk.py:1446-1448",
+            "span": [
+              1446,
+              1448
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:7173779a62d5b6a478e511ffe1a95bb5c20a0b76edbe1cfac9937455a5e0f582",
+            "qualified_name": "src/resource_librarian/clerk.py.task_key",
+            "span": [
+              1494,
+              1498
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:ed311db5dcfc9e9fc589e8d6910eb60e62f3069b8ec9306039326fb59ec40bc0",
+            "qualified_name": "src/resource_librarian/clerk.py:1495-1496",
+            "span": [
+              1495,
+              1496
+            ],
+            "source_span_contains_marker": false
+          }
+        ],
+        "top_error_reasons": []
+      },
+      {
+        "run": 3,
+        "question": "How are external MCP structured results bounded? Cite the code.",
+        "markers": [
+          "MAX_EXTERNAL_RESULT"
+        ],
+        "found": [
+          "MAX_EXTERNAL_RESULT"
+        ],
+        "queries": [
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"external MCP structured results bounding\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:0bb68e89186c2bf3f1b3dafa13d1518d8f1b818aa4d6c351155500d7f403a22e",
+            "qualified_name": "src/resource_librarian/mcp_client.py.MAX_EXTERNAL_RESULT",
+            "span": [
+              47,
+              47
+            ],
+            "source_span_contains_marker": true
+          },
+          {
+            "entity_id": "entity:7bcf11421bde3d00f94c44be3645b18456cfc441f60918671728f771d3a5d4d0",
+            "qualified_name": "src/resource_librarian/mcp_client.py._structured_content",
+            "span": [
+              132,
+              136
+            ],
+            "source_span_contains_marker": false
+          }
+        ],
+        "top_error_reasons": []
+      },
+      {
+        "run": 3,
+        "question": "How does the loop choose its fallback context window? Cite the code.",
+        "markers": [
+          "DEFAULT_CONTEXT_TOKENS"
+        ],
+        "found": [],
+        "queries": [
+          "{\"graph_id\": \"librarian-v2\", \"query\": \"loop fallback context window\"}"
+        ],
+        "selected": [
+          {
+            "entity_id": "entity:f2781a4d6c28bb74bb55673098ca0da0a6bfc92140995b5be45e2dc0091517d9",
+            "qualified_name": "src/resource_librarian/loop.py.Loop.library_context",
+            "span": [
+              665,
+              690
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:7b3c63913b7b79b76233906f72df03d345c3551ee66969fb3aa93db1b5368ec4",
+            "qualified_name": "src/resource_librarian/loop.py.Loop.context_message",
+            "span": [
+              692,
+              703
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:4e3e79f9d66cc3e9626033cb3c0be69d77d5f39cc9cd991d30131d8d2cea6ec6",
+            "qualified_name": "src/resource_librarian/loop.py.CONTEXT_HEADER",
+            "span": [
+              248,
+              252
+            ],
+            "source_span_contains_marker": false
+          },
+          {
+            "entity_id": "entity:2092c436d191c784a5ddd8a0f5032b337136ad182c1b9ec9a7763bd9b14a2de4",
+            "qualified_name": "src/resource_librarian/loop.py.CONTEXT_MARGIN",
+            "span": [
+              140,
+              140
+            ],
+            "source_span_contains_marker": false
+          }
+        ],
+        "top_error_reasons": []
+      }
+    ],
+    "constant_inventory": "review2-constant-inventory-verified.json",
+    "ingests": [
+      "review2-ingest-baseline.json",
+      "review2-ingest-constants-first.json",
+      "review2-ingest-callmask-fixed.json"
+    ],
+    "drift": [
+      "review2-drift-baseline/result.json",
+      "review2-drift-constants/result.json"
+    ],
+    "preset_smoke": {
+      "frozen_benchmark": [
+        {
+          "preset": "papers",
+          "tool": "paper_search_documents",
+          "success": true,
+          "characters": 7254,
+          "schema_characters": 721,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_section",
+          "success": true,
+          "characters": 3227,
+          "schema_characters": 984,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_document",
+          "success": true,
+          "characters": 2491,
+          "schema_characters": 733,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_find_by_concept",
+          "success": true,
+          "characters": 1276,
+          "schema_characters": 805,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_related",
+          "success": true,
+          "characters": 6070,
+          "schema_characters": 640,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2791,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_document",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "request",
+            "message": "request: 'title' is a required property. Example: paper_get_document({\"graph_id\":\"<graph_id>\",\"request\":{\"title\":\"doc:1\"}})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "request": {
+                "title": "doc:1"
+              }
+            }
+          },
+          "characters": 282
+        },
+        {
+          "preset": "code",
+          "tool": "check_architecture",
+          "success": true,
+          "characters": 304,
+          "schema_characters": 455,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "find_dependants",
+          "success": true,
+          "characters": 2678,
+          "schema_characters": 496,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "get_architecture_context",
+          "success": true,
+          "characters": 4781,
+          "schema_characters": 657,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "get_entity_content",
+          "success": true,
+          "characters": 3329,
+          "schema_characters": 529,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "search_entities",
+          "success": true,
+          "characters": 6214,
+          "schema_characters": 541,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2791,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "search_entities",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "query",
+            "message": "query: 17 is not of type 'string'. Example: search_entities({\"graph_id\":\"<graph_id>\",\"query\":\"clerk\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "query": "clerk"
+            }
+          },
+          "characters": 244
+        },
+        {
+          "preset": "lead",
+          "tool": "get_architecture_context",
+          "success": true,
+          "characters": 4781,
+          "schema_characters": 657,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "get_entity_content",
+          "success": true,
+          "characters": 3329,
+          "schema_characters": 529,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "search_entities",
+          "success": true,
+          "characters": 6214,
+          "schema_characters": 541,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2791,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "compile_task_packet",
+          "success": true,
+          "characters": 2768,
+          "schema_characters": 499,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "analyze_cross_graphs",
+          "success": true,
+          "characters": 6766,
+          "schema_characters": 1418,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "search_entities",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "query",
+            "message": "query: 17 is not of type 'string'. Example: search_entities({\"graph_id\":\"<graph_id>\",\"query\":\"clerk\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "query": "clerk"
+            }
+          },
+          "characters": 244
+        },
+        {
+          "preset": "cross",
+          "tool": "get_entity_content",
+          "success": true,
+          "characters": 3329,
+          "schema_characters": 529,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "search_entities",
+          "success": true,
+          "characters": 6214,
+          "schema_characters": 541,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2791,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "list_bridges",
+          "success": true,
+          "characters": 15,
+          "schema_characters": 302,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "analyze_cross_graphs",
+          "success": true,
+          "characters": 6766,
+          "schema_characters": 1418,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "federated_search",
+          "success": true,
+          "characters": 6815,
+          "schema_characters": 571,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "search_entities",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "query",
+            "message": "query: 17 is not of type 'string'. Example: search_entities({\"graph_id\":\"<graph_id>\",\"query\":\"clerk\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "query": "clerk"
+            }
+          },
+          "characters": 244
+        }
+      ],
+      "ui_wheel": [
+        {
+          "preset": "papers",
+          "tool": "paper_search_documents",
+          "success": true,
+          "characters": 7254,
+          "schema_characters": 721,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_section",
+          "success": true,
+          "characters": 3227,
+          "schema_characters": 984,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_document",
+          "success": true,
+          "characters": 2491,
+          "schema_characters": 733,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_find_by_concept",
+          "success": true,
+          "characters": 1276,
+          "schema_characters": 805,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_related",
+          "success": true,
+          "characters": 6070,
+          "schema_characters": 640,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2791,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_document",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "request",
+            "message": "request: 'title' is a required property. Example: paper_get_document({\"graph_id\":\"<graph_id>\",\"request\":{\"title\":\"doc:1\"}})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "request": {
+                "title": "doc:1"
+              }
+            }
+          },
+          "characters": 282
+        },
+        {
+          "preset": "code",
+          "tool": "check_architecture",
+          "success": true,
+          "characters": 304,
+          "schema_characters": 455,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "find_dependants",
+          "success": true,
+          "characters": 2678,
+          "schema_characters": 496,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "get_architecture_context",
+          "success": true,
+          "characters": 4781,
+          "schema_characters": 657,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "get_entity_content",
+          "success": true,
+          "characters": 3329,
+          "schema_characters": 529,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "search_entities",
+          "success": true,
+          "characters": 6214,
+          "schema_characters": 541,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2791,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "search_entities",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "query",
+            "message": "query: 17 is not of type 'string'. Example: search_entities({\"graph_id\":\"<graph_id>\",\"query\":\"clerk\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "query": "clerk"
+            }
+          },
+          "characters": 244
+        },
+        {
+          "preset": "lead",
+          "tool": "get_architecture_context",
+          "success": true,
+          "characters": 4781,
+          "schema_characters": 657,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "get_entity_content",
+          "success": true,
+          "characters": 3329,
+          "schema_characters": 529,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "search_entities",
+          "success": true,
+          "characters": 6214,
+          "schema_characters": 541,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2791,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "compile_task_packet",
+          "success": true,
+          "characters": 2768,
+          "schema_characters": 499,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "analyze_cross_graphs",
+          "success": true,
+          "characters": 6766,
+          "schema_characters": 1418,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "search_entities",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "query",
+            "message": "query: 17 is not of type 'string'. Example: search_entities({\"graph_id\":\"<graph_id>\",\"query\":\"clerk\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "query": "clerk"
+            }
+          },
+          "characters": 244
+        },
+        {
+          "preset": "cross",
+          "tool": "get_entity_content",
+          "success": true,
+          "characters": 3329,
+          "schema_characters": 529,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "search_entities",
+          "success": true,
+          "characters": 6214,
+          "schema_characters": 541,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2791,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "list_bridges",
+          "success": true,
+          "characters": 15,
+          "schema_characters": 302,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "analyze_cross_graphs",
+          "success": true,
+          "characters": 6766,
+          "schema_characters": 1418,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "federated_search",
+          "success": true,
+          "characters": 6815,
+          "schema_characters": 571,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "search_entities",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "query",
+            "message": "query: 17 is not of type 'string'. Example: search_entities({\"graph_id\":\"<graph_id>\",\"query\":\"clerk\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "query": "clerk"
+            }
+          },
+          "characters": 244
+        }
+      ]
+    },
+    "latency_cache_first": [
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 2.907878799996979,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 1
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 2.8587781000023824,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 2
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 2.8702780999956303,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 3
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 2.6495756000003894,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 1
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 2.6549643999969703,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 2
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 2.641266099999484,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 3
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 8.569921399997838,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 1
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 8.538092399998277,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 2
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 8.372358199994778,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 3
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 6.077863200000138,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 1
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 6.097568899996986,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 2
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 6.124253900001349,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 3
+      }
+    ],
+    "latency_final": [
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 3.746407200000249,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 1
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 3.020487299996603,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 2
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 3.050902800001495,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 3
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 3.712786000003689,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 1
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 2.7959585999997216,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 2
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 2.9204845999993267,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 3
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 11.495231599998078,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 1
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 9.277663900000334,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 2
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 9.168985799995426,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 3
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 9.789047500002198,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 1
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 6.732062600000063,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 2
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 6.558623799995985,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 3
+      }
+    ],
+    "browser_attempts": [
+      {
+        "file": "results-review2-first.json",
+        "passed": 3,
+        "failed": 2
+      },
+      {
+        "file": null,
+        "status": "aborted_disk_full",
+        "partial_traces_retained": true
+      },
+      {
+        "file": "results-review2-after-recovery.json",
+        "passed": 4,
+        "failed": 1
+      },
+      {
+        "file": "results-review2-final.json",
+        "passed": 5,
+        "failed": 0
+      }
+    ],
+    "browser_final_stats": {
+      "startTime": "2026-11-13T02:50:49.378Z",
+      "duration": 80000.97200000001,
+      "expected": 5,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "audit": {
+      "graphs": [
+        {
+          "graph_id": "g_03a111af7e3130d797ab1772",
+          "label": "ai-research-papers",
+          "snapshot_id": "snapshot:f593e618fe5441b701a918b0b83452d7d85b6b3d03b5e54089ff530083d132de"
+        },
+        {
+          "graph_id": "g_f329b1eb566856ee104f3f35",
+          "label": "timeline-mapping",
+          "snapshot_id": "snapshot:1050080a5791035a5af57046cbc76301bef74717d127d1dd7ee41e5f956ec094"
+        },
+        {
+          "graph_id": "g_850b52af2916ae87854c9ada",
+          "label": "ToolSet",
+          "snapshot_id": "snapshot:6473b00b8bf63b03ac05201e8f4371e5fd01054c37d0e1d291281dfd7b8f5963"
+        },
+        {
+          "graph_id": "g_1bbebca16afc45c39b2f2f8a",
+          "label": "librarian-v2",
+          "snapshot_id": "snapshot:33ba9c619765ea532d2e91be5089f6348631cb1fb0d6c9b25fd9a83562d1c98a"
+        },
+        {
+          "graph_id": "g_9389ecb83d86491f69da9942",
+          "label": "librarian-survey-worktree",
+          "snapshot_id": "snapshot:1c8f11aaac949884c57960f1f5601a71ad8e4a1f932fa26dc0304df41c32bc7c"
+        }
+      ],
+      "baseline_snapshots_preserved": true,
+      "proposal_rows": {
+        "bridge_proposals": 0
+      },
+      "frozen_benchmark_wheel_sha256": "70db1c61b785625268c629c5f5e3dec672a3a8ee4c49d4d8be7e93baa523e396",
+      "frozen_wheel_unchanged": true,
+      "ui_wheel_sha256": "af44c34b6ad70e67da939d82a37346c49acd3da8c6cd35968f18f11df3d690aa"
+    },
+    "storage_archive": {
+      "root": "E:/Librarian research/Geo_Grapher-wave4-QA-archive",
+      "mapping": "output/phase67-gates/wave4/qa-archive-locations.json",
+      "sha256_verified_on_move": true,
+      "raw_results_preserved": true
+    },
+    "verification": {
+      "geo_exit": 0,
+      "backend_passed": 659,
+      "frontend_unit_passed": 16,
+      "browser_passed": 17,
+      "librarian_final": {
+        "exit": 0,
+        "passed": 2181,
+        "skipped": 2,
+        "deselected": 5,
+        "seconds": 595.4
+      },
+      "partial_librarian_logs": [
+        "output/w4-review2-librarian-final.log",
+        "output/w4-review2-librarian-final-ssd.log"
+      ],
+      "geo_log": "output/w4-review2-verify-final.log",
+      "geo_backend_seconds": 1587.43,
+      "librarian_log": "output/w4-review2-librarian-final-ssd2.log"
+    },
+    "pilot": {
+      "executed": false,
+      "status": "blocked_owner_role_qualification",
+      "steps": "PHASE67_WAVE4_GATE.md section 10"
+    },
+    "production_lead": {
+      "question_run": false,
+      "gating": false,
+      "readiness": {
+        "model": "ByteDance/Seed-2.0-mini",
+        "host": "preset-deepinfra",
+        "core_alive": false
+      }
+    },
+    "budget": {
+      "cap_usd": 10,
+      "committed_usd": 4.47507265,
+      "cycle_usd": 0.3815221999999999
+    },
+    "merged": false,
+    "pushed": false,
+    "acceptance": {
+      "runs": 3,
+      "questions_per_run": 5,
+      "minimum_each": 3,
+      "minimum_aggregate": 12,
+      "maximum_wrong_graph": 0,
+      "maximum_withheld": 0,
+      "maximum_average_calls_per_question": 8,
+      "steps_per_question": 12,
+      "model": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+      "declared_context_tokens": 1048576,
+      "preset": "lead",
+      "scoping": "library"
+    },
+    "latency_passed": false,
+    "open_gates": [
+      "code_cycle_failed_5_of_15",
+      "C14_current_store_cold_latency",
+      "owner_role_qualification_and_live_six_task_pilot",
+      "owner_bridge_firewall_decision",
+      "owner_20_minute_checklist"
+    ]
   }
 }

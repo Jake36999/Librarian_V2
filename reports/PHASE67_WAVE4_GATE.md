@@ -190,6 +190,8 @@ Planning estimate from the maintained guide: about **$0.005 per role, approximat
 
 Automated installed-package preset, real-store browser, and latency results follow below. All use disposable copies, not the live project catalogs.
 
+The first-result rows below are historical and deliberately retained. Review-2 fixes and subsequent results are in §§13–14; the owner workspace command below has been updated to the new UI wheel and catalog.
+
 ### Owner's 20-minute exploratory checklist
 
 - [ ] 0–2 min: start the workspace on the disposable QA catalog using the command recorded with the application results; open its loopback URL.
@@ -240,13 +242,13 @@ Result paths must be new: the scripts refuse to overwrite first evidence. Final 
 The 20-minute checklist above starts with this installed-wheel command on the disposable real-store catalog, after automated QA has stopped:
 
 ```powershell
-uvx --refresh-package geo-grapher --from F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/frontdoor-final-dist/geo_grapher-0.1.1-py3-none-any.whl geographer serve-graphs `
-  --catalog F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/application-browser-wheel/catalog.sqlite `
-  --browse-root F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/application-browser-wheel/browse `
+uvx --refresh-package geo-grapher --from F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/review2-ui-dist2/geo_grapher-0.1.1-py3-none-any.whl geographer serve-graphs `
+  --catalog F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/review2-browser-first/catalog.sqlite `
+  --browse-root F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/review2-browser-first/browse `
   --transport http --port 8790
 ```
 
-Open `http://127.0.0.1:8790/`. The scratch folder is `browse/project`. For a bridge decision with actual overlapping code, check only librarian-v2 and librarian-survey-worktree; ToolSet/librarian-v2 returned no pending candidates in the recorded probe. Directed QI remains an explicit checklist finding until a spatial control exists. Keep the Core qualification commands in §10 separate from this workspace command. The manual checklist is prepared for the owner; Codex has not claimed a completed hands-on owner pass.
+Open `http://127.0.0.1:8790/`. The scratch folder is `browse/project`. For a bridge decision with actual overlapping code, check only librarian-v2 and librarian-survey-worktree; ToolSet/librarian-v2 returned no pending candidates in the recorded probe. The review-2 wheel now exposes Off / Helper balls / Directed in the atomic spatial view; the owner should exercise Directed, expand a block, and return to Off. Keep the Core qualification commands in §10 separate from this workspace command. The manual checklist is prepared for the owner; Codex has not claimed a completed hands-on owner pass.
 
 ### Real-store browser evidence — resumed 2026-11-13
 
@@ -290,6 +292,14 @@ uvx --refresh-package geo-grapher --from output/phase67-gates/wave4/frontdoor-fi
 
 ## 12. Current verdict — 2026-11-13
 
+**NOT READY after review 2. Neither branch is merged or pushed.** The registered three-run code cycle fails: **1/5, 1/5, 3/5 = 5/15**, against each ≥3/5 and aggregate ≥12/15. All 78 tool calls succeeded; wrong-graph and withheld counts are zero; average 5.2 calls/question. No fourth run was made. The remaining code-discovery and answer failures are escalated with per-call evidence in §13.
+
+The cap, caching, constant extraction and identifier fixes are implemented. Installed-wheel preset checks now pass 28/28. Directed-QI controls, certificates, rendered groups and expansion are implemented; the final real-store browser run passes all five scenarios. Full Geo and Librarian verification pass. **Current-store C14 still FAILS**, despite the export-scan cache improvement and earlier old-store pass; all final cold samples are retained in §14. Paper option (a) and cross-graph leakage still pass under their original criteria.
+
+The six-task pilot remains blocked on the owner's exact Resource-Library helper and Clerk qualification and a running Core; §10 gives the commands. The production-lead question is non-gating and also waits for route readiness. The owner's 20-minute checklist and W3-5 bridge-firewall decision remain outstanding. No merge approval is requested while acceptance remains open.
+
+### Historical assessment before review 2 — retained
+
 **NOT READY. Neither branch is merged or pushed.** The owner-directed work and application assessment are complete to the requested stop point; acceptance is not complete.
 
 - Code front door and diagnosable harness are implemented; all five code runs remain separate. The two allowed re-runs fail the preregistered product gate. Escalated; no third run.
@@ -301,3 +311,93 @@ uvx --refresh-package geo-grapher --from output/phase67-gates/wave4/frontdoor-fi
 Remaining acceptance work is concrete: improve code discovery/handle usability under the frozen gate; fit minimal real-store results and enforce federation character caps; expose directed QI in the spatial workspace; restore the tree-balls cold-latency target; and run the six-task pilot after the owner's exact Resource-Library roles are qualified. The owner must approve any eventual merge of either branch. The 20-minute manual checklist is prepared above and remains for the owner to perform.
 
 Reviewable implementation/QA commit: Geo Grapher `4498b08` on `phase67-wave4`. This revision's report and machine evidence summary are also mirrored onto Librarian's `geo-grapher-wave4` worktree; no new Librarian production code was changed in this revision. Original result files remain in the workspace paths referenced above.
+
+## 13. Second owner-directed cycle — registered 2026-11-13 BEFORE execution
+
+The owner explicitly authorises a new cycle under `PHASE67_WAVE4_REVIEW_2.md` §3, after cap fixes, latency caching, constants and canonical-identifier changes. The previous iteration limit and all prior scores remain historical; none is overwritten.
+
+Freeze the same five CODE_BENCH questions and five markers, model `Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo`, declared 1,048,576-token window, library-scoped `lead` preset, and 12-step limit. Run **exactly three independent runs**, each with fresh temporary library state, using one unchanged wheel and the same re-ingested source snapshot for all three. No tuning between runs and no best-of selection.
+
+Acceptance requires **each run at least 3/5 markers AND aggregate at least 12/15**, **zero withheld results**, **zero wrong-graph calls**, and **at most eight tool calls/question on average across all 15 questions**. Every condition is required. Per-call names, bounded arguments, errors, success and per-question top errors remain enabled.
+
+New result paths are `output/phase67-gates/wave4/code-review2-cycle-run1.json`, `code-review2-cycle-run2.json` and `code-review2-cycle-run3.json`. Preserve every first attempt and report all three rows, then evaluate the cycle once. If it fails, stop model re-runs and escalate with the per-call diagnosis. Estimated cycle cost is approximately $0.50, charged to the existing $10 `geo-grapher` pool; retries remain charged to that pool. Record actual metered costs after each run. No extra benchmark cycle is implied by this authorisation.
+
+One production-lead question is explicitly **non-gating** and waits for that exact Resource-Library route to be qualified. Role qualification and the six-task pilot still wait for the owner; no silent route substitution or branch merge is authorised.
+
+### Engineering completed before the cycle
+
+Implementation commit `16a0c59` fixes the cap, export-cache, constant and identifier issues. Two RED cap oracles now pass, including whole-envelope federation accounting and explicit flat degradation down to a focus-only answer. Strict wire queries retain their contract; every MCP response has a final character-cap guard. The installed-wheel preset smoke passed 28/28 on the real-store copies (`preset-smoke-review2-caps-first.json`, then `preset-smoke-review2-canonical.json`); a final check of the frozen wheel is retained separately.
+
+The DeepInfra export-cache draft (`20261113T010241-e0e2b475`, DeepSeek-V4-Pro, $0.0160628) was partially accepted and hardened: retain source encoding, preserve augmented assignments and continue scanning after dynamic declarations. Stage 3 persists the source-only export analysis; older snapshots compute it once in their service context. It is filter-independent; applying protected paths to the selected vertices still respects each filter. CProfile artifacts are `review2-latency-before.pstats` and `review2-latency-after.pstats`; `contract_helpers` cumulative time fell from 0.904 to 0.149 s (instrumented whole-query times 5.395 and 6.448 s, both retained). The separate quiet, unprofiled C14 run passes: ToolSet tree-balls **2.908, 2.859, 2.870 s**, directed **2.650, 2.655, 2.641 s** (`latency-review2-cache-first.json`). No warm sample is substituted for a cold one.
+
+Constants now have exact assignment spans, file parents, documentary incidences, source-value AST fingerprints and conservative static reads. The `constant` enum member already existed in both declaration files; the v1.1 producer now emits it, its generated schema digest was refreshed, and v1.0 presents it as `fragment` without modifying the frozen 1.0 files. Exact short constant names receive the existing exact-symbol priority. Non-callable class slots continue to mask inherited methods; verification caught and fixed that regression before any paid cycle run.
+
+The original librarian-v2 copy has 27,953 entities; the new copy has 28,809 (+3.06%), including 968 constants. One baseline ingest took 54.872 s and the first constant-enabled ingest took 63.189 s (+15.16%, indicative single passes; the latter overlapped verification). The subsequent non-callable-mask correction was re-ingested separately and retained in `review2-ingest-callmask-fixed.json`. Known JavaScript optional-parser coverage is unchanged and recorded in those reports. `qa_constant_inventory.py` confirms the three reviewed constants rank first and return their original source; constants remain outside helper blocks. A first diagnostic mistakenly required a cluster ID even for entities outside the selected static graph; that rejected accounting check is retained in its log, then corrected to test non-contraction.
+
+The wave-2 six-edit fixture was reconstructed from pinned commit `45d37319d0b221839aa76819f8deca45467e2d15` with preserved CRLF, since the old temporary source copies are not present. Baseline-wheel and new-wheel re-ingests both produce **MISSING 11 and UNKNOWN 7,885**, and all six named target tiers agree. The new extractor adds 108 IDENTICAL constant records. These reconstructed results are separate from the original wave-2 rows (`review2-drift-baseline/result.json`, `review2-drift-constants/result.json`). The constant-value oracle separately confirms BODY_REFACTOR; the existing CONTROL_GUARD outcome matrix and complete drift suite pass.
+
+Flat MCP code responses expose canonical entity IDs and citation handles, with no view-local aliases; federation uses the same projection. Labels are shown first in discovery and recommended in the schemas/instructions. Legacy alias recovery is a deterministic bounded LRU scoped by MCP connection, graph and snapshot; ambiguity returns real canonical choices and a valid example. Strict calls keep their aliases.
+
+Pre-cycle verification: full Geo verify **PASS: 657 backend, 17 browser, frontend typecheck/build/unit**, `output/w4-review2-verify-prebench5.log`; Librarian **2,181 passed, 2 skipped, 5 deselected in 718.88 s**, `output/w4-review2-librarian-prebench.log`. Earlier failed/superseded verification logs are retained: stale generated digest, expanded identifier checks, and the non-callable-slot regression were resolved before this cycle. Qwen's separate review (`20261113T011802-c35eb15d`, $0.0035787) proposed four findings, all rejected after checks: it quoted a deleted line, missed recursive canonical conversion, missed the explicit lowest-utility selection, and requested literal folding beyond the specified extraction contract.
+
+**Frozen benchmark wheel:** `review2-prebench-dist5/geo_grapher-0.1.1-py3-none-any.whl`, SHA256 `70db1c61b785625268c629c5f5e3dec672a3a8ee4c49d4d8be7e93baa523e396`. **Frozen librarian-v2 snapshot:** `snapshot:33ba9c619765ea532d2e91be5089f6348631cb1fb0d6c9b25fd9a83562d1c98a`, graph label `librarian-v2`. These are recorded before any of the three paid runs. The production-lead readiness check found model `ByteDance/Seed-2.0-mini`, host `preset-deepinfra`, **Core not running**; the non-gating question and real pilot remain unexecuted.
+
+Registered review-2 run 1: **1/5**, 4.6 calls/question, 0 wrong-graph, 0 withheld, 0 tool errors; metered planning-rate cost **$0.0997139** across 28 HTTP attempts. First file: `code-review2-cycle-run1.json`.
+
+Registered review-2 run 2: **1/5**, 5.8 calls/question, 0 wrong-graph, 0 withheld, 0 tool errors; metered planning-rate cost **$0.1509306** across 33 HTTP attempts. First file: `code-review2-cycle-run2.json`.
+
+Registered review-2 run 3: **3/5**, 5.2 calls/question, 0 wrong-graph, 0 withheld, 0 tool errors; metered planning-rate cost **$0.1308777** across 31 HTTP attempts. First file: `code-review2-cycle-run3.json`.
+
+Three-run cycle verdict: **FAIL — escalate; no extra model run**, 5/15 markers; 5.20 calls/question across all 15 questions. All three rows above are retained.
+
+### Cycle diagnosis and escalation
+
+The cycle cost **$0.3815222** at stored planning rates, including metered retries; each run has a separate `-cost.json` receipt. No criteria, questions, markers, model, wheel or snapshot changed between runs. Preregistration commit `4522115` preceded the three calls. This is a failed product gate despite protocol success, not evidence that the model is weak.
+
+`code-review2-cycle-diagnosis.json` retains each question's search arguments and selected canonical source spans. The HELPER_TOOLS question misses all three times: natural-language search selects `Broker.set_tool`, rather than the indexed constant. The DEFAULT_CONTEXT_TOKENS question also misses all three: searches select loop-context helpers and other context constants. MAX_EXTERNAL_RESULT succeeds in all three runs. Exact-name lookup of all three constants passes the separate no-model oracle; natural-language discovery remains a product gap. `lead_agents` and `run_one` each appear in only one run's final answer. Some selected entity spans contain those markers, but span membership alone does not establish that the relevant lines were delivered in the bounded content page. Pagination, content selection and answer citation need further investigation under a separately authorised plan. Code scores keep their frozen final-answer marker criterion; paper option (a) is not retroactively applied to them.
+
+## 14. Review-2 application completion and owner stop point
+
+### Directed QI and real-store browser
+
+The atomic spatial toolbar now offers Off, Helper balls and Directed. Other grouping or relationship modes disable it with an explanation. The additive v1.1 frame request carries QI options; its response carries the existing certificate. Directed mode shows the block count and **reachability preserved (existential)**. QI nodes render as enclosures with expandable membership. Expansion uses separate transient pins; switching Off restores the original atomic partition. Multi-graph frame requests carry the same selection. Frozen v1.0 declarations remain unchanged.
+
+Real-store QA exposed a filtered-partition affinity bug: the geometry path projected excluded test/vendor endpoints into a QI partition that did not contain them. The QI geometry now uses the certificate's filter. A regression fixture includes excluded test code and sphere-affinity layout; the two new viewport-QI tests and related 15-test viewport/affinity selection pass.
+
+All following rows are retained separately under `output/qa-real/`:
+
+| Review-2 browser attempt | Passed / failed | Interpretation |
+|---|---:|---|
+| `results-review2-first.json` | 3 / 2 | Exposed QI affinity product defect and prune harness selection/wait defect |
+| second attempt, partial traces | aborted | F: filled; server/trace output stopped; no valid completed result JSON |
+| `results-review2-after-recovery.json` | 4 / 1 | QI passed; bridge harness still selected the graph created by prune |
+| `results-review2-final.json` | **5 / 0** | All scenarios pass on the same cleaned disposable real-store copy |
+
+The final installed-wheel pass used `review2-ui-dist2/geo_grapher-0.1.1-py3-none-any.whl` and `review2-browser-first/catalog.sqlite`, prepared from the new constant-enabled snapshots. Directed QI rendered more than one block, expanded a real group, restored the atomic partition on Off, and exercised Helper balls (46.8 s, within the unchanged 120-second scenario timeout). Prune preserved the source snapshot and created a derived graph (19.9 s); bridge review rejected an actual related-code candidate with a rationale (6.5 s); add-folder deselected one of two preview partitions and created one graph (2.1 s); parent traversal, UNC, junction and outside absolute paths were refused. Successful scenarios asserted no browser page or console errors. Screenshot: `output/qa-real/review2-directed-final.png`. The owner's hands-on checklist remains unperformed.
+
+### Evidence preservation and storage recovery
+
+The second browser attempt exhausted F: space. Redundant databases from three older disposable QA copies (`application-r1`, `application-browser-isolated`, `application-bridge-real-pair`) were moved to `E:/Librarian research/Geo_Grapher-wave4-QA-archive/`, with SHA256 before/after checks and manifests. Their old catalog database locators were updated to the archive, so historical copies remain usable. `output/phase67-gates/wave4/qa-archive-locations.json` records the mapping. Raw results, traces, source copies, original gate stores, the frozen benchmark catalog and wheels were retained. About 5.2 GB was recovered. Geo's final temporary directory used E:. Librarian's initial E: run was stopped at 36% because of hard-disk temporary-file latency; an attempted D: root directory was denied and that short fallback run was stopped too. Both partial logs remain. The unchanged full Librarian suite was restarted using a writable task directory under `D:/Librarian_V2/tmp/` on the SSD; no Librarian production source was modified.
+
+### Final verification
+
+Final Geo `scripts/verify.ps1` **PASS**, exit 0: **659 backend tests**, frontend typecheck/build, **16 frontend unit tests**, and **17 browser tests**. Evidence: `output/w4-review2-verify-final.log`. The backend took 1,587.43 s using E: temporary storage; this is verification runtime, not an application latency measurement. Product/UI commit: `2c042f0`.
+
+The final UI wheel's no-model preset smoke **PASS: 28/28**, all within 7,500 characters (`preset-smoke-review2-ui.json`); the frozen benchmark wheel's separate 28/28 result is retained. Cleanup audit `review2-final-audit.json` confirms all five baseline graph/snapshot pairs remain exactly unchanged, no extra graphs and zero bridge proposals. It also verifies the frozen benchmark wheel hash is unchanged. The UI wheel SHA256 is `af44c34b6ad70e67da939d82a37346c49acd3da8c6cd35968f18f11df3d690aa`.
+
+Final full Librarian suite **PASS**, exit 0: **2,181 passed, 2 skipped, 5 deselected in 595.40 s**, `output/w4-review2-librarian-final-ssd2.log`. It ran against the isolated `geo-grapher-wave4` worktree; the owner's dirty original Librarian checkout was not changed.
+
+The final quiet latency check ran only after both suites and browser servers stopped, through the installed UI wheel on `review2-stores/catalog.sqlite`. Every query succeeded, but the process exits 1 because the ToolSet ceiling is breached. All 12 first samples are retained in `latency-review2-final.json`; no warm replacement, discarded spike or repeat was used.
+
+| Final current-store graph | Tree-balls seconds (three cold processes) | Directed seconds (three cold processes) | Verdict |
+|---|---|---|---|
+| ToolSet | **3.746, 3.020, 3.051** | **3.713, 2.796, 2.920** | **C14 FAIL** (<3.0 s required for every ToolSet sample) |
+| librarian-v2 | 11.495, 9.278, 9.169 | 9.789, 6.732, 6.559 | Recorded, not gated |
+
+The earlier cache-first old-store pass in §13 remains valid for that artifact, but does not supersede the final current-store failure. The isolated export scan became faster; end-to-end current-store cold latency still needs investigation. This is escalated with the failed code cycle, without additional product tuning or paid attempts.
+
+No additional paid benchmark run is authorised or planned. Pool commitment after engineering delegation and all three runs is **$4.47507265 of $10**, leaving approximately **$5.5249**; this is a planning-rate ledger, not an invoice. Machine summary `reports/PHASE67_WAVE4_GATE.json` adds a review-2 section and preserves every historical result key.
+
+### Required owner action
+
+Follow §10 exactly for Resource-Library: start Host/Core; qualify both configured research_helper and Clerk roles with free L0 and paid L1 only after reviewing its plan; inspect `--status` for **screened** and **fresh: true** for both; leave Core running and report the statuses. If the configured Qwen3.5-397B Clerk times out, retain/report that failure and decide a replacement separately. Do not silently swap it. Only after the owner reports qualification can the six-task pilot resume. The production-lead question has not run: the recorded readiness check found Core not running. Both branches remain unmerged pending owner approval, and acceptance remains open because the registered code cycle failed.
