@@ -383,6 +383,7 @@ class Turn:
     # arrives later is bound to that reply and not to whichever came last.
     turn_id: str = ""
     reply_id: str = ""
+    completed_at_step_limit: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {k: v for k, v in self.__dict__.items() if v or k in ("reply", "steps")}
@@ -1007,7 +1008,10 @@ class Loop:
                 self._private_runtime = InvocationRuntime()
             runtime = self._private_runtime
         binding = runtime.binding_for(walk_provider)
-        while turn.steps < self.max_steps:
+        while self.max_steps > 0:
+            # The final tool-free iteration always returns; a changed effort
+            # may have reduced the limit below the number already taken.
+            at_step_limit = turn.steps >= self.max_steps
             if self.turn_seconds and turn.steps and \
                     time.monotonic() - started > self.turn_seconds:
                 turn.stopped = "time_limit"
@@ -1017,9 +1021,15 @@ class Loop:
                 turn.stopped = "cancelled"
                 self.on_event({"type": "stopped", "reason": "cancelled"})
                 return turn
-            turn.steps += 1
-            system, view, tools = self.system_prompt(), self.view(), self.tools()
-            preflight = self._workflow_preflight(tools)
+            if not at_step_limit:
+                turn.steps += 1
+            system, view = self.system_prompt(), self.view()
+            tools = [] if at_step_limit else self.tools()
+            if at_step_limit:
+                system += ("\nThe tool-step limit is reached. Answer from the evidence already gathered; "
+                           "say what is missing or uncertain. Use only citations present in that evidence, "
+                           "never invent citations, and do not request or claim further tool actions.")
+            preflight = None if at_step_limit else self._workflow_preflight(tools)
             if preflight is not None:
                 return self._stop_for_workflow_preflight(turn, preflight)
             system, view, turn.request = self._fit_context(system, view, tools)
@@ -1075,16 +1085,29 @@ class Loop:
                 turn.stopped = "cancelled"
                 self.on_event({"type": "stopped", "reason": "cancelled"})
                 return turn
+            if at_step_limit and reply.tool_calls:
+                # A permissive/scripted adapter may still propose tools. Never
+                # execute them or leave unmatched calls in the next turn.
+                turn.stopped = "max_steps"
+                turn.error = "The final answer requested tools although tools were disabled."
+                self.on_event({"type": "stopped", "reason": "max_steps", "error": turn.error})
+                return turn
             self.messages.append(reply.message())
             final = not reply.tool_calls
             reply_id = f"r-{secrets.token_hex(6)}" if final and reply.text else ""
             if reply.text:
                 self.on_event({"type": "text", "text": reply.text,
+                               **({"completed_at_step_limit": True} if at_step_limit else {}),
                                **({"reply_id": reply_id, "turn_id": turn.turn_id}
                                   if reply_id else {})})
                 self._persist("assistant", reply.text, reply_id=reply_id)
             if final:
                 turn.reply, turn.reply_id = reply.text, reply_id
+                if at_step_limit:
+                    turn.completed_at_step_limit = bool(reply.text.strip())
+                    turn.stopped = "max_steps"
+                    self.on_event({"type": "stopped", "reason": "max_steps",
+                                   "completed_at_step_limit": turn.completed_at_step_limit})
                 return turn
             self.refused_last_step = False
             # The trace names the model behind each call (Requirements Addendum R3).
