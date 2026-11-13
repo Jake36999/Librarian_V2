@@ -25,3 +25,11 @@ The six-task pilot remains four tier-3 block contracts, one tier-2 synthesis and
 ## Release boundary
 
 The original dirty Librarian master and its mixed-owner files have not been staged or reverted by this branch's work. Survey integration, wave-4 integration, both full suites, merged-wheel cross-repo checks and every merge/push still need the agreed owner-controlled F1/F2 process. The Geo Grapher 0.2.0 notes and stable-v1.1 freeze are drafts until that process and owner acceptance finish.
+
+## Separately authorised code-quality preparation
+
+The `code-research` profile uses role/binding `lead`, the existing contribute ceiling and production route temperature **0.2**. The invocation runtime receives this policy in both ordinary calls and guarded step-limit synthesis. Other profiles keep their provider default sampling. This profile does not provision a provider/model route or qualify a live helper; it applies to the configured lead binding when selected through the normal application profile mechanism.
+
+For a programmatic Loop, configure the validated profile and provide both `agent_profile` and the vault-backed `ProfileStore` in its context. Registry intentionally reduces a selected profile to consult if the store is absent; setting an arbitrary profile name must not broaden authority. The code-quality evaluation harness now follows that same path, verified with three actual installed-wheel calls and a scripted provider at 0.2 with no paid dispatch.
+
+The P3 self-check prototype was reverted after an inconclusive development A/B: a harness setup error blocked both arms before graph retrieval. Both first rows remain in Geo Grapher's quality report. No benefit is claimed and no extra A/B was run. The single final quality-track cycle is separate from the closed **12/15 wave-4 release result**; it does not reopen that gate or authorise a merge, push or release.
