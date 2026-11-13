@@ -76,5 +76,498 @@
     "packet_chars": 2785,
     "anchor_count": 1,
     "handles": 5
+  },
+  "owner_direction_2026_11_13": {
+    "verdict": "NOT_READY",
+    "merged": false,
+    "pushed": false,
+    "code_criterion": {
+      "min_markers": 4,
+      "total": 5,
+      "max_wrong_graph": 0,
+      "max_withheld": 0,
+      "max_calls_per_question": 8
+    },
+    "code_runs": [
+      {
+        "file": "output\\phase67-gates\\wave4\\code-frontdoor-run1.json",
+        "markers": 3,
+        "total": 5,
+        "calls_per_question": 4.6,
+        "wrong_graph_calls": 0,
+        "withheld": 0,
+        "tool_errors": 0,
+        "passed": false
+      },
+      {
+        "file": "output\\phase67-gates\\wave4\\code-frontdoor-run2.json",
+        "markers": 2,
+        "total": 5,
+        "calls_per_question": 7.2,
+        "wrong_graph_calls": 1,
+        "withheld": 0,
+        "tool_errors": 7,
+        "passed": false
+      }
+    ],
+    "code_escalated": true,
+    "further_model_runs": 0,
+    "papers": {
+      "protocol": "owner-option-a",
+      "source": "output\\phase67-gates\\wave4\\bench-1m-papers.json",
+      "support_map": {
+        "115": 115,
+        "doc:1": 1,
+        "108": 108,
+        "85": 115,
+        "229": 229,
+        "152": 152,
+        "234": 2
+      },
+      "support_provenance": [
+        {
+          "id": 2,
+          "title": "The ESW of Wikidata: Exploratory search workflows on Knowledge Graphs",
+          "abstract": "This work presents the Exploratory Search Workflows collection, focusing on real-world exploration sessions of Wikidata, and introduces a resource for analyzing real user sessions and understanding query evolution and complexity. The collection includes 234 real exploratory workflows and serves as the first query benchmark for KG management systems for exploratory search."
+        },
+        {
+          "id": 115,
+          "title": "GraphRAG for engineering diagrams: ChatP&ID enables LLM interaction with P&IDs",
+          "abstract": "This work introduces ChatP&ID, a framework enabling natural-language interaction with smart P&IDs through Graph Retrieval-Augmented Generation (GraphRAG). ChatP&ID transforms DEXPI-encoded P&IDs into structured knowledge graphs, enabling reliable querying by large language model (LLM) agents and improving response accuracy by 18% over raw image inputs."
+        }
+      ],
+      "questions": [
+        {
+          "question": "What do recent papers say about retrieval augmented generation? Summarise the main claims.",
+          "markers": [
+            "115"
+          ],
+          "supporting_documents": [
+            115
+          ],
+          "retrieval": 1,
+          "answer": 1,
+          "total": 1
+        },
+        {
+          "question": "Which papers combine knowledge graphs with large language models? What specific techniques do they propose?",
+          "markers": [
+            "doc:1",
+            "108"
+          ],
+          "supporting_documents": [
+            1,
+            108
+          ],
+          "retrieval": 2,
+          "answer": 1,
+          "total": 2
+        },
+        {
+          "question": "What token efficiency advantages do graph-based retrieval methods claim over dense vector search?",
+          "markers": [
+            "85"
+          ],
+          "supporting_documents": [
+            115
+          ],
+          "retrieval": 1,
+          "answer": 1,
+          "total": 1
+        },
+        {
+          "question": "What graph neural network techniques appear in the corpus, and which papers use them?",
+          "markers": [
+            "229",
+            "152"
+          ],
+          "supporting_documents": [
+            229,
+            152
+          ],
+          "retrieval": 2,
+          "answer": 2,
+          "total": 2
+        },
+        {
+          "question": "What are the main evaluation benchmarks used in papers about knowledge graph construction?",
+          "markers": [
+            "234"
+          ],
+          "supporting_documents": [
+            2
+          ],
+          "retrieval": 1,
+          "answer": 1,
+          "total": 1
+        }
+      ],
+      "retrieval": 7,
+      "answer": 6,
+      "total": 7,
+      "passed": true
+    },
+    "leakage": {
+      "cross_graph": 0,
+      "total": 29,
+      "passed": true,
+      "prior_knowledge": 1,
+      "remedy": "wave5"
+    },
+    "preset_smoke": {
+      "file": "output\\phase67-gates\\wave4\\preset-smoke-isolated.json",
+      "calls": 28,
+      "passed": false,
+      "failures": [
+        {
+          "preset": "code",
+          "tool": "find_dependants",
+          "success": false,
+          "characters": 318,
+          "schema_characters": 418,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "arguments",
+            "message": "arguments: BUDGET_TOO_SMALL: Minimum successful payload needs 2599 accounting units. Example: find_dependants({\"graph_id\":\"<graph_id>\",\"entity_id\":\"<entity_id>\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "entity_id": "<entity_id>"
+            }
+          }
+        },
+        {
+          "preset": "code",
+          "tool": "get_architecture_context",
+          "success": false,
+          "characters": 325,
+          "schema_characters": 579,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "arguments",
+            "message": "arguments: BUDGET_TOO_SMALL: Minimum successful payload needs 2299 accounting units. Example: get_architecture_context({\"graph_id\":\"<graph_id>\",\"focus_id\":\"<entity_id>\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "focus_id": "<entity_id>"
+            }
+          }
+        },
+        {
+          "preset": "lead",
+          "tool": "get_architecture_context",
+          "success": false,
+          "characters": 325,
+          "schema_characters": 579,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "arguments",
+            "message": "arguments: BUDGET_TOO_SMALL: Minimum successful payload needs 2299 accounting units. Example: get_architecture_context({\"graph_id\":\"<graph_id>\",\"focus_id\":\"<entity_id>\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "focus_id": "<entity_id>"
+            }
+          }
+        },
+        {
+          "preset": "cross",
+          "tool": "federated_search",
+          "success": true,
+          "characters": 20098,
+          "schema_characters": 571,
+          "error": null
+        }
+      ]
+    },
+    "browser_runs": [
+      {
+        "file": "output\\qa-real\\results-first.json",
+        "passed": 0,
+        "failed": 5,
+        "note": "initial harness failures"
+      },
+      {
+        "file": "output\\qa-real\\results-harness-corrected.json",
+        "passed": 2,
+        "failed": 3,
+        "note": "shared-store contention; contaminated"
+      },
+      {
+        "file": "output\\qa-real\\results-isolated.json",
+        "passed": 2,
+        "failed": 3,
+        "note": "20-second waits; separate stores"
+      },
+      {
+        "file": "output\\qa-real\\results-wheel.json",
+        "passed": 3,
+        "failed": 2,
+        "note": "installed wheel; original unrelated code pair"
+      },
+      {
+        "file": "output\\qa-real\\results-bridge-diagnostic.json",
+        "passed": 0,
+        "failed": 1,
+        "note": "ToolSet/librarian-v2: no pending candidates"
+      },
+      {
+        "file": "output\\qa-real\\results-bridge-real-pair.json",
+        "passed": 1,
+        "failed": 0,
+        "note": "related real Librarian copies; review succeeds"
+      }
+    ],
+    "spatial_directed_qi": "FAIL: missing UI control",
+    "latency_first": [
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 3.72568450000108,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 1
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 3.411964500002796,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 2
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 3.3949701999954414,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 3
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 2.7547464999952354,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 1
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 2.961745799999335,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 2
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 2.804371499994886,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 3
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 11.193694999994477,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 1
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 10.887869900005171,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 2
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 10.952797899997677,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 3
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 6.92314769999939,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 1
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 6.9269090999951,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 2
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 6.607169499999145,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 3
+      }
+    ],
+    "latency_quiet": [
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 5.645975700004783,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 1
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 3.149306200000865,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 2
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 3.129669499998272,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 3
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 2.8971361000003526,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 1
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 2.5037999999985914,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 2
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 2.514191000002029,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 3
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 13.981001000000106,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 1
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 9.096816899997066,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 2
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 9.132905799997388,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 3
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 7.408916799999133,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 1
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 6.107102900001337,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 2
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 6.091309499999625,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 3
+      }
+    ],
+    "latency_passed": false,
+    "cleanup": [
+      {
+        "copy": "application-bridge-real-pair",
+        "extra_graphs": [],
+        "snapshots_preserved": true,
+        "proposal_rows": 0
+      },
+      {
+        "copy": "application-browser-isolated",
+        "extra_graphs": [],
+        "snapshots_preserved": true,
+        "proposal_rows": 0
+      },
+      {
+        "copy": "application-browser-wheel",
+        "extra_graphs": [],
+        "snapshots_preserved": true,
+        "proposal_rows": 0
+      },
+      {
+        "copy": "application-r1",
+        "extra_graphs": [],
+        "snapshots_preserved": true,
+        "proposal_rows": 0
+      },
+      {
+        "copy": "application-smoke-isolated",
+        "extra_graphs": [],
+        "snapshots_preserved": true,
+        "proposal_rows": 0
+      }
+    ],
+    "verification": {
+      "geo_verify_exit": 0,
+      "frontdoor_related_tests": 45,
+      "browser_existing_tests": 17,
+      "librarian_passed": 2181,
+      "librarian_skipped": 2,
+      "librarian_deselected": 5
+    },
+    "pilot": {
+      "status": "blocked_owner_qualification",
+      "executed": false,
+      "steps": "PHASE67_WAVE4_GATE.md section 10"
+    },
+    "wheel": {
+      "path": "output\\phase67-gates\\wave4\\frontdoor-final-dist\\geo_grapher-0.1.1-py3-none-any.whl",
+      "sha256": "dba2434547f393e1cbc133e19ae0b645ee45512fd60f6d726f8617b516ca8cc9"
+    },
+    "budget": {
+      "pool_cap_usd": 10,
+      "committed_usd": 4.07390895,
+      "code_run1_usd": 0.0881403,
+      "code_run2_usd": 0.1760749,
+      "review_usd": 0.0021204
+    }
   }
 }

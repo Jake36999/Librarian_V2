@@ -1,5 +1,7 @@
 # Phase 6–7 Wave 4 gate — 2026-11-12
 
+Owner-directed acceptance revision completed 2026-11-13; current verdict is in §12. Earlier measurements remain historical rows.
+
 **Verdict: NOT READY for wave acceptance.** The implementation is reviewable on feature branches. Local engineering checks pass, but the model-assisted code benchmark and the qualified-helper pilot do not close the acceptance criteria. Neither branch has been merged or pushed.
 
 ## 1. Scope and source ownership
@@ -106,3 +108,196 @@ The approved pool opened at $0.491624 and finishes at approximately **$3.81 comm
 Final schema follow-up review: three proposed defects were rejected after source checks (correct pointer decoding; a quoted deleted line; allOf retaining sibling constraints). An escaped-pointer smoke passed and all eight generated concrete request schemas pass JSON Schema validation with no remaining references. No concrete review finding remains unadjudicated.
 
 All local implementation and evidence work is committed on the feature branches. The next acceptance work is a capable lead-route/code-tool pilot, disposition of the 6/7 paper result and prior-knowledge failure, and the six-task pilot after actual Resource-Library role qualification. None is represented as already passed.
+
+## 9. Owner-directed acceptance revision — 2026-11-12
+
+The earlier rows and verdicts above are historical first results. The owner identified the code-tool interface as a product defect: agents were required to construct the internal wire protocol. The new MCP front door accepts flat calls, fills protocol fields server-side, clamps agent budgets and reports actionable errors. Strict `{graph_id,request}` remains a separate, strictly validated form. No branch may be merged without the owner's approval, even when automated gates pass.
+
+### Code re-run: criterion registered BEFORE the run (§3.3)
+
+Freeze the same five CODE_BENCH questions and markers, model `Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo`, declared route window 1048576, library-scoped `lead` preset and 12-step limit. This run must have **at least 4/5 markers, zero withheld results, zero wrong-graph calls, and at most 8 tool calls/question on average**. Every condition is required. Each call records tool name, arguments (600 characters), error code/message (300 characters), success and per-question top errors. No first file is overwritten and no best-of score is taken.
+
+First output: `output/phase67-gates/wave4/code-frontdoor-run1.json`. If it fails, permit only **one** further engineering iteration, decided from its per-call errors, and **one** additional run saved as `code-frontdoor-run2.json`. A second failure is escalated to the owner. These rules are written before either run.
+
+### Paper protocol and leakage decisions (§3.4, §3.6)
+
+The owner selected option (a): evaluate the retained 1M paper run once as **retrieval 7/7 and answer at least 6/7**, with separate scores. Use exact document IDs from `retrieved['ai-research-papers']` for retrieval and retain the original answer-marker score. Record the resulting protocol row below; do not replace the original 6/7 row or run a best-of study.
+
+The leakage gate **PASSES its stated criterion: zero cross-graph leaks (0/29)**. The separate prior-knowledge result remains 1/29. The Warburg abstention/answer-contract remedy belongs to wave 5, not this acceptance criterion.
+
+### Registered front-door run 1 and the single allowed iteration
+
+Run 1: **3/5 markers, 0 withheld, 0 wrong-graph calls, 23 tool calls / 5 questions = 4.6 average, 0 tool errors**. All questions received answers. This is **FAIL** solely on markers, retained in `code-frontdoor-run1.json`.
+
+Its per-call logs show the missed helper-tool and MCP-bound questions fetched unrelated code, without errors. The agent adapter had selected symbol-only lexical search for natural-language questions, excluding original documentary evidence. The one permitted iteration switches the default to the existing `hybrid` retrieval mode and returns up to eight ranked hits (still bounded), without corpus-specific query rewrites or marker hints. A RED oracle using a docstring-only query demonstrates the gap. Run 2 keeps the frozen model, questions, markers and pass mark above. No third re-run is authorized.
+
+| Registered code run | Markers | Calls/question | Withheld | Wrong-graph calls | Verdict |
+|---|---:|---:|---:|---:|---|
+| Original first complete code run | 0/5 | 11.4 | 0 | 0 | FAIL; original file retained |
+| After reference coercion repair | 0/5 | 12.0 | 0 | 0 | FAIL; original file retained |
+| After concrete schema presentation | 0/5 | 12.0 | 0 | 0 | FAIL; original file retained |
+| Flat front door, run 1 | 3/5 | 4.6 | 0 | 0 | FAIL (markers) |
+| Hybrid default, run 2 | 2/5 | 7.2 | 0 | 1 | FAIL; escalated to owner, no third attempt |
+
+The first run had zero tool errors and all five answers, proving the protocol barrier was removed. Remaining retrieval/answer quality still fails the frozen product gate; the second run also made a rejected wrong-graph request. First files remain separate and all new results have per-call diagnostics.
+
+Run 2 has seven rejected calls: four unscoped aliases, two entity IDs absent from the graph, and one mistyped/unknown graph ID. These are preserved in its per-call records and top-error summaries. The next code-product investigation should inspect discovery/ranking and the coexistence of wire aliases with the front door's canonical handles; no third model attempt was made.
+
+### Paper option (a), applied once
+
+`scripts/score_paper_protocol.py` evaluated the retained 1M run: **retrieval 7/7, answer 6/7 — PASS** under the owner's chosen criterion. The original answer-only 6/7 row remains above. Evidence: `papers-option-a-verified.json`. The `85` marker is the token-reduction quantity supported by ChatP&ID (`doc:115`), and `234` is the workflow count supported by ESW (`doc:2`); neither is a document ID. Their source abstracts and the support map are retained in the score file. An initial incorrect all-markers-as-document-IDs calculation is archived separately as rejected accounting, not a model run.
+
+## 10. Resource-Library qualification — exact owner steps (§3.5)
+
+**STOP at the live pilot.** These instructions are prepared, not executed by Codex. Continue only when the owner has qualified the exact roles/routes and asked for the six-task pilot. Application QA below is independent and continues. Do not substitute a different Clerk if Qwen times out.
+
+Run these PowerShell commands as the owner:
+
+```powershell
+$libPy = 'D:/Librarian_V2/.venv/Scripts/python.exe'
+$env:PYTHONPATH = 'D:/Librarian_V2/src'
+& $libPy -m resource_librarian host status
+& $libPy -m resource_librarian host start --vault 'D:/Resource-Library/.librarian-app' --open
+```
+
+The Host should return `status: running` and open the library. If startup instead reports a **stopped/stale** vault lease, first verify the reported PID is not alive with `Get-Process -Id <reported-PID> -ErrorAction SilentlyContinue`; do not take over a live process. Only after confirming the old Core is stopped, the explicit recovery command is:
+
+```powershell
+& $libPy -m resource_librarian --vault 'D:/Resource-Library/.librarian-app' app --takeover --port 0 --open
+```
+
+In Models → qualification, confirm host `preset-deepinfra` and the role-specific canonical bindings: `research_helper` → `google/gemma-4-26B-A4B-it`; `clerk` → `Qwen/Qwen3.5-397B-A17B`. Lead qualification does not cover either role. The equivalent exact commands below call the running Core, keeping its private token inside the helper process:
+
+```powershell
+$qualify = 'F:/uv-data/Geo_Grapher/scripts/qualify_resource_library.py'
+# Read-only plans: inspect the estimate before approving any paid probe.
+& $libPy $qualify --role research_helper --level L1
+& $libPy $qualify --role clerk --level L1
+# Free deterministic checks, then the owner's explicit paid approvals.
+& $libPy $qualify --role research_helper --level L0 --run
+& $libPy $qualify --role clerk --level L0 --run
+& $libPy $qualify --role research_helper --level L1 --run --confirm-spend
+& $libPy $qualify --role clerk --level L1 --run --confirm-spend
+& $libPy $qualify --role research_helper --status
+& $libPy $qualify --role clerk --status
+```
+
+Each L1 performs a real tool proposal **and continuation**, and must produce a role-specific `pass`, a matching observed model, and `qualification.status: screened` with `fresh: true`. Expected evidence is in `C:/Users/jakem/.config/resource-librarian/model-evaluations.json` (`runs` and `qualifications` for both roles), the vault's `.librarian/checkpoints.json` (approved evaluation-spend decisions), and the private Core discovery record under `C:/Users/jakem/.config/resource-librarian/cores/`. Save public command output if desired; never share the Core token or API keys.
+
+Planning estimate from the maintained guide: about **$0.005 per role, approximately $0.01 total** for the small L1 probes; L0 is free. The live plan's estimate is authoritative and should be checked before the owner confirms. A timeout may retain an uncertain charge. Qwen3.5-397B timed out in wave 2: if it times out here, retain that failure and report it; **do not change models** without owner approval. Leave the Core running and tell Codex both role statuses to resume the four-Clerk / tier-2 / tier-1 ToolSet pilot.
+
+## 11. Application testing (§4)
+
+Automated installed-package preset, real-store browser, and latency results follow below. All use disposable copies, not the live project catalogs.
+
+### Owner's 20-minute exploratory checklist
+
+- [ ] 0–2 min: start the workspace on the disposable QA catalog using the command recorded with the application results; open its loopback URL.
+- [ ] 2–6 min: switch ToolSet/Librarian graphs, inspect grouping choices, open a block and inspect labels and role badges. Check whether directed QI is actually available in the spatial UI; do not count an API-only certificate as rendered groups.
+- [ ] 6–10 min: Add folder → browse a scratch project → preview → untick one partition → ingest → observe the completed job and new graph.
+- [ ] 10–13 min: box-select a small source region → prune into a new graph → verify the source graph's snapshot is unchanged.
+- [ ] 13–16 min: review two bridge candidates; accept a justified one with a rationale, reject an unrelated one; check bridge state through `list_bridges`.
+- [ ] 16–20 min: after role/lead readiness is established, ask one code question in Resource-Library with the production lead and six-tool `lead` preset. Inspect the cited `graph-label/entity:` handles and open their source in the UI. Record actual success/failure; do not substitute the development benchmark route.
+
+The prior-knowledge abstention remedy (Warburg negative probe) is a wave 5 backlog item: when the corpus lacks the subject, abstain rather than append prior knowledge; cover this in a Librarian answer-contract test.
+
+### Front-door defaults and review
+
+The agent adapter uses schema 1.1, the catalog's current snapshot, a deterministic digest request ID, the connection profile ceiling, canonical identities and null cursor. Search defaults to hybrid mode, eight results and no kind/repository restriction. Context defaults to atomic grouping, radius one, no pins and QI disabled; enabled QI defaults to tree-balls with diameter two. Content defaults to the entity's original source range (documentation for fragments), radius zero. Dependants default to incoming depth one; architecture checking returns `not_configured` when no rule model exists. Flat and strict forms may not be mixed. Over-ceiling flat budgets report their clamp; strict requests retain strict rejection. Error examples are minimal argument templates; replace the bracketed IDs with IDs from discovery/search.
+
+The DeepInfra review (`w4-frontdoor-direction-review`, Qwen3-Coder) cost $0.0021204 at stored rates. Its proposed minimum-budget defect is incorrect: `<256` already accepts 256. Different per-operation defaults do not violate profile ceilings. A missing repository root requires a malformed code snapshot; ingestion supplies it, and the no-model paper path does not index roots. The 0.85 packing reduction is implementation headroom, not an acceptance defect. No proposed finding warrants another model benchmark. Existing real-store cap failures remain open independently.
+
+Code run 1 cost $0.0881403 across 28 metered HTTP attempts; run 2 cost $0.1760749 across 39. These are API-usage estimates at stored planning rates, not invoices. After both runs and review, the delegation ledger records **$4.07390895 committed of the approved $10 pool**. No further paid benchmark or route qualification was run.
+
+### Installed-wheel preset smoke
+
+`scripts/qa_mcp_presets.py` exercises the exact advertised six-tool sets through `uvx`, without a model, with a 7,500-character response ceiling. The script removes `PYTHONPATH` from the child environment, checks exact tool names, calls every tool, and makes one deliberate bad call per preset. Code schemas are also checked against 1,200 characters in the front-door oracle tests.
+
+| Preset | Calls passing success/error and character checks | Result |
+|---|---:|---|
+| papers | 7/7 | PASS |
+| code | 5/7 | FAIL |
+| lead | 6/7 | FAIL |
+| cross | 6/7 | FAIL |
+
+First evidence: `output/phase67-gates/wave4/preset-smoke-first.json`. Final-wheel confirmation on a separate catalog: `preset-smoke-isolated.json`. Both expose the same four failures: minimal `find_dependants` and two preset instances of `get_architecture_context` return `BUDGET_TOO_SMALL` while trying to fit the full response into 7,500 characters; `federated_search` succeeds but returns **20,098 characters**, breaching that ceiling. All four deliberate bad calls return actionable examples. Minimal architecture and dependant calls pass on the small oracle fixture; the real-store failures are additional product gaps, not a claim that application QA passed.
+
+The intermediate `preset-smoke-final-wheel.json` overlapped the browser on the same disposable catalog and is retained as contaminated. The final confirmation uses `application-smoke-isolated/catalog.sqlite`; the browser uses a different copy. No original catalog or source tree was modified.
+
+Reproduce the final no-model smoke from the repository root:
+
+```powershell
+output/wheel-env/Scripts/python.exe scripts/qa_mcp_presets.py `
+  --catalog output/phase67-gates/wave4/application-smoke-isolated/catalog.sqlite `
+  --wheel output/phase67-gates/wave4/frontdoor-final-dist/geo_grapher-0.1.1-py3-none-any.whl `
+  --out output/phase67-gates/wave4/preset-smoke-owner-new.json
+```
+
+Result paths must be new: the scripts refuse to overwrite first evidence. Final wheel SHA256: `dba2434547f393e1cbc133e19ae0b645ee45512fd60f6d726f8617b516ca8cc9`.
+
+### Owner workspace command
+
+The 20-minute checklist above starts with this installed-wheel command on the disposable real-store catalog, after automated QA has stopped:
+
+```powershell
+uvx --refresh-package geo-grapher --from F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/frontdoor-final-dist/geo_grapher-0.1.1-py3-none-any.whl geographer serve-graphs `
+  --catalog F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/application-browser-wheel/catalog.sqlite `
+  --browse-root F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/application-browser-wheel/browse `
+  --transport http --port 8790
+```
+
+Open `http://127.0.0.1:8790/`. The scratch folder is `browse/project`. For a bridge decision with actual overlapping code, check only librarian-v2 and librarian-survey-worktree; ToolSet/librarian-v2 returned no pending candidates in the recorded probe. Directed QI remains an explicit checklist finding until a spatial control exists. Keep the Core qualification commands in §10 separate from this workspace command. The manual checklist is prepared for the owner; Codex has not claimed a completed hands-on owner pass.
+
+### Real-store browser evidence — resumed 2026-11-13
+
+The final browser harness launches the installed wheel through `uvx`, strips source `PYTHONPATH`, and uses disposable gate-store copies with reconstructed snapshot source bytes. It asserts empty page-error/console-error lists and deletes created graphs and new proposal rows in `afterAll`.
+
+| Browser attempt | Passed / failed | Interpretation |
+|---|---|---|
+| `results-first.json` | 0 / 5 | Retained harness defects: cleanup request format, ambiguous locator and hidden menu controls; also exposed missing QI control |
+| `results-harness-corrected.json` | 2 / 3 | Retained contaminated run: concurrent smoke shared its writable disposable stores and caused SQLite locks |
+| `results-isolated.json` | 2 / 3 | Separate stores; 20-second waits expired for prune/candidates; add-folder and path refusals passed |
+| `results-wheel.json` | 3 / 2 | Installed wheel: prune (21.5 s), folder ingestion and path refusals passed; QI control missing; first code-pair review did not complete |
+| `results-bridge-diagnostic.json` | 0 / 1 | Explicit pair/readiness/response checks: ToolSet/librarian-v2 returned no pending candidates; no artificial candidate inserted |
+| `results-bridge-real-pair.json` | 1 / 0 | Related real librarian-v2/librarian-survey-worktree copies: candidate reviewed and rejected with rationale (11.6 s) |
+
+All result JSON files are under `output/qa-real/`, with matching traces/screenshots in their `test-results-*` directories. No best-of full-suite score is claimed. The completed workflow evidence is: prune creates a derived graph and preserves ToolSet's source snapshot; add-folder previews two partitions, deselects one and creates exactly one graph; `..`, UNC, a real junction and an existing outside absolute directory all return 403; bridge review decides an actual related-code candidate. The required **directed-QI spatial workflow FAILS** because the workspace exposes no directed-QI algorithm control or rendered QI groups. An API certificate does not satisfy that UI requirement.
+
+Offline audit `output/phase67-gates/wave4/application-cleanup-audit.json` confirms every application copy retains all baseline snapshot IDs, has no extra graph rows and has zero proposal rows. The original stores were only used through read-only backup handles. No browser console/page error was reported in the successful final workflow tests.
+
+For a fresh browser run, first prepare a new output directory with `scripts/qa_real_store_prepare.py --catalog output/phase67-gates/wave4/catalog.sqlite --out <new-copy>`, then set `QA_REAL_ROOT` to that directory, `QA_REAL_PORT` to a free loopback port, `QA_REAL_OUTPUT` and `QA_REAL_REPORT` to new evidence paths, and run `npx playwright test --config playwright.real.config.cjs`. The QI test intentionally remains a failing acceptance assertion until the UI exists.
+
+### Cold latency (C14)
+
+`scripts/qa_wave4_latency.py` uses a new installed-wheel Python process per sample, the first function by canonical ID, atomic grouping, radius two, QI diameter two and an 8,192-token strict request. Timing covers `GraphRouter.query`, including cold service/snapshot hydration; interpreter startup and read-only focus selection are excluded. Existing on-disk analysis artifacts are retained. No sample is discarded. The first run overlapped other QA; the second ran after the suites and browsers stopped, on its own store copy.
+
+| Run / graph | Tree-balls seconds (three cold processes) | Directed seconds (three cold processes) | Criterion |
+|---|---|---|---|
+| First / ToolSet | 3.726, 3.412, 3.395 | 2.755, 2.962, 2.804 | FAIL tree-balls <3.0 s |
+| First / librarian-v2 | 11.194, 10.888, 10.953 | 6.923, 6.927, 6.607 | Recorded, not gated |
+| Quiet / ToolSet | 5.646, 3.149, 3.130 | 2.897, 2.504, 2.514 | FAIL tree-balls <3.0 s |
+| Quiet / librarian-v2 | 13.981, 9.097, 9.133 | 7.409, 6.107, 6.091 | Recorded, not gated |
+
+All queries succeeded. C14 requires both algorithms below 3 seconds on ToolSet, so it **FAILS** even though directed QI passes. Raw evidence: `latency-application-first.json` and `latency-application-quiet.json` under `output/phase67-gates/wave4/`. These measurements do not replace earlier wave latency rows.
+
+Reproduce with the installed wheel's Python and a new result path:
+
+```powershell
+uvx --refresh-package geo-grapher --from output/phase67-gates/wave4/frontdoor-final-dist/geo_grapher-0.1.1-py3-none-any.whl python scripts/qa_wave4_latency.py `
+  --catalog output/phase67-gates/wave4/application-smoke-isolated/catalog.sqlite `
+  --out output/phase67-gates/wave4/latency-owner-new.json
+```
+
+## 12. Current verdict — 2026-11-13
+
+**NOT READY. Neither branch is merged or pushed.** The owner-directed work and application assessment are complete to the requested stop point; acceptance is not complete.
+
+- Code front door and diagnosable harness are implemented; all five code runs remain separate. The two allowed re-runs fail the preregistered product gate. Escalated; no third run.
+- Paper option (a) **PASS**: retrieval 7/7, answer 6/7. Leakage criterion **PASS**: cross-graph 0/29. Prior-knowledge 1/29 remains a wave 5 item.
+- Installed-wheel preset QA **FAIL** on real-store response fitting/federation caps. Directed-QI spatial UI **FAIL**. ToolSet C14 **FAIL** for tree-balls. Prune, selected-partition ingestion, picker refusals and a related-code bridge decision have successful real-store browser evidence.
+- Resource-Library qualification commands, evidence locations and cost are in §10. The six-task pilot is **BLOCKED on owner qualification and a running Core**, and has not been executed or replaced with other routes.
+- Final `scripts/verify.ps1` exited 0: full backend suite, frontend typecheck/build/unit and 17 browser tests (`output/w4-direction-verify-final.log`). Four front-door oracle tests and the related catalog/cross-graph suite passed 45 tests (`output/w4-direction-focused-final.log`). Full Librarian suite: **2,181 passed, 2 skipped, 5 deselected in 714.18 s** (`output/w4-direction-librarian-full.log`). Only QA harness/report files changed after that final product verification.
+
+Remaining acceptance work is concrete: improve code discovery/handle usability under the frozen gate; fit minimal real-store results and enforce federation character caps; expose directed QI in the spatial workspace; restore the tree-balls cold-latency target; and run the six-task pilot after the owner's exact Resource-Library roles are qualified. The owner must approve any eventual merge of either branch. The 20-minute manual checklist is prepared above and remains for the owner to perform.
+
+Reviewable implementation/QA commit: Geo Grapher `4498b08` on `phase67-wave4`. This revision's report and machine evidence summary are also mirrored onto Librarian's `geo-grapher-wave4` worktree; no new Librarian production code was changed in this revision. Original result files remain in the workspace paths referenced above.
