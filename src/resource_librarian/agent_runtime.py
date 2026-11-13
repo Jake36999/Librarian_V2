@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 import threading
 import time
@@ -274,6 +275,10 @@ class AgentProfile:
         # MF-011: the route's context window, when its catalogue entry has none
         # (a local or custom model). It only ever narrows what is sent.
         context_tokens = self.route_policy.get("context_tokens")
+        temperature = self.route_policy.get('temperature')
+        if temperature is not None and (type(temperature) not in (int,float) or
+                                        not math.isfinite(temperature) or not 0<=temperature<=2):
+            raise ValueError('route_policy.temperature is a finite number from 0 to 2')
         if context_tokens is not None and (isinstance(context_tokens, bool) or
                                            not isinstance(context_tokens, int) or context_tokens < 1024):
             raise ValueError("route_policy.context_tokens is a whole number of tokens, at least 1024")
@@ -343,6 +348,9 @@ def route_permitted(profile: AgentProfile, route: dict[str, Any]) -> tuple[bool,
 
 
 DEFAULT_PROFILES = {
+    'code-research': AgentProfile('code-research','lead',allowed_bundles=['session','research'],
+                                  permission_ceiling='contribute',validation_rules=['grounded'],
+                                  route_policy={'binding_role':'lead','temperature':0.2}),
     "lead": AgentProfile("lead", "lead", allowed_bundles=["session", "research"],
                          permission_ceiling="contribute", validation_rules=["grounded"]),
     "scribe": AgentProfile("scribe", "scribe", allowed_bundles=["draft"],

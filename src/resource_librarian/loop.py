@@ -425,6 +425,7 @@ class Loop:
         self.profile_role = ""
         self.profile_token_budget = 0
         self.profile_output_budget = 4096
+        self.profile_temperature: float | None = None
         self.profile_cost_budget_usd = 0.0
         self.profile_time_budget_seconds = 0.0
         self.profile_rate_card: dict[str, float] | None = None
@@ -485,6 +486,7 @@ class Loop:
         self.profile_validation_rules = tuple(str(rule).strip()[:120] for rule in rules
                                               if isinstance(rule, str) and rule.strip())[:12]
         policy = getattr(profile, "route_policy", {}) or {}
+        self.profile_temperature = policy.get('temperature') if isinstance(policy,dict) else None
         card = rate_card if isinstance(rate_card, dict) else \
             (policy.get("rate_card") if isinstance(policy, dict) else None)
         if isinstance(card, dict):
@@ -1061,7 +1063,8 @@ class Loop:
                     phase=self.phase(), session_id=self.ctx.session or "",
                     behavior_mode="provider_default")
                 invocation = InvocationPayload.from_legacy(
-                    system, view, tools, max_tokens=self.profile_output_budget)
+                    system, view, tools, max_tokens=self.profile_output_budget,
+                    temperature=self.profile_temperature)
                 # The invocation runtime has a process-wide redacted
                 # trace sink.  Bind it only for this synchronous call so
                 # concurrent walks/background endpoints cannot attach a
