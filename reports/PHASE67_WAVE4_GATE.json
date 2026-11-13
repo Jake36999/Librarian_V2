@@ -3302,5 +3302,228 @@
     "merged": false,
     "pushed": false,
     "previous_candidate_checks_unchanged": true
+  },
+  "review3_final_wave4": {
+    "authorised": true,
+    "last_wave4_code_cycle": true,
+    "executed": true,
+    "registration": "PHASE67_WAVE4_GATE.md section 17",
+    "geo_commit": "420c06d",
+    "librarian_commit": "68eeb77",
+    "wheel": "output/phase67-gates/wave4/final-wave4-dist3/geo_grapher-0.1.1-py3-none-any.whl",
+    "wheel_sha256": "a390f279cf8f6f7fa41368ff2055bd114c40b283b36c8d5c79d048f4931d5199",
+    "runtime_sha256": "1ec0801acd77997f1d9db9d6079dd225d18a677aae782d2ae279ea18eeb1d5fb",
+    "snapshot": "snapshot:1703964f018a8f5981c139069836a87178098924bd94383d5788c083bb89c9bf",
+    "verification": {
+      "geo_exit": 0,
+      "backend_passed": 680,
+      "frontend_unit_passed": 16,
+      "browser_passed": 17,
+      "librarian_exit": 0,
+      "librarian_passed": 2188,
+      "librarian_skipped": 2,
+      "librarian_deselected": 5,
+      "librarian_seconds": 624.23,
+      "final_preset_passed": 28
+    },
+    "criteria": {
+      "runs": 3,
+      "minimum_each": 3,
+      "minimum_total": 12,
+      "total": 15,
+      "maximum_wrong_graph": 0,
+      "maximum_withheld": 0,
+      "maximum_average_calls_per_question": 8,
+      "ordinary_steps": 12,
+      "additional_tool_free_synthesis": 1
+    },
+    "post_cycle_code_evaluation": "STOP regardless of result",
+    "pool_committed_before_cycle": 4.91347995,
+    "merged": false,
+    "pushed": false,
+    "registration_commit": "7f9e4b0",
+    "summary": {
+      "last_wave4_code_cycle": true,
+      "seal_file": "code-final-wave4-cycle-seal.json",
+      "runs": [
+        {
+          "run": 1,
+          "file": "code-final-wave4-cycle-run1.json",
+          "markers": 3,
+          "calls": 35,
+          "wrong_graph": 0,
+          "withheld": 0,
+          "tool_errors": 1,
+          "completed_at_step_limit": 0,
+          "cost_usd": 0.19573900000000005
+        },
+        {
+          "run": 2,
+          "file": "code-final-wave4-cycle-run2.json",
+          "markers": 5,
+          "calls": 32,
+          "wrong_graph": 0,
+          "withheld": 0,
+          "tool_errors": 1,
+          "completed_at_step_limit": 0,
+          "cost_usd": 0.18598310000000004
+        },
+        {
+          "run": 3,
+          "file": "code-final-wave4-cycle-run3.json",
+          "markers": 4,
+          "calls": 31,
+          "wrong_graph": 0,
+          "withheld": 0,
+          "tool_errors": 0,
+          "completed_at_step_limit": 0,
+          "cost_usd": 0.1704916
+        }
+      ],
+      "total_markers": 12,
+      "total": 15,
+      "calls_per_question": 6.533333333333333,
+      "passed": true
+    },
+    "audit": {
+      "passed": true,
+      "frozen_inputs_unchanged": true,
+      "questions_model_settings_verified": true,
+      "runs": [
+        {
+          "run": 1,
+          "answered": 5,
+          "completed_at_step_limit": 0,
+          "wall_seconds": 148.8,
+          "markers": 3
+        },
+        {
+          "run": 2,
+          "answered": 5,
+          "completed_at_step_limit": 0,
+          "wall_seconds": 131.4,
+          "markers": 5
+        },
+        {
+          "run": 3,
+          "answered": 5,
+          "completed_at_step_limit": 0,
+          "wall_seconds": 158.5,
+          "markers": 4
+        }
+      ],
+      "cost_usd": 0.5522137000000003,
+      "metered_http_attempts": 113,
+      "receipt_statuses": {
+        "completed": 113
+      },
+      "pool": {
+        "budget_usd": 10.0,
+        "committed_usd": 5.46811405
+      },
+      "closure": {
+        "last_wave4_code_cycle": true,
+        "status": "closed",
+        "summary": "code-final-wave4-cycle-summary.json",
+        "no_further_wave4_code_cycles": true
+      },
+      "tool_calls": 98,
+      "tool_errors": 2,
+      "coverage_records": 453
+    },
+    "code_gate_passed": true,
+    "code_evaluation_closed": true,
+    "delivery_diagnosis": "output/phase67-gates/wave4/code-final-wave4-cycle-delivery.json",
+    "cycle_cost_usd": 0.5522137,
+    "all_questions_answered": 15,
+    "completed_at_step_limit_answers": 0,
+    "no_further_cycles": true,
+    "pilot": {
+      "executed": false,
+      "core_alive": false,
+      "qualification_call_sent": false,
+      "owner_steps": "PHASE67_WAVE4_GATE.md section 10"
+    },
+    "overall_wave4_acceptance": "PENDING_OWNER_PILOT_AND_ACCEPTANCE"
+  },
+  "f3_preparation_2026_11_13": {
+    "status": "PREPARED_ON_FEATURE_BRANCHES_NOT_RELEASED",
+    "user_authorised_preparation_before_F0_F2_exit": true,
+    "cleanup": {
+      "commit": "658b3d7",
+      "script": "scripts/qa_cleanup.py",
+      "cleanup_and_cycle_lock_tests_passed": 8,
+      "managed_root": "D:/Librarian_V2/tmp/geo-grapher-qa-workspaces",
+      "final_result": {
+        "dry_run": false,
+        "removed": [],
+        "retained": [
+          "D:\\Librarian_V2\\tmp\\geo-grapher-qa-workspaces\\security\\20261113-final-a3"
+        ],
+        "skipped": []
+      },
+      "legacy_gate_copies_protected": true,
+      "draft_run": "20261113T092740-6711b805",
+      "draft_cost_usd": 0.0024204,
+      "draft_adjudication": "rejected"
+    },
+    "security": {
+      "fix_commit": "1ba0457",
+      "first_passed": 4,
+      "first_failed": 2,
+      "final_passed": 6,
+      "final_failed": 0,
+      "live_server": true,
+      "findings_fixed": [
+        "same-root junction alias acceptance",
+        "preview-root replacement before job dispatch"
+      ],
+      "report": "reports/PHASE67_F3_SECURITY.md",
+      "json": "output/qa-real/results-f3-security-final.json"
+    },
+    "verification": {
+      "geo_exit": 0,
+      "backend_passed": 690,
+      "frontend_unit_passed": 16,
+      "browser_fixture_passed": 17,
+      "real_store_browser_passed": 5,
+      "preset_calls_passed": 28,
+      "librarian_unchanged_since_full_suite": true,
+      "librarian_passed": 2188,
+      "librarian_skipped": 2,
+      "librarian_deselected": 5
+    },
+    "audit": {
+      "qa_server_stopped": true,
+      "baseline_snapshots_unchanged": true,
+      "extra_graphs": [],
+      "proposal_rows": 0,
+      "fixture_junction_entries_removed": [
+        "browse/junction",
+        "browse/inside-link"
+      ],
+      "junction_targets_preserved": true,
+      "managed_copy_state": "complete",
+      "wheel_source_and_assets_match": true,
+      "wheel_sha256": "77b647c92a3261467a1bc89434af91a2146fb99c207cf81246a9a90abb2f170f",
+      "code_evaluation_closed": {
+        "last_wave4_code_cycle": true,
+        "status": "closed",
+        "summary": "code-final-wave4-cycle-summary.json",
+        "no_further_wave4_code_cycles": true
+      }
+    },
+    "docs": "docs/phase67/README.md",
+    "librarian_docs": "docs/geo-grapher-phase67-preparation.md",
+    "version_bumped": false,
+    "v11_declared_stable": false,
+    "owner_doc_review": "pending",
+    "F0_exit": false,
+    "F2_exit": false,
+    "F3_exit": false,
+    "merged": false,
+    "pushed": false,
+    "pool_committed_usd": 5.46811405,
+    "pool_cap_usd": 10
   }
 }

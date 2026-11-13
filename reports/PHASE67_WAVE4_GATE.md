@@ -242,13 +242,13 @@ Result paths must be new: the scripts refuse to overwrite first evidence. Final 
 The 20-minute checklist above starts with this installed-wheel command on the disposable real-store catalog, after automated QA has stopped:
 
 ```powershell
-uvx --refresh-package geo-grapher --from F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/continuation-dist2/geo_grapher-0.1.1-py3-none-any.whl geographer serve-graphs `
-  --catalog D:/Librarian_V2/tmp/geo-grapher-wave4-continuation-stores/catalog.sqlite `
-  --browse-root D:/Librarian_V2/tmp/geo-grapher-wave4-continuation-stores/browse `
+uvx --refresh-package geo-grapher --from F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/f3-security-dist/geo_grapher-0.1.1-py3-none-any.whl geographer serve-graphs `
+  --catalog D:/Librarian_V2/tmp/geo-grapher-qa-workspaces/security/20261113-final-a3/catalog.sqlite `
+  --browse-root D:/Librarian_V2/tmp/geo-grapher-qa-workspaces/security/20261113-final-a3/browse `
   --transport http --port 8790
 ```
 
-Open `http://127.0.0.1:8790/`. The scratch folder is `browse/project`. For a bridge decision with actual overlapping code, check only librarian-v2 and librarian-survey-worktree; ToolSet/librarian-v2 returned no pending candidates in the recorded probe. The review-2 wheel now exposes Off / Helper balls / Directed in the atomic spatial view; the owner should exercise Directed, expand a block, and return to Off. Keep the Core qualification commands in §10 separate from this workspace command. The manual checklist is prepared for the owner; Codex has not claimed a completed hands-on owner pass.
+Open `http://127.0.0.1:8790/`. The scratch folder is `browse/project`. Mark the managed copy's `qa-copy.json` state `active` before serving and `complete` after stopping, as described in the operator guide. For a bridge decision with actual overlapping code, check only librarian-v2 and librarian-survey-worktree; ToolSet/librarian-v2 returned no pending candidates in the recorded probe. The spatial control exposes Off / Helper balls / Directed; exercise Directed, expand a block, and return to Off. Keep the Core qualification commands in §10 separate from this workspace command. The manual checklist remains for the owner; Codex has not claimed a completed hands-on owner pass.
 
 ### Real-store browser evidence — resumed 2026-11-13
 
@@ -292,9 +292,9 @@ uvx --refresh-package geo-grapher --from output/phase67-gates/wave4/frontdoor-fi
 
 ## 12. Current verdict — 2026-11-13
 
-**NOT READY after the owner-authorised continuation cycle.** Results are **2/5, 5/5, 5/5 = 12/15**. The aggregate threshold passes, but the requirement that **each run ≥3/5 fails**. No fourth run was made. All 15 questions have zero wrong-graph calls and zero withheld results; average calls/question is 5.8, with two rejected entity-ID calls in run 1. §16 retains every row, receipt and diagnosis. The earlier 5/15 cycle remains separate.
+**Code gate PASS; overall wave-4 acceptance/release NOT READY pending owner work.** The LAST registered code cycle scores **3/5, 5/5, 4/5 = 12/15**, satisfying every frozen threshold (§17). All 15 questions produced answers; wrong-graph and withheld counts are zero; average tool calls/question is 6.53. Wave-4 code evaluation is closed permanently after that cycle. The prior failed cycles, including §16's 2/5, 5/5, 5/5, remain separate.
 
-The candidate's C14, installed-wheel presets, real-store browser and full Geo/Librarian verification still pass (§15); its sealed product and harness inputs did not change during the new cycle. Core remains stopped, so role qualification and the six-task pilot remain pending. Neither branch is merged or pushed. Further model evaluation is stopped at the registered escalation point.
+A3.1–3, safe QA retention and F3 preparation are implemented. The final HTTP-hardened wheel passes **690 backend tests**, frontend checks, **17 browser tests**, **28/28 preset calls**, **5/5 real-store browser workflows** and **6/6 live security scenarios** (§18). Librarian's feature runtime passes **2,188 tests**. Core remains stopped, so role qualification, the six-task pilot and production-lead question remain blocked. Owner hands-on/F1 decisions, F2 merges and release acceptance are outstanding. Neither branch is merged or pushed; no 0.2.0 version bump, stable-contract declaration or release is claimed.
 
 ### Review-2 verdict — retained
 
@@ -518,3 +518,106 @@ Each startup log also retains the same rejected `server/discover` probe, followe
 ### Stop and remaining owner work
 
 The runner exited **1 for the failed gate**, after completing all three runs. No production code changed after the passing full suites and final-wheel QA in §15, so those results remain attached to this exact candidate; no redundant suite rerun or new package build is claimed. Core was checked read-only again and remains stopped; no qualification call, live pilot, production-lead question, route substitution, merge or push was performed. Exact Resource-Library steps remain in §10. Further evaluation or repair requires the owner's direction; this authorisation is fully used.
+
+## 17. Review-3 close-out and LAST wave-4 code cycle — registered BEFORE dispatch
+
+The owner explicitly authorises A3.1–3, one **final** registered cycle under A3.4, then QA cleanup and F3 preparation on the feature branches. **This is the last code cycle for wave 4, whatever its result. No repair-and-rerun cycle follows.** A failed final result goes to the owner for an accepted stability limitation or a wave-5 target; neither disposition is assumed. No merge or push is authorised.
+
+### A3.1–3 implementation and RED evidence
+
+Librarian commit **`68eeb77`** adds one tool-free synthesis invocation at step exhaustion, asking for an answer from gathered evidence and an explicit account of what is missing. It uses the pinned invocation runtime and keeps cancellation, time, context and profile cost/token guards. Tools are not offered or executed; malformed extra tool requests are not appended as pending calls. A nonblank answer has `completed_at_step_limit: true`; the ordinary step count and `max_steps` stop provenance remain. Zero-step budgets do not send a request. Dynamic effort reductions are covered. Existing persistence/citation boundaries remain in place; no benchmark-specific prompt hints are added. Seven scripted-provider oracles pass; the initial four RED results and additional dynamic-limit RED result are retained.
+
+Geo commit **`420c06d`** adds bounded real ID choices from this MCP connection's delivered search hits, scoped by graph and snapshot. Prefix/name similarity orders candidates deterministically; absent recent hits, only exact-name lookup in the selected graph is used. The full choices list is ≤400 serialized characters, at most three records, and the error message is ≤400 characters. The executable example uses a real graph label and candidate; templates remain only when nothing fits. Cache capacity is 256 records and tests cover connection/graph separation and an actual MCP retry.
+
+Flat `search_entities` and `get_entity_content` now carry `coverage` (≤16 records) and `coverage_truncated`. Content hashes cover actual returned UTF-8 text and merge only adjacent returned chunks, preserving gaps and line endings; flags describe partial requested ranges. Search has null source line ranges and hashes the delivered node/hit metadata, **not undisclosed source bodies**. Clipped metadata is explicit. The harness saves validated bounded ranges/hashes per call plus `completed_at_step_limit`, without retaining full source text. Metadata is included in complete response token/character accounting. Strict wire responses are unchanged.
+
+RED logs: `w4-final-step-limit-red.log`, `w4-final-id-recovery-red.log`, `w4-final-coverage-red.log`, `w4-final-coverage-integration-red.log`, `w4-final-harness-coverage-red.log`. Lead adjudication added RED tests for missing coverage keys and a missing outer source range. Qwen coverage draft `20261113T084842-8bd6849e` cost **$0.0014482**, accepted **partial** after the lead corrected truncation detection. Review `20261113T085806-da5f768a` cost **$0.0026983**, **rejected**: calls are rejected before history insertion; `bool(text.strip())` already rejects whitespace; the candidate-list bound already measures each aggregate addition. The corresponding fixtures exercise those concrete behaviors.
+
+The first installed wheel exposed a real fitting regression: added coverage overhead exhausted the old ten-iteration search fitter (three preset failures). Its result `preset-smoke-final-wave4.json` is retained. A new 50-hit source-independent RED fixture reproduced it. Bounded multiplicative hit-count reduction and 24 fitting iterations now converge; the final frozen-wheel preset smoke passes **28/28**. `preset-smoke-final-wave4-second.json` remains separately PASS; wheel 3 differs only by removal of a terminal blank line, with identical AST and focused tests rerun. No paid benchmark ran during these repairs.
+
+### Verification and frozen candidate
+
+Full final Geo verify: **680 backend tests**, frontend typecheck/build, **16 frontend unit tests**, **17 browser tests**, exit 0 (`output/w4-final-a3-verify-second.log`). The earlier 679-test full pass is retained separately. Full Librarian: **2,188 passed, 2 skipped, 5 deselected in 624.23 s**, exit 0 (`output/w4-final-a3-librarian-full.log`). The final-cycle refusal guard also passes its independent oracle; format-only trimming was checked with unchanged AST and five focused tests. No production behavior changed after these full checks.
+
+Installed-wheel → Librarian no-model search/content calls capture real coverage (`final-no-model-librarian-coverage-second.json`), including source line ranges; no provider call was made. The frozen wheel's 28/28 result is `preset-smoke-final-wave4-frozen.json`.
+
+**Frozen wheel:** `output/phase67-gates/wave4/final-wave4-dist3/geo_grapher-0.1.1-py3-none-any.whl`, SHA256 **`a390f279cf8f6f7fa41368ff2055bd114c40b283b36c8d5c79d048f4931d5199`**. **Frozen librarian-v2 snapshot:** `snapshot:1703964f018a8f5981c139069836a87178098924bd94383d5788c083bb89c9bf`, same catalog and source facts as §16. Librarian runtime SHA256 **`1ec0801acd77997f1d9db9d6079dd225d18a677aae782d2ae279ea18eeb1d5fb`** covers its feature-worktree Python source files. The runner seals itself, the harness, questions, wheel and runtime, checking them before and after each run.
+
+### LAST-cycle protocol — all conditions frozen before dispatch
+
+Same five CODE_BENCH questions and markers, same **Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo**, declared **1,048,576** context tokens, library-scoped **lead** preset, and **12 ordinary loop steps**. A3.1's explicitly authorised product behavior may add **one guarded, tool-free synthesis call** at exhaustion; it cannot add another tool step. The prompt/questions/scoring are not changed to assist that call. The marker criterion remains final-answer-only; no paper-style retrieval rescore.
+
+Exactly **three independent fresh-library attempts**, all reported without intervening changes. Pass requires **each ≥3/5 AND aggregate ≥12/15**, **zero wrong-graph calls**, **zero withheld results**, and **≤8 tool calls/question averaged across all 15 questions**. Tool errors, coverage, final-at-limit answers and costs remain separately logged. Use new files `code-final-wave4-cycle-run1.json` through `run3.json`, with separate `-cost.json` receipts. Retain every prior row and all first attempts.
+
+Runner: `scripts/run_wave4_final_code_cycle.py`. Exclusive seal and `wave4-code-evaluation-final.json` prevent restarting the final cycle; the latter is closed on completion or interruption. No fourth run and **no later wave-4 code cycle**, on either pass or failure. Planning cost about **$0.45** within the existing $10 pool; current commitment after this draft/review is **$4.91347995**, about **$5.0865** remaining. This registration and the runner are committed before paid dispatch.
+
+### Follow-on scope after the cycle
+
+Code evaluation stops afterwards. A3.6 cleanup follows, preserving gate originals, frozen wheels and all result evidence. F3 documentation, migration notes and the local-server security pass then proceed on feature branches under the owner's explicit request, without declaring F0/F2 complete, bumping/releasing 0.2.0, merging, pushing or accepting owner limitations. The Resource-Library six-task pilot and non-gating production-lead question still require the owner's screened/fresh roles and running Core (§10).
+
+Registered FINAL wave-4 run 1: **3/5**, 7.0 calls/question, 0 wrong-graph, 0 withheld, 1 tool errors; metered planning-rate cost **$0.1957390** across 40 HTTP attempts. First file: `code-final-wave4-cycle-run1.json`.
+
+Registered FINAL wave-4 run 2: **5/5**, 6.4 calls/question, 0 wrong-graph, 0 withheld, 1 tool errors; metered planning-rate cost **$0.1859831** across 37 HTTP attempts. First file: `code-final-wave4-cycle-run2.json`.
+
+Registered FINAL wave-4 run 3: **4/5**, 6.2 calls/question, 0 wrong-graph, 0 withheld, 0 tool errors; metered planning-rate cost **$0.1704916** across 36 HTTP attempts. First file: `code-final-wave4-cycle-run3.json`.
+
+FINAL wave-4 cycle verdict: **PASS**, 12/15 markers; 6.53 calls/question across all 15 questions. All three rows above are retained.
+
+### Final cycle result and closure
+
+The final registration was committed as **`7f9e4b0` before dispatch**. Every attempt used the same frozen inputs. All original and new rows remain:
+
+| Final run | Markers | Tool calls/question | Wrong graph | Withheld | Tool errors | Cost at stored rates |
+|---|---:|---:|---:|---:|---:|---:|
+| 1 | **3/5** | 7.0 | 0 | 0 | 1 | $0.1957390 |
+| 2 | **5/5** | 6.4 | 0 | 0 | 1 | $0.1859831 |
+| 3 | **4/5** | 6.2 | 0 | 0 | 0 | $0.1704916 |
+
+**PASS:** each ≥3/5; aggregate **12/15**; zero wrong-graph; zero withheld; average **6.5333** tool calls/question ≤8. There were **98 tool calls**, two rejected calls, **15/15 final answers** and **zero** `completed_at_step_limit` answers. The guarded final-synthesis behavior is proven by scripted tests, not claimed as the cause of this model-cycle pass. Every model answer ended within the ordinary steps.
+
+The **113 metered HTTP attempts all completed**, costing **$0.5522137** at stored API-usage rates (above the $0.45 planning estimate, inside the approved pool). Per-run `-cost.json` files retain the ledger IDs. `code-final-wave4-cycle-audit.json` verifies questions/settings, frozen wheel/runtime/harness inputs and closure. `wave4-code-evaluation-final.json` is **closed**, forbids further wave-4 code cycles, and is protected from QA cleanup. The runner exited 0 after the three attempts. No extra model run followed.
+
+The harness saved **453 coverage records**. `code-final-wave4-cycle-delivery.json` validates returned source-range hashes against frozen source bytes. Two run-1 answer misses (MAX_EXTERNAL_RESULT and DEFAULT_CONTEXT_TOKENS) had the expected literal in verified returned source. Run 3's DEFAULT_CONTEXT_TOKENS miss did not appear in its validated returned source ranges. These are delivery diagnostics, not a retrieval rescore or proof of full answer completeness; search metadata is not treated as source-body delivery. No score or frozen criterion changed.
+
+### F0 criterion disposition
+
+| Criterion / work | Final disposition |
+|---|---|
+| Code cycle | **PASS**, last cycle above; evaluation closed |
+| Paper option (a) | **PASS**, retained 7/7 retrieval and 6/7 answers |
+| Cross-graph leakage | **PASS**, retained 0/29 cross-graph leaks; prior-knowledge 1/29 goes to wave 5 |
+| C14 | **PASS** on retained registered samples; narrow headroom disclosed; no median/max rescore |
+| Preset caps and browser workflows | **PASS**, exact-wheel evidence below |
+| Full Geo / Librarian suites | **PASS**, 690 / 2,188 plus frontend/browser as recorded |
+| Six-task Resource-Library pilot | **BLOCKED on owner** screened/fresh helper and Clerk, with Core running |
+| Non-gating production-lead question | **BLOCKED on owner** route/Core readiness; not substituted |
+| Owner hands-on checklist | **PENDING owner**, not replaced by automated QA |
+| W3-5, mixed-owner files, F1/C14 decisions and F2 merges | **PENDING owner**; not changed here |
+
+F0 cannot exit yet; no limitation or release approval is inferred from the code pass.
+
+## 18. QA cleanup and F3 preparation on feature branches
+
+### A3.6 retention
+
+Commit **`658b3d7`** adds `scripts/qa_cleanup.py`: a marked `root/scenario/run` layout, dry-run default, explicit apply, retention of the newest two complete/failed copies per scenario, and UTC-aware timestamp ordering. Active, unmarked or invalid copies are retained. Any gate path, wheel, reparse ancestry/content, stale/forged plan or redirected target is refused. All absolute targets are checked before mutation and rechecked immediately before deletion. No shell-based recursive deletion is used.
+
+Seven cleanup regressions and the final-cycle lock test **PASS 8/8**, including real Windows junctions and a target replaced between deletions (`w4-final-cleanup-final.log`). The worker's initial draft (`20261113T092740-6711b805`, $0.0024204) was **rejected** after root-junction and timezone regressions; the lead replaced its validation/deletion implementation. A case-folding fixture initially collided on Windows and was corrected to a separate parent directory; the failed accounting log is retained.
+
+Cleanup ran before every subsequent browser/security cycle. The managed root is `D:/Librarian_V2/tmp/geo-grapher-qa-workspaces`; legacy gate copies and archived evidence remain protected. At teardown, only two explicitly test-owned junction entries were removed after verifying the server stopped and their targets were inside the disposable workspace; both target directories remain. The copy is now `complete`, eligible for later retention. Final cleanup retains this newest copy and removes nothing, with no skipped/unsafe copies (`output/w4-f3-cleanup-final.json`).
+
+### Documentation and migration preparation
+
+`docs/phase67/` contains the user, agent/MCP, operator, migration and draft 0.2.0 release guides, linked from README. Librarian's feature branch has `docs/geo-grapher-phase67-preparation.md`. All links and recorded v1.1 digests were checked. The migration notes distinguish new snapshot facts (constants/comment associations/stage-3 export analysis) from query-time FTS rebuilding; tokenizer changes alone do not require re-ingestion. Old published facts remain immutable. Backup and rollback notes account for independent SQLite stores, WAL and private cursor-key sidecars.
+
+The future C14 proposal (median of three <3.0 s, max <3.5 s) and librarian-v2 QI performance work are recorded as proposals/wave-5 work, never applied retroactively. No version bump, v1.1 freeze, CI-rule change, merge, tag, release or push is performed. F3 exit still requires approved F2 integration, owner doc review and the merged-main 0.2.0 build; preparation here is the explicit user-authorised exception to roadmap sequencing.
+
+### Real-server security and final application QA
+
+`reports/PHASE67_F3_SECURITY.md` records the authorised local threat boundary and actual test evidence. The first pass retained **4/6**: it found same-root junction acceptance and missing preview-root revalidation. Both received RED unit tests and were fixed in **`1ba0457`**. The corrected real-server pass is **6/6**; the exact hardened-wheel real-store browser is **5/5**; preset smoke is **28/28**. Full Geo verification is **690 backend tests, 16 frontend unit, typecheck/build and 17 browser tests PASS** (`w4-f3-verify-final.log`). The unchanged Librarian runtime retains its 2,188-test full pass.
+
+The post-cycle HTTP-hardened wheel is `f3-security-dist/geo_grapher-0.1.1-py3-none-any.whl`, SHA256 **`77b647c92a3261467a1bc89434af91a2146fb99c207cf81246a9a90abb2f170f`**. Its HTTP picker/job changes are separate from the sealed final model-cycle wheel; no code-agent evaluation was reopened. The model/agent tool implementation and Librarian runtime are unchanged by those HTTP guards.
+
+First and final browser/security JSON and traces remain under `output/qa-real/`: `results-f3-security-baseline.json` (5/5), `results-f3-security-first.json` (4/6), `results-f3-security-final.json` (6/6), and `results-f3-browser-final.json` (5/5). `f3-final-audit.json` confirms unchanged baseline graph heads, zero extra graphs/proposals, preserved junction targets, a stopped QA server, matching packaged source/assets and the closed code-cycle marker. No result is substituted for a first attempt.
+
+Pool commitment after the final cycle and cleanup draft is **$5.46811405 / $10**, approximately **$4.5319** remaining; security testing and docs made no provider calls. Core remains stopped on the final read-only check. Both feature branches remain unmerged and unpushed, and the owner's dirty Librarian master remains untouched. The next release actions are the owner readiness/decisions in §10/F1 and the approved F2 integration sequence, not another wave-4 code cycle.
