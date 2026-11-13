@@ -466,13 +466,16 @@ class McpManager:
 
     def _make_fn(self, server: str, tool_name: str):
         def fn(ctx, **kwargs) -> dict[str, Any]:
+            recovery=ctx.extras.get('_code_recovery')
+            if recovery is not None:
+                return self.call_tool(server,tool_name,kwargs,limit_chars=ctx.extras.get('external_result_limit'),metadata=recovery.metadata())
             return self.call_tool(server, tool_name, kwargs,
                                   limit_chars=ctx.extras.get('external_result_limit'))
         return fn
 
     # -- calling -------------------------------------------------------------
     def call_tool(self, server: str, tool_name: str, arguments: dict[str, Any],
-                  *, limit_chars: int | None = None) -> dict[str, Any]:
+                  *, limit_chars: int | None = None, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
         limit = MAX_EXTERNAL_RESULT if limit_chars is None else limit_chars
         if type(limit) is not int or not MAX_EXTERNAL_RESULT <= limit <= 160_000:
             raise ValueError('limit_chars must be 8000..160000')
@@ -494,7 +497,10 @@ class McpManager:
         if not admitted():
             return changed()
         try:
-            result = self._portal.call(client.call_tool, tool_name, arguments)
+            if metadata is None:result = self._portal.call(client.call_tool, tool_name, arguments)
+            else:
+                from functools import partial
+                result=self._portal.call(partial(client.call_tool,tool_name,arguments,meta=metadata))
         except Exception as exc:                                # noqa: BLE001
             return {"error": "failed", "server": server, "tool": tool_name,
                     "detail": f"{type(exc).__name__}: {clip(str(exc), 400)}"}
