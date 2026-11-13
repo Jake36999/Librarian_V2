@@ -276,8 +276,6 @@ class AgentProfile:
         # (a local or custom model). It only ever narrows what is sent.
         context_tokens = self.route_policy.get("context_tokens")
         temperature = self.route_policy.get('temperature')
-        if 'answer_self_check' in self.route_policy and type(self.route_policy['answer_self_check']) is not bool:
-            raise ValueError('route_policy.answer_self_check is a boolean')
         if temperature is not None and (type(temperature) not in (int,float) or
                                         not math.isfinite(temperature) or not 0<=temperature<=2):
             raise ValueError('route_policy.temperature is a finite number from 0 to 2')
@@ -352,7 +350,7 @@ def route_permitted(profile: AgentProfile, route: dict[str, Any]) -> tuple[bool,
 DEFAULT_PROFILES = {
     'code-research': AgentProfile('code-research','lead',allowed_bundles=['session','research'],
                                   permission_ceiling='contribute',validation_rules=['grounded'],
-                                  route_policy={'binding_role':'lead','temperature':0.2,'answer_self_check':False}),
+                                  route_policy={'binding_role':'lead','temperature':0.2}),
     "lead": AgentProfile("lead", "lead", allowed_bundles=["session", "research"],
                          permission_ceiling="contribute", validation_rules=["grounded"]),
     "scribe": AgentProfile("scribe", "scribe", allowed_bundles=["draft"],
