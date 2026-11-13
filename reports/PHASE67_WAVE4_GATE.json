@@ -2077,5 +2077,1106 @@
       "owner_bridge_firewall_decision",
       "owner_20_minute_checklist"
     ]
+  },
+  "local_continuation_2026_11_13": {
+    "verdict": "NOT_READY_PENDING_CHANGED_PRODUCT_BENCHMARK_AND_OWNER_PILOT",
+    "paid_benchmark_runs": 0,
+    "previous_cycle_unchanged": {
+      "runs": [
+        {
+          "run": 1,
+          "file": "code-review2-cycle-run1.json",
+          "markers": 1,
+          "calls": 23,
+          "wrong_graph": 0,
+          "withheld": 0,
+          "tool_errors": 0,
+          "cost_usd": 0.0997139
+        },
+        {
+          "run": 2,
+          "file": "code-review2-cycle-run2.json",
+          "markers": 1,
+          "calls": 29,
+          "wrong_graph": 0,
+          "withheld": 0,
+          "tool_errors": 0,
+          "cost_usd": 0.15093059999999997
+        },
+        {
+          "run": 3,
+          "file": "code-review2-cycle-run3.json",
+          "markers": 3,
+          "calls": 26,
+          "wrong_graph": 0,
+          "withheld": 0,
+          "tool_errors": 0,
+          "cost_usd": 0.13087769999999999
+        }
+      ],
+      "total_markers": 5,
+      "total": 15,
+      "calls_per_question": 5.2,
+      "passed": false
+    },
+    "wheel": {
+      "path": "output/phase67-gates/wave4/continuation-dist2/geo_grapher-0.1.1-py3-none-any.whl",
+      "sha256": "07870422dcc7c758079929379ceb78015d6f8599a5016e13f093d8b1a25b3864"
+    },
+    "catalog": "D:/Librarian_V2/tmp/geo-grapher-wave4-continuation-stores/catalog.sqlite",
+    "snapshot": "snapshot:1703964f018a8f5981c139069836a87178098924bd94383d5788c083bb89c9bf",
+    "fixes": [
+      "headless_cursor_secret_loading",
+      "porter_fts_and_function_word_filter_with_fallback",
+      "full_adjacent_constant_comment_blocks",
+      "rank_order_before_packing_efficiency"
+    ],
+    "retrieval_semantics": "lexical-fusion-v2-porter/search-rank-tiers-v1",
+    "extractor": "python-ast-symtable-v5-constant-comments",
+    "ingest": [
+      {
+        "label": "ToolSet",
+        "graph_id": "g_850b52af2916ae87854c9ada",
+        "old_snapshot_id": "snapshot:6473b00b8bf63b03ac05201e8f4371e5fd01054c37d0e1d291281dfd7b8f5963",
+        "snapshot_id": "snapshot:f5029b6bf601fcb2896a3c494e30dc306ced8624436d9334a9f9000931e1abee",
+        "old_entities": 17597,
+        "entities": 17597,
+        "constants": 403,
+        "seconds": 28.349082000000635,
+        "report": {
+          "snapshot_id": "snapshot:f5029b6bf601fcb2896a3c494e30dc306ced8624436d9334a9f9000931e1abee",
+          "stage": 3,
+          "status": "complete",
+          "counts": {
+            "entities": 17597,
+            "relationships": 14683,
+            "evidence": 14683,
+            "documentary_incidences": 6206
+          },
+          "relationship_statuses": {
+            "candidate": 567,
+            "exact": 3064,
+            "unresolved": 11052
+          },
+          "parse_failures": {
+            "g_850b52af2916ae87854c9ada": []
+          },
+          "elapsed_seconds": 28.2852,
+          "incremental": null,
+          "repositories": [
+            {
+              "repo_id": "g_850b52af2916ae87854c9ada",
+              "revision": "working-tree:b16f401daa5724a7ffa19f9908bc74004cdb343a86350552381b953a5d53dd83",
+              "digest": "b16f401daa5724a7ffa19f9908bc74004cdb343a86350552381b953a5d53dd83"
+            }
+          ]
+        }
+      },
+      {
+        "label": "librarian-v2",
+        "graph_id": "g_1bbebca16afc45c39b2f2f8a",
+        "old_snapshot_id": "snapshot:33ba9c619765ea532d2e91be5089f6348631cb1fb0d6c9b25fd9a83562d1c98a",
+        "snapshot_id": "snapshot:1703964f018a8f5981c139069836a87178098924bd94383d5788c083bb89c9bf",
+        "old_entities": 28809,
+        "entities": 28809,
+        "constants": 968,
+        "seconds": 74.52884290000657,
+        "report": {
+          "snapshot_id": "snapshot:1703964f018a8f5981c139069836a87178098924bd94383d5788c083bb89c9bf",
+          "stage": 3,
+          "status": "complete",
+          "counts": {
+            "entities": 28809,
+            "relationships": 27378,
+            "evidence": 27378,
+            "documentary_incidences": 33542
+          },
+          "relationship_statuses": {
+            "candidate": 3263,
+            "exact": 5131,
+            "unresolved": 18984
+          },
+          "parse_failures": {
+            "g_1bbebca16afc45c39b2f2f8a": [
+              {
+                "rel_path": "src/resource_librarian/ui/app.js",
+                "language": "javascript",
+                "code": "FallbackParseError",
+                "message": "Tree-sitter reported syntax errors; no complete fallback facts published"
+              }
+            ]
+          },
+          "elapsed_seconds": 74.416,
+          "incremental": null,
+          "repositories": [
+            {
+              "repo_id": "g_1bbebca16afc45c39b2f2f8a",
+              "revision": "working-tree:5818d8f86b0b6c0639db49b26842571e899c55ffcfb3db96180549be77d56100",
+              "digest": "5818d8f86b0b6c0639db49b26842571e899c55ffcfb3db96180549be77d56100"
+            }
+          ]
+        }
+      },
+      {
+        "label": "librarian-survey-worktree",
+        "graph_id": "g_9389ecb83d86491f69da9942",
+        "old_snapshot_id": "snapshot:1c8f11aaac949884c57960f1f5601a71ad8e4a1f932fa26dc0304df41c32bc7c",
+        "snapshot_id": "snapshot:6db76479d9cb2b85b2030c5a8b8131a2e378ff1913b6b6f9042ccdb12914eef2",
+        "old_entities": 28760,
+        "entities": 28760,
+        "constants": 963,
+        "seconds": 77.33627529999649,
+        "report": {
+          "snapshot_id": "snapshot:6db76479d9cb2b85b2030c5a8b8131a2e378ff1913b6b6f9042ccdb12914eef2",
+          "stage": 3,
+          "status": "complete",
+          "counts": {
+            "entities": 28760,
+            "relationships": 27354,
+            "evidence": 27354,
+            "documentary_incidences": 33384
+          },
+          "relationship_statuses": {
+            "candidate": 3259,
+            "exact": 5124,
+            "unresolved": 18971
+          },
+          "parse_failures": {
+            "g_9389ecb83d86491f69da9942": [
+              {
+                "rel_path": "src/resource_librarian/ui/app.js",
+                "language": "javascript",
+                "code": "FallbackParseError",
+                "message": "Tree-sitter reported syntax errors; no complete fallback facts published"
+              }
+            ]
+          },
+          "elapsed_seconds": 77.2325,
+          "incremental": null,
+          "repositories": [
+            {
+              "repo_id": "g_9389ecb83d86491f69da9942",
+              "revision": "working-tree:cdb65b80c3d05ed2a471ec7f4bd037f313a04d0697f731c63e84b0fa07b39248",
+              "digest": "cdb65b80c3d05ed2a471ec7f4bd037f313a04d0697f731c63e84b0fa07b39248"
+            }
+          ]
+        }
+      }
+    ],
+    "semantic_audit": {
+      "passed": true,
+      "normalisation": "Ignore snapshot IDs; compare QI memberships instead of snapshot-bound cluster IDs; omit version-bound relationship IDs and occurrence keys while preserving edge multiplicity and every remaining field.",
+      "graphs": [
+        {
+          "label": "ToolSet",
+          "entities": {
+            "count": 17597,
+            "unchanged": true
+          },
+          "relationships": {
+            "count": 14683,
+            "unchanged": true
+          },
+          "entity_fingerprints": {
+            "count": 2420,
+            "unchanged": true
+          },
+          "qi_memberships_unchanged": true,
+          "incidences": {
+            "added": 91,
+            "removed": 15
+          }
+        },
+        {
+          "label": "librarian-v2",
+          "entities": {
+            "count": 28809,
+            "unchanged": true
+          },
+          "relationships": {
+            "count": 27378,
+            "unchanged": true
+          },
+          "entity_fingerprints": {
+            "count": 3879,
+            "unchanged": true
+          },
+          "qi_memberships_unchanged": true,
+          "incidences": {
+            "added": 250,
+            "removed": 56
+          }
+        },
+        {
+          "label": "librarian-survey-worktree",
+          "entities": {
+            "count": 28760,
+            "unchanged": true
+          },
+          "relationships": {
+            "count": 27354,
+            "unchanged": true
+          },
+          "entity_fingerprints": {
+            "count": 3869,
+            "unchanged": true
+          },
+          "qi_memberships_unchanged": true,
+          "incidences": {
+            "added": 248,
+            "removed": 56
+          }
+        }
+      ]
+    },
+    "final_audit": {
+      "semantic_audit": {
+        "passed": true,
+        "normalisation": "Ignore snapshot IDs; compare QI memberships instead of snapshot-bound cluster IDs; omit version-bound relationship IDs and occurrence keys while preserving edge multiplicity and every remaining field.",
+        "graphs": [
+          {
+            "label": "ToolSet",
+            "entities": {
+              "count": 17597,
+              "unchanged": true
+            },
+            "relationships": {
+              "count": 14683,
+              "unchanged": true
+            },
+            "entity_fingerprints": {
+              "count": 2420,
+              "unchanged": true
+            },
+            "qi_memberships_unchanged": true,
+            "incidences": {
+              "added": 91,
+              "removed": 15
+            }
+          },
+          {
+            "label": "librarian-v2",
+            "entities": {
+              "count": 28809,
+              "unchanged": true
+            },
+            "relationships": {
+              "count": 27378,
+              "unchanged": true
+            },
+            "entity_fingerprints": {
+              "count": 3879,
+              "unchanged": true
+            },
+            "qi_memberships_unchanged": true,
+            "incidences": {
+              "added": 250,
+              "removed": 56
+            }
+          },
+          {
+            "label": "librarian-survey-worktree",
+            "entities": {
+              "count": 28760,
+              "unchanged": true
+            },
+            "relationships": {
+              "count": 27354,
+              "unchanged": true
+            },
+            "entity_fingerprints": {
+              "count": 3869,
+              "unchanged": true
+            },
+            "qi_memberships_unchanged": true,
+            "incidences": {
+              "added": 248,
+              "removed": 56
+            }
+          }
+        ]
+      },
+      "baseline_graph_snapshots_preserved": true,
+      "proposal_rows": 0,
+      "wheel_source_matches": true,
+      "wheel_assets_match": true,
+      "wheel_sha256": "07870422dcc7c758079929379ceb78015d6f8599a5016e13f093d8b1a25b3864",
+      "frozen_benchmark_wheel_unchanged": true
+    },
+    "search_diagnostics": [
+      "continuation-search-first.json",
+      "continuation-search-ranked.json"
+    ],
+    "diagnostic_limit": "Two previously missed query targets now delivered; external result cap remains ambiguous. No model-quality score inferred.",
+    "constant_inventory": [
+      {
+        "name": "HELPER_TOOLS",
+        "entity_id": "entity:d05b33e1508dad24d91cf04aaecd8498c72cae030988b12f3c1d14bf8fd56600",
+        "cite_as": "librarian-v2/entity:entity:d05b33e1508dad24d91cf04aaecd8498c72cae030988b12f3c1d14bf8fd56600",
+        "kind": "constant",
+        "source": {
+          "repo_id": "g_1bbebca16afc45c39b2f2f8a",
+          "rel_path": "src/resource_librarian/tools/delegate.py",
+          "start_line": 17,
+          "end_line": 19
+        },
+        "span": [
+          17,
+          19
+        ],
+        "helper_not_contracted": true,
+        "content": [
+          {
+            "source": {
+              "repo_id": "g_1bbebca16afc45c39b2f2f8a",
+              "rel_path": "src/resource_librarian/tools/delegate.py",
+              "start_line": 17,
+              "end_line": 19
+            },
+            "text": "HELPER_TOOLS = frozenset({\"search\", \"get_note\", \"web_search\", \"read_url\", \"read_file\",\n                          \"read_source_file\", \"read_result\", \"list_files\", \"search_work\",\n                          \"topics_list\"})\n",
+            "sha256": "7bb634986e48685d3480b5db9df3e79b84bb108c7f51adc2f4c2b37a4e5cf058",
+            "trust": "untrusted_repository_content"
+          }
+        ]
+      },
+      {
+        "name": "MAX_EXTERNAL_RESULT",
+        "entity_id": "entity:0bb68e89186c2bf3f1b3dafa13d1518d8f1b818aa4d6c351155500d7f403a22e",
+        "cite_as": "librarian-v2/entity:entity:0bb68e89186c2bf3f1b3dafa13d1518d8f1b818aa4d6c351155500d7f403a22e",
+        "kind": "constant",
+        "source": {
+          "repo_id": "g_1bbebca16afc45c39b2f2f8a",
+          "rel_path": "src/resource_librarian/mcp_client.py",
+          "start_line": 47,
+          "end_line": 47
+        },
+        "span": [
+          47,
+          47
+        ],
+        "helper_not_contracted": true,
+        "content": [
+          {
+            "source": {
+              "repo_id": "g_1bbebca16afc45c39b2f2f8a",
+              "rel_path": "src/resource_librarian/mcp_client.py",
+              "start_line": 47,
+              "end_line": 47
+            },
+            "text": "MAX_EXTERNAL_RESULT = 8_000\r\n",
+            "sha256": "a1d7bfb6d22841e5a623e3fb44182edfde06f68e9915bedcda9d56a18564f3ee",
+            "trust": "untrusted_repository_content"
+          }
+        ]
+      },
+      {
+        "name": "DEFAULT_CONTEXT_TOKENS",
+        "entity_id": "entity:426cfb01891d39e4c1a2eb446c6b064f4552785c723c43106b9d44dd3a4d8dec",
+        "cite_as": "librarian-v2/entity:entity:426cfb01891d39e4c1a2eb446c6b064f4552785c723c43106b9d44dd3a4d8dec",
+        "kind": "constant",
+        "source": {
+          "repo_id": "g_1bbebca16afc45c39b2f2f8a",
+          "rel_path": "src/resource_librarian/loop.py",
+          "start_line": 139,
+          "end_line": 139
+        },
+        "span": [
+          139,
+          139
+        ],
+        "helper_not_contracted": true,
+        "content": [
+          {
+            "source": {
+              "repo_id": "g_1bbebca16afc45c39b2f2f8a",
+              "rel_path": "src/resource_librarian/loop.py",
+              "start_line": 139,
+              "end_line": 139
+            },
+            "text": "DEFAULT_CONTEXT_TOKENS = 131_072\n",
+            "sha256": "088f2206fc901d719f82b66e721946386cd8d4b3646f17ffc76bb0d71b84493d",
+            "trust": "untrusted_repository_content"
+          }
+        ]
+      }
+    ],
+    "smokes": {
+      "first_wheel": [
+        {
+          "preset": "papers",
+          "tool": "paper_search_documents",
+          "success": true,
+          "characters": 7254,
+          "schema_characters": 721,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_section",
+          "success": true,
+          "characters": 3227,
+          "schema_characters": 984,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_document",
+          "success": true,
+          "characters": 2491,
+          "schema_characters": 733,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_find_by_concept",
+          "success": true,
+          "characters": 1276,
+          "schema_characters": 805,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_related",
+          "success": true,
+          "characters": 6070,
+          "schema_characters": 640,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2741,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_document",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "request",
+            "message": "request: 'title' is a required property. Example: paper_get_document({\"graph_id\":\"<graph_id>\",\"request\":{\"title\":\"doc:1\"}})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "request": {
+                "title": "doc:1"
+              }
+            }
+          },
+          "characters": 282
+        },
+        {
+          "preset": "code",
+          "tool": "check_architecture",
+          "success": true,
+          "characters": 304,
+          "schema_characters": 455,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "find_dependants",
+          "success": true,
+          "characters": 2678,
+          "schema_characters": 496,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "get_architecture_context",
+          "success": true,
+          "characters": 4781,
+          "schema_characters": 657,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "get_entity_content",
+          "success": true,
+          "characters": 3329,
+          "schema_characters": 529,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "search_entities",
+          "success": true,
+          "characters": 6214,
+          "schema_characters": 541,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2741,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "search_entities",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "query",
+            "message": "query: 17 is not of type 'string'. Example: search_entities({\"graph_id\":\"<graph_id>\",\"query\":\"clerk\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "query": "clerk"
+            }
+          },
+          "characters": 244
+        },
+        {
+          "preset": "lead",
+          "tool": "get_architecture_context",
+          "success": true,
+          "characters": 4781,
+          "schema_characters": 657,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "get_entity_content",
+          "success": true,
+          "characters": 3329,
+          "schema_characters": 529,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "search_entities",
+          "success": true,
+          "characters": 6214,
+          "schema_characters": 541,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2741,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "compile_task_packet",
+          "success": true,
+          "characters": 2768,
+          "schema_characters": 499,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "analyze_cross_graphs",
+          "success": true,
+          "characters": 6766,
+          "schema_characters": 1418,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "search_entities",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "query",
+            "message": "query: 17 is not of type 'string'. Example: search_entities({\"graph_id\":\"<graph_id>\",\"query\":\"clerk\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "query": "clerk"
+            }
+          },
+          "characters": 244
+        },
+        {
+          "preset": "cross",
+          "tool": "get_entity_content",
+          "success": true,
+          "characters": 3329,
+          "schema_characters": 529,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "search_entities",
+          "success": true,
+          "characters": 6214,
+          "schema_characters": 541,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2741,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "list_bridges",
+          "success": true,
+          "characters": 15,
+          "schema_characters": 302,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "analyze_cross_graphs",
+          "success": true,
+          "characters": 6766,
+          "schema_characters": 1418,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "federated_search",
+          "success": true,
+          "characters": 6822,
+          "schema_characters": 571,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "search_entities",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "query",
+            "message": "query: 17 is not of type 'string'. Example: search_entities({\"graph_id\":\"<graph_id>\",\"query\":\"clerk\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "query": "clerk"
+            }
+          },
+          "characters": 244
+        }
+      ],
+      "final_wheel": [
+        {
+          "preset": "papers",
+          "tool": "paper_search_documents",
+          "success": true,
+          "characters": 7254,
+          "schema_characters": 721,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_section",
+          "success": true,
+          "characters": 3227,
+          "schema_characters": 984,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_document",
+          "success": true,
+          "characters": 2491,
+          "schema_characters": 733,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_find_by_concept",
+          "success": true,
+          "characters": 1276,
+          "schema_characters": 805,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_related",
+          "success": true,
+          "characters": 6070,
+          "schema_characters": 640,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2741,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "papers",
+          "tool": "paper_get_document",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "request",
+            "message": "request: 'title' is a required property. Example: paper_get_document({\"graph_id\":\"<graph_id>\",\"request\":{\"title\":\"doc:1\"}})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "request": {
+                "title": "doc:1"
+              }
+            }
+          },
+          "characters": 282
+        },
+        {
+          "preset": "code",
+          "tool": "check_architecture",
+          "success": true,
+          "characters": 304,
+          "schema_characters": 455,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "find_dependants",
+          "success": true,
+          "characters": 2678,
+          "schema_characters": 496,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "get_architecture_context",
+          "success": true,
+          "characters": 4781,
+          "schema_characters": 657,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "get_entity_content",
+          "success": true,
+          "characters": 3329,
+          "schema_characters": 529,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "search_entities",
+          "success": true,
+          "characters": 6784,
+          "schema_characters": 541,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2741,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "code",
+          "tool": "search_entities",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "query",
+            "message": "query: 17 is not of type 'string'. Example: search_entities({\"graph_id\":\"<graph_id>\",\"query\":\"clerk\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "query": "clerk"
+            }
+          },
+          "characters": 244
+        },
+        {
+          "preset": "lead",
+          "tool": "get_architecture_context",
+          "success": true,
+          "characters": 4781,
+          "schema_characters": 657,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "get_entity_content",
+          "success": true,
+          "characters": 3329,
+          "schema_characters": 529,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "search_entities",
+          "success": true,
+          "characters": 6784,
+          "schema_characters": 541,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2741,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "compile_task_packet",
+          "success": true,
+          "characters": 2768,
+          "schema_characters": 499,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "analyze_cross_graphs",
+          "success": true,
+          "characters": 6766,
+          "schema_characters": 1418,
+          "error": null
+        },
+        {
+          "preset": "lead",
+          "tool": "search_entities",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "query",
+            "message": "query: 17 is not of type 'string'. Example: search_entities({\"graph_id\":\"<graph_id>\",\"query\":\"clerk\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "query": "clerk"
+            }
+          },
+          "characters": 244
+        },
+        {
+          "preset": "cross",
+          "tool": "get_entity_content",
+          "success": true,
+          "characters": 3329,
+          "schema_characters": 529,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "search_entities",
+          "success": true,
+          "characters": 6784,
+          "schema_characters": 541,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "list_graphs",
+          "success": true,
+          "characters": 2741,
+          "schema_characters": 67,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "list_bridges",
+          "success": true,
+          "characters": 15,
+          "schema_characters": 302,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "analyze_cross_graphs",
+          "success": true,
+          "characters": 6766,
+          "schema_characters": 1418,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "federated_search",
+          "success": true,
+          "characters": 5647,
+          "schema_characters": 571,
+          "error": null
+        },
+        {
+          "preset": "cross",
+          "tool": "search_entities",
+          "negative": true,
+          "success": true,
+          "error": {
+            "code": "INVALID_GRAPH_REQUEST",
+            "field": "query",
+            "message": "query: 17 is not of type 'string'. Example: search_entities({\"graph_id\":\"<graph_id>\",\"query\":\"clerk\"})",
+            "example": {
+              "graph_id": "<graph_id>",
+              "query": "clerk"
+            }
+          },
+          "characters": 244
+        }
+      ]
+    },
+    "latency": [
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 2.473872600006871,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 1
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 2.4485624999942956,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 2
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 2.4287667000025976,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 3
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 2.974910600009025,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 1
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 2.3309840000001714,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 2
+      },
+      {
+        "label": "ToolSet",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 2.2956179000029806,
+        "success": true,
+        "focus_id": "entity:0002131fb0c8352bf56ffbeb04485642c94aca7ee49737446a58a5cf53e463b6",
+        "sample": 3
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 11.349618399995961,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 1
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 8.214551600001869,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 2
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "helper_tree_balls_v1",
+        "seconds": 8.234597400005441,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 3
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 10.44546979998995,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 1
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 6.460997799993493,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 2
+      },
+      {
+        "label": "librarian-v2",
+        "algorithm": "directed-helper-condensation-v1",
+        "seconds": 6.193684499987285,
+        "success": true,
+        "focus_id": "entity:0018c176759db3ae63fb32b50242a03039866db662ecb4a6849deffae42e8e82",
+        "sample": 3
+      }
+    ],
+    "latency_passed": true,
+    "latency_store": "output/phase67-gates/wave4/continuation-latency-stores/catalog.sqlite",
+    "latency_notes": "ToolSet F: same SSD; nongating Librarian D:. All first samples retained; narrow directed margin.",
+    "browser": {
+      "file": "output/qa-real/results-continuation-first.json",
+      "stats": {
+        "startTime": "2026-11-13T07:35:54.357Z",
+        "duration": 86431.212,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "verification": {
+      "geo_exit": 0,
+      "backend_passed": 669,
+      "frontend_unit_passed": 16,
+      "browser_passed": 17,
+      "librarian_passed": 2181,
+      "librarian_skipped": 2,
+      "librarian_deselected": 5,
+      "librarian_seconds": 667.17,
+      "strengthened_stopword_and_rank_tests_passed": 4,
+      "production_unchanged_after_full_verification": true
+    },
+    "deepinfra": {
+      "draft_run": "20261113T045321-97d80d8a",
+      "draft_usd": 0.0007801,
+      "draft_adjudication": "partial",
+      "review_run": "20261113T045718-b4649bd7",
+      "review_usd": 0.0039364,
+      "review_adjudication": "rejected",
+      "pool_committed_usd": 4.47978915,
+      "pool_cap_usd": 10
+    },
+    "pilot": {
+      "executed": false,
+      "core_alive": false,
+      "qualification_call_sent": false,
+      "owner_steps": "PHASE67_WAVE4_GATE.md section 10"
+    },
+    "proposed_cycle": {
+      "authorised": false,
+      "executed": false,
+      "registration": "PHASE67_WAVE4_GATE.md section 16",
+      "runs": 3,
+      "minimum_each": 3,
+      "minimum_total": 12,
+      "total": 15,
+      "maximum_wrong_graph": 0,
+      "maximum_withheld": 0,
+      "maximum_average_calls_per_question": 8,
+      "estimated_usd": 0.5
+    },
+    "merged": false,
+    "pushed": false,
+    "implementation_commit": "fe75697"
   }
 }

@@ -242,9 +242,9 @@ Result paths must be new: the scripts refuse to overwrite first evidence. Final 
 The 20-minute checklist above starts with this installed-wheel command on the disposable real-store catalog, after automated QA has stopped:
 
 ```powershell
-uvx --refresh-package geo-grapher --from F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/review2-ui-dist2/geo_grapher-0.1.1-py3-none-any.whl geographer serve-graphs `
-  --catalog F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/review2-browser-first/catalog.sqlite `
-  --browse-root F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/review2-browser-first/browse `
+uvx --refresh-package geo-grapher --from F:/uv-data/Geo_Grapher/output/phase67-gates/wave4/continuation-dist2/geo_grapher-0.1.1-py3-none-any.whl geographer serve-graphs `
+  --catalog D:/Librarian_V2/tmp/geo-grapher-wave4-continuation-stores/catalog.sqlite `
+  --browse-root D:/Librarian_V2/tmp/geo-grapher-wave4-continuation-stores/browse `
   --transport http --port 8790
 ```
 
@@ -291,6 +291,10 @@ uvx --refresh-package geo-grapher --from output/phase67-gates/wave4/frontdoor-fi
 ```
 
 ## 12. Current verdict — 2026-11-13
+
+**NOT READY after local continuation.** The new candidate passes C14, installed-wheel presets, real-store browser and full Geo/Librarian verification (§15). Local search fixes address inflection, missing comment-block support and rank displacement during packing. The failed registered code cycle remains **5/15**; no new model cycle has validated this changed product. Core remains stopped, so role qualification and the six-task pilot remain pending. Neither branch is merged or pushed. §16 records a concrete proposed cycle awaiting fresh owner authorisation.
+
+### Review-2 verdict — retained
 
 **NOT READY after review 2. Neither branch is merged or pushed.** The registered three-run code cycle fails: **1/5, 1/5, 3/5 = 5/15**, against each ≥3/5 and aggregate ≥12/15. All 78 tool calls succeeded; wrong-graph and withheld counts are zero; average 5.2 calls/question. No fourth run was made. The remaining code-discovery and answer failures are escalated with per-call evidence in §13.
 
@@ -401,3 +405,56 @@ No additional paid benchmark run is authorised or planned. Pool commitment after
 ### Required owner action
 
 Follow §10 exactly for Resource-Library: start Host/Core; qualify both configured research_helper and Clerk roles with free L0 and paid L1 only after reviewing its plan; inspect `--status` for **screened** and **fresh: true** for both; leave Core running and report the statuses. If the configured Qwen3.5-397B Clerk times out, retain/report that failure and decide a replacement separately. Do not silently swap it. Only after the owner reports qualification can the six-task pilot resume. The production-lead question has not run: the recorded readiness check found Core not running. Both branches remain unmerged pending owner approval, and acceptance remains open because the registered code cycle failed.
+
+## 15. Local continuation — 2026-11-13
+
+Reviewable implementation and QA scripts: **`fe75697`** on `phase67-wave4`.
+
+The owner's “please continue” resumes local engineering and independent application checks. It does **not** authorise another paid code benchmark cycle, changing the failed cycle's criteria, route substitution or merging. The configured helper and Clerk read-only status commands both found Core stopped; no qualification call or pilot task was sent. All earlier rows and frozen benchmark wheel/snapshots remain intact.
+
+### Source-independent fixes and diagnostics
+
+Three RED oracles exposed concrete issues before their fixes:
+
+- Headless graph opening imported `geographer.server` solely for `persisted_secret`, loading MCP/HTTP transport modules inside a cold local query. The identical key-file behavior now lives in a small `cursor_secret` module; the server re-exports it for compatibility. A fresh-process test forbids server/MCP/Starlette imports while actually importing a project and opening its service.
+- Unstemmed FTS failed ordinary plural/singular queries and admitted common function words as competing matches. Both FTS indexes now use SQLite's Porter/Unicode tokenizer. A conservative prose stopword list falls back to all original terms when it would remove everything, preserving function-word symbols. Exact canonical/qualified/constant-name matches retain priority, original term-count and candidate bounds remain, and matched-fields metadata comes from actual FTS matches. Retrieval semantic fingerprints include `lexical-fusion-v2-porter`.
+- Only the final line of a constant's preceding comment block was associated with it. A sparse mapper now links every contiguous full-line comment at the assignment's literal indentation, plus comments inside its span. It stops at blanks, other statements and indentation changes. Original fragment text, spans and owner remain; only documentary incidences change, including removal of erroneous associations to a preceding statement's inline comment. `python-ast-symtable-v5-constant-comments` requires a new snapshot; prior facts are not edited.
+
+DeepInfra Qwen drafted the mapper (`20261113T045321-97d80d8a`, $0.0007801), then the lead made it sparse, stabilised line iteration and wired extraction. Adjudication: **partial**. A separate Qwen review (`20261113T045718-b4649bd7`, $0.0039364) is **rejected**: its all-stopword finding contradicts the specified fallback; two findings supply no triggering input and are covered by actual headless/boundary tests; its fingerprint finding misses the dynamic retrieval-version inclusion. No reviewer output was accepted without code inspection.
+
+Initial source-independent tests and full verify passed (668 backend, 17 browser, frontend), and `continuation-dist1` passed 28/28 preset calls. Its no-model diagnostics then exposed a fourth defect: utility-per-byte packing could drop the highest-ranked natural-language hit because its documentary nodes cost more than weaker matches. A new `UPLOAD_BUFFER` fixture reproduced that failure. Search units now use rank-ordered tiers, so a higher-ranked hit that fits is admitted before cheaper lower-ranked hits. The shared packer and other operations are unchanged. The `search-rank-tiers-v1` semantic fingerprint prevents reuse of old selections. Focused actor/retrieval/cap tests pass 29/29; the full suite was rerun after this change.
+
+The same two observed diagnostic queries now return HELPER_TOOLS and DEFAULT_CONTEXT_TOKENS as their first delivered entities. The broader `external result cap` query still favours other cap-related code; it is **not** a three-question discovery pass. `continuation-search-first.json` and `continuation-search-ranked.json` retain complete flat responses. These are local, no-model diagnostics, not new benchmark answers or held-out quality evidence. The registered code cycle remains **FAIL 5/15**, with no additional paid benchmark calls.
+
+All three source-copy re-ingests retain their entity and relationship counts; ToolSet has 17,597 entities and librarian-v2 28,809. Added documentary support is in `continuation-ingest-first.json`. The optional JavaScript parser still publishes no complete facts for the known `ui/app.js` failure; this environment reports Tree-sitter syntax failure rather than the wheel's missing-optional-parser message. The new immutable librarian-v2 snapshot is `snapshot:1703964f018a8f5981c139069836a87178098924bd94383d5788c083bb89c9bf`. New stores are under `D:/Librarian_V2/tmp/geo-grapher-wave4-continuation-stores/`; original project stores are untouched.
+
+### Final candidate and local check registration
+
+Final candidate: `continuation-dist2/geo_grapher-0.1.1-py3-none-any.whl`, SHA256 **07870422dcc7c758079929379ceb78015d6f8599a5016e13f093d8b1a25b3864**. Full Geo verify **PASS: 669 backend tests, 16 frontend unit tests, frontend typecheck/build, 17 browser tests**, exit 0 (`output/w4-continuation-verify-final.log`); first full verification remains separate. Librarian **PASS: 2,181 passed, 2 skipped, 5 deselected in 667.17 s** (`output/w4-continuation-librarian-full.log`). Final-wheel preset smoke **PASS 28/28**, `preset-smoke-continuation-ranked.json`; the first wheel's 28/28 row is also retained. Diagnostic and first-smoke processes briefly overlapped on the disposable catalog without lock/error; the final-wheel smoke ran after diagnostics completed, and before the browser.
+
+Before the new local cold measurement: keep the unchanged C14 criterion, every ToolSet sample for both algorithms **<3.0 s**, three fresh processes each, all queries successful; Librarian timing remains non-gating. Use the final wheel and `continuation-latency-stores/catalog.sqlite`. Its ToolSet database is an isolated backup on **F:**, the same SSD as the previous gated run, with snapshot `snapshot:f5029b6bf601fcb2896a3c494e30dc306ced8624436d9334a9f9000931e1abee`. Nongating Librarian stores are on D:, so those timings are not a direct disk-controlled comparison. Run only after suites and browser stop; keep all first samples and no warm replacements. The earlier C14 failure remains a separate row, whatever this candidate measures. Capture one post-change cProfile separately; profiler timing is diagnostic, not the gate.
+
+Final real-store browser **PASS 5/5** on the installed final candidate (`output/qa-real/results-continuation-first.json`): directed QI/expansion/Off restoration 51.2 s, prune 21.5 s, actual related-code bridge review 6.2 s, selected-partition ingestion 2.9 s, and four picker refusals. No page or console errors. Screenshot: `output/qa-real/continuation-directed-first.png`.
+
+The first quiet local measurement **PASSES C14**, process exit 0, all 12 queries successful:
+
+| Candidate / graph | Tree-balls seconds (three cold processes) | Directed seconds (three cold processes) | Verdict |
+|---|---|---|---|
+| continuation-dist2 / ToolSet (F:) | **2.474, 2.449, 2.429** | **2.975, 2.331, 2.296** | **PASS**, all <3.0 s |
+| continuation-dist2 / librarian-v2 (D:) | 11.350, 8.215, 8.235 | 10.445, 6.461, 6.194 | Recorded, not gated |
+
+Evidence: `latency-continuation-first.json`. The slowest directed sample has only about 25 ms headroom; this is a pass on the measured host, not a broad performance guarantee. No sample was dropped or repeated. Separate profile artifacts retain whole instrumented query times **4.780 s before and 4.818 s after**, and graph-service opening `_open` **0.734 → 0.167 s**. Profiling overhead and snapshot changes prevent claiming a whole-profile speedup. The cold-query gate is the unprofiled measurement above. Moving the key loader removes transport import from headless local opening; an already running HTTP/MCP server may already have paid that import cost.
+
+The three reviewed constants still rank first for exact-name lookup, return their original lines, and stay outside helper blocks (`continuation-constant-inventory.json`). `continuation-semantic-audit.json` compares all three old/new graph pairs: original entities, dependency fields and multiplicities, every stored fingerprint, and QI group memberships are unchanged. Only version-bound relationship/occurrence IDs and snapshot-bound cluster IDs are normalised. Documentary incidence changes are ToolSet **+91/−15**, librarian-v2 and survey as recorded in that audit. Two initial accounting checks wrongly compared snapshot-bound QI IDs and then version-bound occurrence keys; both rejected assumptions and diagnostics are retained in `continuation-audit-rejected-accounting.json` and `continuation-audit-first-differences.json`. They are not product failures.
+
+`continuation-final-audit.json` confirms every baseline graph/snapshot survived browser QA, no extra graphs or bridge proposals, installed wheel source/assets match the verified source/build, and the frozen benchmark wheel is unchanged. The all-stopword fixture was strengthened to use the actual stopword symbol `where`; all four language/rank tests passed afterwards, with no production changes after full verification.
+
+No new paid code benchmark was run. Pool commitment is **$4.47978915 of $10** after this worker and review; remaining approximately $5.5202. Acceptance remains open: changed-product code quality is unmeasured, the earlier cycle failed, Core/role readiness blocks the live pilot, and owner hands-on/firewall decisions remain. Both branches remain unmerged pending owner approval.
+
+## 16. Proposed changed-product code cycle — awaiting owner authorisation
+
+This is a reviewable proposal, **not permission to execute**. Review 2 §3 required stopping and escalating after the failed cycle. The local continuation changes retrieval, documentary support and packing; testing this changed product needs a separately authorised cycle, rather than a fourth attempt on the old cycle.
+
+Freeze the final candidate wheel/hash and librarian-v2 snapshot from §15, the same five CODE_BENCH questions/markers, Qwen3-Coder-480B, declared 1,048,576-token window, library-scoped lead preset and 12-step limit. Run exactly three independent fresh-library attempts without intervening changes. Preserve all rows in new `code-continuation-cycle-run1.json` through `run3.json`, with per-call logs and separate cost receipts. Pass only if each ≥3/5, total ≥12/15, zero withheld, zero wrong-graph calls and ≤8 average calls/question across all 15 questions. No best-of, changed scoring or fourth attempt. On failure, stop and escalate again.
+
+Planning cost approximately **$0.50**, charged to the existing $10 pool (about $5.52 currently remains). The owner must explicitly approve this proposed cycle before it runs. The six-task pilot independently waits for the Resource-Library roles in §10; approving a benchmark does not qualify or replace those routes and does not approve a merge.
