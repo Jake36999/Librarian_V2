@@ -136,6 +136,15 @@ def source(vault: Vault, item: dict[str, Any]) -> tuple[str, list[tuple[int, str
     for key in ("clean_file", "file"):                  # a cleaned copy first (P3b)
         if not item.get(key):
             continue
+        from .conversions import ConversionStore, is_conversion
+        if key == 'clean_file' and is_conversion(vault, item[key]):
+            store = ConversionStore(vault)
+            units = store.page_units(item[key])
+            if units:
+                return key, [(n, page) for n, page in units if page.strip()]
+            # Read unanchored generated work as a part, not an invented PDF page.
+            content = store.checked_path(item[key]).read_text(encoding='utf-8')
+            return key, [(0, content)] if content.strip() else []
         path = vault.root / item[key]
         if path.is_file():
             result = text.extract(path, vault.derived / "text")

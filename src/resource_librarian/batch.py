@@ -210,6 +210,10 @@ def _parse(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
         else:
             fresh = _update_item(ctx, item["id"], lambda fresh: fresh.update(clean_file=out["path"]))
             item, done = fresh, {"cleanup": f"cleaned into {out['path']}"}
+    if (str(item.get('file', '')).lower().endswith('.pdf')
+            or item.get('source_kind') == 'paper'):
+        from .paper_graph import write_artifact
+        done['paper_graph'] = _commit(ctx, lambda: write_artifact(ctx.vault, item))
     # Source extraction can populate the disposable text cache. Keep that
     # local filesystem phase on the writer too, not the batch/provider thread.
     chunks = reading.chunk(_commit(ctx, lambda: reading.source_units(ctx.vault, item)))

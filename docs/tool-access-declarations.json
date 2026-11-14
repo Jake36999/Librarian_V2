@@ -2858,7 +2858,7 @@
         "symbol": "pdf_to_markdown_tool"
       },
       "fingerprint": {
-        "source_sha256": "c62ec74f72240c387e8308d43245f4fb654d0ce382cc851e08d7c71d4375bb1f",
+        "source_sha256": "16c5a3cdee056686e935bc3b61ef36cee99bb5178acc614a2911785304467d5a",
         "schema_sha256": "a26de509015c627856703e51d4a693b638e645d261fddf2c4676a9187a67f2ed",
         "effect": "write",
         "open_world": true,

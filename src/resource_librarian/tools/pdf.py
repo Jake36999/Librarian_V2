@@ -31,16 +31,20 @@ def pdf_to_markdown_tool(ctx: Context, file: str, staged_item: str = "") -> dict
     if path.suffix.lower() != ".pdf":
         raise TypeError(f"{file!r} is not a PDF")
     store = ConversionStore(ctx.vault)
-    request = store.request(path, 'pdf_markdown:v1:' + pdf_markdown.MODEL)
+    request = store.request(path, 'pdf_markdown:page-anchors-v2:' + pdf_markdown.MODEL)
     cached = store.find(request)
     if cached is not None:
         return cached
+    legacy = store.find(store.request(path, 'pdf_markdown:v1:' + pdf_markdown.MODEL))
+    if legacy is not None:
+        return {**legacy, 'page_mapping': 'unverified'}
     result = text.extract(path, ctx.vault.derived / "text")
     if result.error:
         raise TypeError(result.error)
     if not any(p.strip() for p in result.pages):
         raise TypeError(f"{file!r} has no extractable text (a scanned PDF needs OCR first)")
-    markdown, batches = pdf_markdown.clean_document(result.pages,
+    anchored = [f'[page {n}]\n{page}' for n, page in enumerate(result.pages, 1)]
+    markdown, batches = pdf_markdown.clean_document(anchored,
                                                    ctx.extras.get("pdf_endpoint"),
                                                    progress=ctx.extras.get("progress"))
     return store.save(request, markdown, pages=len(result.pages), batches=batches)

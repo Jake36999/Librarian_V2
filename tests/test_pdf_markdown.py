@@ -75,7 +75,7 @@ def test_pdf_to_markdown_tool_writes_hidden_generated_work(vault, monkeypatch):
     assert result["path"].startswith('.librarian/conversions/')
     assert result["pages"] == 2 and result["batches"] == 1
     written = (vault.root / result['path']).read_text(encoding="utf-8")
-    assert written == "CLEANED[Raw page one.\n\nRaw page two.]"
+    assert written == "CLEANED[[page 1]\nRaw page one.\n\n[page 2]\nRaw page two.]"
 
 
 def test_pdf_to_markdown_tool_refuses_a_non_pdf(vault):

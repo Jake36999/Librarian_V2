@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import re
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -65,11 +66,15 @@ class ConversionStore:
         rel = '.librarian/conversions/' + ident + '.md'
         path = operation_path(self.vault, rel)
         record = self.evidence.get(ident)
+        detail_keys = set(entry) - {'path', 'evidence_id', 'sha256', 'pages', 'method', 'original_sha256'}
         if (entry.get('path') != rel or not path.is_file() or not record or not self.evidence.intact(record)
                 or record.authorship != 'generated' or file_sha256(path) != entry.get('sha256')
                 or any(record.payload.get(k) != entry.get(k)
                        for k in ('sha256', 'original_sha256', 'method', 'pages'))):
             raise Refusal('EVIDENCE_IS_NEVER_EDITED', 'Conversion changed or is missing; original and first artifacts were retained')
+        if ('conversion_details' in record.payload
+                and {key: entry[key] for key in detail_keys} != record.payload['conversion_details']):
+            raise Refusal('EVIDENCE_IS_NEVER_EDITED', 'Conversion coverage metadata changed')
         return path
 
     def checked_path(self, rel):
@@ -77,6 +82,23 @@ class ConversionStore:
         if not entries:
             raise Refusal('EVIDENCE_IS_NEVER_EDITED', 'Unknown generated conversion')
         return self._checked(entries[0])
+
+    def entry(self, rel):
+        entries = [entry for entry in self._index()['items'].values() if entry.get('path') == rel]
+        if not entries:
+            raise Refusal('EVIDENCE_IS_NEVER_EDITED', 'Unknown generated conversion')
+        self._checked(entries[0])
+        return dict(entries[0])
+
+    def page_units(self, rel):
+        entry = self.entry(rel)
+        content = self.checked_path(rel).read_text(encoding='utf-8')
+        marks = list(re.finditer(r'^\[page ([1-9][0-9]*)\][ \t]*$', content, re.M))
+        if ([int(m[1]) for m in marks] != list(range(1, entry['pages'] + 1))
+                or not marks or content[:marks[0].start()].strip()):
+            return []  # Never reinterpret Markdown's synthetic page 1 as PDF page 1.
+        return [(int(mark[1]), content[mark.end():marks[i + 1].start() if i + 1 < len(marks) else len(content)].strip())
+                for i, mark in enumerate(marks)]
 
     def _origin(self, request, index):
         key = hashlib.sha256((str(request.original) + '\n' + request.original_sha256 + '\n'
@@ -112,7 +134,8 @@ class ConversionStore:
         sha = hashlib.sha256(raw).hexdigest()
         record = self.evidence.put('pdf_text', 'conversion:' + request.cache_key,
             {'sha256': sha, 'original_sha256': request.original_sha256,
-             'method': request.method, 'pages': pages, 'representation': 'generated_conversion'},
+             'method': request.method, 'pages': pages, 'representation': 'generated_conversion',
+             'conversion_details': details},
             authorship='generated')
         rel = '.librarian/conversions/' + record.id + '.md'
         path = operation_path(self.vault, rel)
