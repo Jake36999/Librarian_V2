@@ -1,0 +1,48 @@
+{
+ "tasks": [
+  {
+   "dependencies": [],
+   "description": "Analyze inputs, outputs, calls, cited claims, and uncertainty for aletheia_toolchain/aletheia_tool_core/config.py.load_json_config. Output a closed JSON contract.",
+   "id": "T3_load_json_config",
+   "level": "3"
+  },
+  {
+   "dependencies": [],
+   "description": "Analyze inputs, outputs, calls, cited claims, and uncertainty for aletheia_toolchain/aletheia_tool_core/config.py.resolve_precedence. Output a closed JSON contract.",
+   "id": "T3_resolve_precedence",
+   "level": "3"
+  },
+  {
+   "dependencies": [],
+   "description": "Analyze inputs, outputs, calls, cited claims, and uncertainty for aletheia_toolchain/aletheia_tool_core/config.py.resolve_profile. Output a closed JSON contract.",
+   "id": "T3_resolve_profile",
+   "level": "3"
+  },
+  {
+   "dependencies": [],
+   "description": "Analyze inputs, outputs, calls, cited claims, and uncertainty for aletheia_toolchain/aletheia_tool_core/config.py.validate_config. Output a closed JSON contract.",
+   "id": "T3_validate_config",
+   "level": "3"
+  },
+  {
+   "dependencies": [
+    "T3_load_json_config",
+    "T3_resolve_precedence",
+    "T3_resolve_profile",
+    "T3_validate_config"
+   ],
+   "description": "Synthesize the four tier-3 contracts to resolve precedence. Output a closed JSON contract containing source-supported conclusions and preserved uncertainty.",
+   "id": "T2_precedence_synthesis",
+   "level": "2"
+  },
+  {
+   "dependencies": [
+    "T2_precedence_synthesis"
+   ],
+   "description": "Review the precedence synthesis to resolve the profile. Output a closed JSON contract containing source-supported conclusions and preserved uncertainty.",
+   "id": "T1_profile_review",
+   "level": "1"
+  }
+ ],
+ "server": "geo_phase67_pilot_20261114"
+}

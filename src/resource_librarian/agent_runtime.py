@@ -150,8 +150,13 @@ class ProfiledEndpoint:
             return selector(str(payload.get("task") or ""))
         return self.endpoint
 
-    def _reserve(self, payload: dict[str, Any], rate_card: dict[str, Any] | None) -> dict[str, Any]:
-        """Reserve a conservative one-call background-task budget."""
+    def _reserve(self, payload: dict[str, Any], rate_card: dict[str, Any] | None,
+                 headroom: int = 0) -> dict[str, Any]:
+        """Reserve a conservative one-call background-task budget.
+
+        ``headroom`` is output the route's reviewed dialect adds after this
+        point (a reasoning reserve); it is spent, so it is reserved too.
+        """
         try:
             requested = max(1, int(payload.get("max_tokens") or self.profile.output_budget))
         except (TypeError, ValueError):
@@ -160,7 +165,8 @@ class ProfiledEndpoint:
         prepared["max_tokens"] = min(requested, self.profile.output_budget)
         prompt_tokens = self._token_estimate({key: value for key, value in prepared.items()
                                               if key != "max_tokens"})
-        reserved_tokens = prompt_tokens + prepared["max_tokens"]
+        wire_output = prepared["max_tokens"] + max(0, int(headroom))
+        reserved_tokens = prompt_tokens + wire_output
         with self._lock:
             if self.profile.token_budget and \
                     self._reserved_tokens + reserved_tokens > self.profile.token_budget:
@@ -174,7 +180,7 @@ class ProfiledEndpoint:
                 if prices is None:
                     raise self._unavailable(
                         f"{self.profile.role} profile has a cost budget but no input/output rate card")
-                reserved_cost = ((prompt_tokens * prices[0] + prepared["max_tokens"] * prices[1]) /
+                reserved_cost = ((prompt_tokens * prices[0] + wire_output * prices[1]) /
                                  1_000_000)
                 if self._reserved_cost + reserved_cost > self.profile.cost_budget_usd + 1e-12:
                     raise self._unavailable(
@@ -196,7 +202,8 @@ class ProfiledEndpoint:
             rate_card = self.route_guard(self.profile, target) if self.route_guard else self.rate_card
         except Exception as exc:  # profile failures must queue, never silently fail over
             raise self._unavailable(f"{self.profile.role} profile cannot use this route: {exc}") from exc
-        prepared = self._reserve(payload, rate_card)
+        headroom = getattr(target, "output_headroom_tokens", None)
+        prepared = self._reserve(payload, rate_card, headroom() if callable(headroom) else 0)
         minimum = max(0, int(getattr(target, "min_tokens", 0) or 0))
         if minimum > prepared["max_tokens"]:
             raise self._unavailable(

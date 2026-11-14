@@ -343,6 +343,9 @@ class ProviderEndpoint(Endpoint):
         self.concurrency = self.concurrency_ceiling
         self.payloads: list[dict[str, Any]] = []
 
+    def output_headroom_tokens(self) -> int:
+        return self.invocation_runtime.output_headroom_tokens(self.provider)
+
     def complete(self, payload: dict[str, Any], repair: str = "") -> tuple[str, str]:
         self.payloads.append(payload)
         messages = [{"role": "user", "content": payload["user"]}]

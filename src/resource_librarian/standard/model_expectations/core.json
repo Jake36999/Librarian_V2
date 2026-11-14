@@ -274,6 +274,28 @@
       "behavior_modes": ["provider_default"],
       "source_url": "https://deepinfra.com/nvidia/Nemotron-3-Nano-30B-A3B",
       "source_revision": "provider-page-2026-10-23; endpoint-l1-required"
+    },
+    {
+      "id": "deepinfra-qwen35-397b-clerk-reasoning-reserve",
+      "version": "2026-11-14",
+      "status": "reviewed",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "Qwen/Qwen3.5-397B-A17B",
+      "host_id_or_family": "preset-deepinfra",
+      "capabilities": {
+        "tool_use": "unknown",
+        "tool_results": "unknown",
+        "system_message": "unknown",
+        "structured_output": "unknown",
+        "streaming": "unknown",
+        "native_reasoning": "true"
+      },
+      "behavior_modes": ["provider_default"],
+      "dialect": {"output_headroom": "reasoning_reserve"},
+      "source_url": "https://huggingface.co/Qwen/Qwen3.5-397B-A17B",
+      "source_revision": "official-model-card-thinks-by-default; live-pilot-2026-11-14-four-clerk-contracts-exhausted-1800-visible-budget"
     }
   ]
 }
