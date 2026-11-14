@@ -130,6 +130,19 @@ def result_access(spec, arguments, result, ctx):
     if not spec.external and 'error' in result:
         # Do not open a denied/refused source merely to decorate its error.
         return {'sources': [{'handle': 'native:' + spec.name, 'authorship': 'generated'}], 'taint_sources': []}
+    if not spec.external and spec.name == 'read_source_file':
+        # A generated/owner-curated catalogue note is not proof that the
+        # external repository bytes it names are ours. Use the graph's typed
+        # provenance for trusted own-code reads; legacy aliases stay explicit.
+        handle = 'source:' + str(arguments.get('source', '')) + '/' + str(arguments.get('path', ''))
+        return {'sources': [{'handle': handle, 'authorship': None,
+                             'authorship_resolution': 'unclassified'}], 'taint_sources': [handle]}
+    if not spec.external and spec.name in {'pdf_to_markdown', 'ocr_pdf'} and arguments.get('file'):
+        handle = str(arguments['file'])
+        authorship = _native_authorship(ctx, handle)
+        return {'sources': [{'handle': handle, 'authorship': authorship,
+            **({'authorship_resolution': 'unclassified'} if authorship is None else {})}],
+            'taint_sources': [handle] if authorship not in {'owner_created', 'generated'} else []}
     if not spec.external and spec.name == 'read_evidence' and ctx.vault and arguments.get('evidence_id'):
         from .evidence import EvidenceStore
         store = EvidenceStore(ctx.vault)

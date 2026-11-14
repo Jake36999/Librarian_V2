@@ -144,3 +144,27 @@ def test_native_refusal_does_not_open_source_text_for_metadata(vault, monkeypatc
     spec = ToolSpec('get_note', lambda ctx: {}, 'consult', 'read', Card('Read'))
     out = result_access(spec, {'name': 'blocked'}, {'error': 'refused'}, Context(vault=vault))
     assert out['taint_sources'] == []
+
+
+def test_catalogue_note_authorship_does_not_promote_the_repository_it_describes(vault):
+    from resource_librarian.access import result_access
+    p = vault.root / 'Sources/curated.md'
+    p.parent.mkdir(exist_ok=True)
+    p.write_text('---\nauthorship: generated\n---\n\n# Curated repository note', encoding='utf-8')
+    spec = ToolSpec('read_source_file', lambda ctx: {}, 'consult', 'read', Card('Read original code'))
+    out = result_access(spec, {'source': 'curated', 'path': 'm.py'},
+        {'source': 'curated', 'path': 'm.py', 'text': 'fixture original'}, Context(vault=vault))
+    assert out['sources'][0]['authorship'] is None
+    assert out['sources'][0]['authorship_resolution'] == 'unclassified'
+    assert out['taint_sources']
+
+
+def test_conversion_origin_uses_person_declared_physical_root(vault):
+    from resource_librarian.access import result_access
+    from resource_librarian import content_roots
+    content_roots._write_json(content_roots.manifest_path(vault.root), {'version': 1,
+        'roots': [{'path': 'Internal', 'access': 'read_write', 'authorship': 'owner_created'}]})
+    spec = ToolSpec('pdf_to_markdown', lambda ctx: {}, 'contribute', 'write', Card('Convert'), open_world=True)
+    out = result_access(spec, {'file': 'Internal/own.pdf'}, {'path': '.librarian/conversions/fixture.md'}, Context(vault=vault))
+    assert out['sources'] == [{'handle': 'Internal/own.pdf', 'authorship': 'owner_created'}]
+    assert not out['taint_sources']
