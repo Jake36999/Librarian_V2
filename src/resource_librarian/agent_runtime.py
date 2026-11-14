@@ -476,7 +476,7 @@ BUNDLES = {
                          ("session_status", "get_note", "search", "topics_list", "filters",
                           "update_plan", "advance", "ask_user")),
     "map": ToolBundle("map", "Map relevant sources and structure",
-                       ("get_note", "search", "read_source_file", "dik_rebuild", "filters",
+                       ("get_note", "search", "read_source_file", "source_verification_plan", "request_raw_source_access",
                         "record_assumptions", "advance", "ask_user", "dispatch_plan")),
     "need": ToolBundle("need", "State and test the evidence needed next",
                         ("search", "get_note", "read_source_file", "record_assumptions",
@@ -503,7 +503,8 @@ BUNDLES = {
                             ("admit_contract", "audit_projection", "ask_user", "advance")),
     "execute": ToolBundle("execute", "Do the contract's work within its targets",
                           ("search", "get_note", "read_evidence", "read_source_file",
-                           "stage_artifact", "ask_user", "advance", "dispatch_plan")),
+                           "stage_artifact", "ask_user", "advance", "dispatch_plan",
+                           "source_verification_plan", "request_raw_source_access")),
     "audit": ToolBundle("audit", "Check each planned predicate and the protected targets",
                         ("verify_grain", "audit_targets", "audit_projection", "ask_user",
                          "advance")),
@@ -511,7 +512,8 @@ BUNDLES = {
                          ("reduce_round", "audit_projection", "advance")),
     "research": ToolBundle("research", "Use the phase-specific research bundle", ()),
     "read": ToolBundle("read", "Read-only help", ("get_note", "search", "read_source_file",
-                                                      "list_files", "session_status")),
+                            "read_file", "read_source_section", "verify_source_pages",
+                            "list_files", "session_status")),
     "draft": ToolBundle("draft", "Draft and review bounded text", ("get_note", "search",
                                                                        "record_trace", "ask_user")),
     "clerk": ToolBundle("clerk", "Submit and inspect small asynchronous work",
@@ -607,7 +609,10 @@ def bundle_selection(tier: str, phase: str = "", *, projects_on: bool = True,
     # Oversized reads are projected to a loop-local handle.  Its bounded
     # reader belongs on every task surface so a result remains usable after a
     # phase transition without reopening the registry.
-    for name in ("read_result", "macro_plan", "macro_run"):
+    # Prefer executable, registry-checked macros when a phase fills the cap;
+    # Each expanded call still passes the registry and checkpoint guards;
+    # source dispatch has its own explicit no-model dry run.
+    for name in ("read_result", "macro_run", "macro_plan"):
         if name in by_name and name not in {spec.name for spec in selected}:
             selected.append(by_name[name])
     # A compact fallback gives a newly added phase usable reads without dumping
@@ -675,6 +680,16 @@ MACROS = {
                                       ("staged_item",), ("staging_promotion",)),
 }
 
+# A paper-page variant of the reviewed evidence-to-claim path, using the same
+# expansion, per-step registry gates and checkpoint machinery.
+from dataclasses import replace as _macro_variant
+MACROS['source_pages_to_claim_check'] = _macro_variant(
+    MACROS['evidence_to_claim_check'], id='source_pages_to_claim_check',
+    purpose='Read a located generated section, then check the original PDF pages',
+    steps=(MacroStep('read_source_section', {'source': '$source', 'pages': '$pages'}),
+           MacroStep('verify_source_pages', {'source': '$source', 'pages': '$pages', 'claim': '$claim'})),
+    preconditions=('catalogued_source', 'original_page_targets'))
+
 
 def macro_plan(macro_id: str) -> dict[str, Any]:
     macro = MACROS.get(macro_id)
@@ -714,6 +729,7 @@ def _precondition_error(macro: Macro, inputs: dict[str, Any]) -> str:
         "query": ("query",),
         "approved_intake": ("ref",),
         "pinned_revision": ("source", "path"),
+        'original_page_targets': ('pages', 'claim'),
         "staged_item": ("item_id", "item_ids"),
     }
     missing: list[str] = []

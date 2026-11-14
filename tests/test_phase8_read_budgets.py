@@ -342,3 +342,19 @@ def test_person_started_ingestion_can_process_its_bound_item_but_not_other_items
     ctx.extras['_batch_run'] = 'different-batch'
     with pytest.raises(Refusal, match='THIRD_PARTY_ROUTE_REQUIRED'):
         guard(REGISTRY.get('deep_read'), {'item_id': 'approved-study'}, ctx)
+
+
+def test_get_note_cannot_turn_a_third_party_original_into_a_catalogue_entry(vault):
+    from conftest import write_note
+    write_note(vault.root, 'Notes/External.md', 'type: note\nauthorship: third_party',
+               '# External\n\n## Body\nOriginal third-party prose.\n')
+    out = REGISTRY.call('get_note', {'name': 'External'}, Context(vault=vault))
+    assert out.get('refused') == 'THIRD_PARTY_ROUTE_REQUIRED', out
+
+
+def test_get_note_keeps_the_third_party_catalogue_entry_available(vault):
+    from conftest import add_source
+    add_source(vault.root, 'External catalogue', 'Generated catalogue summary.',
+               extra_fm='authorship: third_party')
+    out = REGISTRY.call('get_note', {'name': 'External catalogue'}, Context(vault=vault))
+    assert out.get('found') is True, out

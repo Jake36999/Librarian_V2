@@ -76,7 +76,7 @@ Own/external bridges remain owner-decided `reference` links; no automatic concep
 
 ## Ingestion, originals and stored work
 
-### S4 reading boundary (implementation in progress)
+### S4 reading boundary (feature candidate)
 
 Source budgets are **tokens**. `read_access.allocate` uses the actual bound model's
 declared window minus the current measured prompt bound, visible output, and reviewed
@@ -97,7 +97,7 @@ escaping, in addition to the token allocation. They report what was cut.
 model call. It reports literal quote presence and explicitly leaves semantic claim
 verification unperformed. Missing originals or mappings remain catalogue-only.
 
-Ordinary and audited agents cannot use `read_file`, `read_source_file`, `read_evidence`
+Ordinary and audited agents cannot use `read_file`, `read_source_file`, `read_evidence`, `read_project`
 or direct `deep_read` as a raw third-party/unclassified-source shortcut. Own/generated
 reads and person callers remain available. Separately person-started ingestion retains
 its Core-only, batch-and-item-bound capability: its Clerk receives bounded chunks and
@@ -116,9 +116,33 @@ Tier-3 code dispatch preflights both input and expected output before any provid
 The code task's **1,800 visible tokens** still bind even when the generic Clerk profile
 allows 4,096. The reviewed reasoning reserve is separate. The output estimate uses
 anchor, boundary and upstream counts; it is a planning estimate, not a guarantee of
-single-shot model completion. Oversized tasks must be split. The source-verification
-dispatch template, complete S4 sweep and full verification remain pending in this
-intermediate candidate.
+single-shot model completion. Oversized tasks must be split.
+
+After graph lookup, call `source_verification_plan(source, claim, graph_id, document,
+section_id)` with the returned document/section identifiers. The Core fetches the current
+section, checks the original SHA, and fills the revision and 1–8 page targets. Name
+`server` only when more than one accepted paper server is connected; it never guesses
+between them. `tier=2` prepares conversion and original tasks; `tier=1` prepares one
+comparison. Both expand a read-only derivative of `evidence_to_claim_check`, with normal
+registry/contract checks on every read. Comparing two representations shares one route
+allocation, with an explicit packet framing reserve. An empty selected text layer stops
+before model dispatch; it does not silently run OCR or establish verification.
+
+Run `dispatch_plan(plan, dry_run=True)` before requesting a paid dispatch. It validates
+the source/graph revision, original bytes and bounded page reads without calling a model.
+Its receipt is not model qualification or spending approval. Source identity is checked
+again before and after each actual task; stale results are retained and marked failed.
+Generic code plans also support the free packet-only dry run, which explicitly does not
+claim to have evaluated model qualification or output budgets.
+
+The Map and Execute lead surfaces offer the plan factory, dispatcher and person-grant
+request within the existing 12-tool cap. Map no longer spends slots on index maintenance
+or filter enumeration. Execute retains `macro_run`; its separate `macro_plan` preview
+falls outside the compact cap. Macro execution still uses registry/checkpoint guards.
+Read-only helpers offer the bounded section/page readers. A project-file raw grant uses
+the same one-call, source-byte/model/tier/session binding as other raw readers; merely
+listing an approved project remains metadata. Complete S5/S6 catalogue/index integration
+and the combined S6 acceptance run remain pending.
 
 Use the native capture → evidence → facts → describe → stage pipeline, DIK, provenance checks, document identity, sensitivity review and approved-batch continuation. Geo remains a pinned installed wheel. The shared inventory/fingerprint is retained, with evidence/DIK identity added by R; no parallel folder pipeline is the final design.
 

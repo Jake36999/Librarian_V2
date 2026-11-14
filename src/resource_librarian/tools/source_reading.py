@@ -1,6 +1,7 @@
 """Read located conversion sections and original pages; no model/OCR per access."""
 from __future__ import annotations
 import hashlib
+from typing import Literal
 
 from .. import access
 from ..conversions import ConversionStore, file_sha256
@@ -16,6 +17,46 @@ from ..rules import Refusal
 def request_raw_source_access(ctx: Context, tool_name: str, arguments: dict, recipient_tier: int = 0) -> dict:
     from ..read_access import request_raw
     return request_raw(ctx, tool_name, arguments, recipient_tier)
+
+
+@tool('source_verification_plan', tier='consult', effect='read',
+      card=Card('Prepare two tier-2 tasks or one tier-1 task to compare a located conversion section with original PDF pages',
+                'after a paper graph section supplies its original SHA, page range and corpus revision',
+                'Run dispatch_plan(plan, dry_run=True) first. The plan rechecks section, original bytes and revision; it never requests a whole document.'))
+def source_verification_plan(ctx: Context, source: str, claim: str, graph_id: str,
+                             document: str, section_id: int, tier: Literal[1, 2] = 2,
+                             server: str = '') -> dict:
+    from ..source_verification import make_plan
+    from .plan_dispatch import _call_external
+    mcp = ctx.extras.get('mcp')
+    candidates = []
+    if mcp:
+        for name, state in mcp.status().items():
+            if (all(state.get(k) for k in ('enabled', 'accepted', 'connected'))
+                    and state.get('library_enabled') is not False
+                    and f'mcp__{name}__paper_get_section' in mcp.tool_names(name)):
+                candidates.append(name)
+    if not server and len(candidates) == 1:
+        server = candidates[0]
+    if server not in candidates:
+        raise ValueError('PLAN_SERVER_UNAVAILABLE: name one accepted server with paper_get_section')
+    result = _call_external(ctx, server, 'paper_get_section', {'graph_id': graph_id,
+        'request': {'title': document, 'section_id': section_id, 'max_chars': 500}})
+    body = result.get('result', result)
+    provenance = body.get('provenance', {})
+    location = provenance.get('location', {}) if isinstance(provenance, dict) else {}
+    start, end = location.get('page_start'), location.get('page_end')
+    revision = body.get('context', {}).get('corpus_revision')
+    if (body.get('section_id') != section_id or not revision
+            or type(start) is not int or type(end) is not int or not 1 <= start <= end <= start + 7):
+        raise ValueError('PLAN_SOURCE_SCOPE: select a graph section with 1–8 original pages and a corpus revision')
+    original = source_path(ctx, source)
+    if file_sha256(original) != provenance.get('source_sha256'):
+        raise ValueError('PLAN_SOURCE_SCOPE: original bytes differ from the graph source')
+    return {'plan': make_plan(server=server, graph_id=graph_id, document=document,
+        section_id=section_id, corpus_revision=revision, source=source,
+        pages=list(range(start, end + 1)), claim=claim, tier=tier), 'based_on': 'evidence_to_claim_check',
+        'next': 'dispatch_plan with dry_run=true; model dispatch requires its normal route and qualification gates'}
 
 
 @tool('verify_source_pages', tier='consult', effect='read',

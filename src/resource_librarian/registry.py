@@ -359,7 +359,7 @@ class Registry:
                     ctx.extras.get("reference_rehydration") != name:
                 allowed = set(active_bundle) if isinstance(active_bundle, (set, frozenset, list, tuple)) else set()
                 packet_fetch = (ctx.extras.get('plan_packet_fetch') == name and spec.external
-                    and spec.effect == 'read' and name.rsplit('__',1)[-1] in {'compile_task_packet','list_graphs'})
+                    and spec.effect == 'read' and name.rsplit('__',1)[-1] in {'compile_task_packet','list_graphs','paper_get_section'})
                 if name not in allowed and not packet_fetch:
                     offered = ", ".join(sorted(allowed)) or "no tools"
                     raise Refusal("TOOL_BUNDLE_REFUSED",

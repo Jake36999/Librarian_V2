@@ -45,6 +45,19 @@ def allocate(route, *, requested_tokens=200000, sources=1, expected_output_token
 
 def raw_target(spec, arguments, ctx):
     from .access import _native_authorship
+    if spec.name == 'read_project':
+        if not arguments.get('path'):
+            return None, None
+        target = _project_file(ctx, arguments['path'])
+        return str(target), _native_authorship(ctx, str(target))
+    if spec.name == 'get_note':
+        from .tools.library import IndexGateway
+        row = IndexGateway(ctx, include_vectors=False).run(lambda engine: engine.index.note_row(arguments['name']))
+        if row is not None and row['shape'] != 'source':
+            author = _native_authorship(ctx, row['path'])
+            if author == 'third_party':
+                return row['path'], author
+        return None, None  # A catalogue entry is the intended first access point.
     if spec.name == 'read_file':
         path = str(arguments.get('path') or '')
         from .tools.browse import _inside
@@ -73,6 +86,20 @@ def raw_target(spec, arguments, ctx):
     return None, None
 
 
+def _project_file(ctx, path):
+    from .credentials import refuse_credentials
+    from .session import SessionStore
+    from .tools.sessions import _project_root
+    refuse_credentials(path)
+    session = SessionStore(ctx.vault).load(ctx.session)
+    root = _project_root(ctx, session.project).resolve()
+    target = (root / path).resolve()
+    refuse_credentials(target)
+    if root not in target.parents or not target.is_file():
+        raise TypeError('Name a file inside the person-approved project')
+    return target
+
+
 def guard(spec, arguments, ctx, *, consume=False):
     from .access import person
     if person(ctx) or ctx.vault is None:
@@ -92,7 +119,10 @@ def guard(spec, arguments, ctx, *, consume=False):
     raise Refusal('THIRD_PARTY_ROUTE_REQUIRED',
         'Locate this source through catalogue → graph → section, then verify_source_pages. '
         'A scoped person checkpoint can grant one raw read to tiers 1–2.',
-        {'source': handle, 'authorship': authorship, 'route': ROUTE})
+        {'source': handle, 'authorship': authorship, 'route': ROUTE,
+         **({'raw_request_example': {'tool': 'request_raw_source_access',
+              'arguments': {'tool_name': 'read_file', 'arguments': {'path': handle}}}}
+            if spec.name == 'get_note' else {})})
 
 
 def _binding(spec, arguments, ctx):
@@ -119,8 +149,10 @@ def _binding(spec, arguments, ctx):
         if row is None:
             raise TypeError('A raw repository grant requires its exact catalogue note')
         sha = file_sha256(ctx.vault.root / row['path'])
+    elif spec.name == 'read_project':
+        sha = file_sha256(_project_file(ctx, effective['path']))
     else:
-        raise TypeError('Only read_file, read_source_file and read_evidence accept a raw grant')
+        raise TypeError('Only read_file, read_source_file, read_evidence and read_project accept a raw grant')
     body = {'tool': spec.name, 'arguments': effective, 'source_sha256': sha,
             'model': ctx.extras.get('read_route', {}).get('model'), 'tier': ctx.extras.get('agent_tier', 1)}
     return {'source': handle, 'binding': hashlib.sha256(json.dumps(body, sort_keys=True).encode()).hexdigest(), **body}
@@ -156,7 +188,7 @@ def _raw_grant(spec, arguments, ctx, *, consume):
     from .checkpoints import CheckpointStore
     from .session import SessionStore
     from .coordination import exclusive_file_lock, operation_path
-    if spec.name not in {'read_file', 'read_source_file', 'read_evidence'}:
+    if spec.name not in {'read_file', 'read_source_file', 'read_evidence', 'read_project'}:
         return False
     session = ctx.session or ctx.extras.get('_publication_session')
     if not session or ctx.extras.get('agent_tier', 1) not in {1, 2}:
@@ -239,7 +271,8 @@ def project_pages(ctx, units, **metadata):
         allocation = {'unit': 'tokens', 'effective_tokens': 32000, 'scope': 'person, no model allocation'}
         cap = 32000
     else:
-        allocation = allocate(ctx.extras.get('read_route', {}), tier=ctx.extras.get('agent_tier', 1))
+        allocation = allocate(ctx.extras.get('read_route', {}), tier=ctx.extras.get('agent_tier', 1),
+                              requested_tokens=ctx.extras.get('_source_read_tokens', 200000))
         from .mcp_client import external_result_limit
         cap = external_result_limit(allocation['context_tokens'])
     # A separate fixed allowance covers source identity, page flags and receipts.
@@ -265,7 +298,7 @@ def project_pages(ctx, units, **metadata):
 def bound_raw_result(spec, result, ctx, arguments):
     """A person grant changes reading permission, never the result-size cap."""
     from .access import person
-    if person(ctx) or spec.name not in {'read_file', 'read_source_file', 'read_evidence'} or 'error' in result:
+    if person(ctx) or spec.name not in {'read_file', 'read_source_file', 'read_evidence', 'read_project'} or 'error' in result:
         return result
     from copy import deepcopy
     from .mcp_client import external_result_limit

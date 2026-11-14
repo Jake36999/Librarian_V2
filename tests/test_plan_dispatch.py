@@ -61,6 +61,15 @@ def test_dependency_ports_only_and_receipts(world):
     assert out['stale']==[]
 
 
+def test_no_model_dry_run_compiles_each_code_packet_without_dispatch(world, monkeypatch):
+    pd, ctx, calls = world
+    monkeypatch.setattr(pd, '_run_task', lambda *args: pytest.fail('dry run dispatched a model'))
+    out = pd.dispatch_plan(ctx, plan([task('t1'), task('t2', ['t1'], 2)]), dry_run=True)
+    assert out['dry_run']
+    assert all(r['state'] == 'planned' and not r['model_dispatched'] for r in out['results'].values())
+    assert len(calls) == 2
+
+
 def test_packet_failure_skips_transitive_dependants(world,monkeypatch):
     pd,ctx,calls=world
     original = pd._call_external

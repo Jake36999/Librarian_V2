@@ -1303,8 +1303,8 @@
         "symbol": "dispatch_plan"
       },
       "fingerprint": {
-        "source_sha256": "68a2227bc87d43bcf6171f2676ce4009cfad1db7d1376ff154d36fe0c0f9036e",
-        "schema_sha256": "a13b9021cf66041b9b09ca520971a8d0c7654169850dad7d0cf691d94c23d50a",
+        "source_sha256": "6875560e46a49ab8468e138bf0f42c24f80a1ec91b379d8badfac0844499ebdf",
+        "schema_sha256": "014df559b96d6adaf47447027fb013e5c988b9c0787e1e99f4e9a8685ef333ee",
         "effect": "read",
         "open_world": true,
         "external": false,
@@ -5763,6 +5763,33 @@
         "source_sha256": "db1bf3360bdfc16b629ba2a26d38aa25512c663563c338b3df6946d3369afd19",
         "schema_sha256": "ea14d1dd80ad2be77c225969c2ecb1f99b3728a0d2836c1178d64485d4f587f6",
         "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "source_verification_plan",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/source_reading.py",
+        "line": 22,
+        "symbol": "source_verification_plan"
+      },
+      "fingerprint": {
+        "source_sha256": "e1e30300953b04a7a1e00843f672d50b8425fdc299003c61d510d3ebd04b74f0",
+        "schema_sha256": "3ffb7089cc58c3858b474258c0d376ca04566212cdba5ae3679836e00f7bc81b",
+        "effect": "read",
         "open_world": false,
         "external": false,
         "sessionless": false

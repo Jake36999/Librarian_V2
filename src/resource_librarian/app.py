@@ -2187,9 +2187,11 @@ class App:
         route = self._role_choice('lead' if tier == 1 else self._profile_binding_role(profile))
         if route is None:
             return {}
+        provider = self._helper_provider(tier)
         return {'model': str(route.get('model') or ''),
                 'context_tokens': self._route_context_limit(route, profile),
-                'visible_output_tokens': profile.output_budget}
+                'visible_output_tokens': profile.output_budget,
+                'reasoning_reserve_tokens': self.invocation_runtime.output_headroom_tokens(provider) if provider is not None else None}
 
     def _provider_for_profile(self, profile_id: str) -> Provider | None:
         profile = self.profiles.get(profile_id)

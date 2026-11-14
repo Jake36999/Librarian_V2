@@ -15,7 +15,7 @@ CAPS = {1:'lead_agents', 2:'tier2_agents', 3:'tier3_agents'}
 
 def _call_external(ctx, server, name, arguments):
     tool_name = f'mcp__{server}__{name}'
-    if name not in {'compile_task_packet','list_graphs'}:
+    if name not in {'compile_task_packet','list_graphs','paper_get_section'}:
         raise ValueError('PLAN_EXTERNAL_TOOL_REFUSED')
     # A narrowly named Core expansion, like durable-reference rehydration.
     # Profile/phase/Broker checks still execute in Registry.call.
@@ -99,7 +99,7 @@ def _shape_problems(plan):
     if not isinstance(plan, dict):
         return ['plan must be an object'], None, notes
     problems += [f'missing {k}' for k in PLAN_KEYS if k not in plan]
-    problems += [f'unexpected {k}' for k in sorted(set(plan) - set(PLAN_KEYS), key=str)]
+    problems += [f'unexpected {k}' for k in sorted(set(plan) - set(PLAN_KEYS) - {'source_verification'}, key=str)]
     problems += [f'{k} must be a non-empty string' for k in ('plan_id', 'server') if k in plan and not text(plan[k])]
     rows = plan.get('tasks')
     if 'tasks' in plan and (not isinstance(rows, list) or not 1 <= len(rows) <= 32):
@@ -133,6 +133,10 @@ def _shape_problems(plan):
             if not isinstance(d, list) or not all(text(x) for x in d) or len(d) != len(set(d)):
                 problems.append(f'{where}: depends_on must be a list of distinct task_id strings')
         clean.append(t)
+    if not problems and 'source_verification' in plan:
+        from ..source_verification import validate
+        try:validate({**plan, 'tasks': clean})
+        except (ValueError, TypeError) as exc:problems.append(str(exc))
     return problems, (None if problems else {**plan, 'tasks': clean}), notes
 
 
@@ -174,7 +178,8 @@ def _validate(ctx, plan, notes=None):
     status = mcp.status().get(server, {})
     if not all(status.get(k) for k in ('enabled','accepted','connected')) or status.get('library_enabled') is False: raise ValueError('PLAN_SERVER_UNAVAILABLE')
     names = mcp.tool_names(server)
-    if any(f'mcp__{server}__{name}' not in names for name in ('compile_task_packet','list_graphs')): raise ValueError('PLAN_SERVER_UNAVAILABLE')
+    required = ('paper_get_section','list_graphs') if 'source_verification' in plan else ('compile_task_packet','list_graphs')
+    if any(f'mcp__{server}__{name}' not in names for name in required): raise ValueError('PLAN_SERVER_UNAVAILABLE')
     return tasks, waves
 
 
@@ -186,9 +191,14 @@ def _cancelled(ctx):
 @tool('dispatch_plan', tier='contribute', effect='read', open_world=True,
       card=Card('Run a lead-compiled task DAG with snapshot packets and verified citations',
                 'bounded code investigation; outputs remain advisory'))
-def dispatch_plan(ctx: Context, plan: dict) -> dict:
+def dispatch_plan(ctx: Context, plan: dict, dry_run: bool = False) -> dict:
     normalised = []
     tasks, waves = _validate(ctx, plan, normalised)
+    if 'source_verification' in plan:
+        from ..source_verification import execute
+        result = execute(ctx, {**plan, 'tasks': list(tasks.values())}, dry_run=dry_run,
+                         call_external=_call_external, run_task=_run_task, cancelled=_cancelled)
+        return {**result, 'normalised': normalised}
     results, packets = {}, {}; server = plan['server']
     # Scope is checked for the entire DAG before compiling any packet or invoking a model.
     if any(t['tier'] == 3 for t in tasks.values()) and not _cancelled(ctx):
@@ -206,12 +216,12 @@ def dispatch_plan(ctx: Context, plan: dict) -> dict:
         ready = []
         for tid in wave:
             t = tasks[tid]
-            if any(results[d]['state'] != 'ok' for d in t['depends_on']):
+            if any(results[d]['state'] not in ({'planned'} if dry_run else {'ok'}) for d in t['depends_on']):
                 results[tid] = dict(state='skipped', snapshot_id=None, error='DEPENDENCY_FAILED'); continue
             try:
                 if _cancelled(ctx): raise ValueError('CANCELLED')
                 upstream = []
-                for d in sorted(t['depends_on']):
+                for d in ([] if dry_run else sorted(t['depends_on'])):
                     dep = results[d]; dp = packets[d]
                     first = next(a for a in dp['anchors'] if a['ref'] == tasks[d]['anchors'][0])
                     rec = dict(task_id=d, ref=first['ref'], cite=first['cite_as'])
@@ -229,6 +239,9 @@ def dispatch_plan(ctx: Context, plan: dict) -> dict:
             t = tasks[tid]; packet = packets[tid]
             try:
                 if _cancelled(ctx): raise ValueError('CANCELLED')
+                if dry_run:
+                    return dict(state='planned', snapshot_id=packet['snapshot_id'], model_dispatched=False,
+                                packet_sha256=content_sha256(packet), budget_status='packet compilation only; model qualification and budgets not evaluated')
                 answer, receipt = _run_task(ctx, t['tier'], packet)
                 verification = verify_citations(answer, packet)
                 if not isinstance(answer, dict): raise ValueError('ANSWER_SHAPE')
@@ -253,7 +266,7 @@ def dispatch_plan(ctx: Context, plan: dict) -> dict:
         for tid in sorted(results):
             if results[tid]['state'] == 'ok' and snapshots.get(tasks[tid]['graph_id']) != results[tid]['snapshot_id']:
                 stale.append(tid); results[tid]['scope_error'] = 'STALE_SCOPE'
-    return dict(plan_id=plan['plan_id'], waves=waves, results={k:results[k] for k in sorted(results)}, stale=stale,
+    return dict(plan_id=plan['plan_id'], dry_run=dry_run, waves=waves, results={k:results[k] for k in sorted(results)}, stale=stale,
                 normalised=normalised)
 
 
@@ -283,7 +296,11 @@ def _plan_schema() -> dict:
             'properties': {'plan_id': ref, 'server': {**ref, 'description': 'the connected MCP server name'},
                            'tasks': {'type': 'array', 'minItems': 1, 'maxItems': 32, 'items': task}},
             'examples': [example]}
-    return {'type': 'object', 'additionalProperties': False, 'required': ['plan'], 'properties': {'plan': plan}}
+    from ..source_verification import descriptor_schema
+    plan['properties']['source_verification'] = descriptor_schema()
+    return {'type': 'object', 'additionalProperties': False, 'required': ['plan'],
+            'properties': {'plan': plan, 'dry_run': {'type': 'boolean', 'default': False,
+                            'description': 'Validate and compile read-only targets without any model dispatch'}}}
 
 
 REGISTRY._tools['dispatch_plan'] = dataclasses.replace(REGISTRY.get('dispatch_plan'), schema=_plan_schema())
