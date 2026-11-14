@@ -287,7 +287,13 @@ class Action:
 
 
 PROFILE_FIELDS = ("modality", "best_for", "license_class", "suggested_tier", "context_length",
-                  "price_input_per_1m", "price_output_per_1m", "tool_calling", "reasoning")
+                  "price_input_per_1m", "price_output_per_1m", "tool_calling", "reasoning",
+                  "recommendation_rank")
+
+
+def _rank(value: Any) -> int | None:
+    """An evidence rank orders recommendations only; anything but a positive int is none."""
+    return value if type(value) is int and value > 0 else None
 
 
 def _tri_state(value: Any) -> bool | None:
@@ -3190,7 +3196,8 @@ class App:
                     # Tri-state (ROUTE-02): an unassessed capability is None, not
                     # False - only an explicit "no" may block a lead placement.
                     "tool_calling": _tri_state(profile.get("tool_calling")),
-                    "reasoning": _tri_state(profile.get("reasoning"))}
+                    "reasoning": _tri_state(profile.get("reasoning")),
+                    "recommendation_rank": _rank(profile.get("recommendation_rank"))}
             elif (provider, m.lower()) in pending:
                 entry["profiling"] = "queued"
             out.append(entry)
