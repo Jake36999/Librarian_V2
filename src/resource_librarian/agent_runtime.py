@@ -350,7 +350,7 @@ def route_permitted(profile: AgentProfile, route: dict[str, Any]) -> tuple[bool,
 DEFAULT_PROFILES = {
     'code-research': AgentProfile('code-research','lead',allowed_bundles=['session','research'],
                                   permission_ceiling='contribute',validation_rules=['grounded'],
-                                  route_policy={'binding_role':'lead','temperature':0.2}),
+                                  route_policy={'binding_role':'lead','temperature':0.2,'answer_self_check':True}),
     "lead": AgentProfile("lead", "lead", allowed_bundles=["session", "research"],
                          permission_ceiling="contribute", validation_rules=["grounded"]),
     "scribe": AgentProfile("scribe", "scribe", allowed_bundles=["draft"],

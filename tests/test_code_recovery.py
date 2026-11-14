@@ -246,3 +246,47 @@ def test_failed_source_open_does_not_spend_a_model_revision(vault,external_tools
     assert len(provider.calls)==2 and turn.reply=='Uncertain.'
     assert turn.recovery_model_calls==0
     assert next(r for r in turn.recoveries if r['pattern']=='FP3')['outcome']=='unresolved'
+
+
+def test_tool_free_xml_request_keeps_the_actual_draft_without_more_dispatch(vault,external_tools):
+    xml=f'<tool_call>\n<function={CONTENT}>\n<parameter=entity_id>\n{EID}\n</parameter>\n</function>\n</tool_call>'
+    replies=iter([Reply(tool_calls=[ToolCall('s',SEARCH,dict(graph_id='g',query=QUESTION))]),
+        Reply(text='The evidence is incomplete.'),Reply(text=xml)])
+    provider=Scripted(lambda *_:next(replies));turn=configured(vault,provider).send(QUESTION)
+    assert turn.reply=='The evidence is incomplete.'
+    assert len(provider.calls)==3 and len(external_tools)==1
+    assert turn.recovery_steps==2 and turn.recovery_model_calls==1
+    record=next(r for r in turn.recoveries if r['pattern']=='FP9')
+    assert record['action']=='retain_prior_answer' and record['outcome']=='resolved'
+    assert record['trigger_value']['format']=='xml_tool_call'
+
+
+def test_production_self_check_matches_the_completed_ab_decision():
+    assert DEFAULT_PROFILES['code-research'].route_policy.get('answer_self_check') is True
+
+
+def test_protocol_tag_mentioned_in_prose_is_not_a_tool_request():
+    assert episode().validate_revision('The parser recognizes the literal <tool_call> tag.')
+
+
+def test_fenced_protocol_example_is_not_an_executable_answer_proposal():
+    example='The documented wire syntax is:\n```xml\n<tool_call><function=example></function></tool_call>\n```\nThis is a source example.'
+    assert episode().validate_revision(example)
+
+
+def test_step_limit_xml_request_is_not_reported_as_a_completed_answer(vault,external_tools):
+    replies=iter([Reply(tool_calls=[ToolCall('s',SEARCH,dict(graph_id='g',query=QUESTION))]),
+        Reply(text=f'<tool_call><function={CONTENT}></function></tool_call>')])
+    provider=Scripted(lambda *_:next(replies));loop=configured(vault,provider);loop.max_steps=1
+    # Remove the evidence candidate so no source revision is scheduled afterwards.
+    from dataclasses import replace
+    original=REGISTRY.get(SEARCH)
+    REGISTRY.unregister(SEARCH)
+    REGISTRY.register(replace(original,fn=lambda *_args,**_kwargs:dict(content=json.dumps(dict(result=dict(data=dict(nodes=[],hits=[])))))))
+    try:turn=loop.send(QUESTION)
+    finally:
+        REGISTRY.unregister(SEARCH)
+        REGISTRY.register(original)
+    assert '<tool_call>' not in turn.reply and not turn.completed_at_step_limit
+    assert len(provider.calls)==2 and turn.recovery_model_calls==1
+    assert any(r['pattern']=='FP9' for r in turn.recoveries)

@@ -6,13 +6,30 @@ import json
 import re
 import uuid
 
-PATTERNS=frozenset('FP'+str(n) for n in range(1,9))
+PATTERNS=frozenset('FP'+str(n) for n in range(1,10))
 STOP=frozenset('a an and are as at be by can cite code constant defines documented does for from function how identifier implementation in is it method named of on or please sets source that the this to what when where which why with you your'.split())
 
 
 def words(text):
     text=re.sub(r'(?<=[a-z0-9])(?=[A-Z])|[_./]+',' ',text)
     return {x for x in re.findall(r'\w+',text.casefold()) if len(x)>2 and x not in STOP and not x.isdigit()}
+
+
+def protocol_request_format(answer):
+    """Recognize the explicit request envelope, never a tag substring alone."""
+    if not isinstance(answer,str):return ''
+    visible=[];fence=None
+    for line in answer.splitlines(keepends=True):
+        marker=re.match(r'^ {0,3}(`{3,}|~{3,})(.*)$',line.rstrip('\r\n'))
+        if fence:
+            if marker and marker[1][0]==fence[0] and len(marker[1])>=len(fence) and not marker[2].strip():fence=None
+            continue
+        if marker:fence=marker[1]
+        else:visible.append(line)
+    if re.search(
+        r'<tool_call>\s*<function=[A-Za-z_][\w.:-]*>[\s\S]*?</function>\s*</tool_call>',''.join(visible)):
+        return 'xml_tool_call'
+    return ''
 
 
 def body_of(result):
@@ -164,6 +181,7 @@ class RecoveryEpisode:
 
     def validate_revision(self,answer):
         if not isinstance(answer,str) or not answer.strip():return False
+        if protocol_request_format(answer):return False
         remainder=answer
         for handle in sorted(self.handles,key=len,reverse=True):
             remainder=re.sub(r'(?<![\w./-])'+re.escape(handle)+r'(?![\w])','',remainder)

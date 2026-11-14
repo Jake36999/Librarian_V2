@@ -1078,6 +1078,10 @@ class Loop:
             turn.stopped='cancelled' if provider_failure_category(exc)=='cancelled' else 'provider_error'
             turn.error=str(exc)[:400];turn.failure_category=provider_failure_category(exc);return turn
         if not self._recovery_allowed(turn,cancel,started):return turn
+        from .code_recovery import protocol_request_format
+        protocol=protocol_request_format(reply.text)
+        if protocol and recovery.begin('FP9',dict(format=protocol,stage='revision'),'retain_prior_answer'):
+            recovery.finish(['FP9'],True)
         accepted=not reply.tool_calls and recovery.validate_revision(reply.text)
         self.on_event(dict(type='answer_self_check',attempted=True,accepted=accepted,
             reason='' if accepted else 'unsupported_citation_or_tool_request'))
@@ -1188,6 +1192,15 @@ class Loop:
                 turn.error = "The final answer requested tools although tools were disabled."
                 self.on_event({"type": "stopped", "reason": "max_steps", "error": turn.error})
                 return turn
+            invalid_final_request=False
+            if recovery is not None and not reply.tool_calls:
+                from .code_recovery import protocol_request_format
+                protocol=protocol_request_format(reply.text)
+                if protocol:
+                    invalid_final_request=True
+                    if recovery.begin('FP9',dict(format=protocol,stage='step_limit' if at_step_limit else 'answer'),'incomplete_answer_without_dispatch'):
+                        recovery.finish(['FP9'],True)
+                    reply.text='I could not complete an evidence-grounded answer within the available steps.'
             self.messages.append(reply.message())
             final = not reply.tool_calls
             reply_id = f"r-{secrets.token_hex(6)}" if final and reply.text else ""
@@ -1200,7 +1213,7 @@ class Loop:
             if final:
                 turn.reply, turn.reply_id = reply.text, reply_id
                 if at_step_limit:
-                    turn.completed_at_step_limit = bool(reply.text.strip())
+                    turn.completed_at_step_limit = bool(reply.text.strip()) and not invalid_final_request
                     turn.stopped = "max_steps"
                     self.on_event({"type": "stopped", "reason": "max_steps",
                                    "completed_at_step_limit": turn.completed_at_step_limit})
