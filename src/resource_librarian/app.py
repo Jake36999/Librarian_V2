@@ -3173,7 +3173,8 @@ class App:
         # this library's own notes, else what any library has profiled (kept in the user's
         # config directory), else the catalogue shipped with the package.
         _remember_profiles(own)
-        profiles = {**_shipped_profiles(), **_remembered_profiles(), **own}
+        shipped = _shipped_profiles()
+        profiles = {**shipped, **_remembered_profiles(), **own}
         pending = self._pending_models()
         out = []
         for m in listed:
@@ -3197,7 +3198,10 @@ class App:
                     # False - only an explicit "no" may block a lead placement.
                     "tool_calling": _tri_state(profile.get("tool_calling")),
                     "reasoning": _tri_state(profile.get("reasoning")),
-                    "recommendation_rank": _rank(profile.get("recommendation_rank"))}
+                    # An older note that predates ranks keeps the shipped evidence rank;
+                    # a rank this library wrote itself wins.
+                    "recommendation_rank": _rank(profile.get("recommendation_rank")) or
+                    _rank((shipped.get((provider, m.lower())) or {}).get("recommendation_rank"))}
             elif (provider, m.lower()) in pending:
                 entry["profiling"] = "queued"
             out.append(entry)

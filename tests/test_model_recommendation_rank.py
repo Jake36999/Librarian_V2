@@ -69,3 +69,19 @@ def test_picker_orders_recommended_by_rank_then_catalogue_order(tmp_path):
     assert lead == ["flash", "pro", "fable", "opus", "small", "bare"]     # rank only inside the tier
     assert small == ["small", "fable", "pro", "opus", "flash", "bare"]    # no rank leak across tiers
     assert none == ["fable", "small", "pro", "opus", "flash", "bare"]     # no slot: catalogue order
+
+
+def test_a_library_note_without_a_rank_keeps_the_shipped_rank_and_its_own_wins(tmp_path):
+    from conftest import write_note
+    from resource_librarian.index import open_index
+    app = _app(tmp_path / "Held", [FLASH, PRO])
+    write_note(app.vault.root, "Sources/model/MiMo-V2.6-Flash - deepinfra.md",
+               f"type: source\nkind: model\nprovider: deepinfra\nmodel_id: {FLASH}\n"
+               "suggested_tier: Tier_1\ntool_calling: true", "## Bottom Line\nAn older note.\n")
+    write_note(app.vault.root, "Sources/model/MiMo-V2.6-Pro - deepinfra.md",
+               f"type: source\nkind: model\nprovider: deepinfra\nmodel_id: {PRO}\n"
+               "suggested_tier: Tier_1\nrecommendation_rank: 5", "## Bottom Line\nThe owner's rank.\n")
+    open_index(app.vault)
+    by_id = {m["id"]: m["profile"] for m in app.models("deepinfra")["models"]}
+    assert by_id[FLASH]["recommendation_rank"] == 1 and not by_id[FLASH]["shared"]
+    assert by_id[PRO]["recommendation_rank"] == 5
