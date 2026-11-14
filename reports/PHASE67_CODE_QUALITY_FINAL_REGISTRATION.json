@@ -1,0 +1,43 @@
+{
+  "track": "post-wave4-code-quality",
+  "wheel_sha256": "159877aea26a3f1c678652bb804fea4edb0a3339f75ee0fa40a6c21004b000e6",
+  "wheel": "F:\\uv-data\\Geo_Grapher\\output\\phase67-gates\\code-quality-track\\quality-dist\\geo_grapher-0.1.1-py3-none-any.whl",
+  "librarian_runtime_sha256": "fe4da23031632dd89f0c9120b5ed0b545a9211c357181b78d9f6801dfc4789d0",
+  "harness_sha256": {
+    "scripts\\librarian_harness.py": "a9d6b8f0a11fe692b2bdbc894373916582f0199284fd28217afd13580bdb0bd9",
+    "scripts\\eval_graph_leakage.py": "9917c6859cb2b48b296a10f4e9561e2540952f59816a15ab9129eb30f416ba41",
+    ".superpowers\\sdd\\2026-11-11-phase6-7-04-wave4-librarian\\budgeted_harness.py": "3af7f4785af7d9574578cf250fddb54ffb5000ea5701688d9ca4767dd8b1c78a",
+    "scripts\\run_code_quality_track.py": "8c27299fb930a57dae056a42b2a959a725a8654a8c39d294c89c2d9d049476f3"
+  },
+  "heldout_seal_sha256": "13328d7f7d233a3ce3851218e3fc5814ca80e348768bc07859cd085faa11f056",
+  "heldout_files": {
+    "output\\phase67-gates\\code-quality-track\\heldout.samples.sealed.json": "7ece2703bf68d9c2f31d2f16bb3646adaf232b2deb085406f1010c3de6ff6543",
+    "output\\phase67-gates\\code-quality-track\\heldout.questions.sealed.json": "1332c60995b08c64d331b31bd7ac6397c11902761099de98bf90bc456d50f324",
+    "output\\phase67-gates\\code-quality-track\\heldout.answers.sealed.json": "cca6611f30400265bca4d6659cb0be94e46dcd2f254377a7ff6fc4561bc61730"
+  },
+  "snapshots": {
+    "librarian-v2": "snapshot:1703964f018a8f5981c139069836a87178098924bd94383d5788c083bb89c9bf",
+    "ToolSet": "snapshot:f5029b6bf601fcb2896a3c494e30dc306ced8624436d9334a9f9000931e1abee"
+  },
+  "model": "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+  "context_tokens": 1048576,
+  "preset": "lead",
+  "scoping": "library",
+  "max_steps": 12,
+  "final_synthesis": "existing guarded tool-free step-limit synthesis only",
+  "production_route_policy": {
+    "binding_role": "lead",
+    "temperature": 0.2
+  },
+  "dispatch_meter_sha256": "d6ef11a3795b6a1042093f661d308b040bcf329326ac6acc0374ce2dccc6d71a",
+  "dev_pass": 15,
+  "heldout_pass": 68,
+  "heldout_per_run": 22,
+  "wrong_graph": 0,
+  "withheld": 0,
+  "max_mean_calls": 8,
+  "heldout_scoring": "case-sensitive defining identifier with word boundaries; key loaded only after all six raw runs finish",
+  "cycle_count": 1,
+  "episodes": 90,
+  "no_repeated_cycles": true
+}

@@ -42,6 +42,8 @@ class Verifier:
 
 
 VERIFIERS: dict[str, Verifier] = {
+    'packet.citation_resolves': Verifier('deterministic', 'bounded',
+        'each cited handle is in the named snapshot task packet; no semantic claim is verified'),
     "evidence.integrity": Verifier("evidence", "exact",
                                    "the evidence object passes its integrity and ingestion checks"),
     "coverage.status": Verifier("deterministic", "exact",
@@ -77,6 +79,7 @@ AUTHORITATIVE_KINDS = frozenset({"deterministic", "test", "solver", "evidence"})
 # review, 2026-10-30: a real quote from source B verified "quoted from source A").
 # Verifiers with no entry check the contract itself, which admission binds.
 SUBJECTS: dict[str, tuple[str, ...]] = {
+    'packet.citation_resolves': ('packet_sha256', 'answer_sha256'),
     "evidence.integrity": ("evidence",), "coverage.status": ("source",),
     "quote.located": ("evidence",), "arithmetic.reproduces": ("note",),
     "claim_run.passed": ("run",), "index.findable": ("note",),

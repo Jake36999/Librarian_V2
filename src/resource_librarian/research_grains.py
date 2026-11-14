@@ -25,6 +25,7 @@ check can establish gets the outcome `no_suitable_tool`, and stays with the
 person instead of being closed by something weaker.
 """
 from __future__ import annotations
+import json
 
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -329,7 +330,23 @@ def boundary_staged(vault: Vault, params: dict[str, Any], *, session: Any = None
                                   f"({staged} staged write(s), no direct write)")
 
 
+def packet_citations(vault: Vault, params: dict[str, Any], **_: Any) -> Check:
+    """Membership in the exact bound packet; this never verifies code semantics."""
+    from .packet_checks import content_sha256, verify_citations
+    packet, answer = params.get('packet'), params.get('answer')
+    if not isinstance(packet, dict) or packet.get('packet_version') != 'task-packet-v1' or not isinstance(answer, dict):
+        return Check('fail', 'bounded', 'a task packet and closed-shape answer are required')
+    if params.get('packet_sha256') != content_sha256(packet) or params.get('answer_sha256') != content_sha256(answer):
+        return Check('fail', 'bounded', 'packet or answer differs from the bound JSON digest')
+    result = verify_citations(answer, packet)
+    passed = result['closure_strength'] == 'bounded'
+    return Check('pass' if passed else 'fail', 'bounded',
+        'all answer citation handles belong to the bound task packet; code semantics remain unverified',
+        detail=json.dumps(result, sort_keys=True))
+
+
 CHECKS: dict[str, Callable[..., Check]] = {
+    'packet.citation_resolves': packet_citations,
     "evidence.integrity": integrity, "coverage.status": coverage, "quote.located": quote,
     "arithmetic.reproduces": arithmetic, "claim_run.passed": claim_run,
     "index.findable": findable, "target.diff_clean": diff_clean,

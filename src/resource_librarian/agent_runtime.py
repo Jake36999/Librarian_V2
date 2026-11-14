@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 import threading
 import time
@@ -274,6 +275,10 @@ class AgentProfile:
         # MF-011: the route's context window, when its catalogue entry has none
         # (a local or custom model). It only ever narrows what is sent.
         context_tokens = self.route_policy.get("context_tokens")
+        temperature = self.route_policy.get('temperature')
+        if temperature is not None and (type(temperature) not in (int,float) or
+                                        not math.isfinite(temperature) or not 0<=temperature<=2):
+            raise ValueError('route_policy.temperature is a finite number from 0 to 2')
         if context_tokens is not None and (isinstance(context_tokens, bool) or
                                            not isinstance(context_tokens, int) or context_tokens < 1024):
             raise ValueError("route_policy.context_tokens is a whole number of tokens, at least 1024")
@@ -343,6 +348,10 @@ def route_permitted(profile: AgentProfile, route: dict[str, Any]) -> tuple[bool,
 
 
 DEFAULT_PROFILES = {
+    'code-research': AgentProfile('code-research','lead',allowed_bundles=['session','research'],
+                                  permission_ceiling='contribute',validation_rules=['grounded'],
+                                  # answer_self_check (FP4) off: measured net harm in the final registered cycle (Review 5).
+                                  route_policy={'binding_role':'lead','temperature':0.2,'answer_self_check':False}),
     "lead": AgentProfile("lead", "lead", allowed_bundles=["session", "research"],
                          permission_ceiling="contribute", validation_rules=["grounded"]),
     "scribe": AgentProfile("scribe", "scribe", allowed_bundles=["draft"],
@@ -459,7 +468,7 @@ BUNDLES = {
                           "update_plan", "advance", "ask_user")),
     "map": ToolBundle("map", "Map relevant sources and structure",
                        ("get_note", "search", "read_source_file", "dik_rebuild", "filters",
-                        "record_assumptions", "advance", "ask_user")),
+                        "record_assumptions", "advance", "ask_user", "dispatch_plan")),
     "need": ToolBundle("need", "State and test the evidence needed next",
                         ("search", "get_note", "read_source_file", "record_assumptions",
                          "update_plan", "advance", "ask_user")),
@@ -485,7 +494,7 @@ BUNDLES = {
                             ("admit_contract", "audit_projection", "ask_user", "advance")),
     "execute": ToolBundle("execute", "Do the contract's work within its targets",
                           ("search", "get_note", "read_evidence", "read_source_file",
-                           "stage_artifact", "ask_user", "advance")),
+                           "stage_artifact", "ask_user", "advance", "dispatch_plan")),
     "audit": ToolBundle("audit", "Check each planned predicate and the protected targets",
                         ("verify_grain", "audit_targets", "audit_projection", "ask_user",
                          "advance")),
