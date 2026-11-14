@@ -69,7 +69,7 @@ def test_batch_uses_core_and_writer_and_keeps_both_generated_links(core, monkeyp
     other = notes.load(core.vault.root / "Sources/document/Second Widget.md")
     assert other.frontmatter["file"].endswith("/paper (2).pdf")
     assert (core.vault.root / other.frontmatter["file"]).read_bytes() == second.read_bytes()
-    assert len(_copies(core)) == 3
+    assert len(_copies(core)) == 2
     for rel in ("Concepts/Widget.md", "Indexes/Topic - Unfiled.md"):
         text = (core.vault.root / rel).read_text(encoding="utf-8")
         assert "[[New Widget]]" in text and "[[Second Widget]]" in text
@@ -100,7 +100,7 @@ def test_duplicate_proposed_name_is_refused_before_its_attachment_copy(core, kin
     _second(core, name="New Widget", kind=kind)
     out = _accept(core)
     assert out["accepted"] == 1 and out["results"][1]["refused"] == "UNIQUE_NOTE_NAMES", out
-    assert len(_copies(core)) == 2  # Only the first source's raw and clean input.
+    assert len(_copies(core)) == 1  # Only the first source's original is copied; its conversion stays hidden.
     assert _store(core).load("second")["status"] == "staged"
     assert not (core.vault.root / "Sources/repository/files/paper.pdf").exists()
 
@@ -110,7 +110,7 @@ def test_bad_item_does_not_hide_a_valid_item_or_mutate_its_inputs(core):
     core.writer.submit(lambda: _store(core).save({**_store(core).load("second"), "review": {}}))
     out = _accept(core, ["no-such-item", "second", "new-widget"])
     assert out["accepted"] == 1 and "error" in out["results"][0] and "error" in out["results"][1], out
-    assert out["results"][2]["status"] == "accepted" and len(_copies(core)) == 2
+    assert out["results"][2]["status"] == "accepted" and len(_copies(core)) == 1
 
 
 @pytest.mark.parametrize("kind", ["prose", "fields"])
@@ -149,7 +149,7 @@ def test_edit_after_first_accept_reports_its_result_and_aborts_remaining_items(c
     assert not (core.vault.root / "Sources/document/Third Widget.md").exists()
     assert second.read_bytes() == b"A human's newer second artifact"
     assert _store(core).load("new-widget")["status"] == "accepted"
-    assert len(_copies(core)) == 2
+    assert len(_copies(core)) == 1
 
 
 @pytest.mark.parametrize("failed", ["New Widget", "Second Widget"])
@@ -169,7 +169,7 @@ def test_caught_io_failure_retains_only_that_items_progress_and_other_items_can_
     try:
         out = _accept(restarted, [failed_id])
         assert out["accepted"] == 1, out
-        assert len(_copies(restarted)) == 3
+        assert len(_copies(restarted)) == 2
     finally:
         restarted.close_runtime()
 
@@ -276,7 +276,7 @@ def test_two_queued_batches_cannot_reapply_the_same_items(core, monkeypatch):
     assert all(not thread.is_alive() for thread in threads)
     assert sorted(r.get("accepted", 0) for r in results) == [0, 2], results
     assert sum(r.get("refused") == "DOCUMENT_ACTIVE" for r in results) == 1
-    assert len(_copies(core)) == 3
+    assert len(_copies(core)) == 2
 
 
 def test_duplicate_item_ids_report_second_decision_without_recopying(core):
@@ -284,7 +284,7 @@ def test_duplicate_item_ids_report_second_decision_without_recopying(core):
     assert preview["would_accept"] == 1 and not preview["results"][1]["ok"], preview
     out = _accept(core, ["new-widget", "new-widget"])
     assert out["accepted"] == 1 and out["results"][1].get("error"), out
-    assert len(_copies(core)) == 2
+    assert len(_copies(core)) == 1
 
 
 def test_missing_origin_does_not_invent_a_session_or_hide_accepted_results(core):
@@ -314,5 +314,5 @@ def test_stopped_index_between_items_retains_results_and_never_copies_later_inpu
     assert out["accepted"] == 1, out
     assert "RuntimeError" in out["results"][1]["error"]
     assert out["results"][2]["error"].startswith("not run")
-    assert len(_copies(core)) == 2
+    assert len(_copies(core)) == 1
     assert not (core.vault.root / "Sources/document/Second Widget.md").exists()

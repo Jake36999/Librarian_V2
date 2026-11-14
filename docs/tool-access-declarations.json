@@ -2725,7 +2725,7 @@
         "symbol": "ocr_pdf_tool"
       },
       "fingerprint": {
-        "source_sha256": "42f6e9d2d8dc54312119cd9b405ba627869c642801fc094403a8f37663d7f206",
+        "source_sha256": "eafd5021c8dada45ae3f911018c7d0c2d280b65eb2b4e04a68a6f7d805f6b910",
         "schema_sha256": "8900d4c8bd3a90e232590f71f5982b88e2b5a456c93ccc8249a87abddcfaa7e1",
         "effect": "write",
         "open_world": true,
@@ -2858,7 +2858,7 @@
         "symbol": "pdf_to_markdown_tool"
       },
       "fingerprint": {
-        "source_sha256": "8a04a1025ae437e00d9248bc6ee0adc0a0795a5167add73486cd71810cc83346",
+        "source_sha256": "c62ec74f72240c387e8308d43245f4fb654d0ce382cc851e08d7c71d4375bb1f",
         "schema_sha256": "a26de509015c627856703e51d4a693b638e645d261fddf2c4676a9187a67f2ed",
         "effect": "write",
         "open_world": true,

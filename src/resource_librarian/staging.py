@@ -457,7 +457,10 @@ def _source_draft(store, item, bottom_line, what_it_solves, decided_by, session,
 
 def _attachment_path(vault: Vault, rel: str) -> Path:
     from .coordination import operation_path
+    from .conversions import ConversionStore, is_conversion
     normalized = str(rel).replace("\\", "/")
+    if is_conversion(vault, normalized):
+        return ConversionStore(vault).checked_path(normalized)
     if normalized.startswith(".librarian/staging/files/"):
         path = operation_path(vault, normalized)
         if not path.is_relative_to(vault.work("staging") / "files"):
@@ -501,7 +504,7 @@ def prepare_source(store, item, bottom_line, what_it_solves, decided_by, session
     draft, coverage = _source_draft(store, item, bottom_line, what_it_solves, decided_by,
                                      progress.get("session", session),
                                      fields, False, index_call)
-    copies, reserved = [], set(reserved_destinations)
+    copies, reserved, retained = [], set(reserved_destinations), []
     for key in ("file", "clean_file"):
         if not item.get(key):
             continue
@@ -510,6 +513,14 @@ def prepare_source(store, item, bottom_line, what_it_solves, decided_by, session
         if not source.is_file():
             raise TypeError(f"attachment is missing: {rel}")
         stamp = fingerprint(source)
+        from .conversions import is_conversion
+        if key == 'clean_file' and is_conversion(store.vault, rel):
+            draft.fields['file_markdown'] = rel
+            retained.append((rel, stamp))
+            continue
+        if key == 'clean_file':
+            raise Refusal('PERSON_CONFIRMS', 'Migrate this recorded legacy conversion with '
+                          'scripts/migrate_conversions.py before acceptance; generated text stays hidden')
         prior = next((c for c in progress.get("copies", []) if c.get("key") == key), None)
         if prior:
             target = store.vault.safe_relative(prior["destination"])
@@ -549,9 +560,9 @@ def prepare_source(store, item, bottom_line, what_it_solves, decided_by, session
     resume = progress.get("source") if progress.get("source", {}).get("fingerprint") not in (None, MISSING) else None
     plan = promotion.prepare(store.vault, draft, index_call, resume=resume)
     plan.update(item_id=item["id"], coverage=coverage, request_hash=request_hash, copies=copies,
-                state_path=state)
+                state_path=state, retained_conversions=[rel for rel, _ in retained])
     plan["targets"].extend([state, *[c["destination"] for c in copies]])
-    plan["observed"].extend([(state, fingerprint_bytes(raw)),
+    plan["observed"].extend([*retained, (state, fingerprint_bytes(raw)),
         (data_path.relative_to(store.vault.root).as_posix(), data_stamp)])
     for copy in copies:
         plan["observed"].extend([(copy["source"], copy["fingerprint"]), (copy["destination"], copy["before"])])
@@ -753,7 +764,8 @@ def _accept_prepared_source(store, item, plan, index_call, leases, entry, guard=
         guard.write(plan["state_path"], json.dumps(item, ensure_ascii=False, indent=1),
                     include_attachments=True)
         return {"id": item["id"], "status": "accepted", "coverage": plan["coverage"], "promotion": report.to_dict(),
-                "originals_retained": [c["source"] for c in plan["copies"]],
+                "originals_retained": [*[c["source"] for c in plan["copies"]],
+                                       *plan.get('retained_conversions', [])],
                 **({"_embedding": {"item_id": item["id"], "name": report.note,
                     "path": report.path, "fingerprint": report.publication_fingerprint,
                     "attention": report.embedding_attention_pending}}
@@ -1033,24 +1045,24 @@ def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: 
 
 
 def _move_file(vault: Vault, item: dict[str, Any], folder: Path) -> str:
-    """Move an item's file (from Inbox/) and return its new vault path."""
-    source = vault.root / item["file"]
+    """Retain the original and copy its attachment; generated work stays hidden."""
+    import shutil
+    from .conversions import is_conversion
+    source = _attachment_path(vault, item["file"])
     if not source.is_file():
         return item["file"]
+    if item.get('clean_file') and not is_conversion(vault, item['clean_file']):
+        from .conversions import migrate_confirmed
+        migrated = migrate_confirmed(vault, item['file'], item['clean_file'], apply=True)
+        item['clean_file'] = migrated['path']
     folder.mkdir(parents=True, exist_ok=True)
     target = folder / source.name
     n = 2
     while target.exists():
         target = folder / f"{source.stem} ({n}){source.suffix}"
         n += 1
-    source.replace(target)
+    shutil.copy2(source, target)
     item["file"] = target.relative_to(vault.root).as_posix()
-    clean = vault.root / item["clean_file"] if item.get("clean_file") else None
-    if clean is not None and clean.is_file():             # its cleaned copy goes with it
-        moved = target.with_name(f"{target.stem} (clean text).md")
-        if not moved.exists():
-            clean.replace(moved)
-            item["clean_file"] = moved.relative_to(vault.root).as_posix()
     return item["file"]
 
 

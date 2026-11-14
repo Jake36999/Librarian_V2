@@ -323,6 +323,8 @@ class Index:
         """Index one note. Returns False when its content was already indexed."""
         path = Path(path)
         rel = path.relative_to(self.vault.root).as_posix()
+        if path.resolve().is_relative_to((self.vault.librarian / 'conversions').resolve()):
+            return False  # Paid generated material is never a catalogue note.
         snapshot = read_bytes_snapshot(path)
         # Preserve Path.read_text's historical universal-newline semantics
         # while obtaining bytes/metadata from one binary handle.
