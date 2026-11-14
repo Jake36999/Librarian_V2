@@ -611,7 +611,24 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="read --file paths relative to this worktree inside the repository")
     parser.add_argument("--work-package", type=Path, default=None,
                         help="admit the call under a DELEG-11 work package")
+    parser.add_argument("--reasoning-effort", default=None,
+                        choices=("none", "minimal", "low", "medium", "high", "xhigh", "max"),
+                        help="reasoning effort as DeepInfra's API names it (lower thinks less, so a "
+                             "bounded output budget is not spent before the answer)")
+    parser.add_argument("--no-thinking", action="store_true",
+                        help="disable thinking mode (Qwen3.5 / GLM: chat_template_kwargs."
+                             "enable_thinking=false), for a direct answer")
     return parser.parse_args(argv)
+
+
+def apply_reasoning_controls(body: dict, args: argparse.Namespace) -> dict:
+    """Add the opt-in reasoning controls the model cards document. Absent flags change nothing."""
+    effort = getattr(args, "reasoning_effort", None)
+    if effort is not None:
+        body["reasoning_effort"] = effort
+    if getattr(args, "no_thinking", False):
+        body["chat_template_kwargs"] = {"enable_thinking": False}
+    return body
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -654,6 +671,7 @@ def main(argv: list[str] | None = None) -> int:
         max_tokens=args.max_output_tokens,
         temperature=args.temperature,
     )
+    body = apply_reasoning_controls(body, args)
     input_guess, reserve = reserve_cost(body, card)
     ledger_path = args.ledger.resolve()
 
