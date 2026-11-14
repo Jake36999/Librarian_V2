@@ -261,8 +261,10 @@ def test_tool_free_xml_request_keeps_the_actual_draft_without_more_dispatch(vaul
     assert record['trigger_value']['format']=='xml_tool_call'
 
 
-def test_production_self_check_matches_the_completed_ab_decision():
-    assert DEFAULT_PROFILES['code-research'].route_policy.get('answer_self_check') is True
+def test_production_self_check_is_off_after_measured_harm():
+    # Review 5 (2026-11-14): in the final registered cycle FP4 rescued 0/11 drafts and degraded two
+    # correct ones. The owner switched it off. The mechanism stays available for explicit opt-in.
+    assert DEFAULT_PROFILES['code-research'].route_policy.get('answer_self_check') is False
 
 
 def test_protocol_tag_mentioned_in_prose_is_not_a_tool_request():
