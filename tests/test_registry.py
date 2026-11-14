@@ -132,6 +132,7 @@ def external_spec(name="mcp__demo__search", schema=None):
 def test_register_adds_an_external_tool_and_it_is_callable(reg):
     reg.register(external_spec())
     out = reg.call("mcp__demo__search", {"query": "x"}, Context(tier="contribute"))
+    assert out.pop('access')['sources'][0]['authorship'] == 'third_party'
     assert out == {"query": "x"}
 
 
@@ -169,6 +170,7 @@ def test_external_names_lists_only_external_tools(reg):
 def test_coerce_uses_the_external_schema_not_fn_hints(reg):
     reg.register(external_spec())
     out = reg.call("mcp__demo__search", {"query": "x", "limit": "3"}, Context(tier="contribute"))
+    assert out.pop('access')['taint_sources']
     assert out == {"query": "x", "limit": 3}
     missing = reg.call("mcp__demo__search", {}, Context(tier="contribute"))
     assert missing["error"] == "invalid_arguments"

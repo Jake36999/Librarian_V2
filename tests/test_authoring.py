@@ -162,7 +162,9 @@ def test_check_notes_reports_broken_links_and_orphaned_sources(vault):
 
 
 def test_run_list_is_empty_before_any_run(vault):
-    assert call(vault, "run_list", tier="consult") == {"runs": []}
+    out = call(vault, "run_list", tier="consult")
+    assert out['runs'] == []
+    assert out['access']['sources']
 
 
 def test_a_write_inside_a_session_is_listed_with_its_path_in_any_phase(vault):

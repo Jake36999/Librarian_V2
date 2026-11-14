@@ -110,7 +110,9 @@ def test_a_failed_capture_stays_visible_and_can_be_retried_or_removed(library):
     assert call(c, "queue_retry", item_ids=[failed[0]["id"]])["requeued"] == 1
     assert call(c, "queue_list")["queued"][0]["ref"] == "nobody/nothing"
     assert call(c, "queue_remove", item_ids=[failed[0]["id"]], reason="dead link")["removed"] == 1
-    assert call(c, "queue_list") == {"queued": [], "failed": []}
+    listed = call(c, "queue_list")
+    assert listed.pop('access')['sources']
+    assert listed == {"queued": [], "failed": []}
     kept = json.loads((library.work("quarantine") / "staging" / f"{failed[0]['id']}.json")
                       .read_text(encoding="utf-8"))
     assert kept["reason"] == "dead link"
@@ -133,7 +135,9 @@ def test_approving_starts_nothing_and_only_a_person_begins_the_batch(library):
     out = call(ctx(library), "staging_decide", item_ids=["doc-a"], decision="approve")
     assert out["results"][0]["status"] == "approved"
     assert store.load("doc-a")["status"] == "approved"
-    assert call(ctx(library), "batch_status") == {"waiting": 1, "running": "",
+    status = call(ctx(library), "batch_status")
+    assert status.pop('access')['sources']
+    assert status == {"waiting": 1, "running": "",
                                                   "waiting_on_model": 0}
     refused = call(ctx(library, tier="contribute"), "process_approved")
     assert refused["refused"] == "TIER_REFUSED"
@@ -153,7 +157,9 @@ def test_restarting_the_app_never_starts_an_approved_batch(library, tmp_path, mo
                   provider_for=lambda choice: None)
         time.sleep(0.3)                                   # anything started would show by now
         assert store.load("doc-a")["status"] == "approved"
-        assert call(ctx(library), "batch_status") == {"waiting": 1, "running": "",
+        status = call(ctx(library), "batch_status")
+        assert status.pop('access')['sources']
+        assert status == {"waiting": 1, "running": "",
                                                   "waiting_on_model": 0}
         if app.mcp is not None:
             app.mcp.stop()

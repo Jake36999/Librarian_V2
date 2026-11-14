@@ -5,7 +5,7 @@
     "generated",
     "third_party"
   ],
-  "scope": "All shipped native registry tools; runtime MCP adapters and Wave L non-registry paths are supplemental, not silently certified.",
+  "scope": "All shipped native registry tools; runtime MCP adapters and Wave L non-registry paths are supplemental, not silently certified. S1: explicit person-only clear_session_taint; record_application remains a generated use-log receipt, not content.",
   "tools": [
     {
       "tool": "accept_artifact",
@@ -1117,7 +1117,7 @@
         "symbol": "delegate"
       },
       "fingerprint": {
-        "source_sha256": "d56a75d4cefabed6594ed618552cc335a10da9236cabd5f98d3db00f5689cd01",
+        "source_sha256": "6b456511718d5cdc5656ebd52790b041b748871b748404b2e458e4cd32d03867",
         "schema_sha256": "29da0f88185e5c362a0183a8482604d26732d766d7f8e21b3cc84c3d225547bd",
         "effect": "read",
         "open_world": true,
@@ -3582,7 +3582,7 @@
         "symbol": "record_application"
       },
       "fingerprint": {
-        "source_sha256": "f6ac4cb02e89d469fc5e26754365dfe597c43c662d51e081e67825f6a4a0f616",
+        "source_sha256": "33e767561433dc4d04cc6d4b51aa98949d0de2822f9e0861ad90ec4580336e72",
         "schema_sha256": "4d730928cd9c4efa971b40cc10327d219d5f68673a7df4642e2ff6c0de5f1f55",
         "effect": "vault_write",
         "open_world": false,
@@ -5646,6 +5646,32 @@
         "sessionless": false
       },
       "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "clear_session_taint",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1898,
+        "symbol": "clear_session_taint"
+      },
+      "fingerprint": {
+        "source_sha256": "6605f30ddac6624bc4d445e0de33c6d16e1a3db7cbce5ea552f0af7982247225",
+        "schema_sha256": "ce3840e908efde03b96fe8f008e3c4476894a4144a29afea0db00ff7077a005b",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Person-only scoped provenance checkpoint; not a content read."
     }
   ]
 }

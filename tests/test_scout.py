@@ -76,6 +76,7 @@ def test_container_expansion_uses_the_curators_words(register):
               "- [held](https://github.com/held/one) - already here\n")
     out = REGISTRY.call("scout_expand", {}, ctx(register, {
         "https://api.github.com/repos/someone/awesome-cdc/readme": readme}))
+    assert out.pop('access')['taint_sources']
     assert out == {"containers": 1, "added": 1, "corroborated": 0}
     candidate = scout.CandidateStore(register).all()["acme/rowstream"]
     assert candidate["description"] == "rowstream" and \

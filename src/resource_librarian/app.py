@@ -2498,7 +2498,24 @@ class App:
     @mutation_entry("the checkpoint resolution")
     def checkpoint_resolve(self, checkpoint_id: str, choice: str) -> dict[str, Any]:
         try:
-            resolve = lambda: self.checkpoints.resolve(checkpoint_id, choice)
+            def resolve():
+                checkpoint = self.checkpoints.get(checkpoint_id)
+                if checkpoint['type'] == 'publication_taint' and choice == 'approve':
+                    from .access import clear_taint
+                    from .session import SessionStore
+                    session_id = checkpoint['evidence'].get('session')
+                    store = SessionStore(self.vault)
+                    if any(e.get('type') == 'taint_clear' and e.get('checkpoint') == checkpoint_id
+                           for e in store.events(session_id)):
+                        return checkpoint
+                    current = sorted(store.load(session_id).taint_sources)
+                    if checkpoint['scope'] != session_id or current != sorted(checkpoint['evidence'].get('sources', [])):
+                        raise ValueError('Sources changed; review a fresh scoped provenance checkpoint')
+                    row = self.checkpoints.resolve(checkpoint_id, choice)
+                    clear_taint(Context(tier='curate', vault=self.vault, session=session_id,
+                                        extras={'caller_kind': 'person'}), checkpoint_id)
+                    return row
+                return self.checkpoints.resolve(checkpoint_id, choice)
             row = self._serialized("checkpoint", resolve)
             self.hub.publish({"type": "checkpoint_resolved", "checkpoint": row})
             return row
@@ -3832,7 +3849,7 @@ class App:
             return self._serialized('folder-accept', lambda: FolderReview(self.vault).accept(
                 str(body.get('id') or ''), str(body.get('folder_fingerprint') or ''),
                 purpose=body.get('purpose'), graph=body.get('graph'), person=True,
-                description=body.get('description')))
+                description=body.get('description'), authorship=body.get('authorship')))
         except (ValueError, TypeError) as exc:
             raise ApiError(409 if 'STALE' in str(exc) else 400, str(exc)) from exc
 

@@ -263,7 +263,7 @@ def test_a_reference_survives_a_phase_bundle_without_reopening_the_registry(vaul
     loop.ctx.extras.update(enforce_active_bundle=True, active_bundle=["read_result"])
 
     assert loop.call("get_note", {"name": "Big Finding"})["refused"] == "TOOL_BUNDLE_REFUSED"
-    assert page(loop, reference).startswith('{"found":true')
+    assert json.loads(page(loop, reference))['found'] is True
     assert "reference_rehydration" not in loop.ctx.extras
 
 

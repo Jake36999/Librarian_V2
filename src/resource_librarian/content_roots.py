@@ -248,6 +248,7 @@ def iter_documents(root: Path) -> list[Path]:
 
 
 def _walk(root: Path, *, markdown_only: bool) -> list[Path]:
+    from .credentials import generated_path
     import os
     import sys
     root = Path(root)
@@ -270,7 +271,7 @@ def _walk(root: Path, *, markdown_only: bool) -> list[Path]:
             for name in filenames:
                 path = here / name
                 wanted = not markdown_only or (name.lower() if fold else name).endswith(".md")
-                if wanted and not outside_scope(rel_of(path), excludes, path, overrides=overrides):
+                if wanted and not generated_path(rel_of(path)) and not outside_scope(rel_of(path), excludes, path, overrides=overrides):
                     out.add(path)
     return sorted(out)
 

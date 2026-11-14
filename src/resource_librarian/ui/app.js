@@ -5779,6 +5779,26 @@ var Librarian = (() => {
       const article = h("article", { class: "folder-card", "aria-label": card.path });
       const purpose = h("select", { "aria-label": "Purpose" }, purposes.map((p) => h("option", { value: p }, p)));
       purpose.value = card.decision?.purpose ?? card.suggested_purpose;
+      const authorship = h(
+        "select",
+        { "aria-label": "Authorship" },
+        h("option", { value: "" }, "Choose authorship"),
+        ...["owner_created", "generated", "third_party"].map((value) => h("option", { value }, value))
+      );
+      const derived = {
+        "own-current": "owner_created",
+        "own-legacy": "owner_created",
+        "own-docs": "owner_created",
+        "research-docs": "third_party",
+        "third-party": "third_party"
+      };
+      const updateAuthorship = () => {
+        authorship.value = derived[purpose.value] ?? "";
+        authorship.disabled = accepted || purpose.value === "exclude" || !!derived[purpose.value];
+      };
+      updateAuthorship();
+      if (!derived[purpose.value] && card.decision?.authorship) authorship.value = card.decision.authorship;
+      purpose.addEventListener("change", updateAuthorship);
       const graph = h("input", { type: "text", "aria-label": "Graph", maxlength: 120 });
       graph.value = card.decision?.graph ?? card.suggested_graph;
       const description = h("textarea", { "aria-label": "Brief description", rows: 2, maxlength: 400 });
@@ -5793,7 +5813,8 @@ var Librarian = (() => {
             folder_fingerprint: card.folder_fingerprint,
             purpose: purpose.value,
             graph: graph.value,
-            description: description.value
+            description: description.value,
+            authorship: authorship.value || null
           });
           outcome.textContent = "Accepted by person";
         } catch (e) {
@@ -5827,6 +5848,7 @@ var Librarian = (() => {
         h("p", {}, `${card.bytes.toLocaleString()} bytes \xB7 ` + Object.entries(card.file_counts).map(([kind, n]) => `${kind}: ${n}`).join(" \xB7 ")),
         h("p", { class: "note" }, card.reasons.join("; ")),
         h("label", {}, "Purpose ", purpose),
+        h("label", {}, "Authorship ", authorship),
         h("label", {}, "Graph ", graph),
         draftStatus,
         h("label", {}, "Brief description ", description),

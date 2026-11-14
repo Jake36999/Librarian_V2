@@ -56,13 +56,21 @@ class FolderReview:
 
     def list(self):
         folder = self.store.folder('folder')
-        return [self.store.load(path.stem) for path in sorted(folder.glob('*.json'))] if folder.is_dir() else []
+        rows = [self.store.load(path.stem) for path in sorted(folder.glob('*.json'))] if folder.is_dir() else []
+        from .access import PURPOSE_AUTHORSHIP
+        for card in rows:
+            decision = card.get('pending_decision') or card.get('decision') or {}
+            authorship = decision.get('authorship') or PURPOSE_AUTHORSHIP.get(decision.get('purpose'))
+            card.update(authorship=authorship, authorship_resolution='declared' if authorship else
+                        'excluded' if decision.get('purpose') == 'exclude' else 'unclassified')
+            card['description'].setdefault('authorship', 'generated')
+        return rows
 
     def overview(self):
         path = self.vault.librarian / 'folder-surveys.json'
         surveys = json.loads(path.read_text(encoding='utf-8')) if path.is_file() else {}
         paths = sorted({name for report in surveys.values() for name in report['credential_refusals']['paths']})
-        return dict(enabled=self.config.get('enabled', False), cards=self.list(), purposes=PURPOSES,
+        return dict(authorship='generated', enabled=self.config.get('enabled', False), cards=self.list(), purposes=PURPOSES,
                     credential_refusals=dict(count=len(paths), paths=paths))
 
     def survey(self, root, *, surveyed=None):
@@ -114,7 +122,8 @@ class FolderReview:
                 source_root=str(root), folder_fingerprint=fp, survey_fingerprint=found.fingerprint,
                 file_counts=part['file_counts'], bytes=part['bytes'], suggested_purpose=purpose,
                 suggested_graph=graph, reasons=part['suggestion']['reasons'], partition=part,
-                description=dict(state='awaiting_model_draft', text='', draft=True),
+                authorship=None, authorship_resolution='unclassified',
+                description=dict(state='awaiting_model_draft', text='', draft=True, authorship='generated'),
                 previous_decision=old.get('decision') if old else None)
             self.store.add(card); cards.append(card)
         # A vanished folder must not leave an accepted, invisible stale decision.
@@ -137,12 +146,22 @@ class FolderReview:
                 'description': {'type': 'string', 'maxLength': 400}}}, max_tokens=320)
         result = clerk.run([clerk.Task(kind, json.dumps(payload), 'Describe this inventory in one sentence.')], endpoint)[0]
         if not result.ok: raise ValueError('FOLDER_DRAFT_FAILED')
-        card['description'] = dict(state='model_draft', text=result.value['description'], draft=True)
+        card['description'] = dict(state='model_draft', text=result.value['description'], draft=True, authorship='generated')
         self.store.save(card); return card
 
-    def accept(self, item_id, fingerprint, *, purpose, graph, person=False, description=None):
+    def accept(self, item_id, fingerprint, *, purpose, graph, person=False, description=None, authorship=None):
         if not person: raise ValueError('PERSON_CONFIRMS: only the folder review UI can accept a folder')
         if purpose not in PURPOSES: raise ValueError('FOLDER_PURPOSE: choose a listed purpose')
+        from .access import AUTHORSHIP, PURPOSE_AUTHORSHIP
+        derived = PURPOSE_AUTHORSHIP.get(purpose)
+        if purpose == 'exclude':
+            authorship = None
+        elif derived:
+            if authorship is not None and authorship != derived:
+                raise ValueError('FOLDER_AUTHORSHIP: this purpose determines its authorship')
+            authorship = derived
+        elif authorship not in AUTHORSHIP:
+            raise ValueError('FOLDER_AUTHORSHIP: data and logs/transcripts require an explicit authorship choice')
         if purpose != 'exclude' and (not isinstance(graph, str) or not graph.strip() or len(graph) > 120):
             raise ValueError('FOLDER_GRAPH: choose a graph label')
         card = self.store.load(item_id)
@@ -152,9 +171,10 @@ class FolderReview:
         rel = card['path']; rows = [r for r in found.entries if rel == '.' or r[0].rstrip('/') == rel or r[0].startswith(rel + '/')]
         if found.partial or found.unreadable or digest(rows) != fingerprint:
             raise ValueError('FOLDER_STALE: the folder changed; survey again')
-        candidate = dict(card, decision=dict(purpose=purpose, graph=graph.strip(),
+        candidate = dict(card, decision=dict(purpose=purpose, authorship=authorship, graph=graph.strip(),
                          description=description if description is not None else card['description']['text'],
                          accepted_by='person', accepted_at=now_iso()), status='accepted')
+        candidate.update(authorship=authorship, authorship_resolution='declared' if authorship else 'excluded')
         all_cards = [c for c in self.list() if c['id'] != item_id] + [candidate]
         selected = [c for c in all_cards if c['status'] == 'accepted' and c.get('decision')]
         surveys = {found.canonical_root: found}
@@ -184,14 +204,15 @@ class FolderReview:
         root = Path(card['source_root']); target = root if card['path'] == '.' else root / card['path']
         attached = not target.resolve().is_relative_to(self.vault.root.resolve())
         purpose = card['decision']['purpose']
-        access = 'read_only' if attached or purpose in READ_ONLY else 'read_write'
+        access = 'read_only' if attached or purpose in READ_ONLY or card['decision'].get('authorship') == 'third_party' else 'read_write'
         data = content_roots.load(self.vault.root) or dict(version=1, mode='create',
             roots=[dict(path='.', access='read_write')], excludes=[])
         path = str(target) if attached else target.relative_to(self.vault.root).as_posix()
         data['roots'] = [r for r in data['roots'] if r['path'] != path]
         if purpose != 'exclude':
             data['roots'].append(dict(path=path, access=access, attached=attached,
-                purpose=purpose, folder_decision=card['id'], survey_fingerprint=card['survey_fingerprint']))
+                purpose=purpose, authorship=card['decision']['authorship'],
+                folder_decision=card['id'], survey_fingerprint=card['survey_fingerprint']))
         else:
             data['excludes'] = sorted(set(data.get('excludes', [])) | {path})
         content_roots._write_json(content_roots.manifest_path(self.vault.root), data)
@@ -211,7 +232,7 @@ def decision_for(vault, path):
 def refuse_write(vault, path):
     from .rules import Refusal
     decision = decision_for(vault, path)
-    if decision and decision['purpose'] in READ_ONLY | {'exclude'}:
+    if decision and (decision['purpose'] in READ_ONLY | {'exclude'} or decision.get('authorship') == 'third_party'):
         raise Refusal('FOLDER_READ_ONLY', f'{path}: accepted folder is read-only or excluded')
     manifest = content_roots.load(vault.root) or {}
     matches = []

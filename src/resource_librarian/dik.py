@@ -56,6 +56,11 @@ def load(vault: Vault, source: str) -> dict[str, Any]:
 
 
 def save(vault: Vault, record: dict[str, Any]) -> Path:
+    record = dict(record)
+    source_authorship = record.get('authorship')
+    for row in record.get('data', []):
+        row.setdefault('source_authorship', source_authorship)
+        row.setdefault('authorship', 'generated' if row.get('origin') == 'model-produced' else source_authorship)
     path = path_for(vault, record["source"])
     path.parent.mkdir(parents=True, exist_ok=True)
     atomic_write_text(path, json.dumps(record, ensure_ascii=False, indent=1))

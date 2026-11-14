@@ -15,3 +15,11 @@ def credential_path(path) -> bool:
 def refuse_credentials(path):
     if credential_path(path):
         raise ValueError(f'CREDENTIAL_REFUSED: {path}')
+
+
+def generated_path(path) -> bool:
+    """Path-only generated-build hygiene, before survey/index content reads."""
+    p = PurePosixPath(str(path).replace('\\', '/'))
+    return (bool({'dist', 'build', '.next', '.nuxt', 'coverage'}.intersection(p.parts))
+        or ('/resource_librarian/ui/' in '/' + p.as_posix() and p.suffix == '.js')
+        or p.name.endswith(('.bundle.js', '.min.js', '.js.map')))

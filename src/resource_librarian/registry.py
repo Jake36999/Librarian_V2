@@ -113,6 +113,9 @@ class ToolSpec:
     # never to clerk/scribe, and always seeded "ask" in the broker regardless
     # of mode (the loop wraps its result untrusted; it gets no vault access).
     external: bool = False
+    # Operator-accepted connector authority, pinned in its acceptance digest.
+    # A tool result/server cannot self-assert this value.
+    provenance_authority: str = ""
     # An external tool's shape is the server's own JSON Schema, not something
     # to read off `fn` (a generic bridge, not a typed Python function) -
     # `json_schema()` and `coerce()` use this directly when it is set.
@@ -388,6 +391,10 @@ class Registry:
                 authorization = hooks[2](name, spec, kwargs, intent, ctx,
                                          raw=arguments or {}, adjusted=adjusted)
             broker = ctx.extras.get("broker")
+            from .access import publication_guard
+            review_sources = publication_guard(spec, kwargs, ctx)
+            if review_sources:
+                ctx = replace(ctx, extras={**ctx.extras, '_publication_review': review_sources})
             if spec.effect != 'read' and ctx.vault is not None:
                 from .folder_review import refuse_write
                 targets = list(intent.targets) if intent is not None else _write_targets(name, kwargs, ctx)
@@ -400,6 +407,13 @@ class Registry:
                 # index mutex around a whole tool would deadlock those paths.
                 # SQLite-owning implementation code uses the Core's
                 # IndexService explicitly for its short transaction instead.
+                current_sources = publication_guard(spec, kwargs, ctx)
+                if current_sources and not ctx.extras.get('_publication_review_accepted'):
+                    raise Refusal('COMPOSITION_REFUSED', 'A fresh person review is required; use staging',
+                                  {'taint_sources': current_sources})
+                if current_sources and current_sources != review_sources:
+                    raise Refusal('COMPOSITION_REFUSED', 'Sources changed while awaiting review; review again',
+                                  {'taint_sources': current_sources})
                 execution_ctx = ctx
                 if intent is not None and intent.prepared is not None:
                     # No shared-context mutation: concurrent calls cannot swap
@@ -408,6 +422,8 @@ class Registry:
                     execution_ctx = replace(ctx, extras={**ctx.extras,
                         "_prepared_write": copy.deepcopy(intent.prepared)})
                 out = spec.fn(execution_ctx, **kwargs)
+                from .access import label_generated_write
+                label_generated_write(spec, out, execution_ctx)
                 if intent is not None and intent.note and isinstance(out, dict):
                     # Issued inside the operation, so it vouches for exactly
                     # what this call wrote and nothing written after it.
@@ -423,6 +439,10 @@ class Registry:
                 else:
                     preview = None
                 permission = broker.check(spec, kwargs, ctx, preview=preview) or "allowed"
+                if review_sources:
+                    if not permission.startswith('asked:'):
+                        raise Refusal('COMPOSITION_REFUSED', 'Canonical publication requires an explicit person review')
+                    ctx = replace(ctx, extras={**ctx.extras, '_publication_review_accepted': True})
             # A local app can provide one VaultWriter for all Librarian-originated
             # mutations.  CLI/tests without one retain the direct, backwards
             # compatible path.  The registry remains the enforcement boundary;
@@ -503,6 +523,9 @@ class Registry:
         outcome = outcome_of(result)
         if outcome:              # its own key: a tool's `status` (e.g. "staged") stays its own
             result = {**result, "outcome": outcome}
+        if name in self._tools:
+            from .access import finalize_result
+            result = finalize_result(self._tools[name], kwargs or arguments or {}, result, ctx)
         if hooks and name in self._tools and ctx.session:
             try:
                 result = hooks[1](name, arguments or {}, result, ctx, self._tools[name].effect,

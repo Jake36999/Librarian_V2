@@ -1848,7 +1848,8 @@ def record_application(ctx: Context, title: str, stage: str, outcome: str,
     path = ctx.vault.root / "Applications" / f"{name}.md"
     if path.exists():
         raise TypeError(f"Applications/{name}.md already exists")
-    fm = {"type": "application", "project": session.project or session.question,
+    from ..access import application_provenance
+    fm = {**application_provenance(ctx), "type": "application", "project": session.project or session.question,
           "stage": stage, "outcome": outcome, "sources_used": [f"[[{s}]]" for s in sources_used],
           "attested_by": "agent", "session": session.id,
           **({"unresolved_sources": unresolved} if unresolved else {})}
@@ -1892,6 +1893,22 @@ def record_application(ctx: Context, title: str, stage: str, outcome: str,
     linked = _link_project_application(ctx, session, rel, name)
     return {"recorded": rel, "path": rel, **({"unresolved": leads} if leads else {}),
             **({"project_reference": linked} if linked else {})}
+
+
+@tool('clear_session_taint', tier='curate', effect='write', scope='session',
+      card=Card('Person review of the exact source set before clearing session publication taint'))
+def clear_session_taint(ctx: Context, checkpoint_id: str = '') -> dict:
+    from ..access import clear_taint, person
+    from ..checkpoints import CheckpointStore
+    if not person(ctx):
+        raise Refusal('PERMISSION_DENIED', 'Only a person may review/clear publication provenance')
+    if checkpoint_id:
+        return clear_taint(ctx, checkpoint_id)
+    sources = sorted(_store(ctx).load(ctx.session).taint_sources)
+    checkpoint = CheckpointStore(ctx.vault).create('publication_taint', ctx.session,
+        evidence={'session': ctx.session, 'sources': sources},
+        choices=['decline', 'approve'], default='decline', requester='person')
+    return {'checkpoint': checkpoint, 'taint_sources': sources}
 
 
 def _link_project_application(ctx: Context, session, rel: str, name: str) -> str:

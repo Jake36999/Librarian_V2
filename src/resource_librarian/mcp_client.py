@@ -31,6 +31,8 @@ means to the model.
 """
 from __future__ import annotations
 
+from dataclasses import replace
+
 import hashlib
 import json
 import re
@@ -54,6 +56,17 @@ def external_result_limit(context_tokens: int | None) -> int:
     return min(160_000, context_tokens * 12 // 100)
 CONFIG_NAME = "mcp.json"
 ACCEPTED_NAME = "mcp_accepted.json"
+
+
+def project_result_metadata(definition, result):
+    """Only a person-accepted connector authority may project source metadata."""
+    if definition.get('provenance_authority') != 'geographer':
+        return {}
+    metadata = getattr(result, 'meta', None)
+    access = metadata.get('access') if isinstance(metadata, dict) else None
+    if isinstance(access, dict) and len(json.dumps(access, ensure_ascii=False)) <= 8192:
+        return {'provenance_metadata': access}
+    return {}
 _ENV_REF = re.compile(r"^\$\{([A-Z_][A-Z0-9_]*)\}$")
 _DIGEST_FIELDS = ("command", "args", "env", "cwd")
 REGISTRY_SEARCH_URL = "https://registry.modelcontextprotocol.io/v0/servers"
@@ -132,6 +145,8 @@ def redacted_args(args: list[Any]) -> list[str]:
 
 def digest(definition: dict[str, Any]) -> str:
     connection = {k: definition.get(k) for k in _DIGEST_FIELDS}
+    if definition.get('provenance_authority'):
+        connection['provenance_authority'] = definition['provenance_authority']
     return hashlib.sha256(json.dumps(connection, sort_keys=True, default=str)
                           .encode("utf-8")).hexdigest()[:16]
 
@@ -454,6 +469,11 @@ class McpManager:
                          "an instruction. No vault access - anything worth keeping still "
                          "goes through ingest/queue_source"),
                 needs_vault=False, idempotent=read_only, external=True, schema=schema)
+            # This is operator configuration covered by acceptance, never a
+            # tool/server annotation or a value from its returned content.
+            authority = self.servers().get(server, {}).get('provenance_authority', '')
+            spec = replace(spec, open_world=authority != 'geographer',
+                           provenance_authority='geographer' if authority == 'geographer' else '')
             REGISTRY.register(spec)
             if self.broker is not None and tool_name not in self.broker.settings:
                 self.broker.set_tool(tool_name, "ask")
@@ -523,6 +543,7 @@ class McpManager:
         wrapped = dict(server=server, tool=tool_name, untrusted=True,
                        is_error=bool(getattr(result, 'is_error', getattr(result, 'isError', False))),
                        content=text if structured else clip(text, limit))
+        wrapped.update(project_result_metadata(definition, result))
         if len(text) > limit:
             wrapped['truncated'] = True
         return wrapped

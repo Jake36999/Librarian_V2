@@ -1,6 +1,6 @@
 """Owner S1 prerequisite: publication closure must cover ordinary sessions too.
 
-These are intentionally RED until the owner reviews the uncovered boundary.
+The initial three RED cases are preserved in the S1 closure-stop evidence.
 No network or model is involved; only fixture vaults receive attempted writes.
 """
 import pytest
@@ -25,8 +25,8 @@ def test_third_party_read_allows_more_reading_but_prevents_canonical_write(
         def read():
             return lead('read_url', url='https://example.org/page')
     else:
-        # Same default metadata as McpManager.connect's unknown external tool:
-        # external=True, effect=read, open_world omitted (currently False).
+        # Legacy adapter metadata: external=True, effect=read, open_world
+        # omitted. The central result boundary must cover old declarations too.
         # Restore the registry through monkeypatch; no live server is connected.
         monkeypatch.setattr(REGISTRY, '_tools', dict(REGISTRY._tools))
 

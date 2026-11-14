@@ -81,6 +81,10 @@ def delegate(ctx: Context, questions: list[str], tier: Literal[1, 2] = 2) -> dic
     steps = max(6, level["turn_steps"] // 3)
 
     child_extras: dict[str, Any] = {"effort": level, "caller": "research_helper"}
+    # Source provenance reaches the central publication boundary without
+    # exposing the parent's session tools, conversation or authority.
+    if ctx.session:
+        child_extras['_publication_session'] = ctx.session
     # Keep read operations on the Core-owned index worker and preserve the
     # normal broker/checkpoint boundary.  Do not copy a writer: helpers remain
     # read-only through HELPER_TOOLS and Loop.only.

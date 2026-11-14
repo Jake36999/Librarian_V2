@@ -50,10 +50,12 @@ class Record:
     source: str
     fetched_at: str
     payload: dict[str, Any]
+    authorship: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {"id": self.id, "kind": self.kind, "source": self.source,
-                "fetched_at": self.fetched_at, "payload": self.payload}
+                "fetched_at": self.fetched_at, "payload": self.payload,
+                **({'authorship': self.authorship} if self.authorship else {})}
 
 
 def _canonical(kind: str, source: str, fetched_at: str, payload: dict[str, Any]) -> bytes:
@@ -84,7 +86,7 @@ class EvidenceStore:
         return self.vault.evidence / kind / f"{record_id}.json"
 
     def prepare(self, kind: str, source: str, payload: dict[str, Any],
-                fetched_at: str | None = None) -> Record:
+                fetched_at: str | None = None, *, authorship: str | None = None) -> Record:
         """Validate and identify evidence without creating any files."""
         if kind not in KINDS:
             raise ValueError(f"evidence kind {kind!r} is not one of {KINDS}")
@@ -96,12 +98,22 @@ class EvidenceStore:
                           f"evidence may not carry framing; remove {framed[:5]}. What was "
                           f"fetched belongs here; why it was fetched belongs in the session.")
         fetched_at = fetched_at or now_iso()
-        record_id = hashlib.sha256(_canonical(kind, source, fetched_at, payload)).hexdigest()[:32]
-        return Record(record_id, kind, source, fetched_at, payload)
+        if authorship is None:
+            from types import SimpleNamespace
+            from .access import _native_authorship
+            authorship = _native_authorship(SimpleNamespace(vault=self.vault), source)
+        from .access import AUTHORSHIP
+        if authorship is not None and authorship not in AUTHORSHIP:
+            raise ValueError('Invalid authorship')
+        body = _canonical(kind, source, fetched_at, payload)
+        if authorship:
+            body += b'\n' + authorship.encode('ascii')
+        record_id = hashlib.sha256(body).hexdigest()[:32]
+        return Record(record_id, kind, source, fetched_at, payload, authorship)
 
     def put(self, kind: str, source: str, payload: dict[str, Any],
-            fetched_at: str | None = None) -> Record:
-        record = self.prepare(kind, source, payload, fetched_at)
+            fetched_at: str | None = None, *, authorship: str | None = None) -> Record:
+        record = self.prepare(kind, source, payload, fetched_at, authorship=authorship)
         path = self._path(record.kind, record.id)
         if not path.exists():
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -128,14 +140,14 @@ class EvidenceStore:
             return None
         data = json.loads(path.read_text(encoding="utf-8"))
         return Record(data["id"], data["kind"], data["source"], data["fetched_at"],
-                      data["payload"])
+                      data["payload"], data.get('authorship'))
 
     def iter(self, kind: str | None = None) -> Iterator[Record]:
         pattern = f"{kind}/*.json" if kind else "*/*.json"
         for path in sorted(self.vault.evidence.glob(pattern)):
             data = json.loads(path.read_text(encoding="utf-8"))
             yield Record(data["id"], data["kind"], data["source"], data["fetched_at"],
-                         data["payload"])
+                         data["payload"], data.get('authorship'))
 
     def verify(self) -> list[str]:
         """Records whose content no longer matches their id: evidence that was
@@ -145,6 +157,8 @@ class EvidenceStore:
     @staticmethod
     def intact(record: Record) -> bool:
         """Whether one record still matches the content hash that is its id."""
-        expected = hashlib.sha256(_canonical(record.kind, record.source,
-                                             record.fetched_at, record.payload)).hexdigest()[:32]
+        body = _canonical(record.kind, record.source, record.fetched_at, record.payload)
+        if record.authorship:
+            body += b'\n' + record.authorship.encode('ascii')
+        expected = hashlib.sha256(body).hexdigest()[:32]
         return expected == record.id

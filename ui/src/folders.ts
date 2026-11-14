@@ -28,6 +28,18 @@ export async function folderReview(api: Api, container: HTMLElement): Promise<vo
     const article = h('article', {class:'folder-card', 'aria-label':card.path});
     const purpose = h('select', {'aria-label':'Purpose'}, purposes.map(p => h('option', {value:p}, p))) as HTMLSelectElement;
     purpose.value = card.decision?.purpose ?? card.suggested_purpose;
+    const authorship = h('select', {'aria-label':'Authorship'},
+      h('option', {value:''}, 'Choose authorship'),
+      ...['owner_created', 'generated', 'third_party'].map(value => h('option', {value}, value))) as HTMLSelectElement;
+    const derived: Record<string, string> = {'own-current':'owner_created', 'own-legacy':'owner_created',
+      'own-docs':'owner_created', 'research-docs':'third_party', 'third-party':'third_party'};
+    const updateAuthorship = () => {
+      authorship.value = derived[purpose.value] ?? '';
+      authorship.disabled = accepted || purpose.value === 'exclude' || !!derived[purpose.value];
+    };
+    updateAuthorship();
+    if (!derived[purpose.value] && card.decision?.authorship) authorship.value = card.decision.authorship;
+    purpose.addEventListener('change', updateAuthorship);
     const graph = h('input', {type:'text', 'aria-label':'Graph', maxlength:120}) as HTMLInputElement;
     graph.value = card.decision?.graph ?? card.suggested_graph;
     const description = h('textarea', {'aria-label':'Brief description', rows:2, maxlength:400}) as HTMLTextAreaElement;
@@ -37,7 +49,8 @@ export async function folderReview(api: Api, container: HTMLElement): Promise<vo
       (accept as HTMLButtonElement).disabled = true; outcome.textContent = 'Applying the reviewed decision…';
       try {
         await api.post('/api/folders/accept', {id:card.id, folder_fingerprint:card.folder_fingerprint,
-          purpose:purpose.value, graph:graph.value, description:description.value});
+          purpose:purpose.value, graph:graph.value, description:description.value,
+          authorship:authorship.value || null});
         outcome.textContent = 'Accepted by person';
       } catch (e) { outcome.textContent = (e as Error).message; (accept as HTMLButtonElement).disabled = false; }
     }}, 'Accept folder decision');
@@ -57,7 +70,8 @@ export async function folderReview(api: Api, container: HTMLElement): Promise<vo
     article.append(h('h3', {}, card.path), h('p', {class:'dim'}, card.source_root),
       h('p', {}, `${card.bytes.toLocaleString()} bytes · ` + Object.entries(card.file_counts).map(([kind, n]) => `${kind}: ${n}`).join(' · ')),
       h('p', {class:'note'}, (card.reasons as string[]).join('; ')),
-      h('label', {}, 'Purpose ', purpose), h('label', {}, 'Graph ', graph), draftStatus,
+      h('label', {}, 'Purpose ', purpose), h('label', {}, 'Authorship ', authorship),
+      h('label', {}, 'Graph ', graph), draftStatus,
       h('label', {}, 'Brief description ', description),
       h('details', {}, h('summary', {}, 'Optional model draft'),
         h('p', {}, 'One qualified Clerk call, metadata only, maximum 320 output tokens. Uses the configured Clerk route; source text is never sent.'),

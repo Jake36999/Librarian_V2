@@ -60,7 +60,8 @@ def test_a_checked_task_never_appears(vault):
                                "due": date.today().isoformat()}, ctx(vault))
     REGISTRY.call("task_done", {"note": project, "text": "finish this"}, ctx(vault))
     out = REGISTRY.call("agenda", {}, ctx(vault))
-    assert all(not b for b in out.values())
+    assert all(not b for key, b in out.items() if key != 'access')
+    assert out['access']['sources']  # metadata now has central provenance
 
 
 def test_a_bad_date_is_treated_as_undated_rather_than_dropped(vault):
@@ -77,7 +78,7 @@ def test_a_hand_written_checkbox_counts_the_same_as_task_add(vault):
               notes.compose("Freeform", [("Milestones", "- [ ] typed straight into Obsidian "
                                         "\U0001F4C5 2026-01-01\n- [x] already done \U0001F4C5 2026-01-01")]))
     out = REGISTRY.call("agenda", {}, ctx(vault))
-    all_tasks = [t for tasks in out.values() for t in tasks]
+    all_tasks = [t for key, tasks in out.items() if key != 'access' for t in tasks]
     assert [t["text"] for t in all_tasks] == ["typed straight into Obsidian"]
 
 

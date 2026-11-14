@@ -321,7 +321,7 @@ def idempotency_key(contract_id: str, revision: int, tool: str, kwargs: dict[str
 
 def authorize(session: Any, spec: Any, kwargs: dict[str, Any], intent: Any,
               vault: Any, *, raw: dict[str, Any] | None = None,
-              adjusted: list[str] | None = None) -> dict[str, Any] | None:
+              adjusted: list[str] | None = None, defer_composition: bool = False) -> dict[str, Any] | None:
     """Check one call against the executing contract; None outside contract execution.
 
     `raw` is the call's arguments as given and `adjusted` what coercion changed:
@@ -386,7 +386,8 @@ def authorize(session: Any, spec: Any, kwargs: dict[str, Any], intent: Any,
                                             f"no note within contract {contract_id}'s read "
                                             "targets cites; add the citing note to the targets")
     history = session.contract_calls.get(contract_id, [])
-    if any(c["untrusted"] for c in history) and klass not in AFTER_UNTRUSTED:
+    from .access import canonical
+    if not defer_composition and any(c["untrusted"] for c in history) and canonical(spec):
         raise Refusal("COMPOSITION_REFUSED",
                       f"{spec.name} ({klass}) after untrusted input in contract {contract_id}: "
                       "untrusted text may only feed reads and staged drafts for the person")
