@@ -137,3 +137,28 @@ def test_ocr_coverage_metadata_is_bound_to_conversion_evidence(paper):
     store.index_path.write_text(json.dumps(index), encoding='utf-8')
     with pytest.raises(Refusal, match='EVIDENCE_IS_NEVER_EDITED'):
         store.page_units(converted['path'])
+
+
+def test_read_chunk_covering_a_whole_middle_chapter_counts_its_actual_coverage(paper):
+    from resource_librarian import dik
+    vault, _, _ = paper
+    data = dik.document(vault, 'Study', ['# Introduction\nA.', '# Method\nB.', '# Results\nC.'],
+        {'0': {'points': ['Scripted source point.']}}, [(1, 3)], 'fixture-revision')
+    assert data['coverage'] == 'full'
+    assert all(row['coverage'] == 'full' for row in data['data'])
+
+
+def test_native_dik_keeps_original_page_numbers_when_an_earlier_page_has_no_text(paper, monkeypatch):
+    from resource_librarian import batch, dik
+    from resource_librarian.staging import StagingStore
+    from resource_librarian.registry import Context
+    vault, pdf, _ = paper
+    store = ConversionStore(vault)
+    converted = store.save(store.request(pdf, 'blank-first-page'),
+        '[page 1]\n\n[page 2]\n# Method\nMethod text.\n\n[page 3]\n# Results\nResult text.', pages=3)
+    item = StagingStore(vault).add({'id': 's-study', 'kind': 'source', 'name': 'Study',
+        'source_kind': 'paper', 'file': 'Inbox/original.pdf', 'clean_file': converted['path']})
+    monkeypatch.setattr(deep_read, 'read_parts', lambda *args: {'0': {'points': ['Scripted point.']}})
+    batch._data(Context(vault=vault), item)
+    locators = [row['locator'] for row in dik.load(vault, 'Study')['data']]
+    assert 'pp. 3-3' in locators, locators

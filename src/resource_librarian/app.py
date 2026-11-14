@@ -2182,6 +2182,15 @@ class App:
     def _helper_provider(self, tier: int) -> Provider | None:
         return self.role_provider("lead") if tier == 1 else self._provider_for_profile("research_helper")
 
+    def _helper_read_route(self, tier: int) -> dict[str, Any]:
+        profile = self.profiles.get('research_helper')
+        route = self._role_choice('lead' if tier == 1 else self._profile_binding_role(profile))
+        if route is None:
+            return {}
+        return {'model': str(route.get('model') or ''),
+                'context_tokens': self._route_context_limit(route, profile),
+                'visible_output_tokens': profile.output_budget}
+
     def _provider_for_profile(self, profile_id: str) -> Provider | None:
         profile = self.profiles.get(profile_id)
         return self.role_provider(self._profile_binding_role(profile))
@@ -2227,17 +2236,18 @@ class App:
 
     def _route_context_limit(self, route: dict[str, Any] | None, profile: Any) -> int:
         """MF-011: the route's context window in tokens, or 0 when unknown (the
-        loop then uses its default). A profile's `route_policy.context_tokens`
-        wins; otherwise the catalogued model's `context_length`."""
+        loop then uses its default). A profile may narrow the actual route's
+        declared catalogue window, never inflate it."""
         policy = getattr(profile, "route_policy", {}) or {}
+        limits = []
         for value in ((policy.get("context_tokens") if isinstance(policy, dict) else None),
                       self._route_catalogue_entry(route).get("context_length")):
             try:
                 if value is not None and int(value) > 0:
-                    return int(value)
+                    limits.append(int(value))
             except (TypeError, ValueError):
                 continue
-        return 0
+        return min(limits) if limits else 0
 
     def _background_endpoint_route(self, endpoint: Any,
                                    fallback_route: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -2313,10 +2323,16 @@ class App:
                     raise ValueError(f"{role} route changed; restart this task on its selected route")
             return self._background_profile_guard(current, target, fallback_route)
 
+        actual = self._background_endpoint_route(endpoint, fallback_route)
+        headroom = getattr(endpoint, 'output_headroom_tokens', None)
         return ProfiledEndpoint(
             endpoint, profile, gate=self.profile_gate,
             route_guard=guard,
             rate_card=self._route_rate_card(fallback_route, profile),
+            read_route={'model': str(actual.get('model') or ''),
+                        'context_tokens': self._route_context_limit(actual, profile),
+                        'visible_output_tokens': profile.output_budget,
+                        'reasoning_reserve_tokens': headroom() if callable(headroom) else 0},
         )
 
     def _helper_profile_guard(self, profile: Any, tier: int) -> dict[str, Any] | None:
@@ -2543,6 +2559,7 @@ class App:
                                   "effort": level, "effort_ceiling": level,
                                   "agent_provider": self.tier,
                                   "helper_provider": self._helper_provider,
+                                  "helper_read_route": self._helper_read_route,
                                   "caller": "core",
                                   "document_leases": self.document_leases,
                                   # The registry uses this narrow executor for

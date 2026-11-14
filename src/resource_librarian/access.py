@@ -201,6 +201,7 @@ def result_access(spec, arguments, result, ctx):
             # A native work/control result is generated. Source readers without a
             # resolvable author are conservatively untrusted, never declared own.
             reader = spec.name in {'read_file', 'read_source_file', 'read_evidence',
+                                  'read_source_section', 'verify_source_pages',
                                   'get_note', 'deep_read', 'deep_read_note', 'read_project',
                                   'search', 'search_work', 'read_result', 'web_search'}
             if result.get('found') is False or (spec.name in {'search', 'search_work'} and result.get('results') == []):
@@ -216,6 +217,9 @@ def result_access(spec, arguments, result, ctx):
 
 
 def finalize_result(spec, arguments, result, ctx):
+    from .access_classes import READ_PERMISSION_CONTROLS
+    if not spec.external and spec.name in READ_PERMISSION_CONTROLS:
+        return result  # Permission metadata does not itself read the named source.
     access = result_access(spec, arguments, result, ctx)
     publication_session = ctx.session or ctx.extras.get('_publication_session')
     if ('error' not in result or spec.external) and access['taint_sources'] and not person(ctx) and publication_session and ctx.vault:

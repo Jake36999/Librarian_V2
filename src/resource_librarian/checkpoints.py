@@ -15,7 +15,7 @@ from .vault import now_iso
 CHECKPOINT_TYPES = frozenset({
     "staging_promotion", "sensitive_source", "host_model_override", "cross_model_failover",
     "evaluation_spend", "macro_expansion", "write_conflict", "docker_execution",
-    "non_isolated_execution", "forced_engagement_close", "operation_recovery", "publication_taint",
+    "non_isolated_execution", "forced_engagement_close", "operation_recovery", "publication_taint", "raw_source_access",
 })
 
 

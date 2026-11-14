@@ -47,7 +47,7 @@ REFERENCE_STATUSES = ("changed", "missing", "expired", "forbidden", "withdrawn",
 # envelope, a revision token issued to this caller), not what the source
 # says, so they are not part of a reference's bytes.
 ENVELOPE_KEYS = frozenset({"session", "outcome", "adjusted_arguments", "session_error",
-                           "revision"})
+                           "revision", "read_allocation"})
 MAX_LOCATOR_CHARS = 2_000
 MAX_MINTED = 50
 HANDLE_ID = re.compile(r"sha256:[0-9a-f]{64}")

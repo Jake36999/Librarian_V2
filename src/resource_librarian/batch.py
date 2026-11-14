@@ -345,6 +345,9 @@ def _data(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     elif kind in ("document", "paper", "standard") and (item.get("clean_file") or item.get("file")):
         units = _commit(ctx, lambda: reading.source_units(ctx.vault, item))
         pages = [t for _, t in units]
+        if units and all(number > 0 for number, _ in units):
+            by_page = dict(units)
+            pages = [by_page.get(number, '') for number in range(1, max(by_page) + 1)]
         chunks = reading.chunk(units)
         # Only readings of the text as it is now (MF-013): a chapter is never
         # credited with claims read from text that has since changed.

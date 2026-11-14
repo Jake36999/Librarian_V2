@@ -205,6 +205,16 @@ _RULES = [
     Rule("POST_WRITE_CONTEXT", "boundaries",
          "A mutation with bounded follow-up work runs outside an existing vault-writer "
          "operation, so provider or encoder IO cannot retain the sole writer."),
+    Rule("THIRD_PARTY_ROUTE_REQUIRED", "boundaries",
+         "Agents locate third-party or unclassified material through catalogue, graph "
+         "and bounded sections, then check original pages. One raw read needs a scoped "
+         "person grant for tier 1 or 2; reading is not canonical publication."),
+    Rule("READ_ROUTE_REQUIRED", "boundaries",
+         "A bounded read uses the actual route's declared context window minus its "
+         "measured prompt, visible output and reasoning reserve; an unknown window is not a large budget."),
+    Rule("TASK_OUTPUT_TOO_LARGE", "boundaries",
+         "A task is split before dispatch if its expected visible output exceeds the "
+         "bound route's output allocation, independently of its input window."),
     Rule("CORE_REQUIRED", "boundaries",
          "Serving calls reach a vault through its owning Librarian Core; a missing or "
          "foreign Core index is never permission to open SQLite directly. MCP never "

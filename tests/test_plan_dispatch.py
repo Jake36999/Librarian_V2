@@ -123,6 +123,8 @@ def test_real_clerk_path_preserves_payload_and_receipt(monkeypatch):
     from resource_librarian import clerk
     class Endpoint:
         concurrency=1
+        read_route={'model':'fixture','context_tokens':32768,
+                    'visible_output_tokens':1800,'reasoning_reserve_tokens':0}
         def complete(self,payload,repair):
             assert payload['task']=='code_block_contract'
             return json.dumps(dict(inputs=[],outputs=[],calls=[],claims=[],not_determinable=[])),'fixture'

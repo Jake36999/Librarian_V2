@@ -94,13 +94,15 @@ class ProfiledEndpoint:
     def __init__(self, endpoint: Any, profile: "AgentProfile", *,
                  gate: ProfileRunGate | None = None,
                  route_guard: Callable[["AgentProfile", Any], dict[str, Any] | None] | None = None,
-                 rate_card: dict[str, Any] | None = None) -> None:
+                 rate_card: dict[str, Any] | None = None,
+                 read_route: dict[str, Any] | None = None) -> None:
         profile.validate()
         self.endpoint = endpoint
         self.profile = profile
         self.gate = gate
         self.route_guard = route_guard
         self.rate_card = rate_card
+        self.read_route = dict(read_route or {})
         underlying_concurrency = max(1, int(getattr(endpoint, "concurrency", 1) or 1))
         # The effort slider can ask a legacy endpoint for more parallel work,
         # but a HostRegistry route has a hard personal ceiling.  Preserve that

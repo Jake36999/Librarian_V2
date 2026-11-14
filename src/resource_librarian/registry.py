@@ -392,6 +392,8 @@ class Registry:
                                          raw=arguments or {}, adjusted=adjusted)
             broker = ctx.extras.get("broker")
             from .access import publication_guard
+            from .read_access import guard as read_guard
+            read_guard(spec, kwargs, ctx)
             review_sources = publication_guard(spec, kwargs, ctx)
             if review_sources:
                 ctx = replace(ctx, extras={**ctx.extras, '_publication_review': review_sources})
@@ -402,6 +404,7 @@ class Registry:
                     if str(target).replace('\\','/').split('/',1)[0] not in {'.librarian','.evidence'}:
                         refuse_write(ctx.vault, ctx.vault.root / target)
             def invoke() -> Any:
+                read_guard(spec, kwargs, ctx, consume=True)
                 # Some tools intentionally block while waiting for a person
                 # (`ask_user`) or orchestrate nested tool calls.  Holding an
                 # index mutex around a whole tool would deadlock those paths.
@@ -422,6 +425,9 @@ class Registry:
                     execution_ctx = replace(ctx, extras={**ctx.extras,
                         "_prepared_write": copy.deepcopy(intent.prepared)})
                 out = spec.fn(execution_ctx, **kwargs)
+                from .read_access import bound_raw_result
+                if isinstance(out, dict):
+                    out = bound_raw_result(spec, out, execution_ctx, kwargs)
                 from .access import label_generated_write
                 label_generated_write(spec, out, execution_ctx)
                 if intent is not None and intent.note and isinstance(out, dict):

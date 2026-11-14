@@ -350,6 +350,13 @@ def test_get_note_outside_the_read_targets_is_refused(vault):
 
 def test_read_evidence_needs_a_citing_note_in_the_targets(vault):
     lead, cited, uncited = reading(vault)
+    # A contract target is necessary; it does not replace S4's person raw-read grant.
+    from resource_librarian.checkpoints import CheckpointStore
+    lead.ctx.extras['read_route'] = {'model': 'scripted-fixture', 'context_tokens': 32768,
+        'prompt_tokens': 1000, 'visible_output_tokens': 1800, 'reasoning_reserve_tokens': 0}
+    request = lead('request_raw_source_access', tool_name='read_evidence', arguments={'evidence_id': cited})
+    assert 'error' not in request, request
+    CheckpointStore(vault).resolve(request['checkpoint']['id'], 'approve')
     assert "refused" not in lead("read_evidence", evidence_id=cited)
     out = lead("read_evidence", evidence_id=uncited)
     assert out["refused"] == "CONTRACT_SCOPE" and "no note within contract" in out["detail"]

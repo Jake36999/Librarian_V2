@@ -72,7 +72,7 @@ def test_read_source_file_never_falls_back_to_default_branch(vault):
 
     result = REGISTRY.call(
         "read_source_file", {"source": "planner", "path": "src/surveyed.py"},
-        Context(tier="consult", vault=vault, extras={"fetcher": NoFetch()}))
+        Context(tier="consult", vault=vault, extras={"fetcher": NoFetch(), "caller_kind": "person"}))
 
     assert result["refused"] == "PINNED_REVISION_REQUIRED"
 
@@ -90,7 +90,7 @@ def test_distinct_survey_tree_shas_are_ambiguous_not_first_one_wins(vault):
 
     result = REGISTRY.call(
         "read_source_file", {"source": "planner", "path": "src/surveyed.py"},
-        Context(tier="consult", vault=vault, extras={"fetcher": NoFetch()}))
+        Context(tier="consult", vault=vault, extras={"fetcher": NoFetch(), "caller_kind": "person"}))
     assert result["refused"] == "PINNED_REVISION_REQUIRED"
 
 

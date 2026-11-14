@@ -1117,7 +1117,7 @@
         "symbol": "delegate"
       },
       "fingerprint": {
-        "source_sha256": "6b456511718d5cdc5656ebd52790b041b748871b748404b2e458e4cd32d03867",
+        "source_sha256": "80eda963a7fdcf3dcbc4ca0617a609bdd332f25fd9c7548d372a0c301d31dfba",
         "schema_sha256": "29da0f88185e5c362a0183a8482604d26732d766d7f8e21b3cc84c3d225547bd",
         "effect": "read",
         "open_world": true,
@@ -5672,6 +5672,101 @@
         "sessionless": false
       },
       "reason": "Person-only scoped provenance checkpoint; not a content read."
+    },
+    {
+      "tool": "read_source_section",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "research helper (read-only allow-list)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": true,
+      "status": "diverges",
+      "fixes": [
+        "S4"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/source_reading.py",
+        "line": 44,
+        "symbol": "read_source_section"
+      },
+      "fingerprint": {
+        "source_sha256": "4a563d3b74ef71cce1ac3728ba131e285d630306ff67e54eec2205be7e83faa3",
+        "schema_sha256": "407ec3cbf8870ee7de2ae2033d12a430ff1d0355f0abf45e209bb771a7b32f15",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "verify_source_pages",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "research helper (read-only allow-list)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": true,
+      "status": "diverges",
+      "fixes": [
+        "S4"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/source_reading.py",
+        "line": 20,
+        "symbol": "verify_source_pages"
+      },
+      "fingerprint": {
+        "source_sha256": "30f4fe3f4722d5216fae2597ed8b2539483553bf7082e5f3ac7159ac9998f824",
+        "schema_sha256": "16858898976e948230136d990641cc204b0156b28b35401bfeeef328192c8814",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "request_raw_source_access",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/source_reading.py",
+        "line": 11,
+        "symbol": "request_raw_source_access"
+      },
+      "fingerprint": {
+        "source_sha256": "db1bf3360bdfc16b629ba2a26d38aa25512c663563c338b3df6946d3369afd19",
+        "schema_sha256": "ea14d1dd80ad2be77c225969c2ecb1f99b3728a0d2836c1178d64485d4f587f6",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
     }
   ]
 }

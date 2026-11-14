@@ -346,7 +346,8 @@ def document(vault: Vault, source: str, pages: list[str], read: dict[str, Any] |
     data = []
     for position, part in enumerate(parts, 1):
         span = range(part["first_page"], part["last_page"] + 1)
-        mine = [i for i, (a, b) in enumerate(chunk_pages) if a in span or b in span]
+        mine = [i for i, (a, b) in enumerate(chunk_pages)
+                if a <= part['last_page'] and b >= part['first_page']]
         done = [i for i in mine if str(i) in read]
         coverage = ("not opened" if not done else "full" if len(done) == len(mine)
                     else f"partial {len(done)}/{len(mine)}")

@@ -76,6 +76,50 @@ Own/external bridges remain owner-decided `reference` links; no automatic concep
 
 ## Ingestion, originals and stored work
 
+### S4 reading boundary (implementation in progress)
+
+Source budgets are **tokens**. `read_access.allocate` uses the actual bound model's
+declared window minus the current measured prompt bound, visible output, and reviewed
+reasoning reserve. A profile may narrow a catalogue window, never enlarge it. The
+current implementation measures serialized UTF-8 bytes as a conservative token upper
+bound, with a separately reported 256-token framing reserve; it does not claim to have
+the route's exact tokenizer. Receipts state this method. **Four characters per token is
+only a planning conversion**, never the enforcement counter.
+
+The existing external per-call cap keeps its original behavior: 8,000 characters for an
+unknown or at-most-131,072-token window; otherwise `min(160000, window * 12 // 100)`
+**characters**. Its historical token/character unit mix is explicit. The new bounded-page
+and permitted raw-source readers also keep that character cap, accounting for JSON
+escaping, in addition to the token allocation. They report what was cut.
+
+`read_source_section` reads only named pages of a verified cached conversion.
+`verify_source_pages` mechanically reads 1–8 named original PDF pages, without OCR or a
+model call. It reports literal quote presence and explicitly leaves semantic claim
+verification unperformed. Missing originals or mappings remain catalogue-only.
+
+Ordinary and audited agents cannot use `read_file`, `read_source_file`, `read_evidence`
+or direct `deep_read` as a raw third-party/unclassified-source shortcut. Own/generated
+reads and person callers remain available. Separately person-started ingestion retains
+its Core-only, batch-and-item-bound capability: its Clerk receives bounded chunks and
+the resulting work stays in staging. This is not a general agent raw-read permission.
+
+`request_raw_source_access` creates a person checkpoint for one raw call by tier 1 or 2.
+It binds the source bytes or pinned catalogue revision, normalized arguments, model,
+tier and publication session. A lead can request review for its actual helper route;
+the helper uses the parent session handle without receiving the conversation. The grant
+is consumed once, including under concurrent calls. Requesting permission does not read
+or taint; using it still marks publication provenance. A durable reference does not grant
+new reading permission and must rehydrate under the current policy. Allocation receipts
+are per-call metadata, separate from the durable source bytes.
+
+Tier-3 code dispatch preflights both input and expected output before any provider call.
+The code task's **1,800 visible tokens** still bind even when the generic Clerk profile
+allows 4,096. The reviewed reasoning reserve is separate. The output estimate uses
+anchor, boundary and upstream counts; it is a planning estimate, not a guarantee of
+single-shot model completion. Oversized tasks must be split. The source-verification
+dispatch template, complete S4 sweep and full verification remain pending in this
+intermediate candidate.
+
 Use the native capture → evidence → facts → describe → stage pipeline, DIK, provenance checks, document identity, sensitivity review and approved-batch continuation. Geo remains a pinned installed wheel. The shared inventory/fingerprint is retained, with evidence/DIK identity added by R; no parallel folder pipeline is the final design.
 
 Conversions belong at `.librarian/conversions/<evidence-id>.md`, content-addressed, outside rebuildable `derived/`. S2 implements this for PDF cleanup and OCR, with a verified persistent cache and separate original-source evidence. Identical source bytes and the same conversion method reuse the artifact without calling a provider. Tampered files or bindings refuse rather than quietly spend again. Their page anchors and original paths feed the agent's graph in S3. Third-party native indexing is catalogue-level only; owner_created attachments are indexed fully. Each use/application is recorded and rolled into catalogue/search results. These are S1–S6b/R requirements, not C0 changes.

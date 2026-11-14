@@ -1009,7 +1009,24 @@ class Loop:
             if previous_recovery is missing:self.ctx.extras.pop('_code_recovery',None)
             else:self.ctx.extras['_code_recovery']=previous_recovery
 
+    def _capture_read_route(self, provider, runtime, system, view, tools):
+        from .read_access import measure, MEASUREMENT
+        # Measure the current serialized request, not a remembered/default prompt.
+        # Without this model's tokenizer, UTF-8 bytes are a conservative bound.
+        # Framing is explicit; no source prompt is copied into the receipt.
+        prompt = {'system': system, 'messages': view,
+                  'tools': [t.__dict__ for t in tools]}
+        self.ctx.extras['read_route'] = {
+            'model': str(getattr(provider, 'model', '') or getattr(provider, 'name', '')),
+            'context_tokens': self.context_limit,
+            'prompt_tokens': measure(prompt) + 256,
+            'prompt_framing_reserve_tokens': 256,
+            'visible_output_tokens': self.profile_output_budget,
+            'reasoning_reserve_tokens': runtime.output_headroom_tokens(provider),
+            'measurement': MEASUREMENT}
+
     def _invoke_walk_model(self,provider,runtime,binding,system,view,tools,cancel):
+        self._capture_read_route(provider,runtime,system,view,tools)
         task=TaskContract(id='agent-walk',kind=self.purpose() or 'research',
             interaction='tool_loop' if tools else 'single_turn',required_capabilities=frozenset({'tool_use'}) if tools else frozenset(),output_contract='text')
         scope=InvocationScope(role=self.profile_role or self.profile_id or 'lead',task=task,

@@ -36,10 +36,13 @@ def _run_task(ctx, tier, packet):
         endpoint = clerk_endpoint(ctx)
         if endpoint is None:
             raise ValueError('CLERK_UNAVAILABLE')
-        result = clerk.run([clerk.code_block_contract(packet)], endpoint)[0]
+        task = clerk.code_block_contract(packet)
+        allocation = _contract_allocation(endpoint, packet, task)
+        result = clerk.run([task], endpoint)[0]
         if not result.ok:
             raise ValueError('CLERK_FAILED: ' + result.problems)
-        return result.value, {k:v for k,v in result.to_dict().items() if k != 'value'}
+        return result.value, {**{k:v for k,v in result.to_dict().items() if k != 'value'},
+                              'read_allocation': allocation}
     from .delegate import delegate
     brief = packet['instruction'] + '\n```json\n' + json.dumps(packet, ensure_ascii=False) + '\n```\nReturn JSON matching: ' + json.dumps(clerk.code_contract_schema())
     out = delegate(ctx, questions=[brief], tier=tier)
@@ -52,6 +55,31 @@ def _run_task(ctx, tier, packet):
     if text.startswith('```') and text.endswith('```'):
         text = text.split('\n', 1)[1].rsplit('```', 1)[0].strip()
     return json.loads(text), {k:result[k] for k in ('model','tools','steps') if k in result}
+
+
+def _contract_allocation(endpoint, packet, task):
+    """Free preflight: input capacity cannot substitute for a short visible reply."""
+    from dataclasses import replace
+    from ..read_access import allocate, measure, MEASUREMENT
+    from ..rules import Refusal
+    route = dict(getattr(endpoint, 'read_route', {}) or {})
+    visible = min(int(route.get('visible_output_tokens') or task.kind.max_tokens), task.kind.max_tokens)
+    # Measure fixed prompt/schema separately from the bounded source chunk.
+    base = replace(task, chunk='').payload()
+    route.update(prompt_tokens=measure(base) + 256, visible_output_tokens=visible,
+                 measurement=MEASUREMENT, prompt_framing_reserve_tokens=256)
+    # Planning estimate, not a claim that a model always fits a schema in one try.
+    expected = (250 + 300 * len(packet.get('anchors', []))
+                + 80 * len(packet.get('boundary', [])) + 150 * len(packet.get('upstream', [])))
+    source_tokens = measure(task.chunk)
+    allocation = allocate(route, requested_tokens=min(200000, source_tokens),
+                          expected_output_tokens=expected, tier=3)
+    allocation.update(source_payload_tokens=source_tokens, owner_input_cap_tokens=200000,
+        output_sizing='Planning estimate from anchor, boundary and upstream counts; provider visible output remains hard capped')
+    if allocation['effective_tokens'] < source_tokens:
+        raise Refusal('READ_ROUTE_REQUIRED', 'Split these bounded targets: source plus fixed prompt and both output reserves exceeds the actual route allocation',
+                      {'allocation': allocation})
+    return allocation
 
 
 PLAN_KEYS = ('plan_id', 'server', 'tasks')

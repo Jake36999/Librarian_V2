@@ -4,3 +4,4 @@ from . import audited  # noqa: F401,E402  (HARNESS-06 research rounds)
 from . import plan_dispatch  # noqa: F401,E402
 from . import pace  # noqa: F401,E402  (the lead's own effort, up to the person's)
 from . import resolve  # noqa: F401,E402  (argument resolvers, R2)
+from . import source_reading  # noqa: F401,E402  (bounded original/conversion page reads)

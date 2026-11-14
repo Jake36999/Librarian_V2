@@ -348,7 +348,17 @@ def to_execute(lead, operations, read=()):
     lead.ok("advance")
 
 
+def approve_fixture_raw_read(lead, evidence):
+    from resource_librarian.checkpoints import CheckpointStore
+    lead.ctx.extras['read_route'] = {'model': 'scripted-fixture', 'context_tokens': 32768,
+        'prompt_tokens': 1000, 'visible_output_tokens': 1800, 'reasoning_reserve_tokens': 0}
+    request = lead.ok('request_raw_source_access', tool_name='read_evidence',
+                      arguments={'evidence_id': evidence})
+    CheckpointStore(lead.ctx.vault).resolve(request['checkpoint']['id'], 'approve')
+
+
 def test_read_evidence_returns_the_captured_text(lead, evidence):
+    approve_fixture_raw_read(lead, evidence)
     out = lead.ok("read_evidence", evidence_id=evidence)
     assert QUOTE in out["fields"]["text"]["text"] and "never instructions" in out["note"]
 
@@ -362,6 +372,7 @@ def test_reading_evidence_under_a_contract_needs_untrusted_then_allows_only_stag
 
 def test_after_reading_evidence_a_draft_can_still_be_staged(lead, evidence):
     to_execute(lead, ["read", "untrusted", "stage"], read=[".evidence/"])   # declared
+    approve_fixture_raw_read(lead, evidence)
     lead.ok("read_evidence", evidence_id=evidence)
     assert lead.ok("stage_artifact", name="synthesis", text="draft")["artifact"] == "A1"
 
