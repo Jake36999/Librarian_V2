@@ -1996,6 +1996,16 @@ var Librarian = (() => {
     return h("span", {}, "done");
   }
 
+  // src/model_order.ts
+  function orderModels(models, slot) {
+    const recommended = (m) => slot > 0 && String(m.profile?.suggested_tier ?? "") === `Tier_${slot}`;
+    const rank = (m) => {
+      const r = m.profile?.recommendation_rank;
+      return recommended(m) && Number.isInteger(r) && r > 0 ? r : Number.POSITIVE_INFINITY;
+    };
+    return models.map((m, i) => ({ m, i })).sort((a, b) => Number(recommended(b.m)) - Number(recommended(a.m)) || rank(a.m) - rank(b.m) || a.i - b.i).map(({ m }) => m);
+  }
+
   // src/panels.ts
   var MODES = [
     ["plan", "Plan", "Reads and searches. Writes are refused: the librarian proposes instead."],
@@ -2571,7 +2581,7 @@ var Librarian = (() => {
       const recommended = (m) => next > 0 && String(m.profile?.suggested_tier ?? "") === `Tier_${next}`;
       clear(host, Object.entries(PROVIDERS).map(([p, label]) => {
         const listing = this.listings.get(p) ?? { status: "\u2026", models: [] };
-        const models = listing.models.filter(matches).filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true)).map((m, i) => ({ m, i })).sort((a, b) => Number(recommended(b.m)) - Number(recommended(a.m)) || a.i - b.i).map(({ m }) => m);
+        const models = orderModels(listing.models.filter(matches).filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true)), next);
         const status = listing.status === "ready" ? `${listing.models.length} model${listing.models.length === 1 ? "" : "s"}` : listing.status === "no key" ? "no key saved (Settings \u2192 Providers & keys)" : listing.status === "offline" ? "offline: the local server is not running" : listing.error ? `error: ${listing.error}` : listing.status;
         return h(
           "section",

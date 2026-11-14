@@ -2271,7 +2271,7 @@
     "Long_Horizon_Tasks",
     "Large_Coding_Tasks"
    ],
-   "suggested_tier": "Tier_1"
+   "suggested_tier": "Tier_1", "recommendation_rank": 1
   },
   "bottom_line": "MiMo-V2.6-Flash is a sparse Mixture-of-Experts AI model with 309B total and 15B activated parameters, natively handling text, image, video, and audio, with a 1M-token context window, designed for agentic tasks like long-",
   "what_it_solves": "It addresses the need for a single model that can process multiple types of data (text, image, video, audio) and handle very long contexts, such as entire code repositories or extended tool-use sessions. It also tackles the challenge of training for diverse tasks (coding, agents, visual, cybersecurity) in one unified reinforcement learning run, rather than separate per-domain efforts, and aims to improve model self-improvement through scaled reward signals and agentic grading.",
@@ -2309,7 +2309,7 @@
     "Large_Coding_Tasks",
     "Long_Horizon_Tasks"
    ],
-   "suggested_tier": "Tier_1"
+   "suggested_tier": "Tier_1", "recommendation_rank": 2
   },
   "bottom_line": "MiMo-V2.6-Pro is a sparse Mixture-of-Experts language model with 1.02T total and 42B activated parameters, natively handling text, image, video, and audio with a 1M-token context window, designed for agentic tasks like c",
   "what_it_solves": "It addresses the challenge of scaling reinforcement learning for self-improvement in AI models, combining multiple modalities and long context in one system. It solves the problem of ranking passing solutions in RL by using groupwise agentic grading, which builds task-specific rubrics and redistributes advantages to higher-quality outputs, enabling the model to improve through feedback and exploration.",
