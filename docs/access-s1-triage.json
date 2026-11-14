@@ -1,0 +1,1542 @@
+[
+  {
+    "surface": "native",
+    "tool": "accept_artifact",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "accept_workflow",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "activity",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "add_candidate",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "admit_contract",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "advance",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "agenda",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "answer",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "archive_note",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "ask_user",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "audit_projection",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "audit_targets",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "batch_cancel",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "batch_status",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "branch_session",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "capabilities",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "References/metadata/diagnostics; no content pass credited"
+  },
+  {
+    "surface": "native",
+    "tool": "capability_candidates",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "capability_install",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "capability_propose",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "check_notes",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "References/metadata/diagnostics; no content pass credited"
+  },
+  {
+    "surface": "native",
+    "tool": "checkpoint",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "claim_run_preflight",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "References/metadata/diagnostics; no content pass credited"
+  },
+  {
+    "surface": "native",
+    "tool": "clerk_next",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "clerk_submit",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "close_brief",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "close_session",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "cohort_freeze",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "cohort_reviewed",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "community_disagreements",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "community_rebuild",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "community_reports",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "concept_candidates",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "create_project",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "decide",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "deep_read",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "deep_read_note",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "delegate",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "desk_pin",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "desk_show",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "desk_touch",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "desk_unpin",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "dik_rebuild",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "dispatch_plan",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "doctor",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "References/metadata/diagnostics; no content pass credited"
+  },
+  {
+    "surface": "native",
+    "tool": "document_duplicates",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "draft_offering",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "duplicate_report",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "edit_note",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "embed_index",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "engagement_close",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "engagement_list",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "engagement_plan",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "engagement_propose",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "engagement_start",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "evaluate",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "extend_budget",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "extract_materialize",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "extract_plan",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "filters",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "References/metadata/diagnostics; no content pass credited"
+  },
+  {
+    "surface": "native",
+    "tool": "freshness_check",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "get_note",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "gitignore_ensure",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "index",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "index_status",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "References/metadata/diagnostics; no content pass credited"
+  },
+  {
+    "surface": "native",
+    "tool": "ingest",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "intake_run",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "lens_adopt",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "lens_drop",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "lens_list",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "lens_pack_accept",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "lens_packs",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "lens_show",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "lens_suggest",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "library_profile",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "list_claim_runs",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "list_files",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "References/metadata/diagnostics; no content pass credited"
+  },
+  {
+    "surface": "native",
+    "tool": "list_sessions",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "list_workflows",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "log_use",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "macro_plan",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "macro_resolve",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "macro_run",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "macro_status",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "model_catalog_adopt",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "model_catalog_status",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "References/metadata/diagnostics; no content pass credited"
+  },
+  {
+    "surface": "native",
+    "tool": "model_expectation_propose",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "note_move",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "ocr_pdf",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "open_brief",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "open_session",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "park_session",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "pdf_to_markdown",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "process_approved",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "project_edit",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "project_map",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "project_scan",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "promote_offering",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "provenance_check",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "queue_list",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "queue_remove",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "queue_retry",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "queue_source",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "ranking_benchmark",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "ranking_candidate_generate",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "ranking_compare",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "ranking_restore",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "ranking_select",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "ranking_status",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "References/metadata/diagnostics; no content pass credited"
+  },
+  {
+    "surface": "native",
+    "tool": "read_evidence",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "read_file",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "read_project",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "read_result",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "read_source_file",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "read_url",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "record_application",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "record_assumptions",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "record_synthesis",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "record_trace",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "reduce_round",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "refile_source",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "reflection_accept",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "reflection_draft",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "reject_artifact",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "request_budget",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "request_evidence",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "research_round",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "resume_session",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "review_due_open",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "rewind_session",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "rules",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "References/metadata/diagnostics; no content pass credited"
+  },
+  {
+    "surface": "native",
+    "tool": "run_claim_input",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "run_list",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "run_pipeline",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "run_resume",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "run_status",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "run_workflow",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "sandbox_read",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "sandbox_run",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "sandbox_run_file",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "save_workflow",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "scout_discover",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "scout_expand",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "scout_rank",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "search",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "search_feedback",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "search_work",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "session_status",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "set_effort",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "set_requirement",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "show_workflow",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "stage_artifact",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "staging_decide",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "staging_flag",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "staging_list",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "staging_preview",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "staging_review",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "staging_show",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "sweep",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "task_add",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "task_done",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "task_route",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "topic_propose",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "topics_list",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "understanding_due",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "understanding_record",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "update_plan",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "update_project",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "v1_import_plan",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "v1_import_stage",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "v1_import_status",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "validate_workflow",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "References/metadata/diagnostics; no content pass credited"
+  },
+  {
+    "surface": "native",
+    "tool": "vault_commit",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "vault_push",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "vault_status",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "References/metadata/diagnostics; no content pass credited"
+  },
+  {
+    "surface": "native",
+    "tool": "verify_access",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "verify_grain",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "views_refresh",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Control/receipt mutation"
+  },
+  {
+    "surface": "native",
+    "tool": "web_search",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "native",
+    "tool": "withdraw_reference",
+    "class": "C",
+    "authorship_conforms": false,
+    "reason": "Person-only authority"
+  },
+  {
+    "surface": "native",
+    "tool": "write_note",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential text/nested content/materialised content: conservatively retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "canonical:check_architecture",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "canonical:find_dependants",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "canonical:find_similar_code",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "canonical:get_architecture_context",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "canonical:get_entity_content",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "canonical:inspect_relationship_witnesses",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "canonical:search_entities",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "paper:annotate_document",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "paper:find_by_concept",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "paper:get_annotations",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "paper:get_claim",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "paper:get_concept",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "paper:get_corpus_status",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "Graph/corpus catalogue metadata"
+  },
+  {
+    "surface": "geo",
+    "tool": "paper:get_document",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "paper:get_outline",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "paper:get_related",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "paper:get_section",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "paper:search_documents",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:analyze_cross_graphs",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:check_architecture",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:compile_task_packet",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:federated_search",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:find_dependants",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:find_similar_code",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:get_architecture_context",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:get_entity_content",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:inspect_relationship_witnesses",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:list_bridges",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:list_graphs",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "Graph/corpus catalogue metadata"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:paper_find_by_concept",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:paper_get_annotations",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:paper_get_claim",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:paper_get_concept",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:paper_get_corpus_status",
+    "class": "B",
+    "authorship_conforms": false,
+    "reason": "Graph/corpus catalogue metadata"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:paper_get_document",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:paper_get_outline",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:paper_get_related",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:paper_get_section",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:paper_search_documents",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  },
+  {
+    "surface": "geo",
+    "tool": "scoped:search_entities",
+    "class": "A",
+    "authorship_conforms": false,
+    "reason": "Potential source/snippet/derived/free-form text; retain text-access obligations"
+  }
+]

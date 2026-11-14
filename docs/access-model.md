@@ -1,6 +1,6 @@
 # Content access model
 
-Normative owner contract, 2026-11-14. This document implements Part A0 of the updated library-setup prompt. Its vocabulary and settled decisions supersede the earlier scope report's `own` shorthand and undecided D1/D3/D5/D6 proposals. The C0 inventory records current divergences; this contract is not a claim that S1–S6b and R have shipped.
+Normative owner contract, approved at OWNER STOP C0 on 2026-11-14. Its vocabulary and settled decisions supersede the earlier scope report's `own` shorthand and undecided D1/D3/D5/D6 proposals. The C0 inventory records current divergences; this contract is not a claim that S1–S6b and R have shipped.
 
 ## Authorship and access
 
@@ -51,7 +51,9 @@ For a comparison, both source allocations must fit that one remainder; a per-sou
 | Tier 2, research helper | Prompt to locate relevant sections first. Intent: about 200k tokens for one source, or a balanced comparison, clamped to the window and reserves. The owner-provided current Gemma/Qwen window is 262,144 tokens, so a 400k-token comparison cannot fit. Report actual allocations when S4 implements them. One-off raw grants are permitted. |
 | Tier 3, Clerk | No free reading or raw-access grant. Search/graph location must produce explicitly bounded targets before extraction/viewing. Existing Wave L PLAN_SCOPE refusal for direct third-party graph anchoring remains; S4 adds a controlled target route rather than free graph access. The owner's 200k–500k intent has unresolved units. Current Clerk declaration: 262,144-token window, 1,800 visible output tokens and 1,024 reasoning-reserve tokens. Clamp to the declared window regardless of the unit decision. |
 
-**OPEN C0-1:** does the Clerk's 200k–500k intent mean tokens or characters? Do not silently select units before the owner answers. S4 must use measured prompt size and each actual bound route's output/reasoning reserve, not extrapolate from model names.
+**DECIDED C0-1 (2026-11-14): tokens.** The Clerk's intended 200k–500k input allocation is always clamped to the actual bound route's declared window minus measured prompt, visible output and reasoning reserve. S4 must also size each tier-3 task to its visible output capacity, not just its input capacity: the current Clerk's 1,800-token visible output was the binding pilot constraint. Split tasks or bound deliverables to fit; report effective input allocations and output allowances per actual route. No new route allocation has been measured or enabled at this documentation step.
+
+**Existing cap unit mix (A5):** the `12%` calculation takes a context setting expressed in tokens, then uses that number as a character limit, capped at 160,000 characters. It is not a 12%-of-window token allowance. There is no explicit characters-per-token conversion basis in that formula. Keep runtime behavior unchanged until S4 states an explicit basis and tests the resulting budgets.
 
 D3 is settled: a person may grant tiers 1/2 one-off raw access through a scoped checkpoint. The earlier "disabled until D3 is decided" text is superseded by that approval; the grant mechanism is still unimplemented and is not silently enabled at C0. Tier 3 requests bounded targets only. A person's original-file access is unchanged.
 
@@ -77,4 +79,11 @@ The library setup's research folder is E:/Librarian research. Do not re-ask sett
 
 ## C0 review boundary
 
-See `access-conformance-sweep.md` and the machine-readable `tool-access-declarations.json`. A declaration-coverage pass proves that tools were reviewed, not that the new policy is implemented. Stop at OWNER STOP C0 before S1 or any other access-policy fix. Wave L stays unmerged; combined Wave L+B0 merges require separate repository approvals at STOP S6. Never push or tag without instruction.
+See `access-conformance-sweep.md` and the machine-readable `tool-access-declarations.json`. A declaration-coverage pass proves that tools were reviewed, not that the new policy is implemented. The owner approved the contract/sweep at STOP C0 and authorised S1 onward to STOP S6, **unless the prerequisite tests find ordinary sessions uncovered: then stop and report first**. Those tests found that condition; see `docs/access-s1-triage.md` and the S1 closure-stop report. No closure fix is implemented yet. Wave L stays unmerged; combined Wave L+B0 merges require separate repository approvals at STOP S6. Never push or tag without instruction.
+
+## S1 implementation amendments (approved, not implemented)
+
+- Resolve authorship and mark closure centrally at `Registry.call` / the result envelope, and at Geo's existing provenance projection. Do not repeat policy across 98 tools; per-tool changes are for refusal/bounding only.
+- Class A returns potentially third-party text to models: authorship must conform at S1, full access behavior by S4. Class B is references/labels/metadata: authorship must conform at S1. Class C is person-only/control and n/a. Report n/N per class at each stop.
+- Unknown external MCP servers default to untrusted/open-world. Geo uses returned provenance to distinguish owner_created/generated reads from third_party untrusted content; server identity is not an authorship proof.
+- Exclude generated UI bundles (`src/resource_librarian/ui/*.js` and analogous build products) from graphs/indexes as generated hygiene; graph `ui/src/*.ts` instead. S0's app.js extraction failure will be resolved by exclusion, not a parser fix. This exclusion is pending after the closure stop.
