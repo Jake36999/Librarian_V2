@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json
 from dataclasses import replace
+import dataclasses
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from .. import clerk, effort
@@ -53,20 +54,85 @@ def _run_task(ctx, tier, packet):
     return json.loads(text), {k:result[k] for k in ('model','tools','steps') if k in result}
 
 
-def _validate(ctx, plan):
+PLAN_KEYS = ('plan_id', 'server', 'tasks')
+TASK_KEYS = ('task_id', 'tier', 'graph_id', 'anchors', 'instruction', 'depends_on')
+# Exact decimal spellings a lead may send for a tier (observed live, 2026-11-14).
+# Nothing else is coerced: no whitespace, floats, leading zeros or booleans.
+TIER_SPELLINGS = {'1': 1, '2': 2, '3': 3}
+
+
+def _shape_problems(plan):
+    """Every shape problem, bounded, plus the normalised copy and its notes.
+
+    A bare ``PLAN_SHAPE`` gave a lead nothing to repair; naming each field does.
+    """
     def text(v): return isinstance(v, str) and bool(v.strip())
-    if not isinstance(plan, dict) or set(plan) != {'plan_id','server','tasks'} or not all(text(plan[k]) for k in ('plan_id','server')):
-        raise ValueError('PLAN_SHAPE')
+    problems, notes = [], []
+    if not isinstance(plan, dict):
+        return ['plan must be an object'], None, notes
+    problems += [f'missing {k}' for k in PLAN_KEYS if k not in plan]
+    problems += [f'unexpected {k}' for k in sorted(set(plan) - set(PLAN_KEYS), key=str)]
+    problems += [f'{k} must be a non-empty string' for k in ('plan_id', 'server') if k in plan and not text(plan[k])]
+    rows = plan.get('tasks')
+    if 'tasks' in plan and (not isinstance(rows, list) or not 1 <= len(rows) <= 32):
+        problems.append('tasks must be a list of 1 to 32 task objects')
+        rows = None
+    clean, seen = [], set()
+    for i, t in enumerate(rows or []):
+        where = f'tasks[{i}]'
+        if not isinstance(t, dict):
+            problems.append(f'{where}: must be an object'); continue
+        problems += [f'{where}: missing {k}' for k in TASK_KEYS if k not in t]
+        problems += [f'{where}: unexpected {k}' for k in sorted(set(t) - set(TASK_KEYS), key=str)]
+        t = dict(t)
+        for k in ('task_id', 'graph_id', 'instruction'):
+            if k in t and not text(t[k]): problems.append(f'{where}: {k} must be a non-empty string')
+        if text(t.get('task_id')):
+            if t['task_id'] in seen: problems.append(f'{where}: duplicate task_id {t["task_id"][:40]!r}')
+            seen.add(t['task_id'])
+        if 'tier' in t:
+            tier = t['tier']
+            if type(tier) is str and tier in TIER_SPELLINGS:
+                t['tier'] = TIER_SPELLINGS[tier]; notes.append(f'{where}.tier')
+            elif type(tier) is not int or tier not in PROFILES:
+                problems.append(f'{where}: tier must be the integer 1, 2 or 3')
+        if 'anchors' in t:
+            a = t['anchors']
+            if not isinstance(a, list) or not 1 <= len(a) <= 8 or not all(text(x) for x in a):
+                problems.append(f'{where}: anchors must be a list of 1 to 8 entity references')
+        if 'depends_on' in t:
+            d = t['depends_on']
+            if not isinstance(d, list) or not all(text(x) for x in d) or len(d) != len(set(d)):
+                problems.append(f'{where}: depends_on must be a list of distinct task_id strings')
+        clean.append(t)
+    return problems, (None if problems else {**plan, 'tasks': clean}), notes
+
+
+def _shape_error(problems):
+    """One bounded message; a problem every task shares is named once, with its indexes."""
+    grouped, order = {}, []
+    for problem in problems:
+        where, sep, what = problem.partition(': ')
+        if sep and where.startswith('tasks['):
+            if what not in grouped: grouped[what] = []; order.append(what)
+            grouped[what].append(where[6:-1])
+        else:
+            order.append(problem); grouped[problem] = None
+    items = [what if grouped[what] is None else f"tasks[{','.join(grouped[what])}]: {what}" for what in order]
+    message, shown = 'PLAN_SHAPE: ', 0
+    for item in items:
+        if len(message) + len(item) + 2 > 560: break
+        message += ('; ' if shown else '') + item; shown += 1
+    if shown < len(items): message += f'; and {len(items) - shown} more'
+    return ValueError(message)
+
+
+def _validate(ctx, plan, notes=None):
+    problems, plan, normalised = _shape_problems(plan)
+    if problems: raise _shape_error(problems)
+    if notes is not None: notes.extend(normalised)
     rows = plan['tasks']
-    if not isinstance(rows, list) or not 1 <= len(rows) <= 32: raise ValueError('PLAN_SHAPE')
-    tasks = {}
-    for t in rows:
-        if not isinstance(t, dict) or set(t) != {'task_id','tier','graph_id','anchors','instruction','depends_on'}: raise ValueError('PLAN_SHAPE')
-        if not all(text(t[k]) for k in ('task_id','graph_id','instruction')) or t['task_id'] in tasks or type(t['tier']) is not int or t['tier'] not in PROFILES: raise ValueError('PLAN_SHAPE')
-        if not isinstance(t['anchors'], list) or not 1 <= len(t['anchors']) <= 8 or not all(text(a) for a in t['anchors']): raise ValueError('PLAN_SHAPE')
-        deps = t['depends_on']
-        if not isinstance(deps, list) or not all(text(d) for d in deps) or len(deps) != len(set(deps)): raise ValueError('PLAN_SHAPE')
-        tasks[t['task_id']] = t
+    tasks = {t['task_id']: t for t in rows}
     if any(d not in tasks for t in rows for d in t['depends_on']): raise ValueError('PLAN_UNKNOWN_DEPENDENCY')
     waves, done = [], set()
     while len(done) < len(tasks):
@@ -93,7 +159,8 @@ def _cancelled(ctx):
       card=Card('Run a lead-compiled task DAG with snapshot packets and verified citations',
                 'bounded code investigation; outputs remain advisory'))
 def dispatch_plan(ctx: Context, plan: dict) -> dict:
-    tasks, waves = _validate(ctx, plan)
+    normalised = []
+    tasks, waves = _validate(ctx, plan, normalised)
     results, packets = {}, {}; server = plan['server']
     for wave in waves:
         ready = []
@@ -146,4 +213,37 @@ def dispatch_plan(ctx: Context, plan: dict) -> dict:
         for tid in sorted(results):
             if results[tid]['state'] == 'ok' and snapshots.get(tasks[tid]['graph_id']) != results[tid]['snapshot_id']:
                 stale.append(tid); results[tid]['scope_error'] = 'STALE_SCOPE'
-    return dict(plan_id=plan['plan_id'], waves=waves, results={k:results[k] for k in sorted(results)}, stale=stale)
+    return dict(plan_id=plan['plan_id'], waves=waves, results={k:results[k] for k in sorted(results)}, stale=stale,
+                normalised=normalised)
+
+
+def _plan_schema() -> dict:
+    """The full nested contract a lead is shown (live pilot finding P2, 2026-11-14).
+
+    It mirrors ``_shape_problems`` exactly; a test holds the two together.
+    """
+    ref = {'type': 'string', 'minLength': 1}
+    task = {'type': 'object', 'additionalProperties': False, 'required': list(TASK_KEYS), 'properties': {
+        'task_id': {**ref, 'description': 'unique within this plan'},
+        'tier': {'type': 'integer', 'enum': [1, 2, 3],
+                 'description': 'integer, not a string: 3 = Clerk code-block contract, '
+                                '2 = synthesis over upstream contracts, 1 = lead-model review'},
+        'graph_id': {**ref, 'description': 'a graph_id from list_graphs on this server'},
+        'anchors': {'type': 'array', 'minItems': 1, 'maxItems': 8, 'items': ref,
+                    'description': 'canonical entity references exactly as search returned them'},
+        'instruction': {**ref, 'description': 'what this task should describe; no conversation framing'},
+        'depends_on': {'type': 'array', 'uniqueItems': True, 'items': ref,
+                       'description': 'task_ids whose results this task receives; [] for none'}}}
+    example = {'plan_id': 'config-contracts', 'server': '<connected geo-grapher server>', 'tasks': [
+        {'task_id': 'contract-1', 'tier': 3, 'graph_id': '<graph_id>', 'anchors': ['entity:<id>'],
+         'instruction': 'Describe the inputs, outputs and calls of this code block.', 'depends_on': []},
+        {'task_id': 'synthesis-1', 'tier': 2, 'graph_id': '<graph_id>', 'anchors': ['entity:<id>'],
+         'instruction': 'Combine the upstream contracts into one cited account.', 'depends_on': ['contract-1']}]}
+    plan = {'type': 'object', 'additionalProperties': False, 'required': list(PLAN_KEYS),
+            'properties': {'plan_id': ref, 'server': {**ref, 'description': 'the connected MCP server name'},
+                           'tasks': {'type': 'array', 'minItems': 1, 'maxItems': 32, 'items': task}},
+            'examples': [example]}
+    return {'type': 'object', 'additionalProperties': False, 'required': ['plan'], 'properties': {'plan': plan}}
+
+
+REGISTRY._tools['dispatch_plan'] = dataclasses.replace(REGISTRY.get('dispatch_plan'), schema=_plan_schema())

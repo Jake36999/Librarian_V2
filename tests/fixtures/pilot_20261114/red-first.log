@@ -1,0 +1,25 @@
+    
+        result = clerk.run([task], endpoint)[0]
+    
+        assert result.ok, result.problems
+        assert task.kind.max_tokens == 1800                 # the visible budget is unchanged
+>       assert bodies[0]["max_tokens"] == 1800 + REASONING_RESERVE_TOKENS
+E       assert 1800 == (1800 + 1024)
+
+C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py:156: AssertionError
+=========================== short test summary info ===========================
+FAILED C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py::test_advertised_schema_names_every_nested_field_and_integer_tiers
+FAILED C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py::test_first_real_plan_gets_field_level_errors_not_a_bare_code
+FAILED C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py::test_schema_repair_plan_with_decimal_string_tiers_is_normalised_exactly
+FAILED C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py::test_only_exact_tier_spellings_are_accepted[True]
+FAILED C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py::test_only_exact_tier_spellings_are_accepted[ 3]
+FAILED C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py::test_only_exact_tier_spellings_are_accepted[3.0_0]
+FAILED C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py::test_only_exact_tier_spellings_are_accepted[3.0_1]
+FAILED C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py::test_only_exact_tier_spellings_are_accepted[03]
+FAILED C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py::test_only_exact_tier_spellings_are_accepted[4]
+FAILED C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py::test_only_exact_tier_spellings_are_accepted[0]
+FAILED C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py::test_only_exact_tier_spellings_are_accepted[None]
+FAILED C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py::test_dispatch_reports_which_fields_were_normalised
+FAILED C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py::test_bundled_pack_reviews_a_reasoning_reserve_for_the_qwen35_clerk_route
+FAILED C:\Users\jakem\AppData\Local\Temp\claude\97217f17778a8799\0c821af5-b0bc-4ed5-944a-59a7ce653e6f\scratchpad\lib-pilotfix\tests\test_pilot_20261114_regressions.py::test_code_block_contract_reaches_the_wire_with_reasoning_headroom
+14 failed in 1.73s

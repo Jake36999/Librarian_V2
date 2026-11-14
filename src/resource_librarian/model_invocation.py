@@ -1301,6 +1301,15 @@ class InvocationRuntime:
         route = ExactRoute.from_provider(provider)
         return InvocationBinding(route, descriptor, self.expectations.match(route, descriptor))
 
+    def output_headroom_tokens(self, provider: Provider) -> int:
+        """Extra output tokens this route's reviewed dialect adds on the wire.
+
+        Budget holders reserve against this, so a reviewed reasoning reserve can
+        never spend past a profile's token or cost budget.
+        """
+        dialect = effective_dialect(self.binding_for(provider).expectation)
+        return REASONING_RESERVE_TOKENS if dialect.get("output_headroom") == "reasoning_reserve" else 0
+
     def adapter_summary(self, provider: Provider, *, model_id: str = "") -> dict[str, Any]:
         """Return passive, non-secret model-tile information.
 
