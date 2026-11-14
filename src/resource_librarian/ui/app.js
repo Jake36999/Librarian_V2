@@ -5730,6 +5730,122 @@ var Librarian = (() => {
     }
   };
 
+  // src/folders.ts
+  var purposes = [
+    "own-current",
+    "own-legacy",
+    "own-docs",
+    "research-docs",
+    "third-party",
+    "data",
+    "logs/transcripts",
+    "exclude"
+  ];
+  async function folderReview(api, container) {
+    const out = await api.get("/api/folders");
+    const status = h("p", { role: "status" });
+    const source = h("input", { type: "text", "aria-label": "Folder to survey", placeholder: "Full path to an attached source folder" });
+    const scan = h("button", { type: "button", disabled: !out.enabled, onclick: async () => {
+      scan.disabled = true;
+      status.textContent = "Surveying metadata\u2026";
+      try {
+        await api.post("/api/folders/survey", { path: source.value });
+        await folderReview(api, container);
+      } catch (e) {
+        status.textContent = e.message;
+      } finally {
+        scan.disabled = false;
+      }
+    } }, "Survey folders");
+    const refused = out.credential_refusals ?? { count: 0, paths: [] };
+    clear(
+      container,
+      h("h2", {}, "Folder purposes"),
+      h("p", { class: "note" }, "Suggestions are not decisions. Accept each folder to assign its graph and access. Attached sources always remain read-only."),
+      !out.enabled ? h("p", { class: "note" }, "Geo-Grapher is disabled. An operator can enable the pinned installed wheel for this library.") : null,
+      h("div", { class: "view-head" }, source, scan),
+      status,
+      h(
+        "details",
+        {},
+        h("summary", {}, `${refused.count} credential-like paths refused \u2014 names only`),
+        h("ul", {}, refused.paths.map((path) => h("li", {}, path)))
+      )
+    );
+    const cards = h("div", { class: "folder-cards" });
+    container.append(cards);
+    for (const card of out.cards ?? []) {
+      const accepted = card.status === "accepted";
+      const article = h("article", { class: "folder-card", "aria-label": card.path });
+      const purpose = h("select", { "aria-label": "Purpose" }, purposes.map((p) => h("option", { value: p }, p)));
+      purpose.value = card.decision?.purpose ?? card.suggested_purpose;
+      const graph = h("input", { type: "text", "aria-label": "Graph", maxlength: 120 });
+      graph.value = card.decision?.graph ?? card.suggested_graph;
+      const description = h("textarea", { "aria-label": "Brief description", rows: 2, maxlength: 400 });
+      description.value = card.decision?.description ?? card.description.text;
+      const outcome = h("p", { role: "status" }, accepted ? "Accepted by person" : card.status === "failed" ? "Application failed \u2014 review and retry" : "Waiting for a person");
+      const accept = h("button", { type: "button", class: "primary", disabled: accepted, onclick: async () => {
+        accept.disabled = true;
+        outcome.textContent = "Applying the reviewed decision\u2026";
+        try {
+          await api.post("/api/folders/accept", {
+            id: card.id,
+            folder_fingerprint: card.folder_fingerprint,
+            purpose: purpose.value,
+            graph: graph.value,
+            description: description.value
+          });
+          outcome.textContent = "Accepted by person";
+        } catch (e) {
+          outcome.textContent = e.message;
+          accept.disabled = false;
+        }
+      } }, "Accept folder decision");
+      const draftStatus = h("p", { class: "note" }, accepted ? "Person-reviewed description" : card.description.state === "model_draft" ? "Draft \u2014 not accepted" : "Awaiting a model draft \u2014 no model called");
+      const approval = h("input", { type: "checkbox", "aria-label": "Approve one paid folder draft" });
+      const draft = h("button", { type: "button", disabled: accepted, onclick: async () => {
+        if (!approval.checked) {
+          outcome.textContent = "Approve the bounded model call first.";
+          return;
+        }
+        draft.disabled = true;
+        try {
+          const updated = await api.post("/api/folders/draft", { id: card.id, approve_spend: true });
+          description.value = updated.description.text;
+          draftStatus.textContent = "Draft \u2014 not accepted";
+          outcome.textContent = "Draft staged for your review";
+          approval.checked = false;
+        } catch (e) {
+          outcome.textContent = e.message;
+        } finally {
+          draft.disabled = accepted;
+        }
+      } }, "Draft from inventory metadata");
+      article.append(
+        h("h3", {}, card.path),
+        h("p", { class: "dim" }, card.source_root),
+        h("p", {}, `${card.bytes.toLocaleString()} bytes \xB7 ` + Object.entries(card.file_counts).map(([kind, n]) => `${kind}: ${n}`).join(" \xB7 ")),
+        h("p", { class: "note" }, card.reasons.join("; ")),
+        h("label", {}, "Purpose ", purpose),
+        h("label", {}, "Graph ", graph),
+        draftStatus,
+        h("label", {}, "Brief description ", description),
+        h(
+          "details",
+          {},
+          h("summary", {}, "Optional model draft"),
+          h("p", {}, "One qualified Clerk call, metadata only, maximum 320 output tokens. Uses the configured Clerk route; source text is never sent."),
+          h("label", {}, approval, " Approve one paid folder draft"),
+          draft
+        ),
+        outcome,
+        accept
+      );
+      cards.append(article);
+    }
+    if (!(out.cards ?? []).length) container.append(h("p", { class: "dim" }, "No folder cards yet. Survey an attached content root to stage its suggestions."));
+  }
+
   // src/views.ts
   var BEST_FOR_TAGS = [
     "Talking_Fast",
@@ -5832,7 +5948,7 @@ var Librarian = (() => {
       this.el.addEventListener("scroll", () => this.savePosition(), { passive: true });
       const paint = () => {
         const focusedKind = kinds.contains(document.activeElement) ? document.activeElement.dataset.kind : "";
-        clear(kinds, [["source", "Sources"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) => h("button", { "data-kind": v, "aria-pressed": String(this.kind === v), onclick: () => {
+        clear(kinds, [["source", "Sources"], ["folder", "Folders"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) => h("button", { "data-kind": v, "aria-pressed": String(this.kind === v), onclick: () => {
           this.selected = "";
           this.kind = v;
           this.savePosition();
@@ -5923,7 +6039,7 @@ var Librarian = (() => {
       if (this.pending) return;
       try {
         const saved = JSON.parse(sessionStorage.getItem("librarian.queue." + key) ?? "null");
-        if (!saved || !["source", "lens", "concept", "topic", "offering", "import"].includes(saved.kind) || !Array.from(this.statuses.options).some((option) => option.value === saved.status)) return;
+        if (!saved || !["source", "lens", "concept", "topic", "offering", "import", "folder"].includes(saved.kind) || !Array.from(this.statuses.options).some((option) => option.value === saved.status)) return;
         this.kind = saved.kind;
         this.statuses.value = this.status = saved.status;
         this.selected = String(saved.selected ?? "");
@@ -6019,6 +6135,17 @@ var Librarian = (() => {
       clear(this.list, h("p", { class: "dim" }, "Loading\u2026"));
       this.bulkStatusFilter = this.kind === "source" ? this.status : "";
       this.paintBulk();
+      if (this.kind === "folder") {
+        clear(this.detail);
+        this.list.style.gridColumn = "1 / -1";
+        try {
+          await folderReview(this.api, this.list);
+        } catch (e) {
+          clear(this.list, h("p", { class: "error" }, e.message));
+        }
+        return;
+      }
+      this.list.style.gridColumn = "";
       if (this.kind === "offering") return this.loadOfferings(request);
       try {
         const status = this.kind === "source" ? this.status : "staged";

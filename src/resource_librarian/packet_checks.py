@@ -92,8 +92,19 @@ def verify_citations(answer: CitationShape, packet: PacketShape) -> Verification
     if unverified:
         closure_strength = "none"
 
-    return {
+    result = {
         "verified": verified,
         "unverified": unverified,
         "closure_strength": closure_strength
     }
+    if packet.get('provenance') == 'third_party':
+        # A source can prove an upstream fact, never the current state of this system.
+        # Fail closed for unlabelled external claims; no model is asked to judge itself.
+        errors = []
+        for i, claim in enumerate(answer['claims']):
+            words = claim['text'].casefold()
+            if not any(label in words for label in ('external reference', 'third-party', 'third party', 'upstream')):
+                errors.append(f'claims[{i}]: THIRD_PARTY_AS_CURRENT_SYSTEM')
+        result.update(provenance_errors=errors, citation_scope='external_reference')
+        if errors: result['closure_strength'] = 'none'
+    return result

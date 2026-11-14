@@ -83,6 +83,8 @@ def _file_hash(path: Path) -> str:
 
 
 def extract(path: Path, cache_dir: Path) -> Extraction:
+    from .credentials import refuse_credentials
+    refuse_credentials(path)
     suffix = path.suffix.lower()
     if suffix not in SUPPORTED:
         return Extraction(error=f"{suffix} files are not supported ({', '.join(SUPPORTED)})")

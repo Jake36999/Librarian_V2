@@ -129,6 +129,8 @@ class Vault:
         What the local API's own file routes, and any tool moving or
         attaching a file by a person- or model-given path, resolve against."""
         rel = (rel or "").strip().strip("/").replace("\\", "/")
+        from .credentials import refuse_credentials
+        refuse_credentials(rel)
         parts = [p for p in rel.split("/") if p]
         if any(p.startswith(".") or p == ".." for p in parts):
             raise Refusal("VAULT_REQUIRED", f"{rel!r} is not part of the vault's own notes")

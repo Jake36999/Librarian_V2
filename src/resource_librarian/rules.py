@@ -141,6 +141,9 @@ _RULES = [
          "Reading a project is not editing it: edits are allowed per folder by a person, "
          "separately from project access, and every applied edit is asked for. Nothing was "
          "changed."),
+    Rule('FOLDER_READ_ONLY', 'sessions',
+         'Accepted third-party, research and data folders are read-only. Attached sources '
+         'are always read-only; only an explicit accepted child purpose can override an internal folder decision.'),
     Rule("PERMISSION_DENIED", "sessions",
          "The permission mode or the tool's own setting denied this action; nothing was "
          "done. Plan mode proposes and never writes."),

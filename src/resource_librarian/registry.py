@@ -388,6 +388,12 @@ class Registry:
                 authorization = hooks[2](name, spec, kwargs, intent, ctx,
                                          raw=arguments or {}, adjusted=adjusted)
             broker = ctx.extras.get("broker")
+            if spec.effect != 'read' and ctx.vault is not None:
+                from .folder_review import refuse_write
+                targets = list(intent.targets) if intent is not None else _write_targets(name, kwargs, ctx)
+                for target in targets:
+                    if str(target).replace('\\','/').split('/',1)[0] not in {'.librarian','.evidence'}:
+                        refuse_write(ctx.vault, ctx.vault.root / target)
             def invoke() -> Any:
                 # Some tools intentionally block while waiting for a person
                 # (`ask_user`) or orchestrate nested tool calls.  Holding an

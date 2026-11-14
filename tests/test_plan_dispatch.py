@@ -63,7 +63,8 @@ def test_dependency_ports_only_and_receipts(world):
 
 def test_packet_failure_skips_transitive_dependants(world,monkeypatch):
     pd,ctx,calls=world
-    monkeypatch.setattr(pd,'_call_external',lambda *a: {'error':'broken'})
+    original = pd._call_external
+    monkeypatch.setattr(pd,'_call_external',lambda c,s,t,a: original(c,s,t,a) if t=='list_graphs' else {'error':'broken'})
     out=pd.dispatch_plan(ctx,plan([task('t1'),task('t2',['t1']),task('t3',['t2'])]))
     assert [out['results'][t]['state'] for t in ('t1','t2','t3')]==['failed','skipped','skipped']
 

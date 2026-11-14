@@ -38,6 +38,7 @@ import tomllib
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
+from .credentials import credential_path
 
 SURVEY_VERSION = 1
 MAX_ENTRIES = 200_000            # past this the survey stops and says it is partial
@@ -78,6 +79,9 @@ class Survey:
 
     def to_dict(self) -> dict[str, Any]:
         out = asdict(self)
+        refused = getattr(self, 'credential_refusals', None)
+        if refused and refused['count']:
+            out['credential_refusals'] = refused
         geo = getattr(self, "geo_grapher", None)
         if geo:
             out["geo_grapher"] = geo
@@ -142,14 +146,21 @@ def _excluded(name: str) -> str:
     return ""
 
 
-def survey(folder: Path | str) -> Survey:
+def survey(folder: Path | str, *, geographer=None) -> Survey:
     """Survey `folder` without changing anything in it."""
     given = Path(folder).expanduser()
     out = Survey(folder=str(given))
     out.entries = []
+    out.credential_refusals = {"count": 0, "paths": []}
     out.root_is_link = os.path.lexists(given) and _is_link(given)
     root = given.resolve()
     out.canonical_root = str(root)
+    if credential_path(root):
+        out.credential_refusals = {'count': 1, 'paths': [str(root)]}
+        out.stops.append('CREDENTIAL_REFUSED: the survey root is itself a refused path')
+        _modes(out, empty=True)
+        out.fingerprint = _digest(out, [])
+        return out
     out.exists = root.is_dir()
     if os.path.lexists(given) and not out.exists:
         out.stops.append(f"{given} exists and is not a folder")
@@ -179,6 +190,11 @@ def survey(folder: Path | str) -> Survey:
             continue
         for entry in entries:
             rel = Path(entry.path).relative_to(root).as_posix()
+            if credential_path(rel):
+                out.credential_refusals['paths'].append(rel)
+                out.credential_refusals['count'] += 1
+                seen.append((rel, -3, 0))
+                continue
             by_folded.setdefault(rel.lower(), []).append(rel)
             if len(seen) >= MAX_ENTRIES:
                 out.partial = True
@@ -225,7 +241,15 @@ def survey(folder: Path | str) -> Survey:
     _modes(out, empty=not seen)
     out.fingerprint = _digest(out, seen)
     out.entries = sorted(seen)     # not reported; DEPLOY-02 compares them before and after
-    geo = _geo_grapher_preview(root) if out.exists else None
+    if geographer is not None:
+        if geographer.get('enabled'):
+            from .folder_review import cli, inventory
+            plan = cli(geographer, ['init-workspace', '--root', str(root), '--catalog',
+                str(geographer.get('catalog') or Path(tempfile.gettempdir()) / 'unused-survey-catalog.sqlite'),
+                '--survey-in', '-'], inventory(out))
+            out.geo_grapher = dict(plan=plan)
+        return out
+    geo = _geo_grapher_preview(root, out) if out.exists else None
     if geo is not None:
         out.geo_grapher = geo      # reported only when GEOGRAPHER_INIT is set; outside the fingerprint
     return out
@@ -234,7 +258,7 @@ def survey(folder: Path | str) -> Survey:
 GEOGRAPHER_TIMEOUT = 60
 
 
-def _geo_grapher_preview(root: Path) -> dict[str, Any] | None:
+def _geo_grapher_preview(root: Path, surveyed: Survey) -> dict[str, Any] | None:
     """Ask Geo-Grapher for a read-only partition plan of `root` (workspace-init-v1).
 
     Runs only when GEOGRAPHER_INIT names a command. It calls `init-workspace ... --plan-out -`
@@ -247,10 +271,15 @@ def _geo_grapher_preview(root: Path) -> dict[str, Any] | None:
     scratch = Path(tempfile.mkdtemp(prefix="librarian-geographer-"))
     try:
         argv = [a.strip('"') for a in shlex.split(cmd, posix=False)] + [
-            "init-workspace", "--root", str(root), "--catalog", str(scratch / "catalog.sqlite"), "--plan-out", "-"]
+            "init-workspace", "--root", str(root), "--catalog", str(scratch / "catalog.sqlite"), "--plan-out", "-",
+            "--survey-in", "-"]
+        inventory = {"version": "folder-inventory-v1", "root": str(root),
+                     "fingerprint": surveyed.fingerprint, "entries": surveyed.entries,
+                     "partial": surveyed.partial, "unreadable": surveyed.unreadable,
+                     "credential_refusals": surveyed.credential_refusals}
         try:
             done = subprocess.run(argv, capture_output=True, timeout=GEOGRAPHER_TIMEOUT,
-                                  stdin=subprocess.DEVNULL)
+                                  input=json.dumps(inventory).encode('utf-8'))
         except (OSError, ValueError) as exc:
             return {"error": "GEOGRAPHER_INIT_UNAVAILABLE", "detail": str(exc)[:300], "command": cmd}
         except subprocess.TimeoutExpired:

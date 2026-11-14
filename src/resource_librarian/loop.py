@@ -1204,6 +1204,9 @@ class Loop:
                     if recovery.begin('FP9',dict(format=protocol,stage='step_limit' if at_step_limit else 'answer'),'incomplete_answer_without_dispatch'):
                         recovery.finish(['FP9'],True)
                     reply.text='I could not complete an evidence-grounded answer within the available steps.'
+            if not reply.tool_calls and recovery is None:
+                from .source_scope import annotate
+                reply.text = annotate(reply.text, self.ctx.extras.get('_source_provenance', {}), self.on_event)
             self.messages.append(reply.message())
             final = not reply.tool_calls
             reply_id = f"r-{secrets.token_hex(6)}" if final and reply.text else ""
@@ -1222,6 +1225,9 @@ class Loop:
                                    "completed_at_step_limit": turn.completed_at_step_limit})
                     if recovery is not None:recovery.finish(['FP7'],turn.completed_at_step_limit)
                 turn=self._recover_code_answer(turn,cancel,started,walk_provider,runtime,binding)
+                if recovery is not None:
+                    from .source_scope import annotate
+                    turn.reply = annotate(turn.reply, self.ctx.extras.get('_source_provenance', {}), self.on_event)
                 if recovery is not None and turn.reply and turn.stopped!='cancelled':
                     self.on_event(dict(type='text',text=turn.reply,reply_id=turn.reply_id,turn_id=turn.turn_id,
                         **({'completed_at_step_limit':True} if turn.completed_at_step_limit else {})))
@@ -1238,6 +1244,8 @@ class Loop:
                 self.on_event({"type": "tool_call", "tool": call.name,
                                "arguments": call.arguments})
                 result = self.call(call.name, call.arguments)
+                from .source_scope import collect
+                collect(result, self.ctx.extras.setdefault('_source_provenance', {}))
                 self._flush_pending()          # `call` may be what just opened the session
                 self._flush_pending_model_events()
                 self.refused_last_step = self.refused_last_step or "refused" in result

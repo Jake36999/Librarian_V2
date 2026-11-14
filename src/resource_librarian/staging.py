@@ -45,7 +45,7 @@ from .rules import Refusal
 from .search import Engine
 from .vault import Vault, now_iso
 
-KINDS = ("source", "lens", "concept", "topic", "import", "model_expectation")
+KINDS = ("source", "lens", "concept", "topic", "import", "model_expectation", "folder")
 # One lifecycle for a source (Requirements - Research Pipeline §4.1, Addendum R7/R14):
 # queued (a reference, not yet fetched) -> staged (captured and described) -> approved
 # (a person approved spending processing on it) -> processing (in a batch a person
@@ -800,6 +800,8 @@ def _decide_one(store, engine, item_id, decision, reason, bottom_line, what_it_s
     if item["status"] == "queued":
         raise TypeError(f"{item_id} is queued for capture, not yet fetched: intake_run "
                         f"captures it, queue_remove drops it")
+    if item['kind'] == 'folder':
+        raise Refusal('PERSON_CONFIRMS', 'folder decisions require the Folders review with a fresh folder fingerprint')
     if item["status"] == "processing":
         raise TypeError(f"{item_id} is in batch {item.get('batch', '?')}: decide it once the "
                         f"batch has enriched it")

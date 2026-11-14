@@ -436,7 +436,10 @@ def fetch_dataset(url: str, fetcher: Fetcher, store: EvidenceStore) -> Fetched:
 
 
 def fetch_file(rel: str, vault: Vault, store: EvidenceStore) -> Fetched:
+    from .credentials import refuse_credentials
+    refuse_credentials(rel)
     path = vault.root / rel
+    refuse_credentials(path.resolve())
     result = text.extract(path, vault.derived / "text")
     if result.error:
         raise FetchError(f"{rel}: {result.error}")

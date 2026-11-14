@@ -162,6 +162,18 @@ def dispatch_plan(ctx: Context, plan: dict) -> dict:
     normalised = []
     tasks, waves = _validate(ctx, plan, normalised)
     results, packets = {}, {}; server = plan['server']
+    # Scope is checked for the entire DAG before compiling any packet or invoking a model.
+    if any(t['tier'] == 3 for t in tasks.values()) and not _cancelled(ctx):
+        catalog = _call_external(ctx, server, 'list_graphs', {})
+        graphs = {g['graph_id']: g for g in catalog.get('graphs', [])}
+        for tid, t in tasks.items():
+            if t['tier'] != 3: continue
+            graph = graphs.get(t['graph_id'])
+            if graph is None:
+                raise ValueError(f'PLAN_SCOPE: task {tid}: graph not available')
+            if (graph.get('stratum', {}).get('role') in {'third_party', 'external_reference', 'research_docs'}
+                    or graph.get('provenance') == 'third_party'):
+                raise ValueError(f'PLAN_SCOPE: task {tid}: tier-3 cannot read third-party graph {t["graph_id"]}')
     for wave in waves:
         ready = []
         for tid in wave:

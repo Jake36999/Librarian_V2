@@ -774,17 +774,20 @@ def create_project(ctx: Context, name: str, stage: str, summary: str,
                 "librarian-app/. Never writes to a project: changing a file is "
                 "project_edit, allowed separately (OBSERVER_WITHOUT_ACTUATION)"))
 def read_project(ctx: Context, path: str = "") -> dict:
+    from ..credentials import refuse_credentials, credential_path
+    refuse_credentials(path)
     session = _session(ctx)
     root = _project_root(ctx, session.project)
     from .. import projects
-    projects.log(root, {"event": "read", "path": path or "(listing)", "session": session.id})
+    projects.log(root, {"event": "read", "path": path or "(listing)", "session": session.id}, vault=ctx.vault)
     if not path:
         files = sorted(p.relative_to(root).as_posix() for p in root.rglob("*")
-                       if p.is_file() and not any(part.startswith(".") or part == "librarian-app"
+                       if p.is_file() and not credential_path(p.relative_to(root)) and not any(part.startswith(".") or part == "librarian-app"
                                                   for part in p.relative_to(root).parts))
         _event(ctx, {"type": "plan", "fields": {"project_read": f"listed {len(files)} files"}})
         return {"root": str(root), "files": files[:MAX_PROJECT_LIST], "total": len(files)}
     target = (root / path).resolve()
+    refuse_credentials(target)
     if root not in target.parents or not target.is_file():
         raise TypeError(f"{path!r} is not a file inside the project")
     text = target.read_text(encoding="utf-8", errors="replace")
@@ -953,7 +956,8 @@ def project_map(ctx: Context, project: str = "", kind: str = "", limit: int = 60
     session = SessionStore(ctx.vault).load(ctx.session) if ctx.session else None
     name = project or (session.project if session else "")
     root = _project_root(ctx, name)
-    app = root / "librarian-app"
+    from .. import projects
+    app = projects.sidecar(ctx.vault, root)
     components = app / "data" / "components.json"
     if not components.is_file():
         raise TypeError(f"{name!r} has not been scanned yet: project_scan")
@@ -1899,13 +1903,13 @@ def _link_project_application(ctx: Context, session, rel: str, name: str) -> str
         root = _project_root(ctx, session.project)
     except (Refusal, TypeError):
         return ""
-    target = root / "librarian-app" / "applications" / f"{notes.safe_name(name)}.json"
+    target = projects.sidecar(ctx.vault, root) / 'applications' / f'{notes.safe_name(name)}.json'
     if not target.parent.is_dir():
         return ""
     target.write_text(_json.dumps({"application": rel, "library": ctx.vault.root.name,
                                    "session": session.id}, indent=1), encoding="utf-8")
-    projects.log(root, {"event": "application recorded", "application": rel})
-    return target.relative_to(root).as_posix()
+    projects.log(root, {"event": "application recorded", "application": rel}, vault=ctx.vault)
+    return target.relative_to(root).as_posix() if target.is_relative_to(root) else str(target)
 
 
 # --------------------------------------------------------------- W3 · weekly-review

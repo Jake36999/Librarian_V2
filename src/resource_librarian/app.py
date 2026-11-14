@@ -3813,6 +3813,40 @@ class App:
                 "read": f"close pair {near:.2f}, far pair {far:.2f}", "model": spec}
 
     # -- project access (Research Pipeline §6): a person's controls, never the model's --
+    def folders(self) -> dict[str, Any]:
+        from .folder_review import FolderReview
+        return FolderReview(self.vault).overview()
+
+    @mutation_entry('the folder survey')
+    def survey_folders(self, path: str) -> dict[str, Any]:
+        from .folder_review import FolderReview
+        try:
+            return self._serialized('folder-survey', lambda: FolderReview(self.vault).survey(path))
+        except ValueError as exc:
+            raise ApiError(400, str(exc)) from exc
+
+    @mutation_entry('the person folder decision')
+    def accept_folder(self, body: dict) -> dict[str, Any]:
+        from .folder_review import FolderReview
+        try:
+            return self._serialized('folder-accept', lambda: FolderReview(self.vault).accept(
+                str(body.get('id') or ''), str(body.get('folder_fingerprint') or ''),
+                purpose=body.get('purpose'), graph=body.get('graph'), person=True,
+                description=body.get('description')))
+        except (ValueError, TypeError) as exc:
+            raise ApiError(409 if 'STALE' in str(exc) else 400, str(exc)) from exc
+
+    @mutation_entry('the approved folder draft')
+    def draft_folder(self, body: dict) -> dict[str, Any]:
+        from .folder_review import FolderReview
+        from .tools.staging import clerk_endpoint
+        try:
+            ctx = Context(tier='contribute', vault=self.vault, extras=self._extras())
+            return FolderReview(self.vault).draft(str(body.get('id') or ''), clerk_endpoint(ctx),
+                approved=body.get('approve_spend') is True)
+        except ValueError as exc:
+            raise ApiError(400, str(exc)) from exc
+
     def projects(self) -> dict[str, Any]:
         from . import projects
         data = projects.state(self.vault)
@@ -4190,6 +4224,8 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                     return self._json(200, app.services())
                 if url.path == "/api/projects":
                     return self._json(200, app.projects())
+                if url.path == '/api/folders':
+                    return self._json(200, app.folders())
                 if url.path == "/api/offerings/staged":
                     from .tools.sessions import staged_offering, staged_offerings
                     wanted = (query.get("id") or [""])[0]
@@ -4449,6 +4485,12 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 return app.test_service(str(body.get("slot") or ""))
             if path == "/api/projects/enable":
                 return app.set_projects_enabled(bool(body.get("enabled")))
+            if path == '/api/folders/survey':
+                return app.survey_folders(str(body.get('path') or ''))
+            if path == '/api/folders/accept':
+                return app.accept_folder(body)
+            if path == '/api/folders/draft':
+                return app.draft_folder(body)
             if path == "/api/projects/add":
                 return app.add_project_root(str(body.get("path") or ""),
                                             str(body.get("project") or ""))
