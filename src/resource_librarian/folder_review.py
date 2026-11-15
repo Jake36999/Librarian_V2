@@ -89,7 +89,7 @@ def cli(config, operation, payload):
             or config.get('wheel_version') != '0.2.0'):
         raise ValueError('GEOGRAPHER_CONFIGURATION: enable a pinned 0.2.0 installed-wheel command')
     # Graph building scales with the project (quantule_mapper: ~8,000 files); planning does not.
-    timeout = 3600 if operation[:1] and operation[0] in LONG_OPERATIONS else 120
+    timeout = 14400 if operation[:1] and operation[0] in LONG_OPERATIONS else 120
     try:
         done = subprocess.run([*command, *operation], input=json.dumps(payload).encode('utf-8'),
                               capture_output=True, timeout=timeout)
