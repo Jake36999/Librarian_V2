@@ -34,7 +34,7 @@ export class DocPane {
   private version = 0;
   private switcher = h("div",{class:"pane-views",role:"group","aria-label":"Pane view"});
   private compact = h("select",{"aria-label":"Pane view"}) as HTMLSelectElement;
-  private current: {kind:"browse"} | { kind: "plan" } | { kind: "agenda" } | { kind: "doc"; path: string; name: string } = { kind: "plan" };
+  private current: {kind:"browse"} | { kind: "plan" } | { kind: "agenda" } | { kind: "doc"; path: string; name: string; readOnly?: boolean; sourcePath?: string } = { kind: "plan" };
   private browsing = "";
 
   /** `onMoved`: a note was renamed, so links to it elsewhere (the chat) can follow.
@@ -160,14 +160,16 @@ export class DocPane {
       return;
     }
     if (version !== this.version) return;
-    this.mark("Note"); this.current = { kind: "doc", path: doc.path, name: doc.name };
-    this.speakButton.hidden = Boolean(doc.script);         // code is run, not read aloud
+    this.mark("Note"); this.current = { kind: "doc", path: doc.path, name: doc.name,
+      readOnly: Boolean(doc.read_only), sourcePath: doc.source_path || doc.path };
+    this.speakButton.hidden = Boolean(doc.script) || Boolean(doc.read_only);
     this.runButton.hidden = !doc.script;
     this.browsing = doc.path.split("/").slice(0,-1).join("/");
     this.recent = [{ path: doc.path, name: doc.name }, ...this.recent.filter((r) => r.path !== doc.path)].slice(0, RECENT);
     const project = this.currentProject();
     if (project) this.api.tool("desk_touch", { project, note: doc.name }).catch(() => undefined);
-    this.paintCrumbs(doc.path);
+    if (doc.read_only) clear(this.crumbs, h('span', {class:'crumb-here'}, doc.source_path || doc.name));
+    else this.paintCrumbs(doc.path);
     if (doc.script) {
       // A script is shown as it is - never rendered - with its last run below it.
       clear(this.runOutput);
@@ -182,6 +184,7 @@ export class DocPane {
     const titled = own?.tagName === "H2" && own.textContent?.trim().toLowerCase() === String(doc.name).toLowerCase();
     if (titled) own!.remove();
     clear(this.body, h("article", { class: "doc" }, h("h1", { class: "doc-title" }, doc.name),
+      doc.read_only ? h('p', {class:'note'}, 'Read-only attached document') : null,
       doc.catalogue ? renderCatalogue(doc.catalogue, (source, filename)=>this.api.downloadOriginal(source, filename)) : null, rendered));
     this.body.scrollTop = 0;
   }
@@ -248,14 +251,14 @@ export class DocPane {
     const item = (label: string, small: string, action: () => void, cls = "") => h("button", {
       class: `menuitem ${cls}`, role: "menuitem", onclick: action }, label, small ? h("small", {}, small) : null);
     const vault = this.vaultName();
-    const obsidian = this.current.kind === "doc" && vault
+    const obsidian = this.current.kind === "doc" && !this.current.readOnly && vault
       ? `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(this.current.path)}` : "";
     const doc = this.current.kind === "doc" ? this.current : null;
     if (!doc) return;
     clear(this.menu, obsidian ? h("a",{class:"menuitem",href:obsidian,role:"menuitem"},"Open this note in Obsidian") : null,
-      item("Rename or move…","Links follow the note",()=>this.paintMove(doc),"move"),
-      item("Copy path",doc.path,async()=>{try {await navigator.clipboard.writeText(doc.path);this.showMenu(false);this.menuButton.focus();}
-        catch {this.menu.append(h("p",{role:"status"},doc.path));}}));
+      doc.readOnly ? null : item("Rename or move…","Links follow the note",()=>this.paintMove(doc),"move"),
+      item("Copy path",doc.sourcePath || doc.path,async()=>{try {await navigator.clipboard.writeText(doc.sourcePath || doc.path);this.showMenu(false);this.menuButton.focus();}
+        catch {this.menu.append(h("p",{role:"status"},doc.sourcePath || doc.path));}}));
     this.menu.querySelector<HTMLElement>("a,button")?.focus();
   }
 

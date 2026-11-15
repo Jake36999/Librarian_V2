@@ -393,7 +393,12 @@ def get_note(ctx: Context, name: str, sections: list[str] | None = None) -> dict
         path = ctx.vault.root / row["path"]
         data = read_bytes(path)
         frontmatter, text, error = notes.parse(data.decode("utf-8", errors="replace"))
-        note = notes.Note(name=path.stem, path=path, frontmatter=frontmatter, body=text,
+        indexed_fm = json.loads(row['frontmatter'])
+        if row['shape'] == 'workspace_document' and indexed_fm.get('_workspace_source'):
+            from ..workspace_documents import document
+            from ..file_access import read_bytes_snapshot
+            _, frontmatter, text, error = document(ctx.vault, path, read_bytes_snapshot(path))
+        note = notes.Note(name=row['name'], path=path, frontmatter=frontmatter, body=text,
                           parse_error=error)
         body = note.sections()
         from ..catalogue_navigation import navigation
@@ -406,8 +411,8 @@ def get_note(ctx: Context, name: str, sections: list[str] | None = None) -> dict
                 "linked_from": engine.index.linked_from(row["name"])[:50],
                 # What a replace-existing write must bring back (CORE-05):
                 # this note as these exact bytes, to this session and caller.
-                "revision": revisions.issue(ctx, revisions.canonical(ctx.vault, row["path"]),
-                                            fingerprint_bytes(data))}
+                **({'read_only': True, 'revision': '', 'read_limitations': [error] if error else []} if indexed_fm.get('_index_read_only') else
+                   {'revision': revisions.issue(ctx, revisions.canonical(ctx.vault, row['path']), fingerprint_bytes(data))})}
     return with_engine(ctx, load)
 
 

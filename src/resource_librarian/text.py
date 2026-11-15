@@ -131,6 +131,19 @@ def sync_documents(index: Index) -> dict[str, Any]:
         if not rel:
             continue
         path = (vault.root / rel).resolve()
+        from .access import _native_authorship
+        from .registry import Context
+        fm = json.loads(row['frontmatter'])
+        if fm.get('authorship') == 'third_party' or _native_authorship(Context(vault=vault), str(path)) == 'third_party':
+            # A previous classification may have left full document chunks.
+            # Keep catalogue sections, remove only the original-text projection.
+            ids = [r[0] for r in index.conn.execute("SELECT id FROM chunk WHERE path=? AND role='document'", (row['path'],))]
+            index._delete_chunk_ids(ids)
+            index.conn.execute('DELETE FROM document_text WHERE path=?', (row['path'],))
+            index.conn.execute('DELETE FROM meta WHERE key=?', ('doc:' + row['name'],))
+            report['problems'].append({'note': row['name'], 'file': rel,
+                'code': 'THIRD_PARTY_CATALOGUE_ONLY', 'problem': 'Native search retains catalogue metadata only; use the conversion graph for located source text'})
+            continue
         if vault.root not in path.parents or not path.is_file():
             report["problems"].append({"note": row["name"], "file": rel,
                                        "problem": "not a file inside this vault"})

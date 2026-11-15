@@ -3985,6 +3985,27 @@ class App:
         """A note by vault path (with or without `.md`), or by bare name when
         the name is unique enough to find: what a [[link]] in the chat holds."""
         rel = (rel or "").strip()
+        if rel.startswith(('workspace:', 'Folder - ')):
+            from .workspace_documents import document, is_projection
+            from .file_access import read_bytes_snapshot
+            self.index_service.refresh()
+            row = self.index_service.run(lambda index: dict(found) if (found := index.note_row(rel)) is not None else None)
+            if row is None or not json.loads(row['frontmatter']).get('_index_read_only'):
+                raise ApiError(404, 'Workspace reference is unavailable; search again')
+            path = Path(row['path']); path = path if path.is_absolute() else self.vault.root / path
+            try:
+                snapshot = read_bytes_snapshot(path)
+                if row['shape'] == 'workspace_document':
+                    _, fm, body, error = document(self.vault, path, snapshot)
+                elif is_projection(self.vault, path):
+                    fm, body, error = notes.parse(snapshot.data.decode('utf-8'))
+                else:
+                    raise ApiError(404, 'Not a read-only workspace reference')
+            except (OSError, ValueError) as exc:
+                raise ApiError(404, 'Workspace source is unavailable or no longer owner-created') from exc
+            return {'path': row['name'], 'name': row['name'], 'source_path': str(fm.get('root') or path),
+                    'text': notes.render(fm, body), 'read_only': True,
+                    'read_limitations': [error] if error else [], 'modified': round(snapshot.mtime)}
         if Path(rel).suffix.lower() in SCRIPT_SUFFIXES:
             # A script is shown as code, never rendered - and only a script can be run
             # (the pane's Run button, EXECUTION_SANDBOX_ONLY).

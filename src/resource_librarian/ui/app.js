@@ -5414,14 +5414,21 @@ var Librarian = (() => {
       }
       if (version !== this.version) return;
       this.mark("Note");
-      this.current = { kind: "doc", path: doc.path, name: doc.name };
-      this.speakButton.hidden = Boolean(doc.script);
+      this.current = {
+        kind: "doc",
+        path: doc.path,
+        name: doc.name,
+        readOnly: Boolean(doc.read_only),
+        sourcePath: doc.source_path || doc.path
+      };
+      this.speakButton.hidden = Boolean(doc.script) || Boolean(doc.read_only);
       this.runButton.hidden = !doc.script;
       this.browsing = doc.path.split("/").slice(0, -1).join("/");
       this.recent = [{ path: doc.path, name: doc.name }, ...this.recent.filter((r) => r.path !== doc.path)].slice(0, RECENT);
       const project = this.currentProject();
       if (project) this.api.tool("desk_touch", { project, note: doc.name }).catch(() => void 0);
-      this.paintCrumbs(doc.path);
+      if (doc.read_only) clear(this.crumbs, h("span", { class: "crumb-here" }, doc.source_path || doc.name));
+      else this.paintCrumbs(doc.path);
       if (doc.script) {
         clear(this.runOutput);
         clear(this.body, h(
@@ -5442,6 +5449,7 @@ var Librarian = (() => {
         "article",
         { class: "doc" },
         h("h1", { class: "doc-title" }, doc.name),
+        doc.read_only ? h("p", { class: "note" }, "Read-only attached document") : null,
         doc.catalogue ? renderCatalogue(doc.catalogue, (source, filename) => this.api.downloadOriginal(source, filename)) : null,
         rendered
       ));
@@ -5514,20 +5522,20 @@ var Librarian = (() => {
         onclick: action
       }, label, small ? h("small", {}, small) : null);
       const vault = this.vaultName();
-      const obsidian = this.current.kind === "doc" && vault ? `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(this.current.path)}` : "";
+      const obsidian = this.current.kind === "doc" && !this.current.readOnly && vault ? `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(this.current.path)}` : "";
       const doc = this.current.kind === "doc" ? this.current : null;
       if (!doc) return;
       clear(
         this.menu,
         obsidian ? h("a", { class: "menuitem", href: obsidian, role: "menuitem" }, "Open this note in Obsidian") : null,
-        item("Rename or move\u2026", "Links follow the note", () => this.paintMove(doc), "move"),
-        item("Copy path", doc.path, async () => {
+        doc.readOnly ? null : item("Rename or move\u2026", "Links follow the note", () => this.paintMove(doc), "move"),
+        item("Copy path", doc.sourcePath || doc.path, async () => {
           try {
-            await navigator.clipboard.writeText(doc.path);
+            await navigator.clipboard.writeText(doc.sourcePath || doc.path);
             this.showMenu(false);
             this.menuButton.focus();
           } catch {
-            this.menu.append(h("p", { role: "status" }, doc.path));
+            this.menu.append(h("p", { role: "status" }, doc.sourcePath || doc.path));
           }
         })
       );

@@ -36,6 +36,10 @@ def _key(text: str) -> str:
 def note(ctx: Context, value: str) -> str:
     if ctx.vault is None:
         return value
+    if value.strip().startswith('workspace:'):
+        # This is a returned, root-qualified index name, not a vault path.
+        # Never collapse it to README (or guess when it no longer exists).
+        return value.strip()
     name = _clean_note(value)
     stems: dict[str, list[str]] = {}
     for path in notes.iter_paths(ctx.vault.root):

@@ -1869,7 +1869,7 @@
         "symbol": "get_note"
       },
       "fingerprint": {
-        "source_sha256": "65ecd2bfbd75670988dac7d5c337bf6ca22d516674fa0eca4f441aec5b30e34d",
+        "source_sha256": "01d93561aaf85e19f096e5ceb7884114691d87206a0912a2195cd5971c597816",
         "schema_sha256": "7e907428eec9b3169972bf17d966c40d84e05054389d21f2083b49b9175b1edc",
         "effect": "read",
         "open_world": false,
