@@ -75,8 +75,18 @@ def cli(config, operation, payload):
     done = subprocess.run([*command, *operation], input=json.dumps(payload).encode('utf-8'),
                           capture_output=True, timeout=120)
     if done.returncode:
-        # Do not reflect raw subprocess output (it may contain source data) into the UI.
-        raise ValueError('GEOGRAPHER_CALL_FAILED: inspect the local diagnostic log')
+        # Do not reflect raw subprocess output (it may contain source data) into the UI;
+        # keep it in the owner-only local log the message points to.
+        log_dir = Path(config.get('log_dir') or Path.home() / '.config' / 'resource-librarian' / 'logs')
+        try:
+            log_dir.mkdir(parents=True, exist_ok=True)
+            with open(log_dir / 'geographer-cli.log', 'a', encoding='utf-8') as out:
+                out.write(f"--- {now_iso()} {' '.join(operation[:1])} exit {done.returncode}{chr(10)}"
+                          f"{done.stderr.decode('utf-8', 'replace')[-8000:]}{chr(10)}")
+        except OSError:
+            pass
+        raise ValueError('GEOGRAPHER_CALL_FAILED: inspect the local diagnostic log '
+                         '(.config/resource-librarian/logs/geographer-cli.log)')
     result = json.loads(done.stdout)
     if result.get('geographer_version') != config['wheel_version']:
         raise ValueError('GEOGRAPHER_VERSION_MISMATCH: install the pinned wheel')

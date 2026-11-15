@@ -399,3 +399,17 @@ def test_policy_infers_data_authorship_from_its_nearest_classified_ancestor(libr
     assert after['third_party_alpha/dump'].get('inherited') is True               # stays third-party, covered
     assert 'decision' not in after['third_party_alpha/dump']
     assert 'ancestor' in after['src/runs']['decision']['policy']['rule']
+
+
+def test_a_failed_geographer_call_writes_the_promised_diagnostic_log(library, tmp_path):
+    import sys, json as _json
+    from resource_librarian.folder_review import cli
+    vault, _ = library
+    script = tmp_path / 'boom.py'
+    script.write_text("import sys; sys.stderr.write('Traceback: catalog locked\n'); sys.exit(1)")
+    config = dict(enabled=True, command=[sys.executable, str(script)], wheel_version='0.2.0', log_dir=str(vault.root / 'logs'))
+    with pytest.raises(ValueError, match='GEOGRAPHER_CALL_FAILED') as caught:
+        cli(config, ['apply-folder-review'], {'x': 1})
+    assert 'catalog locked' not in str(caught.value)            # never reflected into the UI
+    log = (vault.root / 'logs' / 'geographer-cli.log').read_text(encoding='utf-8')
+    assert 'apply-folder-review' in log and 'catalog locked' in log and 'exit 1' in log
