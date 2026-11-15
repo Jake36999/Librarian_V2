@@ -66,14 +66,23 @@ def inventory(found):
                 unreadable=found.unreadable, credential_refusals=found.credential_refusals)
 
 
+LONG_OPERATIONS = frozenset({'apply-folder-review', 'import-library-paper'})
+
+
 def cli(config, operation, payload):
     command = config.get('command')
     if (not config.get('enabled') or not isinstance(command, list) or not command
             or not all(isinstance(s, str) and s for s in command)
             or config.get('wheel_version') != '0.2.0'):
         raise ValueError('GEOGRAPHER_CONFIGURATION: enable a pinned 0.2.0 installed-wheel command')
-    done = subprocess.run([*command, *operation], input=json.dumps(payload).encode('utf-8'),
-                          capture_output=True, timeout=120)
+    # Graph building scales with the project (quantule_mapper: ~8,000 files); planning does not.
+    timeout = 3600 if operation[:1] and operation[0] in LONG_OPERATIONS else 120
+    try:
+        done = subprocess.run([*command, *operation], input=json.dumps(payload).encode('utf-8'),
+                              capture_output=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        raise ValueError(f'GEOGRAPHER_TIMEOUT: {operation[0]} exceeded {timeout}s; the graph build was '
+                         'stopped and nothing was accepted') from None
     if done.returncode:
         # Do not reflect raw subprocess output (it may contain source data) into the UI;
         # keep it in the owner-only local log the message points to.
