@@ -103,6 +103,15 @@ export async function folderReview(api: Api, container: HTMLElement): Promise<vo
       h('p', {class:'note'}, (card.reasons as string[]).join('; ')),
       h('label', {}, 'Purpose ', purpose), h('label', {}, 'Authorship ', authorship),
       h('label', {}, 'Graph ', graph), draftStatus,
+    ...(accepted && ['third-party', 'research-docs'].includes(card.decision?.purpose) ? [h('button', {type:'button',
+      title:'Queue the documents of this reference folder for intake as Sources (no model call until processing)',
+      onclick: async () => {
+        try {
+          const root = card.path === '.' ? card.source_root : `${card.source_root}/${card.path}`;
+          const out = await api.post('/api/folders/sources', {folder: root, limit: 200});
+          outcome.textContent = `Queued ${out.queued} of ${out.documents} documents as Sources; ${out.remaining} remaining.`;
+        } catch (e) { outcome.textContent = (e as Error).message; }
+      }}, 'Queue documents as Sources')] : []),
       h('label', {}, 'Brief description ', description),
       h('details', {}, h('summary', {}, 'Optional model draft'),
         h('p', {}, 'Production drafting is disabled pending owner approval of a qualified Clerk. Drafting checks inventory arithmetic and sensitivity; source text is never sent.'),

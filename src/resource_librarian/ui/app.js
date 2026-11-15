@@ -5967,6 +5967,19 @@ var Librarian = (() => {
         h("label", {}, "Authorship ", authorship),
         h("label", {}, "Graph ", graph),
         draftStatus,
+        ...accepted && ["third-party", "research-docs"].includes(card.decision?.purpose) ? [h("button", {
+          type: "button",
+          title: "Queue the documents of this reference folder for intake as Sources (no model call until processing)",
+          onclick: async () => {
+            try {
+              const root = card.path === "." ? card.source_root : `${card.source_root}/${card.path}`;
+              const out2 = await api.post("/api/folders/sources", { folder: root, limit: 200 });
+              outcome.textContent = `Queued ${out2.queued} of ${out2.documents} documents as Sources; ${out2.remaining} remaining.`;
+            } catch (e) {
+              outcome.textContent = e.message;
+            }
+          }
+        }, "Queue documents as Sources")] : [],
         h("label", {}, "Brief description ", description),
         h(
           "details",

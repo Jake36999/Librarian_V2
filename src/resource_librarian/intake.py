@@ -97,6 +97,14 @@ def capture(ref: str, vault: Vault | None = None) -> Reference:
         candidate = (vault.root / raw).resolve()
         if candidate.is_file() and vault.root in candidate.parents:
             return Reference("file", candidate.relative_to(vault.root).as_posix(), raw)
+        # A document inside an accepted, attached reference folder (folder review): read in
+        # place, never copied into the vault. Excluded or unattached paths stay refused.
+        external = Path(raw)
+        if external.is_absolute() and external.is_file():
+            from .folder_sources import attached_root
+            root = attached_root(vault, external)
+            if root is not None and root.get("purpose") not in (None, "exclude"):
+                return Reference("file", external.resolve().as_posix(), raw)
     if (m := ARXIV.search(raw)) and ("arxiv" in raw.lower() or re.fullmatch(r"\d{4}\.\d{4,5}(v\d+)?", raw)):
         return Reference("arxiv", m.group(1), raw)
     if (m := DOI.search(raw)) and ("doi" in raw.lower() or raw.startswith("10.")):

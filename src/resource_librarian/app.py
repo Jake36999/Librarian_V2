@@ -3886,6 +3886,20 @@ class App:
         except (ValueError, TypeError) as exc:
             raise ApiError(409 if 'STALE' in str(exc) else 400, str(exc)) from exc
 
+    def queue_folder_sources(self, body: dict) -> dict[str, Any]:
+        """Defer an accepted reference folder's documents into intake (no model call here)."""
+        from .folder_sources import queue
+        folder = str(body.get('folder') or '')
+        try:
+            limit = int(body.get('limit') or 50)
+        except (TypeError, ValueError):
+            raise ApiError(400, 'limit is a whole number of documents') from None
+        try:
+            return queue(self.vault, folder, limit=limit, ingest=lambda ref, note: self.person_call(
+                'ingest', {'ref': ref, 'defer': True, 'note': note}))
+        except ValueError as exc:
+            raise ApiError(400, str(exc)) from exc
+
     @mutation_entry('the agent-policy folder decisions')
     def accept_folders_by_policy(self, body: dict) -> dict[str, Any]:
         """Agent-mode orchestration: accept a root's unambiguous, non-sensitive cards as suggested."""
@@ -4636,6 +4650,8 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 return app.survey_folders(str(body.get('path') or ''))
             if path == '/api/folders/accept':
                 return app.accept_folder(body)
+            if path == '/api/folders/sources':
+                return app.queue_folder_sources(body)
             if path == '/api/folders/accept-policy':
                 return app.accept_folders_by_policy(body)
             if path == '/api/folders/approve-batch':
