@@ -232,3 +232,24 @@ def test_stale_clerk_result_cannot_replace_person_edit(library):
     with pytest.raises(PreconditionChangedError):
         batch._folder_describe(ctx, card)
     assert review.store.load(card['id'])['description']['text'] == 'Person revised this draft.'
+
+
+def test_accepted_folder_catalogue_links_description_graph_and_evidence(library):
+    from resource_librarian.folder_review import FolderReview
+    from resource_librarian.index import Index
+    vault, source = library
+    from resource_librarian.init import init
+    init(vault.root)
+    review=FolderReview(vault,planner=fake_planner,applier=lambda _: {})
+    card=next(c for c in review.survey(source)['cards'] if c['path']=='third_party_alpha')
+    accepted=review.accept(card['id'],card['folder_fingerprint'],purpose='third-party',graph='external-code',
+                           description='Upstream inventory for reference.',person=True)
+    with Index(vault) as index:
+        index.refresh()
+        rows=list(index.conn.execute("SELECT path,frontmatter FROM note WHERE shape='source'"))
+        row=next(r for r in rows if json.loads(r['frontmatter']).get('folder_decision')==card['id'])
+        fm=json.loads(row['frontmatter'])
+        text=(vault.root / row['path']).read_text(encoding='utf-8')
+        assert 'Upstream inventory for reference.' in text
+        assert fm['graph_label']=='external-code'
+        assert accepted['accepted_evidence'] in fm['evidence']

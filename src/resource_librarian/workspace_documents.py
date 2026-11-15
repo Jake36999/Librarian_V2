@@ -45,11 +45,14 @@ def _catalogue(vault, row):
     fm = dict(type='source', kind='document', catalogue_of='folder', title=base.name, authorship='generated',
         original_authorship=row.get('authorship'), root=str(base), catalogue_only=True,
         _index_read_only=True, status='active', survey_fingerprint=row.get('survey_fingerprint'),
-        folder_decision=row.get('folder_decision'))
+        folder_decision=row.get('folder_decision'), graph_label=row.get('graph_label'),
+        evidence=row.get('evidence', []))
     body = (f'# Attached folder - {base.name} - {digest}\n\n## Description\n'
         f"Accepted purpose: {row.get('purpose') or 'not recorded'}. "
         f"Original authorship: {row.get('authorship') or 'unclassified'}.\n\n"
         'This is folder metadata, not source text or evidence of examination.\n\n'
+        f"{row.get('description') or 'Description not recorded.'}\n\n"
+        f"## Graph\n{row.get('graph_label') or 'Graph not recorded.'}\n\n"
         f'## Original folder\n{base}\n')
     rendered = notes.render(fm, body)
     if not path.is_file() or path.read_text(encoding='utf-8') != rendered:

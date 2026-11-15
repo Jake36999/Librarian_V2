@@ -273,6 +273,7 @@ class FolderReview:
         candidate['application'] = result; candidate.pop('pending_decision', None)
         from .folder_intake import accepted_record
         accepted_record(self.vault, candidate)
+        self._root_access(candidate)
         self.store.save(candidate); return candidate
 
     def _root_access(self, card):
@@ -287,7 +288,10 @@ class FolderReview:
         if purpose != 'exclude':
             data['roots'].append(dict(path=path, access=access, attached=attached,
                 purpose=purpose, authorship=card['decision']['authorship'],
-                folder_decision=card['id'], survey_fingerprint=card['survey_fingerprint']))
+                folder_decision=card['id'], survey_fingerprint=card['survey_fingerprint'],
+                description=card['decision'].get('description', ''), graph_label=card['decision']['graph'],
+                evidence=[e['id'] for e in card.get('evidence', [])] +
+                         ([card['accepted_evidence']] if card.get('accepted_evidence') else [])))
         else:
             data['excludes'] = sorted(set(data.get('excludes', [])) | {path})
         content_roots._write_json(content_roots.manifest_path(self.vault.root), data)

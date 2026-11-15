@@ -14,7 +14,15 @@ from .vault import now_iso
 def export_document(vault, item):
     from .catalogue_navigation import use_rollup
     from .staging import _attachment_path
-    original = _attachment_path(vault, item['file']) if item.get('file') else None
+    original = None
+    if item.get('file'):
+        candidate = Path(item['file'])
+        if candidate.is_absolute() and not candidate.resolve().is_relative_to(vault.root):
+            from .read_access import source_path
+            from .registry import Context
+            original = source_path(Context(vault=vault), str(candidate))
+        else:
+            original = _attachment_path(vault, item['file'])
     data = {'file_path': original.resolve().as_posix() if original else 'catalogue:' + str(item['name']),
             'metadata': {'title': item.get('title') or item['name'], 'authors': item.get('authors', [])},
             'sections': [], 'source': 'librarian_conversion', 'producer': 'librarian-paper-conversion-v1',
