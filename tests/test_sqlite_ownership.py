@@ -22,7 +22,10 @@ INFRASTRUCTURE = {
     ("communities.py", "run_index"): 1, ("extract.py", "run_index"): 1,
 }
 # Separate SQLite stores, not the vault index.  Reviewed under INDEX-05.
-OTHER_STORES = {("desk.py", "sqlite3.connect"): 1, ("lenses.py", "sqlite3.connect"): 1}
+OTHER_STORES = {("desk.py", "sqlite3.connect"): 1, ("lenses.py", "sqlite3.connect"): 1,
+                # Phase 8 R: a disposable :memory: view over folder metadata inventories
+                # (folder_inventory_duplicates); never the vault index, never persisted.
+                ("document_identity.py", "sqlite3.connect"): 1}
 # Serving paths still opening the vault index directly (2026-10-24: 43; 39 after INDEX-02a;
 # 33 after INDEX-03's callback-gateway migration; 17 after the authoring/session batch;
 # 14 after selected staging paths; 8 after upkeep/catalog-status lookups;

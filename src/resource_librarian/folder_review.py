@@ -289,7 +289,7 @@ class FolderReview:
             data['roots'].append(dict(path=path, access=access, attached=attached,
                 purpose=purpose, authorship=card['decision']['authorship'],
                 folder_decision=card['id'], survey_fingerprint=card['survey_fingerprint'],
-                description=card['decision'].get('description', ''), graph_label=card['decision']['graph'],
+                description=card['decision'].get('description', ''), graph_label=card['decision'].get('graph', ''),
                 evidence=[e['id'] for e in card.get('evidence', [])] +
                          ([card['accepted_evidence']] if card.get('accepted_evidence') else [])))
         else:
