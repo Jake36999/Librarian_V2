@@ -12,6 +12,7 @@ from .vault import now_iso
 
 
 def export_document(vault, item):
+    from .catalogue_navigation import use_rollup
     from .staging import _attachment_path
     original = _attachment_path(vault, item['file']) if item.get('file') else None
     data = {'file_path': original.resolve().as_posix() if original else 'catalogue:' + str(item['name']),
@@ -19,7 +20,9 @@ def export_document(vault, item):
             'sections': [], 'source': 'librarian_conversion', 'producer': 'librarian-paper-conversion-v1',
             'source_extractor_version': 'librarian-conversion-v1', 'extracted_at': now_iso(),
             'usage': {'input_tokens': 0, 'output_tokens': 0, 'cost_usd': 0.0},
-            'coverage': {'status': 'catalogue_only', 'page_verification': False, 'limitations': []}}
+            'coverage': {'status': 'catalogue_only', 'page_verification': False, 'limitations': []},
+            'catalogue': {'authorship': 'generated', 'captured_at': now_iso(),
+                          'use_rollup': use_rollup(vault, item['name'])}}
     def unavailable(reason):
         data['coverage']['limitations'].append(reason)
         return data

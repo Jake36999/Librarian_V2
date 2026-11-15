@@ -7,6 +7,7 @@ import type { Api } from "./api";
 import { clear, h, sel } from "./dom";
 import { render } from "./markdown";
 import { reader, runIcon, speakerIcon } from "./speech";
+import { renderCatalogue } from './catalogue';
 
 const RECENT = 8;
 
@@ -180,7 +181,8 @@ export class DocPane {
     const own = Array.from(rendered.children).find((el) => !el.matches(sel("table.props")));
     const titled = own?.tagName === "H2" && own.textContent?.trim().toLowerCase() === String(doc.name).toLowerCase();
     if (titled) own!.remove();
-    clear(this.body, h("article", { class: "doc" }, h("h1", { class: "doc-title" }, doc.name), rendered));
+    clear(this.body, h("article", { class: "doc" }, h("h1", { class: "doc-title" }, doc.name),
+      doc.catalogue ? renderCatalogue(doc.catalogue, (source, filename)=>this.api.downloadOriginal(source, filename)) : null, rendered));
     this.body.scrollTop = 0;
   }
 

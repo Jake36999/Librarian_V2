@@ -396,8 +396,10 @@ def get_note(ctx: Context, name: str, sections: list[str] | None = None) -> dict
         note = notes.Note(name=path.stem, path=path, frontmatter=frontmatter, body=text,
                           parse_error=error)
         body = note.sections()
+        from ..catalogue_navigation import navigation
+        catalogue = {'catalogue': navigation(ctx.vault, note)} if row['shape'] == 'source' else {}
         wanted = {s.lower() for s in sections or []}
-        return {"found": True, "name": row["name"], "path": row["path"], "shape": row["shape"],
+        return {**catalogue, "found": True, "name": row["name"], "path": row["path"], "shape": row["shape"],
                 "kind": row["kind"], "frontmatter": json.loads(row["frontmatter"]),
                 "sections": {h or "opening": t for h, t in body.items()
                              if not wanted or h.lower() in wanted},

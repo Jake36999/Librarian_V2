@@ -42,7 +42,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib import resources
 from pathlib import Path
 from typing import Any, Callable, Iterator
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, quote
+import os
 
 from . import ADAPTER_PROTOCOL_RANGE, PROTOCOL_VERSION, __version__, batch, doctor, notes, workflows
 from . import tools  # noqa: F401  (registers the tools)
@@ -4016,10 +4017,29 @@ class App:
             raise ApiError(404, f"no note {rel!r}")
         if path.stat().st_size > 2_000_000:
             raise ApiError(413, "that note is too large to show here")
+        from .catalogue_navigation import navigation
+        note = notes.load(path)
+        catalogue = {'catalogue': navigation(self.vault, note, chapter_limit=None)} if note.frontmatter.get('type') == 'source' else {}
         root = self.vault.root.resolve()
-        return {"path": path.resolve().relative_to(root).as_posix(), "name": path.stem,
+        return {**catalogue, "path": path.resolve().relative_to(root).as_posix(), "name": path.stem,
                 "text": read_text(path, encoding="utf-8", errors="replace"),
                 "modified": round(path.stat().st_mtime)}
+
+    def source_original(self, source: str) -> Path:
+        from .read_access import source_path
+        ctx = Context(tier='curate', vault=self.vault, extras=self._extras())
+        document = self.read_file(source)  # person-visible note resolution; no index refresh/extraction
+        note = notes.load(self.vault.root / document['path'])
+        if note.frontmatter.get('type') != 'source' or not note.frontmatter.get('file'):
+            raise ApiError(404, 'Choose a catalogued source with an original attachment')
+        try:
+            original = Path(str(note.frontmatter['file']))
+            original = original if original.is_absolute() else self.vault.root / original
+            if not original.is_file():
+                raise ApiError(404, 'Original is no longer available')
+            return source_path(ctx, str(original))
+        except (OSError, ValueError, TypeError, Refusal) as exc:
+            raise ApiError(404, 'Original unavailable; conversions and credential paths are never served') from exc
 
     @mutation_entry("the file upload")
     def upload_file(self, dir_rel: str, filename: str, data: bytes) -> dict[str, Any]:
@@ -4289,6 +4309,24 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                     return self._json(200, app.list_files((query.get("dir") or [""])[0]))
                 if url.path == "/api/file":
                     return self._json(200, app.read_file((query.get("path") or [""])[0]))
+                if url.path == '/api/source-original':
+                    path = app.source_original((query.get('source') or [''])[0])
+                    try:
+                        handle = path.open('rb')
+                    except OSError as exc:
+                        raise ApiError(404, 'Original is no longer available') from exc
+                    with handle:
+                        self.send_response(200)
+                        self.send_header('Content-Type', 'application/octet-stream')
+                        self.send_header('Content-Length', str(os.fstat(handle.fileno()).st_size))
+                        self.send_header('Content-Disposition', "attachment; filename*=UTF-8''" + quote(path.name))
+                        self.send_header('X-Content-Type-Options', 'nosniff')
+                        self.send_header('Cache-Control', 'no-store')
+                        self.send_header('Content-Security-Policy', "sandbox; default-src 'none'")
+                        for key, value in self._cors().items():self.send_header(key, value)
+                        self.end_headers()
+                        while chunk := handle.read(65536):self.wfile.write(chunk)
+                    return
                 if url.path == "/api/usage":
                     return self._json(200, app.usage((query.get("provider") or [""])[0]))
                 if url.path == "/api/keys":

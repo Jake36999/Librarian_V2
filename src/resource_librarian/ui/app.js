@@ -309,6 +309,19 @@ var Librarian = (() => {
     post(path, body = {}) {
       return this.request("POST", path, body);
     }
+    async downloadOriginal(source, filename) {
+      const response = await fetch(
+        `${this.opts.base}/api/source-original?source=${encodeURIComponent(source)}`,
+        { headers: { "X-Librarian-Token": this.opts.token } }
+      );
+      if (!response.ok) throw new ApiError(response.status, await response.json().catch(() => ({})));
+      const url = URL.createObjectURL(await response.blob());
+      const link2 = document.createElement("a");
+      link2.href = url;
+      link2.download = filename;
+      link2.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1e3);
+    }
     /** The composer's paperclip: raw bytes, not JSON - too large and the wrong shape. */
     async attach(file, dir = "Inbox") {
       const qs = `dir=${encodeURIComponent(dir)}&name=${encodeURIComponent(file.name)}`;
@@ -5155,6 +5168,44 @@ var Librarian = (() => {
     }
   };
 
+  // src/catalogue.ts
+  function renderCatalogue(data, openOriginal) {
+    const status = h("p", { role: "status" });
+    const original = data.original ?? {};
+    const use = data.use_rollup ?? {};
+    return h(
+      "section",
+      { class: "catalogue-navigation", "aria-label": "Source navigator" },
+      h("h2", {}, "Source navigator"),
+      h("h3", {}, "When it\u2019s relevant"),
+      h("p", {}, data.when_relevant || "Not recorded."),
+      h("h3", {}, "How it\u2019s been used"),
+      h("p", {}, `${use.log_use_count ?? 0} recorded uses; ${use.application_count ?? 0} applications. Recorded history, not proof of efficacy.`),
+      ...(use.recent_uses ?? []).map((row) => h("p", {}, String(row.used_for ?? ""))),
+      ...(use.applications ?? []).map((row) => h("p", {}, `${row.name}: ${row.outcome || "outcome not recorded"}`)),
+      original.available ? h("button", { onclick: async () => {
+        status.textContent = "Opening the original\u2026";
+        try {
+          await openOriginal(original.download_source, original.name);
+          status.textContent = "Original download requested.";
+        } catch (error) {
+          status.textContent = error.message;
+        }
+      } }, "Open original") : h("p", {}, "Original unavailable; catalogue only."),
+      status,
+      h("h3", {}, "Chapter summaries"),
+      ...(data.chapters ?? []).map((chapter) => h(
+        "details",
+        {},
+        h("summary", {}, `${chapter.title} \xB7 ${chapter.locator ?? ""}`),
+        h("p", {}, chapter.status === "not examined" ? "Not examined; no summary." : `Reading coverage: ${chapter.coverage ?? "not recorded"}. Generated summary; verify original pages.`),
+        ...(chapter.summary ?? []).map((text) => h("p", {}, text)),
+        chapter.summary_truncated ? h("p", {}, "Summary excerpt; use the graph to locate further evidence.") : null
+      )),
+      data.chapters_truncated ? h("p", {}, `Showing ${(data.chapters ?? []).length} of ${data.chapters_total} chapters.`) : null
+    );
+  }
+
   // src/pane.ts
   var RECENT = 8;
   var DocPane = class {
@@ -5387,7 +5438,13 @@ var Librarian = (() => {
       const own2 = Array.from(rendered.children).find((el) => !el.matches(sel("table.props")));
       const titled = own2?.tagName === "H2" && own2.textContent?.trim().toLowerCase() === String(doc.name).toLowerCase();
       if (titled) own2.remove();
-      clear(this.body, h("article", { class: "doc" }, h("h1", { class: "doc-title" }, doc.name), rendered));
+      clear(this.body, h(
+        "article",
+        { class: "doc" },
+        h("h1", { class: "doc-title" }, doc.name),
+        doc.catalogue ? renderCatalogue(doc.catalogue, (source, filename) => this.api.downloadOriginal(source, filename)) : null,
+        rendered
+      ));
       this.body.scrollTop = 0;
     }
     /** Run the open script in the sandbox, as the person's own action, and show what came
