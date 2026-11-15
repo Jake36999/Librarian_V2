@@ -79,6 +79,26 @@ def normalised_text(text: str) -> str:
     return "\n".join(line for line in lines if line)
 
 
+def folder_inventory_duplicates(inventories: list[tuple[str, bytes]]) -> dict[str, Any]:
+    """Reuse document identity for metadata inventories, never claim body equality.
+
+    A disposable in-memory view is not a second persistent index. Directory
+    names are display locators, not duplicate keys; no source file is opened.
+    """
+    import sqlite3
+    with sqlite3.connect(':memory:') as conn:
+        conn.row_factory = sqlite3.Row
+        conn.executescript(TABLE + 'CREATE TABLE note(path TEXT PRIMARY KEY);')
+        for key, payload in inventories:
+            conn.execute('INSERT INTO note(path) VALUES (?)', (key,))
+            remember(conn, key, payload, payload.decode('utf-8'), {}, 0, 0)
+        result = duplicates(conn)
+    for group in result['groups']:
+        group.update(scope='folder_inventory_metadata', candidate_only=True,
+            why='matching metadata inventory; content not examined, not a verified folder duplicate')
+    return result
+
+
 def _url(value: str) -> str:
     parts = urlsplit(value.strip())
     if not parts.scheme or not parts.netloc:

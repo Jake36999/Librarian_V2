@@ -72,3 +72,32 @@ def write_artifact(vault, item):
     atomic_write_text(path, json.dumps(data, indent=2, ensure_ascii=False))
     return {'path': path.relative_to(vault.root).as_posix(), 'coverage': data['coverage'],
             'sha256': file_sha256(path), 'source': data['file_path'], 'authorship': 'generated'}
+
+
+def publish_artifact(vault, item, artifact):
+    """Publish only within the person's accepted, current folder assignment."""
+    from . import folder_review
+    config = folder_review.configuration(vault)
+    if not config.get('enabled'):
+        return dict(status='disabled')
+    if artifact['coverage']['status'] != 'full_conversion':
+        return dict(status='catalogue_only', published=False)
+    source = Path(artifact['source']).resolve()
+    review = folder_review.FolderReview(vault)
+    candidates = []
+    for card in review.list():
+        root = Path(card['source_root']) / card['path']
+        if source.is_relative_to(root.resolve()):
+            candidates.append((len(root.parts), card))
+    card = max(candidates, key=lambda r:r[0])[1] if candidates else None
+    if (not card or card['status'] != 'accepted' or card.get('pending_decision')
+            or card.get('decision', {}).get('accepted_by') != 'person'
+            or card['decision']['purpose'] == 'exclude'):
+        return dict(status='awaiting_accepted_folder', published=False)
+    review.validate(card)
+    path = vault.root / artifact['path']
+    if file_sha256(path) != artifact['sha256']:
+        raise ValueError('PAPER_ARTIFACT_STALE: rebuild the free projection')
+    return folder_review.cli(config, ['import-library-paper', '--catalog',
+        str(vault.librarian / 'geographer/catalog.sqlite')], dict(library=str(vault.root),
+        graph_label=card['decision']['graph'], artifact=str(path), artifact_sha256=artifact['sha256']))

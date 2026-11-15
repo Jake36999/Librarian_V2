@@ -16,16 +16,27 @@ export async function folderReview(api: Api, container: HTMLElement): Promise<vo
     finally { (scan as HTMLButtonElement).disabled = false; }
   }}, 'Survey folders');
   const refused = out.credential_refusals ?? {count:0, paths:[]};
+  const selected = new Set<string>();
+  const approveBatch = h('button', {type:'button', onclick: async () => {
+    if (!selected.size) { status.textContent='Select folder cards first.'; return; }
+    try {
+      await api.post('/api/folders/approve-batch', {items:[...selected]});
+      status.textContent='Exact set approved. Start the approved processing batch in Staging. Acceptance remains separate.';
+    } catch(e) { status.textContent=(e as Error).message; }
+  }}, 'Approve selected for processing');
   clear(container, h('h2', {}, 'Folder purposes'),
     h('p', {class:'note'}, 'Suggestions are not decisions. Accept each folder to assign its graph and access. Attached sources always remain read-only.'),
     !out.enabled ? h('p', {class:'note'}, 'Geo-Grapher is disabled. An operator can enable the pinned installed wheel for this library.') : null,
-    h('div', {class:'view-head'}, source, scan), status,
+    h('div', {class:'view-head'}, source, scan, approveBatch), status,
     h('details', {}, h('summary', {}, `${refused.count} credential-like paths refused — names only`),
       h('ul', {}, (refused.paths as string[]).map(path => h('li', {}, path)))));
   const cards = h('div', {class:'folder-cards'}); container.append(cards);
   for (const card of out.cards ?? []) {
     const accepted = card.status === 'accepted';
     const article = h('article', {class:'folder-card', 'aria-label':card.path});
+    const include = h('input', {type:'checkbox', 'aria-label':`Include ${card.path} in processing batch`,
+      disabled:accepted || card.sensitivity?.sensitivity==='review_required',
+      onchange:(event:Event)=>{if((event.target as HTMLInputElement).checked)selected.add(card.id);else selected.delete(card.id);}});
     const purpose = h('select', {'aria-label':'Purpose'}, purposes.map(p => h('option', {value:p}, p))) as HTMLSelectElement;
     purpose.value = card.decision?.purpose ?? card.suggested_purpose;
     const authorship = h('select', {'aria-label':'Authorship'},
@@ -57,7 +68,7 @@ export async function folderReview(api: Api, container: HTMLElement): Promise<vo
     const draftStatus = h('p', {class:'note'}, accepted ? 'Person-reviewed description' :
       card.description.state === 'model_draft' ? 'Draft — not accepted' : 'Awaiting a model draft — no model called');
     const approval = h('input', {type:'checkbox', 'aria-label':'Approve one paid folder draft'}) as HTMLInputElement;
-    const draft = h('button', {type:'button', disabled:accepted, onclick: async () => {
+    const draft = h('button', {type:'button', disabled:accepted || !out.drafting_available, onclick: async () => {
       if (!approval.checked) { outcome.textContent = 'Approve the bounded model call first.'; return; }
       (draft as HTMLButtonElement).disabled = true;
       try {
@@ -65,16 +76,18 @@ export async function folderReview(api: Api, container: HTMLElement): Promise<vo
         description.value = updated.description.text; draftStatus.textContent = 'Draft — not accepted';
         outcome.textContent = 'Draft staged for your review'; approval.checked = false;
       } catch (e) { outcome.textContent = (e as Error).message; }
-      finally { (draft as HTMLButtonElement).disabled = accepted; }
+      finally { (draft as HTMLButtonElement).disabled = accepted || !out.drafting_available; }
     }}, 'Draft from inventory metadata');
-    article.append(h('h3', {}, card.path), h('p', {class:'dim'}, card.source_root),
+    article.append(h('h3', {}, card.path), h('label', {}, include, ' Include in processing batch'),
+      h('p', {class:'dim'}, card.source_root),
+      h('p', {class:'note'}, 'Inventory metadata observed; content not examined.'),
       h('p', {}, `${card.bytes.toLocaleString()} bytes · ` + Object.entries(card.file_counts).map(([kind, n]) => `${kind}: ${n}`).join(' · ')),
       h('p', {class:'note'}, (card.reasons as string[]).join('; ')),
       h('label', {}, 'Purpose ', purpose), h('label', {}, 'Authorship ', authorship),
       h('label', {}, 'Graph ', graph), draftStatus,
       h('label', {}, 'Brief description ', description),
       h('details', {}, h('summary', {}, 'Optional model draft'),
-        h('p', {}, 'One qualified Clerk call, metadata only, maximum 320 output tokens. Uses the configured Clerk route; source text is never sent.'),
+        h('p', {}, 'Production drafting is disabled pending owner approval of a qualified Clerk. Drafting checks inventory arithmetic and sensitivity; source text is never sent.'),
         h('label', {}, approval, ' Approve one paid folder draft'), draft), outcome, accept);
     cards.append(article);
   }

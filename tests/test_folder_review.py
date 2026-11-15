@@ -112,9 +112,11 @@ def test_model_draft_is_explicitly_approved_metadata_only_and_never_accepted(lib
         review.draft(card['id'], object())
     def run(tasks, endpoint):
         assert 'synthetic fixture' not in tasks[0].chunk
-        return [SimpleNamespace(ok=True, value={'description': 'A synthetic folder inventory.'})]
+        assert tasks[1].kind.name == 'sensitivity'
+        return [SimpleNamespace(ok=True, value={'description': 'A synthetic folder inventory.'}),
+                SimpleNamespace(ok=True, value={'sensitivity': 'normal', 'reason': 'metadata only'})]
     monkeypatch.setattr(clerk, 'run', run)
-    result = review.draft(card['id'], object(), approved=True)
+    result = review.draft(card['id'], clerk.Scripted(lambda _: {}), approved=True)
     assert result['status'] == 'staged' and result['description']['draft']
     assert result['description']['state'] == 'model_draft'
 

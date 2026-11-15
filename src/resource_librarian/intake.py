@@ -89,6 +89,10 @@ class Reference:
 
 def capture(ref: str, vault: Vault | None = None) -> Reference:
     raw = ref.strip()
+    if raw.startswith('folder:'):
+        if not raw[7:].strip():
+            raise ValueError('FOLDER_REFERENCE: name a folder')
+        return Reference('folder', raw[7:].strip(), raw)
     if vault is not None and not raw.startswith(("http://", "https://")):
         candidate = (vault.root / raw).resolve()
         if candidate.is_file() and vault.root in candidate.parents:
@@ -517,10 +521,15 @@ def _normal_title(text: str) -> str:
 def ingest(vault: Vault, engine: Engine | None, ref: str, *, endpoint: clerk.Endpoint | None,
            fetcher: Fetcher | None = None, need: str = "",
            disqualifiers: list[str] | None = None, found_by: dict[str, Any] | None = None,
-           index_call: Callable[[Callable[[Engine], Any]], Any] | None = None
+           index_call: Callable[[Callable[[Engine], Any]], Any] | None = None,
+           _folder_review=None, _surveyed=None
            ) -> IntakeResult:
     """One reference, through to staging. `found_by` (a session and brief id)
     is kept on the staged item for provenance and never reaches a clerk."""
+    if ref.strip().startswith('folder:'):
+        # This internal adapter is supplied only by the person's FolderReview
+        # entry. The public tool has no argument that can grant external reads.
+        return _ingest_folder(vault, ref, _folder_review, _surveyed)
     if index_call is None:
         if engine is None:
             raise TypeError("ingest needs an Engine or callback-only index access")
@@ -819,6 +828,36 @@ def _quarantine(vault: Vault, ref: str, stage: str, reason: str) -> IntakeResult
     atomic_write_text(folder / name, json.dumps({"ref": ref, "stage": stage, "reason": reason,
                                                    "at": now_iso()}, ensure_ascii=False, indent=1))
     return IntakeResult(ref, "quarantined", detail=f"{stage}: {reason}")
+
+
+def _ingest_folder(vault, ref, review, surveyed):
+    """The folder intake kind: metadata only, through the normal airlock.
+
+    It needs no content index or network fetch. Disabled Geo remains a no-op.
+    Failures use intake's quarantine, rather than a second queue or job store.
+    """
+    from . import deploy_survey, folder_intake
+    from .folder_review import FolderReview
+    stage = 'capture'
+    try:
+        reference = capture(ref, vault)
+        if not isinstance(review, FolderReview) or review.vault.root != vault.root:
+            raise ValueError('PERSON_FOLDER_ADAPTER: use the person folder review')
+        if not review.planner and not review.config.get('enabled'):
+            return IntakeResult(ref, 'staged', detail=dict(enabled=False, cards=[]))
+        found = surveyed or deploy_survey.survey(reference.key, geographer={'enabled': False})
+        if Path(found.canonical_root).resolve() != Path(reference.key).resolve():
+            raise ValueError('FOLDER_REFERENCE_MISMATCH')
+        if found.partial or found.unreadable or found.stops:
+            raise ValueError('FOLDER_SURVEY_INCOMPLETE: resolve survey stops before review')
+        stage = 'evidence'
+        record = folder_intake.inventory_record(vault, found)
+        stage = 'facts'
+        result = review._stage_inventory(found, record)
+        result['inventory_evidence'] = record.id
+        return IntakeResult(ref, 'staged', detail=result)
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        return _quarantine(vault, ref, stage, str(exc))
 
 
 # ------------------------------------------------------------------ the queue

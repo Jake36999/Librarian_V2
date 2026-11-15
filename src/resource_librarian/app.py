@@ -3879,6 +3879,15 @@ class App:
         except (ValueError, TypeError) as exc:
             raise ApiError(409 if 'STALE' in str(exc) else 400, str(exc)) from exc
 
+    @mutation_entry('the person approved folder batch')
+    def approve_folder_batch(self, body: dict) -> dict:
+        from .folder_review import FolderReview
+        try:
+            return self._serialized('folder-batch-approve', lambda: FolderReview(self.vault).approve_batch(
+                body.get('items'), person=True))
+        except (ValueError, TypeError) as exc:
+            raise ApiError(409 if 'STALE' in str(exc) else 400, str(exc)) from exc
+
     @mutation_entry('the approved folder draft')
     def draft_folder(self, body: dict) -> dict[str, Any]:
         from .folder_review import FolderReview
@@ -4590,6 +4599,8 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 return app.survey_folders(str(body.get('path') or ''))
             if path == '/api/folders/accept':
                 return app.accept_folder(body)
+            if path == '/api/folders/approve-batch':
+                return app.approve_folder_batch(body)
             if path == '/api/folders/draft':
                 return app.draft_folder(body)
             if path == "/api/projects/add":
