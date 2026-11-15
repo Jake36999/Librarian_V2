@@ -364,3 +364,18 @@ def test_production_folder_check_needs_the_owners_recorded_approval(library):
     assert drafted['description']['state'] == 'model_draft' and drafted['description']['draft'] is True
     sent = ' '.join(str(p['user']) for p in endpoint.payloads)
     assert 'synthetic fixture' not in sent                                # metadata only, never file text
+
+
+def test_policy_skips_inherited_cards_and_excludes_need_no_sensitivity_check(library):
+    from resource_librarian.folder_review import FolderReview
+    vault, source = library
+    (source / 'src/pkg').mkdir(); (source / 'src/pkg/m.py').write_text('synthetic')
+    _agent_mode(vault)
+    review = FolderReview(vault, planner=fake_planner, applier=lambda _: {'graphs': []})
+    cards = {c['path']: c for c in review.survey(source)['cards']}
+    docs = cards['docs']; docs['suggested_purpose'] = 'exclude'; review.store.save(docs)   # never ingested
+    src = cards['src']; src['sensitivity'] = dict(sensitivity='normal', reason='checked'); review.store.save(src)
+    out = review.accept_by_policy(source)
+    assert 'src' in out['accepted'] and 'docs' in out['accepted']          # exclude needs no check
+    assert 'src/pkg' not in out['accepted'] and out['covered'] >= 1         # inherited: covered by src
+    assert not any(h['path'] == 'src/pkg' for h in out['held'])

@@ -341,9 +341,12 @@ class FolderReview:
         if found.partial or found.unreadable:
             raise ValueError('FOLDER_STALE: the folder could not be read completely; survey again')
         root = found.canonical_root
-        accepted, held, chosen = [], [], []
+        accepted, held, chosen, covered = [], [], [], 0
         for card in self.list():
             if card['kind'] != 'folder' or card['source_root'] != root or card['status'] == 'accepted' or card.get('decision'):
+                continue
+            if card.get('inherited'):
+                covered += 1                                 # its parent's decision covers it
                 continue
             rel = card['path']; purpose = card['suggested_purpose']
             rows = [r for r in found.entries if rel == '.' or r[0].rstrip('/') == rel or r[0].startswith(rel + '/')]
@@ -351,7 +354,7 @@ class FolderReview:
             sensitivity = (card.get('sensitivity') or {}).get('sensitivity')
             if sensitivity == 'review_required':
                 reason = 'sensitive: a person reviews this folder'
-            elif sensitivity != 'normal':
+            elif sensitivity != 'normal' and purpose != 'exclude':      # excluded folders are never ingested
                 reason = 'sensitivity not yet checked: run the folder check (Clerk) first'
             elif purpose not in self.POLICY_PURPOSES:
                 reason = f'{purpose}: authorship cannot be inferred; a person chooses it'
@@ -384,7 +387,7 @@ class FolderReview:
                 accepted_record(self.vault, candidate)
                 self.store.save(candidate)
                 accepted.append(candidate['path'])
-        return dict(accepted=sorted(accepted), held=sorted(held, key=lambda h: h['path']),
+        return dict(accepted=sorted(accepted), held=sorted(held, key=lambda h: h['path']), covered=covered,
                     rule='promotion.mode = agent: unambiguous, not sensitive, unchanged suggestion')
 
     def _root_access(self, card):
