@@ -24,10 +24,20 @@ export async function folderReview(api: Api, container: HTMLElement): Promise<vo
       status.textContent='Exact set approved. Start the approved processing batch in Staging. Acceptance remains separate.';
     } catch(e) { status.textContent=(e as Error).message; }
   }}, 'Approve selected for processing');
+  // Agent-mode orchestration: accept every unambiguous, sensitivity-checked card as suggested.
+  const acceptPolicy = h('button', {type:'button', title:'Library promotion mode must be agent. Sensitive, unchecked, data and log folders stay for you.',
+    onclick: async () => {
+      if (!source.value.trim()) { status.textContent = 'Enter the surveyed folder first.'; return; }
+      status.textContent = 'Accepting unambiguous folders…';
+      try {
+        const out = await api.post('/api/folders/accept-policy', {root: source.value.trim()});
+        status.textContent = `Accepted ${out.accepted.length} as suggested; ${out.held.length} held for you.`;
+      } catch (e) { status.textContent = (e as Error).message; }
+    }}, 'Accept unambiguous folders');
   clear(container, h('h2', {}, 'Folder purposes'),
     h('p', {class:'note'}, 'Suggestions are not decisions. Accept each folder to assign its graph and access. Attached sources always remain read-only.'),
     !out.enabled ? h('p', {class:'note'}, 'Geo-Grapher is disabled. An operator can enable the pinned installed wheel for this library.') : null,
-    h('div', {class:'view-head'}, source, scan, approveBatch), status,
+    h('div', {class:'view-head'}, source, scan, approveBatch, acceptPolicy), status,
     h('details', {}, h('summary', {}, `${refused.count} credential-like paths refused — names only`),
       h('ul', {}, (refused.paths as string[]).map(path => h('li', {}, path)))));
   const cards = h('div', {class:'folder-cards'}); container.append(cards);

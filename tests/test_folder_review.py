@@ -252,3 +252,84 @@ def test_resurvey_refreshes_undecided_suggestions_but_keeps_decisions(library):
     again = {c['path']: c for c in review.survey(source)['cards']}
     assert again['src']['suggested_graph'] == f'{vault.title}-{source.name}'      # refreshed
     assert again['docs']['status'] == 'accepted' and again['docs']['decision']['graph'] == 'kept-by-person'
+
+
+# --- Agent-mode orchestration (owner, 2026-11-15): only sensitive or un-inferable items wait for a person ---
+
+def _agent_mode(vault):
+    vault.set_setting("promotion", "mode", "agent")
+
+
+def _checked(review):
+    """Simulate the metadata-only Clerk check having run on every card."""
+    for card in review.list():
+        card['sensitivity'] = dict(sensitivity='normal', reason='checked'); review.store.save(card)
+
+
+def test_policy_accept_needs_agent_mode(library):
+    from resource_librarian.folder_review import FolderReview
+    vault, source = library
+    review = FolderReview(vault, planner=fake_planner, applier=lambda _: {'graphs': []})
+    review.survey(source)
+    with pytest.raises(ValueError, match='PROMOTION_MODE'):
+        review.accept_by_policy(source)
+
+
+def test_policy_accept_takes_unambiguous_suggestions_in_one_application_and_holds_the_rest(library):
+    from resource_librarian.folder_review import FolderReview
+    vault, source = library
+    runs = source / 'src/sweep_runs'; runs.mkdir(parents=True)
+    for i in range(5):
+        (runs / f'r{i}.csv').write_text('a,b')
+    _agent_mode(vault)
+    applied = []
+    review = FolderReview(vault, planner=fake_planner, applier=lambda request: applied.append(request) or {'graphs': []})
+    cards = {c['path']: c for c in review.survey(source)['cards']}
+    _checked(review); cards = {c['path']: c for c in review.list()}
+    sensitive = cards['third_party_beta']; sensitive['sensitivity'] = dict(sensitivity='review_required', reason='dual-use')
+    review.store.save(sensitive)
+    out = review.accept_by_policy(source)
+    assert len(applied) == 1                                          # one graph application for the set
+    after = {c['path']: c for c in review.list()}
+    assert after['src']['status'] == 'accepted' and after['src']['decision']['accepted_by'] == 'agent-policy'
+    assert after['src']['decision']['graph'] == cards['src']['suggested_graph']
+    assert after['third_party_alpha']['decision']['authorship'] == 'third_party'
+    held = {h['path']: h['reason'] for h in out['held']}
+    assert 'sensitive' in held['third_party_beta'] and after['third_party_beta']['status'] == 'staged'
+    assert 'authorship' in held['src/sweep_runs'] and after['src/sweep_runs']['status'] == 'staged'
+    assert out['accepted'] == sorted(p for p, c in after.items() if c['status'] == 'accepted')
+
+
+def test_policy_accept_never_overrides_a_persons_decision(library):
+    from resource_librarian.folder_review import FolderReview
+    vault, source = library
+    _agent_mode(vault)
+    review = FolderReview(vault, planner=fake_planner, applier=lambda _: {'graphs': []})
+    cards = {c['path']: c for c in review.survey(source)['cards']}
+    review.accept(cards['docs']['id'], cards['docs']['folder_fingerprint'], purpose='own-docs', graph='mine', person=True)
+    _checked(review)
+    review.accept_by_policy(source)
+    docs = {c['path']: c for c in review.list()}['docs']
+    assert docs['decision']['accepted_by'] == 'person' and docs['decision']['graph'] == 'mine'
+
+
+def test_staging_counts_separate_covered_folder_cards_and_read_folder_sensitivity(library):
+    from resource_librarian.folder_review import FolderReview
+    from resource_librarian.staging import StagingStore
+    vault, source = library
+    (source / 'src/pkg').mkdir(); (source / 'src/pkg/m.py').write_text('synthetic')
+    FolderReview(vault, planner=fake_planner).survey(source)
+    counts = StagingStore(vault).counts()['folder']
+    assert counts['covered'] >= 1                     # src/pkg inherits from src
+    assert counts['staged'] == 4                       # the four partitions that need a look
+    assert counts.get('sensitive_waiting', 0) == 0     # pending clerk checks are not "sensitive"
+
+
+def test_policy_accept_holds_folders_whose_sensitivity_was_never_checked(library):
+    from resource_librarian.folder_review import FolderReview
+    vault, source = library
+    _agent_mode(vault)
+    review = FolderReview(vault, planner=fake_planner, applier=lambda _: {'graphs': []})
+    review.survey(source)
+    out = review.accept_by_policy(source)
+    assert out['accepted'] == [] and all('not yet checked' in h['reason'] for h in out['held'])

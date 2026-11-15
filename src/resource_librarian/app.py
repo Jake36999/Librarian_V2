@@ -3886,6 +3886,18 @@ class App:
         except (ValueError, TypeError) as exc:
             raise ApiError(409 if 'STALE' in str(exc) else 400, str(exc)) from exc
 
+    @mutation_entry('the agent-policy folder decisions')
+    def accept_folders_by_policy(self, body: dict) -> dict[str, Any]:
+        """Agent-mode orchestration: accept a root's unambiguous, non-sensitive cards as suggested."""
+        from .folder_review import FolderReview
+        root = str(body.get('root') or '')
+        if not root:
+            raise ApiError(400, 'name the surveyed source root')
+        try:
+            return self._serialized('folder-accept', lambda: FolderReview(self.vault).accept_by_policy(root))
+        except (ValueError, TypeError) as exc:
+            raise ApiError(409 if 'STALE' in str(exc) or 'PROMOTION_MODE' in str(exc) else 400, str(exc)) from exc
+
     @mutation_entry('the person approved folder batch')
     def approve_folder_batch(self, body: dict) -> dict:
         from .folder_review import FolderReview
@@ -4624,6 +4636,8 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 return app.survey_folders(str(body.get('path') or ''))
             if path == '/api/folders/accept':
                 return app.accept_folder(body)
+            if path == '/api/folders/accept-policy':
+                return app.accept_folders_by_policy(body)
             if path == '/api/folders/approve-batch':
                 return app.approve_folder_batch(body)
             if path == '/api/folders/draft':

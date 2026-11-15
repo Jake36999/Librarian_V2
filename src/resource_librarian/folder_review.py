@@ -312,6 +312,72 @@ class FolderReview:
         self._root_access(candidate)
         self.store.save(candidate); return candidate
 
+    # Unambiguous purposes an agent may accept as suggested under promotion.mode = agent.
+    POLICY_PURPOSES = frozenset({'own-current', 'own-legacy', 'own-docs', 'research-docs', 'third-party', 'exclude'})
+
+    def accept_by_policy(self, source_root):
+        """Accept every unambiguous, non-sensitive staged card under one source root as suggested.
+
+        The owner's orchestration rule (2026-11-15): with ``promotion.mode = agent`` the
+        library accepts what can be inferred, and only sensitive or un-inferable folders wait
+        for a person. One survey and one graph application cover the whole set, because a
+        large project cannot afford a full re-survey and graph rebuild per card. A person's
+        decision is never replaced, and nothing is changed from its suggestion.
+        """
+        if str(self.vault.setting('promotion', 'mode') or 'person') != 'agent':
+            raise ValueError('PROMOTION_MODE: policy acceptance needs promotion.mode = agent for this library')
+        from .access import PURPOSE_AUTHORSHIP
+        from .folder_intake import accepted_record, validate_card
+        found = deploy_survey.survey(str(source_root), geographer={'enabled': False})
+        if found.partial or found.unreadable:
+            raise ValueError('FOLDER_STALE: the folder could not be read completely; survey again')
+        root = found.canonical_root
+        accepted, held, chosen = [], [], []
+        for card in self.list():
+            if card['kind'] != 'folder' or card['source_root'] != root or card['status'] == 'accepted' or card.get('decision'):
+                continue
+            rel = card['path']; purpose = card['suggested_purpose']
+            rows = [r for r in found.entries if rel == '.' or r[0].rstrip('/') == rel or r[0].startswith(rel + '/')]
+            reason = None
+            sensitivity = (card.get('sensitivity') or {}).get('sensitivity')
+            if sensitivity == 'review_required':
+                reason = 'sensitive: a person reviews this folder'
+            elif sensitivity != 'normal':
+                reason = 'sensitivity not yet checked: run the folder check (Clerk) first'
+            elif purpose not in self.POLICY_PURPOSES:
+                reason = f'{purpose}: authorship cannot be inferred; a person chooses it'
+            elif digest(rows) != card['folder_fingerprint']:
+                reason = 'stale: the folder changed since the survey'
+            else:
+                try:
+                    validate_card(self.vault, card, rows)
+                except ValueError as exc:
+                    reason = f'validation: {str(exc)[:160]}'
+            if reason:
+                held.append(dict(id=card['id'], path=rel, reason=reason)); continue
+            authorship = None if purpose == 'exclude' else PURPOSE_AUTHORSHIP.get(purpose)
+            chosen.append(dict(card, decision=dict(purpose=purpose, authorship=authorship,
+                graph=card['suggested_graph'], description=card['description']['text'],
+                accepted_by='agent-policy', accepted_at=now_iso(),
+                policy=dict(mode='agent', rule='unambiguous suggestion, not sensitive')),
+                status='accepted', authorship=authorship,
+                authorship_resolution='declared' if authorship else 'excluded'))
+        if chosen:
+            for candidate in chosen:
+                self._root_access(candidate)                 # read barrier before any ingestion
+            ids = {c['id'] for c in chosen}
+            selected = [c for c in self.list() if c['id'] not in ids and c['status'] == 'accepted' and c.get('decision')] + chosen
+            request = dict(library=str(self.vault.root), decisions=selected, inventory=inventory(found))
+            result = (self.applier(request) if self.applier else cli(self.config,
+                ['apply-folder-review', '--catalog', str(self.vault.librarian / 'geographer/catalog.sqlite')], request))
+            for candidate in chosen:
+                candidate['application'] = result
+                accepted_record(self.vault, candidate)
+                self.store.save(candidate)
+                accepted.append(candidate['path'])
+        return dict(accepted=sorted(accepted), held=sorted(held, key=lambda h: h['path']),
+                    rule='promotion.mode = agent: unambiguous, not sensitive, unchanged suggestion')
+
     def _root_access(self, card):
         root = Path(card['source_root']); target = root if card['path'] == '.' else root / card['path']
         attached = not target.resolve().is_relative_to(self.vault.root.resolve())

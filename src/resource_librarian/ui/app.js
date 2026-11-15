@@ -5837,12 +5837,29 @@ var Librarian = (() => {
         status.textContent = e.message;
       }
     } }, "Approve selected for processing");
+    const acceptPolicy = h("button", {
+      type: "button",
+      title: "Library promotion mode must be agent. Sensitive, unchecked, data and log folders stay for you.",
+      onclick: async () => {
+        if (!source.value.trim()) {
+          status.textContent = "Enter the surveyed folder first.";
+          return;
+        }
+        status.textContent = "Accepting unambiguous folders\u2026";
+        try {
+          const out2 = await api.post("/api/folders/accept-policy", { root: source.value.trim() });
+          status.textContent = `Accepted ${out2.accepted.length} as suggested; ${out2.held.length} held for you.`;
+        } catch (e) {
+          status.textContent = e.message;
+        }
+      }
+    }, "Accept unambiguous folders");
     clear(
       container,
       h("h2", {}, "Folder purposes"),
       h("p", { class: "note" }, "Suggestions are not decisions. Accept each folder to assign its graph and access. Attached sources always remain read-only."),
       !out.enabled ? h("p", { class: "note" }, "Geo-Grapher is disabled. An operator can enable the pinned installed wheel for this library.") : null,
-      h("div", { class: "view-head" }, source, scan, approveBatch),
+      h("div", { class: "view-head" }, source, scan, approveBatch, acceptPolicy),
       status,
       h(
         "details",

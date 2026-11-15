@@ -164,8 +164,17 @@ class StagingStore:
         out: dict[str, dict[str, int]] = {}
         for item in self.items():
             bucket = out.setdefault(item["kind"], {})
-            bucket[item["status"]] = bucket.get(item["status"], 0) + 1
-            if item.get("sensitivity") != "normal" and item["status"] == "staged":
+            status = item["status"]
+            # A folder card whose suggestion is inherited is covered by its parent's decision:
+            # counted apart, so "waiting for review" means folders that need a look.
+            if item["kind"] == "folder" and status == "staged" and item.get("inherited"):
+                status = "covered"
+            bucket[status] = bucket.get(status, 0) + 1
+            sensitivity = item.get("sensitivity")
+            if isinstance(sensitivity, dict):           # folder cards keep the clerk's record;
+                # only a completed check that asks for review counts as sensitive
+                sensitivity = "review_required" if sensitivity.get("sensitivity") == "review_required" else "normal"
+            if sensitivity not in ("normal", None) and status == "staged":
                 bucket["sensitive_waiting"] = bucket.get("sensitive_waiting", 0) + 1
         return out
 
