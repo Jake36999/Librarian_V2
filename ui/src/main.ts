@@ -57,6 +57,9 @@ class App {
   private libraries: Popover;
   private checkpoints: Popover;
   private libraryButton = h("button", { class: "ghost lib-switch", title: "Switch library" }, "Library ▾");
+  // This library's own Geo-Grapher, run by this Core (one library, one Geo service).
+  private geoButton = h("button", { class: "ghost geo-open", title: "Open this library's graphs in Geo-Grapher",
+    onclick: () => void this.openGeo() }, "Geo-Grapher ↗");
   private checkpointButton = h("button", { class: "ghost", title: "Decisions waiting for you" }, "Checkpoints ▾");
   private attachPop: Popover;
   private attachPanel: AttachPanel;
@@ -241,7 +244,7 @@ class App {
           h("div", { class: "anchor" }, this.checkpointButton, this.checkpoints.el),
           this.title, this.crumb,
           h("nav", { role: "tablist", "aria-label": "Views" }, Object.values(this.nav)), settingsButton, h("button",{class:"ghost",onclick:()=>this.settings.open("models")},"Models"), this.live,
-          this.paneButton),
+          this.geoButton, this.paneButton),
         this.body),
       this.settings.dialog);
     this.composer = composer;
@@ -675,6 +678,19 @@ class App {
     const caret = start + insertion.length;
     el.focus();
     el.setSelectionRange(caret, caret);
+  }
+
+  private async openGeo(): Promise<void> {
+    try {
+      const geo = await this.api.get("/api/geographer");
+      if (geo.open_url) { window.open(geo.open_url, "_blank", "noopener"); return; }
+      this.warn(geo.state === "disabled"
+        ? "Geo-Grapher is not enabled for this library."
+        : geo.state === "starting" ? "Geo-Grapher is still starting for this library; try again in a moment."
+        : `Geo-Grapher is not running for this library${geo.error ? `: ${geo.error}` : "."}`);
+    } catch (error) {
+      this.warn(`Could not reach this library's Geo-Grapher: ${String(error)}`);
+    }
   }
 
   private warn(message: string): void {

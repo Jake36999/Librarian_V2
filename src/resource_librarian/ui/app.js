@@ -7523,6 +7523,12 @@ var Librarian = (() => {
       this.session = null;
       this.view = "chat";
       this.libraryButton = h("button", { class: "ghost lib-switch", title: "Switch library" }, "Library \u25BE");
+      // This library's own Geo-Grapher, run by this Core (one library, one Geo service).
+      this.geoButton = h("button", {
+        class: "ghost geo-open",
+        title: "Open this library's graphs in Geo-Grapher",
+        onclick: () => void this.openGeo()
+      }, "Geo-Grapher \u2197");
       this.checkpointButton = h("button", { class: "ghost", title: "Decisions waiting for you" }, "Checkpoints \u25BE");
       this.title = h("span", { class: "title" }, "Librarian");
       this.crumb = h("span", { class: "crumb" });
@@ -7838,6 +7844,7 @@ var Librarian = (() => {
             settingsButton,
             h("button", { class: "ghost", onclick: () => this.settings.open("models") }, "Models"),
             this.live,
+            this.geoButton,
             this.paneButton
           ),
           this.body
@@ -8247,6 +8254,18 @@ var Librarian = (() => {
       const caret = start + insertion.length;
       el.focus();
       el.setSelectionRange(caret, caret);
+    }
+    async openGeo() {
+      try {
+        const geo = await this.api.get("/api/geographer");
+        if (geo.open_url) {
+          window.open(geo.open_url, "_blank", "noopener");
+          return;
+        }
+        this.warn(geo.state === "disabled" ? "Geo-Grapher is not enabled for this library." : geo.state === "starting" ? "Geo-Grapher is still starting for this library; try again in a moment." : `Geo-Grapher is not running for this library${geo.error ? `: ${geo.error}` : "."}`);
+      } catch (error) {
+        this.warn(`Could not reach this library's Geo-Grapher: ${String(error)}`);
+      }
     }
     warn(message) {
       this.notice.hidden = false;

@@ -503,6 +503,10 @@ class App:
         from .service_routes import ServiceRuntime
         self.service_runtime = ServiceRuntime(vault, self.hosts, self.host_limiter)
         self.service_runtime.attach()
+        # This library's own Geo-Grapher (one library, one Core, one Geo service).
+        # Created here, started by serve()/switch() once the Core's address is known.
+        from .geo_service import GeoService
+        self.geo = GeoService(vault)
         if mcp is not None:
             # Switching library: outside servers are configured per person, not
             # per library (mcp.json), and their tools are registered once,
@@ -657,6 +661,9 @@ class App:
         but admitted work or the vault writer still exists, so the Core keeps
         its index and vault lease.  A later call retries the final drain.
         """
+        geo = getattr(self, "geo", None)
+        if geo is not None:
+            geo.stop()                      # idempotent; the library's graphs close with it
         with self._shutdown_lock:
             if self._closed:
                 return True
@@ -4281,6 +4288,10 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                     return self._events(since, str((query.get("epoch") or [""])[0] or ""))
                 if url.path == "/api/meta":
                     return self._json(200, app.meta())
+                if url.path == "/api/geographer":
+                    # Person UI only (the Core token is required for /api/*): status plus
+                    # the one-time browser entry into this library's Geo-Grapher.
+                    return self._json(200, {**app.geo.status(), "open_url": app.geo.open_url()})
                 if url.path == "/api/state":
                     return self._json(200, app.state())
                 if url.path == "/api/session/skeleton":
@@ -4729,6 +4740,7 @@ class Switchboard:
 
     def __init__(self, app: App):
         self.app = app
+        self.url = ""                    # the Core's own address, set by serve()
         self._lock = threading.Lock()
         self.retiring: list[App] = []
 
@@ -4754,6 +4766,8 @@ class Switchboard:
                       broker_timeout=old.broker_timeout, mcp=old.mcp,
                       coordinate=old.coordinated, secret_source=old.secret_source)
             self.app = new
+        if getattr(self, "url", ""):
+            new.geo.start(self.url)            # the new library's own Geo-Grapher
         libraries.remember(old.vault)          # so it can always be switched back to
         libraries.remember(vault)
         old.hub.publish({"type": "library_switched", "to": vault.title})
@@ -4881,6 +4895,9 @@ def serve(vault_path: str | None, port: int = 8323, token: str = "",
     connection.publish(vault.root, url=url, token=app.token, pid=os.getpid(),
                        process_start=process_identity.process_start(os.getpid()),
                        protocol_version=PROTOCOL_VERSION, secret_source=app.secret_source)
+    # Start this library's Geo-Grapher alongside the Core (background; never blocks startup).
+    server.board.url = url
+    app.geo.start(url)
     # The host that started the core reads this line to find the port.
     started = {"listening": url, "vault": str(vault.root)}
     _announce(started)
