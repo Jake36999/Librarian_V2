@@ -142,7 +142,7 @@ def test_person_can_open_returned_workspace_identifier_and_read_only_catalogue(s
     attach(app.vault, (root, 'owner_created'))
     app.index_service.refresh()
     rows = app.index_service.run(lambda index: [dict(r) for r in index.conn.execute(
-        "SELECT name,shape FROM note WHERE shape='workspace_document' OR kind='folder'")])
+        "SELECT name,shape FROM note WHERE shape='workspace_document' OR json_extract(frontmatter,'$.catalogue_of')='folder'")])
     assert {r['shape'] for r in rows} == {'workspace_document', 'source'}
     for row in rows:
         status, doc = client.get('/api/file?path=' + urllib.parse.quote(row['name']))
@@ -187,3 +187,37 @@ def test_direct_upsert_applies_path_hygiene_before_open(vault, tmp_path, monkeyp
     monkeypatch.setattr(indexing, 'read_bytes_snapshot', lambda *args: pytest.fail('Rejected path reached a content open'))
     with Index(vault) as index:
         assert index.upsert(path) is False
+
+
+def test_attached_workspace_source_never_reaches_a_hosted_embedding_encoder(vault, tmp_path):
+    import numpy as np
+    from resource_librarian.embed import VectorSearch
+    root = tmp_path / 'private-source'; root.mkdir()
+    original = root / 'private.py'
+    original.write_text('def Privatecodebodysentinel():\n    return 42\n')
+    attach(vault, (root, 'owner_created'))
+    sent = []
+    def hosted_encode(values):
+        sent.extend(values)
+        return np.ones((len(values), 8), dtype='float32')
+    with Index(vault) as index:
+        index.refresh()
+        hosted = VectorSearch(index, 'api:scripted:embedding', hosted_encode)
+        hosted.sync()
+        assert not any('Privatecodebodysentinel' in value for value in sent)
+        assert search(Engine(index), 'Privatecodebodysentinel', 'workspace').results
+        local = VectorSearch.from_spec(index, 'hash:64')
+        assert local.sync() > 0
+        assert index.conn.execute('SELECT count(*) FROM chunk c JOIN embedding e ON e.hash=c.hash '
+                                  'WHERE c.path=? AND e.model=?', (original.as_posix(), local.model)).fetchone()[0] > 0
+
+
+def test_folder_catalogues_use_existing_content_model_kinds(vault, tmp_path):
+    root = tmp_path / 'reference-catalogue'; root.mkdir()
+    attach(vault, (root, 'third_party'))
+    with Index(vault) as index:
+        index.refresh()
+        rows = index.conn.execute("SELECT kind,frontmatter FROM note WHERE shape='source'").fetchall()
+        catalogues = [row for row in rows if json.loads(row['frontmatter']).get('catalogue_only')]
+        assert catalogues
+        assert all(row['kind'] in index.model.kinds for row in catalogues)

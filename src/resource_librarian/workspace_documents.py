@@ -42,7 +42,7 @@ def is_projection(vault, path):
 def _catalogue(vault, row):
     base = row['base']; digest = hashlib.sha256(str(base).encode()).hexdigest()[:16]
     path = operation_path(vault, '.librarian/derived/folder-catalogue/' + digest + '.md')
-    fm = dict(type='source', kind='folder', title=base.name, authorship='generated',
+    fm = dict(type='source', kind='document', catalogue_of='folder', title=base.name, authorship='generated',
         original_authorship=row.get('authorship'), root=str(base), catalogue_only=True,
         _index_read_only=True, status='active', survey_fingerprint=row.get('survey_fingerprint'),
         folder_decision=row.get('folder_decision'))
