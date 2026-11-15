@@ -221,6 +221,19 @@ def finalize_result(spec, arguments, result, ctx):
     if not spec.external and spec.name in READ_PERMISSION_CONTROLS:
         return result  # Permission metadata does not itself read the named source.
     access = result_access(spec, arguments, result, ctx)
+    if not spec.external and spec.name == 'get_note' and 'error' not in result:
+        authors = result.get('frontmatter', {}).get('section_authorship', {})
+        if isinstance(authors, dict):
+            folded = {str(k).casefold(): v for k, v in authors.items()}
+            for heading in result.get('sections', {}):
+                if heading.casefold() not in folded:continue
+                author = folded.get(heading.casefold())
+                if not isinstance(author, str) or author not in AUTHORSHIP:author = None
+                handle = str(result.get('name', 'note')) + '#' + heading
+                access['sources'].append({'handle': handle, 'authorship': author,
+                    **({'authorship_resolution': 'unclassified'} if author is None else {})})
+                if author not in {'owner_created', 'generated'}:access['taint_sources'].append(handle)
+            access['taint_sources'] = sorted(set(access['taint_sources']))
     publication_session = ctx.session or ctx.extras.get('_publication_session')
     if ('error' not in result or spec.external) and access['taint_sources'] and not person(ctx) and publication_session and ctx.vault:
         from .session import SessionStore

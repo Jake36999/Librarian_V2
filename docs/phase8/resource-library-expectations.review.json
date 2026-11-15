@@ -1,0 +1,64 @@
+{
+  "bindings_sha256": "935a95ce2e186339fecec9f610dbaf3dc2f438cb041e3d6a355b1ebab58eb4ea",
+  "records": [
+    {
+      "record": "phase8-reasoning-reserve-lead",
+      "roles": [
+        "lead"
+      ],
+      "model": "ByteDance/Seed-2.0-mini",
+      "host": "preset-deepinfra",
+      "source_card": "D:\\Resource-Library\\.librarian-app\\Sources\\model\\Seed-2.0-mini - deepinfra.md",
+      "source_sha256": "380f6b04ff2b0364061b1000c7bab22eb9944ef54798ecb7ce7a71362d3609c7",
+      "source_authorship": "generated",
+      "owner_card_available": false,
+      "reasoning_claim": "machine-card metadata, not a fresh availability or qualification result",
+      "reserve_tokens_if_reviewed": 1024,
+      "binding_changed": false,
+      "activation": "owner review and the existing expectation/qualification gates; this file is not installed",
+      "limitation": "Earlier pilot reported Seed endpoint closed; not rechecked here."
+    },
+    {
+      "record": "phase8-reasoning-reserve-scribe",
+      "roles": [
+        "scribe",
+        "research_helper"
+      ],
+      "model": "google/gemma-4-26B-A4B-it",
+      "host": "preset-deepinfra",
+      "source_card": "D:\\Resource-Library\\.librarian-app\\Sources\\model\\gemma-4-26B-A4B-it - deepinfra.md",
+      "source_sha256": "c80a1b4ac031958929f9feeecc572407a1b621f53ae79662e8ca1e0f634f3a3d",
+      "source_authorship": "generated",
+      "owner_card_available": false,
+      "reasoning_claim": "machine-card metadata, not a fresh availability or qualification result",
+      "reserve_tokens_if_reviewed": 1024,
+      "binding_changed": false,
+      "activation": "owner review and the existing expectation/qualification gates; this file is not installed"
+    },
+    {
+      "record": "phase8-reasoning-reserve-clerk",
+      "roles": [
+        "clerk"
+      ],
+      "model": "Qwen/Qwen3.5-397B-A17B",
+      "host": "preset-deepinfra",
+      "source_card": "D:\\Resource-Library\\.librarian-app\\Sources\\model\\Qwen3.5-397B-A17B - deepinfra.md",
+      "source_sha256": "42222dbc86fb5842e72e9ab9452ffb6b448e87268abc563b55fb8257d701ede0",
+      "source_authorship": "generated",
+      "owner_card_available": false,
+      "reasoning_claim": "machine-card metadata, not a fresh availability or qualification result",
+      "reserve_tokens_if_reviewed": 1024,
+      "binding_changed": false,
+      "activation": "owner review and the existing expectation/qualification gates; this file is not installed",
+      "existing": "A reviewed exact Qwen reasoning-reserve record already ships; retain it. Do not activate a duplicate."
+    }
+  ],
+  "non_chat_routes": {
+    "ocr": "same Qwen model; service-contract applicability must be reviewed separately",
+    "tts": "Kokoro speech service, no chat-token reasoning reserve proposed",
+    "stt": "unconfigured",
+    "embeddings": "unconfigured"
+  },
+  "live_changes": 0,
+  "paid_calls": 0
+}

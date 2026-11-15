@@ -126,6 +126,11 @@ def candidates(v1_root: Path, with_drafts: bool = False) -> list[dict[str, Any]]
         shape, kind = FOLDERS[folder.name]
         for path in sorted(folder.rglob("*.md")):
             rel = path.relative_to(v1_root).as_posix()
+            from .credentials import credential_path, generated_path
+            from .deploy_survey import is_link
+            if credential_path(rel) or generated_path(rel) or is_link(path) or not path.resolve().is_relative_to(v1_root.resolve()):
+                out.append({'v1_path': rel, 'action': 'left out', 'why': 'credential/generated/link path refused before read'})
+                continue
             try:
                 note = notes.load(path)
             except Exception as exc:                        # noqa: BLE001
@@ -163,6 +168,11 @@ def plan(v1_root: Path, vault: Vault, with_drafts: bool = False) -> dict[str, An
     for row in candidates(v1_root, with_drafts):
         if row["action"] == "stage":
             fm = notes.load(v1_root / row["v1_path"]).frontmatter
+            from .model_cards import refresh_plan
+            refresh = refresh_plan(v1_root, vault, row, fm)
+            if refresh is not None:
+                rows.append(refresh)
+                continue
             if row["v1_path"] in done:
                 row = {**row, "action": "already staged"}
             elif _target_name(row, fm).casefold() in names or \
@@ -279,7 +289,8 @@ def stage(v1_root: Path, vault: Vault, limit: int = 0,
         path = v1_root / row["v1_path"]
         # One read (MF-020): the evidence kept and the fields staged come from
         # the same bytes, so a V1 edit in between cannot make them disagree.
-        raw = read_bytes_snapshot(path).data.decode("utf-8")
+        source_bytes = read_bytes_snapshot(path).data
+        raw = source_bytes.decode("utf-8")
         raw = raw.replace("\r\n", "\n").replace("\r", "\n")     # as read_text read it
         frontmatter, body, error = notes.parse(raw)
         note = notes.Note(name=path.stem, path=path, frontmatter=frontmatter, body=body,
@@ -287,6 +298,8 @@ def stage(v1_root: Path, vault: Vault, limit: int = 0,
         record = evidence.put("v1_note", f"v1:{row['v1_path']}", {
             "path": row["v1_path"], "uuid": str(note.frontmatter.get("uuid") or ""),
             "sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest(), "text": raw})
+        if row.get('v1_type') == 'ai_model':
+            row = {**row, 'model_card_sha256': hashlib.sha256(source_bytes).hexdigest()}
         item = _item(row, note, record.id)
         store.add(item)
         with log.open("a", encoding="utf-8") as handle:
@@ -333,11 +346,18 @@ def _item(row: dict[str, Any], note: notes.Note, evidence_id: str) -> dict[str, 
                                    (" (a draft in V1)" if row.get("draft") else "")}]}
     if row["shape"] == "source":
         fields = {(f"v1_{k}" if k in RESERVED else k): v for k, v in fm.items()
-                  if v not in (None, "", [])}
+                  if row.get('v1_type') == 'ai_model' or v not in (None, "", [])}
         fields.update(v1_path=row["v1_path"], imported_from="V1")
         bottom, solves = sections.pop("Bottom Line", ""), sections.pop("What It Solves", "")
         if "Evidence" in sections:          # V2 writes its own Evidence; V1's stays beside it
             sections["V1 Evidence"] = sections.pop("Evidence")
+        if row.get('v1_type') == 'ai_model' and row.get('model_card_sha256'):
+            from .model_cards import import_fields
+            fields = import_fields(fields, sections, row['model_card_sha256'])
+            if row.get('revision_of'):
+                base.update(id='v1-model-' + hashlib.sha256((row['v1_path'] + row['model_card_sha256']).encode()).hexdigest()[:24],
+                    revision_of=row['revision_of'], revision_kind='model_card',
+                    model_target_sha256=row['model_target_sha256'])
         return {**base, "kind": "source", "source_kind": row["kind"], "name": row["name"],
                 "title": str(fm.get("title") or row["name"]),
                 "canonical_url": str(fm.get("canonical_url") or ""),

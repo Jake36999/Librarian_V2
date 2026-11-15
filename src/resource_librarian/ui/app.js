@@ -2045,6 +2045,7 @@ var Librarian = (() => {
     if (!p) return "unprofiled";
     const parts = p.shared ? ["shared profile"] : [];
     if (p.suggested_tier) parts.push(String(p.suggested_tier).replace(/_/g, " "));
+    if (p.task_class) parts.push(`${p.field_authorship?.task_class === "owner_created" ? "Owner" : "Card"} class: ${String(p.task_class).replace(/_/g, " ")}`);
     const bestFor = p.best_for ?? [];
     if (bestFor.length) parts.push(bestFor.map((t) => String(t).replace(/_/g, " ")).join(", "));
     if (p.context_length) parts.push(`${Math.round(p.context_length / 1e3)}k ctx`);

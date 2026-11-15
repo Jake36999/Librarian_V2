@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "pack_id": "phase8-resource-library-review-drafts",
+  "records": [
+    {
+      "id": "phase8-reasoning-reserve-lead",
+      "version": "2026-11-15",
+      "status": "draft",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "ByteDance/Seed-2.0-mini",
+      "host_id_or_family": "preset-deepinfra",
+      "capabilities": {
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": [
+        "provider_default"
+      ],
+      "dialect": {
+        "output_headroom": "reasoning_reserve"
+      },
+      "source_url": "https://deepinfra.com/ByteDance/Seed-2.0-mini",
+      "source_revision": "local-card-sha256:380f6b04ff2b0364061b1000c7bab22eb9944ef54798ecb7ce7a71362d3609c7"
+    },
+    {
+      "id": "phase8-reasoning-reserve-scribe",
+      "version": "2026-11-15",
+      "status": "draft",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "google/gemma-4-26B-A4B-it",
+      "host_id_or_family": "preset-deepinfra",
+      "capabilities": {
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": [
+        "provider_default"
+      ],
+      "dialect": {
+        "output_headroom": "reasoning_reserve"
+      },
+      "source_url": "https://deepinfra.com/google/gemma-4-26B-A4B-it",
+      "source_revision": "local-card-sha256:c80a1b4ac031958929f9feeecc572407a1b621f53ae79662e8ca1e0f634f3a3d"
+    },
+    {
+      "id": "phase8-reasoning-reserve-clerk",
+      "version": "2026-11-15",
+      "status": "draft",
+      "protocol": "openai",
+      "adapter_id": "legacy_openai_chat",
+      "adapter_abi": 1,
+      "model_id": "Qwen/Qwen3.5-397B-A17B",
+      "host_id_or_family": "preset-deepinfra",
+      "capabilities": {
+        "native_reasoning": "unknown"
+      },
+      "behavior_modes": [
+        "provider_default"
+      ],
+      "dialect": {
+        "output_headroom": "reasoning_reserve"
+      },
+      "source_url": "https://deepinfra.com/Qwen/Qwen3.5-397B-A17B",
+      "source_revision": "local-card-sha256:42222dbc86fb5842e72e9ab9452ffb6b448e87268abc563b55fb8257d701ede0"
+    }
+  ]
+}

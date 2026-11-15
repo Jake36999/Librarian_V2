@@ -32,6 +32,7 @@ function profileMeta(m: any): string {
   if (!p) return "unprofiled";
   const parts: string[] = p.shared ? ["shared profile"] : [];
   if (p.suggested_tier) parts.push(String(p.suggested_tier).replace(/_/g, " "));
+  if (p.task_class) parts.push(`${p.field_authorship?.task_class === 'owner_created' ? 'Owner' : 'Card'} class: ${String(p.task_class).replace(/_/g, ' ')}`);
   const bestFor = (p.best_for ?? []) as string[];
   if (bestFor.length) parts.push(bestFor.map((t: string) => String(t).replace(/_/g, " ")).join(", "));
   if (p.context_length) parts.push(`${Math.round(p.context_length / 1000)}k ctx`);

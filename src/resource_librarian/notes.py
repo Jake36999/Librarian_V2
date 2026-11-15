@@ -169,8 +169,11 @@ def iter_paths(root: Path) -> Iterator[Path]:
         yield from iter_documents(root)
         return
     for path in sorted(root.rglob("*.md")):
+        from .credentials import credential_path, generated_path
+        from .deploy_survey import is_link
         parts = path.relative_to(root).parts
-        if any(part.startswith(".") for part in parts):
+        if (any(part.startswith(".") for part in parts) or credential_path(path.relative_to(root))
+                or generated_path(path.relative_to(root)) or is_link(path)):
             continue
         yield path
 

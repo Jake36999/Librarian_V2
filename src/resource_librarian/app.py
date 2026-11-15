@@ -289,7 +289,7 @@ class Action:
 
 PROFILE_FIELDS = ("modality", "best_for", "license_class", "suggested_tier", "context_length",
                   "price_input_per_1m", "price_output_per_1m", "tool_calling", "reasoning",
-                  "recommendation_rank")
+                  "recommendation_rank", "task_class", "authorship", "field_authorship", "_field_authorship", "_field_sources")
 
 
 def _rank(value: Any) -> int | None:
@@ -340,7 +340,7 @@ def _remember_profiles(own: dict[tuple[str, str], dict[str, Any]]) -> None:
     if not own:
         return
     known = {f"{p}|{m}": v for (p, m), v in _remembered_profiles().items()}
-    fresh = {f"{p}|{m}": {k: v.get(k) for k in PROFILE_FIELDS} for (p, m), v in own.items()}
+    fresh = {f"{p}|{m}": {k: v[k] for k in PROFILE_FIELDS if k in v} for (p, m), v in own.items()}
     if all(known.get(k) == v for k, v in fresh.items()):
         return
     try:
@@ -2234,7 +2234,8 @@ class App:
             if host.base_url.rstrip("/") == str(preset.get("base_url") or "").rstrip("/") and \
                     host.protocol == preset.get("protocol"):
                 provider = family
-        catalogues = {**_shipped_profiles(), **_remembered_profiles(), **self._model_sources()}
+        from .model_cards import merge_profiles
+        catalogues = merge_profiles(_shipped_profiles(), _remembered_profiles(), self._model_sources())
         return catalogues.get((provider, model)) or {}
 
     def _route_context_limit(self, route: dict[str, Any] | None, profile: Any) -> int:
@@ -3165,11 +3166,12 @@ class App:
         except Exception:                                   # noqa: BLE001 - no index yet
             return {}
         out: dict[tuple[str, str], dict[str, Any]] = {}
+        from .model_cards import identity, merge_profiles
         for row in rows:
             fm = json.loads(row["frontmatter"])
-            key = (str(fm.get("provider") or "").lower(), str(fm.get("model_id") or "").lower())
+            key = identity(fm)
             if key[1]:
-                out[key] = {**fm, "_path": row["path"]}
+                out = merge_profiles(out, {key: {**fm, '_path': row['path']}})
         return out
 
     def _pending_models(self) -> set[tuple[str, str]]:
@@ -3211,7 +3213,8 @@ class App:
         # config directory), else the catalogue shipped with the package.
         _remember_profiles(own)
         shipped = _shipped_profiles()
-        profiles = {**shipped, **_remembered_profiles(), **own}
+        from .model_cards import merge_profiles
+        profiles = merge_profiles(shipped, _remembered_profiles(), own)
         pending = self._pending_models()
         out = []
         for m in listed:
@@ -3229,6 +3232,9 @@ class App:
                     "license_class": profile.get("license_class"),
                     "suggested_tier": profile.get("suggested_tier"),
                     "context_length": profile.get("context_length"),
+                    'task_class': profile.get('task_class'),
+                    'field_authorship': profile.get('_field_authorship', {}),
+                    'field_sources': profile.get('_field_sources', {}),
                     "price_input_per_1m": profile.get("price_input_per_1m"),
                     "price_output_per_1m": profile.get("price_output_per_1m"),
                     # Tri-state (ROUTE-02): an unassessed capability is None, not

@@ -986,6 +986,13 @@ def compose_revision(store, item: dict[str, Any]) -> dict[str, Any]:
     note = notes.load(path)
     if note.frontmatter.get("type") != "source":
         raise TypeError("a staged source revision must target a source note")
+    if item.get('revision_kind') == 'model_card':
+        from .model_cards import compose_refresh
+        fm, body, previous = compose_refresh(store, item, note, raw)
+        return {'path': path, 'rel': path.relative_to(store.vault.root).as_posix(),
+                'current': raw.decode('utf-8', 'replace'), 'fingerprint': fingerprint_bytes(raw),
+                'composed': notes.render(fm, body), 'merged': list(previous), 'previous': previous,
+                'set_on_accept': ['owner_card_sha256', 'field_authorship', 'section_authorship']}
     body = note.body
     previous: dict[str, str] = {}
     merged = []
@@ -1025,6 +1032,8 @@ def _decide_revision(store, engine, item: dict[str, Any], decision: str, entry: 
         item["history"].append(entry)
         store.save(item)
         return {"id": item["id"], "status": item["status"]}
+    if item.get('revision_kind') == 'model_card' and decided_by != 'person':
+        raise Refusal('PERSON_CONFIRMS', 'A person accepts changed owner model metadata')
     if mode != "agent" and decided_by != "person":
         raise Refusal("PERSON_CONFIRMS", "a revision rewrites sections of an accepted note: a "
                                          "person accepts it")

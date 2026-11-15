@@ -298,7 +298,11 @@ def project_pages(ctx, units, **metadata):
 def bound_raw_result(spec, result, ctx, arguments):
     """A person grant changes reading permission, never the result-size cap."""
     from .access import person
-    if person(ctx) or spec.name not in {'read_file', 'read_source_file', 'read_evidence', 'read_project'} or 'error' in result:
+    frontmatter = result.get('frontmatter')
+    section_authors = frontmatter.get('section_authorship', {}) if spec.name == 'get_note' and isinstance(frontmatter, dict) else {}
+    quoted_catalogue = (spec.name == 'get_note' and isinstance(section_authors, dict)
+        and any(not isinstance(a, str) or a not in {'owner_created', 'generated'} for a in section_authors.values()))
+    if person(ctx) or (spec.name not in {'read_file', 'read_source_file', 'read_evidence', 'read_project'} and not quoted_catalogue) or 'error' in result:
         return result
     from copy import deepcopy
     from .mcp_client import external_result_limit
@@ -310,8 +314,13 @@ def bound_raw_result(spec, result, ctx, arguments):
     def visit(value):
         if isinstance(value, dict):
             if isinstance(value.get('text'), str):
-                fields.append((value, value['text']))
+                fields.append((value, 'text', value['text']))
                 value['text'] = ''
+            if quoted_catalogue and isinstance(value.get('sections'), dict):
+                for heading, content in value['sections'].items():
+                    if isinstance(content, str):
+                        fields.append((value['sections'], heading, content))
+                        value['sections'][heading] = ''
             for child in value.values():
                 visit(child)
         elif isinstance(value, list):
@@ -322,17 +331,17 @@ def bound_raw_result(spec, result, ctx, arguments):
         out['read_allocation'] = allocation
     remaining = max(0, min(cap, allocation['effective_tokens'] if allocation else cap) - size(out) - 2048)
     clipped = False
-    for field, content in fields:
+    for field, key, content in fields:
         low, high = 0, len(content)
         while low < high:
             middle = (low + high + 1) // 2
             if size(content[:middle]) <= remaining:low = middle
             else:high = middle - 1
-        field['text'] = content[:low]
-        remaining = max(0, remaining - size(field['text']))
+        field[key] = content[:low]
+        remaining = max(0, remaining - size(field[key]))
         if low != len(content):
             clipped = True
-            if field is not out:
+            if key == 'text' and field is not out:
                 field['next_offset'] = max(0, int(arguments.get('offset', 0))) + low
                 field['truncated'] = True
     if clipped:
