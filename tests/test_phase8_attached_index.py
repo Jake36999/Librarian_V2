@@ -37,6 +37,19 @@ def test_attached_own_documents_are_fully_searchable_and_never_rewritten(vault, 
     assert sorted(p.relative_to(root).as_posix() for p in root.rglob('*')) == ['Guide.md']
 
 
+def test_attached_workspace_keeps_short_tail_and_repeated_headings(vault, tmp_path):
+    root = tmp_path / 'own-complete'; root.mkdir()
+    (root / 'Long.md').write_text('# Operations\n\n'+('Opening material.\n'*250)+
+        '\nUltravioletflux procedure at the end.',encoding='utf-8')
+    (root / 'Repeated.md').write_text('## Evidence\nAmberwitness first occurrence.\n\n'
+        '## Evidence\nJadewitness second occurrence.',encoding='utf-8')
+    attach(vault,(root,'owner_created'))
+    with Index(vault) as index:
+        index.refresh()
+        for query in ('Ultravioletflux','Amberwitness','Jadewitness'):
+            assert search(Engine(index),query,'workspace').results,query
+
+
 def test_third_party_root_is_catalogue_only_without_opening_its_documents(vault, tmp_path, monkeypatch):
     import resource_librarian.index as indexing
     root = tmp_path / 'research'; root.mkdir()

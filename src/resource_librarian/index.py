@@ -40,7 +40,7 @@ from .file_access import FileChangedError, file_access, file_identity, read_byte
 from .rules import Refusal
 from .vault import Vault, now_iso
 
-SCHEMA_VERSION = 5          # 3: stable file identity for refresh snapshots
+SCHEMA_VERSION = 6          # 6: complete attached-workspace chunks, including short tails/repeated headings
                             # 4: document identity and duplicate layers (DEPLOY-04)
                             # 5: adopted classification by declared type (REMED-01)
 TARGET_CHARS = 1200
@@ -399,7 +399,11 @@ class Index:
              topics[0] if topics else "", note.sections().get("Bottom Line", "")[:400],
              json.dumps(fm, default=str, ensure_ascii=False), digest, snapshot.mtime,
              snapshot.mtime_ns, snapshot.size, snapshot.identity, error, now_iso()))
-        chunks = chunk_note(note, model) if not error else []
+        # Workspace originals are documents, not curated notes. Note section
+        # dictionaries collapse repeated headings, apply skip roles and can
+        # drop short split tails. Index the complete normalized representation.
+        chunks = ([Chunk('Workspace content', 'claim', piece) for piece in split_text(text)]
+                  if workspace and not error else chunk_note(note, model) if not error else [])
         self._insert_chunks(rel, note.name, chunks)
         facets: list[tuple[str, str]] = [("kind", kind)] if kind else []
         facets += [("topic", t) for t in topics]
