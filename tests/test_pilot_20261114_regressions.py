@@ -218,3 +218,14 @@ def test_provider_endpoint_reports_its_reviewed_headroom(monkeypatch):
         return ProviderEndpoint(provider, invocation_runtime=InvocationRuntime(), role="clerk")
     assert endpoint(QWEN).output_headroom_tokens() == REASONING_RESERVE_TOKENS
     assert endpoint("google/gemma-4-26B-A4B-it").output_headroom_tokens() == 0
+
+
+def test_bundled_pack_reserves_reasoning_headroom_for_the_gpt_oss_120b_bulk_clerk():
+    """Owner card (10-Models/gpt-oss-120b): reasoning-tagged; needs max_tokens headroom or returns empty."""
+    from resource_librarian.model_invocation import (ExactRoute, ExpectationRegistry,
+                                                     LEGACY_OPENAI_CHAT, effective_dialect)
+    record = ExpectationRegistry.bundled().match(
+        ExactRoute("preset-deepinfra", "openai", "endpoint", "openai/gpt-oss-120b"), LEGACY_OPENAI_CHAT)
+    assert record is not None and record.status == "reviewed"
+    assert effective_dialect(record)["output_headroom"] == "reasoning_reserve"
+    assert record.capability("native_reasoning") == "true"

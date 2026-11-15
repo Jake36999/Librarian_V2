@@ -214,8 +214,8 @@
     },
     {
       "id": "deepinfra-gpt-oss-120b-research",
-      "version": "2026-10-23",
-      "status": "draft",
+      "version": "2026-11-15",
+      "status": "reviewed",
       "protocol": "openai",
       "adapter_id": "legacy_openai_chat",
       "adapter_abi": 1,
@@ -227,11 +227,12 @@
         "system_message": "unknown",
         "structured_output": "unknown",
         "streaming": "unknown",
-        "native_reasoning": "unknown"
+        "native_reasoning": "true"
       },
       "behavior_modes": ["provider_default"],
+      "dialect": {"output_headroom": "reasoning_reserve"},
       "source_url": "https://developers.openai.com/cookbook/articles/openai-harmony",
-      "source_revision": "official-harmony-contract-2026-10-23; hosted-mapping-l1-required"
+      "source_revision": "official-harmony-contract-2026-10-23; owner model card 10-Models/gpt-oss-120b (2026-09-25: reasoning-tagged, needs max_tokens headroom); bulk Clerk 2026-11-15, L1 qualification required"
     },
     {
       "id": "deepinfra-qwen3-32b-research",
