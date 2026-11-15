@@ -4000,6 +4000,20 @@ class App:
         """A note by vault path (with or without `.md`), or by bare name when
         the name is unique enough to find: what a [[link]] in the chat holds."""
         rel = (rel or "").strip()
+        if Path(rel).is_absolute():
+            # Search/desk links may carry the physical path. Resolve only a
+            # current indexed workspace document, never arbitrary external IO.
+            resolved = Path(rel).resolve()
+            if resolved.is_relative_to(self.vault.root):
+                rel = resolved.relative_to(self.vault.root).as_posix()
+            else:
+                normalized = resolved.as_posix()
+                self.index_service.refresh()
+                selected = self.index_service.run(lambda index: dict(row) if (row := index.conn.execute(
+                    "SELECT * FROM note WHERE path=? AND shape='workspace_document'", (normalized,)).fetchone()) else None)
+                if selected is None or not json.loads(selected['frontmatter']).get('_index_read_only'):
+                    raise ApiError(404, 'Choose a current read-only workspace result')
+                rel = selected['name']
         if rel.startswith(('workspace:', 'Folder - ')):
             from .workspace_documents import document, is_projection
             from .file_access import read_bytes_snapshot

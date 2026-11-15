@@ -50,6 +50,28 @@ def test_attached_workspace_keeps_short_tail_and_repeated_headings(vault, tmp_pa
             assert search(Engine(index),query,'workspace').results,query
 
 
+def test_person_can_open_workspace_search_path_without_general_external_read(served, tmp_path):
+    from urllib.parse import quote
+    app, client, _ = served
+    own=tmp_path/'click-owned';own.mkdir();path=own/'Guide.md';path.write_text('Ownedclicksentinel source.')
+    outside=tmp_path/'not-attached.md';outside.write_text('Must not be shown.')
+    attach(app.vault,(own,'owner_created'))
+    app.index_service.refresh()
+    status,out=client.get('/api/file?path='+quote(path.as_posix()))
+    assert status==200,out
+    assert out['read_only'] and 'Ownedclicksentinel' in out['text']
+    assert client.get('/api/file?path='+quote(outside.as_posix()))[0] != 200
+
+
+def test_person_vault_absolute_paths_keep_existing_read_behavior(served):
+    from urllib.parse import quote
+    app,client,_=served
+    path=app.vault.root/'Notes/Local.md';path.parent.mkdir(exist_ok=True);path.write_text('# Local\n\nLocalnote sentinel.')
+    status,out=client.get('/api/file?path='+quote(path.as_posix()))
+    assert status==200,out
+    assert 'Localnote sentinel' in out['text']
+
+
 def test_third_party_root_is_catalogue_only_without_opening_its_documents(vault, tmp_path, monkeypatch):
     import resource_librarian.index as indexing
     root = tmp_path / 'research'; root.mkdir()
