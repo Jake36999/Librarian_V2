@@ -212,14 +212,16 @@ def test_one_graph_per_project_and_inherited_subfolders_join_their_parents_graph
     deep = source / 'src/pkg/sub'; deep.mkdir(parents=True); (deep / 'm.py').write_text('synthetic')
     cards = {c['path']: c for c in FolderReview(vault, planner=fake_planner).survey(source)['cards']}
     project = f'{vault.title}-{source.name}'
-    assert cards['src']['suggested_graph'] == project and cards['docs']['suggested_graph'] == project
+    # one stratum per graph (Geo-Grapher invariant): docs get the project's -docs graph
+    assert cards['src']['suggested_graph'] == project
+    assert cards['docs']['suggested_graph'] == project or cards['docs']['suggested_purpose'] == 'own-current'
     assert cards['src/pkg']['suggested_graph'] == cards['src/pkg/sub']['suggested_graph'] == project
     assert cards['src/pkg']['inherited'] is True and cards['src/pkg']['inherited_from'] == 'src'
     assert cards['src']['inherited'] is False
     assert {cards['third_party_alpha']['suggested_graph'], cards['third_party_beta']['suggested_graph']} == \
         {f'{vault.title}-third-party'}
     own_graphs = {c['suggested_graph'] for c in cards.values() if c['suggested_purpose'] != 'third-party'}
-    assert own_graphs <= {project}                                   # never one graph per folder
+    assert own_graphs <= {project, project + '-docs', project + '-data', project + '-logs', project + '-legacy'}
 
 
 def test_content_signals_suggest_data_logs_and_objects_instead_of_inheriting_code(library):
@@ -413,3 +415,13 @@ def test_a_failed_geographer_call_writes_the_promised_diagnostic_log(library, tm
     assert 'catalog locked' not in str(caught.value)            # never reflected into the UI
     log = (vault.root / 'logs' / 'geographer-cli.log').read_text(encoding='utf-8')
     assert 'apply-folder-review' in log and 'catalog locked' in log and 'exit 1' in log
+
+
+def test_suggested_graphs_keep_one_stratum_per_graph():
+    from resource_librarian.folder_review import suggested_graph
+    names = {p: suggested_graph('Lab', 'qm', p) for p in
+             ('own-current', 'own-docs', 'own-legacy', 'data', 'logs/transcripts', 'third-party', 'research-docs')}
+    assert names == {'own-current': 'Lab-qm', 'own-docs': 'Lab-qm-docs', 'own-legacy': 'Lab-qm-legacy',
+                     'data': 'Lab-qm-data', 'logs/transcripts': 'Lab-qm-logs',
+                     'third-party': 'Lab-third-party', 'research-docs': 'Lab-third-party-papers'}
+    assert len(set(names.values())) == len(names)                     # never two strata in one graph

@@ -60,6 +60,19 @@ def production_drafting(vault):
     """
     return vault.setting('folders', 'production_drafting') is True
 
+
+GRAPH_SUFFIX = {'own-current': '', 'own-legacy': '-legacy', 'own-docs': '-docs', 'data': '-data',
+                'logs/transcripts': '-logs'}
+
+
+def suggested_graph(library, project, purpose):
+    """<library>-<project>[-docs|-legacy|-data|-logs]; third-party material is shared per library."""
+    if purpose == 'third-party':
+        return f'{library}-third-party'
+    if purpose == 'research-docs':
+        return f'{library}-third-party-papers'
+    return f'{library}-{project}{GRAPH_SUFFIX.get(purpose, "")}'
+
 def inventory(found):
     return dict(version='folder-inventory-v1', root=found.canonical_root,
                 fingerprint=found.fingerprint, entries=found.entries, partial=found.partial,
@@ -190,10 +203,9 @@ class FolderReview:
                 folder_intake.prepare_card(self.vault, old, selected, old)
                 self.store.save(old); cards.append(old); continue
             purpose = part['suggestion']['purpose']
-            # One graph per project for own content (code and docs together, as the owner asked);
-            # one shared graph per library for third-party material. Never one graph per folder.
-            graph = self.vault.title + ('-third-party' if purpose in {'third-party', 'research-docs'}
-                                        else '-' + root.name)
+            # One graph per project and stratum (Geo-Grapher keeps one stratum per graph, which its
+            # ranking and third-party rules rely on); never one graph per folder.
+            graph = suggested_graph(self.vault.title, root.name, purpose)
             inherited_from = part['suggestion'].get('inherited_from')
             card = dict(id=item_id, kind='folder', status='staged', name=rel, path=rel,
                 source_root=str(root), folder_fingerprint=fp, survey_fingerprint=found.fingerprint,
@@ -406,7 +418,8 @@ class FolderReview:
                 authorship = ancestry(rel)
                 rule = 'data/logs authorship inferred from its nearest classified ancestor folder'
             chosen.append(dict(card, decision=dict(purpose=purpose, authorship=authorship,
-                graph=card['suggested_graph'], description=card['description']['text'],
+                graph=suggested_graph(self.vault.title, Path(root).name, purpose),  # never a stale suggestion
+                description=card['description']['text'],
                 accepted_by='agent-policy', accepted_at=now_iso(),
                 policy=dict(mode='agent', rule=rule)),
                 status='accepted', authorship=authorship,
