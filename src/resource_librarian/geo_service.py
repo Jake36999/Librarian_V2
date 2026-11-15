@@ -84,7 +84,7 @@ class GeoService:
         log.mkdir(parents=True, exist_ok=True)
         argv = [*command, "serve-graphs", "--catalog", str(self.catalog), "--create-catalog",
                 "--transport", "http", "--port", "0", "--ready-file", str(ready),
-                "--librarian-url", librarian_url, "--library-name", self.vault.root.name]
+                "--librarian-url", librarian_url, "--library-name", self.vault.title]
         env = {**os.environ, "GEOGRAPHER_ACCESS_TOKEN": self.token, "PYTHONUTF8": "1"}
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform == "win32" else 0
         try:
@@ -154,7 +154,7 @@ class GeoService:
         with self._lock:
             return {"state": self._state, "error": self._error,
                     "url": self._info.get("url") if self._info else None,
-                    "library": self.vault.root.name}
+                    "library": self.vault.title}
 
     def open_url(self) -> str | None:
         """The one-time browser entry for the authenticated person UI only."""

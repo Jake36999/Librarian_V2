@@ -74,7 +74,8 @@ def test_a_library_start_runs_its_own_geo_grapher_with_a_hidden_token(library):
         catalog = seen["argv"][seen["argv"].index("--catalog") + 1]
         assert Path(catalog) == vault.librarian / "geographer" / "catalog.sqlite"
         assert seen["argv"][seen["argv"].index("--librarian-url") + 1] == "http://127.0.0.1:52206/"
-        assert seen["argv"][seen["argv"].index("--library-name") + 1] == "Parallax"
+        assert seen["argv"][seen["argv"].index("--library-name") + 1] == vault.title == "Parallax"
+        assert status["library"] == vault.title
         assert service.open_url() == f"http://127.0.0.1:59999/?geo_token={service.token}"
         assert service.token not in json.dumps(status)                         # status never leaks it
     finally:
