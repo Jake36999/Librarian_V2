@@ -296,7 +296,8 @@ def test_policy_accept_takes_unambiguous_suggestions_in_one_application_and_hold
     assert after['third_party_alpha']['decision']['authorship'] == 'third_party'
     held = {h['path']: h['reason'] for h in out['held']}
     assert 'sensitive' in held['third_party_beta'] and after['third_party_beta']['status'] == 'staged'
-    assert 'authorship' in held['src/sweep_runs'] and after['src/sweep_runs']['status'] == 'staged'
+    # data inside the project's own code: authorship inferred from the nearest classified ancestor
+    assert after['src/sweep_runs']['decision']['authorship'] == 'owner_created'
     assert out['accepted'] == sorted(p for p, c in after.items() if c['status'] == 'accepted')
 
 
@@ -379,3 +380,22 @@ def test_policy_skips_inherited_cards_and_excludes_need_no_sensitivity_check(lib
     assert 'src' in out['accepted'] and 'docs' in out['accepted']          # exclude needs no check
     assert 'src/pkg' not in out['accepted'] and out['covered'] >= 1         # inherited: covered by src
     assert not any(h['path'] == 'src/pkg' for h in out['held'])
+
+
+def test_policy_infers_data_authorship_from_its_nearest_classified_ancestor(library):
+    from resource_librarian.folder_review import FolderReview
+    vault, source = library
+    for folder in ('src/runs', 'third_party_alpha/dump'):
+        path = source / folder; path.mkdir(parents=True)
+        for i in range(5):
+            (path / f'r{i}.csv').write_text('a,b')
+    _agent_mode(vault)
+    review = FolderReview(vault, planner=fake_planner, applier=lambda _: {'graphs': []})
+    review.survey(source); _checked(review)
+    review.accept_by_policy(source)
+    after = {c['path']: c for c in review.list()}
+    assert after['src/runs']['decision']['purpose'] == 'data'
+    assert after['src/runs']['decision']['authorship'] == 'owner_created'        # inside own project code
+    assert after['third_party_alpha/dump'].get('inherited') is True               # stays third-party, covered
+    assert 'decision' not in after['third_party_alpha/dump']
+    assert 'ancestor' in after['src/runs']['decision']['policy']['rule']

@@ -342,6 +342,20 @@ class FolderReview:
             raise ValueError('FOLDER_STALE: the folder could not be read completely; survey again')
         root = found.canonical_root
         accepted, held, chosen, covered = [], [], [], 0
+        by_path = {c['path']: c for c in self.list() if c['kind'] == 'folder' and c['source_root'] == root}
+
+        def ancestry(rel):
+            """owner_created or third_party from the nearest ancestor whose purpose implies it, else None."""
+            parts = rel.split('/')
+            for depth in range(len(parts) - 1, -1, -1):
+                parent = by_path.get('/'.join(parts[:depth]) or '.')
+                if parent is None:
+                    continue
+                purpose = (parent.get('decision') or {}).get('purpose') or parent['suggested_purpose']
+                if purpose in PURPOSE_AUTHORSHIP:
+                    return PURPOSE_AUTHORSHIP[purpose]
+            return None
+
         for card in self.list():
             if card['kind'] != 'folder' or card['source_root'] != root or card['status'] == 'accepted' or card.get('decision'):
                 continue
@@ -356,7 +370,7 @@ class FolderReview:
                 reason = 'sensitive: a person reviews this folder'
             elif sensitivity != 'normal' and purpose != 'exclude':      # excluded folders are never ingested
                 reason = 'sensitivity not yet checked: run the folder check (Clerk) first'
-            elif purpose not in self.POLICY_PURPOSES:
+            elif purpose not in self.POLICY_PURPOSES and not ancestry(rel):
                 reason = f'{purpose}: authorship cannot be inferred; a person chooses it'
             elif digest(rows) != card['folder_fingerprint']:
                 reason = 'stale: the folder changed since the survey'
@@ -368,10 +382,14 @@ class FolderReview:
             if reason:
                 held.append(dict(id=card['id'], path=rel, reason=reason)); continue
             authorship = None if purpose == 'exclude' else PURPOSE_AUTHORSHIP.get(purpose)
+            rule = 'unambiguous suggestion, not sensitive'
+            if purpose not in self.POLICY_PURPOSES:
+                authorship = ancestry(rel)
+                rule = 'data/logs authorship inferred from its nearest classified ancestor folder'
             chosen.append(dict(card, decision=dict(purpose=purpose, authorship=authorship,
                 graph=card['suggested_graph'], description=card['description']['text'],
                 accepted_by='agent-policy', accepted_at=now_iso(),
-                policy=dict(mode='agent', rule='unambiguous suggestion, not sensitive')),
+                policy=dict(mode='agent', rule=rule)),
                 status='accepted', authorship=authorship,
                 authorship_resolution='declared' if authorship else 'excluded'))
         if chosen:
