@@ -26,6 +26,31 @@ def configuration(vault):
     return json.loads(path.read_text(encoding='utf-8')) if path.is_file() else {'enabled': False}
 
 
+
+DATA_EXTENSIONS = {'.json', '.jsonl', '.csv', '.tsv', '.npy', '.npz', '.h5', '.hdf5', '.parquet', '.pkl',
+                   '.pickle', '.mat', '.dat', '.bin', '.pcap', '.pcapng', '.sqlite', '.db', '.arrow', '.feather'}
+MEDIA_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.tif', '.tiff', '.svg', '.mp4', '.mov',
+                    '.avi', '.mkv', '.webm', '.mp3', '.wav', '.flac', '.blend', '.blend1'}
+LOG_EXTENSIONS = {'.log', '.out', '.err'}
+
+
+def _content_signal(counts):
+    """A folder the name rules left as inherited own code, but whose files say otherwise.
+
+    Metadata only (extensions); a suggestion with its reason, never a decision.
+    """
+    total = sum(counts.values())
+    if total < 3:
+        return None
+    for extensions, purpose, label in ((DATA_EXTENSIONS, 'data', 'data files'),
+                                       (MEDIA_EXTENSIONS, 'exclude', 'media files (catalogued as objects, not graphed)'),
+                                       (LOG_EXTENSIONS, 'logs/transcripts', 'log files')):
+        share = sum(n for ext, n in counts.items() if ext in extensions) / total
+        if share >= 0.7:
+            return purpose, f'content signal: {round(share * 100)}% {label} by extension'
+    return None
+
+
 def inventory(found):
     return dict(version='folder-inventory-v1', root=found.canonical_root,
                 fingerprint=found.fingerprint, entries=found.entries, partial=found.partial,
@@ -116,26 +141,37 @@ class FolderReview:
             for child in children:
                 suffix = Path(child[0]).suffix.lower() or '(no extension)'
                 counts[suffix] = counts.get(suffix, 0) + 1
+            parent_purpose = inherited['suggestion']['purpose'] if inherited else 'own-current'
+            signal = _content_signal(counts) if parent_purpose == 'own-current' else None
+            if signal:
+                suggestion = dict(purpose=signal[0], reasons=[signal[1]])
+            else:
+                suggestion = dict(purpose=parent_purpose, inherited_from=(inherited or {}).get('subtrees', ['.'])[0],
+                                  reasons=['inherited folder suggestion; a person may override it'])
             proposals.append(dict(key=rel, subtrees=[rel], file_counts=counts, bytes=sum(r[1] for r in children),
-                suggestion=dict(purpose=inherited['suggestion']['purpose'] if inherited else 'own-current',
-                                reasons=['inherited folder suggestion; a person may override it'])))
+                suggestion=suggestion))
         for part in proposals:
             rel = (part.get('subtrees') or ['.'])[0] or '.'
             if credential_path(rel) or generated_path(rel): continue
             selected = [r for r in found.entries if rel == '.' or r[0].rstrip('/') == rel or r[0].startswith(rel + '/')]
             fp = digest(selected); item_id = 'folder-' + digest([str(root), rel])[:24]
             old = existing.get(item_id)
-            if old and old['folder_fingerprint'] == fp:
+            # Keep a person's decision across unchanged re-surveys; refresh suggestions otherwise.
+            if old and old['folder_fingerprint'] == fp and (old.get('status') == 'accepted' or old.get('decision')):
                 old['survey_fingerprint'] = found.fingerprint
                 folder_intake.prepare_card(self.vault, old, selected, old)
                 self.store.save(old); cards.append(old); continue
             purpose = part['suggestion']['purpose']
-            graph = self.vault.root.name + ('-third-party' if purpose in {'third-party', 'research-docs'}
-                                           else '-' + (root.name if rel == '.' else rel.replace('/', '-')))
+            # One graph per project for own content (code and docs together, as the owner asked);
+            # one shared graph per library for third-party material. Never one graph per folder.
+            graph = self.vault.title + ('-third-party' if purpose in {'third-party', 'research-docs'}
+                                        else '-' + root.name)
+            inherited_from = part['suggestion'].get('inherited_from')
             card = dict(id=item_id, kind='folder', status='staged', name=rel, path=rel,
                 source_root=str(root), folder_fingerprint=fp, survey_fingerprint=found.fingerprint,
                 file_counts=part['file_counts'], bytes=part['bytes'], suggested_purpose=purpose,
                 suggested_graph=graph, reasons=part['suggestion']['reasons'], partition=part,
+                inherited=inherited_from is not None, inherited_from=inherited_from,
                 authorship=None, authorship_resolution='unclassified',
                 description=dict(state='awaiting_model_draft', text='', draft=True, authorship='generated'),
                 previous_decision=old.get('decision') if old else None)

@@ -31,6 +31,14 @@ export async function folderReview(api: Api, container: HTMLElement): Promise<vo
     h('details', {}, h('summary', {}, `${refused.count} credential-like paths refused — names only`),
       h('ul', {}, (refused.paths as string[]).map(path => h('li', {}, path)))));
   const cards = h('div', {class:'folder-cards'}); container.append(cards);
+  // Subfolders whose suggestion is inherited from a parent are covered by that parent's
+  // decision: shown collapsed, and still individually acceptable to override one.
+  const all = (out.cards ?? []) as any[];
+  const covered = all.filter(c => c.inherited && c.status !== 'accepted' && !c.decision);
+  const inheritedCards = h('div', {class:'folder-cards'});
+  if (covered.length) container.append(h('details', {class:'inherited-folders'},
+    h('summary', {}, `${covered.length} subfolders inherit their parent's suggestion — covered by the parent's decision; open to override one`),
+    inheritedCards));
   for (const card of out.cards ?? []) {
     const accepted = card.status === 'accepted';
     const article = h('article', {class:'folder-card', 'aria-label':card.path});
@@ -89,7 +97,7 @@ export async function folderReview(api: Api, container: HTMLElement): Promise<vo
       h('details', {}, h('summary', {}, 'Optional model draft'),
         h('p', {}, 'Production drafting is disabled pending owner approval of a qualified Clerk. Drafting checks inventory arithmetic and sensitivity; source text is never sent.'),
         h('label', {}, approval, ' Approve one paid folder draft'), draft), outcome, accept);
-    cards.append(article);
+    (covered.includes(card) ? inheritedCards : cards).append(article);
   }
   if (!(out.cards ?? []).length) container.append(h('p', {class:'dim'}, 'No folder cards yet. Survey an attached content root to stage its suggestions.'));
 }

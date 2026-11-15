@@ -202,3 +202,53 @@ def test_accepting_another_card_cannot_silently_reingest_a_changed_accepted_fold
     with pytest.raises(ValueError, match='FOLDER_STALE'):
         review.accept(second['id'], second['folder_fingerprint'], purpose='third-party', graph='references', person=True)
     assert len(applied) == 1
+
+
+# --- Large-repository review (owner, 2026-11-15): 1,583 cards / ~1,100 graphs on quantule_mapper ---
+
+def test_one_graph_per_project_and_inherited_subfolders_join_their_parents_graph(library):
+    from resource_librarian.folder_review import FolderReview
+    vault, source = library
+    deep = source / 'src/pkg/sub'; deep.mkdir(parents=True); (deep / 'm.py').write_text('synthetic')
+    cards = {c['path']: c for c in FolderReview(vault, planner=fake_planner).survey(source)['cards']}
+    project = f'{vault.title}-{source.name}'
+    assert cards['src']['suggested_graph'] == project and cards['docs']['suggested_graph'] == project
+    assert cards['src/pkg']['suggested_graph'] == cards['src/pkg/sub']['suggested_graph'] == project
+    assert cards['src/pkg']['inherited'] is True and cards['src/pkg']['inherited_from'] == 'src'
+    assert cards['src']['inherited'] is False
+    assert {cards['third_party_alpha']['suggested_graph'], cards['third_party_beta']['suggested_graph']} == \
+        {f'{vault.title}-third-party'}
+    own_graphs = {c['suggested_graph'] for c in cards.values() if c['suggested_purpose'] != 'third-party'}
+    assert own_graphs <= {project}                                   # never one graph per folder
+
+
+def test_content_signals_suggest_data_logs_and_objects_instead_of_inheriting_code(library):
+    from resource_librarian.folder_review import FolderReview
+    vault, source = library
+    for folder, ext, n in (('src/sweep_runs', '.json', 12), ('src/GIFS', '.gif', 9), ('src/runtime_logs', '.log', 6),
+                           ('src/mixed', '.py', 3)):
+        path = source / folder; path.mkdir(parents=True)
+        for i in range(n):
+            (path / f'f{i}{ext}').write_text('synthetic')
+    (source / 'src/mixed/table.csv').write_text('a,b')
+    cards = {c['path']: c for c in FolderReview(vault, planner=fake_planner).survey(source)['cards']}
+    assert cards['src/sweep_runs']['suggested_purpose'] == 'data'
+    assert cards['src/GIFS']['suggested_purpose'] == 'exclude'
+    assert cards['src/runtime_logs']['suggested_purpose'] == 'logs/transcripts'
+    assert cards['src/mixed']['suggested_purpose'] == 'own-current' and cards['src/mixed']['inherited'] is True
+    for path in ('src/sweep_runs', 'src/GIFS', 'src/runtime_logs'):
+        assert cards[path]['inherited'] is False and 'content' in cards[path]['reasons'][0]
+
+
+def test_resurvey_refreshes_undecided_suggestions_but_keeps_decisions(library):
+    from resource_librarian.folder_review import FolderReview
+    vault, source = library
+    review = FolderReview(vault, planner=fake_planner, applier=lambda _: {'graphs': []})
+    first = {c['path']: c for c in review.survey(source)['cards']}
+    for card in first.values():                                  # simulate cards staged by older code
+        card['suggested_graph'] = 'stale-per-folder-graph'; review.store.save(card)
+    review.accept(first['docs']['id'], first['docs']['folder_fingerprint'], purpose='own-docs',
+                  graph='kept-by-person', person=True)
+    again = {c['path']: c for c in review.survey(source)['cards']}
+    assert again['src']['suggested_graph'] == f'{vault.title}-{source.name}'      # refreshed
+    assert again['docs']['status'] == 'accepted' and again['docs']['decision']['graph'] == 'kept-by-person'

@@ -5853,6 +5853,15 @@ var Librarian = (() => {
     );
     const cards = h("div", { class: "folder-cards" });
     container.append(cards);
+    const all = out.cards ?? [];
+    const covered = all.filter((c) => c.inherited && c.status !== "accepted" && !c.decision);
+    const inheritedCards = h("div", { class: "folder-cards" });
+    if (covered.length) container.append(h(
+      "details",
+      { class: "inherited-folders" },
+      h("summary", {}, `${covered.length} subfolders inherit their parent's suggestion \u2014 covered by the parent's decision; open to override one`),
+      inheritedCards
+    ));
     for (const card of out.cards ?? []) {
       const accepted = card.status === "accepted";
       const article = h("article", { class: "folder-card", "aria-label": card.path });
@@ -5953,7 +5962,7 @@ var Librarian = (() => {
         outcome,
         accept
       );
-      cards.append(article);
+      (covered.includes(card) ? inheritedCards : cards).append(article);
     }
     if (!(out.cards ?? []).length) container.append(h("p", { class: "dim" }, "No folder cards yet. Survey an attached content root to stage its suggestions."));
   }
