@@ -113,6 +113,9 @@ class ToolSpec:
     # never to clerk/scribe, and always seeded "ask" in the broker regardless
     # of mode (the loop wraps its result untrusted; it gets no vault access).
     external: bool = False
+    # Operator-accepted connector authority, pinned in its acceptance digest.
+    # A tool result/server cannot self-assert this value.
+    provenance_authority: str = ""
     # An external tool's shape is the server's own JSON Schema, not something
     # to read off `fn` (a generic bridge, not a typed Python function) -
     # `json_schema()` and `coerce()` use this directly when it is set.
@@ -355,7 +358,9 @@ class Registry:
                     not ctx.extras.get("macro_expansion_depth") and \
                     ctx.extras.get("reference_rehydration") != name:
                 allowed = set(active_bundle) if isinstance(active_bundle, (set, frozenset, list, tuple)) else set()
-                if name not in allowed:
+                packet_fetch = (ctx.extras.get('plan_packet_fetch') == name and spec.external
+                    and spec.effect == 'read' and name.rsplit('__',1)[-1] in {'compile_task_packet','list_graphs','paper_get_section'})
+                if name not in allowed and not packet_fetch:
                     offered = ", ".join(sorted(allowed)) or "no tools"
                     raise Refusal("TOOL_BUNDLE_REFUSED",
                                   f"{name!r} is not in this turn's task-sized tool bundle "
@@ -386,12 +391,32 @@ class Registry:
                 authorization = hooks[2](name, spec, kwargs, intent, ctx,
                                          raw=arguments or {}, adjusted=adjusted)
             broker = ctx.extras.get("broker")
+            from .access import publication_guard
+            from .read_access import guard as read_guard
+            read_guard(spec, kwargs, ctx)
+            review_sources = publication_guard(spec, kwargs, ctx)
+            if review_sources:
+                ctx = replace(ctx, extras={**ctx.extras, '_publication_review': review_sources})
+            if spec.effect != 'read' and ctx.vault is not None:
+                from .folder_review import refuse_write
+                targets = list(intent.targets) if intent is not None else _write_targets(name, kwargs, ctx)
+                for target in targets:
+                    if str(target).replace('\\','/').split('/',1)[0] not in {'.librarian','.evidence'}:
+                        refuse_write(ctx.vault, ctx.vault.root / target)
             def invoke() -> Any:
+                read_guard(spec, kwargs, ctx, consume=True)
                 # Some tools intentionally block while waiting for a person
                 # (`ask_user`) or orchestrate nested tool calls.  Holding an
                 # index mutex around a whole tool would deadlock those paths.
                 # SQLite-owning implementation code uses the Core's
                 # IndexService explicitly for its short transaction instead.
+                current_sources = publication_guard(spec, kwargs, ctx)
+                if current_sources and not ctx.extras.get('_publication_review_accepted'):
+                    raise Refusal('COMPOSITION_REFUSED', 'A fresh person review is required; use staging',
+                                  {'taint_sources': current_sources})
+                if current_sources and current_sources != review_sources:
+                    raise Refusal('COMPOSITION_REFUSED', 'Sources changed while awaiting review; review again',
+                                  {'taint_sources': current_sources})
                 execution_ctx = ctx
                 if intent is not None and intent.prepared is not None:
                     # No shared-context mutation: concurrent calls cannot swap
@@ -400,6 +425,11 @@ class Registry:
                     execution_ctx = replace(ctx, extras={**ctx.extras,
                         "_prepared_write": copy.deepcopy(intent.prepared)})
                 out = spec.fn(execution_ctx, **kwargs)
+                from .read_access import bound_raw_result
+                if isinstance(out, dict):
+                    out = bound_raw_result(spec, out, execution_ctx, kwargs)
+                from .access import label_generated_write
+                label_generated_write(spec, out, execution_ctx)
                 if intent is not None and intent.note and isinstance(out, dict):
                     # Issued inside the operation, so it vouches for exactly
                     # what this call wrote and nothing written after it.
@@ -415,6 +445,10 @@ class Registry:
                 else:
                     preview = None
                 permission = broker.check(spec, kwargs, ctx, preview=preview) or "allowed"
+                if review_sources:
+                    if not permission.startswith('asked:'):
+                        raise Refusal('COMPOSITION_REFUSED', 'Canonical publication requires an explicit person review')
+                    ctx = replace(ctx, extras={**ctx.extras, '_publication_review_accepted': True})
             # A local app can provide one VaultWriter for all Librarian-originated
             # mutations.  CLI/tests without one retain the direct, backwards
             # compatible path.  The registry remains the enforcement boundary;
@@ -495,6 +529,9 @@ class Registry:
         outcome = outcome_of(result)
         if outcome:              # its own key: a tool's `status` (e.g. "staged") stays its own
             result = {**result, "outcome": outcome}
+        if name in self._tools:
+            from .access import finalize_result
+            result = finalize_result(self._tools[name], kwargs or arguments or {}, result, ctx)
         if hooks and name in self._tools and ctx.session:
             try:
                 result = hooks[1](name, arguments or {}, result, ctx, self._tools[name].effect,
@@ -613,7 +650,7 @@ def coerce(spec: ToolSpec, arguments: dict[str, Any]) -> tuple[dict[str, Any], l
     out: dict[str, Any] = {}
     changed: list[str] = []
     for key, value in arguments.items():
-        schema = properties[key]
+        schema = _argument_schema(properties[key], schema_obj)
         kind = schema.get("type")
         if kind == "boolean":
             if isinstance(value, str):
@@ -685,6 +722,25 @@ def coerce(spec: ToolSpec, arguments: dict[str, Any]) -> tuple[dict[str, Any], l
                 text = matches[0]
             out[key] = text
     return out, changed
+
+
+def _argument_schema(schema: dict, root: dict) -> dict:
+    """Resolve local JSON pointers before coercion; never fetch external schemas."""
+    seen = set()
+    while '$ref' in schema:
+        ref = schema['$ref']
+        if not isinstance(ref, str) or not ref.startswith('#/') or ref in seen:
+            raise TypeError('SCHEMA_REF_INVALID: only acyclic local references are supported')
+        seen.add(ref); target = root
+        try:
+            for part in ref[2:].split('/'):
+                target = target[part.replace('~1','/').replace('~0','~')]
+        except (KeyError, TypeError):
+            raise TypeError('SCHEMA_REF_INVALID: unresolved local reference') from None
+        if not isinstance(target, dict):
+            raise TypeError('SCHEMA_REF_INVALID: reference must name a schema object')
+        schema = {**target, **{k:v for k,v in schema.items() if k != '$ref'}}
+    return schema
 
 
 def _literal(value: Any, kind: type) -> Any:

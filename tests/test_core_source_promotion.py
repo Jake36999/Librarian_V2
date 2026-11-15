@@ -28,9 +28,12 @@ def core(vault):
     clean = vault.work("staging") / "files/paper.md"
     clean.parent.mkdir(parents=True, exist_ok=True)
     clean.write_bytes(b"# Widget paper\r\n\r\nClean text remains unchanged.\n")
+    from resource_librarian.conversions import migrate_confirmed
+    converted = migrate_confirmed(vault, 'Project/docs/paper.pdf',
+                                 '.librarian/staging/files/paper.md', apply=True)
     staging.StagingStore(vault).add({"id": "new-widget", "kind": "source", "name": "New Widget",
         "source_kind": "document", "title": "Widget field study", "canonical_url": "https://example.org/paper",
-        "file": "Project/docs/paper.pdf", "clean_file": ".librarian/staging/files/paper.md",
+        "file": "Project/docs/paper.pdf", "clean_file": converted['path'],
         "review": {"draft": {"status": "ok", "bottom_line": "Widget field study measures practical effects.",
                               "what_it_solves": "Evidence for evaluating Widget.", "model": "fixture-clerk"}},
         "sections": {"Claims": "Source-stated claims, not an endorsement."}, "evidence": []})
@@ -68,7 +71,8 @@ def _copies(core):
 
 
 def _originals(core):
-    return [core.vault.root / "Project/docs/paper.pdf", core.vault.work("staging") / "files/paper.md"]
+    return [core.vault.root / "Project/docs/paper.pdf",
+            next((core.vault.librarian / 'conversions').glob('*.md'))]
 
 
 def test_source_accept_owns_sql_and_files_and_copies_without_relocating_inputs(core, monkeypatch):
@@ -93,10 +97,11 @@ def test_source_accept_owns_sql_and_files_and_copies_without_relocating_inputs(c
     assert [p.read_bytes() for p in _originals(core)] == originals
     note = notes.load(_source(core))
     assert note.frontmatter["file"] == "Sources/document/files/paper.pdf"
-    assert note.frontmatter["file_markdown"] == "Sources/document/files/paper (clean text).md"
+    assert note.frontmatter["file_markdown"].startswith('.librarian/conversions/')
     assert "needs_attention" not in note.frontmatter
     assert "Source-stated claims, not an endorsement." in note.body
-    assert [p.read_bytes() for p in sorted(_copies(core), key=lambda p: p.suffix, reverse=True)] == originals
+    assert [p.read_bytes() for p in _copies(core)] == originals[:1]
+    assert (core.vault.root / note.frontmatter['file_markdown']).read_bytes() == originals[1]
     assert _store(core).load("new-widget")["sections"]["Claims"].startswith("Source-stated")
     concept = (core.vault.root / "Concepts/Widget.md").read_text(encoding="utf-8")
     assert "A person's own definition" in concept and "[[New Widget]]" in concept
@@ -105,7 +110,7 @@ def test_source_accept_owns_sql_and_files_and_copies_without_relocating_inputs(c
                 "Sources/document/New Widget.md" in o["targets"])
     assert ".librarian/staging/source/new-widget.json" in done["targets"]
     assert set(out["results"][0]["originals_retained"]) == {
-        "Project/docs/paper.pdf", ".librarian/staging/files/paper.md"}
+        "Project/docs/paper.pdf", note.frontmatter['file_markdown']}
     assert all(p in done["precondition_fingerprints"] for p in out["results"][0]["originals_retained"])
 
 
@@ -354,7 +359,7 @@ def test_interrupted_acceptance_can_be_explicitly_finished_after_restart(core, m
                       what_it_solves=reviewed["review"]["draft"]["what_it_solves"],
                       **({"revision": reviewed["revision"]} if reviewed.get("revision") else {}))
         assert out.get("accepted") == 1, out
-        assert len(_copies(core)) == 2
+        assert len(_copies(core)) == 1
         assert all((core.vault.root / "Sources/document/files" / name).read_bytes() == data
                    for name, data in before.items())
         assert all(p.exists() for p in _originals(core))

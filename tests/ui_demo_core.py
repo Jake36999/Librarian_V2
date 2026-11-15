@@ -273,7 +273,7 @@ def deep_read_answers(payload):
 
 
 _deep_read_ctx = Context(tier="contribute", vault=vault,
-                         extras={"clerk": clerk.Scripted(deep_read_answers)})
+                         extras={"clerk": clerk.Scripted(deep_read_answers), "caller_kind": "person"})
 _person_call = app.person_call
 
 

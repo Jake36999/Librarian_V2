@@ -425,6 +425,36 @@ def inside(listing: str) -> Task:
         "below.\n- Do not say what it is for; only what is in it."))
 
 
+def code_contract_schema() -> dict[str, Any]:
+    def rows(field: str, max_chars: int | None = None) -> dict:
+        text = {'type': 'string'}
+        if max_chars:
+            text['maxLength'] = max_chars
+        return dict(type='array', items=dict(type='object', additionalProperties=False,
+            required=[field, 'cite'], properties={field: text, 'cite': {'type': 'string'}}))
+    return dict(type='object', additionalProperties=False,
+        required=['inputs', 'outputs', 'calls', 'claims', 'not_determinable'],
+        properties=dict(inputs=rows('name'), outputs=rows('name'), calls=rows('target'),
+                        claims=rows('text', 200), not_determinable=dict(type='array', items={'type':'string'})))
+
+
+def code_block_contract(packet: dict) -> Task:
+    """Describe only a compiled packet; plan/session identity never reaches the clerk."""
+    if not isinstance(packet, dict) or packet.get('packet_version') != 'task-packet-v1':
+        raise ValueError('TASK_PACKET_REQUIRED')
+    if not isinstance(packet.get('instruction'), str):
+        raise ValueError('TASK_PACKET_REQUIRED')
+    chunk = dict(anchors=[{k:a[k] for k in ('ref','cite_as','text') if k in a} for a in packet['anchors']],
+                 boundary=[{k:b[k] for k in ('from','to','subtype','cite_as') if k in b} for b in packet['boundary']],
+                 upstream=[{k:r[k] for k in ('ref','inputs','outputs','cite','origin')} for r in packet.get('upstream',[])])
+    text = json.dumps(chunk, ensure_ascii=False, sort_keys=True)
+    kind = Kind('code_block_contract',
+        "describe the inputs, outputs and calls shown in code. Upstream rows are other readers' "
+        "citation-checked notes; their names remain interpretations and require a cite when reused",
+        code_contract_schema(), max_tokens=1800, chunk_chars=len(text) + 1)
+    return Task(kind, text, packet['instruction'])
+
+
 def mechanics(documentation: str) -> Task:
     return Task(KINDS["mechanics"], documentation, (
         "Below is a project's own documentation. Write up to six short bullets on how "

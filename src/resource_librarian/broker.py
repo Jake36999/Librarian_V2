@@ -51,6 +51,7 @@ class Request:
     event: threading.Event = field(default_factory=threading.Event)
     outcome: str = ""               # allowed | denied | expired
     reason: str = ""
+    publication_sources: tuple[str, ...] = ()
 
     def public(self) -> dict[str, Any]:
         return {"id": self.id, "tool": self.tool, "effect": self.effect,
@@ -123,7 +124,7 @@ class Broker:
             for request in list(self._pending.values()):
                 verdict = self._policy(request.tool, request.effect, request.open_world,
                                        request.session)
-                if verdict == "allow":
+                if verdict == "allow" and not request.publication_sources:
                     self._finish(request, "allowed", f"released by the switch to {mode}")
                     released.append(request.id)
                 elif verdict == "deny":
@@ -164,6 +165,9 @@ class Broker:
         # Plan mode can show the diff it would propose.
         effect = "read" if (arguments or {}).get("dry_run") is True else spec.effect
         verdict = self._policy(spec.name, effect, spec.open_world, session)
+        review_sources = tuple(ctx.extras.get('_publication_review', []))
+        if review_sources and verdict != 'deny':
+            verdict = 'ask'
         if verdict == "allow":
             return f"allowed ({self._mode} mode)" if effect != "read" else "allowed (read)"
         if verdict == "deny":
@@ -175,6 +179,13 @@ class Broker:
                           {k: clip(v, shown) for k, v in (arguments or {}).items()},
                           session, time.monotonic(), spec.open_world,
                           {k: clip(v, 20_000) for k, v in preview.items()} if preview else None)
+        if review_sources:
+            request.publication_sources = review_sources
+            request.preview = {**(request.preview or {}), 'taint_sources': list(review_sources),
+                'publication_review': 'Review derived content before canonical publication; staging is available.'}
+            if spec.name == 'project_edit':
+                request.preview['licence_warning'] = ('derived from third-party (unlicensed) material: '
+                    'do not copy it into this repository')
         with self._lock:
             closed = self._closed
             if closed is None:
@@ -208,7 +219,7 @@ class Broker:
             request = self._pending.get(request_id)
             if request is None:
                 raise LookupError(f"no pending request {request_id!r}")
-            if answer == "allow_session" and request.session and \
+            if answer == "allow_session" and not request.publication_sources and request.session and \
                     request.tool not in ALWAYS_ASK:
                 self._session_grants.add((request.session, request.tool))
             self._finish(request, "denied" if answer == "deny" else "allowed",

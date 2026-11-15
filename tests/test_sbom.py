@@ -39,11 +39,12 @@ def test_a_candidate_lists_runtime_requirements_unresolved_and_the_build_tools_a
     npm_lock = tmp_path / "package-lock.json"
     npm_lock.write_text(json.dumps({"packages": {"": {"name": "ui"}, "node_modules/esbuild": {
         "version": "0.28.2", "integrity": "sha512-" + "QUJD" * 22}}}), encoding="utf-8")
-    bom = make_sbom.build(wheel(tmp_path), None, build_lock, [npm_lock])
+    candidate = wheel(tmp_path)
+    bom = make_sbom.build(candidate, None, build_lock, [npm_lock])
     assert bom["bomFormat"] == "CycloneDX" and bom["specVersion"] == "1.5"
     main = bom["metadata"]["component"]
     assert main["purl"] == "pkg:pypi/demo-pkg@1.2.3"
-    assert main["hashes"][0]["content"] == hashlib.sha256(wheel(tmp_path).read_bytes()).hexdigest()
+    assert main["hashes"][0]["content"] == hashlib.sha256(candidate.read_bytes()).hexdigest()
     by_name = {c["name"]: c for c in bom["components"]}
     assert set(by_name) == {"PyYAML", "keyring", "build", "esbuild"}        # no optional extra
     assert by_name["PyYAML"]["scope"] == "required" and "version" not in by_name["PyYAML"]
@@ -76,6 +77,7 @@ def test_a_lock_that_misses_a_requirement_is_refused(tmp_path):
 
 def test_the_same_inputs_give_the_same_bill(tmp_path, monkeypatch):
     monkeypatch.setenv("SOURCE_DATE_EPOCH", "1800000000")
-    first = make_sbom.build(wheel(tmp_path), None, None, [])
-    second = make_sbom.build(wheel(tmp_path), None, None, [])
+    candidate = wheel(tmp_path)
+    first = make_sbom.build(candidate, None, None, [])
+    second = make_sbom.build(candidate, None, None, [])
     assert first == second and first["metadata"]["timestamp"] == "2027-01-15T08:00:00Z"

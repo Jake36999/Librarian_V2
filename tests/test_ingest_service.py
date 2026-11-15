@@ -7,6 +7,7 @@ flagged by title; the fit record kept apart; and every result says the state it 
 what comes next."""
 import shutil
 import types
+import re
 
 import pytest
 
@@ -54,8 +55,14 @@ class Cleaner:
         if self.fail:
             raise ProviderError("DEEPINFRA_API_KEY is not set")
         raw = messages[0]["content"].replace("-\n", "").replace(HEADER, "")
-        return types.SimpleNamespace(text="## Change data capture\n\n" + " ".join(
-            w for w in raw.split() if not w.isdigit()))
+        # Honor the S3 cleanup contract: retain page markers on their own lines.
+        chunks = re.split(r'(?m)^\[page (\d+)\]\s*\n', raw)
+        cleaned = []
+        for i in range(1, len(chunks), 2):
+            body = ' '.join(w for w in chunks[i + 1].split() if not w.isdigit())
+            heading = '## Change data capture\n\n' if i == 1 else ''
+            cleaned.append(f'[page {chunks[i]}]\n{heading}{body}')
+        return types.SimpleNamespace(text='\n\n'.join(cleaned))
 
 
 def ctx(vault, responses=None, tier="curate", **extras):
@@ -102,14 +109,14 @@ def test_a_mechanical_pdf_is_cleaned_in_the_batch_and_read_from_the_clean_copy(l
     done = run_batch(c, out["item"])
     assert done["status"] == "enriched" and cleaner.calls == 1
     item = StagingStore(library).load(out["item"])
-    assert item["clean_file"] == f".librarian/staging/files/{out['item']}.md"
+    assert item["clean_file"].startswith('.librarian/conversions/')
     assert "information of a database" in (library.root / item["clean_file"]).read_text(
         encoding="utf-8")
     assert not (library.root / "Inbox" / "cdc.md").exists()     # never beside it, as a note
     accepted = call(c, "staging_decide", item_ids=[out["item"]], decision="accept")
     fm = notes.load(library.root / accepted["results"][0]["promotion"]["path"]).frontmatter
     assert fm["file"].endswith("files/cdc.pdf")
-    assert fm["file_markdown"].endswith("files/cdc (clean text).md")
+    assert fm["file_markdown"] == item['clean_file']
     assert fm["coverage"] == "full"
 
 

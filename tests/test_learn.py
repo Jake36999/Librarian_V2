@@ -13,7 +13,7 @@ from conftest import write_note
 @pytest.fixture
 def m(vault):
     write_note(vault.root, "Concepts/Query Planning.md",
-              "type: concept\nconcept_kind: pattern\nstatus: active",
+              "type: concept\nconcept_kind: pattern\nstatus: active\nauthorship: owner_created",
               "## Definition\nHow a database decides the order to join and filter tables.\n")
 
     class Model:

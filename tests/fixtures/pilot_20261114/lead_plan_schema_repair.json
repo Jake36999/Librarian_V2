@@ -1,0 +1,73 @@
+{
+ "plan_id": "phase67-live-pilot-20261114",
+ "server": "geo_phase67_pilot_20261114",
+ "tasks": [
+  {
+   "anchors": [
+    "entity:entity:256ddd69e64c872f1718406151b1534ab29a63fe8b5960a56aede8ede0a78943"
+   ],
+   "depends_on": [],
+   "graph_id": "g_850b52af2916ae87854c9ada",
+   "instruction": "Describe the code block for aletheia_toolchain/aletheia_tool_core/config.py.load_json_config with cited inputs, outputs, calls, claims and uncertainty.",
+   "task_id": "contract-1",
+   "tier": "3"
+  },
+  {
+   "anchors": [
+    "entity:entity:0e9c1f8c1603eda1d8a0ccea8c7646284cdaf005a6030af6e52174bf289578cc"
+   ],
+   "depends_on": [],
+   "graph_id": "g_850b52af2916ae87854c9ada",
+   "instruction": "Describe the code block for aletheia_toolchain/aletheia_tool_core/config.py.resolve_precedence with cited inputs, outputs, calls, claims and uncertainty.",
+   "task_id": "contract-2",
+   "tier": "3"
+  },
+  {
+   "anchors": [
+    "entity:entity:c177e40ca7fbb5454be9e096760dec9f29dd338abdd49cae2bff0642940ec26e"
+   ],
+   "depends_on": [],
+   "graph_id": "g_850b52af2916ae87854c9ada",
+   "instruction": "Describe the code block for aletheia_toolchain/aletheia_tool_core/config.py.resolve_profile with cited inputs, outputs, calls, claims and uncertainty.",
+   "task_id": "contract-3",
+   "tier": "3"
+  },
+  {
+   "anchors": [
+    "entity:entity:97fe812e96b7cd63ef214c752d20bc1245609c7e82acd9fe7952b5e473e22543"
+   ],
+   "depends_on": [],
+   "graph_id": "g_850b52af2916ae87854c9ada",
+   "instruction": "Describe the code block for aletheia_toolchain/aletheia_tool_core/config.py.validate_config with cited inputs, outputs, calls, claims and uncertainty.",
+   "task_id": "contract-4",
+   "tier": "3"
+  },
+  {
+   "anchors": [
+    "entity:entity:0e9c1f8c1603eda1d8a0ccea8c7646284cdaf005a6030af6e52174bf289578cc"
+   ],
+   "depends_on": [
+    "contract-1",
+    "contract-2",
+    "contract-3",
+    "contract-4"
+   ],
+   "graph_id": "g_850b52af2916ae87854c9ada",
+   "instruction": "Synthesize the four tier-3 contracts into a closed JSON contract shape. Anchor the synthesis on resolve_precedence and provide source-supported conclusions, preserving uncertainty and citations.",
+   "task_id": "synthesis-1",
+   "tier": "2"
+  },
+  {
+   "anchors": [
+    "entity:entity:c177e40ca7fbb5454be9e096760dec9f29dd338abdd49cae2bff0642940ec26e"
+   ],
+   "depends_on": [
+    "synthesis-1"
+   ],
+   "graph_id": "g_850b52af2916ae87854c9ada",
+   "instruction": "Review the synthesis into a closed JSON contract shape. Anchor the review on resolve_profile and provide source-supported conclusions, preserving uncertainty and citations.",
+   "task_id": "review-1",
+   "tier": "1"
+  }
+ ]
+}

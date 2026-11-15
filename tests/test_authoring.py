@@ -142,6 +142,11 @@ def test_read_url_reads_without_keeping(vault):
 
 
 def test_read_file_and_list_files_stay_inside_the_vault(vault):
+    import json
+    from resource_librarian.content_roots import manifest_path
+    # Explicitly own fixture material; unclassified/third-party reads have S4 tests.
+    manifest_path(vault.root).write_text(json.dumps({'version': 1,
+        'roots': [{'path': 'Inbox', 'authorship': 'owner_created'}]}), encoding='utf-8')
     (vault.root / "Inbox").mkdir(exist_ok=True)
     (vault.root / "Inbox" / "lab.txt").write_text("Lab 1: install Thunkable.", encoding="utf-8")
     listed = call(vault, "list_files", folder="Inbox")
@@ -162,7 +167,9 @@ def test_check_notes_reports_broken_links_and_orphaned_sources(vault):
 
 
 def test_run_list_is_empty_before_any_run(vault):
-    assert call(vault, "run_list", tier="consult") == {"runs": []}
+    out = call(vault, "run_list", tier="consult")
+    assert out['runs'] == []
+    assert out['access']['sources']
 
 
 def test_a_write_inside_a_session_is_listed_with_its_path_in_any_phase(vault):

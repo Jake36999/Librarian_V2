@@ -309,6 +309,19 @@ var Librarian = (() => {
     post(path, body = {}) {
       return this.request("POST", path, body);
     }
+    async downloadOriginal(source, filename) {
+      const response = await fetch(
+        `${this.opts.base}/api/source-original?source=${encodeURIComponent(source)}`,
+        { headers: { "X-Librarian-Token": this.opts.token } }
+      );
+      if (!response.ok) throw new ApiError(response.status, await response.json().catch(() => ({})));
+      const url = URL.createObjectURL(await response.blob());
+      const link2 = document.createElement("a");
+      link2.href = url;
+      link2.download = filename;
+      link2.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1e3);
+    }
     /** The composer's paperclip: raw bytes, not JSON - too large and the wrong shape. */
     async attach(file, dir = "Inbox") {
       const qs = `dir=${encodeURIComponent(dir)}&name=${encodeURIComponent(file.name)}`;
@@ -1996,6 +2009,16 @@ var Librarian = (() => {
     return h("span", {}, "done");
   }
 
+  // src/model_order.ts
+  function orderModels(models, slot) {
+    const recommended = (m) => slot > 0 && String(m.profile?.suggested_tier ?? "") === `Tier_${slot}`;
+    const rank = (m) => {
+      const r = m.profile?.recommendation_rank;
+      return recommended(m) && Number.isInteger(r) && r > 0 ? r : Number.POSITIVE_INFINITY;
+    };
+    return models.map((m, i) => ({ m, i })).sort((a, b) => Number(recommended(b.m)) - Number(recommended(a.m)) || rank(a.m) - rank(b.m) || a.i - b.i).map(({ m }) => m);
+  }
+
   // src/panels.ts
   var MODES = [
     ["plan", "Plan", "Reads and searches. Writes are refused: the librarian proposes instead."],
@@ -2022,6 +2045,7 @@ var Librarian = (() => {
     if (!p) return "unprofiled";
     const parts = p.shared ? ["shared profile"] : [];
     if (p.suggested_tier) parts.push(String(p.suggested_tier).replace(/_/g, " "));
+    if (p.task_class) parts.push(`${p.field_authorship?.task_class === "owner_created" ? "Owner" : "Card"} class: ${String(p.task_class).replace(/_/g, " ")}`);
     const bestFor = p.best_for ?? [];
     if (bestFor.length) parts.push(bestFor.map((t) => String(t).replace(/_/g, " ")).join(", "));
     if (p.context_length) parts.push(`${Math.round(p.context_length / 1e3)}k ctx`);
@@ -2571,7 +2595,7 @@ var Librarian = (() => {
       const recommended = (m) => next > 0 && String(m.profile?.suggested_tier ?? "") === `Tier_${next}`;
       clear(host, Object.entries(PROVIDERS).map(([p, label]) => {
         const listing = this.listings.get(p) ?? { status: "\u2026", models: [] };
-        const models = listing.models.filter(matches).filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true)).map((m, i) => ({ m, i })).sort((a, b) => Number(recommended(b.m)) - Number(recommended(a.m)) || a.i - b.i).map(({ m }) => m);
+        const models = orderModels(listing.models.filter(matches).filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true)), next);
         const status = listing.status === "ready" ? `${listing.models.length} model${listing.models.length === 1 ? "" : "s"}` : listing.status === "no key" ? "no key saved (Settings \u2192 Providers & keys)" : listing.status === "offline" ? "offline: the local server is not running" : listing.error ? `error: ${listing.error}` : listing.status;
         return h(
           "section",
@@ -5145,6 +5169,44 @@ var Librarian = (() => {
     }
   };
 
+  // src/catalogue.ts
+  function renderCatalogue(data, openOriginal) {
+    const status = h("p", { role: "status" });
+    const original = data.original ?? {};
+    const use = data.use_rollup ?? {};
+    return h(
+      "section",
+      { class: "catalogue-navigation", "aria-label": "Source navigator" },
+      h("h2", {}, "Source navigator"),
+      h("h3", {}, "When it\u2019s relevant"),
+      h("p", {}, data.when_relevant || "Not recorded."),
+      h("h3", {}, "How it\u2019s been used"),
+      h("p", {}, `${use.log_use_count ?? 0} recorded uses; ${use.application_count ?? 0} applications. Recorded history, not proof of efficacy.`),
+      ...(use.recent_uses ?? []).map((row) => h("p", {}, String(row.used_for ?? ""))),
+      ...(use.applications ?? []).map((row) => h("p", {}, `${row.name}: ${row.outcome || "outcome not recorded"}`)),
+      original.available ? h("button", { onclick: async () => {
+        status.textContent = "Opening the original\u2026";
+        try {
+          await openOriginal(original.download_source, original.name);
+          status.textContent = "Original download requested.";
+        } catch (error) {
+          status.textContent = error.message;
+        }
+      } }, "Open original") : h("p", {}, "Original unavailable; catalogue only."),
+      status,
+      h("h3", {}, "Chapter summaries"),
+      ...(data.chapters ?? []).map((chapter) => h(
+        "details",
+        {},
+        h("summary", {}, `${chapter.title} \xB7 ${chapter.locator ?? ""}`),
+        h("p", {}, chapter.status === "not examined" ? "Not examined; no summary." : `Reading coverage: ${chapter.coverage ?? "not recorded"}. Generated summary; verify original pages.`),
+        ...(chapter.summary ?? []).map((text) => h("p", {}, text)),
+        chapter.summary_truncated ? h("p", {}, "Summary excerpt; use the graph to locate further evidence.") : null
+      )),
+      data.chapters_truncated ? h("p", {}, `Showing ${(data.chapters ?? []).length} of ${data.chapters_total} chapters.`) : null
+    );
+  }
+
   // src/pane.ts
   var RECENT = 8;
   var DocPane = class {
@@ -5353,14 +5415,21 @@ var Librarian = (() => {
       }
       if (version !== this.version) return;
       this.mark("Note");
-      this.current = { kind: "doc", path: doc.path, name: doc.name };
-      this.speakButton.hidden = Boolean(doc.script);
+      this.current = {
+        kind: "doc",
+        path: doc.path,
+        name: doc.name,
+        readOnly: Boolean(doc.read_only),
+        sourcePath: doc.source_path || doc.path
+      };
+      this.speakButton.hidden = Boolean(doc.script) || Boolean(doc.read_only);
       this.runButton.hidden = !doc.script;
       this.browsing = doc.path.split("/").slice(0, -1).join("/");
       this.recent = [{ path: doc.path, name: doc.name }, ...this.recent.filter((r) => r.path !== doc.path)].slice(0, RECENT);
       const project = this.currentProject();
       if (project) this.api.tool("desk_touch", { project, note: doc.name }).catch(() => void 0);
-      this.paintCrumbs(doc.path);
+      if (doc.read_only) clear(this.crumbs, h("span", { class: "crumb-here" }, doc.source_path || doc.name));
+      else this.paintCrumbs(doc.path);
       if (doc.script) {
         clear(this.runOutput);
         clear(this.body, h(
@@ -5377,7 +5446,14 @@ var Librarian = (() => {
       const own2 = Array.from(rendered.children).find((el) => !el.matches(sel("table.props")));
       const titled = own2?.tagName === "H2" && own2.textContent?.trim().toLowerCase() === String(doc.name).toLowerCase();
       if (titled) own2.remove();
-      clear(this.body, h("article", { class: "doc" }, h("h1", { class: "doc-title" }, doc.name), rendered));
+      clear(this.body, h(
+        "article",
+        { class: "doc" },
+        h("h1", { class: "doc-title" }, doc.name),
+        doc.read_only ? h("p", { class: "note" }, "Read-only attached document") : null,
+        doc.catalogue ? renderCatalogue(doc.catalogue, (source, filename) => this.api.downloadOriginal(source, filename)) : null,
+        rendered
+      ));
       this.body.scrollTop = 0;
     }
     /** Run the open script in the sandbox, as the person's own action, and show what came
@@ -5447,20 +5523,20 @@ var Librarian = (() => {
         onclick: action
       }, label, small ? h("small", {}, small) : null);
       const vault = this.vaultName();
-      const obsidian = this.current.kind === "doc" && vault ? `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(this.current.path)}` : "";
+      const obsidian = this.current.kind === "doc" && !this.current.readOnly && vault ? `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(this.current.path)}` : "";
       const doc = this.current.kind === "doc" ? this.current : null;
       if (!doc) return;
       clear(
         this.menu,
         obsidian ? h("a", { class: "menuitem", href: obsidian, role: "menuitem" }, "Open this note in Obsidian") : null,
-        item("Rename or move\u2026", "Links follow the note", () => this.paintMove(doc), "move"),
-        item("Copy path", doc.path, async () => {
+        doc.readOnly ? null : item("Rename or move\u2026", "Links follow the note", () => this.paintMove(doc), "move"),
+        item("Copy path", doc.sourcePath || doc.path, async () => {
           try {
-            await navigator.clipboard.writeText(doc.path);
+            await navigator.clipboard.writeText(doc.sourcePath || doc.path);
             this.showMenu(false);
             this.menuButton.focus();
           } catch {
-            this.menu.append(h("p", { role: "status" }, doc.path));
+            this.menu.append(h("p", { role: "status" }, doc.sourcePath || doc.path));
           }
         })
       );
@@ -5720,6 +5796,168 @@ var Librarian = (() => {
     }
   };
 
+  // src/folders.ts
+  var purposes = [
+    "own-current",
+    "own-legacy",
+    "own-docs",
+    "research-docs",
+    "third-party",
+    "data",
+    "logs/transcripts",
+    "exclude"
+  ];
+  async function folderReview(api, container) {
+    const out = await api.get("/api/folders");
+    const status = h("p", { role: "status" });
+    const source = h("input", { type: "text", "aria-label": "Folder to survey", placeholder: "Full path to an attached source folder" });
+    const scan = h("button", { type: "button", disabled: !out.enabled, onclick: async () => {
+      scan.disabled = true;
+      status.textContent = "Surveying metadata\u2026";
+      try {
+        await api.post("/api/folders/survey", { path: source.value });
+        await folderReview(api, container);
+      } catch (e) {
+        status.textContent = e.message;
+      } finally {
+        scan.disabled = false;
+      }
+    } }, "Survey folders");
+    const refused = out.credential_refusals ?? { count: 0, paths: [] };
+    const selected = /* @__PURE__ */ new Set();
+    const approveBatch = h("button", { type: "button", onclick: async () => {
+      if (!selected.size) {
+        status.textContent = "Select folder cards first.";
+        return;
+      }
+      try {
+        await api.post("/api/folders/approve-batch", { items: [...selected] });
+        status.textContent = "Exact set approved. Start the approved processing batch in Staging. Acceptance remains separate.";
+      } catch (e) {
+        status.textContent = e.message;
+      }
+    } }, "Approve selected for processing");
+    clear(
+      container,
+      h("h2", {}, "Folder purposes"),
+      h("p", { class: "note" }, "Suggestions are not decisions. Accept each folder to assign its graph and access. Attached sources always remain read-only."),
+      !out.enabled ? h("p", { class: "note" }, "Geo-Grapher is disabled. An operator can enable the pinned installed wheel for this library.") : null,
+      h("div", { class: "view-head" }, source, scan, approveBatch),
+      status,
+      h(
+        "details",
+        {},
+        h("summary", {}, `${refused.count} credential-like paths refused \u2014 names only`),
+        h("ul", {}, refused.paths.map((path) => h("li", {}, path)))
+      )
+    );
+    const cards = h("div", { class: "folder-cards" });
+    container.append(cards);
+    for (const card of out.cards ?? []) {
+      const accepted = card.status === "accepted";
+      const article = h("article", { class: "folder-card", "aria-label": card.path });
+      const include = h("input", {
+        type: "checkbox",
+        "aria-label": `Include ${card.path} in processing batch`,
+        disabled: accepted || card.sensitivity?.sensitivity === "review_required",
+        onchange: (event) => {
+          if (event.target.checked) selected.add(card.id);
+          else selected.delete(card.id);
+        }
+      });
+      const purpose = h("select", { "aria-label": "Purpose" }, purposes.map((p) => h("option", { value: p }, p)));
+      purpose.value = card.decision?.purpose ?? card.suggested_purpose;
+      const authorship = h(
+        "select",
+        { "aria-label": "Authorship" },
+        h("option", { value: "" }, "Choose authorship"),
+        ...["owner_created", "generated", "third_party"].map((value) => h("option", { value }, value))
+      );
+      const derived = {
+        "own-current": "owner_created",
+        "own-legacy": "owner_created",
+        "own-docs": "owner_created",
+        "research-docs": "third_party",
+        "third-party": "third_party"
+      };
+      const updateAuthorship = () => {
+        authorship.value = derived[purpose.value] ?? "";
+        authorship.disabled = accepted || purpose.value === "exclude" || !!derived[purpose.value];
+      };
+      updateAuthorship();
+      if (!derived[purpose.value] && card.decision?.authorship) authorship.value = card.decision.authorship;
+      purpose.addEventListener("change", updateAuthorship);
+      const graph = h("input", { type: "text", "aria-label": "Graph", maxlength: 120 });
+      graph.value = card.decision?.graph ?? card.suggested_graph;
+      const description = h("textarea", { "aria-label": "Brief description", rows: 2, maxlength: 400 });
+      description.value = card.decision?.description ?? card.description.text;
+      const outcome = h("p", { role: "status" }, accepted ? "Accepted by person" : card.status === "failed" ? "Application failed \u2014 review and retry" : "Waiting for a person");
+      const accept = h("button", { type: "button", class: "primary", disabled: accepted, onclick: async () => {
+        accept.disabled = true;
+        outcome.textContent = "Applying the reviewed decision\u2026";
+        try {
+          await api.post("/api/folders/accept", {
+            id: card.id,
+            folder_fingerprint: card.folder_fingerprint,
+            purpose: purpose.value,
+            graph: graph.value,
+            description: description.value,
+            authorship: authorship.value || null
+          });
+          outcome.textContent = "Accepted by person";
+        } catch (e) {
+          outcome.textContent = e.message;
+          accept.disabled = false;
+        }
+      } }, "Accept folder decision");
+      const draftStatus = h("p", { class: "note" }, accepted ? "Person-reviewed description" : card.description.state === "model_draft" ? "Draft \u2014 not accepted" : "Awaiting a model draft \u2014 no model called");
+      const approval = h("input", { type: "checkbox", "aria-label": "Approve one paid folder draft" });
+      const draft = h("button", { type: "button", disabled: accepted || !out.drafting_available, onclick: async () => {
+        if (!approval.checked) {
+          outcome.textContent = "Approve the bounded model call first.";
+          return;
+        }
+        draft.disabled = true;
+        try {
+          const updated = await api.post("/api/folders/draft", { id: card.id, approve_spend: true });
+          description.value = updated.description.text;
+          draftStatus.textContent = "Draft \u2014 not accepted";
+          outcome.textContent = "Draft staged for your review";
+          approval.checked = false;
+        } catch (e) {
+          outcome.textContent = e.message;
+        } finally {
+          draft.disabled = accepted || !out.drafting_available;
+        }
+      } }, "Draft from inventory metadata");
+      article.append(
+        h("h3", {}, card.path),
+        h("label", {}, include, " Include in processing batch"),
+        h("p", { class: "dim" }, card.source_root),
+        h("p", { class: "note" }, "Inventory metadata observed; content not examined."),
+        h("p", {}, `${card.bytes.toLocaleString()} bytes \xB7 ` + Object.entries(card.file_counts).map(([kind, n]) => `${kind}: ${n}`).join(" \xB7 ")),
+        h("p", { class: "note" }, card.reasons.join("; ")),
+        h("label", {}, "Purpose ", purpose),
+        h("label", {}, "Authorship ", authorship),
+        h("label", {}, "Graph ", graph),
+        draftStatus,
+        h("label", {}, "Brief description ", description),
+        h(
+          "details",
+          {},
+          h("summary", {}, "Optional model draft"),
+          h("p", {}, "Production drafting is disabled pending owner approval of a qualified Clerk. Drafting checks inventory arithmetic and sensitivity; source text is never sent."),
+          h("label", {}, approval, " Approve one paid folder draft"),
+          draft
+        ),
+        outcome,
+        accept
+      );
+      cards.append(article);
+    }
+    if (!(out.cards ?? []).length) container.append(h("p", { class: "dim" }, "No folder cards yet. Survey an attached content root to stage its suggestions."));
+  }
+
   // src/views.ts
   var BEST_FOR_TAGS = [
     "Talking_Fast",
@@ -5822,7 +6060,7 @@ var Librarian = (() => {
       this.el.addEventListener("scroll", () => this.savePosition(), { passive: true });
       const paint = () => {
         const focusedKind = kinds.contains(document.activeElement) ? document.activeElement.dataset.kind : "";
-        clear(kinds, [["source", "Sources"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) => h("button", { "data-kind": v, "aria-pressed": String(this.kind === v), onclick: () => {
+        clear(kinds, [["source", "Sources"], ["folder", "Folders"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) => h("button", { "data-kind": v, "aria-pressed": String(this.kind === v), onclick: () => {
           this.selected = "";
           this.kind = v;
           this.savePosition();
@@ -5913,7 +6151,7 @@ var Librarian = (() => {
       if (this.pending) return;
       try {
         const saved = JSON.parse(sessionStorage.getItem("librarian.queue." + key) ?? "null");
-        if (!saved || !["source", "lens", "concept", "topic", "offering", "import"].includes(saved.kind) || !Array.from(this.statuses.options).some((option) => option.value === saved.status)) return;
+        if (!saved || !["source", "lens", "concept", "topic", "offering", "import", "folder"].includes(saved.kind) || !Array.from(this.statuses.options).some((option) => option.value === saved.status)) return;
         this.kind = saved.kind;
         this.statuses.value = this.status = saved.status;
         this.selected = String(saved.selected ?? "");
@@ -6009,6 +6247,17 @@ var Librarian = (() => {
       clear(this.list, h("p", { class: "dim" }, "Loading\u2026"));
       this.bulkStatusFilter = this.kind === "source" ? this.status : "";
       this.paintBulk();
+      if (this.kind === "folder") {
+        clear(this.detail);
+        this.list.style.gridColumn = "1 / -1";
+        try {
+          await folderReview(this.api, this.list);
+        } catch (e) {
+          clear(this.list, h("p", { class: "error" }, e.message));
+        }
+        return;
+      }
+      this.list.style.gridColumn = "";
       if (this.kind === "offering") return this.loadOfferings(request);
       try {
         const status = this.kind === "source" ? this.status : "staged";

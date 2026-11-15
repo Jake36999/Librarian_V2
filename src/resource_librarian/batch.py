@@ -53,7 +53,7 @@ MAX_READ_CALLS = 40                  # deep_read is chunked; enough calls for a 
 # comes from deep_read itself (its first-step clerk tasks).
 STAGE_RECIPES = {"validate": "1", "parse": "1", "lenses": "1", "data": "1", "relate": "1",
                  "metadata": "1", "review": "1"}
-MODEL_STAGES = frozenset({"parse", "read", "relate", "review"})
+MODEL_STAGES = frozenset({"parse", "read", "relate", "review", "folder_describe"})
 # What processing itself writes to the item it reads: excluded from the
 # mid-stage change check for the stage that writes it.
 OWN_FILES = {"parse": ("file", "clean_file")}
@@ -127,6 +127,9 @@ def _source_identity(vault: Vault, item: dict[str, Any],
         rel = str(item.get(key) or "")
         if key not in skip:
             identity[key] = f"{rel}:{fingerprint(vault.root / rel)}" if rel else ""
+    if item.get('kind') == 'folder':
+        identity.update({key: item.get(key) for key in ('source_root', 'path',
+            'folder_fingerprint', 'inventory_evidence', 'file_counts', 'bytes')})
     return identity
 
 
@@ -151,7 +154,7 @@ def _route_identity(ctx: Context) -> str:
 def _stage_key(identity: dict[str, Any], stage: str, route: str) -> str:
     """A stage's completion key: its input and every stage up to it, with recipes."""
     chain = []
-    for name, _fn in STAGES:
+    for name, _fn in (FOLDER_STAGES if identity.get('kind') == 'folder' else STAGES):
         recipe = reading.recipe() if name == "read" else STAGE_RECIPES.get(name, "1")
         chain.append([name, recipe, route if name in MODEL_STAGES else ""])
         if name == stage:
@@ -210,6 +213,11 @@ def _parse(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
         else:
             fresh = _update_item(ctx, item["id"], lambda fresh: fresh.update(clean_file=out["path"]))
             item, done = fresh, {"cleanup": f"cleaned into {out['path']}"}
+    if (str(item.get('file', '')).lower().endswith('.pdf')
+            or item.get('source_kind') == 'paper'):
+        from .paper_graph import write_artifact, publish_artifact
+        done['paper_graph'] = _commit(ctx, lambda: write_artifact(ctx.vault, item))
+        done['paper_graph']['publication'] = publish_artifact(ctx.vault, item, done['paper_graph'])
     # Source extraction can populate the disposable text cache. Keep that
     # local filesystem phase on the writer too, not the batch/provider thread.
     chunks = reading.chunk(_commit(ctx, lambda: reading.source_units(ctx.vault, item)))
@@ -341,6 +349,9 @@ def _data(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     elif kind in ("document", "paper", "standard") and (item.get("clean_file") or item.get("file")):
         units = _commit(ctx, lambda: reading.source_units(ctx.vault, item))
         pages = [t for _, t in units]
+        if units and all(number > 0 for number, _ in units):
+            by_page = dict(units)
+            pages = [by_page.get(number, '') for number in range(1, max(by_page) + 1)]
         chunks = reading.chunk(units)
         # Only readings of the text as it is now (MF-013): a chapter is never
         # credited with claims read from text that has since changed.
@@ -446,7 +457,8 @@ STAGES: list[tuple[str, Callable[[Context, dict[str, Any]], dict[str, Any]]]] = 
 # ------------------------------------------------------------------ the run
 
 def waiting(vault: Vault) -> list[str]:
-    return [i["id"] for i in StagingStore(vault).items("source", "approved")]
+    store = StagingStore(vault)
+    return [i['id'] for kind in ('source', 'folder') for i in store.items(kind, 'approved')]
 
 
 def waiting_on_model(vault: Vault) -> list[str]:
@@ -495,8 +507,8 @@ def status(vault: Vault, run_id: str = "") -> dict[str, Any]:
                items=[{"id": i, **({"status": finished[i]["status"],
                                      "coverage": finished[i].get("coverage", "")}
                                     if i in finished else {"status": "processing"}),
-                       "stages": {s: done[(i, s)]["status"] for s, _ in STAGES
-                                  if (i, s) in done}} for i in items])
+                       "stages": {s: row['status'] for (key, s), row in done.items()
+                                  if key == i}} for i in items])
     if last["type"] in ("cancelled", "failed"):
         out["detail"] = last.get("detail", "")
     return out
@@ -621,7 +633,8 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
                 continue
             results: dict[str, dict[str, Any]] = {}
             prior = (store.load(item_id).get("processing") or {})
-            for stage, fn in STAGES:
+            stages = FOLDER_STAGES if store.load(item_id).get('kind') == 'folder' else STAGES
+            for stage, fn in stages:
                 current = store.load(item_id)
                 _assert_active(ctx, current)
                 own = OWN_FILES.get(stage, ())
@@ -711,6 +724,9 @@ def _finish_item(store: StagingStore, runs: RunStore, run_id: str, item_id: str,
                           (f"partial {coverage}" if coverage else "partial"),
                           **({"read_coverage": coverage} if coverage else {}),
                           **({"not_examined": incomplete} if incomplete else {})}
+    if item.get('kind') == 'folder':
+        item['processing']['coverage'] = 'metadata only; content not examined'
+        item['processing']['not_examined'] = ['source content', *incomplete]
     if failed:
         item.update(status="failed", failure={"stage": failed, "reason": results[failed].get(
             "reason", ""), "at": now_iso()})
@@ -721,3 +737,39 @@ def _finish_item(store: StagingStore, runs: RunStore, run_id: str, item_id: str,
     store.save(item)
     runs.append(run_id, {"type": "item", "item": item_id, "status": item["status"],
                          "coverage": item["processing"]["coverage"]})
+
+
+def _folder_validate(ctx, item):
+    from .folder_review import FolderReview
+    FolderReview(ctx.vault).validate(item)
+    return dict(status='complete', evidence=item['inventory_evidence'])
+
+
+def _folder_describe(ctx, item):
+    from . import clerk
+    from .folder_review import FolderReview
+    from .tools.staging import clerk_endpoint
+    endpoint = clerk_endpoint(ctx)
+    if not isinstance(endpoint, clerk.Scripted):
+        return dict(status='queued', reason='production folder drafting disabled pending owner qualification approval')
+    preconditions = _item_precondition(ctx, item)
+    described = FolderReview(ctx.vault).draft(item['id'], endpoint, approved=True, persist=False)
+    def save():
+        fresh = StagingStore(ctx.vault).load(item['id'])
+        _assert_active(ctx, fresh)
+        fresh.update(description=described['description'], sensitivity=described['sensitivity'])
+        StagingStore(ctx.vault).save(fresh)
+    _commit(ctx, save, targets=(StagingStore(ctx.vault).path(item['id']),), preconditions=preconditions)
+    return dict(status='complete', content_status='not examined')
+
+
+def _folder_data(ctx, item):
+    from .folder_intake import save_dik
+    from .dik import path_for
+    _commit(ctx, lambda: save_dik(ctx.vault, item), targets=(path_for(ctx.vault, item['id']),),
+            preconditions=_item_precondition(ctx, item))
+    return dict(status='complete', content_status='not examined')
+
+
+FOLDER_STAGES = (('folder_validate', _folder_validate), ('folder_describe', _folder_describe),
+                 ('folder_data', _folder_data))

@@ -65,7 +65,7 @@ def test_an_id_is_never_a_pattern_or_a_path(vault):
 def test_an_edited_record_is_not_served_as_the_cited_text(vault):
     store = EvidenceStore(vault)
     record = store.put("page", "https://x", {"text": "original words"})
-    ctx = Context(tier="consult", vault=vault)
+    ctx = Context(tier="consult", vault=vault, extras={'caller_kind': 'person'})
     assert REGISTRY.call("read_evidence", {"evidence_id": record.id},
                          ctx)["fields"]["text"]["text"] == "original words"
 

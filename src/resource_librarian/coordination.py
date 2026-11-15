@@ -684,8 +684,9 @@ class VaultWatcher:
     def _markdown(self) -> Iterator[Path]:
         """Every visible Markdown file under the watched roots: hidden folders,
         excluded paths and links are not entered."""
-        from .content_roots import outside_scope
+        from .content_roots import outside_scope, folder_overrides
         root = self.vault.root
+        overrides = folder_overrides(root)
         stack = [root / r if r not in (".", "") else root for r in self._roots]
         while stack:
             folder = stack.pop()
@@ -693,7 +694,7 @@ class VaultWatcher:
                 path = Path(entry.path)
                 # The same rule the index walks by: hidden, excluded (files too)
                 # and links or junctions are never entered or watched.
-                if outside_scope(path.relative_to(root).as_posix(), self._excludes, path):
+                if outside_scope(path.relative_to(root).as_posix(), self._excludes, path, overrides=overrides):
                     continue
                 if entry.is_dir(follow_symlinks=False):
                     stack.append(path)
@@ -1036,6 +1037,8 @@ class VaultWriter:
             target = operation_path(self.vault, path)
             rel = target.relative_to(self.vault.root).as_posix()
             if rel.split("/", 1)[0] not in {".librarian", ".evidence"}:
+                from .folder_review import refuse_write
+                refuse_write(self.vault, target)
                 document_targets.append(rel)
         # Do this inside the actor after all preceding operations have
         # committed, then enforce document leases before the write.  A

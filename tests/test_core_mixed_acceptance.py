@@ -82,7 +82,7 @@ def test_source_and_topic_use_explicit_order_with_original_inputs_retained(core,
     assert out.get("accepted") == 2, json.dumps(out, indent=2)
     assert notes.load(_source(core)).frontmatter["primary_topic"] == "Alpha Studies"
     assert [p.read_bytes() for p in _originals(core)] == originals
-    assert len(_copies(core)) == 2
+    assert len(_copies(core)) == 1
     topic_result = out["results"][0 if topic_first else 1]
     assert bool(topic_result["refiled"][0].get("error")) == topic_first
 
@@ -223,7 +223,7 @@ def test_mixed_preview_is_read_only_and_discloses_ordered_replanning(core):
     assert "Sources/document/New Widget.md" in out["targets"]
     source = out["results"][0]
     assert source["coverage"] == "captured" and source["sections"] == ["Claims"]
-    assert source["file"] == "Sources/document/files/paper.pdf" and len(source["copies"]) == 2
+    assert source["file"] == "Sources/document/files/paper.pdf" and len(source["copies"]) == 1
     assert (core.vault.root / "About/Topics.md").read_bytes() == before
     assert not _copies(core) and not _source(core).exists()
 
@@ -243,7 +243,7 @@ def test_import_source_collision_never_replaces_earlier_work_or_moves_inputs(cor
     out = _accept(core, [i, "new-widget"] if import_first else ["new-widget", i])
     assert out.get("accepted") == 1, out
     assert all(p.exists() for p in _originals(core))
-    assert len(_copies(core)) == (0 if import_first else 2)
+    assert len(_copies(core)) == (0 if import_first else 1)
     assert ("Original prose." in _source(core).read_text(encoding="utf-8")) == import_first
 
 

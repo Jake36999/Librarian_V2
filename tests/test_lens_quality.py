@@ -192,7 +192,7 @@ def _stage_two_chunk_doc(vault, catches_2: str):
     (vault.root / "Inbox").mkdir(exist_ok=True)
     (vault.root / "Inbox" / "Contracts.txt").write_text(doc, encoding="utf-8")
     endpoint = clerk.Scripted(_reconcile_answers(catches_2))
-    ctx = Context(tier="curate", vault=vault, extras={"clerk": endpoint})
+    ctx = Context(tier="curate", vault=vault, extras={"clerk": endpoint, "caller_kind": "person"})
     out = REGISTRY.call("ingest", {"ref": "Inbox/Contracts.txt"}, ctx)
     assert out["status"] == "staged", out
     return ctx, out["item"]
@@ -236,7 +236,7 @@ def test_reconcile_keeps_the_existing_lens_when_the_repeat_is_weaker(vault, monk
     (vault.root / "Inbox" / "Contracts.txt").write_text(
         STANCE1 + " Subsystem Alpha logs are noisy.\n\n" +
         STANCE2 + " Subsystem Beta traces are cleaner.", encoding="utf-8")
-    ctx = Context(tier="curate", vault=vault, extras={"clerk": clerk.Scripted(answer)})
+    ctx = Context(tier="curate", vault=vault, extras={"clerk": clerk.Scripted(answer), "caller_kind": "person"})
     out = REGISTRY.call("ingest", {"ref": "Inbox/Contracts.txt"}, ctx)
     item_id = out["item"]
 
@@ -326,7 +326,7 @@ def test_a_failed_challenge_is_logged_and_the_stance_never_reaches_role(vault, m
     (vault.root / "Inbox").mkdir(exist_ok=True)
     (vault.root / "Inbox" / "Doc.txt").write_text(STANCE + " Extra padding sentence.",
                                                   encoding="utf-8")
-    ctx = Context(tier="curate", vault=vault, extras={"clerk": clerk.Scripted(answer)})
+    ctx = Context(tier="curate", vault=vault, extras={"clerk": clerk.Scripted(answer), "caller_kind": "person"})
     out = REGISTRY.call("ingest", {"ref": "Inbox/Doc.txt"}, ctx)
     item_id = out["item"]
     result = REGISTRY.call("deep_read", {"item_id": item_id, "max_chunks": 5}, ctx)
@@ -396,7 +396,7 @@ def test_paired_stance_and_not_stance_fixture(vault, monkeypatch):
     for label, body, expect_staged in (("positive", POSITIVE, True), ("negative", NEGATIVE, False)):
         (vault.root / "Inbox").mkdir(exist_ok=True)
         (vault.root / "Inbox" / f"{label}.txt").write_text(body, encoding="utf-8")
-        ctx = Context(tier="curate", vault=vault, extras={"clerk": clerk.Scripted(answer)})
+        ctx = Context(tier="curate", vault=vault, extras={"clerk": clerk.Scripted(answer), "caller_kind": "person"})
         out = REGISTRY.call("ingest", {"ref": f"Inbox/{label}.txt"}, ctx)
         result = REGISTRY.call("deep_read", {"item_id": out["item"], "max_chunks": 5}, ctx)
         if expect_staged:

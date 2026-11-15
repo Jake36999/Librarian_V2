@@ -57,6 +57,13 @@ def _path(vault: Vault) -> Path:
     return vault.librarian / "projects.json"
 
 
+def sidecar(vault: Vault, root: Path) -> Path:
+    from .folder_review import configuration
+    if configuration(vault).get('enabled'):
+        return vault.librarian / 'project-sidecars' / hashlib.sha256(str(root.resolve()).encode()).hexdigest()[:20]
+    return root / 'librarian-app'
+
+
 def state(vault: Vault) -> dict[str, Any]:
     path = _path(vault)
     data = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
@@ -99,8 +106,10 @@ def add_root(vault: Vault, folder: str, project: str = "") -> dict[str, Any]:
         entry = {"id": secrets.token_hex(4), "path": str(root), "project": project,
                  "added_at": now_iso(), "scaffold": scaffold_state}
         data["roots"].append(entry)
+    if sidecar(vault, root) != root / 'librarian-app':
+        entry.update(access='read_only', writes=False)
     _save(vault, data)
-    log(root, {"event": "root added", "project": project})
+    log(root, {"event": "root added", "project": project}, vault=vault)
     return entry
 
 
@@ -110,14 +119,18 @@ def set_writes(vault: Vault, root_id: str, allowed: bool) -> dict[str, Any]:
     entry = next((r for r in data["roots"] if r["id"] == root_id), None)
     if entry is None:
         raise TypeError(f"no project folder {root_id!r}")
+    if allowed:
+        if entry.get('access') == 'read_only':raise Refusal('FOLDER_READ_ONLY', 'attached source projects are read-only')
+        from .folder_review import refuse_write
+        refuse_write(vault, Path(entry['path']))
     entry["writes"] = bool(allowed)
     _save(vault, data)
-    log(Path(entry["path"]), {"event": "edits " + ("allowed" if allowed else "withdrawn")})
+    log(Path(entry["path"]), {"event": "edits " + ("allowed" if allowed else "withdrawn")}, vault=vault)
     return data
 
 
 def writes_allowed(vault: Vault, root: Path) -> bool:
-    return any(r["path"] == str(root) and r.get("writes") for r in state(vault)["roots"])
+    return any(r["path"] == str(root) and r.get("writes") and r.get('access') != 'read_only' for r in state(vault)["roots"])
 
 
 EDIT_MAX_BYTES = 400_000
@@ -139,6 +152,10 @@ def edit(vault: Vault, root: Path, rel: str, mode: str, new_text: str, old_text:
         raise TypeError(f"{rel!r}: a path inside the project, outside librarian-app/ and "
                         f"dot-folders")
     target = root.joinpath(*parts)
+    from .credentials import refuse_credentials
+    from .folder_review import refuse_write
+    refuse_credentials(target)
+    refuse_write(vault, target)
     if target.is_symlink() or (target.exists() and not target.is_file()):
         raise TypeError(f"{rel!r} is not an ordinary file")
     resolved = target.resolve() if target.exists() else target.parent.resolve() / target.name
@@ -193,7 +210,7 @@ def edit(vault: Vault, root: Path, rel: str, mode: str, new_text: str, old_text:
     entry = {"event": "edit", "path": clean, "mode": mode, "session": session,
              "revision": revision(root), "before": digest(before) if before else "",
              "after": digest(after), "backup": backup, "diff": diff[:20_000]}
-    log(root, entry)
+    log(root, entry, vault=vault)
     return {"path": clean, "applied": True, "diff": diff, "backup": backup,
             "revision": entry["revision"]}
 
@@ -208,7 +225,7 @@ def remove_root(vault: Vault, root_id: str) -> dict[str, Any]:
 def scaffold(vault: Vault, root: Path) -> dict[str, Any]:
     """Create what is missing of `librarian-app/`; never overwrite a file that exists. An
     existing manifest is read and its version reported."""
-    app = root / "librarian-app"
+    app = sidecar(vault, root)
     created: list[str] = []
     for folder in FOLDERS:
         (app / folder).mkdir(parents=True, exist_ok=True)
@@ -236,8 +253,8 @@ def scaffold(vault: Vault, root: Path) -> dict[str, Any]:
     return {"state": status, "version": SCAFFOLD_VERSION, **({"created": created} if created else {})}
 
 
-def log(root: Path, event: dict[str, Any]) -> None:
-    path = root / "librarian-app" / "logs" / "access.jsonl"
+def log(root: Path, event: dict[str, Any], *, vault=None) -> None:
+    path = (sidecar(vault, root) if vault else root / 'librarian-app') / 'logs' / 'access.jsonl'
     if path.parent.is_dir():
         with path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps({"t": now_iso(), **event}, ensure_ascii=False) + "\n")
@@ -294,7 +311,7 @@ def scan(vault: Vault, root: Path, project: str) -> dict[str, Any]:
     rev = revision(root)
     record = dik.from_survey(project, survey, rev, method="static structure (project scan)",
                              files=structure._files(root)[:2000])
-    app = root / "librarian-app"
+    app = sidecar(vault, root)
     (app / "data" / "components.json").write_text(json.dumps(
         {"project": project, "revision": rev, "scanned_at": now_iso(), "data": record["data"]},
         indent=1, ensure_ascii=False), encoding="utf-8")
@@ -307,7 +324,8 @@ def scan(vault: Vault, root: Path, project: str) -> dict[str, Any]:
             r["last_scan"] = {"at": now_iso(), "revision": rev, "components": len(record["data"])}
     _save(vault, data)
     log(root, {"event": "scan", "project": project, "revision": rev,
-               "components": len(record["data"]), "relations": len(record["information"])})
+               "components": len(record["data"]), "relations": len(record["information"])}, vault=vault)
     return {"project": project, "revision": rev, "components": len(record["data"]),
             "relations": len(record["information"]),
-            "written": ["librarian-app/data/components.json", "librarian-app/information/map.json"]}
+            "written": [str(app / 'data/components.json'), str(app / 'information/map.json')] if app != root / 'librarian-app'
+                       else ['librarian-app/data/components.json', 'librarian-app/information/map.json']}

@@ -340,7 +340,7 @@ WRITES: Mapping[str, frozenset] = _PhaseGates()
 # The harness itself: never gated, never charged to a budget.
 HARNESS = frozenset({"open_session", "session_status", "update_plan", "ask_user", "answer",
                      "advance", "park_session", "resume_session", "list_sessions",
-                     "set_effort", "request_budget",
+                     "set_effort", "request_budget", "request_raw_source_access",
                      # a person choosing how the thread reasons is not the model's work
                      "lens_adopt", "lens_drop",
                      # a check on the model's own reasoning; charging it would make it a cost
@@ -544,6 +544,7 @@ class Session:
     # HARNESS-05: each contract's successful calls (class, untrusted, idempotency
     # key), folded from `call` events so composition survives a resume.
     contract_calls: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+    taint_sources: list[str] = field(default_factory=list)
     # REMED-06: the Lead's questions (answered or not) and refused calls since
     # the last audit progress, folded from the log.
     stall: dict[str, int] = field(default_factory=lambda: {"questions": 0, "refusals": 0})
@@ -621,8 +622,24 @@ class Session:
                 if timestamp:
                     safe["t"] = timestamp
                 self.model_events.append(safe)
+        elif kind == "taint":
+            self.taint_sources = sorted(set(self.taint_sources) | set(event.get('sources', [])))
+        elif kind == "taint_clear" and event.get('by') == 'person':
+            self.taint_sources = sorted(set(self.taint_sources) - set(event.get('sources', [])))
         elif kind == "call":
             described = event.get("contract_call")
+            if (not event.get('provenance_boundary') and event.get('ok', True)
+                    and not event.get('refused') and event.get('tier') != 'curate'):
+                from .registry import REGISTRY
+                tool_name = str(event.get('tool', ''))
+                declared_open = tool_name in REGISTRY and REGISTRY.get(tool_name).open_world
+                if declared_open or tool_name.startswith('mcp__') or (isinstance(described, dict) and described.get('untrusted')):
+                    # Legacy logs did not record full provenance. Retain an
+                    # opaque, source-call handle rather than silently clearing
+                    # protection on upgrade or exposing raw arguments.
+                    identity = hashlib.sha256(json.dumps(event.get('args', {}), sort_keys=True,
+                        default=str).encode()).hexdigest()[:16]
+                    self.taint_sources = sorted(set(self.taint_sources) | {f'legacy:{tool_name}:{identity}'})
             if isinstance(described, dict) and event.get("ok", True) and \
                     not event.get("refused"):
                 self.contract_calls.setdefault(str(described.get("contract")), []).append(
@@ -1127,6 +1144,7 @@ class Session:
             status = str(item.get("status", "unknown"))
             library_item_counts[status] = library_item_counts.get(status, 0) + 1
         return {"session": self.id, "purpose": self.purpose, "project": self.project,
+                'taint_sources': list(self.taint_sources),
                 "mode": self.mode, "status": self.status, "phase": self.phase,
                 "phases": list(self.phases), "open_items": self.missing(vault),
                 **({"round": self.audit_round} if self.purpose == "audited" else {}),
@@ -1257,10 +1275,15 @@ class SessionStore:
             kept = self._lines_through(session_id, message_index)
         new_id = self._new_id()
         new_path = self.path(new_id)
+        inherited_sources = self.load(session_id).taint_sources
 
         def write() -> None:
             new_path.parent.mkdir(parents=True, exist_ok=True)
             atomic_write_text(new_path, "\n".join(kept) + "\n")
+            if inherited_sources:
+                with _append_lock(new_path):
+                    _write_event_locked(new_path, {'type': 'taint', 'sources': inherited_sources,
+                                                   'branched_from': session_id})
         self._through_core(write, "session-branch")
         return new_id
 
@@ -1687,7 +1710,7 @@ def authorize_call(tool_name: str, spec: Any, kwargs: dict[str, Any], intent: An
     from . import closure
     session = SessionStore(ctx.vault).load(ctx.session)
     return closure.authorize(session, spec, kwargs, intent, ctx.vault, raw=raw,
-                             adjusted=adjusted)
+                             adjusted=adjusted, defer_composition=True)
 
 
 def after_call(tool_name: str, arguments: dict[str, Any], result: dict[str, Any],
@@ -1702,6 +1725,7 @@ def after_call(tool_name: str, arguments: dict[str, Any], result: dict[str, Any]
     charged = tool_name not in HARNESS and "error" not in result and not _is_person(ctx)
     before = store.load(ctx.session)
     event = {"type": "call", "tool": tool_name, "charged": charged,
+             'provenance_boundary': True,
              "ok": "error" not in result, "effect": effect,
              "args": {k: _trace_value(k, v) for k, v in arguments.items()},
              # Requirements Addendum R3: who called, where, and what really happened.

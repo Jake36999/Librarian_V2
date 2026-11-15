@@ -15,6 +15,7 @@ from typing import Any, Literal
 from ..registry import Card, Context, tool
 
 HELPER_TOOLS = frozenset({"search", "get_note", "web_search", "read_url", "read_file",
+                          "read_source_section", "verify_source_pages",
                           "read_source_file", "read_result", "list_files", "search_work",
                           "topics_list"})
 HELPER_BRIEF = (
@@ -23,7 +24,12 @@ HELPER_BRIEF = (
     "You only read: you cannot open a session, save, capture or change anything. Stop when "
     "you can answer. End with: what you found, where (note names or URLs, exactly), and what "
     "you could not find. Cite the ref: reference of any oversized read you relied on: the "
-    "librarian can reopen it after you finish; a sha256: handle ends with you.")
+    "librarian can reopen it after you finish; a sha256: handle ends with you. "
+    "For third-party library sources, locate relevant parts first: catalogue → graph → "
+    "read_source_section → verify_source_pages. Use bounded page targets; generated "
+    "conversion text is never an original citation. Source reading budgets are TOKENS, "
+    "clamped to your actual route after prompt, visible output and reasoning reserves. "
+    "A comparison splits its available input between sources; never assume 200k+200k fits.")
 # How many of a helper's durable references its result lists (MF-012).
 MAX_HELPER_REFERENCES = 12
 
@@ -80,7 +86,11 @@ def delegate(ctx: Context, questions: list[str], tier: Literal[1, 2] = 2) -> dic
             raise TypeError(f"research_helper profile allows {cap} concurrent helper(s), not {len(asked)}")
     steps = max(6, level["turn_steps"] // 3)
 
-    child_extras: dict[str, Any] = {"effort": level, "caller": "research_helper"}
+    child_extras: dict[str, Any] = {"effort": level, "caller": "research_helper", 'agent_tier': resolved_tier}
+    # Source provenance reaches the central publication boundary without
+    # exposing the parent's session tools, conversation or authority.
+    if ctx.session:
+        child_extras['_publication_session'] = ctx.session
     # Keep read operations on the Core-owned index worker and preserve the
     # normal broker/checkpoint boundary.  Do not copy a writer: helpers remain
     # read-only through HELPER_TOOLS and Loop.only.
@@ -99,6 +109,9 @@ def delegate(ctx: Context, questions: list[str], tier: Literal[1, 2] = 2) -> dic
             helper = Loop(ctx.vault, provider, tier="consult", reply_length="short",
                           working_context=HELPER_BRIEF.format(question=question), scribe=None,
                           extras=dict(child_extras), max_steps=steps)
+            route_for = ctx.extras.get('helper_read_route')
+            if callable(route_for):
+                helper.context_limit = int(route_for(resolved_tier).get('context_tokens') or 0)
             if helper_profile is not None:
                 helper.configure_profile(helper_profile, rate_card=rate_card)
             helper.only = HELPER_TOOLS

@@ -42,7 +42,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib import resources
 from pathlib import Path
 from typing import Any, Callable, Iterator
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, quote
+import os
 
 from . import ADAPTER_PROTOCOL_RANGE, PROTOCOL_VERSION, __version__, batch, doctor, notes, workflows
 from . import tools  # noqa: F401  (registers the tools)
@@ -287,7 +288,13 @@ class Action:
 
 
 PROFILE_FIELDS = ("modality", "best_for", "license_class", "suggested_tier", "context_length",
-                  "price_input_per_1m", "price_output_per_1m", "tool_calling", "reasoning")
+                  "price_input_per_1m", "price_output_per_1m", "tool_calling", "reasoning",
+                  "recommendation_rank", "task_class", "authorship", "field_authorship", "_field_authorship", "_field_sources")
+
+
+def _rank(value: Any) -> int | None:
+    """An evidence rank orders recommendations only; anything but a positive int is none."""
+    return value if type(value) is int and value > 0 else None
 
 
 def _tri_state(value: Any) -> bool | None:
@@ -333,7 +340,7 @@ def _remember_profiles(own: dict[tuple[str, str], dict[str, Any]]) -> None:
     if not own:
         return
     known = {f"{p}|{m}": v for (p, m), v in _remembered_profiles().items()}
-    fresh = {f"{p}|{m}": {k: v.get(k) for k in PROFILE_FIELDS} for (p, m), v in own.items()}
+    fresh = {f"{p}|{m}": {k: v[k] for k in PROFILE_FIELDS if k in v} for (p, m), v in own.items()}
     if all(known.get(k) == v for k, v in fresh.items()):
         return
     try:
@@ -2176,6 +2183,17 @@ class App:
     def _helper_provider(self, tier: int) -> Provider | None:
         return self.role_provider("lead") if tier == 1 else self._provider_for_profile("research_helper")
 
+    def _helper_read_route(self, tier: int) -> dict[str, Any]:
+        profile = self.profiles.get('research_helper')
+        route = self._role_choice('lead' if tier == 1 else self._profile_binding_role(profile))
+        if route is None:
+            return {}
+        provider = self._helper_provider(tier)
+        return {'model': str(route.get('model') or ''),
+                'context_tokens': self._route_context_limit(route, profile),
+                'visible_output_tokens': profile.output_budget,
+                'reasoning_reserve_tokens': self.invocation_runtime.output_headroom_tokens(provider) if provider is not None else None}
+
     def _provider_for_profile(self, profile_id: str) -> Provider | None:
         profile = self.profiles.get(profile_id)
         return self.role_provider(self._profile_binding_role(profile))
@@ -2216,22 +2234,24 @@ class App:
             if host.base_url.rstrip("/") == str(preset.get("base_url") or "").rstrip("/") and \
                     host.protocol == preset.get("protocol"):
                 provider = family
-        catalogues = {**_shipped_profiles(), **_remembered_profiles(), **self._model_sources()}
+        from .model_cards import merge_profiles
+        catalogues = merge_profiles(_shipped_profiles(), _remembered_profiles(), self._model_sources())
         return catalogues.get((provider, model)) or {}
 
     def _route_context_limit(self, route: dict[str, Any] | None, profile: Any) -> int:
         """MF-011: the route's context window in tokens, or 0 when unknown (the
-        loop then uses its default). A profile's `route_policy.context_tokens`
-        wins; otherwise the catalogued model's `context_length`."""
+        loop then uses its default). A profile may narrow the actual route's
+        declared catalogue window, never inflate it."""
         policy = getattr(profile, "route_policy", {}) or {}
+        limits = []
         for value in ((policy.get("context_tokens") if isinstance(policy, dict) else None),
                       self._route_catalogue_entry(route).get("context_length")):
             try:
                 if value is not None and int(value) > 0:
-                    return int(value)
+                    limits.append(int(value))
             except (TypeError, ValueError):
                 continue
-        return 0
+        return min(limits) if limits else 0
 
     def _background_endpoint_route(self, endpoint: Any,
                                    fallback_route: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -2307,10 +2327,16 @@ class App:
                     raise ValueError(f"{role} route changed; restart this task on its selected route")
             return self._background_profile_guard(current, target, fallback_route)
 
+        actual = self._background_endpoint_route(endpoint, fallback_route)
+        headroom = getattr(endpoint, 'output_headroom_tokens', None)
         return ProfiledEndpoint(
             endpoint, profile, gate=self.profile_gate,
             route_guard=guard,
             rate_card=self._route_rate_card(fallback_route, profile),
+            read_route={'model': str(actual.get('model') or ''),
+                        'context_tokens': self._route_context_limit(actual, profile),
+                        'visible_output_tokens': profile.output_budget,
+                        'reasoning_reserve_tokens': headroom() if callable(headroom) else 0},
         )
 
     def _helper_profile_guard(self, profile: Any, tier: int) -> dict[str, Any] | None:
@@ -2492,7 +2518,24 @@ class App:
     @mutation_entry("the checkpoint resolution")
     def checkpoint_resolve(self, checkpoint_id: str, choice: str) -> dict[str, Any]:
         try:
-            resolve = lambda: self.checkpoints.resolve(checkpoint_id, choice)
+            def resolve():
+                checkpoint = self.checkpoints.get(checkpoint_id)
+                if checkpoint['type'] == 'publication_taint' and choice == 'approve':
+                    from .access import clear_taint
+                    from .session import SessionStore
+                    session_id = checkpoint['evidence'].get('session')
+                    store = SessionStore(self.vault)
+                    if any(e.get('type') == 'taint_clear' and e.get('checkpoint') == checkpoint_id
+                           for e in store.events(session_id)):
+                        return checkpoint
+                    current = sorted(store.load(session_id).taint_sources)
+                    if checkpoint['scope'] != session_id or current != sorted(checkpoint['evidence'].get('sources', [])):
+                        raise ValueError('Sources changed; review a fresh scoped provenance checkpoint')
+                    row = self.checkpoints.resolve(checkpoint_id, choice)
+                    clear_taint(Context(tier='curate', vault=self.vault, session=session_id,
+                                        extras={'caller_kind': 'person'}), checkpoint_id)
+                    return row
+                return self.checkpoints.resolve(checkpoint_id, choice)
             row = self._serialized("checkpoint", resolve)
             self.hub.publish({"type": "checkpoint_resolved", "checkpoint": row})
             return row
@@ -2520,6 +2563,7 @@ class App:
                                   "effort": level, "effort_ceiling": level,
                                   "agent_provider": self.tier,
                                   "helper_provider": self._helper_provider,
+                                  "helper_read_route": self._helper_read_route,
                                   "caller": "core",
                                   "document_leases": self.document_leases,
                                   # The registry uses this narrow executor for
@@ -3122,11 +3166,12 @@ class App:
         except Exception:                                   # noqa: BLE001 - no index yet
             return {}
         out: dict[tuple[str, str], dict[str, Any]] = {}
+        from .model_cards import identity, merge_profiles
         for row in rows:
             fm = json.loads(row["frontmatter"])
-            key = (str(fm.get("provider") or "").lower(), str(fm.get("model_id") or "").lower())
+            key = identity(fm)
             if key[1]:
-                out[key] = {**fm, "_path": row["path"]}
+                out = merge_profiles(out, {key: {**fm, '_path': row['path']}})
         return out
 
     def _pending_models(self) -> set[tuple[str, str]]:
@@ -3167,7 +3212,9 @@ class App:
         # this library's own notes, else what any library has profiled (kept in the user's
         # config directory), else the catalogue shipped with the package.
         _remember_profiles(own)
-        profiles = {**_shipped_profiles(), **_remembered_profiles(), **own}
+        shipped = _shipped_profiles()
+        from .model_cards import merge_profiles
+        profiles = merge_profiles(shipped, _remembered_profiles(), own)
         pending = self._pending_models()
         out = []
         for m in listed:
@@ -3185,12 +3232,19 @@ class App:
                     "license_class": profile.get("license_class"),
                     "suggested_tier": profile.get("suggested_tier"),
                     "context_length": profile.get("context_length"),
+                    'task_class': profile.get('task_class'),
+                    'field_authorship': profile.get('_field_authorship', {}),
+                    'field_sources': profile.get('_field_sources', {}),
                     "price_input_per_1m": profile.get("price_input_per_1m"),
                     "price_output_per_1m": profile.get("price_output_per_1m"),
                     # Tri-state (ROUTE-02): an unassessed capability is None, not
                     # False - only an explicit "no" may block a lead placement.
                     "tool_calling": _tri_state(profile.get("tool_calling")),
-                    "reasoning": _tri_state(profile.get("reasoning"))}
+                    "reasoning": _tri_state(profile.get("reasoning")),
+                    # An older note that predates ranks keeps the shipped evidence rank;
+                    # a rank this library wrote itself wins.
+                    "recommendation_rank": _rank(profile.get("recommendation_rank")) or
+                    _rank((shipped.get((provider, m.lower())) or {}).get("recommendation_rank"))}
             elif (provider, m.lower()) in pending:
                 entry["profiling"] = "queued"
             out.append(entry)
@@ -3802,6 +3856,49 @@ class App:
                 "read": f"close pair {near:.2f}, far pair {far:.2f}", "model": spec}
 
     # -- project access (Research Pipeline §6): a person's controls, never the model's --
+    def folders(self) -> dict[str, Any]:
+        from .folder_review import FolderReview
+        return FolderReview(self.vault).overview()
+
+    @mutation_entry('the folder survey')
+    def survey_folders(self, path: str) -> dict[str, Any]:
+        from .folder_review import FolderReview
+        try:
+            return self._serialized('folder-survey', lambda: FolderReview(self.vault).survey(path))
+        except ValueError as exc:
+            raise ApiError(400, str(exc)) from exc
+
+    @mutation_entry('the person folder decision')
+    def accept_folder(self, body: dict) -> dict[str, Any]:
+        from .folder_review import FolderReview
+        try:
+            return self._serialized('folder-accept', lambda: FolderReview(self.vault).accept(
+                str(body.get('id') or ''), str(body.get('folder_fingerprint') or ''),
+                purpose=body.get('purpose'), graph=body.get('graph'), person=True,
+                description=body.get('description'), authorship=body.get('authorship')))
+        except (ValueError, TypeError) as exc:
+            raise ApiError(409 if 'STALE' in str(exc) else 400, str(exc)) from exc
+
+    @mutation_entry('the person approved folder batch')
+    def approve_folder_batch(self, body: dict) -> dict:
+        from .folder_review import FolderReview
+        try:
+            return self._serialized('folder-batch-approve', lambda: FolderReview(self.vault).approve_batch(
+                body.get('items'), person=True))
+        except (ValueError, TypeError) as exc:
+            raise ApiError(409 if 'STALE' in str(exc) else 400, str(exc)) from exc
+
+    @mutation_entry('the approved folder draft')
+    def draft_folder(self, body: dict) -> dict[str, Any]:
+        from .folder_review import FolderReview
+        from .tools.staging import clerk_endpoint
+        try:
+            ctx = Context(tier='contribute', vault=self.vault, extras=self._extras())
+            return FolderReview(self.vault).draft(str(body.get('id') or ''), clerk_endpoint(ctx),
+                approved=body.get('approve_spend') is True)
+        except ValueError as exc:
+            raise ApiError(400, str(exc)) from exc
+
     def projects(self) -> dict[str, Any]:
         from . import projects
         data = projects.state(self.vault)
@@ -3903,6 +4000,41 @@ class App:
         """A note by vault path (with or without `.md`), or by bare name when
         the name is unique enough to find: what a [[link]] in the chat holds."""
         rel = (rel or "").strip()
+        if Path(rel).is_absolute():
+            # Search/desk links may carry the physical path. Resolve only a
+            # current indexed workspace document, never arbitrary external IO.
+            resolved = Path(rel).resolve()
+            if resolved.is_relative_to(self.vault.root):
+                rel = resolved.relative_to(self.vault.root).as_posix()
+            else:
+                normalized = resolved.as_posix()
+                self.index_service.refresh()
+                selected = self.index_service.run(lambda index: dict(row) if (row := index.conn.execute(
+                    "SELECT * FROM note WHERE path=? AND shape='workspace_document'", (normalized,)).fetchone()) else None)
+                if selected is None or not json.loads(selected['frontmatter']).get('_index_read_only'):
+                    raise ApiError(404, 'Choose a current read-only workspace result')
+                rel = selected['name']
+        if rel.startswith(('workspace:', 'Folder - ')):
+            from .workspace_documents import document, is_projection
+            from .file_access import read_bytes_snapshot
+            self.index_service.refresh()
+            row = self.index_service.run(lambda index: dict(found) if (found := index.note_row(rel)) is not None else None)
+            if row is None or not json.loads(row['frontmatter']).get('_index_read_only'):
+                raise ApiError(404, 'Workspace reference is unavailable; search again')
+            path = Path(row['path']); path = path if path.is_absolute() else self.vault.root / path
+            try:
+                snapshot = read_bytes_snapshot(path)
+                if row['shape'] == 'workspace_document':
+                    _, fm, body, error = document(self.vault, path, snapshot)
+                elif is_projection(self.vault, path):
+                    fm, body, error = notes.parse(snapshot.data.decode('utf-8'))
+                else:
+                    raise ApiError(404, 'Not a read-only workspace reference')
+            except (OSError, ValueError) as exc:
+                raise ApiError(404, 'Workspace source is unavailable or no longer owner-created') from exc
+            return {'path': row['name'], 'name': row['name'], 'source_path': str(fm.get('root') or path),
+                    'text': notes.render(fm, body), 'read_only': True,
+                    'read_limitations': [error] if error else [], 'modified': round(snapshot.mtime)}
         if Path(rel).suffix.lower() in SCRIPT_SUFFIXES:
             # A script is shown as code, never rendered - and only a script can be run
             # (the pane's Run button, EXECUTION_SANDBOX_ONLY).
@@ -3935,10 +4067,29 @@ class App:
             raise ApiError(404, f"no note {rel!r}")
         if path.stat().st_size > 2_000_000:
             raise ApiError(413, "that note is too large to show here")
+        from .catalogue_navigation import navigation
+        note = notes.load(path)
+        catalogue = {'catalogue': navigation(self.vault, note, chapter_limit=None)} if note.frontmatter.get('type') == 'source' else {}
         root = self.vault.root.resolve()
-        return {"path": path.resolve().relative_to(root).as_posix(), "name": path.stem,
+        return {**catalogue, "path": path.resolve().relative_to(root).as_posix(), "name": path.stem,
                 "text": read_text(path, encoding="utf-8", errors="replace"),
                 "modified": round(path.stat().st_mtime)}
+
+    def source_original(self, source: str) -> Path:
+        from .read_access import source_path
+        ctx = Context(tier='curate', vault=self.vault, extras=self._extras())
+        document = self.read_file(source)  # person-visible note resolution; no index refresh/extraction
+        note = notes.load(self.vault.root / document['path'])
+        if note.frontmatter.get('type') != 'source' or not note.frontmatter.get('file'):
+            raise ApiError(404, 'Choose a catalogued source with an original attachment')
+        try:
+            original = Path(str(note.frontmatter['file']))
+            original = original if original.is_absolute() else self.vault.root / original
+            if not original.is_file():
+                raise ApiError(404, 'Original is no longer available')
+            return source_path(ctx, str(original))
+        except (OSError, ValueError, TypeError, Refusal) as exc:
+            raise ApiError(404, 'Original unavailable; conversions and credential paths are never served') from exc
 
     @mutation_entry("the file upload")
     def upload_file(self, dir_rel: str, filename: str, data: bytes) -> dict[str, Any]:
@@ -4179,6 +4330,8 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                     return self._json(200, app.services())
                 if url.path == "/api/projects":
                     return self._json(200, app.projects())
+                if url.path == '/api/folders':
+                    return self._json(200, app.folders())
                 if url.path == "/api/offerings/staged":
                     from .tools.sessions import staged_offering, staged_offerings
                     wanted = (query.get("id") or [""])[0]
@@ -4206,6 +4359,24 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                     return self._json(200, app.list_files((query.get("dir") or [""])[0]))
                 if url.path == "/api/file":
                     return self._json(200, app.read_file((query.get("path") or [""])[0]))
+                if url.path == '/api/source-original':
+                    path = app.source_original((query.get('source') or [''])[0])
+                    try:
+                        handle = path.open('rb')
+                    except OSError as exc:
+                        raise ApiError(404, 'Original is no longer available') from exc
+                    with handle:
+                        self.send_response(200)
+                        self.send_header('Content-Type', 'application/octet-stream')
+                        self.send_header('Content-Length', str(os.fstat(handle.fileno()).st_size))
+                        self.send_header('Content-Disposition', "attachment; filename*=UTF-8''" + quote(path.name))
+                        self.send_header('X-Content-Type-Options', 'nosniff')
+                        self.send_header('Cache-Control', 'no-store')
+                        self.send_header('Content-Security-Policy', "sandbox; default-src 'none'")
+                        for key, value in self._cors().items():self.send_header(key, value)
+                        self.end_headers()
+                        while chunk := handle.read(65536):self.wfile.write(chunk)
+                    return
                 if url.path == "/api/usage":
                     return self._json(200, app.usage((query.get("provider") or [""])[0]))
                 if url.path == "/api/keys":
@@ -4438,6 +4609,14 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 return app.test_service(str(body.get("slot") or ""))
             if path == "/api/projects/enable":
                 return app.set_projects_enabled(bool(body.get("enabled")))
+            if path == '/api/folders/survey':
+                return app.survey_folders(str(body.get('path') or ''))
+            if path == '/api/folders/accept':
+                return app.accept_folder(body)
+            if path == '/api/folders/approve-batch':
+                return app.approve_folder_batch(body)
+            if path == '/api/folders/draft':
+                return app.draft_folder(body)
             if path == "/api/projects/add":
                 return app.add_project_root(str(body.get("path") or ""),
                                             str(body.get("project") or ""))

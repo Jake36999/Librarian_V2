@@ -70,7 +70,7 @@ def staged(vault, monkeypatch):
     (vault.root / "Inbox").mkdir(exist_ok=True)
     (vault.root / "Inbox" / "Bridges.txt").write_text(BOOK, encoding="utf-8")
     endpoint = clerk.Scripted(answers)
-    ctx = Context(tier="curate", vault=vault, extras={"clerk": endpoint})
+    ctx = Context(tier="curate", vault=vault, extras={"clerk": endpoint, "caller_kind": "person"})
     out = REGISTRY.call("ingest", {"ref": "Inbox/Bridges.txt"}, ctx)
     assert out["status"] == "staged", out
     return ctx, out["item"]
@@ -278,7 +278,7 @@ def add_topic(vault, name: str) -> None:
 def ingest_bridges(vault, answer=answers):
     (vault.root / "Inbox").mkdir(exist_ok=True)
     (vault.root / "Inbox" / "Bridges.txt").write_text(BOOK, encoding="utf-8")
-    ctx = Context(tier="curate", vault=vault, extras={"clerk": clerk.Scripted(answer)})
+    ctx = Context(tier="curate", vault=vault, extras={"clerk": clerk.Scripted(answer), "caller_kind": "person"})
     out = REGISTRY.call("ingest", {"ref": "Inbox/Bridges.txt"}, ctx)
     assert out["status"] == "staged", out
     return ctx, out["item"]
@@ -362,7 +362,7 @@ def test_a_local_model_reads_one_part_per_call(vault, monkeypatch):
     (vault.root / "Inbox" / "Long.txt").write_text(
         "\n\n".join(f"Paragraph {i} says something about bridges and loads." * 3
                     for i in range(4)), encoding="utf-8")
-    ctx = Context(tier="curate", vault=vault, extras={"clerk": LocalScripted(answers)})
+    ctx = Context(tier="curate", vault=vault, extras={"clerk": LocalScripted(answers), "caller_kind": "person"})
     item = REGISTRY.call("ingest", {"ref": "Inbox/Long.txt"}, ctx)["item"]
     first = REGISTRY.call("deep_read", {"item_id": item, "max_chunks": 12}, ctx)
     assert first["this_call"] == 1 and first["remaining"] > 0 and "local model" in first["note"]
@@ -455,7 +455,8 @@ def test_a_model_cannot_merge_a_revision_into_a_persons_note(staged):
     from resource_librarian import notes as note_io
     name = note_io.load(ctx.vault.root / path).name
     out = REGISTRY.call("deep_read_note", {"note": name, "max_chunks": 20}, ctx)
-    model = Context(tier="contribute", vault=ctx.vault, extras=ctx.extras)
+    model = Context(tier="contribute", vault=ctx.vault,
+                    extras={key: value for key, value in ctx.extras.items() if key != 'caller_kind'})
     done = REGISTRY.call("staging_decide", {"item_ids": [out["revision"]], "decision": "accept"},
                          model)
     assert done["refused"] == "REVISION_REQUIRED"

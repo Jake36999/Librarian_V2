@@ -193,6 +193,12 @@ def test_suggest_reads_the_project_and_never_writes_it(library, tmp_path):
     projects.set_enabled(library, True)
     added = projects.add_root(library, str(project), project="HostWatch")
     assert added["scaffold"]["state"] == "created"
+    # Explicit fixture ownership is independent of permission to read it.
+    from resource_librarian import content_roots
+    content_roots._write_json(content_roots.manifest_path(library.root), {
+        'version': 1, 'roots': [{'path': '.', 'access': 'read_write'},
+            {'path': str(project), 'access': 'read_only', 'attached': True,
+             'authorship': 'owner_created'}], 'excludes': []})
     assert "read_project" in " ".join(m.ok("session_status")["open_items"])
     listing = m.ok("read_project")
     assert listing["files"] == ["README.md"]

@@ -399,6 +399,48 @@ def test_dry_run_writes_nothing(isolated, monkeypatch):
     assert calls == [] and not args.ledger.exists() and not args.output_dir.exists()
 
 
+def test_reasoning_flags_leave_the_default_request_unchanged():
+    args = delegate.parse_args(['--task','flags','--model',MODEL,'--instruction','Inspect this fixture.'])
+    assert args.reasoning_effort is None and args.no_thinking is False
+    body = {'model':MODEL,'messages':[{'role':'user','content':'fixture'}],'max_tokens':32}
+    before = json.dumps(body,sort_keys=True)
+    assert delegate.apply_reasoning_controls(body,args) is body
+    assert json.dumps(body,sort_keys=True) == before
+
+
+@pytest.mark.parametrize('effort',['none','minimal','low','medium','high','xhigh','max'])
+def test_reasoning_effort_maps_each_cli_level_without_other_payload_changes(effort):
+    args = delegate.parse_args(['--task','flags','--model',MODEL,'--instruction','Inspect fixture.',
+                                '--reasoning-effort',effort])
+    body = {'max_tokens':32,'temperature':0.2}
+    assert delegate.apply_reasoning_controls(body,args) == {'max_tokens':32,'temperature':0.2,'reasoning_effort':effort}
+
+
+def test_no_thinking_maps_to_the_explicit_template_control():
+    args = delegate.parse_args(['--task','flags','--model',MODEL,'--instruction','Inspect fixture.','--no-thinking'])
+    assert delegate.apply_reasoning_controls({'max_tokens':32},args) == {
+        'max_tokens':32,'chat_template_kwargs':{'enable_thinking':False}}
+
+
+def test_reasoning_controls_are_included_before_the_no_network_dry_run(isolated,monkeypatch,capsys):
+    args = run_args(isolated,dry_run=True,reasoning_effort='low',no_thinking=True)
+    monkeypatch.setattr(delegate,'parse_args',lambda argv=None:args)
+    def forbidden(*a,**kw):raise AssertionError('Dry run must not dispatch or load credentials')
+    monkeypatch.setattr(delegate.providers,'_request',forbidden)
+    monkeypatch.setattr(delegate,'load_key',forbidden)
+    original = delegate.reserve_cost
+    seen = []
+    def inspect(body,card):
+        assert body['reasoning_effort']=='low'
+        assert body['chat_template_kwargs']=={'enable_thinking':False}
+        seen.append(body)
+        return original(body,card)
+    monkeypatch.setattr(delegate,'reserve_cost',inspect)
+    assert delegate.main()==0 and len(seen)==1
+    assert not args.ledger.exists() and not args.output_dir.exists()
+    assert json.loads(capsys.readouterr().out)['model']==MODEL
+
+
 # --- work-package admission (DELEG-03) ----------------------------------------------
 
 def work_package(tmp_path, **budget):

@@ -52,6 +52,8 @@ API_BATCH = 64
 
 BATCH = 256
 TOKEN = re.compile(r"[a-z0-9][a-z0-9_\-]+")
+HOSTED_WORKSPACE_SCOPE = ("NOT EXISTS (SELECT 1 FROM chunk blocked JOIN note bn ON bn.path=blocked.path "
+                          "WHERE blocked.hash=c.hash AND bn.shape='workspace_document')")
 
 
 class EncoderUnavailable(RuntimeError):
@@ -303,7 +305,8 @@ def estimate(index: Index, model: str, price_per_1m: float | None = None) -> dic
     row = index.conn.execute(
         "SELECT COUNT(DISTINCT c.hash) AS n, COALESCE(SUM(LENGTH(c.text)), 0) AS chars "
         "FROM chunk c LEFT JOIN embedding e ON e.hash = c.hash AND e.model = ? "
-        "WHERE e.hash IS NULL AND c.role != 'document'", (model,)).fetchone()
+        "WHERE e.hash IS NULL AND c.role != 'document' AND (?=0 OR " + HOSTED_WORKSPACE_SCOPE + ")",
+        (model, int(model.startswith('api:')))).fetchone()
     tokens = int(row["chars"] / 4)
     return {"chunks": int(row["n"]), "tokens_est": tokens,
             **({"cost_est_usd": round(tokens / 1e6 * price_per_1m, 4)}
@@ -341,8 +344,8 @@ def sync_source_via(vault, name: str, index_call: Callable) -> str:
         rows = conn.execute(
             "SELECT c.hash, MIN(c.heading) AS heading, MIN(c.text) AS text FROM chunk c "
             "LEFT JOIN embedding e ON e.hash = c.hash AND e.model = ? "
-            "WHERE c.note = ? AND (? = 0 OR e.hash IS NULL) GROUP BY c.hash",
-            (model, name, int(current))).fetchall()
+            "WHERE c.note = ? AND (? = 0 OR e.hash IS NULL) AND (?=0 OR " + HOSTED_WORKSPACE_SCOPE + ") GROUP BY c.hash",
+            (model, name, int(current), int(hosted))).fetchall()
         return {"model": model, "namespace": namespace,
                 "rows": [dict(row) for row in rows]}
 
@@ -467,7 +470,8 @@ class VectorSearch:
         missing = conn.execute(
             "SELECT c.hash, MIN(c.heading) AS heading, MIN(c.text) AS text FROM chunk c "
             "LEFT JOIN embedding e ON e.hash = c.hash AND e.model = ? "
-            "WHERE e.hash IS NULL GROUP BY c.hash", (self.model,)).fetchall()
+            "WHERE e.hash IS NULL AND (?=0 OR " + HOSTED_WORKSPACE_SCOPE + ") GROUP BY c.hash",
+            (self.model, int(self.hosted))).fetchall()
         for start in range(0, len(missing), BATCH):
             batch = missing[start:start + BATCH]
             vectors = np.asarray(self.encode([f"{r['heading']}\n{r['text']}" for r in batch]),
@@ -502,7 +506,8 @@ class VectorSearch:
             "SELECT c.note AS note, n.shape AS shape, e.vector AS vector, e.dim AS dim "
             "FROM chunk c JOIN note n ON n.path = c.path "
             "JOIN embedding e ON e.hash = c.hash AND e.model = ? "
-            "WHERE c.role != 'document'", (self.model,)).fetchall()
+            "WHERE c.role != 'document' AND (?=0 OR " + HOSTED_WORKSPACE_SCOPE + ")",
+            (self.model, int(self.hosted))).fetchall()
         self._owners = [r["note"] for r in rows]
         self._shapes = [r["shape"] for r in rows]
         self._matrix = (np.vstack([np.frombuffer(r["vector"], dtype="float32") for r in rows])
@@ -513,6 +518,8 @@ class VectorSearch:
                limit: int = 80) -> tuple[list[str], str]:
         """Notes by their best chunk's cosine to the query. Returns (names, why
         not): a non-empty second value means vectors did not contribute."""
+        if self.hosted and 'workspace_document' in shapes:
+            return [], 'Workspace documents use lexical or local vectors; hosted embeddings do not receive their source content'
         if self.encode is None:
             return [], self.unavailable
         import numpy as np

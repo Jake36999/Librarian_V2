@@ -95,6 +95,7 @@ def test_call_tool_wraps_the_result_as_untrusted(manager):
     manager.sync()
     ctx = Context(tier="contribute")
     out = REGISTRY.call("mcp__fake__echo", {"text": "hello"}, ctx)
+    assert out.pop('access')['sources'][0]['authorship'] == 'third_party'
     assert out == {"server": "fake", "tool": "echo", "untrusted": True,
                    "is_error": False, "content": '{"text": "hello"}'}
 

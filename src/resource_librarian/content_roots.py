@@ -67,7 +67,12 @@ def watch_scope(root: Path) -> tuple[list[str], set[str]]:
         return ["."], set()
     roots = [r["path"] for r in data.get("roots") or []
              if r.get("access") == "read_write" and not r.get("attached")]
-    return roots or ["."], {str(e).strip("/") for e in data.get("excludes") or []}
+    excludes = {str(e).strip('/') for e in data.get('excludes') or []}
+    excludes.update(r['path'] for r in data.get('roots', [])
+                    if r.get('access') == 'read_only' and not r.get('attached'))
+    all_readonly = any(r.get('path') == '.' and r.get('access') == 'read_only'
+                       for r in data.get('roots', []))
+    return roots or ([] if all_readonly else ['.']), excludes
 
 
 def _write_json(path: Path, data: dict[str, Any]) -> None:
@@ -132,11 +137,13 @@ def apply_adopt(folder: Path | str, fingerprint: str, *, name: str = "",
 
 # ------------------------------------------------------------------ attach
 
-def plan_attach(vault: Vault, folder: Path | str) -> dict[str, Any]:
+def plan_attach(vault: Vault, folder: Path | str, *, _survey=None) -> dict[str, Any]:
     """What attaching `folder` read-only to `vault` would do. Changes nothing."""
     if not vault.exists():
         raise Refusal("VAULT_REQUIRED", f"{vault.root} is not a library to attach to")
-    found = survey(folder)
+    from .folder_review import configuration
+    config = configuration(vault)
+    found = _survey or (survey(folder, geographer=config) if config.get('enabled') else survey(folder))
     if found.stops:
         raise Refusal("ADOPTION_STOPPED", "; ".join(found.stops))
     if not found.modes["attach"]["possible"]:
@@ -146,16 +153,21 @@ def plan_attach(vault: Vault, folder: Path | str) -> dict[str, Any]:
     if root == home or home in root.parents or root in home.parents:
         raise Refusal("ADOPTION_STOPPED", f"{root} overlaps the library at {home}; an attached "
                                       "root lies wholly outside it")
-    return {"mode": "attach", "vault": str(home), "root": str(root),
+    result = {"mode": "attach", "vault": str(home), "root": str(root),
             "survey_fingerprint": found.fingerprint, "markdown_files": found.markdown_files,
             "access": "read_only", "excludes": sorted(e["path"] for e in
                                                       found.exclusion_candidates),
             "creates": [f".librarian/{MANIFEST} (in the library, not the attached folder)"],
             "leaves": "the attached folder untouched; the library never writes into it"}
+    if config.get('enabled'): result['geo_grapher'] = found.geo_grapher['plan']
+    return result
 
 
 def apply_attach(vault: Vault, folder: Path | str, fingerprint: str) -> dict[str, Any]:
-    plan = plan_attach(vault, folder)
+    from .folder_review import configuration, FolderReview
+    config = configuration(vault)
+    found = survey(folder, geographer=config) if config.get('enabled') else survey(folder)
+    plan = plan_attach(vault, folder, _survey=found)
     if plan["survey_fingerprint"] != fingerprint:
         raise Refusal("ADOPTION_PLAN_STALE",
                       "the folder changed since the plan was made: survey it again")
@@ -167,7 +179,9 @@ def apply_attach(vault: Vault, folder: Path | str, fingerprint: str) -> dict[str
          "excludes": plan["excludes"], "survey_fingerprint": fingerprint,
          "applied": now_iso()}]
     _write_json(manifest_path(vault.root), data)
-    return {**plan, "applied": True}
+    result = {**plan, "applied": True}
+    if config.get('enabled'): result['folders'] = FolderReview(vault).survey(folder, surveyed=found)
+    return result
 
 
 
@@ -176,18 +190,35 @@ def apply_attach(vault: Vault, folder: Path | str, fingerprint: str) -> dict[str
 WORKSPACE_DOCUMENT = "workspace_document"
 
 
-def outside_scope(rel: str, excludes: set[str], path: Path | None = None) -> bool:
+def folder_overrides(root):
+    from .folder_review import FolderReview
+    result = {}
+    for card in FolderReview(Vault(root)).list():
+        if card.get('status') != 'accepted' or not card.get('decision'): continue
+        parent = Path(card['source_root']); target = parent if card['path'] == '.' else parent / card['path']
+        if target.is_relative_to(root): result[target.relative_to(root).as_posix()] = card['decision']['purpose']
+    return result
+
+
+def outside_scope(rel: str, excludes: set[str], path: Path | None = None, *, overrides=None) -> bool:
     """One visibility rule for indexing and watching an adopted library: a hidden
     name, an excluded path (file or folder) or anything under one, and any
     link or Windows reparse point (a junction is not a symlink to Python 3.11)
     are outside it. The Codex review (2026-10-30) found the walker and the
     watcher each applied only part of this."""
     from .deploy_survey import is_link
+    from .credentials import credential_path
+    if credential_path(rel):
+        return True
     parts = rel.split("/")
     if any(part.startswith(".") for part in parts):
         return True
-    if any("/".join(parts[:i]) in excludes for i in range(1, len(parts) + 1)):
-        return True
+    blocked = [e for e in excludes if e == '.' or rel == e or rel.startswith(e + '/')]
+    if blocked:
+        choices = [(len(p.split('/')), purpose) for p, purpose in (overrides or {}).items()
+                   if rel == p or rel.startswith(p + '/')]
+        depth, purpose = max(choices, default=(-1, 'exclude'))
+        if purpose == 'exclude' or depth <= max(len(e.split('/')) for e in blocked): return True
     return path is not None and is_link(path)
 
 
@@ -217,10 +248,12 @@ def iter_documents(root: Path) -> list[Path]:
 
 
 def _walk(root: Path, *, markdown_only: bool) -> list[Path]:
+    from .credentials import generated_path
     import os
     import sys
     root = Path(root)
     roots, excludes = watch_scope(root)
+    overrides = folder_overrides(root)
     fold = sys.platform == "win32"      # rglob's '*.md' matches '.MD' there too
     out: set[Path] = set()
 
@@ -229,16 +262,16 @@ def _walk(root: Path, *, markdown_only: bool) -> list[Path]:
 
     for start in roots:
         top = root if start in (".", "") else root / start
-        if top != root and outside_scope(rel_of(top), excludes, top):
+        if top != root and outside_scope(rel_of(top), excludes, top, overrides=overrides):
             continue
         for dirpath, dirnames, filenames in os.walk(top):
             here = Path(dirpath)
             dirnames[:] = [d for d in dirnames
-                           if not outside_scope(rel_of(here / d), excludes, here / d)]
+                           if not outside_scope(rel_of(here / d), excludes, here / d, overrides=overrides)]
             for name in filenames:
                 path = here / name
                 wanted = not markdown_only or (name.lower() if fold else name).endswith(".md")
-                if wanted and not outside_scope(rel_of(path), excludes, path):
+                if wanted and not generated_path(rel_of(path)) and not outside_scope(rel_of(path), excludes, path, overrides=overrides):
                     out.add(path)
     return sorted(out)
 

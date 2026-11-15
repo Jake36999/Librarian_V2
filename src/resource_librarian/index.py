@@ -40,7 +40,7 @@ from .file_access import FileChangedError, file_access, file_identity, read_byte
 from .rules import Refusal
 from .vault import Vault, now_iso
 
-SCHEMA_VERSION = 5          # 3: stable file identity for refresh snapshots
+SCHEMA_VERSION = 6          # 6: complete attached-workspace chunks, including short tails/repeated headings
                             # 4: document identity and duplicate layers (DEPLOY-04)
                             # 5: adopted classification by declared type (REMED-01)
 TARGET_CHARS = 1200
@@ -319,18 +319,46 @@ class Index:
         return ""
 
     # -- writes: one note -----------------------------------------------------
+    def _index_paths(self):
+        from .workspace_documents import index_paths
+        return index_paths(self.vault)
+
+    def _path_key(self, path):
+        from .workspace_documents import key
+        return key(self.vault, path)
+
     def upsert(self, path: Path, *, commit: bool = True, force: bool = False) -> bool:
         """Index one note. Returns False when its content was already indexed."""
         path = Path(path)
-        rel = path.relative_to(self.vault.root).as_posix()
+        from .credentials import credential_path, generated_path
+        from .deploy_survey import is_link
+        if credential_path(path) or generated_path(path) or 'graphify-out' in path.parts or is_link(path):
+            return False
+        rel = self._path_key(path)
+        from .workspace_documents import classification, document, is_projection
+        root = classification(self.vault, path)
+        external = not path.is_relative_to(self.vault.root)
+        if (external and (root is None or root.get('authorship') != 'owner_created')
+                or root and root.get('authorship') == 'third_party'):
+            return False  # Refuse before opening original third-party bytes.
+        workspace = bool(root and root.get('authorship') == 'owner_created'
+                         and (external or root.get('access') == 'read_only'))
+        if path.resolve().is_relative_to((self.vault.librarian / 'conversions').resolve()):
+            return False  # Paid generated material is never a catalogue note.
         snapshot = read_bytes_snapshot(path)
         # Preserve Path.read_text's historical universal-newline semantics
         # while obtaining bytes/metadata from one binary handle.
         text = snapshot.data.decode("utf-8", errors="replace")
         text = text.replace("\r\n", "\n").replace("\r", "\n")
+        if workspace:
+            name, fm, body, error = document(self.vault, path, snapshot)
+            text = notes.render(fm, body)
+        else:
+            name = path.stem
+            fm, body, error = notes.parse(text)
+            if is_projection(self.vault, path):name = 'Folder - ' + str(fm.get('title') or 'attached') + ' - ' + path.stem[:8]
         digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:24]
         row = self.conn.execute("SELECT hash FROM note WHERE path = ?", (rel,)).fetchone()
-        fm, body, error = notes.parse(text)
         # DEPLOY-04: what this path holds now, for identity across moves and
         # for explainable duplicates.
         from .document_identity import remember
@@ -344,11 +372,13 @@ class Index:
                 self.conn.commit()
             return False
         self._delete_rows(rel)
-        note = notes.Note(name=path.stem, path=path, frontmatter=fm, body=body,
+        note = notes.Note(name=name, path=path, frontmatter=fm, body=body,
                           parse_error=error)
         model = self.model
         from .content_roots import WORKSPACE_DOCUMENT, is_managed
-        if not error and self._adopted() and not is_managed(note, model):
+        if workspace:
+            shape = WORKSPACE_DOCUMENT
+        elif not error and self._adopted() and not is_managed(note, model):
             # DEPLOY-03 / REMED-01: in an adopted library, a file that does not
             # declare a managed type is the folder's own documentation - a
             # workspace document whatever folder it sits in, and never rewritten.
@@ -369,7 +399,11 @@ class Index:
              topics[0] if topics else "", note.sections().get("Bottom Line", "")[:400],
              json.dumps(fm, default=str, ensure_ascii=False), digest, snapshot.mtime,
              snapshot.mtime_ns, snapshot.size, snapshot.identity, error, now_iso()))
-        chunks = chunk_note(note, model) if not error else []
+        # Workspace originals are documents, not curated notes. Note section
+        # dictionaries collapse repeated headings, apply skip roles and can
+        # drop short split tails. Index the complete normalized representation.
+        chunks = ([Chunk('Workspace content', 'claim', piece) for piece in split_text(text)]
+                  if workspace and not error else chunk_note(note, model) if not error else [])
         self._insert_chunks(rel, note.name, chunks)
         facets: list[tuple[str, str]] = [("kind", kind)] if kind else []
         facets += [("topic", t) for t in topics]
@@ -467,8 +501,8 @@ class Index:
                      self.conn.execute("SELECT path, mtime_ns, size, file_identity FROM note")}
             seen: set[str] = set()
             unchanged = 0
-            for path in notes.iter_paths(self.vault.root):
-                rel = path.relative_to(self.vault.root).as_posix()
+            for path in self._index_paths():
+                rel = self._path_key(path)
                 try:
                     with file_access(path):
                         stat = path.stat()
@@ -711,8 +745,8 @@ class Index:
     def _filesystem_metadata(self) -> dict[str, tuple[int, int, str]]:
         """A best-effort manifest used only to detect a moving refresh target."""
         rows: dict[str, tuple[int, int, str]] = {}
-        for path in notes.iter_paths(self.vault.root):
-            rel = path.relative_to(self.vault.root).as_posix()
+        for path in self._index_paths():
+            rel = self._path_key(path)
             try:
                 with file_access(path):
                     stat = path.stat()
@@ -735,12 +769,12 @@ class Index:
         self._model = None
         self._adopted_cache = None
         report = RefreshReport(rebuilt=True)
-        for path in notes.iter_paths(self.vault.root):
+        for path in self._index_paths():
             try:
                 self.upsert(path, commit=False, force=True)
             except (FileNotFoundError, FileChangedError):
                 continue
-            report.upserted.append(path.relative_to(self.vault.root).as_posix())
+            report.upserted.append(self._path_key(path))
         self._set_meta("model_hash", self._model_hash())
         self._set_meta("built_at", now_iso())
         self.conn.commit()

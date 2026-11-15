@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 import threading
 import time
@@ -93,13 +94,15 @@ class ProfiledEndpoint:
     def __init__(self, endpoint: Any, profile: "AgentProfile", *,
                  gate: ProfileRunGate | None = None,
                  route_guard: Callable[["AgentProfile", Any], dict[str, Any] | None] | None = None,
-                 rate_card: dict[str, Any] | None = None) -> None:
+                 rate_card: dict[str, Any] | None = None,
+                 read_route: dict[str, Any] | None = None) -> None:
         profile.validate()
         self.endpoint = endpoint
         self.profile = profile
         self.gate = gate
         self.route_guard = route_guard
         self.rate_card = rate_card
+        self.read_route = dict(read_route or {})
         underlying_concurrency = max(1, int(getattr(endpoint, "concurrency", 1) or 1))
         # The effort slider can ask a legacy endpoint for more parallel work,
         # but a HostRegistry route has a hard personal ceiling.  Preserve that
@@ -149,8 +152,13 @@ class ProfiledEndpoint:
             return selector(str(payload.get("task") or ""))
         return self.endpoint
 
-    def _reserve(self, payload: dict[str, Any], rate_card: dict[str, Any] | None) -> dict[str, Any]:
-        """Reserve a conservative one-call background-task budget."""
+    def _reserve(self, payload: dict[str, Any], rate_card: dict[str, Any] | None,
+                 headroom: int = 0) -> dict[str, Any]:
+        """Reserve a conservative one-call background-task budget.
+
+        ``headroom`` is output the route's reviewed dialect adds after this
+        point (a reasoning reserve); it is spent, so it is reserved too.
+        """
         try:
             requested = max(1, int(payload.get("max_tokens") or self.profile.output_budget))
         except (TypeError, ValueError):
@@ -159,7 +167,8 @@ class ProfiledEndpoint:
         prepared["max_tokens"] = min(requested, self.profile.output_budget)
         prompt_tokens = self._token_estimate({key: value for key, value in prepared.items()
                                               if key != "max_tokens"})
-        reserved_tokens = prompt_tokens + prepared["max_tokens"]
+        wire_output = prepared["max_tokens"] + max(0, int(headroom))
+        reserved_tokens = prompt_tokens + wire_output
         with self._lock:
             if self.profile.token_budget and \
                     self._reserved_tokens + reserved_tokens > self.profile.token_budget:
@@ -173,7 +182,7 @@ class ProfiledEndpoint:
                 if prices is None:
                     raise self._unavailable(
                         f"{self.profile.role} profile has a cost budget but no input/output rate card")
-                reserved_cost = ((prompt_tokens * prices[0] + prepared["max_tokens"] * prices[1]) /
+                reserved_cost = ((prompt_tokens * prices[0] + wire_output * prices[1]) /
                                  1_000_000)
                 if self._reserved_cost + reserved_cost > self.profile.cost_budget_usd + 1e-12:
                     raise self._unavailable(
@@ -195,7 +204,8 @@ class ProfiledEndpoint:
             rate_card = self.route_guard(self.profile, target) if self.route_guard else self.rate_card
         except Exception as exc:  # profile failures must queue, never silently fail over
             raise self._unavailable(f"{self.profile.role} profile cannot use this route: {exc}") from exc
-        prepared = self._reserve(payload, rate_card)
+        headroom = getattr(target, "output_headroom_tokens", None)
+        prepared = self._reserve(payload, rate_card, headroom() if callable(headroom) else 0)
         minimum = max(0, int(getattr(target, "min_tokens", 0) or 0))
         if minimum > prepared["max_tokens"]:
             raise self._unavailable(
@@ -274,6 +284,10 @@ class AgentProfile:
         # MF-011: the route's context window, when its catalogue entry has none
         # (a local or custom model). It only ever narrows what is sent.
         context_tokens = self.route_policy.get("context_tokens")
+        temperature = self.route_policy.get('temperature')
+        if temperature is not None and (type(temperature) not in (int,float) or
+                                        not math.isfinite(temperature) or not 0<=temperature<=2):
+            raise ValueError('route_policy.temperature is a finite number from 0 to 2')
         if context_tokens is not None and (isinstance(context_tokens, bool) or
                                            not isinstance(context_tokens, int) or context_tokens < 1024):
             raise ValueError("route_policy.context_tokens is a whole number of tokens, at least 1024")
@@ -343,6 +357,10 @@ def route_permitted(profile: AgentProfile, route: dict[str, Any]) -> tuple[bool,
 
 
 DEFAULT_PROFILES = {
+    'code-research': AgentProfile('code-research','lead',allowed_bundles=['session','research'],
+                                  permission_ceiling='contribute',validation_rules=['grounded'],
+                                  # answer_self_check (FP4) off: measured net harm in the final registered cycle (Review 5).
+                                  route_policy={'binding_role':'lead','temperature':0.2,'answer_self_check':False}),
     "lead": AgentProfile("lead", "lead", allowed_bundles=["session", "research"],
                          permission_ceiling="contribute", validation_rules=["grounded"]),
     "scribe": AgentProfile("scribe", "scribe", allowed_bundles=["draft"],
@@ -458,8 +476,8 @@ BUNDLES = {
                          ("session_status", "get_note", "search", "topics_list", "filters",
                           "update_plan", "advance", "ask_user")),
     "map": ToolBundle("map", "Map relevant sources and structure",
-                       ("get_note", "search", "read_source_file", "dik_rebuild", "filters",
-                        "record_assumptions", "advance", "ask_user")),
+                       ("get_note", "search", "read_source_file", "source_verification_plan", "request_raw_source_access",
+                        "record_assumptions", "advance", "ask_user", "dispatch_plan")),
     "need": ToolBundle("need", "State and test the evidence needed next",
                         ("search", "get_note", "read_source_file", "record_assumptions",
                          "update_plan", "advance", "ask_user")),
@@ -485,7 +503,8 @@ BUNDLES = {
                             ("admit_contract", "audit_projection", "ask_user", "advance")),
     "execute": ToolBundle("execute", "Do the contract's work within its targets",
                           ("search", "get_note", "read_evidence", "read_source_file",
-                           "stage_artifact", "ask_user", "advance")),
+                           "stage_artifact", "ask_user", "advance", "dispatch_plan",
+                           "source_verification_plan", "request_raw_source_access")),
     "audit": ToolBundle("audit", "Check each planned predicate and the protected targets",
                         ("verify_grain", "audit_targets", "audit_projection", "ask_user",
                          "advance")),
@@ -493,7 +512,8 @@ BUNDLES = {
                          ("reduce_round", "audit_projection", "advance")),
     "research": ToolBundle("research", "Use the phase-specific research bundle", ()),
     "read": ToolBundle("read", "Read-only help", ("get_note", "search", "read_source_file",
-                                                      "list_files", "session_status")),
+                            "read_file", "read_source_section", "verify_source_pages",
+                            "list_files", "session_status")),
     "draft": ToolBundle("draft", "Draft and review bounded text", ("get_note", "search",
                                                                        "record_trace", "ask_user")),
     "clerk": ToolBundle("clerk", "Submit and inspect small asynchronous work",
@@ -589,7 +609,10 @@ def bundle_selection(tier: str, phase: str = "", *, projects_on: bool = True,
     # Oversized reads are projected to a loop-local handle.  Its bounded
     # reader belongs on every task surface so a result remains usable after a
     # phase transition without reopening the registry.
-    for name in ("read_result", "macro_plan", "macro_run"):
+    # Prefer executable, registry-checked macros when a phase fills the cap;
+    # Each expanded call still passes the registry and checkpoint guards;
+    # source dispatch has its own explicit no-model dry run.
+    for name in ("read_result", "macro_run", "macro_plan"):
         if name in by_name and name not in {spec.name for spec in selected}:
             selected.append(by_name[name])
     # A compact fallback gives a newly added phase usable reads without dumping
@@ -657,6 +680,16 @@ MACROS = {
                                       ("staged_item",), ("staging_promotion",)),
 }
 
+# A paper-page variant of the reviewed evidence-to-claim path, using the same
+# expansion, per-step registry gates and checkpoint machinery.
+from dataclasses import replace as _macro_variant
+MACROS['source_pages_to_claim_check'] = _macro_variant(
+    MACROS['evidence_to_claim_check'], id='source_pages_to_claim_check',
+    purpose='Read a located generated section, then check the original PDF pages',
+    steps=(MacroStep('read_source_section', {'source': '$source', 'pages': '$pages'}),
+           MacroStep('verify_source_pages', {'source': '$source', 'pages': '$pages', 'claim': '$claim'})),
+    preconditions=('catalogued_source', 'original_page_targets'))
+
 
 def macro_plan(macro_id: str) -> dict[str, Any]:
     macro = MACROS.get(macro_id)
@@ -696,6 +729,7 @@ def _precondition_error(macro: Macro, inputs: dict[str, Any]) -> str:
         "query": ("query",),
         "approved_intake": ("ref",),
         "pinned_revision": ("source", "path"),
+        'original_page_targets': ('pages', 'claim'),
         "staged_item": ("item_id", "item_ids"),
     }
     missing: list[str] = []

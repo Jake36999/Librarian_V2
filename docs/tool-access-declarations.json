@@ -1,0 +1,5799 @@
+{
+  "version": "access-audit-v1",
+  "authorship_vocabulary": [
+    "owner_created",
+    "generated",
+    "third_party"
+  ],
+  "scope": "All shipped native registry tools; runtime MCP adapters and Wave L non-registry paths are supplemental, not silently certified. S1: explicit person-only clear_session_taint; record_application remains a generated use-log receipt, not content.",
+  "tools": [
+    {
+      "tool": "accept_artifact",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/audited.py",
+        "line": 394,
+        "symbol": "accept_artifact"
+      },
+      "fingerprint": {
+        "source_sha256": "c2f11b63343545ba0d7d409ce9b0f82ca29e2e8778ed8ce758ec8571ce5de285",
+        "schema_sha256": "b6ddcae2873fa3b831c1c834c699188ced7b0cdfc537db7bf5b227a2f1731b65",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "accept_workflow",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workflows.py",
+        "line": 66,
+        "symbol": "accept_workflow"
+      },
+      "fingerprint": {
+        "source_sha256": "ff6163886c0c156df0004dc240794f98cd0a20d1e5f09338744fb13af209d27b",
+        "schema_sha256": "c70d2daf71667bd20bdb983d31b4f01657a3308970b3c3d0d7f3bcf3b5d9bf20",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "activity",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1943,
+        "symbol": "activity"
+      },
+      "fingerprint": {
+        "source_sha256": "5775caa7b41693cdbe67b8899777037d0e0d4b2eaa4c5af9337b5e091ce6dde6",
+        "schema_sha256": "49239b163006b224b6f9623ca735cd096221f5e0c87120c15b19bd406176cda4",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "add_candidate",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1301,
+        "symbol": "add_candidate"
+      },
+      "fingerprint": {
+        "source_sha256": "9cf5888d43dd7056cce73a52d67623fcf9fcafa01845cf6df60db2a53442469f",
+        "schema_sha256": "7ed6fbc2fd45ad3f8d844bf67cbf32995ec491d78eed485d1bd4988d17c5d184",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "admit_contract",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/audited.py",
+        "line": 62,
+        "symbol": "admit_contract"
+      },
+      "fingerprint": {
+        "source_sha256": "7cbf315fde1b6c6f440ef5740fb8f7dc48f4a672dd10554c17e3ed728474abf5",
+        "schema_sha256": "2bf3637509dc95d36269c0386688d22bcbb189dd3162d3aeecb8e68a016b39d8",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "advance",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 501,
+        "symbol": "advance"
+      },
+      "fingerprint": {
+        "source_sha256": "9bd5bdda524cc75e1b9be9405cc42708857bf90e037f208fc122ed8ea5101438",
+        "schema_sha256": "496bf68f3e349a6ce83ba3afe5570accb53ff0c1f5af91548873af5c623d6e41",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "agenda",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/library.py",
+        "line": 517,
+        "symbol": "agenda_tool"
+      },
+      "fingerprint": {
+        "source_sha256": "84eecfc3aad2eaa1fdce946084dce2a87f477dc068a7e74ed9caee362f8941d5",
+        "schema_sha256": "b76e7a0d8e67a8dbe3de9cbc8aee278fd95c3c5a2d6b7069930f7e66f98571e8",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "answer",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 478,
+        "symbol": "answer"
+      },
+      "fingerprint": {
+        "source_sha256": "181c55be38959c7798517fb76bd62f5cd8949e256682d32170cefb9f01a0f95f",
+        "schema_sha256": "5804d2fec2ac26157cfc60b9b11d6af9766977936fd75047518f6ea6271de784",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "archive_note",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/authoring.py",
+        "line": 323,
+        "symbol": "archive_note"
+      },
+      "fingerprint": {
+        "source_sha256": "ed9ec7d03e462c4d1e608137910bbb4006c98ea357d4e3a2fcd00633ca23afcf",
+        "schema_sha256": "6355e256e8ef055a239034bc84d067e3e7b3da1afc1a81ccb0782c3d74f4dbcb",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "ask_user",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 440,
+        "symbol": "ask_user"
+      },
+      "fingerprint": {
+        "source_sha256": "e54fa07cbde0fea14af8120674f1d6c4b61b731409721bdac900b306eab893c8",
+        "schema_sha256": "154e39d09ca3b7e9133a11fe8011e56b79ff34d3d75fa66eea94f86137e417a9",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "audit_projection",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 598,
+        "symbol": "audit_projection"
+      },
+      "fingerprint": {
+        "source_sha256": "1ad69f3eee6d8c990bf66257a35eb0d3d30a8d2330b34c161d5a38f2e6999922",
+        "schema_sha256": "cc511b3173cfa9bbdcd8ceb04bf3a47c0d3bed26841eac6006455a3d99437cbd",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "audit_targets",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/audited.py",
+        "line": 259,
+        "symbol": "audit_targets"
+      },
+      "fingerprint": {
+        "source_sha256": "85e7e6170ae95230240cf721e7109aa104cb8f633fe57f4dd2a084fd37bf44c9",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "batch_cancel",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/batch.py",
+        "line": 33,
+        "symbol": "batch_cancel"
+      },
+      "fingerprint": {
+        "source_sha256": "ce5e0a757d1cdbe1ebf91a6061ad0b3beb607303b1774b4571be8a1aaed977e6",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "batch_status",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/batch.py",
+        "line": 24,
+        "symbol": "batch_status"
+      },
+      "fingerprint": {
+        "source_sha256": "a2240cd2cd2d6c18c859760f0622874fbbf1710c678fe215107623a9f569fc41",
+        "schema_sha256": "5ac8aaebe8c0ff6d83746b0857de660b9fc3814844fef0c9407c0fb8d79d068e",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "branch_session",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 337,
+        "symbol": "branch_session"
+      },
+      "fingerprint": {
+        "source_sha256": "efaaab6504e5ee075903e005187ab96c13683ccea881fbbbb469e3d03cb04d7a",
+        "schema_sha256": "9302d3dc4dd9209221bd309d8b97d321936655395ad1cc9b43cb555b6c312326",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "capabilities",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/core.py",
+        "line": 10,
+        "symbol": "capabilities"
+      },
+      "fingerprint": {
+        "source_sha256": "1a0e6bffe3ac062c8bb0530ef0c386ce9880573df42ae719da3f699df6d6bfe6",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "capability_candidates",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/capabilities.py",
+        "line": 48,
+        "symbol": "capability_candidates"
+      },
+      "fingerprint": {
+        "source_sha256": "ffe2fdefed72eb3809fb2650011154369b4ebb2968e9ae272e173c7b6abd5c2e",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "capability_install",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/capabilities.py",
+        "line": 110,
+        "symbol": "capability_install"
+      },
+      "fingerprint": {
+        "source_sha256": "f104a31642a4d47cd0fadbf7d3b628f01a70956d494d31d5c4eedd542e1b61da",
+        "schema_sha256": "c70d2daf71667bd20bdb983d31b4f01657a3308970b3c3d0d7f3bcf3b5d9bf20",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "capability_propose",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/capabilities.py",
+        "line": 87,
+        "symbol": "capability_propose"
+      },
+      "fingerprint": {
+        "source_sha256": "4c3f3b4f5dc0a111657e7a415283737c415bb50fa0fae9bc4a1c00bcc5f2dbea",
+        "schema_sha256": "fdfcd30a8bfedcc6198c68a6f385dd3b32bafdea09c1c7038672f894d4fa43a7",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "check_notes",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/core.py",
+        "line": 69,
+        "symbol": "check_notes"
+      },
+      "fingerprint": {
+        "source_sha256": "415ddda27d74139dc65f2d9d2f1184a5955a19e4e537930452b2868b2f990422",
+        "schema_sha256": "baf131f6da8bd0c9b94962d0f2593f5bf50cceabfa3dc4eddf2a593a49bf9703",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "checkpoint",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1264,
+        "symbol": "checkpoint"
+      },
+      "fingerprint": {
+        "source_sha256": "7b9c1a21740c50df8deb8ea44ed028b500e36026fa05b2f6c94d785b05f086c9",
+        "schema_sha256": "c6b9173805e13ed6edc87f9a1c8d9a6d6d8e6870c5986b02c1acd45be76e5e41",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "claim_run_preflight",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/upkeep.py",
+        "line": 86,
+        "symbol": "claim_run_preflight"
+      },
+      "fingerprint": {
+        "source_sha256": "37be41b71894f444c236f64506d5ebc8956cf1eab5f3e724284a402a26b5e42e",
+        "schema_sha256": "d97beebb224557c5e9327b9187a2a948a5c8f3f359c6ec02487c4cf19669e7a5",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "clerk_next",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "task worker (sessionless protocol only)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/staging.py",
+        "line": 752,
+        "symbol": "clerk_next"
+      },
+      "fingerprint": {
+        "source_sha256": "fcba3e76b54d2ad5b23b2e05869d0e637669050a774444b157db79f4c1e51c72",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": true
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "clerk_submit",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "task worker (sessionless protocol only)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/staging.py",
+        "line": 763,
+        "symbol": "clerk_submit"
+      },
+      "fingerprint": {
+        "source_sha256": "90f9347bd2d29e60afe3bd1aad78fd42941731c7bf2690aa339ec32106de3bf4",
+        "schema_sha256": "905d1bd9b3e10cfb8b6dd7892e6166c1f95a605fd3561b67df6d446c82531788",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": true
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "close_brief",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1053,
+        "symbol": "close_brief"
+      },
+      "fingerprint": {
+        "source_sha256": "3773bf6933451b2eb4e09dccf3b10cc5f01158b858d78c3f77bb6ae90e588842",
+        "schema_sha256": "57bad0783cfd1c89bd83d17df01d92568e5ba869a5e43cceb7c4d4e5d1a744ba",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "close_session",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 543,
+        "symbol": "close_session"
+      },
+      "fingerprint": {
+        "source_sha256": "ad2997e4ea9e827412b381470184de0f24bcaad22f7a4502d4ef191f6df5a8f0",
+        "schema_sha256": "ba55d8f52104e9eae96a643377b0be881da3ed9c58c7f054284876155b2c70e5",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "cohort_freeze",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/scout.py",
+        "line": 40,
+        "symbol": "cohort_freeze"
+      },
+      "fingerprint": {
+        "source_sha256": "3fc46c8e397b77cfc2ee571d551f5c3d8a7840093d6a2a9e8bee46bdde6809fe",
+        "schema_sha256": "dc3203f47328d875c6543fb23488b64ca169847ed5a4d1347ea0c2289165e8d2",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "cohort_reviewed",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/scout.py",
+        "line": 47,
+        "symbol": "cohort_reviewed"
+      },
+      "fingerprint": {
+        "source_sha256": "901f1d46ecdc699208e205d81e8594976848e6df5cc80ebeb97d033857ad2ca4",
+        "schema_sha256": "f5b0d1633018b30ceb7ff1c2c640f75253cd9f21c7ef520e6a4655dcb8c7a435",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "community_disagreements",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/communities.py",
+        "line": 27,
+        "symbol": "community_disagreements"
+      },
+      "fingerprint": {
+        "source_sha256": "65dd1d90e4feb9780c4c0cbc29eb1739d4dfeffb7b7da9058c7e8d0feaa7266f",
+        "schema_sha256": "7bd16ce365b2736de36ffdef32a73a1bcb3bf4b50e73949d14cb48840caed12d",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "community_rebuild",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/communities.py",
+        "line": 9,
+        "symbol": "rebuild_communities"
+      },
+      "fingerprint": {
+        "source_sha256": "ebec4ea3543e191f887d9c74da5c54c52e8460bd2e2febd0ee341ac69b811d57",
+        "schema_sha256": "678ccd2b4433515a4fb0ff92ce4bc0f99c3e2f4bd8a6cd105128f10fee05c4fe",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "community_reports",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/communities.py",
+        "line": 19,
+        "symbol": "community_reports"
+      },
+      "fingerprint": {
+        "source_sha256": "f82426571c4e735dbf7c4161939ccf6f034ab3689646cdeaa587514fff96b5b7",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "concept_candidates",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/staging.py",
+        "line": 739,
+        "symbol": "concept_candidates"
+      },
+      "fingerprint": {
+        "source_sha256": "b7c255771be63938515b8d4302af6bc44768a6071c5726917be31e3dfab0f537",
+        "schema_sha256": "93c1afc6c01c7c2c4cf864bdbe16e2e44416fbde1d85eaeada7be347e7339bcf",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "create_project",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 713,
+        "symbol": "create_project"
+      },
+      "fingerprint": {
+        "source_sha256": "ef5f80777540b606c67463bdf043a8a4d35bd49ec4d82b9c27a0cbfee9c4fead",
+        "schema_sha256": "32df044369923b05d41dbd75367415b153db7b69f4112362f357453c56996ed6",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "decide",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1326,
+        "symbol": "decide"
+      },
+      "fingerprint": {
+        "source_sha256": "2bde7a14ad8c0c08a4004bb7321c661facd0d8a65d7a10a2d5b29b5080e90ca3",
+        "schema_sha256": "0ae98b923306a7c985047a2aff667b9316920718ba162b7d311384f24fadf46b",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "deep_read",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "R",
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/staging.py",
+        "line": 281,
+        "symbol": "deep_read_tool"
+      },
+      "fingerprint": {
+        "source_sha256": "4ebd9070784975e5849afcf7884d5c6d664c3c2e2727c79760519f51716015a6",
+        "schema_sha256": "b5986e5f8ba4185bc8a50ca30eec47dfa8916e63a810adf24b70bd60c754b059",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "deep_read_note",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "R",
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/staging.py",
+        "line": 298,
+        "symbol": "deep_read_note"
+      },
+      "fingerprint": {
+        "source_sha256": "b34e9bc5740af460f29ccb33ae8cfda346f3b0450fb0a086b8e300bd8ce3a57a",
+        "schema_sha256": "9ee9785cc6377481479eab5a82495221c4ae7bb0d010f8239c1ee4ac0a797ef6",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "delegate",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/delegate.py",
+        "line": 31,
+        "symbol": "delegate"
+      },
+      "fingerprint": {
+        "source_sha256": "80eda963a7fdcf3dcbc4ca0617a609bdd332f25fd9c7548d372a0c301d31dfba",
+        "schema_sha256": "29da0f88185e5c362a0183a8482604d26732d766d7f8e21b3cc84c3d225547bd",
+        "effect": "read",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "desk_pin",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/desk.py",
+        "line": 38,
+        "symbol": "desk_pin"
+      },
+      "fingerprint": {
+        "source_sha256": "599d72149b7003106ff187aebc09574282822eb7f13df9c818173c14f9fbb8e1",
+        "schema_sha256": "a7017b6e2460b5e42912071df605ff27058e56bf4c6fc53c4c7d37a8ee6381c3",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "desk_show",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/desk.py",
+        "line": 24,
+        "symbol": "desk_show"
+      },
+      "fingerprint": {
+        "source_sha256": "39ba4b2cfdb9fe4cfbc5cd35cb9d24e16b62d2385a97aafd687c4c97b6b9980a",
+        "schema_sha256": "54d0a89cced0fb699cb9a32af970ec4f05dcbf2a90d35a4b2876d3221f3fc776",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "desk_touch",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/desk.py",
+        "line": 61,
+        "symbol": "desk_touch"
+      },
+      "fingerprint": {
+        "source_sha256": "c41ad8ec64d61f8e9acbcf91a6d3f35af22acfed97fd67938a2f108a538e1537",
+        "schema_sha256": "a7017b6e2460b5e42912071df605ff27058e56bf4c6fc53c4c7d37a8ee6381c3",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "desk_unpin",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/desk.py",
+        "line": 50,
+        "symbol": "desk_unpin"
+      },
+      "fingerprint": {
+        "source_sha256": "7e4995b5aa6e65346219d0c2d3e9ba852193472435193feb4d751511d0c952d2",
+        "schema_sha256": "a7017b6e2460b5e42912071df605ff27058e56bf4c6fc53c4c7d37a8ee6381c3",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "dik_rebuild",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/upkeep.py",
+        "line": 105,
+        "symbol": "dik_rebuild"
+      },
+      "fingerprint": {
+        "source_sha256": "4ed7e8bb24ff2239eb73e4f555f6ea9a26a016a12b6274497f341069591b1985",
+        "schema_sha256": "02cb4e1e63dfc57da6bc4a0aca825d1f83c20654eeae4f7838b51c89b7610da3",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "dispatch_plan",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/plan_dispatch.py",
+        "line": 158,
+        "symbol": "dispatch_plan"
+      },
+      "fingerprint": {
+        "source_sha256": "6875560e46a49ab8468e138bf0f42c24f80a1ec91b379d8badfac0844499ebdf",
+        "schema_sha256": "014df559b96d6adaf47447027fb013e5c988b9c0787e1e99f4e9a8685ef333ee",
+        "effect": "read",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "doctor",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/core.py",
+        "line": 23,
+        "symbol": "doctor_tool"
+      },
+      "fingerprint": {
+        "source_sha256": "1bd6c6f46cfa1aa583d5cfb0752d10bac603176d2e0ac2563afc79a48c43d566",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "document_duplicates",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/upkeep.py",
+        "line": 32,
+        "symbol": "document_duplicates"
+      },
+      "fingerprint": {
+        "source_sha256": "d914bbc5d14bbf55506031ff0b5faad34b76c132edb42e9bf86610be61221ada",
+        "schema_sha256": "baf131f6da8bd0c9b94962d0f2593f5bf50cceabfa3dc4eddf2a593a49bf9703",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "draft_offering",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "R",
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1495,
+        "symbol": "draft_offering"
+      },
+      "fingerprint": {
+        "source_sha256": "6799773c08e286b27f4e48dba715a3df309e9b2dcad76bd44b7e2656d894a944",
+        "schema_sha256": "c94c85a38d69e20f5f4e8d7ec0440db4e80e5ec6aa092a98c054d1a8bd3fb0e2",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "duplicate_report",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/upkeep.py",
+        "line": 22,
+        "symbol": "duplicate_report"
+      },
+      "fingerprint": {
+        "source_sha256": "fd50fcb636221f066fb9fb384f5aafb1c73edad705ce690ced7191d523b3cdaf",
+        "schema_sha256": "37e6ddef47c371fd47f255f7662a01944aa2e9d2f55becd58924c2e9c03a770d",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "edit_note",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/authoring.py",
+        "line": 230,
+        "symbol": "edit_note"
+      },
+      "fingerprint": {
+        "source_sha256": "3572a412eed02767a3107b16c6c31499fc960ff3451b29e68445c3a5e7a02ab9",
+        "schema_sha256": "96f4904eee9b21a46d6a8d058f15f864534c0d636f3a028f86cf82d57b779981",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "embed_index",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/library.py",
+        "line": 334,
+        "symbol": "embed_index"
+      },
+      "fingerprint": {
+        "source_sha256": "c3a118f1de8e0ce842dc3a63bcd92accaa203fe77c4fb71267f400883234123a",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "engagement_close",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workbench.py",
+        "line": 103,
+        "symbol": "engagement_close"
+      },
+      "fingerprint": {
+        "source_sha256": "d48ce8822f779e5c4cfc41f7fe341ffd1e31a12d458ace23828e93ac2d1c0af4",
+        "schema_sha256": "1dbb87c80edd7a1c7f5a4618213063485b4e3d5e8f7adee492c3fc85dae9c21e",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "engagement_list",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workbench.py",
+        "line": 125,
+        "symbol": "engagement_list"
+      },
+      "fingerprint": {
+        "source_sha256": "d4c6686263dea605ec20ec279a47b4900028d83af31cbc81bf190120264076d3",
+        "schema_sha256": "30a4fdbf3410f7023f8f8112931b17a11c81be77233e49444e0ee2aa550761c9",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "engagement_plan",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workbench.py",
+        "line": 52,
+        "symbol": "engagement_plan"
+      },
+      "fingerprint": {
+        "source_sha256": "4cae5217334f9130af192c873803bcab0ebc23a450ebbeea3e9c4e62c7062949",
+        "schema_sha256": "caf81e7d3d9575a5365c585b2448e8d5a7d1dd7756777eb64f2cd3cade728bb8",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "engagement_propose",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workbench.py",
+        "line": 62,
+        "symbol": "engagement_propose"
+      },
+      "fingerprint": {
+        "source_sha256": "b9bd33149a0de562998b611a8e60d43e24d4916700d14f3f12ef9d463dafe588",
+        "schema_sha256": "54b8d28c89efaa61a4282faf885b514cd6019e3818e982266578238746b6d8cf",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "engagement_start",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workbench.py",
+        "line": 72,
+        "symbol": "engagement_start"
+      },
+      "fingerprint": {
+        "source_sha256": "e3826eecde8c56338a417f5ab35f2305228509ffd99283c7f78a8c44e61b6f75",
+        "schema_sha256": "e1f34a8a73b055dcf210d738614597b6b6757a6d1a3ac853f025a2043cbea494",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "evaluate",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/library.py",
+        "line": 533,
+        "symbol": "evaluate"
+      },
+      "fingerprint": {
+        "source_sha256": "f403aa72a05384b7496918ccf77ffb186f06eae54681e448bb93160050412ace",
+        "schema_sha256": "2bdb4729e98ad7a5c2c6de3dd9d7b34f64a602096485a392b41ad741c8811448",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "extend_budget",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 682,
+        "symbol": "extend_budget"
+      },
+      "fingerprint": {
+        "source_sha256": "f7247f4223c1e4b832f5a7d339936041f1e7f57dc4df0a4deda7b9496e802991",
+        "schema_sha256": "1ae48ae354c7adce209b4ffc166b0aeaa956eca457567d9e9c23e240ce7f3b03",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "extract_materialize",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/extract.py",
+        "line": 20,
+        "symbol": "extract_materialize"
+      },
+      "fingerprint": {
+        "source_sha256": "8752738cbc33be8538050319f9241d65278ae93b08bf1f5720b5e7f80d1b794c",
+        "schema_sha256": "f4bb442df2a9569aaa8eb709b52eb3c54d9cdddaea59890e32661e409978b812",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps. Raw content is available at registry consult tier without the new catalogue/graph/target grant."
+    },
+    {
+      "tool": "extract_plan",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/extract.py",
+        "line": 9,
+        "symbol": "extract_plan"
+      },
+      "fingerprint": {
+        "source_sha256": "77d9c1a029af0b3972c892e4362cfd08046b5658bffde407e0a86eefc742b14f",
+        "schema_sha256": "f9b55cc0555265fc859806046146d80e0440491e584217b5317566b559789426",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "filters",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/library.py",
+        "line": 374,
+        "symbol": "filters_tool"
+      },
+      "fingerprint": {
+        "source_sha256": "4c7fc6ce7716e81c0b978ad35269d45cca9a550a9a41394100bdd3480a6d061c",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "freshness_check",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/upkeep.py",
+        "line": 9,
+        "symbol": "freshness_check"
+      },
+      "fingerprint": {
+        "source_sha256": "862e67ee6056586efac205f24c6190f7530c09a8028582d4b113f297facdeef4",
+        "schema_sha256": "02cb4e1e63dfc57da6bc4a0aca825d1f83c20654eeae4f7838b51c89b7610da3",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "get_note",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "research helper (read-only allow-list)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4",
+        "S5",
+        "S6"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/library.py",
+        "line": 382,
+        "symbol": "get_note"
+      },
+      "fingerprint": {
+        "source_sha256": "01d93561aaf85e19f096e5ceb7884114691d87206a0912a2195cd5971c597816",
+        "schema_sha256": "7e907428eec9b3169972bf17d966c40d84e05054389d21f2083b49b9175b1edc",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "gitignore_ensure",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/vault.py",
+        "line": 36,
+        "symbol": "gitignore_ensure"
+      },
+      "fingerprint": {
+        "source_sha256": "1b0a6b6ee83a7e358eff2e208517e74151b10e58cb778ba03d6a09ad6eab9c6b",
+        "schema_sha256": "3a03bb316cedb34f7fd15eb6ef5d703a99b76e904bc5b12a1725813ced0d4d70",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "index",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/library.py",
+        "line": 207,
+        "symbol": "index_tool"
+      },
+      "fingerprint": {
+        "source_sha256": "892a9fab968b76c648367acec56c9a419afb618cf1d25f02285bb7f1bfdd1179",
+        "schema_sha256": "f3b09b8634059ac8c50a5e265dfa1bbaffe8cf181d4e8db3223febec8e9a49ca",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "index_status",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/library.py",
+        "line": 229,
+        "symbol": "index_status"
+      },
+      "fingerprint": {
+        "source_sha256": "2445e00f849ec1f85c3bb24385e40579912b559a2a73c4689083cac7cbead771",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "ingest",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "R",
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/intake.py",
+        "line": 39,
+        "symbol": "ingest"
+      },
+      "fingerprint": {
+        "source_sha256": "3e6a73834f9a7b59dee451a6f1e51557ef8661b3db8c0c286b309c068fcd759d",
+        "schema_sha256": "92c207adaf2bc921e5b9bf988ddce5949fece4b0f3dffa830fcbfb44010e1d0a",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "intake_run",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/intake.py",
+        "line": 126,
+        "symbol": "intake_run"
+      },
+      "fingerprint": {
+        "source_sha256": "25ee184495cc2f172a16b176ca3825390660003a556f10cd1f22f6372cd64737",
+        "schema_sha256": "3f4b18339da39bfbf9e0a6bd416c94bce41e489009ddf34bcf93e00e65708609",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "lens_adopt",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/lenses.py",
+        "line": 34,
+        "symbol": "lens_adopt"
+      },
+      "fingerprint": {
+        "source_sha256": "ed31c71804c5126f9d409d7a03ca4dfbb0377b1e898bd9799566d67ae6305300",
+        "schema_sha256": "1267e6101b521a7f8e499191193604a5fb8c4d55a0aeb5fb5436f10b92e726d6",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "lens_drop",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/lenses.py",
+        "line": 55,
+        "symbol": "lens_drop"
+      },
+      "fingerprint": {
+        "source_sha256": "96631ee9e0c73b9a48e48858d9475b04180458876e62fdea603c929d116d0e8e",
+        "schema_sha256": "1267e6101b521a7f8e499191193604a5fb8c4d55a0aeb5fb5436f10b92e726d6",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "lens_list",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/staging.py",
+        "line": 722,
+        "symbol": "lens_list"
+      },
+      "fingerprint": {
+        "source_sha256": "eef97201b20265d8c3ac9460403ae4cfad67f0b4837d931735849a787813f48c",
+        "schema_sha256": "863c2953316a1938e41367982602423a8db8fcea17c7bb9f0880898133ca805e",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "lens_pack_accept",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/lenses.py",
+        "line": 88,
+        "symbol": "lens_pack_accept"
+      },
+      "fingerprint": {
+        "source_sha256": "61ec38de1aea5c8b69a97891bddc4e8069fa69ee28823648680d96feac6a0ed8",
+        "schema_sha256": "c70d2daf71667bd20bdb983d31b4f01657a3308970b3c3d0d7f3bcf3b5d9bf20",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "lens_packs",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/lenses.py",
+        "line": 79,
+        "symbol": "lens_packs"
+      },
+      "fingerprint": {
+        "source_sha256": "8f04c403b37b6bef95009b05ae41e2d611e48d1eed8b2e03b223701bc16e25ed",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "lens_show",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/staging.py",
+        "line": 731,
+        "symbol": "lens_show"
+      },
+      "fingerprint": {
+        "source_sha256": "31aae8c3ca7cf8e5836132c7b09dc3f708ad831c2c9f69b7cb65384e3c6d78eb",
+        "schema_sha256": "1267e6101b521a7f8e499191193604a5fb8c4d55a0aeb5fb5436f10b92e726d6",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "lens_suggest",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/lenses.py",
+        "line": 21,
+        "symbol": "lens_suggest"
+      },
+      "fingerprint": {
+        "source_sha256": "3495a4444d96008fd09a0ecafcd3a2d4b8dbfaf0295d011b04e309aa34fe843a",
+        "schema_sha256": "2fe359112e2dc0d4117fcd94489af299f83fd40aa9b0587a1f931afcf63fc5d1",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "library_profile",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/lenses.py",
+        "line": 67,
+        "symbol": "library_profile"
+      },
+      "fingerprint": {
+        "source_sha256": "d3199f9995d7d9a83880903def5861596cf515523db9cc62121a4351eb7a98ed",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "list_claim_runs",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/upkeep.py",
+        "line": 95,
+        "symbol": "list_claim_runs"
+      },
+      "fingerprint": {
+        "source_sha256": "f4158380b0d7a715bc009c84af6c361e0e62e67417af6e905c4146ebac2fdca2",
+        "schema_sha256": "5a4f894bf9f1821b569bed97cce249b760edd9c52462e0aa5e086f6de7bdcbe8",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "list_files",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "research helper (read-only allow-list)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/browse.py",
+        "line": 90,
+        "symbol": "list_files"
+      },
+      "fingerprint": {
+        "source_sha256": "e03b6116c763add2c73d6839c409039f01b0ffa9134c04010e7714df18ae5e08",
+        "schema_sha256": "59537a07b32df33aa7d896cb0a2a7d1791b1516b7e4af933a0b0c024f07a456d",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "list_sessions",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 280,
+        "symbol": "list_sessions"
+      },
+      "fingerprint": {
+        "source_sha256": "166e32999370f231f5a069dfa9cb23ce2fa0bb5d2e0bf8eda543fd9ee4b2f712",
+        "schema_sha256": "6950236ef1d96bd204581feeb16c7df94eea7443aa9bd5126365fa4987ea9f91",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "list_workflows",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workflows.py",
+        "line": 26,
+        "symbol": "list_workflows"
+      },
+      "fingerprint": {
+        "source_sha256": "f20674e5e78de9b6eec6b6658b07bb6a992ef0a8f433e93a04cbf14fa3f8f6a1",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "log_use",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1313,
+        "symbol": "log_use"
+      },
+      "fingerprint": {
+        "source_sha256": "33ecd7935583b96ee75b8d3481caf99d4ab8641496fdd7a099dea41ecb866d80",
+        "schema_sha256": "600a2439163cee34b669bed507df90b231c8671c415e8cb99418a07e1ddfb6e0",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "macro_plan",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/macros.py",
+        "line": 10,
+        "symbol": "show_macro_plan"
+      },
+      "fingerprint": {
+        "source_sha256": "a58faa80ad36ab455d28185c6538aacdd3f49a95c89a69490dc468f23e2ea014",
+        "schema_sha256": "94ae789082ff5d36a913ebc710189f9a0af68b54dbedcad7062553a39673d4db",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "macro_resolve",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/macros.py",
+        "line": 53,
+        "symbol": "resolve_macro_step"
+      },
+      "fingerprint": {
+        "source_sha256": "fad0d0a4d85bc6909b796c006d60b03371fbb6fd7b8c1e97112615670dc2f84d",
+        "schema_sha256": "3e3a639d3f9fc04a6773afffa63af8ed31dfce00d76d79d68c7208f8feeacce2",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "macro_run",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/macros.py",
+        "line": 26,
+        "symbol": "execute_macro"
+      },
+      "fingerprint": {
+        "source_sha256": "e020b34a26febd8109c88825226cbe06c1bc2c366d9b43a663eb1483293a7cb0",
+        "schema_sha256": "e24bb252eda947d09d0fe26afcbddb78dbaac85150bd24dcc9e43cee1ad5d333",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "macro_status",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/macros.py",
+        "line": 39,
+        "symbol": "show_macro_status"
+      },
+      "fingerprint": {
+        "source_sha256": "574300e1282d5a763329de50703fd4e379076b975203b9e0c7c8be91e832aa9f",
+        "schema_sha256": "900920ca961084b4d6768ebd542d4d645da8935f11835d496d6f12899ad2f264",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "model_catalog_adopt",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S6b"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/model_catalog.py",
+        "line": 20,
+        "symbol": "model_catalog_adopt"
+      },
+      "fingerprint": {
+        "source_sha256": "633d74995978e0f664ad824107ece5f7582dc9070891c65f37f0d4b80820e807",
+        "schema_sha256": "327cd9a6ca583134b93d6a18f396c8a3b334bc356cc011feb3c610261ed5e108",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "model_catalog_status",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/model_catalog.py",
+        "line": 10,
+        "symbol": "model_catalog_status"
+      },
+      "fingerprint": {
+        "source_sha256": "bea2f2e8fc3366e4d8a322f1215892aae4ff7804a120c6261f313a33576b5509",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "model_expectation_propose",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/model_expectations.py",
+        "line": 9,
+        "symbol": "model_expectation_propose"
+      },
+      "fingerprint": {
+        "source_sha256": "1f1c91f6d9e556fe6bb623a2d13896f022587534b08b883021c9546c20c23d86",
+        "schema_sha256": "239de935dec9e14a0dad58a533a4260a08946bd57f33ded8dc047e50c41dd518",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "note_move",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/library.py",
+        "line": 412,
+        "symbol": "note_move"
+      },
+      "fingerprint": {
+        "source_sha256": "b1c518d7e7ab8c4756056dc210dcd35112683c50954687894a70eca2ed59de08",
+        "schema_sha256": "5886dad5f512ca1240ed30bee78b14ae07776a05ed5ff32ffb354ba3863215ac",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "ocr_pdf",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/pdf.py",
+        "line": 51,
+        "symbol": "ocr_pdf_tool"
+      },
+      "fingerprint": {
+        "source_sha256": "eafd5021c8dada45ae3f911018c7d0c2d280b65eb2b4e04a68a6f7d805f6b910",
+        "schema_sha256": "8900d4c8bd3a90e232590f71f5982b88e2b5a456c93ccc8249a87abddcfaa7e1",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps. The produced conversion is user-visible and is not yet the required hidden, page-anchored library work."
+    },
+    {
+      "tool": "open_brief",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 974,
+        "symbol": "open_brief"
+      },
+      "fingerprint": {
+        "source_sha256": "b277d1e8d7f051793504538c659631ab6b1795e4835c20e8bcd26a4488681471",
+        "schema_sha256": "d2415204ac33920c2f5d066efe7f8e71c2151e51c0358e05356db2cb59784d29",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "open_session",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 227,
+        "symbol": "open_session"
+      },
+      "fingerprint": {
+        "source_sha256": "e928c60ad181a921643a0f1927003a1afea9b72ca371c896e5812a568495bf18",
+        "schema_sha256": "58ca92b218698a4138476ba1975f57f0b2b4999c39a09016c3382c6d20208cc8",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "park_session",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 310,
+        "symbol": "park_session"
+      },
+      "fingerprint": {
+        "source_sha256": "13e4e7ddaad093048e94e6827b85c79acb6779bf33dbcf6c639097c70ce008f2",
+        "schema_sha256": "9dd3a03888a822556fb19f6e52fa6ef90d7b54da7fdf4df5ca6542a7d036b099",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "pdf_to_markdown",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/pdf.py",
+        "line": 13,
+        "symbol": "pdf_to_markdown_tool"
+      },
+      "fingerprint": {
+        "source_sha256": "16c5a3cdee056686e935bc3b61ef36cee99bb5178acc614a2911785304467d5a",
+        "schema_sha256": "a26de509015c627856703e51d4a693b638e645d261fddf2c4676a9187a67f2ed",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps. The produced conversion is user-visible and is not yet the required hidden, page-anchored library work."
+    },
+    {
+      "tool": "process_approved",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/batch.py",
+        "line": 9,
+        "symbol": "process_approved"
+      },
+      "fingerprint": {
+        "source_sha256": "c79dbdad62ed0ecf0fd15d61acdeff982b552f65e057e18ef5b8c03171edd762",
+        "schema_sha256": "2e558493caf09cf57728901c50f1daa2713595c60ab4328dc2cfe86e9d05f817",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "project_edit",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 922,
+        "symbol": "project_edit"
+      },
+      "fingerprint": {
+        "source_sha256": "90226ebddff7f55afa5ac20df86ff1cc60b76cef8720b6f0d5814dc680847eaf",
+        "schema_sha256": "31a3868c498920d7043d21ecd5672e8caf93c693227915f859712e822721f9bf",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "project_map",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S6"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 950,
+        "symbol": "project_map"
+      },
+      "fingerprint": {
+        "source_sha256": "07980489e7e4f3142dfdc33c38d8634bdbb90d6a1c70b6677178adde354792c3",
+        "schema_sha256": "580939fb407b5c248b3df99babc22fcd8f4adc8d51868d28584f50fc4184fc7a",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "project_scan",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S6"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 908,
+        "symbol": "project_scan"
+      },
+      "fingerprint": {
+        "source_sha256": "192b7fec6b792df13b77906a2b79e8770cc38eed09972b74d885c5e537d99e60",
+        "schema_sha256": "b76e7a0d8e67a8dbe3de9cbc8aee278fd95c3c5a2d6b7069930f7e66f98571e8",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "promote_offering",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1685,
+        "symbol": "promote_offering"
+      },
+      "fingerprint": {
+        "source_sha256": "a98a8daf19f01f54c31903e1d5b021c176ed1cc82ccd613cd36ab38c1c03c419",
+        "schema_sha256": "e84ba22667523b9c19dd0e785574eb8619bc9e5f83805a5337474c9281eeb23c",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "provenance_check",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/upkeep.py",
+        "line": 46,
+        "symbol": "provenance_check"
+      },
+      "fingerprint": {
+        "source_sha256": "74fbc3b7bee7ff7ab4f44b999f50bdff646e5f7f3c36c4686bb0c90b1d582e40",
+        "schema_sha256": "aa111dfe4be08ad56b0cc8c807615cc676566143c643f98803f59c40e55da783",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "queue_list",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/intake.py",
+        "line": 148,
+        "symbol": "queue_list"
+      },
+      "fingerprint": {
+        "source_sha256": "ecc4392c5be32bf2b7d765e19d7a284140f2655b10be48b7fae2bdd462dc2435",
+        "schema_sha256": "baf131f6da8bd0c9b94962d0f2593f5bf50cceabfa3dc4eddf2a593a49bf9703",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "queue_remove",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/intake.py",
+        "line": 159,
+        "symbol": "queue_remove"
+      },
+      "fingerprint": {
+        "source_sha256": "ae138bf7fb3a037fba63abafb964a5566794761d3492c02c929a3766d389305d",
+        "schema_sha256": "4fa5238c5ed82a97db78d8ae26cf2ac7052077e6596ef8b8cb1fb3213787b263",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "queue_retry",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/intake.py",
+        "line": 177,
+        "symbol": "queue_retry"
+      },
+      "fingerprint": {
+        "source_sha256": "49487b317e19aeabb0962c359fd05c41615d6f6265890068b8c33e2f473206f9",
+        "schema_sha256": "d73a2f532c80d3adf51d783652015cc12c7dd9d390742a1d9107b195c29a8a40",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "queue_source",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/intake.py",
+        "line": 92,
+        "symbol": "queue_source"
+      },
+      "fingerprint": {
+        "source_sha256": "6183dce93cfeefef83d9a95e61d809a905f18c5430c05db64a813263600a5505",
+        "schema_sha256": "05ce5eede6977acf0984e0789dc3a97d7a34ba3c0163576e6c97d282f83ae457",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "ranking_benchmark",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/ranking.py",
+        "line": 32,
+        "symbol": "ranking_benchmark"
+      },
+      "fingerprint": {
+        "source_sha256": "cf89a39afa2be25b61d53401728e204550de03f318242bfe0b9ea21b5f9aa17d",
+        "schema_sha256": "23e45bd591d98b1054dd55f78e0bc47323a7225498759e671c0e5ce155dad850",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "ranking_candidate_generate",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/ranking.py",
+        "line": 23,
+        "symbol": "ranking_candidate_generate"
+      },
+      "fingerprint": {
+        "source_sha256": "4ecb6b44f3345245299c9e70df5d049ab1841fa2802f38f989d10568c5186e5a",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "ranking_compare",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/ranking.py",
+        "line": 44,
+        "symbol": "ranking_compare"
+      },
+      "fingerprint": {
+        "source_sha256": "d2f6c137d9bd44845e97dfa68ff7a1f7d5d34d438cbb8547267663db39b411cc",
+        "schema_sha256": "ae2f4d379ccb528b9119e55c588d556962ac156aa03ef12af5732475bcfa5c1e",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "ranking_restore",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/ranking.py",
+        "line": 64,
+        "symbol": "ranking_restore"
+      },
+      "fingerprint": {
+        "source_sha256": "77d3183f98a86c223883bdcb972300175119430e00ba05437378d5f806be42ce",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "ranking_select",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/ranking.py",
+        "line": 54,
+        "symbol": "ranking_select"
+      },
+      "fingerprint": {
+        "source_sha256": "678469eedca9f300e23f86747767e4090f1ee62621a8d65b9acd8192d28fb18c",
+        "schema_sha256": "23997033a8bef6ec5044d9d44a689000ab3fdf1641f82cd006fe9afe2a1927ed",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "ranking_status",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/ranking.py",
+        "line": 15,
+        "symbol": "ranking_status"
+      },
+      "fingerprint": {
+        "source_sha256": "ac361f15b4c1708a4201248455462b7d815204acb7266fc3f91d665321749866",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "read_evidence",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/audited.py",
+        "line": 224,
+        "symbol": "read_evidence"
+      },
+      "fingerprint": {
+        "source_sha256": "f0a876230d422b31e44b9c9b0547d1e241d753a2ea8b1e26e74d198068c95199",
+        "schema_sha256": "383bbe995e46687f3b4b72b21dd0d054d6da81a57f863fd0b53234c6dacf2f71",
+        "effect": "read",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps. Raw content is available at registry consult tier without the new catalogue/graph/target grant."
+    },
+    {
+      "tool": "read_file",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "research helper (read-only allow-list)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/browse.py",
+        "line": 67,
+        "symbol": "read_file"
+      },
+      "fingerprint": {
+        "source_sha256": "1224ba1b78fde27aab6f92bc8c5b26c5d946de280a065ac2b7f5d6d5bde51985",
+        "schema_sha256": "87a3d3f92e56a4cdfd7a29de797122d3d72f238ea32068b333839d10e8f09ab9",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps. Raw content is available at registry consult tier without the new catalogue/graph/target grant."
+    },
+    {
+      "tool": "read_project",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4",
+        "S6"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 769,
+        "symbol": "read_project"
+      },
+      "fingerprint": {
+        "source_sha256": "f93f543093655ce3e5fc2dceeba09bb0a24f16f8a5ed426b6df47c96e192f5cb",
+        "schema_sha256": "930c1155204e34a37bb57e8494e69fd0820999bfcccc8940c5e1cfc492d141c1",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps. Raw content is available at registry consult tier without the new catalogue/graph/target grant."
+    },
+    {
+      "tool": "read_result",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "research helper (read-only allow-list)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/results.py",
+        "line": 9,
+        "symbol": "read_result"
+      },
+      "fingerprint": {
+        "source_sha256": "45f1ca1283b59afb08ebfc2b8c30db42056f0706426cd95eaae5257ba4045cf0",
+        "schema_sha256": "d0b0e1b764449a6e155c99adb5691e84c3869e98fa6d98df948cebbdae7ffb34",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps. Raw content is available at registry consult tier without the new catalogue/graph/target grant."
+    },
+    {
+      "tool": "read_source_file",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "research helper (read-only allow-list)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/upkeep.py",
+        "line": 57,
+        "symbol": "read_source_file"
+      },
+      "fingerprint": {
+        "source_sha256": "c66d44fa607ffac3695d38a701fb0670cabc83af1168b16cf13e32e44532a5d2",
+        "schema_sha256": "532bfbfe1f9337006e59b9f9af9993ffe717cdc0c8f34939aef444f92c838756",
+        "effect": "read",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps. Raw content is available at registry consult tier without the new catalogue/graph/target grant."
+    },
+    {
+      "tool": "read_url",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "research helper (read-only allow-list)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/browse.py",
+        "line": 38,
+        "symbol": "read_url"
+      },
+      "fingerprint": {
+        "source_sha256": "5717aad577b95d13cbe005763bdb494d982c0aa47ef214e78f3b2142d757e3d0",
+        "schema_sha256": "19d11d4fa657cc681cac28e96f11bab8504a27e72c89f14cc2d329d64eb50ca3",
+        "effect": "read",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "record_application",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1823,
+        "symbol": "record_application"
+      },
+      "fingerprint": {
+        "source_sha256": "33e767561433dc4d04cc6d4b51aa98949d0de2822f9e0861ad90ec4580336e72",
+        "schema_sha256": "4d730928cd9c4efa971b40cc10327d219d5f68673a7df4642e2ff6c0de5f1f55",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "record_assumptions",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 371,
+        "symbol": "record_assumptions"
+      },
+      "fingerprint": {
+        "source_sha256": "9a42d60015d54251697f15ca41252a7d553b65a62e849062ff4de0adea5453bc",
+        "schema_sha256": "10e5dffd26fb86fb31c225bed4e5fa3907d49bbe2473f28cbd54417794391a39",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "record_synthesis",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1351,
+        "symbol": "record_synthesis"
+      },
+      "fingerprint": {
+        "source_sha256": "921328d379fec13a8d852c6baa876a218be3f48babf54e8538b6bc8014fd079f",
+        "schema_sha256": "2d715fc211423d535a78b88c71c482fa5ad1f38a6d9f72b5120c1e0597ca5e22",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "record_trace",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/scout.py",
+        "line": 66,
+        "symbol": "record_trace"
+      },
+      "fingerprint": {
+        "source_sha256": "ec291ae88caa4869d8250c9505eaf9bd698f5513264055c428f0a89b75defa44",
+        "schema_sha256": "c3ae6cd4d4eefdcfbf8232b505a35c5496f111ad14030ef2e8ac207242c7a2ab",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "reduce_round",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/audited.py",
+        "line": 360,
+        "symbol": "reduce_round"
+      },
+      "fingerprint": {
+        "source_sha256": "99bca32e897761e0c0e8454c97f082c08e59faf0f73349697fee1cb004294800",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "refile_source",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/taxonomy.py",
+        "line": 67,
+        "symbol": "refile_source"
+      },
+      "fingerprint": {
+        "source_sha256": "7ebcff5de039ee1350a8f8fdd7e318edf35787705cfaaee4408e9f50591873fb",
+        "schema_sha256": "c4561c72d10f3628816d49349bee011de646c0129cbb2705c350d0a009bdee61",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "reflection_accept",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1999,
+        "symbol": "reflection_accept"
+      },
+      "fingerprint": {
+        "source_sha256": "0fcbeeaea0c7cbcae1515d12ff18c86a96e187af9b868717a2d72306b2cbb180",
+        "schema_sha256": "ffefa1307084da90418500e97a8bd21eae1ca312ac279fb527fdd267732dedbd",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "reflection_draft",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "R",
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1969,
+        "symbol": "reflection_draft"
+      },
+      "fingerprint": {
+        "source_sha256": "cc40a8972415d079d9ed81fe0fd0475c1103fc9bd9c039f3c336604b4265d8bf",
+        "schema_sha256": "6062a871276e1089db2887db737927ea9ad4e057bb84c315c2f2b331c28debea",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "reject_artifact",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/audited.py",
+        "line": 414,
+        "symbol": "reject_artifact"
+      },
+      "fingerprint": {
+        "source_sha256": "fdf842e84e0857162d74fbf92cc7ef3edfc27ce43809a42a9cb0ca285bbdf1b2",
+        "schema_sha256": "1eb4812cf8f1660f99fdbabafac2c2f829dde3fc562e3f7afd2c477f1771b0dc",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "request_budget",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 666,
+        "symbol": "request_budget"
+      },
+      "fingerprint": {
+        "source_sha256": "143f6dbf6c49a32652f7101d82885cc5522dc4ca0d277c749d645648eeac1533",
+        "schema_sha256": "791b582bdf4bed69d23ca85d318a151c8c6f401cff46ee90d75b6ea79df6ebd9",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "request_evidence",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/audited.py",
+        "line": 430,
+        "symbol": "request_evidence"
+      },
+      "fingerprint": {
+        "source_sha256": "3d7a04757c101a85f2d78fe020be60c624e8f6a44c3ed702b16a6209f7120079",
+        "schema_sha256": "1efb2b202c1e25272582f1a08fd3380531b228f1d265d3d4da168f88f9b5da57",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "research_round",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1077,
+        "symbol": "research_round"
+      },
+      "fingerprint": {
+        "source_sha256": "38e35eb9a8a2f3cfe57ff77344a2259fe14678cbc037958f24c74b00e67864d3",
+        "schema_sha256": "e64c40c9c7a6d71ae4c766f096146b15d2fa39b823f139708f749bb1c86ee9c8",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "resume_session",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 287,
+        "symbol": "resume_session"
+      },
+      "fingerprint": {
+        "source_sha256": "01a493eeb0cbf23292a711aa13e59463b19da6bd4c16449946f43094a609b06a",
+        "schema_sha256": "4e32cceb52709b443fd15e78701cba740e49fc724a1c8595d796eedba28c943f",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "review_due_open",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 856,
+        "symbol": "review_due_open"
+      },
+      "fingerprint": {
+        "source_sha256": "094697085095074e987b98b3a048b64b9b4c5724a1fcdb4ea67cf1fe1882a85b",
+        "schema_sha256": "7dd4cce86a22fab83dee0bff5a808857cb325e61936a10fb0a82fd1dd89dcacc",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "rewind_session",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 317,
+        "symbol": "rewind_session"
+      },
+      "fingerprint": {
+        "source_sha256": "6f0bf48cc5bdd24fd7d09fb93fd10f88a7a7143f961ab731525981b5b3ee5745",
+        "schema_sha256": "9302d3dc4dd9209221bd309d8b97d321936655395ad1cc9b43cb555b6c312326",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "rules",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/core.py",
+        "line": 33,
+        "symbol": "rules_tool"
+      },
+      "fingerprint": {
+        "source_sha256": "68939cfde334eefa74acb30d4074cc823374722c9640663b61dc1eb9b12f8295",
+        "schema_sha256": "8ec0a884bef6ca08cd206d4ea7a81320a1fdb2ddf84e7b66ba61dbf21b28c0d2",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "run_claim_input",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/upkeep.py",
+        "line": 74,
+        "symbol": "run_claim_input"
+      },
+      "fingerprint": {
+        "source_sha256": "4b8b53beb8ed3bedb58af02b733fdab2cc1bdc831b9b431d0e34a4a07942455c",
+        "schema_sha256": "f395e386f7c06ce663b40b91e5ea7c6065d0e6e200d9228ff145903b91ace68b",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "run_list",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/browse.py",
+        "line": 108,
+        "symbol": "run_list"
+      },
+      "fingerprint": {
+        "source_sha256": "7e04f8943600e8f1636de2becb802ad172b7a614c2327090f93f293daf5f0205",
+        "schema_sha256": "3f4b18339da39bfbf9e0a6bd416c94bce41e489009ddf34bcf93e00e65708609",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "run_pipeline",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workflows.py",
+        "line": 95,
+        "symbol": "run_pipeline"
+      },
+      "fingerprint": {
+        "source_sha256": "96fd8e6afedd60f92a14a18a3039f61ab54f5b98f6960398e9a3d9c155f0820b",
+        "schema_sha256": "0e3f7880937957966c5086b1cab0802055e0f1bdcfacb9e29b5f7d73032c506c",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "run_resume",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workflows.py",
+        "line": 112,
+        "symbol": "run_resume"
+      },
+      "fingerprint": {
+        "source_sha256": "d2603fbe8430d1489e149c508583a00fa8e2f7f38ce78882d1a63ca578967a7d",
+        "schema_sha256": "6e27d4045fe035adac9adc01ed46f2cc3d5e365abd96330b6cd44a76439ec697",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "run_status",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workflows.py",
+        "line": 105,
+        "symbol": "run_status"
+      },
+      "fingerprint": {
+        "source_sha256": "1a0137c7ccff4474689e978840be64fb1b5d169cf36af2fedc07821f9345c148",
+        "schema_sha256": "f395e386f7c06ce663b40b91e5ea7c6065d0e6e200d9228ff145903b91ace68b",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "run_workflow",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workflows.py",
+        "line": 86,
+        "symbol": "run_workflow"
+      },
+      "fingerprint": {
+        "source_sha256": "42abff1a366191e416a658bd7a794ed63d5b87082a57401d315fcf94c0a80ff8",
+        "schema_sha256": "0e3f7880937957966c5086b1cab0802055e0f1bdcfacb9e29b5f7d73032c506c",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "sandbox_read",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sandbox.py",
+        "line": 26,
+        "symbol": "sandbox_read"
+      },
+      "fingerprint": {
+        "source_sha256": "8d4e393c324c3d7b2f10448cb4c903013a57778beef878cf073d36bed6cf60be",
+        "schema_sha256": "5f98edbdd4cfb4d41ecde4afaa2cb7c73099c562d63cc464f017c135d5187128",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "sandbox_run",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sandbox.py",
+        "line": 9,
+        "symbol": "sandbox_run"
+      },
+      "fingerprint": {
+        "source_sha256": "5dffb1011824765c800bde94bb0f3e25652559db91e84789a9374cd47de36849",
+        "schema_sha256": "48008135d37182a5226f8af01e61b548d36545a6038b6d22eb2177d3c661ce97",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "sandbox_run_file",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sandbox.py",
+        "line": 36,
+        "symbol": "sandbox_run_file"
+      },
+      "fingerprint": {
+        "source_sha256": "905bf25c513e92fec3ed8e96e41bbaa381a647fe73e75f7f32d3457609b70fed",
+        "schema_sha256": "39b714704935190561ed407980480b9a4a0b346b97346e0bff71fb9ace820194",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "save_workflow",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workflows.py",
+        "line": 57,
+        "symbol": "save_workflow"
+      },
+      "fingerprint": {
+        "source_sha256": "26bd397dc3982498b71627b305184283dd74c850e73b2d52795caf4cabde976a",
+        "schema_sha256": "8de11bb61b47148735ba8dbc3bb8a8523361109fe137fbf5073231f70bd6ffde",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "scout_discover",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/scout.py",
+        "line": 11,
+        "symbol": "scout_discover"
+      },
+      "fingerprint": {
+        "source_sha256": "4446d1fbfe829dd07f3a2e3bcc7125041231c9341c26906bc9bf259fbb7e1aad",
+        "schema_sha256": "60dc3f55fd518bc2af83979609e58dc1431b1977efc677933714e93469ee44f0",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "scout_expand",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/scout.py",
+        "line": 20,
+        "symbol": "scout_expand"
+      },
+      "fingerprint": {
+        "source_sha256": "c371b0646391d32d4c8d9d3352ca3af9847ccd5365c6d0ef5ff6d0f6778f5c23",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "scout_rank",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/scout.py",
+        "line": 27,
+        "symbol": "scout_rank"
+      },
+      "fingerprint": {
+        "source_sha256": "3cdc2b1b6e6bea2fef91284ea4833f480341f34d13f1a9368e868b068e69df4c",
+        "schema_sha256": "7bd16ce365b2736de36ffdef32a73a1bcb3bf4b50e73949d14cb48840caed12d",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "search",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "research helper (read-only allow-list)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4",
+        "S5",
+        "S6"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/library.py",
+        "line": 236,
+        "symbol": "search_tool"
+      },
+      "fingerprint": {
+        "source_sha256": "d6f3e6e44b1f12a0a26c0a6f13d1512191e7f009cf342a34fe3d50bcb6372070",
+        "schema_sha256": "53e5b088cb3050f7a83da30a971462333a848a7c46da5d0d75c4b24fc93a7ce5",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "search_feedback",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/library.py",
+        "line": 257,
+        "symbol": "search_feedback"
+      },
+      "fingerprint": {
+        "source_sha256": "0a9765876c674f6779c2dd9d92dbd99e11ff1dab82e721c1198d8968e56c4231",
+        "schema_sha256": "2092be5ca772d488693e25758f85ce160cf23d5be3c862e4bdcf5a5b007b2b99",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "search_work",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "research helper (read-only allow-list)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/work_search.py",
+        "line": 74,
+        "symbol": "search_work"
+      },
+      "fingerprint": {
+        "source_sha256": "80d674066ff852dfe50c08066328c09f7b1cda64d678e8558f805ba165cd9a38",
+        "schema_sha256": "bcce9fdff489ae22589876bd4e4d0b8a7c08e3990e6e9e480b111a77e85fc213",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "session_status",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 303,
+        "symbol": "session_status"
+      },
+      "fingerprint": {
+        "source_sha256": "3517b59f61aabc08aa42538e7759fdf5f99df08690fea134d44c578b789b8b11",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "set_effort",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/pace.py",
+        "line": 17,
+        "symbol": "set_effort"
+      },
+      "fingerprint": {
+        "source_sha256": "4b5535649a189d2f27a73e4f5125c6bab377be01665ab196223e3a0d93cf531c",
+        "schema_sha256": "03a14b0f7402e6d4d7ddd5ef5256c332bcf1feffacb9d2ec0c2cfef3e5d0b17e",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "set_requirement",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 572,
+        "symbol": "set_requirement"
+      },
+      "fingerprint": {
+        "source_sha256": "361f78e3fcb817e41871fadcec0ee10de8d8df6b0e8817056c61a8ee30d19157",
+        "schema_sha256": "5af30619b6ffcc52ac35a8a43743c5f32ac8fbc71ff17d8d3bfe5d0dfb88110b",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "show_workflow",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workflows.py",
+        "line": 41,
+        "symbol": "show_workflow"
+      },
+      "fingerprint": {
+        "source_sha256": "745c464c4f4d3ebc49bc9b7b18ba0d9cfdb3d7230a63f1574f8303563b803c35",
+        "schema_sha256": "c70d2daf71667bd20bdb983d31b4f01657a3308970b3c3d0d7f3bcf3b5d9bf20",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "stage_artifact",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/audited.py",
+        "line": 116,
+        "symbol": "stage_artifact"
+      },
+      "fingerprint": {
+        "source_sha256": "627eb35022c83086bea64896ca494d4bb75051594c04a570a0f0dcd53cc198b3",
+        "schema_sha256": "aef7f0e421fe6e6efc1efda26579d0426607087e23eb70c3ae949fbcd00cbfb8",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "staging_decide",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "R",
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/staging.py",
+        "line": 500,
+        "symbol": "staging_decide"
+      },
+      "fingerprint": {
+        "source_sha256": "4874fb6f83bc00beca90d0051d0da024d8aba1350050b08cf7f14223aa3fba19",
+        "schema_sha256": "2f89a947ff5486105a4aea8bf75bfa25c4dbe679b39cb76b5a7e4857b7243a2a",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "staging_flag",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/staging.py",
+        "line": 706,
+        "symbol": "staging_flag"
+      },
+      "fingerprint": {
+        "source_sha256": "abff82c7e2c24d9ae79edbfb8709880c8631dc06061bfd040b268e5e95371709",
+        "schema_sha256": "36298a80c40f54f2acd373f3e03765575748de3d83c97bc1b69359660c87a6a1",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "staging_list",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "R",
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/staging.py",
+        "line": 156,
+        "symbol": "staging_list"
+      },
+      "fingerprint": {
+        "source_sha256": "91dd58991ab3886551c4b357b30a9d3acffb97718c6fd393b73f989456e51bd8",
+        "schema_sha256": "2303ec037f328e4e9f0094d0edeeab514bc3f7ee2b7fd0a0c983bda05ba4b782",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "staging_preview",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "R",
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/staging.py",
+        "line": 257,
+        "symbol": "staging_preview"
+      },
+      "fingerprint": {
+        "source_sha256": "40430f711a791800ecef91fb14e3f6b2b84c8dcdc17d774a111e4734ccce7b8b",
+        "schema_sha256": "819bcbacde1d504c5d72af8e1670ae6d1f18409152339706e7bd74ebb20d196a",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "staging_review",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "R",
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/staging.py",
+        "line": 270,
+        "symbol": "staging_review"
+      },
+      "fingerprint": {
+        "source_sha256": "637720f983b4bd28321c018fbdeed4ddbc044dacf8e3d5598e8d91ad77ead827",
+        "schema_sha256": "5051905d5bec2405294dca222acbe6c0c5eb8ef89f9d3947772d730e295830d9",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "staging_show",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "R",
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/staging.py",
+        "line": 236,
+        "symbol": "staging_show"
+      },
+      "fingerprint": {
+        "source_sha256": "5a79f339e237c7a2b2b2c2c375e3681e9ce0d0e8c5f496e41e82184936449a1f",
+        "schema_sha256": "2d2dc71b84e3b1293ec7f29df0cc71c3e9783fbcc03a5c77ad7339a112cf0b5e",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "sweep",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "R",
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/scout.py",
+        "line": 55,
+        "symbol": "sweep"
+      },
+      "fingerprint": {
+        "source_sha256": "c40b7dae59163c81a6bc0b2241a67fa7eee1e632877889026653ae10e50ed08c",
+        "schema_sha256": "3f4b18339da39bfbf9e0a6bd416c94bce41e489009ddf34bcf93e00e65708609",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "task_add",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/library.py",
+        "line": 465,
+        "symbol": "task_add"
+      },
+      "fingerprint": {
+        "source_sha256": "f5faf9c578499b9734c146d7053992aab01dbd75d1ecbe1969ad691df1501c12",
+        "schema_sha256": "ec1ae3a58abc0944577f3290dc3e4621e418c32b08b992ea766ff927bbdac778",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "task_done",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/library.py",
+        "line": 496,
+        "symbol": "task_done"
+      },
+      "fingerprint": {
+        "source_sha256": "4cf950a2df42fad9ce15b91b87e5e5bcb1936d49da4d8135f41bbcd0a9ea2f7c",
+        "schema_sha256": "77b2bee3d4ff6457bd1c9b78c15ca3c0bbd3ac027b5093f19f4c9fb0e8b86852",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "task_route",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 2020,
+        "symbol": "task_route"
+      },
+      "fingerprint": {
+        "source_sha256": "d32b7d70d286b4f9efe137b8a32d387f7076b405c5c3d8bb1de350a868a22da3",
+        "schema_sha256": "13cbcd084a5fe79c8de5b215c3f46951e3e5f1bd75f91d7cf6f3e2e6c4e9c1fd",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "topic_propose",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/taxonomy.py",
+        "line": 41,
+        "symbol": "topic_propose"
+      },
+      "fingerprint": {
+        "source_sha256": "ad272fda87251ac7e96b92d2e4f690c183c5882203e3f76027b3013154c61dea",
+        "schema_sha256": "e129da59a10869106d784419a6ef4c8feceb8cbe6aa2dec06a84711953b466a5",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "topics_list",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "research helper (read-only allow-list)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/taxonomy.py",
+        "line": 13,
+        "symbol": "topics_list"
+      },
+      "fingerprint": {
+        "source_sha256": "428bc7eebb953acf843ce5abdb04e21d49ee7ddba1d45bca50f60d2467dfc3f8",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "understanding_due",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 833,
+        "symbol": "understanding_due"
+      },
+      "fingerprint": {
+        "source_sha256": "3776b3d4cbe087e7a7a749d1f79f270bddc4845fd25ab0b3f8a1853fb8d54d95",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "understanding_record",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 802,
+        "symbol": "understanding_record"
+      },
+      "fingerprint": {
+        "source_sha256": "04777a7db50feb5216f8d504be1acc38cfe4ff765b8f28745796029020b6fa31",
+        "schema_sha256": "46bad8972895d74a5c833f94db7da1f480daabdd23f3244e8db232216b62c37f",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "update_plan",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 351,
+        "symbol": "update_plan"
+      },
+      "fingerprint": {
+        "source_sha256": "67678e88d7c155f39c26d92ddd01f71f6c1482be661e57a89cc21d60c7aaa5c3",
+        "schema_sha256": "03a82b126c9a4d7b0f8de029c35b657ecedb9b625b0868be6b872d125af57b2e",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "update_project",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/authoring.py",
+        "line": 273,
+        "symbol": "update_project"
+      },
+      "fingerprint": {
+        "source_sha256": "289c3e75f1e87f24a243509c6ae1b14d707f74c9e0828d26d36bba7ed244b923",
+        "schema_sha256": "f63b2893aa1f6053955e4f8c1015d190ad4c8283692d259ffad3b82eb5817506",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "v1_import_plan",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "task worker (sessionless protocol only)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "R",
+        "S1",
+        "S6b"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/v1_migration.py",
+        "line": 19,
+        "symbol": "v1_import_plan"
+      },
+      "fingerprint": {
+        "source_sha256": "1a67e7129383b68358de3f4429394db21f2c53daaf38a7e696aabfd9f2f64bc9",
+        "schema_sha256": "f528ce1e77edb2c88d4a34588bd7e4fe56106faafb261fc8df02f34281ff5ce2",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": true
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "v1_import_stage",
+      "minimum_tier": "curate",
+      "actors": [
+        "person",
+        "task worker (sessionless protocol only)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "R",
+        "S1",
+        "S6b"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/v1_migration.py",
+        "line": 28,
+        "symbol": "v1_import_stage"
+      },
+      "fingerprint": {
+        "source_sha256": "c214728754512099b457b9f8f798f29425ba0993c02250b00120d47ee1ca410a",
+        "schema_sha256": "c46f7cf10c1038959f24f0276c22de0c78d185f9e088b25ddd6c7e9bd4e87982",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": true
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "v1_import_status",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "task worker (sessionless protocol only)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "R",
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/v1_migration.py",
+        "line": 42,
+        "symbol": "v1_import_status"
+      },
+      "fingerprint": {
+        "source_sha256": "11a03ee11b452e7e04738bbf19dac9c9af9a3b6f11e21630f8230cb22d772293",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": true
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "validate_workflow",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/workflows.py",
+        "line": 50,
+        "symbol": "validate_workflow"
+      },
+      "fingerprint": {
+        "source_sha256": "412be61c8c866a77a1086e9829c007509d2a5ed9cc8311c6ff204dd69a998946",
+        "schema_sha256": "8de11bb61b47148735ba8dbc3bb8a8523361109fe137fbf5073231f70bd6ffde",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "vault_commit",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/vault.py",
+        "line": 54,
+        "symbol": "vault_commit"
+      },
+      "fingerprint": {
+        "source_sha256": "e6c37d69fa4bc9aad252877380b1bc313349e7b25376fe8a7727b17a1d62c59e",
+        "schema_sha256": "84dd2557aeddb7f13dd570feb30ab5b4a5fbc875b9eb2cb4d9fcd4f44d7bf425",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "vault_push",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/vault.py",
+        "line": 77,
+        "symbol": "vault_push"
+      },
+      "fingerprint": {
+        "source_sha256": "776beecdfc6797f604e20d92e1bb2f4c1656d11b54ad79d01e7970cf51e41a21",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "vault_write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "vault_status",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/core.py",
+        "line": 46,
+        "symbol": "vault_status"
+      },
+      "fingerprint": {
+        "source_sha256": "07a097e8c6c38f675dab47653b9322a608fa45f449e66ce3c08697681bf26422",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "verify_access",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/library.py",
+        "line": 352,
+        "symbol": "verify_access"
+      },
+      "fingerprint": {
+        "source_sha256": "a6a86c4eeafd1a289b364331ce25f1d64749ea6bb701e015ae4cf72392956ae5",
+        "schema_sha256": "6055c544e6d5dffaae127494d16501f8b3fedd2a8165a06dcc868f7793fc6e11",
+        "effect": "write",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "verify_grain",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/audited.py",
+        "line": 141,
+        "symbol": "verify_grain"
+      },
+      "fingerprint": {
+        "source_sha256": "2748be4c6de3bdaf90a90bebf5ce4c2d71d480666005acf4681e6b33b9f451e8",
+        "schema_sha256": "92c18606915a3f0bda3f3ea6be1ab6fdf041715bc5d97ec653b225c6b05a86b6",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "views_refresh",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/taxonomy.py",
+        "line": 78,
+        "symbol": "views_refresh"
+      },
+      "fingerprint": {
+        "source_sha256": "0dc6863ac9cd1078bc0f28b587ce1665a546139ea3d41936cb767744e153562f",
+        "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "web_search",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "research helper (read-only allow-list)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1",
+        "S4",
+        "S5"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/web.py",
+        "line": 13,
+        "symbol": "web_search"
+      },
+      "fingerprint": {
+        "source_sha256": "de4fd1424612e7049e2745ba7ed39c7078326a2c200fe5187a407b3a1de5e039",
+        "schema_sha256": "c40fd1686507292a77dcff4ee4cabba9196e1a0e1de7af810f3f28fb54a80bb5",
+        "effect": "read",
+        "open_world": true,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "withdraw_reference",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/results.py",
+        "line": 34,
+        "symbol": "withdraw_reference"
+      },
+      "fingerprint": {
+        "source_sha256": "376e18ab99bee90c61bf070cbb6a47bb1d084d314936b524bd9745729b975506",
+        "schema_sha256": "eb4565770f0723bc82ad08155a897b4a579454b287ce0606c9451fd886630129",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+    },
+    {
+      "tool": "write_note",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/authoring.py",
+        "line": 158,
+        "symbol": "write_note"
+      },
+      "fingerprint": {
+        "source_sha256": "94c419c254c2b73f30fa94f8e7ad696f5d02c639be02aea45ec7a40550bd9003",
+        "schema_sha256": "ba0414567eb5ce21d634b635c3ef427da5ff138fdf6253d17e65862a50ec8b00",
+        "effect": "vault_write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+    },
+    {
+      "tool": "clear_session_taint",
+      "minimum_tier": "curate",
+      "actors": [
+        "person"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/sessions.py",
+        "line": 1898,
+        "symbol": "clear_session_taint"
+      },
+      "fingerprint": {
+        "source_sha256": "6605f30ddac6624bc4d445e0de33c6d16e1a3db7cbce5ea552f0af7982247225",
+        "schema_sha256": "ce3840e908efde03b96fe8f008e3c4476894a4144a29afea0db00ff7077a005b",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Person-only scoped provenance checkpoint; not a content read."
+    },
+    {
+      "tool": "read_source_section",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "research helper (read-only allow-list)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": true,
+      "status": "diverges",
+      "fixes": [
+        "S4"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/source_reading.py",
+        "line": 44,
+        "symbol": "read_source_section"
+      },
+      "fingerprint": {
+        "source_sha256": "4a563d3b74ef71cce1ac3728ba131e285d630306ff67e54eec2205be7e83faa3",
+        "schema_sha256": "407ec3cbf8870ee7de2ae2033d12a430ff1d0355f0abf45e209bb771a7b32f15",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "verify_source_pages",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)",
+        "research helper (read-only allow-list)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": true,
+      "status": "diverges",
+      "fixes": [
+        "S4"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/source_reading.py",
+        "line": 20,
+        "symbol": "verify_source_pages"
+      },
+      "fingerprint": {
+        "source_sha256": "30f4fe3f4722d5216fae2597ed8b2539483553bf7082e5f3ac7159ac9998f824",
+        "schema_sha256": "16858898976e948230136d990641cc204b0156b28b35401bfeeef328192c8814",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "request_raw_source_access",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/source_reading.py",
+        "line": 11,
+        "symbol": "request_raw_source_access"
+      },
+      "fingerprint": {
+        "source_sha256": "db1bf3360bdfc16b629ba2a26d38aa25512c663563c338b3df6946d3369afd19",
+        "schema_sha256": "ea14d1dd80ad2be77c225969c2ecb1f99b3728a0d2836c1178d64485d4f587f6",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    },
+    {
+      "tool": "source_verification_plan",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/source_reading.py",
+        "line": 22,
+        "symbol": "source_verification_plan"
+      },
+      "fingerprint": {
+        "source_sha256": "e1e30300953b04a7a1e00843f672d50b8425fdc299003c61d510d3ebd04b74f0",
+        "schema_sha256": "3ffb7089cc58c3858b474258c0d376ca04566212cdba5ae3679836e00f7bc81b",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      }
+    }
+  ]
+}

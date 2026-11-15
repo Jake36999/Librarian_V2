@@ -6,6 +6,7 @@ import { preference, remember } from "./commands";
 import type { Api } from "./api";
 import { clear, h, cls, sel } from "./dom";
 import { render } from "./markdown";
+import { folderReview } from './folders';
 
 // A model's `best_for`/`suggested_tier` are a clerk's first guess, not a
 // measurement (see Note Content Model.md) - a person edits them here the
@@ -77,7 +78,7 @@ export class Staging {
     if (this.pending) return;
     try {
       const saved = JSON.parse(sessionStorage.getItem("librarian.queue." + key) ?? "null");
-      if (!saved || !["source","lens","concept","topic","offering","import"].includes(saved.kind) ||
+      if (!saved || !["source","lens","concept","topic","offering","import","folder"].includes(saved.kind) ||
           !Array.from(this.statuses.options).some(option => option.value === saved.status)) return;
       this.kind = saved.kind;
       this.statuses.value = this.status = saved.status;
@@ -124,7 +125,7 @@ export class Staging {
     this.el.addEventListener("scroll", () => this.savePosition(), {passive:true});
     const paint = () => {
       const focusedKind = kinds.contains(document.activeElement) ? (document.activeElement as HTMLElement).dataset.kind : "";
-      clear(kinds, [["source", "Sources"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) =>
+      clear(kinds, [["source", "Sources"], ["folder", "Folders"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) =>
         h("button", { "data-kind": v, "aria-pressed": String(this.kind === v), onclick: () => { this.selected = ""; this.kind = v; this.savePosition(); paint(); void this.load(true); } }, label, h("span", { class: "queue-count", title: v === "source" ? "Sources in selected filter" : "Waiting for review" }, String(v === "offering" ? this.waitingOfferings ?? "…" : this.counts ? this.counts[v]?.[v === "source" ? this.status : "staged"] ?? 0 : "…")))));
       if (focusedKind) kinds.querySelector<HTMLButtonElement>(`[data-kind="${focusedKind}"]`)?.focus({preventScroll:true});
       scan.style.display = this.kind === "concept" ? "" : "none";
@@ -247,6 +248,13 @@ export class Staging {
     clear(this.list, h("p", { class: "dim" }, "Loading…"));
     this.bulkStatusFilter = this.kind === "source" ? this.status : "";
     this.paintBulk();
+    if (this.kind === 'folder') {
+      clear(this.detail); this.list.style.gridColumn = '1 / -1';
+      try { await folderReview(this.api, this.list); }
+      catch (e) { clear(this.list, h('p', {class:'error'}, (e as Error).message)); }
+      return;
+    }
+    this.list.style.gridColumn = '';
     if (this.kind === "offering") return this.loadOfferings(request);
     try {
       const status = this.kind === "source" ? this.status : "staged";

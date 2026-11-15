@@ -550,6 +550,12 @@ def _source_fields(engine: Engine, name: str, hit: Hit | None) -> dict[str, Any]
         if fm.get(key):
             fields[key] = fm[key]
     if row["shape"] == "source":
+        from .catalogue_navigation import use_rollup, all_use_rollups
+        if engine._catalogue_rollups is None:
+            applications = engine.conn.execute("SELECT name,path,frontmatter FROM note WHERE shape='application'").fetchall()
+            engine._catalogue_rollups = all_use_rollups(engine.index.vault, application_rows=applications)
+        fields['use_rollup'] = use_rollup(engine.index.vault, name, rollups=engine._catalogue_rollups)
+        fields['when_relevant'] = str(fm.get('when_relevant') or '')[:600]
         # R15: how much of it was read, so a result is never taken as more than it is
         fields["read_depth"] = str(fm.get("coverage") or "not recorded")
         if fm.get("not_examined"):
@@ -584,6 +590,7 @@ def _within(engine: "Engine", names: set[str], max_age_days: int) -> tuple[set[s
 def search(engine: Engine, query: str, intent: str = "donor",
            constraints: dict[str, Any] | None = None, limit: int = 10,
            source: str = "", max_age_days: int = 0) -> Response:
+    engine._catalogue_rollups = None  # one history read per search, refreshed next call
     if intent not in INTENTS:
         raise ConstraintError(f"intent {intent!r} is not one of {INTENTS}")
     if source and intent not in SOURCE_INTENTS:

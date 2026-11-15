@@ -89,6 +89,10 @@ def add_source(root: Path, name: str, bottom: str, solves: str = "", *,
     sections.append(("Evidence", "- fetched"))
     fm = REPO_FM.format(title=name, slug=notes.safe_name(name).replace(" ", "-").lower(),
                         topic=topic, license=license)
+    # These are synthetic notes written by the fixture author, not downloaded
+    # repositories. Tests of third-party originals choose authorship explicitly.
+    if 'authorship:' not in extra_fm:
+        fm += '\nauthorship: owner_created'
     if extra_fm:
         fm += "\n" + extra_fm.strip()
     return write_note(root, f"Sources/{kind_folder}/{name}.md", fm, notes.compose(name, sections))

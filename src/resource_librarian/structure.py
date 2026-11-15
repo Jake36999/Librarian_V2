@@ -162,15 +162,20 @@ def shallow_clone(url: str, timeout: int = CLONE_TIMEOUT) -> Iterator[Path]:
 # ------------------------------------------------------------------ reading
 
 def _files(root: Path) -> list[str]:
+    from .credentials import credential_path, generated_path
     out: list[str] = []
     for current, dirs, names in os.walk(root):
-        dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS and not d.startswith("."))
+        dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS and not d.startswith(".")
+                         and not credential_path(Path(current) / d))
         rel = Path(current).relative_to(root)
-        out += [(rel / n).as_posix() for n in sorted(names)]
+        out += [(rel / n).as_posix() for n in sorted(names)
+                if not credential_path(rel / n) and not generated_path(rel / n)]
     return sorted(out, key=lambda p: (_is_example(p), p.count("/"), p))
 
 
 def _read(root: Path, rel: str) -> str:
+    from .credentials import credential_path
+    if credential_path(rel): return ''
     path = root / rel
     try:
         if path.is_symlink() or path.stat().st_size > MAX_FILE_BYTES:

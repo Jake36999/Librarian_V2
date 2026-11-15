@@ -69,9 +69,14 @@ def quantities(vault: Vault, fm: dict[str, Any]) -> dict[str, tuple[int, str, bo
 def check(vault: Vault, path, fm: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     note = notes.load(path)
     fm = fm if fm is not None else note.frontmatter
+    return check_sections(vault, note.sections(), fm)
+
+
+def check_sections(vault: Vault, sections: dict[str, str], fm: dict[str, Any]) -> list[dict[str, Any]]:
+    """Check staged prose before display, using the same arithmetic as notes."""
     known = quantities(vault, fm)
     out = []
-    for heading, text in note.sections().items():
+    for heading, text in sections.items():
         if heading in SKIP_SECTIONS:
             continue
         for m in CLAIM.finditer(text):

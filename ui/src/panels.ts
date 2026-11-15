@@ -4,6 +4,7 @@
 import type { Api, ApiError } from "./api";
 import { COMMANDS, preference, remember } from "./commands";
 import { clear, h, when } from "./dom";
+import { orderModels } from "./model_order";
 
 export const MODES = [
   ["plan", "Plan", "Reads and searches. Writes are refused: the librarian proposes instead."],
@@ -31,6 +32,7 @@ function profileMeta(m: any): string {
   if (!p) return "unprofiled";
   const parts: string[] = p.shared ? ["shared profile"] : [];
   if (p.suggested_tier) parts.push(String(p.suggested_tier).replace(/_/g, " "));
+  if (p.task_class) parts.push(`${p.field_authorship?.task_class === 'owner_created' ? 'Owner' : 'Card'} class: ${String(p.task_class).replace(/_/g, ' ')}`);
   const bestFor = (p.best_for ?? []) as string[];
   if (bestFor.length) parts.push(bestFor.map((t: string) => String(t).replace(/_/g, " ")).join(", "));
   if (p.context_length) parts.push(`${Math.round(p.context_length / 1000)}k ctx`);
@@ -534,10 +536,8 @@ export class ModelTile {
     const recommended = (m: any) => next > 0 && String(m.profile?.suggested_tier ?? "") === `Tier_${next}`;
     clear(host, Object.entries(PROVIDERS).map(([p, label]) => {
       const listing = this.listings.get(p) ?? { status: "…", models: [] };
-      const models = (listing.models as any[]).filter(matches)
-        .filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true))
-        .map((m, i) => ({ m, i })).sort((a, b) => Number(recommended(b.m)) - Number(recommended(a.m)) || a.i - b.i)
-        .map(({ m }) => m);
+      const models = orderModels((listing.models as any[]).filter(matches)
+        .filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true)), next);
       const status = listing.status === "ready" ? `${listing.models.length} model${listing.models.length === 1 ? "" : "s"}`
         : listing.status === "no key" ? "no key saved (Settings → Providers & keys)"
         : listing.status === "offline" ? "offline: the local server is not running"

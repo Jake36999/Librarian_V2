@@ -70,7 +70,7 @@ def test_the_survey_reads_structure_and_access_points(checkout):
     env = {e["name"]: e for e in s["environment"]}
     assert "DEMO_API_KEY" not in env
     assert env["ROWSTREAM_API_TOKEN"]["credential"] and not env["PG_DSN"]["credential"]
-    assert env["KAFKA_BROKERS"]["file"] == ".env.example" and "PORT" in env
+    assert 'KAFKA_BROKERS' not in env and 'PORT' in env  # credential-like templates are refused before reading
     section = structure.access_points_section(s)
     assert "`rowstream` → `rowstream.cli:main` (pyproject.toml)" in section
     assert "**Credentials it reads**: `ROWSTREAM_API_TOKEN`" in section

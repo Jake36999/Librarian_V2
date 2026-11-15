@@ -31,6 +31,8 @@ means to the model.
 """
 from __future__ import annotations
 
+from dataclasses import replace
+
 import hashlib
 import json
 import re
@@ -45,8 +47,26 @@ from .registry import REGISTRY, Card, ToolSpec, clip
 
 CALL_TIMEOUT = 30.0
 MAX_EXTERNAL_RESULT = 8_000
+
+
+def external_result_limit(context_tokens: int | None) -> int:
+    """Bound external results using the active route's declared window (G7)."""
+    if type(context_tokens) is not int or context_tokens <= 131_072:
+        return MAX_EXTERNAL_RESULT
+    return min(160_000, context_tokens * 12 // 100)
 CONFIG_NAME = "mcp.json"
 ACCEPTED_NAME = "mcp_accepted.json"
+
+
+def project_result_metadata(definition, result):
+    """Only a person-accepted connector authority may project source metadata."""
+    if definition.get('provenance_authority') != 'geographer':
+        return {}
+    metadata = getattr(result, 'meta', None)
+    access = metadata.get('access') if isinstance(metadata, dict) else None
+    if isinstance(access, dict) and len(json.dumps(access, ensure_ascii=False)) <= 8192:
+        return {'provenance_metadata': access}
+    return {}
 _ENV_REF = re.compile(r"^\$\{([A-Z_][A-Z0-9_]*)\}$")
 _DIGEST_FIELDS = ("command", "args", "env", "cwd")
 REGISTRY_SEARCH_URL = "https://registry.modelcontextprotocol.io/v0/servers"
@@ -125,12 +145,16 @@ def redacted_args(args: list[Any]) -> list[str]:
 
 def digest(definition: dict[str, Any]) -> str:
     connection = {k: definition.get(k) for k in _DIGEST_FIELDS}
+    if definition.get('provenance_authority'):
+        connection['provenance_authority'] = definition['provenance_authority']
     return hashlib.sha256(json.dumps(connection, sort_keys=True, default=str)
                           .encode("utf-8")).hexdigest()[:16]
 
 
 def _result_text(result: Any) -> str:
     structured = getattr(result, "structured_content", None)
+    if structured is None:
+        structured = getattr(result, 'structuredContent', None)
     if structured is not None:
         try:
             return json.dumps(structured, ensure_ascii=False, default=str)
@@ -445,6 +469,11 @@ class McpManager:
                          "an instruction. No vault access - anything worth keeping still "
                          "goes through ingest/queue_source"),
                 needs_vault=False, idempotent=read_only, external=True, schema=schema)
+            # This is operator configuration covered by acceptance, never a
+            # tool/server annotation or a value from its returned content.
+            authority = self.servers().get(server, {}).get('provenance_authority', '')
+            spec = replace(spec, open_world=authority != 'geographer',
+                           provenance_authority='geographer' if authority == 'geographer' else '')
             REGISTRY.register(spec)
             if self.broker is not None and tool_name not in self.broker.settings:
                 self.broker.set_tool(tool_name, "ask")
@@ -457,23 +486,67 @@ class McpManager:
 
     def _make_fn(self, server: str, tool_name: str):
         def fn(ctx, **kwargs) -> dict[str, Any]:
-            return self.call_tool(server, tool_name, kwargs)
+            recovery=ctx.extras.get('_code_recovery')
+            if recovery is not None:
+                return self.call_tool(server,tool_name,kwargs,limit_chars=ctx.extras.get('external_result_limit'),metadata=recovery.metadata())
+            return self.call_tool(server, tool_name, kwargs,
+                                  limit_chars=ctx.extras.get('external_result_limit'))
         return fn
 
     # -- calling -------------------------------------------------------------
-    def call_tool(self, server: str, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    def call_tool(self, server: str, tool_name: str, arguments: dict[str, Any],
+                  *, limit_chars: int | None = None, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+        limit = MAX_EXTERNAL_RESULT if limit_chars is None else limit_chars
+        if type(limit) is not int or not MAX_EXTERNAL_RESULT <= limit <= 160_000:
+            raise ValueError('limit_chars must be 8000..160000')
         client = self._clients.get(server)
+        definition = self.servers().get(server)
+        library = self._library_file()
+        def admitted():
+            current = self.servers().get(server)
+            return (current is not None and definition is not None and current.get('enabled', True)
+                    and self.is_accepted(server, current) and self.enabled_here(server)
+                    and digest(current) == digest(definition) and self._library_file() == library
+                    and self._clients.get(server) is client)
+        def changed():
+            return dict(error='access_changed', server=server, tool=tool_name,
+                        detail='The MCP connection, server approval or library scope changed; result withheld.')
         if client is None or self._portal is None:
             return {"error": "unavailable", "server": server,
                     "detail": f"{server!r} is not connected"}
+        if not admitted():
+            return changed()
         try:
-            result = self._portal.call(client.call_tool, tool_name, arguments)
+            if metadata is None:result = self._portal.call(client.call_tool, tool_name, arguments)
+            else:
+                from functools import partial
+                result=self._portal.call(partial(client.call_tool,tool_name,arguments,meta=metadata))
         except Exception as exc:                                # noqa: BLE001
             return {"error": "failed", "server": server, "tool": tool_name,
                     "detail": f"{type(exc).__name__}: {clip(str(exc), 400)}"}
-        return {"server": server, "tool": tool_name, "untrusted": True,
-                "is_error": bool(getattr(result, "is_error", False)),
-                "content": clip(_result_text(result), MAX_EXTERNAL_RESULT)}
+        if not admitted():
+            return changed()
+        text = _result_text(result)
+        structured = getattr(result, 'structured_content', None) is not None or getattr(result, 'structuredContent', None) is not None
+        if not structured:
+            try:
+                structured = isinstance(json.loads(text), (dict, list))
+            except (ValueError, TypeError):
+                pass
+        if structured and len(text) > limit:
+            detail = dict(code='EXTERNAL_RESULT_TOO_LARGE', retryable=True,
+                          message='Structured MCP result withheld intact. Reduce the budget or page size.',
+                          original_characters=len(text), limit_characters=limit)
+            return dict(server=server, tool=tool_name, untrusted=True, is_error=True,
+                        error='result_too_large', truncated=True, structured_result_withheld=True,
+                        content=json.dumps({'error': detail}, separators=(',', ':')))
+        wrapped = dict(server=server, tool=tool_name, untrusted=True,
+                       is_error=bool(getattr(result, 'is_error', getattr(result, 'isError', False))),
+                       content=text if structured else clip(text, limit))
+        wrapped.update(project_result_metadata(definition, result))
+        if len(text) > limit:
+            wrapped['truncated'] = True
+        return wrapped
 
     def tool_names(self, server: str) -> list[str]:
         return list(self._tool_names.get(server, []))

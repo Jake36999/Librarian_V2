@@ -263,7 +263,7 @@ def test_a_reference_survives_a_phase_bundle_without_reopening_the_registry(vaul
     loop.ctx.extras.update(enforce_active_bundle=True, active_bundle=["read_result"])
 
     assert loop.call("get_note", {"name": "Big Finding"})["refused"] == "TOOL_BUNDLE_REFUSED"
-    assert page(loop, reference).startswith('{"found":true')
+    assert json.loads(page(loop, reference))['found'] is True
     assert "reference_rehydration" not in loop.ctx.extras
 
 
@@ -331,6 +331,8 @@ def test_search_results_stay_ephemeral_and_say_so(vault):
 
 
 def test_a_repository_file_reference_reads_the_surveyed_bytes_again_or_says_unavailable(vault):
+    from resource_librarian.session import SessionStore
+    from resource_librarian.checkpoints import CheckpointStore
     from test_upkeep import surveyed
     surveyed(vault, tree="abc123")
     api = "https://api.github.com/repos/example/planner"
@@ -339,20 +341,43 @@ def test_a_repository_file_reference_reads_the_surveyed_bytes_again_or_says_unav
         f"{api}/git/trees/abc123?recursive=1": {"tree": [
             {"path": "src/plan.py", "type": "blob", "sha": "b1"}]},
         f"{api}/git/blobs/b1": {"content": base64.b64encode(code.encode()).decode()}}
+    args = {"source": "planner", "path": "src/plan.py", "max_chars": 60_000}
+    def permit(loop):
+        loop.ctx.session = SessionStore(vault).new('explore', question='Read pinned file').id
+        loop.ctx.extras['read_route'] = {'model': 'scripted-fixture', 'context_tokens': 262144,
+            'prompt_tokens': 1000, 'visible_output_tokens': 4096, 'reasoning_reserve_tokens': 0}
+        requester = Context(tier='contribute', vault=loop.ctx.vault, session=loop.ctx.session,
+                            extras=loop.ctx.extras)
+        request = REGISTRY.call('request_raw_source_access',
+                                {'tool_name': 'read_source_file', 'arguments': args}, requester)
+        assert 'error' not in request, request
+        CheckpointStore(vault).resolve(request['checkpoint']['id'], 'approve')
     first = Loop(vault, Provider(), extras={"fetcher": intake.Replay(dict(responses))})
+    permit(first)
     projected = first.call("read_source_file", {"source": "planner", "path": "src/plan.py",
                                                 "max_chars": 60_000})
     reference = projected["reference"]
 
     restarted = Loop(Vault(vault.root), Provider(),
                      extras={"fetcher": intake.Replay(dict(responses))})
+    # Knowing a durable reference is not a fresh source-reading grant.
+    unresolved(restarted.call('read_result', {'handle': reference}), 'forbidden')
+    permit(restarted)
     text = page(restarted, reference)
     assert json.loads(text)["text"] == code
     assert json.loads(text)["version"].startswith("tree abc123")
 
     offline = Loop(Vault(vault.root), Provider(), extras={"fetcher": intake.Replay({})})
+    permit(offline)
     out = unresolved(offline.call("read_result", {"handle": reference}), "unavailable")
     assert "def step_" not in json.dumps(out)
+
+
+def test_route_allocation_receipts_are_not_part_of_durable_source_bytes():
+    from resource_librarian.result_handles import durable_text
+    first = {'text': 'Pinned source bytes.', 'read_allocation': {'model': 'a', 'prompt_tokens': 1000}}
+    second = {'text': 'Pinned source bytes.', 'read_allocation': {'model': 'b', 'prompt_tokens': 2000}}
+    assert durable_text(first) == durable_text(second)
 
 
 def test_every_status_is_one_of_the_declared_ones():

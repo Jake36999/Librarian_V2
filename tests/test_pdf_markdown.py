@@ -58,7 +58,7 @@ def test_endpoint_is_always_deepinfra_never_the_vaults_own_clerk():
     assert ep.model == pdf_markdown.MODEL == "deepseek-ai/DeepSeek-V4-Flash-0731"
 
 
-def test_pdf_to_markdown_tool_writes_a_clean_sibling_file(vault, monkeypatch):
+def test_pdf_to_markdown_tool_writes_hidden_generated_work(vault, monkeypatch):
     pdf_path = vault.root / "Inbox" / "book.pdf"
     pdf_path.parent.mkdir(parents=True, exist_ok=True)
     pdf_path.write_bytes(b"%PDF-1.4 not a real pdf, extraction is mocked below")
@@ -72,10 +72,10 @@ def test_pdf_to_markdown_tool_writes_a_clean_sibling_file(vault, monkeypatch):
     ctx = Context(tier="contribute", vault=vault)
     result = REGISTRY.call("pdf_to_markdown", {"file": "Inbox/book.pdf"}, ctx)
     assert "error" not in result, result
-    assert result["path"] == "Inbox/book.md"
+    assert result["path"].startswith('.librarian/conversions/')
     assert result["pages"] == 2 and result["batches"] == 1
-    written = (vault.root / "Inbox" / "book.md").read_text(encoding="utf-8")
-    assert written == "CLEANED[Raw page one.\n\nRaw page two.]"
+    written = (vault.root / result['path']).read_text(encoding="utf-8")
+    assert written == "CLEANED[[page 1]\nRaw page one.\n\n[page 2]\nRaw page two.]"
 
 
 def test_pdf_to_markdown_tool_refuses_a_non_pdf(vault):

@@ -36,6 +36,16 @@ export class Api {
   get(path: string, signal?: AbortSignal): Promise<any> { return this.request("GET", path, undefined, signal); }
   post(path: string, body: unknown = {}): Promise<any> { return this.request("POST", path, body); }
 
+  async downloadOriginal(source: string, filename: string): Promise<void> {
+    const response = await fetch(`${this.opts.base}/api/source-original?source=${encodeURIComponent(source)}`,
+      {headers:{'X-Librarian-Token':this.opts.token}});
+    if (!response.ok) throw new ApiError(response.status, await response.json().catch(()=>({})));
+    const url = URL.createObjectURL(await response.blob());
+    const link = document.createElement('a');
+    link.href = url; link.download = filename; link.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  }
+
   /** The composer's paperclip: raw bytes, not JSON - too large and the wrong shape. */
   async attach(file: File, dir = "Inbox"): Promise<{ path: string; name: string }> {
     const qs = `dir=${encodeURIComponent(dir)}&name=${encodeURIComponent(file.name)}`;

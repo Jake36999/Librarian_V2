@@ -20,8 +20,10 @@ from test_intake import RESPONSES, clerk_answers
 API = "https://api.github.com/repos/example/"
 
 
-def call(vault, tool_name, /, tier="contribute", fetcher=None, **args):
+def call(vault, tool_name, /, tier="contribute", fetcher=None, caller_kind="", **args):
     extras = {"fetcher": fetcher} if fetcher else {}
+    if caller_kind:
+        extras['caller_kind'] = caller_kind
     return REGISTRY.call(tool_name, args, Context(tier=tier, vault=vault, extras=extras))
 
 
@@ -192,14 +194,14 @@ def test_a_repository_file_is_read_at_the_surveyed_version(vault):
             {"path": "logo.png", "type": "blob", "sha": "b2"}]},
         f"{api}/git/blobs/b1": {"content": base64.b64encode(b"def plan():\n    pass\n").decode()},
         f"{api}/git/blobs/b2": {"content": base64.b64encode(b"\x89PNG\x00\x00").decode()}})
-    out = call(vault, "read_source_file", tier="consult", fetcher=replay, source="planner",
+    out = call(vault, "read_source_file", tier="consult", caller_kind='person', fetcher=replay, source="planner",
                path="src/plan.py")
     assert out["text"].startswith("def plan") and out["version"] == "tree abc123 (as surveyed)"
-    assert call(vault, "read_source_file", tier="consult", fetcher=replay, source="planner",
+    assert call(vault, "read_source_file", tier="consult", caller_kind='person', fetcher=replay, source="planner",
                 path="src/missing.py")["error"] == "invalid_arguments"
-    assert "binary" in call(vault, "read_source_file", tier="consult", fetcher=replay,
+    assert "binary" in call(vault, "read_source_file", tier="consult", caller_kind='person', fetcher=replay,
                             source="planner", path="logo.png")["detail"]
-    assert call(vault, "read_source_file", tier="consult", fetcher=replay, source="planner",
+    assert call(vault, "read_source_file", tier="consult", caller_kind='person', fetcher=replay, source="planner",
                 path="../etc/passwd")["error"] == "invalid_arguments"
 
 
