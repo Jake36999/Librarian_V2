@@ -51,6 +51,15 @@ def _content_signal(counts):
     return None
 
 
+
+def production_drafting(vault):
+    """The owner's recorded approval for real (qualified) Clerk folder checks in this library.
+
+    Set as `[folders] production_drafting = true`. The route itself still passes the Core's
+    profile and qualification gate; this only lifts the scripted-only restriction.
+    """
+    return vault.setting('folders', 'production_drafting') is True
+
 def inventory(found):
     return dict(version='folder-inventory-v1', root=found.canonical_root,
                 fingerprint=found.fingerprint, entries=found.entries, partial=found.partial,
@@ -220,7 +229,7 @@ class FolderReview:
         if not approved: raise ValueError('SPEND_APPROVAL_REQUIRED')
         if endpoint is None: raise ValueError('CLERK_UNAVAILABLE')
         from . import clerk
-        if not isinstance(endpoint, clerk.Scripted):
+        if not isinstance(endpoint, clerk.Scripted) and not production_drafting(self.vault):
             raise ValueError('FOLDER_DRAFT_DISABLED: owner approval of a qualified Clerk route is required')
         card = self.store.load(item_id)
         # Only metadata reaches the Clerk, including for third-party folders. No graph/source bodies.

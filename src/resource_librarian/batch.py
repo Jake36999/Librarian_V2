@@ -750,7 +750,8 @@ def _folder_describe(ctx, item):
     from .folder_review import FolderReview
     from .tools.staging import clerk_endpoint
     endpoint = clerk_endpoint(ctx)
-    if not isinstance(endpoint, clerk.Scripted):
+    from .folder_review import production_drafting
+    if not isinstance(endpoint, clerk.Scripted) and not production_drafting(ctx.vault):
         return dict(status='queued', reason='production folder drafting disabled pending owner qualification approval')
     preconditions = _item_precondition(ctx, item)
     described = FolderReview(ctx.vault).draft(item['id'], endpoint, approved=True, persist=False)

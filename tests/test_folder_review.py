@@ -333,3 +333,34 @@ def test_policy_accept_holds_folders_whose_sensitivity_was_never_checked(library
     review.survey(source)
     out = review.accept_by_policy(source)
     assert out['accepted'] == [] and all('not yet checked' in h['reason'] for h in out['held'])
+
+
+class _RealishEndpoint:
+    """Not clerk.Scripted: stands in for a production (qualified) Clerk route."""
+    name = "realish"; concurrency = 1
+
+    def __init__(self):
+        self.payloads = []
+
+    def complete(self, payload, repair=""):
+        import json as _json
+        self.payloads.append(payload)
+        if payload["task"] == "sensitivity":
+            return _json.dumps({"sensitivity": "normal", "reason": "metadata only"}), "realish"
+        return _json.dumps({"description": "A folder of Python source files."}), "realish"
+
+
+def test_production_folder_check_needs_the_owners_recorded_approval(library):
+    from resource_librarian.folder_review import FolderReview
+    vault, source = library
+    review = FolderReview(vault, planner=fake_planner)
+    card = review.survey(source)['cards'][0]
+    endpoint = _RealishEndpoint()
+    with pytest.raises(ValueError, match='FOLDER_DRAFT_DISABLED'):
+        review.draft(card['id'], endpoint, approved=True)
+    vault.set_setting('folders', 'production_drafting', True)
+    drafted = review.draft(card['id'], endpoint, approved=True)
+    assert drafted['sensitivity']['sensitivity'] == 'normal'
+    assert drafted['description']['state'] == 'model_draft' and drafted['description']['draft'] is True
+    sent = ' '.join(str(p['user']) for p in endpoint.payloads)
+    assert 'synthetic fixture' not in sent                                # metadata only, never file text
