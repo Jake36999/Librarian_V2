@@ -12,7 +12,7 @@ import { PROVIDERS } from "./panels";
 const GROUPS = [
   ["Environment", [["commands", "Commands & shortcuts"], ["connections", "Providers & keys"], ["mcp", "Tools & integrations"]]],
   ["Current library", [["models", "Models & services"], ["context", "Chat behaviour"],
-    ["review", "Review & promotion"], ["projects", "Project access"], ["methods", "Methods & lenses"],
+    ["review", "Review & promotion"], ["permissions", "Permissions"], ["projects", "Project access"], ["methods", "Methods & lenses"],
     ["topics", "Topics & organisation"]]],
   ["Advanced", [["profiles", "Agent profiles"], ["health", "Health & diagnostics"]]],
 ] as const;
@@ -211,6 +211,7 @@ export class Settings {
       commands: () => this.controlsPage(), models: () => this.modelsPage(), connections: () => this.connections(), mcp: () => this.mcp(),
       context: () => this.context(), projects: () => this.projectsPage(), profiles: () => this.agentProfiles(),
       review: () => this.library(false), health: () => h("div", {}, this.coreHealth(), this.library(true)),
+      permissions: () => this.permissionsPage(),
       topics: () => { const host = h("div", { class: "topics" }); void this.paintTopics(host); return host; },
       methods: () => {
         const profile = h("div"), packs = h("div", { class: "lens-packs" });
@@ -224,6 +225,25 @@ export class Settings {
     }}, "Discard unsaved edits"));
     this.syncState();
     this.body.scrollTop = 0;
+  }
+
+  private permissionsPage(): HTMLElement {
+    const host=h('div',{},h('p',{},'Tool permissions for the current library. Allowing a tool does not start it or remove its budget and safety checks.'));
+    const status=h('p',{role:'status'});host.append(status);
+    void this.api.get('/api/state').then(state=>{
+      const names=[...new Set(['intake_run',...Object.keys(state.tool_settings ?? {})])].sort();
+      for(const tool of names){
+        const select=h('select',{'aria-label':`Permission for ${tool}`},['ask','allow','deny'].map(value=>h('option',{value},value))) as HTMLSelectElement;
+        select.value=state.tool_settings?.[tool] ?? 'ask';
+        select.onchange=async()=>{select.disabled=true;try{
+          const result=await this.api.post('/api/tool-setting',{tool,setting:select.value});
+          select.value=result.tool_settings[tool];status.textContent='Saved for this library.';
+        }catch(error){select.value=state.tool_settings?.[tool] ?? 'ask';status.textContent=(error as Error).message;}
+        finally{select.disabled=false;}};
+        host.append(h('label',{class:'f'},tool,select));
+      }
+    }).catch(error=>{status.textContent=(error as Error).message;});
+    return host;
   }
 
   private modelsPage(): HTMLElement {

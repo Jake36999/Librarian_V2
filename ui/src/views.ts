@@ -123,10 +123,12 @@ export class Staging {
       .map(([v, label]) => h("option", { value: v }, label))) as HTMLSelectElement;
     this.statuses = statuses;
     this.el.addEventListener("scroll", () => this.savePosition(), {passive:true});
+    const sourceWaiting = () => Object.entries(this.counts?.source ?? {}).filter(([status]) =>
+      ['queued','staged','approved','partial','enriched','failed','deferred'].includes(status)).reduce((n,[,count])=>n+count,0);
     const paint = () => {
       const focusedKind = kinds.contains(document.activeElement) ? (document.activeElement as HTMLElement).dataset.kind : "";
       clear(kinds, [["source", "Sources"], ["folder", "Folders"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) =>
-        h("button", { "data-kind": v, "aria-pressed": String(this.kind === v), onclick: () => { this.selected = ""; this.kind = v; this.savePosition(); paint(); void this.load(true); } }, label, h("span", { class: "queue-count", title: v === "source" ? "Sources in selected filter" : "Waiting for review" }, String(v === "offering" ? this.waitingOfferings ?? "…" : this.counts ? this.counts[v]?.[v === "source" ? this.status : "staged"] ?? 0 : "…")))));
+        h("button", { "data-kind": v, "aria-pressed": String(this.kind === v), onclick: () => { this.selected = ""; this.kind = v; this.savePosition(); paint(); void this.load(true); } }, label, h("span", { class: "queue-count", title: v === "source" ? "Sources across all waiting states; choose a filter below" : "Waiting for review" }, String(v === "offering" ? this.waitingOfferings ?? "…" : this.counts ? v === 'source' ? sourceWaiting() : this.counts[v]?.staged ?? 0 : "…")))));
       if (focusedKind) kinds.querySelector<HTMLButtonElement>(`[data-kind="${focusedKind}"]`)?.focus({preventScroll:true});
       scan.style.display = this.kind === "concept" ? "" : "none";
       propose.style.display = this.kind === "topic" ? "" : "none";
@@ -250,8 +252,12 @@ export class Staging {
     this.paintBulk();
     if (this.kind === 'folder') {
       clear(this.detail); this.list.style.gridColumn = '1 / -1';
-      try { await folderReview(this.api, this.list); }
-      catch (e) { clear(this.list, h('p', {class:'error'}, (e as Error).message)); }
+      const folderHost=h('div');
+      try {
+        await folderReview(this.api, folderHost);
+        if(request === this.listRequest && this.kind === 'folder' && !this.stopped)clear(this.list,folderHost);
+      }
+      catch (e) { if(request === this.listRequest)clear(this.list, h('p', {class:'error'}, (e as Error).message)); }
       return;
     }
     this.list.style.gridColumn = '';

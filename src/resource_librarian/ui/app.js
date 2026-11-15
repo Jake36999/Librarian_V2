@@ -2914,6 +2914,7 @@ var Librarian = (() => {
       ["models", "Models & services"],
       ["context", "Chat behaviour"],
       ["review", "Review & promotion"],
+      ["permissions", "Permissions"],
       ["projects", "Project access"],
       ["methods", "Methods & lenses"],
       ["topics", "Topics & organisation"]
@@ -3158,6 +3159,7 @@ var Librarian = (() => {
         profiles: () => this.agentProfiles(),
         review: () => this.library(false),
         health: () => h("div", {}, this.coreHealth(), this.library(true)),
+        permissions: () => this.permissionsPage(),
         topics: () => {
           const host = h("div", { class: "topics" });
           void this.paintTopics(host);
@@ -3178,6 +3180,35 @@ var Librarian = (() => {
       } }, "Discard unsaved edits"));
       this.syncState();
       this.body.scrollTop = 0;
+    }
+    permissionsPage() {
+      const host = h("div", {}, h("p", {}, "Tool permissions for the current library. Allowing a tool does not start it or remove its budget and safety checks."));
+      const status = h("p", { role: "status" });
+      host.append(status);
+      void this.api.get("/api/state").then((state) => {
+        const names = [.../* @__PURE__ */ new Set(["intake_run", ...Object.keys(state.tool_settings ?? {})])].sort();
+        for (const tool of names) {
+          const select = h("select", { "aria-label": `Permission for ${tool}` }, ["ask", "allow", "deny"].map((value) => h("option", { value }, value)));
+          select.value = state.tool_settings?.[tool] ?? "ask";
+          select.onchange = async () => {
+            select.disabled = true;
+            try {
+              const result = await this.api.post("/api/tool-setting", { tool, setting: select.value });
+              select.value = result.tool_settings[tool];
+              status.textContent = "Saved for this library.";
+            } catch (error) {
+              select.value = state.tool_settings?.[tool] ?? "ask";
+              status.textContent = error.message;
+            } finally {
+              select.disabled = false;
+            }
+          };
+          host.append(h("label", { class: "f" }, tool, select));
+        }
+      }).catch((error) => {
+        status.textContent = error.message;
+      });
+      return host;
     }
     modelsPage() {
       const catalogues = h("div", { class: "model-catalogs" });
@@ -6097,6 +6128,7 @@ var Librarian = (() => {
       ].map(([v, label]) => h("option", { value: v }, label)));
       this.statuses = statuses;
       this.el.addEventListener("scroll", () => this.savePosition(), { passive: true });
+      const sourceWaiting = () => Object.entries(this.counts?.source ?? {}).filter(([status]) => ["queued", "staged", "approved", "partial", "enriched", "failed", "deferred"].includes(status)).reduce((n, [, count]) => n + count, 0);
       const paint = () => {
         const focusedKind = kinds.contains(document.activeElement) ? document.activeElement.dataset.kind : "";
         clear(kinds, [["source", "Sources"], ["folder", "Folders"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) => h("button", { "data-kind": v, "aria-pressed": String(this.kind === v), onclick: () => {
@@ -6105,7 +6137,7 @@ var Librarian = (() => {
           this.savePosition();
           paint();
           void this.load(true);
-        } }, label, h("span", { class: "queue-count", title: v === "source" ? "Sources in selected filter" : "Waiting for review" }, String(v === "offering" ? this.waitingOfferings ?? "\u2026" : this.counts ? this.counts[v]?.[v === "source" ? this.status : "staged"] ?? 0 : "\u2026")))));
+        } }, label, h("span", { class: "queue-count", title: v === "source" ? "Sources across all waiting states; choose a filter below" : "Waiting for review" }, String(v === "offering" ? this.waitingOfferings ?? "\u2026" : this.counts ? v === "source" ? sourceWaiting() : this.counts[v]?.staged ?? 0 : "\u2026")))));
         if (focusedKind) kinds.querySelector(`[data-kind="${focusedKind}"]`)?.focus({ preventScroll: true });
         scan.style.display = this.kind === "concept" ? "" : "none";
         propose.style.display = this.kind === "topic" ? "" : "none";
@@ -6289,10 +6321,12 @@ var Librarian = (() => {
       if (this.kind === "folder") {
         clear(this.detail);
         this.list.style.gridColumn = "1 / -1";
+        const folderHost = h("div");
         try {
-          await folderReview(this.api, this.list);
+          await folderReview(this.api, folderHost);
+          if (request === this.listRequest && this.kind === "folder" && !this.stopped) clear(this.list, folderHost);
         } catch (e) {
-          clear(this.list, h("p", { class: "error" }, e.message));
+          if (request === this.listRequest) clear(this.list, h("p", { class: "error" }, e.message));
         }
         return;
       }
