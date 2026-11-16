@@ -472,3 +472,70 @@ def test_a_large_tree_surveys_in_linear_time(library):
     started = time.perf_counter()
     cards = FolderReview(vault, planner=fake_planner).survey(source)['cards']
     assert len(cards) >= 300 and time.perf_counter() - started < 120
+
+
+def test_policy_covers_folders_under_an_excluded_parent_instead_of_holding_them(library):
+    """2026-11-16: 1,639 cards under an excluded tmp waited for checks they never needed."""
+    from resource_librarian.folder_review import FolderReview
+    vault, source = library
+    (source / 'docs/scratch').mkdir(); (source / 'docs/scratch/n.md').write_text('synthetic')
+    _agent_mode(vault)
+    review = FolderReview(vault, planner=fake_planner, applier=lambda _: {'graphs': []})
+    cards = {c['path']: c for c in review.survey(source)['cards']}
+    docs = cards['docs']; docs['suggested_purpose'] = 'exclude'; review.store.save(docs)
+    child = cards['docs/scratch']                  # its own suggestion, sensitivity never checked
+    child.update(inherited=False, inherited_from=None, suggested_purpose='own-docs'); review.store.save(child)
+    out = review.accept_by_policy(source)
+    assert 'docs' in out['accepted']
+    assert 'docs/scratch' not in out['accepted']
+    assert not any(h['path'] == 'docs/scratch' for h in out['held'])          # covered, not held
+    assert out['covered'] >= 1
+
+
+def test_policy_never_follows_a_link_or_junction(library, tmp_path):
+    import os, subprocess
+    from resource_librarian.folder_review import FolderReview
+    vault, source = library
+    outside = tmp_path / 'outside'; outside.mkdir(); (outside / 'secret.md').write_text('synthetic')
+    (source / 'src/linked').mkdir(); (source / 'src/linked/a.py').write_text('synthetic')
+    _agent_mode(vault)
+    review = FolderReview(vault, planner=fake_planner, applier=lambda _: {'graphs': []})
+    cards = {c['path']: c for c in review.survey(source)['cards']}
+    _checked(review)
+    card = review.store.load(cards['src/linked']['id']) if hasattr(review.store, 'load') else cards['src/linked']
+    card.update(inherited=False, inherited_from=None, suggested_purpose='own-current',
+                sensitivity=dict(sensitivity='normal', reason='checked'))
+    review.store.save(card)
+    target = source / 'src/linked'
+    for f in target.iterdir(): f.unlink()
+    target.rmdir()
+    try:
+        if os.name == 'nt':
+            subprocess.run(['cmd', '/c', 'mklink', '/J', str(target), str(outside)], check=True, capture_output=True)
+        else:
+            os.symlink(outside, target, target_is_directory=True)
+    except (OSError, subprocess.CalledProcessError):
+        pytest.skip('this machine cannot create a link')
+    try:
+        out = review.accept_by_policy(source)
+    except ValueError as exc:                       # a survey that refuses the link is also safe
+        assert 'FOLDER' in str(exc); return
+    assert 'src/linked' not in out['accepted']
+    assert any(h['path'] == 'src/linked' and h['reason'].startswith('link') for h in out['held'])
+
+
+def test_the_folder_brief_is_given_the_total_so_the_model_never_sums_counts(library, monkeypatch):
+    """2026-11-16: summing extension counts itself, the Clerk wrote 2,211 files for 2,292."""
+    import json as _json
+    from resource_librarian.folder_review import FolderReview
+    from resource_librarian import clerk
+    vault, source = library; review = FolderReview(vault, planner=fake_planner)
+    card = review.survey(source)['cards'][0]
+    seen = {}
+    def run(tasks, endpoint):
+        seen.update(_json.loads(tasks[0].chunk))
+        return [SimpleNamespace(ok=True, value={'description': 'A synthetic folder inventory.'}),
+                SimpleNamespace(ok=True, value={'sensitivity': 'normal', 'reason': 'metadata only'})]
+    monkeypatch.setattr(clerk, 'run', run)
+    review.draft(card['id'], clerk.Scripted(lambda _: {}), approved=True)
+    assert seen['files'] == sum(card['file_counts'].values()) and 'file_counts' in seen

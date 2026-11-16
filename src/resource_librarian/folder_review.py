@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -311,7 +312,10 @@ class FolderReview:
             raise ValueError('FOLDER_DRAFT_DISABLED: owner approval of a qualified Clerk route is required')
         card = self.store.load(item_id)
         # Only metadata reaches the Clerk, including for third-party folders. No graph/source bodies.
-        payload = dict(path=card['path'], file_counts=card['file_counts'], bytes=card['bytes'])
+        # The total is given, not left to the model: summing 30 extension counts, the Clerk
+        # stated 2,211 files for 2,292 and the provenance check refused it (2026-11-16).
+        payload = dict(path=card['path'], files=sum(card['file_counts'].values()),
+                       file_counts=card['file_counts'], bytes=card['bytes'])
         kind = clerk.Kind('folder_brief', 'describe folder inventory metadata without inferring source behaviour',
             {'type': 'object', 'required': ['description'], 'properties': {
                 'description': {'type': 'string', 'maxLength': 400}}}, max_tokens=320)
@@ -434,9 +438,33 @@ class FolderReview:
                     return PURPOSE_AUTHORSHIP[purpose]
             return None
 
+        def excluded_above(rel):
+            """True when an ancestor is excluded, by a decision or by this pass (2026-11-16):
+            nothing under an excluded folder is ever ingested, so it needs no card of its own."""
+            parts = rel.split('/') if rel != '.' else []
+            for depth in range(len(parts) - 1, -1, -1):
+                parent = by_path.get('/'.join(parts[:depth]) or '.')
+                purpose = ((parent or {}).get('decision') or {}).get('purpose')
+                if purpose:
+                    return purpose == 'exclude'
+            return False
+
+        def linked(rel):
+            """The folder, or a folder between it and the root, is a link or junction: never
+            followed (a junction can point anywhere, even outside the root)."""
+            base = Path(os.path.realpath(root)); path = Path(root); expected = base
+            for part in ([] if rel == '.' else rel.split('/')):
+                path, expected = path / part, expected / part
+                if path.is_symlink() or os.path.normcase(os.path.realpath(path)) != os.path.normcase(str(expected)):
+                    return True
+            return False
+
         subtrees = Subtrees(found.entries)
-        for card in self.list():
-            if card['kind'] != 'folder' or card['source_root'] != root or card['status'] == 'accepted' or card.get('decision'):
+        pending = [c for c in self.list() if c['kind'] == 'folder' and c['source_root'] == root
+                   and c['status'] != 'accepted' and not c.get('decision')]
+        for card in sorted(pending, key=lambda c: (c['path'] != '.', c['path'].count('/'), c['path'])):
+            if excluded_above(card['path']):
+                covered += 1                                 # under an excluded folder
                 continue
             if card.get('inherited'):
                 covered += 1                                 # its parent's decision covers it
@@ -445,7 +473,9 @@ class FolderReview:
             rows = subtrees.rows(rel)
             reason = None
             sensitivity = (card.get('sensitivity') or {}).get('sensitivity')
-            if sensitivity == 'review_required':
+            if linked(rel):
+                reason = 'link: a link or junction is never followed; a person decides it'
+            elif sensitivity == 'review_required':
                 reason = 'sensitive: a person reviews this folder'
             elif sensitivity != 'normal' and purpose != 'exclude':      # excluded folders are never ingested
                 reason = 'sensitivity not yet checked: run the folder check (Clerk) first'
@@ -465,6 +495,7 @@ class FolderReview:
             if purpose not in self.POLICY_PURPOSES:
                 authorship = ancestry(rel)
                 rule = 'data/logs authorship inferred from its nearest classified ancestor folder'
+            by_path[rel] = dict(card, decision=dict(purpose=purpose))   # children see it this pass
             chosen.append(dict(card, decision=dict(purpose=purpose, authorship=authorship,
                 graph=suggested_graph(self.vault.title, Path(root).name, purpose,
                                       third_party_scope(self.vault)),  # never a stale suggestion

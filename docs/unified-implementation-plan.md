@@ -6476,3 +6476,28 @@ the same way.
 **Why it matters.** Budgets are charged from DeepInfra's billed `estimated_cost`, so spend
 tracking was right; the catalogue's prices feed cost estimates and rate cards, which put
 GLM-5.3 reviews at half their real price.
+
+### Folder review: excluded parents cover their children, links are never followed, totals are given (2026-11-16)
+
+**Owner, 2026-11-16:** "go ahead and finish enriching everything in both libraries".
+
+**Found while finishing.**
+- Resource-Library's `D:\Librarian_V2` root had 1,709 staged cards; 1,639 sat under `tmp`, which
+  is suggested `exclude`. Policy acceptance held every one of them for a sensitivity check they
+  never need, because only a card marked `inherited` counted as covered.
+- `tmp` holds junctions. Geo-Grapher refuses a decision whose folder escapes its root
+  (`FOLDER_SCOPE`), so one junction card refused the whole application.
+- Nonlinear Field Lab's `.` and `docs` cards failed their folder check: given only the per-extension
+  counts, the Clerk summed them itself and wrote 2,211 files for 2,292 (and 7,541 for 8,071), and
+  the provenance check rightly refused the description.
+
+**Changes.**
+- `accept_by_policy` walks cards parents-first. A card under an excluded folder (decided before,
+  or chosen in the same pass) is covered, not held.
+- A card whose folder, or any folder between it and the root, is a link or junction is held
+  ("never followed; a person decides it"), never sent to Geo-Grapher.
+- The folder brief's metadata now carries `files`, the total, computed in code. Measured on the two
+  NFL folders: 4 of 4 drafts stated the right totals and passed provenance.
+
+**Tests.** `tests/test_folder_review.py` (+3): an excluded parent covers a child with its own
+suggestion; a junction is held, never accepted; the brief carries the computed total.
