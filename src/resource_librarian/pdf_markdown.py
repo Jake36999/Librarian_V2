@@ -43,11 +43,28 @@ CLEANUP_SYSTEM = (
 )
 
 
-def endpoint() -> OpenAICompatible:
-    """Always this one model, on DeepInfra - never the vault's own [clerk]
-    route, which may be a local model unsuited to this (or any) task."""
-    preset = PRESETS["deepinfra"]
-    return OpenAICompatible(preset["base_url"], MODEL, preset["key_env"], name="deepinfra")
+def route(vault=None) -> tuple[str, str]:
+    """The cleanup model: `[services] cleanup = "<provider>:<model>"`, else the default.
+
+    A library setting, not a constant (owner, 2026-11-16: model choices belong in
+    configuration, chosen from the profiled catalogue). It is its own service slot, never
+    the vault's [clerk] route, which may be a local model unsuited to this task. The model
+    is part of each conversion's cache key, so changing it never reuses another model's text.
+    """
+    value = vault.setting("services", "cleanup") if vault is not None else None
+    if isinstance(value, str) and ":" in value:
+        provider, model = value.split(":", 1)
+        provider, model = provider.strip(), model.strip()
+        if provider not in PRESETS or not model:
+            raise ValueError(f"[services] cleanup: use '<provider>:<model>' with a provider in {sorted(PRESETS)}")
+        return provider, model
+    return "deepinfra", MODEL
+
+
+def endpoint(vault=None) -> OpenAICompatible:
+    provider, model = route(vault)
+    preset = PRESETS[provider]
+    return OpenAICompatible(preset["base_url"], model, preset["key_env"], name=provider)
 
 
 def batch_pages(pages: list[str], batch_chars: int = BATCH_CHARS) -> list[str]:

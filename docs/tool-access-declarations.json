@@ -2721,7 +2721,7 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/pdf.py",
-        "line": 64,
+        "line": 65,
         "symbol": "ocr_pdf_tool"
       },
       "fingerprint": {
@@ -2858,7 +2858,7 @@
         "symbol": "pdf_to_markdown_tool"
       },
       "fingerprint": {
-        "source_sha256": "521cd69865899804b3e113912f0dddd78b6670f83a71fd745aee3f4e8e3b9a73",
+        "source_sha256": "9179cad6365e713167b307b305badc6bc29cd022dc5234bde69fef548e5ceea0",
         "schema_sha256": "a26de509015c627856703e51d4a693b638e645d261fddf2c4676a9187a67f2ed",
         "effect": "write",
         "open_world": true,

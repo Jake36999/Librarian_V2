@@ -3421,6 +3421,40 @@ class App:
         clean = self._clean_tiers([route])[0]
         return self._select_tiers([clean, *kept], override, checkpoint_id, lead_only=True)
 
+    @mutation_entry("the role selection")
+    def set_role_route(self, role: str, route: Any) -> dict[str, Any]:
+        """Select one non-lead role's model, and only that role's (owner, 2026-11-16).
+
+        A Clerk, Scribe or research-helper choice used to go through the whole tier list, which
+        re-checks the Lead: a library whose Lead had no fresh qualification could not change its
+        Clerk at all. Selection is configuration; whether the model may be *used* stays with the
+        role's own qualification, enforced before every call (`_require_profile_qualification`),
+        so an unscreened choice is recorded but its tasks queue until it is qualified.
+        """
+        if role not in CHAT_ROLES or role == "lead":
+            raise ApiError(400, "role is scribe, clerk or research_helper; choose the lead with set_lead")
+        if not isinstance(route, dict):
+            raise ApiError(400, "route is one {provider|host_id, model}")
+        clean = self._clean_tiers([route])[0]
+        binding = self._binding_for_route(role, clean)
+        saved: dict[str, Any] = {}
+
+        def persist() -> None:
+            rows = self.role_routes.raw()
+            rows[role] = self._revised_binding(rows.get(role), binding)
+            hints = [dict(t) for t in (self.settings.data.get("tiers") or []) if isinstance(t, dict)]
+            self.role_routes.save(rows)
+            projected = self._tiers_projection(rows, hints)
+            if projected:
+                self.settings.update_in_operation(tiers=projected)
+            saved.update(host_id=rows[role].host_id, model=rows[role].model_id)
+
+        self._serialized("role-route-settings", persist)
+        self.hub.publish({"type": "tiers_changed", "role": role})
+        qualification = self.qualification_status(saved["host_id"], saved["model"], role)
+        return {"role": role, "route": saved, "qualification": qualification,
+                "usable": bool((qualification.get("qualification") or {}).get("fresh"))}
+
     def lead_status(self, tiers: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         if tiers is None:
             bound = self._role_choice("lead", validate_host=False)
@@ -4636,6 +4670,9 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 # authenticates with the owner-only connection record's token.
                 return app.mcp_call(str(body.get("tool") or ""), body.get("arguments") or {},
                                     str(body.get("session") or ""), str(body.get("tier") or "consult"))
+            if path == "/api/routes/role":
+                # One non-lead role's model (configuration); its own qualification still gates use.
+                return app.set_role_route(str(body.get("role") or ""), body.get("route"))
             if path == "/api/lead":
                 return app.set_lead(body.get("route"), str(body.get("override") or ""),
                                     str(body.get("checkpoint_id") or ""))

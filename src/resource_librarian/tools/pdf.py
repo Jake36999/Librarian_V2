@@ -21,8 +21,8 @@ from ..file_access import connected_read_path
                 "and page numbers, and a clean copy would help both the person and the model "
                 "read it",
                 "Reformats only - never summarises, shortens or adds anything not in the "
-                "source. Always deepseek-ai/DeepSeek-V4-Flash-0731 on DeepInfra, whatever this "
-                "vault's own [clerk] route is set to (which may be a local model)"))
+                "source. The model is the library's [services] cleanup setting (default "
+                "deepseek-ai/DeepSeek-V4-Flash-0731 on DeepInfra), never its [clerk] route"))
 def pdf_to_markdown_tool(ctx: Context, file: str, staged_item: str = "") -> dict:
     """Generated text remains hidden and reusable even after source acceptance.
 
@@ -34,11 +34,12 @@ def pdf_to_markdown_tool(ctx: Context, file: str, staged_item: str = "") -> dict
     if path.suffix.lower() != ".pdf":
         raise TypeError(f"{file!r} is not a PDF")
     store = ConversionStore(ctx.vault)
-    request = store.request(path, 'pdf_markdown:page-anchors-v2:' + pdf_markdown.MODEL)
+    provider, model = pdf_markdown.route(ctx.vault)          # [services] cleanup, else the default
+    request = store.request(path, 'pdf_markdown:page-anchors-v2:' + model)
     cached = store.find(request)
     if cached is not None:
         return cached
-    legacy = store.find(store.request(path, 'pdf_markdown:v1:' + pdf_markdown.MODEL))
+    legacy = store.find(store.request(path, 'pdf_markdown:v1:' + model))
     if legacy is not None:
         return {**legacy, 'page_mapping': 'unverified'}
     result = text.extract(path, ctx.vault.derived / "text")
@@ -51,11 +52,11 @@ def pdf_to_markdown_tool(ctx: Context, file: str, staged_item: str = "") -> dict
         raise TypeError("the library's budget ceiling was reached; no cleanup was run")
 
     def spent(usage):
-        usage_log.record_call(ctx.vault, role="cleanup", task="pdf_to_markdown", model=pdf_markdown.MODEL,
-                              host="deepinfra", tokens_in=usage.get("input_tokens"),
+        usage_log.record_call(ctx.vault, role="cleanup", task="pdf_to_markdown", model=model,
+                              host=provider, tokens_in=usage.get("input_tokens"),
                               tokens_out=usage.get("output_tokens"), usd=usage.get("estimated_cost_usd", usage.get("estimated_cost")))
     markdown, batches = pdf_markdown.clean_document(anchored,
-                                                   ctx.extras.get("pdf_endpoint"),
+                                                   ctx.extras.get("pdf_endpoint") or pdf_markdown.endpoint(ctx.vault),
                                                    progress=ctx.extras.get("progress"),
                                                    on_usage=spent)
     return store.save(request, markdown, pages=len(result.pages), batches=batches)

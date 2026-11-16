@@ -6356,3 +6356,39 @@ Verification: full suite in a clean clone of `f1398a5` plus this change: 2614 pa
   text layer. Mapped conversions and OCR conversions keep their keys.
 Tests: `test_phase8_paper_publication.py` (+2). Verification: full suite in a clean clone of
 `46b5bbb` plus this change: 2616 passed, 2 skipped, 5 deselected in 960.81s (0:16:00), exit 0.
+
+### Model choice is configuration: per-role selection, cleanup model as a setting (2026-11-16)
+
+**Owner, 2026-11-16:** no model should be bound in code; choices belong in configuration,
+selected from the profiled catalogue through the adapters. Where a failure is the adapter's,
+upgrade the adapter.
+
+**Diagnosis (Resource-Library read nothing).** Reproduced with its own route files: the
+Clerk call was refused with "agent profile 'clerk' requires screened qualification for
+role 'clerk'; this route is experimental (expired)". `Qwen/Qwen3.5-397B-A17B` had passed
+L1 as Clerk on 2026-11-14 under an older compatibility fingerprint; since then only L0 was
+re-run. Not an adapter failure: the gate worked. `google/gemma-4-26B-A4B-it` and
+`openai/gpt-oss-120b` are screened under the current fingerprint. The design fault was
+that changing the Clerk required the whole tier list, which re-checks the Lead, so a
+library whose Lead lacked fresh evidence could not change its Clerk at all.
+
+**Changes:**
+- `App.set_role_route(role, route)` (`POST /api/routes/role`): select Scribe, Clerk or
+  research helper alone. Only that role's binding changes; the Lead never; the picker
+  projection follows. Use is still gated by that role's own qualification before every
+  call, so an unscreened selection is recorded but its tasks queue (`usable: false`).
+- The PDF cleanup model was a constant (`pdf_markdown.MODEL`). It is now
+  `[services] cleanup = "<provider>:<model>"`, default unchanged; it stays its own slot,
+  never `[clerk]`. The model is in each conversion's cache key.
+
+**Inventory of other model literals in code.** `clerk.PRESETS["deepinfra"]["model"]`
+(`gpt-oss-20b`) is the fallback when `[clerk]` names a provider without a model:
+overridable, kept. `service_adapters` turns off Qwen3.5 "thinking" in OCR requests: adapter
+knowledge of a model family, kept.
+
+**Tests.** `test_role_route_bindings.py` (+1: one role changes, the Lead and Scribe do
+not, the picker agrees, an unqualified choice is not usable, the Lead is refused),
+`test_pdf_markdown.py` (+1: setting, default, refused provider).
+
+**Verification:** full suite in a clean clone of `ea62338` plus this change: 2618 passed,
+2 skipped, 5 deselected in 973.03s (0:16:13), exit 0.

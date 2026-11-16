@@ -255,3 +255,21 @@ def test_explicit_host_id_cannot_be_reinterpreted_as_a_provider_alias(routed_app
     app.set_tiers([{"host_id": "deepinfra", "model": "custom"}], override="test")
     assert app.role_routes.resolve("lead").host_id == "deepinfra"
     assert app._role_choice("lead")["host_id"] == "deepinfra"
+
+
+def test_one_role_is_selected_without_touching_the_lead_or_its_qualification(routed_app):
+    """Owner, 2026-11-16: model choice is configuration. Changing the Clerk must not need the
+    Lead's override, and must not make an unqualified Clerk usable."""
+    app = routed_app
+    app.set_tiers([route("lead-a"), route("notes"), route("intake")], override="test")
+    lead_before = app.role_routes.raw()["lead"]
+    out = app.set_role_route("clerk", route("bulk-reader"))
+    rows = app.role_routes.raw()
+    assert rows["clerk"].model_id == "bulk-reader" and out["route"]["model"] == "bulk-reader"
+    assert rows["lead"] == lead_before and app.role_routes.resolve("scribe").model_id == "notes"
+    assert app.settings.data["tiers"][2]["model"] == "bulk-reader"          # the picker agrees
+    assert out["usable"] is False                                         # no qualification evidence
+    with pytest.raises(ApiError, match="set_lead"):
+        app.set_role_route("lead", route("other"))
+    with pytest.raises(ApiError):
+        app.set_role_route("clerk", "not a route")

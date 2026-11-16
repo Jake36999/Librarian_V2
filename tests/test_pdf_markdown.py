@@ -1,9 +1,11 @@
 """PDF cleanup (pdf_markdown.py) and the pdf_to_markdown tool: batching joins
-back up whole, the model is always DeepInfra regardless of the vault's own
-[clerk] route, and the tool writes a clean .md sibling."""
+back up whole, the model is the library's [services] cleanup setting (never its own
+[clerk] route), and the tool writes a clean .md sibling."""
 from __future__ import annotations
 
 from dataclasses import dataclass
+
+import pytest
 
 from resource_librarian import pdf_markdown, text, tools  # noqa: F401 (registers tools)
 from resource_librarian.providers import Reply
@@ -67,7 +69,7 @@ def test_pdf_to_markdown_tool_writes_hidden_generated_work(vault, monkeypatch):
                         lambda path, cache_dir: text.Extraction(pages=["Raw page one.",
                                                                        "Raw page two."]))
     fake = FakeEndpoint()
-    monkeypatch.setattr(pdf_markdown, "endpoint", lambda: fake)
+    monkeypatch.setattr(pdf_markdown, "endpoint", lambda vault=None: fake)
 
     ctx = Context(tier="contribute", vault=vault)
     result = REGISTRY.call("pdf_to_markdown", {"file": "Inbox/book.pdf"}, ctx)
@@ -130,3 +132,14 @@ def test_progress_is_reported_on_the_callers_thread_only():
         pages, fake, progress=lambda message: threads.append(threading.current_thread()))
     assert batches == 4 and len(threads) == 5 and all(t is caller for t in threads)
     assert [markdown.index(f"page {i}") for i in range(4)] == sorted(markdown.index(f"page {i}") for i in range(4))
+
+
+def test_the_cleanup_model_is_a_library_setting_not_a_constant(vault):
+    """Owner, 2026-11-16: model choices belong in configuration."""
+    assert pdf_markdown.route(vault) == ("deepinfra", pdf_markdown.MODEL)          # default unchanged
+    vault.set_setting("services", "cleanup", "deepinfra:google/gemma-4-26B-A4B-it")
+    assert pdf_markdown.route(vault) == ("deepinfra", "google/gemma-4-26B-A4B-it")
+    assert pdf_markdown.endpoint(vault).model == "google/gemma-4-26B-A4B-it"
+    vault.set_setting("services", "cleanup", "nowhere:some/model")
+    with pytest.raises(ValueError, match="cleanup"):
+        pdf_markdown.route(vault)
