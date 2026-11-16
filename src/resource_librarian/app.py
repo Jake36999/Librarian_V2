@@ -484,10 +484,12 @@ class App:
                 self.reconciled_at_start = reconcile_open(vault)
             except Exception as exc:  # noqa: BLE001 - startup never fails on it
                 self.reconciled_at_start = {"error": [f"{type(exc).__name__}: {exc}"[:300]]}
-        # Redacted invocation diagnostics live only in process memory for the
-        # first adapter slice.  Do not turn model prompts or responses into a
-        # new vault artefact merely by adding a protocol translation seam.
-        self.invocation_runtime = InvocationRuntime()
+        # Redacted invocation diagnostics stay in process memory: prompts and responses never become
+        # a vault artefact. The one persisted derivative is the spend audit (usage_log): role, model,
+        # outcome and token counts per call, so a large ingestion can be audited and capped.
+        from .usage_log import UsageLog
+        self.usage_log = UsageLog(vault)
+        self.invocation_runtime = InvocationRuntime(trace_sink=self.usage_log.record)
         self.broker = Broker(mode=self.settings.data.get("mode", "ask"),
                              timeout=broker_timeout)
         self.broker.subscribe(self.hub.publish)
