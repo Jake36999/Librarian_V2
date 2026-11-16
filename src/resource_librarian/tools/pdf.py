@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 
-from .. import ocr, pdf_markdown, text
+from .. import ocr, pdf_markdown, text, usage_log
 from ..registry import Card, Context, tool
 from ..conversions import ConversionStore
 from ..file_access import connected_read_path
@@ -47,9 +47,17 @@ def pdf_to_markdown_tool(ctx: Context, file: str, staged_item: str = "") -> dict
     if not any(p.strip() for p in result.pages):
         raise TypeError(f"{file!r} has no extractable text (a scanned PDF needs OCR first)")
     anchored = [f'[page {n}]\n{page}' for n, page in enumerate(result.pages, 1)]
+    if usage_log.budget(ctx.vault)["over"]:
+        raise TypeError("the library's budget ceiling was reached; no cleanup was run")
+
+    def spent(usage):
+        usage_log.record_call(ctx.vault, role="cleanup", task="pdf_to_markdown", model=pdf_markdown.MODEL,
+                              host="deepinfra", tokens_in=usage.get("input_tokens"),
+                              tokens_out=usage.get("output_tokens"))
     markdown, batches = pdf_markdown.clean_document(anchored,
                                                    ctx.extras.get("pdf_endpoint"),
-                                                   progress=ctx.extras.get("progress"))
+                                                   progress=ctx.extras.get("progress"),
+                                                   on_usage=spent)
     return store.save(request, markdown, pages=len(result.pages), batches=batches)
 
 
@@ -98,6 +106,10 @@ def ocr_pdf_tool(ctx: Context, file: str, staged_item: str = "",
     with ThreadPoolExecutor(max_workers=1, thread_name_prefix="ocr-page-commit") as persistence:
         def save_page(i, value):
             metadata = getattr(reader, 'last_response', {})
+            usage = (metadata or {}).get('usage') or {}
+            usage_log.record_call(ctx.vault, role='ocr', task='page', model=getattr(reader, 'name', ''),
+                                  tokens_in=usage.get('prompt_tokens'), tokens_out=usage.get('completion_tokens'),
+                                  usd=usage.get('estimated_cost'))
             pending_writes.append(persistence.submit(commit, lambda: store.save(
                 page_requests[i], value, pages=1, page_number=i + 1,
                 model=getattr(reader, 'name', ''), response=metadata)))
@@ -105,7 +117,8 @@ def ocr_pdf_tool(ctx: Context, file: str, staged_item: str = "",
             if len(pending_writes) >= max(4, 4 * int(getattr(reader, "concurrency", 1))):
                 pending_writes.pop(0).result()
         got = ocr.read_pdf(ctx.vault, path, reader, max_pages, all_pages=all_pages,
-                           cached_pages=cached_pages, on_page=save_page, extracted=extracted)
+                           cached_pages=cached_pages, on_page=save_page, extracted=extracted,
+                           keep_going=lambda: not usage_log.budget(ctx.vault)['over'])
         for future in pending_writes:
             future.result()
     markdown = got.pop('markdown')

@@ -67,19 +67,23 @@ def batch_pages(pages: list[str], batch_chars: int = BATCH_CHARS) -> list[str]:
     return batches
 
 
-def clean_text(raw: str, ep: OpenAICompatible | None = None) -> str:
+def clean_text(raw: str, ep: OpenAICompatible | None = None,
+               on_usage: Callable[[dict], None] | None = None) -> str:
     """One blob of raw extracted text, reformatted. Raises `ProviderError`
     (no key, unreachable, the model's own error) - never silently degrades,
     since the whole point of calling this is the cleaner text."""
     ep = ep or endpoint()
     reply = ep.chat(CLEANUP_SYSTEM, [{"role": "user", "content": raw}], [],
                     max_tokens=REASONING_FLOOR + max(2000, int(len(raw) * 0.6)))
+    if on_usage is not None:
+        on_usage(getattr(reply, "usage", None) or {})
     return reply.text.strip()
 
 
 def clean_document(pages: list[str], ep: OpenAICompatible | None = None,
                    progress: Callable[[str], None] | None = None,
-                   workers: int = WORKERS) -> tuple[str, int]:
+                   workers: int = WORKERS,
+                   on_usage: Callable[[dict], None] | None = None) -> tuple[str, int]:
     """Every page, batched and cleaned, joined into one markdown document -
     for a person or the model to read whole, the way V1's script wrote a
     `.md` sibling next to a PDF. Returns (markdown, batches billed).
@@ -91,7 +95,7 @@ def clean_document(pages: list[str], ep: OpenAICompatible | None = None,
     done = [0]
 
     def one(batch: str) -> str:
-        out = clean_text(batch, ep)
+        out = clean_text(batch, ep, on_usage)
         done[0] += 1
         if progress:
             progress(f"cleaning the PDF's text: {done[0]} of {len(batches)} parts")

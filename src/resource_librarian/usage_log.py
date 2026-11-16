@@ -73,3 +73,56 @@ class UsageLog:
                 else:
                     entry["in"] += line["in"]; entry["out"] += line.get("out") or 0
         return totals
+
+
+# -- calls that do not go through the InvocationRuntime (OCR pages, PDF cleanup) --------------
+
+_WRITE = threading.Lock()
+
+
+def record_call(vault: Any, *, role: str, task: str, model: str = "", host: str = "",
+                tokens_in: int | None = None, tokens_out: int | None = None,
+                usd: float | None = None, outcome: str = "ok") -> None:
+    """One paid call made outside the runtime: its tokens and, when the provider reported it,
+    its dollar cost. Same file and line shape as `UsageLog.record`, plus `usd`."""
+    try:
+        line = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), "role": role,
+                "task": task, "host": host, "model": model, "outcome": outcome, "ms": None,
+                "in": tokens_in, "out": tokens_out}
+        if usd is not None:
+            line["usd"] = round(float(usd), 6)
+        log = UsageLog(vault)
+        with _WRITE:
+            log.folder().mkdir(parents=True, exist_ok=True)
+            with open(log.today_path(), "a", encoding="utf-8") as handle:
+                handle.write(json.dumps(line, separators=(",", ":")) + chr(10))
+    except Exception:                    # noqa: BLE001 - diagnostics never break a model call
+        pass
+
+
+def spent_usd(vault: Any) -> float:
+    """Dollars known to be spent: reported costs, plus unpriced cleanup tokens at the library's
+    own `[budget] cleanup_usd_per_mtok_in/out`. Tokens with no price are never guessed."""
+    price_in = vault.setting("budget", "cleanup_usd_per_mtok_in")
+    price_out = vault.setting("budget", "cleanup_usd_per_mtok_out")
+    total = 0.0
+    folder = UsageLog(vault).folder()
+    for path in sorted(folder.glob("usage-*.jsonl")):
+        for text in path.read_text(encoding="utf-8").splitlines():
+            try:
+                line = json.loads(text)
+            except ValueError:
+                continue
+            if isinstance(line.get("usd"), (int, float)):
+                total += line["usd"]
+            elif line.get("role") == "cleanup" and isinstance(price_in, (int, float))                     and isinstance(price_out, (int, float)):
+                total += (line.get("in") or 0) * price_in / 1e6 + (line.get("out") or 0) * price_out / 1e6
+    return total
+
+
+def budget(vault: Any) -> dict[str, Any]:
+    """The library's spend against its optional ceiling (`[budget] ceiling_usd`)."""
+    ceiling = vault.setting("budget", "ceiling_usd")
+    ceiling = float(ceiling) if isinstance(ceiling, (int, float)) and not isinstance(ceiling, bool) else None
+    spent = spent_usd(vault)
+    return {"ceiling_usd": ceiling, "spent_usd": spent, "over": ceiling is not None and spent >= ceiling}

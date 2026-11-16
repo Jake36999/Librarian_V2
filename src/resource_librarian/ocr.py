@@ -172,7 +172,7 @@ def render_page(path: Path, index: int, scale: float = SCALE) -> bytes:
         document.close()
 
 
-def read_pdf(vault: Vault, path: Path, ocr: Any, max_pages: int = MAX_PAGES, *, all_pages: bool = False, cached_pages=None, on_page=None, extracted=None) -> dict[str, Any]:
+def read_pdf(vault: Vault, path: Path, ocr: Any, max_pages: int = MAX_PAGES, *, all_pages: bool = False, cached_pages=None, on_page=None, extracted=None, keep_going=None) -> dict[str, Any]:
     """Every page's text: its own text layer where it has one, OCR where it has none."""
     extracted = extracted if extracted is not None else text.extract(path, vault.derived / "text")
     if extracted.error:
@@ -195,6 +195,11 @@ def read_pdf(vault: Vault, path: Path, ocr: Any, max_pages: int = MAX_PAGES, *, 
         active = {}
         def submit_next():
             i = next(pending, None)
+            if i is not None and keep_going is not None and not keep_going():
+                if not any(e.get("budget") for e in errors):
+                    errors.append({"page": i + 1, "error": "stopped: the library's budget ceiling was reached",
+                                   "budget": True})
+                i = None
             if i is not None:
                 # PDFium rendering and all durable writes stay on the caller.
                 active[pool.submit(transcribe, render_page(path, i))] = i

@@ -664,6 +664,11 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
         for item_id in items:
             if item_id in finished:
                 continue
+            from . import usage_log
+            if usage_log.budget(ctx.vault)["over"]:       # a ceiling the person set: stop, resumable
+                runs.append(run_id, {"type": "cancelled", "detail": "the library's budget ceiling "
+                                     "([budget] ceiling_usd) was reached; raise it to resume"})
+                return
             results: dict[str, dict[str, Any]] = {}
             prior = (store.load(item_id).get("processing") or {})
             stages = FOLDER_STAGES if store.load(item_id).get('kind') == 'folder' else STAGES

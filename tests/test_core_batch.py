@@ -585,3 +585,22 @@ def test_relations_do_not_require_claims_from_fully_read_bibliography(core, refe
         "information": []}
     core.writer.submit(lambda: dik.save(core.vault, record))
     assert batch._relate(_ctx(core), item)["status"] == expected
+
+
+def test_a_run_stops_resumably_at_the_library_budget_ceiling(core, monkeypatch):
+    from resource_librarian import usage_log
+    _item(core, "first")
+    _item(core, "second")
+    core.vault.set_setting("budget", "ceiling_usd", 0.01)
+    calls = []
+    def parse(ctx, source):
+        calls.append(source["id"])
+        usage_log.record_call(ctx.vault, role="ocr", task="page", model="m", usd=0.02)   # first item spends it all
+        return {"status": "complete"}
+    monkeypatch.setattr(batch, "STAGES", [("parse", parse)])
+    run = core.person_call("process_approved", {})
+    assert run["status"] == "cancelled"
+    assert len(calls) == 1                                    # the second item never started
+    core.vault.set_setting("budget", "ceiling_usd", 1.0)
+    resumed = core.person_call("process_approved", {"resume": run["run"]})
+    assert resumed["status"] == "finished" and len(calls) == 2
