@@ -2721,11 +2721,11 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/pdf.py",
-        "line": 51,
+        "line": 64,
         "symbol": "ocr_pdf_tool"
       },
       "fingerprint": {
-        "source_sha256": "93c66f7f194c9787f0dabed631762ac7e174ed1dd2edff000a4c458cbc28655a",
+        "source_sha256": "6b7ba0acf0465cb446d90def831650e4d1ba141e4686aabc89d38f2ad1d54b51",
         "schema_sha256": "c0ed618c07ce2bc5d2c89031133be3d552be0113a78189872c418488dd8d980d",
         "effect": "write",
         "open_world": true,
@@ -2854,11 +2854,11 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/pdf.py",
-        "line": 13,
+        "line": 16,
         "symbol": "pdf_to_markdown_tool"
       },
       "fingerprint": {
-        "source_sha256": "b170c9d9d51d6ad969ce29dbb9c2337058a02df42d2c00b9f3fe465e3c8f6bb8",
+        "source_sha256": "328824edda3503ec52153259de5541842f001f1f4a7897a8434a0abab006abc6",
         "schema_sha256": "a26de509015c627856703e51d4a693b638e645d261fddf2c4676a9187a67f2ed",
         "effect": "write",
         "open_world": true,

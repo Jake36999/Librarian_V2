@@ -604,3 +604,26 @@ def test_a_run_stops_resumably_at_the_library_budget_ceiling(core, monkeypatch):
     core.vault.set_setting("budget", "ceiling_usd", 1.0)
     resumed = core.person_call("process_approved", {"resume": run["run"]})
     assert resumed["status"] == "finished" and len(calls) == 2
+
+
+def test_batch_status_scales_with_the_run_not_its_square(core):
+    """A 30k-source ingestion has about 200k log events; status must group them once."""
+    import time
+    from resource_librarian.workflows import RunStore
+    import json
+    runs = RunStore(core.vault)
+    ids = [f"doc-{i:05d}" for i in range(4000)]
+    run_id = "batch-2026-11-16-scale1"
+    events = [{"type": "started", "name": batch.NAME, "kind": "batch", "items": ids, "requested_by": "test"}]
+    for item in ids:
+        events += [{"type": "done", "item": item, "stage": stage, "status": "complete"}
+                   for stage in ("validate", "parse", "read", "lenses", "data", "relate", "review")]
+        events.append({"type": "item", "item": item, "status": "complete", "coverage": "full"})
+    events.append({"type": "finished"})
+    runs.path(run_id).parent.mkdir(parents=True, exist_ok=True)
+    runs.path(run_id).write_text(chr(10).join(json.dumps(e) for e in events) + chr(10), encoding="utf-8")
+    started = time.perf_counter()
+    out = batch.status(core.vault, run_id)
+    elapsed = time.perf_counter() - started
+    assert out["total"] == 4000 and out["items"][0]["stages"]["relate"] == "complete"
+    assert elapsed < 3.0, f"status took {elapsed:.1f}s for 4000 items"

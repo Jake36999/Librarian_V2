@@ -526,7 +526,10 @@ def status(vault: Vault, run_id: str = "") -> dict[str, Any]:
         return out
     events = RunStore(vault).events(run_id)
     items = events[0].get("items", [])
-    done = {(e["item"], e["stage"]): e for e in events if e["type"] == "done"}
+    stages_by_item: dict[str, dict[str, str]] = {}      # grouped once: not items x events
+    for e in events:
+        if e["type"] == "done":
+            stages_by_item.setdefault(e["item"], {})[e["stage"]] = e["status"]
     finished = {e["item"]: e for e in events if e["type"] == "item"}
     last = events[-1]
     state = last["type"] if last["type"] in ("finished", "cancelled", "failed") else (
@@ -539,8 +542,7 @@ def status(vault: Vault, run_id: str = "") -> dict[str, Any]:
                items=[{"id": i, **({"status": finished[i]["status"],
                                      "coverage": finished[i].get("coverage", "")}
                                     if i in finished else {"status": "processing"}),
-                       "stages": {s: row['status'] for (key, s), row in done.items()
-                                  if key == i}} for i in items])
+                       "stages": dict(stages_by_item.get(i, {}))} for i in items])
     if last["type"] in ("cancelled", "failed"):
         out["detail"] = last.get("detail", "")
     return out
