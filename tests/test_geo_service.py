@@ -148,3 +148,53 @@ def test_an_app_never_starts_geo_by_itself_and_closing_the_library_stops_it(libr
     finally:
         app.close_runtime()
     assert app.geo.status()["state"] == "stopped" and not _alive(pid)
+
+
+def test_stop_never_ends_a_process_a_stale_ready_file_names(library):
+    """A ready file left by an earlier run must not point stop() at a reused pid."""
+    import subprocess
+    from resource_librarian.geo_service import GeoService
+    vault, _ = library
+    bystander = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+    try:
+        runtime = vault.librarian / "runtime"
+        runtime.mkdir(parents=True, exist_ok=True)
+        (runtime / "geographer-ready.json").write_text(
+            json.dumps(dict(url="http://127.0.0.1:1/", port=1, pid=bystander.pid)), encoding="utf-8")
+        service = GeoService(vault)          # this session never started a service
+        service.stop()
+        time.sleep(0.5)
+        assert bystander.poll() is None and _alive(bystander.pid)
+    finally:
+        bystander.kill()
+
+
+def test_stop_ends_only_the_listener_it_recorded(library):
+    """If the recorded listener's pid now belongs to another process, leave it alone."""
+    import subprocess
+    from resource_librarian.geo_service import GeoService
+    vault, _ = library
+    service = GeoService(vault)
+    service.start("http://127.0.0.1:52206/")
+    bystander = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+    try:
+        assert _wait(service, {"running", "failed"})["state"] == "running"
+        service._info = {**service._info, "pid": bystander.pid}      # as if the pid were reused
+        service.stop()
+        time.sleep(0.5)
+        assert bystander.poll() is None
+    finally:
+        bystander.kill()
+
+
+def test_the_service_is_told_which_process_owns_it(library):
+    from resource_librarian.geo_service import GeoService
+    vault, record = library
+    service = GeoService(vault)
+    service.start("http://127.0.0.1:52206/")
+    try:
+        assert _wait(service, {"running", "failed"})["state"] == "running"
+        argv = json.loads(record.read_text())["argv"]
+        assert argv[argv.index("--parent-pid") + 1] == str(os.getpid())
+    finally:
+        service.stop()

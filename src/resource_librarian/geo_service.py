@@ -27,6 +27,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from . import process_identity
 from .folder_review import configuration
 
 READY_TIMEOUT = 60.0
@@ -41,6 +42,7 @@ class GeoService:
         self._lock = threading.Lock()
         self._proc: subprocess.Popen | None = None
         self._info: dict[str, Any] | None = None
+        self._listener_start: str | None = None       # the listener's start identity, captured when it reported ready
         self._state = "stopped"
         self._error = ""
         self._stopping = threading.Event()
@@ -84,7 +86,8 @@ class GeoService:
         log.mkdir(parents=True, exist_ok=True)
         argv = [*command, "serve-graphs", "--catalog", str(self.catalog), "--create-catalog",
                 "--transport", "http", "--port", "0", "--ready-file", str(ready),
-                "--librarian-url", librarian_url, "--library-name", self.vault.title]
+                "--librarian-url", librarian_url, "--library-name", self.vault.title,
+                "--parent-pid", str(os.getpid())]
         env = {**os.environ, "GEOGRAPHER_ACCESS_TOKEN": self.token, "PYTHONUTF8": "1"}
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform == "win32" else 0
         try:
@@ -106,6 +109,7 @@ class GeoService:
                 if isinstance(info, dict) and isinstance(info.get("port"), int):
                     with self._lock:
                         self._info, self._state = info, "running"
+                        self._listener_start = process_identity.process_start(info["pid"]) if isinstance(info.get("pid"), int) else None
                     return
             code = proc.poll()
             if code is not None:
@@ -130,17 +134,26 @@ class GeoService:
         self._stopping.set()
         self._terminate()
         with self._lock:
-            self._state, self._info, self.token = "stopped", None, ""
+            self._state, self._info, self.token, self._listener_start = "stopped", None, "", None
         (self._runtime / "geographer-ready.json").unlink(missing_ok=True)
 
     def _terminate(self) -> None:
         with self._lock:
             proc, info = self._proc, self._info
             self._proc = None
-        listener = info.get("pid") if isinstance(info, dict) else None
-        if not isinstance(listener, int):
-            listener = _ready_pid(self._runtime / "geographer-ready.json")
-        if isinstance(listener, int) and (proc is None or listener != proc.pid):
+        # Only a process this session started is ever ended. The listener is the pid this
+        # session read from the ready file after launching, and it must still be the same
+        # process (start identity), so a stale file or a reused pid never reaches an
+        # unrelated program.
+        listener = None
+        if isinstance(info, dict) and isinstance(info.get("pid"), int):
+            if self._listener_start and process_identity.is_alive(info["pid"], self._listener_start):
+                listener = info["pid"]
+        elif proc is not None:                    # launched, but not yet ready: the file is ours
+            pid = _ready_pid(self._runtime / "geographer-ready.json")   # (cleared before launch)
+            if pid is not None and process_identity.is_alive(pid):
+                listener = pid
+        if listener is not None and (proc is None or listener != proc.pid):
             _end(listener)
         if proc is not None and proc.poll() is None:
             proc.terminate()
