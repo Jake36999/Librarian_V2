@@ -56,11 +56,35 @@ def test_documents_lists_only_this_folders_own_third_party_documents(attached):
     assert found == ["papers/a.pdf", "papers/b.md", "papers/sub/c.txt"]
 
 
-def test_own_folders_are_never_turned_into_sources(attached):
+def test_own_docs_become_sources_but_other_own_content_does_not(attached):
+    """Owner, 2026-11-16: internal docs are read as Sources too, and keep their own graph."""
+    from resource_librarian import content_roots
     from resource_librarian.folder_sources import documents
     vault, source = attached
+    found = [p.relative_to(source).as_posix() for p in documents(vault, str(source / "drafts"), scope=(".md",))]
+    assert found == ["drafts/own.md"]
+    manifest = content_roots.load(vault.root)
+    for root in manifest["roots"]:
+        if root.get("folder_decision") == "folder-3":
+            root["purpose"] = "own-current"
+    content_roots._write_json(content_roots.manifest_path(vault.root), manifest)
     with pytest.raises(ValueError, match="FOLDER_SOURCES"):
-        documents(vault, str(source / "drafts"))
+        documents(vault, str(source / "drafts"), scope=(".md",))
+
+
+def test_queue_newest_first_puts_the_most_recent_documents_in_the_queue_first(attached):
+    import os
+    from resource_librarian.folder_sources import queue
+    vault, source = attached
+    for age, rel in enumerate(("papers/sub/c.txt", "papers/a.pdf", "papers/b.md")):
+        os.utime(source / rel, (1_700_000_000 - age * 1000, 1_700_000_000 - age * 1000))
+    calls = []
+    out = queue(vault, str(source / "papers"), ingest=lambda ref, note: calls.append(ref) or {"status": "queued"},
+                limit=10, scope=(".pdf", ".md", ".txt"), order="newest")
+    assert out["order"] == "newest"
+    assert [c.rsplit("/", 2)[-1] for c in calls] == ["c.txt", "a.pdf", "b.md"]
+    with pytest.raises(ValueError, match="order"):
+        queue(vault, str(source / "papers"), ingest=lambda r, n: {}, order="oldest")
 
 
 def test_queue_defers_every_document_once_and_respects_the_limit(attached):

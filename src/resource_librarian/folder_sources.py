@@ -4,8 +4,10 @@ Folder review classifies folders; it never reads their contents. A folder accept
 as `third-party` or `research-docs` is reference material, so each of its documents
 enters the normal source pipeline: intake (capture -> evidence -> facts -> describe
 -> stage) and then the approved batch (parse -> read -> lenses -> data -> relate ->
-metadata -> review). Own content (`owner_created`) is indexed whole instead and is
-never turned into Sources.
+metadata -> review). Own code, data and logs (`owner_created`) are indexed whole instead
+and never turned into Sources. Own documentation (`own-docs`) is both (owner, 2026-11-16):
+read as Sources, and still indexed in its own graph, reasoned over separately and joined
+by the cross-graph analysis.
 
 Queuing is deferred (`ingest defer=true`): no model call happens here, so a whole
 folder can be queued for free and processed in measured batches.
@@ -19,7 +21,8 @@ from typing import Any, Callable
 from . import content_roots
 from .credentials import credential_path, generated_path
 
-SOURCE_PURPOSES = frozenset({"third-party", "research-docs"})
+SOURCE_PURPOSES = frozenset({"third-party", "research-docs", "own-docs"})
+ORDERS = ("name", "newest")
 DOCUMENT_SUFFIXES = frozenset({".pdf", ".md", ".txt", ".rst", ".tex", ".html", ".htm", ".docx"})
 # What becomes a Source by default. A vendored repository holds thousands of .txt/.rst/.md files (Parallax's
 # third-party folders: 9,359 documents, 17 of them PDFs); each Source costs about fifteen Clerk tasks plus its
@@ -58,8 +61,8 @@ def documents(vault: Any, folder: str, scope: Any = None, *, _all: bool = False)
     base = Path(folder).resolve()
     decision = attached_root(vault, base)
     if decision is None or Path(decision["path"]).resolve() != base or decision.get("purpose") not in SOURCE_PURPOSES:
-        raise ValueError("FOLDER_SOURCES: only an accepted third-party or research-docs folder becomes Sources; "
-                         "own content is indexed whole")
+        raise ValueError("FOLDER_SOURCES: only an accepted third-party, research-docs or own-docs folder "
+                         "becomes Sources; other own content is indexed whole")
     out = []
     for path in sorted(base.rglob("*")):
         if not path.is_file() or path.suffix.lower() not in DOCUMENT_SUFFIXES:
@@ -83,12 +86,17 @@ def _ledger(vault: Any) -> Path:
 
 
 def queue(vault: Any, folder: str, *, ingest: Callable[[str, str], dict[str, Any]],
-          limit: int = 50, scope: Any = None) -> dict[str, Any]:
-    """Defer up to ``limit`` not-yet-queued documents of one folder through ``ingest``."""
+          limit: int = 50, scope: Any = None, order: str = "name") -> dict[str, Any]:
+    """Defer up to ``limit`` not-yet-queued documents of one folder through ``ingest``.
+    ``order="newest"`` queues the most recently modified first (intake runs in queue order)."""
     if not isinstance(limit, int) or not 1 <= limit <= 500:
         raise ValueError("FOLDER_SOURCES: limit is 1-500 documents per call")
+    if order not in ORDERS:
+        raise ValueError(f"FOLDER_SOURCES: order is one of {list(ORDERS)}")
     chosen = _scope(scope)
     docs = documents(vault, folder, chosen)
+    if order == "newest":
+        docs.sort(key=lambda p: p.stat().st_mtime, reverse=True)
     left_out: dict[str, int] = {}
     for other in documents(vault, folder, _all=True):
         if other.suffix.lower() not in chosen:
@@ -111,7 +119,7 @@ def queue(vault: Any, folder: str, *, ingest: Callable[[str, str], dict[str, Any
         queued += 1
     path.write_text(json.dumps(done, indent=1), encoding="utf-8")
     keys = {d.resolve().as_posix() for d in docs}
-    return dict(folder=str(Path(folder).resolve()), scope=list(chosen), not_in_scope=dict(sorted(left_out.items())),
+    return dict(folder=str(Path(folder).resolve()), scope=list(chosen), order=order, not_in_scope=dict(sorted(left_out.items())),
                 documents=len(docs), queued=queued,
                 already_queued=sum(1 for k in keys if k in done) - queued,
                 remaining=sum(1 for k in keys if k not in done), failures=failures)

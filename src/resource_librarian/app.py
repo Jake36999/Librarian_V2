@@ -3911,7 +3911,7 @@ class App:
         except (TypeError, ValueError):
             raise ApiError(400, 'limit is a whole number of documents') from None
         try:
-            return queue(self.vault, folder, limit=limit, scope=body.get('scope'), ingest=lambda ref, note: self.person_call(
+            return queue(self.vault, folder, limit=limit, scope=body.get('scope'), order=str(body.get('order') or 'name'), ingest=lambda ref, note: self.person_call(
                 'ingest', {'ref': ref, 'defer': True, 'note': note}))
         except ValueError as exc:
             raise ApiError(400, str(exc)) from exc

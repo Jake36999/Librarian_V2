@@ -132,7 +132,12 @@ def _framing(ctx: Context, entry: dict) -> tuple[str, str, list[str], dict, str]
 def intake_run(ctx: Context, limit: int = 10) -> dict:
     index_gateway = IndexGateway(ctx)
     results = []
+    from .. import usage_log
     for entry in intake.pending(ctx.vault)[:limit]:
+        if usage_log.budget(ctx.vault)["over"]:       # the library's ceiling: stop, the rest stay queued
+            return {"processed": len(results), "results": results, "stopped": "budget_ceiling",
+                    "detail": "the library's budget ceiling ([budget] ceiling_usd) was reached",
+                    "still_waiting": len(intake.pending(ctx.vault))}
         session_id, need, disqualifiers, found_by, framing = _framing(ctx, entry)
         result = intake.ingest(ctx.vault, None, entry["ref"], endpoint=clerk_endpoint(ctx),
                                fetcher=_fetcher(ctx), need=need, disqualifiers=disqualifiers,

@@ -92,7 +92,7 @@ def test_unpriced_tokens_are_priced_only_by_a_library_setting(vault):
 
 def test_the_ceiling_is_a_library_setting_and_blocks_when_reached(vault):
     from resource_librarian import usage_log
-    assert usage_log.budget(vault) == {"ceiling_usd": None, "spent_usd": 0.0, "over": False}
+    assert usage_log.budget(vault) == {"ceiling_usd": None, "spent_usd": 0.0, "over": False, "unpriced_calls": 0}
     vault.set_setting("budget", "ceiling_usd", 0.004)
     usage_log.record_call(vault, role="ocr", task="page", model="m", usd=0.003)
     assert usage_log.budget(vault)["over"] is False
@@ -134,13 +134,15 @@ def test_cleanup_calls_are_recorded_with_their_tokens(vault):
 
     class Endpoint:
         def chat(self, system, messages, tools, max_tokens=0):
-            return Reply(text="# cleaned", usage={"input_tokens": 120, "output_tokens": 30})
+            return Reply(text="# cleaned", usage={"input_tokens": 120, "output_tokens": 30,
+                                                   "estimated_cost": 0.0004})
     ctx = Context(tier="curate", vault=vault, extras={"pdf_endpoint": Endpoint()})
     out = REGISTRY.call("pdf_to_markdown", {"file": "Inbox/t.pdf"}, ctx)
     assert "error" not in out, out
     rows = [json.loads(t) for p in (vault.librarian / "runtime").glob("usage-*.jsonl")
             for t in p.read_text().splitlines()]
     assert [(r["role"], r["in"], r["out"]) for r in rows] == [("cleanup", 120, 30)]
+    assert rows[0]["usd"] == pytest.approx(0.0004)              # the provider's own figure is counted
 
 
 def test_cleanup_refuses_over_the_ceiling(vault):
@@ -153,3 +155,39 @@ def test_cleanup_refuses_over_the_ceiling(vault):
     usage_log.record_call(vault, role="ocr", task="page", model="m", usd=0.002)
     out = REGISTRY.call("pdf_to_markdown", {"file": "Inbox/u.pdf"}, Context(tier="curate", vault=vault, extras={}))
     assert "error" in out and "budget" in str(out.get("detail", "")).lower()
+
+
+# --- Clerk and lead spend reach the ceiling (owner, 2026-11-16: run until the funds are spent) ---
+
+def test_provider_reported_cost_survives_both_normalisations():
+    from resource_librarian import providers
+    once = providers._safe_usage({"prompt_tokens": 10, "completion_tokens": 5, "estimated_cost": 0.00042})
+    assert once["estimated_cost_usd"] == pytest.approx(0.00042)
+    assert providers._safe_usage(once)["estimated_cost_usd"] == pytest.approx(0.00042)
+    assert "estimated_cost_usd" not in providers._safe_usage({"prompt_tokens": 1, "estimated_cost": True})
+    assert "estimated_cost_usd" not in providers._safe_usage({"prompt_tokens": 1, "estimated_cost": -1})
+
+
+def test_a_runtime_row_with_a_reported_cost_counts_toward_the_ceiling(vault):
+    import copy
+    from resource_librarian import usage_log
+    row = copy.deepcopy(ROW)
+    row["result"]["telemetry"]["usage"]["estimated_cost_usd"] = 0.0021
+    usage_log.UsageLog(vault).record(row)
+    usage_log.UsageLog(vault).record(ROW)                       # no cost reported: visible, not guessed
+    state = usage_log.budget(vault)
+    assert state["spent_usd"] == pytest.approx(0.0021) and state["unpriced_calls"] == 1
+
+
+def test_intake_run_stops_at_the_ceiling_and_leaves_the_rest_queued(vault, monkeypatch):
+    from resource_librarian import intake, usage_log
+    from resource_librarian.registry import Context
+    from resource_librarian.tools.intake import intake_run
+    monkeypatch.setattr(intake, "pending", lambda v, *a: [{"id": "q1", "ref": "x"}])
+    def never(*a, **k):
+        raise AssertionError("no paid intake past the ceiling")
+    monkeypatch.setattr(intake, "ingest", never)
+    vault.set_setting("budget", "ceiling_usd", 0.001)
+    usage_log.record_call(vault, role="clerk", task="describe", model="m", usd=0.002)
+    out = intake_run(Context(tier="contribute", vault=vault), limit=5)
+    assert out["processed"] == 0 and out["stopped"] == "budget_ceiling" and out["still_waiting"] == 1

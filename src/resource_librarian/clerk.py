@@ -62,10 +62,29 @@ when where which who will with without would you your via also any each other su
 PAYLOAD_KEYS = frozenset({"task", "system", "user", "schema", "temperature", "max_tokens"})
 
 
-def _bullets(name: str = "bullets", max_items: int = MAX_BULLETS) -> dict[str, Any]:
+READING_CHARS = 240          # points and limits: room for an equation or a table value
+# Pilot review 2026-11-16: 43 of 772 reading bullets carried any math, and 8 pointed at an
+# equation instead of giving it. The reading kinds say so explicitly.
+QUANTITATIVE_RULES = (
+    "Keep equations, symbols, numbers and units exactly as the text writes them.",
+    "State a result itself (the value, the relation), not a pointer such as 'given by Eq. (3)'.",
+)
+
+
+def _bullets(name: str = "bullets", max_items: int = MAX_BULLETS,
+             chars: int = BULLET_CHARS) -> dict[str, Any]:
     return {"type": "object", "required": [name], "properties": {
         name: {"type": "array", "maxItems": max_items,
-               "items": {"type": "string", "maxLength": BULLET_CHARS}}}}
+               "items": {"type": "string", "maxLength": chars}}}}
+
+
+def _fit(text: str, maximum: int) -> str:
+    """An oversized item kept, cut at a word boundary with an explicit marker. Discarding it
+    whole lost some of the densest statements (pilot: discards on 8 of 10 papers)."""
+    cut = text[:maximum - 1]
+    if " " in cut[maximum // 2:]:
+        cut = cut[:cut.rfind(" ")]
+    return cut.rstrip(" ,;:") + "…"
 
 
 @dataclass(frozen=True)
@@ -79,6 +98,7 @@ class Kind:
     chunk_chars: int = 6000
     bullet_fields: tuple[str, ...] = ()        # each string must be grounded in the chunk
     quote_fields: tuple[str, ...] = ()         # each must appear verbatim in the chunk
+    rules: tuple[str, ...] = ()                # extra rules this kind adds to the prompt
 
 
 KINDS: dict[str, Kind] = {k.name: k for k in (
@@ -164,11 +184,12 @@ KINDS: dict[str, Kind] = {k.name: k for k in (
               "confident": {"type": "boolean"}}},
          temperature=0.2, max_tokens=600, bullet_fields=("bottom_line", "what_it_solves")),
     Kind("points", "say what a passage of a text itself claims, argues or explains",
-         _bullets(max_items=5), temperature=0.15, max_tokens=600, chunk_chars=6000,
-         bullet_fields=("bullets",)),
+         _bullets(max_items=5, chars=READING_CHARS), temperature=0.15, max_tokens=800,
+         chunk_chars=6000, bullet_fields=("bullets",), rules=QUANTITATIVE_RULES),
     Kind("limits", "say what a text itself states about its own limits, assumptions and "
-                   "conditions", _bullets(max_items=4),
-         temperature=0.15, max_tokens=500, chunk_chars=6000, bullet_fields=("bullets",)),
+                   "conditions", _bullets(max_items=4, chars=READING_CHARS),
+         temperature=0.15, max_tokens=650, chunk_chars=6000, bullet_fields=("bullets",),
+         rules=QUANTITATIVE_RULES),
     # The lens chain (V1's progressive perspective prompts, E1-E11 in
     # `internal docs/Literature Alignment - Agentic AI Trust and Architecture
     # 2026-09-26.md`): perspective -> attention -> challenge -> role -> probe
@@ -383,6 +404,7 @@ def _system_prompt(kind: Kind) -> str:
             "- If the text does not say, choose the least committed option the schema "
             "allows, or leave the field empty. Do not infer.\n"
             "- Do not judge whether it is good, popular or worth using.\n"
+            + "".join(f"- {rule}\n" for rule in kind.rules) +
             "- Reply with one JSON object matching this schema, and nothing else:\n"
             f"{json.dumps(kind.schema)}")
 
@@ -1508,7 +1530,10 @@ def run_one(task: Task, endpoint: Endpoint) -> Result:
                 kept = []
                 for bullet in bullets:
                     if isinstance(bullet, str) and len(bullet) > maximum:
-                        reductions.append(f"{field}: discarded oversized item: {bullet}")
+                        # Kept, cut with a marker; the full text stays in the reductions.
+                        reductions.append(f"{field}: oversized item kept truncated at "
+                                          f"{maximum} characters: {bullet}")
+                        kept.append(_fit(bullet, maximum))
                     else:
                         kept.append(bullet)
                 value[field] = kept

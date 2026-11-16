@@ -6200,3 +6200,47 @@ and the MCP server still refuses with `CORE_REQUIRED`.
 **Verification:** full suite: 2139 passed, 2 skipped, 5 deselected in 655.93s (0:10:55) (exit 0, Python 3.11.3)
 (`reports/2026-11-12-evidence/suite-a1.json`, a clean clone of `6c79979` plus this
 commit's files).
+
+### Budgeted ingestion prerequisites: Clerk spend in the ceiling, reading kept whole, internal docs as Sources (2026-11-16)
+
+**Owner, 2026-11-16:** $20 for the main architecture and internal docs, $10 for
+supporting research, newest content first, run until the funds are spent if the
+pipeline is solid. Internal docs are added as Sources and keep their own graph
+section; the cross-graph analysis joins them.
+
+**What blocked a capped run, and the changes:**
+- **The ceiling could not see Clerk or lead spend.** `[budget] ceiling_usd`
+  counted OCR and priced cleanup only; runtime rows carried tokens, no dollars.
+  `providers._safe_usage` now keeps the provider's own `estimated_cost`
+  (DeepInfra) as `estimated_cost_usd`, surviving both normalisations; the
+  usage log writes it as `usd`; cleanup records it too. `budget()` also
+  reports `unpriced_calls`, so a route the cap cannot price is visible.
+- **Intake ignored the ceiling.** `intake_run` now stops between items when the
+  ceiling is reached and leaves the rest queued (`stopped: budget_ceiling`).
+- **Reading lost its densest statements** (pilot: discards on 8 of 10 papers;
+  43 of 772 bullets carried math). Oversized bullets are kept, cut at a word
+  boundary with "…", the full text in the reductions. `points` and `limits`
+  allow 240 characters and tell the Clerk to keep equations, symbols, numbers
+  and units verbatim and to state results, not "given by Eq. (n)".
+- **Internal docs never became Sources.** `own-docs` joins the Source purposes;
+  other own content (code, data, logs) is still indexed whole only. Folder
+  queuing takes `order="newest"` (most recently modified first).
+
+**Access review.** `intake_run` and `pdf_to_markdown` fingerprints refreshed
+after review: a budget stop and cost logging only, no new reads.
+
+**Not changed.** Titles, topics, card sampling and foreign-material filtering
+(C6-C9) still apply after reading and need no re-read; they are not in this
+change.
+
+**Tests.** `test_usage_log.py` (+3: cost survives both normalisations, a runtime
+row with a cost counts and one without is reported unpriced, intake stops at the
+ceiling; cleanup row carries its cost), `test_folder_sources.py` (own-docs
+become Sources while other own content does not; newest-first order),
+`test_clerk.py` (oversized kept truncated; reading kinds ask for equations).
+
+**Verification:** full suite in a clean clone of `bd57987` plus this change:
+2514 passed, 4 skipped, 5 deselected; 47 failed and 27 errored, all in
+subprocess-spawning tests with Windows exit 0xC0000142 (process start failed)
+late in a 16-minute run. Re-running those 21 files in the same clone: 238 passed,
+0 failed (2 min 12 s).

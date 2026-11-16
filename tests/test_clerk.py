@@ -217,8 +217,18 @@ def test_oversized_bullet_does_not_discard_valid_siblings():
     result = clerk.run_one(clerk.points(short + " " + long),
         clerk.Scripted(lambda p: {"bullets": [short, long]}))
     assert result.ok
-    assert result.value["bullets"] == [short]
-    assert any(long in warning for warning in result.dropped)
+    # Pilot review 2026-11-16: kept, cut with a marker, never dropped whole; full text in the reductions.
+    kept = result.value["bullets"]
+    assert kept[0] == short and kept[1].endswith("…") and len(kept[1]) <= clerk.READING_CHARS
+    assert long.startswith(kept[1][:-1].rstrip())
+    assert any(long in warning and "kept truncated" in warning for warning in result.dropped)
+
+
+def test_reading_kinds_ask_for_equations_and_values_verbatim():
+    for name in ("points", "limits"):
+        prompt = clerk.KINDS[name].schema and clerk._system_prompt(clerk.KINDS[name])
+        assert "equations, symbols, numbers and units exactly" in prompt
+    assert "equations" not in clerk._system_prompt(clerk.KINDS["claims"])
 
 
 def test_full_bounded_term_list_fits_its_task_output_allocation():

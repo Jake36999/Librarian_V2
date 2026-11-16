@@ -139,6 +139,12 @@ def _safe_usage(value: Any) -> dict[str, int]:
         total_tokens = input_tokens + output_tokens
     if total_tokens is not None:
         usage["total_tokens"] = total_tokens
+    # The provider's own dollar figure for this reply (DeepInfra: `estimated_cost`), so a
+    # library's budget ceiling sees Clerk and lead spend, not only OCR (2026-11-16).
+    # Normalising twice (adapter, then the runtime's evidence) must keep it: accept both names.
+    cost = value.get("estimated_cost", value.get("estimated_cost_usd"))
+    if isinstance(cost, (int, float)) and not isinstance(cost, bool) and 0 <= cost < 1e6:
+        usage["estimated_cost_usd"] = float(cost)
     return usage
 
 

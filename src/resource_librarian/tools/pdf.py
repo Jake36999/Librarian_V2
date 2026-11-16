@@ -53,7 +53,7 @@ def pdf_to_markdown_tool(ctx: Context, file: str, staged_item: str = "") -> dict
     def spent(usage):
         usage_log.record_call(ctx.vault, role="cleanup", task="pdf_to_markdown", model=pdf_markdown.MODEL,
                               host="deepinfra", tokens_in=usage.get("input_tokens"),
-                              tokens_out=usage.get("output_tokens"))
+                              tokens_out=usage.get("output_tokens"), usd=usage.get("estimated_cost_usd", usage.get("estimated_cost")))
     markdown, batches = pdf_markdown.clean_document(anchored,
                                                    ctx.extras.get("pdf_endpoint"),
                                                    progress=ctx.extras.get("progress"),

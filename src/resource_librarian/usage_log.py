@@ -3,8 +3,8 @@
 The Core's InvocationRuntime already emits a bounded trace row per call: role, task, models, outcome,
 elapsed time and normalised token usage. It never carries prompts, source text or hidden reasoning.
 This writes the useful part of each row to `.librarian/runtime/usage-YYYYMMDD.jsonl`, one short line
-per call, so a large ingestion can be audited and capped after the fact. Tokens are recorded, not
-dollars: prices change, and `summary()` is what a budget tool prices against the model catalogue.
+per call, so a large ingestion can be audited and capped after the fact. Tokens are always recorded;
+dollars too when the provider reports them (DeepInfra's `estimated_cost`), which the ceiling counts.
 
 Logging never breaks a model call: any failure is swallowed.
 """
@@ -40,7 +40,8 @@ class UsageLog:
             plan = row.get("plan") or {}
             result = row.get("result") or {}
             scope = plan.get("scope") or {}
-            tokens_in, tokens_out = self._tokens((result.get("telemetry") or {}).get("usage"))
+            usage = (result.get("telemetry") or {}).get("usage")
+            tokens_in, tokens_out = self._tokens(usage)
             line = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                     "role": scope.get("role", ""), "task": scope.get("task_kind", ""),
                     "host": (plan.get("route") or {}).get("host_id", ""),
@@ -48,6 +49,9 @@ class UsageLog:
                     or (plan.get("route") or {}).get("requested_model", ""),
                     "outcome": result.get("outcome", ""), "ms": result.get("elapsed_ms"),
                     "in": tokens_in, "out": tokens_out}
+            cost = usage.get("estimated_cost_usd") if isinstance(usage, dict) else None
+            if isinstance(cost, (int, float)) and not isinstance(cost, bool):
+                line["usd"] = round(float(cost), 6)
             text = json.dumps(line, separators=(",", ":"))
             with self._lock:
                 self.folder().mkdir(parents=True, exist_ok=True)
@@ -125,4 +129,24 @@ def budget(vault: Any) -> dict[str, Any]:
     ceiling = vault.setting("budget", "ceiling_usd")
     ceiling = float(ceiling) if isinstance(ceiling, (int, float)) and not isinstance(ceiling, bool) else None
     spent = spent_usd(vault)
-    return {"ceiling_usd": ceiling, "spent_usd": spent, "over": ceiling is not None and spent >= ceiling}
+    return {"ceiling_usd": ceiling, "spent_usd": spent, "over": ceiling is not None and spent >= ceiling,
+            "unpriced_calls": unpriced_calls(vault)}
+
+
+def unpriced_calls(vault: Any) -> int:
+    """Successful calls the ceiling cannot price: tokens but no reported cost (and, for cleanup,
+    no configured price). Shown beside the spend, so a cap that cannot see a route is visible."""
+    priced_cleanup = all(isinstance(vault.setting("budget", key), (int, float))
+                         for key in ("cleanup_usd_per_mtok_in", "cleanup_usd_per_mtok_out"))
+    count = 0
+    for path in sorted(UsageLog(vault).folder().glob("usage-*.jsonl")):
+        for text in path.read_text(encoding="utf-8").splitlines():
+            try:
+                line = json.loads(text)
+            except ValueError:
+                continue
+            if isinstance(line.get("usd"), (int, float)) or (line.get("role") == "cleanup" and priced_cleanup):
+                continue
+            if line.get("in"):
+                count += 1
+    return count
