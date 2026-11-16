@@ -345,3 +345,32 @@ def test_staging_dependency_operation_log_remains_readable_after_restart(core):
                                                     "body": "No spurious recovery block."})["created"]
     finally:
         restarted.close_runtime()
+
+
+def test_an_item_from_an_attached_folder_can_be_rejected_and_its_original_is_retained(core, tmp_path):
+    """2026-11-16: rejecting 70 papers whose originals live in an attached project folder failed
+    with 'is not in the subpath of' the library; the original is never the library's to guard."""
+    from resource_librarian import content_roots
+    project = tmp_path / "project"
+    kept, moved = project / "kept.pdf", project / "moved.pdf"
+    project.mkdir()
+    kept.write_bytes(b"external original")
+    moved.write_bytes(b"moved away")
+    manifest = content_roots.load(core.vault.root) or dict(version=1, mode="create", excludes=[],
+                                                          roots=[dict(path=".", access="read_write")])
+    manifest["roots"].append(dict(path=str(project), access="read_only", attached=True,
+                                  purpose="research-docs", authorship="third_party",
+                                  folder_decision="folder-x", graph_label="lib-third-party-papers"))
+    content_roots._write_json(content_roots.manifest_path(core.vault.root), manifest)
+    for name, original in (("kept", kept), ("moved", moved)):
+        item = {"id": f"reject-{name}", "kind": "source", "source_kind": "document",
+                "name": name, "status": "partial", "file": str(original), "evidence": []}
+        core._serialized("stage-test", lambda item=item: staging.StagingStore(core.vault).add(item))
+    moved.unlink()                                  # the owner moved it; its item is rejected
+    core.set_mode("auto")
+    out = core.person_call("staging_decide", {
+        "item_ids": ["reject-kept", "reject-moved"], "decision": "reject", "reason": "moved"})
+    assert "results" in out, out
+    assert [r["status"] for r in out["results"]] == ["rejected", "rejected"]
+    assert str(kept) in out["results"][0]["originals_retained"]
+    assert kept.read_bytes() == b"external original"

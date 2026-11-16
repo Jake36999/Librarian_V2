@@ -383,6 +383,10 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
                 if not item.get(key):
                     continue
                 path = staging._attachment_path(ctx.vault, str(item[key]))
+                if not path.is_relative_to(ctx.vault.root.resolve()):
+                    # An attached folder's original (2026-11-16): a rejection never touches it,
+                    # so there is nothing in the library to guard; it is reported as retained.
+                    continue
                 rel = path.relative_to(ctx.vault.root).as_posix()
                 observed.append((rel, fingerprint(path)))
                 attachments.append(rel)

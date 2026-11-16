@@ -6521,3 +6521,18 @@ limits keep their existing handling.
 
 **Tests.** `tests/test_clerk.py` (+2): a long term drops only its entry; a long quote becomes a
 verbatim excerpt that passes the quote check, and a long explanation is truncated with the marker.
+
+### Rejecting an item from an attached folder (2026-11-16)
+
+**Found while finishing** (owner, 2026-11-16: move Nonlinear Field Lab's 70 external PDFs out
+of the mixed `docs\external_validation` folder). Rejecting their old items failed with
+"is not in the subpath of" the library: `staging_decide`'s rejection plan fingerprinted
+each item's `file` as a library attachment. For an attached folder's original, that path is
+outside the library, so `relative_to` raised.
+
+**Change.** The rejection plan guards only attachments inside the library. An attached
+folder's original is never touched by a rejection and is still reported in
+`originals_retained`. This is also the case when the original has since been moved.
+
+**Tests.** `tests/test_staging_safety.py` (+1): two items from an attached folder, one whose
+original was moved away, are both rejected, and the kept original is unchanged.
