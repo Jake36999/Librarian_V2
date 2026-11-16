@@ -57,8 +57,9 @@ KINDS = ("source", "lens", "concept", "topic", "import", "model_expectation", "f
 STATUSES = ("queued", "staged", "approved", "processing", "enriched", "partial",
             "accepted", "rejected", "deferred", "failed")
 DECIDABLE = {"accept": ("staged", "deferred", "approved", "enriched", "partial"),
-             # partial or failed: run the batch again; finished stages are not repeated
-             "approve": ("staged", "deferred", "failed", "partial"),
+             # partial or failed: run the batch again; finished stages are not repeated. enriched:
+             # the same, for a stage added after it was read (2026-11-16: paper publication)
+             "approve": ("staged", "deferred", "failed", "partial", "enriched"),
              "reject": ("staged", "deferred", "approved", "enriched", "partial", "failed"),
              "defer": ("staged", "approved", "enriched", "partial")}
 CAPTURED = ("accepted as captured: only what intake fetched was read (a page's text, a "

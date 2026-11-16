@@ -52,7 +52,7 @@ MAX_READ_CALLS = 40                  # deep_read is chunked; enough calls for a 
 # MF-020: bump a stage's recipe when what it does changes; the read stage's
 # comes from deep_read itself (its first-step clerk tasks).
 STAGE_RECIPES = {"validate": "1", "parse": "1", "lenses": "1", "data": "1", "relate": "1",
-                 "metadata": "1", "review": "1"}
+                 "metadata": "1", "review": "1", "publish": "1"}
 MODEL_STAGES = frozenset({"parse", "read", "relate", "review", "folder_describe"})
 # What processing itself writes to the item it reads: excluded from the
 # mid-stage change check for the stage that writes it.
@@ -232,9 +232,11 @@ def _parse(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
             item, done = fresh, {"cleanup": f"cleaned into {out['path']}"}
     if (str(item.get('file', '')).lower().endswith('.pdf')
             or item.get('source_kind') == 'paper'):
-        from .paper_graph import write_artifact, publish_artifact
+        # The free projection only: it is published by the `publish` stage, after reading, with
+        # the read points as its claims (2026-11-16: publishing here sent empty claims and made
+        # every paper two retained generations).
+        from .paper_graph import write_artifact
         done['paper_graph'] = _commit(ctx, lambda: write_artifact(ctx.vault, item))
-        done['paper_graph']['publication'] = publish_artifact(ctx.vault, item, done['paper_graph'])
     # Source extraction can populate the disposable text cache. Keep that
     # local filesystem phase on the writer too, not the batch/provider thread.
     chunks = reading.chunk(_commit(ctx, lambda: reading.source_units(ctx.vault, item)))
@@ -481,9 +483,35 @@ def _metadata(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     return _commit(ctx, propose, targets=(store.path(item["id"]),))
 
 
+def _publish(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
+    """A read PDF's paper graph, into the Geo graph of its accepted folder (free).
+
+    Last, so a paper's sections carry the reading's located points as generated claims, and so
+    adding this stage changes no earlier stage's key. A PDF whose text layer is complete gets a
+    free page-anchored conversion here. Publication never fails the source: what stops it is
+    recorded and the reading stands."""
+    if not str(item.get('file', '')).lower().endswith('.pdf'):
+        return {"status": "not_applicable"}
+    from .paper_graph import write_artifact, publish_artifact
+    artifact = _commit(ctx, lambda: write_artifact(ctx.vault, item, text_layer=True))
+    if artifact['coverage']['status'] != 'full_conversion':
+        return {"status": "not_applicable", "paper_graph": artifact,
+                "reason": "; ".join(artifact['coverage'].get('limitations') or [])[:300]}
+    try:
+        publication = publish_artifact(ctx.vault, item, artifact)
+    except (ValueError, OSError) as exc:
+        return {"status": "partial", "paper_graph": artifact, "reason": f"not published: {str(exc)[:300]}"}
+    if not publication.get('published'):
+        return {"status": "partial", "paper_graph": artifact, "publication": publication,
+                "reason": f"not published: {publication.get('status', 'refused')}"}
+    return {"status": "complete", "paper_graph": artifact,
+            "publication": {k: publication.get(k) for k in ("graph_id", "documents", "paper_database")}}
+
+
 STAGES: list[tuple[str, Callable[[Context, dict[str, Any]], dict[str, Any]]]] = [
     ("validate", _validate), ("parse", _parse), ("read", _read), ("lenses", _lenses),
-    ("data", _data), ("relate", _relate), ("metadata", _metadata), ("review", _review)]
+    ("data", _data), ("relate", _relate), ("metadata", _metadata), ("review", _review),
+    ("publish", _publish)]
 
 
 # ------------------------------------------------------------------ the run
@@ -686,7 +714,8 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
                 # Independent stages keep their receipts across partial retries.
                 dependencies = {"read": {"parse"}, "lenses": {"read"},
                                 "data": {"parse", "read"}, "relate": {"data"},
-                                "review": {"read", "data", "relate"}}
+                                "review": {"read", "data", "relate"},
+                                "publish": {"parse", "read", "review"}}
                 changed_input = bool(reran.intersection(dependencies.get(stage, ())))
                 if (not changed_input and logged and logged.get("key") == key
                         and logged.get("status") == "complete"):

@@ -86,6 +86,27 @@ def suggested_graph(library, project, purpose, third_party='library'):
 def third_party_scope(vault):
     return str(vault.setting('folders', 'third_party_graph') or 'library')
 
+class Subtrees:
+    """The survey rows at or below each folder, indexed once, in survey order.
+
+    `rows(rel)` equals `[r for r in entries if rel == '.' or r[0].rstrip('/') == rel or
+    r[0].startswith(rel + '/')]`, so fingerprints are unchanged; building it costs files x depth
+    instead of folders x files per scan (2026-11-16: Librarian_V2's tmp, 31,000 files)."""
+
+    def __init__(self, entries):
+        self.entries = list(entries)
+        self.under = {}
+        for i, row in enumerate(self.entries):
+            parts = row[0].rstrip('/').split('/')
+            for depth in range(1, len(parts) + 1):
+                self.under.setdefault('/'.join(parts[:depth]), []).append(i)
+
+    def rows(self, rel):
+        if rel == '.':
+            return list(self.entries)
+        return [self.entries[i] for i in self.under.get(rel, [])]
+
+
 def inventory(found):
     return dict(version='folder-inventory-v1', root=found.canonical_root,
                 fingerprint=found.fingerprint, entries=found.entries, partial=found.partial,
@@ -186,13 +207,23 @@ class FolderReview:
             file_counts={}, bytes=0, suggestion=dict(purpose='exclude', reasons=[e['reason']]))
             for e in plan.get('excluded', []) if not credential_path(e['rel'])]]
         proposed = {(p.get('subtrees') or ['.'])[0] or '.' for p in proposals}
+        subtrees = Subtrees(found.entries)
+        eligible_names = {r[0] for r in folder_intake.eligible(found.entries)}
+        by_subtree = {}                                  # subtree -> [(position in proposals, proposal)]
+        for position, p in enumerate(proposals):
+            for s in p.get('subtrees', []):
+                by_subtree.setdefault(s, []).append((position, p))
         for name, size, _ in found.entries:
             rel = name.rstrip('/')
             if not name.endswith('/') or size < 0 or rel in proposed or credential_path(rel): continue
-            parents = [p for p in proposals if any(rel.startswith(s + '/') for s in p.get('subtrees', []))]
-            inherited = max(parents, key=lambda p: len(p['subtrees'][0]), default=None)
-            children = [r for r in folder_intake.eligible(found.entries)
-                        if r[0].startswith(rel + '/') and r[1] >= 0 and not r[0].endswith('/')]
+            # The nearest proposal above this folder, found by walking up its own path instead of
+            # testing every proposal (2026-11-16: a 31,000-file tree took hours of CPU here).
+            parts = rel.split('/')
+            parents = sorted((hit for depth in range(1, len(parts)) for hit in by_subtree.get('/'.join(parts[:depth]), [])),
+                             key=lambda hit: hit[0])
+            inherited = max((p for _, p in parents), key=lambda p: len(p['subtrees'][0]), default=None)
+            children = [r for r in subtrees.rows(rel)
+                        if r[0] in eligible_names and r[0].startswith(rel + '/') and r[1] >= 0 and not r[0].endswith('/')]
             counts = {}
             for child in children:
                 suffix = Path(child[0]).suffix.lower() or '(no extension)'
@@ -206,10 +237,11 @@ class FolderReview:
                                   reasons=['inherited folder suggestion; a person may override it'])
             proposals.append(dict(key=rel, subtrees=[rel], file_counts=counts, bytes=sum(r[1] for r in children),
                 suggestion=suggestion))
+            by_subtree.setdefault(rel, []).append((len(proposals) - 1, proposals[-1]))
         for part in proposals:
             rel = (part.get('subtrees') or ['.'])[0] or '.'
             if credential_path(rel) or generated_path(rel): continue
-            selected = [r for r in found.entries if rel == '.' or r[0].rstrip('/') == rel or r[0].startswith(rel + '/')]
+            selected = subtrees.rows(rel)
             fp = digest(selected); item_id = 'folder-' + digest([str(root), rel])[:24]
             old = existing.get(item_id)
             # Keep a person's decision across unchanged re-surveys; refresh suggestions otherwise.
@@ -402,6 +434,7 @@ class FolderReview:
                     return PURPOSE_AUTHORSHIP[purpose]
             return None
 
+        subtrees = Subtrees(found.entries)
         for card in self.list():
             if card['kind'] != 'folder' or card['source_root'] != root or card['status'] == 'accepted' or card.get('decision'):
                 continue
@@ -409,7 +442,7 @@ class FolderReview:
                 covered += 1                                 # its parent's decision covers it
                 continue
             rel = card['path']; purpose = card['suggested_purpose']
-            rows = [r for r in found.entries if rel == '.' or r[0].rstrip('/') == rel or r[0].startswith(rel + '/')]
+            rows = subtrees.rows(rel)
             reason = None
             sensitivity = (card.get('sensitivity') or {}).get('sensitivity')
             if sensitivity == 'review_required':

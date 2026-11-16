@@ -439,3 +439,36 @@ def test_a_library_of_several_projects_can_keep_third_party_material_per_project
     assert suggested_graph('L', 'p', 'research-docs') == 'L-third-party-papers'      # default unchanged
     with pytest.raises(ValueError, match='third_party_graph'):
         suggested_graph('L', 'p', 'third-party', 'folder')
+
+
+def test_subtree_index_matches_the_original_scan_exactly():
+    """2026-11-16: the per-folder scan was folders x files; the index must give identical rows
+    (same order, so the same folder fingerprints)."""
+    import random
+    from resource_librarian.folder_review import Subtrees
+    rnd = random.Random(3)
+    names = set()
+    for _ in range(400):
+        depth = rnd.randint(1, 5)
+        parts = [rnd.choice(['a', 'b', 'ab', 'a.b', 'c d']) for _ in range(depth)]
+        for d in range(1, depth):
+            names.add('/'.join(parts[:d]) + '/')
+        names.add('/'.join(parts) + rnd.choice(['', '.md', '.py']))
+    entries = sorted((n, rnd.randint(-1, 50), 0) for n in names)
+    index = Subtrees(entries)
+    for rel in ['.'] + sorted({n.rstrip('/') for n in names}):
+        brute = [r for r in entries if rel == '.' or r[0].rstrip('/') == rel or r[0].startswith(rel + '/')]
+        assert index.rows(rel) == brute, rel
+
+
+def test_a_large_tree_surveys_in_linear_time(library):
+    import time
+    from resource_librarian.folder_review import FolderReview
+    vault, source = library
+    for i in range(300):
+        for j in range(10):
+            path = source / 'tmp' / f'w{i}' / f'f{j}.md'; path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('x')
+    started = time.perf_counter()
+    cards = FolderReview(vault, planner=fake_planner).survey(source)['cards']
+    assert len(cards) >= 300 and time.perf_counter() - started < 120

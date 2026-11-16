@@ -6286,3 +6286,42 @@ the boundaries between projects, making full use of Geo-Grapher and the data con
 
 **Verification:** full suite in a clean clone of `7590866` plus this change: 2607 passed,
 2 skipped, 5 deselected in 945.03s (0:15:45), exit 0.
+
+### Paper graphs after reading, agent-mode publication, linear folder survey (2026-11-16)
+
+**Owner, 2026-11-16:** make sure Nonlinear Field Lab's full ingestion cycle is complete,
+including its Geo-Grapher components, with architecture, docs and research ingested
+separately and lineage, content and purpose preserved.
+
+**Found by the new validator** (`reports/2026-11-16-pilot-review/run-scripts/validate_library.py`):
+content table, graph separation, Source purposes, lineage digests and sampled fidelity
+all pass, but **no paper had ever reached Geo** (0 of 47 PDFs). Three causes:
+- `publish_artifact` required `accepted_by == 'person'`; every Nonlinear Field Lab
+  folder was accepted by agent policy. It now also trusts `agent-policy` decisions when
+  the library's `promotion.mode` is `agent` (the person's own setting); never in a
+  person-mode library.
+- A PDF with a usable text layer had no persistent conversion, so it was always
+  `catalogue_only`. `text_layer_conversion` records the same text, page-anchored and
+  bound to the original's bytes, free; any page without text means none.
+- The artifact was written and published at parse, before reading, so its claims were
+  empty, and publishing twice would have doubled Geo's retained generations. Parse now
+  only writes the projection; a new last stage, `publish`, exports with the read points
+  and limits as claims (`reading_point`, `reading_limit`, located by page, marked
+  generated and unverified) and publishes once. Adding it last changes no earlier
+  stage's key, so nothing read is re-read.
+- `enriched` sources can be approved again: a re-run repeats no finished stage, so
+  sources read before `publish` existed get only it.
+
+**Survey speed.** `_stage_inventory` and `accept_by_policy` scanned every survey row
+per folder (folders x files, plus credential checks each time): Librarian_V2's 31,000
+-file `tmp` ran over 35 CPU-minutes without finishing. `Subtrees` indexes rows per
+folder once, in survey order, so fingerprints are identical (tested against the old
+scan on a random tree).
+
+**Tests.** `test_phase8_paper_publication.py` (rewritten parse test; +4: publish stage
+with claims, agent-mode trust, text-layer conversion, enriched re-run runs only the new
+stage), `test_folder_review.py` (+2: index equivalence, 3,000-file tree in linear time),
+`test_lifecycle.py` (stage map gains `publish: not_applicable` for a non-PDF).
+
+**Verification:** full suite in a clean clone of `42fc49b` plus this change: 2612 passed,
+2 skipped, 5 deselected in 850.03s (0:14:10), exit 0.

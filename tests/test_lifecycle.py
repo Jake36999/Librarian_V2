@@ -181,7 +181,8 @@ def test_the_batch_reads_and_reviews_then_waits_for_acceptance(library):
     assert out["items"][0]["status"] == "enriched"
     assert out["items"][0]["stages"] == {
         "validate": "complete", "parse": "complete", "read": "complete", "lenses": "complete",
-        "data": "complete", "relate": "complete", "metadata": "complete", "review": "complete"}
+        "data": "complete", "relate": "complete", "metadata": "complete", "review": "complete",
+        "publish": "not_applicable"}                       # not a PDF: no paper graph
     enriched = StagingStore(library).load(item)
     assert enriched["processing"]["coverage"] == "full"
     accepted = call(c, "staging_decide", item_ids=[item], decision="accept")

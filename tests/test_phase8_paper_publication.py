@@ -1,25 +1,68 @@
 from test_phase8_paper_graph import paper
 
 
-def test_native_parse_publishes_conversion_only_through_accepted_folder(paper, monkeypatch):
+def _accepted(monkeypatch, pdf, accepted_by='person'):
     from resource_librarian import folder_review
-    from resource_librarian.batch import _parse
-    from resource_librarian.registry import Context
-    vault, pdf, converted = paper
     monkeypatch.setattr(folder_review, 'configuration', lambda _: {'enabled': True})
-    decision = dict(purpose='research-docs', authorship='third_party', graph='papers', accepted_by='person')
+    decision = dict(purpose='research-docs', authorship='third_party', graph='papers', accepted_by=accepted_by)
     card = dict(id='folder-fixture', status='accepted', source_root=str(pdf.parent), path='.', decision=decision)
     monkeypatch.setattr(folder_review.FolderReview, 'list', lambda _: [card])
     monkeypatch.setattr(folder_review.FolderReview, 'validate', lambda *_: None)
     calls = []
     monkeypatch.setattr(folder_review, 'cli', lambda config, operation, payload:
                         calls.append((operation, payload)) or {'geographer_version':'0.2.0', 'published':True})
-    out = _parse(Context(tier='contribute', vault=vault), {'name':'Study', 'file':'Inbox/original.pdf',
-        'clean_file':converted['path'], 'source_kind':'paper'})
-    assert out['paper_graph']['publication']['published'] is True
-    assert calls[0][0][0] == 'import-library-paper'
+    return calls
+
+
+READ = {'read': {'0': {'locator': 'p. 1', 'points': ['Opening evidence is stated.'], 'limits': []},
+                 '1': {'locator': 'pp. 2-3', 'points': ['A method with a late detail.'],
+                       'limits': ['Closing evidence is bounded.']}}}
+
+
+def test_parse_only_prepares_the_projection_and_publish_runs_after_reading(paper, monkeypatch):
+    """2026-11-16: publishing at parse sent empty claims and made two generations per paper."""
+    import json
+    from resource_librarian.batch import _parse, _publish
+    from resource_librarian.registry import Context
+    vault, pdf, converted = paper
+    calls = _accepted(monkeypatch, pdf)
+    item = {'name':'Study', 'file':'Inbox/original.pdf', 'clean_file':converted['path'], 'source_kind':'paper'}
+    out = _parse(Context(tier='contribute', vault=vault), item)
+    assert 'publication' not in out['paper_graph'] and calls == []
+    done = _publish(Context(tier='contribute', vault=vault), {**item, 'deep_read': READ})
+    assert done['status'] == 'complete' and calls[0][0][0] == 'import-library-paper'
     assert calls[0][1]['graph_label'] == 'papers'
-    assert calls[0][1]['artifact_sha256'] == out['paper_graph']['sha256']
+    artifact = json.loads((vault.root / done['paper_graph']['path']).read_text(encoding='utf-8'))
+    claims = [(c['text'], c['claim_type']) for s in artifact['sections'] for c in s['claims']]
+    assert ('Opening evidence is stated.', 'reading_point') in claims
+    assert ('Closing evidence is bounded.', 'reading_limit') in claims
+    assert any('unverified' in x for x in artifact['coverage']['limitations'])
+
+
+def test_agent_policy_decisions_publish_only_in_an_agent_mode_library(paper, monkeypatch):
+    from resource_librarian import paper_graph
+    vault, pdf, converted = paper
+    calls = _accepted(monkeypatch, pdf, accepted_by='agent-policy')
+    item = {'name':'Study', 'file':'Inbox/original.pdf', 'clean_file':converted['path']}
+    artifact = paper_graph.write_artifact(vault, item)
+    assert paper_graph.publish_artifact(vault, item, artifact)['status'] == 'awaiting_accepted_folder'
+    vault.set_setting('promotion', 'mode', 'agent')
+    assert paper_graph.publish_artifact(vault, item, artifact)['published'] is True and len(calls) == 1
+
+
+def test_a_complete_text_layer_gets_a_free_page_anchored_conversion(paper, monkeypatch):
+    from resource_librarian import paper_graph, text
+    from resource_librarian.conversions import ConversionStore
+    vault, pdf, _ = paper
+    monkeypatch.setattr(text, 'extract', lambda *a: text.Extraction(pages=['First page text.', 'Second page text.']))
+    data = paper_graph.export_document(vault, {'name': 'Usable', 'file': 'Inbox/original.pdf'}, text_layer=True)
+    assert data['coverage']['status'] == 'full_conversion' and data['page_count'] == 2
+    rel = paper_graph.text_layer_conversion(vault, pdf)                    # cached, not re-made
+    assert ConversionStore(vault).page_units(rel) == [(1, 'First page text.'), (2, 'Second page text.')]
+    monkeypatch.setattr(text, 'extract', lambda *a: text.Extraction(pages=['Text.', '   ']))
+    other = vault.root / 'Inbox/scan.pdf'; other.write_bytes(b'another fixture')
+    assert paper_graph.text_layer_conversion(vault, other) is None          # a page without text: none
+    assert paper_graph.export_document(vault, {'name': 'Plain', 'file': 'Inbox/original.pdf'})['coverage']['status']         == 'catalogue_only'                                                # only the publish stage asks for it
 
 
 def test_publication_never_uses_failed_or_unreviewed_folder(paper, monkeypatch):
@@ -56,3 +99,27 @@ def test_paper_export_refuses_an_unattached_external_original(paper, tmp_path):
     original=tmp_path/'outside.pdf';original.write_bytes(pdf.read_bytes())
     with pytest.raises(Exception,match='accepted|library|vault|Vault'):
         export_document(vault,dict(name='Unapproved',file=str(original)))
+
+
+def test_an_enriched_source_reruns_only_a_stage_added_after_it_was_read(vault, monkeypatch):
+    """2026-11-16: papers read before the publish stage existed get it without a paid re-read."""
+    from resource_librarian import batch, staging
+    from resource_librarian.registry import Context
+    store = staging.StagingStore(vault)
+    store.add({"id": "s1", "kind": "source", "status": "staged", "name": "S", "sensitivity": "normal",
+               "sections": {}, "history": []})
+    ran = []
+    stages = [(name, (lambda n: lambda ctx, item: ran.append(n) or {"status": "complete"})(name))
+              for name, _ in batch.STAGES]
+    monkeypatch.setattr(batch, "STAGES", stages[:-1])
+    ctx = Context(tier="curate", vault=vault)
+    approve = lambda: store.save({**store.load("s1"), "status": "approved"})
+    approve()
+    batch.start(ctx, requested_by="person")
+    assert store.load("s1")["status"] == "enriched" and ran[-1] == "review"
+    assert "enriched" in staging.DECIDABLE["approve"]
+    ran.clear()
+    monkeypatch.setattr(batch, "STAGES", stages)
+    approve()
+    batch.start(ctx, requested_by="person")
+    assert ran == ["publish"]
