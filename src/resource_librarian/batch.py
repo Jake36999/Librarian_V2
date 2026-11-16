@@ -202,6 +202,15 @@ def run_settings(ctx: Context) -> dict[str, Any]:
     return {"optical_all_pages": optical_all_pages(ctx)}
 
 
+def _page_mapped(ctx: Context, rel: str) -> bool:
+    """Whether a generated conversion's page anchors verify against its page count."""
+    from .conversions import ConversionStore
+    try:
+        return bool(_commit(ctx, lambda: ConversionStore(ctx.vault).page_units(rel)))
+    except Exception:                                  # noqa: BLE001 - unverifiable is unmapped
+        return False
+
+
 def _parse(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     """The per-kind branch on what capture found (quality.py): a paper's open-access PDF is
     fetched, a mechanically extracted PDF is cleaned into markdown, and what cannot be read
@@ -227,6 +236,11 @@ def _parse(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
                                                 "staged_item": item["id"]}, ctx)
         if "error" in out:
             done = {"cleanup": f"not run: {out.get('detail') or out['error']}"}
+        elif not _page_mapped(ctx, out["path"]):
+            # The cleaner merged or dropped page markers (2026-11-16: 9 of 31 conversions). Read
+            # the text layer instead: its pages are the original's, so every point keeps a page
+            # locator and the paper can reach its graph. The conversion is kept as evidence.
+            done = {"cleanup": f"kept unused: {out['path']} lost its page anchors; read from the text layer"}
         else:
             fresh = _update_item(ctx, item["id"], lambda fresh: fresh.update(clean_file=out["path"]))
             item, done = fresh, {"cleanup": f"cleaned into {out['path']}"}

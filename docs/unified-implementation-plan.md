@@ -6332,3 +6332,14 @@ first research round queued three pytest fixture PDFs from `E:\Librarian researc
 .gg-w4-final-temp` as the newest papers (capture failed; no model call). They were removed
 from the queue. Test: `test_folder_sources.py::test_hidden_folders_never_become_sources`.
 Verification: `tests/test_folder_sources.py` 28 passed; not yet a full-suite run.
+
+**A cleanup that lost page anchors is not used (same day).** 9 of Nonlinear Field Lab's 31
+`pdf_to_markdown` conversions merged or dropped one or two `[page N]` markers (for example
+18 for a 20-page PDF), so `page_units` rejected the map and those Sources were read as a
+single unanchored unit: no page locators, chapters "not opened" (the `data` stage's
+partials), no paper graph. `_parse` now checks the map (`_page_mapped`) and, when it fails,
+keeps the conversion as evidence but reads the text layer, whose pages are the original's.
+The 9 already read need a targeted re-read; listed in the run report.
+Test: `test_phase8_paper_publication.py::test_a_cleanup_that_lost_page_anchors_is_kept_unused_and_the_text_layer_is_read`.
+Verification: full suite in a clean clone of `f1398a5` plus this change: 2614 passed,
+2 skipped, 5 deselected in 979.79s (0:16:19), exit 0 (this also covers `f1398a5`).

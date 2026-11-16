@@ -123,3 +123,28 @@ def test_an_enriched_source_reruns_only_a_stage_added_after_it_was_read(vault, m
     approve()
     batch.start(ctx, requested_by="person")
     assert ran == ["publish"]
+
+
+def test_a_cleanup_that_lost_page_anchors_is_kept_unused_and_the_text_layer_is_read(paper, monkeypatch):
+    """2026-11-16: 9 of 31 cleaned conversions merged or dropped a page marker, so their Sources
+    were read without page locators and could never reach a paper graph."""
+    from resource_librarian import batch
+    from resource_librarian.conversions import ConversionStore
+    from resource_librarian.registry import Context
+    vault, pdf, mapped = paper
+    store = ConversionStore(vault)
+    unmapped = store.save(store.request(pdf, 'pdf_markdown:page-anchors-v2:fixture'),
+                          '[page 1]\nOne.\n\n[page 3]\nThree, page two merged away.', pages=3)
+    real_call = batch.REGISTRY.call
+    def call(name, args, ctx):
+        if name == 'pdf_to_markdown':
+            return {'path': unmapped['path']}
+        return real_call(name, args, ctx)
+    monkeypatch.setattr(batch.REGISTRY, 'call', call)
+    ctx = Context(tier='contribute', vault=vault)
+    seen = []
+    monkeypatch.setattr(batch, '_update_item', lambda ctx, item_id, fn: seen.append(item_id))
+    out = batch._parse(ctx, {'id': 'x', 'name': 'Study', 'file': 'Inbox/original.pdf',
+                             'intake': {'quality': {'verdict': 'cleanup'}}})
+    assert seen == [] and 'lost its page anchors' in out['cleanup']
+    assert batch._page_mapped(ctx, mapped['path']) and not batch._page_mapped(ctx, unmapped['path'])
