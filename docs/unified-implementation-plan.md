@@ -6448,3 +6448,31 @@ default, and no library could change it.
 
 **Tests.** `tests/test_reasoning_effort.py` (+3): the default "none" for any model with no
 template switch, role and model settings win in order, and the request field is sent only when given.
+
+### Model catalogue prices match DeepInfra's live listing (2026-11-16)
+
+**Owner, 2026-11-16:** "update the catalogue prices too", after the model-card audit found the
+shipped catalogue out of date.
+
+**Checked** against `GET https://api.deepinfra.com/v1/openai/models` (public; `metadata.pricing`,
+USD per 1M tokens), 2026-11-16. Of the 102 entries in `standard/model_catalog/deepinfra.json`
+(captured 2026-09-28): 70 matched, 10 had changed and 7 had no price; 15 are no longer listed
+and are left as they are.
+
+**Changed** (input/output, old to new): GLM-5.3 0.45/2.00 to 0.90/4.00; GLM-5.3-Flash
+0.075/0.25 to 0.15/0.50; DeepSeek-V4.1-Flash 0.14/0.42 to 0.20/0.60; DeepSeek-V4-Flash-Vision-Exp
+0.216/0.647 to 0.44/1.32; gemma-4-31B-it 0.13/0.38 to 0.20/0.40; Qwen3.8-27B 0.15/1.875 to
+0.20/2.50; L3.1-70B-Euryale-v2.2 0.68/0.68 to 0.85/0.85; Mistral-Nemo-Instruct-2407 0.019 to
+0.029 input; NVIDIA-Nemotron-3-Super-120B-A12B 0.085 to 0.075 input; NVIDIA-Nemotron-3.5-Lightning
+0.08/0.20 to 0.06/0.16. **Added** (were unpriced): gemma-4-31B-it-Ultra, gpt-oss-120b-Ultra,
+L3-8B-Lunaris-v1-Turbo, Llama-Guard-4-12B, MiniMax-M3, Mistral-Small-3.2-24B-Instruct-2506,
+Nemotron-Content-Safety-3.5. The Specs price line is updated with the fields; each entry's
+evidence stays the 2026-09-28 listing it was drafted from.
+
+**Also in data, not code:** Resource-Library's own model notes (`Sources/model`), which win
+over the shipped catalogue in `merge_profiles`, carried the same 17 values and were updated
+the same way.
+
+**Why it matters.** Budgets are charged from DeepInfra's billed `estimated_cost`, so spend
+tracking was right; the catalogue's prices feed cost estimates and rate cards, which put
+GLM-5.3 reviews at half their real price.

@@ -542,8 +542,8 @@
    "modality": "Image_To_Text",
    "license_class": "Unknown",
    "context_length": 1048576,
-   "price_input_per_1m": 0.216,
-   "price_output_per_1m": 0.647,
+   "price_input_per_1m": 0.44,
+   "price_output_per_1m": 1.32,
    "tool_calling": true,
    "reasoning": true,
    "best_for": [
@@ -554,7 +554,7 @@
   "bottom_line": "DeepSeek-V4-Flash-Vision-Exp is an experimental multimodal text-generation model from DeepSeek, available on DeepInfra, that adds visual understanding to the V4-Flash architecture and supports a 1M-token context window,",
   "what_it_solves": "It addresses the need for a model that can process both text and images together, enabling tasks like visual grounding and tool calling. It also handles large amounts of text at once with its 1M-token context, and offers flexible output options like structured JSON and adjustable reasoning effort.",
   "sections": {
-   "Specs": "- **Provider**: deepinfra (`deepseek-ai/DeepSeek-V4-Flash-Vision-Exp`)\n- **Context length**: 1,048,576 tokens\n- **Price**: $0.216 / $0.647 per 1M tokens\n- **Modality**: Image To Text\n- Supports tool/function calling.\n- A reasoning model: chain-of-thought is returned separately from the answer.\n- **Best for** (a first guess; confirm or correct it): Long Conversations\n- **Suggested tier** (a first guess): Tier 2"
+   "Specs": "- **Provider**: deepinfra (`deepseek-ai/DeepSeek-V4-Flash-Vision-Exp`)\n- **Context length**: 1,048,576 tokens\n- **Price**: $0.44 / $1.32 per 1M tokens\n- **Modality**: Image To Text\n- Supports tool/function calling.\n- A reasoning model: chain-of-thought is returned separately from the answer.\n- **Best for** (a first guess; confirm or correct it): Long Conversations\n- **Suggested tier** (a first guess): Tier 2"
   },
   "captured_at": "2026-09-28",
   "evidence": {
@@ -656,8 +656,8 @@
    "modality": "Image_To_Text",
    "license_class": "Unknown",
    "context_length": 1048576,
-   "price_input_per_1m": 0.14,
-   "price_output_per_1m": 0.42,
+   "price_input_per_1m": 0.2,
+   "price_output_per_1m": 0.6,
    "tool_calling": true,
    "reasoning": true,
    "best_for": [
@@ -669,7 +669,7 @@
   "bottom_line": "DeepSeek-V4.1-Flash is a multimodal Mixture-of-Experts (MoE) model with 552B backbone parameters that processes images and text and generates text, supporting contexts up to one million tokens.",
   "what_it_solves": "It addresses the high cost and memory demands of processing very long inputs, such as agentic workloads, by using a Causal Encoder-Decoder architecture that activates only 8B parameters per token during prefill and 16B during decode. It also reduces the persistent KV cache footprint to about 1/8 of a prior model through SWA Bounded Replay, and further cuts the global KV cache to 890 bytes per token via Compressed Sparse Attention 2 and FP4 caching, improving cost efficiency.",
   "sections": {
-   "Specs": "- **Provider**: deepinfra (`deepseek-ai/DeepSeek-V4.1-Flash`)\n- **Context length**: 1,048,576 tokens\n- **Price**: $0.14 / $0.42 per 1M tokens\n- **Modality**: Image To Text\n- Supports tool/function calling.\n- A reasoning model: chain-of-thought is returned separately from the answer.\n- **Best for** (a first guess; confirm or correct it): Long Conversations, Long Horizon Tasks\n- **Suggested tier** (a first guess): Tier 1"
+   "Specs": "- **Provider**: deepinfra (`deepseek-ai/DeepSeek-V4.1-Flash`)\n- **Context length**: 1,048,576 tokens\n- **Price**: $0.2 / $0.6 per 1M tokens\n- **Modality**: Image To Text\n- Supports tool/function calling.\n- A reasoning model: chain-of-thought is returned separately from the answer.\n- **Best for** (a first guess; confirm or correct it): Long Conversations, Long Horizon Tasks\n- **Suggested tier** (a first guess): Tier 1"
   },
   "captured_at": "2026-09-28",
   "evidence": {
@@ -1077,8 +1077,8 @@
    "modality": "Image_To_Text",
    "license_class": "Permissive",
    "context_length": 262144,
-   "price_input_per_1m": 0.13,
-   "price_output_per_1m": 0.38,
+   "price_input_per_1m": 0.2,
+   "price_output_per_1m": 0.4,
    "tool_calling": true,
    "reasoning": true,
    "best_for": [
@@ -1091,7 +1091,7 @@
   "bottom_line": "Gemma 4 31B It is an open-weights, multimodal, instruction-tuned text generation model from Google DeepMind, available via DeepInfra's API with tiered pricing.",
   "what_it_solves": "It addresses the need for a versatile AI model that can handle both text and image inputs to generate text, useful for tasks like coding, reasoning, and multimodal understanding. It also aims to make advanced AI accessible by offering various model sizes for deployment on devices from phones to servers, and supports long contexts up to 256K tokens and over 140 languages.",
   "sections": {
-   "Specs": "- **Provider**: deepinfra (`google/gemma-4-31B-it`)\n- **Context length**: 262,144 tokens\n- **Price**: $0.13 / $0.38 per 1M tokens\n- **Modality**: Image To Text\n- Supports tool/function calling.\n- A reasoning model: chain-of-thought is returned separately from the answer.\n- **Best for** (a first guess; confirm or correct it): Large Coding Tasks, Long Conversations, Long Horizon Tasks\n- **Suggested tier** (a first guess): Tier 1"
+   "Specs": "- **Provider**: deepinfra (`google/gemma-4-31B-it`)\n- **Context length**: 262,144 tokens\n- **Price**: $0.2 / $0.4 per 1M tokens\n- **Modality**: Image To Text\n- Supports tool/function calling.\n- A reasoning model: chain-of-thought is returned separately from the answer.\n- **Best for** (a first guess; confirm or correct it): Large Coding Tasks, Long Conversations, Long Horizon Tasks\n- **Suggested tier** (a first guess): Tier 1"
   },
   "captured_at": "2026-09-28",
   "evidence": {
@@ -1146,7 +1146,9 @@
   "canonical_url": "https://deepinfra.com/google/gemma-4-31B-it-Ultra",
   "fields": {
    "provider": "deepinfra",
-   "model_id": "google/gemma-4-31B-it-Ultra"
+   "model_id": "google/gemma-4-31B-it-Ultra",
+   "price_input_per_1m": 0.27,
+   "price_output_per_1m": 0.76
   },
   "bottom_line": "This is a product page for the Gemma 4 31B It Ultra API, a text generation model offered by DeepInfra with pricing and usage details.",
   "what_it_solves": "It provides a way for users to access a specific text generation model through an API, with pricing per million tokens. The page also lists various model categories and families, suggesting it helps users find and use different AI models for tasks like text generation, speech recognition, and image classification.",
@@ -1290,8 +1292,8 @@
    "modality": "Text_Generation",
    "license_class": "Unknown",
    "context_length": 1048576,
-   "price_input_per_1m": 0.45,
-   "price_output_per_1m": 2.0,
+   "price_input_per_1m": 0.9,
+   "price_output_per_1m": 4.0,
    "tool_calling": true,
    "reasoning": true,
    "best_for": [
@@ -1304,7 +1306,7 @@
   "bottom_line": "GLM-5.3 is a large-scale reasoning model from Z.ai for complex software engineering and long-horizon agent tasks, supporting text input/output with a 1M-token context window and improved coding performance over GLM-5.2.",
   "what_it_solves": "It addresses the challenge of performing complex coding and long-horizon agent tasks, which require handling large amounts of context and sustained reasoning. It improves on its predecessor in coding ability and token efficiency, and shows gains in areas like vulnerability discovery and exploitation, according to benchmarks. It also offers a reasoning_effort parameter to control thinking budget for different use cases.",
   "sections": {
-   "Specs": "- **Provider**: deepinfra (`zai-org/GLM-5.3`)\n- **Context length**: 1,048,576 tokens\n- **Price**: $0.45 / $2 per 1M tokens\n- **Modality**: Text Generation\n- Supports tool/function calling.\n- A reasoning model: chain-of-thought is returned separately from the answer.\n- **Best for** (a first guess; confirm or correct it): Large Coding Tasks, Long Horizon Tasks\n- **Suggested tier** (a first guess): Tier 1"
+   "Specs": "- **Provider**: deepinfra (`zai-org/GLM-5.3`)\n- **Context length**: 1,048,576 tokens\n- **Price**: $0.9 / $4 per 1M tokens\n- **Modality**: Text Generation\n- Supports tool/function calling.\n- A reasoning model: chain-of-thought is returned separately from the answer.\n- **Best for** (a first guess; confirm or correct it): Large Coding Tasks, Long Horizon Tasks\n- **Suggested tier** (a first guess): Tier 1"
   },
   "captured_at": "2026-09-28",
   "evidence": {
@@ -1329,8 +1331,8 @@
    "modality": "Text_Generation",
    "license_class": "Unknown",
    "context_length": 1048576,
-   "price_input_per_1m": 0.075,
-   "price_output_per_1m": 0.25,
+   "price_input_per_1m": 0.15,
+   "price_output_per_1m": 0.5,
    "tool_calling": true,
    "reasoning": false,
    "best_for": [
@@ -1343,7 +1345,7 @@
   "bottom_line": "GLM-5.3-Flash is a natively multimodal text generation model from Z.ai with 320B total and 18B active parameters, designed for efficient coding and long-horizon agent tasks, using a hybrid sparse and linear attention to,",
   "what_it_solves": "It addresses the problem of high compute costs and inefficiency in serving large language models, especially for long-context tasks. By using a hybrid architecture with sparse and linear attention, it reduces long-context serving costs while maintaining accurate long-context behavior. It also aims to deliver more intelligence with less compute, outperforming a previous model at one-tenth the price.",
   "sections": {
-   "Specs": "- **Provider**: deepinfra (`zai-org/GLM-5.3-Flash`)\n- **Context length**: 1,048,576 tokens\n- **Price**: $0.075 / $0.25 per 1M tokens\n- **Modality**: Text Generation\n- Supports tool/function calling.\n- **Best for** (a first guess; confirm or correct it): Large Coding Tasks, Long Horizon Tasks\n- **Suggested tier** (a first guess): Tier 1"
+   "Specs": "- **Provider**: deepinfra (`zai-org/GLM-5.3-Flash`)\n- **Context length**: 1,048,576 tokens\n- **Price**: $0.15 / $0.5 per 1M tokens\n- **Modality**: Text Generation\n- Supports tool/function calling.\n- **Best for** (a first guess; confirm or correct it): Large Coding Tasks, Long Horizon Tasks\n- **Suggested tier** (a first guess): Tier 1"
   },
   "captured_at": "2026-09-28",
   "evidence": {
@@ -1428,7 +1430,9 @@
   "canonical_url": "https://deepinfra.com/openai/gpt-oss-120b-Ultra",
   "fields": {
    "provider": "deepinfra",
-   "model_id": "openai/gpt-oss-120b-Ultra"
+   "model_id": "openai/gpt-oss-120b-Ultra",
+   "price_input_per_1m": 0.2,
+   "price_output_per_1m": 0.95
   },
   "bottom_line": "This is a DeepInfra demo page for the gpt-oss-120b-Ultra, a text generation model priced at $0.20 per million input tokens and $0.95 per million output tokens.",
   "what_it_solves": "It provides access to a high-speed version of a large language model for text generation tasks, allowing users to generate text outputs from prompts. The pricing structure addresses the need for cost-effective AI inference, with separate charges for input and output tokens.",
@@ -1908,7 +1912,9 @@
   "canonical_url": "https://deepinfra.com/Sao10K/L3-8B-Lunaris-v1-Turbo",
   "fields": {
    "provider": "deepinfra",
-   "model_id": "Sao10K/L3-8B-Lunaris-v1-Turbo"
+   "model_id": "Sao10K/L3-8B-Lunaris-v1-Turbo",
+   "price_input_per_1m": 0.04,
+   "price_output_per_1m": 0.05
   },
   "bottom_line": "This is a DeepInfra product page for the Sao10K L3-8B-Lunaris-v1-Turbo text generation model, offering it as an API with pricing, deployment options, and a demo.",
   "what_it_solves": "It provides access to a text generation model through an API, allowing users to generate text by sending requests. The page addresses the need for a hosted, scalable way to use this specific model without managing infrastructure, with options like private endpoints and flexible tier pricing.",
@@ -1936,8 +1942,8 @@
    "modality": "Text_Generation",
    "license_class": "Unknown",
    "context_length": 131072,
-   "price_input_per_1m": 0.68,
-   "price_output_per_1m": 0.68,
+   "price_input_per_1m": 0.85,
+   "price_output_per_1m": 0.85,
    "tool_calling": false,
    "reasoning": false,
    "best_for": [
@@ -1948,7 +1954,7 @@
   "bottom_line": "This is a DeepInfra API demo page for the Sao10K L3.1-70B-Euryale-v2.2, a text generation model focused on creative roleplay, priced at $0.85 per 1M tokens with a Flex tier option.",
   "what_it_solves": "It provides access to a specialized language model for creative roleplay scenarios, allowing users to generate text-based interactions. The page addresses the need for a deployable, cost-effective model with flexible pricing and a private endpoint option, though it requires login to use.",
   "sections": {
-   "Specs": "- **Provider**: deepinfra (`Sao10K/L3.1-70B-Euryale-v2.2`)\n- **Context length**: 131,072 tokens\n- **Price**: $0.68 / $0.68 per 1M tokens\n- **Modality**: Text Generation\n- **Best for** (a first guess; confirm or correct it): Long Conversations\n- **Suggested tier** (a first guess): Tier 2"
+   "Specs": "- **Provider**: deepinfra (`Sao10K/L3.1-70B-Euryale-v2.2`)\n- **Context length**: 131,072 tokens\n- **Price**: $0.85 / $0.85 per 1M tokens\n- **Modality**: Text Generation\n- **Best for** (a first guess; confirm or correct it): Long Conversations\n- **Suggested tier** (a first guess): Tier 2"
   },
   "captured_at": "2026-09-28",
   "evidence": {
@@ -2161,7 +2167,9 @@
   "fields": {
    "provider": "deepinfra",
    "model_id": "meta-llama/Llama-Guard-4-12B",
-   "drafted_by": "deepseek-ai/DeepSeek-V4-Flash-0731"
+   "drafted_by": "deepseek-ai/DeepSeek-V4-Flash-0731",
+   "price_input_per_1m": 0.18,
+   "price_output_per_1m": 0.18
   },
   "bottom_line": "Llama Guard 4 12B is a multimodal safety classifier that classifies text and image content in LLM inputs and outputs as safe or unsafe, listing violated categories when unsafe.",
   "what_it_solves": "It addresses the problem of harmful or unsafe content in AI systems, such as violent crimes, hate, or sexual content. It works by examining both text prompts and responses, as well as images, to determine if they are safe. If content is unsafe, it identifies which specific hazard categories were violated, helping to moderate AI interactions.",
@@ -2375,7 +2383,9 @@
   "fields": {
    "provider": "deepinfra",
    "model_id": "MiniMaxAI/MiniMax-M3",
-   "drafted_by": "deepseek-ai/DeepSeek-V4-Flash-0731"
+   "drafted_by": "deepseek-ai/DeepSeek-V4-Flash-0731",
+   "price_input_per_1m": 0.28,
+   "price_output_per_1m": 1.1
   },
   "bottom_line": "MiniMax-M3 is a native multimodal model with 1M context, ~428B parameters, and ~23B activated parameters, available on DeepInfra with pricing per 1M tokens.",
   "what_it_solves": "It addresses the challenge of processing long contexts efficiently by using MiniMax Sparse Attention, which speeds up prefill and decode compared to an earlier model. It also aims to handle text, image, and video together through mixed-modality training, and supports coding and agentic tasks.",
@@ -2403,7 +2413,7 @@
    "modality": "Text_Generation",
    "license_class": "Permissive",
    "context_length": 131072,
-   "price_input_per_1m": 0.019,
+   "price_input_per_1m": 0.029,
    "price_output_per_1m": 0.03,
    "tool_calling": true,
    "reasoning": false,
@@ -2417,7 +2427,7 @@
   "bottom_line": "Mistral-Nemo-Instruct-2407 is an instruct fine-tuned large language model, jointly trained by Mistral AI and NVIDIA, available via API with pricing per million tokens.",
   "what_it_solves": "It addresses the need for a capable language model that can handle text generation tasks, including multilingual and code data, with a large context window. It is designed to outperform existing models of similar or smaller size, making it a practical choice for developers seeking a high-performing, open-licensed model.",
   "sections": {
-   "Specs": "- **Provider**: deepinfra (`mistralai/Mistral-Nemo-Instruct-2407`)\n- **Context length**: 131,072 tokens\n- **Price**: $0.019 / $0.03 per 1M tokens\n- **Modality**: Text Generation\n- Supports tool/function calling.\n- **Best for** (a first guess; confirm or correct it): Small Coding Tasks, Long Conversations\n- **Suggested tier** (a first guess): Tier 2"
+   "Specs": "- **Provider**: deepinfra (`mistralai/Mistral-Nemo-Instruct-2407`)\n- **Context length**: 131,072 tokens\n- **Price**: $0.029 / $0.03 per 1M tokens\n- **Modality**: Text Generation\n- Supports tool/function calling.\n- **Best for** (a first guess; confirm or correct it): Small Coding Tasks, Long Conversations\n- **Suggested tier** (a first guess): Tier 2"
   },
   "captured_at": "2026-09-28",
   "evidence": {
@@ -2478,7 +2488,9 @@
   "fields": {
    "provider": "deepinfra",
    "model_id": "mistralai/Mistral-Small-3.2-24B-Instruct-2506",
-   "drafted_by": "deepseek-ai/DeepSeek-V4-Flash-0731"
+   "drafted_by": "deepseek-ai/DeepSeek-V4-Flash-0731",
+   "price_input_per_1m": 0.075,
+   "price_output_per_1m": 0.2
   },
   "bottom_line": "Mistral-Small-3.2-24B-Instruct-2506 is a text-generation AI model, a minor update of Mistral-Small-3.1-24B-Instruct-2503, with improved instruction following, fewer repetition errors, and more robust function calling.",
   "what_it_solves": "Mistral-Small-3.2-24B-Instruct-2506 is a text-generation AI model, a minor update of Mistral-Small-3.1-24B-Instruct-2503, with improved instruction following, fewer repetition errors, and more robust function calling.",
@@ -2604,7 +2616,9 @@
   "fields": {
    "provider": "deepinfra",
    "model_id": "nvidia/Nemotron-Content-Safety-3.5",
-   "drafted_by": "deepseek-ai/DeepSeek-V4-Flash-0731"
+   "drafted_by": "deepseek-ai/DeepSeek-V4-Flash-0731",
+   "price_input_per_1m": 0.2,
+   "price_output_per_1m": 0.2
   },
   "bottom_line": "Nemotron Content Safety 3.5 is a multimodal safety classifier from NVIDIA that classifies content as safe or unsafe and provides a reasoning trace, usable as a guardrail, judge, or for post-training models.",
   "what_it_solves": "Nemotron Content Safety 3.5 is a multimodal safety classifier from NVIDIA that classifies content as safe or unsafe and provides a reasoning trace, usable as a guardrail, judge, or for post-training models.",
@@ -2632,7 +2646,7 @@
    "modality": "Text_Generation",
    "license_class": "Unknown",
    "context_length": 262144,
-   "price_input_per_1m": 0.085,
+   "price_input_per_1m": 0.075,
    "price_output_per_1m": 0.4,
    "tool_calling": true,
    "reasoning": true,
@@ -2645,7 +2659,7 @@
   "bottom_line": "NVIDIA Nemotron 3 Super 120B A12B is a hybrid Mixture-of-Experts (MoE) text generation model available via DeepInfra's API, priced per million tokens, and optimized for running multiple collaborating agents on a single N",
   "what_it_solves": "It addresses the challenge of running many AI agents simultaneously on one GPU, which is needed for multi-agent applications and specialized agentic systems. The model is engineered for high compute efficiency and accuracy, supporting tasks like reasoning, tool use, and instruction following. It is offered through DeepInfra with deployment options like private endpoints and priority or flex tiers.",
   "sections": {
-   "Specs": "- **Provider**: deepinfra (`nvidia/NVIDIA-Nemotron-3-Super-120B-A12B`)\n- **Context length**: 262,144 tokens\n- **Price**: $0.085 / $0.4 per 1M tokens\n- **Modality**: Text Generation\n- Supports tool/function calling.\n- A reasoning model: chain-of-thought is returned separately from the answer.\n- **Best for** (a first guess; confirm or correct it): Long Conversations, Long Horizon Tasks\n- **Suggested tier** (a first guess): Tier 2"
+   "Specs": "- **Provider**: deepinfra (`nvidia/NVIDIA-Nemotron-3-Super-120B-A12B`)\n- **Context length**: 262,144 tokens\n- **Price**: $0.075 / $0.4 per 1M tokens\n- **Modality**: Text Generation\n- Supports tool/function calling.\n- A reasoning model: chain-of-thought is returned separately from the answer.\n- **Best for** (a first guess; confirm or correct it): Long Conversations, Long Horizon Tasks\n- **Suggested tier** (a first guess): Tier 2"
   },
   "captured_at": "2026-09-28",
   "evidence": {
@@ -2708,8 +2722,8 @@
    "modality": "Text_Generation",
    "license_class": "Unknown",
    "context_length": 262144,
-   "price_input_per_1m": 0.08,
-   "price_output_per_1m": 0.2,
+   "price_input_per_1m": 0.06,
+   "price_output_per_1m": 0.16,
    "tool_calling": true,
    "reasoning": false,
    "best_for": [
@@ -2721,7 +2735,7 @@
   "bottom_line": "NVIDIA Nemotron 3.5 Lightning is a text generation model offered on DeepInfra, described as NVIDIA's fastest open model for always-on agents and high-volume specialized tasks, with pricing per million tokens and a 262, 1",
   "what_it_solves": "It addresses the need for fast, efficient AI text generation in applications that require constant availability or handle large volumes of specialized work. It improves on its predecessor by offering up to 4 times higher throughput on a 1-million-token context, which helps manage large amounts of text quickly. It also supports a 262,144-token context, allowing it to process very long inputs or outputs in a single session.",
   "sections": {
-   "Specs": "- **Provider**: deepinfra (`nvidia/NVIDIA-Nemotron-3.5-Lightning`)\n- **Context length**: 262,144 tokens\n- **Price**: $0.08 / $0.2 per 1M tokens\n- **Modality**: Text Generation\n- Supports tool/function calling.\n- **Best for** (a first guess; confirm or correct it): Long Conversations, Long Horizon Tasks\n- **Suggested tier** (a first guess): Tier 2"
+   "Specs": "- **Provider**: deepinfra (`nvidia/NVIDIA-Nemotron-3.5-Lightning`)\n- **Context length**: 262,144 tokens\n- **Price**: $0.06 / $0.16 per 1M tokens\n- **Modality**: Text Generation\n- Supports tool/function calling.\n- **Best for** (a first guess; confirm or correct it): Long Conversations, Long Horizon Tasks\n- **Suggested tier** (a first guess): Tier 2"
   },
   "captured_at": "2026-09-28",
   "evidence": {
@@ -3523,8 +3537,8 @@
    "modality": "Image_To_Text",
    "license_class": "Unknown",
    "context_length": 262144,
-   "price_input_per_1m": 0.15,
-   "price_output_per_1m": 1.875,
+   "price_input_per_1m": 0.2,
+   "price_output_per_1m": 2.5,
    "tool_calling": true,
    "reasoning": true,
    "best_for": [
@@ -3537,7 +3551,7 @@
   "bottom_line": "Qwen3.8-27B is an open-weight dense vision-language model from Qwen, available via DeepInfra's API, that handles text, image, and video understanding with flexible thinking control for coding, professional work, research",
   "what_it_solves": "It addresses the need for a compact, deployment-friendly AI model that can handle complex, multi-step tasks reliably, such as coding, professional workflows, and research. It also solves the challenge of multimodal understanding by natively processing images and videos, and offers flexible thinking modes to balance reasoning depth and speed.",
   "sections": {
-   "Specs": "- **Provider**: deepinfra (`Qwen/Qwen3.8-27B`)\n- **Context length**: 262,144 tokens\n- **Price**: $0.15 / $1.875 per 1M tokens\n- **Modality**: Image To Text\n- Supports tool/function calling.\n- A reasoning model: chain-of-thought is returned separately from the answer.\n- **Best for** (a first guess; confirm or correct it): Large Coding Tasks, Long Horizon Tasks\n- **Suggested tier** (a first guess): Tier 1"
+   "Specs": "- **Provider**: deepinfra (`Qwen/Qwen3.8-27B`)\n- **Context length**: 262,144 tokens\n- **Price**: $0.2 / $2.5 per 1M tokens\n- **Modality**: Image To Text\n- Supports tool/function calling.\n- A reasoning model: chain-of-thought is returned separately from the answer.\n- **Best for** (a first guess; confirm or correct it): Large Coding Tasks, Long Horizon Tasks\n- **Suggested tier** (a first guess): Tier 1"
   },
   "captured_at": "2026-09-28",
   "evidence": {
