@@ -6325,3 +6325,10 @@ stage), `test_folder_review.py` (+2: index equivalence, 3,000-file tree in linea
 
 **Verification:** full suite in a clean clone of `42fc49b` plus this change: 2612 passed,
 2 skipped, 5 deselected in 850.03s (0:14:10), exit 0.
+
+**Hidden folders never become Sources (same day).** `folder_sources.documents` skipped
+build and cache folders but not hidden ones, which the survey excludes: Resource-Library's
+first research round queued three pytest fixture PDFs from `E:\Librarian research\
+.gg-w4-final-temp` as the newest papers (capture failed; no model call). They were removed
+from the queue. Test: `test_folder_sources.py::test_hidden_folders_never_become_sources`.
+Verification: `tests/test_folder_sources.py` 28 passed; not yet a full-suite run.

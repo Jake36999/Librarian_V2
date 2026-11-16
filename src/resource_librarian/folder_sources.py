@@ -70,7 +70,10 @@ def documents(vault: Any, folder: str, scope: Any = None, *, _all: bool = False)
         if wanted is not None and path.suffix.lower() not in wanted:
             continue
         rel = path.relative_to(base)
-        if any(part in SKIP_DIRS or part.lower().endswith("cache") for part in rel.parts[:-1]):
+        # Hidden folders too, as the survey treats them (2026-11-16: pytest scratch PDFs inside a
+        # hidden temp folder were queued as the "newest" research papers).
+        if any(part in SKIP_DIRS or part.lower().endswith("cache") or part.startswith(".")
+               for part in rel.parts[:-1]):
             continue
         if credential_path(rel.as_posix()) or generated_path(rel.as_posix()):
             continue

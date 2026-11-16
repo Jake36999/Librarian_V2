@@ -241,3 +241,12 @@ def test_queue_reports_what_the_scope_left_out_so_the_owner_sees_it(attached):
     out = queue(vault, str(source / "papers"), ingest=lambda ref, note: {"status": "queued"}, limit=10)
     assert out["scope"] == [".pdf"] and out["queued"] == 1
     assert out["not_in_scope"] == {".md": 1, ".txt": 1}                # visible, free, and widenable
+
+
+def test_hidden_folders_never_become_sources(attached):
+    from resource_librarian.folder_sources import documents
+    vault, source = attached
+    hidden = source / "papers" / ".scratch" / "pytest-1"; hidden.mkdir(parents=True)
+    (hidden / "p.pdf").write_text("synthetic")
+    found = [p.relative_to(source).as_posix() for p in documents(vault, str(source / "papers"), scope=(".pdf",))]
+    assert found == ["papers/a.pdf"]
