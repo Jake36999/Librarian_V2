@@ -16,7 +16,8 @@ from ..registry import Card, Context, tool
                 "another start reports it and does nothing; `resume` continues an "
                 "interrupted or cancelled run without repeating a finished stage"))
 def process_approved(ctx: Context, resume: str = "", background: bool = False,
-                     retry_waiting: bool = False) -> dict:
+                     retry_waiting: bool = False, optical_all_pages: bool = False) -> dict:
+    ctx.extras["optical_all_pages"] = optical_all_pages
     return batch.start(ctx, requested_by=ctx.tier, resume=resume, background=background,
                        retry_waiting=retry_waiting)
 
@@ -30,7 +31,7 @@ def batch_status(ctx: Context, run: str = "") -> dict:
     return batch.status(ctx.vault, run)
 
 
-@tool("batch_cancel", tier="curate", effect="write", scope="library",
+@tool("batch_cancel", tier="curate", effect="write", scope="library", orchestrates=True,
       returns=("cancelling",),
       card=Card("Stop the running batch after its current stage",
                 "a person wants processing to stop",

@@ -543,3 +543,22 @@ def test_a_probe_answered_only_in_its_own_part_is_not_confirmed(staged, vault):
     ctx, item = staged
     out = read_all(vault, item, document_answers(probes=({"probe": "L1.P1", "claim": "C2"},)))
     assert out["document"]["probes_confirmed"] == 0
+
+
+def test_failed_required_extraction_does_not_count_as_read(staged, monkeypatch):
+    ctx, ident = staged
+    def failed(tasks, endpoint, queue_dir=None, **kwargs):
+        return [clerk.Result(t.kind.name, t.id, "error", problems="transport failed") for t in tasks]
+    monkeypatch.setattr(clerk, "run", failed)
+    out = REGISTRY.call("deep_read", {"item_id": ident, "lenses": False}, ctx)
+    assert out["read"] == 0
+    assert out["remaining"] == out["chunks"]
+    assert "transport failed" in str(out["task_failures"])
+
+
+def test_partial_staged_source_can_continue_reading(staged):
+    ctx, ident = staged
+    store = StagingStore(ctx.vault)
+    item = store.load(ident); item["status"] = "partial"; store.save(item)
+    out = REGISTRY.call("deep_read", {"item_id": ident, "lenses": False}, ctx)
+    assert out.get("read", 0) > 0, out

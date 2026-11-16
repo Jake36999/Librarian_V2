@@ -193,14 +193,14 @@ WORKSPACE_DOCUMENT = "workspace_document"
 def folder_overrides(root):
     from .folder_review import FolderReview
     result = {}
-    for card in FolderReview(Vault(root)).list():
+    for card in FolderReview(Vault(root)).list(include_provenance=False):
         if card.get('status') != 'accepted' or not card.get('decision'): continue
         parent = Path(card['source_root']); target = parent if card['path'] == '.' else parent / card['path']
         if target.is_relative_to(root): result[target.relative_to(root).as_posix()] = card['decision']['purpose']
     return result
 
 
-def outside_scope(rel: str, excludes: set[str], path: Path | None = None, *, overrides=None) -> bool:
+def outside_scope(rel: str, excludes: set[str], path: Path | None = None, *, overrides=None, hidden: bool = True) -> bool:
     """One visibility rule for indexing and watching an adopted library: a hidden
     name, an excluded path (file or folder) or anything under one, and any
     link or Windows reparse point (a junction is not a symlink to Python 3.11)
@@ -211,7 +211,9 @@ def outside_scope(rel: str, excludes: set[str], path: Path | None = None, *, ove
     if credential_path(rel):
         return True
     parts = rel.split("/")
-    if any(part.startswith(".") for part in parts):
+    # Indexing and watching skip hidden names; READING a connected project does not (hidden=False):
+    # .github, .gitignore and root dotfiles are ordinary project files an agent must be able to open.
+    if hidden and any(part.startswith(".") for part in parts):
         return True
     blocked = [e for e in excludes if e == '.' or rel == e or rel.startswith(e + '/')]
     if blocked:
@@ -285,3 +287,45 @@ def adopted(root: Path) -> bool:
 def manifest_bytes(root: Path) -> bytes:
     path = manifest_path(root)
     return path.read_bytes() if path.is_file() else b""
+
+
+def resolve_read_path(vault, value):
+    """Resolve a library/attached read under the owner's current manifest.
+
+    Attachment grants reading without requiring a later folder classification.
+    An explicit deeper exclusion and configured exclusions still narrow that grant.
+    This is path authority only; registry actor/grant and publication checks remain.
+    """
+    from .credentials import refuse_credentials
+    path = (vault.root / value).resolve()
+    refuse_credentials(value)
+    refuse_credentials(path)
+    home = vault.root.resolve()
+    if path == home or path.is_relative_to(home):
+        return path
+    candidates = []
+    for entry in (load(vault.root) or {}).get('roots', []):
+        if not entry.get('attached'):
+            continue
+        base = (home / entry['path']).resolve()
+        if path.is_relative_to(base):
+            candidates.append((len(base.parts), base, entry))
+    if not candidates:
+        from . import projects
+        configured = projects.state(vault)
+        if configured['enabled']:
+            for entry in configured['roots']:
+                base = Path(entry['path']).resolve()
+                if path.is_relative_to(base):
+                    projects.root_for(vault, '', repository=str(base))
+                    candidates.append((len(base.parts), base,
+                                       {**entry, 'access': 'read_only'}))
+        if not candidates:
+            raise TypeError(f"{value!r} is outside the library and configured connected roots")
+    _, base, entry = max(candidates, key=lambda item: item[0])
+    if entry.get('purpose') == 'exclude' or entry.get('access') not in ('read_only', 'read_write'):
+        raise TypeError(f"{value!r} is excluded by the connected-root configuration")
+    rel = path.relative_to(base).as_posix()
+    if outside_scope(rel, set(entry.get('excludes', [])), path, hidden=False):
+        raise TypeError(f"{value!r} is excluded by the connected-root configuration")
+    return path

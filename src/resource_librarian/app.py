@@ -2589,6 +2589,10 @@ class App:
                                    "background_profile_endpoint": self._background_profile_endpoint,
                                   "invocation_runtime": self.invocation_runtime,
                                   "use_tool_bundles": True}
+        try:
+            extras["ocr_context_tokens"] = int(self._route_catalogue_entry(self._role_choice("ocr")).get("context_length") or 0)
+        except (ApiError, KeyError, TypeError, ValueError):
+            extras["ocr_context_tokens"] = 0
         if self.writer is not None:
             extras["vault_writer"] = self.writer
         from .clerk import UnavailableEndpoint
@@ -2698,6 +2702,8 @@ class App:
 
         def turn() -> None:
             try:
+                # Only actual person messages contribute external PDF references.
+                loop.ctx.extras.setdefault("_person_pdf_messages", []).append(text)
                 result = loop.send(text, cancel=cancel)
                 self._touch_desk(text)
                 event = {"type": "turn_done", **result.to_dict(), "session": self.session_view()}
@@ -3774,7 +3780,7 @@ class App:
             self.services())[1])
 
     @mutation_entry("the service test")
-    def test_service(self, slot: str) -> dict[str, Any]:
+    def test_service(self, slot: str, file: str = "", page: int = 1) -> dict[str, Any]:
         """One small, real call: the OCR model reads a sample line (R17's Test action)."""
         from . import ocr
         if slot == "embeddings":
@@ -3799,6 +3805,14 @@ class App:
             reader = ocr.endpoint(self.vault)
             if reader is None:
                 return {"ok": False, "error": "no OCR model is chosen"}
+            if file:
+                from .read_access import source_path
+                original = source_path(Context(vault=self.vault), file)
+                if original.suffix.lower() != ".pdf" or type(page) is not int or page < 1:
+                    raise ApiError(400, "Choose a PDF and a positive page number")
+                got = reader.page_text(ocr.render_page(original, page - 1))
+                return {"ok": bool(got.strip()), "read": got, "page": page, "response": getattr(reader, "last_response", {}),
+                        "model": getattr(reader, "name", "")}
             got = reader.page_text(ocr.sample_png())
         except (ocr.OcrError, ProviderError) as exc:
             return {"ok": False, "error": str(exc)[:300]}
@@ -4643,7 +4657,7 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 return app.set_service(str(body.get("slot") or ""), str(body.get("provider") or ""),
                                        str(body.get("model") or ""), str(body.get("host_id") or ""))
             if path == "/api/services/test":
-                return app.test_service(str(body.get("slot") or ""))
+                return app.test_service(str(body.get("slot") or ""), str(body.get("file") or ""), body.get("page", 1))
             if path == "/api/projects/enable":
                 return app.set_projects_enabled(bool(body.get("enabled")))
             if path == '/api/folders/survey':

@@ -78,7 +78,9 @@ def test_ocr_uses_the_shared_transport(monkeypatch):
     from resource_librarian import ocr
     seen = _transport(monkeypatch, {"choices": [{"message": {"content": " page "}}]})
     monkeypatch.setattr(ocr, "ocr_request", lambda *a: ({"model": "m"}, None))
+    import threading
     chat = ocr.VisionChat.__new__(ocr.VisionChat)
+    chat._response_local = threading.local()
     chat.url, chat.key_env, chat.model, chat.timeout = "http://x/v1/chat/completions", "", "m", 5
     chat.route = chat.vault = None
     chat.provider, chat.name = "custom", "custom:m"

@@ -112,7 +112,7 @@ KINDS: dict[str, Kind] = {k.name: k for k in (
                  "type": "object", "required": ["term", "sentence"], "properties": {
                      "term": {"type": "string", "maxLength": 60},
                      "sentence": {"type": "string", "maxLength": 300}}}}}},
-         max_tokens=900, chunk_chars=6000),
+         max_tokens=1800, chunk_chars=6000),
     Kind("queries", "turn a description of a need into search terms",
          {"type": "object", "required": ["queries"], "properties": {
              "queries": {"type": "array", "maxItems": 6,
@@ -479,8 +479,8 @@ def claims(abstract: str) -> Task:
 
 def terms(text: str) -> Task:
     return Task(KINDS["terms"], text, (
-        "List up to twelve technical terms the text below uses, each with the sentence "
-        "it appears in, copied exactly. Only terms the text itself uses; do not define "
+        "List up to twelve technical terms the text below uses, each with a verbatim excerpt "
+        "of at most 300 characters containing the term, in the sentence field. Only terms the text itself uses; do not define "
         "them."))
 
 
@@ -1448,6 +1448,24 @@ class Router(Endpoint):
 
 # ------------------------------------------------------------------ running
 
+def _escape_invalid_json_backslashes(raw: str) -> str:
+    """Preserve literal backslashes in strings without guessing missing JSON structure."""
+    out, inside, i = [], False, 0
+    while i < len(raw):
+        char = raw[i]
+        if char == '"':
+            inside = not inside
+        if inside and char == chr(92) and i + 1 < len(raw):
+            following = raw[i + 1]
+            valid = following == chr(92) or following in '\"/bfnrt' or (following == 'u' and
+                len(raw[i + 2:i + 6]) == 4 and all(c in '0123456789abcdefABCDEF' for c in raw[i + 2:i + 6]))
+            if valid:
+                out.extend((char, following)); i += 2; continue
+            out.append(char)
+        out.append(char); i += 1
+    return ''.join(out)
+
+
 def run_one(task: Task, endpoint: Endpoint) -> Result:
     payload = task.payload()
     problems = ""
@@ -1462,9 +1480,43 @@ def run_one(task: Task, endpoint: Endpoint) -> Result:
                           problems=f"{type(exc).__name__}: {exc}"[:400], model=model,
                           attempts=attempt + 1)
         value, problems = parse(raw, task.kind.schema)
+        reductions = []
+        if problems.startswith("invalid JSON"):
+            repaired = _escape_invalid_json_backslashes(raw)
+            if repaired != raw:
+                value, problems = parse(repaired, task.kind.schema)
+                reductions.append("JSON: invalid backslash escapes preserved as literal source text")
+        if task.kind.name == "terms" and isinstance(value.get("terms"), list):
+            limit = task.kind.schema["properties"]["terms"]["items"]["properties"]["sentence"]["maxLength"]
+            for entry in value["terms"]:
+                if not isinstance(entry, dict):
+                    continue
+                sentence, term = entry.get("sentence"), entry.get("term")
+                if isinstance(sentence, str) and isinstance(term, str) and len(sentence) > limit:
+                    pos = sentence.lower().find(term.lower())
+                    if pos >= 0 and len(term) <= limit:
+                        start = max(0, pos - (limit - len(term)) // 2)
+                        end = min(len(sentence), start + limit)
+                        entry["sentence"] = sentence[start:end].strip()
+                        reductions.append("terms: long sentence retained as a bounded verbatim excerpt")
+            problems = "; ".join(_check(value, task.kind.schema))
+        for field in task.kind.bullet_fields:
+            rule = task.kind.schema.get("properties", {}).get(field, {})
+            maximum = rule.get("items", {}).get("maxLength")
+            bullets = value.get(field)
+            if isinstance(bullets, list) and isinstance(maximum, int):
+                kept = []
+                for bullet in bullets:
+                    if isinstance(bullet, str) and len(bullet) > maximum:
+                        reductions.append(f"{field}: discarded oversized item: {bullet}")
+                    else:
+                        kept.append(bullet)
+                value[field] = kept
+        if value:
+            problems = "; ".join(_check(value, task.kind.schema))
         if not problems:
             status, value, dropped = verify(task, value)
-            return Result(task.kind.name, task.id, status, value, dropped, model=model,
+            return Result(task.kind.name, task.id, status, value, dropped + reductions, model=model,
                           attempts=attempt + 1)
     return Result(task.kind.name, task.id, "refused", problems=problems, model=model,
                   attempts=REPAIR_ATTEMPTS + 1)
@@ -1512,13 +1564,17 @@ def _run(tasks: Sequence[Task], endpoint: Endpoint | None,
             for i, result in zip(indexes, _run([tasks[i] for i in indexes], target, queue_dir, state_write)):
                 out[i] = result
         return [out[i] for i in range(len(tasks))]
-    try:
-        if endpoint.concurrency <= 1 or len(tasks) <= 1:
-            return [run_one(t, endpoint) for t in tasks]
-        with ThreadPoolExecutor(max_workers=endpoint.concurrency) as pool:
-            return list(pool.map(lambda t: run_one(t, endpoint), tasks))
-    except ClerkUnavailable as exc:
-        return [_queue(t, queue_dir, str(exc), state_write) for t in tasks]
+    def complete_one(task):
+        try:
+            return run_one(task, endpoint)
+        except ClerkUnavailable as exc:
+            return _queue(task, queue_dir, str(exc), state_write)
+
+    if endpoint.concurrency <= 1 or len(tasks) <= 1:
+        return [complete_one(t) for t in tasks]
+    with ThreadPoolExecutor(max_workers=endpoint.concurrency) as pool:
+        return list(pool.map(complete_one, tasks))
+
 
 
 def task_key(payload: dict[str, Any]) -> str:

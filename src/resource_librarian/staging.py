@@ -475,7 +475,11 @@ def _attachment_path(vault: Vault, rel: str) -> Path:
         if not path.is_relative_to(vault.work("staging") / "files"):
             raise TypeError("hidden attachments must remain inside staging/files")
         return path
-    path = vault.safe_relative(normalized)
+    from .file_access import connected_read_path
+    path = (connected_read_path(vault, normalized) if Path(normalized).is_absolute()
+            else vault.safe_relative(normalized))
+    if not path.is_relative_to(vault.root.resolve()):
+        return path
     if any(part.startswith(".") for part in path.relative_to(vault.root).parts):
         raise TypeError("visible attachments cannot resolve into hidden vault state")
     return path
@@ -518,7 +522,7 @@ def prepare_source(store, item, bottom_line, what_it_solves, decided_by, session
         if not item.get(key):
             continue
         source = _attachment_path(store.vault, item[key])
-        rel = source.relative_to(store.vault.root).as_posix()
+        rel = (source.relative_to(store.vault.root).as_posix() if source.is_relative_to(store.vault.root) else source.as_posix())
         if not source.is_file():
             raise TypeError(f"attachment is missing: {rel}")
         stamp = fingerprint(source)

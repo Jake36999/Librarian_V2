@@ -457,7 +457,10 @@ class Registry:
             if writer is not None and spec.orchestrates:
                 # Admission is still explicit. The orchestrator itself may
                 # wait, but each contained mutation is its own checked write.
-                writer.submit(lambda: None, caller=f"orchestrator:{name}:admit")
+                # Cancellation only sets the running batch's in-memory event.
+                # Its admission must not queue behind the work it cancels.
+                if name != "batch_cancel":
+                    writer.submit(lambda: None, caller=f"orchestrator:{name}:admit")
                 result = invoke()
             elif writer is not None:
                 targets = list(intent.targets) if intent is not None else \

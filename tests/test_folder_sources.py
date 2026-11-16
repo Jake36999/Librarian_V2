@@ -72,3 +72,119 @@ def test_queue_defers_every_document_once_and_respects_the_limit(attached):
     assert out["queued"] == 2 and out["remaining"] == 1 and len(calls) == 2
     again = queue(vault, str(source / "papers"), ingest=ingest, limit=10)
     assert again["queued"] == 1 and again["already_queued"] == 2       # idempotent across runs
+
+
+@pytest.mark.parametrize("rel", ["papers/b.md", "papers/notes.py", "drafts/own.md"])
+def test_connected_file_read_preserves_original(attached, rel):
+    from resource_librarian.tools.browse import read_file
+    from resource_librarian.registry import Context
+    vault, source = attached
+    path = source / rel
+    before = path.read_bytes()
+    result = read_file(Context(tier="consult", vault=vault), str(path))
+    assert "synthetic" in result["text"]
+    assert path.read_bytes() == before
+
+
+def test_connected_pdf_conversion_reads_in_place(attached, monkeypatch):
+    from resource_librarian.tools.pdf import pdf_to_markdown_tool
+    from resource_librarian import text, pdf_markdown
+    from resource_librarian.registry import Context
+    vault, source = attached
+    path = source / "papers/a.pdf"
+    before = path.read_bytes()
+    monkeypatch.setattr(text, "extract", lambda *a: text.Extraction(pages=["source text"]))
+    monkeypatch.setattr(pdf_markdown, "clean_document", lambda *a, **kw: ("source text", 1))
+    result = pdf_to_markdown_tool(Context(tier="contribute", vault=vault), str(path))
+    assert result["path"].startswith(".librarian/conversions/")
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("rel", ["papers/excluded/x.md", "papers/.env", "elsewhere.md"])
+def test_connected_reads_refuse_excluded_credentials_and_unattached(attached, rel):
+    from resource_librarian.file_access import connected_read_path
+    vault, source = attached
+    with pytest.raises((TypeError, ValueError)):
+        connected_read_path(vault, str(source / rel))
+
+
+def test_connected_attachment_acceptance_resolves_original(attached):
+    from resource_librarian.staging import _attachment_path
+    vault, source = attached
+    assert _attachment_path(vault, str(source / "papers/b.md")) == (source / "papers/b.md").resolve()
+
+
+def test_connected_read_honours_attach_without_folder_classification(attached):
+    from resource_librarian import content_roots
+    from resource_librarian.file_access import connected_read_path
+    vault, source = attached
+    data = content_roots.load(vault.root)
+    for root in data['roots']:
+        if root.get('attached'):
+            root.pop('purpose', None)
+    content_roots._write_json(content_roots.manifest_path(vault.root), data)
+    assert connected_read_path(vault, str(source / 'papers/b.md')).is_file()
+
+
+def test_connected_read_honours_configured_exclusion(attached):
+    from resource_librarian import content_roots
+    from resource_librarian.file_access import connected_read_path
+    vault, source = attached
+    data = content_roots.load(vault.root)
+    data['roots'][1]['excludes'] = ['b.md']
+    content_roots._write_json(content_roots.manifest_path(vault.root), data)
+    with pytest.raises((TypeError, ValueError)):
+        connected_read_path(vault, str(source / 'papers/b.md'))
+
+
+@pytest.mark.parametrize('enabled', [False, True])
+def test_connected_read_uses_existing_project_switch(attached, enabled):
+    from resource_librarian import projects
+    from resource_librarian.file_access import connected_read_path
+    vault, source = attached
+    target = source / 'project' / 'analysis.py'
+    target.parent.mkdir(); target.write_text('value = 1')
+    projects._save(vault, {'enabled': enabled, 'roots': [{'path': str(target.parent)}]})
+    if enabled:
+        assert connected_read_path(vault, str(target)) == target.resolve()
+    else:
+        with pytest.raises(TypeError):
+            connected_read_path(vault, str(target))
+
+
+def test_third_party_attached_pdf_reads_without_grant_and_retains_provenance(attached, monkeypatch):
+    from resource_librarian import text
+    from resource_librarian.registry import Context, REGISTRY
+    import resource_librarian.tools
+    vault, source = attached
+    pdf = source / "papers/a.pdf"
+    monkeypatch.setattr(text, "extract", lambda *args: text.Extraction(pages=["Paper text"]))
+    result = REGISTRY.call("read_file", {"path": str(pdf)}, Context(tier="consult", vault=vault))
+    assert result.get("text") == "Paper text", result
+    assert any(row["authorship"] == "third_party" for row in result["access"]["sources"])
+    assert result["access"]["taint_sources"]
+
+
+def test_authorship_lookup_does_not_validate_presentation_descriptions(vault, monkeypatch):
+    from resource_librarian.folder_review import decision_for
+    from resource_librarian.staging import StagingStore
+    from resource_librarian import provenance
+    decision = {"purpose": "third-party", "authorship": "third_party"}
+    StagingStore(vault).add({"id": "folder-policy", "kind": "folder",
+        "source_root": str(vault.root), "path": "papers", "status": "accepted",
+        "decision": decision, "description": {"text": "Presentation only"}})
+    def refuse(*a, **kw):
+        raise AssertionError("policy lookup rebuilt the presentation provenance")
+    monkeypatch.setattr(provenance, "check_sections", refuse)
+    assert decision_for(vault, vault.root / "papers/a.pdf") == decision
+
+
+@pytest.mark.parametrize("handle", ["https://example.org/paper", "file:3820cc3f43198421", "conversion:abc123"])
+def test_evidence_handles_are_not_treated_as_local_paths(vault, monkeypatch, handle):
+    from types import SimpleNamespace
+    from resource_librarian.access import _native_authorship
+    import resource_librarian.folder_review as folders
+    def refuse(*a, **kw):
+        raise AssertionError("non-path evidence handle entered folder policy resolution")
+    monkeypatch.setattr(folders, "decision_for", refuse)
+    assert _native_authorship(SimpleNamespace(vault=vault), handle) is None

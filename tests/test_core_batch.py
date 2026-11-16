@@ -471,3 +471,117 @@ def test_a_completion_from_before_mf020_has_no_key_and_is_not_reused(core, monke
     monkeypatch.setattr(batch, "STAGES", [("read", _counting_stage(calls))])
     core.person_call("process_approved", {})
     assert calls == [item["id"]]
+
+
+def test_resume_retries_queued_read_and_preserves_completed_parse(core, monkeypatch):
+    _item(core)
+    calls = []
+    def parse(ctx, source):
+        calls.append("parse")
+        return {"status": "complete"}
+    def read(ctx, source):
+        calls.append("read")
+        if calls.count("read") == 1:
+            ctx.extras["cancel"].set()
+            return {"status": "queued", "coverage": "0/2"}
+        return {"status": "complete", "coverage": "2/2"}
+    monkeypatch.setattr(batch, "STAGES", [("parse", parse), ("read", read)])
+    original = core.person_call("process_approved", {})
+    resumed = core.person_call("process_approved", {"resume": original["run"]})
+    assert resumed["status"] == "finished"
+    assert calls == ["parse", "read", "read"]
+
+
+def test_batch_cancel_does_not_wait_for_busy_writer(core):
+    entered, release = threading.Event(), threading.Event()
+    cancelled = threading.Event()
+    thread, _, errors = _thread(lambda: core.writer.submit(lambda: (entered.set(), release.wait(5))))
+    assert entered.wait(2)
+    batch._LIVE[str(core.vault.root)] = ("test-busy", None, cancelled)
+    caller, results, call_errors = _thread(lambda: core.person_call("batch_cancel", {}))
+    try:
+        caller.join(0.5)
+        assert cancelled.is_set(), "cancellation waited behind model work on writer"
+        assert results and not call_errors
+    finally:
+        release.set()
+        caller.join(5)
+        thread.join(5)
+        batch._LIVE.pop(str(core.vault.root), None)
+
+
+def test_batch_read_retains_individual_task_failure_reasons(core, monkeypatch):
+    failures = [{"task": "terms", "reason": "fixture schema issue"}]
+    monkeypatch.setattr(REGISTRY, "call", lambda *a, **kw: {
+        "read": 1, "chunks": 2, "remaining": 1, "this_call": 0, "task_failures": failures})
+    assert batch._read(_ctx(core), {"id": "fixture"})["task_failures"] == failures
+
+
+def test_real_ocr_releases_writer_during_network_work(core, monkeypatch):
+    entered, release = threading.Event(), threading.Event()
+    class Reader:
+        name = "fixture-ocr"
+        def page_text(self, png):
+            entered.set()
+            assert release.wait(5)
+            return "Captured page"
+    path = core.vault.root / "Inbox/scan.pdf"
+    path.parent.mkdir(exist_ok=True); path.write_bytes(pdf_bytes([[]]))
+    from resource_librarian.conversions import ConversionStore
+    original_save = ConversionStore.save
+    def save(self, *args, **kwargs):
+        assert on_writer_thread()
+        return original_save(self, *args, **kwargs)
+    monkeypatch.setattr(ConversionStore, "save", save)
+    worker, results, errors = _thread(lambda: REGISTRY.call("ocr_pdf", {
+        "file": "Inbox/scan.pdf", "all_pages": True}, _ctx(core, ocr_endpoint=Reader())))
+    probe = None
+    try:
+        assert entered.wait(3)
+        probe, values, failures = _thread(lambda: core.writer.submit(lambda: True))
+        probe.join(0.5)
+        assert values == [True], "OCR held the writer while waiting for its model"
+    finally:
+        release.set(); worker.join(5)
+        if probe: probe.join(5)
+    assert not errors and results and results[0].get("read") == 1
+
+
+
+def test_ocr_continues_capturing_pages_while_writer_is_temporarily_busy(core):
+    first, proceed, all_pages, held, release = [threading.Event() for _ in range(5)]
+    class Reader:
+        name = "fixture-ocr-progress"
+        calls = 0
+        def page_text(self, png):
+            self.calls += 1
+            if self.calls == 1:
+                first.set(); assert proceed.wait(5)
+            if self.calls == 3: all_pages.set()
+            return "Captured page"
+    path = core.vault.root / "Inbox/progress.pdf"
+    path.parent.mkdir(exist_ok=True); path.write_bytes(pdf_bytes([[], [], []]))
+    worker, results, errors = _thread(lambda: REGISTRY.call("ocr_pdf", {
+        "file": "Inbox/progress.pdf", "all_pages": True}, _ctx(core, ocr_endpoint=Reader())))
+    blocker = None
+    try:
+        assert first.wait(3)
+        blocker, _, _ = _thread(lambda: core.writer.submit(lambda: (held.set(), release.wait(5))))
+        assert held.wait(2)
+        proceed.set()
+        assert all_pages.wait(1), "page capture waited for queued persistence"
+    finally:
+        proceed.set(); release.set(); worker.join(5)
+        if blocker: blocker.join(5)
+    assert not errors and results and results[0].get("read") == 3
+
+
+@pytest.mark.parametrize("references_coverage,expected", [("full", "not_applicable"), ("partial", "partial")])
+def test_relations_do_not_require_claims_from_fully_read_bibliography(core, references_coverage, expected):
+    item = _item(core, source_kind="paper")
+    record = {"source": item["name"], "kind": "document", "data": [
+        {"id": "body", "kind": "chapter", "name": "Body", "coverage": "full", "claims": ["A finding."]},
+        {"id": "refs", "kind": "chapter", "name": "References", "coverage": references_coverage, "claims": []}],
+        "information": []}
+    core.writer.submit(lambda: dik.save(core.vault, record))
+    assert batch._relate(_ctx(core), item)["status"] == expected

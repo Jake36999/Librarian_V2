@@ -104,7 +104,7 @@ def test_macro_approval_never_overrides_a_denied_step_or_plan_mode(core):
 
 def test_only_reviewed_first_party_workflows_can_orchestrate_writer_operations():
     assert [name for name in REGISTRY.names() if REGISTRY.get(name).orchestrates] == [
-        "macro_resolve", "macro_run", "model_catalog_adopt", "process_approved"]
+        "batch_cancel", "macro_resolve", "macro_run", "model_catalog_adopt", "ocr_pdf", "process_approved"]
     # macro_resolve only re-enters run_macro with the inputs a run's log recorded.
     assert REGISTRY.get("macro_resolve").tier == "curate"
     assert REGISTRY.get("process_approved").tier == "curate"

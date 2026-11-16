@@ -339,13 +339,16 @@ def ocr_request(provider: str, model_id: str, prompt: str, image_url: str,
     row = binding("ocr", provider, model_id)
     if row.descriptor is not None and row.descriptor.id != "openai_vision_chat_v1":
         raise ServiceContractError("selected OCR model has a non-vision-chat adapter")
-    return ({
+    request = {
         "model": model_id, "temperature": 0, "max_tokens": max(1, int(max_tokens)),
         "messages": [{"role": "user", "content": [
             {"type": "text", "text": prompt},
             {"type": "image_url", "image_url": {"url": image_url}},
         ]}],
-    }, row)
+    }
+    if provider == "deepinfra" and model_id.startswith("Qwen/Qwen3.5-"):
+        request["chat_template_kwargs"] = {"enable_thinking": False}
+    return request, row
 
 
 def tts_request(provider: str, model_id: str, text: str) -> tuple[dict[str, Any], ServiceBinding]:

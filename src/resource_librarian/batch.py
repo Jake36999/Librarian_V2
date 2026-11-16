@@ -198,8 +198,10 @@ def _parse(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
         if done.get("status") == "partial":
             return done
         item = StagingStore(ctx.vault).load(item["id"])
-    elif verdict == "needs_ocr" and str(item.get("file", "")).lower().endswith(".pdf") \
-            and not item.get("clean_file"):
+    elif (verdict == "needs_ocr" or ctx.extras.get("optical_all_pages")) and str(item.get("file", "")).lower().endswith(".pdf") \
+            and (not item.get("clean_file") or
+                 (item.get("ocr") or {}).get("read", 0) < (item.get("ocr") or {}).get("needed", 0) or
+                 (ctx.extras.get("optical_all_pages") and (item.get("ocr") or {}).get("recipe") != "visual-v3")):
         done = _ocr(ctx, item)
         if done.get("status") == "partial":
             return done
@@ -247,7 +249,8 @@ def _ocr(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     if chosen is None:
         return {"status": "partial", "reason": "the pages have no text layer, and no OCR "
                 "model is chosen (Settings -> Connections, slot 4)"}
-    out = REGISTRY.call("ocr_pdf", {"file": item["file"], "staged_item": item["id"]}, ctx)
+    out = REGISTRY.call("ocr_pdf", {"file": item["file"], "staged_item": item["id"],
+                                       "all_pages": bool(ctx.extras.get("optical_all_pages"))}, ctx)
     if "error" in out:
         return {"status": "partial", "reason": f"the pages have no text layer, and OCR was "
                                                f"not run: {out.get('detail') or out['error']}"}
@@ -256,10 +259,12 @@ def _ocr(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
         return {"status": "partial", "reason": f"the pages have no text layer, and OCR read "
                                                f"none of them: {why}"}
     _update_item(ctx, item["id"], lambda fresh: fresh.update(
-        clean_file=out["path"], ocr={k: out[k] for k in ("model", "pages", "needed", "read")}))
+        clean_file=out["path"], ocr={**{k: out[k] for k in ("model", "pages", "needed", "read")},
+                                   "recipe": "visual-v3"}))
     complete = out["read"] >= out["needed"] and not out.get("errors")
     return {"ocr": f"{out['read']} of {out['needed']} image-only pages read by {out['model']}",
             "ocr_complete": complete,
+            **({} if complete else {"status": "partial", "reason": f"OCR read {out['read']} of {out['needed']} required pages"}),
             **({} if complete else {"ocr_gap": f"OCR read {out['read']} of {out['needed']} "
                                                f"image-only pages"})}
 
@@ -308,6 +313,7 @@ def _read(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
         return {"status": "complete", "coverage": coverage,
                 "lenses_staged": out.get("lenses_staged", [])}
     return {"status": "queued" if not out.get("this_call") else "partial",
+            "task_failures": out.get("task_failures", []),
             "coverage": coverage, "reason": "waiting for the clerk model"
             if not out.get("this_call") else "stopped before the end"}
 
@@ -317,10 +323,18 @@ def _review(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     if "error" in out:
         return {"status": "failed", "reason": str(out.get("detail") or out["error"])}
     draft = (out.get("draft") or {}).get("status", "")
-    if draft == "ok":
-        return {"status": "complete", "draft": draft}
-    return {"status": "queued", "draft": draft,
-            "reason": "waiting for the clerk model to draft the Bottom Line"}
+    if draft != "ok":
+        return {"status": "queued", "draft": draft,
+                "reason": "waiting for the clerk model to draft the Bottom Line"}
+    # A draft is not a review of the whole source: complete only when every part was read. The
+    # pilot showed `read: queued` beside `review: complete` for a 12-chunk paper.
+    seen = reading.progress(item)
+    if seen["chunks"] and seen["read"] < seen["chunks"]:
+        return {"status": "partial", "draft": draft,
+                "reason": f"reading incomplete: {seen['read']} of {seen['chunks']} parts read"}
+    if not seen["chunks"] and item.get("source_kind") in ("paper", "document", "standard")             and (item.get("clean_file") or item.get("file")):
+        return {"status": "partial", "draft": draft, "reason": "the document has not been read"}
+    return {"status": "complete", "draft": draft}
 
 
 def _lenses(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
@@ -399,8 +413,11 @@ def _relate(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
         return {"status": "not_applicable", "reason": "no Data records to relate"}
     if record["kind"] != "document":
         return {"status": "complete", "relations": len(record["information"])}
-    if sum(1 for d in record["data"] if d.get("kind") == "chapter") < 2:
+    chapters = [d for d in record["data"] if d.get("kind") == "chapter"]
+    if len(chapters) < 2:
         return {"status": "not_applicable", "reason": "a single part: nothing to relate"}
+    if all(d.get("coverage") == "full" for d in chapters) and sum(bool(d.get("claims")) for d in chapters) < 2:
+        return {"status": "not_applicable", "reason": "all chapters read; fewer than two contain substantive claims"}
     out = dik.relate_chapters(record, clerk_endpoint(ctx), ctx.vault.work("queue") / "clerk",
         state_write=lambda fn, path: _commit(ctx, fn, targets=(path,)))
     def save():
@@ -627,13 +644,14 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
         done = {(e["item"], e["stage"]): e for e in runs.events(run_id) if e["type"] == "done"}
         finished = {e["item"] for e in runs.events(run_id) if e["type"] == "item"}
         last = ""
-        route = _route_identity(ctx)
+        route = _route_identity(ctx) + (":optical-all-pages-v1" if ctx.extras.get("optical_all_pages") else "")
         for item_id in items:
             if item_id in finished:
                 continue
             results: dict[str, dict[str, Any]] = {}
             prior = (store.load(item_id).get("processing") or {})
             stages = FOLDER_STAGES if store.load(item_id).get('kind') == 'folder' else STAGES
+            reran = set()
             for stage, fn in stages:
                 current = store.load(item_id)
                 _assert_active(ctx, current)
@@ -642,10 +660,16 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
                 before = _source_identity(ctx.vault, current, own)
                 key = _stage_key(_source_identity(ctx.vault, current), stage, route)
                 logged = done.get((item_id, stage))
-                if logged is not None and logged.get("key") == key:   # resumed: never twice
+                # Independent stages keep their receipts across partial retries.
+                dependencies = {"read": {"parse"}, "lenses": {"read"},
+                                "data": {"parse", "read"}, "relate": {"data"},
+                                "review": {"read", "data", "relate"}}
+                changed_input = bool(reran.intersection(dependencies.get(stage, ())))
+                if (not changed_input and logged and logged.get("key") == key
+                        and logged.get("status") == "complete"):
                     results[stage] = logged
                     continue
-                if (prior.get("stages") or {}).get(stage) == "complete" and \
+                if not changed_input and (prior.get("stages") or {}).get(stage) == "complete" and \
                         (prior.get("keys") or {}).get(stage) == key:  # an earlier run's, same input
                     results[stage] = {"status": "complete", "carried": prior.get("run", ""),
                                       "key": key,
@@ -657,6 +681,7 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
                     runs.append(run_id, {"type": "cancelled",
                                          "detail": f"cancelled after {last or 'the start'}"})
                     return
+                reran.add(stage)
                 runs.append(run_id, {"type": "stage", "item": item_id, "stage": stage})
                 # A long step says how far it has got (the PDF clean-up's parts), so the
                 # banner never sits on one stage for minutes with nothing to show.

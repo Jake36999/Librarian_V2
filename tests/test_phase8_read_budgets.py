@@ -38,19 +38,7 @@ def test_measured_byte_bound_does_not_assume_unicode_has_four_characters_per_tok
     assert measure('漢字') >= 6
 
 
-def test_third_party_raw_read_refuses_before_extraction_in_ordinary_session(vault, monkeypatch):
-    path = vault.root / 'Inbox/external.pdf'
-    path.write_bytes(b'not opened')
-    monkeypatch.setattr(access, '_native_authorship', lambda *args: 'third_party')
-    def forbidden(*args, **kwargs):
-        pytest.fail('Refuse before raw extraction')
-    monkeypatch.setattr(text, 'extract', forbidden)
-    out = REGISTRY.call('read_file', {'path': 'Inbox/external.pdf'}, Context(vault=vault))
-    assert out['refused'] == 'THIRD_PARTY_ROUTE_REQUIRED'
-    assert out['route'] == ['catalogue', 'graph', 'section', 'verify_source_pages']
-
-
-@pytest.mark.parametrize('person,authorship', [(True, 'third_party'), (False, 'owner_created')])
+@pytest.mark.parametrize('person,authorship', [(True, 'third_party'), (False, 'third_party'), (False, 'owner_created')])
 def test_person_and_own_raw_access_remain_allowed(vault, monkeypatch, person, authorship):
     path = vault.root / 'Inbox/document.pdf'
     path.write_bytes(b'fixture')
@@ -358,3 +346,14 @@ def test_get_note_keeps_the_third_party_catalogue_entry_available(vault):
                extra_fm='authorship: third_party')
     out = REGISTRY.call('get_note', {'name': 'External catalogue'}, Context(vault=vault))
     assert out.get('found') is True, out
+
+
+def test_agent_can_read_exact_person_referenced_pdf_outside_roots(vault, tmp_path, monkeypatch):
+    external = tmp_path / "person sample.pdf"
+    external.write_bytes(b"fixture")
+    ctx = Context(vault=vault, extras={"_person_pdf_messages": [f'Read "{external}".']})
+    monkeypatch.setattr(text, "extract", lambda *args: text.Extraction(pages=["Referenced text"]))
+    result = REGISTRY.call("read_file", {"path": str(external)}, ctx)
+    assert result.get("text") == "Referenced text", result
+    ctx.extras["_person_pdf_messages"] = [f'Read "{external}.bak".']
+    assert "error" in REGISTRY.call("read_file", {"path": str(external)}, ctx)

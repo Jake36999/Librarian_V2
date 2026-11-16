@@ -94,6 +94,15 @@ def _native_authorship(ctx, value):
     """Resolve source handles from accepted folders/explicit note frontmatter."""
     if ctx.vault is None or not isinstance(value, str):
         return None
+    from urllib.parse import urlsplit
+    # Evidence URI/identity handles are not files relative to the vault.
+    # A Windows drive letter is the one-character scheme exception.
+    try:
+        scheme = urlsplit(value).scheme
+    except ValueError:
+        return None
+    if len(scheme) > 1:
+        return None
     from .credentials import credential_path
     from .folder_review import decision_for
     from . import notes

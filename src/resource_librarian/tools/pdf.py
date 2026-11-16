@@ -5,9 +5,12 @@ ingestion (that would change ingestion's cost for every vault without anyone
 having decided it should)."""
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+
 from .. import ocr, pdf_markdown, text
 from ..registry import Card, Context, tool
 from ..conversions import ConversionStore
+from ..file_access import connected_read_path
 
 
 @tool("pdf_to_markdown", tier="contribute", effect="write", scope="session", open_world=True,
@@ -25,8 +28,8 @@ def pdf_to_markdown_tool(ctx: Context, file: str, staged_item: str = "") -> dict
 
     `staged_item` is retained for existing approved batch callers.
     """
-    path = (ctx.vault.root / file).resolve()
-    if ctx.vault.root not in path.parents or not path.is_file():
+    path = connected_read_path(ctx.vault, file)
+    if not path.is_file():
         raise TypeError(f"{file!r} is not a file inside this vault")
     if path.suffix.lower() != ".pdf":
         raise TypeError(f"{file!r} is not a PDF")
@@ -50,7 +53,7 @@ def pdf_to_markdown_tool(ctx: Context, file: str, staged_item: str = "") -> dict
     return store.save(request, markdown, pages=len(result.pages), batches=batches)
 
 
-@tool("ocr_pdf", tier="contribute", effect="write", scope="session", open_world=True,
+@tool("ocr_pdf", tier="contribute", effect="write", scope="session", open_world=True, orchestrates=True,
       returns=("path", "pages", "needed", "read", "errors", "model"),
       card=Card("Read a PDF's pages that have no text layer (a scan) with the library's OCR "
                 "model, into one markdown text", "a PDF was flagged needs_ocr",
@@ -58,9 +61,9 @@ def pdf_to_markdown_tool(ctx: Context, file: str, staged_item: str = "") -> dict
                 "call to the OCR model chosen in Settings -> Connections (slot 4). With none "
                 "chosen it refuses rather than use a chat model"))
 def ocr_pdf_tool(ctx: Context, file: str, staged_item: str = "",
-                 max_pages: int = ocr.MAX_PAGES) -> dict:
-    path = (ctx.vault.root / file).resolve()
-    if ctx.vault.root.resolve() not in path.parents or not path.is_file():
+                 max_pages: int = ocr.MAX_PAGES, all_pages: bool = False) -> dict:
+    path = connected_read_path(ctx.vault, file)
+    if not path.is_file():
         raise TypeError(f"{file!r} is not a file inside this vault")
     if path.suffix.lower() != ".pdf":
         raise TypeError(f"{file!r} is not a PDF")
@@ -69,11 +72,42 @@ def ocr_pdf_tool(ctx: Context, file: str, staged_item: str = "",
         raise TypeError("no OCR model is chosen for this library: Settings -> Connections, "
                         "slot 4")
     store = ConversionStore(ctx.vault)
-    request = store.request(path, 'ocr:v1:' + str(getattr(reader, 'name', '')) + ':' + str(max_pages))
-    cached = store.find(request)
-    if cached is not None:
+    request = store.request(path, 'ocr:v3-visual:' + str(all_pages) + ':' + str(getattr(reader, 'name', '')) + ':' + str(max_pages))
+    def commit(fn):
+        from ..conversions import file_sha256
+        from ..rules import Refusal
+        def checked():
+            if file_sha256(path) != request.original_sha256:
+                raise Refusal("EVIDENCE_IS_NEVER_EDITED", "Original PDF changed during OCR; retry from its current bytes")
+            return fn()
+        writer = ctx.extras.get("vault_writer")
+        return writer.submit(checked, caller="ocr-conversion") if writer is not None else checked()
+    cached = commit(lambda: store.find(request))
+    if cached is not None and cached.get("read", 0) >= cached.get("needed", 0) and not cached.get("errors"):
         return cached
-    got = ocr.read_pdf(ctx.vault, path, reader, max_pages)
+    page_requests = {}
+    cached_pages = {}
+    extracted = commit(lambda: text.extract(path, ctx.vault.derived / "text"))
+    for i in range(len(extracted.pages)):
+        page_request = store.request(path, request.method + ':page:' + str(i))
+        page_requests[i] = page_request
+        held = commit(lambda: store.find(page_request))
+        if held is not None:
+            cached_pages[i] = (ctx.vault.root / held['path']).read_text(encoding='utf-8')
+    pending_writes = []
+    with ThreadPoolExecutor(max_workers=1, thread_name_prefix="ocr-page-commit") as persistence:
+        def save_page(i, value):
+            metadata = getattr(reader, 'last_response', {})
+            pending_writes.append(persistence.submit(commit, lambda: store.save(
+                page_requests[i], value, pages=1, page_number=i + 1,
+                model=getattr(reader, 'name', ''), response=metadata)))
+            # Bound buffered page text while allowing capture to overlap a busy writer.
+            if len(pending_writes) >= max(4, 4 * int(getattr(reader, "concurrency", 1))):
+                pending_writes.pop(0).result()
+        got = ocr.read_pdf(ctx.vault, path, reader, max_pages, all_pages=all_pages,
+                           cached_pages=cached_pages, on_page=save_page, extracted=extracted)
+        for future in pending_writes:
+            future.result()
     markdown = got.pop('markdown')
     pages = got.pop('pages')
-    return store.save(request, markdown, pages=pages, **got)
+    return commit(lambda: store.save(request, markdown, pages=pages, **got))

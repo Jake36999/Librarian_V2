@@ -120,9 +120,11 @@ class FolderReview:
         self.vault = vault; self.store = StagingStore(vault)
         self.config = configuration(vault); self.planner = planner; self.applier = applier
 
-    def list(self):
+    def list(self, *, include_provenance=True):
         folder = self.store.folder('folder')
         rows = [self.store.load(path.stem) for path in sorted(folder.glob('*.json'))] if folder.is_dir() else []
+        if not include_provenance:
+            return rows
         from .access import PURPOSE_AUTHORSHIP
         for card in rows:
             decision = card.get('pending_decision') or card.get('decision') or {}
@@ -464,7 +466,7 @@ class FolderReview:
 def decision_for(vault, path):
     """Deepest accepted folder decision wins. Stale/failed read barriers stay conservative."""
     path = Path(path).resolve(); candidates = []
-    for card in FolderReview(vault).list():
+    for card in FolderReview(vault).list(include_provenance=False):
         decision = card.get('pending_decision') or card.get('decision')
         if not decision: continue
         root = Path(card['source_root']); root = root if card['path'] == '.' else root / card['path']

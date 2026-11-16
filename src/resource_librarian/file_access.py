@@ -140,3 +140,9 @@ def read_bytes_snapshot(path: Path) -> FileSnapshot:
 def read_text(path: Path, *, encoding: str = "utf-8", errors: str = "strict") -> str:
     with file_access(path):
         return path.read_text(encoding=encoding, errors=errors)
+
+
+def connected_read_path(vault, value):
+    """Resolve reads using the library's existing content-root configuration."""
+    from .content_roots import resolve_read_path
+    return resolve_read_path(vault, value)

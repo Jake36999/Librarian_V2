@@ -375,7 +375,7 @@ def deep_read(vault: Vault, item_id: str, endpoint: clerk.Endpoint | None, *,
     item = store.load(item_id)
     if item["kind"] != "source":
         raise TypeError(f"{item_id} is a {item['kind']}; only a staged source is deep-read")
-    if item["status"] not in ("staged", "deferred", "approved", "processing"):
+    if item["status"] not in ("staged", "deferred", "approved", "processing", "partial"):
         raise TypeError(f"{item_id} is already {item['status']}")
     local = clerk.is_local(endpoint)
     if local:
@@ -413,7 +413,9 @@ def deep_read(vault: Vault, item_id: str, endpoint: clerk.Endpoint | None, *,
     stances: dict[int, dict[str, Any]] = {}
     terms_by_chunk: dict[int, list[str]] = {}
     for (c, label, _), result in zip(first, results):
-        if result.status == "queued":
+        if label in ("points", "limits", "terms") and result.dropped:
+            discard(c, label, "; ".join(result.dropped))
+        if result.status == "queued" or (label in ("points", "limits", "terms") and not result.ok):
             waiting.add(c.index)
         elif label in ("points", "limits") and result.ok:
             notes[c.index][label] = result.value.get("bullets", [])
@@ -542,7 +544,11 @@ def deep_read(vault: Vault, item_id: str, endpoint: clerk.Endpoint | None, *,
     store.save(item)
     return {"id": item_id, "chunks": len(chunks), "read": len(read), **carried,
             "remaining": len(chunks) - len(read), "this_call": len(todo) - len(waiting),
-            "waiting_on_clerk": len(waiting), "lenses_staged": staged,
+            "waiting_on_clerk": len(waiting),
+            "task_failures": [{"task": label, "chunk": c.index, "status": result.status,
+                               "reason": result.problems}
+                              for (c, label, _), result in zip(first, results) if not result.ok],
+            "lenses_staged": staged,
             "lenses_corroborated": corroborated,
             "lenses_total": len(record["lenses"]), "discards": len(discards),
             "sections": rebuilt, **({"document": document} if document else {}),

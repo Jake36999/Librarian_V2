@@ -112,6 +112,12 @@ def guard(spec, arguments, ctx, *, consume=False):
             # Its Clerk receives bounded chunks; no whole document is returned.
             return
     handle, authorship = raw_target(spec, arguments, ctx)
+    if (handle and Path(handle).suffix.lower() == '.pdf'
+            and spec.name in {'read_file', 'read_project'}):
+        # raw_target already checked containment or the actual person reference.
+        target = (ctx.vault.root / handle).resolve()
+        if target.is_file() and target.suffix.lower() == '.pdf':
+            return
     if handle is None or authorship in {'owner_created', 'generated'}:
         return
     if _raw_grant(spec, arguments, ctx, consume=consume):
@@ -251,13 +257,10 @@ def source_path(ctx, source):
         path = Path(target)
         path = path if path.is_absolute() else ctx.vault.root / path
     refuse_credentials(path); refuse_credentials(path.resolve())
-    roots = [ctx.vault.root.resolve()]
-    for root in (load(ctx.vault.root) or {}).get('roots', []):
-        base = Path(root['path'])
-        roots.append((base if base.is_absolute() else ctx.vault.root / base).resolve())
-    resolved = path.resolve()
-    if not any(resolved.is_relative_to(root) for root in roots) or not resolved.is_file():
-        raise Refusal('VAULT_REQUIRED', 'Original must exist in this library or an accepted attached root')
+    from .content_roots import resolve_read_path
+    resolved = resolve_read_path(ctx.vault, str(path))
+    if not resolved.is_file():
+        raise Refusal('VAULT_REQUIRED', 'Original must exist in this library or a configured connected root')
     # In-vault hidden state is never accepted as an original.
     if resolved.is_relative_to(ctx.vault.root.resolve()):
         ctx.vault.safe_relative(resolved.relative_to(ctx.vault.root.resolve()).as_posix())

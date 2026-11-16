@@ -17,6 +17,8 @@ Cleaning up text that already exists is a different job, `pdf_markdown.py`'s.
 """
 from __future__ import annotations
 
+import threading
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 import base64
 import io
 import json
@@ -36,11 +38,17 @@ MAX_PAGES = 200            # a batch reads at most this many image-only pages pe
 SCALE = 2.0                # ~144 dpi: small print stays legible
 PROMPT = ("Transcribe all of the text on this page image, exactly as written, as Markdown. "
           "Keep headings, lists and tables; write mathematics in LaTeX. Do not summarise, "
-          "translate, correct or add anything. If the page has no text, reply with nothing.")
+          "translate or correct source content. For each visible figure or diagram, add a "
+          "separate [Visual description] identifying its labels, axes, legend and depicted "
+          "relationships. Label these descriptions as generated interpretation. Mark uncertain "
+          "symbols or unreadable regions explicitly; do not invent details. For a blank page, "
+          "return [Blank page].")
 
 
 class OcrError(RuntimeError):
-    pass
+    def __init__(self, message, *, response=None):
+        super().__init__(message)
+        self.response = response or {}
 
 
 def choice(vault: Vault) -> dict[str, str]:
@@ -65,6 +73,17 @@ class VisionChat:
         self.key_env = route.key_env if route else PRESETS[provider]["key_env"]
         self.model, self.timeout, self.route, self.vault = model, timeout, route, vault
         self.name = f"{provider}:{model}"
+        self._response_local = threading.local()
+        runtime = service_routes.runtime(vault) if vault else None
+        self.concurrency = runtime.hosts.get(route.host_id).concurrency_limit if runtime and route else 1
+
+    @property
+    def last_response(self):
+        return getattr(self._response_local, "value", {})
+
+    @last_response.setter
+    def last_response(self, value):
+        self._response_local.value = value
 
     def page_text(self, png: bytes) -> str:
         key = _key(self.key_env)                           # ProviderError when no key is set
@@ -89,6 +108,30 @@ class VisionChat:
             # The shared transport already retried transient failures.
             raise OcrError(f"{self.name}: {exc}") from exc
         try:
+            self.last_response = {"finish_reason": data["choices"][0].get("finish_reason"),
+                                  "usage": data.get("usage", {})}
+            if self.last_response["finish_reason"] == "length":
+                first = dict(self.last_response)
+                prompt_tokens = int(first["usage"].get("prompt_tokens") or 0)
+                context = int(getattr(self, "context_tokens", 0) or 0)
+                cap = int(getattr(self, "max_output_tokens", 8000) or 8000)
+                grown = min(cap, max(0, context - prompt_tokens))
+                if prompt_tokens > 0 and grown > body["max_tokens"]:
+                    body["max_tokens"] = grown
+                    try:
+                        data = service_routes.run(self.vault, self.route, send) if self.route and self.vault else send()
+                    except (ProviderError, service_routes.ServiceRouteError) as exc:
+                        raise OcrError(str(exc), response=first) from exc
+                    second = {"finish_reason": data["choices"][0].get("finish_reason"), "usage": data.get("usage", {})}
+                    usage = dict(second["usage"])
+                    for field in ("prompt_tokens", "completion_tokens", "total_tokens", "estimated_cost"):
+                        if field in first["usage"] or field in second["usage"]:
+                            usage[field] = (first["usage"].get(field) or 0) + (second["usage"].get(field) or 0)
+                    self.last_response = {**second, "usage": usage, "attempts": [first, second],
+                        "recovery": {"pattern": "OCR_OUTPUT_LIMIT", "trigger_value": "length",
+                                     "action": {"max_tokens": grown}, "outcome": second["finish_reason"]}}
+                if self.last_response["finish_reason"] == "length":
+                    raise OcrError("OCR response truncated at its output limit; page remains incomplete", response=self.last_response)
             return str(data["choices"][0]["message"]["content"] or "").strip()
         except (KeyError, IndexError, TypeError) as exc:
             raise OcrError(f"{self.name}: an unexpected reply {str(data)[:200]}") from exc
@@ -109,7 +152,10 @@ def endpoint(vault: Vault, extras: dict[str, Any] | None = None) -> Any | None:
         route = service_routes.resolve(vault, "ocr", validate=True)
         if route is None or route.choice() != {key: chosen[key] for key in ("provider", "model")}:
             raise service_routes.ServiceRouteError("OCR assignment changed; restart the operation")
-        return VisionChat(chosen["provider"], chosen["model"], route=route, vault=vault)
+        reader = VisionChat(chosen["provider"], chosen["model"], route=route, vault=vault)
+        reader.context_tokens = int((extras or {}).get("ocr_context_tokens") or 0)
+        reader.max_output_tokens = int(vault.setting("services", "ocr_max_output_tokens") or 8000)
+        return reader
     except service_routes.ServiceRouteError as exc:
         raise OcrError(str(exc)) from exc
 
@@ -126,23 +172,48 @@ def render_page(path: Path, index: int, scale: float = SCALE) -> bytes:
         document.close()
 
 
-def read_pdf(vault: Vault, path: Path, ocr: Any, max_pages: int = MAX_PAGES) -> dict[str, Any]:
+def read_pdf(vault: Vault, path: Path, ocr: Any, max_pages: int = MAX_PAGES, *, all_pages: bool = False, cached_pages=None, on_page=None, extracted=None) -> dict[str, Any]:
     """Every page's text: its own text layer where it has one, OCR where it has none."""
-    extracted = text.extract(path, vault.derived / "text")
+    extracted = extracted if extracted is not None else text.extract(path, vault.derived / "text")
     if extracted.error:
         raise OcrError(extracted.error)
     pages = list(extracted.pages)
-    needed = [i for i, page in enumerate(pages) if not page.strip()]
+    needed = [i for i, page in enumerate(pages) if all_pages or not page.strip()]
+    cached_pages = cached_pages or {}
     done, errors = 0, []
-    for i in needed[:max(0, max_pages)]:
-        try:
-            pages[i] = ocr.page_text(render_page(path, i))
+    for i in needed:
+        if i in cached_pages:
+            pages[i] = cached_pages[i]
             done += 1
-        except ProviderError as exc:                      # no key: every page would fail alike
-            errors.append({"page": i + 1, "error": str(exc)[:200]})
-            break
-        except OcrError as exc:
-            errors.append({"page": i + 1, "error": str(exc)[:200]})
+    pending = [i for i in needed if i not in cached_pages]
+    pending = iter(pending[:max(0, max_pages)])
+    concurrency = max(1, min(int(getattr(ocr, "concurrency", 1)), 32))
+    def transcribe(png):
+        value = ocr.page_text(png)
+        return value, getattr(ocr, "last_response", {})
+    with ThreadPoolExecutor(max_workers=concurrency) as pool:
+        active = {}
+        def submit_next():
+            i = next(pending, None)
+            if i is not None:
+                # PDFium rendering and all durable writes stay on the caller.
+                active[pool.submit(transcribe, render_page(path, i))] = i
+        for _ in range(concurrency):
+            submit_next()
+        while active:
+            ready, _ = wait(active, return_when=FIRST_COMPLETED)
+            for future in ready:
+                i = active.pop(future)
+                try:
+                    pages[i], metadata = future.result()
+                    ocr.last_response = metadata
+                    if on_page is not None:
+                        on_page(i, pages[i])
+                    done += 1
+                except (ProviderError, OcrError) as exc:
+                    errors.append({"page": i + 1, "error": str(exc)[:200],
+                                   **({"response": exc.response} if getattr(exc, "response", None) else {})})
+                submit_next()
     markdown = "\n\n".join(f"[page {n}]\n{page.strip()}" for n, page in enumerate(pages, 1)
                            if page.strip())
     return {"markdown": markdown, "pages": len(pages), "needed": len(needed), "read": done,

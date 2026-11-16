@@ -27,7 +27,7 @@ from typing import Any
 
 from .index import Index
 
-SUPPORTED = (".pdf", ".txt", ".md", ".docx", ".pptx", ".odt", ".odp", ".html", ".htm")
+SUPPORTED = (".py", ".js", ".ts", ".tsx", ".jsx", ".json", ".yaml", ".yml", ".toml", ".csv", ".rst", ".tex", ".sh", ".ps1", ".c", ".h", ".cpp", ".rs", ".go", ".java", ".sql", ".xml", ".ipynb", ".pdf", ".txt", ".md", ".docx", ".pptx", ".odt", ".odp", ".html", ".htm")
 
 # Office files are zip archives of XML: read with the standard library, so a
 # lab sheet or a lecture deck needs no extra install. A Word document is one
@@ -74,6 +74,25 @@ class Extraction:
     cached: bool = False
 
 
+PLAIN_TEXT_LIMIT = 2_000_000
+
+
+def _plain_text(path: Path) -> str | None:
+    """The file's text when it is plain UTF-8 text within the size limit, else None."""
+    try:
+        if path.stat().st_size > PLAIN_TEXT_LIMIT:
+            return None
+        data = path.read_bytes()
+    except OSError:
+        return None
+    if b"\x00" in data[:8192]:
+        return None
+    try:
+        return data.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return None
+
+
 def _file_hash(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -87,7 +106,13 @@ def extract(path: Path, cache_dir: Path) -> Extraction:
     refuse_credentials(path)
     suffix = path.suffix.lower()
     if suffix not in SUPPORTED:
-        return Extraction(error=f"{suffix} files are not supported ({', '.join(SUPPORTED)})")
+        # Not a whitelist of names: any plain-text file (pytest.ini, setup.cfg, Makefile, LICENSE,
+        # Dockerfile, .gitignore) reads as one page. Binary or oversized files still do not.
+        plain = _plain_text(path)
+        if plain is not None:
+            return Extraction([plain], 0 if plain.strip() else 1)
+        return Extraction(error=f"{suffix or path.name} files are not supported, and this one is not plain text "
+                                f"({', '.join(SUPPORTED)})")
     key = _file_hash(path)
     cached = cache_dir / f"{key}.json"
     if cached.exists():

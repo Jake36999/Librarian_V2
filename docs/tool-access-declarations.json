@@ -384,7 +384,7 @@
         "symbol": "batch_cancel"
       },
       "fingerprint": {
-        "source_sha256": "ce5e0a757d1cdbe1ebf91a6061ad0b3beb607303b1774b4571be8a1aaed977e6",
+        "source_sha256": "271af2876b60779311e55a9c89a3b872ad3df0e7a48868fedb00e9e624baffd6",
         "schema_sha256": "d746974fa9afd5e951f76f9af38954b0ad7f436f2120dc974da65e5ee39f856f",
         "effect": "write",
         "open_world": false,
@@ -2341,7 +2341,7 @@
         "symbol": "list_files"
       },
       "fingerprint": {
-        "source_sha256": "e03b6116c763add2c73d6839c409039f01b0ffa9134c04010e7714df18ae5e08",
+        "source_sha256": "f2e558bf14740389b854e2cc9013e083ddc45db2211f6e46acf4dec367b0e49a",
         "schema_sha256": "59537a07b32df33aa7d896cb0a2a7d1791b1516b7e4af933a0b0c024f07a456d",
         "effect": "read",
         "open_world": false,
@@ -2725,8 +2725,8 @@
         "symbol": "ocr_pdf_tool"
       },
       "fingerprint": {
-        "source_sha256": "eafd5021c8dada45ae3f911018c7d0c2d280b65eb2b4e04a68a6f7d805f6b910",
-        "schema_sha256": "8900d4c8bd3a90e232590f71f5982b88e2b5a456c93ccc8249a87abddcfaa7e1",
+        "source_sha256": "93c66f7f194c9787f0dabed631762ac7e174ed1dd2edff000a4c458cbc28655a",
+        "schema_sha256": "c0ed618c07ce2bc5d2c89031133be3d552be0113a78189872c418488dd8d980d",
         "effect": "write",
         "open_world": true,
         "external": false,
@@ -2858,7 +2858,7 @@
         "symbol": "pdf_to_markdown_tool"
       },
       "fingerprint": {
-        "source_sha256": "16c5a3cdee056686e935bc3b61ef36cee99bb5178acc614a2911785304467d5a",
+        "source_sha256": "b170c9d9d51d6ad969ce29dbb9c2337058a02df42d2c00b9f3fe465e3c8f6bb8",
         "schema_sha256": "a26de509015c627856703e51d4a693b638e645d261fddf2c4676a9187a67f2ed",
         "effect": "write",
         "open_world": true,
@@ -2884,8 +2884,8 @@
         "symbol": "process_approved"
       },
       "fingerprint": {
-        "source_sha256": "c79dbdad62ed0ecf0fd15d61acdeff982b552f65e057e18ef5b8c03171edd762",
-        "schema_sha256": "2e558493caf09cf57728901c50f1daa2713595c60ab4328dc2cfe86e9d05f817",
+        "source_sha256": "96e513e1e5ea2d807f1d044eb55e1dc5de2b96d41eb7a0dec6ab67c3e9f30d9f",
+        "schema_sha256": "248490c609b25d8084131dff9f8299e2b3e2965c7f8f09cc4846b27787ceb35a",
         "effect": "write",
         "open_world": true,
         "external": false,
@@ -3409,7 +3409,7 @@
         "symbol": "read_file"
       },
       "fingerprint": {
-        "source_sha256": "1224ba1b78fde27aab6f92bc8c5b26c5d946de280a065ac2b7f5d6d5bde51985",
+        "source_sha256": "6511f04baa04eaee9cd29e4692a338ccbb1f656deeed316c3e82b2fe22aabcdd",
         "schema_sha256": "87a3d3f92e56a4cdfd7a29de797122d3d72f238ea32068b333839d10e8f09ab9",
         "effect": "read",
         "open_world": false,

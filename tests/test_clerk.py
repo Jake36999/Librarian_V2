@@ -171,3 +171,63 @@ def test_missing_key_queues(fake_server, monkeypatch, tmp_path):
 def test_unreachable_endpoint_queues(tmp_path):
     endpoint = clerk.OpenAICompatible("http://127.0.0.1:9/v1", "m", timeout=2)
     assert clerk.run([clerk.uses(README)], endpoint, tmp_path)[0].status == "queued"
+
+
+@pytest.mark.parametrize("concurrency", [1, 3])
+def test_unavailable_task_preserves_successful_siblings(tmp_path, concurrency):
+    tasks = [clerk.uses(README + str(i)) for i in range(3)]
+    def respond(payload):
+        if payload["user"] == tasks[1].payload()["user"]:
+            raise clerk.ClerkUnavailable("temporary failure")
+        return {"bullets": []}
+    results = clerk.run(tasks, clerk.Scripted(respond, concurrency=concurrency), tmp_path)
+    assert [r.status for r in results] == ["ok", "queued", "ok"]
+    assert len(list(tmp_path.glob("*.json"))) == 1
+
+
+def test_long_term_sentence_becomes_bounded_verbatim_excerpt():
+    sentence = "Earlier material " * 30 + "waveguide dispersion determines phase matching " + "later material " * 30
+    result = clerk.run_one(clerk.terms(sentence), clerk.Scripted(lambda p: {
+        "terms": [{"term": "waveguide dispersion", "sentence": sentence}]}))
+    assert result.ok
+    excerpt = result.value["terms"][0]["sentence"]
+    assert len(excerpt) <= 300
+    assert excerpt in sentence and "waveguide dispersion" in excerpt
+    assert result.dropped
+
+
+def test_invalid_json_latex_escape_is_recovered_without_changing_text():
+    source = r"The operator $\hat{a}$ annihilates a photon."
+    raw = '{"bullets": ["' + source + '"]}'
+    result = clerk.run_one(clerk.points(source), clerk.Scripted(lambda p: raw))
+    assert result.ok
+    assert result.value["bullets"] == [source]
+    assert result.attempts == 1
+    assert any("escape" in x for x in result.dropped)
+
+
+def test_json_backslash_repair_preserves_already_valid_escapes():
+    raw = json.dumps({"text": r"$\omega$ and \hat{a}", "quoted": '"text"', "line": "first\nsecond"})
+    assert clerk._escape_invalid_json_backslashes(raw) == raw
+
+
+def test_oversized_bullet_does_not_discard_valid_siblings():
+    short = "The pump controls the signal."
+    long = "The waveguide supports " + "multiple spatial modes " * 15 + "."
+    result = clerk.run_one(clerk.points(short + " " + long),
+        clerk.Scripted(lambda p: {"bullets": [short, long]}))
+    assert result.ok
+    assert result.value["bullets"] == [short]
+    assert any(long in warning for warning in result.dropped)
+
+
+def test_full_bounded_term_list_fits_its_task_output_allocation():
+    entries = [{"term": f"Term{i}", "sentence": f"Term{i} appears in this exact source sentence " + "with supporting context " * 8 + "."} for i in range(12)]
+    source = " ".join(e["sentence"] for e in entries)
+    raw = json.dumps({"terms": entries})
+    # This fixture transport models a token-limited completion at three characters/token.
+    endpoint = clerk.Scripted(lambda p: raw[:p["max_tokens"] * 3])
+    result = clerk.run_one(clerk.terms(source), endpoint)
+    assert result.ok, result.problems
+    assert len(result.value["terms"]) == 12
+    assert result.attempts == 1

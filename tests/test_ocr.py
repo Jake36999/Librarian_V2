@@ -68,7 +68,7 @@ def test_the_batch_reads_a_scan_by_ocr_and_the_note_says_so(library):
     done = call(c, "process_approved")["items"][0]
     assert done["status"] == "enriched", done
     staged = StagingStore(library).load(item)
-    assert staged["ocr"] == {"model": "fake:ocr", "pages": 3, "needed": 2, "read": 2}
+    assert staged["ocr"] == {"model": "fake:ocr", "pages": 3, "needed": 2, "read": 2, "recipe": "visual-v3"}
     accepted = call(c, "staging_decide", item_ids=[item], decision="accept")
     fm = notes.load(library.root / accepted["results"][0]["promotion"]["path"]).frontmatter
     assert fm["coverage"] == "full (text by OCR)"
@@ -146,3 +146,112 @@ def test_the_slot_is_chosen_per_library_and_tested(served, tmp_path, monkeypatch
                         lambda self, png: "The librarian reads this page.")
     tested = client.post("/api/services/test", {"slot": "ocr"})[1]
     assert tested["ok"] and tested["model"] == "deepinfra:Qwen/Qwen3-VL-30B-A3B-Instruct"
+
+
+def test_optical_all_pages_includes_existing_text(library):
+    reader = Reader()
+    result = ocr.read_pdf(library, library.root / "Inbox/scan.pdf", reader, all_pages=True)
+    assert reader.calls == 3
+    assert result["needed"] == result["read"] == 3
+
+
+def test_partial_ocr_is_not_complete_parse(library):
+    from resource_librarian import batch
+    class Failing(Reader):
+        def page_text(self, png):
+            self.calls += 1
+            if self.calls > 1:
+                raise ocr.OcrError("temporary provider failure")
+            return "One page captured."
+    c = ctx(library, ocr_endpoint=Failing(), optical_all_pages=True)
+    ident = call(c, "ingest", ref="Inbox/scan.pdf")["item"]
+    item = StagingStore(library).load(ident)
+    item["intake"] = {"quality": {"verdict": "cleanup"}}
+    StagingStore(library).save(item)
+    result = batch._parse(c, item)
+    assert result["status"] == "partial"
+
+
+def test_optical_retry_reuses_completed_pages(library):
+    saved = {}
+    reader = Reader()
+    first = ocr.read_pdf(library, library.root / "Inbox/scan.pdf", reader, 1,
+                         all_pages=True, cached_pages=saved, on_page=saved.__setitem__)
+    assert first["read"] == 1
+    second = ocr.read_pdf(library, library.root / "Inbox/scan.pdf", reader,
+                          all_pages=True, cached_pages=saved, on_page=saved.__setitem__)
+    assert second["read"] == 3
+    assert reader.calls == 3
+
+
+def test_parse_retries_existing_incomplete_optical_conversion(library):
+    from resource_librarian import batch
+    c = ctx(library, ocr_endpoint=Reader(), optical_all_pages=True)
+    ident = call(c, "ingest", ref="Inbox/scan.pdf")["item"]
+    item = StagingStore(library).load(ident)
+    item.update(clean_file="existing-partial.md", ocr={"read": 1, "needed": 3})
+    StagingStore(library).save(item)
+    result = batch._parse(c, item)
+    assert result["status"] == "complete"
+    assert StagingStore(library).load(ident)["ocr"]["read"] == 3
+
+
+def test_truncated_vision_response_is_not_success(monkeypatch):
+    from resource_librarian import providers
+    monkeypatch.setenv("DEEPINFRA_API_KEY", "test-key")
+    monkeypatch.setattr(providers, "_request", lambda *a, **kw: {
+        "choices": [{"finish_reason": "length", "message": {"content": "partial equation"}}]})
+    with pytest.raises(ocr.OcrError, match="truncated"):
+        ocr.VisionChat("deepinfra", "Qwen/Qwen3.5-397B-A17B").page_text(b"image")
+
+
+def test_optical_pages_use_declared_concurrency_and_commit_on_caller(library):
+    import threading
+    barrier = threading.Barrier(3)
+    caller = threading.get_ident()
+    saved = []
+    class ParallelReader:
+        name = "parallel-fixture"
+        concurrency = 3
+        def page_text(self, png):
+            barrier.wait(timeout=2)
+            return "Captured page"
+    def save(i, value):
+        assert threading.get_ident() == caller
+        saved.append(i)
+    got = ocr.read_pdf(library, library.root / "Inbox/scan.pdf", ParallelReader(),
+                       all_pages=True, on_page=save)
+    assert got["read"] == 3
+    assert sorted(saved) == [0, 1, 2]
+
+
+def test_source_change_during_ocr_cannot_bind_output_to_old_bytes(library):
+    path = library.root / "Inbox/scan.pdf"
+    class ChangingReader(Reader):
+        def page_text(self, png):
+            path.write_bytes(pdf_bytes([["A replacement source."]]))
+            return "Text from an obsolete source image."
+    out = call(ctx(library, ocr_endpoint=ChangingReader()), "ocr_pdf",
+               file="Inbox/scan.pdf", all_pages=True, max_pages=1)
+    assert out.get("refused") == "EVIDENCE_IS_NEVER_EDITED", out
+    assert "Original PDF changed" in out["detail"]
+
+
+@pytest.mark.parametrize("context,cap,expected", [(7000,8000,5800), (20000,16000,16000)])
+def test_truncated_page_can_retry_once_with_measured_window_budget(monkeypatch, context, cap, expected):
+    from resource_librarian import providers
+    monkeypatch.setenv("DEEPINFRA_API_KEY", "test-key")
+    budgets = []
+    def request(*args, **kwargs):
+        budgets.append(args[3]["max_tokens"])
+        return {"choices": [{"finish_reason": "length" if len(budgets) == 1 else "stop",
+                             "message": {"content": "partial" if len(budgets) == 1 else "complete"}}],
+                "usage": {"prompt_tokens": 1200, "completion_tokens": 4000 if len(budgets) == 1 else 500,
+                          "estimated_cost": 0.01}}
+    monkeypatch.setattr(providers, "_request", request)
+    reader = ocr.VisionChat("deepinfra", "Qwen/Qwen3.5-27B")
+    reader.context_tokens = context
+    reader.max_output_tokens = cap
+    assert reader.page_text(b"image") == "complete"
+    assert budgets == [4000, expected]
+    assert reader.last_response["usage"]["estimated_cost"] == pytest.approx(0.02)
