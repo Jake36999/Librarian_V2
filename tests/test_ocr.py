@@ -255,3 +255,44 @@ def test_truncated_page_can_retry_once_with_measured_window_budget(monkeypatch, 
     assert reader.page_text(b"image") == "complete"
     assert budgets == [4000, expected]
     assert reader.last_response["usage"]["estimated_cost"] == pytest.approx(0.02)
+
+
+def _staged_cleanup(library, c):
+    ident = call(c, "ingest", ref="Inbox/scan.pdf")["item"]
+    item = StagingStore(library).load(ident)
+    item["intake"] = {"quality": {"verdict": "cleanup"}}
+    StagingStore(library).save(item)
+    return item
+
+
+def test_optical_all_pages_is_a_library_setting_off_by_default(library):
+    from resource_librarian import batch
+    assert batch.optical_all_pages(ctx(library)) is False
+    reader = Reader()
+    c = ctx(library, ocr_endpoint=reader)
+    item = _staged_cleanup(library, c)
+    batch._parse(c, item)
+    assert reader.calls == 0                     # a text-layer page is not sent to the vision model
+
+
+def test_the_library_setting_turns_it_on_without_a_per_call_flag(library):
+    from resource_librarian import batch
+    library.set_setting("conversion", "optical_all_pages", True)
+    reader = Reader()
+    c = ctx(library, ocr_endpoint=reader)
+    assert batch.optical_all_pages(c) is True
+    item = _staged_cleanup(library, c)
+    batch._parse(c, item)
+    assert reader.calls == 3                     # every page, including the one with a text layer
+
+
+def test_a_per_call_flag_still_turns_it_on(library):
+    from resource_librarian import batch
+    assert batch.optical_all_pages(ctx(library, optical_all_pages=True)) is True
+
+
+def test_the_run_log_records_the_conversion_method(library):
+    from resource_librarian import batch
+    assert batch.run_settings(ctx(library)) == {"optical_all_pages": False}
+    library.set_setting("conversion", "optical_all_pages", True)
+    assert batch.run_settings(ctx(library)) == {"optical_all_pages": True}

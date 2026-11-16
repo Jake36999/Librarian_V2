@@ -187,6 +187,21 @@ def _validate(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
             "canonical_url": item.get("canonical_url", "")}
 
 
+def optical_all_pages(ctx: Context) -> bool:
+    """Read every PDF page by vision OCR, even pages that have a text layer.
+
+    It is a library setting (`[conversion] optical_all_pages`, off by default), because it is
+    the largest cost lever in a PDF ingestion: a per-call flag someone must remember is how a
+    text-layer corpus ends up paying for vision on every page. A per-call `optical_all_pages`
+    still turns it on for one run."""
+    return bool(ctx.extras.get("optical_all_pages")) or ctx.vault.setting("conversion", "optical_all_pages") is True
+
+
+def run_settings(ctx: Context) -> dict[str, Any]:
+    """The conversion settings a run used, recorded in its log so a cost can be explained."""
+    return {"optical_all_pages": optical_all_pages(ctx)}
+
+
 def _parse(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     """The per-kind branch on what capture found (quality.py): a paper's open-access PDF is
     fetched, a mechanically extracted PDF is cleaned into markdown, and what cannot be read
@@ -198,10 +213,10 @@ def _parse(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
         if done.get("status") == "partial":
             return done
         item = StagingStore(ctx.vault).load(item["id"])
-    elif (verdict == "needs_ocr" or ctx.extras.get("optical_all_pages")) and str(item.get("file", "")).lower().endswith(".pdf") \
+    elif (verdict == "needs_ocr" or optical_all_pages(ctx)) and str(item.get("file", "")).lower().endswith(".pdf") \
             and (not item.get("clean_file") or
                  (item.get("ocr") or {}).get("read", 0) < (item.get("ocr") or {}).get("needed", 0) or
-                 (ctx.extras.get("optical_all_pages") and (item.get("ocr") or {}).get("recipe") != "visual-v3")):
+                 (optical_all_pages(ctx) and (item.get("ocr") or {}).get("recipe") != "visual-v3")):
         done = _ocr(ctx, item)
         if done.get("status") == "partial":
             return done
@@ -250,7 +265,7 @@ def _ocr(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
         return {"status": "partial", "reason": "the pages have no text layer, and no OCR "
                 "model is chosen (Settings -> Connections, slot 4)"}
     out = REGISTRY.call("ocr_pdf", {"file": item["file"], "staged_item": item["id"],
-                                       "all_pages": bool(ctx.extras.get("optical_all_pages"))}, ctx)
+                                       "all_pages": bool(optical_all_pages(ctx))}, ctx)
     if "error" in out:
         return {"status": "partial", "reason": f"the pages have no text layer, and OCR was "
                                                f"not run: {out.get('detail') or out['error']}"}
@@ -615,7 +630,8 @@ def _begin(ctx: Context, requested_by: str, resume: str,
                 return {"started": False, "waiting": 0, "detail": "nothing is approved"}
             run_id = f"batch-{now_iso()[:10]}-{secrets.token_hex(3)}"
             runs.append(run_id, {"type": "started", "name": NAME, "kind": "batch",
-                                 "items": items, "requested_by": requested_by})
+                                 "items": items, "requested_by": requested_by,
+                                 "settings": run_settings(ctx)})
             for item_id in items:
                 _update_item(ctx, item_id, lambda fresh: fresh.update(status="processing", batch=run_id))
         cancel = ctx.extras.get("cancel") or threading.Event()
@@ -644,7 +660,7 @@ def _run(ctx: Context, run_id: str, items: list[str], cancel: threading.Event) -
         done = {(e["item"], e["stage"]): e for e in runs.events(run_id) if e["type"] == "done"}
         finished = {e["item"] for e in runs.events(run_id) if e["type"] == "item"}
         last = ""
-        route = _route_identity(ctx) + (":optical-all-pages-v1" if ctx.extras.get("optical_all_pages") else "")
+        route = _route_identity(ctx) + (":optical-all-pages-v1" if optical_all_pages(ctx) else "")
         for item_id in items:
             if item_id in finished:
                 continue
