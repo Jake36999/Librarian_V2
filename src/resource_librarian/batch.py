@@ -127,6 +127,10 @@ def _source_identity(vault: Vault, item: dict[str, Any],
         rel = str(item.get(key) or "")
         if key not in skip:
             identity[key] = f"{rel}:{fingerprint(vault.root / rel)}" if rel else ""
+    if item.get("clean_file") and "clean_file" not in skip and _unmapped_cleanup(vault, item["clean_file"]):
+        # Only such items change identity, so re-approving them re-runs parse (which sets the
+        # conversion aside) and reading; every other source's keys are unchanged (2026-11-16).
+        identity["clean_file"] += ":page-anchors-lost"
     if item.get('kind') == 'folder':
         identity.update({key: item.get(key) for key in ('source_root', 'path',
             'folder_fingerprint', 'inventory_evidence', 'file_counts', 'bytes')})
@@ -202,6 +206,19 @@ def run_settings(ctx: Context) -> dict[str, Any]:
     return {"optical_all_pages": optical_all_pages(ctx)}
 
 
+def _unmapped_cleanup(vault: Vault, rel: str) -> bool:
+    """A `pdf_to_markdown` conversion whose page anchors do not verify (OCR conversions are
+    written page by page and are not judged here)."""
+    from .conversions import ConversionStore
+    store = ConversionStore(vault)
+    try:
+        if not str(store.entry(rel).get("method", "")).startswith("pdf_markdown"):
+            return False
+        return not store.page_units(rel)
+    except Exception:                                  # noqa: BLE001 - unknown is not unmapped
+        return False
+
+
 def _page_mapped(ctx: Context, rel: str) -> bool:
     """Whether a generated conversion's page anchors verify against its page count."""
     from .conversions import ConversionStore
@@ -217,6 +234,10 @@ def _parse(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     here (a scan, a script-built page) is said, not guessed around."""
     q = (item.get("intake") or {}).get("quality") or {}
     verdict, done = q.get("verdict", "usable"), {}
+    if item.get("clean_file") and _unmapped_cleanup(ctx.vault, item["clean_file"]):
+        lost = item["clean_file"]
+        item = _update_item(ctx, item["id"], lambda fresh: fresh.update(clean_file=None))
+        done = {"cleanup": f"set aside: {lost} lost its page anchors; read from the text layer"}
     if verdict == "metadata_only" and q.get("full_text_url") and not item.get("file"):
         done = _fetch_full_text(ctx, item, q["full_text_url"])
         if done.get("status") == "partial":

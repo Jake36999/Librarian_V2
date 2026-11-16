@@ -148,3 +148,42 @@ def test_a_cleanup_that_lost_page_anchors_is_kept_unused_and_the_text_layer_is_r
                              'intake': {'quality': {'verdict': 'cleanup'}}})
     assert seen == [] and 'lost its page anchors' in out['cleanup']
     assert batch._page_mapped(ctx, mapped['path']) and not batch._page_mapped(ctx, unmapped['path'])
+
+
+def test_an_inherited_undecided_card_defers_to_its_accepted_parent(paper, monkeypatch):
+    """2026-11-16: research PDFs sit under inherited `staged` subfolder cards; the parent's decision covers them."""
+    from resource_librarian import folder_review, paper_graph
+    vault, pdf, converted = paper
+    calls = _accepted(monkeypatch, pdf.parent)          # the accepted card is the parent of pdf's folder
+    sub = dict(id='folder-sub', status='staged', source_root=str(pdf.parent.parent), path=pdf.parent.name,
+               inherited=True, inherited_from='.')
+    parent = folder_review.FolderReview.list(None)[0]
+    monkeypatch.setattr(folder_review.FolderReview, 'list', lambda _: [parent, sub])
+    item = {'name': 'Study', 'file': 'Inbox/original.pdf', 'clean_file': converted['path']}
+    artifact = paper_graph.write_artifact(vault, item)
+    assert paper_graph.publish_artifact(vault, item, artifact)['published'] is True and len(calls) == 1
+    own = dict(sub, inherited=False)                    # a folder no one has decided blocks publication
+    monkeypatch.setattr(folder_review.FolderReview, 'list', lambda _: [parent, own])
+    assert paper_graph.publish_artifact(vault, item, artifact)['status'] == 'awaiting_accepted_folder'
+
+
+def test_a_source_already_read_from_an_unmapped_cleanup_is_reread_from_the_text_layer(paper, monkeypatch):
+    """2026-11-16: the 9 sources read before the check get new keys (so only they re-run) and
+    parse sets the conversion aside; a source with a verified map keeps its keys."""
+    from resource_librarian import batch
+    from resource_librarian.conversions import ConversionStore
+    from resource_librarian.registry import Context
+    vault, pdf, mapped = paper
+    store = ConversionStore(vault)
+    unmapped = store.save(store.request(pdf, 'pdf_markdown:page-anchors-v2:fixture2'),
+                          '[page 1]\nOne.\n\n[page 3]\nThree.', pages=3)
+    good = {'id': 'g', 'name': 'G', 'file': 'Inbox/original.pdf', 'clean_file': mapped['path']}
+    bad = {**good, 'id': 'b', 'clean_file': unmapped['path']}
+    assert 'page-anchors-lost' not in batch._source_identity(vault, good)['clean_file']
+    assert batch._source_identity(vault, bad)['clean_file'].endswith(':page-anchors-lost')
+    updates = []
+    def update(ctx, item_id, fn):
+        fresh = dict(bad); fn(fresh); updates.append(fresh); return fresh
+    monkeypatch.setattr(batch, '_update_item', update)
+    out = batch._parse(Context(tier='contribute', vault=vault), {**bad, 'intake': {'quality': {'verdict': 'usable'}}})
+    assert updates and updates[0]['clean_file'] is None and 'set aside' in out['cleanup']

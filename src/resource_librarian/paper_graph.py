@@ -141,6 +141,10 @@ def publish_artifact(vault, item, artifact):
     review = folder_review.FolderReview(vault)
     candidates = []
     for card in review.list():
+        # An inherited, undecided card is covered by its parent's decision (2026-11-16: every
+        # research PDF sat under one, so none could publish); a folder decided on its own is not.
+        if card.get('inherited') and not card.get('decision') and not card.get('pending_decision'):
+            continue
         root = Path(card['source_root']) / card['path']
         if source.is_relative_to(root.resolve()):
             candidates.append((len(root.parts), card))

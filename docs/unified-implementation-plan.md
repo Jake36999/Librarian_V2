@@ -6343,3 +6343,16 @@ The 9 already read need a targeted re-read; listed in the run report.
 Test: `test_phase8_paper_publication.py::test_a_cleanup_that_lost_page_anchors_is_kept_unused_and_the_text_layer_is_read`.
 Verification: full suite in a clean clone of `f1398a5` plus this change: 2614 passed,
 2 skipped, 5 deselected in 979.79s (0:16:19), exit 0 (this also covers `f1398a5`).
+
+**Two more from the first live publications (same day).**
+- *Inherited cards.* Publication took the deepest folder card above a PDF; research PDFs sit
+  under inherited, undecided cards (`external research/research_pdfs`, `staged`), so all were
+  `awaiting_accepted_folder`. Inherited undecided cards now defer to their decided parent; a
+  folder decided on its own still blocks. After the fix the first paper published: 1 document,
+  9 sections, 113 located claims in `Nonlinear Field Lab-third-party`.
+- *The 9 already read from an unmapped cleanup.* `_source_identity` marks a `pdf_markdown`
+  conversion whose anchors fail (`:page-anchors-lost`), so only those sources get new keys;
+  re-approved, parse sets the conversion aside (kept as evidence) and they are read from the
+  text layer. Mapped conversions and OCR conversions keep their keys.
+Tests: `test_phase8_paper_publication.py` (+2). Verification: full suite in a clean clone of
+`46b5bbb` plus this change: 2616 passed, 2 skipped, 5 deselected in 960.81s (0:16:00), exit 0.
