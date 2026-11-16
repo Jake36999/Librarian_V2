@@ -116,3 +116,17 @@ def test_the_batch_banner_shows_a_steps_progress(vault, monkeypatch):
     monkeypatch.setattr(batch, "live", lambda v: "batch-x")
     assert batch.status(vault, "batch-x")["current"] == {
         "item": "a", "stage": "parse", "detail": "cleaning the PDF's text: 3 of 9 parts"}
+
+
+def test_progress_is_reported_on_the_callers_thread_only():
+    """2026-11-16: in the approved batch, progress goes through the vault writer that runs this
+    tool; reported from a pool thread it deadlocked the Core once every part had come back."""
+    import threading
+    caller = threading.current_thread()
+    fake = FakeEndpoint()
+    pages = [f"page {i} " + "x" * 6000 for i in range(4)]
+    threads = []
+    markdown, batches = pdf_markdown.clean_document(
+        pages, fake, progress=lambda message: threads.append(threading.current_thread()))
+    assert batches == 4 and len(threads) == 5 and all(t is caller for t in threads)
+    assert [markdown.index(f"page {i}") for i in range(4)] == sorted(markdown.index(f"page {i}") for i in range(4))

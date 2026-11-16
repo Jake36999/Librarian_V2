@@ -6244,3 +6244,18 @@ become Sources while other own content does not; newest-first order),
 subprocess-spawning tests with Windows exit 0xC0000142 (process start failed)
 late in a 16-minute run. Re-running those 21 files in the same clone: 238 passed,
 0 failed (2 min 12 s).
+
+**Found by the first round (same day): cleanup deadlocked the Core.** The approved
+batch runs `pdf_to_markdown` on the vault writer, and `clean_document` reported
+"n of N parts" from its pool threads. Each report is a run-log append through
+that writer, so the first one waited on the writer while the writer waited on the
+pool. All three parts of the first cleanup PDF had returned (and been billed)
+when the Core froze. The pilot never reached this: it OCR'd every page.
+`clean_document` now gathers results on the caller's thread and reports
+progress only there. The frozen Core was force-quit (its batch resumable),
+ended after its command line was checked, and restarted with a takeover; the
+batch resumed past the item. Test: `test_pdf_markdown.py::
+test_progress_is_reported_on_the_callers_thread_only`.
+
+**Verification (both changes):** full suite in a clean clone of `bd57987` plus
+both: 2591 passed, 2 skipped, 5 deselected in 968.02s (0:16:08), exit 0.

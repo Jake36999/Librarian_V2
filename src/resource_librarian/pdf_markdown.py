@@ -16,7 +16,7 @@ levels, never summarise or add anything not in the source.
 """
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable
 
 from .providers import OpenAICompatible, PRESETS
@@ -92,16 +92,17 @@ def clean_document(pages: list[str], ep: OpenAICompatible | None = None,
     "n of N parts" as each one comes back."""
     ep = ep or endpoint()
     batches = batch_pages(pages)
-    done = [0]
-
-    def one(batch: str) -> str:
-        out = clean_text(batch, ep, on_usage)
-        done[0] += 1
-        if progress:
-            progress(f"cleaning the PDF's text: {done[0]} of {len(batches)} parts")
-        return out
+    # `progress` is called on this (the caller's) thread only. In the approved batch it appends
+    # to the run log through the vault writer, and this tool runs on that writer: a call from a
+    # pool thread waits for the writer, which waits for the pool - a deadlock (2026-11-16: an
+    # ingestion froze after all three parts had come back).
     if progress:
         progress(f"cleaning the PDF's text: 0 of {len(batches)} parts")
+    cleaned: list[str] = [""] * len(batches)
     with ThreadPoolExecutor(max_workers=max(1, min(workers, len(batches) or 1))) as pool:
-        cleaned = list(pool.map(one, batches))
+        futures = {pool.submit(clean_text, batch, ep, on_usage): i for i, batch in enumerate(batches)}
+        for done, future in enumerate(as_completed(futures), 1):
+            cleaned[futures[future]] = future.result()
+            if progress:
+                progress(f"cleaning the PDF's text: {done} of {len(batches)} parts")
     return "\n\n".join(cleaned), len(batches)
