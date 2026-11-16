@@ -21,6 +21,10 @@ from .credentials import credential_path, generated_path
 
 SOURCE_PURPOSES = frozenset({"third-party", "research-docs"})
 DOCUMENT_SUFFIXES = frozenset({".pdf", ".md", ".txt", ".rst", ".tex", ".html", ".htm", ".docx"})
+# What becomes a Source by default. A vendored repository holds thousands of .txt/.rst/.md files (Parallax's
+# third-party folders: 9,359 documents, 17 of them PDFs); each Source costs about fifteen Clerk tasks plus its
+# reading, so wider scopes are chosen per call, with the counts in view (see `queue`'s not_in_scope).
+DEFAULT_SCOPE = (".pdf",)
 SKIP_DIRS = frozenset({".git", "node_modules", "venv", ".venv", "__pycache__", "build", "dist", "output",
                        "tmp", "graphify-out", ".librarian", "librarian-app"})
 
@@ -39,8 +43,18 @@ def attached_root(vault: Any, path: Path) -> dict[str, Any] | None:
     return best
 
 
-def documents(vault: Any, folder: str) -> list[Path]:
-    """This accepted reference folder's own documents, sorted; nothing a deeper decision owns."""
+def _scope(scope: Any) -> tuple[str, ...]:
+    chosen = tuple(str(x).lower() for x in (scope if scope else DEFAULT_SCOPE))
+    if not chosen or any(x not in DOCUMENT_SUFFIXES for x in chosen):
+        raise ValueError(f"FOLDER_SOURCES: scope is a non-empty subset of {sorted(DOCUMENT_SUFFIXES)}")
+    return chosen
+
+
+def documents(vault: Any, folder: str, scope: Any = None, *, _all: bool = False) -> list[Path]:
+    """This accepted reference folder's own documents of the chosen scope, sorted; nothing a deeper decision owns."""
+    if scope is not None and not scope and not _all:
+        raise ValueError("FOLDER_SOURCES: scope is a non-empty subset of " + str(sorted(DOCUMENT_SUFFIXES)))
+    wanted = None if _all else _scope(scope)
     base = Path(folder).resolve()
     decision = attached_root(vault, base)
     if decision is None or Path(decision["path"]).resolve() != base or decision.get("purpose") not in SOURCE_PURPOSES:
@@ -49,6 +63,8 @@ def documents(vault: Any, folder: str) -> list[Path]:
     out = []
     for path in sorted(base.rglob("*")):
         if not path.is_file() or path.suffix.lower() not in DOCUMENT_SUFFIXES:
+            continue
+        if wanted is not None and path.suffix.lower() not in wanted:
             continue
         rel = path.relative_to(base)
         if any(part in SKIP_DIRS or part.lower().endswith("cache") for part in rel.parts[:-1]):
@@ -67,11 +83,16 @@ def _ledger(vault: Any) -> Path:
 
 
 def queue(vault: Any, folder: str, *, ingest: Callable[[str, str], dict[str, Any]],
-          limit: int = 50) -> dict[str, Any]:
+          limit: int = 50, scope: Any = None) -> dict[str, Any]:
     """Defer up to ``limit`` not-yet-queued documents of one folder through ``ingest``."""
     if not isinstance(limit, int) or not 1 <= limit <= 500:
         raise ValueError("FOLDER_SOURCES: limit is 1-500 documents per call")
-    docs = documents(vault, folder)
+    chosen = _scope(scope)
+    docs = documents(vault, folder, chosen)
+    left_out: dict[str, int] = {}
+    for other in documents(vault, folder, _all=True):
+        if other.suffix.lower() not in chosen:
+            left_out[other.suffix.lower()] = left_out.get(other.suffix.lower(), 0) + 1
     path = _ledger(vault)
     done = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
     queued, failures = 0, []
@@ -90,6 +111,7 @@ def queue(vault: Any, folder: str, *, ingest: Callable[[str, str], dict[str, Any
         queued += 1
     path.write_text(json.dumps(done, indent=1), encoding="utf-8")
     keys = {d.resolve().as_posix() for d in docs}
-    return dict(folder=str(Path(folder).resolve()), documents=len(docs), queued=queued,
+    return dict(folder=str(Path(folder).resolve()), scope=list(chosen), not_in_scope=dict(sorted(left_out.items())),
+                documents=len(docs), queued=queued,
                 already_queued=sum(1 for k in keys if k in done) - queued,
                 remaining=sum(1 for k in keys if k not in done), failures=failures)

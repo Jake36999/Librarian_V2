@@ -50,7 +50,8 @@ def test_capture_refuses_excluded_or_unattached_files(attached, rel):
 def test_documents_lists_only_this_folders_own_third_party_documents(attached):
     from resource_librarian.folder_sources import documents
     vault, source = attached
-    found = [p.relative_to(source).as_posix() for p in documents(vault, str(source / "papers"))]
+    found = [p.relative_to(source).as_posix() for p in documents(vault, str(source / "papers"),
+                                                                 scope=(".pdf", ".md", ".txt"))]
     # no credentials, no build output, no code, nothing under a differently decided child root
     assert found == ["papers/a.pdf", "papers/b.md", "papers/sub/c.txt"]
 
@@ -68,9 +69,10 @@ def test_queue_defers_every_document_once_and_respects_the_limit(attached):
     calls = []
     def ingest(ref, note):
         calls.append(ref); return {"status": "queued"}
-    out = queue(vault, str(source / "papers"), ingest=ingest, limit=2)
+    wide = (".pdf", ".md", ".txt")
+    out = queue(vault, str(source / "papers"), ingest=ingest, limit=2, scope=wide)
     assert out["queued"] == 2 and out["remaining"] == 1 and len(calls) == 2
-    again = queue(vault, str(source / "papers"), ingest=ingest, limit=10)
+    again = queue(vault, str(source / "papers"), ingest=ingest, limit=10, scope=wide)
     assert again["queued"] == 1 and again["already_queued"] == 2       # idempotent across runs
 
 
@@ -188,3 +190,30 @@ def test_evidence_handles_are_not_treated_as_local_paths(vault, monkeypatch, han
         raise AssertionError("non-path evidence handle entered folder policy resolution")
     monkeypatch.setattr(folders, "decision_for", refuse)
     assert _native_authorship(SimpleNamespace(vault=vault), handle) is None
+
+
+# --- Scope (owner, 2026-11-16): a vendored repository's thousands of .txt/.rst files are not Sources ---
+
+def test_default_scope_is_pdfs_only_so_a_folder_never_queues_thousands_of_text_files(attached):
+    from resource_librarian.folder_sources import documents
+    vault, source = attached
+    assert [p.name for p in documents(vault, str(source / "papers"))] == ["a.pdf"]
+
+
+def test_scope_is_chosen_per_call_and_validated(attached):
+    from resource_librarian.folder_sources import documents
+    vault, source = attached
+    names = lambda scope: sorted(p.name for p in documents(vault, str(source / "papers"), scope=scope))
+    assert names((".md",)) == ["b.md"] and names((".pdf", ".txt")) == ["a.pdf", "c.txt"]
+    with pytest.raises(ValueError, match="FOLDER_SOURCES"):
+        documents(vault, str(source / "papers"), scope=(".py",))
+    with pytest.raises(ValueError, match="FOLDER_SOURCES"):
+        documents(vault, str(source / "papers"), scope=())
+
+
+def test_queue_reports_what_the_scope_left_out_so_the_owner_sees_it(attached):
+    from resource_librarian.folder_sources import queue
+    vault, source = attached
+    out = queue(vault, str(source / "papers"), ingest=lambda ref, note: {"status": "queued"}, limit=10)
+    assert out["scope"] == [".pdf"] and out["queued"] == 1
+    assert out["not_in_scope"] == {".md": 1, ".txt": 1}                # visible, free, and widenable
