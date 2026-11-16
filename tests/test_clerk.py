@@ -241,3 +241,30 @@ def test_full_bounded_term_list_fits_its_task_output_allocation():
     assert result.ok, result.problems
     assert len(result.value["terms"]) == 12
     assert result.attempts == 1
+
+
+# -- 2026-11-16: an over-long field refused a whole chunk's answer, and the source stayed
+# partial ("waiting for the clerk model") on every retry.
+
+def test_an_over_long_term_drops_that_entry_not_the_answer():
+    long_term = "a very long phrase " * 5
+    text = f"The coupler shows {long_term.strip()} here. Phase matching holds in the waveguide."
+    result = clerk.run_one(clerk.terms(text), clerk.Scripted(lambda p: {"terms": [
+        {"term": long_term.strip(), "sentence": f"The coupler shows {long_term.strip()} here."},
+        {"term": "Phase matching", "sentence": "Phase matching holds in the waveguide."}]}))
+    assert result.ok
+    assert [t["term"] for t in result.value["terms"]] == ["Phase matching"]
+    assert any("entry dropped" in d and "term" in d for d in result.dropped)
+
+
+def test_an_over_long_quote_is_cut_to_a_verbatim_excerpt_that_passes_the_quote_check():
+    quote = ("We treat the field as a medium whose response depends on its own history, " * 6).strip()
+    explanation = "Reads the system historically. " * 20
+    result = clerk.run_one(clerk.lens_perspective(quote), clerk.Scripted(lambda p: {
+        "has_perspective": True, "name": "history-dependent medium",
+        "explanation": explanation, "source_quote": quote}))
+    assert result.ok, result.problems
+    kept = result.value["source_quote"]
+    assert len(kept) <= 300 and kept in quote and not kept.endswith("…")       # still verbatim
+    assert len(result.value["explanation"]) <= 400 and result.value["explanation"].endswith("…")
+    assert any("verbatim excerpt" in d for d in result.dropped)

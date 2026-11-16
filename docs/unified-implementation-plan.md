@@ -6501,3 +6501,23 @@ GLM-5.3 reviews at half their real price.
 
 **Tests.** `tests/test_folder_review.py` (+3): an excluded parent covers a child with its own
 suggestion; a junction is held, never accepted; the brief carries the computed total.
+
+### The Clerk fits an over-long field instead of refusing the answer (2026-11-16)
+
+**Found while finishing enrichment** (owner, 2026-11-16: "finish enriching everything"). Reads
+stayed incomplete because one field broke a length limit and the whole chunk's answer was
+refused after its repair attempt. Seen in one NFL batch: a 61-character `term`, a terms
+`sentence` over 300 characters that did not contain its term, and a lens `source_quote` over 300.
+The source then showed "waiting for the clerk model" and the same refusal came back on every retry.
+
+**Change.** `clerk._fit_lengths`, applied only when the check reports "longer than":
+- a verbatim field (`sentence`, `quote`, `source_quote`, `evidence_quote`) is cut to a shorter
+  verbatim excerpt at a word boundary, with no marker, so the quote check still applies;
+- an array entry whose identity (`term`, `name`, `from`, `to`) is too long is dropped alone;
+- any other string is kept truncated with the existing "…" marker.
+
+Each change is a recorded reduction (in `Result.dropped`) with the full original text. Points and
+limits keep their existing handling.
+
+**Tests.** `tests/test_clerk.py` (+2): a long term drops only its entry; a long quote becomes a
+verbatim excerpt that passes the quote check, and a long explanation is truncated with the marker.

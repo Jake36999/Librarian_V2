@@ -87,6 +87,59 @@ def _fit(text: str, maximum: int) -> str:
     return cut.rstrip(" ,;:") + "…"
 
 
+# Over-long fields (2026-11-16): one 61-character term, or one quote a few words too long,
+# refused the whole chunk's answer, and the source stayed partial ("waiting for the clerk
+# model") however often it was retried. A verbatim field is cut to a shorter verbatim
+# excerpt (it still passes the quote check); an entry whose identity is too long is dropped
+# alone; any other text is kept truncated with a marker. Every change is a recorded reduction.
+VERBATIM_FIELDS = frozenset({"sentence", "quote", "source_quote", "evidence_quote"})
+IDENTITY_FIELDS = frozenset({"term", "name", "from", "to"})
+
+
+def _cut_verbatim(text: str, maximum: int) -> str:
+    cut = text[:maximum]
+    if len(text) > maximum and " " in cut[maximum // 2:]:
+        cut = cut[:cut.rfind(" ")]
+    return cut.rstrip()
+
+
+def _fit_lengths(value: Any, schema: dict[str, Any], where: str, reductions: list[str]) -> Any:
+    """Bring every string within its maxLength without refusing the whole answer."""
+    kind = schema.get("type")
+    if kind == "object" and isinstance(value, dict):
+        for key, rule in (schema.get("properties") or {}).items():
+            if key not in value:
+                continue
+            item, limit = value[key], rule.get("maxLength")
+            if rule.get("type") == "string" and isinstance(item, str) and isinstance(limit, int)                     and len(item) > limit:
+                value[key] = _cut_verbatim(item, limit) if key in VERBATIM_FIELDS else _fit(item, limit)
+                reductions.append(f"{where}{key}: over {limit} characters, kept "
+                                  f"{'as a verbatim excerpt' if key in VERBATIM_FIELDS else 'truncated'}: {item}")
+            else:
+                value[key] = _fit_lengths(item, rule, f"{where}{key}.", reductions)
+        return value
+    if kind == "array" and isinstance(value, list):
+        rule = schema.get("items") or {}
+        kept = []
+        for entry in value:
+            if rule.get("type") == "object" and isinstance(entry, dict):
+                too_long = [k for k in IDENTITY_FIELDS & set(entry)
+                            if isinstance(entry[k], str) and isinstance(
+                                (rule.get("properties") or {}).get(k, {}).get("maxLength"), int)
+                            and len(entry[k]) > rule["properties"][k]["maxLength"]]
+                if too_long:
+                    reductions.append(f"{where}: entry dropped, its {too_long[0]} is over "
+                                      f"{rule['properties'][too_long[0]]['maxLength']} characters: "
+                                      f"{entry[too_long[0]]}")
+                    continue
+            kept.append(_fit_lengths(entry, rule, where, reductions))
+        return kept
+    if kind == "string" and isinstance(value, str) and isinstance(schema.get("maxLength"), int)             and len(value) > schema["maxLength"]:
+        reductions.append(f"{where.rstrip('.')}: over {schema['maxLength']} characters, kept truncated: {value}")
+        return _fit(value, schema["maxLength"])
+    return value
+
+
 @dataclass(frozen=True)
 class Kind:
     """How one kind of task is asked and checked."""
@@ -1544,6 +1597,8 @@ def run_one(task: Task, endpoint: Endpoint) -> Result:
                     else:
                         kept.append(bullet)
                 value[field] = kept
+        if value and problems and "longer than" in problems:
+            value = _fit_lengths(value, task.kind.schema, "", reductions)
         if value:
             problems = "; ".join(_check(value, task.kind.schema))
         if not problems:
