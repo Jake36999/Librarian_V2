@@ -425,3 +425,17 @@ def test_suggested_graphs_keep_one_stratum_per_graph():
                      'data': 'Lab-qm-data', 'logs/transcripts': 'Lab-qm-logs',
                      'third-party': 'Lab-third-party', 'research-docs': 'Lab-third-party-papers'}
     assert len(set(names.values())) == len(names)                     # never two strata in one graph
+
+
+def test_a_library_of_several_projects_can_keep_third_party_material_per_project(library):
+    """Owner, 2026-11-16: boundaries between projects must not blur in Resource-Library."""
+    from resource_librarian.folder_review import FolderReview, suggested_graph
+    vault, source = library
+    vault.set_setting('folders', 'third_party_graph', 'project')
+    cards = FolderReview(vault, planner=fake_planner).survey(source)['cards']
+    third = {c['suggested_graph'] for c in cards if c['suggested_purpose'] == 'third-party'}
+    assert third == {f'library-{source.name}-third-party'}
+    assert suggested_graph('L', 'p', 'research-docs', 'project') == 'L-p-third-party-papers'
+    assert suggested_graph('L', 'p', 'research-docs') == 'L-third-party-papers'      # default unchanged
+    with pytest.raises(ValueError, match='third_party_graph'):
+        suggested_graph('L', 'p', 'third-party', 'folder')

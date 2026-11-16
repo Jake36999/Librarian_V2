@@ -6259,3 +6259,30 @@ test_progress_is_reported_on_the_callers_thread_only`.
 
 **Verification (both changes):** full suite in a clean clone of `bd57987` plus
 both: 2591 passed, 2 skipped, 5 deselected in 968.02s (0:16:08), exit 0.
+
+### Resource-Library boundaries: per-project third-party graphs, secret stores refused by name (2026-11-16)
+
+**Owner, 2026-11-16:** use the rest of the $30 for Resource-Library (Librarian research,
+Librarian_V2, Resource-Library, ToolSet, knowledge_compiler_engine), without blurring
+the boundaries between projects, making full use of Geo-Grapher and the data controls.
+
+**Changes:**
+- `[folders] third_party_graph = "project"` (default `library`, unchanged): third-party
+  code and papers go to `<library>-<project>-third-party[-papers]`, so a library holding
+  several projects never mixes their vendored material. Survey suggestions and policy
+  acceptance both read it.
+- `credential_path` refuses secret stores by name (`*.secret`, `*-secret`, `_secret`,
+  `.secrets`, `secrets.*`, `credentials`, `credentials.json`, `.netrc`, `.pgpass`,
+  `.htpasswd`). Found: 15 `*.sqlite.cursor-secret` files in an archived Geo QA folder under
+  `E:\Librarian research`, and 427 under `Librarian_V2\tmp`; none was refused before.
+  Exact names only: `credentials.py` and papers about secret sharing still pass.
+
+**Not changed by an agent:** Resource-Library's `promotion.mode` stays `person`, and
+`production_drafting` is unset; both are a person's. The proposal is in
+`reports/2026-11-16-pilot-review/RESOURCE-LIBRARY-BOUNDARIES.md`.
+
+**Tests.** `tests/test_credential_paths.py` (new, 15 cases), `test_folder_review.py`
+(+1: per-project labels, default unchanged, unknown scope refused).
+
+**Verification:** full suite in a clean clone of `7590866` plus this change: 2607 passed,
+2 skipped, 5 deselected in 945.03s (0:15:45), exit 0.

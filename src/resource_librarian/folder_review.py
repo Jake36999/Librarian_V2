@@ -65,13 +65,26 @@ GRAPH_SUFFIX = {'own-current': '', 'own-legacy': '-legacy', 'own-docs': '-docs',
                 'logs/transcripts': '-logs'}
 
 
-def suggested_graph(library, project, purpose):
-    """<library>-<project>[-docs|-legacy|-data|-logs]; third-party material is shared per library."""
+THIRD_PARTY_SCOPES = ('library', 'project')
+
+
+def suggested_graph(library, project, purpose, third_party='library'):
+    """<library>-<project>[-docs|-legacy|-data|-logs]. Third-party material is shared per library
+    by default; `third_party='project'` (`[folders] third_party_graph = "project"`) keeps each
+    project's vendored code and papers in that project's own graphs, so a library holding several
+    projects never mixes them (owner, 2026-11-16: Resource-Library)."""
+    if third_party not in THIRD_PARTY_SCOPES:
+        raise ValueError(f'FOLDER_GRAPH: third_party_graph is one of {list(THIRD_PARTY_SCOPES)}')
+    scope = f'{library}-{project}' if third_party == 'project' else library
     if purpose == 'third-party':
-        return f'{library}-third-party'
+        return f'{scope}-third-party'
     if purpose == 'research-docs':
-        return f'{library}-third-party-papers'
+        return f'{scope}-third-party-papers'
     return f'{library}-{project}{GRAPH_SUFFIX.get(purpose, "")}'
+
+
+def third_party_scope(vault):
+    return str(vault.setting('folders', 'third_party_graph') or 'library')
 
 def inventory(found):
     return dict(version='folder-inventory-v1', root=found.canonical_root,
@@ -207,7 +220,7 @@ class FolderReview:
             purpose = part['suggestion']['purpose']
             # One graph per project and stratum (Geo-Grapher keeps one stratum per graph, which its
             # ranking and third-party rules rely on); never one graph per folder.
-            graph = suggested_graph(self.vault.title, root.name, purpose)
+            graph = suggested_graph(self.vault.title, root.name, purpose, third_party_scope(self.vault))
             inherited_from = part['suggestion'].get('inherited_from')
             card = dict(id=item_id, kind='folder', status='staged', name=rel, path=rel,
                 source_root=str(root), folder_fingerprint=fp, survey_fingerprint=found.fingerprint,
@@ -420,7 +433,8 @@ class FolderReview:
                 authorship = ancestry(rel)
                 rule = 'data/logs authorship inferred from its nearest classified ancestor folder'
             chosen.append(dict(card, decision=dict(purpose=purpose, authorship=authorship,
-                graph=suggested_graph(self.vault.title, Path(root).name, purpose),  # never a stale suggestion
+                graph=suggested_graph(self.vault.title, Path(root).name, purpose,
+                                      third_party_scope(self.vault)),  # never a stale suggestion
                 description=card['description']['text'],
                 accepted_by='agent-policy', accepted_at=now_iso(),
                 policy=dict(mode='agent', rule=rule)),
