@@ -334,8 +334,13 @@ def require_binding(service: str, provider: str, model_id: str) -> ServiceBindin
 
 
 def ocr_request(provider: str, model_id: str, prompt: str, image_url: str,
-                *, max_tokens: int = 4_000) -> tuple[dict[str, Any], ServiceBinding]:
-    """Build the only OCR request shape V2 currently supports."""
+                *, max_tokens: int = 4_000,
+                reasoning_effort: str = "") -> tuple[dict[str, Any], ServiceBinding]:
+    """Build the only OCR request shape V2 currently supports.
+
+    `reasoning_effort` is the library's `[reasoning] ocr` (or `[reasoning.models]`)
+    setting, sent as the OpenAI-compatible field; empty sends nothing. Whether OCR
+    thinks is configuration, not a model-name rule in code (owner, 2026-11-16)."""
     row = binding("ocr", provider, model_id)
     if row.descriptor is not None and row.descriptor.id != "openai_vision_chat_v1":
         raise ServiceContractError("selected OCR model has a non-vision-chat adapter")
@@ -346,8 +351,8 @@ def ocr_request(provider: str, model_id: str, prompt: str, image_url: str,
             {"type": "image_url", "image_url": {"url": image_url}},
         ]}],
     }
-    if provider == "deepinfra" and model_id.startswith("Qwen/Qwen3.5-"):
-        request["chat_template_kwargs"] = {"enable_thinking": False}
+    if reasoning_effort:
+        request["reasoning_effort"] = reasoning_effort
     return request, row
 
 

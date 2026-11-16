@@ -77,7 +77,7 @@ def test_clerk_keeps_its_error_shapes(monkeypatch):
 def test_ocr_uses_the_shared_transport(monkeypatch):
     from resource_librarian import ocr
     seen = _transport(monkeypatch, {"choices": [{"message": {"content": " page "}}]})
-    monkeypatch.setattr(ocr, "ocr_request", lambda *a: ({"model": "m"}, None))
+    monkeypatch.setattr(ocr, "ocr_request", lambda *a, **kw: ({"model": "m"}, None))
     import threading
     chat = ocr.VisionChat.__new__(ocr.VisionChat)
     chat._response_local = threading.local()

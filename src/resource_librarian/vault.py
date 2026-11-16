@@ -83,6 +83,10 @@ DEFAULT_CONFIG: dict[str, dict[str, Any]] = {
     "services": {"ocr": "deepinfra:Qwen/Qwen3.5-397B-A17B", "ocr_format": "vision_chat",
                  "tts": "deepinfra:hexgrad/Kokoro-82M", "stt": ""},
     "scribe": {"provider": ""},
+    # How hard each role's model thinks (`reasoning_effort` on the wire): per role, and
+    # `[reasoning.models] "<model>"` per model. Unset leaves the model's default. OCR ships
+    # "none": transcription needs no thinking (measured, 2026-11-16).
+    "reasoning": {"ocr": "none"},
 }
 
 

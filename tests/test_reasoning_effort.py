@@ -66,3 +66,46 @@ def test_the_clerk_config_endpoint_and_cleanup_read_it_too(vault, monkeypatch):
     assert [b.get("reasoning_effort") for b in bodies] == ["low", "none"]
     vault.set_setting("reasoning", "cleanup", "none")
     assert pdf_markdown.endpoint(vault).reasoning_effort == "none"
+
+
+# -- OCR (owner, 2026-11-16): the thinking switch was a model-name rule in code -------------
+
+def _ocr_bodies(monkeypatch, vault, model):
+    from resource_librarian import ocr, providers
+    sent = []
+    monkeypatch.setenv("DEEPINFRA_API_KEY", "test-key")
+    monkeypatch.setattr(providers, "_request", lambda method, url, headers, body, *a, **kw: (
+        sent.append(body) or {"choices": [{"message": {"content": "text"}, "finish_reason": "stop"}],
+                              "usage": {}}))
+    ocr.VisionChat("deepinfra", model, vault=vault).page_text(b"png")
+    return sent
+
+
+def test_ocr_sends_the_shipped_default_none_and_no_model_name_rule(monkeypatch, tmp_path):
+    from resource_librarian.vault import Vault
+    (body,) = _ocr_bodies(monkeypatch, Vault(tmp_path), "Qwen/Qwen3.5-27B")
+    assert body["reasoning_effort"] == "none"
+    assert "chat_template_kwargs" not in body          # no Qwen-only template switch in code
+    (other,) = _ocr_bodies(monkeypatch, Vault(tmp_path), "google/gemma-4-26B-A4B-it")
+    assert other["reasoning_effort"] == "none"          # the same configuration for any model
+
+
+def test_ocr_follows_the_librarys_role_and_model_settings(monkeypatch, tmp_path):
+    from resource_librarian.vault import Vault
+    vault = Vault(tmp_path)
+    vault.set_setting("reasoning", "ocr", "low")
+    (body,) = _ocr_bodies(monkeypatch, vault, "Qwen/Qwen3.5-27B")
+    assert body["reasoning_effort"] == "low"
+    (vault.librarian / "config.toml").write_text(
+        '[reasoning]\nocr = "low"\n\n[reasoning.models]\n"Qwen/Qwen3.5-27B" = "none"\n', encoding="utf-8")
+    (body,) = _ocr_bodies(monkeypatch, vault, "Qwen/Qwen3.5-27B")
+    assert body["reasoning_effort"] == "none"
+
+
+def test_ocr_request_sends_reasoning_effort_only_when_given():
+    from resource_librarian.service_adapters import ocr_request
+    plain, _ = ocr_request("deepinfra", "Qwen/Qwen3.5-397B-A17B", "p", "data:image/png;base64,AA")
+    assert "reasoning_effort" not in plain and "chat_template_kwargs" not in plain
+    tuned, _ = ocr_request("deepinfra", "Qwen/Qwen3.5-397B-A17B", "p", "data:image/png;base64,AA",
+                           reasoning_effort="none")
+    assert tuned["reasoning_effort"] == "none"

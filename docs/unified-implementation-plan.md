@@ -6421,3 +6421,30 @@ refusal, provider on the wire, Core per role, `[clerk]` endpoint per task and cl
 
 **Verification:** full suite in a clean clone of `9c02f8e` plus this change: 2623 passed,
 2 skipped, 5 deselected in 937.37s (0:15:37), exit 0.
+
+### OCR reasoning is configuration (2026-11-16)
+
+**Owner, 2026-11-16:** "yes, fix ocr": the OCR path should take the reasoning setting.
+
+**Found.** `service_adapters.ocr_request` switched thinking off with
+`chat_template_kwargs: {enable_thinking: false}` only for model ids starting
+`Qwen/Qwen3.5-` on DeepInfra: a model-name rule in code. Any other OCR model kept its
+default, and no library could change it.
+
+**Measured on DeepInfra, 2026-11-16** (`reports/2026-11-16-pilot-review/run-scripts/`):
+- Text probe (`effort_probe.py`), Qwen3.5-27B: the template flag and `reasoning_effort: "none"`
+  give the same 154 output tokens and cost; unset thinks (~2,100 tokens, ~12x the cost).
+- One real page (`ocr_effort_probe.py`, `19-cayley-graphs.pdf` page 2) through `VisionChat`:
+  unset 2,352 output tokens, $0.0064, 65 s; "none" 473 tokens, $0.0015, 13 s. Both have
+  word recall 1.0 against the page's text layer.
+
+**Changes.**
+- `ocr_request(..., reasoning_effort=)` sends the OpenAI-compatible field only when given;
+  the Qwen-only template switch is removed.
+- `VisionChat.reasoning_effort()` reads `[reasoning] ocr` / `[reasoning.models]` through
+  `reasoning_effort_for`.
+- `DEFAULT_CONFIG["reasoning"] = {"ocr": "none"}`: the shipped default keeps today's
+  behaviour for Qwen3.5 and now applies to any OCR model; a library overrides it in config.
+
+**Tests.** `tests/test_reasoning_effort.py` (+3): the default "none" for any model with no
+template switch, role and model settings win in order, and the request field is sent only when given.

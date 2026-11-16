@@ -85,12 +85,22 @@ class VisionChat:
     def last_response(self, value):
         self._response_local.value = value
 
+    def reasoning_effort(self) -> str:
+        """`[reasoning] ocr` / `[reasoning.models]`; the shipped default is "none":
+        a transcription needs no thinking, and a thinking model costs ~12x more per page
+        (measured on Qwen3.5-27B, 2026-11-16)."""
+        from .providers import reasoning_effort_for
+        from .vault import DEFAULT_CONFIG
+        config = self.vault.config() if self.vault else DEFAULT_CONFIG
+        return reasoning_effort_for(config, "ocr", self.model)
+
     def page_text(self, png: bytes) -> str:
         key = _key(self.key_env)                           # ProviderError when no key is set
         image = "data:image/png;base64," + base64.b64encode(png).decode()
         try:
             body, _binding = ocr_request(self.route.contract_provider if self.route else self.provider,
-                                         self.model, PROMPT, image)
+                                         self.model, PROMPT, image,
+                                         reasoning_effort=self.reasoning_effort())
         except ServiceContractError as exc:
             raise OcrError(f"{self.name}: {exc}") from exc
         # Build auth headers – _request adds Content-Type itself.
