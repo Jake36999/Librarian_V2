@@ -2187,7 +2187,17 @@ class App:
 
     def role_provider(self, role: str) -> Provider | None:
         route = self._role_choice(role)
-        return self._provider_for(route) if route is not None else None
+        provider = self._provider_for(route) if route is not None else None
+        if provider is not None and hasattr(provider, "reasoning_effort"):
+            # [reasoning] in the library's config: per role, per model; unset leaves the
+            # model's default (owner, 2026-11-16: model behaviour is configuration).
+            from .providers import reasoning_effort_for
+            effort = reasoning_effort_for(self.vault.config(), role, str(route.get("model") or ""))
+            if effort:
+                import copy
+                provider = copy.copy(provider)            # never alter a shared instance
+                provider.reasoning_effort = effort
+        return provider
 
     def _helper_provider(self, tier: int) -> Provider | None:
         return self.role_provider("lead") if tier == 1 else self._provider_for_profile("research_helper")

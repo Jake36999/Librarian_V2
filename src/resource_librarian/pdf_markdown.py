@@ -64,7 +64,10 @@ def route(vault=None) -> tuple[str, str]:
 def endpoint(vault=None) -> OpenAICompatible:
     provider, model = route(vault)
     preset = PRESETS[provider]
-    return OpenAICompatible(preset["base_url"], model, preset["key_env"], name=provider)
+    from .providers import reasoning_effort_for
+    effort = reasoning_effort_for(vault.config(), "cleanup", model) if vault is not None else ""
+    return OpenAICompatible(preset["base_url"], model, preset["key_env"], name=provider,
+                            reasoning_effort=effort)
 
 
 def batch_pages(pages: list[str], batch_chars: int = BATCH_CHARS) -> list[str]:

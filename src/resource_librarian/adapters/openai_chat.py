@@ -65,11 +65,14 @@ class OpenAIChatAdapter:
         tools: list[Any],
         max_tokens: int = 4096,
         temperature: float | None = None,
+        reasoning_effort: str | None = None,
     ) -> dict[str, Any]:
         """Build the exact JSON body for a chat completion request.
 
         Key order is deliberately maintained: model, max_tokens, messages,
-        then temperature (if not None), then tools (if any).
+        then temperature (if not None), then tools (if any), then
+        reasoning_effort (if set - the OpenAI-compatible field DeepInfra documents:
+        none, minimal, low, medium, high, xhigh, max; omitted means the model's default).
         """
         body: dict[str, Any] = {
             "model": model,
@@ -90,6 +93,8 @@ class OpenAIChatAdapter:
                 }
                 for t in tools
             ]
+        if reasoning_effort:
+            body["reasoning_effort"] = reasoning_effort
         return body
 
     @staticmethod

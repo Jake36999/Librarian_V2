@@ -735,14 +735,45 @@ def _key(key_env: str) -> str:
 
 # ----------------------------------------------------------- OpenAI-compatible
 
+REASONING_EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
+
+
+def checked_reasoning_effort(value: Any, where: str = "reasoning_effort") -> str:
+    """'' (the model's own default) or one of REASONING_EFFORTS; anything else is refused."""
+    text = str(value or "").strip().lower()
+    if text and text not in REASONING_EFFORTS:
+        raise ValueError(f"{where}: use one of {', '.join(REASONING_EFFORTS)} (or leave it unset)")
+    return text
+
+
+def reasoning_effort_for(config: dict[str, Any], role: str, model: str) -> str:
+    """The library's reasoning effort for one role's calls on one model (owner, 2026-11-16).
+
+        [reasoning]
+        clerk = "low"                       # per role (clerk, scribe, lead, cleanup, ...)
+        [reasoning.models]
+        "Qwen/Qwen3.5-397B-A17B" = "none"   # per model, wins over the role
+
+    Configuration, not code: unset sends nothing and the model keeps its default.
+    """
+    section = (config or {}).get("reasoning") or {}
+    if not isinstance(section, dict):
+        return ""
+    models = section.get("models") or {}
+    if isinstance(models, dict) and str(models.get(model) or "").strip():
+        return checked_reasoning_effort(models.get(model), f"[reasoning.models] {model!r}")
+    return checked_reasoning_effort(section.get(role), f"[reasoning] {role}")
+
+
 class OpenAICompatible(Provider):
     def __init__(self, base_url: str, model: str = "", key_env: str = "", name: str = "",
-                 timeout: float = 120):
+                 timeout: float = 120, reasoning_effort: str = ""):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.key_env = key_env
         self.name = name or self.base_url
         self.timeout = timeout
+        self.reasoning_effort = checked_reasoning_effort(reasoning_effort)
 
     def _headers(self) -> dict[str, str]:
         key = _key(self.key_env)
@@ -779,7 +810,8 @@ class OpenAICompatible(Provider):
         # Import inside the method to avoid a circular import at module level.
         from .adapters.openai_chat import OpenAIChatAdapter
         body = OpenAIChatAdapter.render(self.model, system, messages, tools,
-                                        max_tokens=max_tokens, temperature=temperature)
+                                        max_tokens=max_tokens, temperature=temperature,
+                                        reasoning_effort=getattr(self, "reasoning_effort", "") or None)
         from .adapters.openai_chat import chat_url
         if cancel is None:
             reply = _request("POST", chat_url(self.base_url), self._headers(), body, self.timeout)

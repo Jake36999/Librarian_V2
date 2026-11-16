@@ -1278,7 +1278,9 @@ class OpenAICompatible(Endpoint):
 
     def __init__(self, base_url: str, model: str, key_env: str = "", concurrency: int = 1,
                  min_tokens: int = 0, timeout: int = 120, models: dict[str, str] | None = None,
-                 provider_id: str = ""):
+                 provider_id: str = "", reasoning_effort: str = ""):
+        from .providers import checked_reasoning_effort
+        self.reasoning_effort = checked_reasoning_effort(reasoning_effort, "[clerk] reasoning_effort")
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.key_env = key_env
@@ -1346,6 +1348,8 @@ class OpenAICompatible(Endpoint):
         body: dict[str, Any] = {
             "model": model, "messages": messages, "temperature": payload["temperature"],
             "max_tokens": max(payload["max_tokens"], self.min_tokens)}
+        if self.reasoning_effort:                 # [clerk] reasoning_effort (unset: model default)
+            body["reasoning_effort"] = self.reasoning_effort
         if policy["strict_attempt"]:
             body["response_format"] = {"type": "json_schema", "json_schema": {
                 "name": safe, "strict": True, "schema": _strict(payload["schema"])}}
@@ -1388,7 +1392,8 @@ def _strict(schema: dict[str, Any]) -> dict[str, Any]:
 def _endpoint(provider: str, settings: dict[str, Any]) -> OpenAICompatible:
     base = dict(PRESETS.get(provider, {}))
     base.update({k: v for k, v in settings.items() if k in
-                 ("base_url", "key_env", "model", "concurrency", "min_tokens", "timeout")})
+                 ("base_url", "key_env", "model", "concurrency", "min_tokens", "timeout",
+                  "reasoning_effort")})
     if not base.get("base_url"):
         raise ClerkUnavailable(f"clerk provider {provider!r} needs a base_url")
     models = {k[len("model_"):]: str(v) for k, v in settings.items()
@@ -1430,6 +1435,8 @@ def from_config(settings: dict[str, Any]) -> Endpoint | None:
         task = key[len("route_"):]
         extra = {name: int(settings[f"{name}_{task}"]) for name in ("min_tokens", "timeout")
                  if str(settings.get(f"{name}_{task}") or "").strip()}
+        if str(settings.get(f"reasoning_effort_{task}") or "").strip():
+            extra["reasoning_effort"] = str(settings[f"reasoning_effort_{task}"])
         routes[task] = _endpoint(target, {**({"model": model} if model else {}), **extra})
     default = _endpoint(provider, settings) if provider else None
     if not routes:

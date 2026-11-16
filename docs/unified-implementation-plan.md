@@ -6392,3 +6392,32 @@ not, the picker agrees, an unqualified choice is not usable, the Lead is refused
 
 **Verification:** full suite in a clean clone of `ea62338` plus this change: 2618 passed,
 2 skipped, 5 deselected in 973.03s (0:16:13), exit 0.
+
+### Reasoning effort is configuration (2026-11-16)
+
+**Owner, 2026-11-16:** go ahead with the reasoning-control adapter upgrade (from the model
+cards' API documentation: DeepInfra's OpenAI-compatible `reasoning_effort`, values none,
+minimal, low, medium, high, xhigh, max).
+
+**Why it matters.** Reasoning models think by default and bill it as output: Qwen3.5-397B
+at $3.00 per million output tokens. The Clerk's structured tasks rarely need it.
+`InvocationPlan.reasoning_intent` existed but nothing put it on the wire.
+
+**Changes.**
+- `OpenAIChatAdapter.render(..., reasoning_effort=)` appends the field only when set; the
+  existing key order is unchanged.
+- `OpenAICompatible(reasoning_effort=)`, validated (`checked_reasoning_effort`).
+- `providers.reasoning_effort_for(config, role, model)`: `[reasoning] <role> = "<effort>"`
+  and `[reasoning.models] "<model>" = "<effort>"` (model wins). Unset sends nothing: the
+  model's default, so nothing changes until a library sets it.
+- The Core applies it to each role's provider (`role_provider`, on a copy); the cleanup
+  endpoint reads role `cleanup`; the `[clerk]` endpoint takes `reasoning_effort` and
+  `reasoning_effort_<task>`.
+
+**Not changed.** No library sets it yet; qualification evidence is not re-run for it.
+
+**Tests.** `tests/test_reasoning_effort.py` (5): wire field only when set, precedence and
+refusal, provider on the wire, Core per role, `[clerk]` endpoint per task and cleanup.
+
+**Verification:** full suite in a clean clone of `9c02f8e` plus this change: 2623 passed,
+2 skipped, 5 deselected in 937.37s (0:15:37), exit 0.
