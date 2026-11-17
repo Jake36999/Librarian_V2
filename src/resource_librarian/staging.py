@@ -569,6 +569,13 @@ def prepare_source(store, item, bottom_line, what_it_solves, decided_by, session
         rel = (source.relative_to(store.vault.root).as_posix() if source.is_relative_to(store.vault.root) else source.as_posix())
         if not source.is_file():
             raise TypeError(f"attachment is missing: {rel}")
+        if key == "file" and not source.is_relative_to(store.vault.root.resolve()):
+            # A file in an attached project folder is the owner's original, read where it is
+            # through client access: the note names it in place and nothing is copied into the
+            # vault (2026-11-17: copying sent the outside path to the vault writer, which cannot
+            # observe it, so no attached source could ever be accepted).
+            draft.fields["file"] = rel
+            continue
         stamp = fingerprint(source)
         from .conversions import is_conversion
         if key == 'clean_file' and is_conversion(store.vault, rel):

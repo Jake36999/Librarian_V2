@@ -6761,3 +6761,17 @@ never lifts a hold; policy writes go through `commit` and a failed build restore
 **Tests.** `tests/test_deep_read.py` (+2, and two locator assertions now expect parts);
 `tests/test_batch_review_coverage.py` (+1); `tests/test_intake_file_names.py` (1);
 `tests/test_phase8_paper_publication.py` (+1; its reading fixture records version and part count).
+
+### An attached project file is accepted in place (2026-11-17)
+
+**Found** (Gemini audit R5, reproduced). No source whose file lives in an attached folder could be
+accepted into `Sources/`. Acceptance planned to copy the outside file into the vault and put its
+path among the writer's observed files. The writer cannot observe a path outside the vault, so it
+reported the file "changed after it was read" (`DOCUMENT_ACTIVE`).
+
+**Change.** For a `file` outside the vault, `_source_plan` writes its absolute path to the note's
+`file` and plans no copy. The owner's original is read where it is, through client access, as
+connected projects are meant to be.
+
+**Tests.** `tests/test_external_source_acceptance.py` (1): accepted, the note names the original,
+nothing is copied, and the original is unchanged.
