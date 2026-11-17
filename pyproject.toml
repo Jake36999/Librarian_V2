@@ -18,12 +18,13 @@ dependencies = ["PyYAML>=6", "keyring>=25,<27"]
 [project.optional-dependencies]
 search = ["numpy>=1.26"]
 embed = ["numpy>=1.26", "model2vec>=0.4"]
-pdf = ["pypdf>=4"]
+# pypdfium2 renders a page without a text layer for OCR (BSD/Apache; PyMuPDF is AGPL).
+pdf = ["pypdf>=4", "pypdfium2>=4"]
 mcp = ["mcp>=2.2,<3"]
 # `build` keeps the source-install developer workflow able to exercise the
 # same wheel path as release CI; it is not a runtime dependency in a shipped
 # hash-locked wheelhouse.
-dev = ["pytest>=8", "numpy>=1.26", "pypdf>=4", "mcp>=2.2,<3", "build>=1.2", "jsonschema>=4"]
+dev = ["pytest>=8", "numpy>=1.26", "pypdf>=4", "pypdfium2>=4", "mcp>=2.2,<3", "build>=1.2", "jsonschema>=4"]
 
 [project.scripts]
 librarian = "resource_librarian.cli:main"

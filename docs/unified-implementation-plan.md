@@ -6775,3 +6775,15 @@ connected projects are meant to be.
 
 **Tests.** `tests/test_external_source_acceptance.py` (1): accepted, the note names the original,
 nothing is copied, and the original is unchanged.
+
+### OCR's page renderer is a declared dependency (2026-11-17)
+
+**Found.** The branch's first hosted CI run failed three OCR tests on Python 3.12 and 3.13:
+`test_ocr_pages_are_recorded_and_stop_at_the_ceiling`, and two writer-release tests in
+`test_core_batch.py`. OCR renders a page without a text layer with `pypdfium2` (since `a65671c`),
+but the package was declared nowhere. It was installed on the development machine and absent from
+the hash-locked `requirements-dev.txt` that CI installs.
+
+**Change.** `pypdfium2>=4` joins the `pdf` and `dev` extras. `requirements-dev.txt` was regenerated
+with the command in its header. The only change is `pypdfium2==5.15.2` with its hashes, the
+version the local suite runs with.
