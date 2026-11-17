@@ -6578,3 +6578,20 @@ close button and graceful shutdown per core added to the ui."
 
 **Tests.** `tests/test_geo_service.py` (+3): an exited service is reported closed or failed
 and can start again; the person-only stop and start routes.
+
+### Third-party graph labels follow Geo-Grapher's observed modality (2026-11-17)
+
+**Found while finishing Parallax** (owner, 2026-11-16: "then do external sources such as pdf's and
+repositories"). Policy acceptance of `F:\network_management` failed with `GROUP_STRATUM_CONFLICT`.
+Two person overrides had created `Parallax-third-party` as a code graph, since a card with no
+observed modality defaults to code. Geo-Grapher observed modality `doc` for the 22 third-party
+repositories, and a graph holds one stratum, so the whole application was refused.
+
+**Change.** `suggested_graph(..., modality=)` takes the partition's observed modality for
+third-party folders: code keeps `-third-party`, `doc` becomes `-third-party-docs`, and `paper`
+shares `-third-party-papers` with research documents (the same stratum). The survey and policy
+acceptance pass it (`observed_modality(partition)`). Without an observation the label is
+unchanged, so existing graphs keep their names.
+
+**Tests.** `tests/test_folder_review.py` (+1): labels per modality, and a policy pass that puts a
+doc-modality and a code-modality repository in separate graphs.

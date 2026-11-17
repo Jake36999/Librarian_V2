@@ -539,3 +539,32 @@ def test_the_folder_brief_is_given_the_total_so_the_model_never_sums_counts(libr
     monkeypatch.setattr(clerk, 'run', run)
     review.draft(card['id'], clerk.Scripted(lambda _: {}), approved=True)
     assert seen['files'] == sum(card['file_counts'].values()) and 'file_counts' in seen
+
+
+def test_third_party_graphs_follow_the_observed_modality_so_one_graph_holds_one_stratum(library):
+    """2026-11-17: Parallax's doc-modality repositories shared a label with a code-modality
+    graph, and Geo-Grapher refused the whole application (GROUP_STRATUM_CONFLICT)."""
+    from resource_librarian.folder_review import FolderReview, suggested_graph
+    assert suggested_graph('lib', 'p', 'third-party') == 'lib-third-party'
+    assert suggested_graph('lib', 'p', 'third-party', modality='code') == 'lib-third-party'
+    assert suggested_graph('lib', 'p', 'third-party', modality='doc') == 'lib-third-party-docs'
+    assert suggested_graph('lib', 'p', 'third-party', modality='paper') == \
+        suggested_graph('lib', 'p', 'research-docs') == 'lib-third-party-papers'
+    vault, source = library
+
+    def planner(surveyed):
+        plan = fake_planner(surveyed)
+        for part in plan['partitions']:
+            if part['key'] == 'third_party_beta':
+                part['stratum'] = {'role': 'third_party', 'trust_tier': 'bronze', 'modality': 'doc'}
+        return plan
+    _agent_mode(vault)
+    review = FolderReview(vault, planner=planner, applier=lambda _: {'graphs': []})
+    cards = {c['path']: c for c in review.survey(source)['cards']}
+    assert cards['third_party_alpha']['suggested_graph'].endswith('-third-party')
+    assert cards['third_party_beta']['suggested_graph'].endswith('-third-party-docs')
+    _checked(review)
+    review.accept_by_policy(source)
+    after = {c['path']: c for c in review.list()}
+    assert after['third_party_beta']['decision']['graph'].endswith('-third-party-docs')
+    assert after['third_party_alpha']['decision']['graph'].endswith('-third-party')

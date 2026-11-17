@@ -69,19 +69,30 @@ GRAPH_SUFFIX = {'own-current': '', 'own-legacy': '-legacy', 'own-docs': '-docs',
 THIRD_PARTY_SCOPES = ('library', 'project')
 
 
-def suggested_graph(library, project, purpose, third_party='library'):
+def suggested_graph(library, project, purpose, third_party='library', modality=None):
     """<library>-<project>[-docs|-legacy|-data|-logs]. Third-party material is shared per library
     by default; `third_party='project'` (`[folders] third_party_graph = "project"`) keeps each
     project's vendored code and papers in that project's own graphs, so a library holding several
-    projects never mixes them (owner, 2026-11-16: Resource-Library)."""
+    projects never mixes them (owner, 2026-11-16: Resource-Library).
+
+    Third-party folders keep Geo-Grapher's observed modality in the label (2026-11-17): a graph
+    holds one stratum, and Parallax's doc-modality repositories could not join the code graph
+    a person's override had created (GROUP_STRATUM_CONFLICT). Code keeps `-third-party`; docs go
+    to `-third-party-docs`; papers share `-third-party-papers` with research documents."""
     if third_party not in THIRD_PARTY_SCOPES:
         raise ValueError(f'FOLDER_GRAPH: third_party_graph is one of {list(THIRD_PARTY_SCOPES)}')
     scope = f'{library}-{project}' if third_party == 'project' else library
     if purpose == 'third-party':
-        return f'{scope}-third-party'
+        return f'{scope}-third-party' + {'doc': '-docs', 'paper': '-papers'}.get(modality or 'code', '')
     if purpose == 'research-docs':
         return f'{scope}-third-party-papers'
     return f'{library}-{project}{GRAPH_SUFFIX.get(purpose, "")}'
+
+
+def observed_modality(partition):
+    """Geo-Grapher's observed modality for a partition (code, doc or paper), or None."""
+    value = ((partition or {}).get('stratum') or {}).get('modality')
+    return value if value in ('code', 'doc', 'paper') else None
 
 
 def third_party_scope(vault):
@@ -253,7 +264,8 @@ class FolderReview:
             purpose = part['suggestion']['purpose']
             # One graph per project and stratum (Geo-Grapher keeps one stratum per graph, which its
             # ranking and third-party rules rely on); never one graph per folder.
-            graph = suggested_graph(self.vault.title, root.name, purpose, third_party_scope(self.vault))
+            graph = suggested_graph(self.vault.title, root.name, purpose, third_party_scope(self.vault),
+                                    observed_modality(part))
             inherited_from = part['suggestion'].get('inherited_from')
             card = dict(id=item_id, kind='folder', status='staged', name=rel, path=rel,
                 source_root=str(root), folder_fingerprint=fp, survey_fingerprint=found.fingerprint,
@@ -498,7 +510,8 @@ class FolderReview:
             by_path[rel] = dict(card, decision=dict(purpose=purpose))   # children see it this pass
             chosen.append(dict(card, decision=dict(purpose=purpose, authorship=authorship,
                 graph=suggested_graph(self.vault.title, Path(root).name, purpose,
-                                      third_party_scope(self.vault)),  # never a stale suggestion
+                                      third_party_scope(self.vault),
+                                      observed_modality(card.get('partition'))),  # never a stale suggestion
                 description=card['description']['text'],
                 accepted_by='agent-policy', accepted_at=now_iso(),
                 policy=dict(mode='agent', rule=rule)),
