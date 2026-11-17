@@ -6787,3 +6787,8 @@ the hash-locked `requirements-dev.txt` that CI installs.
 **Change.** `pypdfium2>=4` joins the `pdf` and `dev` extras. `requirements-dev.txt` was regenerated
 with the command in its header. The only change is `pypdfium2==5.15.2` with its hashes, the
 version the local suite runs with.
+
+**Then (same day).** With the renderer installed, 14 more OCR tests ran in CI and failed on Pillow
+(`PIL`), which encodes the rendered page. It is also undeclared. `Pillow>=10` joins both extras;
+the lock adds only `pillow==13.0.0`. The suite was then run in a fresh Python 3.11 environment
+installed only from the lock, as CI installs it: 2657 passed, 2 skipped.
