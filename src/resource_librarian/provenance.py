@@ -32,6 +32,9 @@ CLAIM = re.compile(
     r"modules|endpoints|routes|entry points|(?P<lang>" + "|".join(LANGUAGES) + r") files)\b",
     re.I)
 SKIP_SECTIONS = ("Evidence",)
+# "5 files with a '.json' extension", "2 files without extensions": a part of the folder, not
+# its total (2026-11-17: true folder briefs were refused as contradicting their inventory).
+QUALIFIED = re.compile(r"\s*(?:with|without|of|in|having|that|which|named|ending|whose|under|inside)\b", re.I)
 CAPS = {"modules": 80, "endpoints": 60, "entry points": 40}   # what the survey keeps at most
 
 
@@ -66,6 +69,24 @@ def quantities(vault: Vault, fm: dict[str, Any]) -> dict[str, tuple[int, str, bo
     return out
 
 
+def part_counts(vault: Vault, fm: dict[str, Any]) -> set[int]:
+    """Per-extension file counts from a folder survey's entries (a qualified claim's numbers)."""
+    store = EvidenceStore(vault)
+    counts: dict[str, int] = {}
+    for ref in fm.get("evidence") or []:
+        record = store.get(str(ref))
+        if record is None or record.kind != "survey":
+            continue
+        for entry in record.payload.get("entries") or []:
+            path = str(entry[0]) if isinstance(entry, (list, tuple)) and entry else ""
+            if not path or path.endswith("/"):
+                continue
+            name = path.rsplit("/", 1)[-1]
+            ext = name[name.rfind("."):].lower() if "." in name[1:] else ""
+            counts[ext] = counts.get(ext, 0) + 1
+    return set(counts.values())
+
+
 def check(vault: Vault, path, fm: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     note = notes.load(path)
     fm = fm if fm is not None else note.frontmatter
@@ -75,6 +96,7 @@ def check(vault: Vault, path, fm: dict[str, Any] | None = None) -> list[dict[str
 def check_sections(vault: Vault, sections: dict[str, str], fm: dict[str, Any]) -> list[dict[str, Any]]:
     """Check staged prose before display, using the same arithmetic as notes."""
     known = quantities(vault, fm)
+    parts: set[int] | None = None
     out = []
     for heading, text in sections.items():
         if heading in SKIP_SECTIONS:
@@ -90,6 +112,11 @@ def check_sections(vault: Vault, sections: dict[str, str], fm: dict[str, Any]) -
                 out.append({**row, "outcome": "unsupported"})
                 continue
             recorded, evidence, capped = found
+            if what == "files" and QUALIFIED.match(text[m.end():]):
+                parts = part_counts(vault, fm) if parts is None else parts
+                out.append({**row, "part": True, "evidence": evidence,
+                            "outcome": "supported" if stated in parts or stated == recorded else "unsupported"})
+                continue
             if recorded == stated:
                 outcome = "supported"
             elif capped and stated > recorded:

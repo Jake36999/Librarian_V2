@@ -6536,3 +6536,22 @@ folder's original is never touched by a rejection and is still reported in
 
 **Tests.** `tests/test_staging_safety.py` (+1): two items from an attached folder, one whose
 original was moved away, are both rejected, and the kept original is unchanged.
+
+### Provenance: a qualified file count is a part, not the folder's total (2026-11-17)
+
+**Found while finishing** (owner, 2026-11-16: "finish enriching everything"). Nonlinear Field Lab's
+`specs` folder check failed on every attempt, and so did all 55 of Parallax's. The Clerk's brief was
+true: "7 files ..., consisting of 5 files with a '.json' extension and 2 files with no extension".
+But `provenance.check_sections` read every "N files" as a claim about the total. It called 5 and 2
+contradictions of 7, and `FolderReview.draft` refused the brief (FOLDER_PROVENANCE).
+
+**Change.** When "N files" is followed by a qualifier (with, without, of, in, having, ...), it is a
+part of the folder. It is supported when it equals a per-extension count computed from the survey
+evidence's entries (or the total), and otherwise unsupported. It is never contradicted, following
+the module's rule that a false accusation is worse than a missed one. An unqualified wrong total is
+still a contradiction.
+
+**Measured.** NFL `specs` passes provenance on 2 of 2 live drafts (Gemma), where it failed before.
+
+**Tests.** `tests/test_provenance_parts.py` (2): per-type parts match the inventory; a wrong total
+is still contradicted and an unknown part is only unsupported.
