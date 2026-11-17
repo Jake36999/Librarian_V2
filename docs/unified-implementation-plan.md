@@ -6792,3 +6792,18 @@ version the local suite runs with.
 (`PIL`), which encodes the rendered page. It is also undeclared. `Pillow>=10` joins both extras;
 the lock adds only `pillow==13.0.0`. The suite was then run in a fresh Python 3.11 environment
 installed only from the lock, as CI installs it: 2657 passed, 2 skipped.
+
+### Core startup reads folder overrides from the manifest (2026-11-17)
+
+**Found** after compacting Parallax's index: its Core no longer started inside the Host's 20-second
+window. At startup, `content_roots.folder_overrides` listed every folder card to find the in-vault
+folders with an accepted decision: 15,543 cards and 233 MB in Parallax, 6.8 s warm and more when
+the disk cache was cold.
+
+**Change.** `folder_overrides` reads the content-roots manifest, which acceptance already writes:
+an in-vault root row carrying its `folder_decision` and purpose, or an in-vault `exclude`. Same
+result on all three pilot libraries, measured at 6.8 s, 0.65 s and 4.9 s before, under 0.01 s
+after.
+
+**Tests.** The existing override and index-scope tests (`tests/test_folder_review.py`,
+`tests/test_workspace_documents.py`) cover it, and pass unchanged.

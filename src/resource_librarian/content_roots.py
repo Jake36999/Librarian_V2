@@ -191,12 +191,19 @@ WORKSPACE_DOCUMENT = "workspace_document"
 
 
 def folder_overrides(root):
-    from .folder_review import FolderReview
+    """In-vault folders with an accepted decision -> its purpose, as acceptance recorded them in
+    the manifest (a root row with its `folder_decision`, or an `exclude`). Reading the manifest,
+    not every folder card, keeps Core startup flat: Parallax's 15,543 cards (233 MB) made it take
+    longer than the Host's 20-second start window (2026-11-17)."""
+    data = load(Path(root)) or {}
     result = {}
-    for card in FolderReview(Vault(root)).list(include_provenance=False):
-        if card.get('status') != 'accepted' or not card.get('decision'): continue
-        parent = Path(card['source_root']); target = parent if card['path'] == '.' else parent / card['path']
-        if target.is_relative_to(root): result[target.relative_to(root).as_posix()] = card['decision']['purpose']
+    for row in data.get('roots') or []:
+        path = str(row.get('path') or '')
+        if row.get('folder_decision') and not row.get('attached') and not Path(path).is_absolute() and row.get('purpose'):
+            result[path.strip('/') or '.'] = row['purpose']
+    for path in data.get('excludes') or []:
+        if not Path(str(path)).is_absolute():
+            result[str(path).strip('/') or '.'] = 'exclude'
     return result
 
 
