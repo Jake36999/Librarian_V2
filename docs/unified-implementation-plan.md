@@ -6653,3 +6653,49 @@ that Core's pid so it exits with the Core. That Core picks up this fix when it i
 
 **Tests.** `tests/test_geo_service.py` (+1): a listener ended from outside is not reported running, the
 leftover launcher is ended, and the service can start again. The clean-close and crash cases stay green.
+
+### A re-survey tells a move from a content change (2026-11-17)
+
+**Owner, 2026-11-17:** "make sure that any time the system identifies a change, it checks if it
+needs a re-review, or can be tracked by the system … only requiring review if the content changes,
+but only putting up a yellow flag when a file moves".
+
+**Found.** Moving 7 datasheets inside Parallax's `docs` cost three hours:
+- A folder's fingerprint covers every row below it, so the re-survey reset `docs` and the root
+  (`.`). Both needed a Clerk check and a policy pass again.
+- The 7 held repositories, unchanged and undecided, lost their `review_required` flags. A re-check
+  then passed one of them as normal.
+- Nonlinear Field Lab's 70 moved PDFs left staged items pointing at vanished paths.
+
+**Change** (`folder_review.py`).
+- `classify_change` compares a card's previous survey rows (from its evidence record) with the
+  new ones by path, size and modification time.
+  - A file that vanished and one that appeared with the same size and time is one moved file;
+    a same-drive move or rename keeps both.
+  - Added or edited files are `content`.
+  - Decided subfolders are left out of a parent's comparison, because they track themselves.
+- A decided card whose change is `moved`, `removed` or `unchanged` keeps its decision. It takes
+  the new fingerprint and a yellow `change` record: kind, capped lists and counts, the previous
+  fingerprint.
+- A `content` change re-asks, as before, with a `review` change record.
+- An undecided card keeps its Clerk check (sensitivity and description) while its content is
+  tracked. A `review_required` hold is kept even when the content changed, until a person
+  decides.
+- `follow_moves` re-points staged sources (`file`, `fields.file`) and the folder-sources ledger
+  at moved files, each with a yellow `change` and a history entry. The root's moves are read
+  before the cards refresh their evidence; the survey reports `moved_files` and
+  `followed_sources`.
+
+**Not changed.**
+- A whole folder that is renamed still gets new card ids: the old cards are deferred as "folder
+  no longer present".
+- Geo-Grapher graphs are not re-applied for moved files; the next acceptance on that graph
+  refreshes them.
+- Deferred ingest entries are not re-pointed. Runners queue and read in one round.
+
+**Tests.** `tests/test_folder_change_tracking.py` (5):
+- a moved file keeps the decision, gets a yellow flag, and the parent is untouched;
+- removals are tracked, while new content asks again;
+- a hold survives, and changed content never lifts it;
+- staged sources and the ledger follow a move;
+- moves are paired by size and time.

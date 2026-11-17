@@ -18,6 +18,119 @@ PURPOSES = ('own-current', 'own-legacy', 'own-docs', 'research-docs', 'third-par
 READ_ONLY = {'research-docs', 'third-party', 'data'}
 
 
+
+# A change a re-survey can track keeps the folder's decision and raises a yellow flag; any other
+# change asks for a review again (owner, 2026-11-17: "only requiring review if the content
+# changes, but only putting up a yellow flag when a file moves").
+TRACKED_CHANGES = ('unchanged', 'moved', 'removed')
+
+
+def _change_files(rows, rel, skip):
+    """{path: (size, mtime_ns)} of the files at or below `rel`, leaving out `skip` subtrees."""
+    out = {}
+    for row in rows or []:
+        name, size = row[0], row[1]
+        if name.endswith('/') or size < 0:
+            continue
+        if rel != '.' and name != rel and not name.startswith(rel + '/'):
+            continue
+        if any(name.startswith(s + '/') for s in skip):
+            continue
+        out[name] = (size, row[2] if len(row) > 2 else 0)
+    return out
+
+
+def classify_change(old_rows, new_rows, *, rel='.', skip=()):
+    """What changed in one folder between two surveys, by path, size and modification time.
+
+    A file that vanished and one that appeared with the same size and modification time are one
+    file that moved (a same-drive move or rename keeps both). `content` means a file was added
+    or edited, so the decision needs a review; `moved` and `removed` are tracked; `unchanged`
+    means only folders, or decided subfolders listed in `skip`, changed."""
+    if old_rows is None:
+        return dict(kind='content', reason='no earlier inventory to compare', moved=[], removed=[],
+                    added=[], edited=[])
+    old, new = _change_files(old_rows, rel, skip), _change_files(new_rows, rel, skip)
+    edited = sorted(path for path in old.keys() & new.keys() if old[path] != new[path])
+    pools = {}
+    for path in sorted(old.keys() - new.keys()):
+        pools.setdefault(old[path], []).append(path)
+    moved, added = [], []
+    for path in sorted(new.keys() - old.keys()):
+        pool = pools.get(new[path]) or []
+        if not pool:
+            added.append(path)
+            continue
+        name = path.rsplit('/', 1)[-1]
+        source = next((q for q in pool if q.rsplit('/', 1)[-1] == name), pool[0])
+        pool.remove(source)
+        moved.append([source, path])
+    removed = sorted(q for pool in pools.values() for q in pool)
+    kind = 'content' if edited or added else 'moved' if moved else 'removed' if removed else 'unchanged'
+    return dict(kind=kind, moved=moved, removed=removed, added=added, edited=edited)
+
+
+def change_record(change, *, flag, previous_fingerprint):
+    """The card's record of a change; lists are capped so a large move never bloats a card."""
+    record = dict(kind=change['kind'], flag=flag, at=now_iso(), previous_fingerprint=previous_fingerprint)
+    for key in ('moved', 'removed', 'added', 'edited'):
+        record[key] = change.get(key, [])[:50]
+        record[key + '_count'] = len(change.get(key, []))
+    if change.get('reason'):
+        record['reason'] = change['reason']
+    return record
+
+
+def previous_rows(vault, card):
+    """The survey rows the card was last prepared from, or None when they cannot be trusted."""
+    from .evidence import EvidenceStore
+    if not card:
+        return None
+    ref = ((card.get('evidence') or [{}])[0] or {}).get('id')
+    if not ref:
+        return None
+    store = EvidenceStore(vault)
+    try:
+        record = store.get(ref)
+    except (OSError, ValueError, TypeError, KeyError):
+        return None
+    if record is None or not store.intact(record):
+        return None
+    return (record.payload or {}).get('entries')
+
+
+def follow_moves(vault, root, moved):
+    """Point staged sources and the folder-sources ledger at files that moved, so nothing is
+    read again or orphaned. Each moved item keeps a yellow flag and a history entry."""
+    if not moved:
+        return 0
+    root = Path(root)
+    pairs = {os.path.normcase((root / a).resolve().as_posix()): (root / b).resolve().as_posix()
+             for a, b in moved}
+    store = StagingStore(vault)
+    followed = 0
+    for item in store.items('source'):
+        before = str(item.get('file') or '')
+        target = pairs.get(os.path.normcase(Path(before).resolve().as_posix())) if before else None
+        if not target:
+            continue
+        item['file'] = target
+        if isinstance(item.get('fields'), dict) and item['fields'].get('file'):
+            item['fields']['file'] = target
+        at = now_iso()
+        item['change'] = dict(kind='moved', flag='yellow', at=at, moved_from=before, moved_to=target)
+        item.setdefault('history', []).append(dict(at=at, event='moved', moved_from=before,
+                                                   moved_to=target, by='folder survey'))
+        store.save(item)
+        followed += 1
+    path = vault.librarian / 'folder-sources.json'
+    if path.is_file():
+        ledger = json.loads(path.read_text(encoding='utf-8'))
+        renamed = {pairs.get(os.path.normcase(key), key): value for key, value in ledger.items()}
+        if renamed != ledger:
+            atomic_write_text(path, json.dumps(renamed, indent=1))
+    return followed
+
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
@@ -215,6 +328,12 @@ class FolderReview:
             inventory_evidence=record.id, credential_refusals=found.credential_refusals)
         atomic_write_text(path, json.dumps(surveys, indent=1))
         root = Path(found.canonical_root); existing = {c['id']: c for c in self.list()}; cards = []
+        decided_paths = {c['path'] for c in existing.values() if c['source_root'] == str(root)
+                         and (c.get('status') == 'accepted' or c.get('decision'))}
+        # Files that moved anywhere under the root, read before the cards below refresh their
+        # evidence; their staged sources and ledger entries follow them after the cards.
+        top = existing.get('folder-' + digest([str(root), '.'])[:24])
+        moved = classify_change(previous_rows(self.vault, top), found.entries)['moved'] if top else []
         proposals = [*plan['partitions'], *[dict(key='exclude:' + e['rel'], subtrees=[e['rel']],
             file_counts={}, bytes=0, suggestion=dict(purpose='exclude', reasons=[e['reason']]))
             for e in plan.get('excluded', []) if not credential_path(e['rel'])]]
@@ -256,8 +375,21 @@ class FolderReview:
             selected = subtrees.rows(rel)
             fp = digest(selected); item_id = 'folder-' + digest([str(root), rel])[:24]
             old = existing.get(item_id)
-            # Keep a person's decision across unchanged re-surveys; refresh suggestions otherwise.
-            if old and old['folder_fingerprint'] == fp and (old.get('status') == 'accepted' or old.get('decision')):
+            decided = bool(old and (old.get('status') == 'accepted' or old.get('decision')))
+            change = None
+            if old and old['folder_fingerprint'] != fp:
+                # Decided subfolders track their own changes; they never re-ask the parent.
+                skip = [d for d in decided_paths if d != rel and (rel == '.' or d.startswith(rel + '/'))]
+                change = classify_change(previous_rows(self.vault, old), selected, rel=rel, skip=skip)
+            tracked = old is not None and (change is None or change['kind'] in TRACKED_CHANGES)
+            # Keep a decision across a re-survey that changed nothing a review is for: unchanged
+            # content, files that moved (same size and time) or files removed. Flag it yellow.
+            if decided and tracked:
+                if change is not None:
+                    if change['kind'] != 'unchanged':
+                        old['change'] = change_record(change, flag='yellow',
+                                                      previous_fingerprint=old['folder_fingerprint'])
+                    old['folder_fingerprint'] = fp
                 old['survey_fingerprint'] = found.fingerprint
                 folder_intake.prepare_card(self.vault, old, selected, old)
                 self.store.save(old); cards.append(old); continue
@@ -275,15 +407,31 @@ class FolderReview:
                 authorship=None, authorship_resolution='unclassified',
                 description=dict(state='awaiting_model_draft', text='', draft=True, authorship='generated'),
                 previous_decision=old.get('decision') if old else None)
+            if old is not None:
+                held = (old.get('sensitivity') or {}).get('sensitivity') == 'review_required'
+                if tracked:
+                    # The Clerk's check described this same content: keep it (2026-11-17: a re-survey
+                    # cleared seven held repositories' review flags).
+                    for key in ('sensitivity', 'description'):
+                        if old.get(key) is not None:
+                            card[key] = old[key]
+                elif held:
+                    # Only a person lifts a hold; changed content keeps it until they decide.
+                    card['sensitivity'] = dict(old['sensitivity'], reason=str(old['sensitivity'].get('reason') or '')
+                                               + ' (kept after the content changed; a person decides)')
+                if change is not None and change['kind'] != 'unchanged':
+                    card['change'] = change_record(change, flag='yellow' if tracked else 'review',
+                                                   previous_fingerprint=old['folder_fingerprint'])
             folder_intake.prepare_card(self.vault, card, selected, old)
             self.store.add(card); cards.append(card)
+        followed = follow_moves(self.vault, root, moved)
         # A vanished folder must not leave an accepted, invisible stale decision.
         live = {c['id'] for c in cards}
         for old in existing.values():
             if old['source_root'] == str(root) and old['id'] not in live:
                 old.update(status='deferred', stale_reason='folder no longer present'); self.store.save(old)
         return dict(enabled=True, cards=cards, duplicates=folder_intake.duplicates(cards),
-                    survey_fingerprint=found.fingerprint,
+                    survey_fingerprint=found.fingerprint, moved_files=len(moved), followed_sources=followed,
                     credential_refusals=found.credential_refusals)
 
     def approve_batch(self, item_ids, *, person=False):
