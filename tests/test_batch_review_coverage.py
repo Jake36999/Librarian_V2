@@ -42,3 +42,12 @@ def test_sources_with_nothing_to_deep_read_keep_the_draft_only_review():
 def test_a_missing_draft_stays_queued():
     batch.REGISTRY.call = lambda *a, **k: {"draft": {"status": "pending"}}
     assert batch._review(None, paper(12, 12))["status"] == "queued"
+
+
+def test_an_ungrounded_draft_is_not_reported_as_waiting_for_a_model(monkeypatch):
+    """2026-11-17: 39 sources sat partial as "waiting for the clerk model" though it had answered."""
+    monkeypatch.setattr(batch.REGISTRY, "call", lambda *a, **k: {"draft": {"status": "not_confident"}})
+    out = batch._review(None, paper(12, 12))
+    assert out["status"] == "partial" and "waiting" not in out["reason"] and "answered" in out["reason"]
+    monkeypatch.setattr(batch.REGISTRY, "call", lambda *a, **k: {"draft": {"status": "refused"}})
+    assert batch._review(None, paper(12, 12))["status"] == "failed"

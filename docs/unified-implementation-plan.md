@@ -6731,3 +6731,33 @@ but only putting up a yellow flag when a file moves".
 **Tests.** `tests/test_withheld_folders.py` (4): the build is told which folders are withheld;
 folder sources skip withheld and excluded folders and reads honour excludes; a later normal check
 never lifts a hold; policy writes go through `commit` and a failed build restores the manifest.
+
+### Reading quality: part locators, chapters by part, review status, file names, bullets, paper concepts (2026-11-17)
+
+**Found** (Gemini audit M3, M4, M5, 2.2, G4; checked).
+- Every Markdown or text chunk was cited "p. 1", because a non-PDF's single page was numbered.
+  As a result `dik.chapters` found at most one chapter and relate never ran: 686 of 696 Markdown
+  items in one library.
+- An ungrounded Clerk draft was reported as "waiting for the clerk model".
+- Project `README.md` files were refused as duplicates of the library's own README.
+- The first 40 bullets alone hid up to 740 points.
+- Paper graphs had no concepts or authors, and unread PDFs were published with no claims.
+
+**Change.**
+- `deep_read.source` numbers pages only for PDFs and slide decks, or for a multi-page extraction.
+  Otherwise page 0, so a chunk reads "part N".
+- For a text without pages, `batch._data` and the DIK rebuild pass the read parts as units with
+  `unit="part"`. `dik.chapters` then finds a heading anywhere in a part, and ranges read
+  "parts a-b".
+- Stored readings are reused by text key, so a re-run relabels and re-chapters a stored Markdown
+  record without reading it again.
+- `batch._review`: `not_confident` is partial with its real reason, and `refused`/`error` fail.
+- `intake.file_title` names a generic stem ("README", "index", …) "<folder> - <stem>".
+- `deep_read.spread` keeps the 40-bullet cap but draws evenly from every part, in reading order.
+- `paper_graph`: authors, year, venue and doi come from `fields`. Recorded `term_usage` terms
+  become each section's concepts (name-only mentions).
+- `batch._publish` waits until every part is read.
+
+**Tests.** `tests/test_deep_read.py` (+2, and two locator assertions now expect parts);
+`tests/test_batch_review_coverage.py` (+1); `tests/test_intake_file_names.py` (1);
+`tests/test_phase8_paper_publication.py` (+1; its reading fixture records version and part count).

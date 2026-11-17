@@ -14,7 +14,7 @@ def _accepted(monkeypatch, pdf, accepted_by='person'):
     return calls
 
 
-READ = {'read': {'0': {'locator': 'p. 1', 'points': ['Opening evidence is stated.'], 'limits': []},
+READ = {'version': 2, 'chunks': 2, 'read': {'0': {'locator': 'p. 1', 'points': ['Opening evidence is stated.'], 'limits': []},
                  '1': {'locator': 'pp. 2-3', 'points': ['A method with a late detail.'],
                        'limits': ['Closing evidence is bounded.']}}}
 
@@ -187,3 +187,23 @@ def test_a_source_already_read_from_an_unmapped_cleanup_is_reread_from_the_text_
     monkeypatch.setattr(batch, '_update_item', update)
     out = batch._parse(Context(tier='contribute', vault=vault), {**bad, 'intake': {'quality': {'verdict': 'usable'}}})
     assert updates and updates[0]['clean_file'] is None and 'set aside' in out['cleanup']
+
+
+def test_an_unread_paper_is_not_published_and_terms_become_concepts(paper, monkeypatch):
+    """2026-11-17: unread PDFs were published with no claims; every paper had no concepts."""
+    import json
+    from resource_librarian.batch import _publish
+    from resource_librarian.evidence import EvidenceStore
+    from resource_librarian.registry import Context
+    vault, pdf, converted = paper
+    calls = _accepted(monkeypatch, pdf)
+    item = {'name': 'Study', 'file': 'Inbox/original.pdf', 'clean_file': converted['path'], 'source_kind': 'paper',
+            'canonical_url': 'file:study', 'fields': {'authors': ['A. Author'], 'year': 2024}}
+    half = {'version': 2, 'chunks': 2, 'read': {'0': READ['read']['0']}}
+    out = _publish(Context(tier='contribute', vault=vault), {**item, 'deep_read': half})
+    assert out['status'] == 'partial' and '1 of 2' in out['reason'] and calls == []
+    EvidenceStore(vault).put('term_usage', 'file:study', {'term': 'evidence', 'sentence': 'Opening evidence is stated.'})
+    done = _publish(Context(tier='contribute', vault=vault), {**item, 'deep_read': READ})
+    artifact = json.loads((vault.root / done['paper_graph']['path']).read_text(encoding='utf-8'))
+    assert artifact['metadata']['authors'] == ['A. Author'] and artifact['metadata']['year'] == 2024
+    assert {'name': 'evidence', 'concept_type': 'term'} in [c for s in artifact['sections'] for c in s['concepts']]

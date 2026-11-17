@@ -375,6 +375,16 @@ def _review(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     if "error" in out:
         return {"status": "failed", "reason": str(out.get("detail") or out["error"])}
     draft = (out.get("draft") or {}).get("status", "")
+    # Only a draft the Clerk has not produced yet is waiting on a model. One it answered but
+    # could not ground in the source, or refused, is not: reporting it as "waiting" told the
+    # owner no Clerk was available and left the source partial forever (2026-11-17: 39 sources).
+    if draft == "not_confident":
+        return {"status": "partial", "draft": draft,
+                "reason": "the clerk answered, but its Bottom Line did not rest on the source's own "
+                          "words; a person writes it, or a fuller reading gives it more to go on"}
+    if draft in ("refused", "error"):
+        return {"status": "failed", "draft": draft,
+                "reason": f"the clerk's Bottom Line draft {'was refused' if draft == 'refused' else 'failed'}"}
     if draft != "ok":
         return {"status": "queued", "draft": draft,
                 "reason": "waiting for the clerk model to draft the Bottom Line"}
@@ -422,9 +432,16 @@ def _data(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
         # Only readings of the text as it is now (MF-013): a chapter is never
         # credited with claims read from text that has since changed.
         parts = _commit(ctx, lambda: reading.read_parts(ctx.vault, item, chunks))
-        record = dik.document(ctx.vault, item["name"], pages, parts,
-                              [(c.first_page, c.last_page) for c in chunks],
-                              str(item.get("captured_at") or ""))
+        if units and all(number == 0 for number, _ in units):
+            # A text without pages (Markdown, plain text): its read parts are the units, so its
+            # headings make chapters and the relate step has parts to relate (2026-11-17).
+            record = dik.document(ctx.vault, item["name"], [c.text for c in chunks], parts,
+                                  [(c.index + 1, c.index + 1) for c in chunks],
+                                  str(item.get("captured_at") or ""), unit="part")
+        else:
+            record = dik.document(ctx.vault, item["name"], pages, parts,
+                                  [(c.first_page, c.last_page) for c in chunks],
+                                  str(item.get("captured_at") or ""))
     elif kind == "model":
         record = dik.model(item["name"], item.get("fields") or {},
                            str(item.get("captured_at") or ""))
@@ -527,6 +544,12 @@ def _publish(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     recorded and the reading stands."""
     if not str(item.get('file', '')).lower().endswith('.pdf'):
         return {"status": "not_applicable"}
+    # A paper graph carries the reading's claims, so it waits for the whole reading
+    # (2026-11-17: twelve unread PDFs were published with no claims at all).
+    seen = reading.progress(item)
+    if not seen["chunks"] or seen["read"] < seen["chunks"]:
+        return {"status": "partial", "reason": f"not published until every part is read "
+                                               f"({seen['read']} of {seen['chunks'] or '?'} read)"}
     from .paper_graph import write_artifact, publish_artifact
     artifact = _commit(ctx, lambda: write_artifact(ctx.vault, item, text_layer=True))
     if artifact['coverage']['status'] != 'full_conversion':

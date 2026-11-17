@@ -447,6 +447,21 @@ def fetch_dataset(url: str, fetcher: Fetcher, store: EvidenceStore) -> Fetched:
     return fetched
 
 
+# File names that say what a file is for, not what it is about: alone they collide across
+# folders (2026-11-17: 20 project README.md files were refused as "already held: README").
+GENERIC_STEMS = frozenset({"readme", "index", "notes", "changelog", "changes", "license", "contributing",
+                           "todo", "overview", "summary", "main", "introduction", "intro", "agents",
+                           "claude", "history", "authors", "security", "setup", "usage"})
+
+
+def file_title(path: Path) -> str:
+    """A file's working title: its stem, or "<folder> - <stem>" for a generic name."""
+    stem = path.stem
+    if stem.casefold() in GENERIC_STEMS and path.parent.name:
+        return f"{path.parent.name} - {stem}"
+    return stem
+
+
 def fetch_file(rel: str, vault: Vault, store: EvidenceStore) -> Fetched:
     from .credentials import refuse_credentials
     refuse_credentials(rel)
@@ -457,7 +472,8 @@ def fetch_file(rel: str, vault: Vault, store: EvidenceStore) -> Fetched:
         raise FetchError(f"{rel}: {result.error}")
     body = "\n\n".join(result.pages)
     digest = hashlib.sha256(path.read_bytes()).hexdigest()[:16]
-    fetched = Fetched("document", notes.safe_name(path.stem)[:120], path.stem,
+    title = file_title(path)
+    fetched = Fetched("document", notes.safe_name(title)[:120], title,
                       f"file:{digest}", file=rel)
     _record(store, fetched, "pdf_text" if path.suffix.lower() == ".pdf" else "page",
             f"file:{path.name}#{digest}",

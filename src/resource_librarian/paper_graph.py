@@ -52,6 +52,27 @@ def reading_claims(item, start, end):
     return claims
 
 
+def item_terms(vault, item):
+    """The terms the Clerk recorded for this source (`term_usage` evidence), first-seen order."""
+    from .evidence import EvidenceStore
+    source = item.get('canonical_url') or item.get('id')
+    seen, out = set(), []
+    for record in EvidenceStore(vault).iter('term_usage'):
+        if record.source != source:
+            continue
+        term = str((record.payload or {}).get('term') or '').strip()
+        if term and term.casefold() not in seen:
+            seen.add(term.casefold()); out.append(term)
+    return out
+
+
+def section_concepts(terms, body):
+    """Concepts a section mentions: each recorded term its text contains (no definitions: a usage
+    sentence is not one)."""
+    folded = body.casefold()
+    return [{'name': term, 'concept_type': 'term'} for term in terms if term.casefold() in folded]
+
+
 def export_document(vault, item, *, text_layer=False):
     from .catalogue_navigation import use_rollup
     from .staging import _attachment_path
@@ -65,7 +86,12 @@ def export_document(vault, item, *, text_layer=False):
         else:
             original = _attachment_path(vault, item['file'])
     data = {'file_path': original.resolve().as_posix() if original else 'catalogue:' + str(item['name']),
-            'metadata': {'title': item.get('title') or item['name'], 'authors': item.get('authors', [])},
+            # Bibliographic fields live in the item's `fields` (2026-11-17: authors were read from
+            # the item itself, so every published paper had none).
+            'metadata': {'title': item.get('title') or item['name'],
+                         'authors': list((item.get('fields') or {}).get('authors') or item.get('authors') or []),
+                         **{k: (item.get('fields') or {})[k] for k in ('year', 'venue', 'doi')
+                            if (item.get('fields') or {}).get(k)}},
             'sections': [], 'source': 'librarian_conversion', 'producer': 'librarian-paper-conversion-v1',
             'source_extractor_version': 'librarian-conversion-v1', 'extracted_at': now_iso(),
             'usage': {'input_tokens': 0, 'output_tokens': 0, 'cost_usd': 0.0},
@@ -104,13 +130,18 @@ def export_document(vault, item, *, text_layer=False):
                           'evidence_id': resolved['original_evidence_id']},
                 conversion={'path': str((vault.root / rel).resolve()), 'sha256': entry['sha256'],
                             'authorship': 'generated', 'evidence_id': entry['evidence_id']})
+    terms = item_terms(vault, item)
     for position, chapter in enumerate(dik.chapters(pages)):
         start, end = chapter['first_page'], chapter['last_page']
         body = '\n\n'.join(pages[start - 1:end])
         data['sections'].append({'heading': chapter['title'], 'position': position,
             'section_type': 'other', 'text': body, 'word_count': len(body.split()),
             'page_start': start, 'page_end': end, 'claims': reading_claims(item, start, end),
-            'concepts': []})
+            'concepts': section_concepts(terms, body)})
+    if terms and data['sections'] and not any(sec['concepts'] for sec in data['sections']):
+        # The terms came from the reading but no chapter text names them verbatim: keep them as
+        # the document's mentions, on its first section, rather than losing them.
+        data['sections'][0]['concepts'] = [{'name': t, 'concept_type': 'term'} for t in terms]
     limitations = ['Generated text and chapter detection require checking original pages; no claim verification performed']
     if any(s['claims'] for s in data['sections']):
         limitations.append('Claims are the Librarian reading\'s generated points and limits, located by page; '

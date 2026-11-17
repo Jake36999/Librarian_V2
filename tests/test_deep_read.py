@@ -97,7 +97,7 @@ def test_deep_read_reads_everything_and_stages_the_lens(staged):
     item = StagingStore(ctx.vault).load(item_id)
     claims = item["sections"]["Claims"]
     assert "Cable-stayed bridges hang the deck from towers" in claims        # the last chunk
-    assert "(p. 1)" in claims
+    assert "(part 1)" in claims and "(part 4)" in claims and "(p. " not in claims   # a .txt has no pages
     assert "only holds when the loads are static" in item["sections"]["Evidence & Limits"]
 
     lens = StagingStore(ctx.vault).load(out["lenses_staged"][0])
@@ -198,7 +198,7 @@ def test_a_reorder_moves_each_reading_with_its_own_text(staged):
     assert record["read"]["1"]["points"] == ["Bridges carry loads across a gap by routing "
                                              "force into the ground"]
     claims = item["sections"]["Claims"].splitlines()
-    assert claims[0] == "- Steel trusses spread a load across many members (p. 1)"
+    assert claims[0] == "- Steel trusses spread a load across many members (part 1)"
     assert record["document"]["order"] == record["order"]        # the whole-text pass ran again
 
 
@@ -562,3 +562,23 @@ def test_partial_staged_source_can_continue_reading(staged):
     item = store.load(ident); item["status"] = "partial"; store.save(item)
     out = REGISTRY.call("deep_read", {"item_id": ident, "lenses": False}, ctx)
     assert out.get("read", 0) > 0, out
+
+
+def test_a_text_without_pages_gets_part_chapters_from_its_headings():
+    """2026-11-17: every Markdown file was one chapter "pp. 1-1", so relate never ran."""
+    from resource_librarian import dik
+    parts = ["# Setup\n\nInstall the tools.", "More setup detail.", "## Running\n\nRun the job.", "# Results\n\nIt worked."]
+    out = dik.chapters(parts, unit="part")
+    assert [(c["title"], c["first_page"], c["last_page"]) for c in out] == [
+        ("Setup", 1, 2), ("Running", 3, 3), ("Results", 4, 4)]
+    assert dik.chapters(["plain"] * 3, unit="part")[0]["title"] == "parts 1-3"
+    assert dik.span_label("page", 2, 5) == "pp. 2-5"
+
+
+def test_a_long_reading_shows_bullets_from_every_part_not_only_the_first():
+    """2026-11-17: the first 40 bullets alone hid up to 740 points from later parts."""
+    per_chunk = [[f"- a{i}" for i in range(30)], [f"- b{i}" for i in range(30)], ["- c0"]]
+    shown = deep_read.spread(per_chunk, 10)
+    assert len(shown) == 10 and "- c0" in shown and "- b0" in shown
+    assert shown == sorted(shown, key=lambda b: ("abc".index(b[2]), int(b[3:])))   # reading order
+    assert deep_read.spread([["- x"]], 40) == ["- x"]

@@ -96,6 +96,7 @@ TEXT_KEYS = ("text",)               # what an evidence record's payload holds as
 # MF-013 (NAT-01): a part's earlier reading is reused only for the same text,
 # packed by the same chunker, from the same representation, read by the same
 # recipe. Bump CHUNKER whenever `chunk` or `_pieces` packs text differently.
+PAGED_SUFFIXES = (".pdf", ".pptx", ".odp")   # formats whose units are pages or slides
 CHUNKER = "paragraph-pack/1"
 RECORD_VERSION = 2
 STALE_LEGACY = ("an earlier deep read recorded only how many parts it read, not which text, "
@@ -149,7 +150,11 @@ def source(vault: Vault, item: dict[str, Any]) -> tuple[str, list[tuple[int, str
         if path.is_file():
             result = text.extract(path, vault.derived / "text")
             if not result.error:
-                return key, [(n, page) for n, page in enumerate(result.pages, 1)
+                # Only a paged document numbers its pages. Markdown, text and web pages come back
+                # as one undivided text: page 0, so each chunk is "part N", not "p. 1"
+                # (2026-11-17: 686 of 696 Markdown items in a library cited only "p. 1").
+                paged = path.suffix.lower() in PAGED_SUFFIXES or len(result.pages) > 1
+                return key, [(n if paged else 0, page) for n, page in enumerate(result.pages, 1)
                              if page.strip()]
     return "evidence", _evidence_units(vault, item)
 
@@ -931,6 +936,22 @@ def _resolve_probes(store: StagingStore, item: dict[str, Any],
     return confirmed
 
 
+def spread(per_chunk: list[list[str]], limit: int) -> list[str]:
+    """Up to `limit` bullets drawn evenly from every part, in reading order: each part's first
+    bullet, then each part's second, and so on (2026-11-17: the first 40 bullets alone hid up to
+    740 points from the later parts of a long source)."""
+    taken = [0] * len(per_chunk)
+    left = limit
+    depth = 0
+    while left > 0 and any(depth < len(b) for b in per_chunk):
+        for i, bullets in enumerate(per_chunk):
+            if left and depth < len(bullets):
+                taken[i] += 1
+                left -= 1
+        depth += 1
+    return [b for i, bullets in enumerate(per_chunk) for b in bullets[:taken[i]]]
+
+
 def _rebuild_sections(item: dict[str, Any], chunks: list[Chunk],
                       sections_of: dict[str, str]) -> dict[str, int]:
     """The item's claims and limits sections, from every chunk read so far,
@@ -938,7 +959,7 @@ def _rebuild_sections(item: dict[str, Any], chunks: list[Chunk],
     earlier rebuild wrote that now has nothing read behind it is cleared, so
     claims from text that changed do not stay on the item (MF-013)."""
     points_to, limits_to = _headings(item, sections_of)
-    collected: dict[str, list[str]] = {}
+    collected: dict[str, list[list[str]]] = {}       # heading -> each read chunk's bullets
     record = item["deep_read"]
     read = record["read"]
     for c in chunks:
@@ -946,20 +967,21 @@ def _rebuild_sections(item: dict[str, Any], chunks: list[Chunk],
         if not note:
             continue
         for label, heading in (("points", points_to), ("limits", limits_to)):
-            collected.setdefault(heading, []).extend(
-                f"- {b} ({c.locator})" for b in note.get(label, []))
+            collected.setdefault(heading, []).append(
+                [f"- {b} ({c.locator})" for b in note.get(label, [])])
     sections = item.setdefault("sections", {})
     counts: dict[str, int] = {}
-    for heading, bullets in collected.items():
-        if not bullets:
+    for heading, per_chunk in collected.items():
+        total = sum(len(b) for b in per_chunk)
+        if not total:
             continue
-        shown = bullets[:SECTION_BULLETS]
-        more = len(bullets) - len(shown)
+        shown = spread(per_chunk, SECTION_BULLETS)
+        more = total - len(shown)
         if more:
-            shown.append(f"- … and {more} more from later in the text (kept in the staged "
+            shown.append(f"- … and {more} more across the text (all kept in the staged "
                          f"item's deep-read record)")
         sections[heading] = "\n".join(shown)
-        counts[heading] = len(bullets)
+        counts[heading] = total
     for heading in record.get("sections") or []:
         if heading not in counts:
             sections.pop(heading, None)

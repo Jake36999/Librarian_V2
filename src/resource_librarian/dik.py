@@ -309,12 +309,16 @@ def dataset(vault: Vault, source: str, fields: dict[str, Any], revision: str) ->
 
 # ------------------------------------------------------------------ long documents
 
-def chapters(pages: list[str]) -> list[dict[str, Any]]:
+def chapters(pages: list[str], unit: str = "page") -> list[dict[str, Any]]:
     """The document's own divisions - headings a chapter, part or section starts with - each
-    with its page range; without any, the pages in fixed runs, labelled as such."""
+    with its page range; without any, the pages in fixed runs, labelled as such.
+
+    `unit="part"` is for a text without pages (Markdown, plain text): `pages` are then its read
+    parts, a heading anywhere in a part opens a chapter there, and ranges are of parts."""
     marks: list[tuple[int, str]] = []
     for number, page in enumerate(pages, 1):
-        for m in CHAPTER.finditer(page[:600]):                    # a heading opens a page
+        window = page if unit == "part" else page[:600]
+        for m in CHAPTER.finditer(window):                        # a heading opens a page
             title = (m.group("md") or f"{m.group('word').title()} {m.group('num')}"
                      f"{(': ' + m.group('title').strip()) if m.group('title') else ''}").strip()
             marks.append((number, " ".join(title.split())[:120]))
@@ -332,17 +336,23 @@ def chapters(pages: list[str]) -> list[dict[str, Any]]:
     run = 10
     for start in range(1, len(pages) + 1, run):
         end = min(len(pages), start + run - 1)
-        out.append({"title": f"pp. {start}-{end}", "first_page": start, "last_page": end,
-                    "method": "fixed page runs (no headings found)"})
+        out.append({"title": f"{span_label(unit, start, end)}", "first_page": start, "last_page": end,
+                    "method": f"fixed {unit} runs (no headings found)"})
     return out
 
 
+def span_label(unit: str, first: int, last: int) -> str:
+    """'pp. 3-5' for pages, 'parts 3-5' for the read parts of a text without pages."""
+    return f"pp. {first}-{last}" if unit == "page" else f"parts {first}-{last}"
+
+
 def document(vault: Vault, source: str, pages: list[str], read: dict[str, Any] | None,
-             chunk_pages: list[tuple[int, int]], revision: str) -> dict[str, Any]:
+             chunk_pages: list[tuple[int, int]], revision: str, unit: str = "page") -> dict[str, Any]:
     """Data for a long document: its chapters, each with coverage and the claims read from it;
-    Information: their order, and nothing drawn to a chapter not read."""
+    Information: their order, and nothing drawn to a chapter not read. `unit="part"`: a text
+    without pages, whose `pages` are its read parts."""
     read = read or {}
-    parts = chapters(pages)
+    parts = chapters(pages, unit)
     data = []
     for position, part in enumerate(parts, 1):
         span = range(part["first_page"], part["last_page"] + 1)
@@ -352,7 +362,7 @@ def document(vault: Vault, source: str, pages: list[str], read: dict[str, Any] |
         coverage = ("not opened" if not done else "full" if len(done) == len(mine)
                     else f"partial {len(done)}/{len(mine)}")
         claims = [p for i in done for p in (read[str(i)].get("points") or [])][:8]
-        locator = f"pp. {part['first_page']}-{part['last_page']}"
+        locator = span_label(unit, part['first_page'], part['last_page'])
         data.append(_datum(source, "chapter", locator, part["title"], revision=revision,
                            method=part["method"], position=position, coverage=coverage,
                            status="observed" if done else "not examined",
@@ -438,8 +448,12 @@ def rebuild(vault: Vault, conn, source: str = "", limit: int = 20, *,
                 vault.root / fm["file"], vault.derived / "text").pages
             chunks = reading.chunk(units)
             # Only readings that still match this text (MF-013).
-            record = document(vault, name, pages, reading.read_parts(vault, item, chunks),
-                              [(c.first_page, c.last_page) for c in chunks], revision)
+            if units and all(number == 0 for number, _ in units):
+                record = document(vault, name, [c.text for c in chunks], reading.read_parts(vault, item, chunks),
+                                  [(c.index + 1, c.index + 1) for c in chunks], revision, unit="part")
+            else:
+                record = document(vault, name, pages, reading.read_parts(vault, item, chunks),
+                                  [(c.first_page, c.last_page) for c in chunks], revision)
         else:
             out.append({"source": name, "status": "skipped",
                         "reason": f"no component model for a {kind or 'source'} without a file"})
