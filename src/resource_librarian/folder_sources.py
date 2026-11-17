@@ -46,6 +46,19 @@ def attached_root(vault: Any, path: Path) -> dict[str, Any] | None:
     return best
 
 
+def blocked_folders(vault: Any) -> set[str]:
+    """Normcased absolute folders no folder source may come from: the manifest's excludes (an
+    `exclude` decision or survey hygiene) and folders still withheld for a decision."""
+    import os
+    from .workspace_documents import roots, undecided_folders
+    manifest = content_roots.load(vault.root) or {}
+    out = set(undecided_folders(vault, roots(vault)))
+    for value in manifest.get("excludes", []):
+        path = Path(value)
+        out.add(os.path.normcase(str((path if path.is_absolute() else vault.root / path).resolve())))
+    return out
+
+
 def _scope(scope: Any) -> tuple[str, ...]:
     chosen = tuple(str(x).lower() for x in (scope if scope else DEFAULT_SCOPE))
     if not chosen or any(x not in DOCUMENT_SUFFIXES for x in chosen):
@@ -63,6 +76,8 @@ def documents(vault: Any, folder: str, scope: Any = None, *, _all: bool = False)
     if decision is None or Path(decision["path"]).resolve() != base or decision.get("purpose") not in SOURCE_PURPOSES:
         raise ValueError("FOLDER_SOURCES: only an accepted third-party, research-docs or own-docs folder "
                          "becomes Sources; other own content is indexed whole")
+    from .workspace_documents import _inside
+    blocked = blocked_folders(vault)
     out = []
     for path in sorted(base.rglob("*")):
         if not path.is_file() or path.suffix.lower() not in DOCUMENT_SUFFIXES:
@@ -80,6 +95,8 @@ def documents(vault: Any, folder: str, scope: Any = None, *, _all: bool = False)
         owner = attached_root(vault, path)
         if owner is None or Path(owner["path"]).resolve() != base:
             continue                                   # a deeper accepted card decides this one
+        if _inside(path.parent, blocked):
+            continue                                   # excluded, or withheld until decided
         out.append(path)
     return out
 
@@ -120,7 +137,8 @@ def queue(vault: Any, folder: str, *, ingest: Callable[[str, str], dict[str, Any
             continue
         done[key] = result.get("status", "queued")
         queued += 1
-    path.write_text(json.dumps(done, indent=1), encoding="utf-8")
+    from .coordination import atomic_write_text
+    atomic_write_text(path, json.dumps(done, indent=1))        # never a half-written ledger
     keys = {d.resolve().as_posix() for d in docs}
     return dict(folder=str(Path(folder).resolve()), scope=list(chosen), order=order, not_in_scope=dict(sorted(left_out.items())),
                 documents=len(docs), queued=queued,

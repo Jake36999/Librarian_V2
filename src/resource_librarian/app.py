@@ -406,6 +406,8 @@ class App:
         # stop either refuses a new mutation or waits for its writer work.
         self._mutations = 0
         self._offline_lock = threading.RLock()
+        # Folder survey, check and acceptance run one at a time, beside the writer (2026-11-17).
+        self._folder_operation = threading.RLock()
         self._offline_lease: VaultCoordinator | None = None
         if not coordinate and (VaultCoordinator.held_here(vault) or VaultCoordinator.held_elsewhere(vault)):
             raise ApiError(409, "CORE_REQUIRED: a Core already owns this library; connect through its API")
@@ -3929,17 +3931,33 @@ class App:
 
     @mutation_entry('the folder survey')
     def survey_folders(self, path: str) -> dict[str, Any]:
+        from . import deploy_survey
         from .folder_review import FolderReview
         try:
-            return self._serialized('folder-survey', lambda: FolderReview(self.vault).survey(path))
+            with self._folder_operation:
+                # The walk reads only; it runs before the writer is asked for anything
+                # (2026-11-17: an 8-minute walk inside the writer starved the whole Core).
+                found = deploy_survey.survey(path, geographer={'enabled': False}) if self.writer is not None else None
+                return self._serialized('folder-survey', lambda: FolderReview(self.vault).survey(path, surveyed=found))
         except ValueError as exc:
             raise ApiError(400, str(exc)) from exc
 
+    def _folder_review_beside_writer(self, caller: str, fn: Callable[[Any], Any]) -> Any:
+        """Run a folder acceptance beside the single writer: its project walk and Geo-Grapher
+        graph build take minutes to hours, so only its writes go to the writer, one at a time.
+        Folder operations still run one after another (2026-11-17: a policy pass held the
+        writer for its whole walk and build, and every other request timed out)."""
+        from .folder_review import FolderReview
+        if self.writer is None:
+            return self._serialized(caller, lambda: fn(FolderReview(self.vault)))
+        with self._folder_operation, self._counted_mutation(f"the {caller} mutation"):
+            review = FolderReview(self.vault, commit=lambda write: self.writer.submit(write, caller=caller))
+            return fn(review)
+
     @mutation_entry('the person folder decision')
     def accept_folder(self, body: dict) -> dict[str, Any]:
-        from .folder_review import FolderReview
         try:
-            return self._serialized('folder-accept', lambda: FolderReview(self.vault).accept(
+            return self._folder_review_beside_writer('folder-accept', lambda review: review.accept(
                 str(body.get('id') or ''), str(body.get('folder_fingerprint') or ''),
                 purpose=body.get('purpose'), graph=body.get('graph'), person=True,
                 description=body.get('description'), authorship=body.get('authorship')))
@@ -3955,8 +3973,9 @@ class App:
         except (TypeError, ValueError):
             raise ApiError(400, 'limit is a whole number of documents') from None
         try:
-            return queue(self.vault, folder, limit=limit, scope=body.get('scope'), order=str(body.get('order') or 'name'), ingest=lambda ref, note: self.person_call(
-                'ingest', {'ref': ref, 'defer': True, 'note': note}))
+            with self._folder_operation:          # one ledger writer at a time (2026-11-17)
+                return queue(self.vault, folder, limit=limit, scope=body.get('scope'), order=str(body.get('order') or 'name'), ingest=lambda ref, note: self.person_call(
+                    'ingest', {'ref': ref, 'defer': True, 'note': note}))
         except ValueError as exc:
             raise ApiError(400, str(exc)) from exc
 
@@ -3968,7 +3987,7 @@ class App:
         if not root:
             raise ApiError(400, 'name the surveyed source root')
         try:
-            return self._serialized('folder-accept', lambda: FolderReview(self.vault).accept_by_policy(root))
+            return self._folder_review_beside_writer('folder-accept', lambda review: review.accept_by_policy(root))
         except (ValueError, TypeError) as exc:
             raise ApiError(409 if 'STALE' in str(exc) or 'PROMOTION_MODE' in str(exc) else 400, str(exc)) from exc
 
@@ -3987,8 +4006,10 @@ class App:
         from .tools.staging import clerk_endpoint
         try:
             ctx = Context(tier='contribute', vault=self.vault, extras=self._extras())
-            return FolderReview(self.vault).draft(str(body.get('id') or ''), clerk_endpoint(ctx),
-                approved=body.get('approve_spend') is True)
+            commit = (lambda write: self.writer.submit(write, caller='folder-draft')) if self.writer is not None else None
+            with self._folder_operation:
+                return FolderReview(self.vault, commit=commit).draft(str(body.get('id') or ''), clerk_endpoint(ctx),
+                    approved=body.get('approve_spend') is True)
         except ValueError as exc:
             raise ApiError(400, str(exc)) from exc
 

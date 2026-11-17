@@ -39,7 +39,9 @@ def undecided_folders(vault, declared):
     bases = {row['base'] for row in declared}
     out = set()
     for card in StagingStore(vault).summaries('folder'):
-        if card['status'] == 'accepted' or card['decided'] or card['inherited']:
+        if card['status'] == 'accepted' or card['decided']:
+            continue
+        if card['inherited'] and card['sensitivity'] != 'review_required':
             continue
         if not card['source_root'] or card['path'] in (None, '', '.'):
             continue
@@ -90,11 +92,12 @@ def _catalogue(vault, row):
 def index_paths(vault):
     declared = roots(vault)
     paths = set()
+    undecided = undecided_folders(vault, declared)
     for path in notes.iter_paths(vault.root):
         choice = classification(vault, path, declared=declared)
-        if not choice or choice.get('authorship') != 'third_party':paths.add(path)
+        if (not choice or choice.get('authorship') != 'third_party') and not _inside(path, undecided):
+            paths.add(path)
     excludes = (content_roots.load(vault.root) or {}).get('excludes', [])
-    undecided = undecided_folders(vault, declared)
     for row in declared:
         base = row['base']
         if not row.get('attached') and row.get('access') != 'read_only':continue

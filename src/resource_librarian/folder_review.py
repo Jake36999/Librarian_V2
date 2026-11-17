@@ -131,6 +131,28 @@ def follow_moves(vault, root, moved):
             atomic_write_text(path, json.dumps(renamed, indent=1))
     return followed
 
+
+def withheld(card):
+    """A folder no decision covers yet: not accepted or decided, and either proposed on its own
+    (not inherited) or flagged for a person's review. Its files stay out of every graph build,
+    index and folder-source walk until it is decided (2026-11-17: accepting a parent walked
+    straight into held third-party repositories)."""
+    if card.get('kind') != 'folder' or card.get('status') == 'accepted' or card.get('decision'):
+        return False
+    if (card.get('sensitivity') or {}).get('sensitivity') == 'review_required':
+        return True
+    return not card.get('inherited') and card.get('path') not in (None, '', '.')
+
+
+def withheld_paths(cards, decisions):
+    """Absolute folders to keep out of the graph build for `decisions`."""
+    roots = {c['source_root'] for c in decisions}
+    chosen = {(c['source_root'], c['path']) for c in decisions}
+    return sorted({str((Path(c['source_root']) / c['path']).resolve()) for c in cards
+                   if c.get('source_root') in roots and (c['source_root'], c.get('path')) not in chosen
+                   and withheld(c)})
+
+
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
@@ -275,9 +297,19 @@ def cli(config, operation, payload):
 
 
 class FolderReview:
-    def __init__(self, vault, *, planner=None, applier=None):
+    def __init__(self, vault, *, planner=None, applier=None, surveyor=None, commit=None):
+        """`surveyor(root)` walks a source root and `commit(fn)` runs one write. A Core passes a
+        commit that hands each write to its single writer, so the long walk and graph build of an
+        acceptance run beside it instead of blocking every other write for minutes or hours
+        (2026-11-17). By default both run here, as before."""
         self.vault = vault; self.store = StagingStore(vault)
         self.config = configuration(vault); self.planner = planner; self.applier = applier
+        self.surveyor = surveyor or (lambda root: deploy_survey.survey(str(root), geographer={'enabled': False}))
+        self.commit = commit or (lambda fn: fn())
+
+    def _apply(self, request):
+        return self.applier(request) if self.applier else cli(self.config,
+            ['apply-folder-review', '--catalog', str(self.vault.librarian / 'geographer/catalog.sqlite')], request)
 
     def list(self, *, include_provenance=True):
         folder = self.store.folder('folder')
@@ -490,11 +522,18 @@ class FolderReview:
             raise ValueError('FOLDER_PROVENANCE: description contradicts its inventory')
         if len(results) < 2 or not results[1].ok:
             raise ValueError('FOLDER_SENSITIVITY: review is incomplete')
-        card['sensitivity'] = results[1].value
+        held = (card.get('sensitivity') or {}).get('sensitivity') == 'review_required'
+        if held and results[1].value.get('sensitivity') != 'review_required':
+            # Only a person lifts a hold. A later check that sees nothing sensitive is recorded
+            # beside it, never in its place (2026-11-17: a re-check passed a held repository as
+            # normal and a policy pass then accepted it).
+            card['sensitivity'] = dict(card['sensitivity'], later_check=results[1].value)
+        else:
+            card['sensitivity'] = results[1].value
         card['description'] = dict(state='model_draft', text=result.value['description'], draft=True,
                                    authorship='generated', provenance=claims)
         if persist:
-            self.store.save(card)
+            self.commit(lambda: self.store.save(card))
         return card
 
     def accept(self, item_id, fingerprint, *, purpose, graph, person=False, description=None, authorship=None):
@@ -515,7 +554,7 @@ class FolderReview:
         card = self.store.load(item_id)
         if card['kind'] != 'folder' or fingerprint != card['folder_fingerprint']:
             raise ValueError('FOLDER_STALE: review this card again')
-        found = deploy_survey.survey(card['source_root'], geographer={'enabled': False})
+        found = self.surveyor(card['source_root'])
         rel = card['path']; rows = [r for r in found.entries if rel == '.' or r[0].rstrip('/') == rel or r[0].startswith(rel + '/')]
         if found.partial or found.unreadable or digest(rows) != fingerprint:
             raise ValueError('FOLDER_STALE: the folder changed; survey again')
@@ -540,28 +579,31 @@ class FolderReview:
         for member in selected:
             source_root = member['source_root']
             if source_root not in surveys:
-                surveys[source_root] = deploy_survey.survey(source_root, geographer={'enabled': False})
+                surveys[source_root] = self.surveyor(source_root)
             checked = surveys[source_root]; relative = member['path']
             entries = [r for r in checked.entries if relative == '.' or r[0].rstrip('/') == relative or r[0].startswith(relative + '/')]
             if checked.partial or checked.unreadable or checked.stops or digest(entries) != member['folder_fingerprint']:
                 raise ValueError(f'FOLDER_STALE: accepted folder {relative} changed; survey again before applying any group')
             validate_card(self.vault, member, entries)
         # Persist the read barrier before ingestion; a failed graph build cannot enable writes.
-        self._root_access(candidate)
-        request = dict(library=str(self.vault.root), decisions=selected, inventory=inventory(found))
-        card.update(status='processing', pending_decision=candidate['decision']); self.store.save(card)
+        request = dict(library=str(self.vault.root), decisions=selected, inventory=inventory(found),
+                       withheld=withheld_paths(all_cards, selected))
+        card.update(status='processing', pending_decision=candidate['decision'])
+        self.commit(lambda: (self._root_access(candidate), self.store.save(card)))
         try:
-            result = ((self.applier(request) if self.applier else cli(self.config,
-                ['apply-folder-review', '--catalog', str(self.vault.librarian / 'geographer/catalog.sqlite')], request))
+            result = (self._apply(request)
                 if purpose != 'exclude' or card.get('application') or any(c['decision']['purpose'] != 'exclude' for c in selected) else {})
         except Exception:
             card.update(status='failed', failure='graph application failed; read-only barrier retained')
-            self.store.save(card); raise
+            self.commit(lambda: self.store.save(card)); raise
         candidate['application'] = result; candidate.pop('pending_decision', None)
         from .folder_intake import accepted_record
-        accepted_record(self.vault, candidate)
-        self._root_access(candidate)
-        self.store.save(candidate); return candidate
+
+        def finish():
+            accepted_record(self.vault, candidate)
+            self._root_access(candidate)
+            self.store.save(candidate)
+        self.commit(finish); return candidate
 
     # Unambiguous purposes an agent may accept as suggested under promotion.mode = agent.
     POLICY_PURPOSES = frozenset({'own-current', 'own-legacy', 'own-docs', 'research-docs', 'third-party', 'exclude'})
@@ -579,7 +621,7 @@ class FolderReview:
             raise ValueError('PROMOTION_MODE: policy acceptance needs promotion.mode = agent for this library')
         from .access import PURPOSE_AUTHORSHIP
         from .folder_intake import accepted_record, validate_card
-        found = deploy_survey.survey(str(source_root), geographer={'enabled': False})
+        found = self.surveyor(str(source_root))
         if found.partial or found.unreadable:
             raise ValueError('FOLDER_STALE: the folder could not be read completely; survey again')
         root = found.canonical_root
@@ -666,18 +708,38 @@ class FolderReview:
                 status='accepted', authorship=authorship,
                 authorship_resolution='declared' if authorship else 'excluded'))
         if chosen:
-            for candidate in chosen:
-                self._root_access(candidate)                 # read barrier before any ingestion
+            manifest = content_roots.manifest_path(self.vault.root)
+            before = manifest.read_bytes() if manifest.is_file() else None
+
+            def barrier():
+                for candidate in chosen:
+                    self._root_access(candidate)             # read barrier before any ingestion
+            self.commit(barrier)
             ids = {c['id'] for c in chosen}
-            selected = [c for c in self.list() if c['id'] not in ids and c['status'] == 'accepted' and c.get('decision')] + chosen
-            request = dict(library=str(self.vault.root), decisions=selected, inventory=inventory(found))
-            result = (self.applier(request) if self.applier else cli(self.config,
-                ['apply-folder-review', '--catalog', str(self.vault.librarian / 'geographer/catalog.sqlite')], request))
-            for candidate in chosen:
-                candidate['application'] = result
-                accepted_record(self.vault, candidate)
-                self.store.save(candidate)
-                accepted.append(candidate['path'])
+            listed = self.list()
+            selected = [c for c in listed if c['id'] not in ids and c['status'] == 'accepted' and c.get('decision')] + chosen
+            request = dict(library=str(self.vault.root), decisions=selected, inventory=inventory(found),
+                           withheld=withheld_paths([c for c in listed if c['id'] not in ids], selected))
+            try:
+                result = self._apply(request)
+            except Exception:
+                # Nothing was accepted, so no folder it would have attached may stay attached
+                # (2026-11-17: a failed build left the new roots in the manifest).
+                def restore():
+                    if before is None:
+                        manifest.unlink(missing_ok=True)
+                    else:
+                        atomic_write_text(manifest, before.decode('utf-8'))
+                self.commit(restore)
+                raise
+
+            def finish():
+                for candidate in chosen:
+                    candidate['application'] = result
+                    accepted_record(self.vault, candidate)
+                    self.store.save(candidate)
+            self.commit(finish)
+            accepted.extend(c['path'] for c in chosen)
         return dict(accepted=sorted(accepted), held=sorted(held, key=lambda h: h['path']), covered=covered,
                     rule='promotion.mode = agent: unambiguous, not sensitive, unchanged suggestion')
 

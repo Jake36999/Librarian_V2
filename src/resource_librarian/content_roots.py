@@ -325,6 +325,13 @@ def resolve_read_path(vault, value):
     _, base, entry = max(candidates, key=lambda item: item[0])
     if entry.get('purpose') == 'exclude' or entry.get('access') not in ('read_only', 'read_write'):
         raise TypeError(f"{value!r} is excluded by the connected-root configuration")
+    # An `exclude` decision is written to the manifest's own excludes, not to the root entry
+    # (2026-11-17): honour those too, as absolute folders under this root.
+    for excluded in (load(vault.root) or {}).get('excludes', []):
+        folder = Path(excluded)
+        folder = (folder if folder.is_absolute() else home / folder).resolve()
+        if folder != home and folder.is_relative_to(base) and (path == folder or path.is_relative_to(folder)):
+            raise TypeError(f"{value!r} is excluded by the connected-root configuration")
     rel = path.relative_to(base).as_posix()
     if outside_scope(rel, set(entry.get('excludes', [])), path, hidden=False):
         raise TypeError(f"{value!r} is excluded by the connected-root configuration")

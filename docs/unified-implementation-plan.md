@@ -6699,3 +6699,35 @@ but only putting up a yellow flag when a file moves".
 - a hold survives, and changed content never lifts it;
 - staged sources and the ledger follow a move;
 - moves are paired by size and time.
+
+### Withheld folders stay out of every build, index and walk; folder work beside the writer (2026-11-17)
+
+**Found** (Gemini audit R1–R4, checked against the code by the owner's review session).
+- Accepting a parent folder walked into held and undecided child folders. Geo-Grapher excluded
+  only the children it was sent, and the Librarian sent only accepted cards.
+- Folder sources and connected reads ignored the manifest's library-wide `excludes`, where every
+  `exclude` decision is written.
+- A Clerk re-check could lower `review_required` to `normal`, so a policy pass accepted a held
+  repository.
+- Survey, acceptance and policy walked the whole project (466–802 s) and ran the Geo-Grapher
+  build inside the single writer, so every other request waited.
+- A failed policy build left its new roots attached.
+- `draft_folder` saved off the writer, and the folder-sources ledger was not written atomically.
+
+**Change.**
+- `withheld(card)` is a card that is neither accepted nor decided and is either proposed on its
+  own or flagged for review. Every `apply-folder-review` request carries `withheld` paths, and
+  Geo-Grapher (same date) excludes them and each card's own partition `exclude_globs`.
+- `undecided_folders` also counts inherited cards held for review, and filters in-vault notes.
+- `folder_sources.documents` skips manifest excludes and withheld folders.
+- `resolve_read_path` honours the manifest's own excludes.
+- `FolderReview.draft` records a later normal check beside a hold, never in its place.
+- `FolderReview(surveyor=, commit=)`. The App's acceptance and policy routes run beside the
+  writer under one folder-operation lock and send each write through `writer.submit`. A survey's
+  walk is done before the writer is asked. The draft and the folder-sources queue take the same
+  lock; the ledger write is atomic.
+- A failed policy build restores `content-roots.json` byte for byte.
+
+**Tests.** `tests/test_withheld_folders.py` (4): the build is told which folders are withheld;
+folder sources skip withheld and excluded folders and reads honour excludes; a later normal check
+never lifts a hold; policy writes go through `commit` and a failed build restores the manifest.
