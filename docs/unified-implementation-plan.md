@@ -6595,3 +6595,25 @@ unchanged, so existing graphs keep their names.
 
 **Tests.** `tests/test_folder_review.py` (+1): labels per modality, and a policy pass that puts a
 doc-modality and a code-modality repository in separate graphs.
+
+### The Geo-Grapher button no longer trusts a dead address (2026-11-17)
+
+**Found** (owner, 2026-11-17: the Geo-Grapher button "broke"). A Geo-Grapher ended from outside the Core
+left its Core offering the address of a server that no longer existed. In Nonlinear Field Lab the Core still
+reported `running` with a url nothing listened on, so the button opened a dead page. That Core also predated
+the start and stop routes, so the button had no way to start a new one.
+
+**Cause.** `GeoService.status()` decided a service had ended only from its launcher's exit code. On Windows the
+launcher is a separate process from the listener, so a listener ended alone kept the Core's state `running`.
+
+**Change.** `GeoService` checks the listener's own liveness (its recorded pid and start identity) as well as
+the launcher's. When the listener is gone it waits up to two seconds for the launcher to report a clean exit
+(a Close from the Geo-Grapher window is still `stopped`, not `failed`), ends a launcher that outlives its
+listener, and reports `failed` so the button starts a new service.
+
+**Repair of the live case.** Nonlinear's Core is running older code and is mid-ingestion, so it was not
+restarted: a Geo-Grapher was started at the address and with the token the Core already reports, owned by
+that Core's pid so it exits with the Core. That Core picks up this fix when it is next restarted.
+
+**Tests.** `tests/test_geo_service.py` (+1): a listener ended from outside is not reported running, the
+leftover launcher is ended, and the service can start again. The clean-close and crash cases stay green.

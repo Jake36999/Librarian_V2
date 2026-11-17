@@ -30,6 +30,11 @@ if mode == "old_wheel":
     sys.stderr.write("serve-graphs: error: unrecognized arguments: --ready-file\n"); sys.exit(2)
 if mode in ("ok", "closes", "crashes"):
     open(a.ready_file, "w").write(json.dumps(dict(url="http://127.0.0.1:59999/", port=59999, pid=os.getpid())))
+if mode == "split":                      # a launcher that outlives its listener, as a Windows venv launcher can
+    import subprocess
+    child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"])
+    open(os.environ["FAKE_GEO_RECORD"] + ".child", "w").write(str(child.pid))
+    open(a.ready_file, "w").write(json.dumps(dict(url="http://127.0.0.1:59999/", port=59999, pid=child.pid)))
 if mode in ("closes", "crashes"):        # closed from its own window, or ended on its own
     time.sleep(0.6); sys.exit(0 if mode == "closes" else 3)
 while True:
@@ -219,6 +224,33 @@ def test_a_service_that_exits_is_not_reported_running_and_can_start_again(librar
         assert not (vault.librarian / "runtime" / "geographer-ready.json").exists()
         monkeypatch.setenv("FAKE_GEO_MODE", "ok")
         service.start("http://127.0.0.1:52206/")
+        assert _wait(service, {"running", "failed"})["state"] == "running"
+    finally:
+        service.stop()
+
+
+def test_a_listener_ended_from_outside_is_not_reported_running(library, monkeypatch):
+    """2026-11-17: a Geo-Grapher ended from outside (not by the Core) left its Core offering the address
+    of a server that no longer existed, so the Geo-Grapher button opened a dead page and could not start
+    a new one. The listener's own liveness decides, not only the launcher's."""
+    import signal
+    from resource_librarian.geo_service import GeoService
+    vault, record = library
+    monkeypatch.setenv("FAKE_GEO_MODE", "split")
+    service = GeoService(vault)
+    service.start("http://127.0.0.1:52206/")
+    try:
+        assert _wait(service, {"running", "failed"})["state"] == "running"
+        assert service.open_url() is not None
+        child = int(Path(str(record) + ".child").read_text())
+        launcher = json.loads(record.read_text())["pid"]
+        os.kill(child, signal.SIGTERM)                       # the real server goes; its launcher stays
+        status = _wait(service, {"stopped", "failed"})
+        assert status["state"] == "failed" and "GEOGRAPHER_EXITED" in status["error"], status
+        assert service.open_url() is None and status["url"] is None
+        assert not _alive(launcher)                          # the leftover launcher is ended too
+        monkeypatch.setenv("FAKE_GEO_MODE", "ok")
+        service.start("http://127.0.0.1:52206/")             # and the button can start it again
         assert _wait(service, {"running", "failed"})["state"] == "running"
     finally:
         service.stop()

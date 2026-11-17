@@ -163,16 +163,44 @@ class GeoService:
                 proc.kill()
 
     # -- views ------------------------------------------------------------
-    def status(self) -> dict[str, Any]:
+    def _reap_if_dead(self) -> None:
+        """A service closed from its own window (owner, 2026-11-17: a clean way to close Geo-Grapher),
+        ended on its own, or ended from outside is not reported as running.
+
+        The launcher's exit is one signal. The listener's own liveness is the other: on Windows the
+        launcher is a separate process, and a listener ended from outside (a task kill, a crash of
+        only the child) used to leave this Core offering the address of a server that no longer
+        existed, with the Geo-Grapher button opening a dead page and unable to start a new one."""
         with self._lock:
-            # A service closed from its own window (owner, 2026-11-17: a clean way to close
-            # Geo-Grapher) or one that ended on its own is not reported as running.
-            if self._state == "running" and self._proc is not None and self._proc.poll() is not None:
-                code = self._proc.returncode
-                self._proc, self._info, self.token, self._listener_start = None, None, "", None
-                self._state = "stopped" if code == 0 else "failed"
-                self._error = "" if code == 0 else f"GEOGRAPHER_EXITED: code {code}; see .librarian/logs/geographer.log"
-                (self._runtime / "geographer-ready.json").unlink(missing_ok=True)
+            if self._state != "running":
+                return
+            proc = self._proc
+            pid = (self._info or {}).get("pid")
+            listener_gone = (isinstance(pid, int) and self._listener_start is not None
+                             and not process_identity.is_alive(pid, self._listener_start))
+            code = proc.poll() if proc is not None else None
+            if code is None and not listener_gone:
+                return
+        if code is None and proc is not None:
+            # The listener ended but its launcher has not yet: give a clean close its moment to
+            # report exit code 0, then end a launcher that outlives its listener.
+            try:
+                code = proc.wait(timeout=2.0)
+            except subprocess.TimeoutExpired:
+                self._terminate()
+        with self._lock:
+            if self._state != "running":          # stop() or a new start() got there first
+                return
+            self._proc, self._info, self.token, self._listener_start = None, None, "", None
+            self._state = "stopped" if code == 0 else "failed"
+            self._error = ("" if code == 0 else
+                           f"GEOGRAPHER_EXITED: code {code}; see .librarian/logs/geographer.log" if code is not None else
+                           "GEOGRAPHER_EXITED: the service ended unexpectedly; see .librarian/logs/geographer.log")
+            (self._runtime / "geographer-ready.json").unlink(missing_ok=True)
+
+    def status(self) -> dict[str, Any]:
+        self._reap_if_dead()
+        with self._lock:
             return {"state": self._state, "error": self._error,
                     "url": self._info.get("url") if self._info else None,
                     "library": self.vault.title}
