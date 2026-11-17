@@ -4707,6 +4707,16 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                                        str(body.get("model") or ""), str(body.get("host_id") or ""))
             if path == "/api/services/test":
                 return app.test_service(str(body.get("slot") or ""), str(body.get("file") or ""), body.get("page", 1))
+            if path == "/api/geographer/stop":
+                # Close this library's Geo-Grapher; the Core and its work carry on.
+                app.geo.stop()
+                return {**app.geo.status(), "open_url": None}
+            if path == "/api/geographer/start":
+                url = getattr(getattr(self.server, "board", None), "url", "")
+                if not url:
+                    raise ApiError(409, "the Core has no address yet; try again in a moment")
+                app.geo.start(url)
+                return {**app.geo.status(), "open_url": app.geo.open_url()}
             if path == "/api/projects/enable":
                 return app.set_projects_enabled(bool(body.get("enabled")))
             if path == '/api/folders/survey':

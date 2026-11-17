@@ -6555,3 +6555,26 @@ still a contradiction.
 
 **Tests.** `tests/test_provenance_parts.py` (2): per-type parts match the inventory; a wrong total
 is still contradicted and an unknown part is only unsupported.
+
+### Close controls per Core: Geo-Grapher and the library (2026-11-17)
+
+**Owner, 2026-11-17:** "there's no clean way to close geo-grapher or the librarian. We need a
+close button and graceful shutdown per core added to the ui."
+
+**Changes.**
+- The header has a **Close ▾** menu:
+  - "Close Geo-Grapher" or "Start Geo-Grapher" (new routes `POST /api/geographer/stop` and
+    `POST /api/geographer/start`); the Core and its work carry on.
+  - "Close this library" uses the existing graceful `POST /api/host/stop`: admission closes and
+    current work finishes. When the Core reports active work (409) the menu lists it and offers
+    "Stop anyway" (forced, after a confirmation) or "Keep it running". A Core the Host did not
+    start (404) is named as such.
+  - After a stop, the page says the library is closed.
+- `GeoService.status()` notices a service that has exited. Exit code 0, such as Geo-Grapher's
+  own Close button, is reported as `stopped`; any other code is `failed`. Its address is never
+  handed out again, and "Geo-Grapher ↗" starts it again before opening.
+- Geo-Grapher (its own repository) gained the Close button and `POST /api/workspace/close`,
+  offered only to a library service started with `--parent-pid`.
+
+**Tests.** `tests/test_geo_service.py` (+3): an exited service is reported closed or failed
+and can start again; the person-only stop and start routes.

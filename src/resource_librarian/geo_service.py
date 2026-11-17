@@ -165,12 +165,21 @@ class GeoService:
     # -- views ------------------------------------------------------------
     def status(self) -> dict[str, Any]:
         with self._lock:
+            # A service closed from its own window (owner, 2026-11-17: a clean way to close
+            # Geo-Grapher) or one that ended on its own is not reported as running.
+            if self._state == "running" and self._proc is not None and self._proc.poll() is not None:
+                code = self._proc.returncode
+                self._proc, self._info, self.token, self._listener_start = None, None, "", None
+                self._state = "stopped" if code == 0 else "failed"
+                self._error = "" if code == 0 else f"GEOGRAPHER_EXITED: code {code}; see .librarian/logs/geographer.log"
+                (self._runtime / "geographer-ready.json").unlink(missing_ok=True)
             return {"state": self._state, "error": self._error,
                     "url": self._info.get("url") if self._info else None,
                     "library": self.vault.title}
 
     def open_url(self) -> str | None:
         """The one-time browser entry for the authenticated person UI only."""
+        self.status()                             # never hand out the address of a closed service
         with self._lock:
             if self._state != "running" or not self._info:
                 return None

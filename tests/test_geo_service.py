@@ -28,8 +28,10 @@ record = dict(argv=sys.argv[1:], token_seen=bool(os.environ.get("GEOGRAPHER_ACCE
 open(os.environ["FAKE_GEO_RECORD"], "w").write(json.dumps(record))
 if mode == "old_wheel":
     sys.stderr.write("serve-graphs: error: unrecognized arguments: --ready-file\n"); sys.exit(2)
-if mode == "ok":
+if mode in ("ok", "closes", "crashes"):
     open(a.ready_file, "w").write(json.dumps(dict(url="http://127.0.0.1:59999/", port=59999, pid=os.getpid())))
+if mode in ("closes", "crashes"):        # closed from its own window, or ended on its own
+    time.sleep(0.6); sys.exit(0 if mode == "closes" else 3)
 while True:
     time.sleep(0.2)
 '''
@@ -198,3 +200,59 @@ def test_the_service_is_told_which_process_owns_it(library):
         assert argv[argv.index("--parent-pid") + 1] == str(os.getpid())
     finally:
         service.stop()
+
+
+@pytest.mark.parametrize("mode, state", [("closes", "stopped"), ("crashes", "failed")])
+def test_a_service_that_exits_is_not_reported_running_and_can_start_again(library, monkeypatch, mode, state):
+    """2026-11-17: Geo-Grapher gained a Close button; the Core must not keep offering its address."""
+    from resource_librarian.geo_service import GeoService
+    vault, record = library
+    monkeypatch.setenv("FAKE_GEO_MODE", mode)
+    service = GeoService(vault)
+    service.start("http://127.0.0.1:52206/")
+    try:
+        assert _wait(service, {"running", "failed"})["state"] == "running"
+        status = _wait(service, {"stopped", "failed"})
+        assert status["state"] == state
+        assert (status["error"] == "") == (mode == "closes")
+        assert service.open_url() is None
+        assert not (vault.librarian / "runtime" / "geographer-ready.json").exists()
+        monkeypatch.setenv("FAKE_GEO_MODE", "ok")
+        service.start("http://127.0.0.1:52206/")
+        assert _wait(service, {"running", "failed"})["state"] == "running"
+    finally:
+        service.stop()
+
+
+def test_the_person_ui_can_close_and_reopen_this_librarys_geo_grapher(vault, tmp_path, monkeypatch):
+    """2026-11-17: a close control per Core. Closing Geo-Grapher leaves the Core running."""
+    import threading
+    from resource_librarian.app import App, build
+    from resource_librarian.keys import KeyStore
+    from test_app import Client
+    monkeypatch.setenv("LIBRARIAN_CONFIG_DIR", str(tmp_path / "config"))
+    calls = []
+
+    class Geo:
+        state = "running"
+        def stop(self): calls.append("stop"); Geo.state = "stopped"
+        def start(self, url): calls.append(("start", url)); Geo.state = "running"
+        def status(self): return {"state": Geo.state, "error": "", "url": None, "library": "x"}
+        def open_url(self): return "http://127.0.0.1:1/?geo_token=t" if Geo.state == "running" else None
+
+    app = App(vault, token="test-token", keys=KeyStore(use_keyring=False), broker_timeout=5)
+    app.geo = Geo()
+    server = build(app)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        client = Client(server, "test-token")
+        assert client.post("/api/geographer/stop", token=False)[0] == 403       # person UI only
+        code, out = client.post("/api/geographer/stop")
+        assert code == 200 and out["state"] == "stopped" and out["open_url"] is None
+        assert client.post("/api/geographer/start")[0] == 409                    # no address yet
+        server.board.url = "http://127.0.0.1:5555/"
+        code, out = client.post("/api/geographer/start")
+        assert code == 200 and out["state"] == "running" and out["open_url"]
+        assert calls == ["stop", ("start", "http://127.0.0.1:5555/")]
+    finally:
+        server.shutdown(); server.server_close()

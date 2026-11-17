@@ -4,7 +4,7 @@
 
 import { COMMANDS, preference } from "./commands";
 import { reader } from "./speech";
-import { Api, type Event, type Options } from "./api";
+import { Api, ApiError, type Event, type Options } from "./api";
 export type { Options } from "./api";
 import { AttachPanel } from "./attach";
 import { Chat, type Session } from "./chat";
@@ -61,6 +61,12 @@ class App {
   private geoButton = h("button", { class: "ghost geo-open", title: "Open this library's graphs in Geo-Grapher",
     onclick: () => void this.openGeo() }, "Geo-Grapher ↗");
   private checkpointButton = h("button", { class: "ghost", title: "Decisions waiting for you" }, "Checkpoints ▾");
+  // Close controls (owner, 2026-11-17): this library's Geo-Grapher, or the whole library
+  // (its Core, which stops Geo-Grapher with it), each closed gracefully.
+  // An icon so the header does not wrap on narrow hosts (the smoke run's 497 px pane).
+  private closeButton = h("button", { class: "ghost lib-close", title: "Close Geo-Grapher or this library",
+    "aria-label": "Close Geo-Grapher or this library" }, "⏻");
+  private closeMenu!: Popover;
   private attachPop: Popover;
   private attachPanel: AttachPanel;
   private tile: ModelTile;
@@ -145,6 +151,8 @@ class App {
     this.sessions = new Popover(this.ids.id("lib-sessions"), "Sessions", sessionsButton, "lib-sessions");
     this.libraries = new Popover(this.ids.id("lib-libraries"), "Libraries", this.libraryButton, "lib-libraries");
     this.checkpoints = new Popover(this.ids.id("lib-checkpoints"), "Checkpoints", this.checkpointButton, "lib-checkpoints");
+    this.closeMenu = new Popover(this.ids.id("lib-close"), "Close", this.closeButton, "lib-close-menu");
+    this.closeButton.onclick = () => { this.toggle(this.closeMenu); if (this.closeMenu.open) void this.renderClose(); };
     this.libraryButton.onclick = () => {
       this.toggle(this.libraries);
       if (this.libraries.open) void renderLibraries(this.libraries, this.api, this.libraryName());
@@ -244,7 +252,8 @@ class App {
           h("div", { class: "anchor" }, this.checkpointButton, this.checkpoints.el),
           this.title, this.crumb,
           h("nav", { role: "tablist", "aria-label": "Views" }, Object.values(this.nav)), settingsButton, h("button",{class:"ghost",onclick:()=>this.settings.open("models")},"Models"), this.live,
-          this.geoButton, this.paneButton),
+          this.geoButton, this.paneButton,
+          h("div", { class: "anchor" }, this.closeButton, this.closeMenu.el)),
         this.body),
       this.settings.dialog);
     this.composer = composer;
@@ -638,7 +647,7 @@ class App {
 
   private toggle(pop: Popover): void {
     const open = !pop.open;
-    [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop]
+    [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop, this.closeMenu]
       .forEach((p) => p.show(false));
     pop.show(open);
   }
@@ -680,9 +689,84 @@ class App {
     el.setSelectionRange(caret, caret);
   }
 
+  /** The Close menu: this library's Geo-Grapher, then the library itself. */
+  private async renderClose(): Promise<void> {
+    const pop = this.closeMenu;
+    const status = h("p", { class: "dim", role: "status" }, "");
+    let geo: any = {};
+    try { geo = await this.api.get("/api/geographer"); } catch { geo = { state: "unknown" }; }
+    const running = geo.state === "running" || geo.state === "starting";
+    const geoButton = h("button", {
+      class: "ghost", disabled: geo.state === "disabled" || geo.state === "unknown",
+      onclick: async () => {
+        status.textContent = running ? "Closing Geo-Grapher…" : "Starting Geo-Grapher…";
+        try {
+          await this.api.post(running ? "/api/geographer/stop" : "/api/geographer/start");
+          status.textContent = running ? "Geo-Grapher is closed. The library keeps running." : "Geo-Grapher is starting.";
+          window.setTimeout(() => { if (pop.open) void this.renderClose(); }, 1200);
+        } catch (e) { status.textContent = `Not done: ${(e as Error).message}`; }
+      } }, running ? "Close Geo-Grapher" : "Start Geo-Grapher");
+    const libraryButton = h("button", { class: "ghost danger", onclick: () => void this.closeLibrary(false, status, body) },
+      "Close this library");
+    const body = h("div", { class: "close-body" });
+    clear(pop.el,
+      h("h4", {}, "Geo-Grapher"),
+      h("p", { class: "dim" }, geo.state === "disabled" ? "Not enabled for this library."
+        : running ? "Running for this library." : geo.state === "failed" ? `Stopped with an error${geo.error ? `: ${geo.error}` : "."}`
+        : "Closed."),
+      geoButton,
+      h("h4", {}, "This library"),
+      h("p", { class: "dim" }, "Stops its Core gracefully: no new work is admitted, current work finishes or is "
+        + "listed for you first, then its Geo-Grapher and the vault lease are released."),
+      libraryButton, body, status);
+  }
+
+  /** Ask this library's Core to stop. Active work is shown first; only an explicit
+   * second choice forces the stop (the Core records it as a forced engagement close). */
+  private async closeLibrary(force: boolean, status: HTMLElement, body: HTMLElement): Promise<void> {
+    status.textContent = force ? "Stopping after the current step…" : "Asking the library to stop…";
+    try {
+      await this.api.post("/api/host/stop", { force });
+      this.stopping = true;
+      clear(this.root, h("div", { class: "lib-closed", role: "status" },
+        h("h2", {}, `${this.libraryName()} is closed`),
+        h("p", {}, "Its Core and Geo-Grapher have stopped and the vault is released. You can close this tab, "
+          + "or start the library again from the Librarian Host.")));
+    } catch (e) {
+      const err = e as ApiError;
+      if (err.status === 409) {
+        const active = (err.body?.active ?? {}) as Record<string, unknown>;
+        const rows = Object.entries(active).filter(([, v]) => v && (!Array.isArray(v) || v.length));
+        status.textContent = "";
+        clear(body,
+          h("p", { class: "warn" }, "This library has work in progress:"),
+          h("ul", {}, rows.length ? rows.map(([k, v]) => h("li", {}, `${k.replace(/_/g, " ")}: ${
+            Array.isArray(v) ? v.length : typeof v === "object" ? Object.keys(v as object).length : String(v)}`))
+            : h("li", {}, "a running action")),
+          h("button", { class: "ghost danger", onclick: () => {
+            if (window.confirm("Stop the library now? Work in progress is cancelled at its next safe point."))
+              void this.closeLibrary(true, status, body);
+          } }, "Stop anyway"),
+          h("button", { class: "ghost", onclick: () => { clear(body); this.closeMenu.show(false); } }, "Keep it running"));
+      } else if (err.status === 404) {
+        status.textContent = "This Core was not started by the Librarian Host; stop it where it was started.";
+      } else {
+        status.textContent = `Not stopped: ${err.message}`;
+      }
+    }
+  }
+
   private async openGeo(): Promise<void> {
     try {
-      const geo = await this.api.get("/api/geographer");
+      let geo = await this.api.get("/api/geographer");
+      if (geo.state === "stopped" || geo.state === "failed") {
+        // Closed earlier from the Close menu or from Geo-Grapher itself: start it again.
+        geo = await this.api.post("/api/geographer/start");
+        for (let i = 0; i < 40 && !geo.open_url && geo.state === "starting"; i++) {
+          await new Promise(r => window.setTimeout(r, 500));
+          geo = await this.api.get("/api/geographer");
+        }
+      }
       if (geo.open_url) { window.open(geo.open_url, "_blank", "noopener"); return; }
       this.warn(geo.state === "disabled"
         ? "Geo-Grapher is not enabled for this library."
