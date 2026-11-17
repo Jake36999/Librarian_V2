@@ -6596,6 +6596,42 @@ unchanged, so existing graphs keep their names.
 **Tests.** `tests/test_folder_review.py` (+1): labels per modality, and a policy pass that puts a
 doc-modality and a code-modality repository in separate graphs.
 
+### Storage and speed quick wins: cached counts, undecided folders, a capped index log (2026-11-17)
+
+**Found in the pilot libraries** (owner, 2026-11-17: the libraries grew to 20–30 GB each; "implement
+the quick items"; measurements in `reports/2026-11-16-pilot-review/STORAGE-AND-SPEED-OPTIMISATION.md`).
+
+- **`staging_list` parsed every folder card.** `counts()` read every staging file of every kind:
+  233 MB in Parallax, 9.4 s per call uncontended. Runners call it several times per round, which
+  starved the Core until reads timed out.
+- **A repository held for sensitivity review was indexed whole.** A held, undecided child folder
+  has no root row of its own, so the parent's own-current decision covered it. In Parallax that
+  was 51,507 files of `linux-80211n-csitool-master`, out of 54,225 indexed.
+- **The index's write-ahead log stayed at its peak.** One rebuild left a 6.8 GB log beside a
+  6.8 GB index, and nothing ever cut it back.
+
+**Change.**
+- `StagingStore.summaries(kind)` keeps a small summary of each item. It parses a file again only
+  when the file's size or modification time changed; a deleted file leaves the cache.
+  `counts()` reads summaries.
+- `workspace_documents.undecided_folders` lists folder cards that are not accepted, not
+  decided, not inherited and not a declared root's own base. `index_paths` leaves their files
+  out of the parent's whole indexing until they are decided; an incremental refresh removes
+  notes already indexed from them.
+- The index connection sets `journal_size_limit` to 64 MB. `IndexService.refresh` and `close`
+  run a truncating checkpoint, best effort: a reader holding old frames leaves the log for the
+  next attempt.
+
+**Measured on the pilot libraries.**
+- Repeated `counts()`: 2.1–2.6 s the first time, 0.03–0.04 s after, with identical results.
+- The gate leaves out the 53,034 Parallax notes inside its 6 held repositories and nothing in
+  the other two libraries (Resource-Library's 1,639 undecided cards cover no indexed note).
+
+**Tests.** `tests/test_storage_quick_wins.py` (3):
+- counts parse only changed cards and follow edits and deletions;
+- an undecided folder is left out until it is decided;
+- the log is capped, and emptied after a refresh and on close.
+
 ### The Geo-Grapher button no longer trusts a dead address (2026-11-17)
 
 **Found** (owner, 2026-11-17: the Geo-Grapher button "broke"). A Geo-Grapher ended from outside the Core

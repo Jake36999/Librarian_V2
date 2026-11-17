@@ -40,6 +40,7 @@ from .file_access import FileChangedError, file_access, file_identity, read_byte
 from .rules import Refusal
 from .vault import Vault, now_iso
 
+WAL_SIZE_LIMIT = 64 * 1024 * 1024   # bytes kept of the write-ahead log after a checkpoint
 SCHEMA_VERSION = 6          # 6: complete attached-workspace chunks, including short tails/repeated headings
                             # 4: document identity and duplicate layers (DEPLOY-04)
                             # 5: adopted classification by declared type (REMED-01)
@@ -256,6 +257,9 @@ class Index:
             # Bounded waiting makes the Core retryable without an indefinite
             # UI hang; adapters never open this file themselves.
             conn.execute("PRAGMA busy_timeout=5000")
+            # A checkpointed log is cut back to this size instead of being kept at its peak:
+            # one rebuild left Parallax a 6.8 GB log beside a 6.8 GB index (2026-11-17).
+            conn.execute(f"PRAGMA journal_size_limit={WAL_SIZE_LIMIT}")
             conn.executescript(SCHEMA)
             from .document_identity import TABLE as DOCUMENT_TABLE
             conn.executescript(DOCUMENT_TABLE)
@@ -267,6 +271,18 @@ class Index:
             self._local.conn = conn
             self._all.append(conn)
         return conn
+
+    def truncate_wal(self) -> bool:
+        """Fold the write-ahead log into the index and empty it; True when it was emptied.
+        Best effort: a reader holding old frames leaves the log for the next attempt."""
+        conn = getattr(self._local, "conn", None)
+        if conn is None:
+            return False
+        try:
+            busy, _log, _done = conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+        except sqlite3.Error:
+            return False
+        return not busy
 
     def close(self) -> None:
         conn = getattr(self._local, "conn", None)
@@ -913,7 +929,11 @@ class IndexService:
         return value
 
     def refresh(self, rebuild: bool = False) -> RefreshReport:
-        return self.run(lambda index: index.rebuild() if rebuild else index.refresh())
+        def do(index: Index) -> RefreshReport:
+            report = index.rebuild() if rebuild else index.refresh()
+            index.truncate_wal()
+            return report
+        return self.run(do)
 
     def stats(self) -> dict[str, Any]:
         return self.run(lambda index: index.stats())
@@ -958,7 +978,11 @@ class IndexService:
         # intentionally made ordinary requests unavailable.  Existing queued
         # requests retain FIFO ordering and finish before this close request.
         done, box = threading.Event(), []
-        self._queue.put((lambda index: index.close(), done, box))
+
+        def close(index: Index) -> None:
+            index.truncate_wal()
+            index.close()
+        self._queue.put((close, done, box))
         if not done.wait(5.0):
             raise TimeoutError("index service did not close its SQLite connection")
         self._closed.set()

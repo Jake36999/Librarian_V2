@@ -32,7 +32,9 @@ from __future__ import annotations
 
 import json
 import hashlib
+import os
 import re
+import threading
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable, Iterable
@@ -46,6 +48,23 @@ from .search import Engine
 from .vault import Vault, now_iso
 
 KINDS = ("source", "lens", "concept", "topic", "import", "model_expectation", "folder")
+
+# Per staging folder: {file name: ((mtime_ns, size), summary)}. Counting and the index's folder
+# gate read summaries; a file is parsed again only when its size or modification time changed
+# (2026-11-17: counts() parsed every folder card, 233 MB in Parallax, on each staging_list: 9.4 s).
+_SUMMARIES: dict[str, dict[str, tuple[tuple[int, int], dict[str, Any]]]] = {}
+_SUMMARIES_LOCK = threading.Lock()
+
+
+def _summary(item: dict[str, Any]) -> dict[str, Any]:
+    sensitivity = item.get("sensitivity")
+    if isinstance(sensitivity, dict):           # folder cards keep the clerk's record;
+        # only a completed check that asks for review counts as sensitive
+        sensitivity = "review_required" if sensitivity.get("sensitivity") == "review_required" else "normal"
+    return dict(id=item.get("id"), kind=item["kind"], status=item["status"],
+                inherited=bool(item.get("inherited")), sensitivity=sensitivity,
+                decided=bool(item.get("decision")), path=item.get("path"),
+                source_root=item.get("source_root"))
 # One lifecycle for a source (Requirements - Research Pipeline §4.1, Addendum R7/R14):
 # queued (a reference, not yet fetched) -> staged (captured and described) -> approved
 # (a person approved spending processing on it) -> processing (in a batch a person
@@ -161,22 +180,46 @@ class StagingStore:
                 if not status or item.get("status") == status:
                     yield item
 
+    def summaries(self, kind: str) -> list[dict[str, Any]]:
+        """Small summaries of one kind's items (id, kind, status, inherited, sensitivity,
+        decided, path, source_root), in file-name order. Only files whose size or
+        modification time changed since the last call are read again."""
+        folder = self.folder(kind)
+        if not folder.is_dir():
+            return []
+        key = os.path.normcase(str(folder.resolve()))
+        with _SUMMARIES_LOCK:
+            cache = _SUMMARIES.get(key, {})
+        fresh: dict[str, tuple[tuple[int, int], dict[str, Any]]] = {}
+        with os.scandir(folder) as entries:
+            for entry in entries:
+                if not entry.name.endswith(".json") or not entry.is_file():
+                    continue
+                stat = entry.stat()
+                signature = (stat.st_mtime_ns, stat.st_size)
+                hit = cache.get(entry.name)
+                if hit is None or hit[0] != signature:
+                    item = json.loads(Path(entry.path).read_text(encoding="utf-8"))
+                    hit = (signature, _summary(item))
+                fresh[entry.name] = hit
+        with _SUMMARIES_LOCK:
+            _SUMMARIES[key] = fresh                 # a deleted file leaves the cache with it
+        return [fresh[name][1] for name in sorted(fresh)]
+
     def counts(self) -> dict[str, dict[str, int]]:
         out: dict[str, dict[str, int]] = {}
-        for item in self.items():
-            bucket = out.setdefault(item["kind"], {})
-            status = item["status"]
-            # A folder card whose suggestion is inherited is covered by its parent's decision:
-            # counted apart, so "waiting for review" means folders that need a look.
-            if item["kind"] == "folder" and status == "staged" and item.get("inherited"):
-                status = "covered"
-            bucket[status] = bucket.get(status, 0) + 1
-            sensitivity = item.get("sensitivity")
-            if isinstance(sensitivity, dict):           # folder cards keep the clerk's record;
-                # only a completed check that asks for review counts as sensitive
-                sensitivity = "review_required" if sensitivity.get("sensitivity") == "review_required" else "normal"
-            if sensitivity not in ("normal", None) and status == "staged":
-                bucket["sensitive_waiting"] = bucket.get("sensitive_waiting", 0) + 1
+        for kind in KINDS:
+            for item in self.summaries(kind):
+                bucket = out.setdefault(item["kind"], {})
+                status = item["status"]
+                # A folder card whose suggestion is inherited is covered by its parent's decision:
+                # counted apart, so "waiting for review" means folders that need a look.
+                if item["kind"] == "folder" and status == "staged" and item["inherited"]:
+                    status = "covered"
+                bucket[status] = bucket.get(status, 0) + 1
+                sensitivity = item["sensitivity"]
+                if sensitivity not in ("normal", None) and status == "staged":
+                    bucket["sensitive_waiting"] = bucket.get("sensitive_waiting", 0) + 1
         return out
 
     def quarantine_path(self, item_id: str) -> Path:

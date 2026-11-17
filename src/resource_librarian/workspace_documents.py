@@ -30,6 +30,33 @@ def classification(vault, path, *, declared=None):
     return max(matches, key=lambda r: len(r['base'].parts)) if matches else None
 
 
+def undecided_folders(vault, declared):
+    """Folders a survey proposed on their own that nobody has decided yet, outside every
+    declared root's own base. Their files stay out of the parent root's whole indexing until a
+    person or the policy decides them (2026-11-17: 51,507 files of a repository held for
+    sensitivity review were indexed under Parallax's root decision)."""
+    from .staging import StagingStore
+    bases = {row['base'] for row in declared}
+    out = set()
+    for card in StagingStore(vault).summaries('folder'):
+        if card['status'] == 'accepted' or card['decided'] or card['inherited']:
+            continue
+        if not card['source_root'] or card['path'] in (None, '', '.'):
+            continue
+        folder = (Path(card['source_root']) / card['path']).resolve()
+        if folder not in bases:
+            out.add(os.path.normcase(str(folder)))
+    return out
+
+
+def _inside(path, folders):
+    """Whether `path` is one of `folders` (normcased strings) or lies under one."""
+    if not folders:
+        return False
+    path = Path(path)
+    return any(os.path.normcase(str(p)) in folders for p in (path, *path.parents))
+
+
 def key(vault, path):
     path = Path(path)
     return path.relative_to(vault.root).as_posix() if path.is_relative_to(vault.root) else path.resolve().as_posix()
@@ -67,6 +94,7 @@ def index_paths(vault):
         choice = classification(vault, path, declared=declared)
         if not choice or choice.get('authorship') != 'third_party':paths.add(path)
     excludes = (content_roots.load(vault.root) or {}).get('excludes', [])
+    undecided = undecided_folders(vault, declared)
     for row in declared:
         base = row['base']
         if not row.get('attached') and row.get('access') != 'read_only':continue
@@ -82,7 +110,8 @@ def index_paths(vault):
                     and choice.get('purpose') != 'exclude' and not is_link(path)
                     and not any(p.startswith('.') or p in EXCLUDE_NAMES or p == 'graphify-out' for p in path.relative_to(base).parts)
                     and not credential_path(rel) and not generated_path(rel)
-                    and not any(rel == e or rel.startswith(str(e).rstrip('/') + '/') or str(path) == e for e in excludes))
+                    and not any(rel == e or rel.startswith(str(e).rstrip('/') + '/') or str(path) == e for e in excludes)
+                    and not _inside(path, undecided))
             directories[:] = [d for d in directories if allowed(parent / d)]
             for filename in files:
                 path = parent / filename

@@ -199,7 +199,10 @@ def test_concurrent_loopback_clients_refresh_checkpoint_and_auxiliary_stores(vau
         assert client.post("/api/documents/release", {"path": "Notes/Human.md"})[0] == 200
         app.index_service.refresh()
         assert app.index_service.run(lambda ix: ix.conn.execute("PRAGMA integrity_check").fetchone()[0]) == "ok"
-        assert len(checkpoints) == rounds
+        # One explicit maintenance checkpoint per round; every refresh also empties the log
+        # (2026-11-17), all on the index's own thread.
+        assert len([sql for sql in checkpoints if "passive" in sql.lower()]) == rounds
+        assert any("truncate" in sql.lower() for sql in checkpoints)
         assert sql_threads == {app.index_service._thread}
         assert len([record for record in connections if record["path"] == "index.sqlite"]) == 1
         for prefix in ("Browser", "MCP", "Agent"):
