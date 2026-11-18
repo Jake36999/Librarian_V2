@@ -261,3 +261,23 @@ def test_a_step_still_being_sent_is_never_offered_for_an_answer(core, monkeypatc
     out = core.person_call("macro_resolve", {"checkpoint_id": inputs["checkpoint_id"],
                                              "step": 1, "choice": "applied"})
     assert out["status"] == "changed"
+
+
+def test_asking_again_after_approval_uses_the_approval_instead_of_minting_another(core):
+    """2026-11-18: a person approved the macro's checkpoint, then the model asked for the same
+    macro without passing the checkpoint id. `ensure` makes a fresh card once a checkpoint is
+    resolved, so the approval was orphaned and a new decision card appeared, again and again."""
+    inputs = approved_two_notes(core)
+    approved_id = inputs.pop("checkpoint_id")
+    out = core.person_call("macro_run", {"macro": "two_notes", "inputs": inputs})   # no id
+    assert out["status"] == "completed", out
+    assert (core.vault.root / "Notes" / "First note.md").is_file()
+    assert core.checkpoints.all(pending_only=True) == []         # no second card was made
+    assert [c["id"] for c in core.checkpoints.all() if c["type"] == "macro_expansion"] == [approved_id]
+
+
+def test_an_unapproved_or_different_macro_still_asks_for_a_new_decision(core):
+    approved_two_notes(core)
+    out = core.person_call("macro_run", {"macro": "two_notes",
+                                         "inputs": {"first": "Other", "second": "Different"}})
+    assert out["status"] == "awaiting_checkpoint"                # a different plan needs its own approval

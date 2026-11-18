@@ -12,7 +12,7 @@ export function renderCatalogue(data: any, openOriginal: (source: string, filena
     h('p', {}, `${use.log_use_count ?? 0} recorded uses; ${use.application_count ?? 0} applications. Recorded history, not proof of efficacy.`),
     ...(use.recent_uses ?? []).map((row: any) => h('p', {}, String(row.used_for ?? ''))),
     ...(use.applications ?? []).map((row: any) => h('p', {}, `${row.name}: ${row.outcome || 'outcome not recorded'}`)),
-    original.available ? h('button', {onclick: async () => {
+    original.available ? h('button', {class: 'ghost', onclick: async () => {
       status.textContent = 'Opening the original…';
       try {await openOriginal(original.download_source, original.name); status.textContent = 'Original download requested.';}
       catch (error) {status.textContent = (error as Error).message;}

@@ -282,3 +282,15 @@ def test_not_findable_is_loud(vault):
         assert not report.catalogued and report.to_dict()["status"] == "written but not findable"
         assert "needs_attention" in notes.load(vault.root / report.path).frontmatter
         assert findability(engine, "twin 99")
+
+
+def test_a_queued_draft_says_why_the_clerk_was_unavailable(staged):
+    """2026-11-18: the Clerk's refusal ("requires screened clerk qualification…") was lost, and
+    the page said only "no clerk model is available" while a Clerk model was assigned."""
+    reason = "agent profile 'clerk' requires screened clerk qualification; this route is experimental"
+    c = Context(tier="curate", vault=staged, extras={"clerk": clerk.UnavailableEndpoint(reason)})
+    out = REGISTRY.call("staging_review", {"item_id": "s-a"}, c)
+    assert out["draft"]["status"] == "queued"
+    assert out["draft"]["reason"] == reason
+    ok = REGISTRY.call("staging_review", {"item_id": "s-a"}, ctx(staged))
+    assert "reason" not in ok["draft"]                       # only a queued draft carries one

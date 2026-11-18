@@ -273,6 +273,20 @@ class App {
     // Open by default where there is room for both; the choice is remembered.
     const saved = recall("pane");
     this.showPane(saved === "open");
+    void this.openGuideOnFirstVisit(saved);
+  }
+
+  /** A new library carries "About the Librarian and how to use it" at its root. The first time
+   *  this browser opens the library (and the pane has not been opened or closed on purpose), the
+   *  pane opens on it, so the way in is on screen. Its links lead to the formal notes beside it.
+   *  An older library has no such note: nothing opens. Obsidian shows notes itself, so it is left alone. */
+  private async openGuideOnFirstVisit(savedPane: string): Promise<void> {
+    if (this.opts.openNote || savedPane || recall("guide-seen")) return;
+    try { await this.api.get(`/api/file?path=${encodeURIComponent(GUIDE_NOTE + ".md")}`); }
+    catch { return; }
+    remember("guide-seen", "1");
+    this.showPane(true);
+    await this.pane.open(GUIDE_NOTE);
   }
 
   private composer: HTMLElement;
@@ -298,13 +312,13 @@ class App {
     e.stopPropagation();
   };
   private popovers(): Popover[] {
-    return [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop];
+    return [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop, this.closeMenu];
   }
   private readonly onDocumentClick = (e: MouseEvent) => {
     // The dispatch path, not `contains`: a click that re-renders the popover
     // detaches its own target, which is still inside.
     const path = e.composedPath();
-    for (const p of [this.modes, this.models, this.sessions, this.libraries, this.checkpoints, this.attachPop]) {
+    for (const p of this.popovers()) {
       if (p.open && !path.includes(p.el) && !path.includes(p.button)) {
         if (p !== this.models || !this.tile.cancelSlot()) p.show(false);
       }
@@ -507,8 +521,10 @@ class App {
   private renderCheckpoints(): void {
     const rows = (this.state.pending_checkpoints ?? []) as any[];
     const card = (row: any) => {
+      // The raw record is for checking, not reading first: folded under "Details".
       const evidence = row.evidence && Object.keys(row.evidence).length
-        ? h("pre", { class: "checkpoint-evidence" }, JSON.stringify(row.evidence, null, 2)) : null;
+        ? h("details", { class: "checkpoint-details" }, h("summary", {}, "Details"),
+            h("pre", { class: "checkpoint-evidence" }, JSON.stringify(row.evidence, null, 2))) : null;
       const writeConflictHelp = row.type === "write_conflict"
         ? h("p", { class: "checkpoint-help" },
             "Review the named note in its editor. Resolving this card records your decision only; it does not retry the blocked write. Repeat the original action after the editor is quiet.")
@@ -532,6 +548,8 @@ class App {
       };
       return h("section", { class: "checkpoint" },
         h("strong", {}, String(row.type ?? "Decision").replace(/_/g, " ")),
+        // Every card names itself, so an agent and a person can be talking about the same one.
+        h("small", { class: "dim" }, ` · ${String(row.id ?? "")}`),
         h("p", {}, String(row.scope ?? "")),
         evidence, writeConflictHelp,
         h("div", { class: "row2" }, ...(Array.isArray(row.choices) ? row.choices : []).map((choice: string) =>
@@ -951,6 +969,9 @@ function fileIcon(): SVGElement {
 function remember(key: string, value: string): void {
   try { localStorage.setItem(`librarian:${key}`, value); } catch { /* private window */ }
 }
+
+/** The note every new library starts with (starter/About the Librarian and how to use it.md). */
+const GUIDE_NOTE = "About the Librarian and how to use it";
 
 function recall(key: string): string {
   try { return localStorage.getItem(`librarian:${key}`) ?? ""; } catch { return ""; }

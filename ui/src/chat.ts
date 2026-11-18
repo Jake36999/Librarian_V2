@@ -399,6 +399,9 @@ export class Chat {
         this.setWorking(false);
         if (event.stopped === "cancelled") {
           this.append(h("div", { class: "tool" }, "Reply stopped."));
+        } else if (event.stopped === "no_progress") {
+          this.append(h("div", { class: "error" }, String(event.error ?? "The same step was refused again and again, so this turn stopped. "),
+            " Look at the Plan pane for what the thread still needs."));
         } else if (event.stopped === "max_steps") {
           this.append(h("div", { class: "error" }, "Stopped after the step limit for one turn. ",
             "Say “continue” to carry on, or ask for a summary of where it got to."));
@@ -928,8 +931,10 @@ export class Chat {
         (c.subthreads ?? []).length ? h("li", {}, `Open: ${(c.subthreads ?? []).length} sub-threads`) : null,
         (c.next_targets ?? []).length ? h("li", {}, `Next: ${(c.next_targets ?? []).join(", ")}`) : null)),
       (session.writes ?? []).length ? h("h3", {}, "Written") : null,
-      (session.writes ?? []).length ? h("ul", {}, (session.writes as any[]).map((w) =>
-        h("li", {}, w.path ? link(w.path, pathName(w.path), this.hooks.openNote) : w.tool))) : null);
+      // One line per note: a note written twice in a thread is listed once.
+      (session.writes ?? []).length ? h("ul", {}, (session.writes as any[])
+        .filter((w, i, all) => !w.path || all.findIndex((x) => x.path === w.path) === i)
+        .map((w) => h("li", {}, w.path ? link(w.path, pathName(w.path), this.hooks.openNote) : w.tool))) : null);
   }
 
   private question(session: Session, q: any): HTMLElement {

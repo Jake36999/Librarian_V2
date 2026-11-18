@@ -2,6 +2,7 @@
 // tile (chat models by click order), and Sessions.
 
 import type { Api, ApiError } from "./api";
+import { WORKFLOWS, workflowHint } from "./workflows";
 import { COMMANDS, preference, remember } from "./commands";
 import { clear, h, when } from "./dom";
 import { orderModels } from "./model_order";
@@ -12,12 +13,11 @@ export const MODES = [
   ["auto", "Auto", "Writes within the phase gate and the vault's settings. Sensitive material still waits for you."],
 ] as const;
 
+// Titles for workflows that have no shortcut label; what each does and leaves behind is in workflows.ts.
 const ACTIONS: Record<string, [string, string]> = {
-  "review-due": [COMMANDS["review-due"], "Open parked learning sessions for concepts due for review."],
-  "clear-enrichment-backlog": [COMMANDS["clear-enrichment-backlog"], "Fetch, describe and stage everything queued. Background, cancellable."],
-  "deep-read-staged": ["Deep-read staged sources", "Read each staged source's whole text: claims and limits with pages, and lenses to review. Background, cancellable."],
-  "review-conversation": ["Review this conversation for sources", "A bounded snapshot of recent turns → suggested sources. Writes nothing."],
-  "weekly-review": ["Weekly review of a pursuit", "Its tasks, what was read and written, its desk → a drafted reflection for you to read. Writes nothing until you accept it."],
+  "deep-read-staged": ["Deep-read staged sources", ""],
+  "review-conversation": ["Review this conversation for sources", ""],
+  "weekly-review": ["Weekly review of a pursuit", ""],
 };
 
 export const PROVIDERS: Record<string, string> = {
@@ -167,7 +167,10 @@ export function renderModes(pop: Popover, api: Api, mode: string, queued: string
       fields[key] = el;
       return h("div", {}, h("label", { class: "f", for: el.id }, key === "project" ? "Pursuit" : key), el);
     }));
-    clear(pop.el, h("h4", {}, (ACTIONS[name] ?? [name])[0]), rows,
+    clear(pop.el, h("h4", {}, (ACTIONS[name] ?? [name])[0]),
+      WORKFLOWS[name] ? h("p", { class: "note" }, WORKFLOWS[name].does) : null,
+      WORKFLOWS[name]?.result ? h("p", { class: "note" }, h("strong", {}, "Result: "), WORKFLOWS[name].result) : null,
+      rows,
       h("div", { class: "row2" },
         h("button", { class: "primary", onclick: () => {
           const inputs = Object.fromEntries(Object.entries(fields).map(([k, el]) => [k, el.value.trim()]));
@@ -179,8 +182,13 @@ export function renderModes(pop: Popover, api: Api, mode: string, queued: string
   clear(pop.el,
     h("h4", {}, "Permission mode"), group,
     h("h4", { class: "gap" }, "Queue an action"), scope ? h("p",{class:"note"},scope) : null,
-    queued.map((name) => h("button", { class: "menuitem", "data-command": name, onclick: start(name) },
-      COMMANDS[name] ?? (ACTIONS[name] ?? [name])[0], h("small", {}, (ACTIONS[name] ?? ["", "A pipeline."])[1]))),
+    // What it does is the hint (hover or focus); what it leaves behind is always in view.
+    queued.map((name) => h("button", { class: "menuitem", "data-command": name, onclick: start(name),
+      title: workflowHint(name) || undefined },
+      COMMANDS[name] ?? (ACTIONS[name] ?? [name])[0],
+      WORKFLOWS[name]?.result
+        ? h("small", { class: "outcome" }, h("strong", {}, "Result: "), WORKFLOWS[name].result)
+        : h("small", {}, (ACTIONS[name] ?? ["", "A pipeline."])[1]))),
     extra.length ? h("h4", { class: "gap" }, "This vault's pipelines") : null,
     extra.map((name) => h("button", { class: "menuitem", "data-command": name, onclick: start(name) }, COMMANDS[name] ?? name)));
 }
@@ -193,6 +201,13 @@ export interface Tier { provider: string; model: string }
 const VISION = /(-vl\b|vl-|vision|ocr|gemma-[34]|qwen3\.[5-9]|llama-4|pixtral|llava|inkling|glimmer)/i;
 // Embedding models by name (the catalogue profiles none yet).
 const EMBED = /(bge|embed|e5-|gte-|nomic|minilm|mpnet|potion|jina|arctic)/i;
+// A chat role (Lead, Notes, Small tasks) needs a model that chats. The catalogue also lists
+// embedding, image, video and speech models; offering them as a Lead assigns one that cannot
+// answer. A profile's modality wins; unprofiled models are judged by name.
+const NOT_CHAT_MODALITY = /Embedding|Speech|Audio|Text_To_Image|Text_To_Video|Image_To_Image|Image_To_Video|Video/i;
+const NOT_CHAT_NAME = /(^|\/)(bge|embed|e5-|gte-|nomic|minilm|mpnet|jina|arctic)|bria\/|pixverse|lightricks|seedream|seedance|[-_\/](t2v|i2v|t2i)([-_.\/]|$)|image-max|p-image|p-video|asr|whisper|voxtral|transcrib|tts|kokoro|chatterbox|orpheus|higgs/i;
+const isChatModel = (m: any): boolean => m.profile?.modality ? !NOT_CHAT_MODALITY.test(String(m.profile.modality))
+  : !NOT_CHAT_NAME.test(String(m.id));
 const SLOT_KIND: Record<string, { label: string; fits: (m: any) => boolean }> = {
   ocr: { label: "Vision models", fits: (m) => m.profile?.modality === "Image_To_Text" || VISION.test(String(m.id)) },
   embeddings: { label: "Embedding models", fits: (m) => m.profile?.modality === "Embeddings" || EMBED.test(String(m.id)) },
@@ -490,10 +505,11 @@ export class ModelTile {
         .filter((m:any) => recent.includes(p + "/" + m.id)).map((m:any) => h("button",{class:"ghost",onclick:()=>this.pick(p,m.id)}, m.id + " · " + PROVIDERS[p])));
       clear(this.pop.el,
         h("div", { class: "tierbar" }, h("strong", {}, `Choose the ${slot.label} model`),
-          slot.role !== undefined ? null : h("span", { class: "dim" }, this.showAll ? "Every model is listed. Click one."
+          h("span", { class: "dim" }, this.showAll ? "Every model is listed. Click one."
+            : slot.role !== undefined ? "Chat models are listed (embedding, image, video and speech models are hidden). Click one."
             : `${SLOT_KIND[slot.name]?.label ?? "Matching models"} are listed (by profile, or by name). Click one.`),
-          slot.role !== undefined ? null : h("button", { class: "ghost", onclick: () => { this.showAll = !this.showAll; this.render(); } },
-            this.showAll ? `${SLOT_KIND[slot.name]?.label ?? "Matching models"} only` : "Show all"),
+          h("button", { class: "ghost", onclick: () => { this.showAll = !this.showAll; this.render(); } },
+            this.showAll ? (slot.role !== undefined ? "Chat models only" : `${SLOT_KIND[slot.name]?.label ?? "Matching models"} only`) : "Show all"),
           h("button", { class: "ghost", onclick: () => { this.endSlot(); slot.done(); } }, "Cancel")),
         h("button", {class:"ghost",onclick:()=>{remember("model-view",quick ? "detailed":"quick");this.render();}},quick ? "Compare all models" : "Quick selection"),
         quick ? h("div",{},h("h4",{},"Recently assigned to this role"),recentOptions.length ? recentOptions : h("p",{},"No recent selection is available. Choose Compare all models.")) : null,
@@ -537,7 +553,7 @@ export class ModelTile {
     clear(host, Object.entries(PROVIDERS).map(([p, label]) => {
       const listing = this.listings.get(p) ?? { status: "…", models: [] };
       const models = orderModels((listing.models as any[]).filter(matches)
-        .filter((m) => !this.slot || this.showAll || (SLOT_KIND[this.slot.name]?.fits(m) ?? true)), next);
+        .filter((m) => this.showAll || (this.slot && SLOT_KIND[this.slot.name] ? SLOT_KIND[this.slot.name].fits(m) : isChatModel(m))), next);
       const status = listing.status === "ready" ? `${listing.models.length} model${listing.models.length === 1 ? "" : "s"}`
         : listing.status === "no key" ? "no key saved (Settings → Providers & keys)"
         : listing.status === "offline" ? "offline: the local server is not running"

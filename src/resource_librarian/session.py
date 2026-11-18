@@ -419,7 +419,7 @@ ASKS = {
                    "the sources, grounded like the scribe.",
     "next": "When should this be reviewed again, and is there a next session to propose?",
     "manage": "Which open requirement comes next, and what one bounded step serves it? "
-              "Record it with update_plan(proposal={'requirements': [...], 'step': ...}); "
+              "Record it with update_plan(fields={'proposal': {'requirements': [...], 'step': ...}}); "
               "ask the person instead if the requirement is unclear.",
     "preflight": "The Core admits the proposal as a contract against the current state, "
                  "or refuses it with the reason.",
@@ -799,12 +799,12 @@ class Session:
         if p == "frame":
             if self.purpose in ("add_project", "suggest", "start_pursuit"):
                 if not self.project:
-                    out.append("no project set: update_plan(project=...) or create_project")
+                    out.append("no project set: update_plan(fields={'project': ...}) or create_project")
                 elif not vault.project_note(self.project).exists():
                     out.append(f"no Project note for {self.project!r}: create_project")
             else:
                 if not (self.question or self.project):
-                    out.append("no question set: update_plan(question=...)")
+                    out.append("no question set: update_plan(fields={'question': ...})")
                 if self.project and not vault.project_note(self.project).exists():
                     # 2026-10-02: an explore thread named a project that had no note, left
                     # Frame, and spent a dozen calls in Need where create_project is not
@@ -813,12 +813,12 @@ class Session:
                                f"create_project(name={self.project!r}, ...) now, or "
                                f"update_plan(fields={{'project': ''}}) to work without one")
         elif p == "ingest" and not _filled(self.plan.get("ingested")):
-            out.append("record what the person already has: update_plan(ingested=...) "
+            out.append("record what the person already has: update_plan(fields={'ingested': ...}) "
                        "(a list, or 'none')")
         elif p == "map":
             if "map" not in self.plan:
                 out.append("record the orientation: search with intent 'orient', then "
-                           "update_plan(map=...)")
+                           "update_plan(fields={'map': ...})")
             if self.purpose == "suggest" and "project_read" not in self.plan:
                 from .projects import root_for
                 try:
@@ -860,29 +860,29 @@ class Session:
                     out.append(f"promote the staged offering: promote_offering(offering="
                                f"'{staged[-1]}') - it is not in the vault until promoted")
         elif p == "check_in" and not (self.question or self.project):
-            out.append("say what you are working on: update_plan(question=..., project=...)")
+            out.append("say what you are working on: update_plan(fields={'question': ..., 'project': ...})")
         elif p == "find" and not self.uses and "nothing_found" not in self.plan:
-            out.append("log the sources you used (log_use), or update_plan(nothing_found=...)")
+            out.append("log the sources you used (log_use), or update_plan(fields={'nothing_found': ...})")
         elif p == "check_out":
             if self.purpose == "apply":
                 if not any(w["tool"] == "record_application" for w in self.writes) and \
                         "no_application" not in self.plan:
-                    out.append("record_application, or update_plan(no_application=reason)")
+                    out.append("record_application, or update_plan(fields={'no_application': reason})")
             elif self.purpose != "start_pursuit":
                 open_briefs = [b.id for b in self.briefs.values() if b.status == "open"]
                 if open_briefs:
                     out.append(f"close brief(s) {', '.join(open_briefs)}: close_brief")
         # -- start_pursuit (W1) ------------------------------------------------
         elif p == "inventory" and not _filled(self.plan.get("inventory")):
-            out.append("record the kind-specific inventory: update_plan(inventory=...)")
+            out.append("record the kind-specific inventory: update_plan(fields={'inventory': ...})")
         elif p == "plan":
             if "no_dates" not in self.plan and not _has_dated_task(vault, self.project):
                 out.append("add at least one dated milestone (task_add), or "
-                           "update_plan(no_dates=reason)")
+                           "update_plan(fields={'no_dates': reason})")
         elif p == "seed":
             seeded = self.plan.get("ingested")
             if not _filled(seeded):
-                out.append("record what was seeded: update_plan(ingested=...) (a list, or "
+                out.append("record what was seeded: update_plan(fields={'ingested': ...}) (a list, or "
                            "'none')")
             elif not _is_none(seeded) and not (self.called.get("ingest") or
                                                self.called.get("queue_source")):
@@ -893,13 +893,13 @@ class Session:
         # -- learn (W2) ---------------------------------------------------------
         elif p == "goal" and not _filled(self.plan.get("goal")):
             out.append("what do they want to be able to do, and by when: "
-                       "update_plan(goal=..., deadline=...)")
+                       "update_plan(fields={'goal': ..., 'deadline': ...})")
         elif p == "baseline" and not _filled(self.plan.get("baseline")):
             out.append("2-3 diagnostic questions before teaching: ask_user, then "
-                       "update_plan(baseline=...)")
+                       "update_plan(fields={'baseline': ...})")
         elif p == "focus" and "focus" not in self.plan:
             out.append("read what the library holds, then choose the focus concepts: "
-                       "update_plan(focus=[...])")
+                       "update_plan(fields={'focus': [...]})")
         elif p == "practice" and "practice_stopped" not in self.plan:
             # A spent budget does not count as practice: the phase stays open,
             # and the envelope says so, until every focus concept has its own
@@ -911,23 +911,23 @@ class Session:
             remaining = [c for c in focus if str(c).casefold() not in practised]
             if remaining:
                 out.append(f"practise the remaining focus concept(s): {', '.join(remaining)} "
-                           f"(or update_plan(practice_stopped=reason))")
+                           f"(or update_plan(fields={{'practice_stopped': reason}}))")
         elif p == "consolidate" and ("consolidated" not in self.plan or not any(
                 w.get("tool") == "understanding_record" and w.get("phase") == "consolidate"
                 for w in self.writes)):
             # The person's own explanation is the point of this phase: a flag
             # without an understanding_record made here is not consolidation.
             out.append("let them explain it in their own words, critique it against the "
-                       "sources, then understanding_record and update_plan(consolidated=...)")
+                       "sources, then understanding_record and update_plan(fields={'consolidated': ...})")
         # -- add_capability (§4 F2) ----------------------------------------------
         elif p == "candidate" and not _filled(self.plan.get("candidate")):
-            out.append("name the candidate: update_plan(candidate=...) - a curated server "
+            out.append("name the candidate: update_plan(fields={'candidate': ...}) - a curated server "
                        "(capability_candidates) or a repository URL the person gave")
         elif p == "assess":
             if not self.called.get("ingest"):
                 out.append("ingest the candidate's repository, so it is read as a source")
             elif not _filled(self.plan.get("assessment")):
-                out.append("record the assessment: update_plan(assessment=...) - licence, "
+                out.append("record the assessment: update_plan(fields={'assessment': ...}) - licence, "
                            "maintenance, claims, caveats, what it can reach")
         elif p == "propose" and not self.capabilities:
             out.append("propose its exact definition: capability_propose(...)")
@@ -939,7 +939,7 @@ class Session:
                               not _review_scheduled(vault, self.plan.get("focus") or [])):
             out.append("review dates as tasks - task_add(text='Review: <concept>', due=..., "
                        "heading='Understanding') - or enable the Spaced Repetition plugin, "
-                       "then update_plan(scheduled=...)")
+                       "then update_plan(fields={'scheduled': ...})")
         if p in ASSUMPTION_PHASES and not self.assumptions_recorded():
             out.append("before committing: record what you are assuming and how each was "
                        "settled - record_assumptions([{assumption, settled_by, how}]), where "
@@ -962,13 +962,13 @@ class Session:
             proposal = self.plan.get("proposal")
             named = proposal.get("requirements") if isinstance(proposal, dict) else None
             if not named or not isinstance(named, list):
-                return ["propose one bounded step: update_plan(proposal={'requirements': "
-                        "[...], 'step': '...'})"]
+                return ["propose one bounded step: update_plan(fields={'proposal': "
+                        "{'requirements': [...], 'step': '...'}})"]
             # A model can send anything here (the G5 pilot sent objects): name
             # the shape instead of failing on it.
             if not all(isinstance(r, str) for r in named):
                 return ["the proposal names requirements by id, as strings: "
-                        "update_plan(proposal={'requirements': ['R1'], 'step': '...'})"]
+                        "update_plan(fields={'proposal': {'requirements': ['R1'], 'step': '...'}})"]
             unknown = [r for r in named if r not in audit.requirements]
             if unknown:
                 return [f"the proposal names unknown requirement(s): {', '.join(map(str, unknown))}"]

@@ -617,3 +617,34 @@ def test_usage_is_not_available_for_other_providers():
         providers.OpenAICompatible("https://api.openai.com/v1", "gpt", name="openai").usage()
     with pytest.raises(providers.ProviderError):
         providers.Scripted(lambda *a: None).usage()
+
+
+class _RepeatModel(providers.Provider):
+    """Opens an explore thread, then asks to advance again and again."""
+    name = "repeat"
+
+    def __init__(self):
+        self.calls = 0
+
+    def chat(self, system, messages, tools, max_tokens=4096, temperature=None):
+        self.calls += 1
+        if self.calls == 1:
+            return Reply(tool_calls=[ToolCall("c1", "open_session",
+                                              {"purpose": "explore", "question": "q"})])
+        return Reply(tool_calls=[ToolCall(f"c{self.calls}", "advance", {})])
+
+
+def test_a_turn_that_keeps_getting_the_same_refusal_stops_with_the_cause(tmp_path):
+    """2026-11-18: a model refused `advance` 15 times in Map. Refused advances cost no phase
+    budget, so only the step cap ended the turn. Four identical refusals in a row now end it,
+    saying what was refused."""
+    vault = library(tmp_path / "v")
+    model = _RepeatModel()
+    events = []
+    loop = Loop(vault, model, max_steps=40, on_event=events.append,
+                extras={"use_tool_bundles": False})
+    turn = loop.send("Explore host state.")
+    assert turn.stopped == "no_progress", turn.stopped
+    assert model.calls < 12, model.calls                       # not the step cap
+    assert "advance" in turn.error and "not finished" in turn.error, turn.error
+    assert any(e.get("type") == "stopped" and e.get("reason") == "no_progress" for e in events)

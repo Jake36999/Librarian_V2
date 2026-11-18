@@ -1,5 +1,6 @@
 import type { Api } from "./api";
 import { clear, h } from "./dom";
+import { WORKFLOWS } from "./workflows";
 
 export const COMMANDS: Record<string, string> = {
   settings: "Open Settings", search: "Focus Search", staging: "Open Staging",
@@ -39,7 +40,11 @@ export function shortcutPage(native: boolean, open: (id: string) => void, api: A
       e.stopPropagation(); open(id);
     }}, "Open") as HTMLButtonElement;
     controls.set(id,{hint,button});
-    return h("div", {class:"settings-role"}, h("div",{},h("strong", {}, label),hint), native ? null : binding,button);
+    // Every shortcut says what it does (and what it leaves behind); `hint` below it is the live status.
+    const info = WORKFLOWS[id];
+    const what = info ? h("small", {class:"cmd-desc"}, info.does,
+      info.result ? h("span", {}, " ", h("strong", {}, "Result: "), info.result) : null) : null;
+    return h("div", {class:"settings-role"}, h("div",{},h("strong", {}, label),what,hint), native ? null : binding,button);
   };
   clear(panel, h("p", {}, native ? "Assign keys in Obsidian Settings → Hotkeys. Search for Librarian."
     : "Shortcuts apply to this browser address. Select Unassigned to clear a binding. Workflow shortcuts open the action for review."),

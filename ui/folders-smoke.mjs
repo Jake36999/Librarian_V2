@@ -23,12 +23,16 @@ try {
   assert.equal(await card.getByLabel('Graph').inputValue(), 'Wave L Fixture-third-party');
   await page.screenshot({path: `${artifacts}/folders-staged.png`, fullPage:true});
   await card.getByRole('button', {name:'Accept folder decision', exact:true}).click();
-  await card.getByText('Accepted by person', {exact:true}).waitFor({timeout:30000});
+  // A decided card leaves the waiting list, as a decided source does, and moves to Accepted.
+  await page.getByText(/^Accepted third_party_alpha\./).waitFor({timeout:30000});
+  assert.equal(await page.getByRole('article', {name:'third_party_alpha'}).count(), 0);
   await page.reload();
   await page.getByRole('tab', {name:'Staging',exact:true}).click();
   await page.getByRole('button', {name:/^Folders/}).click();
+  await page.getByLabel('Which folders').selectOption('accepted');
   await page.getByRole('article', {name:'third_party_alpha'}).getByText('Accepted by person', {exact:true}).waitFor();
   await page.screenshot({path:`${artifacts}/folders-accepted.png`, fullPage:true});
+  await page.getByLabel('Which folders').selectOption('waiting');
   if (source) {
     assert.ok(resolve(source).toLowerCase().startsWith(resolve('G:/Libraries/_qa').toLowerCase() + sep));
     writeFileSync(resolve(source, 'src/processor.py'), 'def process(value):\n    return value + 2\n');
@@ -39,7 +43,9 @@ try {
     await page.screenshot({path:`${artifacts}/folders-stale.png`, fullPage:true});
     await page.getByLabel('Folder to survey').fill(source);
     await page.getByRole('button', {name:'Survey folders', exact:true}).click();
+    await page.getByLabel('Which folders').selectOption('accepted');
     await page.getByRole('article', {name:'third_party_alpha'}).getByText('Accepted by person', {exact:true}).waitFor();
+    await page.getByLabel('Which folders').selectOption('waiting');
     await page.getByRole('article', {name:'src', exact:true}).getByText('Waiting for a person', {exact:true}).waitFor();
   }
   assert.deepEqual(errors, []);

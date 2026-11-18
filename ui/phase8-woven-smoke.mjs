@@ -12,6 +12,7 @@ try {
  await page.getByRole('tab',{name:'Staging',exact:true}).click();
  await page.getByRole('button',{name:/^Folders/}).click();
  await page.getByRole('heading',{name:'Folder purposes'}).waitFor();
+ await page.getByLabel('Which folders').selectOption('accepted');
  if(await page.getByText('Accepted by person',{exact:true}).count()!==2)throw Error('Two accepted root decisions');
  await page.screenshot({path:path.join(base,'person-folders.png'),fullPage:true});
  await page.click('.lib-app nav button:has-text("Search")');

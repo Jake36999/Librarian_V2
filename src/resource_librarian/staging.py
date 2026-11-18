@@ -283,7 +283,11 @@ def review(store: StagingStore, item_id: str, endpoint: clerk.Endpoint | None,
     draft, sensitive = results[0], results[1]
     out: dict[str, Any] = {"reviewed_at": now_iso(),
                            "draft": {"status": draft.status, **draft.value,
-                                     "dropped": draft.dropped, "model": draft.model}}
+                                     "dropped": draft.dropped, "model": draft.model,
+                                     # why it waits (e.g. the route is not yet qualified for the
+                                     # Clerk), so a page need not guess "no clerk model"
+                                     **({"reason": draft.problems}
+                                        if draft.status == "queued" and draft.problems else {})}}
     if sensitive.ok and sensitive.value.get("sensitivity") == "review_required":
         item["sensitivity"] = "review"
         out["sensitivity"] = sensitive.value.get("reason", "")

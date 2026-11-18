@@ -102,6 +102,7 @@ export class Staging {
   private counts?: Record<string, Record<string, number>>;
   private waitingOfferings?: number;
   private listRequest = 0;
+  private listLimit = 50;                       // how many rows the list asks for; "Show more" raises it
   private paintKinds: () => void = () => {};
   private evidenceMode = h("select", {"aria-label":"Review evidence layout"}, h("option",{value:"beside"},"Evidence beside draft"), h("option",{value:"demand"},"Evidence on demand")) as HTMLSelectElement;
   private stopped = false;
@@ -115,7 +116,7 @@ export class Staging {
               private routeHint: () => string = () => "", private libraryKey: () => string = () => "") {
     const kinds = h("div", { class: "seg", role: "group", "aria-label": "Kind" });
     const statuses = h("select", { "aria-label": "Which sources", onchange: () => {
-      this.status = statuses.value; this.selected = ""; this.savePosition(); void this.load(true);
+      this.status = statuses.value; this.selected = ""; this.listLimit = 50; this.savePosition(); void this.load(true);
     } }, [["staged", "Captured, to review"], ["approved", "Approved, awaiting ingestion"],
           ["enriched", "Ingested, ready to accept"], ["partial", "Ingested with gaps"],
           ["queued", "Queued for capture"],
@@ -128,7 +129,7 @@ export class Staging {
     const paint = () => {
       const focusedKind = kinds.contains(document.activeElement) ? (document.activeElement as HTMLElement).dataset.kind : "";
       clear(kinds, [["source", "Sources"], ["folder", "Folders"], ["lens", "Lenses"], ["concept", "Concepts"], ["topic", "Topics"], ["offering", "Offerings"], ["import", "From V1"]].map(([v, label]) =>
-        h("button", { "data-kind": v, "aria-pressed": String(this.kind === v), onclick: () => { this.selected = ""; this.kind = v; this.savePosition(); paint(); void this.load(true); } }, label, h("span", { class: "queue-count", title: v === "source" ? "Sources across all waiting states; choose a filter below" : "Waiting for review" }, String(v === "offering" ? this.waitingOfferings ?? "…" : this.counts ? v === 'source' ? sourceWaiting() : this.counts[v]?.staged ?? 0 : "…")))));
+        h("button", { "data-kind": v, "aria-pressed": String(this.kind === v), onclick: () => { this.selected = ""; this.kind = v; this.listLimit = 50; this.savePosition(); paint(); void this.load(true); } }, label, h("span", { class: "queue-count", title: v === "source" ? "Sources across all waiting states; choose a filter below" : "Waiting for review" }, String(v === "offering" ? this.waitingOfferings ?? "…" : this.counts ? v === 'source' ? sourceWaiting() : this.counts[v]?.staged ?? 0 : "…")))));
       if (focusedKind) kinds.querySelector<HTMLButtonElement>(`[data-kind="${focusedKind}"]`)?.focus({preventScroll:true});
       scan.style.display = this.kind === "concept" ? "" : "none";
       propose.style.display = this.kind === "topic" ? "" : "none";
@@ -253,8 +254,13 @@ export class Staging {
     if (this.kind === 'folder') {
       clear(this.detail); this.list.style.gridColumn = '1 / -1';
       const folderHost=h('div');
+      // The badge is the same "waiting" count the list below filters to.
+      const refreshCounts = () => void this.api.tool("staging_list", { kind: "folder", status: "staged", limit: 1 })
+        .then(counted => { if (!this.stopped && counted.counts) { this.counts = counted.counts; this.paintKinds(); } })
+        .catch(() => {});
       try {
-        await folderReview(this.api, folderHost);
+        refreshCounts();
+        await folderReview(this.api, folderHost, '', refreshCounts);
         if(request === this.listRequest && this.kind === 'folder' && !this.stopped)clear(this.list,folderHost);
       }
       catch (e) { if(request === this.listRequest)clear(this.list, h('p', {class:'error'}, (e as Error).message)); }
@@ -264,7 +270,7 @@ export class Staging {
     if (this.kind === "offering") return this.loadOfferings(request);
     try {
       const status = this.kind === "source" ? this.status : "staged";
-      const out = await this.api.tool("staging_list", { kind: this.kind, status, limit: 50 });
+      const out = await this.api.tool("staging_list", { kind: this.kind, status, limit: this.listLimit });
       if (request !== this.listRequest || this.stopped) return;
       if (out.error) throw new Error(String(out.detail ?? out.error));
       this.counts = out.counts;
@@ -277,6 +283,7 @@ export class Staging {
         }).catch(() => {});
       }
       const items = (out.items ?? []) as any[];
+      const total = Number(out.total ?? items.length);
       // Ticks belong to this list as shown: a source no longer in it is unticked.
       this.rows = new Map(items.map(item => [String(item.id), item]));
       this.bulkStatusFilter = status;
@@ -317,7 +324,11 @@ export class Staging {
             ? [`failed at ${item.failure?.stage ?? "?"}`]
             : [item.topic, item.drafted ? "drafted" : item.reviewed ? "draft queued" : "no draft yet",
                item.deep_read ? `read ${item.deep_read}` : "", item.fit]).filter(Boolean).join(" · ")))))
-          : h("p", { class: "dim" }, "Nothing here."));
+          : h("p", { class: "dim" }, "Nothing here."),
+        // The list is a page: say so, and let the rest be reached (the header counts them all).
+        total > items.length ? h("p", { class: "note" }, `Showing ${items.length} of ${total}. `,
+          h("button", { class: "ghost", type: "button", onclick: () => { this.listLimit += 50; void this.load(); } },
+            "Show 50 more")) : null);
       await this.finishRestore(items.map(item => item.id));
       if (!this.selected && !this.detailLocked) {
         clear(this.detail, h("p", { class: "dim" }, "Choose an item to see its draft beside its evidence."));
@@ -500,7 +511,9 @@ export class Staging {
       if (onModel) {
         rows.push(h("div", { class: "row2 tight" },
           h("span", {}, `${onModel} source${onModel === 1 ? " has" : "s have"} reading steps that waited for a model. `
-            + "With models chosen (Choose models), run just those steps:"),
+            + "With models chosen (",
+            h("button", { class: "link", type: "button", onclick: () => this.openModels() }, "Choose models"),
+            "), run just those steps:"),
           start("retry", "Run the waiting steps", { retry_waiting: true }, "ghost")));
       }
     }
@@ -607,8 +620,14 @@ export class Staging {
       try {
         const out = await this.api.tool("staging_review", { item_id: id });
         if (out.error) throw new Error(String(out.detail ?? out.error));
-        if (out.draft?.status === "queued") clear(status, h("p", { class: "dim" }, "Queued: no clerk model is available. Choose a tier 3 model, or run the clerk agent."));
-        else await this.show(id);
+        // Queued or not, the review wrote to the item, so show it again: the page would otherwise
+        // keep the revision from before and the next Accept would fail as a stale write.
+        await this.show(id);
+        if (out.draft?.status === "queued") {
+          const why = out.draft.reason ? String(out.draft.reason) : "no clerk model is available";
+          this.detail.prepend(h("p", { class: "warn", role: "status" },
+            `Queued: the clerk could not run (${why}). Choose or qualify a Small tasks model in Settings → Models & services, or run the clerk agent.`));
+        }
       } catch (e) {
         clear(status, h("p", { class: "error" }, (e as Error).message));
       }
@@ -690,7 +709,13 @@ export class Staging {
     const capture = h("div", {},
       Object.keys(intakeInfo.stages ?? {}).length ? h("p", { class: "dim" }, `Capture — ${ledger(intakeInfo.stages)}`) : null,
       Object.keys(proc.stages ?? {}).length ? h("p", { class: "dim" }, `Batch — ${ledger(proc.stages)}`) : null,
-      q.verdict && q.verdict !== "usable" ? h("p", { class: "warn" }, `${q.reason}. Next: ${q.next}.`) : null,
+      // What capture found stays true, but its "Next:" is advice for a source the batch has not
+      // yet run on. Once every batch stage is complete the step has happened.
+      q.verdict && q.verdict !== "usable"
+        ? (Object.keys(proc.stages ?? {}).length && Object.values(proc.stages as Record<string, string>).every(v => v === "complete")
+          ? h("p", { class: "note" }, `At capture: ${q.reason}. The batch has since run.`)
+          : h("p", { class: "warn" }, `${q.reason}. Next: ${q.next}.`))
+        : null,
       item.possible_duplicate_of ? h("p", { class: "warn" }, `Possibly the same work as ${item.possible_duplicate_of}.`) : null,
       item.fit_screen ? h("p", { class: "note" }, `Screened against ${item.found_for?.brief ?? "its brief"}: `,
         h("strong", {}, String(item.fit_screen.verdict ?? item.fit_screen.status ?? "")),
@@ -936,7 +961,7 @@ export class Staging {
   }
 
   /** A proposed topic, as the library's own sources suggest it (R8). It is reviewed here;
-   * accepting, renaming or merging it into the taxonomy is done in Settings → Library. */
+   * accepting, renaming or merging it into the taxonomy is done in Settings → Topics & organisation. */
   /** V1's Applications and branch offerings: the note as V1 wrote it, into its V2 folder. */
   private showImport(item: any): void {
     const reason = h("input", { type: "text", placeholder: "Reason (for a rejection or deferral)",
@@ -992,14 +1017,14 @@ export class Staging {
       h("p", {}, item.what_belongs ?? ""),
       item.acceptance_progress ? h("p", { class: "warn" },
         `Partly applied. Completed: ${(item.acceptance_progress.completed_paths ?? []).join(", ")}. `
-        + "Finish acceptance in Settings → Library after review. Rejecting or deferring does not undo those writes.") : null,
+        + "Finish acceptance in Settings → Topics & organisation after review. Rejecting or deferring does not undo those writes.") : null,
       item.duplicate_of ? h("p", { class: "warn" }, `Close to a topic you already have: ${item.duplicate_of}. Merge rather than add?`) : null,
       h("p", { class: "dim" }, `${item.coverage?.sources ?? members.length} of the ${item.coverage?.of ?? "?"} sources considered · proposed by ${item.proposed_by ?? "the clerk"}`),
       (item.aliases ?? []).length ? h("p", {}, h("strong", {}, "Also called: "), (item.aliases as string[]).join(", ")) : null,
       h("h4", {}, "Sources it would hold"),
       h("p", {}, members.flatMap((s, i) => [i ? ", " : "", h("a", { class: "wl", href: "#",
         onclick: (e: Event) => { e.preventDefault(); this.openNote(s); } }, s)])),
-      h("p", { class: "note" }, "A proposal only: the topic list changes when you accept, rename or merge it in Settings → Library."),
+      h("p", { class: "note" }, "A proposal only: the topic list changes when you accept, rename or merge it in Settings → Topics & organisation."),
       reason,
       h("div", { class: "row2" },
         h("button", { class: "ghost", onclick: decide("reject") }, "Reject"),

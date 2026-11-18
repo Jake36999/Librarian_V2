@@ -86,6 +86,9 @@ def init(folder: Path | str, name: str = "", profile: str = "") -> InitReport:
             write(rel, text.replace("{name}", title).replace("{created}", created[:10]))
     write("About/Rules.md", "---\ntype: \"about\"\nstatus: \"active\"\ngenerated: true\n---\n\n"
           + rules.render_markdown())
+    from . import reference
+    write("About/Tool Reference.md", "---\ntype: \"about\"\nstatus: \"active\"\ngenerated: true\n---\n\n"
+          + reference.render_markdown())
 
     config = {section: dict(values) for section, values in DEFAULT_CONFIG.items()}
     config["vault"].update(name=title, created=created)

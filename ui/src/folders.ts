@@ -4,14 +4,26 @@ import { clear, h } from './dom';
 const purposes = ['own-current', 'own-legacy', 'own-docs', 'research-docs', 'third-party',
   'data', 'logs/transcripts', 'exclude'];
 
-/** The person's second trust tier. Suggestions and drafts never accept themselves. */
-export async function folderReview(api: Api, container: HTMLElement): Promise<void> {
+// Like the Sources list, the folder list shows what is waiting by default; decided cards
+// move to their own filter instead of staying in the queue. Kept across re-renders.
+let folderFilter: 'waiting' | 'accepted' = 'waiting';
+
+/** The person's second trust tier. Suggestions and drafts never accept themselves.
+ * `notice` is shown in the status line after a re-render; `onDecided` lets the host
+ * refresh its waiting counts once a card has been accepted. */
+export async function folderReview(api: Api, container: HTMLElement, notice = '',
+                                   onDecided: () => void = () => {}): Promise<void> {
   const out = await api.get('/api/folders');
-  const status = h('p', {role:'status'});
+  const rerender = (message = '') => folderReview(api, container, message, onDecided);
+  const status = h('p', {role:'status'}, notice);
+  const filter = h('select', {'aria-label':'Which folders', onchange: () => {
+    folderFilter = filter.value as typeof folderFilter; void rerender();
+  }}, h('option', {value:'waiting'}, 'Waiting for a person'), h('option', {value:'accepted'}, 'Accepted')) as HTMLSelectElement;
+  filter.value = folderFilter;
   const source = h('input', {type:'text', 'aria-label':'Folder to survey', placeholder:'Full path to an attached source folder'}) as HTMLInputElement;
   const scan = h('button', {type:'button', disabled:!out.enabled, onclick: async () => {
     (scan as HTMLButtonElement).disabled = true; status.textContent = 'Surveying metadata…';
-    try { await api.post('/api/folders/survey', {path:source.value}); await folderReview(api, container); }
+    try { await api.post('/api/folders/survey', {path:source.value}); await rerender(); }
     catch (e) { status.textContent = (e as Error).message; }
     finally { (scan as HTMLButtonElement).disabled = false; }
   }}, 'Survey folders');
@@ -31,13 +43,14 @@ export async function folderReview(api: Api, container: HTMLElement): Promise<vo
       status.textContent = 'Accepting unambiguous folders…';
       try {
         const out = await api.post('/api/folders/accept-policy', {root: source.value.trim()});
-        status.textContent = `Accepted ${out.accepted.length} as suggested; ${out.held.length} held for you.`;
+        onDecided();
+        await rerender(`Accepted ${out.accepted.length} as suggested; ${out.held.length} held for you.`);
       } catch (e) { status.textContent = (e as Error).message; }
     }}, 'Accept unambiguous folders');
   clear(container, h('h2', {}, 'Folder purposes'),
     h('p', {class:'note'}, 'Suggestions are not decisions. Accept each folder to assign its graph and access. Attached sources always remain read-only.'),
     !out.enabled ? h('p', {class:'note'}, 'Geo-Grapher is disabled. An operator can enable the pinned installed wheel for this library.') : null,
-    h('div', {class:'view-head'}, source, scan, approveBatch, acceptPolicy), status,
+    h('div', {class:'view-head'}, source, scan, approveBatch, acceptPolicy), filter, status,
     h('details', {}, h('summary', {}, `${refused.count} credential-like paths refused — names only`),
       h('ul', {}, (refused.paths as string[]).map(path => h('li', {}, path)))));
   const cards = h('div', {class:'folder-cards'}); container.append(cards);
@@ -49,7 +62,8 @@ export async function folderReview(api: Api, container: HTMLElement): Promise<vo
   if (covered.length) container.append(h('details', {class:'inherited-folders'},
     h('summary', {}, `${covered.length} subfolders inherit their parent's suggestion — covered by the parent's decision; open to override one`),
     inheritedCards));
-  for (const card of out.cards ?? []) {
+  const shown = all.filter(c => (c.status === 'accepted') === (folderFilter === 'accepted'));
+  for (const card of shown) {
     const accepted = card.status === 'accepted';
     const article = h('article', {class:'folder-card', 'aria-label':card.path});
     const include = h('input', {type:'checkbox', 'aria-label':`Include ${card.path} in processing batch`,
@@ -80,7 +94,8 @@ export async function folderReview(api: Api, container: HTMLElement): Promise<vo
         await api.post('/api/folders/accept', {id:card.id, folder_fingerprint:card.folder_fingerprint,
           purpose:purpose.value, graph:graph.value, description:description.value,
           authorship:authorship.value || null});
-        outcome.textContent = 'Accepted by person';
+        onDecided();
+        await rerender(`Accepted ${card.path}. It now appears under Accepted.`);
       } catch (e) { outcome.textContent = (e as Error).message; (accept as HTMLButtonElement).disabled = false; }
     }}, 'Accept folder decision');
     const draftStatus = h('p', {class:'note'}, accepted ? 'Person-reviewed description' :
@@ -118,5 +133,7 @@ export async function folderReview(api: Api, container: HTMLElement): Promise<vo
         h('label', {}, approval, ' Approve one paid folder draft'), draft), outcome, accept);
     (covered.includes(card) ? inheritedCards : cards).append(article);
   }
-  if (!(out.cards ?? []).length) container.append(h('p', {class:'dim'}, 'No folder cards yet. Survey an attached content root to stage its suggestions.'));
+  if (!all.length) container.append(h('p', {class:'dim'}, 'No folder cards yet. Survey an attached content root to stage its suggestions.'));
+  else if (!shown.length) container.append(h('p', {class:'dim'}, folderFilter === 'waiting'
+    ? `0 waiting. Nothing here. ${all.length} accepted: choose Accepted to see them.` : 'No accepted folders yet.'));
 }

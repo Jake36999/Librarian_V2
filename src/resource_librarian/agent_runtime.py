@@ -19,7 +19,11 @@ from .coordination import atomic_write_text
 from .registry import REGISTRY, TIERS, Context, ToolSpec
 from .vault import now_iso
 
-MAX_BUNDLE_TOOLS = 12
+# A phase offers its declared bundle, up to two session-aware required actions and the three tail
+# tools (read_result, macro_run, macro_plan). The cap clips from the end, so it must hold all of
+# them: at 12, Map, Search and Judge would have silently lost their tail tools once the gate tools
+# were added (tests/test_phase_bundles.py).
+MAX_BUNDLE_TOOLS = 16
 
 
 class ProfileCapacityError(RuntimeError):
@@ -475,24 +479,74 @@ BUNDLES = {
     "frame": ToolBundle("frame", "Frame a question and inspect the current library",
                          ("session_status", "get_note", "search", "topics_list", "filters",
                           "update_plan", "advance", "ask_user")),
+    # Every phase's exit gate (`Session.missing`) names what the model must do to leave it. A bundle
+    # that omits one of those tools can never be left: Map asked for update_plan, Need for
+    # open_brief, Search for research_round/checkpoint, Judge for decide, Synthesise for
+    # promote_offering, Check-out for close_brief (found 2026-11-18). `scripts/phase_walk.py` and
+    # tests/test_phase_bundles.py check this for every phase of every purpose.
     "map": ToolBundle("map", "Map relevant sources and structure",
                        ("get_note", "search", "read_source_file", "source_verification_plan", "request_raw_source_access",
-                        "record_assumptions", "advance", "ask_user", "dispatch_plan")),
+                        "record_assumptions", "update_plan", "advance", "ask_user", "dispatch_plan")),
     "need": ToolBundle("need", "State and test the evidence needed next",
                         ("search", "get_note", "read_source_file", "record_assumptions",
-                         "update_plan", "advance", "ask_user")),
+                         "open_brief", "update_plan", "advance", "ask_user")),
     "search": ToolBundle("search", "Find, inspect, and rank evidence",
                           ("search", "get_note", "read_source_file", "web_search", "ingest",
-                           "queue_source", "advance", "ask_user")),
+                           "queue_source", "research_round", "checkpoint", "advance", "ask_user")),
     "judge": ToolBundle("judge", "Judge staged and source evidence",
                          ("get_note", "search", "staging_list", "staging_show", "staging_review",
-                          "provenance_check", "advance", "ask_user")),
+                          "provenance_check", "decide", "record_assumptions", "advance",
+                          "ask_user")),
     "synthesise": ToolBundle("synthesise", "Record a grounded synthesis or identify the gap",
                               ("get_note", "search", "record_synthesis", "record_trace",
-                               "draft_offering", "advance", "ask_user")),
+                               "draft_offering", "promote_offering", "advance", "ask_user")),
     "check-out": ToolBundle("check-out", "Make a person-reviewed outcome concrete",
-                             ("get_note", "draft_offering", "record_application", "close_session",
-                              "ask_user", "staging_list")),
+                             ("get_note", "draft_offering", "record_application", "close_brief",
+                              "close_session", "update_plan", "ask_user", "staging_list")),
+    # The phases of the other purposes. Without an entry here a phase fell back to the `session`
+    # bundle (open/resume/advance/ask only), so none of its work could be done in the app.
+    "ingest": ToolBundle("ingest", "Record and bring in what the person already has",
+                          ("update_plan", "search", "get_note", "ingest", "queue_source",
+                           "advance", "ask_user")),
+    "check-in": ToolBundle("check-in", "Say what is being worked on and what is needed",
+                            ("update_plan", "search", "get_note", "advance", "ask_user")),
+    "find": ToolBundle("find", "Find, open and use sources for the work in hand",
+                        ("search", "get_note", "read_source_file", "log_use", "update_plan",
+                         "advance", "ask_user")),
+    "inventory": ToolBundle("inventory", "Take the kind-specific inventory of a pursuit",
+                             ("update_plan", "search", "get_note", "read_source_file",
+                              "record_assumptions", "advance", "ask_user")),
+    "plan": ToolBundle("plan", "Set the milestones and their dates",
+                        ("update_plan", "task_add", "search", "get_note", "advance", "ask_user")),
+    "seed": ToolBundle("seed", "Seed the library with what the pursuit needs",
+                        ("update_plan", "ingest", "queue_source", "search", "get_note",
+                         "advance", "ask_user")),
+    "goal": ToolBundle("goal", "Learn: what they want to be able to do, and by when",
+                        ("update_plan", "search", "get_note", "advance", "ask_user")),
+    "baseline": ToolBundle("baseline", "Learn: what they already know",
+                            ("update_plan", "get_note", "search", "advance", "ask_user")),
+    "focus": ToolBundle("focus", "Learn: choose the concepts to focus on",
+                         ("update_plan", "search", "get_note", "read_source_file", "advance",
+                          "ask_user")),
+    "practice": ToolBundle("practice", "Learn: practise each focus concept against a source",
+                            ("update_plan", "understanding_record", "search", "get_note",
+                             "read_source_file", "advance", "ask_user")),
+    "consolidate": ToolBundle("consolidate", "Learn: consolidate in their own words",
+                               ("update_plan", "understanding_record", "search", "get_note",
+                                "read_source_file", "advance", "ask_user")),
+    "next": ToolBundle("next", "Learn: schedule the review and propose a next session",
+                        ("update_plan", "task_add", "get_note", "search", "close_session",
+                         "ask_user")),
+    "candidate": ToolBundle("candidate", "Name the capability candidate",
+                             ("update_plan", "capability_candidates", "get_note", "advance",
+                              "ask_user")),
+    "assess": ToolBundle("assess", "Assess the candidate as a source",
+                          ("update_plan", "ingest", "get_note", "read_source_file", "search",
+                           "record_assumptions", "advance", "ask_user")),
+    "propose": ToolBundle("propose", "Propose the exact capability definition",
+                           ("capability_propose", "get_note", "advance", "ask_user")),
+    "install": ToolBundle("install", "The person decides whether to install",
+                           ("capability_install", "get_note", "advance", "ask_user")),
     # The audited purpose's round (HARNESS-03 to -07; G5 readiness R1). The
     # person's own controls - set_requirement, accept_artifact, reject_artifact,
     # request_evidence - are deliberately in no bundle: a model never sees them.
@@ -541,6 +595,11 @@ def required_bundle_actions(phase: str = "", *, purpose: str = "", project: str 
     """
     phase_id = phase.strip().lower().replace("_", "-")
     purpose_id = purpose.strip().lower().replace("-", "_")
+    # `suggest` has no Need phase, so its brief is opened in Map (open_brief is gated to map and
+    # need), and its Map phase reads the project's own files when project access is on. Both are
+    # refused by the registry if not allowed, so offering them never widens authority.
+    if purpose_id == "suggest" and phase_id == "map":
+        return ("open_brief", "read_project")
     if phase_id != "frame" or purpose_id not in PROJECT_BOOTSTRAP_PURPOSES:
         return ()
     if not project.strip() or not project_exists:
@@ -885,6 +944,17 @@ def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, 
         checkpoint_id = str(inputs.get("checkpoint_id") or "")
         approved = False
         checkpoint: dict[str, Any] | None = None
+        if checkpoints is not None and not checkpoint_id:
+            # A person's approval belongs to this exact expanded plan (the scope is its digest).
+            # A caller that asks again without the id still holds that approval: use it, rather
+            # than minting a new card (`ensure` does, once a checkpoint is resolved) and leaving
+            # the approved one orphaned. A different plan has a different scope, so it still asks.
+            for row in reversed(checkpoints.all()):
+                if row.get("type") == "macro_expansion" and row.get("scope") == scope and \
+                        row.get("resolution") == "approve" and not row.get("expired"):
+                    checkpoint_id = str(row["id"])
+                    inputs = {**inputs, "checkpoint_id": checkpoint_id}
+                    break
         if checkpoints is not None and checkpoint_id:
             try:
                 checkpoint = checkpoints.get(checkpoint_id)

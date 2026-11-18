@@ -55,10 +55,10 @@ def test_profile_read_bundle_exposes_the_bounded_read_route():
 
 @pytest.mark.parametrize('phase', ['map', 'execute'])
 def test_lead_can_prepare_a_source_plan_and_request_person_review(phase):
-    from resource_librarian.agent_runtime import bundle_selection
+    from resource_librarian.agent_runtime import MAX_BUNDLE_TOOLS, bundle_selection
     names = {s.name for s in bundle_selection('contribute', phase).offered}
     assert {'source_verification_plan', 'request_raw_source_access', 'dispatch_plan', 'read_result', 'macro_run'} <= names
-    assert len(names) <= 12
+    assert len(names) <= MAX_BUNDLE_TOOLS
 
 
 @pytest.fixture

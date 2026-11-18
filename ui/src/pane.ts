@@ -324,7 +324,7 @@ export class DocPane {
               h("button", { class: "icon-btn pin-toggle", title: adopted.has(l.id) ? "Drop from this thread" : "Adopt for this thread",
                 "aria-label": adopted.has(l.id) ? `Drop ${l.name}` : `Adopt ${l.name}`, onclick: () => void toggle(l.id)() },
                 adopted.has(l.id) ? "✓" : "+")))
-        : h("p", { class: "dim" }, "No accepted lenses yet - accept one in Staging, or a lens pack in Settings → Library."));
+        : h("p", { class: "dim" }, "No accepted lenses yet - accept one in Staging, or a lens pack in Settings → Methods & lenses."));
     } catch (e) {
       clear(host, h("p", { class: "error" }, (e as Error).message));
     }

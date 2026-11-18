@@ -148,7 +148,8 @@ UPKEEP_TOOLS = frozenset({
     "model_catalog_status", "doctor", "index", "index_status", "views_refresh", "check_notes",
     "rules", "evaluate", "freshness_check", "duplicate_report", "provenance_check",
     "dik_rebuild", "refile_source", "topic_propose", "concept_candidates", "lens_packs",
-    "library_profile", "capability_candidates", "verify_access", "scout_rank",
+    # capability_candidates is not upkeep: an add_capability session's candidate phase asks for it
+    "library_profile", "verify_access", "scout_rank",
     "search_feedback", "list_claim_runs", "note_move", "desk_unpin", "desk_show",
     "desk_touch", "filters", "reflection_draft"})
 
@@ -290,6 +291,22 @@ def narrowed(tier: str, phase: str = "", projects_on: bool = True,
             continue
         shown.append(spec)
     return shown
+
+
+NO_PROGRESS_REPEATS = 4
+
+
+def _no_progress_signature(name: str, result: dict[str, Any]) -> str:
+    """"" when the call made progress; else `name|what was refused` (equal for the same refusal).
+
+    A refused call, and an `advance` that stayed because the phase is not finished, are the two
+    ways a model can keep asking for something it cannot have."""
+    if "refused" in result:
+        return f"{name}|{result.get('refused')}: {str(result.get('detail') or '')[:160]}"
+    if name == "advance" and result.get("moved") is False:
+        missing = result.get("missing") or []
+        return f"advance|the phase is not finished; missing: {json.dumps(missing)[:300]}"
+    return ""
 
 
 def _projects_on(vault: Any) -> bool:
@@ -1141,6 +1158,7 @@ class Loop:
                 self._private_runtime = InvocationRuntime()
             runtime = self._private_runtime
         binding = runtime.binding_for(walk_provider)
+        last_signature, repeats = "", 0
         while self.max_steps > 0:
             # The final tool-free iteration always returns; a changed effort
             # may have reduced the limit below the number already taken.
@@ -1281,6 +1299,21 @@ class Loop:
                     turn.stopped = "stalled"
                     self.on_event({"type": "stopped", "reason": "stalled",
                                    "parked": result["stalled"].get("parked", [])})
+                    return turn
+                # The same refusal again and again is not progress, and a refused `advance`
+                # costs no phase budget, so only the step cap would end it (2026-11-18: a model
+                # asked to leave Map 15 times). Stop with what was refused.
+                signature = _no_progress_signature(call.name, result)
+                repeats = repeats + 1 if signature and signature == last_signature else \
+                    (1 if signature else 0)
+                last_signature = signature
+                if repeats >= NO_PROGRESS_REPEATS:
+                    turn.stopped = "no_progress"
+                    turn.error = (f"{call.name} was refused {repeats} times in a row with the "
+                                  f"same answer, so this turn stopped instead of repeating it: "
+                                  f"{signature.split('|', 1)[1][:300]}")
+                    self.on_event({"type": "stopped", "reason": "no_progress",
+                                   "error": turn.error})
                     return turn
                 # A successful session/write tool can have moved the phase or
                 # opened a session.  Recompute the compact surface now rather
