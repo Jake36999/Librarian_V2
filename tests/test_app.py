@@ -1005,3 +1005,19 @@ def test_a_refused_post_is_answered_after_its_body_is_read(served):
                 answer += chunk
         assert answer.split(b"\r\n", 1)[0].split()[1] == b"403"
         assert json.loads(answer.split(b"\r\n\r\n", 1)[1])["error"].startswith("refused:")
+
+
+def test_api_mcp_shows_a_library_owned_server_by_its_endpoint_never_its_token(served):
+    """The library's own Geo (2026-11-18) is listed as what runs: its loopback endpoint and
+    header names, never the token, and marked as standing in for the mcp.json entry."""
+    import sys
+    app, client, _ = served
+    client.post("/api/mcp/config", {
+        "mcpServers": {"geo-grapher": {"command": sys.executable, "args": [FAKE_MCP_SERVER]}}})
+    app.mcp.set_builtin("geo-grapher", {"url": "http://127.0.0.1:9/mcp",
+                                         "headers": {"X-Geo-Token": "s3cret-token"}})
+    status, out = client.get("/api/mcp")
+    row = out["servers"]["geo-grapher"]
+    assert status == 200 and row["library_owned"] and row["shadows_mcp_json"]
+    assert row["url"] == "http://127.0.0.1:9/mcp" and row["headers"] == ["X-Geo-Token"]
+    assert "command" not in row and "s3cret-token" not in json.dumps(out)

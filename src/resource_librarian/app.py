@@ -3049,11 +3049,19 @@ class App:
         from .mcp_client import redacted_args
         status = mcp.status()
         servers = mcp.servers()
-        return {"servers": {name: {**status.get(name, {}), "command": d.get("command", ""),
-                                   "args": redacted_args(d.get("args") or []),
-                                   "env": sorted((d.get("env") or {}).keys()),
-                                   "tool_names": mcp.tool_names(name)}
-                            for name, d in servers.items()},
+        out = {name: {**status.get(name, {}), "command": d.get("command", ""),
+                      "args": redacted_args(d.get("args") or []),
+                      "env": sorted((d.get("env") or {}).keys()),
+                      "tool_names": mcp.tool_names(name)}
+               for name, d in servers.items()}
+        for name in [n for n, s in status.items() if s.get("library_owned")]:
+            # The library's own service, shown as what it is: its endpoint, never its token,
+            # and the mcp.json entry it stands in for is not what runs.
+            owned = getattr(mcp, "builtin", lambda _n: None)(name) or {}
+            out[name] = {**status[name], "url": owned.get("url", ""),
+                         "headers": sorted((owned.get("headers") or {}).keys()),
+                         "shadows_mcp_json": name in servers, "tool_names": mcp.tool_names(name)}
+        return {"servers": out,
                 "config_dir": str(mcp.config_dir),
                 "tool_settings": dict(self.broker.settings)}
 
