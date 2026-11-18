@@ -512,3 +512,7 @@ dialog.lib-settings .lib-settings-role .lib-clear-role { grid-column: 3; grid-ro
 /* Workflow hints: what a workflow leaves behind stays in view; what it does is the hover hint. */
 .lib-app .lib-menuitem small.lib-outcome strong, dialog.lib-dialog .lib-cmd-desc strong { color: var(--ink); font-weight: 600; }
 dialog.lib-dialog .lib-cmd-desc { display: block; margin: 2px 0 4px; color: var(--muted); font-size: 12.5px; line-height: 1.4; }
+
+/* Picking a file for the chat in the pane. */
+.lib-app .lib-pane-pick { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 8px 10px; margin-bottom: 10px; border: 1px solid var(--accent); border-radius: 8px; background: var(--panel); }
+.lib-app .lib-popover.lib-attach .lib-menuitem small { display: block; font-weight: 400; }

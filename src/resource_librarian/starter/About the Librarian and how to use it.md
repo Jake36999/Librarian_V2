@@ -38,11 +38,14 @@ graphs built from this library), and the power button (close Geo-Grapher or this
 Anything can be **deferred** (come back to it) or **rejected** (with a reason). Rejecting never
 deletes the original file.
 
-## Workflows you can start
+## The paperclip menu
 
-Open **Modes** under the message box and choose **Queue an action**. Each workflow has a hint
-(hover it) and says what it will leave behind. The same workflows can be given keyboard shortcuts
-in Settings, under *Commands & shortcuts*, where each one is explained.
+Everything you bring to the librarian is in the **paperclip** menu under the message box:
+
+- **Attach a file from this computer**: copies it into this library's Inbox and adds its path to your message.
+- **Link a note or folder from the library**: opens the library beside the chat with a hint; pick a file and it is added to your message.
+- **Open skill registry**: the skills, the `/` commands an agent host offers, and where to read about any plugin you install.
+- **Run a workflow**: the fixed jobs (process the enrichment backlog, deep-read staged sources, and so on). Each has a hint (hover it) and says what it will leave behind. The same workflows can be given keyboard shortcuts in Settings, under *Commands & shortcuts*, where each one is explained.
 
 ## Permissions
 
@@ -51,6 +54,11 @@ The **Modes** menu also sets how much the librarian may write on its own:
 - **Plan**: reads and searches only; it proposes instead of writing.
 - **Ask permission**: every write pauses for your answer (allow once, allow for this session, or deny).
 - **Auto**: writes inside the phase it is in and the library's settings. Sensitive material still waits for you.
+
+A workflow you start from the paperclip menu, and a batch you approved for ingestion, are the
+permission for their own steps: those run without a question per write, and the librarian reports
+only a problem. Open-ended work (searching, recall, graphs, inspection, writing files) always follows the
+mode.
 
 Review and promotion (Settings) decide whether promotions need a person or may be made by the
 librarian itself.

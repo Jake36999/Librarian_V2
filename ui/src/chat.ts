@@ -853,9 +853,12 @@ export class Chat {
         const out = await this.api.tool("answer", { question_id: id, answer: value }, sessionId);
         if (out.error) throw new Error(String(out.detail ?? out.error));
         clear(row, h("em", {}, out.resumed
-          ? `Answered: “${value}”` : `Recorded: “${value}” - send a message to carry the thread on.`));
+          ? `Answered: “${value}”` : `Answered: “${value}” - carrying the thread on.`));
         card.classList.add(cls("done"));
         if (out.session) this.hooks.onSession(out.session);
+        // A thread reopened after a restart has no live turn waiting on this answer, so it was
+        // only recorded. The answer is the person's go-ahead: carry on without asking them to type.
+        if (!out.resumed) this.hooks.resend("Carry on from my answer.");
       } catch (e) {
         clear(row, h("div", { class: "error" }, (e as Error).message),
           h("button", { onclick: () => void send(value) }, "Retry"));

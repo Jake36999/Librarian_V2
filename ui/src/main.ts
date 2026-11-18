@@ -9,7 +9,7 @@ export type { Options } from "./api";
 import { AttachPanel } from "./attach";
 import { Chat, type Session } from "./chat";
 import { $, claimInstance, clear, h, cls, sel } from "./dom";
-import { MODES, ModelTile, Popover, PROVIDERS, renderLibraries, renderModes, renderSessions, type Tier } from "./panels";
+import { MODES, ModelTile, Popover, PROVIDERS, renderLibraries, renderModes, renderSessions, renderWorkflows, type Tier } from "./panels";
 import { Settings } from "./settings";
 import { DocPane } from "./pane";
 import { link } from "./markdown";
@@ -164,7 +164,16 @@ class App {
       "aria-label": "Attach" }, "📎");
     this.attachPop = new Popover(this.ids.id("lib-attach"), "Attach", attachButton, "lib-attach");
     this.attachPanel = new AttachPanel(this.attachPop, this.api, (text) => this.insertIntoComposer(text),
-      (file, raw) => this.addAttachment(file.name, raw));
+      (file, raw) => this.addAttachment(file.name, raw), {
+        // The pane is the one place to navigate to a file: it opens on Browse with a hint.
+        pickFile: () => { this.showPane(true); this.pane.pickFile("Pick a file to add to the chat",
+          (reference) => this.insertIntoComposer(reference)); },
+        openRegistry: () => void this.openSkillRegistry(),
+        workflows: (rerender) => renderWorkflows(this.attachPop, this.api, this.state.queued_actions ?? [],
+          this.pipelines, (msg) => this.warn(msg), this.state.queued_inputs ?? {},
+          this.ids.id("librarian-workflow"),
+          this.libraryName() + " · " + (this.session?.session ?? "no active conversation"), rerender),
+      });
     attachButton.onclick = () => { this.toggle(this.attachPop); if (this.attachPop.open) this.attachPanel.render(); };
 
     this.modeButton.onclick = () => this.toggle(this.modes);
@@ -327,6 +336,15 @@ class App {
 
   // -- the document pane -------------------------------------------------------
   /** A [[link]]: in Obsidian the real note opens; elsewhere it opens beside the chat. */
+  /** The skill registry: built by the Core on request, shown in the pane like a note. */
+  private async openSkillRegistry(): Promise<void> {
+    try {
+      const page = await this.api.get("/api/skills");
+      this.showPane(true);
+      this.pane.showPage(String(page.title ?? "Skill registry"), String(page.markdown ?? ""));
+    } catch (e) { this.warn(`The skill registry did not open: ${(e as Error).message}`); }
+  }
+
   private async openDoc(target: string): Promise<void> {
     if (this.opts.openNote) {
       try {
@@ -498,9 +516,7 @@ class App {
     clear(this.modelButton, tier
       ? [h("span", { class: "badge" }, "1"), ` ${tier.model} · ${PROVIDERS[tier.provider] ?? tier.provider}`]
       : "Choose models", " ▾");
-    renderModes(this.modes, this.api, this.state.mode, this.state.queued_actions ?? [], this.pipelines,
-      (msg) => this.warn(msg), this.state.queued_inputs ?? {}, this.ids.id("librarian-mode"),
-      this.libraryName() + " · " + (this.session?.session ?? "no active conversation"));
+    renderModes(this.modes, this.api, this.state.mode, (msg) => this.warn(msg), this.ids.id("librarian-mode"));
     const pending = ((this.state.pending_checkpoints ?? []) as any[]).length;
     this.checkpointButton.textContent = pending ? `Checkpoints (${pending}) ▾` : "Checkpoints ▾";
     if (this.checkpoints.open) this.renderCheckpoints();
@@ -629,8 +645,9 @@ class App {
       this.warn("Attach a source file for this library, then ask the librarian to capture it for review in Staging.");
       return;
     }
-    if (!this.modes.open) this.toggle(this.modes);
-    const button = this.modes.el.querySelector<HTMLButtonElement>(`[data-command="${id}"]`);
+    // Workflows live in the paperclip menu: open it and focus the one asked for.
+    if (!this.attachPop.open) { this.toggle(this.attachPop); this.attachPanel.render(); }
+    const button = this.attachPop.el.querySelector<HTMLButtonElement>(`[data-command="${id}"]`);
     if (button) { button.focus(); button.scrollIntoView({block:"nearest"}); }
     else this.warn("This workflow is unavailable in " + this.libraryName() + ".");
   }

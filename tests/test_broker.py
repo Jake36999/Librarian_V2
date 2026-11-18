@@ -132,3 +132,44 @@ def test_a_cached_engine_works_from_any_thread(library):
     thread, box = call_in_thread("search", {"query": "osquery"}, c)
     thread.join(10)
     assert box["results"] and "error" not in box
+
+
+# -- an approved workflow is pre-authorised for its own steps ---------------------------------
+
+def granted(vault, broker, tools, label="approved ingestion"):
+    return Context(tier="contribute", vault=vault, extras={
+        "broker": broker, "workflow_grant": {"label": label, "tools": frozenset(tools)}})
+
+
+def test_a_granted_workflow_runs_its_own_steps_without_asking(library):
+    """A person approved this exact batch (or started this workflow): its steps are not asked
+    about again, one write at a time, until the run is done."""
+    broker = Broker("ask")
+    spec = REGISTRY.get("queue_source")
+    note = broker.check(spec, {"ref": "a/b"}, granted(library, broker, {"queue_source"}))
+    assert note == "allowed (approved ingestion)" and broker.pending() == []
+
+
+def test_a_grant_covers_only_the_tools_it_names(library):
+    broker = Broker("ask", timeout=0.2)
+    c = granted(library, broker, {"deep_read"})
+    result = REGISTRY.call("queue_source", {"ref": "a/b"}, c)          # not in the grant
+    assert result["refused"] == "PERMISSION_UNANSWERED"
+
+
+def test_a_grant_never_overrides_deny_plan_or_always_ask(library):
+    spec = REGISTRY.get("queue_source")
+    denied = Broker("ask", {"queue_source": "deny"})
+    with pytest.raises(Exception) as caught:
+        denied.check(spec, {"ref": "a/b"}, granted(library, denied, {"queue_source"}))
+    assert "PERMISSION_DENIED" in str(caught.value) or "Deny" in str(caught.value)
+    plan = Broker("plan")
+    with pytest.raises(Exception):
+        plan.check(spec, {"ref": "a/b"}, granted(library, plan, {"queue_source"}))
+    asked = Broker("ask", {"queue_source": "ask"}, timeout=0.2)         # a tool set to Ask stays Ask
+    c = granted(library, asked, {"queue_source"})
+    assert REGISTRY.call("queue_source", {"ref": "a/b"}, c)["refused"] == "PERMISSION_UNANSWERED"
+    from resource_librarian.broker import ALWAYS_ASK
+    assert "project_edit" in ALWAYS_ASK          # and these are never in a grant's reach
+    always = Broker("ask", timeout=0.2)
+    assert always._policy("project_edit", "write", False, "", granted=True) == "ask"

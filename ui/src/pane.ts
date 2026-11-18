@@ -34,8 +34,10 @@ export class DocPane {
   private version = 0;
   private switcher = h("div",{class:"pane-views",role:"group","aria-label":"Pane view"});
   private compact = h("select",{"aria-label":"Pane view"}) as HTMLSelectElement;
-  private current: {kind:"browse"} | { kind: "plan" } | { kind: "agenda" } | { kind: "doc"; path: string; name: string; readOnly?: boolean; sourcePath?: string } = { kind: "plan" };
+  private current: {kind:"browse"} | {kind:"page"} | { kind: "plan" } | { kind: "agenda" } | { kind: "doc"; path: string; name: string; readOnly?: boolean; sourcePath?: string } = { kind: "plan" };
   private browsing = "";
+  /** While the person is choosing a file for the chat: a click on a file hands it back. */
+  private pick: { prompt: string; done: (reference: string) => void } | null = null;
 
   /** `onMoved`: a note was renamed, so links to it elsewhere (the chat) can follow.
    *  `currentProject`: the open session's pursuit, if any - drives the ⋮ menu's Desk
@@ -92,8 +94,36 @@ export class DocPane {
 
   get showingPlan(): boolean { return this.current.kind === "plan"; }
 
+  /** Browse the library to choose one file for the chat. The pane opens on Browse with `prompt`
+   *  as its hint; a click on a file (or "Link this folder") hands back its reference instead of
+   *  opening it, and Cancel leaves. This is the one place to navigate to a file. */
+  pickFile(prompt: string, done: (reference: string) => void): void {
+    this.pick = { prompt, done };
+    this.showMenu(false);
+    void this.showBrowse();
+  }
+
+  private finishPick(reference: string): void {
+    const picked = this.pick;
+    this.pick = null;
+    void this.showBrowse();
+    picked?.done(reference);
+  }
+
+  /** A generated page (the skill registry): Markdown shown like a note, its links opening notes here. */
+  showPage(title: string, markdown: string): void {
+    this.pick = null;
+    this.mark("Note"); this.current = { kind: "page" };
+    this.menuButton.hidden = this.speakButton.hidden = this.runButton.hidden = true;
+    clear(this.crumbs, h("span", { class: "crumb-here" }, title));
+    clear(this.body, h("article", { class: "doc" }, h("h1", { class: "doc-title" }, title),
+      render(markdown, (t) => void this.open(t), { frontmatter: false })));
+    this.body.scrollTop = 0;
+  }
+
   private mark(view: string): void {
     this.version++;
+    if (view !== "Browse") this.pick = null;           // choosing a file ends when the pane moves on
     this.compact.value = view;
     this.compact.options[0].disabled = !this.recent.length && view !== "Note";
     this.switcher.querySelectorAll("button").forEach(b=>{
@@ -270,14 +300,20 @@ export class DocPane {
     const browser = h("div",{class:"pane-browser pad"}); clear(this.body,browser);
     const item = (label:string,small:string,action:()=>void,cls="") => h("button",{class:"menuitem "+cls,onclick:action},label,small ? h("small",{},small) : null);
     const folder = h("div",{class:"pane-folder"}), desk = h("div",{class:"pane-desk"}), lenses=h("div",{class:"pane-lenses"});
-    const project=this.currentProject(), session=this.currentSession();
+    const picking = this.pick !== null;
+    const project = picking ? "" : this.currentProject(), session = picking ? "" : this.currentSession();
     clear(browser,
+      this.pick ? h("div", { class: "pane-pick", role: "status" }, h("strong", {}, this.pick.prompt),
+        h("button", { class: "ghost", onclick: () => { this.pick = null; void this.showBrowse(); } }, "Cancel")) : null,
       project ? h("h4", {}, `Desk — ${project}`) : null,
       project ? desk : null,
       session ? h("h4", {}, "Lenses — this thread") : null,
       session ? lenses : null,
       this.recent.length ? h("h4", {}, "Recent") : null,
-      this.recent.map((r) => item(r.name, r.path, () => { this.showMenu(false); void this.open(r.path); })),
+      this.recent.map((r) => item(r.name, r.path, () => {
+        this.showMenu(false);
+        if (this.pick) this.finishPick(`[[${r.name}]]`); else void this.open(r.path);
+      })),
       h("h4", {}, "Browse"), folder);
     try {
       const listing = await this.api.get(`/api/files?dir=${encodeURIComponent(this.browsing)}`);
@@ -285,9 +321,13 @@ export class DocPane {
       clear(folder,
         h("div", { class: "folder-path" }, `/${listing.dir}`),
         up !== null ? item(`↑ ${up ? up.split("/").pop() : "the vault"}`, "", () => { this.browsing = up; void this.showBrowse(); }, "dir up") : null,
+        this.pick && listing.dir ? item("Link this folder", "", () => this.finishPick(`\`${listing.dir}/\``), "dir") : null,
         (listing.entries as any[]).map((e) => e.kind === "dir"
           ? item(`${e.name}/`, "", () => { this.browsing = e.path; void this.showBrowse(); }, "dir")
-          : item(e.name, "", () => { this.showMenu(false); void this.open(e.path); }, "file")),
+          : item(e.name, "", () => {
+            this.showMenu(false);
+            if (this.pick) this.finishPick(`[[${e.name}]]`); else void this.open(e.path);
+          }, "file")),
         listing.entries.length ? null : h("p", { class: "dim" }, "No notes here."));
     } catch (e) {
       this.browsing = "";

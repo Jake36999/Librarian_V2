@@ -63,6 +63,10 @@ _GUARD = threading.RLock()
 T = TypeVar("T")
 
 
+# What the batch's stages call through the registry. The grant is exactly this list.
+STAGE_TOOLS = frozenset({"pdf_to_markdown", "ocr_pdf", "deep_read", "staging_review"})
+
+
 def _commit(ctx: Context, fn: Callable[[], T], *, targets: tuple[Path, ...] = (),
             preconditions: dict[str, str] | None = None) -> T:
     """A short state commit, never a network/model call or a whole batch.
@@ -665,8 +669,12 @@ def start(ctx: Context, requested_by: str, resume: str = "",
         return prepared
     run_id, items, cancel = prepared
     vault = ctx.vault
+    # The person approved exactly this set for ingestion; the stages below are that decision
+    # carried out, so they are not asked about again source by source. Only this worker's
+    # context holds the grant, and only for the tools the stages call.
     worker_ctx = Context(tier=ctx.tier, vault=vault, extras={
-        **ctx.extras, "cancel": cancel, "_batch_run": run_id})
+        **ctx.extras, "cancel": cancel, "_batch_run": run_id,
+        "workflow_grant": {"label": f"approved ingestion {run_id}", "tools": STAGE_TOOLS}})
     if background:
         thread = threading.Thread(target=_run, args=(worker_ctx, run_id, items, cancel),
                                   daemon=True, name=f"batch-{run_id}")

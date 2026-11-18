@@ -135,7 +135,11 @@ class Broker:
         return {"mode": mode, "released": released, "denied": denied}
 
     # -- deciding ------------------------------------------------------------
-    def _policy(self, tool: str, effect: str, open_world: bool, session: str) -> str:
+    def _policy(self, tool: str, effect: str, open_world: bool, session: str,
+                granted: bool = False) -> str:
+        """`granted`: the call is a step of a workflow a person approved or started (see
+        `check`). It lifts only the per-write question; Deny, Plan mode, a tool set to Ask and
+        the always-ask tools all still apply."""
         if tool in self.harness:
             return "allow"
         setting = self.settings.get(tool, "")
@@ -150,6 +154,8 @@ class Broker:
             return "allow"
         if tool in ALWAYS_ASK and setting != "allow":
             return "ask"
+        if granted:
+            return "allow"
         if (session, tool) in self._session_grants:
             return "allow"
         if self._mode == "auto" or setting == "allow":
@@ -164,11 +170,19 @@ class Broker:
         # A dry run writes nothing (staging_decide, project_edit): it is decided as a read, so
         # Plan mode can show the diff it would propose.
         effect = "read" if (arguments or {}).get("dry_run") is True else spec.effect
-        verdict = self._policy(spec.name, effect, spec.open_world, session)
+        # A workflow a person approved (the exact batch they approved for ingestion) or started
+        # (a pipeline from the paperclip menu) is authorised as a whole, for the tools it
+        # names, until it ends: asking again for each of its writes would be 98 questions for
+        # one decision. Only the run's own ctx carries the grant; an agent's call never does.
+        grant = ctx.extras.get("workflow_grant") or {}
+        in_grant = spec.name in (grant.get("tools") or ())
+        verdict = self._policy(spec.name, effect, spec.open_world, session, granted=in_grant)
         review_sources = tuple(ctx.extras.get('_publication_review', []))
         if review_sources and verdict != 'deny':
             verdict = 'ask'
         if verdict == "allow":
+            if effect != "read" and in_grant and self.settings.get(spec.name) != "allow" and                     self._mode != "auto":
+                return f"allowed ({grant.get('label') or 'approved workflow'})"
             return f"allowed ({self._mode} mode)" if effect != "read" else "allowed (read)"
         if verdict == "deny":
             why = ("the tool is set to Deny" if self.settings.get(spec.name) == "deny" else

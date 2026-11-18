@@ -471,12 +471,14 @@ Result: ${info.result}` : info.does : "";
   // src/attach.ts
   var AttachPanel = class {
     constructor(pop, api, insert, onFileAttached = () => {
-    }) {
+    }, hooks = { pickFile() {
+    }, openRegistry() {
+    }, workflows: () => [] }) {
       this.pop = pop;
       this.api = api;
       this.insert = insert;
       this.onFileAttached = onFileAttached;
-      this.browsing = "";
+      this.hooks = hooks;
       this.status = h("p", { class: "dim" });
       this.fileInput = h("input", {
         type: "file",
@@ -490,10 +492,9 @@ Result: ${info.result}` : info.does : "";
     dispose() {
       this.fileInput.remove();
     }
-    /** Called each time the popover opens: start back at the vault root. */
+    /** Called each time the popover opens. */
     render() {
-      this.browsing = "";
-      void this.paint();
+      this.paint();
     }
     async chosen() {
       const file = this.fileInput.files?.[0];
@@ -510,50 +511,44 @@ Result: ${info.result}` : info.does : "";
         clear(this.status, h("span", { class: "error" }, `Could not attach ${file.name}: ${e.message}`));
       }
     }
-    item(label, action) {
-      return h("button", { class: "menuitem", role: "menuitem", onclick: action }, label);
+    item(label, hint, action) {
+      return h(
+        "button",
+        { class: "menuitem", role: "menuitem", onclick: action },
+        label,
+        hint ? h("small", {}, hint) : null
+      );
     }
-    async paint() {
-      const folder = h("div", {}, h("p", { class: "dim" }, "Loading\u2026"));
+    paint() {
       clear(
         this.pop.el,
-        this.item("\u{1F4CE} Attach a file from this computer", () => {
-          this.pop.show(false);
-          this.fileInput.click();
-        }),
+        this.item(
+          "\u{1F4CE} Attach a file from this computer",
+          "Copies it into this library's Inbox and adds its path to your message.",
+          () => {
+            this.pop.show(false);
+            this.fileInput.click();
+          }
+        ),
+        this.item(
+          "\u{1F517} Link a note or folder from the library",
+          "Opens the library beside the chat: pick a file to add to the chat.",
+          () => {
+            this.pop.show(false);
+            this.hooks.pickFile();
+          }
+        ),
         this.status,
-        h("h4", { class: "gap" }, "Link a note or folder"),
-        folder
+        this.item(
+          "Open skill registry",
+          "Skills, \u201C/\u201D commands and where to read about installed plugins.",
+          () => {
+            this.pop.show(false);
+            this.hooks.openRegistry();
+          }
+        ),
+        ...this.hooks.workflows(() => this.paint())
       );
-      try {
-        const listing = await this.api.get(`/api/files?dir=${encodeURIComponent(this.browsing)}`);
-        const up = listing.dir ? listing.dir.split("/").slice(0, -1).join("/") : null;
-        clear(
-          folder,
-          h("div", { class: "folder-path" }, `/${listing.dir}`),
-          up !== null ? this.item(
-            `\u2191 ${up ? up.split("/").pop() : "the vault"}`,
-            () => {
-              this.browsing = up;
-              void this.paint();
-            }
-          ) : null,
-          listing.dir ? this.item("Link this folder", () => {
-            this.pop.show(false);
-            this.insert(`\`${listing.dir}/\``);
-          }) : null,
-          listing.entries.map((e) => e.kind === "dir" ? this.item(`${e.name}/`, () => {
-            this.browsing = e.path;
-            void this.paint();
-          }) : this.item(e.name, () => {
-            this.pop.show(false);
-            this.insert(`[[${e.name}]]`);
-          })),
-          listing.entries.length ? null : h("p", { class: "dim" }, "No notes here.")
-        );
-      } catch (e) {
-        clear(folder, h("p", { class: "error" }, e.message));
-      }
     }
   };
 
@@ -1779,9 +1774,10 @@ Result: ${info.result}` : info.does : "";
         try {
           const out = await this.api.tool("answer", { question_id: id, answer: value }, sessionId);
           if (out.error) throw new Error(String(out.detail ?? out.error));
-          clear(row, h("em", {}, out.resumed ? `Answered: \u201C${value}\u201D` : `Recorded: \u201C${value}\u201D - send a message to carry the thread on.`));
+          clear(row, h("em", {}, out.resumed ? `Answered: \u201C${value}\u201D` : `Answered: \u201C${value}\u201D - carrying the thread on.`));
           card.classList.add(cls("done"));
           if (out.session) this.hooks.onSession(out.session);
+          if (!out.resumed) this.hooks.resend("Carry on from my answer.");
         } catch (e) {
           clear(
             row,
@@ -2177,7 +2173,7 @@ Result: ${info.result}` : info.does : "";
       this.observer = null;
     }
   };
-  function renderModes(pop, api, mode, queued, pipelines, report, needs = {}, radioName = "librarian-mode", scope = "") {
+  function renderModes(pop, api, mode, report, radioName = "librarian-mode") {
     let confirmed = mode;
     const group = h(
       "div",
@@ -2206,6 +2202,14 @@ Result: ${info.result}` : info.does : "";
         h("span", {}, label, h("small", {}, help))
       ))
     );
+    clear(
+      pop.el,
+      h("h4", {}, "Permission mode"),
+      group,
+      h("p", { class: "note" }, "Starting a workflow from the paperclip menu is the permission for its steps: they are not asked about again. Everything else follows this mode.")
+    );
+  }
+  function renderWorkflows(pop, api, queued, pipelines, report, needs = {}, radioName = "librarian-workflow", scope = "", back = () => void 0) {
     const extra = pipelines.filter((p) => !queued.includes(p) && !p.startsWith("review-item"));
     const run = async (name, inputs = {}) => {
       pop.show(false);
@@ -2256,18 +2260,15 @@ Result: ${info.result}` : info.does : "";
             }
             void run(name, inputs);
           } }, "Start"),
-          h("button", { class: "ghost", onclick: () => renderModes(pop, api, mode, queued, pipelines, report, needs, radioName, scope) }, "Back")
+          h("button", { class: "ghost", onclick: () => back() }, "Back")
         )
       );
     };
-    clear(
-      pop.el,
-      h("h4", {}, "Permission mode"),
-      group,
-      h("h4", { class: "gap" }, "Queue an action"),
+    return [
+      h("h4", { class: "gap" }, "Run a workflow"),
       scope ? h("p", { class: "note" }, scope) : null,
       // What it does is the hint (hover or focus); what it leaves behind is always in view.
-      queued.map((name) => h(
+      ...queued.map((name) => h(
         "button",
         {
           class: "menuitem",
@@ -2279,8 +2280,8 @@ Result: ${info.result}` : info.does : "";
         WORKFLOWS[name]?.result ? h("small", { class: "outcome" }, h("strong", {}, "Result: "), WORKFLOWS[name].result) : h("small", {}, (ACTIONS[name] ?? ["", "A pipeline."])[1])
       )),
       extra.length ? h("h4", { class: "gap" }, "This vault's pipelines") : null,
-      extra.map((name) => h("button", { class: "menuitem", "data-command": name, onclick: start(name) }, COMMANDS[name] ?? name))
-    );
+      ...extra.map((name) => h("button", { class: "menuitem", "data-command": name, onclick: start(name) }, COMMANDS[name] ?? name))
+    ].filter((e) => e !== null);
   }
   var VISION = /(-vl\b|vl-|vision|ocr|gemma-[34]|qwen3\.[5-9]|llama-4|pixtral|llava|inkling|glimmer)/i;
   var EMBED = /(bge|embed|e5-|gte-|nomic|minilm|mpnet|potion|jina|arctic)/i;
@@ -5367,6 +5368,8 @@ Result: ${info.result}` : info.does : "";
       this.compact = h("select", { "aria-label": "Pane view" });
       this.current = { kind: "plan" };
       this.browsing = "";
+      /** While the person is choosing a file for the chat: a click on a file hands it back. */
+      this.pick = null;
       this.onDocumentClick = (e) => {
         if (!this.menu.hidden && !e.composedPath().includes(this.menu) && !e.composedPath().includes(this.menuButton)) {
           this.showMenu(false);
@@ -5428,8 +5431,38 @@ Result: ${info.result}` : info.does : "";
     get showingPlan() {
       return this.current.kind === "plan";
     }
+    /** Browse the library to choose one file for the chat. The pane opens on Browse with `prompt`
+     *  as its hint; a click on a file (or "Link this folder") hands back its reference instead of
+     *  opening it, and Cancel leaves. This is the one place to navigate to a file. */
+    pickFile(prompt, done) {
+      this.pick = { prompt, done };
+      this.showMenu(false);
+      void this.showBrowse();
+    }
+    finishPick(reference) {
+      const picked = this.pick;
+      this.pick = null;
+      void this.showBrowse();
+      picked?.done(reference);
+    }
+    /** A generated page (the skill registry): Markdown shown like a note, its links opening notes here. */
+    showPage(title, markdown) {
+      this.pick = null;
+      this.mark("Note");
+      this.current = { kind: "page" };
+      this.menuButton.hidden = this.speakButton.hidden = this.runButton.hidden = true;
+      clear(this.crumbs, h("span", { class: "crumb-here" }, title));
+      clear(this.body, h(
+        "article",
+        { class: "doc" },
+        h("h1", { class: "doc-title" }, title),
+        render(markdown, (t) => void this.open(t), { frontmatter: false })
+      ));
+      this.body.scrollTop = 0;
+    }
     mark(view) {
       this.version++;
+      if (view !== "Browse") this.pick = null;
       this.compact.value = view;
       this.compact.options[0].disabled = !this.recent.length && view !== "Note";
       this.switcher.querySelectorAll("button").forEach((b) => {
@@ -5661,9 +5694,19 @@ Result: ${info.result}` : info.does : "";
       clear(this.body, browser);
       const item = (label, small, action, cls2 = "") => h("button", { class: "menuitem " + cls2, onclick: action }, label, small ? h("small", {}, small) : null);
       const folder = h("div", { class: "pane-folder" }), desk = h("div", { class: "pane-desk" }), lenses = h("div", { class: "pane-lenses" });
-      const project = this.currentProject(), session = this.currentSession();
+      const picking = this.pick !== null;
+      const project = picking ? "" : this.currentProject(), session = picking ? "" : this.currentSession();
       clear(
         browser,
+        this.pick ? h(
+          "div",
+          { class: "pane-pick", role: "status" },
+          h("strong", {}, this.pick.prompt),
+          h("button", { class: "ghost", onclick: () => {
+            this.pick = null;
+            void this.showBrowse();
+          } }, "Cancel")
+        ) : null,
         project ? h("h4", {}, `Desk \u2014 ${project}`) : null,
         project ? desk : null,
         session ? h("h4", {}, "Lenses \u2014 this thread") : null,
@@ -5671,7 +5714,8 @@ Result: ${info.result}` : info.does : "";
         this.recent.length ? h("h4", {}, "Recent") : null,
         this.recent.map((r) => item(r.name, r.path, () => {
           this.showMenu(false);
-          void this.open(r.path);
+          if (this.pick) this.finishPick(`[[${r.name}]]`);
+          else void this.open(r.path);
         })),
         h("h4", {}, "Browse"),
         folder
@@ -5686,12 +5730,14 @@ Result: ${info.result}` : info.does : "";
             this.browsing = up;
             void this.showBrowse();
           }, "dir up") : null,
+          this.pick && listing.dir ? item("Link this folder", "", () => this.finishPick(`\`${listing.dir}/\``), "dir") : null,
           listing.entries.map((e) => e.kind === "dir" ? item(`${e.name}/`, "", () => {
             this.browsing = e.path;
             void this.showBrowse();
           }, "dir") : item(e.name, "", () => {
             this.showMenu(false);
-            void this.open(e.path);
+            if (this.pick) this.finishPick(`[[${e.name}]]`);
+            else void this.open(e.path);
           }, "file")),
           listing.entries.length ? null : h("p", { class: "dim" }, "No notes here.")
         );
@@ -7926,7 +7972,29 @@ Result: ${info.result}` : info.does : "";
         this.attachPop,
         this.api,
         (text) => this.insertIntoComposer(text),
-        (file, raw) => this.addAttachment(file.name, raw)
+        (file, raw) => this.addAttachment(file.name, raw),
+        {
+          // The pane is the one place to navigate to a file: it opens on Browse with a hint.
+          pickFile: () => {
+            this.showPane(true);
+            this.pane.pickFile(
+              "Pick a file to add to the chat",
+              (reference) => this.insertIntoComposer(reference)
+            );
+          },
+          openRegistry: () => void this.openSkillRegistry(),
+          workflows: (rerender) => renderWorkflows(
+            this.attachPop,
+            this.api,
+            this.state.queued_actions ?? [],
+            this.pipelines,
+            (msg) => this.warn(msg),
+            this.state.queued_inputs ?? {},
+            this.ids.id("librarian-workflow"),
+            this.libraryName() + " \xB7 " + (this.session?.session ?? "no active conversation"),
+            rerender
+          )
+        }
       );
       attachButton.onclick = () => {
         this.toggle(this.attachPop);
@@ -8105,6 +8173,16 @@ Result: ${info.result}` : info.does : "";
     }
     // -- the document pane -------------------------------------------------------
     /** A [[link]]: in Obsidian the real note opens; elsewhere it opens beside the chat. */
+    /** The skill registry: built by the Core on request, shown in the pane like a note. */
+    async openSkillRegistry() {
+      try {
+        const page = await this.api.get("/api/skills");
+        this.showPane(true);
+        this.pane.showPage(String(page.title ?? "Skill registry"), String(page.markdown ?? ""));
+      } catch (e) {
+        this.warn(`The skill registry did not open: ${e.message}`);
+      }
+    }
     async openDoc(target) {
       if (this.opts.openNote) {
         try {
@@ -8261,17 +8339,7 @@ Result: ${info.result}` : info.does : "";
       clear(this.modeButton, "Modes: ", h("strong", {}, mode ? mode[1].split(" ")[0] : "?"), " \u25BE");
       const tier = (this.state.tiers ?? [])[0];
       clear(this.modelButton, tier ? [h("span", { class: "badge" }, "1"), ` ${tier.model} \xB7 ${PROVIDERS[tier.provider] ?? tier.provider}`] : "Choose models", " \u25BE");
-      renderModes(
-        this.modes,
-        this.api,
-        this.state.mode,
-        this.state.queued_actions ?? [],
-        this.pipelines,
-        (msg) => this.warn(msg),
-        this.state.queued_inputs ?? {},
-        this.ids.id("librarian-mode"),
-        this.libraryName() + " \xB7 " + (this.session?.session ?? "no active conversation")
-      );
+      renderModes(this.modes, this.api, this.state.mode, (msg) => this.warn(msg), this.ids.id("librarian-mode"));
       const pending = (this.state.pending_checkpoints ?? []).length;
       this.checkpointButton.textContent = pending ? `Checkpoints (${pending}) \u25BE` : "Checkpoints \u25BE";
       if (this.checkpoints.open) this.renderCheckpoints();
@@ -8420,8 +8488,11 @@ Result: ${info.result}` : info.does : "";
         this.warn("Attach a source file for this library, then ask the librarian to capture it for review in Staging.");
         return;
       }
-      if (!this.modes.open) this.toggle(this.modes);
-      const button = this.modes.el.querySelector(`[data-command="${id}"]`);
+      if (!this.attachPop.open) {
+        this.toggle(this.attachPop);
+        this.attachPanel.render();
+      }
+      const button = this.attachPop.el.querySelector(`[data-command="${id}"]`);
       if (button) {
         button.focus();
         button.scrollIntoView({ block: "nearest" });

@@ -39,6 +39,15 @@ previously blocked phase on a scratch library (about $0.018 in total).
 - **The note pane opens on the guide the first time a browser opens a library**, if the guide exists and the pane was never opened or closed on purpose. Following a link opens that note in the pane (checked live). Older libraries have no guide, so nothing opens for them; Obsidian is left alone.
 - The platform documentation that ships with the Librarian (`docs/`: operator guide, agent guide, product contract) is **not** copied into libraries. The guide points at it by name; linking to it from inside a library would mean shipping those files into every vault, which is your call.
 
+## One menu for what you bring, and workflows that are asked about once
+
+- **The paperclip menu is now the one place** for attach, link, the skill registry and workflows. "Link a note or folder" no longer navigates inside the popover: it opens the library in the right-hand pane on Browse with the hint "Pick a file to add to the chat", and a click on a file (or "Link this folder") adds it to the message. Cancel leaves.
+- **Workflows moved from Modes to the paperclip menu** ("Run a workflow"), with the hint and "Result:" line each. Modes now holds only the permission mode.
+- **Starting a workflow is the permission for its own steps.** A scoped grant (`workflow_grant` on the run's own context) lets the steps of a workflow you start, and of a batch you approved for ingestion, run in Ask mode without a question per write. It covers only the tools that workflow or batch names; Deny, Plan mode, a tool set to Ask and the always-ask tools (`project_edit`, `sandbox_output`) still apply, and an agent's own calls never carry it. Checked live: in Ask mode, "Process enrichment backlog" produced no permission card and the source moved from Queued to Staged. Tests: `tests/test_broker.py`, `tests/test_workflow_grant.py`, `tests/test_app.py`.
+- **What the ACCEPT-02 logs show:** the only per-write questions were `write_note` ×2 (the agent's own plan and registry notes), `open_brief`, `queue_source` (one question, then 100 calls under "allow for this session") and `queue_remove`; none came from the batch stages. Agent-authored notes stay under the permission mode, as you described.
+- **Skill registry** (`/api/skills`, shown in the pane): the `/` commands, skills and agent from the plugin, installed servers with their tool counts and a docs link when the server's definition has one, and links to the guide, Tool Reference, Rules and the recommendation notes. It is built on request, so it works for existing libraries; its entries are copied from `plugin/`, and `tests/test_skill_registry.py` fails if they drift.
+- **An answered question carries the thread on.** When a reopened thread's question is answered (for example "Extend by 50 calls"), nothing was waiting on it, so the person had to type a message. It now continues by itself.
+
 ## Live check with a real model (scratch libraries, forced into each phase)
 
 | Phase | Before | After |

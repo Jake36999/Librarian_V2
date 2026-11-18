@@ -114,10 +114,8 @@ export class Popover {
 
 // -- Modes ---------------------------------------------------------------------
 
-export function renderModes(pop: Popover, api: Api, mode: string, queued: string[],
-                            pipelines: string[], report: (msg: string) => void,
-                            needs: Record<string, Record<string, { type: string }>> = {},
-                            radioName = "librarian-mode", scope = ""): void {
+export function renderModes(pop: Popover, api: Api, mode: string, report: (msg: string) => void,
+                            radioName = "librarian-mode"): void {
   let confirmed = mode;                       // the last mode the Core accepted
   const group = h("div", { role: "radiogroup", "aria-label": "Permission mode" },
     MODES.map(([value, label, help]) => h("label", { class: "opt" },
@@ -137,6 +135,20 @@ export function renderModes(pop: Popover, api: Api, mode: string, queued: string
         },
       }),
       h("span", {}, label, h("small", {}, help)))));
+  clear(pop.el,
+    h("h4", {}, "Permission mode"), group,
+    h("p", { class: "note" }, "Starting a workflow from the paperclip menu is the permission for its steps: "
+      + "they are not asked about again. Everything else follows this mode."));
+}
+
+/** The workflows a person can start (the paperclip menu's second section). Starting one is the
+ *  permission for its own steps; the Core asks nothing more until it finishes and reports only a
+ *  problem. `back` returns to the menu from a workflow's input form. */
+export function renderWorkflows(pop: Popover, api: Api, queued: string[], pipelines: string[],
+                                report: (msg: string) => void,
+                                needs: Record<string, Record<string, { type: string }>> = {},
+                                radioName = "librarian-workflow", scope = "",
+                                back: () => void = () => undefined): HTMLElement[] {
   const extra = pipelines.filter((p) => !queued.includes(p) && !p.startsWith("review-item"));
   const run = async (name: string, inputs: Record<string, string> = {}) => {
     pop.show(false);
@@ -177,20 +189,20 @@ export function renderModes(pop: Popover, api: Api, mode: string, queued: string
           if (Object.values(inputs).some((v) => !v)) { report("Fill in every field first."); return; }
           void run(name, inputs);
         } }, "Start"),
-        h("button", { class: "ghost", onclick: () => renderModes(pop, api, mode, queued, pipelines, report, needs, radioName, scope) }, "Back")));
+        h("button", { class: "ghost", onclick: () => back() }, "Back")));
   };
-  clear(pop.el,
-    h("h4", {}, "Permission mode"), group,
-    h("h4", { class: "gap" }, "Queue an action"), scope ? h("p",{class:"note"},scope) : null,
+  return [
+    h("h4", { class: "gap" }, "Run a workflow"), scope ? h("p", { class: "note" }, scope) : null,
     // What it does is the hint (hover or focus); what it leaves behind is always in view.
-    queued.map((name) => h("button", { class: "menuitem", "data-command": name, onclick: start(name),
+    ...queued.map((name) => h("button", { class: "menuitem", "data-command": name, onclick: start(name),
       title: workflowHint(name) || undefined },
       COMMANDS[name] ?? (ACTIONS[name] ?? [name])[0],
       WORKFLOWS[name]?.result
         ? h("small", { class: "outcome" }, h("strong", {}, "Result: "), WORKFLOWS[name].result)
         : h("small", {}, (ACTIONS[name] ?? ["", "A pipeline."])[1]))),
     extra.length ? h("h4", { class: "gap" }, "This vault's pipelines") : null,
-    extra.map((name) => h("button", { class: "menuitem", "data-command": name, onclick: start(name) }, COMMANDS[name] ?? name)));
+    ...extra.map((name) => h("button", { class: "menuitem", "data-command": name, onclick: start(name) }, COMMANDS[name] ?? name)),
+  ].filter((e): e is HTMLElement => e !== null);
 }
 
 // -- the Model tile --------------------------------------------------------------

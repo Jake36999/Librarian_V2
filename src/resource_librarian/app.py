@@ -3005,7 +3005,11 @@ class App:
         extras["progress"] = progress
         ctx = Context(tier="contribute", vault=self.vault, extras=extras)
         library = _library(ctx)
-        library.get(name)                                   # unknown names fail now, loudly
+        definition = library.get(name)                      # unknown names fail now, loudly
+        # A person started this workflow: that is the permission for its own steps, asked once
+        # rather than once per write. The grant lives on this run's context only.
+        extras["workflow_grant"] = {"label": f"{name} workflow",
+                                    "tools": workflows.granted_actions(definition, library)}
         # Admit and register together, under the lock close_runtime closes
         # admission under: it either sees this action or refuses it.
         with self._lock:
@@ -3043,6 +3047,24 @@ class App:
             raise ApiError(409, "outside MCP servers need the `mcp` extra: "
                                 "pip install resource-librarian[mcp]")
         return self.mcp
+
+    def skill_registry(self) -> dict[str, Any]:
+        """The skill registry page, built now from the plugin's skills and the servers this
+        library has installed (none when the `mcp` extra is absent)."""
+        from . import skill_registry
+        servers: list[dict[str, Any]] = []
+        if self.mcp is not None:
+            try:
+                status = self.mcp_status()["servers"]
+                defs = self.mcp.servers()
+                servers = [{"name": name, "enabled": bool(info.get("enabled", True)),
+                            "tool_names": info.get("tool_names") or [],
+                            "docs": (defs.get(name) or {}).get("docs")
+                            or (defs.get(name) or {}).get("homepage") or ""}
+                           for name, info in sorted(status.items())]
+            except Exception:                           # noqa: BLE001 - the page never fails for a server
+                servers = []
+        return {"title": "Skill registry", "markdown": skill_registry.render_markdown(servers)}
 
     def mcp_status(self) -> dict[str, Any]:
         mcp = self._mcp()
@@ -4435,6 +4457,8 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                         {"name": s.name, "purpose": s.card.purpose, "effect": s.effect,
                          "tier": s.tier, "schema": s.json_schema()}
                         for s in sorted(REGISTRY.for_tier("curate"), key=lambda s: s.name)]})
+                if url.path == "/api/skills":
+                    return self._json(200, app.skill_registry())
                 if url.path == "/api/models":
                     return self._json(200, app.models((query.get("provider") or [""])[0]))
                 if url.path == "/api/hosts":

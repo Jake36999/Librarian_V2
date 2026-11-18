@@ -625,25 +625,29 @@ def test_existing_provider_tiers_migrate_to_explicit_seeded_or_custom_hosts(vaul
         app.close_runtime()
 
 
-def test_a_queued_action_asks_in_ask_mode_and_can_be_cancelled(served):
+def test_a_workflow_a_person_starts_runs_without_asking_in_ask_mode(served):
+    """Starting a workflow from the paperclip menu is the permission for its own steps: in Ask
+    mode it runs to the end with no question per write, and reports only a problem."""
     app, client, _ = served
+    assert client.get("/api/state")[1]["mode"] == "ask"
+    after = app.hub.last()
     status, action = client.post("/api/actions", {"name": "run-queue"})
     assert status == 200 and action["status"] == "running"
-    request = wait_for(app, "permission_request")                # its write waits, in Ask
-    assert request["tool"] == "intake_run"
-    assert client.post(f"/api/actions/{action['id']}/cancel")[1] == {"cancelling": action["id"]}
-    client.post("/api/permission", {"id": request["id"], "answer": "allow_once"})
-    done = wait_for(app, "action_done")
-    assert done["id"] == action["id"] and done["status"] == "finished"
-
-    client.post("/api/mode", {"mode": "auto"})
-    after = app.hub.last()
-    second = client.post("/api/actions", {"name": "run-queue"})[1]
     done = wait_for(app, "action_done", after=after)
-    assert done["id"] == second["id"] and done["status"] == "finished"
+    assert done["id"] == action["id"] and done["status"] == "finished"
     assert not [e for e in app.hub.since(after) if e["type"] == "permission_request"]
     assert client.post("/api/actions", {"name": "no-such-pipeline"})[0] == 404
     assert client.post("/api/actions/zzz/cancel")[0] == 404
+
+
+def test_a_started_workflow_still_obeys_a_tool_set_to_deny(served):
+    app, client, _ = served
+    app.broker.set_tool("intake_run", "deny")
+    after = app.hub.last()
+    client.post("/api/actions", {"name": "run-queue"})
+    done = wait_for(app, "action_done", after=after)
+    assert done["status"] != "finished" or "PERMISSION_DENIED" in str(done)
+    assert not [e for e in app.hub.since(after) if e["type"] == "permission_request"]
 
 
 def test_a_cancelled_run_pauses_before_its_next_step(vault):

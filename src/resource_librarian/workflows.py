@@ -214,6 +214,14 @@ def _children(d: Definition) -> list[str]:
     return list(dict.fromkeys(names))
 
 
+def granted_actions(d: Definition, library: Library) -> frozenset[str]:
+    """Every action a run of `d` can call, through the workflows it reaches: what a person
+    authorises by starting it (see `Broker.check`)."""
+    return frozenset(str(step["action"]) for node in closure(d, library).values()
+                     for step in node.data.get("steps") or []
+                     if isinstance(step, dict) and "action" in step)
+
+
 def closure(d: Definition, library: Library) -> dict[str, Definition]:
     """Every definition a run of `d` can reach, by name, `d` included.
 
