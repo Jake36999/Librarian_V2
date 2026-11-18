@@ -98,6 +98,27 @@ def index_paths(vault):
         if (not choice or choice.get('authorship') != 'third_party') and not _inside(path, undecided):
             paths.add(path)
     excludes = (content_roots.load(vault.root) or {}).get('excludes', [])
+    # Lookups by a path's own parents, not scans of every exclude and root: a search refreshes
+    # the index first, and the scans (1,779 excludes x 52 roots x every file, twice per refresh)
+    # made one Resource-Library search take 87-218 s against 0.9 s for the search itself
+    # (2026-11-18). Same rules as before.
+    excluded_rel = {str(e).rstrip('/') for e in excludes if not Path(str(e)).is_absolute()}
+    excluded_abs = {str(e) for e in excludes}
+    by_base = {os.path.normcase(str(row['base'])): row for row in declared}
+
+    def deepest(path):
+        for candidate in (path, *path.parents):
+            row = by_base.get(os.path.normcase(str(candidate)))
+            if row is not None:
+                return row
+        return None
+
+    def excluded(rel, path):
+        if str(path) in excluded_abs:
+            return True
+        parts = rel.split('/')
+        return any('/'.join(parts[:i]) in excluded_rel for i in range(1, len(parts) + 1))
+
     for row in declared:
         base = row['base']
         if not row.get('attached') and row.get('access') != 'read_only':continue
@@ -108,12 +129,12 @@ def index_paths(vault):
             parent = Path(here)
             def allowed(path):
                 rel = path.relative_to(base).as_posix()
-                choice = classification(vault, path, declared=declared)
+                choice = deepest(path)
                 return (choice is not None and choice.get('authorship') == 'owner_created'
                     and choice.get('purpose') != 'exclude' and not is_link(path)
                     and not any(p.startswith('.') or p in EXCLUDE_NAMES or p == 'graphify-out' for p in path.relative_to(base).parts)
                     and not credential_path(rel) and not generated_path(rel)
-                    and not any(rel == e or rel.startswith(str(e).rstrip('/') + '/') or str(path) == e for e in excludes)
+                    and not excluded(rel, path)
                     and not _inside(path, undecided))
             directories[:] = [d for d in directories if allowed(parent / d)]
             for filename in files:

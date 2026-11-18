@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+import time
 from pathlib import Path
 from typing import Any, Callable, Literal, TypeVar
 
@@ -168,11 +169,27 @@ def _build_engine(ctx: Context, index: Index | None = None, *, include_vectors: 
     return engine
 
 
+def _refreshed_recently(ctx: Context, index: Index) -> bool:
+    """Whether the library's `[search] refresh_seconds` (default 0: always refresh) says the
+    last full refresh is recent enough to search without walking the folders again. The Core's own
+    writes update the index as they happen; only edits made outside it wait for the next refresh
+    (2026-11-18: the walk before each search took 12 s in Resource-Library, the search 1 s)."""
+    try:
+        window = float(ctx.vault.setting("search", "refresh_seconds") or 0)
+    except (TypeError, ValueError):
+        window = 0.0
+    last = getattr(index, "_refreshed_at", None)
+    return window > 0 and last is not None and time.monotonic() - last < window
+
+
 def _prepared_engine(ctx: Context, index: Index, refresh: bool, *, include_vectors: bool = True) -> Engine:
     """Build and, when requested, refresh an engine inside the index owner."""
     engine = _build_engine(ctx, index, include_vectors=include_vectors)
+    if refresh and _refreshed_recently(ctx, index):
+        refresh = False
     if refresh:
         report = index.refresh()
+        index._refreshed_at = time.monotonic()
         documents = text.sync_documents(index)
         if report.upserted or report.removed or report.rebuilt or documents["indexed"]:
             engine.forget()

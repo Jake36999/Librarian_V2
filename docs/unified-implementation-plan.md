@@ -6807,3 +6807,30 @@ after.
 
 **Tests.** The existing override and index-scope tests (`tests/test_folder_review.py`,
 `tests/test_workspace_documents.py`) cover it, and pass unchanged.
+
+### A search no longer spends minutes refreshing before it ranks (2026-11-18)
+
+**Found** while building a recall baseline. An agent's `search` in Resource-Library took 87–218 s
+through the Core, and 42.7 s offline. The ranking itself took 0.9 s. The rest was the index
+refresh that runs before every search:
+- `index_paths` checked every candidate file against all 1,779 manifest excludes and all 52 roots
+  (13.7 million comparisons per refresh), and a refresh lists the paths twice;
+- `decision_for`, used by `sync_documents` and by every access check, loaded and resolved all
+  12,722 folder cards on each call: 300 lookups took 1,491 s.
+
+**Change.**
+- `index_paths` looks a path up through its own parents: excludes as a set, and roots by their
+  normalised base. The rules are unchanged, and the path lists are identical on all three pilot
+  libraries.
+- `decision_for` reads the cached folder-card summaries, which now carry `decision_record`, and
+  walks the path's parents. Its answers are identical (300 sampled paths per library); 300 lookups
+  take 8.2 s instead of 1,491.
+- `[search] refresh_seconds` (default 0, so every search refreshes as before). When set, a search
+  skips the folder walk if a full refresh ran within that many seconds. The Core's own writes
+  update the index as they happen; only edits made outside it wait.
+
+**Measured** (Resource-Library, offline, warm): a refresh and search took 13.3 s instead of 42.7.
+With the window set, a search inside it takes about 1 s.
+
+**Tests.** `tests/test_search_refresh_window.py` (1). The existing access, index, search and folder
+tests cover the unchanged rules (342 passed).

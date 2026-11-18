@@ -765,14 +765,24 @@ class FolderReview:
 
 
 def decision_for(vault, path):
-    """Deepest accepted folder decision wins. Stale/failed read barriers stay conservative."""
-    path = Path(path).resolve(); candidates = []
-    for card in FolderReview(vault).list(include_provenance=False):
-        decision = card.get('pending_decision') or card.get('decision')
-        if not decision: continue
-        root = Path(card['source_root']); root = root if card['path'] == '.' else root / card['path']
-        if path.is_relative_to(root.resolve()): candidates.append((len(root.parts), decision))
-    return max(candidates, key=lambda c: c[0])[1] if candidates else None
+    """Deepest accepted folder decision wins. Stale/failed read barriers stay conservative.
+
+    Read from the cached card summaries and looked up through the path's own parents: loading and
+    resolving every card on each call (12,722 in Resource-Library) made every access check, and the
+    index refresh before each search, slow (2026-11-18)."""
+    path = Path(path).resolve()
+    by_root = {}
+    for card in StagingStore(vault).summaries('folder'):
+        decision = card.get('decision_record')
+        if not decision or not card.get('source_root'):
+            continue
+        root = Path(card['source_root']); root = root if card['path'] in ('.', None, '') else root / card['path']
+        by_root[os.path.normcase(str(root))] = decision
+    for candidate in (path, *path.parents):
+        decision = by_root.get(os.path.normcase(str(candidate)))
+        if decision is not None:
+            return decision
+    return None
 
 
 def refuse_write(vault, path):

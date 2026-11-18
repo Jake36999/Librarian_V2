@@ -64,7 +64,10 @@ def _summary(item: dict[str, Any]) -> dict[str, Any]:
     return dict(id=item.get("id"), kind=item["kind"], status=item["status"],
                 inherited=bool(item.get("inherited")), sensitivity=sensitivity,
                 decided=bool(item.get("decision")), path=item.get("path"),
-                source_root=item.get("source_root"))
+                source_root=item.get("source_root"),
+                # What a folder decides for files under it, read by decision_for on every access
+                # check: the pending decision of a card being applied, else its decision.
+                decision_record=(item.get("pending_decision") or item.get("decision")) if item.get("kind") == "folder" else None)
 # One lifecycle for a source (Requirements - Research Pipeline §4.1, Addendum R7/R14):
 # queued (a reference, not yet fetched) -> staged (captured and described) -> approved
 # (a person approved spending processing on it) -> processing (in a batch a person
