@@ -6900,3 +6900,40 @@ in-place files resolved in 1.9 s.
 
 **Tests.** `tests/test_withheld_folders.py` (+1: the scope is not re-resolved per read, and an
 exclusion written after a read still refuses the next read).
+
+### Coverage weighs rare terms, a skipped Search hands Judge its candidates, staged readings are searchable (2026-11-18)
+**Change.**
+- `Engine.verdict` weighs each distinctive term by its inverse document frequency over the
+  answerable notes when it computes the best answer's account (`coverage_weighting`, default
+  `rarity`; `count` keeps V1's one-term-one-vote). Below `selectivity_min_corpus` every term
+  still counts 1.
+- `open_brief` records the names its coverage search held. When `advance` skips Search because
+  every brief is `covered`, those names become the briefs' candidates
+  (`candidates_from_briefs` in its result).
+- `search_work` searches a staged source through its reading too: the deep read's points and
+  limits, its sections and its draft. A result needs two thirds of the query's words (all of a
+  one- or two-word query); fuller matches rank first, then newest. Each result carries
+  `matched` and `of`.
+
+**Why (measured on the pilot libraries, 2026-11-18).**
+- "sources comparing this solver's results or runtime against published lattice QCD or MILC
+  codes" was `covered` in NFL on 4 of 10 terms (solver, results, runtime, against). Nothing
+  matched lattice, QCD or MILC. Full-sentence needs were nearly always `covered`, so Search was
+  skipped.
+- After a skip, Judge had no candidates. An agent following `next` ended with
+  `record_synthesis(outcome='nothing')`.
+- Three rare words from a staged source's read claim found it for 0–10% of 40 sampled records
+  per library, and returned nothing at all for 36–39 of them.
+
+**Access review.** The fingerprints of `advance`, `open_brief` and `search_work` were refreshed
+in `docs/tool-access-declarations.json` after review:
+- `advance` and `open_brief` record and seed note names that the brief's search already
+  returned.
+- `search_work` still returns only identifiers and status, now with match counts, and no
+  reading text. Tiers and actors are unchanged.
+
+**Tests.**
+- `tests/test_search.py` (+1: common words no longer cover a need; `count` still does);
+- `tests/test_sessions.py` (+1: a skipped Search seeds Judge from the brief);
+- `tests/test_upkeep.py` (+1: a staged reading is found and partial matches rank second; the
+  existing two-word case still needs both words).

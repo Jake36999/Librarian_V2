@@ -537,7 +537,19 @@ def advance(ctx: Context, target: str = "", reason: str = "") -> dict:
     if target and target != to and phases.index(target) > phases.index(to):
         raise TypeError(f"phases are walked in order; the next phase is {to!r}")
     _event(ctx, {"type": "phase", "to": to, "skipped": skipped})
-    return {"moved": to, **({"skipped": skipped} if skipped else {})}
+    seeded = []
+    if skipped:
+        # A skipped search must not leave Judge with nothing to judge: what each brief's
+        # own search already holds becomes its candidates (2026-11-18: a covered brief
+        # ended in `record_synthesis(outcome='nothing')` for an agent following `next`).
+        for brief in session.briefs.values():
+            for name in brief.held:
+                if name not in session.candidates and name not in seeded:
+                    _event(ctx, {"type": "candidate", "source": name, "brief": brief.id,
+                                 "via": "brief_held"})
+                    seeded.append(name)
+    return {"moved": to, **({"skipped": skipped} if skipped else {}),
+            **({"candidates_from_briefs": seeded} if seeded else {})}
 
 
 @tool("close_session", tier="consult", effect="write", phases=("check_out", "next", "reduce"),
@@ -1022,7 +1034,8 @@ def open_brief(ctx: Context, need: str, disqualifiers: list[str] | None = None,
     _event(ctx, {"type": "brief", "id": brief_id, "need": need, "topic": topic,
                  "disqualifiers": stated + [d for d in standing if d not in stated],
                  "constraints": {a: list(v) for a, v in bounds.items()},
-                 "verdict": verdict["verdict"], "suggested_queries": suggested})
+                 "verdict": verdict["verdict"], "suggested_queries": suggested,
+                 "held": [r["name"] for r in verdict["results"][:5]]})
     return {"brief": brief_id, "topic": topic, "verdict": verdict["verdict"],
             **({"disqualifiers_from": applied} if applied else {}),
             "already_held": [r["name"] for r in verdict["results"][:5]],

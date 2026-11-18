@@ -107,3 +107,27 @@ def test_name_qualification():
 def test_coverage_orders_measured_alternatives(engine):
     engine.h["coverage_order"] = "bm25"
     assert search(engine, "query operating system state").results[0].name == "osquery"
+
+
+def test_a_need_is_not_covered_by_its_common_words(vault):
+    """2026-11-18: a sentence-length need was `covered` because it matched its common words
+    (solver, results, runtime) while its subject (lattice, QCD, MILC) matched nothing.
+    The verdict now weighs each distinctive term by its rarity; `count` keeps V1's rule."""
+    for i in range(10):
+        add_source(vault.root, f"run {i}", f"Solver results and runtime for grid {i}.")
+    add_source(vault.root, "qcd bench", "Lattice QCD benchmark against the MILC code.")
+    add_source(vault.root, "qcd notes", "Lattice QCD timings measured with MILC.")
+    for i in range(12):
+        add_source(vault.root, f"other {i}", f"Unrelated tool number {i} for pictures.")
+    index = Index(vault)
+    index.refresh()
+    try:
+        heuristics = {**vault.config()["heuristics"], "data_shaped": ["kind=dataset"]}
+        need = "solver results runtime compared with gluon hadron spectroscopy"
+        weighted = search(Engine(index, heuristics), need)
+        counted = search(Engine(index, {**heuristics, "coverage_weighting": "count"}), need)
+        assert counted.verdict == "covered"                 # V1's one term, one vote
+        assert weighted.verdict != "covered"
+        assert search(Engine(index, heuristics), "lattice QCD MILC").verdict == "covered"
+    finally:
+        index.close()

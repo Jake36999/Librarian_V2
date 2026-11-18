@@ -174,14 +174,14 @@
         "symbol": "advance"
       },
       "fingerprint": {
-        "source_sha256": "9bd5bdda524cc75e1b9be9405cc42708857bf90e037f208fc122ed8ea5101438",
+        "source_sha256": "ff183a044899903105272057d87a4cbe57243af2a757ca8a90b658814422c3e1",
         "schema_sha256": "496bf68f3e349a6ce83ba3afe5570accb53ff0c1f5af91548873af5c623d6e41",
         "effect": "write",
         "open_world": false,
         "external": false,
         "sessionless": false
       },
-      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass."
+      "reason": "Control/receipt/configuration or counts; not counted as a content-access pass. 2026-11-18 review (agent Claude): a skipped Search now records the brief's own held sources as candidates (names of catalogued notes the brief's search returned); no content returned, tier and effect unchanged."
     },
     {
       "tool": "agenda",
@@ -2759,14 +2759,14 @@
         "symbol": "open_brief"
       },
       "fingerprint": {
-        "source_sha256": "b277d1e8d7f051793504538c659631ab6b1795e4835c20e8bcd26a4488681471",
+        "source_sha256": "34d65bdc325e4d66ae6c7f2c29a5e59fe30b2fb2db2599992481b95ea9d739d8",
         "schema_sha256": "d2415204ac33920c2f5d066efe7f8e71c2151e51c0358e05356db2cb59784d29",
         "effect": "write",
         "open_world": false,
         "external": false,
         "sessionless": false
       },
-      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps. 2026-11-18 review (agent Claude): the brief event also records the names its coverage search held (already returned as already_held); no new content or authorship class."
     },
     {
       "tool": "open_session",
@@ -4560,14 +4560,14 @@
         "symbol": "search_work"
       },
       "fingerprint": {
-        "source_sha256": "80d674066ff852dfe50c08066328c09f7b1cda64d678e8558f805ba165cd9a38",
+        "source_sha256": "17c28b1ac10a4ca70d866f44894b78493543b923cd3427f65d5440d477ef3240",
         "schema_sha256": "bcce9fdff489ae22589876bd4e4d0b8a7c08e3990e6e9e480b111a77e85fc213",
         "effect": "read",
         "open_world": false,
         "external": false,
         "sessionless": false
       },
-      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps. 2026-11-18 review (agent Claude): staged sources are matched through their recorded reading too (points, limits, sections, draft); results still return only kind, id, name, status and when, plus matched counts, no reading text. Same actors and tier."
     },
     {
       "tool": "session_status",

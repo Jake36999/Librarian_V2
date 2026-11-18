@@ -495,6 +495,7 @@ class Brief:
     closing_note: str = ""
     topic: str = ""                 # the asked topic it answers (R13: one brief per topic)
     coverage: str = ""              # at close: covered | partial | gap
+    held: list[str] = field(default_factory=list)   # what the brief's own search already holds
 
 
 @dataclass
@@ -705,7 +706,8 @@ class Session:
                                              list(event["disqualifiers"]),
                                              event.get("constraints") or {},
                                              event.get("verdict", ""),
-                                             topic=event.get("topic", ""))
+                                             topic=event.get("topic", ""),
+                                             held=list(event.get("held") or []))
         elif kind == "brief_closed":
             brief = self.briefs[event["id"]]
             brief.status, brief.closing_note = "closed", event.get("note", "")

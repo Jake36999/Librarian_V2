@@ -220,7 +220,26 @@ def test_the_work_is_searchable_staging_sessions_and_activity(vault):
                     scope="sessions")
     assert [r["session"] for r in sessions["results"]] == [m.ctx.session]
     assert call(vault, "search_work", tier="consult", query="zurich gardening",
-                scope="sessions")["results"] == []                 # every word must match
+                scope="sessions")["results"] == []     # two of two words must match
     activity = call(vault, "search_work", tier="consult", query="host plan", scope="activity")
     assert any(r["what"] == "wrote" and r["target"] == "Notes/Host Plan.md"
                for r in activity["results"])
+
+
+def test_search_work_finds_a_staged_source_by_its_reading_and_ranks_partial_matches(vault, monkeypatch):
+    """2026-11-18: three rare words from a staged source's read claim found 0-10% of staged
+    sources: the reading was not searched and every word had to match. Now the reading is
+    searched, two of three words suffice, and fuller matches rank first."""
+    from resource_librarian.tools import work_search
+    items = [
+        {"kind": "source", "id": "full", "name": "full", "status": "enriched", "captured_at": "2026-01-01",
+         "deep_read": {"read": {"p1": {"points": ["The mediator flushes shards before compaction."],
+                                       "limits": []}}}},
+        {"kind": "source", "id": "partial", "name": "partial", "status": "enriched", "captured_at": "2026-02-01",
+         "sections": {"Claims": ["Shards are flushed nightly by the mediator."]}},
+        {"kind": "source", "id": "one-word", "name": "one-word", "status": "enriched", "captured_at": "2026-03-01",
+         "review": {"draft": {"bottom_line": "Compaction of logs."}}},
+    ]
+    monkeypatch.setattr(work_search.StagingStore, "items", lambda self: items)
+    out = call(vault, "search_work", tier="consult", query="mediator shards compaction", scope="staging")
+    assert [(r["id"], r["matched"]) for r in out["results"]] == [("full", 3), ("partial", 2)]

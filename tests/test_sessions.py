@@ -377,3 +377,26 @@ def test_the_envelope_carries_the_project_once_set(library):
     m.ok("open_session", purpose="add_project", question="q")
     out = m.ok("create_project", name="Host Watch", stage="active", summary="s")
     assert out["session"]["project"] == "Host Watch"
+
+
+def test_a_skipped_search_hands_the_briefs_held_sources_to_judge(library):
+    """2026-11-18: when every brief was already `covered`, Search was skipped and Judge had
+    no candidates, so an agent following `next` recorded `nothing`. What the brief's own
+    search holds now becomes its candidates."""
+    m = Model(library)
+    m.ok("open_session", purpose="explore", question="what exposes host state to SQL?")
+    m.ok("advance")
+    m.ok("search", query="operating system state", intent="orient")
+    m.ok("update_plan", fields={"map": "host tooling is held under Unfiled"})
+    m.ok("advance")
+    brief = m.ok("open_brief", need="operating system state as a relational SQL database",
+                 disqualifiers=["requires a GPU"])
+    assert brief["verdict"] == "covered" and "osquery" in brief["already_held"]
+    moved = m.ok("advance")
+    assert moved["moved"] == "judge" and "skipped" in moved
+    assert set(moved["candidates_from_briefs"]) == set(brief["already_held"])
+    held = {c["source"]: c for c in m.ok("session_status")["candidates"]}
+    assert set(held) == set(brief["already_held"]) and held["osquery"]["brief"] == "B1"
+    m.decide_all(keep={"osquery"})
+    m.ok("record_assumptions", assumptions=[])
+    assert m.ok("advance")["moved"] == "synthesise"

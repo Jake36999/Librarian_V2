@@ -64,6 +64,9 @@ DEFAULT_CONFIG: dict[str, dict[str, Any]] = {
         # "union" beat V1's "bm25" order on V1's eval and scenarios, measured
         # 2026-09-25 on a scratch copy of V1's notes (Librarian V2 - M2 Results).
         "coverage_order": "union",
+        # "rarity" weighs each distinctive term by its inverse document frequency in the
+        # verdict's account; "count" is V1's one-term-one-vote (2026-11-18, see search.py).
+        "coverage_weighting": "rarity",
     },
     # Off until the embeddings spike says which model earns its place; see
     # "Librarian V2 - M0 Results". Form: "model2vec:<model id>".

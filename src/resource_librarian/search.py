@@ -475,13 +475,36 @@ class Engine:
                 for axis, values in sorted(out.items()) if len(values) > 1}
 
     # -- verdict ------------------------------------------------------------
+    def _term_weights(self, selective: frozenset[str]) -> dict[str, float]:
+        """How much each distinctive term counts towards the verdict's account.
+
+        `count` gives every term 1 (V1's rule). `rarity` (default) weighs a term by its
+        inverse document frequency over the answerable notes, so a need written as a
+        sentence is not `covered` because it matched its common words. Measured
+        2026-11-18: "sources comparing this solver's results or runtime against published
+        lattice QCD or MILC codes" was `covered` on 4 of 10 terms (solver, results,
+        runtime, against) while nothing matched lattice, QCD or MILC. Below
+        `selectivity_min_corpus` a document frequency means nothing, so every term counts 1.
+        """
+        import math
+        shapes = ("source",)
+        answerable = self._answerable_count(shapes)
+        if (self.h.get("coverage_weighting", "rarity") != "rarity"
+                or answerable < int(self.h["selectivity_min_corpus"])):
+            return {t: 1.0 for t in selective}
+        floor = 1.0 / answerable                 # a term in no note counts as one note in all
+        return {t: math.log(1.0 / max(self.document_frequency(t, shapes), floor)) or 0.01
+                for t in selective}
+
     def verdict(self, selective: frozenset[str], results: list[Result]) -> dict[str, Any]:
         """Absolute, where rank is relative: how much of the query the best
         answer accounts for in a claim section, and how many sources agree."""
         per = [tuple(t for t in r.fields.get("matched", []) if t.lower() in selective)
                if r.fields.get("matched_role") == "claim" else () for r in results]
-        best = max(per, key=len, default=())
-        account = len({t.lower() for t in best}) / len(selective) if selective else 0.0
+        weight = self._term_weights(selective)
+        best = max(per, key=lambda m: (sum(weight[t.lower()] for t in set(m)), len(m)), default=())
+        total = sum(weight.values())
+        account = (sum(weight[t] for t in {t.lower() for t in best}) / total) if total else 0.0
         consensus = sum(1 for m in per if len(m) >= 2)
         strong, thin = float(self.h["strong_account"]), float(self.h["thin_account"])
         agree = int(self.h["consensus_matches"])
@@ -511,6 +534,7 @@ _DEFAULTS: dict[str, Any] = {
     "selectivity_ceiling": 0.5, "selectivity_min_corpus": 20, "rrf_k": 60, "name_weight": 1.2, "coverage_weight": 1.0,
     "vector_weight": 1.0, "coverage_min_terms": 2, "strong_account": 0.34,
     "thin_account": 0.10, "consensus_matches": 2, "coverage_order": "union",
+    "coverage_weighting": "rarity",
 }
 
 
