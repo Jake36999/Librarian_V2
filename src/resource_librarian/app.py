@@ -78,6 +78,9 @@ from .tools.sessions import Waiters
 from .vault import DEFAULT_CONFIG, Vault, now_iso
 
 LOOPBACK = {"127.0.0.1", "localhost", "::1", "[::1]"}
+# The library's own Geo-Grapher as its agents see it: the same server name (and so the
+# same tool names and permissions) the person's mcp.json entry used before (2026-11-18).
+GEO_SERVER = "geo-grapher"
 HOST_ORIGINS = {"app://obsidian.md"}
 MAX_BODY = 1_000_000
 MAX_UPLOAD = 40_000_000
@@ -511,6 +514,7 @@ class App:
         # Created here, started by serve()/switch() once the Core's address is known.
         from .geo_service import GeoService
         self.geo = GeoService(vault)
+        self.geo.on_change.append(self._geo_for_agents)
         if mcp is not None:
             # Switching library: outside servers are configured per person, not
             # per library (mcp.json), and their tools are registered once,
@@ -518,6 +522,7 @@ class App:
             # library's own broker is seeded with their default (Ask).
             self.mcp = mcp
             mcp.owner = self                       # the retiring library no longer stops it
+            mcp.clear_builtin(GEO_SERVER)          # the retiring library's Geo is not this one's
             mcp.attach_broker(self.broker)
             mcp.use_library(vault.librarian)       # this library's own choices
             threading.Thread(target=mcp.sync, daemon=True, name="mcp-sync").start()
@@ -531,6 +536,20 @@ class App:
             self.mcp.owner = self
             self.mcp.use_library(vault.librarian)
             threading.Thread(target=self.mcp.sync, daemon=True, name="mcp-sync").start()
+
+    def _geo_for_agents(self, definition: dict[str, Any] | None) -> None:
+        """This library's agents reach its own running Geo-Grapher (owner, 2026-11-18:
+        "Built-in service"), not a separately launched stdio copy: the Core registers the
+        service as a library-owned MCP server while it runs, and removes it when it ends.
+        Its tools keep their names and their permission (Ask until a person says otherwise)."""
+        mcp = getattr(self, "mcp", None)
+        if mcp is None or getattr(mcp, "owner", None) is not self:
+            return                                  # a retired library's service is not this one's
+        if definition:
+            mcp.set_builtin(GEO_SERVER, definition)
+        else:
+            mcp.clear_builtin(GEO_SERVER)
+        threading.Thread(target=mcp.sync, daemon=True, name="mcp-sync-geo").start()
 
     # -- switching library ---------------------------------------------------
     def running(self) -> dict[str, Any]:

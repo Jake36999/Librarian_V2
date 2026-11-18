@@ -242,6 +242,13 @@ class McpManager:
         self._entered: dict[str, Any] = {}
         self._tool_names: dict[str, list[str]] = {}
         self._errors: dict[str, str] = {}
+        # Library-owned servers the Core runs itself (its Geo-Grapher), in memory only:
+        # never written to mcp.json, never needing a person's acceptance there, and
+        # shadowing an mcp.json entry of the same name. `_connected` holds the definition
+        # each connection was made with, so a restarted service (new port, new token)
+        # is reconnected rather than reused.
+        self._builtin: dict[str, dict[str, Any]] = {}
+        self._connected: dict[str, dict[str, Any]] = {}
 
     # -- config ----------------------------------------------------------
     # -- per-library enablement (Co-work Roadmap §4 F1) ----------------------
@@ -315,6 +322,28 @@ class McpManager:
 
     def servers(self) -> dict[str, dict[str, Any]]:
         return self.load_config()["mcpServers"]
+
+    # -- library-owned servers ------------------------------------------------
+    def set_builtin(self, name: str, definition: dict[str, Any]) -> None:
+        """Serve `name` from a definition the Core owns (owner, 2026-11-18: an agent
+        reaches its library's own Geo-Grapher through the service the Core runs, not a
+        separate stdio process). `url` is a Streamable HTTP endpoint; `headers` may carry
+        a secret and are kept in memory only. Call `sync()` afterwards."""
+        if not str(definition.get("url") or "").startswith(("http://127.0.0.1:", "http://localhost:")):
+            raise ValueError("a library-owned server is a loopback HTTP endpoint")
+        with self._lock:
+            self._builtin[name] = dict(definition)
+
+    def clear_builtin(self, name: str) -> None:
+        with self._lock:
+            self._builtin.pop(name, None)
+
+    def builtin(self, name: str) -> dict[str, Any] | None:
+        return self._builtin.get(name)
+
+    def _definition(self, name: str) -> dict[str, Any] | None:
+        """What `name` runs as now: the library-owned definition, else mcp.json's."""
+        return self._builtin.get(name) or self.servers().get(name)
 
     def set_server(self, name: str, definition: dict[str, Any]) -> None:
         """Add or replace one server's entry, keeping the others as they are."""
@@ -409,43 +438,60 @@ class McpManager:
         stop the others."""
         self.start()
         servers = self.servers()
-        wanted = {name for name, definition in servers.items()
-                 if definition.get("enabled", True) and self.is_accepted(name, definition)
-                 and self.enabled_here(name)}
+        builtin = dict(self._builtin)
+        wanted = {name: definition for name, definition in servers.items()
+                  if name not in builtin and definition.get("enabled", True)
+                  and self.is_accepted(name, definition) and self.enabled_here(name)}
+        wanted.update(builtin)
         for name in list(self._clients):
-            if name not in wanted:
+            if name not in wanted or self._connected.get(name) != wanted[name]:
                 self._disconnect(name)
-        for name in wanted:
+        for name, definition in wanted.items():
             if name not in self._clients:
-                self._connect(name, servers[name])
+                self._connect(name, definition)
         return self.status()
 
     def _connect(self, name: str, definition: dict[str, Any]) -> None:
         try:
             from mcp import Client
-            from mcp.client.stdio import StdioServerParameters
-            command = str(definition.get("command") or "").strip()
-            if not command:
-                raise ValueError("no command given (Phase 1 is stdio-only)")
-            params = StdioServerParameters(
-                command=command, args=[str(a) for a in definition.get("args") or []],
-                env=_resolve_env(definition.get("env") or {}),
-                cwd=definition.get("cwd") or None)
-            client = Client(params, read_timeout_seconds=CALL_TIMEOUT)
+            timeout = float(definition.get("timeout_seconds") or CALL_TIMEOUT)
+            if definition.get("url"):
+                # A library-owned loopback service (set_builtin): Streamable HTTP, with its
+                # headers (the service's token) attached to every request.
+                from mcp.client.streamable_http import streamable_http_client
+                from mcp.shared._httpx_utils import create_mcp_http_client
+                http = create_mcp_http_client(headers={str(k): str(v) for k, v in
+                                                       (definition.get("headers") or {}).items()})
+                client = Client(streamable_http_client(str(definition["url"]), http_client=http),
+                                read_timeout_seconds=timeout)
+            else:
+                from mcp.client.stdio import StdioServerParameters
+                command = str(definition.get("command") or "").strip()
+                if not command:
+                    raise ValueError("no command given")
+                params = StdioServerParameters(
+                    command=command, args=[str(a) for a in definition.get("args") or []],
+                    env=_resolve_env(definition.get("env") or {}),
+                    cwd=definition.get("cwd") or None)
+                client = Client(params, read_timeout_seconds=timeout)
             wrapped = self._portal.wrap_async_context_manager(client)
             entered = wrapped.__enter__()
             tools = self._portal.call(entered.list_tools).tools
         except Exception as exc:                                # noqa: BLE001
+            while isinstance(exc, BaseExceptionGroup) and exc.exceptions:
+                exc = exc.exceptions[0]          # the cause, not "unhandled errors in a TaskGroup"
             self._errors[name] = f"{type(exc).__name__}: {clip(str(exc), 300)}"
             return
         self._errors.pop(name, None)
         self._clients[name] = entered
         self._entered[name] = wrapped
+        self._connected[name] = dict(definition)
         self._register_tools(name, tools)
 
     def _disconnect(self, name: str) -> None:
         self._unregister(name)
         self._clients.pop(name, None)
+        self._connected.pop(name, None)
         self._errors.pop(name, None)
         wrapped = self._entered.pop(name, None)
         if wrapped is not None:
@@ -474,7 +520,7 @@ class McpManager:
                 needs_vault=False, idempotent=read_only, external=True, schema=schema)
             # This is operator configuration covered by acceptance, never a
             # tool/server annotation or a value from its returned content.
-            authority = self.servers().get(server, {}).get('provenance_authority', '')
+            authority = (self._definition(server) or {}).get('provenance_authority', '')
             spec = replace(spec, open_world=authority != 'geographer',
                            provenance_authority='geographer' if authority == 'geographer' else '')
             REGISTRY.register(spec)
@@ -503,9 +549,16 @@ class McpManager:
         if type(limit) is not int or not MIN_EXTERNAL_RESULT <= limit <= 160_000:
             raise ValueError('limit_chars must be 8000..160000')
         client = self._clients.get(server)
-        definition = self.servers().get(server)
+        definition = self._definition(server)
         library = self._library_file()
         def admitted():
+            owned = self._builtin.get(server)
+            if owned is not None or (definition or {}).get('url'):
+                # Library-owned: admitted while the same service (url and token) is still
+                # this library's and still the connection the call was made on.
+                return (owned is not None and owned == definition
+                        and self._connected.get(server) == owned and self._library_file() == library
+                        and self._clients.get(server) is client)
             current = self.servers().get(server)
             return (current is not None and definition is not None and current.get('enabled', True)
                     and self.is_accepted(server, current) and self.enabled_here(server)
@@ -557,7 +610,14 @@ class McpManager:
     # -- status ----------------------------------------------------------
     def status(self) -> dict[str, Any]:
         out = {}
+        for name, definition in self._builtin.items():
+            out[name] = {"enabled": True, "accepted": True, "library_owned": True,
+                        "connected": name in self._clients,
+                        "tools": len(self._tool_names.get(name, [])),
+                        "error": self._errors.get(name, ""), "unpinned": ""}
         for name, definition in self.servers().items():
+            if name in self._builtin:
+                continue
             accepted = self.is_accepted(name, definition)
             enabled = bool(definition.get("enabled", True))
             connected = name in self._clients

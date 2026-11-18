@@ -46,6 +46,9 @@ class GeoService:
         self._state = "stopped"
         self._error = ""
         self._stopping = threading.Event()
+        # Called with mcp_definition() whenever the service starts or ends (None when it is
+        # not running): the Core hands its agents this library's Geo through it.
+        self.on_change: list = []
 
     # -- paths ------------------------------------------------------------
     @property
@@ -110,6 +113,7 @@ class GeoService:
                     with self._lock:
                         self._info, self._state = info, "running"
                         self._listener_start = process_identity.process_start(info["pid"]) if isinstance(info.get("pid"), int) else None
+                    self._notify()
                     return
             code = proc.poll()
             if code is not None:
@@ -127,6 +131,28 @@ class GeoService:
     def _fail(self, error: str) -> None:
         with self._lock:
             self._state, self._error, self._info = "failed", error, None
+        self._notify()
+
+    def mcp_definition(self) -> dict[str, Any] | None:
+        """This library's running Geo as a library-owned MCP server for its agents: the
+        service's own `/mcp` endpoint on loopback, with the per-library token as a header
+        (memory only, never written anywhere). None when the service is not running."""
+        with self._lock:
+            if self._state != "running" or not self._info or not self.token:
+                return None
+            return {"url": f"http://127.0.0.1:{int(self._info['port'])}/mcp",
+                    "headers": {"X-Geo-Token": self.token},
+                    "provenance_authority": "geographer",
+                    # A cold first query on a large graph took 20-355 s (2026-11-18).
+                    "timeout_seconds": 600}
+
+    def _notify(self) -> None:
+        definition = self.mcp_definition()
+        for listener in list(self.on_change):
+            try:
+                listener(definition)
+            except Exception:                                   # noqa: BLE001
+                pass                          # a listener's failure never stops the service
 
     def stop(self) -> None:
         """Stop this library's service and its real listener (which a Windows venv
@@ -136,6 +162,7 @@ class GeoService:
         with self._lock:
             self._state, self._info, self.token, self._listener_start = "stopped", None, "", None
         (self._runtime / "geographer-ready.json").unlink(missing_ok=True)
+        self._notify()
 
     def _terminate(self) -> None:
         with self._lock:
@@ -197,6 +224,7 @@ class GeoService:
                            f"GEOGRAPHER_EXITED: code {code}; see .librarian/logs/geographer.log" if code is not None else
                            "GEOGRAPHER_EXITED: the service ended unexpectedly; see .librarian/logs/geographer.log")
             (self._runtime / "geographer-ready.json").unlink(missing_ok=True)
+        self._notify()
 
     def status(self) -> dict[str, Any]:
         self._reap_if_dead()

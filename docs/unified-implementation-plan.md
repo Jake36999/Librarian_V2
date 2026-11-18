@@ -6937,3 +6937,40 @@ in `docs/tool-access-declarations.json` after review:
 - `tests/test_sessions.py` (+1: a skipped Search seeds Judge from the brief);
 - `tests/test_upkeep.py` (+1: a staged reading is found and partial matches rank second; the
   existing two-word case still needs both words).
+
+### A library's agents reach its own Geo-Grapher service (2026-11-18)
+**Owner decision (in chat):** "Built-in service".
+
+**Change.**
+- `McpManager.set_builtin` / `clear_builtin` hold library-owned servers in memory only. A
+  built-in is a loopback Streamable HTTP endpoint with headers. It shadows the `mcp.json`
+  entry of the same name, needs no `mcp.json` acceptance, and is reconnected when its
+  definition changes.
+- `call_tool` admits a call to a built-in only while the definition is the one the
+  connection was made with, the library is the same and the client is the same. Otherwise it
+  returns `access_changed`.
+- `GeoService.mcp_definition()` describes the running service: `http://127.0.0.1:<port>/mcp`,
+  `X-Geo-Token`, `provenance_authority = geographer`, 600 s read timeout. `on_change`
+  listeners hear each start and end.
+- The Core registers it as `geo-grapher` while it runs, removes it when it ends, and clears a
+  retired library's on a switch.
+- Tool names and their permissions are unchanged: each starts at Ask.
+- A connection error now reports its cause, not "unhandled errors in a TaskGroup".
+
+**Why.**
+- The person's `mcp.json` entry started a published `geo-grapher==0.1.1` over stdio with
+  `GEOGRAPHER_CATALOG` unset, so agents' Geo tools never saw the library's catalogue.
+- A second stdio process would also load the same multi-GB graphs again. The cold first
+  queries measured 20–355 s.
+- The token never leaves the Core.
+
+**Tests.** `tests/test_mcp_builtin_geo.py` (5), against a real HTTP server
+(`tests/fixtures/fake_mcp_http_server.py`) that refuses a request without the token:
+- the built-in shadows the `mcp.json` entry and answers;
+- a wrong token does not connect, and a new definition reconnects;
+- a cleared service unregisters its tools;
+- a call after the token rotated is withheld;
+- only loopback HTTP can be library-owned;
+- the service hands its endpoint to listeners.
+
+`tests/test_shutdown.py`: the stand-in manager gains `clear_builtin`.
