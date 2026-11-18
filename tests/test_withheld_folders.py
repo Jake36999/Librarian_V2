@@ -97,3 +97,32 @@ def test_policy_writes_go_through_commit_and_a_failed_build_restores_the_manifes
         failing.accept_by_policy(source)
     assert commits and (manifest.read_bytes() if manifest.is_file() else None) == before
     assert not [c for c in failing.list() if c["status"] == "accepted"]
+
+
+def test_read_scope_is_resolved_once_per_manifest_and_follows_a_change(project, monkeypatch):
+    """The resolved roots and exclusions are cached per manifest content (2026-11-18: resolving
+    1,779 exclusions on every read made one index refresh take 95 s); an exclusion written
+    after a read must still narrow the next one."""
+    from pathlib import Path
+    from resource_librarian import content_roots
+    from resource_librarian.content_roots import resolve_read_path
+    from resource_librarian.folder_review import FolderReview
+    vault, source = project
+    review = FolderReview(vault, planner=planner, applier=lambda _: {})
+    cards = {c["path"]: c for c in review.survey(source)["cards"]}
+    root = cards["."]
+    review.accept(root["id"], root["folder_fingerprint"], purpose="own-docs", graph="docs", person=True)
+    target = source / "excluded" / "x.md"
+    assert resolve_read_path(vault, str(target)) == target.resolve()
+    calls = []
+    real = Path.resolve
+    monkeypatch.setattr(Path, "resolve", lambda self, *a, **k: calls.append(self) or real(self, *a, **k))
+    for _ in range(5):
+        resolve_read_path(vault, str(source / "own.md"))
+    assert len(calls) <= 5                      # only each read's own path, not the scope again
+    monkeypatch.setattr(Path, "resolve", real)
+    excluded = {c["path"]: c for c in review.list()}["excluded"]
+    review.accept(excluded["id"], excluded["folder_fingerprint"], purpose="exclude", graph="", person=True)
+    with pytest.raises(TypeError, match="excluded"):
+        resolve_read_path(vault, str(target))
+    assert content_roots._RESOLVED_SCOPES

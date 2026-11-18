@@ -6885,3 +6885,18 @@ temp folder.
 - `tests/test_research_round_workspace.py` (1);
 - `tests/test_staging_list_paging.py` (1);
 - `tests/test_external_result_limit.py` (floor now 24,000).
+
+### Read scope resolved once per manifest (2026-11-18)
+**Change.** `content_roots.resolve_read_path` used to resolve every attached root and every
+manifest exclusion on each call. Those values are now computed once per manifest content
+(`_resolved_scope`, keyed by the manifest's bytes), so a changed manifest is honoured on the
+next read.
+
+**Why.** ef5f595 made `sync_documents` read each in-place Source's original through
+`resolve_read_path`. On Resource-Library (53 roots, 1,779 exclusions) that cost about 0.7 s per
+Source: one index refresh took 95 s for 143 accepted Sources. Every search and every accept
+paid it, because the 30 s refresh window expired between 100 s calls. Measured afterwards: 144
+in-place files resolved in 1.9 s.
+
+**Tests.** `tests/test_withheld_folders.py` (+1: the scope is not re-resolved per read, and an
+exclusion written after a read still refuses the next read).

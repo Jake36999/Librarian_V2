@@ -296,6 +296,31 @@ def manifest_bytes(root: Path) -> bytes:
     return path.read_bytes() if path.is_file() else b""
 
 
+_RESOLVED_SCOPES: dict[tuple[str, bytes], tuple[Path, list, list]] = {}
+
+
+def _resolved_scope(vault) -> tuple[Path, list[tuple[Path, dict]], list[Path]]:
+    """The vault's resolved home, attached roots and manifest exclusions, computed once per
+    manifest content. Resolving every root and exclusion on every read cost ~0.7 s per path
+    on a manifest with many exclusions, and `sync_documents` reads every in-place Source's
+    original on each index refresh (2026-11-18: 143 Sources made one refresh take 95 s)."""
+    key = (str(vault.root), manifest_bytes(vault.root))
+    hit = _RESOLVED_SCOPES.get(key)
+    if hit is None:
+        data = load(vault.root) or {}
+        home = vault.root.resolve()
+        attached = [((home / entry['path']).resolve(), entry)
+                    for entry in data.get('roots', []) if entry.get('attached')]
+        excludes = []
+        for excluded in data.get('excludes', []):
+            folder = Path(excluded)
+            excludes.append((folder if folder.is_absolute() else home / folder).resolve())
+        if len(_RESOLVED_SCOPES) >= 16:
+            _RESOLVED_SCOPES.clear()
+        hit = _RESOLVED_SCOPES[key] = (home, attached, excludes)
+    return hit
+
+
 def resolve_read_path(vault, value):
     """Resolve a library/attached read under the owner's current manifest.
 
@@ -307,14 +332,11 @@ def resolve_read_path(vault, value):
     path = (vault.root / value).resolve()
     refuse_credentials(value)
     refuse_credentials(path)
-    home = vault.root.resolve()
+    home, attached, excludes = _resolved_scope(vault)
     if path == home or path.is_relative_to(home):
         return path
     candidates = []
-    for entry in (load(vault.root) or {}).get('roots', []):
-        if not entry.get('attached'):
-            continue
-        base = (home / entry['path']).resolve()
+    for base, entry in attached:
         if path.is_relative_to(base):
             candidates.append((len(base.parts), base, entry))
     if not candidates:
@@ -334,9 +356,7 @@ def resolve_read_path(vault, value):
         raise TypeError(f"{value!r} is excluded by the connected-root configuration")
     # An `exclude` decision is written to the manifest's own excludes, not to the root entry
     # (2026-11-17): honour those too, as absolute folders under this root.
-    for excluded in (load(vault.root) or {}).get('excludes', []):
-        folder = Path(excluded)
-        folder = (folder if folder.is_absolute() else home / folder).resolve()
+    for folder in excludes:
         if folder != home and folder.is_relative_to(base) and (path == folder or path.is_relative_to(folder)):
             raise TypeError(f"{value!r} is excluded by the connected-root configuration")
     rel = path.relative_to(base).as_posix()
