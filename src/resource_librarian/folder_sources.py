@@ -76,29 +76,44 @@ def documents(vault: Any, folder: str, scope: Any = None, *, _all: bool = False)
     if decision is None or Path(decision["path"]).resolve() != base or decision.get("purpose") not in SOURCE_PURPOSES:
         raise ValueError("FOLDER_SOURCES: only an accepted third-party, research-docs or own-docs folder "
                          "becomes Sources; other own content is indexed whole")
+    import os
     from .workspace_documents import _inside
     blocked = blocked_folders(vault)
-    out = []
-    for path in sorted(base.rglob("*")):
-        if not path.is_file() or path.suffix.lower() not in DOCUMENT_SUFFIXES:
-            continue
-        if wanted is not None and path.suffix.lower() not in wanted:
-            continue
-        rel = path.relative_to(base)
+    # The deepest attached root owning a path, by its parents: one manifest read, not one per file.
+    bases = {os.path.normcase(str(Path(r["path"]).resolve())) for r in
+             (content_roots.load(vault.root) or {}).get("roots", []) if r.get("attached")}
+    mine = os.path.normcase(str(base))
+
+    def owned_here(path: Path) -> bool:
+        for parent in path.parents:
+            key = os.path.normcase(str(parent))
+            if key in bases:
+                return key == mine                     # a deeper accepted card decides otherwise
+        return False
+
+    def skipped(part: str) -> bool:
         # Hidden folders too, as the survey treats them (2026-11-16: pytest scratch PDFs inside a
         # hidden temp folder were queued as the "newest" research papers).
-        if any(part in SKIP_DIRS or part.lower().endswith("cache") or part.startswith(".")
-               for part in rel.parts[:-1]):
-            continue
-        if credential_path(rel.as_posix()) or generated_path(rel.as_posix()):
-            continue
-        owner = attached_root(vault, path)
-        if owner is None or Path(owner["path"]).resolve() != base:
-            continue                                   # a deeper accepted card decides this one
-        if _inside(path.parent, blocked):
-            continue                                   # excluded, or withheld until decided
-        out.append(path)
-    return out
+        return part in SKIP_DIRS or part.lower().endswith("cache") or part.startswith(".")
+
+    out = []
+    # Skipped folders are pruned before they are entered (2026-11-18: rglob walked whole .git and
+    # .venv trees only to drop every file found there).
+    for here, directories, files in os.walk(base):
+        directories[:] = [d for d in directories if not skipped(d)]
+        parent = Path(here)
+        for name in files:
+            path = parent / name
+            suffix = path.suffix.lower()
+            if suffix not in DOCUMENT_SUFFIXES or (wanted is not None and suffix not in wanted):
+                continue
+            rel = path.relative_to(base)
+            if credential_path(rel.as_posix()) or generated_path(rel.as_posix()):
+                continue
+            if not owned_here(path) or _inside(path.parent, blocked):
+                continue                               # a deeper decision, an exclusion or a hold
+            out.append(path)
+    return sorted(out)
 
 
 def _ledger(vault: Any) -> Path:

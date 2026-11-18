@@ -143,6 +143,31 @@ def extract(path: Path, cache_dir: Path) -> Extraction:
     return Extraction(pages, empty)
 
 
+def source_original(vault: Any, fm: dict[str, Any]) -> tuple[str, Path | None]:
+    """The file a Source's text is read from, and its path: its page-anchored conversion
+    (`file_markdown`) when one is recorded, else its `file`. A file outside the vault (an attached
+    project file accepted in place) is read through the connected-read rules, never directly
+    (2026-11-18: in-place Sources had no indexed text and no quotable original)."""
+    from .conversions import ConversionStore, is_conversion
+    conv = str(fm.get("file_markdown") or "").strip()
+    if conv and is_conversion(vault, conv):
+        try:
+            return conv, ConversionStore(vault).checked_path(conv)
+        except (TypeError, ValueError, OSError):
+            pass
+    rel = str(fm.get("file") or "").strip()
+    if not rel:
+        return "", None
+    path = (vault.root / rel).resolve()
+    if vault.root in path.parents:
+        return rel, path
+    from .content_roots import resolve_read_path
+    try:
+        return rel, resolve_read_path(vault, rel)
+    except (TypeError, ValueError, OSError):
+        return rel, None
+
+
 def sync_documents(index: Index) -> dict[str, Any]:
     """Index the text of every Source's `file` that is new or changed."""
     vault = index.vault
@@ -156,6 +181,10 @@ def sync_documents(index: Index) -> dict[str, Any]:
         if not rel:
             continue
         path = (vault.root / rel).resolve()
+        if vault.root not in path.parents:
+            # An attached project file accepted in place: read it (or its conversion) where it is.
+            rel, found = source_original(vault, json.loads(row["frontmatter"]))
+            path = found if found is not None else path
         from .access import _native_authorship
         from .registry import Context
         fm = json.loads(row['frontmatter'])
@@ -169,9 +198,9 @@ def sync_documents(index: Index) -> dict[str, Any]:
             report['problems'].append({'note': row['name'], 'file': rel,
                 'code': 'THIRD_PARTY_CATALOGUE_ONLY', 'problem': 'Native search retains catalogue metadata only; use the conversion graph for located source text'})
             continue
-        if vault.root not in path.parents or not path.is_file():
+        if not path.is_file():
             report["problems"].append({"note": row["name"], "file": rel,
-                                       "problem": "not a file inside this vault"})
+                                       "problem": "not a file inside this vault or its connected folders"})
             continue
         stat = path.stat()
         stamp = f"{rel}|{stat.st_size}|{stat.st_mtime}"

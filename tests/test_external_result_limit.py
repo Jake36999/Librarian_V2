@@ -5,7 +5,7 @@ from resource_librarian.mcp_client import McpManager
 from resource_librarian.registry import Context
 
 
-@pytest.mark.parametrize('window,expected', [(None,8000),(131072,8000),(200000,24000),(1048576,125829),(10000000,160000)])
+@pytest.mark.parametrize('window,expected', [(None,24000),(131072,24000),(200000,24000),(1048576,125829),(10000000,160000)])
 def test_formula(window, expected):
     from resource_librarian.mcp_client import external_result_limit
     assert external_result_limit(window) == expected

@@ -46,7 +46,10 @@ from .coordination import atomic_write_text
 from .registry import REGISTRY, Card, ToolSpec, clip
 
 CALL_TIMEOUT = 30.0
-MAX_EXTERNAL_RESULT = 8_000
+# Floor for routes of 131K tokens or less (or unknown). Geo-Grapher's default 4,000-token packet is
+# about 16,000 characters: at 8,000 every such packet was withheld as too large (2026-11-18).
+MAX_EXTERNAL_RESULT = 24_000
+MIN_EXTERNAL_RESULT = 8_000         # the smallest limit a caller may ask for
 
 
 def external_result_limit(context_tokens: int | None) -> int:
@@ -497,7 +500,7 @@ class McpManager:
     def call_tool(self, server: str, tool_name: str, arguments: dict[str, Any],
                   *, limit_chars: int | None = None, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
         limit = MAX_EXTERNAL_RESULT if limit_chars is None else limit_chars
-        if type(limit) is not int or not MAX_EXTERNAL_RESULT <= limit <= 160_000:
+        if type(limit) is not int or not MIN_EXTERNAL_RESULT <= limit <= 160_000:
             raise ValueError('limit_chars must be 8000..160000')
         client = self._clients.get(server)
         definition = self.servers().get(server)

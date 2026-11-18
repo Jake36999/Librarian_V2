@@ -61,6 +61,7 @@ LETTER = r"[^\W_]"                    # a letter or digit, any script; `_` is a 
 NAME_SHORT_QUERY = 2
 NAME_MIN_QUERY_COVERAGE = 0.5
 NAME_MIN_NAME_COVERAGE = 0.5
+PER_NOTE_POOL = 3            # passages one note may place in a lexical pool (see Engine.lexical)
 
 COVERED, THIN, UNCOVERED = "covered", "thin", "uncovered"
 
@@ -331,16 +332,23 @@ class Engine:
             return []
         marks_s = ",".join("?" for _ in shapes)
         marks_r = ",".join("?" for _ in roles)
-        sql = ("SELECT c.note AS note, c.heading AS heading, c.role AS role, c.text AS text, "
-               "bm25(chunk_fts) AS score FROM chunk_fts JOIN chunk c ON c.id = chunk_fts.rowid "
-               "JOIN note n ON n.path = c.path WHERE chunk_fts MATCH ? "
-               f"AND n.shape IN ({marks_s}) AND c.role IN ({marks_r})")
+        # At most PER_NOTE_POOL passages per note enter the pool: one 92,000-passage data file could
+        # otherwise fill all `limit` slots before results are reduced to one per note, and no
+        # document ever ranked (2026-11-18).
+        inner = ("SELECT c.note AS note, c.heading AS heading, c.role AS role, c.text AS text, "
+                 "bm25(chunk_fts) AS score "
+                 "FROM chunk_fts JOIN chunk c ON c.id = chunk_fts.rowid "
+                 "JOIN note n ON n.path = c.path WHERE chunk_fts MATCH ? "
+                 f"AND n.shape IN ({marks_s}) AND c.role IN ({marks_r})")
         params: list[Any] = [query, *shapes, *roles]
         if within:
-            sql += f" AND c.note IN ({','.join('?' for _ in within)})"
+            inner += f" AND c.note IN ({','.join('?' for _ in within)})"
             params += list(within)
-        sql += " ORDER BY score LIMIT ?"
-        params.append(limit)
+        # bm25() is only allowed in the FTS query itself, so the per-note rank is taken outside it.
+        sql = (f"WITH matched AS ({inner}) SELECT note, heading, role, text, score FROM "
+               "(SELECT *, row_number() OVER (PARTITION BY note ORDER BY score) AS per_note FROM matched) "
+               "WHERE per_note <= ? ORDER BY score LIMIT ?")
+        params += [PER_NOTE_POOL, limit]
         try:
             rows = self.conn.execute(sql, params).fetchall()
         except sqlite3.OperationalError:

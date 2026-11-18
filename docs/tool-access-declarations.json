@@ -3905,14 +3905,14 @@
         "symbol": "research_round"
       },
       "fingerprint": {
-        "source_sha256": "38e35eb9a8a2f3cfe57ff77344a2259fe14678cbc037958f24c74b00e67864d3",
+        "source_sha256": "813efb40e8623d2c1d82efa7044103344cf987c979da6ee0ee7b7f023b3d644f",
         "schema_sha256": "e64c40c9c7a6d71ae4c766f096146b15d2fa39b823f139708f749bb1c86ee9c8",
         "effect": "write",
         "open_world": false,
         "external": false,
         "sessionless": false
       },
-      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps. 2026-11-18 review (agent Claude): an uncovered or thin round also returns `workspace` leads (note names and match reasons) from the workspace intent, which covers owner-created documents only; no new authorship class, tier unchanged."
     },
     {
       "tool": "resume_session",
@@ -4808,14 +4808,14 @@
         "symbol": "staging_list"
       },
       "fingerprint": {
-        "source_sha256": "91dd58991ab3886551c4b357b30a9d3acffb97718c6fd393b73f989456e51bd8",
+        "source_sha256": "6c503095a64828abb51172b8decc6b7406ee44f882b877e58cfe71a550853f1e",
         "schema_sha256": "2303ec037f328e4e9f0094d0edeeab514bc3f7ee2b7fd0a0c983bda05ba4b782",
         "effect": "read",
         "open_world": false,
         "external": false,
         "sessionless": false
       },
-      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps."
+      "reason": "No explicit owner_created/generated/third_party contract on potentially mixed output; review the named follow-up steps. 2026-11-18 review (agent Claude): filters and counts from cached summaries and reads only the page in full; same rows, fields and authorship as before, tier unchanged."
     },
     {
       "tool": "staging_preview",

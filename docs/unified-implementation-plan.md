@@ -6834,3 +6834,54 @@ With the window set, a search inside it takes about 1 s.
 
 **Tests.** `tests/test_search_refresh_window.py` (1). The existing access, index, search and folder
 tests cover the unchanged rules (342 passed).
+
+### Recall: in-place Sources searchable and quotable, a pool cap, workspace leads, wider MCP results (2026-11-18)
+
+**Found** (Gemini's post-ingestion recall review, each item checked in the code).
+- **In-place Sources had no indexed text.** A Source accepted in place (`693448d`) names a file
+  outside the vault. `text.sync_documents` refused it ("not a file inside this vault"), so its
+  `in_text` passages never existed. A quote from past the card's 40 bullets failed, because
+  `_quote_source` never read the conversion or the original.
+- **Giant files filled the lexical pool.** `Engine.lexical` took the 80 best passages before
+  results were reduced to one per note, so one 92,000-passage data file could fill all 80.
+- **Research rounds saw only folder stubs.** `research_round` searches the catalogue (`donor`).
+  Before promotion it saw only the folder stubs, while the library's own documents sat indexed
+  but unsearched.
+- **Default Geo-Grapher packets were refused.** `MAX_EXTERNAL_RESULT = 8,000` characters, for
+  routes of 131K tokens or less, withheld every default 4,000-token Geo-Grapher packet (about
+  16,000 characters) as too large. The review's "clipped mid-JSON" is not quite right: it was
+  withheld whole, with a retryable error.
+- **Slow listing and walking.** `staging_list` parsed every item of a kind to build one page.
+  `folder_sources.documents` walked `.git` and `.venv` trees before dropping them, and re-read the
+  manifest for every file.
+
+**Change.**
+- `text.source_original` picks the text a Source is read from: its page-anchored conversion, else
+  its `file`, reading an outside file through `resolve_read_path`. `sync_documents` and the quote
+  check (`_quote_source`, `_texts_of`) use it. Third-party papers stay catalogue-only in native
+  search, as designed.
+- `Engine.lexical` admits at most `PER_NOTE_POOL` (3) passages per note into its pool.
+- A round whose catalogue verdict is `uncovered` or `thin` also searches `workspace` and reports
+  `workspace` leads on that query. They are leads to read, not candidates.
+- `MAX_EXTERNAL_RESULT` is 24,000 characters. Callers may still ask for as little as 8,000
+  (`MIN_EXTERNAL_RESULT`).
+- `staging_list` filters and counts from the cached summaries and reads only its page in full.
+- `folder_sources.documents` prunes skipped folders before entering them and finds a file's root
+  through its parents. Identical document lists on all three libraries; 1.2–16.7 s instead of
+  21.7–74 s.
+
+**Operational.** The pilot Cores now run from `G:\Libraries\_core-runtime\<commit>\src`, not a
+temp folder.
+
+**Access review.** The fingerprints of `staging_list` and `research_round` were refreshed in
+`docs/tool-access-declarations.json` after review:
+- `staging_list` returns the same rows and fields.
+- `research_round`'s workspace leads come from the workspace intent, which holds owner-created
+  documents only. No new authorship class; tiers unchanged.
+
+**Tests.**
+- `tests/test_external_source_acceptance.py` (+1: indexed text and a quotable original);
+- `tests/test_search_pool_cap.py` (1);
+- `tests/test_research_round_workspace.py` (1);
+- `tests/test_staging_list_paging.py` (1);
+- `tests/test_external_result_limit.py` (floor now 24,000).

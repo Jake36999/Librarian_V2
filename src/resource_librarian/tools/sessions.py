@@ -1127,6 +1127,14 @@ def research_round(ctx: Context, queries: list[str], brief: str = "", limit: int
                 if low not in seen_vocab and low not in vocabulary and not low.isdigit():
                     vocabulary.append(low)
         entry = {"query": query, "verdict": response["verdict"], "results": names}
+        if response["verdict"] in ("uncovered", "thin"):
+            # The catalogue does not cover it: say what the library's own working documents hold,
+            # as leads to read, not Sources to decide (2026-11-18: before promotion, rounds saw
+            # only folder stubs while the documents themselves sat indexed and unsearched).
+            work = gateway.run(lambda engine: search(engine, query, "workspace", None, limit=min(limit, 5)).to_dict())
+            leads = [{"name": r["name"], "why": r.get("why", "")} for r in work.get("results") or []]
+            if leads:
+                entry["workspace"] = leads
         if outside:
             entry["outside"] = _outside(ctx, query, limit, seen_vocab, vocabulary, new, brief)
         per_query.append(entry)
@@ -1412,7 +1420,22 @@ def _quote_source(ctx: Context, engine, source: str, quote: str) -> tuple[str, s
                                    "'document'", (row["name"],)):
         if needle in _normal(doc["text"]):
             return f"document:{row['name']}", doc["text"]
+    # The whole original, past the card's 40 bullets: its conversion, or the attached file where
+    # it is (2026-11-18: a quote from a later page failed though the source held it).
+    rel, original = _original_text(ctx, fm)
+    if original and needle in _normal(original):
+        return f"file:{rel}", original
     return "", ""
+
+
+def _original_text(ctx: Context, fm: dict) -> tuple[str, str]:
+    """A Source's full original text (its conversion, else its attached file), or ("", "")."""
+    from .. import text as text_mod
+    rel, path = text_mod.source_original(ctx.vault, fm)
+    if path is None or not path.is_file():
+        return "", ""
+    result = text_mod.extract(path, ctx.vault.derived / "text")
+    return (rel, "\n\n".join(result.pages)) if not result.error else ("", "")
 
 
 NEAREST_FLOOR = 0.4         # share of the quote's words a passage must hold to be offered
@@ -1433,6 +1456,9 @@ def _texts_of(ctx: Context, engine, source: str) -> list[str]:
             out += [str(v) for v in record.payload.values() if isinstance(v, str)]
     out += [doc["text"] for doc in engine.conn.execute(
         "SELECT text FROM chunk WHERE note = ? AND role = 'document'", (row["name"],))]
+    original = _original_text(ctx, fm)[1]
+    if original:
+        out.append(original)
     return out
 
 

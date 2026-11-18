@@ -163,9 +163,18 @@ def staging_list(ctx: Context, kind: Literal["", "source", "lens", "concept", "t
                                  "partial", "deferred", "accepted", "failed"] = "staged",
                  limit: int = 25, offset: int = 0) -> dict:
     store = _store(ctx)
-    rows = [staging.summary(i) for i in store.items(kind, status)]
+    # Filter and count from the cached summaries, in the order items() lists them, and read only
+    # the page's items in full (2026-11-18: each call parsed every item of the kind first).
+    matching = [s for k in ([kind] if kind else staging.KINDS) for s in store.summaries(k)
+                if not status or s["status"] == status]
+    rows = []
+    for summary_row in matching[offset:offset + limit]:
+        try:
+            rows.append(staging.summary(store.load(summary_row["id"])))
+        except (TypeError, ValueError, OSError):
+            continue                                   # removed since it was listed
     page = []
-    for row in rows[offset:offset + limit]:
+    for row in rows:
         # Each row on the page carries the revision it shows, read from the same
         # bytes, so a person can approve or defer it straight from the list.
         try:
@@ -175,7 +184,7 @@ def staging_list(ctx: Context, kind: Literal["", "source", "lens", "concept", "t
             continue
         page.append({**staging.summary(item),
                      "staged_revision": revisions.issue(ctx, state, observed)})
-    return {"counts": store.counts(), "total": len(rows), "items": page}
+    return {"counts": store.counts(), "total": len(matching), "items": page}
 
 
 def _digest(value: Any) -> str:

@@ -45,3 +45,23 @@ def test_an_attached_file_is_accepted_and_referenced_in_place(core):
     assert fm["file"] == doc.resolve().as_posix()                # the original, where it is
     assert not list((app.vault.root / "Sources").rglob("design.md"))   # nothing copied in
     assert doc.read_bytes() == before
+
+
+def test_an_in_place_source_has_indexed_text_and_a_quotable_original(core):
+    """2026-11-18: in-place Sources had no `in_text` passages and quotes past the card failed."""
+    from resource_librarian import text
+    from resource_librarian.registry import Context
+    from resource_librarian.tools.sessions import _original_text
+    app, doc = core
+    doc.write_text("# Design\n\nThe design keeps attached files where they are.\n\n"
+                   "A later passage says the archive is rebuilt every night.\n", encoding="utf-8")
+    assert app.person_call("staging_decide", {"item_ids": ["design"], "decision": "accept"}).get("accepted") == 1
+    report = app.index_service.run(lambda index: text.sync_documents(index))
+    assert any(e["note"] == "Design notes" for e in report["indexed"]), report
+    rows = app.index_service.run(lambda index: index.conn.execute(
+        "SELECT count(*) FROM chunk WHERE note = 'Design notes' AND role = 'document'").fetchone()[0])
+    assert rows >= 1
+    note = next((app.vault.root / "Sources").rglob("Design notes.md"))
+    from resource_librarian import notes
+    rel, original = _original_text(Context(vault=app.vault), notes.load(note).frontmatter)
+    assert "rebuilt every night" in original and rel == doc.resolve().as_posix()
