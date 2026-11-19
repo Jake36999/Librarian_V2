@@ -95,6 +95,29 @@ def test_only_a_loopback_http_endpoint_can_be_library_owned(manager):
         manager.set_builtin("geo-grapher", {"command": "python"})
 
 
+def test_a_reserved_name_is_never_launched_from_mcp_json(manager):
+    """A person-level stdio "geo-grapher" entry (the wheel is not on PyPI, so it only ever ended
+    in "Connection closed") is not launched while the Core's own service is not running: the
+    name is reported as library-owned and not connected, with no error of its own."""
+    manager.set_server("geo-grapher", {"command": sys.executable, "args": [FAKE_STDIO]})
+    manager.accept("geo-grapher")
+    manager.reserve("geo-grapher")
+    status = manager.sync()["geo-grapher"]
+    assert status["library_owned"] and not status["connected"] and status["error"] == ""
+    assert status["tools"] == 0 and REGISTRY.external_names() == []
+    assert manager._clients == {}                      # nothing was started
+
+
+def test_a_reserved_name_still_connects_once_the_service_runs(manager, service):
+    url, token = service
+    manager.reserve("geo-grapher")
+    manager.set_builtin("geo-grapher", {"url": url, "headers": {"X-Geo-Token": token}})
+    assert manager.sync()["geo-grapher"]["connected"]
+    manager.clear_builtin("geo-grapher")
+    status = manager.sync()["geo-grapher"]             # the service ended: reported, not vanished
+    assert status["library_owned"] and not status["connected"]
+
+
 def test_the_geo_service_hands_its_running_endpoint_to_listeners(tmp_path):
     from types import SimpleNamespace
     from resource_librarian.geo_service import GeoService

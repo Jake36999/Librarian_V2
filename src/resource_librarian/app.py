@@ -523,6 +523,7 @@ class App:
             self.mcp = mcp
             mcp.owner = self                       # the retiring library no longer stops it
             mcp.clear_builtin(GEO_SERVER)          # the retiring library's Geo is not this one's
+            mcp.reserve(GEO_SERVER)
             mcp.attach_broker(self.broker)
             mcp.use_library(vault.librarian)       # this library's own choices
             threading.Thread(target=mcp.sync, daemon=True, name="mcp-sync").start()
@@ -534,6 +535,7 @@ class App:
         else:
             self.mcp = McpManager(config_dir(), broker=self.broker)
             self.mcp.owner = self
+            self.mcp.reserve(GEO_SERVER)
             self.mcp.use_library(vault.librarian)
             threading.Thread(target=self.mcp.sync, daemon=True, name="mcp-sync").start()
 
@@ -2764,6 +2766,12 @@ class App:
             if not self.busy or self._turn_cancel is None:
                 return {"cancelling": False}
             self._turn_cancel.set()
+            session = self.loop.ctx.session if self.loop is not None else None
+        # A turn waiting on a person (a question, or a permission card) would otherwise stay
+        # blocked until its timeout, holding "busy" and leaving Stop on "Stopping…" (stress F-04).
+        # Only this turn's own session is released; other agents' requests are theirs.
+        self.waiters.cancel_session(self.vault.root, session)
+        self.broker.deny_session(session, "stopped by a person")
         return {"cancelling": True}
 
     WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
@@ -3080,9 +3088,15 @@ class App:
             # The library's own service, shown as what it is: its endpoint, never its token,
             # and the mcp.json entry it stands in for is not what runs.
             owned = getattr(mcp, "builtin", lambda _n: None)(name) or {}
+            from .folder_review import configuration
+            geo = self.geo.status() if name == GEO_SERVER else {}
             out[name] = {**status[name], "url": owned.get("url", ""),
                          "headers": sorted((owned.get("headers") or {}).keys()),
-                         "shadows_mcp_json": name in servers, "tool_names": mcp.tool_names(name)}
+                         "shadows_mcp_json": name in servers, "tool_names": mcp.tool_names(name),
+                         # Why it is not connected, when it is not: the service's own state.
+                         "service": {"state": geo.get("state", ""), "error": geo.get("error", ""),
+                                     "configured": bool(configuration(self.vault).get("enabled"))}
+                         if name == GEO_SERVER else None}
         return {"servers": out,
                 "config_dir": str(mcp.config_dir),
                 "tool_settings": dict(self.broker.settings)}

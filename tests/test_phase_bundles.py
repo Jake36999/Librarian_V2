@@ -64,3 +64,14 @@ def test_a_phase_bundle_is_never_clipped_by_the_tool_cap(purpose):
         offered = {s.name for s in bundle_selection("contribute", phase.replace("_", "-"),
                                                    purpose=purpose).offered}
         assert set(tail) <= offered, (purpose, phase, set(tail) - offered)
+
+
+def test_an_audited_session_can_be_closed_and_every_phase_can_park():
+    """Stress F-06 / F-12: the audited round's next-step text ends in close_session, and a spent
+    budget tells the model to park_session, so both must be on the surface that says so."""
+    offered = {s.name for s in bundle_selection("contribute", "reduce", purpose="audited").offered}
+    assert "close_session" in offered         # the registry allows it in reduce, not in manage
+    for purpose, phases in PURPOSES.items():
+        for phase in phases:
+            offered = {s.name for s in bundle_selection("contribute", phase, purpose=purpose).offered}
+            assert "park_session" in offered, (purpose, phase)

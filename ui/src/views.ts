@@ -270,7 +270,16 @@ export class Staging {
     if (this.kind === "offering") return this.loadOfferings(request);
     try {
       const status = this.kind === "source" ? this.status : "staged";
-      const out = await this.api.tool("staging_list", { kind: this.kind, status, limit: this.listLimit });
+      // The tool returns at most 50 rows a call, so the list is read a page at a time by offset
+      // until it holds as many rows as are being shown (a reload keeps the length it had).
+      let out = await this.api.tool("staging_list", { kind: this.kind, status, limit: Math.min(50, this.listLimit), offset: 0 });
+      while (!out.error && (out.items ?? []).length < Math.min(this.listLimit, Number(out.total ?? 0))) {
+        const have = (out.items ?? []).length;
+        const more = await this.api.tool("staging_list", { kind: this.kind, status, limit: Math.min(50, this.listLimit - have), offset: have });
+        if (more.error || !(more.items ?? []).length) break;
+        out = { ...out, items: [...out.items, ...more.items], total: more.total ?? out.total };
+        if (request !== this.listRequest || this.stopped) return;
+      }
       if (request !== this.listRequest || this.stopped) return;
       if (out.error) throw new Error(String(out.detail ?? out.error));
       this.counts = out.counts;

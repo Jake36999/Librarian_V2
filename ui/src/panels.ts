@@ -201,7 +201,11 @@ export function renderWorkflows(pop: Popover, api: Api, queued: string[], pipeli
         ? h("small", { class: "outcome" }, h("strong", {}, "Result: "), WORKFLOWS[name].result)
         : h("small", {}, (ACTIONS[name] ?? ["", "A pipeline."])[1]))),
     extra.length ? h("h4", { class: "gap" }, "This vault's pipelines") : null,
-    ...extra.map((name) => h("button", { class: "menuitem", "data-command": name, onclick: start(name) }, COMMANDS[name] ?? name)),
+    // A pipeline this vault holds is not part of the shipped set: it is not trusted to write
+    // unasked, so starting it is not the permission for its steps (the mode still asks).
+    ...extra.map((name) => h("button", { class: "menuitem", "data-command": name, onclick: start(name),
+      title: "Defined in this vault. Its writes still follow your permission mode." },
+      COMMANDS[name] ?? name, h("small", {}, "Its writes still follow your permission mode."))),
   ].filter((e): e is HTMLElement => e !== null);
 }
 

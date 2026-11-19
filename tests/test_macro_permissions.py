@@ -281,3 +281,63 @@ def test_an_unapproved_or_different_macro_still_asks_for_a_new_decision(core):
     out = core.person_call("macro_run", {"macro": "two_notes",
                                          "inputs": {"first": "Other", "second": "Different"}})
     assert out["status"] == "awaiting_checkpoint"                # a different plan needs its own approval
+
+
+def _other_context(core, session, caller="agent-B"):
+    return Context(tier="contribute", vault=core.vault, session=session,
+                   extras={"checkpoints": core.checkpoints, "caller": caller})
+
+
+def test_a_later_cancel_withdraws_an_earlier_approval(core):
+    """Stress F-02: only the newest card for a plan counts. A person who approved it and then
+    cancelled a newer request for the same plan has withdrawn the approval."""
+    inputs = approved_two_notes(core)
+    inputs.pop("checkpoint_id")
+    scope = agent_runtime._checkpoint_scope(agent_runtime.MACROS["two_notes"], inputs)
+    newer = core.checkpoints.create("macro_expansion", scope, choices=["approve", "cancel"],
+                                    default="cancel", requester="person")
+    core.checkpoints.resolve(newer["id"], "cancel")
+    out = core.person_call("macro_run", {"macro": "two_notes", "inputs": inputs})
+    assert out["status"] == "awaiting_checkpoint"
+    assert not (core.vault.root / "Notes" / "First note.md").exists()
+
+
+def test_a_finished_run_is_not_replayed_by_asking_again_without_the_id(core):
+    """Stress F-02: reuse is for a run that has not happened yet. Once it has completed, asking
+    again for the same plan is a new decision, not a silent "already completed" for ever."""
+    inputs = approved_two_notes(core)
+    done = core.person_call("macro_run", {"macro": "two_notes", "inputs": inputs})
+    assert done["status"] == "completed"
+    inputs.pop("checkpoint_id")
+    again = core.person_call("macro_run", {"macro": "two_notes", "inputs": inputs})
+    assert again["status"] == "awaiting_checkpoint" and again["checkpoint"]["resolution"] == ""
+
+
+def test_another_sessions_approval_is_not_used(core):
+    """Stress F-02: an approval asked for in one session is not another session's, whether it
+    is found by plan or named by its id."""
+    core.set_mode("auto")
+    inputs = {"first": "Shared plan", "second": "Shared plan two"}
+    asked = agent_runtime.run_macro(_other_context(core, "session-A", "agent-A"), "two_notes", inputs)
+    core.checkpoints.resolve(asked["checkpoint"]["id"], "approve")
+    by_plan = agent_runtime.run_macro(_other_context(core, "session-B"), "two_notes", inputs)
+    assert by_plan["status"] == "awaiting_checkpoint"
+    assert by_plan["checkpoint"]["id"] != asked["checkpoint"]["id"]
+    by_id = agent_runtime.run_macro(_other_context(core, "session-B"), "two_notes",
+                                    {**inputs, "checkpoint_id": asked["checkpoint"]["id"]})
+    assert by_id["status"] == "awaiting_checkpoint"
+    assert not (core.vault.root / "Notes" / "Shared plan.md").exists()
+
+
+def test_one_approval_is_not_run_twice_at_once(core):
+    """Stress F-02: a second caller arriving while the approved run executes is told to wait."""
+    inputs = approved_two_notes(core)
+    with agent_runtime._RUNNING_LOCK:
+        agent_runtime._RUNNING.add(inputs["checkpoint_id"])
+    try:
+        out = core.person_call("macro_run", {"macro": "two_notes", "inputs": inputs})
+    finally:
+        agent_runtime._RUNNING.discard(inputs["checkpoint_id"])
+    assert out["status"] == "paused" and "already executing" in out["detail"]
+    assert not (core.vault.root / "Notes" / "First note.md").exists()
+    assert core.person_call("macro_run", {"macro": "two_notes", "inputs": inputs})["status"] == "completed"

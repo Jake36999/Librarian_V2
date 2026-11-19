@@ -249,6 +249,9 @@ class McpManager:
         # is reconnected rather than reused.
         self._builtin: dict[str, dict[str, Any]] = {}
         self._connected: dict[str, dict[str, Any]] = {}
+        # Names only the Core may serve (reserve): an mcp.json entry of that name is never
+        # launched, even while the Core's service for it is not running.
+        self._reserved: set[str] = set()
 
     # -- config ----------------------------------------------------------
     # -- per-library enablement (Co-work Roadmap §4 F1) ----------------------
@@ -337,6 +340,13 @@ class McpManager:
     def clear_builtin(self, name: str) -> None:
         with self._lock:
             self._builtin.pop(name, None)
+
+    def reserve(self, name: str) -> None:
+        """`name` belongs to a service the Core runs (its Geo-Grapher). An older person-level
+        mcp.json entry under that name is a stdio copy that cannot start here (the wheel is not
+        on PyPI), so it is never launched: the name is served by `set_builtin` or not at all."""
+        with self._lock:
+            self._reserved.add(name)
 
     def builtin(self, name: str) -> dict[str, Any] | None:
         return self._builtin.get(name)
@@ -440,7 +450,7 @@ class McpManager:
         servers = self.servers()
         builtin = dict(self._builtin)
         wanted = {name: definition for name, definition in servers.items()
-                  if name not in builtin and definition.get("enabled", True)
+                  if name not in builtin and name not in self._reserved and definition.get("enabled", True)
                   and self.is_accepted(name, definition) and self.enabled_here(name)}
         wanted.update(builtin)
         for name in list(self._clients):
@@ -615,8 +625,13 @@ class McpManager:
                         "connected": name in self._clients,
                         "tools": len(self._tool_names.get(name, [])),
                         "error": self._errors.get(name, ""), "unpinned": ""}
+        for name in self._reserved - set(self._builtin):
+            # The Core's own service for this name is not running: nothing is connected, and
+            # that is a state of the service (the settings page shows it), not a failed server.
+            out[name] = {"enabled": True, "accepted": True, "library_owned": True, "connected": False,
+                         "tools": 0, "error": "", "unpinned": ""}
         for name, definition in self.servers().items():
-            if name in self._builtin:
+            if name in self._builtin or name in self._reserved:
                 continue
             accepted = self.is_accepted(name, definition)
             enabled = bool(definition.get("enabled", True))

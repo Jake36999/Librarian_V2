@@ -103,6 +103,11 @@ export class DocPane {
     void this.showBrowse();
   }
 
+  /** The pane closed or the library changed: a pick that was waiting is over (stress F-14). */
+  cancelPick(): void {
+    this.pick = null;
+  }
+
   private finishPick(reference: string): void {
     const picked = this.pick;
     this.pick = null;

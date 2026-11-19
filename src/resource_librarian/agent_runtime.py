@@ -562,8 +562,10 @@ BUNDLES = {
     "audit": ToolBundle("audit", "Check each planned predicate and the protected targets",
                         ("verify_grain", "audit_targets", "audit_projection", "ask_user",
                          "advance")),
+    # close_session is how an audited session ends (Session.next_step says so after a round is
+    # reduced, and when every requirement is accounted for): found missing 2026-11-19.
     "reduce": ToolBundle("reduce", "Reduce the round's results to requirement statuses",
-                         ("reduce_round", "audit_projection", "advance")),
+                         ("reduce_round", "audit_projection", "advance", "close_session")),
     "research": ToolBundle("research", "Use the phase-specific research bundle", ()),
     "read": ToolBundle("read", "Read-only help", ("get_note", "search", "read_source_file",
                             "read_file", "read_source_section", "verify_source_pages",
@@ -671,7 +673,9 @@ def bundle_selection(tier: str, phase: str = "", *, projects_on: bool = True,
     # Prefer executable, registry-checked macros when a phase fills the cap;
     # Each expanded call still passes the registry and checkpoint guards;
     # source dispatch has its own explicit no-model dry run.
-    for name in ("read_result", "macro_run", "macro_plan"):
+    # park_session is what a spent budget tells the model to use (Session.next_step), so it is
+    # offered in every phase; the registry still decides whether it may run.
+    for name in ("read_result", "macro_run", "macro_plan", "park_session"):
         if name in by_name and name not in {spec.name for spec in selected}:
             selected.append(by_name[name])
     # A compact fallback gives a newly added phase usable reads without dumping
@@ -815,6 +819,11 @@ def _checkpoint_scope(macro: Macro, inputs: dict[str, Any]) -> str:
 
 UNKNOWN_STEP_CHOICES = ("retry", "applied")
 
+# Approved runs executing right now in this process (checkpoint ids), so one approval cannot
+# be executed by two callers at once.
+_RUNNING: set[str] = set()
+_RUNNING_LOCK = threading.Lock()
+
 
 class MacroJournal:
     """One approved write-capable macro run's step log (MF-018).
@@ -944,31 +953,42 @@ def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, 
         checkpoint_id = str(inputs.get("checkpoint_id") or "")
         approved = False
         checkpoint: dict[str, Any] | None = None
+        session = str(getattr(ctx, "session", "") or "")
+        caller = str(ctx.extras.get("caller") or "agent")
         if checkpoints is not None and not checkpoint_id:
             # A person's approval belongs to this exact expanded plan (the scope is its digest).
             # A caller that asks again without the id still holds that approval: use it, rather
             # than minting a new card (`ensure` does, once a checkpoint is resolved) and leaving
             # the approved one orphaned. A different plan has a different scope, so it still asks.
-            for row in reversed(checkpoints.all()):
-                if row.get("type") == "macro_expansion" and row.get("scope") == scope and \
-                        row.get("resolution") == "approve" and not row.get("expired"):
-                    checkpoint_id = str(row["id"])
+            # Only the LATEST card for this plan counts (a later cancel withdraws an earlier
+            # approval), it must have been asked for by this same session and caller, and a run
+            # that has already finished is spent: running it again is a new decision.
+            latest = next((row for row in reversed(checkpoints.all())
+                           if row.get("type") == "macro_expansion" and row.get("scope") == scope), None)
+            if latest is not None and latest.get("resolution") == "approve" and not latest.get("expired") \
+                    and (latest.get("evidence") or {}).get("session", "") == session \
+                    and latest.get("requester") == caller:
+                spent = ctx.vault is not None and MacroJournal(ctx.vault, str(latest["id"])).state()[1]
+                if not spent:
+                    checkpoint_id = str(latest["id"])
                     inputs = {**inputs, "checkpoint_id": checkpoint_id}
-                    break
         if checkpoints is not None and checkpoint_id:
             try:
                 checkpoint = checkpoints.get(checkpoint_id)
+                bound = str((checkpoint.get("evidence") or {}).get("session") or "")
                 approved = checkpoint.get("type") == "macro_expansion" and \
                     checkpoint.get("scope") == scope and checkpoint.get("resolution") == "approve" and \
-                    not checkpoint.get("expired")
+                    not checkpoint.get("expired") and \
+                    (not bound or not session or bound == session)    # another session's approval is not this one's
             except (KeyError, ValueError):
                 approved = False
         if not approved:
             if checkpoints is not None:
                 def ensure_checkpoint():
-                    return checkpoints.ensure("macro_expansion", scope, evidence=plan,
+                    return checkpoints.ensure("macro_expansion", scope,
+                                              evidence={**plan, "session": session} if session else plan,
                                               choices=["approve", "cancel"], default="cancel",
-                                              requester=str(ctx.extras.get("caller") or "agent"))
+                                              requester=caller)
                 writer = ctx.extras.get("vault_writer")
                 checkpoint = writer.submit(ensure_checkpoint, caller="macro-checkpoint") \
                     if writer is not None else ensure_checkpoint()
@@ -993,9 +1013,17 @@ def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, 
                 "steps": [{"tool": step.tool, "result": (recorded.get(i) or {}).get("result"),
                            "reused": True} for i, step in enumerate(macro.steps)],
                 "detail": "this approved run already completed; nothing was repeated"}
-    if journal is not None and not recorded:
-        journal.append({"type": "started", "macro": macro.id, "version": macro.version,
-                        "scope": scope, "inputs": _bound_inputs(inputs)})
+    # One approval is one run at a time: a second caller arriving while it executes is told so
+    # rather than racing it (the journal alone only dedupes what has already been recorded).
+    claimed = ""
+    if journal is not None:
+        with _RUNNING_LOCK:
+            if checkpoint_id in _RUNNING:
+                return {"macro": plan, "status": "paused", "resumable": True,
+                        "detail": "this approved run is already executing; wait for it to finish "
+                                  "(macro_status shows where it stands) instead of starting it again"}
+            _RUNNING.add(checkpoint_id)
+            claimed = checkpoint_id
     steps = []
     # Registry.call enforces the compact active bundle for ordinary model
     # calls.  A macro is the explicitly approved exception, so scope its
@@ -1008,6 +1036,9 @@ def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, 
     except (TypeError, ValueError):
         ctx.extras["macro_expansion_depth"] = 1
     try:
+        if journal is not None and not recorded:
+            journal.append({"type": "started", "macro": macro.id, "version": macro.version,
+                            "scope": scope, "inputs": _bound_inputs(inputs)})
         from .workflows import _summary
         for index, step in enumerate(macro.steps):
             if step.tool not in REGISTRY:
@@ -1080,6 +1111,9 @@ def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, 
             journal.append({"type": "completed"})
         return {"macro": plan, "steps": steps, "status": "completed"}
     finally:
+        if claimed:
+            with _RUNNING_LOCK:
+                _RUNNING.discard(claimed)
         if previous_depth:
             ctx.extras["macro_expansion_depth"] = previous_depth
         else:

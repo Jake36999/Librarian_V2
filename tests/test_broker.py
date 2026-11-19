@@ -173,3 +173,35 @@ def test_a_grant_never_overrides_deny_plan_or_always_ask(library):
     assert "project_edit" in ALWAYS_ASK          # and these are never in a grant's reach
     always = Broker("ask", timeout=0.2)
     assert always._policy("project_edit", "write", False, "", granted=True) == "ask"
+
+
+# -- Stop frees a turn that is waiting on a person ---------------------------------------------
+
+def test_stop_denies_only_the_turns_own_pending_permission_requests(library):
+    """Stress F-04: pressing Stop on a turn blocked on a permission card left it waiting for the
+    full timeout. The turn's own requests are refused at once; another session's stay open."""
+    broker = Broker("ask", timeout=30)
+    mine, theirs = ctx(library, broker), ctx(library, broker)
+    for c in (mine, theirs):
+        assert REGISTRY.call("open_session", {"purpose": "explore", "question": "q"}, c)["opened"]
+    t1, box1 = call_in_thread("queue_source", {"ref": "a/b"}, mine)
+    wait_for_pending(broker, 1)
+    t2, box2 = call_in_thread("queue_source", {"ref": "c/d"}, theirs)
+    wait_for_pending(broker, 2)
+    assert broker.deny_session(mine.session, "stopped by a person") == 1
+    t1.join(5)
+    assert not t1.is_alive() and box1["refused"] == "PERMISSION_DENIED"
+    assert [r["session"] for r in broker.pending()] == [theirs.session]
+    broker.deny_session(theirs.session, "cleanup")
+    t2.join(5)
+
+
+def test_stop_releases_a_question_the_turn_is_waiting_on(library):
+    from resource_librarian.tools.sessions import Waiters
+    waiters = Waiters(timeout=30)
+    key = f"{library.root}::s1::q1"
+    done = waiters.register(key)
+    other = waiters.register(f"{library.root}::s2::q1")
+    assert waiters.cancel_session(library.root, "s1") == 1
+    assert done.is_set() and not other.is_set()
+    assert waiters.answer(f"{library.root}::s2::q1", "yes") is True      # not closed for good

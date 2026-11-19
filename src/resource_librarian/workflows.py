@@ -215,9 +215,14 @@ def _children(d: Definition) -> list[str]:
 
 
 def granted_actions(d: Definition, library: Library) -> frozenset[str]:
-    """Every action a run of `d` can call, through the workflows it reaches: what a person
-    authorises by starting it (see `Broker.check`)."""
+    """Every action a run of `d` can call through the shipped workflows it reaches: what a
+    person authorises by starting it (see `Broker.check`).
+
+    Only the standard set carries this. A definition a vault holds (written by a person, a
+    sync or an agent, and accepted once as text) is not reviewed code: its writes still follow
+    the library's permission mode, even when a standard pipeline routes to it. Stress F-03."""
     return frozenset(str(step["action"]) for node in closure(d, library).values()
+                     if node.origin == "standard"
                      for step in node.data.get("steps") or []
                      if isinstance(step, dict) and "action" in step)
 

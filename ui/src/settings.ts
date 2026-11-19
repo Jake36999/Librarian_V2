@@ -1239,7 +1239,35 @@ export class Settings {
       return h("div", { class: "row2 tight" }, h("span", { class: "dim" }, tool.replace(/^mcp__/, "")), seg);
     };
 
-    const serverRows = Object.entries(servers).map(([name, s]) => h("div", { class: "srv-block" },
+    // A server the Core itself runs for this library (its Geo-Grapher): not something a person
+    // installs, pauses or removes, so it shows what the service is doing instead.
+    const ownedRow = (name: string, s: any) => {
+      const svc = s.service ?? {};
+      const state: string = s.connected ? "running" : (svc.state || "not running");
+      const why = s.connected ? "" :
+        svc.state === "starting" ? "Starting; its tools appear when it is ready." :
+        svc.state === "failed" ? (svc.error || "It could not start; see .librarian/logs/geographer.log.") :
+        svc.configured === false ? "Not set up for this library: it has no Geo-Grapher runtime in .librarian/geographer.json, so these tools are not offered here." :
+        "Not running. Start it here, or open the Geo-Grapher button at the top.";
+      const canStart = !s.connected && svc.configured !== false && svc.state !== "starting";
+      return h("div", { class: "srv-block" },
+        h("div", { class: "srv" },
+          h("span", { class: `dot ${s.connected ? "" : svc.state === "failed" ? "off" : "nokey"}` }),
+          h("span", {}, h("strong", {}, name),
+            h("span", { class: "dim" }, ` · this library's own service · ${state} · ${s.tools ?? 0} tool${s.tools === 1 ? "" : "s"}`)),
+          canStart ? h("button", { class: "primary", onclick: async () => {
+            busy("Starting Geo-Grapher…");
+            try { await this.api.post("/api/geographer/start"); status.textContent = ""; setTimeout(reload, 1500); }
+            catch (e) { fail(e); }
+          } }, "Start") : null),
+        why ? h("p", { class: svc.state === "failed" ? "note err" : "note" }, why) : null,
+        s.shadows_mcp_json ? h("p", { class: "note" }, "An older hand-added \"" + name + "\" entry in your MCP file is ignored: this library's service replaces it.") : null,
+        (s.tool_names ?? []).length
+          ? h("details", { class: "tool-perms" }, h("summary", {}, `Permissions for ${name} (${s.tool_names.length} tools)`), (s.tool_names as string[]).map(toolRow))
+          : null);
+    };
+
+    const serverRows = Object.entries(servers).map(([name, s]: [string, any]) => s.library_owned ? ownedRow(name, s) : h("div", { class: "srv-block" },
       h("div", { class: "srv" },
         h("span", { class: `dot ${s.connected ? "" : s.error ? "off" : "nokey"}` }),
         h("span", {}, h("strong", {}, name),

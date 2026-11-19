@@ -937,7 +937,7 @@ class Session:
                        "finished outcome too")
         elif p == "next" and ("scheduled" not in self.plan or
                               not _review_scheduled(vault, self.plan.get("focus") or [])):
-            out.append("review dates as tasks - task_add(text='Review: <concept>', due=..., "
+            out.append("review dates as tasks - task_add(note='<project note>', text='Review: <concept>', due=..., "
                        "heading='Understanding') - or enable the Spaced Repetition plugin, "
                        "then update_plan(fields={'scheduled': ...})")
         if p in ASSUMPTION_PHASES and not self.assumptions_recorded():

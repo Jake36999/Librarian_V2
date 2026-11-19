@@ -236,6 +236,10 @@ def check_gates(purposes: list[str], tier: str) -> list[dict]:
                 w.force_phase(phase)
                 offered = set(w.offered())
                 named = needed_for(needed, purpose, phase)
+                # A session ends with close_session, which no gate names: the last phase of every
+                # purpose has to offer it (the audited purpose lacked it until 2026-11-19).
+                if phase == PURPOSES[purpose][-1]:
+                    named = named | {"close_session"}
                 absent = sorted(named - offered - ALTERNATIVES.get((purpose, phase), set()))
                 guarded = set(required_bundle_actions(phase, purpose=purpose, project="P",
                                                       project_exists=False))

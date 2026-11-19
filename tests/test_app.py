@@ -817,10 +817,11 @@ pytest.importorskip("mcp")
 FAKE_MCP_SERVER = str(Path(__file__).parent / "fixtures" / "fake_mcp_server.py")
 
 
-def test_api_mcp_status_is_empty_with_no_servers_configured(served):
+def test_api_mcp_status_lists_only_the_librarys_own_geo_with_no_servers_configured(served):
     _, client, _ = served
     status, out = client.get("/api/mcp")
-    assert status == 200 and out["servers"] == {}
+    assert status == 200 and list(out["servers"]) == ["geo-grapher"]
+    assert out["servers"]["geo-grapher"]["library_owned"] and not out["servers"]["geo-grapher"]["connected"]
 
 
 def test_api_mcp_save_a_server_needs_acceptance_before_it_connects(served):
@@ -921,7 +922,7 @@ def test_api_mcp_remove_disconnects_and_forgets_the_server(served):
     client.post("/api/mcp/server", {
         "name": "fake", "server": {"command": sys.executable, "args": [FAKE_MCP_SERVER]}})
     status, out = client.post("/api/mcp/remove", {"name": "fake"})
-    assert status == 200 and out["servers"] == {}
+    assert status == 200 and list(out["servers"]) == ["geo-grapher"]     # only the library's own Geo row
     assert REGISTRY.external_names() == []
 
 
@@ -1025,3 +1026,17 @@ def test_api_mcp_shows_a_library_owned_server_by_its_endpoint_never_its_token(se
     assert status == 200 and row["library_owned"] and row["shadows_mcp_json"]
     assert row["url"] == "http://127.0.0.1:9/mcp" and row["headers"] == ["X-Geo-Token"]
     assert "command" not in row and "s3cret-token" not in json.dumps(out)
+
+
+def test_api_mcp_explains_why_the_library_own_geo_is_not_connected(served):
+    """With the Core's Geo not running, an older stdio "geo-grapher" entry is not launched (it
+    could only fail with "Connection closed"); the row carries the service's own state."""
+    import sys
+    app, client, _ = served
+    client.post("/api/mcp/config", {
+        "mcpServers": {"geo-grapher": {"command": sys.executable, "args": ["-c", "raise SystemExit(1)"]}}})
+    status, out = client.get("/api/mcp")
+    row = out["servers"]["geo-grapher"]
+    assert status == 200 and row["library_owned"] and not row["connected"] and row["error"] == ""
+    assert row["service"]["configured"] is False and row["service"]["state"] in {"stopped", "disabled", ""}
+    assert "command" not in row

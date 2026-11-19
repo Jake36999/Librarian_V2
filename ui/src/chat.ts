@@ -194,6 +194,12 @@ export class Chat {
    *  live stream picks up - the log itself, not the `handle()` event path
    *  (that path also flips `working`/rail state meant for a turn in progress). */
   private replay(messages: { role: string; text: string }[], minRewind = 0): void {
+    // Clearing the log detaches the "working" line and every card: forget them, so the next
+    // append does not insert before a node that is no longer in the log (stress F-04), and a
+    // question that has the same number in the next thread (q1) is not taken as already shown (F-05).
+    const wasWorking = this.working !== null;
+    this.working = null;
+    this.cards.clear();
     clear(this.log);
     messages.forEach((m, i) => {
       const dangling = m.role === "user" && i === messages.length - 1;   // never answered
@@ -202,7 +208,13 @@ export class Chat {
       if (dangling) this.lastUserText = String(m.text ?? "");
     });
     if (!messages.length) this.empty();
+    if (wasWorking) this.setWorking(true);            // a turn still running keeps its indicator
     this.scroll();
+  }
+
+  /** Question numbers start again in every thread, so a card is keyed by its thread too. */
+  private questionKey(sessionId: string, id: string): string {
+    return `q:${sessionId}:${id}`;
   }
 
   setWorking(on: boolean): void {
@@ -431,6 +443,7 @@ export class Chat {
       case "conversation_reset":
         this.rail.clear();
         this.setWorking(false);
+        this.cards.clear();
         this.empty();
         this.hooks.onSession(null);
         break;
@@ -464,7 +477,7 @@ export class Chat {
         // clear it once answered - without waiting for the (now-delayed)
         // tool result or the next turn_done. Answered from elsewhere (the
         // Plan panel, another tab): this card still needs marking done.
-        const card = this.cards.get(`q:${String(event.question_id ?? "")}`);
+        const card = this.cards.get(this.questionKey(String(event.session ?? ""), String(event.question_id ?? "")));
         if (card && !card.classList.contains(cls("done"))) {
           card.classList.add(cls("done"));
           const row = card.querySelector(sel(".row"));
@@ -842,9 +855,9 @@ export class Chat {
    *  turn's own blocked call directly. */
   private questionCard(event: Event): void {
     const id = String(event.question_id ?? "");
-    if (!id || this.cards.has(`q:${id}`)) return;   // already shown (a reconnect, say)
-    const options = (event.options ?? null) as string[] | null;
     const sessionId = String(event.session ?? "");
+    if (!id || this.cards.has(this.questionKey(sessionId, id))) return;   // already shown (a reconnect, say)
+    const options = (event.options ?? null) as string[] | null;
     const row = h("div", { class: "row" });
     const send = async (value: string) => {
       if (!value.trim()) return;
@@ -882,7 +895,7 @@ export class Chat {
       h("strong", {}, "The librarian is asking"), " · ",
       h("span", { class: "dim" }, String(event.kind ?? "clarify")),
       h("div", {}, String(event.question ?? "")), row);
-    this.cards.set(`q:${id}`, card);
+    this.cards.set(this.questionKey(sessionId, id), card);
     this.append(card);
     (card.querySelector("input, button") as HTMLElement | null)?.focus();
   }
@@ -947,6 +960,9 @@ export class Chat {
         const out = await this.api.tool("answer", { question_id: q.id, answer }, session?.session ?? "");
         if (out.error) throw new Error(String(out.detail ?? out.error));
         this.hooks.onSession(out.session ?? session);
+        // As in the chat card: a reopened thread has no live turn waiting, so the answer
+        // is the go-ahead to carry on.
+        if (!out.resumed) this.hooks.resend("Carry on from my answer.");
       } catch (e) {
         box.append(h("div", { class: "error" }, (e as Error).message));
       }

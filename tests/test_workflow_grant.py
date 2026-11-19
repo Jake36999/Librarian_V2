@@ -52,3 +52,19 @@ def test_a_workflow_started_by_a_person_carries_a_grant_for_its_actions(vault, m
         assert "project_edit" not in grant["tools"] and "sandbox_output" not in grant["tools"]
     finally:
         app.close_runtime()
+
+
+def test_a_workflow_the_vault_defines_is_not_given_a_grant(vault):
+    """Stress F-03: a person accepts a vault definition once, as text. Starting it is not the
+    permission for its writes (the shipped set is reviewed; this is not), however it is reached."""
+    ctx = Context(tier="contribute", vault=vault, extras={})
+    library = _library(ctx)
+    library.save("workflow: vault-writer\npurpose: writes a note\ninputs: {}\nsteps:\n"
+                 "  - id: s1\n    action: write_note\n    args: {folder: Notes, name: X, body: x}\n",
+                 accepted_by_person=True)
+    library.save("pipeline: vault-parent\npurpose: runs it\ninputs: {}\nsteps:\n"
+                 "  - id: s1\n    workflow: vault-writer\n    args: {}\n", accepted_by_person=True)
+    assert workflows.granted_actions(library.get("vault-writer"), library) == frozenset()
+    assert workflows.granted_actions(library.get("vault-parent"), library) == frozenset()
+    shipped = library.get("clear-enrichment-backlog")
+    assert workflows.granted_actions(shipped, library)             # the shipped set still has it

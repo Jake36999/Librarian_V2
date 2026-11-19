@@ -968,6 +968,9 @@ Result: ${info.result}` : info.does : "";
      *  live stream picks up - the log itself, not the `handle()` event path
      *  (that path also flips `working`/rail state meant for a turn in progress). */
     replay(messages, minRewind = 0) {
+      const wasWorking = this.working !== null;
+      this.working = null;
+      this.cards.clear();
       clear(this.log);
       messages.forEach((m, i) => {
         const dangling = m.role === "user" && i === messages.length - 1;
@@ -979,7 +982,12 @@ Result: ${info.result}` : info.does : "";
         if (dangling) this.lastUserText = String(m.text ?? "");
       });
       if (!messages.length) this.empty();
+      if (wasWorking) this.setWorking(true);
       this.scroll();
+    }
+    /** Question numbers start again in every thread, so a card is keyed by its thread too. */
+    questionKey(sessionId, id) {
+      return `q:${sessionId}:${id}`;
     }
     setWorking(on) {
       if (on && !this.working) {
@@ -1265,6 +1273,7 @@ Result: ${info.result}` : info.does : "";
         case "conversation_reset":
           this.rail.clear();
           this.setWorking(false);
+          this.cards.clear();
           this.empty();
           this.hooks.onSession(null);
           break;
@@ -1299,7 +1308,7 @@ Result: ${info.result}` : info.does : "";
           this.questionCard(event);
           break;
         case "question_answered": {
-          const card = this.cards.get(`q:${String(event.question_id ?? "")}`);
+          const card = this.cards.get(this.questionKey(String(event.session ?? ""), String(event.question_id ?? "")));
           if (card && !card.classList.contains(cls("done"))) {
             card.classList.add(cls("done"));
             const row = card.querySelector(sel(".row"));
@@ -1764,9 +1773,9 @@ Result: ${info.result}` : info.does : "";
      *  turn's own blocked call directly. */
     questionCard(event) {
       const id = String(event.question_id ?? "");
-      if (!id || this.cards.has(`q:${id}`)) return;
-      const options = event.options ?? null;
       const sessionId = String(event.session ?? "");
+      if (!id || this.cards.has(this.questionKey(sessionId, id))) return;
+      const options = event.options ?? null;
       const row = h("div", { class: "row" });
       const send = async (value) => {
         if (!value.trim()) return;
@@ -1815,7 +1824,7 @@ Result: ${info.result}` : info.does : "";
         h("div", {}, String(event.question ?? "")),
         row
       );
-      this.cards.set(`q:${id}`, card);
+      this.cards.set(this.questionKey(sessionId, id), card);
       this.append(card);
       card.querySelector("input, button")?.focus();
     }
@@ -1885,6 +1894,7 @@ Result: ${info.result}` : info.does : "";
           const out = await this.api.tool("answer", { question_id: q.id, answer }, session?.session ?? "");
           if (out.error) throw new Error(String(out.detail ?? out.error));
           this.hooks.onSession(out.session ?? session);
+          if (!out.resumed) this.hooks.resend("Carry on from my answer.");
         } catch (e) {
           box.append(h("div", { class: "error" }, e.message));
         }
@@ -2280,7 +2290,19 @@ Result: ${info.result}` : info.does : "";
         WORKFLOWS[name]?.result ? h("small", { class: "outcome" }, h("strong", {}, "Result: "), WORKFLOWS[name].result) : h("small", {}, (ACTIONS[name] ?? ["", "A pipeline."])[1])
       )),
       extra.length ? h("h4", { class: "gap" }, "This vault's pipelines") : null,
-      ...extra.map((name) => h("button", { class: "menuitem", "data-command": name, onclick: start(name) }, COMMANDS[name] ?? name))
+      // A pipeline this vault holds is not part of the shipped set: it is not trusted to write
+      // unasked, so starting it is not the permission for its steps (the mode still asks).
+      ...extra.map((name) => h(
+        "button",
+        {
+          class: "menuitem",
+          "data-command": name,
+          onclick: start(name),
+          title: "Defined in this vault. Its writes still follow your permission mode."
+        },
+        COMMANDS[name] ?? name,
+        h("small", {}, "Its writes still follow your permission mode.")
+      ))
     ].filter((e) => e !== null);
   }
   var VISION = /(-vl\b|vl-|vision|ocr|gemma-[34]|qwen3\.[5-9]|llama-4|pixtral|llava|inkling|glimmer)/i;
@@ -4816,7 +4838,41 @@ Result: ${info.result}` : info.does : "";
         paint();
         return h("div", { class: "row2 tight" }, h("span", { class: "dim" }, tool.replace(/^mcp__/, "")), seg);
       };
-      const serverRows = Object.entries(servers).map(([name, s]) => h(
+      const ownedRow = (name, s) => {
+        const svc = s.service ?? {};
+        const state = s.connected ? "running" : svc.state || "not running";
+        const why = s.connected ? "" : svc.state === "starting" ? "Starting; its tools appear when it is ready." : svc.state === "failed" ? svc.error || "It could not start; see .librarian/logs/geographer.log." : svc.configured === false ? "Not set up for this library: it has no Geo-Grapher runtime in .librarian/geographer.json, so these tools are not offered here." : "Not running. Start it here, or open the Geo-Grapher button at the top.";
+        const canStart = !s.connected && svc.configured !== false && svc.state !== "starting";
+        return h(
+          "div",
+          { class: "srv-block" },
+          h(
+            "div",
+            { class: "srv" },
+            h("span", { class: `dot ${s.connected ? "" : svc.state === "failed" ? "off" : "nokey"}` }),
+            h(
+              "span",
+              {},
+              h("strong", {}, name),
+              h("span", { class: "dim" }, ` \xB7 this library's own service \xB7 ${state} \xB7 ${s.tools ?? 0} tool${s.tools === 1 ? "" : "s"}`)
+            ),
+            canStart ? h("button", { class: "primary", onclick: async () => {
+              busy("Starting Geo-Grapher\u2026");
+              try {
+                await this.api.post("/api/geographer/start");
+                status.textContent = "";
+                setTimeout(reload, 1500);
+              } catch (e) {
+                fail(e);
+              }
+            } }, "Start") : null
+          ),
+          why ? h("p", { class: svc.state === "failed" ? "note err" : "note" }, why) : null,
+          s.shadows_mcp_json ? h("p", { class: "note" }, 'An older hand-added "' + name + `" entry in your MCP file is ignored: this library's service replaces it.`) : null,
+          (s.tool_names ?? []).length ? h("details", { class: "tool-perms" }, h("summary", {}, `Permissions for ${name} (${s.tool_names.length} tools)`), s.tool_names.map(toolRow)) : null
+        );
+      };
+      const serverRows = Object.entries(servers).map(([name, s]) => s.library_owned ? ownedRow(name, s) : h(
         "div",
         { class: "srv-block" },
         h(
@@ -5438,6 +5494,10 @@ Result: ${info.result}` : info.does : "";
       this.pick = { prompt, done };
       this.showMenu(false);
       void this.showBrowse();
+    }
+    /** The pane closed or the library changed: a pick that was waiting is over (stress F-14). */
+    cancelPick() {
+      this.pick = null;
     }
     finishPick(reference) {
       const picked = this.pick;
@@ -6483,7 +6543,14 @@ Result: ${info.result}` : info.does : "";
       if (this.kind === "offering") return this.loadOfferings(request);
       try {
         const status = this.kind === "source" ? this.status : "staged";
-        const out = await this.api.tool("staging_list", { kind: this.kind, status, limit: this.listLimit });
+        let out = await this.api.tool("staging_list", { kind: this.kind, status, limit: Math.min(50, this.listLimit), offset: 0 });
+        while (!out.error && (out.items ?? []).length < Math.min(this.listLimit, Number(out.total ?? 0))) {
+          const have = (out.items ?? []).length;
+          const more = await this.api.tool("staging_list", { kind: this.kind, status, limit: Math.min(50, this.listLimit - have), offset: have });
+          if (more.error || !(more.items ?? []).length) break;
+          out = { ...out, items: [...out.items, ...more.items], total: more.total ?? out.total };
+          if (request !== this.listRequest || this.stopped) return;
+        }
         if (request !== this.listRequest || this.stopped) return;
         if (out.error) throw new Error(String(out.detail ?? out.error));
         this.counts = out.counts;
@@ -8196,6 +8263,7 @@ Result: ${info.result}` : info.does : "";
       await this.pane.open(target);
     }
     showPane(on) {
+      if (!on) this.pane.cancelPick();
       this.paneOpen = on;
       this.body.classList.toggle(cls("pane-open"), on);
       this.body.classList.toggle(cls("pane-closed"), !on);

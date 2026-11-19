@@ -261,6 +261,16 @@ class Broker:
                 self._finish(request, "expired", reason)
         return len(waiting)
 
+    def deny_session(self, session: Any, reason: str) -> int:
+        """A person pressed Stop: refuse this session's waiting requests now, so the turn that
+        was waiting on them is freed instead of holding on for the full timeout."""
+        session = str(session or "")
+        with self._lock:
+            waiting = [r for r in self._pending.values() if r.session == session]
+            for request in waiting:
+                self._finish(request, "denied", reason)
+        return len(waiting)
+
     def close(self, reason: str) -> int:
         """Expire every waiting request and refuse every later one the same
         way (terminal, for a Core stop); returns how many were waiting."""

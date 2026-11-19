@@ -6,7 +6,28 @@ cannot go stale. The plugin's files live outside the installed package, so the e
 copied from `plugin/` and `tests/test_skill_registry.py` fails if the two drift apart."""
 from __future__ import annotations
 
+import re
 from typing import Any
+
+_URL = re.compile(r"https?://[^\s<>`|\[\]()]{1,200}")
+
+
+def _cell(text: Any) -> str:
+    """Text for one table cell: one line, no pipe, backtick or wiki/Markdown link syntax, so a
+    value a server or a person chose cannot split the row, add columns or make a link."""
+    flat = " ".join(str(text or "").split()).replace("`", "'")
+    return flat.replace("|", "\\|").replace("[", "\\[").replace("]", "\\]")
+
+
+def _code(text: Any) -> str:
+    """Text for a code span inside a table cell: one line, no backtick, no bare pipe."""
+    return " ".join(str(text or "").split()).replace("`", "'").replace("|", "\\|")
+
+
+def _docs(value: Any) -> str:
+    """A documentation address as plain text in a code span, only when it is a plain http(s) URL."""
+    text = str(value or "").strip()
+    return f"`{text}`" if _URL.fullmatch(text) else "see the server itself"
 
 # (command, what it takes, what it does) - plugin/commands/*.md
 COMMANDS: tuple[tuple[str, str, str], ...] = (
@@ -47,20 +68,20 @@ def render_markdown(servers: list[dict[str, Any]] | None = None) -> str:
         "## Commands you can type", "",
         "Typed in the agent host's chat, starting with `/`.", "",
         "| Command | Takes | What it does |", "| --- | --- | --- |"]
-    lines += [f"| `{name}` | {takes and f'`{takes}`'} | {does} |" for name, takes, does in COMMANDS]
+    lines += [f"| `{name}` | {takes and f'`{_code(takes)}`'} | {_cell(does)} |" for name, takes, does in COMMANDS]
     lines += ["", "## Skills", "",
               "An agent reads a skill when the situation matches; you do not type these.", "",
               "| Skill | Used for |", "| --- | --- |"]
-    lines += [f"| `{name}` | {does} |" for name, does in SKILLS]
+    lines += [f"| `{name}` | {_cell(does)} |" for name, does in SKILLS]
     lines += ["", "## Agents", "", "| Agent | What it does |", "| --- | --- |"]
-    lines += [f"| `{name}` | {does} |" for name, does in AGENTS]
+    lines += [f"| `{name}` | {_cell(does)} |" for name, does in AGENTS]
     lines += ["", "## Installed servers and plugins", ""]
     if servers:
         lines += ["| Name | In this library | Tools | Documentation |", "| --- | --- | --- | --- |"]
         for s in servers:
-            docs = s.get("docs") or s.get("homepage") or ""
-            lines.append(f"| `{s['name']}` | {'on' if s.get('enabled') else 'off'} | "
-                         f"{len(s.get('tool_names') or [])} | {f'<{docs}>' if docs else 'see the server itself'} |")
+            docs = _docs(s.get("docs") or s.get("homepage"))
+            lines.append(f"| `{_code(s.get('name'))}` | {'on' if s.get('enabled') else 'off'} | "
+                         f"{len(s.get('tool_names') or [])} | {docs} |")
     else:
         lines.append("None installed yet. Add one from Settings → Tools & integrations.")
     lines += ["", "## Read more", "",

@@ -139,6 +139,18 @@ class Waiters:
             done.set()
         return len(pending)
 
+    def cancel_session(self, root: Any, session: Any) -> int:
+        """Stop waiting for this session's pending questions (a person pressed Stop), without
+        closing the Waiters for good. Each ask returns as if it timed out: the turn is freed
+        and the question stays in the thread's log for the person to come back to."""
+        needle = f"{root}::{session}::"
+        with self._lock:
+            keys = [k for k in self._pending if k.startswith(needle)]
+            done = [self._pending.pop(k) for k in keys]
+        for event in done:
+            event.set()
+        return len(done)
+
     def answer(self, key: str, text: str) -> bool:
         """True when a call was actually waiting on this key; False when it
         already gave up (timed out), nothing was ever waiting on it, or the

@@ -516,3 +516,14 @@ dialog.lib-dialog .lib-cmd-desc { display: block; margin: 2px 0 4px; color: var(
 /* Picking a file for the chat in the pane. */
 .lib-app .lib-pane-pick { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 8px 10px; margin-bottom: 10px; border: 1px solid var(--accent); border-radius: 8px; background: var(--panel); }
 .lib-app .lib-popover.lib-attach .lib-menuitem small { display: block; font-weight: 400; }
+
+/* A short window (a split pane, a phone held sideways, 200% zoom): the header's controls are
+   three rows of 34px buttons there, which left the chat 22px tall and nowhere for the paperclip
+   menu to open (stress F-07). Compact them, and let a popover scroll rather than clip. */
+@media (max-height: 520px) {
+  .lib-app > header { padding: 4px 8px; row-gap: 3px; gap: 6px; }
+  .lib-app > header button, .lib-app > header .lib-ghost { min-height: 0; height: 26px; padding-top: 0; padding-bottom: 0; font-size: 12.5px; line-height: 1; }
+  .lib-app > header .lib-icon-btn { width: 26px; height: 26px; }
+  .lib-app > header nav { height: 26px; }
+  .lib-app .lib-popover.lib-modes { max-height: calc(100% - 16px); overflow-y: auto; }
+}

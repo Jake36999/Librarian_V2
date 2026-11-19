@@ -139,7 +139,12 @@ await page.keyboard.press("Enter");
 await page.waitForSelector(".lib-msg >> text=exposes the operating system");
 await page.waitForSelector(".lib-working", { state: "detached" });      // the turn is done, not just its text
 await expect(page.isVisible(".lib-tool >> text=opened a thread"), "the rail shows the session opening");
-await expect(page.isHidden(".lib-pane"), "the default pane leaves room for the primary workspace");
+// A library with a guide opens it beside the chat the first time a browser visits, and the pane
+// then follows the thread (here it shows the plan). Closing it leaves the whole window to the chat.
+await expect(page.evaluate(() => localStorage.getItem("librarian:guide-seen") === "1"), "the guide opened on this browser's first visit");
+await expect(page.isVisible(".lib-pane .lib-plan >> text=Frame"), "the pane follows the thread and shows its plan");
+await page.getByRole("button", {name:"Close the pane"}).click();
+await expect(page.isHidden(".lib-pane"), "closing the pane leaves room for the primary workspace");
 await page.getByRole("button", {name:"Show the document pane"}).click();
 await expect(page.isVisible(".lib-pane .lib-plan >> text=Frame"), "the plan shows the phases beside the chat");
 step("a turn streams into the rail and the plan");
@@ -234,14 +239,29 @@ await page.setInputFiles("input[type=file]", attachFile);
 await page.waitForFunction(() => document.querySelector("#lib-msg").value.includes("Inbox/notes.pdf"));
 await page.fill("#lib-msg", "");
 await page.keyboard.press("Escape");            // setInputFiles skips the menu item that would close it
+// Linking a note is picking it in the library pane (one place to navigate), with a hint.
+async function backToRoot() {
+  const here = () => page.locator(".lib-pane-browser .lib-folder-path").textContent();
+  await page.waitForSelector(".lib-pane-browser .lib-folder-path");
+  for (let guard = 0; guard < 6 && (await here()) !== "/"; guard++) {
+    const before = await here();
+    await page.click(".lib-pane-browser .lib-menuitem.lib-up");
+    await page.waitForFunction((was) => document.querySelector(".lib-pane-browser .lib-folder-path")?.textContent !== was, before);
+  }
+}
 await page.click("button[aria-label='Attach']");
-await page.click("#lib-attach .lib-menuitem:has-text('Projects/')");
-await page.click("#lib-attach .lib-menuitem:has-text('Host Watch')");
+await page.click("#lib-attach .lib-menuitem:has-text('Link a note or folder')");
+await page.waitForSelector(".lib-pane-pick >> text=Pick a file to add to the chat");
+await backToRoot();
+await page.click(".lib-pane-browser .lib-menuitem.lib-dir:has-text('Projects/')");
+await page.click(".lib-pane-browser .lib-menuitem.lib-file:has-text('Host Watch')");
 await page.waitForFunction(() => document.querySelector("#lib-msg").value.includes("[[Host Watch]]"));
+await expect(page.isHidden(".lib-pane-pick"), "picking a file ends the pick");
 await page.fill("#lib-msg", "");
 step("the paperclip attaches a file into Inbox/, and links an existing note, both inserted into the message");
 
-// A long vault listing used to grow above the top of the host and clip its first entries.
+// The paperclip menu fits and scrolls in a short, narrow window, and a long vault listing in the
+// pick pane scrolls to its last entry (a long listing used to grow above the top of the host).
 const longListing = Array.from({length:120}, (_, i) => ({
   kind:"file", name:`Scroll fixture ${i + 1}`, path:`Scroll fixture ${i + 1}.md`,
 }));
@@ -255,13 +275,14 @@ for (const size of [{width:1200,height:820}, {width:497,height:450}]) {
   const trigger = page.getByRole("button", {name:"Attach", exact:true});
   await trigger.click();
   const tile = page.getByRole("dialog", {name:"Attach", exact:true});
-  await tile.getByRole("menuitem", {name:"Scroll fixture 120",exact:true}).waitFor({state:"attached"});
+  await tile.getByRole("menuitem", {name:/Link a note or folder/}).waitFor({state:"attached"});
   const geometry = await tile.evaluate(el => {
     const box = el.getBoundingClientRect(), area = el.parentElement.getBoundingClientRect();
     return { fits:box.top >= area.top && box.bottom <= area.bottom && box.left >= area.left && box.right <= area.right,
       scrollable:el.scrollHeight > el.clientHeight, chatScroll:el.parentElement.querySelector(".lib-log").scrollTop };
   });
-  await expect(geometry.fits && geometry.scrollable, `paperclip fits and scrolls at ${size.width}x${size.height}`);
+  await expect(geometry.fits, `paperclip fits at ${size.width}x${size.height}`);
+  if (size.width === 497) await expect(geometry.scrollable, `paperclip scrolls at ${size.width}x${size.height}`);
   console.log("Paperclip geometry", size, geometry);
   await tile.hover();
   await page.mouse.wheel(0, 10000);
@@ -275,14 +296,18 @@ for (const size of [{width:1200,height:820}, {width:497,height:450}]) {
     await page.keyboard.press("Escape");
     await expect(await trigger.evaluate(el => el === document.activeElement), "Escape returns to the paperclip");
   } else {
-    await tile.getByRole("menuitem", {name:"Scroll fixture 120",exact:true}).click();
+    await tile.getByRole("menuitem", {name:/Link a note or folder/}).click();
+    await backToRoot();
+    const last = page.locator(".lib-pane-browser .lib-menuitem.lib-file", {hasText:"Scroll fixture 120"});
+    await last.scrollIntoViewIfNeeded();
+    await last.click();
     await expect((await page.inputValue("#lib-msg")).includes("[[Scroll fixture 120]]"), "last note links to the draft");
     await page.fill("#lib-msg", "");
   }
 }
 await page.unroute("**/api/files?dir=");
 await page.setViewportSize(originalSize);
-step("a 120-note paperclip list scrolls independently on desktop and in a short narrow view");
+step("the paperclip fits and scrolls in a short narrow view, and a 120-note listing can be picked from to its end");
 
 // Settings: save a key, then overwriting asks first; the key never shows.
 // OpenAI, not the default DeepInfra tab: the demo core profiles a DeepInfra
@@ -736,8 +761,8 @@ step("a staged offering: read in full in Staging -> Offerings, then promoted fro
 
 // (d) the review-due action opens a parked learn session for the review that fell due.
 await page.click(".lib-app nav button:has-text('Chat')");
-await page.click(".lib-toolbar .lib-tb:has-text('Modes')");
-await page.click("#lib-modes .lib-menuitem:has-text('Review due concepts')");
+await page.click("button[aria-label='Attach']");                  // workflows live in the paperclip menu
+await page.click("#lib-attach .lib-menuitem:has-text('Review due concepts')");
 await page.waitForFunction(async () => {
   const token = document.querySelector("meta[name=librarian-token]")?.getAttribute("content") ?? "";
   const r = await fetch("/api/tool/list_sessions", { method: "POST", headers: { "Content-Type": "application/json",

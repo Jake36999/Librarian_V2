@@ -358,6 +358,7 @@ class App {
   }
 
   private showPane(on: boolean): void {
+    if (!on) this.pane.cancelPick();                  // closing the pane ends a file pick
     this.paneOpen = on;
     this.body.classList.toggle(cls("pane-open"), on);
     this.body.classList.toggle(cls("pane-closed"), !on);
