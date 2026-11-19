@@ -27,7 +27,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from . import process_identity
+from . import process_identity, projects
 from .folder_review import configuration
 
 READY_TIMEOUT = 60.0
@@ -61,6 +61,24 @@ class GeoService:
         path.mkdir(parents=True, exist_ok=True)
         return path
 
+    def browse_roots(self) -> list[str]:
+        """The folders Geo's "Add folder" may browse: the project folders this library's person attached, and only
+        while project access is on. Geo reads them; it never writes to them. With none, the picker is off and the
+        page says how to turn it on (agent review 2026-11-19, F-05: it used to have no roots at all, so "Add folder"
+        always failed in a library's Geo)."""
+        try:
+            state = projects.state(self.vault)
+        except (OSError, ValueError):
+            return []
+        if not state.get("enabled"):
+            return []
+        out: list[str] = []
+        for root in state.get("roots", []):
+            path = Path(str(root.get("path") or ""))
+            if str(path) and path.is_dir() and str(path) not in out:
+                out.append(str(path))
+        return out
+
     # -- lifecycle --------------------------------------------------------
     def start(self, librarian_url: str) -> None:
         """Start this library's service in the background; idempotent while it runs."""
@@ -91,6 +109,8 @@ class GeoService:
                 "--transport", "http", "--port", "0", "--ready-file", str(ready),
                 "--librarian-url", librarian_url, "--library-name", self.vault.title,
                 "--parent-pid", str(os.getpid())]
+        for root in self.browse_roots():
+            argv += ["--browse-root", root]
         env = {**os.environ, "GEOGRAPHER_ACCESS_TOKEN": self.token, "PYTHONUTF8": "1"}
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform == "win32" else 0
         try:

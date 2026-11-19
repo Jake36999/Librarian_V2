@@ -288,3 +288,40 @@ def test_the_person_ui_can_close_and_reopen_this_librarys_geo_grapher(vault, tmp
         assert calls == ["stop", ("start", "http://127.0.0.1:5555/")]
     finally:
         server.shutdown(); server.server_close()
+
+
+def _argv_of(vault, record):
+    from resource_librarian.geo_service import GeoService
+    service = GeoService(vault)
+    service.start("http://127.0.0.1:52206/")
+    try:
+        assert _wait(service, {"running", "failed"})["state"] == "running"
+        return json.loads(record.read_text())["argv"]
+    finally:
+        service.stop()
+
+
+def _attach(vault, *folders):
+    (vault.librarian / "projects.json").write_text(json.dumps(
+        {"enabled": True, "roots": [{"id": f"r{i}", "path": str(f)} for i, f in enumerate(folders)]}), encoding="utf-8")
+
+
+def test_a_librarys_geo_may_browse_the_project_folders_its_person_attached(library, tmp_path):
+    """F-05 (agent review 2026-11-19): with no browse roots, "Add folder" in a library's Geo always failed."""
+    vault, record = library
+    attached, gone = tmp_path / "attached-project", tmp_path / "moved-away"
+    attached.mkdir()
+    _attach(vault, attached, attached, gone)               # a duplicate and a folder that no longer exists
+    argv = _argv_of(vault, record)
+    roots = [argv[i + 1] for i, a in enumerate(argv) if a == "--browse-root"]
+    assert roots == [str(attached)]
+
+
+def test_geo_browses_nothing_until_project_access_is_on_and_a_folder_is_attached(library, tmp_path):
+    vault, record = library
+    assert "--browse-root" not in _argv_of(vault, record)                      # nothing attached
+    folder = tmp_path / "attached-project"
+    folder.mkdir()
+    (vault.librarian / "projects.json").write_text(json.dumps(
+        {"enabled": False, "roots": [{"id": "r0", "path": str(folder)}]}), encoding="utf-8")
+    assert "--browse-root" not in _argv_of(vault, record)                      # attached, but project access is off
