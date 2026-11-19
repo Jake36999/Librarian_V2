@@ -7054,3 +7054,51 @@ Not seen in a browser: a paused chip's option buttons, and the waiting badge.
 - `review-conversation` scores are poorly calibrated.
 - The Clerk queue's depth and vault spend against the ceiling are not shown.
 - ST-F13 to F16 (rest).
+
+### Hardening from the ACCEPT-02 research run (2026-11-19)
+
+An outside agent (Antigravity) ingested 96 papers into ACCEPT-02 over MCP and the person route.
+Its run log, session log and scripts were read; nothing in that library was changed.
+
+**What went wrong, and why.**
+- **The "looping" request** was a script, not a model. It sent 92 single-item `staging_decide`
+  calls in 6 seconds (49 accepts with topics, 43 approves) while its session was still in Search.
+  Each was refused `PHASE_GATE`, and the script did not stop at the first refusal.
+- **The 49 papers it accepted with topics were never accepted.** A batch accept with field
+  corrections was refused ("accept items individually"). Its one-at-a-time script then failed on
+  its own side, and its later reports described the accept as under way.
+- **4 papers stayed partial.** The model set `confident: false` on Bottom Lines that were sound;
+  the input looked the same as the 39 that drafted fine. The batch kept such a paper partial
+  and never retried it.
+- **The Clerk, Scribe and research helper had to be re-qualified.** The hard compatibility
+  fingerprint held every tool's schema, so a change to any tool re-marked every role unscreened,
+  and drafts queued with no visible reason.
+- **A Core stopped and left its lease.** A Host start refused, and an agent had to check the dead
+  pid and rerun with `--takeover`.
+- **147 Clerk queue files** stayed queued after the configured model answered the same tasks.
+
+**Fixed.**
+- `batch._review`:
+  - a "not confident" Bottom Line is asked once more;
+  - if the model is still unsure but `clerk.grounded` finds the Bottom Line and what it solves in
+    the evidence, the stage completes as `low_confidence`, and Staging says the Clerk was not
+    confident;
+  - accepting still needs a person's confirmed Bottom Line;
+  - an ungrounded draft stays partial, as before.
+- `staging_decide(item_fields={id: {...}})` accepts a batch of new sources with each item's own
+  fields, through the same prepared, guarded batch. A shared `fields` is still refused, now with a
+  message that names `item_fields`. One item is handled too, and stray ids are refused.
+- The qualification compatibility fingerprint covers only the tools a role's bundles can offer:
+  Clerk 3, Scribe 4, helper 8. The Lead, whose bundles follow the phase, keeps the whole registry.
+  **Each library's Clerk, Scribe and helper need qualifying once more on this build.** After that,
+  tool changes elsewhere leave them screened.
+- A Host-managed Core that meets a stopped Core's lease (OS lock free, pid gone) copies the old
+  record to `vault.lease.stale-<time>.json`, announces it, and takes over. An interactive start
+  still asks on the takeover page.
+- `clerk.run` removes a task's queued copy when the configured model answers it. Existing orphans
+  clear as their tasks are answered again.
+
+**Tests.** `test_batch_review_coverage.py` (retry, grounded low confidence, `_grounded_draft`),
+`test_core_source_batch.py` (per-item fields, stray ids), `test_app.py` (role-scoped
+fingerprint), `test_app_reopen.py` (Host-managed takeover keeps the record), `test_clerk.py`
+(queue copy removed).

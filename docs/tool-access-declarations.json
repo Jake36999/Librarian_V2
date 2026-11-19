@@ -4741,12 +4741,12 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/staging.py",
-        "line": 500,
+        "line": 521,
         "symbol": "staging_decide"
       },
       "fingerprint": {
-        "source_sha256": "4874fb6f83bc00beca90d0051d0da024d8aba1350050b08cf7f14223aa3fba19",
-        "schema_sha256": "2f89a947ff5486105a4aea8bf75bfa25c4dbe679b39cb76b5a7e4857b7243a2a",
+        "source_sha256": "741b68159db295c61ea642ff09b989f9b76ff0038ce33196347917d754803844",
+        "schema_sha256": "269eb5420887b52769f7072d567b1d112c73ed488a9eb3f534d0a6f0b35a1600",
         "effect": "vault_write",
         "open_world": false,
         "external": false,

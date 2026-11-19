@@ -342,6 +342,11 @@ def deep_read_note(ctx: Context, note: str, max_chunks: int = reading.MAX_CHUNKS
     return {"revision": open_revision["id"], "of": row["path"], **out}
 
 
+BATCH_SHARED = ("a batch accept cannot share one Bottom Line or one set of field corrections: give "
+                "each item its own with item_fields={item_id: {field: value}}, or accept items one "
+                "at a time")
+
+
 def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
     """Selected staging writes: explicit paths, checked before any approval.
 
@@ -443,10 +448,10 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
         i["kind"] == "source" and not i.get("revision_of") for i in items)
     if source_batch:
         if kwargs.get("fields") or kwargs.get("bottom_line") or kwargs.get("what_it_solves"):
-            raise TypeError("a batch accept cannot share prose or field corrections; accept items individually")
+            raise TypeError(BATCH_SHARED)
         batch = staging.prepare_source_batch(_store(ctx), items,
             "person" if ctx.tier == "curate" else "agent", ctx.session or "",
-            IndexGateway(ctx, include_vectors=False).run)
+            IndexGateway(ctx, include_vectors=False).run, item_fields=kwargs.get("item_fields"))
         # Initial staged snapshots include invalid/preflight-failed items too.
         initial = dict(observed)
         for path, stamp in batch["observed"]:
@@ -460,7 +465,9 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
         prepared = {"operation": "stage_sources", "source_batch": batch}
     elif multiple and items:
         if kwargs.get("fields") or kwargs.get("bottom_line") or kwargs.get("what_it_solves"):
-            raise TypeError("a batch accept cannot share prose or field corrections; accept items individually")
+            raise TypeError(BATCH_SHARED)
+        if kwargs.get("item_fields"):
+            raise TypeError("item_fields applies to a batch of new sources only; accept these one at a time")
         batch = staging.prepare_mixed_batch(_store(ctx), items,
             "person" if ctx.tier == "curate" else "agent", ctx.session or "",
             IndexGateway(ctx, include_vectors=False).run)
@@ -479,7 +486,8 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
         try:
             source_plan = staging.prepare_source(_store(ctx), item, kwargs.get("bottom_line") or "",
                 kwargs.get("what_it_solves") or "", "person" if ctx.tier == "curate" else "agent",
-                origin, kwargs.get("fields") or {}, IndexGateway(ctx, include_vectors=False).run)
+                origin, {**(kwargs.get("fields") or {}), **((kwargs.get("item_fields") or {}).get(item["id"]) or {})},
+                IndexGateway(ctx, include_vectors=False).run)
         except (Refusal, TypeError) as exc:
             # Preserve the existing per-item error contract without falling
             # through to an unplanned mutation after a failed preparation.
@@ -525,8 +533,18 @@ def staging_decide(ctx: Context, item_ids: list[str],
                    decision: Literal["accept", "approve", "reject", "defer"], reason: str = "",
                    bottom_line: str = "", what_it_solves: str = "",
                    fields: dict | None = None, dry_run: bool = False, revision: str = "",
-                   staged_revision: str = "") -> dict:
+                   staged_revision: str = "", item_fields: dict | None = None) -> dict:
     store = _store(ctx)
+    if item_fields is not None:
+        # Each item's own corrections in one batch accept (2026-11-19, ACCEPT-02): a research
+        # run gave 49 papers 49 topics and had to accept them one call at a time.
+        if decision != "accept" or not isinstance(item_fields, dict) or                 any(not isinstance(v, dict) for v in item_fields.values()):
+            raise TypeError("item_fields maps each accepted item's ID to its own fields")
+        stray = sorted(set(item_fields) - set(item_ids))
+        if stray:
+            raise TypeError(f"item_fields names items not being decided: {stray[:5]}")
+        if len(item_ids) == 1:
+            fields = {**(fields or {}), **(item_fields.get(item_ids[0]) or {})}
     if dry_run:
         # an accept rehearsed: every check, what would be written, nothing changed
         if decision != "accept":
@@ -541,9 +559,9 @@ def staging_decide(ctx: Context, item_ids: list[str],
                     pass
             if items and all(i["kind"] == "source" and not i.get("revision_of") for i in items):
                 if fields or bottom_line or what_it_solves:
-                    raise TypeError("a batch accept cannot share prose or field corrections; accept items individually")
+                    raise TypeError(BATCH_SHARED)
                 batch = staging.prepare_source_batch(store, items, decided_by, ctx.session or "",
-                    IndexGateway(ctx, include_vectors=False).run)
+                    IndexGateway(ctx, include_vectors=False).run, item_fields=item_fields)
                 results, seen = [], set()
                 for item_id in item_ids:
                     plan = batch["plans"].get(item_id, {"error": "no staged item with this ID"})
@@ -561,7 +579,9 @@ def staging_decide(ctx: Context, item_ids: list[str],
                         "would_accept": sum(int(r["ok"]) for r in results)}
             if items:
                 if fields or bottom_line or what_it_solves:
-                    raise TypeError("a batch accept cannot share prose or field corrections; accept items individually")
+                    raise TypeError(BATCH_SHARED)
+                if item_fields:
+                    raise TypeError("item_fields applies to a batch of new sources only; accept these one at a time")
                 batch = staging.prepare_mixed_batch(store, items, decided_by, ctx.session or "",
                     IndexGateway(ctx, include_vectors=False).run)
                 results, seen = [], set()

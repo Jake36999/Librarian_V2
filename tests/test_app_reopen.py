@@ -174,16 +174,24 @@ def test_leaving_a_stale_library_closed_never_takes_it_over(vault, config, said,
     assert said[-1]["decision"] == "leave"
 
 
-def test_a_host_managed_core_reports_a_stale_lease_without_a_page(
+def test_a_host_managed_core_keeps_the_stale_record_and_takes_over(
         vault, config, said, monkeypatch):
+    """2026-11-19 (ACCEPT-02): a Host-started Core met a stopped Core's lease and refused, and an
+    agent had to find the dead pid and rerun with --takeover. With no person to ask, it now keeps
+    the old record as the clue and takes over; the OS lock was free and the pid gone."""
     monkeypatch.setenv("LIBRARIAN_HOST_MANAGED", "1")
+    record = vault.librarian / "runtime" / "vault.lease.json"
+    record.parent.mkdir(parents=True, exist_ok=True)
+    record.write_text('{"pid": 4242, "started_at": "2026-11-08"}', encoding="utf-8")
     fake = _StaleThenFine()
     monkeypatch.setattr(app_module, "App", fake)
 
-    assert app_module.serve(str(vault.root), port=0) == 2
-    assert said == [{"error": "stale_vault_lease", "detail": said[0]["detail"],
-                     "takeover": said[0]["takeover"]}]
-    assert fake.calls == [False]
+    assert app_module.serve(str(vault.root), port=0) == 2      # the fake then reports "in use"
+    assert fake.calls == [False, True]
+    assert said[0]["recovered_stale_vault_lease"] is True
+    kept = vault.root / said[0]["previous_record"]
+    assert kept.read_text(encoding="utf-8") == record.read_text(encoding="utf-8")
+    assert said[-1]["error"] == "vault_in_use"
 
 
 # -- the library picker ---------------------------------------------------------

@@ -7172,6 +7172,9 @@ Result: ${info.result}` : info.does : "";
             "div",
             {},
             h("label", { class: "f", for: "lib-bl" }, interrupted ? "Bottom Line (previously approved; review it)" : draft.bottom_line ? `Bottom Line (drafted by ${draft.model || "the clerk"}; edit it)` : "Bottom Line"),
+            // ACCEPT-02, 2026-11-19: a draft the clerk was not confident in is kept, not hidden; a
+            // person confirms or rewrites it before it is accepted.
+            draft.status === "not_confident" && draft.bottom_line ? h("p", { class: "warn" }, "The clerk drafted this but was not confident in it. Check it against the evidence before accepting.") : null,
             bottom,
             h("label", { class: "f", for: "lib-solves" }, "What it solves"),
             solves,

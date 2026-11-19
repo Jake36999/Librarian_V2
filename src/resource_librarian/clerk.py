@@ -1629,6 +1629,14 @@ def run(tasks: Sequence[Task], endpoint: Endpoint | None,
     for i, result in zip(rest, _run(tasks=[tasks[i] for i in rest], endpoint=endpoint,
                                     queue_dir=queue_dir, state_write=state_write)):
         results[i] = result
+        if queue_dir is not None and result.status not in ("queued", "error"):
+            # Answered now by the model: a copy queued earlier, when no model could take it, is
+            # done too. Only answers from the queue removed it, so 147 answered tasks sat
+            # queued in one library (2026-11-19, ACCEPT-02).
+            stale = queue_dir / f"{task_key(tasks[i].payload())}.json"
+            if stale.exists():
+                drop = lambda p=stale: p.unlink(missing_ok=True)
+                state_write(drop, stale) if state_write is not None else drop()
     return [results[i] for i in range(len(tasks))]
 
 

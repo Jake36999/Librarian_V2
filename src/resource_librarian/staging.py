@@ -643,7 +643,7 @@ def prepare_source(store, item, bottom_line, what_it_solves, decided_by, session
 
 
 def prepare_source_batch(store, items: list[dict], decided_by: str, session: str,
-                         index_call) -> dict:
+                         index_call, item_fields: dict | None = None) -> dict:
     """One bounded source-only acceptance inventory, prepared before approval.
 
     A shared guard advances only hashes of our own durable writes, never a
@@ -658,8 +658,11 @@ def prepare_source_batch(store, items: list[dict], decided_by: str, session: str
         try:
             if item.get("promotion_progress"):
                 raise TypeError("review and finish interrupted source acceptance one item at a time")
+            # Each item's own field corrections (`item_fields`, 2026-11-19): 49 papers each with
+            # their own topic were refused as a batch and had to be sent one call at a time.
             plan = prepare_source(store, item, "", "", decided_by,
-                str((item.get("found_for") or {}).get("session") or session or ""), {}, index_call,
+                str((item.get("found_for") or {}).get("session") or session or ""),
+                dict((item_fields or {}).get(item_id) or {}), index_call,
                 reserved_destinations=reserved)
             if plan["name"].casefold() in names:
                 raise Refusal("UNIQUE_NOTE_NAMES", "another source in this batch has the same destination; accept it separately")

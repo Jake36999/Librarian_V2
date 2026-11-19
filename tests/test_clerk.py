@@ -268,3 +268,13 @@ def test_an_over_long_quote_is_cut_to_a_verbatim_excerpt_that_passes_the_quote_c
     assert len(kept) <= 300 and kept in quote and not kept.endswith("…")       # still verbatim
     assert len(result.value["explanation"]) <= 400 and result.value["explanation"].endswith("…")
     assert any("verbatim excerpt" in d for d in result.dropped)
+
+
+def test_a_task_answered_by_the_model_leaves_no_queued_copy(tmp_path):
+    """ACCEPT-02, 2026-11-19: a task queued while no model could take it stayed queued after
+    the configured model answered it directly (147 such files); only queue answers removed it."""
+    task = clerk.uses(README)
+    queued = clerk.run([task], None, tmp_path)[0]
+    assert queued.status == "queued" and list(tmp_path.glob("*.json"))
+    clerk.run([task], clerk.Scripted(lambda p: {"bullets": []}), tmp_path)
+    assert not list(tmp_path.glob("*.json"))

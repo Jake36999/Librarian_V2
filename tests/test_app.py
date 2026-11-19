@@ -1168,3 +1168,27 @@ def test_a_lead_model_the_provider_does_not_know_marks_its_route(served):
     health = client.get("/api/state")[1]["lead_route_health"]
     assert health["status"] == "error" and "does not know the model" in health["detail"]
     assert wait_for(app, "route_health_changed", after=after)["model"] == tier["model"]
+
+
+def test_a_tool_change_outside_a_roles_bundle_keeps_its_qualification(vault, monkeypatch):
+    """ACCEPT-02, 2026-11-19: adding an argument to any tool re-marked the Clerk, Scribe and
+    helper unscreened (the hard fingerprint held every tool's schema), and their drafts queued
+    until qualification was run again. Now only the tools a role can be offered count; the
+    Lead, whose bundles follow the phase, still depends on the whole registry."""
+    from resource_librarian.registry import REGISTRY
+    app = App(vault, keys=KeyStore(use_keyring=False), provider_for=lambda _c: None)
+    try:
+        before = {r: app._qualification_fingerprints("preset-deepinfra", "m1", r)["compatibility"]
+                  for r in ("clerk", "research_helper", "lead")}
+        from dataclasses import replace
+        spec = REGISTRY.get("staging_decide")              # in no Clerk or helper bundle
+        monkeypatch.setitem(REGISTRY._tools, "staging_decide", replace(spec, effect="read"))
+        after = {r: app._qualification_fingerprints("preset-deepinfra", "m1", r)["compatibility"]
+                 for r in ("clerk", "research_helper", "lead")}
+        assert after["clerk"] == before["clerk"]
+        assert after["research_helper"] == before["research_helper"]
+        assert after["lead"] != before["lead"]
+        assert app._role_tools("clerk") == {"clerk_submit", "clerk_next", "session_status"}
+        assert app._role_tools("lead") is None
+    finally:
+        app.close_runtime()

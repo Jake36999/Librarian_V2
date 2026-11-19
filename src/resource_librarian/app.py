@@ -1693,6 +1693,22 @@ class App:
             raise ApiError(400, str(exc)) from exc
 
     # -- tiered qualification ----------------------------------------------
+    def _role_tools(self, role: str) -> frozenset[str] | None:
+        """The tools a role's bundles can offer, or None when they are chosen per phase (or the
+        role is unknown): then the whole registry is its contract."""
+        from .agent_runtime import BUNDLES
+        try:
+            bundles = list(self.profiles.get(role).allowed_bundles or [])
+        except (KeyError, ValueError, AttributeError):
+            return None
+        names: set[str] = set()
+        for bundle in bundles:
+            row = BUNDLES.get(bundle)
+            if row is None or not row.names:
+                return None
+            names.update(row.names)
+        return frozenset(names) if names else None
+
     def _qualification_fingerprints(self, host_id: str, model: str, role: str) -> dict[str, str]:
         """Dependency evidence for a route, split into hard and soft inputs."""
         from .agent_runtime import BUNDLES, MACROS
@@ -1708,9 +1724,16 @@ class App:
             profile = self.profiles.get(role).public()
         except (KeyError, ValueError):
             profile = {"id": role}
+        # Only the tools this role can be offered are part of its wire contract. Every tool was,
+        # so any change to any tool (a new argument on staging_decide) re-marked the Clerk,
+        # Scribe and helper unscreened, though they never see those tools, and their drafts
+        # queued until someone re-ran qualification (2026-11-19, ACCEPT-02). A role whose
+        # bundles are chosen by phase (the Lead) keeps the whole registry.
+        reachable = self._role_tools(role)
         schemas = [{"name": spec.name, "tier": spec.tier, "effect": spec.effect,
                     "schema": spec.json_schema()}
-                   for spec in sorted(REGISTRY.for_tier("curate"), key=lambda x: x.name)]
+                   for spec in sorted(REGISTRY.for_tier("curate"), key=lambda x: x.name)
+                   if reachable is None or spec.name in reachable]
         # The adapter and the exact model expectation are part of the wire /
         # parser contract, not presentation metadata.  A changed adapter ABI,
         # protocol renderer, endpoint identity, or exact capability record
@@ -5169,6 +5192,20 @@ def build(app: App, port: int = 0) -> Server:
     return server
 
 
+def _keep_stale_lease(vault: Vault) -> str:
+    """Copy a stopped Core's lease record aside before a takeover replaces it, so the clue to
+    what stopped it survives. Returns the copy's vault-relative path, or "" if none."""
+    record = vault.librarian / "runtime" / "vault.lease.json"
+    if not record.is_file():
+        return ""
+    kept = record.with_name(f"vault.lease.stale-{time.strftime('%Y%m%d-%H%M%S')}.json")
+    try:
+        kept.write_bytes(record.read_bytes())
+    except OSError:
+        return ""
+    return kept.relative_to(vault.root).as_posix()
+
+
 def _announce(payload: dict[str, Any]) -> None:
     """One JSON line for whoever started this process (the Host, the picker).
     A launcher that has since exited leaves a closed pipe; that never stops
@@ -5212,6 +5249,16 @@ def serve(vault_path: str | None, port: int = 8323, token: str = "",
                       host_managed=host_managed)
             break
         except StaleLeaseError as exc:
+            if host_managed and not takeover:
+                # The OS lock was free and the recorded Core's process is gone (both checked
+                # before StaleLeaseError is raised). A Host-started Core has no person to ask, so
+                # it keeps the old record as the clue and takes over (2026-11-19, ACCEPT-02: an
+                # agent had to find the dead pid and rerun with --takeover by hand).
+                kept = _keep_stale_lease(vault)
+                _announce({"recovered_stale_vault_lease": True, "detail": str(exc),
+                           "previous_record": kept})
+                takeover = True
+                continue
             if host_managed or takeover:
                 # Headless: nobody would see a page. The Host reports this line.
                 _announce({"error": "stale_vault_lease", "detail": str(exc),

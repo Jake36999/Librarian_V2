@@ -379,17 +379,28 @@ def _review(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     if "error" in out:
         return {"status": "failed", "reason": str(out.get("detail") or out["error"])}
     draft = (out.get("draft") or {}).get("status", "")
+    if draft == "not_confident":
+        # The model's own "not confident" is uneven on the same evidence (2026-11-19, ACCEPT-02:
+        # 4 of 43 papers, each with a sound Bottom Line). Ask once more before anything else.
+        again = REGISTRY.call("staging_review", {"item_id": item["id"]}, ctx)
+        if "error" not in again:
+            out, draft = again, (again.get("draft") or {}).get("status", "")
     # Only a draft the Clerk has not produced yet is waiting on a model. One it answered but
     # could not ground in the source, or refused, is not: reporting it as "waiting" told the
     # owner no Clerk was available and left the source partial forever (2026-11-17: 39 sources).
     if draft == "not_confident":
-        return {"status": "partial", "draft": draft,
-                "reason": "the clerk answered, but its Bottom Line did not rest on the source's own "
-                          "words; a person writes it, or a fuller reading gives it more to go on"}
+        if _grounded_draft(ctx, item["id"]):
+            # A Bottom Line resting on the source's own words is kept, flagged for a person: the
+            # model's doubt is shown, not treated as missing work (the paper stayed partial).
+            draft = "low_confidence"
+        else:
+            return {"status": "partial", "draft": "not_confident",
+                    "reason": "the clerk answered, but its Bottom Line did not rest on the source's "
+                              "own words; a person writes it, or a fuller reading gives it more to go on"}
     if draft in ("refused", "error"):
         return {"status": "failed", "draft": draft,
                 "reason": f"the clerk's Bottom Line draft {'was refused' if draft == 'refused' else 'failed'}"}
-    if draft != "ok":
+    if draft not in ("ok", "low_confidence"):
         return {"status": "queued", "draft": draft,
                 "reason": "waiting for the clerk model to draft the Bottom Line"}
     # A draft is not a review of the whole source: complete only when every part was read. The
@@ -401,6 +412,22 @@ def _review(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:
     if not seen["chunks"] and item.get("source_kind") in ("paper", "document", "standard")             and (item.get("clean_file") or item.get("file")):
         return {"status": "partial", "draft": draft, "reason": "the document has not been read"}
     return {"status": "complete", "draft": draft}
+
+
+def _grounded_draft(ctx: Context, item_id: str) -> bool:
+    """Whether the stored not-confident draft still rests on the item's evidence: a Bottom Line
+    and what it solves, each with enough of its content words in that text (`clerk.grounded`).
+    The Clerk's check stops at the model's own `confident: false`, before grounding runs."""
+    from . import clerk
+    from .staging import evidence_text
+    try:
+        item = StagingStore(ctx.vault).load(item_id)
+    except (AttributeError, KeyError, OSError, TypeError, ValueError):
+        return False
+    draft = (item.get("review") or {}).get("draft") or {}
+    text = evidence_text(item)
+    parts = [str(draft.get(k) or "").strip() for k in ("bottom_line", "what_it_solves")]
+    return bool(text and all(parts) and all(clerk.grounded(p, text) for p in parts))
 
 
 def _lenses(ctx: Context, item: dict[str, Any]) -> dict[str, Any]:

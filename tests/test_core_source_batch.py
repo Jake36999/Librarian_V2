@@ -316,3 +316,21 @@ def test_stopped_index_between_items_retains_results_and_never_copies_later_inpu
     assert out["results"][2]["error"].startswith("not run")
     assert len(_copies(core)) == 1
     assert not (core.vault.root / "Sources/document/Second Widget.md").exists()
+
+
+def test_a_batch_accept_takes_each_items_own_fields(core):
+    """ACCEPT-02, 2026-11-19: 49 papers, each with its own topic, were refused as a batch ("a
+    batch accept cannot share ... field corrections") and had to go one call at a time."""
+    _second(core)
+    shared = _accept(core, fields={"title": "Shared"})
+    assert "item_fields" in json.dumps(shared), shared            # the refusal names the way
+    out = _accept(core, item_fields={"new-widget": {"aliases": ["Widget A"]}, "second": {"aliases": ["Widget B"]}})
+    assert out["accepted"] == 2, [r.get("error") or r.get("detail") for r in out["results"]]
+    assert notes.load(_source(core)).frontmatter["aliases"] == ["Widget A"]
+    assert notes.load(core.vault.root / "Sources/document/Second Widget.md").frontmatter["aliases"] == ["Widget B"]
+
+
+def test_item_fields_must_name_the_items_being_decided(core):
+    _second(core)
+    out = _accept(core, item_fields={"someone-else": {"year": 2021}})
+    assert "not being decided" in json.dumps(out), out
