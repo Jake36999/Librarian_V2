@@ -48,16 +48,40 @@ In `~/.claude.json` (Claude Code), or the equivalent in other clients:
   session's write phases. `curate` is the person's own tier; never configure an
   agent with it.
 
-### Starting a Core without opening the window
+### Managing Cores
+
+**Agents manage Cores** (owner, 2026-11-16): starting, restarting, stopping, and
+recovering a stale lease. Don't leave a Core on old code, or a library locked,
+waiting for the person: that is how the system drifts. Use the MCP's
+Core-management tools where your client has them; otherwise use the Host:
 
 ```
-D:/Librarian_V2/.venv/Scripts/python.exe -m resource_librarian host start --vault <library>
 D:/Librarian_V2/.venv/Scripts/python.exe -m resource_librarian host status
+D:/Librarian_V2/.venv/Scripts/python.exe -m resource_librarian host start   --vault <library>
+D:/Librarian_V2/.venv/Scripts/python.exe -m resource_librarian host restart --vault <library>
+D:/Librarian_V2/.venv/Scripts/python.exe -m resource_librarian host stop    --vault <library>
+D:/Librarian_V2/.venv/Scripts/python.exe -m resource_librarian host doctor
 ```
 
-`host start` reuses a Core that is already running for that library instead of
-starting a second one (`host.py:172`). Opening the app or the Obsidian view also
-starts one.
+- **Look first.** `host status` lists every running Core: its library, address,
+  pid, and whether the Host manages it. `host start` reuses a running Core
+  instead of starting a second one (`host.py:172`).
+- **Restart after landing code a Core runs.** A Core keeps the code it started
+  with. After a merge or checkpoint that changes `src/`, restart the affected
+  Cores, then confirm from `/api/meta` or a tool call that they are back.
+- **Stop gracefully.** `stop` is refused while work is admitted: wait for that
+  work, or cancel it through its own tool. `--force` is only for `quit` with
+  active work; say what it cancelled.
+- **A Core started outside the Host** (by the app window or another agent) may
+  refuse a Host stop. Check that it has no admitted work, end its process, then
+  recover the lease as below and start it under the Host.
+- **A stale lease** (`stale_vault_lease`) means the recorded Core's process is
+  no longer alive. The lease check has already established that. Confirm with
+  `host status` that no Core is listed for that library, then start it with a
+  takeover:
+  `LIBRARIAN_VAULT_TAKEOVER=1 … host start --vault <library>`. The Host passes
+  the variable to the Core it starts.
+- **Report what you did:** which Core, which library, why, and its state after.
 
 ### Which library to use
 
@@ -76,10 +100,10 @@ starts one.
 | Answer | Meaning | What to do |
 |---|---|---|
 | `CORE_REQUIRED: no vault` | the MCP process has no library | set `--vault` and restart the client |
-| `CORE_REQUIRED: no Librarian Core is running` | nothing serves that library | `host start --vault …`, or ask the person to open it |
+| `CORE_REQUIRED: no Librarian Core is running` | nothing serves that library | `host start --vault …` |
 | `{"attached": url}` when launching the app | the library's Core was already running | nothing: that Core was opened, no second one was built |
-| `vault_in_use` when launching the app | a live process holds the library but does not answer at its address | the message names the process; the person closes it, then opens the library again |
-| `stale_vault_lease` | a Core stopped without releasing the library | the app shows the person a takeover page (`takeover_page`); headless or Host launches print this line instead. **Never take over on your own.** |
+| `vault_in_use` when launching the app | a live process holds the library but does not answer at its address | the message names the process: stop it (Managing Cores), then start the library again |
+| `stale_vault_lease` | a Core stopped without releasing the library | recover it with a takeover start (Managing Cores). The app window shows the person a takeover page (`takeover_page`) instead. |
 | `requires screened qualification for role '…'` | that helper route has no evidence (section 2) | ask the person to qualify the route |
 
 **Reopening (fixed 2026-11-12).** Closing the browser tab leaves the Core running,

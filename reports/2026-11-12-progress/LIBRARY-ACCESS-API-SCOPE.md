@@ -45,7 +45,8 @@ see the plan's progress log. The rest of this scope is still a proposal.
   is built.
 - **Lease stale:** serve a small takeover page (as the library picker does)
   that says which process held the library and when it started. Its button calls
-  the existing takeover path. A person decides; an agent never does.
+  the existing takeover path. (Agents may also recover a stale lease
+  themselves: owner, 2026-11-16; see `docs/agent-guide.md`, Managing Cores.)
 - **The library picker** gets the same check when a person opens a library from
   it (`library_picker.py`).
 
@@ -81,7 +82,7 @@ What the router adds:
 | Method and path | Does | Notes |
 |---|---|---|
 | `GET /v1/libraries` | lists known libraries: `id`, `name`, `path`, `profile`, `state` (`running`, `stopped`, `stale`, `missing`) | `id` is a stable digest of the canonical path; paths are shown, contents never |
-| `POST /v1/libraries/{id}/open` | ensures a Core: reuses a running one, or starts one headless | `stale` is refused with `STALE_LEASE`, which only the person resolves (section 2) |
+| `POST /v1/libraries/{id}/open` | ensures a Core: reuses a running one, or starts one headless | `stale` answers `STALE_LEASE`; the caller recovers it with an explicit takeover after the liveness check (Managing Cores in `docs/agent-guide.md`) |
 | `GET /v1/libraries/{id}/status` | the Core's health, active work, its own lease, and its qualified routes | the qualified routes are why helpers may be refused |
 | `GET /v1/libraries/{id}/tools` | the tool list at this client's tier | the registry's own specs |
 | `POST /v1/libraries/{id}/tools/{name}` | one tool call: `{arguments, session}`, returning the Core's result unchanged | forwarded to `/api/mcp/call` with the client's tier |
@@ -129,7 +130,7 @@ security decision. This scope stays loopback-only.
 | **Tier ceiling:** `consult` by default; `contribute` granted per library by the person in Settings; `curate` never through the router | `curate` is a person's own authority |
 | **A per-client library allow-list,** optional | so a Geo-Grapher session sees only the libraries it should |
 | **Every call is attributed** (`caller=router:<client>`) in the Core's existing activity and audit trail | provenance |
-| **No path-based opening;** no takeover; no force-stop | these are person decisions |
+| **No path-based opening** | adding a library stays a person's act. Core lifecycle (start, restart, stop, stale-lease takeover) is agent-manageable, owner 2026-11-16, with the checks in `docs/agent-guide.md` |
 | **Paid model routes keep their existing spend checkpoints;** qualification is never run through the router | the person confirms spend |
 
 ### Sessions
@@ -178,8 +179,8 @@ acceptance tests, not as a parallel track.
   get one Core, never two.
 - **Reopening works.** Closing the browser tab, then launching the app again,
   opens the running Core.
-- **A stale lease is never taken over by the router.** It answers
-  `STALE_LEASE`; the person's takeover page clears it.
+- **A stale lease is never taken over silently.** The router answers
+  `STALE_LEASE`; an agent or the person clears it with an explicit takeover.
 - **The tier ceiling holds.** A `consult` client calling a write tool is refused
   by the Core's existing tier check. `curate` can't be granted through the
   router.

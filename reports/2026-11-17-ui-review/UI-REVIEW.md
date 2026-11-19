@@ -19,8 +19,12 @@ that runs UI/UX review rounds with Claude in Chrome.
 - Python files show steel-blue;
 - Close shows the closed page and the server exits with code 0.
 
-**Not yet live** in the libraries' own Geo views: they run the pinned wheel in
-`G:\Libraries\_geo-runtime\env`. To deploy:
+**Deployed 2026-11-17 (afternoon)** from Geo-Grapher `a3dd77d`: items 1–4, the three-graph cap and the
+compact view form are live in all three libraries' Geo views. The wheel was built from a clean export of
+the commit plus the built front end, passed the package smoke test in a throwaway copy of the runtime,
+was reinstalled into the live runtime (0.2 s), and each library's Geo was restarted through its Core.
+Rollback: `uv pip install --python G:/Libraries/_geo-runtime/env/Scripts/python.exe --reinstall-package geo-grapher G:/Libraries/_geo-runtime/dist/previous/geo_grapher-0.2.0-before-a3dd77d.whl`,
+then restart each Geo. The procedure used, for the next time:
 1. Rebuild the wheel: `uv build --wheel --out-dir G:/Libraries/_geo-runtime/dist`, with
    `UV_CACHE_DIR=G:/Libraries/_geo-runtime/uv-cache UV_LINK_MODE=copy`.
 2. Reinstall it: `uv pip install --python G:/Libraries/_geo-runtime/env/Scripts/python.exe --reinstall-package geo-grapher <wheel>`.

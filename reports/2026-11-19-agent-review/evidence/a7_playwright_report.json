@@ -1,0 +1,584 @@
+{
+  "librarian": {
+    "nav_element_tags": [
+      {
+        "label": "Chat",
+        "tag": "BUTTON",
+        "role": "tab"
+      },
+      {
+        "label": "Staging",
+        "tag": "BUTTON",
+        "role": "tab"
+      },
+      {
+        "label": "Search",
+        "tag": "BUTTON",
+        "role": "tab"
+      },
+      {
+        "label": "Settings",
+        "tag": "BUTTON",
+        "role": null
+      },
+      {
+        "label": "Models",
+        "tag": "BUTTON",
+        "role": null
+      }
+    ],
+    "viewports": {
+      "375x812": {
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "horizOverflow": false,
+        "headerButtonRowsEstimate": 4,
+        "unlabelledControlsCount": 0,
+        "unlabelledSample": [],
+        "missingDisabledTitleCount": 0,
+        "missingDisabledTitle": [],
+        "hScrollContainers": [
+          {
+            "tag": "BUTTON",
+            "cls": "lib-ghost lib-switch",
+            "scrollW": 204,
+            "clientW": 133
+          }
+        ],
+        "clippedTexts": [
+          {
+            "text": "ACCEPT-02 Testing Library \u25be",
+            "scrollW": 204,
+            "clientW": 133
+          }
+        ],
+        "landmarks": {
+          "main": 1,
+          "nav": 2,
+          "header": 2,
+          "h1": []
+        }
+      },
+      "768x1024": {
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "horizOverflow": false,
+        "headerButtonRowsEstimate": 2,
+        "unlabelledControlsCount": 0,
+        "unlabelledSample": [],
+        "missingDisabledTitleCount": 0,
+        "missingDisabledTitle": [],
+        "hScrollContainers": [
+          {
+            "tag": "SPAN",
+            "cls": "lib-title",
+            "scrollW": 1194,
+            "clientW": 736
+          }
+        ],
+        "clippedTexts": [],
+        "landmarks": {
+          "main": 1,
+          "nav": 2,
+          "header": 2,
+          "h1": []
+        }
+      },
+      "1280x900": {
+        "innerWidth": 1280,
+        "scrollWidth": 1280,
+        "horizOverflow": false,
+        "headerButtonRowsEstimate": 2,
+        "unlabelledControlsCount": 0,
+        "unlabelledSample": [],
+        "missingDisabledTitleCount": 0,
+        "missingDisabledTitle": [],
+        "hScrollContainers": [
+          {
+            "tag": "SPAN",
+            "cls": "lib-title",
+            "scrollW": 1194,
+            "clientW": 139
+          }
+        ],
+        "clippedTexts": [],
+        "landmarks": {
+          "main": 1,
+          "nav": 2,
+          "header": 2,
+          "h1": []
+        }
+      },
+      "1440x1000": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "horizOverflow": false,
+        "headerButtonRowsEstimate": 2,
+        "unlabelledControlsCount": 0,
+        "unlabelledSample": [],
+        "missingDisabledTitleCount": 0,
+        "missingDisabledTitle": [],
+        "hScrollContainers": [
+          {
+            "tag": "SPAN",
+            "cls": "lib-title",
+            "scrollW": 1194,
+            "clientW": 283
+          }
+        ],
+        "clippedTexts": [],
+        "landmarks": {
+          "main": 1,
+          "nav": 2,
+          "header": 2,
+          "h1": []
+        }
+      },
+      "zoom200_720x500": {
+        "innerWidth": 720,
+        "scrollWidth": 720,
+        "horizOverflow": false,
+        "headerButtonRowsEstimate": 2,
+        "unlabelledControlsCount": 0,
+        "unlabelledSample": [],
+        "missingDisabledTitleCount": 0,
+        "missingDisabledTitle": [],
+        "hScrollContainers": [
+          {
+            "tag": "SPAN",
+            "cls": "lib-title",
+            "scrollW": 1194,
+            "clientW": 704
+          }
+        ],
+        "clippedTexts": [],
+        "landmarks": {
+          "main": 1,
+          "nav": 2,
+          "header": 2,
+          "h1": []
+        }
+      }
+    },
+    "search_audit_1440": {
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "horizOverflow": false,
+      "headerButtonRowsEstimate": 2,
+      "unlabelledControlsCount": 0,
+      "unlabelledSample": [],
+      "missingDisabledTitleCount": 0,
+      "missingDisabledTitle": [],
+      "hScrollContainers": [
+        {
+          "tag": "SPAN",
+          "cls": "lib-title",
+          "scrollW": 1194,
+          "clientW": 283
+        }
+      ],
+      "clippedTexts": [],
+      "landmarks": {
+        "main": 1,
+        "nav": 2,
+        "header": 2,
+        "h1": []
+      }
+    },
+    "tab_focus": [
+      {
+        "tag": "BUTTON",
+        "role": null,
+        "text": "Settings",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "BUTTON",
+        "role": null,
+        "text": "Models",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "BUTTON",
+        "role": null,
+        "text": "Geo-Grapher \u2197",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "BUTTON",
+        "role": null,
+        "text": "Show the document pane",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "BUTTON",
+        "role": null,
+        "text": "\u23fb",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "TEXTAREA",
+        "role": null,
+        "text": "Message",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "BUTTON",
+        "role": null,
+        "text": "\ud83d\udcce",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "BUTTON",
+        "role": null,
+        "text": "Modes:\nAsk\n\u25be",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      }
+    ],
+    "escape_key": {
+      "Sessions menu": {
+        "changed_after_escape": true
+      },
+      "Checkpoints menu": {
+        "changed_after_escape": true
+      },
+      "Attach menu": {
+        "changed_after_escape": true
+      },
+      "Settings modal": {
+        "changed_after_escape": true
+      }
+    },
+    "page_errors": [],
+    "light_bg": "rgb(251, 250, 248)",
+    "reduced_motion_nonzero": []
+  },
+  "geo_build": {
+    "available_graphs": [],
+    "viewports": {
+      "375x812": {
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "horizOverflow": false,
+        "headerButtonRowsEstimate": 3,
+        "unlabelledControlsCount": 0,
+        "unlabelledSample": [],
+        "missingDisabledTitleCount": 1,
+        "missingDisabledTitle": [
+          {
+            "tag": "INPUT",
+            "text": "on",
+            "cls": ""
+          }
+        ],
+        "hScrollContainers": [
+          {
+            "tag": "BUTTON",
+            "cls": "",
+            "scrollW": 72,
+            "clientW": 62
+          },
+          {
+            "tag": "BUTTON",
+            "cls": "",
+            "scrollW": 100,
+            "clientW": 85
+          },
+          {
+            "tag": "H1",
+            "cls": "",
+            "scrollW": 110,
+            "clientW": 54
+          },
+          {
+            "tag": "SMALL",
+            "cls": "workspace-scope-caption",
+            "scrollW": 237,
+            "clientW": 116
+          }
+        ],
+        "clippedTexts": [
+          {
+            "text": "Workspace",
+            "scrollW": 72,
+            "clientW": 62
+          },
+          {
+            "text": "app-helper-only",
+            "scrollW": 100,
+            "clientW": 85
+          }
+        ],
+        "landmarks": {
+          "main": 1,
+          "nav": 2,
+          "header": 1,
+          "h1": [
+            "app-helper-only"
+          ]
+        }
+      },
+      "768x1024": {
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "horizOverflow": false,
+        "headerButtonRowsEstimate": 2,
+        "unlabelledControlsCount": 0,
+        "unlabelledSample": [],
+        "missingDisabledTitleCount": 1,
+        "missingDisabledTitle": [
+          {
+            "tag": "INPUT",
+            "text": "on",
+            "cls": ""
+          }
+        ],
+        "hScrollContainers": [],
+        "clippedTexts": [],
+        "landmarks": {
+          "main": 1,
+          "nav": 2,
+          "header": 1,
+          "h1": [
+            "app-helper-only"
+          ]
+        }
+      },
+      "1280x900": {
+        "innerWidth": 1280,
+        "scrollWidth": 1280,
+        "horizOverflow": false,
+        "headerButtonRowsEstimate": 2,
+        "unlabelledControlsCount": 0,
+        "unlabelledSample": [],
+        "missingDisabledTitleCount": 1,
+        "missingDisabledTitle": [
+          {
+            "tag": "INPUT",
+            "text": "on",
+            "cls": ""
+          }
+        ],
+        "hScrollContainers": [],
+        "clippedTexts": [],
+        "landmarks": {
+          "main": 1,
+          "nav": 2,
+          "header": 1,
+          "h1": [
+            "app-helper-only"
+          ]
+        }
+      },
+      "1440x1000": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "horizOverflow": false,
+        "headerButtonRowsEstimate": 4,
+        "unlabelledControlsCount": 0,
+        "unlabelledSample": [],
+        "missingDisabledTitleCount": 1,
+        "missingDisabledTitle": [
+          {
+            "tag": "INPUT",
+            "text": "on",
+            "cls": ""
+          }
+        ],
+        "hScrollContainers": [],
+        "clippedTexts": [],
+        "landmarks": {
+          "main": 1,
+          "nav": 2,
+          "header": 1,
+          "h1": [
+            "app-helper-only"
+          ]
+        }
+      },
+      "zoom200_720x500": {
+        "innerWidth": 720,
+        "scrollWidth": 720,
+        "horizOverflow": false,
+        "headerButtonRowsEstimate": 2,
+        "unlabelledControlsCount": 0,
+        "unlabelledSample": [],
+        "missingDisabledTitleCount": 1,
+        "missingDisabledTitle": [
+          {
+            "tag": "INPUT",
+            "text": "on",
+            "cls": ""
+          }
+        ],
+        "hScrollContainers": [],
+        "clippedTexts": [],
+        "landmarks": {
+          "main": 1,
+          "nav": 2,
+          "header": 1,
+          "h1": [
+            "app-helper-only"
+          ]
+        }
+      }
+    },
+    "tab_focus": [
+      {
+        "tag": "A",
+        "role": null,
+        "text": "Skip to architecture view",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "A",
+        "role": null,
+        "text": "\u25c9 Geo Grapher",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "BUTTON",
+        "role": null,
+        "text": "Enter parent container",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "BUTTON",
+        "role": null,
+        "text": "Home",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "BUTTON",
+        "role": null,
+        "text": "Workspace",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "BUTTON",
+        "role": null,
+        "text": "app-helper-only",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "INPUT",
+        "role": null,
+        "text": "Search files, classes, functions\u2026",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "SELECT",
+        "role": null,
+        "text": "Symbols / paths\nCode + documents\nDocuments",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "SUMMARY",
+        "role": null,
+        "text": "Settings",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      },
+      {
+        "tag": "INPUT",
+        "role": null,
+        "text": "",
+        "outlineStyle": "solid",
+        "outlineWidth": "2px",
+        "boxShadow": false
+      }
+    ],
+    "escape_key": {
+      "Legend": {
+        "text_changed_on_escape": false
+      },
+      "Scope & filters": {
+        "error": "Locator.click: Timeout 2500ms exceeded.\nCall log:\n  - waiting for get_by_role(\"button\", name=re.compile(r\"Scope & filters\")).filter(visible=True).firs"
+      },
+      "Configure rules": {
+        "error": "Locator.click: Timeout 2500ms exceeded.\nCall log:\n  - waiting for locator(\"button:has-text('Configure rules')\").filter(visible=True).first\n"
+      },
+      "Settings": {
+        "error": "Locator.click: Timeout 2500ms exceeded.\nCall log:\n  - waiting for locator(\"button[aria-label*='Settings' i], button[title*='Settings' i]\").filter(visi"
+      }
+    },
+    "light_theme_error": "Locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\"button[aria-label*='Settings' i], button[title*='Settings' i]\").filter(vis",
+    "page_errors": [],
+    "reduced_motion_nonzero": []
+  },
+  "geo_accept02": {
+    "audit_1440": {
+      "innerWidth": 1440,
+      "scrollWidth": 1440,
+      "horizOverflow": false,
+      "headerButtonRowsEstimate": 3,
+      "unlabelledControlsCount": 0,
+      "unlabelledSample": [],
+      "missingDisabledTitleCount": 1,
+      "missingDisabledTitle": [
+        {
+          "tag": "INPUT",
+          "text": "on",
+          "cls": ""
+        }
+      ],
+      "hScrollContainers": [
+        {
+          "tag": "ASIDE",
+          "cls": "inspector-panel side-panel ",
+          "scrollW": 360,
+          "clientW": 329
+        }
+      ],
+      "clippedTexts": [
+        {
+          "text": "g_1b2d94d0a79987dfa563eb9e:4ae57baa08cb",
+          "scrollW": 323,
+          "clientW": 273
+        }
+      ],
+      "landmarks": {
+        "main": 1,
+        "nav": 2,
+        "header": 1,
+        "h1": [
+          "DataManagement-baseline"
+        ]
+      }
+    },
+    "url_redacted": "http://127.0.0.1:65417/"
+  }
+}

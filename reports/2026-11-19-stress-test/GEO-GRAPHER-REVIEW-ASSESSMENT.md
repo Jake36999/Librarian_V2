@@ -43,4 +43,31 @@ or reproduced it; **not checked** = I did not open that graph.
 
 ## Status
 
-I changed nothing in Geo-Grapher (`F:\uv-data\Geo_Grapher` is a separate repository). Items 1 to 3 above are the proposed first change there.
+Done in Geo-Grapher (`F:\uv-data\Geo_Grapher`, commit `bb5c708`, branch `feat/per-library-service`, **not pushed**):
+canvas space (filter bar 148 → 86px, header 95 → 64px, canvas 26% → 31–33% of the window), one dismiss
+behaviour for every floating panel (Escape, outside press, focus back to the trigger), Scope & filters
+opening under its trigger, the legend behind a toggle, and the opaque id no longer shown as a name in the
+Inspector. The Inspector already had its tabs, so that suggestion needed little.
+
+**Deployed 2026-11-19** to all four libraries with Geo (ACCEPT-02, Nonlinear Field Lab, Parallax,
+Resource-Library). The wheel was built from a clean export of `bb5c708` plus the built front end; it differs
+from the previously deployed wheel only in line endings and the new bundle. It was reinstalled into
+`G:\Libraries\_geo-runtime\env` and each library's Geo was restarted through its Core (4 s each; every Core was
+idle, no turn, action or batch running). Each now serves the new bundle. The Cores themselves were not restarted.
+Rollback: `uv pip install --python G:/Libraries/_geo-runtime/env/Scripts/python.exe --reinstall-package geo-grapher --no-deps G:/Libraries/_geo-runtime/dist/previous/geo_grapher-0.2.0-before-bb5c708.whl`,
+then restart each Geo (Close ▾ → start, or `POST /api/geographer/stop` then `/start`).
+
+**Top bar, rail and zoom slider deployed 2026-11-19** (Geo-Grapher commit `fa33b96`, same four libraries). The
+wheel was built from a clean export of `fa33b96` plus the built front end (bundle `index-QS4Fiqmj.js` /
+`index-Bdrl7Mc9.css`), reinstalled into `G:\Libraries\_geo-runtime\env`, and each library's Geo was restarted
+through its Core (about 2 s each; every Core was idle: not busy, no running action). Each serves the new bundle
+and still lists its graphs (2, 6, 7 and 16). On the real Resource-Library, in Edge: at 1200×760 the header is one
+row of 51px and the canvas is 54% of the window (it was 26%); at 477×1200 with 3D space on the canvas is 71%.
+That width opens in List view by default, as before. No page errors. One install detail: the default uv cache is
+on C: and uv cannot move files across drives, so the install needs `UV_CACHE_DIR=G:\Libraries\_geo-runtime\uv-cache`.
+Rollback: `uv pip install --python G:/Libraries/_geo-runtime/env/Scripts/python.exe --reinstall-package geo-grapher --no-deps G:/Libraries/_geo-runtime/dist/previous/geo_grapher-0.2.0-before-fa33b96.whl`
+(with the same `UV_CACHE_DIR`), then restart each Geo.
+
+Still open: the Inspector's
+member list still shows an id-looking entry for a repository root; the 20k and 65k-entity graph claims were
+not checked; the pre-existing failing test "search hides stale matches while a newer query is pending".
