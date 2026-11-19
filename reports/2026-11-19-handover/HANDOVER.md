@@ -268,7 +268,15 @@ I read the code behind its main claims. I did not run any workflow.
 > - from §3.3: the MCP `run_workflow` wait, the Health and registry contradiction, and
 >   inspection under a spent budget.
 >
-> Item 7 (Geo-Grapher) is still open.
+> Item 7 (Geo-Grapher) was done after that, in Geo-Grapher `e71967a`:
+> - declared-link jumps (AR-F08) and Compare pre-disabled without fingerprints (AR-F16);
+> - Matrix headers and Light bubbles (AR-F20) and the three MCP shapes (AR-F06);
+> - the first-search latency (AR-F07): 73 s to 6.2 s on the 65k-entity graph, from a query plan
+>   in `service.source_of`.
+>
+> **Correction to its commit message:** the Python suite count is 929 passed and 2 skipped, not
+> 1041. The 153 rerun tests were added to the 888, but most of them were already among the 888.
+> The wheel is **not** deployed to the libraries.
 
 1. **Triage `WORKFLOW-REVIEW.md`.** The paperclip workflows are the user-facing half of the agent workflow, and WF-D1
    (nothing visible happens) and WF-D2 (false success counts) are both confirmed in source. Fix the counts first: a
