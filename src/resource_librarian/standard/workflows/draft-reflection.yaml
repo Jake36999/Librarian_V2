@@ -18,3 +18,4 @@ outputs:
   gathered: {from: steps.draft.gathered}
   draft: {from: steps.draft.draft}
   ok: {from: steps.draft.ok}
+  reason: {from: steps.draft.reason}

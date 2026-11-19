@@ -14,3 +14,5 @@ steps:
     on_error: continue
 outputs:
   read: {from: steps.read.count}
+  failed: {from: steps.read.failed}
+  errors: {from: steps.read.errors}

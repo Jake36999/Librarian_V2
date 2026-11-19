@@ -502,7 +502,9 @@ BUNDLES = {
                                "draft_offering", "promote_offering", "advance", "ask_user")),
     "check-out": ToolBundle("check-out", "Make a person-reviewed outcome concrete",
                              ("get_note", "draft_offering", "record_application", "close_brief",
-                              "close_session", "update_plan", "ask_user", "staging_list")),
+                              "close_session", "update_plan", "ask_user", "staging_list",
+                              # back to an earlier phase when the outcome needs redoing (ST-F12)
+                              "advance")),
     # The phases of the other purposes. Without an entry here a phase fell back to the `session`
     # bundle (open/resume/advance/ask only), so none of its work could be done in the app.
     "ingest": ToolBundle("ingest", "Record and bring in what the person already has",
@@ -536,7 +538,7 @@ BUNDLES = {
                                 "read_source_file", "advance", "ask_user")),
     "next": ToolBundle("next", "Learn: schedule the review and propose a next session",
                         ("update_plan", "task_add", "get_note", "search", "close_session",
-                         "ask_user")),
+                         "ask_user", "advance")),       # back to practise again (ST-F12)
     "candidate": ToolBundle("candidate", "Name the capability candidate",
                              ("update_plan", "capability_candidates", "get_note", "advance",
                               "ask_user")),

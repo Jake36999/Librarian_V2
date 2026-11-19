@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 import subprocess
 
 import pytest
@@ -267,8 +268,53 @@ def test_ingest_cited_is_v1s_script_declared(vault):
     finally:
         intake_mod.ARXIV_INTERVAL = saved
     assert out["status"] == "finished", out
-    assert out["outputs"] == {"cited": 3, "ingested": 2}          # the Wikipedia link skipped
+    assert out["outputs"] == {"cited": 3, "ingested": 2, "failed": 0,
+                              "errors": []}                       # the Wikipedia link skipped
     assert out["steps"]["papers"]["considered"] == 3
+
+
+EACH_REFUSED = """
+workflow: read-missing-notes
+purpose: read notes that are not there, carrying on past each failure
+steps:
+  - id: read
+    each: {from: inputs.names}
+    action: read_file
+    args: {path: {from: item}}
+    on_error: continue
+inputs:
+  names: {type: list}
+outputs:
+  read: {from: steps.read.count}
+  failed: {from: steps.read.failed}
+  errors: {from: steps.read.errors}
+"""
+
+
+def test_each_counts_only_what_succeeded(vault):
+    """WF-D2: under on_error: continue a refused item is reported as failed, never counted
+    as done (deep-read-staged once reported read: 5 when none of the five was read)."""
+    ctx = person(vault)
+    saved = REGISTRY.call("save_workflow", {"yaml_text": EACH_REFUSED}, ctx)
+    assert "error" not in saved, saved
+    out = REGISTRY.call("run_workflow", {"name": "read-missing-notes",
+                                         "inputs": {"names": ["Inbox/No Such A.md", "Inbox/No Such B.md"]}}, ctx)
+    assert out["status"] == "finished", out
+    assert out["outputs"]["read"] == 0 and out["outputs"]["failed"] == 2
+    assert len(out["outputs"]["errors"]) == 2 and all(out["outputs"]["errors"])
+    assert out["steps"]["read"]["attempted"] == 2
+
+
+def test_succeeded_reads_failed_states():
+    assert workflows.succeeded({"item": "x", "state": "staged"})
+    assert not workflows.succeeded({"error": "refused", "detail": "no"})
+    assert not workflows.succeeded({"state": "failed", "reason": "not found"})
+    assert workflows.failure_reason({"state": "failed", "reason": "not found"}) == "not found"
+
+
+def test_review_staged_retries_items_whose_draft_was_queued():
+    text = (Path(workflows.__file__).parent / "standard" / "workflows" / "review-staged.yaml").read_text(encoding="utf-8")
+    assert "item.drafted, is: false" in text
 
 
 BRIEF = """

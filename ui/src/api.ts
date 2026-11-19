@@ -110,7 +110,7 @@ export const EVENT_TYPES = [
   "permission_request", "permission_decided", "mode_changed", "tiers_changed",
   "session_attached", "conversation_reset", "person_acted",
   "question_asked", "question_answered",
-  "action_started", "action_progress", "action_done", "library_switched", "reply_reviewed",
+  "action_started", "action_progress", "action_done", "action_dismissed", "library_switched", "reply_reviewed",
   "checkpoint_created", "checkpoint_resolved",
   "route_health_changed", "workflow_preflight", "resync_required",
 ];

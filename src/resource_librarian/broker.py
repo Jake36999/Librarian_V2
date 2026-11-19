@@ -170,6 +170,8 @@ class Broker:
         # A dry run writes nothing (staging_decide, project_edit): it is decided as a read, so
         # Plan mode can show the diff it would propose.
         effect = "read" if (arguments or {}).get("dry_run") is True else spec.effect
+        if effect != "read" and spec.name in RUN_TOOLS:
+            effect = _run_effect(arguments, ctx, effect)
         # A workflow a person approved (the exact batch they approved for ingestion) or started
         # (a pipeline from the paperclip menu) is authorised as a whole, for the tools it
         # names, until it ends: asking again for each of its writes would be 98 questions for
@@ -200,6 +202,9 @@ class Broker:
             if spec.name == 'project_edit':
                 request.preview['licence_warning'] = ('derived from third-party (unlicensed) material: '
                     'do not copy it into this repository')
+        # An MCP client gives up at about 180 s; waiting longer leaves it hanging and the
+        # request open after nobody can use its answer (2026-11-19 workflow review).
+        wait = min(self.timeout, float(ctx.extras.get("permission_wait") or self.timeout))
         with self._lock:
             closed = self._closed
             if closed is None:
@@ -207,22 +212,28 @@ class Broker:
         if closed is not None:
             # The Core is stopping: nobody is left to approve it.
             request.outcome, request.reason = "expired", closed
+            wait = 0.0
         else:
             self._emit({"type": "permission_request", **request.public()})
-            if not request.event.wait(self.timeout):
+            if not request.event.wait(wait):
                 with self._lock:
                     if not request.event.is_set():
                         self._finish(request, "expired", "nobody answered")
         if request.outcome == "allowed":
             return f"asked: {request.reason}"
         if request.outcome == "expired":
+            if ctx.extras.get("caller_kind") == "mcp":
+                # The client asks again once the person has answered; the thread is not parked.
+                raise Refusal("PERMISSION_UNANSWERED", f"{spec.name} waited {wait:.0f}s for a "
+                              f"person to answer in Librarian; ask again once they have, or "
+                              f"ask them to allow {spec.name} for this session")
             if session and getattr(ctx, "vault", None) is not None:
                 from .session import SessionStore
                 SessionStore(ctx.vault).append(session, {
                     "type": "status", "status": "parked",
                     "note": f"a permission request for {spec.name} went unanswered"})
             raise Refusal("PERMISSION_UNANSWERED", f"{spec.name} waited "
-                                                   f"{self.timeout:.0f}s for a person; "
+                                                   f"{wait:.0f}s for a person; "
                                                    f"the session is parked")
         raise Refusal("PERMISSION_DENIED", f"{spec.name}: {request.reason}")
 
@@ -281,3 +292,31 @@ class Broker:
     def state(self) -> dict[str, Any]:
         return {"mode": self._mode, "tool_settings": dict(self.settings),
                 "pending": self.pending()}
+
+
+RUN_TOOLS = frozenset({"run_workflow", "run_pipeline"})
+
+
+def _run_effect(arguments: dict[str, Any] | None, ctx: Any, effect: str) -> str:
+    """`run_workflow` is a write only when the run can write: a workflow whose every step,
+    through every workflow it reaches, is a read (gather-agenda) asks nothing in Ask mode
+    (2026-11-19: a read-only run asked, and the MCP client timed out waiting)."""
+    name = str((arguments or {}).get("name") or "")
+    vault = getattr(ctx, "vault", None)
+    if not name or vault is None:
+        return effect
+    try:
+        from . import workflows
+        from .registry import REGISTRY
+        library = workflows.Library(vault)
+        actions = {str(step["action"]) for node in workflows.closure(library.get(name), library).values()
+                   for step in node.data.get("steps") or []
+                   if isinstance(step, dict) and "action" in step}
+        if any("route" in step for node in workflows.closure(library.get(name), library).values()
+               for step in node.data.get("steps") or [] if isinstance(step, dict)):
+            return effect                      # a routing step may call a model: not a plain read
+        if actions and all(a in REGISTRY and REGISTRY.get(a).effect == "read" for a in actions):
+            return "read"
+    except Exception:                          # noqa: BLE001 - unknown or invalid: keep it a write
+        return effect
+    return effect

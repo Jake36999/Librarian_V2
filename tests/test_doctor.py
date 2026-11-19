@@ -117,3 +117,27 @@ def test_a_malformed_community_plugins_file_is_never_a_crash(vault, monkeypatch)
     (obsidian / "community-plugins.json").write_text("not json")
     names = _names(doctor.checks(vault))
     assert "obsidian plugins" not in names
+
+
+class _LibraryOwned:
+    """A live manager whose `geo-grapher` is the Core's own service, beside a hand-written
+    mcp.json entry of the same name."""
+    def __init__(self, connected):
+        self.connected = connected
+
+    def servers(self):
+        return {"geo-grapher": {"command": "geographer", "args": ["mcp"]}}
+
+    def status(self):
+        return {"geo-grapher": {"library_owned": True, "connected": self.connected, "tools": 22}}
+
+
+@pytest.mark.parametrize("connected, words", [(True, "22 tool(s), connected"),
+                                               (False, "not running")])
+def test_the_librarys_own_service_is_reported_as_a_service(connected, words):
+    """2026-11-19 workflow review: Health said "installed; not enabled in this library" for
+    the library's own Geo-Grapher while the skill registry showed it connected."""
+    checks = {c.name: c for c in doctor._mcp_server_checks(_LibraryOwned(connected))}
+    check = checks["mcp: geo-grapher"]
+    assert check.ok and "own service" in check.detail and words in check.detail
+    assert "not enabled in this library" not in check.detail

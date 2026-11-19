@@ -134,6 +134,8 @@ export class Staging {
       scan.style.display = this.kind === "concept" ? "" : "none";
       propose.style.display = this.kind === "topic" ? "" : "none";
       statuses.style.display = this.kind === "source" ? "" : "none";
+      add.style.display = this.kind === "source" ? "" : "none";
+      if (this.kind !== "source") { addForm.hidden = true; add.setAttribute("aria-expanded", "false"); }
     };
     const propose = h("button", { class: "ghost", title: "Group the library's sources into topics, staged here for you to accept",
       onclick: async () => {
@@ -162,6 +164,47 @@ export class Staging {
           clear(this.list, h("p", { class: "error" }, (e as Error).message));
         }
       } }, "Scan for concepts");
+    // AR-F10: a person adds a source here, not only through Chat - a reference (web page,
+    // arXiv id, DOI, GitHub repo) or a file from this computer, fetched and staged at once.
+    const addStatus = h("span", { role: "status", class: "dim" });
+    const addRef = h("input", { type: "text", placeholder: "URL, arXiv id, DOI or GitHub repo",
+      "aria-label": "Reference to add" }) as HTMLInputElement;
+    // Made when needed and never placed in the page, so the composer's paperclip input stays
+    // the page's only file input.
+    const addFile = document.createElement("input");
+    addFile.type = "file";
+    const ingest = async (ref: string, label: string) => {
+      addStatus.textContent = `Adding ${label}…`;
+      try {
+        const out = await this.api.tool("ingest", { ref });
+        if (out.error) throw new Error(String(out.detail ?? out.refused ?? out.error));
+        addStatus.textContent = out.state === "failed" || out.status === "failed"
+          ? `Not added: ${out.reason ?? out.detail ?? "the fetch failed"} (Queued for capture lists it).`
+          : `Staged ${out.name ?? label}.`;
+        addRef.value = "";
+        this.kind = "source"; this.status = this.statuses.value = "staged"; paint();
+        await this.load(true);
+      } catch (e) { addStatus.textContent = `Not added: ${(e as Error).message}`; }
+    };
+    addFile.onchange = async () => {
+      const file = addFile.files?.[0];
+      addFile.value = "";
+      if (!file) return;
+      addStatus.textContent = `Uploading ${file.name}…`;
+      try { const saved = await this.api.attach(file); await ingest(saved.path, saved.name); }
+      catch (e) { addStatus.textContent = `Not added: ${(e as Error).message}`; }
+    };
+    const addForm = h("form", { class: "add-source", hidden: true, "aria-label": "Add a source",
+      onsubmit: (e: Event) => { e.preventDefault(); const ref = addRef.value.trim(); if (ref) void ingest(ref, ref); } },
+      addRef, h("button", { type: "submit", class: "primary" }, "Fetch and stage"),
+      h("button", { type: "button", class: "ghost", onclick: () => addFile.click() }, "Choose a file…"),
+      addStatus);
+    const add = h("button", { class: "ghost", title: "Add a source to Staging: a reference or a file",
+      "aria-expanded": "false", onclick: () => {
+        addForm.hidden = !addForm.hidden;
+        add.setAttribute("aria-expanded", String(!addForm.hidden));
+        if (!addForm.hidden) addRef.focus();
+      } }, "Add source");
     paint();
     this.paintKinds = paint;
     this.evidenceMode.value = preference("evidence","beside");
@@ -174,8 +217,8 @@ export class Staging {
     this.el.append(h("div", { class: "view-head" }, h("strong", {}, "Staging review"), kinds),
       h("p", { class: "note" }, "Review captured material before adding it to this library."),
       h("div", { class: "view-head review-toolbar" }, statuses, this.evidenceMode,
-      h("button", { class: "ghost", onclick: () => void this.load(true) }, "Refresh"), scan, propose),
-      this.banner, this.bulk,
+      h("button", { class: "ghost", onclick: () => void this.load(true) }, "Refresh"), scan, propose, add),
+      addForm, this.banner, this.bulk,
       h("div", { class: "split" }, this.list, this.detail));
     this.bulk.hidden = true;
   }

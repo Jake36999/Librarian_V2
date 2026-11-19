@@ -357,3 +357,25 @@ def test_agent_can_read_exact_person_referenced_pdf_outside_roots(vault, tmp_pat
     assert result.get("text") == "Referenced text", result
     ctx.extras["_person_pdf_messages"] = [f'Read "{external}.bak".']
     assert "error" in REGISTRY.call("read_file", {"path": str(external)}, ctx)
+
+
+def test_a_person_started_shipped_read_workflow_may_deep_read(vault, monkeypatch):
+    """WF-D3: deep-read-staged started from the paperclip was refused on every third-party
+    source. The Core's workflow grant for a person's start is that person's route; a context
+    without it (an agent's own call) is still refused."""
+    from resource_librarian.staging import StagingStore
+    from resource_librarian.read_access import guard
+    from resource_librarian.rules import Refusal
+    StagingStore(vault).add({'id': 'staged-study', 'kind': 'source', 'name': 'Study',
+                             'source_kind': 'paper', 'file': 'Inbox/study.pdf', 'status': 'staged'})
+    monkeypatch.setattr(access, '_native_authorship', lambda *args: 'third_party')
+    granted = Context(tier='contribute', vault=vault, extras={
+        'workflow_grant': {'label': 'deep-read-staged workflow', 'tools': frozenset({'deep_read'})}})
+    assert guard(REGISTRY.get('deep_read'), {'item_id': 'staged-study'}, granted) is None
+    other = Context(tier='contribute', vault=vault, extras={
+        'workflow_grant': {'label': 'review-due workflow', 'tools': frozenset({'review_due_open'})}})
+    with pytest.raises(Refusal, match='THIRD_PARTY_ROUTE_REQUIRED'):
+        guard(REGISTRY.get('deep_read'), {'item_id': 'staged-study'}, other)
+    with pytest.raises(Refusal, match='THIRD_PARTY_ROUTE_REQUIRED'):
+        guard(REGISTRY.get('deep_read'), {'item_id': 'staged-study'},
+              Context(tier='contribute', vault=vault))

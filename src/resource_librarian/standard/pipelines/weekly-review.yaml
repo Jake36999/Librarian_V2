@@ -23,4 +23,5 @@ steps:
 outputs:
   draft: {from: steps.draft.outputs.draft}
   gathered: {from: steps.draft.outputs.gathered}
+  reason: {from: steps.draft.outputs.reason}
   overdue: {from: steps.tasks.outputs.overdue}

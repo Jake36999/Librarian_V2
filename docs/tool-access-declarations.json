@@ -3785,11 +3785,11 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/sessions.py",
-        "line": 1969,
+        "line": 2037,
         "symbol": "reflection_draft"
       },
       "fingerprint": {
-        "source_sha256": "cc40a8972415d079d9ed81fe0fd0475c1103fc9bd9c039f3c336604b4265d8bf",
+        "source_sha256": "1e89ed94531ecb7d73629f7be62e315132a7e3c9dff928766448bf3253fd2f95",
         "schema_sha256": "6062a871276e1089db2887db737927ea9ad4e057bb84c315c2f2b331c28debea",
         "effect": "write",
         "open_world": false,

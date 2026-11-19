@@ -6974,3 +6974,83 @@ in `docs/tool-access-declarations.json` after review:
 - the service hands its endpoint to listeners.
 
 `tests/test_shutdown.py`: the stand-in manager gains `clear_builtin`.
+
+### Workflows report what they did; the handover's open UI and stress-test items (2026-11-19)
+
+From `reports/2026-11-19-handover/HANDOVER.md` §5 and Gemini's `WORKFLOW-REVIEW.md`.
+
+**Workflows (WF-D1 to WF-D4).**
+- `each` under `on_error: continue` counts only what succeeded. A step reports `attempted`,
+  `failed` and up to 20 `errors`. `succeeded()` treats an error, a refusal and a
+  `state`/`status` of failed, refused or quarantined as a failure. `deep-read-staged`,
+  `ingest-cited` and `review-staged` output `failed` and `errors`. (`deep-read-staged` once
+  reported `read: 5` with none read.)
+- `review-staged` retries items whose draft was queued: it filters on `drafted`, not
+  `reviewed`.
+- A person's start of a shipped workflow that names `deep_read` is that person's route in
+  `read_access.guard`, as an approved batch is. Only the Core sets the grant. An agent's own
+  call is still refused `THIRD_PARTY_ROUTE_REQUIRED`.
+- `reflection_draft` includes up to five later and five undated tasks, with a count of the
+  rest. An empty draft returns `status` and `reason`. `draft-reflection` and `weekly-review`
+  output the reason.
+- The pipeline router uses, in order: a `[routing]` model, then the Clerk the library reads
+  with (Settings, then `[clerk]`, then the fallback). It no longer pauses with "no routing
+  model is configured" while a Clerk is set.
+- Queued actions:
+  - A finished or failed action keeps a bounded copy of its outputs or error until dismissed.
+  - A paused action carries `paused_step`, `question` and `options`. It is `paused_step`
+    because the event hub stamps its own `at` on every event.
+  - New routes: `GET /api/actions`, `POST /api/actions/<id>/resume` (with `choices`) and
+    `POST /api/actions/<id>/dismiss`.
+  - A paused chip follows its run when `run_resume` finishes it elsewhere.
+- UI:
+  - Chips show "finished · read 2, failed 1", with each error in the tooltip.
+  - A paused chip offers its options and a Resume button.
+  - Every chip but a running one can be dismissed.
+
+**MCP, health, budgets.**
+- `run_workflow` or `run_pipeline` counts as a read when every action in the definition's
+  closure is a read and it has no routing step. `gather-agenda` asks nothing in Ask mode.
+- An MCP call waits at most `MCP_PERMISSION_WAIT` (150 s) for a person, which is below the
+  client's own 180 s. It then returns `PERMISSION_UNANSWERED` saying to ask again, and does
+  not park the thread.
+- Health reports a library-owned server (geo-grapher) as the library's own service.
+- The skill registry shows a server as "on" only when it is enabled, accepted and turned on
+  in this library.
+- `list_workflows`, `show_workflow`, `run_list`, `run_status`, `rules`, `capabilities` and
+  `batch_status` still answer once a phase budget is spent.
+
+**Stress test and agent review.**
+- ST-F09: a bare-name `/api/file` lookup applies `_visible` and stays inside the vault. A
+  failed GET answers 500 instead of dropping the connection.
+- ST-F10: an attachment whose name is a Windows device name (`CON`, `NUL.md`, `COM1.txt`) is
+  saved with a `_` prefix (`notes.device_safe`). A note write still refuses such a name.
+  `safe_name` keeps the extension of a name cut to 150 characters. Non-ASCII letters are
+  still dropped, because allowing them would rename existing notes.
+- ST-F11: the no-progress guard counts errors (bad arguments, failed tools), compares a
+  digest of the whole detail, and stops on eight failures that cycle among two answers.
+- ST-F12: `advance` is offered in check-out and learn's next.
+- AR-F02: a chat turn whose provider error says the model is unknown marks the Lead route
+  unhealthy. State carries `lead_route_health`, and the model pill shows ⚠ with the detail.
+- AR-F03: the Chat tab shows how many permission requests are waiting, from any view. A
+  reload no longer duplicates a permission card.
+- AR-F10: Staging has "Add source": a reference to fetch and stage, or a file uploaded to
+  Inbox and ingested. Its file input is made when needed, so the paperclip's stays the page's
+  only one.
+
+**Tests.** `test_workflows.py` (each counts, `succeeded`, review-staged filter),
+`test_phase8_read_budgets.py`, `test_weekly_review.py`, `test_app.py` (finished result and
+dismiss, resume from the chip, chip follows its run, router uses the Clerk, symlinked bare
+name, missing Lead model), `test_broker.py`, `test_doctor.py`, `test_skill_registry.py`,
+`test_sessions.py`, `test_notes.py`, `test_loop.py`, `test_phase_bundles.py`. UI smoke passes.
+In the browser on the demo Core:
+- a finished chip survives a reload, shows its error in the tooltip and dismisses;
+- Staging's Add source opens.
+
+Not seen in a browser: a paused chip's option buttons, and the waiting badge.
+
+**Still open.**
+- WF review: only 5 of 15 workflows have a UI entry, and optional inputs are not prompted.
+- `review-conversation` scores are poorly calibrated.
+- The Clerk queue's depth and vault spend against the ceiling are not shown.
+- ST-F13 to F16 (rest).

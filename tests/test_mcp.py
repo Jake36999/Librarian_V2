@@ -158,13 +158,15 @@ def test_connections_do_not_share_a_session(vault, live_core):
 
 
 def test_routing_without_a_core_clerk_pauses(vault, live_core):
-    """The clerk is the Core's: with no routing model the pipeline pauses
-    rather than borrowing the connection's model in-line."""
+    """The clerk is the Core's: the router is the Core's Clerk, never the connection's model
+    in-line. This Clerk is not cleared for routing, so the pipeline pauses and says why
+    (2026-11-19: the router reads the library's Clerk, not only config.toml)."""
     backlog(vault)
     live_core(vault, clerk=clerk.Scripted(clerk_answers), fetcher=intake.Replay(RESPONSES))
     out = run(LibrarianServer(vault, "contribute"),
               lambda call: call("run_pipeline", name="clear-enrichment-backlog"))
-    assert out["status"] == "paused" and "no routing model" in out["reason"]
+    assert out["status"] == "paused" and out["reason"]
+    assert "clerk" in out["reason"].lower() or "no routing model" in out["reason"]
 
 
 # -- CORE-04A: every call is the Core's, or refused --------------------------

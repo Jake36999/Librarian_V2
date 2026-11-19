@@ -426,7 +426,7 @@ def validate(d: Definition, library: Library, _seen: tuple[str, ...] = ()) -> di
                          check_ref, check_when)
             returns[sid] = ("chosen", "results")
         if each is not None and sid:
-            returns[sid] = ("results", "count", "considered", "truncated")
+            returns[sid] = ("results", "count", "attempted", "failed", "errors", "considered", "truncated")
         if sid:
             ids.append(sid)
     for name, ref in (data.get("outputs") or {}).items():
@@ -553,6 +553,28 @@ def resolve(value: Any, scope: dict[str, Any]) -> Any:
     if isinstance(value, list):
         return [resolve(v, scope) for v in value]
     return value
+
+
+FAILED_STATES = ("failed", "refused", "quarantined")
+
+
+def succeeded(result: Any) -> bool:
+    """A step result that did what it was asked: no error, and no failed state
+    (`ingest` reports a quarantined capture as `state: failed`, not as an error)."""
+    if not isinstance(result, dict):
+        return True
+    if "error" in result or result.get("refused"):
+        return False
+    return not any(result.get(k) in FAILED_STATES for k in ("state", "status"))
+
+
+def failure_reason(result: Any) -> str:
+    if not isinstance(result, dict):
+        return ""
+    for key in ("detail", "reason", "error", "state", "status"):
+        if result.get(key):
+            return str(result[key])[:200]
+    return "failed"
 
 
 def holds(when: dict[str, Any] | None, scope: dict[str, Any]) -> bool:
@@ -822,9 +844,16 @@ class Runner:
                     local = {**scope, "item": item}
                     if holds(step.get("when"), local):
                         results.append(self._one(step, local, f"{key}[{n}]"))
-                scope["steps"][step["id"]] = {"results": results, "count": len(results),
-                                              "considered": min(len(items), MAX_EACH),
-                                              "truncated": len(items) > MAX_EACH}
+                # `count` is what succeeded (2026-11-19, WF-D2): under `on_error: continue` a
+                # refused or failed item stays in `results`, and counting it reported
+                # `read: 5` when none of the five was read.
+                failed = [r for r in results if not succeeded(r)]
+                scope["steps"][step["id"]] = {
+                    "results": results, "count": len(results) - len(failed),
+                    "attempted": len(results), "failed": len(failed),
+                    "errors": [failure_reason(r) for r in failed][:20],
+                    "considered": min(len(items), MAX_EACH),
+                    "truncated": len(items) > MAX_EACH}
                 continue
             if not holds(step.get("when"), scope):
                 scope["steps"][step["id"]] = {"skipped": True}

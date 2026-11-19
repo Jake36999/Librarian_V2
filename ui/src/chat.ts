@@ -815,6 +815,10 @@ export class Chat {
   }
 
   private permission(event: Event): void {
+    // A reload replays pending requests from state while the stream may deliver the same one:
+    // one card per request (2026-11-19 workflow review: two cards, and Deny on one 404ed).
+    const existing = this.cards.get(String(event.id));
+    if (existing && existing.isConnected) return;
     const args = (event.arguments ?? {}) as Record<string, string>;
     const preview = (event.preview ?? null) as Record<string, string> | null;
     // A previewed change (project_edit) shows its diff, not its raw arguments.

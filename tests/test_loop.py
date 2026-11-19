@@ -648,3 +648,22 @@ def test_a_turn_that_keeps_getting_the_same_refusal_stops_with_the_cause(tmp_pat
     assert model.calls < 12, model.calls                       # not the step cap
     assert "advance" in turn.error and "not finished" in turn.error, turn.error
     assert any(e.get("type") == "stopped" and e.get("reason") == "no_progress" for e in events)
+
+
+def test_the_no_progress_guard_sees_errors_long_details_and_cycles():
+    """Stress ST-F11: alternating refusals, repeated ordinary errors and repeated bad
+    arguments evaded the guard, and two refusals that differed after 160 characters were
+    taken for the same one."""
+    from resource_librarian.loop import _no_progress, _no_progress_signature as sig
+    bad_args = sig("task_add", {"error": "invalid_arguments", "detail": "missing ['note']"})
+    assert bad_args and _no_progress([bad_args] * 4)
+    failed = sig("read_file", {"error": "failed", "detail": "no file 'x'"})
+    assert failed and _no_progress([failed] * 4)
+    a = sig("advance", {"refused": "PHASE_GATE", "detail": "x" * 200 + "A"})
+    b = sig("advance", {"refused": "PHASE_GATE", "detail": "x" * 200 + "B"})
+    assert a != b
+    assert not _no_progress([a, b, a])
+    assert _no_progress([a, b] * 4)                       # A, B, A, B ... is a loop
+    c = sig("search", {"refused": "BUDGET_SPENT", "detail": "c"})
+    assert not _no_progress([a, b, c, a, b, c, a, b])     # three answers: still searching
+    assert sig("search", {"hits": []}) == ""

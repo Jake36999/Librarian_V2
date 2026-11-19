@@ -243,6 +243,8 @@ def test_budget_is_enforced_and_harness_is_free(library):
     spent = m("search", query="database")
     assert spent["refused"] == "BUDGET_SPENT" and spent["session"]["budget_left"] == 0
     assert "error" not in m("session_status")
+    # Looking at what its workflows did is still possible (2026-11-19 workflow review).
+    assert "refused" not in m("list_workflows") and "refused" not in m("run_list")
     # The budget is the model's: the person's own reads in the thread (the
     # pane's lens list) are neither refused by it nor charged to it.
     person = Context(tier="curate", vault=library, session=m.ctx.session)

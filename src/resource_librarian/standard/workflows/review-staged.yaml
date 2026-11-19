@@ -8,9 +8,11 @@ steps:
     args: {kind: source, status: staged, limit: {from: inputs.limit}}
   - id: review
     each: {from: steps.waiting.items}
-    when: {from: item.reviewed, is: false}
+    when: {from: item.drafted, is: false}
     action: staging_review
     args: {item_id: {from: item.id}}
     on_error: continue
 outputs:
   reviewed: {from: steps.review.count}
+  failed: {from: steps.review.failed}
+  errors: {from: steps.review.errors}

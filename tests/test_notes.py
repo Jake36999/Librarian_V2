@@ -1,3 +1,4 @@
+import pytest
 from pathlib import Path
 
 from resource_librarian import notes
@@ -69,3 +70,18 @@ def test_rewrite_wikilinks_by_bare_name_only():
     same, changed_again = notes.rewrite_wikilinks("Nothing here links to it.",
                                                    "Old Name", "New Name")
     assert not changed_again and same == "Nothing here links to it."
+
+
+@pytest.mark.parametrize("given, made", [
+    ("a" * 300 + ".txt", "a" * 146 + ".txt"), ("b" * 200, "b" * 150), ("Notes.md", "Notes.md")])
+def test_safe_name_keeps_the_extension_when_it_cuts(given, made):
+    """Stress ST-F10: a 304-character name lost its .txt."""
+    assert notes.safe_name(given) == made
+
+
+@pytest.mark.parametrize("given, made", [
+    ("CON", "_CON"), ("con.txt", "_con.txt"), ("NUL.md", "_NUL.md"), ("COM1.pdf", "_COM1.pdf"),
+    ("Console notes.md", "Console notes.md"), ("Aux study", "Aux study")])
+def test_an_attachment_never_takes_a_windows_device_name(given, made):
+    """Stress ST-F10: `CON.txt` was saved as is and broke vault_commit."""
+    assert notes.device_safe(notes.safe_name(given)) == made

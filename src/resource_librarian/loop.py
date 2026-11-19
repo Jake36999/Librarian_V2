@@ -294,18 +294,40 @@ def narrowed(tier: str, phase: str = "", projects_on: bool = True,
 
 
 NO_PROGRESS_REPEATS = 4
+# Failures in a row that cycle among at most two answers (A, B, A, B...) are a loop too.
+NO_PROGRESS_CYCLE = 8
 
 
 def _no_progress_signature(name: str, result: dict[str, Any]) -> str:
-    """"" when the call made progress; else `name|what was refused` (equal for the same refusal).
+    """"" when the call made progress; else `name|what went wrong|digest` (equal only for the
+    same failure).
 
-    A refused call, and an `advance` that stayed because the phase is not finished, are the two
-    ways a model can keep asking for something it cannot have."""
+    A refused call, an error (bad arguments, a tool that failed) and an `advance` that stayed
+    because the phase is not finished are the ways a model can keep asking for something it
+    cannot have. The digest covers the whole detail: two refusals that differ only after 160
+    characters are different answers (stress ST-F11)."""
     if "refused" in result:
-        return f"{name}|{result.get('refused')}: {str(result.get('detail') or '')[:160]}"
-    if name == "advance" and result.get("moved") is False:
-        missing = result.get("missing") or []
-        return f"advance|the phase is not finished; missing: {json.dumps(missing)[:300]}"
+        detail = str(result.get("detail") or "")
+        shown = f"{result.get('refused')}: {detail[:160]}"
+    elif "error" in result:
+        detail = str(result.get("detail") or "")
+        shown = f"{result.get('error')}: {detail[:160]}"
+    elif name == "advance" and result.get("moved") is False:
+        detail = json.dumps(result.get("missing") or [])
+        shown = f"the phase is not finished; missing: {detail[:300]}"
+    else:
+        return ""
+    digest = hashlib.sha1(f"{shown}|{detail}".encode("utf-8", "replace")).hexdigest()[:12]
+    return f"{name}|{shown}|{digest}"
+
+
+def _no_progress(failures: list[str]) -> str:
+    """Why these consecutive failures are no progress, or "": the same one four times, or a
+    cycle of at most two answers over eight calls (stress ST-F11: A, B, A, B evaded it)."""
+    if len(failures) >= NO_PROGRESS_REPEATS and len(set(failures[-NO_PROGRESS_REPEATS:])) == 1:
+        return f"was refused {NO_PROGRESS_REPEATS} times in a row with the same answer"
+    if len(failures) >= NO_PROGRESS_CYCLE and len(set(failures[-NO_PROGRESS_CYCLE:])) <= 2:
+        return f"alternated between the same failures {NO_PROGRESS_CYCLE} times"
     return ""
 
 
@@ -1158,7 +1180,7 @@ class Loop:
                 self._private_runtime = InvocationRuntime()
             runtime = self._private_runtime
         binding = runtime.binding_for(walk_provider)
-        last_signature, repeats = "", 0
+        failures: list[str] = []          # consecutive failed calls' signatures
         while self.max_steps > 0:
             # The final tool-free iteration always returns; a changed effort
             # may have reduced the limit below the number already taken.
@@ -1304,14 +1326,12 @@ class Loop:
                 # costs no phase budget, so only the step cap would end it (2026-11-18: a model
                 # asked to leave Map 15 times). Stop with what was refused.
                 signature = _no_progress_signature(call.name, result)
-                repeats = repeats + 1 if signature and signature == last_signature else \
-                    (1 if signature else 0)
-                last_signature = signature
-                if repeats >= NO_PROGRESS_REPEATS:
+                failures = failures + [signature] if signature else []
+                why = _no_progress(failures)
+                if why:
                     turn.stopped = "no_progress"
-                    turn.error = (f"{call.name} was refused {repeats} times in a row with the "
-                                  f"same answer, so this turn stopped instead of repeating it: "
-                                  f"{signature.split('|', 1)[1][:300]}")
+                    turn.error = (f"{call.name} {why}, so this turn stopped instead of "
+                                  f"repeating it: {signature.split('|')[1][:300]}")
                     self.on_event({"type": "stopped", "reason": "no_progress",
                                    "error": turn.error})
                     return turn

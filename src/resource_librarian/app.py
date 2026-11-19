@@ -273,6 +273,10 @@ class Settings:
             persist()
 
 
+# Below an MCP client's own request timeout (about 180 s), so the client hears the outcome.
+MCP_PERMISSION_WAIT = 150.0
+
+
 @dataclass
 class Action:
     id: str
@@ -282,12 +286,39 @@ class Action:
     run: str = ""
     result: dict[str, Any] = field(default_factory=dict)
     cancel: threading.Event = field(default_factory=threading.Event)
+    ctx: Any = field(default=None, repr=False)          # the run's own context, for a resume
+    library: Any = field(default=None, repr=False)
 
     def public(self) -> dict[str, Any]:
-        return {"id": self.id, "name": self.name, "status": self.status,
-                "steps": self.steps, "run": self.run,
-                **({"at": self.result.get("at"), "reason": self.result.get("reason")}
-                   if self.status == "paused" else {})}
+        out: dict[str, Any] = {"id": self.id, "name": self.name, "status": self.status,
+                               "steps": self.steps, "run": self.run}
+        if self.status == "paused":
+            # `paused_step`, not `at`: the event hub stamps its own `at` time on every event.
+            out.update(paused_step=self.result.get("at"), reason=self.result.get("reason"),
+                       question=self.result.get("question"),
+                       options=self.result.get("options") or [])
+        elif self.status in ("finished", "failed"):
+            # What it left behind, so a person sees the result (2026-11-19, WF-D1: a fast run's
+            # chip vanished with its output). Bounded: the full result stays in the run log.
+            out.update(outputs=_compact(self.result.get("outputs")),
+                       error=str(self.result.get("error") or
+                                 (self.result.get("result") or {}).get("detail") or "")[:400],
+                       failed_at=self.result.get("at") if self.status == "failed" else None)
+        return out
+
+
+def _compact(value: Any, limit: int = 4000) -> Any:
+    """A run's outputs as a page can show them: whole when small, otherwise scalars kept and
+    lists and objects reduced to their size."""
+    if value is None:
+        return None
+    if len(json.dumps(value, default=str)) <= limit:
+        return value
+    if isinstance(value, dict):
+        return {k: (v if isinstance(v, (str, int, float, bool)) or v is None
+                    else f"{len(v)} items" if isinstance(v, (list, dict)) else str(v))
+                for k, v in list(value.items())[:40]}
+    return f"{len(value)} items" if isinstance(value, list) else str(value)[:limit]
 
 
 PROFILE_FIELDS = ("modality", "best_for", "license_class", "suggested_tier", "context_length",
@@ -2755,6 +2786,8 @@ class App:
                     self.busy = False
                     self._turn_cancel = None
             self.hub.publish(event)
+            if event["type"] == "turn_done" and event.get("stopped") == "provider_error":
+                self._note_missing_model(str(event.get("error") or ""))
             if event["type"] == "turn_done" and event.get("reply"):
                 self._review_reply(loop, str(event["reply"]), str(event.get("reply_id") or ""),
                                    str(event.get("turn_id") or ""))
@@ -2775,6 +2808,51 @@ class App:
         return {"cancelling": True}
 
     WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
+
+    MISSING_MODEL = re.compile(r"http 404|model not found|model_not_found|does not exist|"
+                               r"no such model|unknown model", re.IGNORECASE)
+
+    @staticmethod
+    def _lead_host_id(tier: dict[str, Any]) -> str:
+        """A tier's host: its own id, or a preset provider's `preset-<name>` host."""
+        if tier.get("host_id"):
+            return str(tier["host_id"])
+        provider = str(tier.get("provider") or "")
+        return "preset-" + provider if provider in PRESETS else provider
+
+    def _lead_route_health(self) -> dict[str, Any]:
+        """The Lead route's last health, when it is about the model now chosen."""
+        tiers = list(self.settings.data.get("tiers") or [])
+        if not tiers:
+            return {}
+        host_id = self._lead_host_id(tiers[0])
+        try:
+            health = (self.hosts.get(host_id).health or {})
+        except (KeyError, AttributeError):
+            return {}
+        if health.get("model") and health.get("model") != tiers[0].get("model"):
+            return {}
+        return {"host_id": host_id, **{k: health.get(k) for k in ("status", "detail", "model")}}
+
+    def _note_missing_model(self, error: str) -> None:
+        """A Lead whose model the provider does not know (a placeholder such as `lead-m`, or a
+        retired id) marks its route unhealthy, so the model pill warns before the next turn
+        fails the same way (2026-11-19, AR-F02: nothing said the configured model was gone)."""
+        if not self.MISSING_MODEL.search(error):
+            return
+        tiers = list(self.settings.data.get("tiers") or [])
+        if not tiers:
+            return
+        host_id, model = self._lead_host_id(tiers[0]), str(tiers[0].get("model") or "")
+        try:
+            health = self.hosts.mark_health(
+                host_id, ok=False, model=model,
+                detail=f"the provider does not know the model {model!r}; choose another "
+                       f"in Models ({error[:160]})")
+        except (KeyError, OSError):
+            return
+        self.hub.publish({"type": "route_health_changed", "host_id": host_id, "model": model,
+                          "health": health.get("health", {})})
 
     def _review_reply(self, loop: Loop, reply: str, reply_id: str = "", turn_id: str = "") -> None:
         """§4 G3 on chat replies (`reply_review`): after the reply, never
@@ -2976,7 +3054,8 @@ class App:
             raise ApiError(400, "arguments is a JSON object")
         granted = TIERS[min(TIERS.index(tier), TIERS.index(self.MCP_TIER_CEILING))]
         with self._counted_call("mcp", f"the MCP call {name!r}"):
-            extras = {**self._extras(), "caller_kind": "mcp", "caller": "mcp"}
+            extras = {**self._extras(), "caller_kind": "mcp", "caller": "mcp",
+                      "permission_wait": MCP_PERMISSION_WAIT}
             # A question for the person does not block an MCP call: it returns
             # the question (needs_person, question_id) as MCP always has; the
             # person answers in Librarian and the client calls again.
@@ -3023,11 +3102,18 @@ class App:
         with self._lock:
             self._admit(f"the action {name!r}")
             self.actions[action.id] = action
+        action.ctx, action.library = ctx, library
+        self.hub.publish({"type": "action_started", **action.public()})
+        self._run_action(action, lambda runner: runner.start(name, inputs or {}))
+        return action.public()
+
+    def _run_action(self, action: "Action", step: Callable[[Any], dict[str, Any]]) -> None:
+        from .tools.workflows import _router
 
         def run() -> None:
             try:
-                runner = workflows.Runner(library, ctx, _router(ctx))
-                action.result = runner.start(name, inputs or {})
+                runner = workflows.Runner(action.library, action.ctx, _router(action.ctx))
+                action.result = step(runner)
                 action.run = action.result.get("run", action.run)
                 action.status = action.result.get("status", "finished")
             except (Refusal, workflows.DefinitionError, KeyError) as exc:
@@ -3038,9 +3124,7 @@ class App:
                 action.result = {"error": f"{type(exc).__name__}: {exc}"}
             self.hub.publish({"type": "action_done", **action.public(),
                               "result": action.result})
-        self.hub.publish({"type": "action_started", **action.public()})
-        threading.Thread(target=run, daemon=True, name=f"action-{name}").start()
-        return action.public()
+        threading.Thread(target=run, daemon=True, name=f"action-{action.name}").start()
 
     def cancel_action(self, action_id: str) -> dict[str, Any]:
         action = self.actions.get(action_id)
@@ -3048,6 +3132,64 @@ class App:
             raise ApiError(404, f"no action {action_id!r}")
         action.cancel.set()
         return {"cancelling": action_id}
+
+    @mutation_entry("the action resume")
+    def resume_action(self, action_id: str, choices: dict[str, str] | None = None) -> dict[str, Any]:
+        """Continue a paused run from its chip: with the person's route choice when a routing
+        step paused, or as it stands once a routing model is set (2026-11-19, WF-D4: a paused
+        chip had no control and stayed paused after the run finished elsewhere)."""
+        self._sync_actions()
+        action = self.actions.get(action_id)
+        if action is None:
+            raise ApiError(404, f"no action {action_id!r}")
+        if action.status != "paused" or not action.run:
+            raise ApiError(409, f"{action.name} is {action.status}, not paused")
+        if action.ctx is None:
+            raise ApiError(409, "this run was started by an earlier Core; resume it from Chat "
+                                "with run_resume")
+        with self._lock:
+            self._admit(f"the action {action.name!r}")
+        action.cancel.clear()
+        action.status = "running"
+        self.hub.publish({"type": "action_progress", **action.public()})
+        picked = {str(k): str(v) for k, v in (choices or {}).items()}
+        self._run_action(action, lambda runner: runner.resume(action.run, picked or None))
+        return action.public()
+
+    def actions_view(self) -> list[dict[str, Any]]:
+        self._sync_actions()
+        return [a.public() for a in self.actions.values()]
+
+    def dismiss_action(self, action_id: str) -> dict[str, Any]:
+        """Clear a finished, failed or paused chip. A paused run stays resumable with
+        run_resume; only the chip goes."""
+        action = self.actions.get(action_id)
+        if action is None:
+            raise ApiError(404, f"no action {action_id!r}")
+        if action.status == "running":
+            raise ApiError(409, f"{action.name} is still running; cancel it first")
+        self.actions.pop(action_id, None)
+        self.hub.publish({"type": "action_dismissed", "id": action_id})
+        return {"dismissed": action_id}
+
+    def _sync_actions(self) -> None:
+        """A paused chip follows its run: a run finished by run_resume elsewhere (Chat, MCP)
+        no longer shows as paused here."""
+        store = workflows.RunStore(self.vault)
+        for action in list(self.actions.values()):
+            if action.status != "paused" or not action.run:
+                continue
+            try:
+                status = store.status(action.run)
+            except (workflows.DefinitionError, OSError, ValueError, IndexError):
+                continue
+            if status["status"] in ("finished", "failed", "cancelled"):
+                action.status = "failed" if status["status"] == "failed" else "finished"
+                last = status.get("last") or {}
+                action.result = {"run": action.run, "status": action.status,
+                                 "outputs": last.get("outputs"),
+                                 "error": (last.get("result") or {}).get("detail", "")
+                                 if status["status"] == "failed" else ""}
 
     # -- MCP servers (Co-work Roadmap §3, Phase 1) ---------------------------
     def _mcp(self) -> Any:
@@ -3065,7 +3207,11 @@ class App:
             try:
                 status = self.mcp_status()["servers"]
                 defs = self.mcp.servers()
-                servers = [{"name": name, "enabled": bool(info.get("enabled", True)),
+                # "on" means usable from this library: enabled, accepted and turned on here
+                # (2026-11-19: a server installed but not enabled here showed as on).
+                servers = [{"name": name, "enabled": bool(info.get("enabled", True))
+                            and info.get("accepted", True) is not False
+                            and info.get("library_enabled", True) is not False,
                             "tool_names": info.get("tool_names") or [],
                             "docs": (defs.get(name) or {}).get("docs")
                             or (defs.get(name) or {}).get("homepage") or ""}
@@ -4234,12 +4380,20 @@ class App:
                 break
         if path is None and "/" not in rel:
             wanted = f"{rel}.md".lower() if not rel.lower().endswith(".md") else rel.lower()
+            root = self.vault.root.resolve()
             for found in sorted(self.vault.root.rglob("*.md")):
                 relative = found.relative_to(self.vault.root)
                 if found.name.lower() == wanted and \
                         not any(p.startswith(".") for p in relative.parts):
-                    path = found
-                    break
+                    # The check a vault path gets: a link that leads outside the vault is
+                    # not this note (stress ST-F09: a symlink read an outside file).
+                    try:
+                        target = self._visible(relative.as_posix())
+                    except ApiError:
+                        continue
+                    if target.resolve().is_relative_to(root):
+                        path = target
+                        break
         if path is None:
             raise ApiError(404, f"no note {rel!r}")
         if path.stat().st_size > 2_000_000:
@@ -4277,7 +4431,7 @@ class App:
         def persist() -> dict[str, Any]:
             folder = self._visible(dir_rel or "Inbox")
             folder.mkdir(parents=True, exist_ok=True)
-            name = notes.safe_name(filename) or "attachment"
+            name = notes.device_safe(notes.safe_name(filename) or "attachment")
             target = folder / name
             stem, suffix = target.stem, target.suffix
             n = 1
@@ -4324,7 +4478,8 @@ class App:
                 "active_profile_runs": self.profile_gate.status(),
                 "pending_checkpoints": self.checkpoints.all(pending_only=True),
                 "session": self.session_view(),
-                "actions": [a.public() for a in self.actions.values()],
+                "actions": self.actions_view(),
+                "lead_route_health": self._lead_route_health(),
                 "queued_actions": list(QUEUED), "queued_inputs": self.queued_inputs(),
                 "last_event": self.hub.last(), "event_stream": self.hub.cursor()}
 
@@ -4464,6 +4619,8 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                     return self._json(200, {**app.geo.status(), "open_url": app.geo.open_url()})
                 if url.path == "/api/state":
                     return self._json(200, app.state())
+                if url.path == "/api/actions":
+                    return self._json(200, {"actions": app.actions_view()})
                 if url.path == "/api/session/skeleton":
                     return self._json(200, app.contract_skeleton())
                 if url.path == "/api/tools":
@@ -4573,6 +4730,10 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 return self._json(404, {"error": f"no route {url.path}"})
             except ApiError as exc:
                 return self._json(exc.status, exc.body)
+            except Exception as exc:                        # noqa: BLE001
+                # A failed GET answers, as a POST does, instead of dropping the connection
+                # (stress ST-F09).
+                return self._json(500, {"error": f"{type(exc).__name__}: {exc}"})
 
         def _refuse_unread(self, payload: dict[str, Any]) -> None:
             """Answer a refused POST after reading its body. Closing a socket
@@ -4849,6 +5010,13 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                     raise ApiError(404, str(exc)) from exc
             if path.startswith("/api/actions/") and path.endswith("/cancel"):
                 return app.cancel_action(path.split("/")[3])
+            if path.startswith("/api/actions/") and path.endswith("/resume"):
+                choices = body.get("choices")
+                if choices is not None and not isinstance(choices, dict):
+                    raise ApiError(400, "choices maps a paused step to an option")
+                return app.resume_action(path.split("/")[3], choices)
+            if path.startswith("/api/actions/") and path.endswith("/dismiss"):
+                return app.dismiss_action(path.split("/")[3])
             raise ApiError(404, f"no route {path}")
 
         def _static(self, path: str) -> None:

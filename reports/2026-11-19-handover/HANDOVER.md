@@ -262,6 +262,14 @@ I read the code behind its main claims. I did not run any workflow.
 
 ## 5. Open work, in the order I would do it
 
+> **Done later the same day** (see the plan's §19 entry "Workflows report what they did"):
+> - items 1 to 6: WF-D1 to WF-D4, the review-staged filter, the reflection's reason, AR-F02,
+>   AR-F03, AR-F10, ST-F09 to ST-F12;
+> - from §3.3: the MCP `run_workflow` wait, the Health and registry contradiction, and
+>   inspection under a spent budget.
+>
+> Item 7 (Geo-Grapher) is still open.
+
 1. **Triage `WORKFLOW-REVIEW.md`.** The paperclip workflows are the user-facing half of the agent workflow, and WF-D1
    (nothing visible happens) and WF-D2 (false success counts) are both confirmed in source. Fix the counts first: a
    workflow that reports success on a failure is worse than one that shows nothing.

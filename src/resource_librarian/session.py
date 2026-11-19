@@ -337,6 +337,11 @@ class _PhaseGates(Mapping[str, frozenset]):
 
 
 WRITES: Mapping[str, frozenset] = _PhaseGates()
+# Looking at the run machinery is still possible once a phase's budget is spent, so a model
+# can see what its workflows did before it parks (2026-11-19 workflow review: list_workflows
+# and run_list were refused under BUDGET_SPENT). Still charged while budget is left.
+INSPECTION = frozenset({"list_workflows", "show_workflow", "run_list", "run_status", "rules",
+                        "capabilities", "batch_status"})
 # The harness itself: never gated, never charged to a budget.
 HARNESS = frozenset({"open_session", "session_status", "update_plan", "ask_user", "answer",
                      "advance", "park_session", "resume_session", "list_sessions",
@@ -1691,7 +1696,8 @@ def before_call(tool_name: str, effect: str, ctx: Any) -> None:
     # (the pane's lens list, a desk read) are neither refused by it nor
     # charged to it - found by the browser smoke test, 2026-09-28, when a
     # spent frame budget hid the person's own lens list behind BUDGET_SPENT.
-    if session.budget_left() == 0 and not _is_person(ctx):
+    if session.budget_left() == 0 and not _is_person(ctx) and not (
+            tool_name in INSPECTION and effect == "read"):
         raise Refusal("BUDGET_SPENT", session.next_step(ctx.vault))
 
 

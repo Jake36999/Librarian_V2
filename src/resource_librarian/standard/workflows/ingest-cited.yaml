@@ -16,3 +16,5 @@ steps:
 outputs:
   cited: {from: steps.trace.cited_links}
   ingested: {from: steps.papers.count}
+  failed: {from: steps.papers.failed}
+  errors: {from: steps.papers.errors}

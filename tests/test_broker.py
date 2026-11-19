@@ -205,3 +205,30 @@ def test_stop_releases_a_question_the_turn_is_waiting_on(library):
     assert waiters.cancel_session(library.root, "s1") == 1
     assert done.is_set() and not other.is_set()
     assert waiters.answer(f"{library.root}::s2::q1", "yes") is True      # not closed for good
+
+
+def test_a_read_only_workflow_run_asks_nothing_in_ask_mode(library):
+    """2026-11-19 workflow review: run_workflow is tagged a write, so gather-agenda (every
+    step a read) asked in Ask mode and an MCP client timed out waiting."""
+    from resource_librarian.broker import _run_effect
+    broker = Broker(mode="ask", timeout=0.2)
+    c = ctx(library, broker)
+    assert _run_effect({"name": "gather-agenda"}, c, "write") == "read"
+    assert _run_effect({"name": "sync-vault"}, c, "write") == "write"
+    assert _run_effect({"name": "clear-enrichment-backlog"}, c, "write") == "write"   # routes
+    assert _run_effect({"name": "no-such-workflow"}, c, "write") == "write"
+    assert broker.check(REGISTRY.get("run_workflow"), {"name": "gather-agenda"}, c) \
+        == "allowed (read)"
+    assert not broker.pending()
+
+
+def test_an_mcp_wait_ends_before_the_client_gives_up_and_does_not_park(library):
+    broker = Broker(mode="ask", timeout=30)
+    c = Context(tier="contribute", vault=library, extras={
+        "broker": broker, "caller_kind": "mcp", "permission_wait": 0.1})
+    from resource_librarian.rules import Refusal
+    started = time.monotonic()
+    with pytest.raises(Refusal) as refused:
+        broker.check(REGISTRY.get("run_workflow"), {"name": "sync-vault"}, c)
+    assert refused.value.code == "PERMISSION_UNANSWERED" and "ask again" in str(refused.value)
+    assert time.monotonic() - started < 5

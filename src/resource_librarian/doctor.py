@@ -99,6 +99,17 @@ def _mcp_server_checks(mcp: Any, vault: Vault | None = None) -> list[Check]:
     live = manager.status() if mcp is not None else {}
     out = []
     for name, definition in servers.items():
+        if live.get(name, {}).get("library_owned"):
+            # The name is the Core's own service for this library (geo-grapher): its state is
+            # the service's, not this hand-written entry's (2026-11-19: Health said "not
+            # enabled in this library" while the registry showed it connected).
+            state = live[name]
+            out.append(Check(f"mcp: {name}", True,
+                             f"this library's own service, {state.get('tools', 0)} tool(s), "
+                             f"connected" if state.get("connected") else
+                             "this library's own service, not running (Settings → Geo-Grapher "
+                             "starts it)"))
+            continue
         if not definition.get("enabled", True):
             out.append(Check(f"mcp: {name}", True, "disabled"))
         elif not manager.is_accepted(name, definition):

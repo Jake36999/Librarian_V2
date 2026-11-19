@@ -128,3 +128,25 @@ def test_the_weekly_review_pipeline_gathers_and_drafts_end_to_end(m):
     assert out["status"] == "finished", out
     assert "overdue" in out["outputs"]["draft"].lower()
     assert any(t["text"] == "Overdue thing" for t in out["outputs"]["overdue"])
+
+
+def test_an_empty_reflection_says_why_and_later_tasks_are_counted(m):
+    """2026-11-19 workflow review: later and undated tasks were dropped, and a queued or
+    refused draft finished as draft "" with no reason."""
+    m.ok("create_project", name="Weekly Three", stage="active", summary="s")
+
+    def answer(payload):
+        assert "[undated] tidy the notes" in payload["user"]
+        assert "and 2 more undated tasks" in payload["user"]
+        return {}
+
+    drafting = Context(tier="contribute", vault=m.ctx.vault,
+                       extras={"clerk": clerk.Scripted(answer)})
+    undated = [{"text": t, "note": "Weekly Three"} for t in
+               ("tidy the notes", "b", "c", "d", "e", "f", "g")]
+    out = REGISTRY.call("reflection_draft", {
+        "project": "Weekly Three", "agenda_buckets": {"undated": undated},
+        "activity_summary": {"uses": [], "writes": []}}, drafting)
+    assert "error" not in out, out
+    assert out["ok"] is False and out["draft"] == ""
+    assert out["reason"] and out["status"] != "ok"

@@ -72,3 +72,45 @@ def test_a_servers_name_and_docs_cannot_change_the_page():
     # the commands table keeps its three columns: "[source | lens]" is one cell
     review = next(line for line in lines if line.startswith("| `/review-staging`"))
     assert len(UNESCAPED_PIPE.split(review.strip().strip("|"))) == 3
+
+
+class _Manager:
+    """Two servers installed for the person: one turned on in this library, one not."""
+    def status(self):
+        return {"on-here": {"enabled": True, "accepted": True, "library_enabled": True,
+                            "connected": True, "tools": 1},
+                "off-here": {"enabled": True, "accepted": True, "library_enabled": False,
+                             "connected": False, "tools": 0}}
+
+    def servers(self):
+        return {"on-here": {"command": "x"}, "off-here": {"command": "y"}}
+
+    def tool_names(self, name):
+        return ["t"] if name == "on-here" else []
+
+    def __getattr__(self, name):                  # anything else the status view reads
+        return lambda *a, **k: {}
+
+    def stop(self):
+        pass
+
+
+@pytest.mark.skipif(not PLUGIN.is_dir(), reason="no plugin folder beside the package")
+def test_a_server_not_enabled_in_this_library_is_not_shown_on(vault, monkeypatch):
+    """2026-11-19 workflow review: the registry said "on" for a server Health and Settings
+    said was not enabled in this library."""
+    from resource_librarian.app import App
+    from resource_librarian.keys import KeyStore
+    seen = {}
+    monkeypatch.setattr(skill_registry, "render_markdown",
+                        lambda servers: seen.update(servers=servers) or "")
+    app = App(vault, coordinate=True, keys=KeyStore(use_keyring=False))
+    try:
+        saved, app.mcp = app.mcp, _Manager()
+        app.mcp_status()                       # raises here, not swallowed by the page
+        app.skill_registry()
+    finally:
+        app.mcp = saved
+        app.close_runtime()
+    on = {s["name"]: s["enabled"] for s in seen["servers"]}
+    assert on == {"off-here": False, "on-here": True}

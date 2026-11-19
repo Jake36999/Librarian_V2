@@ -213,6 +213,26 @@ def rewrite_wikilinks(text: str, old_name: str, new_name: str) -> tuple[str, boo
 SAFE_NAME = re.compile(r"[^A-Za-z0-9 &_.,()'+-]")
 
 
+WINDOWS_RESERVED = re.compile(r"^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\.|$)", re.IGNORECASE)
+SHORT_SUFFIX = re.compile(r"\.[A-Za-z0-9]{1,8}$")
+
+
 def safe_name(text: str) -> str:
-    """A filename every OS and Obsidian accept."""
-    return SAFE_NAME.sub("", str(text)).strip(" .")[:150]
+    """A filename every OS and Obsidian accept.
+
+    2026-11-19 (stress ST-F10): a name cut to 150 characters keeps its extension. A Windows
+    device name (`CON`) is left for the caller: a note write refuses it, an attachment is
+    renamed (`device_safe`). Letters outside ASCII are still dropped: allowing them would
+    rename notes this function has already named."""
+    name = SAFE_NAME.sub("", str(text)).strip(" .")
+    if len(name) > 150:
+        suffix = SHORT_SUFFIX.search(name)
+        tail = suffix.group(0) if suffix else ""
+        name = name[:150 - len(tail)].rstrip(" .") + tail
+    return name
+
+
+def device_safe(name: str) -> str:
+    """`CON.txt`, `NUL.md`, `COM1` prefixed with `_`: Windows cannot open a file whose stem is
+    a device name, and `vault_commit` failed on one (stress ST-F10)."""
+    return "_" + name if WINDOWS_RESERVED.match(name) else name

@@ -1040,3 +1040,131 @@ def test_api_mcp_explains_why_the_library_own_geo_is_not_connected(served):
     assert status == 200 and row["library_owned"] and not row["connected"] and row["error"] == ""
     assert row["service"]["configured"] is False and row["service"]["state"] in {"stopped", "disabled", ""}
     assert "command" not in row
+
+
+def test_a_finished_workflow_keeps_its_result_until_dismissed(served):
+    """WF-D1: a fast run's chip vanished with its output. The finished action keeps a bounded
+    copy of its outputs for the page, GET /api/actions lists it, and dismiss clears it."""
+    app, client, _ = served
+    after = app.hub.last()
+    _, action = client.post("/api/actions", {"name": "run-queue"})
+    done = wait_for(app, "action_done", after=after)
+    assert done["status"] == "finished" and "outputs" in done
+    status, listed = client.get("/api/actions")
+    assert status == 200
+    row = next(a for a in listed["actions"] if a["id"] == action["id"])
+    assert row["status"] == "finished" and row["outputs"] == done["outputs"]
+    assert client.post(f"/api/actions/{action['id']}/dismiss")[0] == 200
+    assert not [a for a in client.get("/api/state")[1]["actions"] if a["id"] == action["id"]]
+    assert client.post(f"/api/actions/{action['id']}/dismiss")[0] == 404
+
+
+ASK_ONCE = """
+pipeline: ask-once
+purpose: ask the routing model one question, then stop
+steps:
+  - id: look
+    workflow: run-queue
+  - id: next
+    route:
+      decide: reason
+      question: Is anything more needed?
+      options:
+        done:
+          end: true
+          when_to_choose: nothing more is needed
+        later:
+          end: true
+          when_to_choose: something should wait
+"""
+
+
+def test_a_paused_workflow_can_be_resumed_with_a_route_from_its_chip(served, monkeypatch):
+    """WF-D4: a paused chip had no control. It now carries the question and options, and a
+    person's choice resumes the same run to the end."""
+    from resource_librarian import workflows
+    from resource_librarian.registry import REGISTRY, Context
+    app, client, _ = served
+    person = Context(tier="curate", vault=app.vault)
+    assert "error" not in REGISTRY.call("save_workflow", {"yaml_text": ASK_ONCE}, person)
+    REGISTRY.call("accept_workflow", {"name": "ask-once"}, person)
+    monkeypatch.setattr("resource_librarian.tools.workflows._router",
+                        lambda ctx: workflows.Router(None))
+    after = app.hub.last()
+    _, action = client.post("/api/actions", {"name": "ask-once"})
+    paused = wait_for(app, "action_done", after=after)
+    assert paused["status"] == "paused", paused
+    assert paused["options"] == ["done", "later"] and paused["question"]
+    assert client.post(f"/api/actions/{action['id']}/resume", {"choices": "done"})[0] == 400
+    after = app.hub.last()
+    status, resumed = client.post(f"/api/actions/{action['id']}/resume",
+                                  {"choices": {paused["paused_step"]: "done"}})
+    assert status == 200 and resumed["status"] == "running"
+    done = wait_for(app, "action_done", after=after)
+    assert done["status"] == "finished", done
+    assert workflows.RunStore(app.vault).status(done["run"])["status"] == "finished"
+    assert client.post(f"/api/actions/{action['id']}/resume")[0] == 409
+
+
+def test_a_paused_chip_follows_its_run_finished_elsewhere(served, monkeypatch):
+    from resource_librarian import workflows
+    from resource_librarian.registry import REGISTRY, Context
+    app, client, _ = served
+    person = Context(tier="curate", vault=app.vault)
+    REGISTRY.call("save_workflow", {"yaml_text": ASK_ONCE}, person)
+    REGISTRY.call("accept_workflow", {"name": "ask-once"}, person)
+    monkeypatch.setattr("resource_librarian.tools.workflows._router",
+                        lambda ctx: workflows.Router(None))
+    after = app.hub.last()
+    _, action = client.post("/api/actions", {"name": "ask-once"})
+    paused = wait_for(app, "action_done", after=after)
+    out = REGISTRY.call("run_resume", {"run_id": paused["run"],
+                                       "choices": {paused["paused_step"]: "later"}}, person)
+    assert out["status"] == "finished", (out.get("reason"), out.get("at"))
+    row = next(a for a in client.get("/api/state")[1]["actions"] if a["id"] == action["id"])
+    assert row["status"] == "finished"
+
+
+def test_the_pipeline_router_uses_the_clerk_this_library_reads_with(vault):
+    """WF-D4: with no [routing] model the router is the library's Clerk, not "no routing
+    model is configured"."""
+    from resource_librarian import clerk
+    from resource_librarian.registry import Context
+    from resource_librarian.tools.workflows import _router
+    endpoint = clerk.Scripted(lambda payload: {"option": "done", "reason": "x"})
+    assert _router(Context(tier="contribute", vault=vault,
+                           extras={"clerk": endpoint})).endpoint is endpoint
+
+
+def test_a_bare_name_never_reads_through_a_link_out_of_the_vault(served, tmp_path):
+    """Stress ST-F09: /api/file?path=<stem> found a symlinked note by name, read the file
+    outside the vault, then crashed do_GET (the client saw a dropped connection)."""
+    app, client, _ = served
+    outside = tmp_path / "secret_outside.md"
+    outside.write_text("outside the vault", encoding="utf-8")
+    link = app.vault.root / "Notes" / "escape_link.md"
+    link.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        link.symlink_to(outside)
+    except (OSError, NotImplementedError):
+        pytest.skip("this machine cannot make a symlink")
+    status, body = client.get("/api/file?path=escape_link")
+    assert status in (403, 404), body
+    assert "outside the vault" not in json.dumps(body)
+
+
+def test_a_lead_model_the_provider_does_not_know_marks_its_route(served):
+    """AR-F02: a placeholder Lead (`lead-m`) 404ed on every turn and nothing said so. The first
+    such failure marks the route, and page state carries it for the model pill."""
+    app, client, _ = served
+    assert client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "lead-m"}],
+                                      "override": "a placeholder"})[0] == 200
+    tier = app.settings.data["tiers"][0]
+    assert client.get("/api/state")[1]["lead_route_health"].get("status") != "error"
+    app._note_missing_model("a transient network error")          # not a missing model
+    assert client.get("/api/state")[1]["lead_route_health"].get("status") != "error"
+    after = app.hub.last()
+    app._note_missing_model("HTTP 404: The model `lead-m` does not exist")
+    health = client.get("/api/state")[1]["lead_route_health"]
+    assert health["status"] == "error" and "does not know the model" in health["detail"]
+    assert wait_for(app, "route_health_changed", after=after)["model"] == tier["model"]

@@ -2035,7 +2035,7 @@ def activity(ctx: Context, since: str = "-7d", project: str = "") -> dict:
 
 
 @tool("reflection_draft", tier="contribute", effect="write", scope="session",
-      returns=("project", "gathered", "draft", "ok"),
+      returns=("project", "gathered", "draft", "ok", "status", "reason"),
       card=Card("Draft a short reflection from a week's own gathered tasks, activity and desk",
                 "a weekly review, once agenda/activity/desk_show have been gathered",
                 "Grounded only in what is passed in - gathered facts, never source evidence - "
@@ -2044,9 +2044,18 @@ def activity(ctx: Context, since: str = "-7d", project: str = "") -> dict:
 def reflection_draft(ctx: Context, project: str, agenda_buckets: dict, activity_summary: dict,
                      desk: dict | None = None) -> dict:
     lines = ["Tasks:"]
+    buckets = agenda_buckets or {}
     for bucket in ("overdue", "today", "this_week"):
-        for item in (agenda_buckets or {}).get(bucket, [])[:10]:
+        for item in buckets.get(bucket, [])[:10]:
             lines.append(f"- [{bucket}] {item.get('text', '')} ({item.get('note', '')})")
+    # Later and undated tasks were dropped, so a week of undated tasks read as none
+    # (2026-11-19, workflow review): a few of each, and how many there are.
+    for bucket in ("later", "undated"):
+        rows = buckets.get(bucket, [])
+        for item in rows[:5]:
+            lines.append(f"- [{bucket}] {item.get('text', '')} ({item.get('note', '')})")
+        if len(rows) > 5:
+            lines.append(f"- and {len(rows) - 5} more {bucket} tasks")
     lines.append("Activity:")
     for u in (activity_summary or {}).get("uses", [])[:15]:
         lines.append(f"- used {u.get('source', '')} for {u.get('used_for', '')}")
@@ -2060,8 +2069,14 @@ def reflection_draft(ctx: Context, project: str, agenda_buckets: dict, activity_
     drafted = clerk.run([clerk.reflection(gathered)], clerk_endpoint(ctx),
                         ctx.vault.work("queue") / "clerk")[0]
     text = str(drafted.value.get("reflection", "")).strip() if drafted.ok else ""
-    return {"project": project, "gathered": gathered, "draft": text, "ok": drafted.ok,
-            "drafted_by": drafted.model if drafted.ok else ""}
+    out = {"project": project, "gathered": gathered, "draft": text, "ok": drafted.ok,
+           "status": drafted.status, "drafted_by": drafted.model if drafted.ok else "",
+           "reason": ""}
+    if not drafted.ok:
+        # An empty draft says why (a queued task, a refusal, an unqualified route), instead
+        # of finishing silently with draft "" and ok false.
+        out["reason"] = (drafted.problems or f"the Clerk's draft is {drafted.status}")[:400]
+    return out
 
 
 @tool("reflection_accept", tier="curate", effect="vault_write", scope="library",

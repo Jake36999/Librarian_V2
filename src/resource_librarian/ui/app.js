@@ -21,6 +21,7 @@ var Librarian = (() => {
   // src/main.ts
   var main_exports = {};
   __export(main_exports, {
+    actionOutputs: () => actionOutputs,
     mount: () => mount
   });
 
@@ -459,6 +460,7 @@ Result: ${info.result}` : info.does : "";
     "action_started",
     "action_progress",
     "action_done",
+    "action_dismissed",
     "library_switched",
     "reply_reviewed",
     "checkpoint_created",
@@ -1725,6 +1727,8 @@ Result: ${info.result}` : info.does : "";
       return out;
     }
     permission(event) {
+      const existing = this.cards.get(String(event.id));
+      if (existing && existing.isConnected) return;
       const args = event.arguments ?? {};
       const preview = event.preview ?? null;
       const detail = preview ? `${preview.path ?? ""}` : Object.entries(args).slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(" \xB7 ");
@@ -6343,6 +6347,11 @@ Result: ${info.result}` : info.does : "";
         scan.style.display = this.kind === "concept" ? "" : "none";
         propose.style.display = this.kind === "topic" ? "" : "none";
         statuses.style.display = this.kind === "source" ? "" : "none";
+        add.style.display = this.kind === "source" ? "" : "none";
+        if (this.kind !== "source") {
+          addForm.hidden = true;
+          add.setAttribute("aria-expanded", "false");
+        }
       };
       const propose = h("button", {
         class: "ghost",
@@ -6375,6 +6384,68 @@ Result: ${info.result}` : info.does : "";
           }
         }
       }, "Scan for concepts");
+      const addStatus = h("span", { role: "status", class: "dim" });
+      const addRef = h("input", {
+        type: "text",
+        placeholder: "URL, arXiv id, DOI or GitHub repo",
+        "aria-label": "Reference to add"
+      });
+      const addFile = document.createElement("input");
+      addFile.type = "file";
+      const ingest = async (ref, label) => {
+        addStatus.textContent = `Adding ${label}\u2026`;
+        try {
+          const out = await this.api.tool("ingest", { ref });
+          if (out.error) throw new Error(String(out.detail ?? out.refused ?? out.error));
+          addStatus.textContent = out.state === "failed" || out.status === "failed" ? `Not added: ${out.reason ?? out.detail ?? "the fetch failed"} (Queued for capture lists it).` : `Staged ${out.name ?? label}.`;
+          addRef.value = "";
+          this.kind = "source";
+          this.status = this.statuses.value = "staged";
+          paint();
+          await this.load(true);
+        } catch (e) {
+          addStatus.textContent = `Not added: ${e.message}`;
+        }
+      };
+      addFile.onchange = async () => {
+        const file = addFile.files?.[0];
+        addFile.value = "";
+        if (!file) return;
+        addStatus.textContent = `Uploading ${file.name}\u2026`;
+        try {
+          const saved = await this.api.attach(file);
+          await ingest(saved.path, saved.name);
+        } catch (e) {
+          addStatus.textContent = `Not added: ${e.message}`;
+        }
+      };
+      const addForm = h(
+        "form",
+        {
+          class: "add-source",
+          hidden: true,
+          "aria-label": "Add a source",
+          onsubmit: (e) => {
+            e.preventDefault();
+            const ref = addRef.value.trim();
+            if (ref) void ingest(ref, ref);
+          }
+        },
+        addRef,
+        h("button", { type: "submit", class: "primary" }, "Fetch and stage"),
+        h("button", { type: "button", class: "ghost", onclick: () => addFile.click() }, "Choose a file\u2026"),
+        addStatus
+      );
+      const add = h("button", {
+        class: "ghost",
+        title: "Add a source to Staging: a reference or a file",
+        "aria-expanded": "false",
+        onclick: () => {
+          addForm.hidden = !addForm.hidden;
+          add.setAttribute("aria-expanded", String(!addForm.hidden));
+          if (!addForm.hidden) addRef.focus();
+        }
+      }, "Add source");
       paint();
       this.paintKinds = paint;
       this.evidenceMode.value = preference("evidence", "beside");
@@ -6396,8 +6467,10 @@ Result: ${info.result}` : info.does : "";
           this.evidenceMode,
           h("button", { class: "ghost", onclick: () => void this.load(true) }, "Refresh"),
           scan,
-          propose
+          propose,
+          add
         ),
+        addForm,
         this.banner,
         this.bulk,
         h("div", { class: "split" }, this.list, this.detail)
@@ -7818,6 +7891,11 @@ Result: ${info.result}` : info.does : "";
   };
 
   // src/main.ts
+  function actionOutputs(outputs) {
+    if (!outputs || typeof outputs !== "object") return "";
+    const parts = Object.entries(outputs).filter(([k, v]) => k !== "errors" && v !== null && v !== void 0 && v !== "").slice(0, 6).map(([k, v]) => `${k} ${Array.isArray(v) ? v.length : typeof v === "object" ? Object.keys(v).length : String(v).length > 40 ? `${String(v).slice(0, 39)}\u2026` : String(v)}`);
+    return parts.length ? ` \xB7 ${parts.join(", ")}` : "";
+  }
   function relinkChat(log, oldName, newName, open) {
     log.querySelectorAll(sel("a.wl")).forEach((a) => {
       const target = a.title;
@@ -7849,6 +7927,8 @@ Result: ${info.result}` : info.does : "";
         onclick: () => void this.openGeo()
       }, "Geo-Grapher \u2197");
       this.checkpointButton = h("button", { class: "ghost", title: "Decisions waiting for you" }, "Checkpoints \u25BE");
+      // AR-F03: permission requests waiting for an answer, shown on the Chat tab from any view.
+      this.waiting = /* @__PURE__ */ new Set();
       // Close controls (owner, 2026-11-17): this library's Geo-Grapher, or the whole library
       // (its Core, which stops Geo-Grapher with it), each closed gracefully.
       // An icon so the header does not wrap on narrow hosts (the smoke run's 497 px pane).
@@ -8338,6 +8418,16 @@ Result: ${info.result}` : info.does : "";
       this.paintChips();
       if (this.state.busy) this.chat.setWorking(true);
       for (const request of this.state.pending ?? []) this.chat.handle({ seq: 0, type: "permission_request", ...request });
+      this.waiting = new Set((this.state.pending ?? []).map((r) => String(r.id)));
+      this.paintWaiting();
+    }
+    /** The Chat tab says when a request waits for a person, so a call blocked in Chat is seen
+     *  from Staging or Search (AR-F03). */
+    paintWaiting() {
+      const n = this.waiting.size, tab = this.nav.chat;
+      clear(tab, "Chat", n ? h("span", { class: "badge waiting", "aria-hidden": "true" }, String(n)) : null);
+      tab.setAttribute("aria-label", n ? `Chat, ${n} permission request${n === 1 ? "" : "s"} waiting` : "Chat");
+      tab.title = n ? `${n} permission request${n === 1 ? " is" : "s are"} waiting for you in Chat` : "";
     }
     onEvent(event) {
       if (event.type === "resync_required") {
@@ -8346,6 +8436,14 @@ Result: ${info.result}` : info.does : "";
       }
       this.chat.handle(event);
       switch (event.type) {
+        case "permission_request":
+          this.waiting.add(String(event.id));
+          this.paintWaiting();
+          break;
+        case "permission_decided":
+          this.waiting.delete(String(event.id));
+          this.paintWaiting();
+          break;
         case "mode_changed":
           this.state.mode = event.to;
           this.paintToolbar();
@@ -8368,7 +8466,7 @@ Result: ${info.result}` : info.does : "";
         case "action_done": {
           const actions = this.state.actions ?? [];
           const at = actions.findIndex((a) => a.id === event.id);
-          const row = { id: event.id, name: event.name, status: event.status, steps: event.steps, reason: event.reason };
+          const { type: _type, result: _result, at: _at, ...row } = event;
           if (at >= 0) actions[at] = row;
           else actions.push(row);
           this.state.actions = actions;
@@ -8376,6 +8474,10 @@ Result: ${info.result}` : info.does : "";
           if (event.type === "action_done" && this.view === "staging") void this.staging.load();
           break;
         }
+        case "action_dismissed":
+          this.state.actions = (this.state.actions ?? []).filter((a) => a.id !== event.id);
+          this.paintChips();
+          break;
         case "person_acted":
           if (event.session) this.setSession(event.session);
           if (this.view === "staging") void this.staging.load();
@@ -8387,6 +8489,14 @@ Result: ${info.result}` : info.does : "";
         case "route_health_changed":
         case "workflow_preflight":
           if (this.models.open) void this.tile.refresh();
+          if (event.type === "route_health_changed") {
+            const lead = (this.state.tiers ?? [])[0];
+            const ev = event;
+            if (lead && [lead.host_id, lead.provider, `preset-${lead.provider}`].includes(ev.host_id)) {
+              this.state.lead_route_health = { host_id: ev.host_id, ...ev.health ?? {} };
+              this.paintToolbar();
+            }
+          }
           break;
         case "library_switched":
           window.location.reload();
@@ -8406,7 +8516,14 @@ Result: ${info.result}` : info.does : "";
       const mode = MODES.find(([v]) => v === this.state.mode);
       clear(this.modeButton, "Modes: ", h("strong", {}, mode ? mode[1].split(" ")[0] : "?"), " \u25BE");
       const tier = (this.state.tiers ?? [])[0];
-      clear(this.modelButton, tier ? [h("span", { class: "badge" }, "1"), ` ${tier.model} \xB7 ${PROVIDERS[tier.provider] ?? tier.provider}`] : "Choose models", " \u25BE");
+      const health = this.state.lead_route_health ?? {};
+      const broken = !!tier && health.status === "error" && (!health.model || health.model === tier.model);
+      clear(this.modelButton, tier ? [
+        h("span", { class: "badge" }, "1"),
+        broken ? h("span", { class: "route-warning", "aria-label": "route problem" }, " \u26A0") : null,
+        ` ${tier.model} \xB7 ${PROVIDERS[tier.provider] ?? tier.provider}`
+      ] : "Choose models", " \u25BE");
+      this.modelButton.title = broken ? `This model's route failed: ${health.detail ?? ""}` : "";
       renderModes(this.modes, this.api, this.state.mode, (msg) => this.warn(msg), this.ids.id("librarian-mode"));
       const pending = (this.state.pending_checkpoints ?? []).length;
       this.checkpointButton.textContent = pending ? `Checkpoints (${pending}) \u25BE` : "Checkpoints \u25BE";
@@ -8489,26 +8606,72 @@ Result: ${info.result}` : info.does : "";
       );
     }
     paintChips() {
-      const running = (this.state.actions ?? []).filter((a) => a.status === "running" || a.status === "paused");
+      const actions = (this.state.actions ?? []).filter((a) => ["running", "paused", "finished", "failed"].includes(a.status));
       for (const id of [...this.cancelling]) {
-        if (!running.some((a) => a.id === id && a.status === "running")) this.cancelling.delete(id);
+        if (!actions.some((a) => a.id === id && a.status === "running")) this.cancelling.delete(id);
       }
-      clear(this.chips, running.map((a) => h(
-        "span",
-        { class: "chip" },
-        `${a.name} \xB7 ${a.status === "paused" ? `paused${a.reason ? `: ${a.reason}` : ""}` : `${a.steps} steps`}`,
-        a.status !== "running" ? null : this.cancelling.has(a.id) ? h("button", { "aria-label": `Cancelling ${a.name}`, "aria-busy": "true", disabled: true }, "Cancelling\u2026") : h("button", { "aria-label": `Cancel ${a.name}`, onclick: async () => {
-          this.cancelling.add(a.id);
-          this.paintChips();
-          try {
-            await this.api.post(`/api/actions/${a.id}/cancel`);
-          } catch (e) {
-            this.cancelling.delete(a.id);
+      const post = async (a, verb, body) => {
+        try {
+          await this.api.post(`/api/actions/${a.id}/${verb}`, body);
+        } catch (e) {
+          this.warn(`${a.name}: ${e.message}`);
+        }
+      };
+      const dismiss = (a) => h("button", {
+        "aria-label": `Dismiss ${a.name}`,
+        title: "Dismiss",
+        onclick: () => void post(a, "dismiss")
+      }, "\u2715");
+      clear(this.chips, actions.map((a) => {
+        if (a.status === "running") return h(
+          "span",
+          { class: "chip" },
+          `${a.name} \xB7 ${a.steps} steps`,
+          this.cancelling.has(a.id) ? h("button", { "aria-label": `Cancelling ${a.name}`, "aria-busy": "true", disabled: true }, "Cancelling\u2026") : h("button", { "aria-label": `Cancel ${a.name}`, onclick: async () => {
+            this.cancelling.add(a.id);
             this.paintChips();
-            this.warn(`${a.name} was not cancelled: ${e.message}`);
-          }
-        } }, "\u2715")
-      )));
+            try {
+              await this.api.post(`/api/actions/${a.id}/cancel`);
+            } catch (e) {
+              this.cancelling.delete(a.id);
+              this.paintChips();
+              this.warn(`${a.name} was not cancelled: ${e.message}`);
+            }
+          } }, "\u2715")
+        );
+        if (a.status === "paused") {
+          const options = Array.isArray(a.options) ? a.options : [];
+          return h(
+            "span",
+            { class: "chip action-paused", role: "group", "aria-label": `${a.name} is paused` },
+            `${a.name} \xB7 paused${a.reason ? `: ${a.reason}` : ""}`,
+            a.question && options.length ? h("span", { class: "dim" }, ` ${a.question}`) : null,
+            ...options.map((option) => h("button", {
+              class: "action-choice",
+              title: `Continue with "${option}" for this step`,
+              onclick: () => void post(a, "resume", { choices: { [a.paused_step]: option } })
+            }, option)),
+            h("button", {
+              class: "action-choice",
+              title: "Continue: a routing model set since then decides",
+              onclick: () => void post(a, "resume")
+            }, "Resume"),
+            dismiss(a)
+          );
+        }
+        const summary = a.status === "failed" ? `failed${a.error ? `: ${a.error}` : ""}` : `finished${actionOutputs(a.outputs)}`;
+        const errors = Array.isArray(a.outputs?.errors) ? a.outputs.errors : [];
+        return h(
+          "span",
+          {
+            class: `chip action-${a.status}`,
+            role: "status",
+            title: [summary, ...errors.map((e) => `\u2022 ${e}`)].join("\n")
+          },
+          `${a.name} \xB7 ${summary}`,
+          dismiss(a)
+        );
+      }));
     }
     setSession(session) {
       if (session && this.session && session.session === this.session.session)

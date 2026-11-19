@@ -17,6 +17,18 @@ import { Search, Staging } from "./views";
 
 type View = "chat" | "staging" | "search";
 
+/** A finished run's outputs in one line: " · read 0, failed 5". Lists show their size. */
+export function actionOutputs(outputs: unknown): string {
+  if (!outputs || typeof outputs !== "object") return "";
+  const parts = Object.entries(outputs as Record<string, unknown>)
+    .filter(([k, v]) => k !== "errors" && v !== null && v !== undefined && v !== "")
+    .slice(0, 6)
+    .map(([k, v]) => `${k} ${Array.isArray(v) ? v.length
+      : typeof v === "object" ? Object.keys(v as object).length
+      : String(v).length > 40 ? `${String(v).slice(0, 39)}…` : String(v)}`);
+  return parts.length ? ` · ${parts.join(", ")}` : "";
+}
+
 /** After a rename, links to the old name already in the chat log point at
  *  nothing; each click target is captured when rendered, so replace them. */
 function relinkChat(log: HTMLElement, oldName: string, newName: string,
@@ -61,6 +73,8 @@ class App {
   private geoButton = h("button", { class: "ghost geo-open", title: "Open this library's graphs in Geo-Grapher",
     onclick: () => void this.openGeo() }, "Geo-Grapher ↗");
   private checkpointButton = h("button", { class: "ghost", title: "Decisions waiting for you" }, "Checkpoints ▾");
+  // AR-F03: permission requests waiting for an answer, shown on the Chat tab from any view.
+  private waiting = new Set<string>();
   // Close controls (owner, 2026-11-17): this library's Geo-Grapher, or the whole library
   // (its Core, which stops Geo-Grapher with it), each closed gracefully.
   // An icon so the header does not wrap on narrow hosts (the smoke run's 497 px pane).
@@ -434,6 +448,17 @@ class App {
     this.paintChips();
     if (this.state.busy) this.chat.setWorking(true);
     for (const request of this.state.pending ?? []) this.chat.handle({ seq: 0, type: "permission_request", ...request });
+    this.waiting = new Set(((this.state.pending ?? []) as any[]).map((r) => String(r.id)));
+    this.paintWaiting();
+  }
+
+  /** The Chat tab says when a request waits for a person, so a call blocked in Chat is seen
+   *  from Staging or Search (AR-F03). */
+  private paintWaiting(): void {
+    const n = this.waiting.size, tab = this.nav.chat;
+    clear(tab, "Chat", n ? h("span", { class: "badge waiting", "aria-hidden": "true" }, String(n)) : null);
+    tab.setAttribute("aria-label", n ? `Chat, ${n} permission request${n === 1 ? "" : "s"} waiting` : "Chat");
+    tab.title = n ? `${n} permission request${n === 1 ? " is" : "s are"} waiting for you in Chat` : "";
   }
 
   private onEvent(event: Event): void {
@@ -446,6 +471,14 @@ class App {
     }
     this.chat.handle(event);
     switch (event.type) {
+      case "permission_request":
+        this.waiting.add(String(event.id));
+        this.paintWaiting();
+        break;
+      case "permission_decided":
+        this.waiting.delete(String(event.id));
+        this.paintWaiting();
+        break;
       case "mode_changed":
         this.state.mode = event.to;
         this.paintToolbar();
@@ -465,13 +498,19 @@ class App {
       case "action_started": case "action_progress": case "action_done": {
         const actions = (this.state.actions ?? []) as any[];
         const at = actions.findIndex((a) => a.id === event.id);
-        const row = { id: event.id, name: event.name, status: event.status, steps: event.steps, reason: event.reason };
+        // Keep what the Core reports about the run (outputs, error, a paused route's question
+        // and options), not only its name and status: WF-D1, a finished run's result was lost.
+        const { type: _type, result: _result, at: _at, ...row } = event as any;
         if (at >= 0) actions[at] = row; else actions.push(row);
         this.state.actions = actions;
         this.paintChips();
         if (event.type === "action_done" && this.view === "staging") void this.staging.load();
         break;
       }
+      case "action_dismissed":
+        this.state.actions = ((this.state.actions ?? []) as any[]).filter((a) => a.id !== (event as any).id);
+        this.paintChips();
+        break;
       case "person_acted":
         if (event.session) this.setSession(event.session);
         if (this.view === "staging") void this.staging.load();
@@ -485,6 +524,14 @@ class App {
         // requests while ensuring an open Model Tile never presents stale
         // safety state.
         if (this.models.open) void this.tile.refresh();
+        if (event.type === "route_health_changed") {
+          const lead = ((this.state.tiers ?? []) as any[])[0];
+          const ev = event as any;
+          if (lead && [lead.host_id, lead.provider, `preset-${lead.provider}`].includes(ev.host_id)) {
+            this.state.lead_route_health = { host_id: ev.host_id, ...(ev.health ?? {}) };
+            this.paintToolbar();
+          }
+        }
         break;
       case "library_switched":
         // Another tab (or this one) switched library: this page belongs to
@@ -514,9 +561,14 @@ class App {
     const mode = MODES.find(([v]) => v === this.state.mode);
     clear(this.modeButton, "Modes: ", h("strong", {}, mode ? mode[1].split(" ")[0] : "?"), " ▾");
     const tier = ((this.state.tiers ?? []) as Tier[])[0];
+    // AR-F02: a Lead whose model the provider does not know says so here, before the next turn.
+    const health = (this.state.lead_route_health ?? {}) as any;
+    const broken = !!tier && health.status === "error" && (!health.model || health.model === tier.model);
     clear(this.modelButton, tier
-      ? [h("span", { class: "badge" }, "1"), ` ${tier.model} · ${PROVIDERS[tier.provider] ?? tier.provider}`]
+      ? [h("span", { class: "badge" }, "1"), broken ? h("span", { class: "route-warning", "aria-label": "route problem" }, " ⚠") : null,
+         ` ${tier.model} · ${PROVIDERS[tier.provider] ?? tier.provider}`]
       : "Choose models", " ▾");
+    this.modelButton.title = broken ? `This model's route failed: ${health.detail ?? ""}` : "";
     renderModes(this.modes, this.api, this.state.mode, (msg) => this.warn(msg), this.ids.id("librarian-mode"));
     const pending = ((this.state.pending_checkpoints ?? []) as any[]).length;
     this.checkpointButton.textContent = pending ? `Checkpoints (${pending}) ▾` : "Checkpoints ▾";
@@ -582,25 +634,53 @@ class App {
   }
 
   private paintChips(): void {
-    const running = ((this.state.actions ?? []) as any[]).filter((a) => a.status === "running" || a.status === "paused");
+    const actions = ((this.state.actions ?? []) as any[]).filter((a) =>
+      ["running", "paused", "finished", "failed"].includes(a.status));
     // MF-006: a requested cancel stays visibly pending until the Core reports
     // the run stopped (its chip goes) or refuses the request.
     for (const id of [...this.cancelling]) {
-      if (!running.some((a) => a.id === id && a.status === "running")) this.cancelling.delete(id);
+      if (!actions.some((a) => a.id === id && a.status === "running")) this.cancelling.delete(id);
     }
-    clear(this.chips, running.map((a) => h("span", { class: "chip" },
-      `${a.name} · ${a.status === "paused" ? `paused${a.reason ? `: ${a.reason}` : ""}` : `${a.steps} steps`}`,
-      a.status !== "running" ? null : this.cancelling.has(a.id)
-        ? h("button", { "aria-label": `Cancelling ${a.name}`, "aria-busy": "true", disabled: true }, "Cancelling…")
-        : h("button", { "aria-label": `Cancel ${a.name}`, onclick: async () => {
-            this.cancelling.add(a.id);
-            this.paintChips();
-            try { await this.api.post(`/api/actions/${a.id}/cancel`); } catch (e) {
-              this.cancelling.delete(a.id);
+    const post = async (a: any, verb: string, body?: unknown) => {
+      try { await this.api.post(`/api/actions/${a.id}/${verb}`, body); } catch (e) {
+        this.warn(`${a.name}: ${(e as Error).message}`);
+      }
+    };
+    const dismiss = (a: any) => h("button", { "aria-label": `Dismiss ${a.name}`, title: "Dismiss",
+      onclick: () => void post(a, "dismiss") }, "✕");
+    // A finished run says what it left behind and a failed one why (WF-D1); a paused routing
+    // step offers its options and a resume (WF-D4). The full result stays in the run log.
+    clear(this.chips, actions.map((a) => {
+      if (a.status === "running") return h("span", { class: "chip" }, `${a.name} · ${a.steps} steps`,
+        this.cancelling.has(a.id)
+          ? h("button", { "aria-label": `Cancelling ${a.name}`, "aria-busy": "true", disabled: true }, "Cancelling…")
+          : h("button", { "aria-label": `Cancel ${a.name}`, onclick: async () => {
+              this.cancelling.add(a.id);
               this.paintChips();
-              this.warn(`${a.name} was not cancelled: ${(e as Error).message}`);
-            }
-          } }, "✕"))));
+              try { await this.api.post(`/api/actions/${a.id}/cancel`); } catch (e) {
+                this.cancelling.delete(a.id);
+                this.paintChips();
+                this.warn(`${a.name} was not cancelled: ${(e as Error).message}`);
+              }
+            } }, "✕"));
+      if (a.status === "paused") {
+        const options: string[] = Array.isArray(a.options) ? a.options : [];
+        return h("span", { class: "chip action-paused", role: "group", "aria-label": `${a.name} is paused` },
+          `${a.name} · paused${a.reason ? `: ${a.reason}` : ""}`,
+          a.question && options.length ? h("span", { class: "dim" }, ` ${a.question}`) : null,
+          ...options.map((option) => h("button", { class: "action-choice",
+            title: `Continue with "${option}" for this step`,
+            onclick: () => void post(a, "resume", { choices: { [a.paused_step]: option } }) }, option)),
+          h("button", { class: "action-choice", title: "Continue: a routing model set since then decides",
+            onclick: () => void post(a, "resume") }, "Resume"),
+          dismiss(a));
+      }
+      const summary = a.status === "failed" ? `failed${a.error ? `: ${a.error}` : ""}` : `finished${actionOutputs(a.outputs)}`;
+      const errors: string[] = Array.isArray(a.outputs?.errors) ? a.outputs.errors : [];
+      return h("span", { class: `chip action-${a.status}`, role: "status",
+          title: [summary, ...errors.map((e) => `• ${e}`)].join("\n") },
+        `${a.name} · ${summary}`, dismiss(a));
+    }));
   }
 
   private setSession(session: Session): void {

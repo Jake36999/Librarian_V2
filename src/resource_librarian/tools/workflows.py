@@ -11,16 +11,26 @@ def _library(ctx: Context) -> workflows.Library:
 
 
 def _router(ctx: Context) -> workflows.Router:
+    """A surface's router, else a `[routing]` model in config.toml, else the Clerk this
+    library reads with (the one chosen in Settings, then `[clerk]`, then a fallback).
+    2026-11-19 (WF-D4): the Settings Clerk was never read here, so every reasoned
+    pipeline started from the app paused with "no routing model is configured"."""
     if "router" in ctx.extras:
         return ctx.extras["router"]
-    config = ctx.vault.config()
-    settings = (config.get("routing") or {}) if (config.get("routing") or {}).get("provider") \
-        else (config.get("clerk") or {})
-    try:
-        endpoint = clerk.from_config(settings)
-    except clerk.ClerkUnavailable:
-        endpoint = None
-    return workflows.Router(endpoint or ctx.extras.get("clerk_fallback"))
+    routing = ctx.vault.config().get("routing") or {}
+    endpoint = None
+    if routing.get("provider"):
+        try:
+            endpoint = clerk.from_config(routing)
+        except clerk.ClerkUnavailable:
+            endpoint = None
+    if endpoint is None:
+        from .staging import clerk_endpoint
+        try:
+            endpoint = clerk_endpoint(ctx)
+        except clerk.ClerkUnavailable:
+            endpoint = None
+    return workflows.Router(endpoint)
 
 
 @tool("list_workflows", tier="consult", effect="read", returns=("definitions",),

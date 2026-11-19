@@ -75,3 +75,10 @@ def test_an_audited_session_can_be_closed_and_every_phase_can_park():
         for phase in phases:
             offered = {s.name for s in bundle_selection("contribute", phase, purpose=purpose).offered}
             assert "park_session" in offered, (purpose, phase)
+
+
+def test_a_terminal_phase_can_go_back(vault):
+    """Stress ST-F12: `advance` (which also moves back) was not offered in check-out or in
+    learn's next, so a model could not return to redo a phase."""
+    from resource_librarian.agent_runtime import BUNDLES
+    assert "advance" in BUNDLES["check-out"].names and "advance" in BUNDLES["next"].names

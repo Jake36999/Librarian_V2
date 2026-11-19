@@ -111,6 +111,13 @@ def guard(spec, arguments, ctx, *, consume=False):
             # Core-only capability from the curate-tier approved-batch runner.
             # Its Clerk receives bounded chunks; no whole document is returned.
             return
+    if spec.name == 'deep_read' and 'deep_read' in ((ctx.extras.get('workflow_grant') or {})
+                                                    .get('tools') or ()):
+        # A person started a shipped workflow that reads (deep-read-staged): that start is the
+        # person's route, as an approved batch is. The grant is set only by the Core for a run
+        # a person began, never by an agent's own call (2026-11-19, WF-D3: every UI start was
+        # refused THIRD_PARTY_ROUTE_REQUIRED). The Clerk still sees bounded chunks only.
+        return
     handle, authorship = raw_target(spec, arguments, ctx)
     if (handle and Path(handle).suffix.lower() == '.pdf'
             and spec.name in {'read_file', 'read_project'}):
