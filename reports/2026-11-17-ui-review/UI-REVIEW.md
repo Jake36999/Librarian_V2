@@ -19,6 +19,18 @@ that runs UI/UX review rounds with Claude in Chrome.
 - Python files show steel-blue;
 - Close shows the closed page and the server exits with code 0.
 
+**Latest deploy, 2026-11-19 (evening): Geo-Grapher `e71967a`.**
+- **How it was done:** the same procedure as below. The wheel was built from a clean export plus its
+  built front end, and smoke-tested in a throwaway environment holding the runtime's 36 pinned
+  packages: a first search on the 65k-entity Librarian_V2 graph took 6.4 s, with the same 8 hits.
+- **Live:** each library's Geo was stopped and started through its own Core. All three run the new
+  bundle, and their graph listings carry `fingerprints`.
+- **Rollback:** `uv pip install --python G:/Libraries/_geo-runtime/env/Scripts/python.exe
+  --reinstall-package geo-grapher G:/Libraries/_geo-runtime/dist/previous/geo_grapher-0.2.0-before-e71967a.whl`,
+  then restart each Geo.
+- **Not restarted:** one stdio `serve-graphs` on this runtime, for Resource-Library's catalogue. An MCP
+  client started it, and it picks up the new code when that client restarts it.
+
 **Deployed 2026-11-17 (afternoon)** from Geo-Grapher `a3dd77d`: items 1–4, the three-graph cap and the
 compact view form are live in all three libraries' Geo views. The wheel was built from a clean export of
 the commit plus the built front end, passed the package smoke test in a throwaway copy of the runtime,
