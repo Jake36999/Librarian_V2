@@ -171,15 +171,15 @@ def canvas(phases: dict[str, list[dict]]) -> dict:
             text = (f"### {r['phase']}\n_{r.get('ask', '')}_\n\n**To leave:**\n{gate}\n\n"
                     "**Gate uses:** " + ", ".join(f"`{t}`" for t in r.get("remedies") or [])
                     + "\n\n**Tools:** " + ", ".join(f"`{t}`" for t in r["offered"]))
-            nid = f"{purpose}-{i}"
+            nid = f"librarian-map-{purpose}-{i}"
             nodes.append({"id": nid, "type": "text", "x": x + 20, "y": y, "width": 400,
                           "height": 260, "text": text})
             if cards:
-                edges.append({"id": f"e-{nid}", "fromNode": cards[-1], "fromSide": "bottom",
+                edges.append({"id": f"{nid}-after", "fromNode": cards[-1], "fromSide": "bottom",
                               "toNode": nid, "toSide": "top"})
             cards.append(nid)
             y += 300
-        nodes.append({"id": f"g-{purpose}", "type": "group", "x": x, "y": 0, "width": 440,
+        nodes.append({"id": f"librarian-map-{purpose}", "type": "group", "x": x, "y": 0, "width": 440,
                       "height": y, "label": f"{purpose} session"})
         x += 500
     return {"nodes": nodes, "edges": edges}
@@ -216,24 +216,25 @@ def render(phases, workflows, pipelines, macros) -> str:
     return "\n".join(out) + "\n"
 
 
-def write_canvas(folder: Path, text: str) -> Path:
-    """Write the canvas, unless a person has changed the one already there.
+def write_canvas(folder: Path, generated: dict) -> Path:
+    """Write the map's canvas through the safe canvas service (W2, 2026-11-20).
 
-    2026-11-20: a regeneration overwrote a canvas the owner had re-saved in Obsidian. The hash of
-    what this script last wrote is kept beside it; a canvas that no longer matches it (or one with
-    no record) is a person's, and is never replaced - the new map goes beside it instead. W2's safe
-    canvas service will replace this with pinned positions and a previewed, hash-checked commit."""
-    import hashlib
-    target, record = folder / "workflow-map.canvas", folder / ".workflow-map.canvas.sha256"
-    if target.is_file():
-        current = hashlib.sha256(target.read_bytes()).hexdigest()
-        ours = record.read_text(encoding="utf-8").strip() if record.is_file() else ""
-        if current != ours:
-            target = folder / "workflow-map.generated.canvas"
-    target.write_text(text, encoding="utf-8")
-    if target.name == "workflow-map.canvas":
-        record.write_text(hashlib.sha256(target.read_bytes()).hexdigest(), encoding="utf-8")
-    return target
+    Only nodes with the `librarian-map-` prefix are the map's; every other node on the canvas is a
+    person's and is kept, and a map node someone moved stays where they put it. A canvas this
+    service never wrote (no `librarian-` node: a person's own drawing, or a map from before W2) is
+    never merged into; the map is written beside it, to the next free name, instead."""
+    from resource_librarian.canvas import service
+    target = folder / "workflow-map.canvas"
+    n = 0
+    while True:
+        try:
+            service.write(target, generated, profile=None)
+            return target
+        except service.CanvasConflict:
+            n += 1
+            target = folder / f"workflow-map.generated{'' if n == 1 else '-' + str(n)}.canvas"
+            if n > 9:
+                raise
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -245,14 +246,14 @@ def main(argv: list[str] | None = None) -> int:
     workflows, pipelines, macros = gather_yaml("workflows"), gather_yaml("pipelines"), gather_macros()
     (args.out / "WORKFLOW-MAP.md").write_text(render(phases, workflows, pipelines, macros),
                                               encoding="utf-8")
-    target = write_canvas(args.out, json.dumps(canvas(phases), indent=1))
+    target = write_canvas(args.out, canvas(phases))
     (args.out / "workflow-map.json").write_text(json.dumps(
         {"phases": phases, "workflows": workflows, "pipelines": pipelines, "macros": macros},
         indent=1), encoding="utf-8")
     print(f"wrote {args.out}: {sum(len(r) for r in phases.values())} phases, "
           f"{len(workflows)} workflows, {len(pipelines)} pipelines, {len(macros)} macros")
     if target.name != "workflow-map.canvas":
-        print(f"workflow-map.canvas was changed by a person since it was generated, so it was "
+        print(f"workflow-map.canvas holds nodes the Librarian did not write (a person's canvas), so it was "
               f"left alone; the new map is in {target.name}")
     return 0
 

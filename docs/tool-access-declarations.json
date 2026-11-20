@@ -5794,6 +5794,68 @@
         "external": false,
         "sessionless": false
       }
+    },
+    {
+      "tool": "canvas_compile",
+      "minimum_tier": "consult",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": true,
+      "authorship_may_return": [
+        "owner_created",
+        "generated",
+        "third_party"
+      ],
+      "authorship_explicit": false,
+      "status": "diverges",
+      "fixes": [
+        "S1"
+      ],
+      "evidence": {
+        "path": "src/resource_librarian/tools/canvas.py",
+        "line": 30,
+        "symbol": "canvas_compile"
+      },
+      "fingerprint": {
+        "source_sha256": "92188580e0c3e1405cc81032e0fc25e9a0bcd9df27c5cc363b2a683079228fe4",
+        "schema_sha256": "39b714704935190561ed407980480b9a4a0b346b97346e0bff71fb9ace820194",
+        "effect": "read",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Returns YAML compiled from a vault canvas: no explicit owner_created/generated/third_party contract on its text (like show_workflow)."
+    },
+    {
+      "tool": "canvas_draw_workflow",
+      "minimum_tier": "contribute",
+      "actors": [
+        "person",
+        "lead (bundle/profile-gated)",
+        "external agent (MCP tier-capped)"
+      ],
+      "returns_content": false,
+      "authorship_may_return": [],
+      "authorship_explicit": null,
+      "status": "n/a",
+      "fixes": [],
+      "evidence": {
+        "path": "src/resource_librarian/tools/canvas.py",
+        "line": 55,
+        "symbol": "canvas_draw_workflow"
+      },
+      "fingerprint": {
+        "source_sha256": "7ac6ffd7442026cbf000c4ffa3de26bd351f9b234644e6f4a7375af501448a13",
+        "schema_sha256": "57490982684581573ad788525e20fec2af7faaa70d7ed59c0e55598fdad7df00",
+        "effect": "write",
+        "open_world": false,
+        "external": false,
+        "sessionless": false
+      },
+      "reason": "Control/receipt: returns the canvas path, revision, proposal hash and change counts; not counted as a content-access pass."
     }
   ]
 }

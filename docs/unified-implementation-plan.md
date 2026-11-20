@@ -7358,3 +7358,27 @@ After the dual-orchestrator step schema (`docs/proposals/plan-forward-2026-11.md
 Tests: `tests/test_workflow_steps.py`.
 
 **W1 is complete:** phases as data (part 1), macros as workflows (part 2), and these step fields (part 3). OP6, OP15 and OP16 are closed.
+
+### W2: a safe canvas service, and workflows drawn on a canvas (2026-11-20)
+
+The owner accepted W2 of `docs/proposals/plan-forward-2026-11.md`. The owner's own canvases (`reports/2026-11-20-workflow-map/`) are never written to.
+- **`resource_librarian/canvas/document.py` and `layout.py`** are copied from the owner's MARK XLVIII (commit `281dc41`, MIT), standard library only, under a provenance header, with MARK's layout tests (`tests/test_canvas_layout.py`). One change from the source: the metadata namespace is `librarian` and the managed id prefix `librarian-`. Nothing imports or calls the MARK repo.
+- **`canvas/service.py`** is the safe write.
+  - `preview` reads a canvas without loss; a malformed one is reported and never replaced. It merges generated nodes in: only `librarian-` nodes are the service's, a person's nodes and edges are kept, and a managed node keeps where it is. The layout never moves a pinned or person-moved node.
+  - `preview` returns the file's revision and the proposal's hash. `commit` refuses if either changed, backs up the file (`.bak`, ignored by git and not listed by Obsidian), and replaces it atomically.
+  - A canvas holding no `librarian-` node is a person's, and nothing is merged into it unless the caller passes `adopt`.
+- **`canvas/workflows.py`** draws and compiles workflows, after MARK's canvas planner.
+  - A workflow is drawn as a `role: workflow` anchor and one `role: step` node per action step, with `key: value` directives: `arg`, `each`, `when`, `on_error`, `side_effects`, `accept`, `compensation`.
+  - A `needs` edge is `depends_on`; a `then` edge orders.
+  - Compiling refuses a step with no action, a second anchor, a cycle, a shared id or an unknown directive. A node with no role is a note that does nothing, and is reported.
+  - Order comes from the edges, then the step id, never from position, so moving nodes changes neither the workflow nor its fingerprint (text and edges only).
+  - All 19 shipped workflows survive a round trip.
+- **Tools.**
+  - `canvas_compile` (consult, read) returns the validated YAML; it is saved and accepted through `save_workflow` / `accept_workflow`, exactly like a written workflow.
+  - `canvas_draw_workflow` (contribute) previews, and commits only with that preview's revision and hash.
+  - New refusal: `CANVAS_CONFLICT`.
+- **`scripts/workflow_map.py`** writes its canvas through the service. The owner's `workflow-map.canvas` holds no `librarian-` node, so the map goes to `workflow-map.generated.canvas`, and a rerun merges into it in place.
+
+W2's done-when holds in `tests/test_canvas_service.py`: a workflow drawn by hand, compiled, saved, accepted and run gives the same outputs as the same workflow written in YAML.
+
+Left for the diagram-workflows proposal (another session): use case, activity and test-case views drawn through this service.

@@ -68,3 +68,6 @@ reports/2026-10-30-runtime-tooling-literature/data/page_views/
 
 # CI evidence written by the core job (MF-043d); uploaded, never committed
 test-evidence/
+
+# Safe canvas writes keep a backup beside the canvas (W2): never committed.
+*.canvas.*.bak

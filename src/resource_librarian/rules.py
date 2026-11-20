@@ -144,6 +144,10 @@ _RULES = [
     Rule('FOLDER_READ_ONLY', 'sessions',
          'Accepted third-party, research and data folders are read-only. Attached sources '
          'are always read-only; only an explicit accepted child purpose can override an internal folder decision.'),
+    Rule("CANVAS_CONFLICT", "boundaries",
+         "A canvas is written only through a preview: nothing is merged into a canvas a person "
+         "drew, a malformed canvas is never replaced, and a commit is refused if the file "
+         "changed since its preview. Nothing was written; preview again."),
     Rule("PERMISSION_DENIED", "sessions",
          "A person, the tool's own setting or the permission mode denied this action; "
          "nothing was done. The refusal's message says which: 'denied by a person' is a "
