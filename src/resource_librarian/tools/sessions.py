@@ -1739,11 +1739,22 @@ def _review_claims(ctx: Context, gateway: IndexGateway, checked: list[dict]) -> 
             "queued" if r.status == "queued" else "unchecked")
         if verdict == "unsupported":        # the quote was found; a silent passage proves nothing
             verdict = "unchecked"
+        # 2026-11-20: an insight report's reviews came back "unchecked" with no reason; the
+        # Clerk's own problem (a failed schema check, a refused route) is said instead.
+        why = str(r.value.get("reason", "")) if r.ok else \
+            f"[review not completed: {clip_reason(r)}]"
         out.append({"verdict": verdict, "counter_quote": str(r.value.get("counter_quote", "")),
-                    "reason": str(r.value.get("reason", "")), "model": r.model or "",
+                    "reason": why, "model": r.model or "",
                     **({"failing_input": r.value["failing_input"]}
                        if r.ok and r.value.get("failing_input") else {})})
     return out
+
+
+def clip_reason(result: Any) -> str:
+    """A Clerk result's status and problem, short enough to keep on a review verdict."""
+    problem = " ".join(str(getattr(result, "problems", "") or "").split())
+    status = str(getattr(result, "status", "") or "")
+    return f"{status}: {problem[:200]}" if problem else status or "no reply"
 
 
 def _runnable(ctx: Context, claim: str, source: str, verdict: dict, origin: str,

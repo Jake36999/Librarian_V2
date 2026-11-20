@@ -7259,3 +7259,12 @@ The five DataManagement insight reports showed three gaps:
 - **No claim review.** Quotes were verified, but never the claim's own sentence: one report was staged with a word-salad claim over a verbatim quote. The Clerk's claim review gains an `unreadable` verdict, which needs no counter-quote. In `draft_offering` it is a challenge a rebuttal cannot keep; reply review flags it like `fails`. Resource-Library turns `review_offerings` on (owner, in chat).
 
 Tests: `test_graph_evidence.py` (labels, hint), `test_phase_bundles.py` (outline, code search), `test_review_gate.py` (`test_an_unreadable_claim_is_sent_back_even_with_a_rebuttal`).
+
+### An unchecked claim review says why (2026-11-20)
+
+The five DataManagement reports were redrafted with the fixes above: sections read through the outline, the code graph searched by its real label, and every claim reviewed. Of 12 claims, 9 came back `holds` and 3 `unchecked`. All three unchecked claims quote a paper's full PDF text (`file:`); every claim quoted from a Source note got a verdict. Out of the Core, the same review on the same passage returns `holds` with both the Clerk (gemma-4-26B) and the review route (GLM-5.3).
+- Inside the Core, a review that does not complete keeps the Clerk's own status and problem as its reason, instead of an empty one, so the next run names the cause.
+- Inside the Core the Clerk is the assigned role endpoint, so `[clerk] route_review` never applies there. The review ran on gemma, not GLM-5.3. Recorded; not changed.
+- Open: one session holds one synthesis, so five reports drafted in one session share one "Together" and "Unknowns". After the redraft those sections were stale ("no outline tool"). A multi-question brief wants one synthesis per report, or one session per question.
+
+Test: `test_a_review_that_did_not_complete_says_why`.

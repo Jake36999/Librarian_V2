@@ -108,6 +108,27 @@ def test_an_unreadable_claim_is_sent_back_even_with_a_rebuttal(library):
     assert "'unreadable'" in asked["user"] or "'unreadable'" in asked.get("system", "")
 
 
+def test_a_review_that_did_not_complete_says_why(library):
+    """2026-11-20: five reviews came back 'unchecked' with an empty reason."""
+    reviewing(library)
+    m = Model(library)
+    m.ctx.extras["clerk"] = clerk.Scripted(lambda payload: {"verdict": "maybe"}
+                                           if payload["task"] == "review" else {})
+    to_synthesise(m)
+    m.ok("draft_offering", title="Host Watch Starter", summary=SUMMARY, claims=[CLAIM])
+    status = m.ok("session_status")
+    events = [e for e in SessionStoreEvents(library, m.ctx.session) if e.get("type") == "review"]
+    verdict = events[-1]["verdicts"][0]
+    assert verdict["verdict"] == "unchecked" and verdict["reason"].startswith("[review not completed")
+    assert status["phase"] == "synthesise"
+
+
+def SessionStoreEvents(vault, session):
+    import json
+    path = vault.librarian / "sessions" / f"{session}.jsonl"
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+
+
 def test_a_fails_without_a_counter_quote_from_the_passage_is_not_counted(library):
     reviewing(library)
     m = Model(library)
