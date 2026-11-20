@@ -78,3 +78,42 @@ def test_a_declaration_expands_groups_and_refuses_what_it_cannot_mean():
 def test_an_unregistered_check_is_refused():
     with pytest.raises(phases.PhaseDefinitionError, match="unregistered gate check"):
         phases.validate_checks(set(GATES) - {"judge"})
+
+
+# ----------------------------------------------------------------------------- W1 part 2: macros
+
+def test_every_macro_is_a_valid_workflow_definition():
+    from resource_librarian import workflows
+    from resource_librarian.agent_runtime import MACROS
+    library = workflows.Library(None)
+    declared = {d.name.replace("-", "_"): d for d in library._standard() if "macro" in d.data}
+    assert set(declared) == set(MACROS)
+    for name, d in declared.items():
+        result = workflows.validate(d, library)
+        assert result["valid"], (name, result["errors"])
+        assert [s.tool for s in MACROS[name].steps] == [s["action"] for s in d.data["steps"]]
+
+
+@pytest.mark.parametrize("macro, why", [
+    ("{version: 0, write_capable: true}", "version"),
+    ("{version: 1, write_capable: maybe}", "write_capable"),
+    ("{version: 1, write_capable: false, preconditions: [telepathy]}", "unknown"),
+    ("{version: 1, write_capable: false, retries: 3}", "unknown key"),
+])
+def test_a_macro_block_refuses_what_the_engine_cannot_run(macro, why):
+    from resource_librarian import workflows
+    text = (f"workflow: probe-macro\npurpose: probe\nmacro: {macro}\ninputs:\n  q: {{type: string}}\n"
+            f"steps:\n  - id: s\n    action: search\n    args: {{query: {{from: inputs.q}}}}\n")
+    result = workflows.validate(workflows.parse(text), workflows.Library(None))
+    assert not result["valid"] and any(why in e for e in result["errors"]), result["errors"]
+
+
+def test_a_macro_step_takes_only_literals_and_inputs():
+    from resource_librarian import workflows
+    text = ("workflow: probe-macro\npurpose: probe\nmacro: {version: 1, write_capable: false}\n"
+            "inputs:\n  q: {type: string}\nsteps:\n  - id: a\n    action: search\n"
+            "    args: {query: {from: inputs.q}}\n  - id: b\n    each: {from: steps.a.results}\n"
+            "    action: get_note\n    args: {name: {from: item.name}}\n")
+    errors = workflows.validate(workflows.parse(text), workflows.Library(None))["errors"]
+    assert any("{id, action, args} only" in e for e in errors)
+    assert any("literal string or" in e for e in errors)

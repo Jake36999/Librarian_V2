@@ -1,0 +1,10 @@
+workflow: intake-to-stage
+purpose: Ingest one reference into reviewed staging
+macro: {version: 1, write_capable: true, preconditions: [approved_intake], checkpoints: [sensitive_source, write_conflict]}
+inputs:
+  ref: {type: string}
+  brief: {type: string, default: ""}
+steps:
+  - id: ingest
+    action: ingest
+    args: {ref: {from: inputs.ref}, brief: {from: inputs.brief}}

@@ -1,0 +1,15 @@
+workflow: review-staged-candidate
+purpose: Review a staged candidate, then make the selected decision
+macro: {version: 1, write_capable: true, preconditions: [staged_item], checkpoints: [staging_promotion]}
+inputs:
+  item_id: {type: string}
+  item_ids: {type: list}
+  decision: {type: string}
+  reason: {type: string, default: ""}
+steps:
+  - id: review
+    action: staging_review
+    args: {item_id: {from: inputs.item_id}}
+  - id: decide
+    action: staging_decide
+    args: {item_ids: {from: inputs.item_ids}, decision: {from: inputs.decision}, reason: {from: inputs.reason}}

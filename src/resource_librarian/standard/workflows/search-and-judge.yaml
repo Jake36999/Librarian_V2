@@ -1,0 +1,15 @@
+workflow: search-and-judge
+purpose: Search then inspect the chosen source
+macro: {version: 1, write_capable: false, preconditions: [query]}
+inputs:
+  query: {type: string}
+  # The search tool's safe, documented default; a terse call never broadens the intent.
+  intent: {type: string, default: donor}
+  source: {type: string, default: ""}
+steps:
+  - id: search
+    action: search
+    args: {query: {from: inputs.query}, intent: {from: inputs.intent}}
+  - id: inspect
+    action: get_note
+    args: {name: {from: inputs.source}}

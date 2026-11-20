@@ -631,43 +631,57 @@ class Macro:
     write_capable: bool = False
     preconditions: tuple[str, ...] = ()
     checkpoints: tuple[str, ...] = ()
+    # Input defaults declared on the workflow: a missing or empty input takes its default.
+    defaults: dict[str, str] = field(default_factory=dict)
 
 
-MACROS = {
-    "inspect_map_source": Macro("inspect_map_source", 1, "Inspect a source then refresh its map",
-                                 (MacroStep("get_note", {"name": "$source"}),
-                                  MacroStep("dik_rebuild", {"source": "$source"})), True,
-                                 ("catalogued_source",), ("write_conflict",)),
-    "search_and_judge": Macro("search_and_judge", 1, "Search then inspect the chosen source",
-                               (MacroStep("search", {"query": "$query", "intent": "$intent"}),
-                                MacroStep("get_note", {"name": "$source"})), False,
-                               ("query",), ()),
-    "intake_to_stage": Macro("intake_to_stage", 1, "Ingest one reference into reviewed staging",
-                              (MacroStep("ingest", {"ref": "$ref", "brief": "$brief"}),), True,
-                              ("approved_intake",), ("sensitive_source", "write_conflict")),
-    "evidence_to_claim_check": Macro("evidence_to_claim_check", 1,
-                                       "Read a pinned source file before a claim check",
-                                       (MacroStep("read_source_file", {"source": "$source",
-                                                                         "path": "$path"}),), False,
-                                       ("catalogued_source", "pinned_revision"), ()),
-    "review_staged_candidate": Macro("review_staged_candidate", 1,
-                                      "Review a staged candidate, then make the selected decision",
-                                      (MacroStep("staging_review", {"item_id": "$item_id"}),
-                                       MacroStep("staging_decide", {"item_ids": "$item_ids",
-                                                                      "decision": "$decision",
-                                                                      "reason": "$reason"})), True,
-                                      ("staged_item",), ("staging_promotion",)),
+# The macros are declared as YAML workflows with a `macro:` block (standard/workflows/, W1,
+# 2026-11-20): one definition language, validated like every workflow against the closed action
+# registry and each action's own arguments. This engine still runs them: its approval checkpoint
+# per exact expanded plan, its step journal and its scoped bundle expansion are the macro's own.
+# A macro's id is its workflow name with underscores (`search-and-judge` -> `search_and_judge`).
+
+# Named input requirements a macro may declare (closed set; the validator checks the names).
+PRECONDITIONS: dict[str, tuple[str, ...]] = {
+    "catalogued_source": ("source",),
+    "query": ("query",),
+    "approved_intake": ("ref",),
+    "pinned_revision": ("source", "path"),
+    "original_page_targets": ("pages", "claim"),
+    "staged_item": ("item_id", "item_ids"),
 }
 
-# A paper-page variant of the reviewed evidence-to-claim path, using the same
-# expansion, per-step registry gates and checkpoint machinery.
-from dataclasses import replace as _macro_variant
-MACROS['source_pages_to_claim_check'] = _macro_variant(
-    MACROS['evidence_to_claim_check'], id='source_pages_to_claim_check',
-    purpose='Read a located generated section, then check the original PDF pages',
-    steps=(MacroStep('read_source_section', {'source': '$source', 'pages': '$pages'}),
-           MacroStep('verify_source_pages', {'source': '$source', 'pages': '$pages', 'claim': '$claim'})),
-    preconditions=('catalogued_source', 'original_page_targets'))
+
+def _load_macros() -> dict[str, Macro]:
+    import yaml as _yaml
+    from importlib import resources as _resources
+    out: dict[str, Macro] = {}
+    folder = _resources.files("resource_librarian") / "standard" / "workflows"
+    for child in sorted(folder.iterdir(), key=lambda c: c.name):
+        if not child.name.endswith((".yaml", ".yml")):
+            continue
+        data = _yaml.safe_load(child.read_text(encoding="utf-8")) or {}
+        spec = data.get("macro")
+        if not isinstance(spec, dict):
+            continue
+        steps = []
+        for step in data.get("steps") or []:
+            args = {}
+            for key, value in (step.get("args") or {}).items():
+                args[key] = ("$" + str(value["from"]).split(".", 1)[1]
+                             if isinstance(value, dict) else str(value))
+            steps.append(MacroStep(str(step["action"]), args))
+        defaults = {name: str(field["default"]) for name, field in (data.get("inputs") or {}).items()
+                    if isinstance(field, dict) and field.get("default") not in (None, "")}
+        macro_id = str(data["workflow"]).replace("-", "_")
+        out[macro_id] = Macro(macro_id, int(spec.get("version", 1)), str(data.get("purpose") or ""),
+                              tuple(steps), bool(spec.get("write_capable")),
+                              tuple(spec.get("preconditions") or ()),
+                              tuple(spec.get("checkpoints") or ()), defaults)
+    return out
+
+
+MACROS = _load_macros()
 
 
 def macro_plan(macro_id: str) -> dict[str, Any]:
@@ -680,14 +694,14 @@ def macro_plan(macro_id: str) -> dict[str, Any]:
             "steps": [{"tool": s.tool, "arguments": s.arguments} for s in macro.steps]}
 
 
-def _resolve(value: str, inputs: dict[str, Any]) -> Any:
+def _resolve(value: str, inputs: dict[str, Any], defaults: dict[str, str] | None = None) -> Any:
     if value.startswith("$"):
-        # The search tool's safe, documented default is ``donor``.  Keeping
-        # it here makes a terse macro invocation valid without silently
-        # broadening its search intent.
-        if value == "$intent":
-            return inputs.get("intent") or "donor"
-        return inputs.get(value[1:], "")
+        name = value[1:]
+        # A declared default (search-and-judge's intent: donor) fills a missing or empty
+        # input, so a terse invocation never silently broadens what a step does.
+        if defaults and name in defaults:
+            return inputs.get(name) or defaults[name]
+        return inputs.get(name, "")
     return value
 
 
@@ -695,7 +709,7 @@ def _expanded_plan(macro: Macro, inputs: dict[str, Any]) -> dict[str, Any]:
     """The exact registry calls a macro would make for this invocation."""
     plan = macro_plan(macro.id)
     plan["steps"] = [{"tool": step.tool,
-                      "arguments": {key: _resolve(value, inputs)
+                      "arguments": {key: _resolve(value, inputs, macro.defaults)
                                     for key, value in step.arguments.items()}}
                      for step in macro.steps]
     return plan
@@ -703,14 +717,7 @@ def _expanded_plan(macro: Macro, inputs: dict[str, Any]) -> dict[str, Any]:
 
 def _precondition_error(macro: Macro, inputs: dict[str, Any]) -> str:
     """Check small, auditable input preconditions before any step runs."""
-    requirements = {
-        "catalogued_source": ("source",),
-        "query": ("query",),
-        "approved_intake": ("ref",),
-        "pinned_revision": ("source", "path"),
-        'original_page_targets': ('pages', 'claim'),
-        "staged_item": ("item_id", "item_ids"),
-    }
+    requirements = PRECONDITIONS
     missing: list[str] = []
     for condition in macro.preconditions:
         for key in requirements.get(condition, ()):
@@ -963,7 +970,8 @@ def run_macro(ctx: Context, macro_id: str, inputs: dict[str, Any]) -> dict[str, 
             # macro_run, while this fixed registered sequence expands it.  Each
             # contained call still receives its usual tier, broker, phase, budget
             # and document-lease checks.
-            args = {key: _resolve(value, inputs) for key, value in step.arguments.items()}
+            args = {key: _resolve(value, inputs, macro.defaults)
+                    for key, value in step.arguments.items()}
             # item_ids needs a list for the existing staging API.
             if step.tool == "staging_decide" and isinstance(args.get("item_ids"), str):
                 args["item_ids"] = [args["item_ids"]]

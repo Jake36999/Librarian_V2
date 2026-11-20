@@ -198,11 +198,34 @@ def render(phases, workflows, pipelines, macros) -> str:
     for p in pipelines:
         out += [f"### {p['name']}", "", f"_{p['purpose']}_", "", "```mermaid",
                 mermaid_steps(p["name"], p["steps"]), "```", ""]
-    out += ["## 5. Agent macros (`agent_runtime.MACROS`, a second step-sequencing mechanism)", "",
+    out += ["## 5. Agent macros", "",
+            "Workflows above with a `macro:` block. The Lead runs them in a session with "
+            "`macro_run`; one that can write waits for a person's approval of its exact "
+            "expanded plan.", "",
             "| Macro | Steps | Writes |", "|---|---|---|"]
     out += [f"| `{m['name']}` | {' → '.join(f'`{s}`' for s in m['steps'])} | "
             f"{'yes' if m['writes'] else 'no'} |" for m in macros]
     return "\n".join(out) + "\n"
+
+
+def write_canvas(folder: Path, text: str) -> Path:
+    """Write the canvas, unless a person has changed the one already there.
+
+    2026-11-20: a regeneration overwrote a canvas the owner had re-saved in Obsidian. The hash of
+    what this script last wrote is kept beside it; a canvas that no longer matches it (or one with
+    no record) is a person's, and is never replaced - the new map goes beside it instead. W2's safe
+    canvas service will replace this with pinned positions and a previewed, hash-checked commit."""
+    import hashlib
+    target, record = folder / "workflow-map.canvas", folder / ".workflow-map.canvas.sha256"
+    if target.is_file():
+        current = hashlib.sha256(target.read_bytes()).hexdigest()
+        ours = record.read_text(encoding="utf-8").strip() if record.is_file() else ""
+        if current != ours:
+            target = folder / "workflow-map.generated.canvas"
+    target.write_text(text, encoding="utf-8")
+    if target.name == "workflow-map.canvas":
+        record.write_text(hashlib.sha256(target.read_bytes()).hexdigest(), encoding="utf-8")
+    return target
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -214,13 +237,15 @@ def main(argv: list[str] | None = None) -> int:
     workflows, pipelines, macros = gather_yaml("workflows"), gather_yaml("pipelines"), gather_macros()
     (args.out / "WORKFLOW-MAP.md").write_text(render(phases, workflows, pipelines, macros),
                                               encoding="utf-8")
-    (args.out / "workflow-map.canvas").write_text(json.dumps(canvas(phases), indent=1),
-                                                  encoding="utf-8")
+    target = write_canvas(args.out, json.dumps(canvas(phases), indent=1))
     (args.out / "workflow-map.json").write_text(json.dumps(
         {"phases": phases, "workflows": workflows, "pipelines": pipelines, "macros": macros},
         indent=1), encoding="utf-8")
     print(f"wrote {args.out}: {sum(len(r) for r in phases.values())} phases, "
           f"{len(workflows)} workflows, {len(pipelines)} pipelines, {len(macros)} macros")
+    if target.name != "workflow-map.canvas":
+        print(f"workflow-map.canvas was changed by a person since it was generated, so it was "
+              f"left alone; the new map is in {target.name}")
     return 0
 
 

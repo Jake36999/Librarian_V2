@@ -1081,6 +1081,18 @@
    ]
   },
   {
+   "name": "evidence-to-claim-check",
+   "purpose": "Read a pinned source file before a claim check",
+   "steps": [
+    {
+     "id": "read",
+     "does": "read_source_file",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
    "name": "flag-sensitive",
    "purpose": "mark one staged source for a person's review as possibly dual-use",
    "steps": [
@@ -1147,6 +1159,36 @@
    ]
   },
   {
+   "name": "inspect-map-source",
+   "purpose": "Inspect a source then refresh its map",
+   "steps": [
+    {
+     "id": "inspect",
+     "does": "get_note",
+     "each": false,
+     "kind": "action"
+    },
+    {
+     "id": "refresh",
+     "does": "dik_rebuild",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "intake-to-stage",
+   "purpose": "Ingest one reference into reviewed staging",
+   "steps": [
+    {
+     "id": "ingest",
+     "does": "ingest",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
    "name": "review-conversation",
    "purpose": "find catalogued sources relevant to a snapshot of a conversation; writes nothing",
    "steps": [
@@ -1183,6 +1225,24 @@
    ]
   },
   {
+   "name": "review-staged-candidate",
+   "purpose": "Review a staged candidate, then make the selected decision",
+   "steps": [
+    {
+     "id": "review",
+     "does": "staging_review",
+     "each": false,
+     "kind": "action"
+    },
+    {
+     "id": "decide",
+     "does": "staging_decide",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
    "name": "review-staged",
    "purpose": "draft the unframed Bottom Line and run the sensitivity check for every staged source that has none yet (V1's draft_staging_promotions, declared)",
    "steps": [
@@ -1207,6 +1267,42 @@
     {
      "id": "intake",
      "does": "intake_run",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "search-and-judge",
+   "purpose": "Search then inspect the chosen source",
+   "steps": [
+    {
+     "id": "search",
+     "does": "search",
+     "each": false,
+     "kind": "action"
+    },
+    {
+     "id": "inspect",
+     "does": "get_note",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "source-pages-to-claim-check",
+   "purpose": "Read a located generated section, then check the original PDF pages",
+   "steps": [
+    {
+     "id": "read",
+     "does": "read_source_section",
+     "each": false,
+     "kind": "action"
+    },
+    {
+     "id": "verify",
+     "does": "verify_source_pages",
      "each": false,
      "kind": "action"
     }
@@ -1289,11 +1385,36 @@
  ],
  "macros": [
   {
+   "name": "evidence_to_claim_check",
+   "purpose": "Read a pinned source file before a claim check",
+   "steps": [
+    "read_source_file"
+   ],
+   "writes": false
+  },
+  {
    "name": "inspect_map_source",
    "purpose": "Inspect a source then refresh its map",
    "steps": [
     "get_note",
     "dik_rebuild"
+   ],
+   "writes": true
+  },
+  {
+   "name": "intake_to_stage",
+   "purpose": "Ingest one reference into reviewed staging",
+   "steps": [
+    "ingest"
+   ],
+   "writes": true
+  },
+  {
+   "name": "review_staged_candidate",
+   "purpose": "Review a staged candidate, then make the selected decision",
+   "steps": [
+    "staging_review",
+    "staging_decide"
    ],
    "writes": true
   },
@@ -1305,31 +1426,6 @@
     "get_note"
    ],
    "writes": false
-  },
-  {
-   "name": "intake_to_stage",
-   "purpose": "Ingest one reference into reviewed staging",
-   "steps": [
-    "ingest"
-   ],
-   "writes": true
-  },
-  {
-   "name": "evidence_to_claim_check",
-   "purpose": "Read a pinned source file before a claim check",
-   "steps": [
-    "read_source_file"
-   ],
-   "writes": false
-  },
-  {
-   "name": "review_staged_candidate",
-   "purpose": "Review a staged candidate, then make the selected decision",
-   "steps": [
-    "staging_review",
-    "staging_decide"
-   ],
-   "writes": true
   },
   {
    "name": "source_pages_to_claim_check",

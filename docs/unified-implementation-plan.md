@@ -7333,3 +7333,15 @@ Tests: `tests/test_phase_declaration.py`.
 Lesson: the regenerated `workflow-map.canvas` overwrote a copy the owner had re-saved in Obsidian, unchecked. W2's safe canvas writes (pinned nodes, preview before commit) exist to prevent exactly this.
 
 Left in W1: the macros as YAML workflows (OP15), and the dual-orchestrator step fields.
+
+### W1, part 2: the agent macros are YAML workflows (2026-11-20)
+
+OP15: two mechanisms sequenced steps, the 6 agent macros in Python and the YAML workflows.
+- **One definition language.** Each macro is now a workflow in `standard/workflows/` with a `macro:` block (`version`, `write_capable`, `preconditions`, `checkpoints`). `workflows.validate` checks it like any workflow, against the closed action registry and each action's own arguments; the macros never had that check. The block also confines a macro step to `{id, action, args}`, with arguments that are literals or `{from: inputs.<name>}`, which is exactly what the macro engine expands. Preconditions are a named closed set (`agent_runtime.PRECONDITIONS`).
+- **`agent_runtime.MACROS` is built from those files.** A declared input default replaces the hard-coded `$intent` case.
+- **The engine is kept.** `run_macro`'s approval checkpoint per exact expanded plan, its step journal and outcome-unknown recovery, one run at a time, and its scoped bundle expansion are the macro's own safety semantics. Moving them onto the generic workflow runner would trade proven behaviour for uniformity.
+- **Unchanged.** A dump of every macro from `HEAD` and from this tree is identical: plan, expanded plans for sample inputs, preconditions, and every approval-checkpoint scope digest. Existing approvals in libraries stay valid.
+- **The validator also reports something new:** `review-staged-candidate`'s decision step writes only in Assess, Ingest, Judge and Seed.
+- **`scripts/workflow_map.py` no longer overwrites a canvas a person has changed.** It keeps the hash of what it last wrote; a canvas that differs, or has no record, is left alone, and the new map goes to `workflow-map.generated.canvas`.
+
+Left in W1: the dual-orchestrator step fields (`depends_on`, `side_effects`, `acceptance_criteria`, `compensation`).

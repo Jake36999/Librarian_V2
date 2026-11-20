@@ -1,0 +1,12 @@
+workflow: inspect-map-source
+purpose: Inspect a source then refresh its map
+macro: {version: 1, write_capable: true, preconditions: [catalogued_source], checkpoints: [write_conflict]}
+inputs:
+  source: {type: string}
+steps:
+  - id: inspect
+    action: get_note
+    args: {name: {from: inputs.source}}
+  - id: refresh
+    action: dik_rebuild
+    args: {source: {from: inputs.source}}

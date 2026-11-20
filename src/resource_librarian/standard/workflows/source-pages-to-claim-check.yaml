@@ -1,0 +1,14 @@
+workflow: source-pages-to-claim-check
+purpose: Read a located generated section, then check the original PDF pages
+macro: {version: 1, write_capable: false, preconditions: [catalogued_source, original_page_targets]}
+inputs:
+  source: {type: string}
+  pages: {type: string}
+  claim: {type: string}
+steps:
+  - id: read
+    action: read_source_section
+    args: {source: {from: inputs.source}, pages: {from: inputs.pages}}
+  - id: verify
+    action: verify_source_pages
+    args: {source: {from: inputs.source}, pages: {from: inputs.pages}, claim: {from: inputs.claim}}

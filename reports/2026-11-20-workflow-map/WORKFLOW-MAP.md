@@ -179,6 +179,17 @@ flowchart LR
   s --> n0
 ```
 
+### evidence-to-claim-check
+
+_Read a pinned source file before a claim check_
+
+```mermaid
+flowchart LR
+  s["evidence-to-claim-check"]
+  n0["read: read_source_file"]
+  s --> n0
+```
+
 ### flag-sensitive
 
 _mark one staged source for a person's review as possibly dual-use_
@@ -236,6 +247,30 @@ flowchart LR
   n0 --> n1
 ```
 
+### inspect-map-source
+
+_Inspect a source then refresh its map_
+
+```mermaid
+flowchart LR
+  s["inspect-map-source"]
+  n0["inspect: get_note"]
+  s --> n0
+  n1["refresh: dik_rebuild"]
+  n0 --> n1
+```
+
+### intake-to-stage
+
+_Ingest one reference into reviewed staging_
+
+```mermaid
+flowchart LR
+  s["intake-to-stage"]
+  n0["ingest: ingest"]
+  s --> n0
+```
+
 ### review-conversation
 
 _find catalogued sources relevant to a snapshot of a conversation; writes nothing_
@@ -269,6 +304,19 @@ flowchart LR
   s --> n0
 ```
 
+### review-staged-candidate
+
+_Review a staged candidate, then make the selected decision_
+
+```mermaid
+flowchart LR
+  s["review-staged-candidate"]
+  n0["review: staging_review"]
+  s --> n0
+  n1["decide: staging_decide"]
+  n0 --> n1
+```
+
 ### review-staged
 
 _draft the unframed Bottom Line and run the sensitivity check for every staged source that has none yet (V1's draft_staging_promotions, declared)_
@@ -291,6 +339,32 @@ flowchart LR
   s["run-queue"]
   n0["intake: intake_run"]
   s --> n0
+```
+
+### search-and-judge
+
+_Search then inspect the chosen source_
+
+```mermaid
+flowchart LR
+  s["search-and-judge"]
+  n0["search: search"]
+  s --> n0
+  n1["inspect: get_note"]
+  n0 --> n1
+```
+
+### source-pages-to-claim-check
+
+_Read a located generated section, then check the original PDF pages_
+
+```mermaid
+flowchart LR
+  s["source-pages-to-claim-check"]
+  n0["read: read_source_section"]
+  s --> n0
+  n1["verify: verify_source_pages"]
+  n0 --> n1
 ```
 
 ### sync-vault
@@ -340,13 +414,15 @@ flowchart LR
   n2 --> n3
 ```
 
-## 5. Agent macros (`agent_runtime.MACROS`, a second step-sequencing mechanism)
+## 5. Agent macros
+
+Workflows above with a `macro:` block. The Lead runs them in a session with `macro_run`; one that can write waits for a person's approval of its exact expanded plan.
 
 | Macro | Steps | Writes |
 |---|---|---|
-| `inspect_map_source` | `get_note` → `dik_rebuild` | yes |
-| `search_and_judge` | `search` → `get_note` | no |
-| `intake_to_stage` | `ingest` | yes |
 | `evidence_to_claim_check` | `read_source_file` | no |
+| `inspect_map_source` | `get_note` → `dik_rebuild` | yes |
+| `intake_to_stage` | `ingest` | yes |
 | `review_staged_candidate` | `staging_review` → `staging_decide` | yes |
+| `search_and_judge` | `search` → `get_note` | no |
 | `source_pages_to_claim_check` | `read_source_section` → `verify_source_pages` | no |

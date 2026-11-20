@@ -295,14 +295,59 @@ def _param_schema(tool: str) -> dict[str, dict[str, Any]]:
                      "required": p.default is p.empty} for p in spec.parameters()}
 
 
+def _macro_problems(d: Definition) -> list[str]:
+    """A workflow that is also an agent macro (W1, 2026-11-20): one fixed sequence of actions the
+    Lead may run in a session with `macro_run`, which asks a person first when it can write.
+
+    `macro: {version, write_capable, preconditions, checkpoints}`. Its steps are plain actions
+    whose arguments are literal strings or `{from: inputs.<name>}`: the macro engine expands
+    exactly that, so nothing else may appear."""
+    from .agent_runtime import PRECONDITIONS
+    errors: list[str] = []
+    spec = d.data.get("macro")
+    if d.kind != "workflow":
+        return ["`macro` belongs on a workflow, not a pipeline"]
+    if not isinstance(spec, dict):
+        return ["`macro` is {version, write_capable, preconditions, checkpoints}"]
+    for key in set(spec) - {"version", "write_capable", "preconditions", "checkpoints"}:
+        errors.append(f"macro: unknown key {key!r}")
+    if not isinstance(spec.get("version"), int) or spec["version"] < 1:
+        errors.append("macro.version is a whole number from 1")
+    if not isinstance(spec.get("write_capable"), bool):
+        errors.append("macro.write_capable is true or false")
+    for key in ("preconditions", "checkpoints"):
+        value = spec.get(key, [])
+        if not isinstance(value, list) or not all(isinstance(v, str) and v for v in value):
+            errors.append(f"macro.{key} is a list of names")
+    unknown = sorted(set(spec.get("preconditions") or []) - set(PRECONDITIONS))
+    if unknown:
+        errors.append(f"macro.preconditions: unknown {unknown} (known: {sorted(PRECONDITIONS)})")
+    for i, step in enumerate(d.data.get("steps") or []):
+        if not isinstance(step, dict):
+            continue
+        where = f"macro step {step.get('id') or i + 1}"
+        if set(step) - {"id", "action", "args"}:
+            errors.append(f"{where}: a macro step is {{id, action, args}} only")
+        for name, value in (step.get("args") or {}).items():
+            ok = isinstance(value, str) or (
+                isinstance(value, dict) and set(value) == {"from"}
+                and str(value["from"]).startswith("inputs.") and str(value["from"]).count(".") == 1)
+            if not ok:
+                errors.append(f"{where}: argument {name!r} is a literal string or "
+                              f"{{from: inputs.<name>}}")
+    return errors
+
+
 def validate(d: Definition, library: Library, _seen: tuple[str, ...] = ()) -> dict[str, Any]:
     """Every problem at once, so a definition can be fixed in one pass."""
     errors: list[str] = []
     warnings: list[str] = []
     data = d.data
-    allowed_top = {d.kind, "purpose", "inputs", "steps", "outputs", "tier"}
+    allowed_top = {d.kind, "purpose", "inputs", "steps", "outputs", "tier", "macro"}
     for key in set(data) - allowed_top:
         errors.append(f"unknown key {key!r} (allowed: {sorted(allowed_top)})")
+    if "macro" in data:
+        errors.extend(_macro_problems(d))
     if not str(data.get("purpose") or "").strip():
         errors.append("a definition states its `purpose`")
     inputs = data.get("inputs") or {}

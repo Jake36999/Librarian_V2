@@ -1,0 +1,10 @@
+workflow: evidence-to-claim-check
+purpose: Read a pinned source file before a claim check
+macro: {version: 1, write_capable: false, preconditions: [catalogued_source, pinned_revision]}
+inputs:
+  source: {type: string}
+  path: {type: string}
+steps:
+  - id: read
+    action: read_source_file
+    args: {source: {from: inputs.source}, path: {from: inputs.path}}
