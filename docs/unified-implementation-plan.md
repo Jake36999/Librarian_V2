@@ -7287,3 +7287,21 @@ Owner, 20 November: translate the models' workflows into written use cases and d
   - no published views;
   - two step-sequencing mechanisms;
   - phase gates kept as code rather than data.
+
+### The plan forward is proposed, with what MARK XLVIII brings (2026-11-20)
+
+`docs/proposals/plan-forward-2026-11.md` sets out eight workstreams, W1–W8. Each names the open points it closes (OP1–OP16 in `reports/2026-11-20-workflow-map/USE-CASES.md`), what it reuses, and how we know it is done:
+1. W1: workflows as data (phases, gates and macros).
+2. W2: a canvas service, and canvas ⇄ workflow.
+3. W3: change-impact detection.
+4. W4: published views, then the query surface.
+5. W5: relations as checked claims with trust tiers.
+6. W6: an organisation workflow.
+7. W7: research-session fixes.
+8. W8: topic filing, then the visuals.
+
+It follows a read of the owner's earlier harness, MARK XLVIII (MIT, commit `281dc41`). The owner is retiring it, so the boundary is explicit: no import, runtime call, shared file or followed path. Anything reused is copied in with its tests and a provenance header, and the designs are recorded in the proposal's Appendix A. From it the proposal takes:
+- **To lift:** its standard-library canvas modules (`canvas_document`, `canvas_layout`).
+- **To adopt:** the safe preview-then-commit canvas flow; the canvas-planning design (node directives, least-privilege roles, fingerprint-bound approval); the dual-orchestrator step fields our workflows lack; and its typed relation vocabulary.
+
+None of it is plan work until the owner accepts a workstream.
