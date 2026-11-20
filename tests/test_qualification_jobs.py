@@ -141,3 +141,39 @@ def test_exact_adapter_expectation_is_a_hard_qualification_dependency(served, mo
     after = app._qualification_fingerprints("preset-openai", "example-model", "lead")
     assert before["compatibility"] != after["compatibility"]
 
+
+
+def test_two_cores_sharing_the_evaluation_file_keep_each_others_runs(tmp_path):
+    """2026-11-20: each Core loaded model-evaluations.json once and wrote back its whole copy,
+    so qualifying five libraries in a row kept only the last library's runs."""
+    from resource_librarian.hosts import QualificationStore
+    path = tmp_path / "model-evaluations.json"
+    a, b = QualificationStore(path), QualificationStore(path)       # two Cores, loaded together
+    a.record(host_id="h", model_id="m", role="clerk", level="L0", outcome="pass",
+             compatibility_fingerprint="fa", behavior_fingerprint="ba")
+    b.record(host_id="h", model_id="m", role="scribe", level="L0", outcome="pass",
+             compatibility_fingerprint="fb", behavior_fingerprint="bb")
+    fresh = QualificationStore(path)
+    assert {r.role for r in fresh.runs.values()} == {"clerk", "scribe"}
+    assert a.get("h", "m", "scribe") is not None                    # a sees b's write
+
+
+def test_another_librarys_contract_does_not_invalidate_this_ones_evidence(tmp_path):
+    """Libraries can compute different fingerprints for one route and share the file. A record
+    left by another library's contract is re-derived from this contract's own runs, not
+    declared hard-invalid (which demoted the Clerk and switched its drafts off)."""
+    from resource_librarian.hosts import QualificationStore
+    store = QualificationStore(tmp_path / "model-evaluations.json")
+    for level in ("L0", "L1"):
+        store.record(host_id="h", model_id="m", role="clerk", level=level, outcome="pass",
+                     compatibility_fingerprint="mine", behavior_fingerprint="b")
+    store.record(host_id="h", model_id="m", role="clerk", level="L0", outcome="pass",
+                 compatibility_fingerprint="theirs", behavior_fingerprint="b")
+    assert store.get("h", "m", "clerk").compatibility_fingerprint == "theirs"
+    assert store.route_change_kind(host_id="h", model_id="m", role="clerk",
+                                   compatibility_fingerprint="mine", behavior_fingerprint="b") == ""
+    mine = store.get("h", "m", "clerk")
+    assert mine.compatibility_fingerprint == "mine" and not mine.invalidation
+    # A contract with no runs of its own is still a hard change.
+    assert store.route_change_kind(host_id="h", model_id="m", role="clerk",
+                                   compatibility_fingerprint="new", behavior_fingerprint="b") == "hard"

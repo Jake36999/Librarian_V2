@@ -7136,3 +7136,32 @@ Test: `test_folder_review.py::test_a_change_inside_an_excluded_folder_blocks_no_
   surveyed again.
 - The fix is to rebuild only the groups an accept touches, which is a Geo-Grapher
   `apply_review` change.
+
+### Qualification evidence survives several Cores sharing one file (2026-11-20)
+
+**Found.** Attaching E:/DataManagement to Resource-Library failed: every folder check came back
+`FOLDER_DRAFT_FAILED`, because the Clerk route counted as unqualified ten minutes after it
+passed. Two faults in `hosts.QualificationStore`, whose file (`model-evaluations.json`) is
+shared by every running Core:
+1. **Lost updates.** Each Core loaded the file once and wrote back its whole in-memory copy, so
+   the last Core to save erased the others' runs. Five libraries qualified in a row kept only
+   the last library's: 41 runs on file instead of 71.
+2. **One record per route, many contracts.** The summary record was keyed by
+   host/model/role. A library whose fingerprint differs then saw "hard compatibility
+   fingerprint changed", demoted the route to experimental and overwrote the record, which
+   switched the next library's Clerk off in turn. Runs were already filed per fingerprint.
+
+**Fixed.**
+- `_save` takes a cross-process file lock, re-reads the file and merges: runs by id, and per
+  route the most recently updated record. `get` refreshes when the file changed.
+- `route_change_kind` and `invalidate_route` first check whether this caller's contract has
+  runs of its own. If it does, they re-derive the record from those runs instead of declaring
+  it hard-invalid.
+- `invalidate_route` and `annotate_route` stamp `updated_at`.
+
+All five Cores were restarted and re-qualified. Nonlinear, Resource-Library, Parallax and
+ACCEPT-02 each show Clerk, Scribe and helper screened at once.
+
+Tests (`test_qualification_jobs.py`): two stores on one file keep each other's runs; another
+contract's record does not invalidate this contract's evidence, while a contract with no runs
+is still a hard change.

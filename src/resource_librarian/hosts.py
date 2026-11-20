@@ -8,6 +8,7 @@ versioned evidence says so.
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import hmac
 import json
@@ -767,38 +768,117 @@ def fingerprints(*, protocol: str, tool_schema: Any, response_contract: Any,
     }
 
 
+@contextlib.contextmanager
+def _file_lock(path: Path, timeout: float = 30.0):
+    """A cross-process lock on `path` (created if missing), held for the block."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle = open(path, "a+b")
+    try:
+        if os.name == "nt":
+            import msvcrt
+            handle.seek(0)
+            if not handle.read(1):
+                handle.write(b"0"); handle.flush()
+            handle.seek(0)
+            deadline = time.monotonic() + timeout
+            while True:
+                try:
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError:
+                    if time.monotonic() > deadline:
+                        raise TimeoutError(f"{path} stayed locked for {timeout:.0f}s")
+                    time.sleep(0.05)
+            try:
+                yield
+            finally:
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+        else:  # pragma: no cover - POSIX CI
+            import fcntl
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+    finally:
+        handle.close()
+
+
 class QualificationStore:
     """Append-only-ish local evidence store. Release evidence is read separately."""
+
+    # One file shared by every running Core (one per library). Each Core used to load it once and
+    # write back its whole in-memory copy, so the last Core to save erased the runs the others had
+    # just recorded (2026-11-20: five libraries qualified in a row kept only the last one's runs).
+    # Saves now merge under a cross-process lock, and reads pick up other Cores' writes.
 
     def __init__(self, path: Path | None = None) -> None:
         self.path = path or config_dir() / "model-evaluations.json"
         self.runs: dict[str, EvaluationRun] = {}
         self.qualifications: dict[str, Qualification] = {}
+        self._seen: tuple[int, int] | None = None
         self._load()
 
+    def _stamp(self) -> tuple[int, int] | None:
+        try:
+            stat = self.path.stat()
+        except OSError:
+            return None
+        return stat.st_mtime_ns, stat.st_size
+
     def _load(self) -> None:
+        """Merge the file into memory: every run (runs are immutable, keyed by id) and, per route,
+        the qualification record updated most recently."""
+        stamp = self._stamp()
         try:
             data = json.loads(self.path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
+            self._seen = stamp
             return
         for row in data.get("runs", []) if isinstance(data, dict) else []:
             try:
                 run = EvaluationRun(**row)
-                self.runs[run.id] = run
+                self.runs.setdefault(run.id, run)
             except TypeError:
                 continue
         for row in data.get("qualifications", []) if isinstance(data, dict) else []:
             try:
                 q = Qualification(**row)
-                self.qualifications[q.key] = q
             except TypeError:
                 continue
+            mine = self.qualifications.get(q.key)
+            if mine is None or (q.updated_at or "") > (mine.updated_at or ""):
+                self.qualifications[q.key] = q
+        self._seen = stamp
+
+    def _refresh(self) -> None:
+        if self._stamp() != self._seen:
+            self._load()
 
     def _save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        payload = {"schema_version": 1, "runs": [asdict(r) for r in self.runs.values()],
-                   "qualifications": [asdict(q) for q in self.qualifications.values()]}
-        atomic_write_text(self.path, json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
+        with _file_lock(self.path.with_name(self.path.name + ".lock")):
+            self._load()                     # merge what other Cores wrote since we last read
+            payload = {"schema_version": 1, "runs": [asdict(r) for r in self.runs.values()],
+                       "qualifications": [asdict(q) for q in self.qualifications.values()]}
+            atomic_write_text(self.path, json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
+            self._seen = self._stamp()
+
+    def _for_contract(self, host_id: str, model_id: str, role: str, compatible: str,
+                      behavior: str) -> Qualification | None:
+        """The record for this route as this caller's contract sees it. Libraries can compute
+        different fingerprints for one route (a library's own model cards feed the adapter
+        contract), and they share this file: when the stored record is another contract's but
+        runs exist for this one, derive from those runs instead of declaring it invalid."""
+        q = self.get(host_id, model_id, role)
+        if q is None or q.compatibility_fingerprint == compatible:
+            return q
+        if any((r.host_id, r.model_id, r.role, r.compatibility_fingerprint) ==
+               (host_id, model_id, role, compatible) for r in self.runs.values()):
+            q = self._derive(host_id, model_id, role, compatible, behavior)
+            self._save()
+        return q
 
     def record(self, *, host_id: str, model_id: str, role: str, level: str,
                outcome: str, compatibility_fingerprint: str, behavior_fingerprint: str,
@@ -863,6 +943,7 @@ class QualificationStore:
         return bool(q and q.status in ("verified_local", "verified_release") and q.fresh())
 
     def get(self, host_id: str, model_id: str, role: str) -> Qualification | None:
+        self._refresh()
         return self.qualifications.get("|".join((host_id, model_id, role)))
 
     def route_change_kind(self, *, host_id: str, model_id: str, role: str,
@@ -875,7 +956,8 @@ class QualificationStore:
         stale.  Keeping it separate from ``invalidate_route`` preserves that
         method's simple backwards-compatible return value.
         """
-        q = self.get(host_id, model_id, role)
+        q = self._for_contract(host_id, model_id, role, compatibility_fingerprint,
+                               behavior_fingerprint)
         if q is None:
             return ""
         if q.compatibility_fingerprint != compatibility_fingerprint:
@@ -901,6 +983,7 @@ class QualificationStore:
         q = self.get(host_id, model_id, role)
         if q is not None:
             q.invalidation = str(invalidation)[:500]
+            q.updated_at = now_iso()
             self._save()
         return q
 
@@ -957,7 +1040,8 @@ class QualificationStore:
         route's fingerprint to every qualification would falsely invalidate a
         whole person's model registry on every settings visit.
         """
-        q = self.get(host_id, model_id, role)
+        q = self._for_contract(host_id, model_id, role, compatibility_fingerprint,
+                               behavior_fingerprint)
         if q is None:
             return None
         if q.compatibility_fingerprint != compatibility_fingerprint:
@@ -965,10 +1049,12 @@ class QualificationStore:
             q.invalidation = "hard compatibility fingerprint changed"
             q.compatibility_fingerprint = compatibility_fingerprint
             q.behavior_fingerprint = behavior_fingerprint
+            q.updated_at = now_iso()
             self._save()
         elif q.behavior_fingerprint != behavior_fingerprint:
             q.invalidation = "advisory_stale: behavior fingerprint changed"
             q.behavior_fingerprint = behavior_fingerprint
+            q.updated_at = now_iso()
             self._save()
         return q
 
