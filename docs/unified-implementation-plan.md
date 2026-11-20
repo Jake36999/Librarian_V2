@@ -7165,3 +7165,23 @@ ACCEPT-02 each show Clerk, Scribe and helper screened at once.
 Tests (`test_qualification_jobs.py`): two stores on one file keep each other's runs; another
 contract's record does not invalidate this contract's evidence, while a contract with no runs
 is still a hard change.
+
+### A person's message resumes a parked thread (2026-11-20)
+
+**Found.** An unattended deeper-research run in Resource-Library (owner's request) produced
+nothing in 30 turns.
+- The Lead opened its first brief, and `open_brief` asked the person for disqualifiers
+  (`BRIEF_REQUIRED`). Nobody answered, so after 600 s the thread parked.
+- Every later "continue" was then refused `SESSION_REQUIRED: resume_session first`, but
+  `resume_session` is in no phase bundle. The Lead called `advance` 29 times, each "ok", and
+  stayed parked. It cost $0.11.
+
+**Fixed.** `App.chat` resumes the attached thread when it is parked, before the turn runs
+(`_resume_if_parked`, through the person's own `resume_session`). The person writing to the
+thread is the resume. Test: `test_app.py::test_a_persons_message_resumes_a_parked_thread`.
+
+**For the run.**
+- The project now holds standing disqualifiers, the shared constraints from
+  `RESEARCH-OBJECTIVES.md`, so its briefs open without asking.
+- The run's driver answers any question as "the person is away; decide from the brief and
+  record what you assumed".

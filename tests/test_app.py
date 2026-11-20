@@ -1192,3 +1192,27 @@ def test_a_tool_change_outside_a_roles_bundle_keeps_its_qualification(vault, mon
         assert app._role_tools("lead") is None
     finally:
         app.close_runtime()
+
+
+def test_a_persons_message_resumes_a_parked_thread(served):
+    """2026-11-20: a research thread parked when a question went unanswered. Every later
+    "continue" was refused SESSION_REQUIRED, because resume_session is in no phase bundle, and
+    30 turns went nowhere. The person writing to the thread now resumes it."""
+    from resource_librarian.session import SessionStore
+    app, client, model = served
+    assert client.post("/api/tiers", {"tiers": [{"provider": "deepinfra", "model": "m1"}],
+                                      "override": "test"})[0] == 200
+    model.replies = [Reply(tool_calls=[ToolCall("1", "open_session", {"purpose": "explore",
+                                                                       "question": "hosts"})]),
+                     Reply(text="Opened.")]
+    client.post("/api/chat", {"text": "explore hosts"})
+    done = wait_for(app, "turn_done")
+    session_id = done["session"]["session"]
+    store = SessionStore(app.vault)
+    store.append(session_id, {"type": "status", "status": "parked",
+                              "note": "question q1 went unanswered"})
+    assert store.load(session_id).status == "parked"
+    model.replies = [Reply(text="Carrying on.")]
+    client.post("/api/chat", {"text": "continue"})
+    wait_for(app, "turn_done", after=done["seq"])
+    assert store.load(session_id).status == "open"
