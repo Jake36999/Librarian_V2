@@ -345,7 +345,7 @@ KINDS: dict[str, Kind] = {k.name: k for k in (
     # and validates it (`claim_run.validate`), and only a person ever runs it.
     Kind("review", "check whether a passage supports a claim made from it",
          {"type": "object", "required": ["verdict", "reason"], "properties": {
-             "verdict": {"type": "string", "enum": ["holds", "fails", "unsupported"]},
+             "verdict": {"type": "string", "enum": ["holds", "fails", "unsupported", "unreadable"]},
              "counter_quote": {"type": "string", "maxLength": 400},
              "reason": {"type": "string", "maxLength": 300},
              "failing_input": {"type": "object", "properties": {
@@ -787,6 +787,8 @@ def review(claim: str, quote: str, passage: str) -> Task:
         "out of its context. Copy into `counter_quote` the exact words from the passage "
         "that show it; the quote is checked, and a 'fails' without one is not counted.\n"
         "- 'unsupported': the passage says nothing either way about what the claim asserts.\n"
+        "- 'unreadable': the claim itself is not a coherent sentence a reader could check "
+        "(garbled words, word salad, cut off). No counter_quote is needed; say so in `reason`.\n"
         "`reason`: one sentence.\n"
         "`failing_input`: only when the claim is about what one function in a code "
         "repository does, the passage shows that function, and one call to it would show "

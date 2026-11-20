@@ -92,6 +92,22 @@ def test_a_kept_challenge_is_shown_and_only_a_person_promotes_it(library):
     assert promoted["promoted"] is False and promoted["question_id"]
 
 
+def test_an_unreadable_claim_is_sent_back_even_with_a_rebuttal(library):
+    """2026-11-20: an insight report was staged with a word-salad claim over a verbatim quote."""
+    reviewing(library)
+    m = Model(library)
+    endpoint = reviewer("unreadable")
+    m.ctx.extras["clerk"] = endpoint
+    to_synthesise(m)
+    garbled = {**CLAIM, "text": "framing two-step say plus merge across as can score before",
+               "rebuttal": "it is fine"}
+    out = m("draft_offering", title="Host Watch Starter", summary=SUMMARY, claims=[garbled])
+    assert out["refused"] == "REVIEW_CHALLENGED" and "not a readable sentence" in out["detail"]
+    assert not list((library.librarian / "staging" / "offerings").glob("*.md"))
+    asked = [p for p in endpoint.payloads if p["task"] == "review"][0]
+    assert "'unreadable'" in asked["user"] or "'unreadable'" in asked.get("system", "")
+
+
 def test_a_fails_without_a_counter_quote_from_the_passage_is_not_counted(library):
     reviewing(library)
     m = Model(library)

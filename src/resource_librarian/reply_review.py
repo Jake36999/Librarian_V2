@@ -164,7 +164,7 @@ def review_reply(vault: Vault, reply: str, endpoint: clerk.Endpoint | None,
             partly.append({"claim": claim, **seen,
                            "reason": f"not found in the first {NOTE_CHARS} characters checked; "
                                      f"the rest of the note was not read"})
-        elif verdict in ("fails", "unsupported"):
+        elif verdict in ("fails", "unsupported", "unreadable"):
             # `unsupported`: the note is silent on it, so no quote can show that. It
             # is said as "not found in the note", never as a contradiction.
             row = {"claim": claim, "note": Path(rel).stem, **seen, "verdict": verdict,

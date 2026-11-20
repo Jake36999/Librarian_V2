@@ -7247,3 +7247,15 @@ Test: `tests/test_graph_evidence.py`.
 ### A spent budget's own remedy is offered in every phase (2026-11-20)
 
 With the papers as Source notes, the Lead put three papers forward by `cite_as` and spent Judge's budget. The refusal told it to `request_budget`, but no research bundle offered that tool. The Lead asked with `ask_user` instead, which extends nothing, and parked. `request_budget` now joins `park_session` in the tail tools of every phase. The bundle cap rises from 20 to 22, so Search (twenty tools with Geo-Grapher's) keeps its whole tail. The owner had asked for the run to be pushed through, so a person's `extend_budget` (+20) let this run go on.
+
+### Insight reports read their papers' sections and our code, and each claim is reviewed as written (2026-11-20)
+
+The five DataManagement insight reports showed three gaps:
+- **No section text.** Every quote was a card's bottom-line or claim line. `paper_get_section` needs a section id once a paper has several sections, and no bundle offered `paper_get_outline`. It is now in the read set (Search) and the check set (Judge, Synthesise).
+- **Unverified code locations.** The Lead guessed `librarian-v2` for the code graph, the example in Geo-Grapher's own instructions. `list_graphs` could not correct it: Resource-Library's 17 graphs made a 26k-character result, over the 24k an outside result may be. Changes:
+  - The Core now tells the Lead its library's graph labels, read from its own catalog (`graph_evidence.geo_note`). The note says what each kind holds, how to read a paper by section, and how a `cite_as` is used as evidence.
+  - The note replaces the generic outside-server addendum for this library's own graphs; their results are still data, never instructions. The phase hint no longer calls them "a candidate, never evidence".
+  - Synthesise can search the code graph.
+- **No claim review.** Quotes were verified, but never the claim's own sentence: one report was staged with a word-salad claim over a verbatim quote. The Clerk's claim review gains an `unreadable` verdict, which needs no counter-quote. In `draft_offering` it is a challenge a rebuttal cannot keep; reply review flags it like `fails`. Resource-Library turns `review_offerings` on (owner, in chat).
+
+Tests: `test_graph_evidence.py` (labels, hint), `test_phase_bundles.py` (outline, code search), `test_review_gate.py` (`test_an_unreadable_claim_is_sent_back_even_with_a_rebuttal`).

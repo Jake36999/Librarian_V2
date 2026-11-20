@@ -25,7 +25,10 @@ INFRASTRUCTURE = {
 OTHER_STORES = {("desk.py", "sqlite3.connect"): 1, ("lenses.py", "sqlite3.connect"): 1,
                 # Phase 8 R: a disposable :memory: view over folder metadata inventories
                 # (folder_inventory_duplicates); never the vault index, never persisted.
-                ("document_identity.py", "sqlite3.connect"): 1}
+                ("document_identity.py", "sqlite3.connect"): 1,
+                # 2026-11-20: Geo-Grapher's own catalog, opened read-only (mode=ro) for the
+                # graph labels a Lead is told; never the vault index, never written.
+                ("graph_evidence.py", "sqlite3.connect"): 1}
 # Serving paths still opening the vault index directly (2026-10-24: 43; 39 after INDEX-02a;
 # 33 after INDEX-03's callback-gateway migration; 17 after the authoring/session batch;
 # 14 after selected staging paths; 8 after upkeep/catalog-status lookups;

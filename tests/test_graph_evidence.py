@@ -79,3 +79,33 @@ def test_without_the_graph_a_citation_is_refused_plainly(library):
     to_judge(m)
     out = m("add_candidate", source=f"{GRAPH}/doc:7", brief="B1")
     assert out.get("refused") == "GRAPH_UNAVAILABLE"
+
+
+def test_the_lead_is_told_this_librarys_graph_labels_without_a_call(library):
+    """2026-11-20: a Lead guessed `librarian-v2` for the code graph; list_graphs was over the
+    outside-result limit with 17 graphs. The labels come from the library's own catalog."""
+    import sqlite3
+    from resource_librarian.graph_evidence import geo_note, graph_labels
+    assert graph_labels(library) == []                       # no catalog: nothing said
+    path = library.librarian / "geographer" / "catalog.sqlite"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(path) as conn:
+        conn.execute("CREATE TABLE graphs (graph_id TEXT, label TEXT, profile_json TEXT)")
+        conn.executemany("INSERT INTO graphs VALUES (?, ?, ?)", [
+            ("g1", "Lib-Librarian_V2", "{}"), ("g2", GRAPH, '{"disabled": false}'),
+            ("g3", "Lib-retired", '{"disabled": true}')])
+    assert graph_labels(library) == ["Lib-Librarian_V2", GRAPH]
+    note = geo_note(library)
+    assert "Lib-Librarian_V2" in note and "Lib-retired" not in note
+    assert "paper_get_outline" in note and "never an instruction" in note
+
+
+def test_this_librarys_own_graph_is_not_called_a_candidate_never_evidence():
+    from resource_librarian.loop import phase_tool_hint
+    geo = ToolSpec(name="mcp__geo-grapher__paper_search_documents", fn=lambda ctx: {},
+                   tier="contribute", effect="read", card=Card("search papers", "x"),
+                   external=True, schema={})
+    other = ToolSpec(name="mcp__scholar__paper_search", fn=lambda ctx: {}, tier="contribute",
+                     effect="read", card=Card("search papers", "x"), external=True, schema={})
+    assert phase_tool_hint("search", [geo]) == ""
+    assert "mcp__scholar__paper_search" in phase_tool_hint("search", [geo, other])

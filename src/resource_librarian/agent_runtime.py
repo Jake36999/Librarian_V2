@@ -474,9 +474,16 @@ class ToolBundle:
 # are the sanctioned way to read them. Names are filtered against the registry: a library without
 # its Geo service simply does not offer them.
 GRAPH_FIND = ("mcp__geo-grapher__list_graphs", "mcp__geo-grapher__paper_search_documents")
-GRAPH_READ = ("mcp__geo-grapher__paper_get_section", "mcp__geo-grapher__paper_get_claim", "mcp__geo-grapher__search_entities",
+# paper_get_section needs a section id once a paper has several sections, and only the outline
+# gives one (2026-11-20: a Lead read no section text at all without it).
+GRAPH_READ = ("mcp__geo-grapher__paper_get_outline", "mcp__geo-grapher__paper_get_section",
+              "mcp__geo-grapher__paper_get_claim", "mcp__geo-grapher__search_entities",
               "mcp__geo-grapher__get_entity_content")
-GRAPH_CHECK = ("mcp__geo-grapher__paper_get_section", "mcp__geo-grapher__paper_get_claim", "mcp__geo-grapher__get_entity_content")
+GRAPH_CHECK = ("mcp__geo-grapher__paper_get_outline", "mcp__geo-grapher__paper_get_section",
+               "mcp__geo-grapher__paper_get_claim", "mcp__geo-grapher__get_entity_content")
+# Saying where a finding lands in the code is Synthesise's work (2026-11-20: five insight reports
+# named code places from the brief alone, unread).
+GRAPH_CODE = ("mcp__geo-grapher__search_entities",)
 
 BUNDLES = {
     "session": ToolBundle("session", "Open, inspect, advance or safely park a research session",
@@ -513,7 +520,7 @@ BUNDLES = {
     "synthesise": ToolBundle("synthesise", "Record a grounded synthesis or identify the gap",
                               ("get_note", "search", "record_synthesis", "record_trace",
                                "draft_offering", "promote_offering", "advance", "ask_user",
-                               *GRAPH_CHECK)),
+                               *GRAPH_CHECK, *GRAPH_CODE)),
     "check-out": ToolBundle("check-out", "Make a person-reviewed outcome concrete",
                              ("get_note", "draft_offering", "record_application", "close_brief",
                               "close_session", "update_plan", "ask_user", "staging_list",

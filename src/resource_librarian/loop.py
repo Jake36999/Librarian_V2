@@ -203,6 +203,7 @@ TOOL_CHOICE_NOTES = {
 # only a connected tool of that kind - which, since F1, means one enabled in
 # this library - is pointed out. Matched on its name and card, since a server
 # declares no category of its own.
+GEO_PREFIX = "mcp__geo-grapher__"
 PHASE_TOOL_HINTS: tuple[tuple[frozenset[str], str, str], ...] = (
     (frozenset({"seed"}), "reference-library tools (e.g. Zotero) for reading-list items the "
                           "person already has", r"zotero|reference|bibliograph|citation"),
@@ -219,8 +220,10 @@ def phase_tool_hint(phase: str, specs: list[ToolSpec]) -> str:
     for phases, label, pattern in PHASE_TOOL_HINTS:
         if phase not in phases:
             continue
-        matched = [s.name for s in specs if s.external and
-                   re.search(pattern, f"{s.name} {s.card.purpose}", re.I)][:5]
+        # This library's own graphs have their own note (graph_evidence.geo_note): a paper
+        # there can be evidence, so "a candidate, never evidence" is not said of them.
+        matched = [s.name for s in specs if s.external and not s.name.startswith(GEO_PREFIX)
+                   and re.search(pattern, f"{s.name} {s.card.purpose}", re.I)][:5]
         if matched:
             return (f"This phase can use {label}: {', '.join(matched)}. What they return is a "
                     f"candidate, never evidence: anything worth keeping goes through ingest or "
@@ -672,12 +675,15 @@ class Loop:
         if session is not None and session.purpose == "learn" and self.stance != "coach":
             parts.append(STANCES["coach"])
         shown = narrowed(self.ctx.tier, self.phase(), _projects_on(self.ctx.vault))
-        if any(spec.external for spec in shown):
+        if any(spec.name.startswith(GEO_PREFIX) for spec in shown):
+            from .graph_evidence import geo_note
+            parts.append(geo_note(self.ctx.vault))
+        if any(spec.external and not spec.name.startswith(GEO_PREFIX) for spec in shown):
             parts.append(EXTERNAL_TOOLS_ADDENDUM)
             parts.append(TOOL_CHOICE_NOTES["outside"])
-            hint = phase_tool_hint(self.phase(), shown)
-            if hint:
-                parts.append(hint)
+        hint = phase_tool_hint(self.phase(), shown)
+        if hint:
+            parts.append(hint)
         locked = locked_here(self.ctx.tier, self.phase(), session.phases) if session else ""
         if locked:
             parts.append(locked)

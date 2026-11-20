@@ -92,6 +92,10 @@ def test_research_phases_offer_the_librarys_graphs_read_only():
     assert set(GRAPH_FIND) <= set(BUNDLES["need"].names)
     assert set(GRAPH_FIND + GRAPH_READ) <= set(BUNDLES["search"].names)
     assert set(GRAPH_CHECK) <= set(BUNDLES["judge"].names) and set(GRAPH_CHECK) <= set(BUNDLES["synthesise"].names)
+    # A paper's sections need their ids from the outline; Synthesise says where a finding lands
+    # in the code, so it can search the code graph (2026-11-20).
+    assert "mcp__geo-grapher__paper_get_outline" in set(GRAPH_READ) & set(GRAPH_CHECK)
+    assert "mcp__geo-grapher__search_entities" in BUNDLES["synthesise"].names
     assert all(name.startswith("mcp__geo-grapher__") for name in GRAPH_FIND + GRAPH_READ + GRAPH_CHECK)
     # The tail tools still fit after the largest research bundle.
     assert len(BUNDLES["search"].names) + 5 <= MAX_BUNDLE_TOOLS

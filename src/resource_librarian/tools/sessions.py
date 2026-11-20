@@ -1631,6 +1631,13 @@ def draft_offering(ctx: Context, title: str, summary: str, claims: list[dict],
             verdict["run_id"] = run_id
             runnable.append({"run_id": run_id, "claim": c["text"][:200],
                              "input": claim_run_shown(verdict["failing_input"])})
+        if verdict["verdict"] == "unreadable":
+            # 2026-11-20: an insight report was staged with a claim that was word salad; its
+            # quote was verbatim, so only reading the claim itself could catch it. A rebuttal
+            # does not keep it: the claim is rewritten.
+            challenges.append(f"claim {i} is not a readable sentence ({verdict['reason']}): "
+                              f"rewrite it as one plain sentence that its quote supports")
+            continue
         if verdict["verdict"] != "fails":
             continue
         rebuttal = str(claim.get("rebuttal") or "").strip()
