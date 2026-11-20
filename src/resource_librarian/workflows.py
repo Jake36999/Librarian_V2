@@ -61,6 +61,55 @@ from .vault import Vault, jsonl_lines, now_iso
 
 REF = re.compile(r"^(inputs|steps|item)(\.[A-Za-z0-9_\-]+)*$")
 CONDITIONS = ("is", "in", "empty")
+# W1 part 3 (2026-11-20), after the dual-orchestrator step schema: what a step can touch, least
+# to most. A step's own class is derived from its action; a declared one may not be lower.
+# `external_*` means the action reaches beyond the vault (a model, the web, another service),
+# so a deep read that writes a note and calls a Clerk is external_write: it overstates rather
+# than understates, which is the side a label shown before approval must err on.
+SIDE_EFFECTS = ("none", "local_read", "external_read", "local_write", "external_write")
+# Tests an acceptance criterion may make on a step's own result.
+ACCEPT_TESTS = ("is", "in", "empty", "at_least")
+
+
+def side_effect_of(spec: Any) -> str:
+    """An action's side-effect class, from its registry spec (never from a definition's say-so)."""
+    if spec.effect == "read":
+        return "external_read" if spec.open_world else "local_read"
+    return "external_write" if spec.open_world else "local_write"
+
+
+def unaccepted(criteria: list[dict[str, Any]] | None, result: Any) -> str:
+    """Why a step's result fails its acceptance criteria, or "" when it meets them all."""
+    scope = {"result": result}
+    for c in criteria or []:
+        if "at_least" in c:
+            try:
+                value = _lookup(str(c["from"]), scope)
+            except KeyError:
+                value = None
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or \
+                    value < c["at_least"]:
+                return f"{c['from']} is {value!r}, not at least {c['at_least']!r}"
+        elif not holds(c, scope):
+            test = next(t for t in ("is", "in", "empty") if t in c)
+            try:
+                value = _lookup(str(c["from"]), scope)
+            except KeyError:
+                value = None
+            return f"{c['from']} is {value!r}; the step requires {test} {c[test]!r}"
+    return ""
+
+
+def dependency_met(result: Any) -> bool:
+    """A dependency counts as met when it ran and did what it was asked: not skipped, no error,
+    and, for an `each` step, no failed item."""
+    if not isinstance(result, dict):
+        return result is not None
+    if result.get("skipped"):
+        return False
+    if "attempted" in result and "failed" in result:
+        return not result["failed"]
+    return succeeded(result)
 MAX_EACH = 200
 ITEM_CHARS = 3000
 UNKNOWN_CHOICES = ("retry", "applied")      # MF-018: a person's call on an unrecorded step
@@ -363,6 +412,7 @@ def validate(d: Definition, library: Library, _seen: tuple[str, ...] = ()) -> di
         steps = []
     tiers: list[str] = []
     returns: dict[str, tuple[str, ...]] = {}
+    effects: dict[str, str] = {}             # action step id -> its side-effect class
     ids: list[str] = []
     phases: set[str] | None = None
     from .session import WRITES
@@ -419,9 +469,23 @@ def validate(d: Definition, library: Library, _seen: tuple[str, ...] = ()) -> di
             check_ref(each, f"{where}.each", False)
         has_item = each is not None
         check_when(step.get("when"), f"{where}.when", has_item)
-        known = {"id", "action", "workflow", "route", "args", "each", "when", "on_error"}
+        known = {"id", "action", "workflow", "route", "args", "each", "when", "on_error",
+                 "depends_on", "side_effects", "acceptance_criteria", "compensation"}
         for key in set(step) - known:
             errors.append(f"{where}: unknown key {key!r}")
+        depends = step.get("depends_on")
+        if depends is not None:
+            if not isinstance(depends, list) or not all(isinstance(x, str) for x in depends):
+                errors.append(f"{where}: `depends_on` is a list of earlier step ids")
+            else:
+                # Declared earlier, so declaration order is already a topological order.
+                for dep in depends:
+                    if dep not in ids:
+                        errors.append(f"{where}: depends_on {dep!r} names no earlier step")
+        if "action" not in step:
+            for key in ("side_effects", "acceptance_criteria", "compensation"):
+                if key in step:
+                    errors.append(f"{where}: `{key}` belongs on an action step")
         what = [k for k in ("action", "workflow", "route") if k in step]
         if len(what) != 1:
             errors.append(f"{where}: exactly one of `action`, `workflow` or `route`")
@@ -456,6 +520,37 @@ def validate(d: Definition, library: Library, _seen: tuple[str, ...] = ()) -> di
                 check_ref(args, f"{where}.args", has_item)
                 if tool in WRITES:
                     phases = set(WRITES[tool]) if phases is None else phases & WRITES[tool]
+                derived = side_effect_of(spec)
+                declared_effect = step.get("side_effects")
+                if declared_effect is not None:
+                    if declared_effect not in SIDE_EFFECTS:
+                        errors.append(f"{where}: side_effects is one of {list(SIDE_EFFECTS)}")
+                    elif SIDE_EFFECTS.index(declared_effect) < SIDE_EFFECTS.index(derived):
+                        errors.append(f"{where}: declares side_effects {declared_effect!r} but "
+                                      f"{tool} is {derived!r}")
+                effects[sid] = declared_effect if declared_effect in SIDE_EFFECTS and \
+                    SIDE_EFFECTS.index(declared_effect) >= SIDE_EFFECTS.index(derived) else derived
+                criteria = step.get("acceptance_criteria")
+                if criteria is not None:
+                    if not isinstance(criteria, list):
+                        errors.append(f"{where}: `acceptance_criteria` is a list of "
+                                      f"{{from: result.<field>, is|in|empty|at_least: value}}")
+                        criteria = []
+                    for n, c in enumerate(criteria):
+                        at = f"{where}.acceptance_criteria[{n}]"
+                        if not isinstance(c, dict) or not str(c.get("from", "")).startswith(
+                                "result.") or len(set(c) & set(ACCEPT_TESTS)) != 1 or \
+                                set(c) - {"from", *ACCEPT_TESTS}:
+                            errors.append(f"{at}: {{from: result.<field>, one of "
+                                          f"{list(ACCEPT_TESTS)}: value}}")
+                            continue
+                        field_name = str(c["from"]).split(".")[1]
+                        if spec.returns and field_name not in spec.returns:
+                            errors.append(f"{at}: {tool} returns {sorted(spec.returns)}, "
+                                          f"not {field_name!r}")
+                        if "at_least" in c and (isinstance(c["at_least"], bool) or
+                                                not isinstance(c["at_least"], (int, float))):
+                            errors.append(f"{at}: at_least is a number")
         elif what[0] == "workflow":
             if d.kind == "workflow":
                 errors.append(f"{where}: a workflow's steps are actions; chain workflows "
@@ -474,6 +569,9 @@ def validate(d: Definition, library: Library, _seen: tuple[str, ...] = ()) -> di
             returns[sid] = ("results", "count", "attempted", "failed", "errors", "considered", "truncated")
         if sid:
             ids.append(sid)
+        undo = step.get("compensation")
+        if undo is not None and "action" in step:
+            errors.extend(_compensation_problems(undo, where, each is not None, check_ref))
     for name, ref in (data.get("outputs") or {}).items():
         check_ref(ref, f"output {name}", False)
     tier = max(tiers or ["consult"], key=TIERS.index)
@@ -485,9 +583,37 @@ def validate(d: Definition, library: Library, _seen: tuple[str, ...] = ()) -> di
     if phases is not None and not phases:
         warnings.append("its writes are unlocked in different session phases, so inside a "
                         "session it can only run in parts; outside a session it runs whole")
+    highest = max(effects.values(), key=SIDE_EFFECTS.index) if effects else "none"
     return {"name": d.name, "kind": d.kind, "valid": not errors, "errors": errors,
             "warnings": warnings, "tier": declared or tier,
-            "session_phases": sorted(phases) if phases else []}
+            "session_phases": sorted(phases) if phases else [],
+            "side_effects": effects, "side_effects_max": highest}
+
+
+def _compensation_problems(undo: Any, where: str, in_each: bool, check_ref: Callable) -> list[str]:
+    """A step's declared undo: one registered action with its own valid arguments. It is shown
+    when a later step fails, never run by the runner itself."""
+    errors: list[str] = []
+    if in_each:
+        return [f"{where}: compensation is for a single step, not an `each`"]
+    if not isinstance(undo, dict) or set(undo) - {"action", "args"} or "action" not in undo:
+        return [f"{where}: compensation is {{action, args}}"]
+    tool = str(undo["action"])
+    if tool not in REGISTRY:
+        return [f"{where}: compensation {tool!r} is not a registered action"]
+    if tool.startswith(("run_", "save_workflow", "accept_workflow")):
+        return [f"{where}: compensation {tool!r} cannot be an undo"]
+    params = _param_schema(tool)
+    args = undo.get("args") or {}
+    if not isinstance(args, dict):
+        return [f"{where}: compensation args is a mapping"]
+    for name in set(args) - set(params):
+        errors.append(f"{where}: compensation {tool} takes no argument {name!r}")
+    for name, p in params.items():
+        if p["required"] and name not in args:
+            errors.append(f"{where}: compensation {tool} needs {name!r}")
+    check_ref(args, f"{where}.compensation.args", False)
+    return errors
 
 
 def _check_workflow_ref(name: str, args: Any, where: str, library: Library, errors: list[str],
@@ -865,10 +991,16 @@ class Runner:
                     "next": "configure a routing model and run_resume, or choose the route "
                             "by hand with run_resume(choices={...})", **paused.detail}
         except RunFailed as failed:
+            undo = self._compensations(d, inputs)
             self.store.append(self.run_id, {"type": "failed", "step": failed.step,
-                                            "result": failed.result})
+                                            "result": failed.result,
+                                            **({"compensations": undo} if undo else {})})
             return {"run": self.run_id, "status": "failed", "at": failed.step,
-                    "result": failed.result}
+                    "result": failed.result,
+                    **({"compensations": undo,
+                        "next": "these steps finished before the failure and declare an undo; "
+                                "a person decides whether to run each, newest first"}
+                       if undo else {})}
         outputs = resolve(d.data.get("outputs") or {}, scope)
         self.store.append(self.run_id, {"type": "finished", "outputs": outputs})
         return {"run": self.run_id, "status": "finished", "outputs": outputs,
@@ -878,6 +1010,14 @@ class Runner:
         scope: dict[str, Any] = {"inputs": inputs, "steps": {}}
         for step in d.data["steps"]:
             key = f"{prefix}{step['id']}"
+            # depends_on: a step runs only once every dependency did what it was asked; one
+            # that was skipped or failed (under on_error: continue) skips this step too.
+            unmet = [dep for dep in step.get("depends_on") or []
+                     if not dependency_met(scope["steps"].get(dep))]
+            if unmet:
+                scope["steps"][step["id"]] = {"skipped": True,
+                                              "because": f"dependency {unmet[0]!r} did not succeed"}
+                continue
             if step.get("each") is not None:
                 # Inside `each`, `when` is judged per item: it filters the list.
                 items = resolve(step["each"], scope)
@@ -946,6 +1086,16 @@ class Runner:
                 "effect": spec.effect if spec else "",
                 "idempotent": bool(spec.idempotent) if spec else False})
             result = REGISTRY.call(step["action"], args, self.ctx)
+            why = unaccepted(step.get("acceptance_criteria"), result) if "error" not in result else ""
+            if why:
+                # The action ran; its result did not meet the step's criteria. The run records
+                # what happened (so it is never mistaken for an unknown outcome) and treats the
+                # step as failed.
+                result = {"error": "not_accepted", "detail": why, "result": _summary(result)}
+                self._record(key, step["action"], result)
+                if step.get("on_error") != "continue":
+                    raise RunFailed(key, result)
+                return self.memo[key]
             if "error" in result and step.get("on_error") != "continue":
                 self.store.append(self.run_id, {"type": "step", "key": key,
                                                 "action": step["action"], "ok": False})
@@ -955,6 +1105,25 @@ class Runner:
         if "workflow" in step:
             return self._workflow(step["workflow"], step.get("args") or {}, scope, key)
         return self._route(step["route"], scope, key)
+
+    def _compensations(self, d: Definition, inputs: dict[str, Any]) -> list[dict[str, Any]]:
+        """The declared undo of each top-level step that finished, newest first, resolved
+        against what the run recorded. Shown on failure; the runner never runs one itself."""
+        scope = {"inputs": inputs, "steps": {s["id"]: self.memo[s["id"]]
+                                             for s in d.data["steps"] if s["id"] in self.memo}}
+        out = []
+        for step in reversed(d.data["steps"]):
+            undo = step.get("compensation")
+            done = self.memo.get(step["id"])
+            if not undo or done is None or not succeeded(done):
+                continue
+            try:
+                out.append({"step": step["id"], "action": undo["action"],
+                            "args": resolve(undo.get("args") or {}, scope)})
+            except KeyError as exc:
+                out.append({"step": step["id"], "action": undo["action"],
+                            "unresolved": str(exc)})
+        return out
 
     def _workflow(self, name: str, args: dict[str, Any], scope: dict[str, Any],
                   key: str) -> dict[str, Any]:

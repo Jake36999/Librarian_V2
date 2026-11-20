@@ -7345,3 +7345,16 @@ OP15: two mechanisms sequenced steps, the 6 agent macros in Python and the YAML 
 - **`scripts/workflow_map.py` no longer overwrites a canvas a person has changed.** It keeps the hash of what it last wrote; a canvas that differs, or has no record, is left alone, and the new map goes to `workflow-map.generated.canvas`.
 
 Left in W1: the dual-orchestrator step fields (`depends_on`, `side_effects`, `acceptance_criteria`, `compensation`).
+
+### W1, part 3: workflow steps declare dependencies, side effects, acceptance and an undo (2026-11-20)
+
+After the dual-orchestrator step schema (`docs/proposals/plan-forward-2026-11.md`, Appendix A). Every addition is optional, and a definition without them runs exactly as before.
+- **`depends_on: [ids]`.** Each must name an earlier step, so declaration order is already a topological order and no cycle can be written. A step runs only once every dependency did what it was asked; a dependency that was skipped, failed under `on_error: continue`, or had a failed item, skips it with the reason recorded.
+- **`side_effects`.** Each action step's class is derived from its registry spec: `local_read`, `external_read`, `local_write` or `external_write`, where `external` means the action reaches beyond the vault. A declared class may overstate, never understate (validation error). `validate` reports each step's class and the definition's highest, for an approval preview.
+- **`acceptance_criteria`.** These are conditions on the step's own result: `{from: result.<field>, is|in|empty|at_least}`, checked against the fields an action declares it returns. A result that misses one is recorded as `not_accepted` and treated as a failure, so `on_error` applies. The step's real outcome is still logged, so it is never mistaken for an unknown outcome.
+- **`compensation: {action, args}`.** A declared undo, validated like a step. When a run fails, the failure and its log list the undo of each finished top-level step, newest first, with its arguments resolved. The runner never runs one: a person decides, as with an outcome-unknown step.
+- **`scripts/workflow_map.py`** labels each workflow step with its side-effect class.
+
+Tests: `tests/test_workflow_steps.py`.
+
+**W1 is complete:** phases as data (part 1), macros as workflows (part 2), and these step fields (part 3). OP6, OP15 and OP16 are closed.

@@ -1,96 +1,742 @@
 {
-	"nodes":[
-		{"id":"add_project-0","type":"text","x":20,"y":80,"width":400,"height":260,"text":"### frame\n_Which project is this for, what stage is it at, and what is fixed?_\n\n**To leave:**\n- no Project note for 'P': create_project\n\n**Gate uses:** `create_project`, `update_plan`\n\n**Tools:** `create_project`, `get_note`, `search`, `session_status`, `topics_list`, `update_plan`"},
-		{"id":"add_project-1","type":"text","x":20,"y":380,"width":400,"height":260,"text":"### ingest\n_What does the person already have (repositories, papers, notes) that belongs in the library?_\n\n**To leave:**\n- record what the person already has: update_plan(fields={'ingested': ...}) (a list, or 'none')\n\n**Gate uses:** `update_plan`\n\n**Tools:** `get_note`, `ingest`, `queue_source`, `search`, `update_plan`"},
-		{"id":"add_project-2","type":"text","x":20,"y":680,"width":400,"height":260,"text":"### map\n_What does the library already hold on this, and under which topics?_\n\n**To leave:**\n- record the orientation: search with intent 'orient', then update_plan(fields={'map': ...})\n\n**Gate uses:** `search`, `update_plan`\n\n**Tools:** `dispatch_plan`, `get_note`, `read_source_file`, `record_assumptions`, `request_raw_source_access`, `search`, `source_verification_plan`, `update_plan`"},
-		{"id":"add_project-3","type":"text","x":20,"y":980,"width":400,"height":260,"text":"### need\n_What is needed, and what must a candidate not assume, require or depend on?_\n\n**To leave:**\n- open at least one brief: open_brief(need, disqualifiers)\n\n**Gate uses:** `open_brief`\n\n**Tools:** `get_note`, `open_brief`, `read_source_file`, `record_assumptions`, `search`, `update_plan`"},
-		{"id":"add_project-4","type":"text","x":20,"y":1280,"width":400,"height":260,"text":"### search\n_What did the last round teach? Which 2-4 sub-threads are open, and what is the next named target?_\n\n**To leave:**\n- run rounds until the stopping rule fires: research_round, then checkpoint\n\n**Gate uses:** `checkpoint`, `research_round`\n\n**Tools:** `checkpoint`, `get_note`, `ingest`, `queue_source`, `read_source_file`, `research_round`, `search`, `web_search`"},
-		{"id":"add_project-5","type":"text","x":20,"y":1580,"width":400,"height":260,"text":"### judge\n_What role would each candidate play? A rejection needs its reason._\n\n**To leave:**\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Gate uses:** `decide`, `session_status`\n\n**Tools:** `add_candidate`, `decide`, `get_note`, `record_assumptions`, `search`, `session_status`, `staging_list`, `staging_review`, `staging_show`"},
-		{"id":"add_project-6","type":"text","x":20,"y":1880,"width":400,"height":260,"text":"### synthesise\n_Which sources together; at what cost; what is unknown; what to open first? Every claim carries its source and a verbatim quote._\n\n**To leave:**\n- record the cross-source synthesis: record_synthesis\n\n**Gate uses:** `draft_offering`, `promote_offering`, `record_synthesis`\n\n**Tools:** `draft_offering`, `get_note`, `promote_offering`, `record_synthesis`, `record_trace`, `search`"},
-		{"id":"add_project-7","type":"text","x":20,"y":2180,"width":400,"height":260,"text":"### check_out\n_What did the library fail to answer?_\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** `close_brief`\n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"},
-		{"id":"g-add_project","type":"group","x":0,"y":0,"width":440,"height":2480,"label":"add_project session"},
-		{"id":"explore-0","type":"text","x":520,"y":80,"width":400,"height":260,"text":"### frame\n_Which project is this for, what stage is it at, and what is fixed?_\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** `create_project`, `update_plan`\n\n**Tools:** `get_note`, `search`, `session_status`, `topics_list`, `update_plan`"},
-		{"id":"explore-1","type":"text","x":520,"y":380,"width":400,"height":260,"text":"### map\n_What does the library already hold on this, and under which topics?_\n\n**To leave:**\n- record the orientation: search with intent 'orient', then update_plan(fields={'map': ...})\n\n**Gate uses:** `search`, `update_plan`\n\n**Tools:** `dispatch_plan`, `get_note`, `read_source_file`, `record_assumptions`, `request_raw_source_access`, `search`, `source_verification_plan`, `update_plan`"},
-		{"id":"explore-2","type":"text","x":520,"y":680,"width":400,"height":260,"text":"### need\n_What is needed, and what must a candidate not assume, require or depend on?_\n\n**To leave:**\n- open at least one brief: open_brief(need, disqualifiers)\n\n**Gate uses:** `open_brief`\n\n**Tools:** `get_note`, `open_brief`, `read_source_file`, `record_assumptions`, `search`, `update_plan`"},
-		{"id":"explore-3","type":"text","x":520,"y":980,"width":400,"height":260,"text":"### search\n_What did the last round teach? Which 2-4 sub-threads are open, and what is the next named target?_\n\n**To leave:**\n- run rounds until the stopping rule fires: research_round, then checkpoint\n\n**Gate uses:** `checkpoint`, `research_round`\n\n**Tools:** `checkpoint`, `get_note`, `ingest`, `queue_source`, `read_source_file`, `research_round`, `search`, `web_search`"},
-		{"id":"explore-4","type":"text","x":520,"y":1280,"width":400,"height":260,"text":"### judge\n_What role would each candidate play? A rejection needs its reason._\n\n**To leave:**\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Gate uses:** `decide`, `session_status`\n\n**Tools:** `add_candidate`, `decide`, `get_note`, `record_assumptions`, `search`, `session_status`, `staging_list`, `staging_review`, `staging_show`"},
-		{"id":"explore-5","type":"text","x":520,"y":1580,"width":400,"height":260,"text":"### synthesise\n_Which sources together; at what cost; what is unknown; what to open first? Every claim carries its source and a verbatim quote._\n\n**To leave:**\n- record the cross-source synthesis: record_synthesis\n\n**Gate uses:** `draft_offering`, `promote_offering`, `record_synthesis`\n\n**Tools:** `draft_offering`, `get_note`, `promote_offering`, `record_synthesis`, `record_trace`, `search`"},
-		{"id":"explore-6","type":"text","x":520,"y":1880,"width":400,"height":260,"text":"### check_out\n_What did the library fail to answer?_\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** `close_brief`\n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"},
-		{"id":"g-explore","type":"group","x":500,"y":0,"width":440,"height":2180,"label":"explore session"},
-		{"id":"suggest-0","type":"text","x":1020,"y":80,"width":400,"height":260,"text":"### frame\n_Which project is this for, what stage is it at, and what is fixed?_\n\n**To leave:**\n- no Project note for 'P': create_project\n\n**Gate uses:** `create_project`, `update_plan`\n\n**Tools:** `create_project`, `get_note`, `search`, `session_status`, `topics_list`, `update_plan`"},
-		{"id":"suggest-1","type":"text","x":1020,"y":380,"width":400,"height":260,"text":"### map\n_What does the library already hold on this, and under which topics?_\n\n**To leave:**\n- record the orientation: search with intent 'orient', then update_plan(fields={'map': ...})\n\n**Gate uses:** `read_project`, `search`, `update_plan`\n\n**Tools:** `dispatch_plan`, `get_note`, `open_brief`, `read_source_file`, `record_assumptions`, `request_raw_source_access`, `search`, `source_verification_plan`, `update_plan`"},
-		{"id":"suggest-2","type":"text","x":1020,"y":680,"width":400,"height":260,"text":"### search\n_What did the last round teach? Which 2-4 sub-threads are open, and what is the next named target?_\n\n**To leave:**\n- run rounds until the stopping rule fires: research_round, then checkpoint\n\n**Gate uses:** `checkpoint`, `research_round`\n\n**Tools:** `checkpoint`, `get_note`, `ingest`, `queue_source`, `read_source_file`, `research_round`, `search`, `web_search`"},
-		{"id":"suggest-3","type":"text","x":1020,"y":980,"width":400,"height":260,"text":"### judge\n_What role would each candidate play? A rejection needs its reason._\n\n**To leave:**\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Gate uses:** `decide`, `session_status`\n\n**Tools:** `add_candidate`, `decide`, `get_note`, `record_assumptions`, `search`, `session_status`, `staging_list`, `staging_review`, `staging_show`"},
-		{"id":"suggest-4","type":"text","x":1020,"y":1280,"width":400,"height":260,"text":"### synthesise\n_Which sources together; at what cost; what is unknown; what to open first? Every claim carries its source and a verbatim quote._\n\n**To leave:**\n- record the cross-source synthesis: record_synthesis\n\n**Gate uses:** `draft_offering`, `promote_offering`, `record_synthesis`\n\n**Tools:** `draft_offering`, `get_note`, `promote_offering`, `record_synthesis`, `record_trace`, `search`"},
-		{"id":"suggest-5","type":"text","x":1020,"y":1580,"width":400,"height":260,"text":"### check_out\n_What did the library fail to answer?_\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** `close_brief`\n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"},
-		{"id":"g-suggest","type":"group","x":1000,"y":0,"width":440,"height":1880,"label":"suggest session"},
-		{"id":"apply-0","type":"text","x":1520,"y":80,"width":400,"height":260,"text":"### check_in\n_What are you working on, and what do you need from the library?_\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** `update_plan`\n\n**Tools:** `get_note`, `search`, `update_plan`"},
-		{"id":"apply-1","type":"text","x":1520,"y":380,"width":400,"height":260,"text":"### find\n_Find, qualify, open, extract: which sources did you use, and for what?_\n\n**To leave:**\n- log the sources you used (log_use), or update_plan(fields={'nothing_found': ...})\n\n**Gate uses:** `log_use`, `update_plan`\n\n**Tools:** `get_note`, `log_use`, `read_source_file`, `search`, `update_plan`"},
-		{"id":"apply-2","type":"text","x":1520,"y":680,"width":400,"height":260,"text":"### check_out\n_What did the library fail to answer?_\n\n**To leave:**\n- record_application, or update_plan(fields={'no_application': reason})\n\n**Gate uses:** `record_application`, `update_plan`\n\n**Tools:** `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"},
-		{"id":"g-apply","type":"group","x":1500,"y":0,"width":440,"height":980,"label":"apply session"},
-		{"id":"start_pursuit-0","type":"text","x":2020,"y":80,"width":400,"height":260,"text":"### frame\n_Which project is this for, what stage is it at, and what is fixed?_\n\n**To leave:**\n- no Project note for 'P': create_project\n\n**Gate uses:** `create_project`, `update_plan`\n\n**Tools:** `create_project`, `get_note`, `search`, `session_status`, `topics_list`, `update_plan`"},
-		{"id":"start_pursuit-1","type":"text","x":2020,"y":380,"width":400,"height":260,"text":"### inventory\n_Kind-specific questions: what does this pursuit actually involve - modules and assessments, a role and its first-90-days, deliverables and stakeholders, or a research question and what's already known?_\n\n**To leave:**\n- record the kind-specific inventory: update_plan(fields={'inventory': ...})\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Gate uses:** `update_plan`\n\n**Tools:** `get_note`, `read_source_file`, `record_assumptions`, `search`, `update_plan`"},
-		{"id":"start_pursuit-2","type":"text","x":2020,"y":680,"width":400,"height":260,"text":"### plan\n_What are the milestones, and which of them have dates?_\n\n**To leave:**\n- add at least one dated milestone (task_add), or update_plan(fields={'no_dates': reason})\n\n**Gate uses:** `task_add`, `update_plan`\n\n**Tools:** `get_note`, `search`, `task_add`, `update_plan`"},
-		{"id":"start_pursuit-3","type":"text","x":2020,"y":980,"width":400,"height":260,"text":"### seed\n_What reading, handbooks or onboarding material belongs in the library for this pursuit, and which of it matters enough to pin to the desk?_\n\n**To leave:**\n- record what was seeded: update_plan(fields={'ingested': ...}) (a list, or 'none')\n\n**Gate uses:** `ingest`, `queue_source`, `update_plan`\n\n**Tools:** `get_note`, `ingest`, `queue_source`, `search`, `update_plan`"},
-		{"id":"start_pursuit-4","type":"text","x":2020,"y":1280,"width":400,"height":260,"text":"### check_out\n_What did the library fail to answer?_\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** \n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"},
-		{"id":"g-start_pursuit","type":"group","x":2000,"y":0,"width":440,"height":1580,"label":"start_pursuit session"},
-		{"id":"learn-0","type":"text","x":2520,"y":80,"width":400,"height":260,"text":"### goal\n_What do they want to be able to do, and by when?_\n\n**To leave:**\n- what do they want to be able to do, and by when: update_plan(fields={'goal': ..., 'deadline': ...})\n\n**Gate uses:** `update_plan`\n\n**Tools:** `get_note`, `search`, `update_plan`"},
-		{"id":"learn-1","type":"text","x":2520,"y":380,"width":400,"height":260,"text":"### baseline\n_Before teaching anything: 2-3 questions on what they already know._\n\n**To leave:**\n- 2-3 diagnostic questions before teaching: ask_user, then update_plan(fields={'baseline': ...})\n\n**Gate uses:** `ask_user`, `update_plan`\n\n**Tools:** `get_note`, `search`, `update_plan`"},
-		{"id":"learn-2","type":"text","x":2520,"y":680,"width":400,"height":260,"text":"### focus\n_What does the library hold on this, and which concepts should this session focus on?_\n\n**To leave:**\n- read what the library holds, then choose the focus concepts: update_plan(fields={'focus': [...]})\n\n**Gate uses:** `update_plan`\n\n**Tools:** `get_note`, `read_source_file`, `search`, `update_plan`"},
-		{"id":"learn-3","type":"text","x":2520,"y":980,"width":400,"height":260,"text":"### practice\n_Ask one question anchored in a source passage; the person answers; feedback cites the passage; record what they understand._\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** `understanding_record`, `update_plan`\n\n**Tools:** `get_note`, `read_source_file`, `search`, `understanding_record`, `update_plan`"},
-		{"id":"learn-4","type":"text","x":2520,"y":1280,"width":400,"height":260,"text":"### consolidate\n_Let the person explain it in their own words first; critique it against the sources, grounded like the scribe._\n\n**To leave:**\n- let them explain it in their own words, critique it against the sources, then understanding_record and update_plan(fields={'consolidated': ...})\n\n**Gate uses:** `understanding_record`, `update_plan`\n\n**Tools:** `get_note`, `read_source_file`, `search`, `understanding_record`, `update_plan`"},
-		{"id":"learn-5","type":"text","x":2520,"y":1580,"width":400,"height":260,"text":"### next\n_When should this be reviewed again, and is there a next session to propose?_\n\n**To leave:**\n- review dates as tasks - task_add(note='<project note>', text='Review: <concept>', due=..., heading='Understanding') - or enable the Spaced Repetition plugin, then update_plan(fields={'scheduled': ...})\n\n**Gate uses:** `task_add`, `update_plan`\n\n**Tools:** `close_session`, `get_note`, `search`, `task_add`, `update_plan`"},
-		{"id":"g-learn","type":"group","x":2500,"y":0,"width":440,"height":1880,"label":"learn session"},
-		{"id":"add_capability-0","type":"text","x":3020,"y":80,"width":400,"height":260,"text":"### candidate\n_Which server? One from capability_candidates (the curated list), or a repository URL the person gives - never one found by browsing on your own._\n\n**To leave:**\n- name the candidate: update_plan(fields={'candidate': ...}) - a curated server (capability_candidates) or a repository URL the person gave\n\n**Gate uses:** `capability_candidates`, `update_plan`\n\n**Tools:** `capability_candidates`, `get_note`, `update_plan`"},
-		{"id":"add_capability-1","type":"text","x":3020,"y":380,"width":400,"height":260,"text":"### assess\n_ingest its repository, read it as a source, and record the assessment: licence, maintenance, what it claims, caveats, what it can reach - its card is its own claim, and the narrowest tool that does the job is the one to want._\n\n**To leave:**\n- ingest the candidate's repository, so it is read as a source\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Gate uses:** `ingest`, `update_plan`\n\n**Tools:** `get_note`, `ingest`, `read_source_file`, `record_assumptions`, `search`, `update_plan`"},
-		{"id":"add_capability-2","type":"text","x":3020,"y":680,"width":400,"height":260,"text":"### propose\n_Propose one exact, pinned definition: which launcher, which version, which secrets (as ${ENV} names only), and why this library needs it._\n\n**To leave:**\n- propose its exact definition: capability_propose(...)\n\n**Gate uses:** `capability_propose`\n\n**Tools:** `capability_propose`, `get_note`"},
-		{"id":"add_capability-3","type":"text","x":3020,"y":980,"width":400,"height":260,"text":"### install\n_The person decides: capability_install asks them, and installs only on yes._\n\n**To leave:**\n- capability_install(name) - it asks the person; a decline is a finished outcome too\n\n**Gate uses:** `capability_install`\n\n**Tools:** `capability_install`, `get_note`"},
-		{"id":"add_capability-4","type":"text","x":3020,"y":1280,"width":400,"height":260,"text":"### check_out\n_What did the library fail to answer?_\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** `close_brief`\n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"},
-		{"id":"g-add_capability","type":"group","x":3000,"y":0,"width":440,"height":1580,"label":"add_capability session"},
-		{"id":"audited-0","type":"text","x":3520,"y":80,"width":400,"height":260,"text":"### manage\n_Which open requirement comes next, and what one bounded step serves it? Record it with update_plan(fields={'proposal': {'requirements': [...], 'step': ...}}); ask the person instead if the requirement is unclear._\n\n**To leave:**\n- no requirements yet: the person sets them with set_requirement\n\n**Gate uses:** `update_plan`\n\n**Tools:** `audit_projection`, `get_note`, `read_evidence`, `search`, `update_plan`"},
-		{"id":"audited-1","type":"text","x":3520,"y":380,"width":400,"height":260,"text":"### preflight\n_The Core admits the proposal as a contract against the current state, or refuses it with the reason._\n\n**To leave:**\n- no contract has been admitted: preflight admits one\n\n**Gate uses:** `admit_contract`\n\n**Tools:** `admit_contract`, `audit_projection`"},
-		{"id":"audited-2","type":"text","x":3520,"y":680,"width":400,"height":260,"text":"### execute\n_Do only what the admitted contract allows, through its tools._\n\n**To leave:**\n- no contract has been admitted: preflight admits one\n\n**Gate uses:** `stage_artifact`\n\n**Tools:** `dispatch_plan`, `get_note`, `read_evidence`, `read_source_file`, `request_raw_source_access`, `search`, `source_verification_plan`, `stage_artifact`"},
-		{"id":"audited-3","type":"text","x":3520,"y":980,"width":400,"height":260,"text":"### audit\n_Tier A checks every predicate of the contract's requirements on the actual artifacts; a missing or failed check is recorded, not skipped._\n\n**To leave:**\n- no contract has been admitted: preflight admits one\n\n**Gate uses:** `audit_targets`, `verify_grain`\n\n**Tools:** `audit_projection`, `audit_targets`, `verify_grain`"},
-		{"id":"audited-4","type":"text","x":3520,"y":1280,"width":400,"height":260,"text":"### reduce\n_The Core turns the round's results into requirement statuses. Then start the next round, or close the session if every requirement is accounted for._\n\n**To leave:**\n- no contract has been admitted: preflight admits one\n\n**Gate uses:** `close_session`, `reduce_round`\n\n**Tools:** `audit_projection`, `close_session`, `reduce_round`"},
-		{"id":"g-audited","type":"group","x":3500,"y":0,"width":440,"height":1580,"label":"audited session"}
-	],
-	"edges":[
-		{"id":"e-add_project-1","fromNode":"add_project-0","fromSide":"bottom","toNode":"add_project-1","toSide":"top"},
-		{"id":"e-add_project-2","fromNode":"add_project-1","fromSide":"bottom","toNode":"add_project-2","toSide":"top"},
-		{"id":"e-add_project-3","fromNode":"add_project-2","fromSide":"bottom","toNode":"add_project-3","toSide":"top"},
-		{"id":"e-add_project-4","fromNode":"add_project-3","fromSide":"bottom","toNode":"add_project-4","toSide":"top"},
-		{"id":"e-add_project-5","fromNode":"add_project-4","fromSide":"bottom","toNode":"add_project-5","toSide":"top"},
-		{"id":"e-add_project-6","fromNode":"add_project-5","fromSide":"bottom","toNode":"add_project-6","toSide":"top"},
-		{"id":"e-add_project-7","fromNode":"add_project-6","fromSide":"bottom","toNode":"add_project-7","toSide":"top"},
-		{"id":"e-explore-1","fromNode":"explore-0","fromSide":"bottom","toNode":"explore-1","toSide":"top"},
-		{"id":"e-explore-2","fromNode":"explore-1","fromSide":"bottom","toNode":"explore-2","toSide":"top"},
-		{"id":"e-explore-3","fromNode":"explore-2","fromSide":"bottom","toNode":"explore-3","toSide":"top"},
-		{"id":"e-explore-4","fromNode":"explore-3","fromSide":"bottom","toNode":"explore-4","toSide":"top"},
-		{"id":"e-explore-5","fromNode":"explore-4","fromSide":"bottom","toNode":"explore-5","toSide":"top"},
-		{"id":"e-explore-6","fromNode":"explore-5","fromSide":"bottom","toNode":"explore-6","toSide":"top"},
-		{"id":"e-suggest-1","fromNode":"suggest-0","fromSide":"bottom","toNode":"suggest-1","toSide":"top"},
-		{"id":"e-suggest-2","fromNode":"suggest-1","fromSide":"bottom","toNode":"suggest-2","toSide":"top"},
-		{"id":"e-suggest-3","fromNode":"suggest-2","fromSide":"bottom","toNode":"suggest-3","toSide":"top"},
-		{"id":"e-suggest-4","fromNode":"suggest-3","fromSide":"bottom","toNode":"suggest-4","toSide":"top"},
-		{"id":"e-suggest-5","fromNode":"suggest-4","fromSide":"bottom","toNode":"suggest-5","toSide":"top"},
-		{"id":"e-apply-1","fromNode":"apply-0","fromSide":"bottom","toNode":"apply-1","toSide":"top"},
-		{"id":"e-apply-2","fromNode":"apply-1","fromSide":"bottom","toNode":"apply-2","toSide":"top"},
-		{"id":"e-start_pursuit-1","fromNode":"start_pursuit-0","fromSide":"bottom","toNode":"start_pursuit-1","toSide":"top"},
-		{"id":"e-start_pursuit-2","fromNode":"start_pursuit-1","fromSide":"bottom","toNode":"start_pursuit-2","toSide":"top"},
-		{"id":"e-start_pursuit-3","fromNode":"start_pursuit-2","fromSide":"bottom","toNode":"start_pursuit-3","toSide":"top"},
-		{"id":"e-start_pursuit-4","fromNode":"start_pursuit-3","fromSide":"bottom","toNode":"start_pursuit-4","toSide":"top"},
-		{"id":"e-learn-1","fromNode":"learn-0","fromSide":"bottom","toNode":"learn-1","toSide":"top"},
-		{"id":"e-learn-2","fromNode":"learn-1","fromSide":"bottom","toNode":"learn-2","toSide":"top"},
-		{"id":"e-learn-3","fromNode":"learn-2","fromSide":"bottom","toNode":"learn-3","toSide":"top"},
-		{"id":"e-learn-4","fromNode":"learn-3","fromSide":"bottom","toNode":"learn-4","toSide":"top"},
-		{"id":"e-learn-5","fromNode":"learn-4","fromSide":"bottom","toNode":"learn-5","toSide":"top"},
-		{"id":"e-add_capability-1","fromNode":"add_capability-0","fromSide":"bottom","toNode":"add_capability-1","toSide":"top"},
-		{"id":"e-add_capability-2","fromNode":"add_capability-1","fromSide":"bottom","toNode":"add_capability-2","toSide":"top"},
-		{"id":"e-add_capability-3","fromNode":"add_capability-2","fromSide":"bottom","toNode":"add_capability-3","toSide":"top"},
-		{"id":"e-add_capability-4","fromNode":"add_capability-3","fromSide":"bottom","toNode":"add_capability-4","toSide":"top"},
-		{"id":"e-audited-1","fromNode":"audited-0","fromSide":"bottom","toNode":"audited-1","toSide":"top"},
-		{"id":"e-audited-2","fromNode":"audited-1","fromSide":"bottom","toNode":"audited-2","toSide":"top"},
-		{"id":"e-audited-3","fromNode":"audited-2","fromSide":"bottom","toNode":"audited-3","toSide":"top"},
-		{"id":"e-audited-4","fromNode":"audited-3","fromSide":"bottom","toNode":"audited-4","toSide":"top"}
-	]
+ "nodes": [
+  {
+   "id": "add_project-0",
+   "type": "text",
+   "x": 20,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### frame\n_Which project is this for, what stage is it at, and what is fixed?_\n\n**To leave:**\n- no Project note for 'P': create_project\n\n**Gate uses:** `create_project`, `update_plan`\n\n**Tools:** `create_project`, `get_note`, `search`, `session_status`, `topics_list`, `update_plan`"
+  },
+  {
+   "id": "add_project-1",
+   "type": "text",
+   "x": 20,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### ingest\n_What does the person already have (repositories, papers, notes) that belongs in the library?_\n\n**To leave:**\n- record what the person already has: update_plan(fields={'ingested': ...}) (a list, or 'none')\n\n**Gate uses:** `update_plan`\n\n**Tools:** `get_note`, `ingest`, `queue_source`, `search`, `update_plan`"
+  },
+  {
+   "id": "add_project-2",
+   "type": "text",
+   "x": 20,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### map\n_What does the library already hold on this, and under which topics?_\n\n**To leave:**\n- record the orientation: search with intent 'orient', then update_plan(fields={'map': ...})\n\n**Gate uses:** `search`, `update_plan`\n\n**Tools:** `dispatch_plan`, `get_note`, `read_source_file`, `record_assumptions`, `request_raw_source_access`, `search`, `source_verification_plan`, `update_plan`"
+  },
+  {
+   "id": "add_project-3",
+   "type": "text",
+   "x": 20,
+   "y": 980,
+   "width": 400,
+   "height": 260,
+   "text": "### need\n_What is needed, and what must a candidate not assume, require or depend on?_\n\n**To leave:**\n- open at least one brief: open_brief(need, disqualifiers)\n\n**Gate uses:** `open_brief`\n\n**Tools:** `get_note`, `open_brief`, `read_source_file`, `record_assumptions`, `search`, `update_plan`"
+  },
+  {
+   "id": "add_project-4",
+   "type": "text",
+   "x": 20,
+   "y": 1280,
+   "width": 400,
+   "height": 260,
+   "text": "### search\n_What did the last round teach? Which 2-4 sub-threads are open, and what is the next named target?_\n\n**To leave:**\n- run rounds until the stopping rule fires: research_round, then checkpoint\n\n**Gate uses:** `checkpoint`, `research_round`\n\n**Tools:** `checkpoint`, `get_note`, `ingest`, `queue_source`, `read_source_file`, `research_round`, `search`, `web_search`"
+  },
+  {
+   "id": "add_project-5",
+   "type": "text",
+   "x": 20,
+   "y": 1580,
+   "width": 400,
+   "height": 260,
+   "text": "### judge\n_What role would each candidate play? A rejection needs its reason._\n\n**To leave:**\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Gate uses:** `decide`, `session_status`\n\n**Tools:** `add_candidate`, `decide`, `get_note`, `record_assumptions`, `search`, `session_status`, `staging_list`, `staging_review`, `staging_show`"
+  },
+  {
+   "id": "add_project-6",
+   "type": "text",
+   "x": 20,
+   "y": 1880,
+   "width": 400,
+   "height": 260,
+   "text": "### synthesise\n_Which sources together; at what cost; what is unknown; what to open first? Every claim carries its source and a verbatim quote._\n\n**To leave:**\n- record the cross-source synthesis: record_synthesis\n\n**Gate uses:** `draft_offering`, `promote_offering`, `record_synthesis`\n\n**Tools:** `draft_offering`, `get_note`, `promote_offering`, `record_synthesis`, `record_trace`, `search`"
+  },
+  {
+   "id": "add_project-7",
+   "type": "text",
+   "x": 20,
+   "y": 2180,
+   "width": 400,
+   "height": 260,
+   "text": "### check_out\n_What did the library fail to answer?_\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** `close_brief`\n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"
+  },
+  {
+   "id": "g-add_project",
+   "type": "group",
+   "x": 0,
+   "y": 0,
+   "width": 440,
+   "height": 2480,
+   "label": "add_project session"
+  },
+  {
+   "id": "explore-0",
+   "type": "text",
+   "x": 520,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### frame\n_Which project is this for, what stage is it at, and what is fixed?_\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** `create_project`, `update_plan`\n\n**Tools:** `get_note`, `search`, `session_status`, `topics_list`, `update_plan`"
+  },
+  {
+   "id": "explore-1",
+   "type": "text",
+   "x": 520,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### map\n_What does the library already hold on this, and under which topics?_\n\n**To leave:**\n- record the orientation: search with intent 'orient', then update_plan(fields={'map': ...})\n\n**Gate uses:** `search`, `update_plan`\n\n**Tools:** `dispatch_plan`, `get_note`, `read_source_file`, `record_assumptions`, `request_raw_source_access`, `search`, `source_verification_plan`, `update_plan`"
+  },
+  {
+   "id": "explore-2",
+   "type": "text",
+   "x": 520,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### need\n_What is needed, and what must a candidate not assume, require or depend on?_\n\n**To leave:**\n- open at least one brief: open_brief(need, disqualifiers)\n\n**Gate uses:** `open_brief`\n\n**Tools:** `get_note`, `open_brief`, `read_source_file`, `record_assumptions`, `search`, `update_plan`"
+  },
+  {
+   "id": "explore-3",
+   "type": "text",
+   "x": 520,
+   "y": 980,
+   "width": 400,
+   "height": 260,
+   "text": "### search\n_What did the last round teach? Which 2-4 sub-threads are open, and what is the next named target?_\n\n**To leave:**\n- run rounds until the stopping rule fires: research_round, then checkpoint\n\n**Gate uses:** `checkpoint`, `research_round`\n\n**Tools:** `checkpoint`, `get_note`, `ingest`, `queue_source`, `read_source_file`, `research_round`, `search`, `web_search`"
+  },
+  {
+   "id": "explore-4",
+   "type": "text",
+   "x": 520,
+   "y": 1280,
+   "width": 400,
+   "height": 260,
+   "text": "### judge\n_What role would each candidate play? A rejection needs its reason._\n\n**To leave:**\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Gate uses:** `decide`, `session_status`\n\n**Tools:** `add_candidate`, `decide`, `get_note`, `record_assumptions`, `search`, `session_status`, `staging_list`, `staging_review`, `staging_show`"
+  },
+  {
+   "id": "explore-5",
+   "type": "text",
+   "x": 520,
+   "y": 1580,
+   "width": 400,
+   "height": 260,
+   "text": "### synthesise\n_Which sources together; at what cost; what is unknown; what to open first? Every claim carries its source and a verbatim quote._\n\n**To leave:**\n- record the cross-source synthesis: record_synthesis\n\n**Gate uses:** `draft_offering`, `promote_offering`, `record_synthesis`\n\n**Tools:** `draft_offering`, `get_note`, `promote_offering`, `record_synthesis`, `record_trace`, `search`"
+  },
+  {
+   "id": "explore-6",
+   "type": "text",
+   "x": 520,
+   "y": 1880,
+   "width": 400,
+   "height": 260,
+   "text": "### check_out\n_What did the library fail to answer?_\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** `close_brief`\n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"
+  },
+  {
+   "id": "g-explore",
+   "type": "group",
+   "x": 500,
+   "y": 0,
+   "width": 440,
+   "height": 2180,
+   "label": "explore session"
+  },
+  {
+   "id": "suggest-0",
+   "type": "text",
+   "x": 1020,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### frame\n_Which project is this for, what stage is it at, and what is fixed?_\n\n**To leave:**\n- no Project note for 'P': create_project\n\n**Gate uses:** `create_project`, `update_plan`\n\n**Tools:** `create_project`, `get_note`, `search`, `session_status`, `topics_list`, `update_plan`"
+  },
+  {
+   "id": "suggest-1",
+   "type": "text",
+   "x": 1020,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### map\n_What does the library already hold on this, and under which topics?_\n\n**To leave:**\n- record the orientation: search with intent 'orient', then update_plan(fields={'map': ...})\n\n**Gate uses:** `read_project`, `search`, `update_plan`\n\n**Tools:** `dispatch_plan`, `get_note`, `open_brief`, `read_source_file`, `record_assumptions`, `request_raw_source_access`, `search`, `source_verification_plan`, `update_plan`"
+  },
+  {
+   "id": "suggest-2",
+   "type": "text",
+   "x": 1020,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### search\n_What did the last round teach? Which 2-4 sub-threads are open, and what is the next named target?_\n\n**To leave:**\n- run rounds until the stopping rule fires: research_round, then checkpoint\n\n**Gate uses:** `checkpoint`, `research_round`\n\n**Tools:** `checkpoint`, `get_note`, `ingest`, `queue_source`, `read_source_file`, `research_round`, `search`, `web_search`"
+  },
+  {
+   "id": "suggest-3",
+   "type": "text",
+   "x": 1020,
+   "y": 980,
+   "width": 400,
+   "height": 260,
+   "text": "### judge\n_What role would each candidate play? A rejection needs its reason._\n\n**To leave:**\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Gate uses:** `decide`, `session_status`\n\n**Tools:** `add_candidate`, `decide`, `get_note`, `record_assumptions`, `search`, `session_status`, `staging_list`, `staging_review`, `staging_show`"
+  },
+  {
+   "id": "suggest-4",
+   "type": "text",
+   "x": 1020,
+   "y": 1280,
+   "width": 400,
+   "height": 260,
+   "text": "### synthesise\n_Which sources together; at what cost; what is unknown; what to open first? Every claim carries its source and a verbatim quote._\n\n**To leave:**\n- record the cross-source synthesis: record_synthesis\n\n**Gate uses:** `draft_offering`, `promote_offering`, `record_synthesis`\n\n**Tools:** `draft_offering`, `get_note`, `promote_offering`, `record_synthesis`, `record_trace`, `search`"
+  },
+  {
+   "id": "suggest-5",
+   "type": "text",
+   "x": 1020,
+   "y": 1580,
+   "width": 400,
+   "height": 260,
+   "text": "### check_out\n_What did the library fail to answer?_\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** `close_brief`\n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"
+  },
+  {
+   "id": "g-suggest",
+   "type": "group",
+   "x": 1000,
+   "y": 0,
+   "width": 440,
+   "height": 1880,
+   "label": "suggest session"
+  },
+  {
+   "id": "apply-0",
+   "type": "text",
+   "x": 1520,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### check_in\n_What are you working on, and what do you need from the library?_\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** `update_plan`\n\n**Tools:** `get_note`, `search`, `update_plan`"
+  },
+  {
+   "id": "apply-1",
+   "type": "text",
+   "x": 1520,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### find\n_Find, qualify, open, extract: which sources did you use, and for what?_\n\n**To leave:**\n- log the sources you used (log_use), or update_plan(fields={'nothing_found': ...})\n\n**Gate uses:** `log_use`, `update_plan`\n\n**Tools:** `get_note`, `log_use`, `read_source_file`, `search`, `update_plan`"
+  },
+  {
+   "id": "apply-2",
+   "type": "text",
+   "x": 1520,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### check_out\n_What did the library fail to answer?_\n\n**To leave:**\n- record_application, or update_plan(fields={'no_application': reason})\n\n**Gate uses:** `record_application`, `update_plan`\n\n**Tools:** `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"
+  },
+  {
+   "id": "g-apply",
+   "type": "group",
+   "x": 1500,
+   "y": 0,
+   "width": 440,
+   "height": 980,
+   "label": "apply session"
+  },
+  {
+   "id": "start_pursuit-0",
+   "type": "text",
+   "x": 2020,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### frame\n_Which project is this for, what stage is it at, and what is fixed?_\n\n**To leave:**\n- no Project note for 'P': create_project\n\n**Gate uses:** `create_project`, `update_plan`\n\n**Tools:** `create_project`, `get_note`, `search`, `session_status`, `topics_list`, `update_plan`"
+  },
+  {
+   "id": "start_pursuit-1",
+   "type": "text",
+   "x": 2020,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### inventory\n_Kind-specific questions: what does this pursuit actually involve - modules and assessments, a role and its first-90-days, deliverables and stakeholders, or a research question and what's already known?_\n\n**To leave:**\n- record the kind-specific inventory: update_plan(fields={'inventory': ...})\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Gate uses:** `update_plan`\n\n**Tools:** `get_note`, `read_source_file`, `record_assumptions`, `search`, `update_plan`"
+  },
+  {
+   "id": "start_pursuit-2",
+   "type": "text",
+   "x": 2020,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### plan\n_What are the milestones, and which of them have dates?_\n\n**To leave:**\n- add at least one dated milestone (task_add), or update_plan(fields={'no_dates': reason})\n\n**Gate uses:** `task_add`, `update_plan`\n\n**Tools:** `get_note`, `search`, `task_add`, `update_plan`"
+  },
+  {
+   "id": "start_pursuit-3",
+   "type": "text",
+   "x": 2020,
+   "y": 980,
+   "width": 400,
+   "height": 260,
+   "text": "### seed\n_What reading, handbooks or onboarding material belongs in the library for this pursuit, and which of it matters enough to pin to the desk?_\n\n**To leave:**\n- record what was seeded: update_plan(fields={'ingested': ...}) (a list, or 'none')\n\n**Gate uses:** `ingest`, `queue_source`, `update_plan`\n\n**Tools:** `get_note`, `ingest`, `queue_source`, `search`, `update_plan`"
+  },
+  {
+   "id": "start_pursuit-4",
+   "type": "text",
+   "x": 2020,
+   "y": 1280,
+   "width": 400,
+   "height": 260,
+   "text": "### check_out\n_What did the library fail to answer?_\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** \n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"
+  },
+  {
+   "id": "g-start_pursuit",
+   "type": "group",
+   "x": 2000,
+   "y": 0,
+   "width": 440,
+   "height": 1580,
+   "label": "start_pursuit session"
+  },
+  {
+   "id": "learn-0",
+   "type": "text",
+   "x": 2520,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### goal\n_What do they want to be able to do, and by when?_\n\n**To leave:**\n- what do they want to be able to do, and by when: update_plan(fields={'goal': ..., 'deadline': ...})\n\n**Gate uses:** `update_plan`\n\n**Tools:** `get_note`, `search`, `update_plan`"
+  },
+  {
+   "id": "learn-1",
+   "type": "text",
+   "x": 2520,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### baseline\n_Before teaching anything: 2-3 questions on what they already know._\n\n**To leave:**\n- 2-3 diagnostic questions before teaching: ask_user, then update_plan(fields={'baseline': ...})\n\n**Gate uses:** `ask_user`, `update_plan`\n\n**Tools:** `get_note`, `search`, `update_plan`"
+  },
+  {
+   "id": "learn-2",
+   "type": "text",
+   "x": 2520,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### focus\n_What does the library hold on this, and which concepts should this session focus on?_\n\n**To leave:**\n- read what the library holds, then choose the focus concepts: update_plan(fields={'focus': [...]})\n\n**Gate uses:** `update_plan`\n\n**Tools:** `get_note`, `read_source_file`, `search`, `update_plan`"
+  },
+  {
+   "id": "learn-3",
+   "type": "text",
+   "x": 2520,
+   "y": 980,
+   "width": 400,
+   "height": 260,
+   "text": "### practice\n_Ask one question anchored in a source passage; the person answers; feedback cites the passage; record what they understand._\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** `understanding_record`, `update_plan`\n\n**Tools:** `get_note`, `read_source_file`, `search`, `understanding_record`, `update_plan`"
+  },
+  {
+   "id": "learn-4",
+   "type": "text",
+   "x": 2520,
+   "y": 1280,
+   "width": 400,
+   "height": 260,
+   "text": "### consolidate\n_Let the person explain it in their own words first; critique it against the sources, grounded like the scribe._\n\n**To leave:**\n- let them explain it in their own words, critique it against the sources, then understanding_record and update_plan(fields={'consolidated': ...})\n\n**Gate uses:** `understanding_record`, `update_plan`\n\n**Tools:** `get_note`, `read_source_file`, `search`, `understanding_record`, `update_plan`"
+  },
+  {
+   "id": "learn-5",
+   "type": "text",
+   "x": 2520,
+   "y": 1580,
+   "width": 400,
+   "height": 260,
+   "text": "### next\n_When should this be reviewed again, and is there a next session to propose?_\n\n**To leave:**\n- review dates as tasks - task_add(note='<project note>', text='Review: <concept>', due=..., heading='Understanding') - or enable the Spaced Repetition plugin, then update_plan(fields={'scheduled': ...})\n\n**Gate uses:** `task_add`, `update_plan`\n\n**Tools:** `close_session`, `get_note`, `search`, `task_add`, `update_plan`"
+  },
+  {
+   "id": "g-learn",
+   "type": "group",
+   "x": 2500,
+   "y": 0,
+   "width": 440,
+   "height": 1880,
+   "label": "learn session"
+  },
+  {
+   "id": "add_capability-0",
+   "type": "text",
+   "x": 3020,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### candidate\n_Which server? One from capability_candidates (the curated list), or a repository URL the person gives - never one found by browsing on your own._\n\n**To leave:**\n- name the candidate: update_plan(fields={'candidate': ...}) - a curated server (capability_candidates) or a repository URL the person gave\n\n**Gate uses:** `capability_candidates`, `update_plan`\n\n**Tools:** `capability_candidates`, `get_note`, `update_plan`"
+  },
+  {
+   "id": "add_capability-1",
+   "type": "text",
+   "x": 3020,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### assess\n_ingest its repository, read it as a source, and record the assessment: licence, maintenance, what it claims, caveats, what it can reach - its card is its own claim, and the narrowest tool that does the job is the one to want._\n\n**To leave:**\n- ingest the candidate's repository, so it is read as a source\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Gate uses:** `ingest`, `update_plan`\n\n**Tools:** `get_note`, `ingest`, `read_source_file`, `record_assumptions`, `search`, `update_plan`"
+  },
+  {
+   "id": "add_capability-2",
+   "type": "text",
+   "x": 3020,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### propose\n_Propose one exact, pinned definition: which launcher, which version, which secrets (as ${ENV} names only), and why this library needs it._\n\n**To leave:**\n- propose its exact definition: capability_propose(...)\n\n**Gate uses:** `capability_propose`\n\n**Tools:** `capability_propose`, `get_note`"
+  },
+  {
+   "id": "add_capability-3",
+   "type": "text",
+   "x": 3020,
+   "y": 980,
+   "width": 400,
+   "height": 260,
+   "text": "### install\n_The person decides: capability_install asks them, and installs only on yes._\n\n**To leave:**\n- capability_install(name) - it asks the person; a decline is a finished outcome too\n\n**Gate uses:** `capability_install`\n\n**Tools:** `capability_install`, `get_note`"
+  },
+  {
+   "id": "add_capability-4",
+   "type": "text",
+   "x": 3020,
+   "y": 1280,
+   "width": 400,
+   "height": 260,
+   "text": "### check_out\n_What did the library fail to answer?_\n\n**To leave:**\n- nothing: advance\n\n**Gate uses:** `close_brief`\n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"
+  },
+  {
+   "id": "g-add_capability",
+   "type": "group",
+   "x": 3000,
+   "y": 0,
+   "width": 440,
+   "height": 1580,
+   "label": "add_capability session"
+  },
+  {
+   "id": "audited-0",
+   "type": "text",
+   "x": 3520,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### manage\n_Which open requirement comes next, and what one bounded step serves it? Record it with update_plan(fields={'proposal': {'requirements': [...], 'step': ...}}); ask the person instead if the requirement is unclear._\n\n**To leave:**\n- no requirements yet: the person sets them with set_requirement\n\n**Gate uses:** `update_plan`\n\n**Tools:** `audit_projection`, `get_note`, `read_evidence`, `search`, `update_plan`"
+  },
+  {
+   "id": "audited-1",
+   "type": "text",
+   "x": 3520,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### preflight\n_The Core admits the proposal as a contract against the current state, or refuses it with the reason._\n\n**To leave:**\n- no contract has been admitted: preflight admits one\n\n**Gate uses:** `admit_contract`\n\n**Tools:** `admit_contract`, `audit_projection`"
+  },
+  {
+   "id": "audited-2",
+   "type": "text",
+   "x": 3520,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### execute\n_Do only what the admitted contract allows, through its tools._\n\n**To leave:**\n- no contract has been admitted: preflight admits one\n\n**Gate uses:** `stage_artifact`\n\n**Tools:** `dispatch_plan`, `get_note`, `read_evidence`, `read_source_file`, `request_raw_source_access`, `search`, `source_verification_plan`, `stage_artifact`"
+  },
+  {
+   "id": "audited-3",
+   "type": "text",
+   "x": 3520,
+   "y": 980,
+   "width": 400,
+   "height": 260,
+   "text": "### audit\n_Tier A checks every predicate of the contract's requirements on the actual artifacts; a missing or failed check is recorded, not skipped._\n\n**To leave:**\n- no contract has been admitted: preflight admits one\n\n**Gate uses:** `audit_targets`, `verify_grain`\n\n**Tools:** `audit_projection`, `audit_targets`, `verify_grain`"
+  },
+  {
+   "id": "audited-4",
+   "type": "text",
+   "x": 3520,
+   "y": 1280,
+   "width": 400,
+   "height": 260,
+   "text": "### reduce\n_The Core turns the round's results into requirement statuses. Then start the next round, or close the session if every requirement is accounted for._\n\n**To leave:**\n- no contract has been admitted: preflight admits one\n\n**Gate uses:** `close_session`, `reduce_round`\n\n**Tools:** `audit_projection`, `close_session`, `reduce_round`"
+  },
+  {
+   "id": "g-audited",
+   "type": "group",
+   "x": 3500,
+   "y": 0,
+   "width": 440,
+   "height": 1580,
+   "label": "audited session"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e-add_project-1",
+   "fromNode": "add_project-0",
+   "fromSide": "bottom",
+   "toNode": "add_project-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_project-2",
+   "fromNode": "add_project-1",
+   "fromSide": "bottom",
+   "toNode": "add_project-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_project-3",
+   "fromNode": "add_project-2",
+   "fromSide": "bottom",
+   "toNode": "add_project-3",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_project-4",
+   "fromNode": "add_project-3",
+   "fromSide": "bottom",
+   "toNode": "add_project-4",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_project-5",
+   "fromNode": "add_project-4",
+   "fromSide": "bottom",
+   "toNode": "add_project-5",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_project-6",
+   "fromNode": "add_project-5",
+   "fromSide": "bottom",
+   "toNode": "add_project-6",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_project-7",
+   "fromNode": "add_project-6",
+   "fromSide": "bottom",
+   "toNode": "add_project-7",
+   "toSide": "top"
+  },
+  {
+   "id": "e-explore-1",
+   "fromNode": "explore-0",
+   "fromSide": "bottom",
+   "toNode": "explore-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-explore-2",
+   "fromNode": "explore-1",
+   "fromSide": "bottom",
+   "toNode": "explore-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-explore-3",
+   "fromNode": "explore-2",
+   "fromSide": "bottom",
+   "toNode": "explore-3",
+   "toSide": "top"
+  },
+  {
+   "id": "e-explore-4",
+   "fromNode": "explore-3",
+   "fromSide": "bottom",
+   "toNode": "explore-4",
+   "toSide": "top"
+  },
+  {
+   "id": "e-explore-5",
+   "fromNode": "explore-4",
+   "fromSide": "bottom",
+   "toNode": "explore-5",
+   "toSide": "top"
+  },
+  {
+   "id": "e-explore-6",
+   "fromNode": "explore-5",
+   "fromSide": "bottom",
+   "toNode": "explore-6",
+   "toSide": "top"
+  },
+  {
+   "id": "e-suggest-1",
+   "fromNode": "suggest-0",
+   "fromSide": "bottom",
+   "toNode": "suggest-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-suggest-2",
+   "fromNode": "suggest-1",
+   "fromSide": "bottom",
+   "toNode": "suggest-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-suggest-3",
+   "fromNode": "suggest-2",
+   "fromSide": "bottom",
+   "toNode": "suggest-3",
+   "toSide": "top"
+  },
+  {
+   "id": "e-suggest-4",
+   "fromNode": "suggest-3",
+   "fromSide": "bottom",
+   "toNode": "suggest-4",
+   "toSide": "top"
+  },
+  {
+   "id": "e-suggest-5",
+   "fromNode": "suggest-4",
+   "fromSide": "bottom",
+   "toNode": "suggest-5",
+   "toSide": "top"
+  },
+  {
+   "id": "e-apply-1",
+   "fromNode": "apply-0",
+   "fromSide": "bottom",
+   "toNode": "apply-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-apply-2",
+   "fromNode": "apply-1",
+   "fromSide": "bottom",
+   "toNode": "apply-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-start_pursuit-1",
+   "fromNode": "start_pursuit-0",
+   "fromSide": "bottom",
+   "toNode": "start_pursuit-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-start_pursuit-2",
+   "fromNode": "start_pursuit-1",
+   "fromSide": "bottom",
+   "toNode": "start_pursuit-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-start_pursuit-3",
+   "fromNode": "start_pursuit-2",
+   "fromSide": "bottom",
+   "toNode": "start_pursuit-3",
+   "toSide": "top"
+  },
+  {
+   "id": "e-start_pursuit-4",
+   "fromNode": "start_pursuit-3",
+   "fromSide": "bottom",
+   "toNode": "start_pursuit-4",
+   "toSide": "top"
+  },
+  {
+   "id": "e-learn-1",
+   "fromNode": "learn-0",
+   "fromSide": "bottom",
+   "toNode": "learn-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-learn-2",
+   "fromNode": "learn-1",
+   "fromSide": "bottom",
+   "toNode": "learn-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-learn-3",
+   "fromNode": "learn-2",
+   "fromSide": "bottom",
+   "toNode": "learn-3",
+   "toSide": "top"
+  },
+  {
+   "id": "e-learn-4",
+   "fromNode": "learn-3",
+   "fromSide": "bottom",
+   "toNode": "learn-4",
+   "toSide": "top"
+  },
+  {
+   "id": "e-learn-5",
+   "fromNode": "learn-4",
+   "fromSide": "bottom",
+   "toNode": "learn-5",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_capability-1",
+   "fromNode": "add_capability-0",
+   "fromSide": "bottom",
+   "toNode": "add_capability-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_capability-2",
+   "fromNode": "add_capability-1",
+   "fromSide": "bottom",
+   "toNode": "add_capability-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_capability-3",
+   "fromNode": "add_capability-2",
+   "fromSide": "bottom",
+   "toNode": "add_capability-3",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_capability-4",
+   "fromNode": "add_capability-3",
+   "fromSide": "bottom",
+   "toNode": "add_capability-4",
+   "toSide": "top"
+  },
+  {
+   "id": "e-audited-1",
+   "fromNode": "audited-0",
+   "fromSide": "bottom",
+   "toNode": "audited-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-audited-2",
+   "fromNode": "audited-1",
+   "fromSide": "bottom",
+   "toNode": "audited-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-audited-3",
+   "fromNode": "audited-2",
+   "fromSide": "bottom",
+   "toNode": "audited-3",
+   "toSide": "top"
+  },
+  {
+   "id": "e-audited-4",
+   "fromNode": "audited-3",
+   "fromSide": "bottom",
+   "toNode": "audited-4",
+   "toSide": "top"
+  }
+ ]
 }

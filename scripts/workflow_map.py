@@ -92,8 +92,16 @@ def gather_yaml(kind: str) -> list[dict]:
                   ("route" if s.get("route") else "?"), "each": bool(s.get("each")),
                   "kind": "workflow" if s.get("workflow") else "route" if s.get("route") else "action"}
                  for s in data.get("steps") or []]
+        # W1 part 3: what each step can touch, from the validator (derived from its action).
+        from resource_librarian import workflows as wf
+        library = wf.Library(None)
+        report = wf.validate(wf.parse(path.read_text(encoding="utf-8")), library)
+        for row in steps:
+            row["side_effects"] = report.get("side_effects", {}).get(row["id"], "")
+            row["depends_on"] = next((list(s.get("depends_on") or []) for s in data.get("steps") or []
+                                      if s.get("id") == row["id"]), [])
         rows.append({"name": data.get(kind[:-1]) or path.stem, "purpose": data.get("purpose", ""),
-                     "steps": steps})
+                     "steps": steps, "side_effects_max": report.get("side_effects_max", "")})
     return rows
 
 
@@ -125,7 +133,7 @@ def mermaid_steps(name: str, steps: list[dict]) -> str:
     for i, s in enumerate(steps):
         shape = ('[["' if s["kind"] == "workflow" else '{"' if s["kind"] == "route" else '["')
         close = {'[["': '"]]', '{"': '"}', '["': '"]'}[shape]
-        text = f'{s["id"]}: {s["does"]}' + (" (each)" if s.get("each") else "")
+        text = f'{s["id"]}: {s["does"]}' + (" (each)" if s.get("each") else "") +             (f' [{s["side_effects"]}]' if s.get("side_effects") else "")
         lines.append(f"  n{i}{shape}{label(text, 60)}{close}")
         lines.append(f"  {prev} --> n{i}")
         prev = f"n{i}"

@@ -162,9 +162,9 @@ _read the whole text of every staged source, part by part - claims and limits wi
 ```mermaid
 flowchart LR
   s["deep-read-staged"]
-  n0["waiting: staging_list"]
+  n0["waiting: staging_list (local_read)"]
   s --> n0
-  n1["read: deep_read (each)"]
+  n1["read: deep_read (each) (external_write)"]
   n0 --> n1
 ```
 
@@ -175,7 +175,7 @@ _draft a short reflection grounded only in a week's own gathered tasks, activity
 ```mermaid
 flowchart LR
   s["draft-reflection"]
-  n0["draft: reflection_draft"]
+  n0["draft: reflection_draft (local_write)"]
   s --> n0
 ```
 
@@ -186,7 +186,7 @@ _Read a pinned source file before a claim check_
 ```mermaid
 flowchart LR
   s["evidence-to-claim-check"]
-  n0["read: read_source_file"]
+  n0["read: read_source_file (external_read)"]
   s --> n0
 ```
 
@@ -197,7 +197,7 @@ _mark one staged source for a person's review as possibly dual-use_
 ```mermaid
 flowchart LR
   s["flag-sensitive"]
-  n0["flag: staging_flag"]
+  n0["flag: staging_flag (local_write)"]
   s --> n0
 ```
 
@@ -208,7 +208,7 @@ _what was read and written across every session - or one pursuit's, given a proj
 ```mermaid
 flowchart LR
   s["gather-activity"]
-  n0["scan: activity"]
+  n0["scan: activity (local_read)"]
   s --> n0
 ```
 
@@ -219,7 +219,7 @@ _every open, dated task across the vault - or one pursuit's, given a project - b
 ```mermaid
 flowchart LR
   s["gather-agenda"]
-  n0["scan: agenda"]
+  n0["scan: agenda (local_read)"]
   s --> n0
 ```
 
@@ -230,7 +230,7 @@ _a pursuit's current working set (W3 weekly-review, step 3)_
 ```mermaid
 flowchart LR
   s["gather-desk"]
-  n0["show: desk_show"]
+  n0["show: desk_show (local_read)"]
   s --> n0
 ```
 
@@ -241,9 +241,9 @@ _record an external research report's cited links as evidence, then fetch and st
 ```mermaid
 flowchart LR
   s["ingest-cited"]
-  n0["trace: record_trace"]
+  n0["trace: record_trace (local_write)"]
   s --> n0
-  n1["papers: ingest (each)"]
+  n1["papers: ingest (each) (external_write)"]
   n0 --> n1
 ```
 
@@ -254,9 +254,9 @@ _Inspect a source then refresh its map_
 ```mermaid
 flowchart LR
   s["inspect-map-source"]
-  n0["inspect: get_note"]
+  n0["inspect: get_note (local_read)"]
   s --> n0
-  n1["refresh: dik_rebuild"]
+  n1["refresh: dik_rebuild (local_write)"]
   n0 --> n1
 ```
 
@@ -267,7 +267,7 @@ _Ingest one reference into reviewed staging_
 ```mermaid
 flowchart LR
   s["intake-to-stage"]
-  n0["ingest: ingest"]
+  n0["ingest: ingest (external_write)"]
   s --> n0
 ```
 
@@ -278,7 +278,7 @@ _find catalogued sources relevant to a snapshot of a conversation; writes nothin
 ```mermaid
 flowchart LR
   s["review-conversation"]
-  n0["found: search"]
+  n0["found: search (local_read)"]
   s --> n0
 ```
 
@@ -289,7 +289,7 @@ _open one parked learn session per concept whose review task is due, framed for 
 ```mermaid
 flowchart LR
   s["review-due"]
-  n0["open: review_due_open"]
+  n0["open: review_due_open (local_write)"]
   s --> n0
 ```
 
@@ -300,7 +300,7 @@ _draft the unframed Bottom Line and run the sensitivity check for one staged sou
 ```mermaid
 flowchart LR
   s["review-item"]
-  n0["review: staging_review"]
+  n0["review: staging_review (external_write)"]
   s --> n0
 ```
 
@@ -311,9 +311,9 @@ _Review a staged candidate, then make the selected decision_
 ```mermaid
 flowchart LR
   s["review-staged-candidate"]
-  n0["review: staging_review"]
+  n0["review: staging_review (external_write)"]
   s --> n0
-  n1["decide: staging_decide"]
+  n1["decide: staging_decide (local_write)"]
   n0 --> n1
 ```
 
@@ -324,9 +324,9 @@ _draft the unframed Bottom Line and run the sensitivity check for every staged s
 ```mermaid
 flowchart LR
   s["review-staged"]
-  n0["waiting: staging_list"]
+  n0["waiting: staging_list (local_read)"]
   s --> n0
-  n1["review: staging_review (each)"]
+  n1["review: staging_review (each) (external_write)"]
   n0 --> n1
 ```
 
@@ -337,7 +337,7 @@ _take what is waiting in the intake queue through fetch, evidence, description a
 ```mermaid
 flowchart LR
   s["run-queue"]
-  n0["intake: intake_run"]
+  n0["intake: intake_run (external_write)"]
   s --> n0
 ```
 
@@ -348,9 +348,9 @@ _Search then inspect the chosen source_
 ```mermaid
 flowchart LR
   s["search-and-judge"]
-  n0["search: search"]
+  n0["search: search (local_read)"]
   s --> n0
-  n1["inspect: get_note"]
+  n1["inspect: get_note (local_read)"]
   n0 --> n1
 ```
 
@@ -361,9 +361,9 @@ _Read a located generated section, then check the original PDF pages_
 ```mermaid
 flowchart LR
   s["source-pages-to-claim-check"]
-  n0["read: read_source_section"]
+  n0["read: read_source_section (local_read)"]
   s --> n0
-  n1["verify: verify_source_pages"]
+  n1["verify: verify_source_pages (local_read)"]
   n0 --> n1
 ```
 
@@ -374,11 +374,11 @@ _keep the vault's ignore rules current, commit what changed, and push it_
 ```mermaid
 flowchart LR
   s["sync-vault"]
-  n0["ignore: gitignore_ensure"]
+  n0["ignore: gitignore_ensure (local_write)"]
   s --> n0
-  n1["commit: vault_commit"]
+  n1["commit: vault_commit (local_write)"]
   n0 --> n1
-  n2["push: vault_push"]
+  n2["push: vault_push (external_write)"]
   n1 --> n2
 ```
 

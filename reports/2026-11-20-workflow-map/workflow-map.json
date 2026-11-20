@@ -1058,15 +1058,20 @@
      "id": "waiting",
      "does": "staging_list",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_read",
+     "depends_on": []
     },
     {
      "id": "read",
      "does": "deep_read",
      "each": true,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "external_write",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "external_write"
   },
   {
    "name": "draft-reflection",
@@ -1076,9 +1081,12 @@
      "id": "draft",
      "does": "reflection_draft",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_write",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "local_write"
   },
   {
    "name": "evidence-to-claim-check",
@@ -1088,9 +1096,12 @@
      "id": "read",
      "does": "read_source_file",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "external_read",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "external_read"
   },
   {
    "name": "flag-sensitive",
@@ -1100,9 +1111,12 @@
      "id": "flag",
      "does": "staging_flag",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_write",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "local_write"
   },
   {
    "name": "gather-activity",
@@ -1112,9 +1126,12 @@
      "id": "scan",
      "does": "activity",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_read",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "local_read"
   },
   {
    "name": "gather-agenda",
@@ -1124,9 +1141,12 @@
      "id": "scan",
      "does": "agenda",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_read",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "local_read"
   },
   {
    "name": "gather-desk",
@@ -1136,9 +1156,12 @@
      "id": "show",
      "does": "desk_show",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_read",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "local_read"
   },
   {
    "name": "ingest-cited",
@@ -1148,15 +1171,20 @@
      "id": "trace",
      "does": "record_trace",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_write",
+     "depends_on": []
     },
     {
      "id": "papers",
      "does": "ingest",
      "each": true,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "external_write",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "external_write"
   },
   {
    "name": "inspect-map-source",
@@ -1166,15 +1194,20 @@
      "id": "inspect",
      "does": "get_note",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_read",
+     "depends_on": []
     },
     {
      "id": "refresh",
      "does": "dik_rebuild",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_write",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "local_write"
   },
   {
    "name": "intake-to-stage",
@@ -1184,9 +1217,12 @@
      "id": "ingest",
      "does": "ingest",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "external_write",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "external_write"
   },
   {
    "name": "review-conversation",
@@ -1196,9 +1232,12 @@
      "id": "found",
      "does": "search",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_read",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "local_read"
   },
   {
    "name": "review-due",
@@ -1208,9 +1247,12 @@
      "id": "open",
      "does": "review_due_open",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_write",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "local_write"
   },
   {
    "name": "review-item",
@@ -1220,9 +1262,12 @@
      "id": "review",
      "does": "staging_review",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "external_write",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "external_write"
   },
   {
    "name": "review-staged-candidate",
@@ -1232,15 +1277,20 @@
      "id": "review",
      "does": "staging_review",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "external_write",
+     "depends_on": []
     },
     {
      "id": "decide",
      "does": "staging_decide",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_write",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "external_write"
   },
   {
    "name": "review-staged",
@@ -1250,15 +1300,20 @@
      "id": "waiting",
      "does": "staging_list",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_read",
+     "depends_on": []
     },
     {
      "id": "review",
      "does": "staging_review",
      "each": true,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "external_write",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "external_write"
   },
   {
    "name": "run-queue",
@@ -1268,9 +1323,12 @@
      "id": "intake",
      "does": "intake_run",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "external_write",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "external_write"
   },
   {
    "name": "search-and-judge",
@@ -1280,15 +1338,20 @@
      "id": "search",
      "does": "search",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_read",
+     "depends_on": []
     },
     {
      "id": "inspect",
      "does": "get_note",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_read",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "local_read"
   },
   {
    "name": "source-pages-to-claim-check",
@@ -1298,15 +1361,20 @@
      "id": "read",
      "does": "read_source_section",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_read",
+     "depends_on": []
     },
     {
      "id": "verify",
      "does": "verify_source_pages",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_read",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "local_read"
   },
   {
    "name": "sync-vault",
@@ -1316,21 +1384,28 @@
      "id": "ignore",
      "does": "gitignore_ensure",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_write",
+     "depends_on": []
     },
     {
      "id": "commit",
      "does": "vault_commit",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "local_write",
+     "depends_on": []
     },
     {
      "id": "push",
      "does": "vault_push",
      "each": false,
-     "kind": "action"
+     "kind": "action",
+     "side_effects": "external_write",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "external_write"
   }
  ],
  "pipelines": [
@@ -1342,15 +1417,20 @@
      "id": "intake",
      "does": "run-queue",
      "each": false,
-     "kind": "workflow"
+     "kind": "workflow",
+     "side_effects": "",
+     "depends_on": []
     },
     {
      "id": "next",
      "does": "route",
      "each": false,
-     "kind": "route"
+     "kind": "route",
+     "side_effects": "",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "none"
   },
   {
    "name": "weekly-review",
@@ -1360,27 +1440,36 @@
      "id": "tasks",
      "does": "gather-agenda",
      "each": false,
-     "kind": "workflow"
+     "kind": "workflow",
+     "side_effects": "",
+     "depends_on": []
     },
     {
      "id": "work",
      "does": "gather-activity",
      "each": false,
-     "kind": "workflow"
+     "kind": "workflow",
+     "side_effects": "",
+     "depends_on": []
     },
     {
      "id": "desk",
      "does": "gather-desk",
      "each": false,
-     "kind": "workflow"
+     "kind": "workflow",
+     "side_effects": "",
+     "depends_on": []
     },
     {
      "id": "draft",
      "does": "draft-reflection",
      "each": false,
-     "kind": "workflow"
+     "kind": "workflow",
+     "side_effects": "",
+     "depends_on": []
     }
-   ]
+   ],
+   "side_effects_max": "none"
   }
  ],
  "macros": [
