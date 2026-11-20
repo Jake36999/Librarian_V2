@@ -3826,7 +3826,7 @@
     },
     {
       "tool": "request_budget",
-      "minimum_tier": "contribute",
+      "minimum_tier": "consult",
       "actors": [
         "person",
         "lead (bundle/profile-gated)",
@@ -3839,11 +3839,11 @@
       "fixes": [],
       "evidence": {
         "path": "src/resource_librarian/tools/sessions.py",
-        "line": 666,
+        "line": 694,
         "symbol": "request_budget"
       },
       "fingerprint": {
-        "source_sha256": "143f6dbf6c49a32652f7101d82885cc5522dc4ca0d277c749d645648eeac1533",
+        "source_sha256": "c8f9656cbe742da3df3e61056eab31716c6631ab50d53c0bfc9e790899ec1f14",
         "schema_sha256": "791b582bdf4bed69d23ca85d318a151c8c6f401cff46ee90d75b6ea79df6ebd9",
         "effect": "write",
         "open_world": false,

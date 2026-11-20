@@ -468,139 +468,28 @@ class ToolBundle:
 # Names are deliberately filtered against the registry, so adding/removing a
 # capability never breaks an old bundle definition.  A phase needs a compact
 # affordance set, not the entire catalogue.
-# The library's own Geo-Grapher, read-only, for research phases (owner, 2026-11-20: agents researching
-# a 96-paper corpus never reached its knowledge graphs, because no phase bundle offered them). The
-# paper graph is the access route for third-party papers (catalogue -> graph -> section), so these
-# are the sanctioned way to read them. Names are filtered against the registry: a library without
-# its Geo service simply does not offer them.
-GRAPH_FIND = ("mcp__geo-grapher__list_graphs", "mcp__geo-grapher__paper_search_documents")
-# paper_get_section needs a section id once a paper has several sections, and only the outline
-# gives one (2026-11-20: a Lead read no section text at all without it).
-GRAPH_READ = ("mcp__geo-grapher__paper_get_outline", "mcp__geo-grapher__paper_get_section",
-              "mcp__geo-grapher__paper_get_claim", "mcp__geo-grapher__search_entities",
-              "mcp__geo-grapher__get_entity_content")
-GRAPH_CHECK = ("mcp__geo-grapher__paper_get_outline", "mcp__geo-grapher__paper_get_section",
-               "mcp__geo-grapher__paper_get_claim", "mcp__geo-grapher__get_entity_content")
-# Saying where a finding lands in the code is Synthesise's work (2026-11-20: five insight reports
-# named code places from the brief alone, unread).
-GRAPH_CODE = ("mcp__geo-grapher__search_entities",)
+#
+# Every phase's bundle, its exit gate and the tools that gate names are declared once in
+# standard/phases.yaml (W1, 2026-11-20); `scripts/phase_walk.py` and tests/test_phase_bundles.py
+# check that a phase offers what its gate and refusals tell a model to use (found 2026-11-18: Map
+# asked for update_plan and its bundle omitted it).
+from .phases import DECLARATION as _PHASE_DECLARATION, TAIL as BUNDLE_TAIL  # noqa: E402
+
+# The library's own Geo-Grapher groups, kept as names for code and tests that use them.
+GRAPH_FIND = _PHASE_DECLARATION.tool_groups["graph_find"]
+GRAPH_READ = _PHASE_DECLARATION.tool_groups["graph_read"]
+GRAPH_CHECK = _PHASE_DECLARATION.tool_groups["graph_check"]
+GRAPH_CODE = _PHASE_DECLARATION.tool_groups["graph_code"]
 
 BUNDLES = {
-    "session": ToolBundle("session", "Open, inspect, advance or safely park a research session",
-                           ("open_session", "resume_session", "session_status", "advance",
-                            "ask_user", "answer", "park_session", "close_session",
-                            # A project can be the explicit frame for a new
-                            # session, so keep this one broker-gated action in
-                            # the initial compact surface rather than forcing a
-                            # model to invent an unoffered call.
-                            "create_project")),
-    "frame": ToolBundle("frame", "Frame a question and inspect the current library",
-                         ("session_status", "get_note", "search", "topics_list", "filters",
-                          "update_plan", "advance", "ask_user")),
-    # Every phase's exit gate (`Session.missing`) names what the model must do to leave it. A bundle
-    # that omits one of those tools can never be left: Map asked for update_plan, Need for
-    # open_brief, Search for research_round/checkpoint, Judge for decide, Synthesise for
-    # promote_offering, Check-out for close_brief (found 2026-11-18). `scripts/phase_walk.py` and
-    # tests/test_phase_bundles.py check this for every phase of every purpose.
-    "map": ToolBundle("map", "Map relevant sources and structure",
-                       ("get_note", "search", "read_source_file", "source_verification_plan", "request_raw_source_access",
-                        "record_assumptions", "update_plan", "advance", "ask_user", "dispatch_plan")),
-    "need": ToolBundle("need", "State and test the evidence needed next",
-                        ("search", "get_note", "read_source_file", "record_assumptions",
-                         "open_brief", "update_plan", "advance", "ask_user",
-                         *GRAPH_FIND)),
-    "search": ToolBundle("search", "Find, inspect, and rank evidence",
-                          ("search", "get_note", "read_source_file", "web_search", "ingest",
-                           "queue_source", "research_round", "checkpoint", "advance", "ask_user",
-                           *GRAPH_FIND, *GRAPH_READ)),
-    "judge": ToolBundle("judge", "Judge staged and source evidence",
-                         ("get_note", "search", "staging_list", "staging_show", "staging_review",
-                          "provenance_check", "decide", "record_assumptions", "advance",
-                          "ask_user", "session_status", "add_candidate", *GRAPH_CHECK)),
-    "synthesise": ToolBundle("synthesise", "Record a grounded synthesis or identify the gap",
-                              ("get_note", "search", "record_synthesis", "record_trace",
-                               "draft_offering", "promote_offering", "advance", "ask_user",
-                               *GRAPH_CHECK, *GRAPH_CODE)),
-    "check-out": ToolBundle("check-out", "Make a person-reviewed outcome concrete",
-                             ("get_note", "draft_offering", "record_application", "close_brief",
-                              "close_session", "update_plan", "ask_user", "staging_list",
-                              # back to an earlier phase when the outcome needs redoing (ST-F12)
-                              "advance")),
-    # The phases of the other purposes. Without an entry here a phase fell back to the `session`
-    # bundle (open/resume/advance/ask only), so none of its work could be done in the app.
-    "ingest": ToolBundle("ingest", "Record and bring in what the person already has",
-                          ("update_plan", "search", "get_note", "ingest", "queue_source",
-                           "advance", "ask_user")),
-    "check-in": ToolBundle("check-in", "Say what is being worked on and what is needed",
-                            ("update_plan", "search", "get_note", "advance", "ask_user")),
-    "find": ToolBundle("find", "Find, open and use sources for the work in hand",
-                        ("search", "get_note", "read_source_file", "log_use", "update_plan",
-                         "advance", "ask_user")),
-    "inventory": ToolBundle("inventory", "Take the kind-specific inventory of a pursuit",
-                             ("update_plan", "search", "get_note", "read_source_file",
-                              "record_assumptions", "advance", "ask_user")),
-    "plan": ToolBundle("plan", "Set the milestones and their dates",
-                        ("update_plan", "task_add", "search", "get_note", "advance", "ask_user")),
-    "seed": ToolBundle("seed", "Seed the library with what the pursuit needs",
-                        ("update_plan", "ingest", "queue_source", "search", "get_note",
-                         "advance", "ask_user")),
-    "goal": ToolBundle("goal", "Learn: what they want to be able to do, and by when",
-                        ("update_plan", "search", "get_note", "advance", "ask_user")),
-    "baseline": ToolBundle("baseline", "Learn: what they already know",
-                            ("update_plan", "get_note", "search", "advance", "ask_user")),
-    "focus": ToolBundle("focus", "Learn: choose the concepts to focus on",
-                         ("update_plan", "search", "get_note", "read_source_file", "advance",
-                          "ask_user")),
-    "practice": ToolBundle("practice", "Learn: practise each focus concept against a source",
-                            ("update_plan", "understanding_record", "search", "get_note",
-                             "read_source_file", "advance", "ask_user")),
-    "consolidate": ToolBundle("consolidate", "Learn: consolidate in their own words",
-                               ("update_plan", "understanding_record", "search", "get_note",
-                                "read_source_file", "advance", "ask_user")),
-    "next": ToolBundle("next", "Learn: schedule the review and propose a next session",
-                        ("update_plan", "task_add", "get_note", "search", "close_session",
-                         "ask_user", "advance")),       # back to practise again (ST-F12)
-    "candidate": ToolBundle("candidate", "Name the capability candidate",
-                             ("update_plan", "capability_candidates", "get_note", "advance",
-                              "ask_user")),
-    "assess": ToolBundle("assess", "Assess the candidate as a source",
-                          ("update_plan", "ingest", "get_note", "read_source_file", "search",
-                           "record_assumptions", "advance", "ask_user")),
-    "propose": ToolBundle("propose", "Propose the exact capability definition",
-                           ("capability_propose", "get_note", "advance", "ask_user")),
-    "install": ToolBundle("install", "The person decides whether to install",
-                           ("capability_install", "get_note", "advance", "ask_user")),
-    # The audited purpose's round (HARNESS-03 to -07; G5 readiness R1). The
-    # person's own controls - set_requirement, accept_artifact, reject_artifact,
-    # request_evidence - are deliberately in no bundle: a model never sees them.
-    "manage": ToolBundle("manage", "Read the session's state and propose one bounded step",
-                         ("audit_projection", "update_plan", "search", "get_note",
-                          "read_evidence", "ask_user", "advance")),
-    "preflight": ToolBundle("preflight", "Ask the Core to admit the proposal as a contract",
-                            ("admit_contract", "audit_projection", "ask_user", "advance")),
-    "execute": ToolBundle("execute", "Do the contract's work within its targets",
-                          ("search", "get_note", "read_evidence", "read_source_file",
-                           "stage_artifact", "ask_user", "advance", "dispatch_plan",
-                           "source_verification_plan", "request_raw_source_access")),
-    "audit": ToolBundle("audit", "Check each planned predicate and the protected targets",
-                        ("verify_grain", "audit_targets", "audit_projection", "ask_user",
-                         "advance")),
-    # close_session is how an audited session ends (Session.next_step says so after a round is
-    # reduced, and when every requirement is accounted for): found missing 2026-11-19.
-    "reduce": ToolBundle("reduce", "Reduce the round's results to requirement statuses",
-                         ("reduce_round", "audit_projection", "advance", "close_session")),
-    "research": ToolBundle("research", "Use the phase-specific research bundle", ()),
-    "read": ToolBundle("read", "Read-only help", ("get_note", "search", "read_source_file",
-                            "read_file", "read_source_section", "verify_source_pages",
-                            "list_files", "session_status")),
-    "draft": ToolBundle("draft", "Draft and review bounded text", ("get_note", "search",
-                                                                       "record_trace", "ask_user")),
-    "clerk": ToolBundle("clerk", "Submit and inspect small asynchronous work",
-                          ("clerk_submit", "clerk_next", "session_status")),
+    **{name: ToolBundle(name, purpose, tools)
+       for name, (purpose, tools) in _PHASE_DECLARATION.bundles.items()},
+    **{p.bundle_id: ToolBundle(p.bundle_id, p.bundle_purpose, p.tools)
+       for p in _PHASE_DECLARATION.phases.values()},
 }
 
 
-PROJECT_BOOTSTRAP_PURPOSES = frozenset({"add_project", "suggest", "start_pursuit"})
+PROJECT_BOOTSTRAP_PURPOSES = _PHASE_DECLARATION.bootstrap_purposes
 
 
 def required_bundle_actions(phase: str = "", *, purpose: str = "", project: str = "",
@@ -623,12 +512,14 @@ def required_bundle_actions(phase: str = "", *, purpose: str = "", project: str 
     # `suggest` has no Need phase, so its brief is opened in Map (open_brief is gated to map and
     # need), and its Map phase reads the project's own files when project access is on. Both are
     # refused by the registry if not allowed, so offering them never widens authority.
-    if purpose_id == "suggest" and phase_id == "map":
-        return ("open_brief", "read_project")
+    declared = _PHASE_DECLARATION.phases.get(phase_id.replace("-", "_"))
+    extras = declared.extras.get(purpose_id, ()) if declared else ()
+    if extras:
+        return extras
     if phase_id != "frame" or purpose_id not in PROJECT_BOOTSTRAP_PURPOSES:
         return ()
     if not project.strip() or not project_exists:
-        return ("create_project",)
+        return _PHASE_DECLARATION.bootstrap_tools
     return ()
 
 
@@ -700,7 +591,7 @@ def bundle_selection(tier: str, phase: str = "", *, projects_on: bool = True,
     # (Session.next_step), so they are offered in every phase; the registry still decides whether
     # they may run. 2026-11-20: a Lead in Judge with its budget spent was told to request_budget,
     # found no such tool, and asked with ask_user instead, which extends nothing.
-    for name in ("read_result", "macro_run", "macro_plan", "park_session", "request_budget"):
+    for name in BUNDLE_TAIL:
         if name in by_name and name not in {spec.name for spec in selected}:
             selected.append(by_name[name])
     # A compact fallback gives a newly added phase usable reads without dumping

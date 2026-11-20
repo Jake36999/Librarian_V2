@@ -61,22 +61,14 @@ from resource_librarian.session import PURPOSES, Session, SessionStore  # noqa: 
 from resource_librarian.vault import Vault  # noqa: E402
 
 TEXT_PURPOSES_FOR_WALK = ("explore", "add_project", "suggest")
-# Judge's gate says "N undecided candidate(s)" without naming the tool that decides one.
-IMPLICIT_GATE_TOOLS = {"judge": ("decide",)}
-# A gate branch that only applies to some purposes. (phase, tool) -> the purposes it applies to.
-ONLY_FOR = {
-    ("map", "read_project"): {"suggest"},
-    ("check_out", "update_plan"): {"apply"},
-    ("check_out", "record_application"): {"apply"},
-    ("check_out", "close_brief"): {"explore", "add_project", "suggest", "add_capability"},
-}
-# Gate text that offers a choice: the tool is one of two ways out, so being absent is by design,
-# not a deadlock. (purpose, phase) -> tools.
-ALTERNATIVES = {
-    ("explore", "frame"): {"create_project"},   # or update_plan(fields={'project': ''})
-    ("suggest", "map"): {"read_project"},       # only when the library's project access is on
-    ("apply", "check_out"): {"close_brief"},    # that branch of the gate is for other purposes
-}
+# Which tools each phase's gate tells a model to use, and where a tool is only one of two ways
+# out, are declared in standard/phases.yaml (W1, 2026-11-20) - read from there, never re-derived.
+from resource_librarian.phases import DECLARATION  # noqa: E402
+
+# (purpose, phase) -> tools that are one of two ways out there (absence is by design).
+ALTERNATIVES = {(purpose, ph): {r.tool for r in DECLARATION.phases[ph].remedies(purpose)
+                                if purpose in r.alternative_in}
+                for purpose, seq in DECLARATION.purposes.items() for ph in seq}
 
 
 # ----------------------------------------------------------------------------- a stub model
@@ -171,52 +163,39 @@ def short(value, n: int = 140) -> str:
 
 # ----------------------------------------------------------------------------- 1. gates
 
-def _branches(source: str) -> dict[str, str]:
-    """Split a gate function's source into the text of each `p == "phase"` branch."""
-    marks = list(re.finditer(r'\b(?:el)?if p == "([a-z_]+)"', source))
-    out: dict[str, str] = {}
-    for i, mark in enumerate(marks):
-        end = marks[i + 1].start() if i + 1 < len(marks) else len(source)
-        out[mark.group(1)] = out.get(mark.group(1), "") + source[mark.start():end]
-    return out
-
-
 def gate_tools() -> dict[str, set[str]]:
-    """phase -> registered tools its gate text asks the model to use."""
-    # A person's own tools (tier curate) are never the model's to call, so a gate that waits for
-    # one is not a bundle gap.
-    names = {n for n in REGISTRY.names() if getattr(REGISTRY.get(n), "tier", "") != "curate"}
-    # The assumptions tail applies to ASSUMPTION_PHASES whichever branch ran: handled below, so
-    # keep it out of the last `p == ...` branch it textually follows.
-    body = inspect.getsource(Session.missing).split("if p in ASSUMPTION_PHASES")[0]
-    texts = _branches(body)
-    for phase, text in _branches(inspect.getsource(Session._audited_missing)).items():
-        texts[phase] = texts.get(phase, "") + text
-    # the assumptions tail in `missing` applies to these phases whatever branch they took
-    from resource_librarian.session import ASSUMPTION_PHASES
-    for phase in ASSUMPTION_PHASES:
-        texts[phase] = texts.get(phase, "") + ' "record_assumptions"'
-    # Gates whose text does not name the tool the model needs. Found by the WALK, kept here so
-    # the cheap static check stays honest about them.
-    for phase, implied in IMPLICIT_GATE_TOOLS.items():
-        texts[phase] = texts.get(phase, "") + "".join(f' "{name}"' for name in implied)
-    found: dict[str, set[str]] = {}
-    for phase, text in texts.items():
-        # drop each branch's own `p == "phase"` condition line: its literals are phase names and
-        # plan keys (the "ingest" phase would otherwise look like it names the ingest tool)
-        text = "\n".join(line for line in text.split("\n")
-                         if not re.search(r"\b(?:el)?if p == \"", line) or "out.append" in line)
-        strings = " ".join(re.findall(r'"((?:[^"\\]|\\.)*)"', text))
-        tokens = set(re.findall(r"[a-z][a-z_]+", strings))
-        found[phase] = {t for t in tokens if t in names and t not in ("search",)} | (
-            {"search"} if re.search(r"\bsearch with intent\b|\bsearch\(", strings) else set())
-    return found
+    """phase -> every tool its declared gate remedies use (any purpose)."""
+    return {name: {r.tool for g in ph.gate for r in g.remedies}
+            for name, ph in DECLARATION.phases.items()}
 
 
 def needed_for(needed: dict[str, set[str]], purpose: str, phase: str) -> set[str]:
-    """The phase's gate tools that apply to this purpose (a branch is often purpose-specific)."""
-    return {t for t in needed.get(phase, set())
-            if purpose in ONLY_FOR.get((phase, t), {purpose})}
+    """The phase's gate tools that apply to this purpose (a remedy may be purpose-specific)."""
+    declared = DECLARATION.phases.get(phase)
+    if declared is None:
+        return set()
+    return {r.tool for r in declared.remedies(purpose)} & needed.get(phase, set())
+
+
+def named_in_checks() -> dict[str, set[str]]:
+    """phase -> registered tools named in the text of that phase's gate check functions. A drift
+    guard: a check that starts telling a model to use a tool must declare it as a remedy."""
+    from resource_librarian.session import GATES
+    names = {n for n in REGISTRY.names() if getattr(REGISTRY.get(n), "tier", "") != "curate"}
+    found: dict[str, set[str]] = {}
+    for name, ph in DECLARATION.phases.items():
+        tokens: set[str] = set()
+        for g in ph.gate:
+            if g.check == "audited":
+                continue            # the audited round's text is the Core's, checked by its own tests
+            source = inspect.getsource(GATES[g.check])
+            strings = " ".join(re.findall(r'"((?:[^"\\]|\\.)*)"', source))
+            # "search" is also an ordinary word; it counts only as "search with intent" or a call.
+            tokens |= {t for t in re.findall(r"[a-z][a-z_]+", strings) if t != "search"}
+            if re.search(r"\bsearch with intent\b|\bsearch\(", strings):
+                tokens.add("search")
+        found[name] = {t for t in tokens if t in names}
+    return found
 
 
 def check_gates(purposes: list[str], tier: str) -> list[dict]:
@@ -235,7 +214,9 @@ def check_gates(purposes: list[str], tier: str) -> list[dict]:
             for phase in PURPOSES[purpose]:
                 w.force_phase(phase)
                 offered = set(w.offered())
-                named = needed_for(needed, purpose, phase)
+                # What the gate tells a model to use here, and what any refusal tells it (OP6,
+                # 2026-11-20: three phases refused with a tool their bundle did not offer).
+                named = needed_for(needed, purpose, phase) | set(DECLARATION.refusal_remedies)
                 # A session ends with close_session, which no gate names: the last phase of every
                 # purpose has to offer it (the audited purpose lacked it until 2026-11-19).
                 if phase == PURPOSES[purpose][-1]:
@@ -305,7 +286,9 @@ def check_probe(purposes: list[str], tier: str) -> list[dict]:
 
 def _hint_plan_keys(phase: str) -> list[str]:
     """The `update_plan(key=...)` keys a phase's gate text teaches."""
-    text = _branches(inspect.getsource(Session.missing)).get(phase, "")
+    from resource_librarian.session import GATES
+    declared = DECLARATION.phases.get(phase)
+    text = "".join(inspect.getsource(GATES[g.check]) for g in (declared.gate if declared else ()))
     return sorted(set(re.findall(r"update_plan\(([a-z_]+)=", text)))
 
 

@@ -13,6 +13,16 @@
      "session_status",
      "topics_list",
      "update_plan"
+    ],
+    "ask": "Which project is this for, what stage is it at, and what is fixed?",
+    "budget": 24,
+    "assumptions": false,
+    "checks": [
+     "frame"
+    ],
+    "remedies": [
+     "create_project",
+     "update_plan"
     ]
    },
    {
@@ -26,6 +36,15 @@
      "queue_source",
      "search",
      "update_plan"
+    ],
+    "ask": "What does the person already have (repositories, papers, notes) that belongs in the library?",
+    "budget": 20,
+    "assumptions": false,
+    "checks": [
+     "ingest"
+    ],
+    "remedies": [
+     "update_plan"
     ]
    },
    {
@@ -42,6 +61,16 @@
      "search",
      "source_verification_plan",
      "update_plan"
+    ],
+    "ask": "What does the library already hold on this, and under which topics?",
+    "budget": 20,
+    "assumptions": false,
+    "checks": [
+     "map"
+    ],
+    "remedies": [
+     "search",
+     "update_plan"
     ]
    },
    {
@@ -56,6 +85,15 @@
      "record_assumptions",
      "search",
      "update_plan"
+    ],
+    "ask": "What is needed, and what must a candidate not assume, require or depend on?",
+    "budget": 18,
+    "assumptions": false,
+    "checks": [
+     "need"
+    ],
+    "remedies": [
+     "open_brief"
     ]
    },
    {
@@ -72,6 +110,16 @@
      "research_round",
      "search",
      "web_search"
+    ],
+    "ask": "What did the last round teach? Which 2-4 sub-threads are open, and what is the next named target?",
+    "budget": 40,
+    "assumptions": false,
+    "checks": [
+     "search"
+    ],
+    "remedies": [
+     "checkpoint",
+     "research_round"
     ]
    },
    {
@@ -89,6 +137,16 @@
      "staging_list",
      "staging_review",
      "staging_show"
+    ],
+    "ask": "What role would each candidate play? A rejection needs its reason.",
+    "budget": 40,
+    "assumptions": true,
+    "checks": [
+     "judge"
+    ],
+    "remedies": [
+     "decide",
+     "session_status"
     ]
    },
    {
@@ -103,6 +161,17 @@
      "record_synthesis",
      "record_trace",
      "search"
+    ],
+    "ask": "Which sources together; at what cost; what is unknown; what to open first? Every claim carries its source and a verbatim quote.",
+    "budget": 16,
+    "assumptions": false,
+    "checks": [
+     "synthesise"
+    ],
+    "remedies": [
+     "draft_offering",
+     "promote_offering",
+     "record_synthesis"
     ]
    },
    {
@@ -115,6 +184,15 @@
      "record_application",
      "staging_list",
      "update_plan"
+    ],
+    "ask": "What did the library fail to answer?",
+    "budget": 14,
+    "assumptions": false,
+    "checks": [
+     "check_out"
+    ],
+    "remedies": [
+     "close_brief"
     ]
    }
   ],
@@ -128,6 +206,16 @@
      "session_status",
      "topics_list",
      "update_plan"
+    ],
+    "ask": "Which project is this for, what stage is it at, and what is fixed?",
+    "budget": 24,
+    "assumptions": false,
+    "checks": [
+     "frame"
+    ],
+    "remedies": [
+     "create_project",
+     "update_plan"
     ]
    },
    {
@@ -144,6 +232,16 @@
      "search",
      "source_verification_plan",
      "update_plan"
+    ],
+    "ask": "What does the library already hold on this, and under which topics?",
+    "budget": 20,
+    "assumptions": false,
+    "checks": [
+     "map"
+    ],
+    "remedies": [
+     "search",
+     "update_plan"
     ]
    },
    {
@@ -158,6 +256,15 @@
      "record_assumptions",
      "search",
      "update_plan"
+    ],
+    "ask": "What is needed, and what must a candidate not assume, require or depend on?",
+    "budget": 18,
+    "assumptions": false,
+    "checks": [
+     "need"
+    ],
+    "remedies": [
+     "open_brief"
     ]
    },
    {
@@ -174,6 +281,16 @@
      "research_round",
      "search",
      "web_search"
+    ],
+    "ask": "What did the last round teach? Which 2-4 sub-threads are open, and what is the next named target?",
+    "budget": 40,
+    "assumptions": false,
+    "checks": [
+     "search"
+    ],
+    "remedies": [
+     "checkpoint",
+     "research_round"
     ]
    },
    {
@@ -191,6 +308,16 @@
      "staging_list",
      "staging_review",
      "staging_show"
+    ],
+    "ask": "What role would each candidate play? A rejection needs its reason.",
+    "budget": 40,
+    "assumptions": true,
+    "checks": [
+     "judge"
+    ],
+    "remedies": [
+     "decide",
+     "session_status"
     ]
    },
    {
@@ -205,6 +332,17 @@
      "record_synthesis",
      "record_trace",
      "search"
+    ],
+    "ask": "Which sources together; at what cost; what is unknown; what to open first? Every claim carries its source and a verbatim quote.",
+    "budget": 16,
+    "assumptions": false,
+    "checks": [
+     "synthesise"
+    ],
+    "remedies": [
+     "draft_offering",
+     "promote_offering",
+     "record_synthesis"
     ]
    },
    {
@@ -217,6 +355,15 @@
      "record_application",
      "staging_list",
      "update_plan"
+    ],
+    "ask": "What did the library fail to answer?",
+    "budget": 14,
+    "assumptions": false,
+    "checks": [
+     "check_out"
+    ],
+    "remedies": [
+     "close_brief"
     ]
    }
   ],
@@ -233,6 +380,16 @@
      "session_status",
      "topics_list",
      "update_plan"
+    ],
+    "ask": "Which project is this for, what stage is it at, and what is fixed?",
+    "budget": 24,
+    "assumptions": false,
+    "checks": [
+     "frame"
+    ],
+    "remedies": [
+     "create_project",
+     "update_plan"
     ]
    },
    {
@@ -250,6 +407,17 @@
      "search",
      "source_verification_plan",
      "update_plan"
+    ],
+    "ask": "What does the library already hold on this, and under which topics?",
+    "budget": 20,
+    "assumptions": false,
+    "checks": [
+     "map"
+    ],
+    "remedies": [
+     "read_project",
+     "search",
+     "update_plan"
     ]
    },
    {
@@ -266,6 +434,16 @@
      "research_round",
      "search",
      "web_search"
+    ],
+    "ask": "What did the last round teach? Which 2-4 sub-threads are open, and what is the next named target?",
+    "budget": 40,
+    "assumptions": false,
+    "checks": [
+     "search"
+    ],
+    "remedies": [
+     "checkpoint",
+     "research_round"
     ]
    },
    {
@@ -283,6 +461,16 @@
      "staging_list",
      "staging_review",
      "staging_show"
+    ],
+    "ask": "What role would each candidate play? A rejection needs its reason.",
+    "budget": 40,
+    "assumptions": true,
+    "checks": [
+     "judge"
+    ],
+    "remedies": [
+     "decide",
+     "session_status"
     ]
    },
    {
@@ -297,6 +485,17 @@
      "record_synthesis",
      "record_trace",
      "search"
+    ],
+    "ask": "Which sources together; at what cost; what is unknown; what to open first? Every claim carries its source and a verbatim quote.",
+    "budget": 16,
+    "assumptions": false,
+    "checks": [
+     "synthesise"
+    ],
+    "remedies": [
+     "draft_offering",
+     "promote_offering",
+     "record_synthesis"
     ]
    },
    {
@@ -309,6 +508,15 @@
      "record_application",
      "staging_list",
      "update_plan"
+    ],
+    "ask": "What did the library fail to answer?",
+    "budget": 14,
+    "assumptions": false,
+    "checks": [
+     "check_out"
+    ],
+    "remedies": [
+     "close_brief"
     ]
    }
   ],
@@ -319,6 +527,15 @@
     "offered": [
      "get_note",
      "search",
+     "update_plan"
+    ],
+    "ask": "What are you working on, and what do you need from the library?",
+    "budget": 12,
+    "assumptions": false,
+    "checks": [
+     "check_in"
+    ],
+    "remedies": [
      "update_plan"
     ]
    },
@@ -333,6 +550,16 @@
      "read_source_file",
      "search",
      "update_plan"
+    ],
+    "ask": "Find, qualify, open, extract: which sources did you use, and for what?",
+    "budget": 30,
+    "assumptions": false,
+    "checks": [
+     "find"
+    ],
+    "remedies": [
+     "log_use",
+     "update_plan"
     ]
    },
    {
@@ -345,6 +572,16 @@
      "get_note",
      "record_application",
      "staging_list",
+     "update_plan"
+    ],
+    "ask": "What did the library fail to answer?",
+    "budget": 14,
+    "assumptions": false,
+    "checks": [
+     "check_out"
+    ],
+    "remedies": [
+     "record_application",
      "update_plan"
     ]
    }
@@ -362,6 +599,16 @@
      "session_status",
      "topics_list",
      "update_plan"
+    ],
+    "ask": "Which project is this for, what stage is it at, and what is fixed?",
+    "budget": 24,
+    "assumptions": false,
+    "checks": [
+     "frame"
+    ],
+    "remedies": [
+     "create_project",
+     "update_plan"
     ]
    },
    {
@@ -376,6 +623,15 @@
      "record_assumptions",
      "search",
      "update_plan"
+    ],
+    "ask": "Kind-specific questions: what does this pursuit actually involve - modules and assessments, a role and its first-90-days, deliverables and stakeholders, or a research question and what's already known?",
+    "budget": 18,
+    "assumptions": true,
+    "checks": [
+     "inventory"
+    ],
+    "remedies": [
+     "update_plan"
     ]
    },
    {
@@ -386,6 +642,16 @@
     "offered": [
      "get_note",
      "search",
+     "task_add",
+     "update_plan"
+    ],
+    "ask": "What are the milestones, and which of them have dates?",
+    "budget": 16,
+    "assumptions": false,
+    "checks": [
+     "plan"
+    ],
+    "remedies": [
      "task_add",
      "update_plan"
     ]
@@ -401,6 +667,17 @@
      "queue_source",
      "search",
      "update_plan"
+    ],
+    "ask": "What reading, handbooks or onboarding material belongs in the library for this pursuit, and which of it matters enough to pin to the desk?",
+    "budget": 20,
+    "assumptions": false,
+    "checks": [
+     "seed"
+    ],
+    "remedies": [
+     "ingest",
+     "queue_source",
+     "update_plan"
     ]
    },
    {
@@ -413,7 +690,14 @@
      "record_application",
      "staging_list",
      "update_plan"
-    ]
+    ],
+    "ask": "What did the library fail to answer?",
+    "budget": 14,
+    "assumptions": false,
+    "checks": [
+     "check_out"
+    ],
+    "remedies": []
    }
   ],
   "learn": [
@@ -426,6 +710,15 @@
      "get_note",
      "search",
      "update_plan"
+    ],
+    "ask": "What do they want to be able to do, and by when?",
+    "budget": 12,
+    "assumptions": false,
+    "checks": [
+     "goal"
+    ],
+    "remedies": [
+     "update_plan"
     ]
    },
    {
@@ -436,6 +729,16 @@
     "offered": [
      "get_note",
      "search",
+     "update_plan"
+    ],
+    "ask": "Before teaching anything: 2-3 questions on what they already know.",
+    "budget": 14,
+    "assumptions": false,
+    "checks": [
+     "baseline"
+    ],
+    "remedies": [
+     "ask_user",
      "update_plan"
     ]
    },
@@ -449,6 +752,15 @@
      "read_source_file",
      "search",
      "update_plan"
+    ],
+    "ask": "What does the library hold on this, and which concepts should this session focus on?",
+    "budget": 18,
+    "assumptions": false,
+    "checks": [
+     "focus"
+    ],
+    "remedies": [
+     "update_plan"
     ]
    },
    {
@@ -458,6 +770,16 @@
      "get_note",
      "read_source_file",
      "search",
+     "understanding_record",
+     "update_plan"
+    ],
+    "ask": "Ask one question anchored in a source passage; the person answers; feedback cites the passage; record what they understand.",
+    "budget": 30,
+    "assumptions": false,
+    "checks": [
+     "practice"
+    ],
+    "remedies": [
      "understanding_record",
      "update_plan"
     ]
@@ -473,6 +795,16 @@
      "search",
      "understanding_record",
      "update_plan"
+    ],
+    "ask": "Let the person explain it in their own words first; critique it against the sources, grounded like the scribe.",
+    "budget": 16,
+    "assumptions": false,
+    "checks": [
+     "consolidate"
+    ],
+    "remedies": [
+     "understanding_record",
+     "update_plan"
     ]
    },
    {
@@ -484,6 +816,16 @@
      "close_session",
      "get_note",
      "search",
+     "task_add",
+     "update_plan"
+    ],
+    "ask": "When should this be reviewed again, and is there a next session to propose?",
+    "budget": 14,
+    "assumptions": false,
+    "checks": [
+     "next"
+    ],
+    "remedies": [
      "task_add",
      "update_plan"
     ]
@@ -498,6 +840,16 @@
     "offered": [
      "capability_candidates",
      "get_note",
+     "update_plan"
+    ],
+    "ask": "Which server? One from capability_candidates (the curated list), or a repository URL the person gives - never one found by browsing on your own.",
+    "budget": null,
+    "assumptions": false,
+    "checks": [
+     "candidate"
+    ],
+    "remedies": [
+     "capability_candidates",
      "update_plan"
     ]
    },
@@ -514,6 +866,16 @@
      "record_assumptions",
      "search",
      "update_plan"
+    ],
+    "ask": "ingest its repository, read it as a source, and record the assessment: licence, maintenance, what it claims, caveats, what it can reach - its card is its own claim, and the narrowest tool that does the job is the one to want.",
+    "budget": null,
+    "assumptions": true,
+    "checks": [
+     "assess"
+    ],
+    "remedies": [
+     "ingest",
+     "update_plan"
     ]
    },
    {
@@ -524,6 +886,15 @@
     "offered": [
      "capability_propose",
      "get_note"
+    ],
+    "ask": "Propose one exact, pinned definition: which launcher, which version, which secrets (as ${ENV} names only), and why this library needs it.",
+    "budget": null,
+    "assumptions": false,
+    "checks": [
+     "propose"
+    ],
+    "remedies": [
+     "capability_propose"
     ]
    },
    {
@@ -534,6 +905,15 @@
     "offered": [
      "capability_install",
      "get_note"
+    ],
+    "ask": "The person decides: capability_install asks them, and installs only on yes.",
+    "budget": null,
+    "assumptions": false,
+    "checks": [
+     "install"
+    ],
+    "remedies": [
+     "capability_install"
     ]
    },
    {
@@ -546,6 +926,15 @@
      "record_application",
      "staging_list",
      "update_plan"
+    ],
+    "ask": "What did the library fail to answer?",
+    "budget": 14,
+    "assumptions": false,
+    "checks": [
+     "check_out"
+    ],
+    "remedies": [
+     "close_brief"
     ]
    }
   ],
@@ -561,6 +950,15 @@
      "read_evidence",
      "search",
      "update_plan"
+    ],
+    "ask": "Which open requirement comes next, and what one bounded step serves it? Record it with update_plan(fields={'proposal': {'requirements': [...], 'step': ...}}); ask the person instead if the requirement is unclear.",
+    "budget": 12,
+    "assumptions": false,
+    "checks": [
+     "audited"
+    ],
+    "remedies": [
+     "update_plan"
     ]
    },
    {
@@ -571,6 +969,15 @@
     "offered": [
      "admit_contract",
      "audit_projection"
+    ],
+    "ask": "The Core admits the proposal as a contract against the current state, or refuses it with the reason.",
+    "budget": 8,
+    "assumptions": false,
+    "checks": [
+     "audited"
+    ],
+    "remedies": [
+     "admit_contract"
     ]
    },
    {
@@ -587,6 +994,15 @@
      "search",
      "source_verification_plan",
      "stage_artifact"
+    ],
+    "ask": "Do only what the admitted contract allows, through its tools.",
+    "budget": 30,
+    "assumptions": false,
+    "checks": [
+     "audited"
+    ],
+    "remedies": [
+     "stage_artifact"
     ]
    },
    {
@@ -598,6 +1014,16 @@
      "audit_projection",
      "audit_targets",
      "verify_grain"
+    ],
+    "ask": "Tier A checks every predicate of the contract's requirements on the actual artifacts; a missing or failed check is recorded, not skipped.",
+    "budget": 16,
+    "assumptions": false,
+    "checks": [
+     "audited"
+    ],
+    "remedies": [
+     "audit_targets",
+     "verify_grain"
     ]
    },
    {
@@ -607,6 +1033,16 @@
     ],
     "offered": [
      "audit_projection",
+     "close_session",
+     "reduce_round"
+    ],
+    "ask": "The Core turns the round's results into requirement statuses. Then start the next round, or close the session if every requirement is accounted for.",
+    "budget": 8,
+    "assumptions": false,
+    "checks": [
+     "audited"
+    ],
+    "remedies": [
      "close_session",
      "reduce_round"
     ]

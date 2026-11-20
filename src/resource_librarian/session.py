@@ -274,34 +274,10 @@ def model_session_trace_sink(trace: dict[str, Any]) -> None:
         pending.extend(events)
         del pending[:-MAX_PENDING_MODEL_EVENTS]
 
-PURPOSES: dict[str, tuple[str, ...]] = {
-    "add_project": ("frame", "ingest", "map", "need", "search", "judge", "synthesise",
-                    "check_out"),
-    "explore": ("frame", "map", "need", "search", "judge", "synthesise", "check_out"),
-    "suggest": ("frame", "map", "search", "judge", "synthesise", "check_out"),
-    "apply": ("check_in", "find", "check_out"),
-    # Co-work Roadmap §2, W1: starting a course, job, project, research line or
-    # learning goal. Reuses "frame" (create_project's own gate) and "check_out"
-    # (close_session's) rather than inventing new phase names for either, since
-    # both tools already mean the same thing here as everywhere else.
-    "start_pursuit": ("frame", "inventory", "plan", "seed", "check_out"),
-    # W2: stewarding, not answering. Every phase name here is new - "map" was
-    # deliberately not reused, since its exit condition (concepts read, a
-    # focus chosen) is not "the library's own map" the other purposes mean.
-    "learn": ("goal", "baseline", "focus", "practice", "consolidate", "next"),
-    # Roadmap §4 F2: adding a capability (an outside MCP server) the way the
-    # librarian adds anything - assessed as a source first. "candidate", not
-    # apply's "find": that name already means "sources used" there.
-    "add_capability": ("candidate", "assess", "propose", "install", "check_out"),
-    # HARNESS-03: an audited session works in rounds. Each round the Lead
-    # proposes (manage), the Core admits a contract (preflight), the contract
-    # runs (execute), Tier A checks it (audit) and the Core reduces the results
-    # to requirement statuses (reduce); then the next round starts at manage.
-    "audited": ("manage", "preflight", "execute", "audit", "reduce"),
-}
-MODE = {"add_project": "librarian", "explore": "librarian", "suggest": "librarian",
-        "apply": "reader", "start_pursuit": "librarian", "learn": "librarian",
-        "add_capability": "librarian", "audited": "librarian"}
+# Purposes, their phases, each phase's question, budget, bundle and exit gate: declared once in
+# standard/phases.yaml (W1, 2026-11-20) and read through `phases`.
+from .phases import ASKS, ASSUMPTION_PHASES, DEFAULT_BUDGETS, MODE, PURPOSES  # noqa: E402
+from . import phases as _phases  # noqa: E402
 # A round is not a redo: each one gets its phases' full budgets, up to this cap
 # (the vault's [session] audited_max_rounds overrides it).
 AUDITED_MAX_ROUNDS = 50
@@ -362,7 +338,6 @@ HARNESS = frozenset({"open_session", "session_status", "update_plan", "ask_user"
 # synthesise), a server definition (assess, before propose), a plan (inventory,
 # before plan) - do not close until the model has said what it is assuming and
 # how each assumption was settled, checked against what this session actually did.
-ASSUMPTION_PHASES = frozenset({"judge", "assess", "inventory"})
 
 # Raised 2026-09-28 from the shipped defaults (frame 8, ingest/map 12, need 10,
 # check_out 8, check_in 6, inventory/seed 12, plan 10, goal 6, baseline 8,
@@ -373,12 +348,7 @@ ASSUMPTION_PHASES = frozenset({"judge", "assess", "inventory"})
 # search/judge/synthesise/find/practice were not reported as tight and are
 # left as they were. A vault can still override any of these under [session]
 # in its own .librarian/config.toml.
-DEFAULT_BUDGETS = {"frame": 24, "ingest": 20, "map": 20, "need": 18, "search": 40,
-                   "judge": 40, "synthesise": 16, "check_out": 14, "check_in": 12, "find": 30,
-                   "inventory": 18, "plan": 16, "seed": 20,
-                   "goal": 12, "baseline": 14, "focus": 18, "practice": 30, "consolidate": 16,
-                   "next": 14,
-                   "manage": 12, "preflight": 8, "execute": 30, "audit": 16, "reduce": 8}
+# DEFAULT_BUDGETS: each phase's `budget` in standard/phases.yaml.
 
 # Search is sized for one brief. Each further brief - a topic the request asked about -
 # adds to it, up to a ceiling: a six-topic request parked in Search, its briefs open, in
@@ -386,54 +356,7 @@ DEFAULT_BUDGETS = {"frame": 24, "ingest": 20, "map": 20, "need": 18, "search": 4
 SEARCH_PER_BRIEF = 12
 SEARCH_EXTRA_MAX = 60
 
-ASKS = {
-    "frame": "Which project is this for, what stage is it at, and what is fixed?",
-    "ingest": "What does the person already have (repositories, papers, notes) that belongs "
-              "in the library?",
-    "map": "What does the library already hold on this, and under which topics?",
-    "need": "What is needed, and what must a candidate not assume, require or depend on?",
-    "search": "What did the last round teach? Which 2-4 sub-threads are open, and what is "
-              "the next named target?",
-    "judge": "What role would each candidate play? A rejection needs its reason.",
-    "synthesise": "Which sources together; at what cost; what is unknown; what to open "
-                  "first? Every claim carries its source and a verbatim quote.",
-    "check_out": "What did the library fail to answer?",
-    "check_in": "What are you working on, and what do you need from the library?",
-    "find": "Find, qualify, open, extract: which sources did you use, and for what?",
-    "inventory": "Kind-specific questions: what does this pursuit actually involve - modules "
-                 "and assessments, a role and its first-90-days, deliverables and "
-                 "stakeholders, or a research question and what's already known?",
-    "plan": "What are the milestones, and which of them have dates?",
-    "seed": "What reading, handbooks or onboarding material belongs in the library for this "
-            "pursuit, and which of it matters enough to pin to the desk?",
-    "goal": "What do they want to be able to do, and by when?",
-    "candidate": "Which server? One from capability_candidates (the curated list), or a "
-                 "repository URL the person gives - never one found by browsing on your own.",
-    "assess": "ingest its repository, read it as a source, and record the assessment: "
-              "licence, maintenance, what it claims, caveats, what it can reach - its card is "
-              "its own claim, and the narrowest tool that does the job is the one to want.",
-    "propose": "Propose one exact, pinned definition: which launcher, which version, which "
-               "secrets (as ${ENV} names only), and why this library needs it.",
-    "install": "The person decides: capability_install asks them, and installs only on yes.",
-    "baseline": "Before teaching anything: 2-3 questions on what they already know.",
-    "focus": "What does the library hold on this, and which concepts should this session "
-             "focus on?",
-    "practice": "Ask one question anchored in a source passage; the person answers; feedback "
-                "cites the passage; record what they understand.",
-    "consolidate": "Let the person explain it in their own words first; critique it against "
-                   "the sources, grounded like the scribe.",
-    "next": "When should this be reviewed again, and is there a next session to propose?",
-    "manage": "Which open requirement comes next, and what one bounded step serves it? "
-              "Record it with update_plan(fields={'proposal': {'requirements': [...], 'step': ...}}); "
-              "ask the person instead if the requirement is unclear.",
-    "preflight": "The Core admits the proposal as a contract against the current state, "
-                 "or refuses it with the reason.",
-    "execute": "Do only what the admitted contract allows, through its tools.",
-    "audit": "Tier A checks every predicate of the contract's requirements on the actual "
-             "artifacts; a missing or failed check is recorded, not skipped.",
-    "reduce": "The Core turns the round's results into requirement statuses. Then start "
-              "the next round, or close the session if every requirement is accounted for.",
-}
+# ASKS: each phase's `ask` in standard/phases.yaml.
 
 
 def _filled(value: Any) -> bool:
@@ -799,156 +722,12 @@ class Session:
         """What stands between this phase and the next. Empty means it may advance."""
         out = [f"unanswered question {q['id']}: {q['question']}" for q in self.open_questions()]
         p = self.phase
-        if self.purpose == "audited":
-            return out + self._audited_missing()
-        if p == "frame":
-            if self.purpose in ("add_project", "suggest", "start_pursuit"):
-                if not self.project:
-                    out.append("no project set: update_plan(fields={'project': ...}) or create_project")
-                elif not vault.project_note(self.project).exists():
-                    out.append(f"no Project note for {self.project!r}: create_project")
-            else:
-                if not (self.question or self.project):
-                    out.append("no question set: update_plan(fields={'question': ...})")
-                if self.project and not vault.project_note(self.project).exists():
-                    # 2026-10-02: an explore thread named a project that had no note, left
-                    # Frame, and spent a dozen calls in Need where create_project is not
-                    # offered. It is settled here, where it is.
-                    out.append(f"no Project note for {self.project!r} yet: "
-                               f"create_project(name={self.project!r}, ...) now, or "
-                               f"update_plan(fields={{'project': ''}}) to work without one")
-        elif p == "ingest" and not _filled(self.plan.get("ingested")):
-            out.append("record what the person already has: update_plan(fields={'ingested': ...}) "
-                       "(a list, or 'none')")
-        elif p == "map":
-            if "map" not in self.plan:
-                out.append("record the orientation: search with intent 'orient', then "
-                           "update_plan(fields={'map': ...})")
-            if self.purpose == "suggest" and "project_read" not in self.plan:
-                from .projects import root_for
-                try:
-                    root_for(vault, self.project, "")
-                    out.append("read the project's own files: read_project")
-                except Refusal:
-                    pass            # access is off: the suggestion rests on the Project note
-        elif p == "need":
-            # R13: one brief per asked topic, so every topic ends with a coverage verdict
-            unbriefed = [r["topic"] for r in self.coverage() if not r["brief"]]
-            if unbriefed:
-                out.append(f"open a brief for each asked topic still without one: "
-                           f"{', '.join(unbriefed[:8])} - open_brief(need, disqualifiers, "
-                           f"topic=...)")
-            elif not self.briefs:
-                out.append("open at least one brief: open_brief(need, disqualifiers)")
-        elif p == "search":
-            if not self._search_done():
-                out.append("run rounds until the stopping rule fires: research_round, then "
-                           "checkpoint")
-        elif p == "judge":
-            undecided = [c.source for c in self.candidates.values()
-                         if c.disposition == "undecided"]
-            if undecided:
-                more = (f" - decide(source=[...], disposition='reject'|'context'|'defer', "
-                        f"reason=...) settles several sharing one reason in one call; "
-                        f"decide's result and session_status list the rest"
-                        if len(undecided) > 8 else "")
-                out.append(f"{len(undecided)} undecided candidate(s): "
-                           f"{', '.join(undecided[:8])}{more}")
-        elif p == "synthesise":
-            if self.synthesis is None:
-                out.append("record the cross-source synthesis: record_synthesis")
-            elif self.synthesis.get("outcome") == "offering" and not any(
-                    o.get("status") in ("staged", "promoted") for o in self.offerings):
-                out.append("draft the offering: draft_offering")
-            else:
-                # Staged is not delivered (M0 pass 2: a guide was drafted, then left in
-                # staging): promote it - the person is asked under promotion.mode "person" -
-                # or the person declines it.
-                staged = [o["id"] for o in self.offerings if o.get("status") == "staged"]
-                if staged and not any(o.get("status") == "promoted" for o in self.offerings):
-                    out.append(f"promote the staged offering: promote_offering(offering="
-                               f"'{staged[-1]}') - it is not in the vault until promoted")
-        elif p == "check_in" and not (self.question or self.project):
-            out.append("say what you are working on: update_plan(fields={'question': ..., 'project': ...})")
-        elif p == "find" and not self.uses and "nothing_found" not in self.plan:
-            out.append("log the sources you used (log_use), or update_plan(fields={'nothing_found': ...})")
-        elif p == "check_out":
-            if self.purpose == "apply":
-                if not any(w["tool"] == "record_application" for w in self.writes) and \
-                        "no_application" not in self.plan:
-                    out.append("record_application, or update_plan(fields={'no_application': reason})")
-            elif self.purpose != "start_pursuit":
-                open_briefs = [b.id for b in self.briefs.values() if b.status == "open"]
-                if open_briefs:
-                    out.append(f"close brief(s) {', '.join(open_briefs)}: close_brief")
-        # -- start_pursuit (W1) ------------------------------------------------
-        elif p == "inventory" and not _filled(self.plan.get("inventory")):
-            out.append("record the kind-specific inventory: update_plan(fields={'inventory': ...})")
-        elif p == "plan":
-            if "no_dates" not in self.plan and not _has_dated_task(vault, self.project):
-                out.append("add at least one dated milestone (task_add), or "
-                           "update_plan(fields={'no_dates': reason})")
-        elif p == "seed":
-            seeded = self.plan.get("ingested")
-            if not _filled(seeded):
-                out.append("record what was seeded: update_plan(fields={'ingested': ...}) (a list, or "
-                           "'none')")
-            elif not _is_none(seeded) and not (self.called.get("ingest") or
-                                               self.called.get("queue_source")):
-                # Self-reported until 2026-09-28: seeded sources are believed
-                # only once something was actually ingested or queued here.
-                out.append("the seeded sources were listed but none was ingested or queued in "
-                           "this session: ingest / queue_source them, or ingested='none'")
-        # -- learn (W2) ---------------------------------------------------------
-        elif p == "goal" and not _filled(self.plan.get("goal")):
-            out.append("what do they want to be able to do, and by when: "
-                       "update_plan(fields={'goal': ..., 'deadline': ...})")
-        elif p == "baseline" and not _filled(self.plan.get("baseline")):
-            out.append("2-3 diagnostic questions before teaching: ask_user, then "
-                       "update_plan(fields={'baseline': ...})")
-        elif p == "focus" and "focus" not in self.plan:
-            out.append("read what the library holds, then choose the focus concepts: "
-                       "update_plan(fields={'focus': [...]})")
-        elif p == "practice" and "practice_stopped" not in self.plan:
-            # A spent budget does not count as practice: the phase stays open,
-            # and the envelope says so, until every focus concept has its own
-            # understanding_record or someone says, visibly, why it stopped.
-            focus = self.plan.get("focus") or []
-            focus = [focus] if isinstance(focus, str) else list(focus)
-            practised = {str(w.get("concept", "")).casefold() for w in self.writes
-                        if w.get("tool") == "understanding_record"}
-            remaining = [c for c in focus if str(c).casefold() not in practised]
-            if remaining:
-                out.append(f"practise the remaining focus concept(s): {', '.join(remaining)} "
-                           f"(or update_plan(fields={{'practice_stopped': reason}}))")
-        elif p == "consolidate" and ("consolidated" not in self.plan or not any(
-                w.get("tool") == "understanding_record" and w.get("phase") == "consolidate"
-                for w in self.writes)):
-            # The person's own explanation is the point of this phase: a flag
-            # without an understanding_record made here is not consolidation.
-            out.append("let them explain it in their own words, critique it against the "
-                       "sources, then understanding_record and update_plan(fields={'consolidated': ...})")
-        # -- add_capability (§4 F2) ----------------------------------------------
-        elif p == "candidate" and not _filled(self.plan.get("candidate")):
-            out.append("name the candidate: update_plan(fields={'candidate': ...}) - a curated server "
-                       "(capability_candidates) or a repository URL the person gave")
-        elif p == "assess":
-            if not self.called.get("ingest"):
-                out.append("ingest the candidate's repository, so it is read as a source")
-            elif not _filled(self.plan.get("assessment")):
-                out.append("record the assessment: update_plan(fields={'assessment': ...}) - licence, "
-                           "maintenance, claims, caveats, what it can reach")
-        elif p == "propose" and not self.capabilities:
-            out.append("propose its exact definition: capability_propose(...)")
-        elif p == "install" and not any(c.get("status") in ("installed", "declined")
-                                         for c in self.capabilities.values()):
-            out.append("capability_install(name) - it asks the person; a decline is a "
-                       "finished outcome too")
-        elif p == "next" and ("scheduled" not in self.plan or
-                              not _review_scheduled(vault, self.plan.get("focus") or [])):
-            out.append("review dates as tasks - task_add(note='<project note>', text='Review: <concept>', due=..., "
-                       "heading='Understanding') - or enable the Spaced Repetition plugin, "
-                       "then update_plan(fields={'scheduled': ...})")
+        try:
+            gate = _phases.phase(p).gate
+        except KeyError:
+            gate = ()
+        for check in gate:
+            out.extend(GATES[check.check](self, vault))
         if p in ASSUMPTION_PHASES and not self.assumptions_recorded():
             out.append("before committing: record what you are assuming and how each was "
                        "settled - record_assumptions([{assumption, settled_by, how}]), where "
@@ -1196,6 +975,302 @@ class Session:
 
 
 # -------------------------------------------------------------------- storage
+
+# --------------------------------------------------------------- phase exit gates
+# Each check is one phase's exit condition, moved verbatim from Session.missing (W1,
+# 2026-11-20). standard/phases.yaml names which checks a phase runs and the tools their
+# remedies use; this is the closed set of checks it may name.
+GATES: dict[str, Callable[[Session, Vault], list[str]]] = {}
+
+
+def _gate(name: str):
+    def register(fn):
+        GATES[name] = fn
+        return fn
+    return register
+
+
+@_gate("audited")
+def _gate_audited(s: Session, vault: Vault) -> list[str]:
+    return s._audited_missing()
+
+
+@_gate('frame')
+def _gate_frame(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if s.purpose in ("add_project", "suggest", "start_pursuit"):
+        if not s.project:
+            out.append("no project set: update_plan(fields={'project': ...}) or create_project")
+        elif not vault.project_note(s.project).exists():
+            out.append(f"no Project note for {s.project!r}: create_project")
+    else:
+        if not (s.question or s.project):
+            out.append("no question set: update_plan(fields={'question': ...})")
+        if s.project and not vault.project_note(s.project).exists():
+            # 2026-10-02: an explore thread named a project that had no note, left
+            # Frame, and spent a dozen calls in Need where create_project is not
+            # offered. It is settled here, where it is.
+            out.append(f"no Project note for {s.project!r} yet: "
+                       f"create_project(name={s.project!r}, ...) now, or "
+                       f"update_plan(fields={{'project': ''}}) to work without one")
+    return out
+
+
+@_gate('ingest')
+def _gate_ingest(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if not _filled(s.plan.get("ingested")):
+        out.append("record what the person already has: update_plan(fields={'ingested': ...}) "
+                   "(a list, or 'none')")
+    return out
+
+
+@_gate('map')
+def _gate_map(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if "map" not in s.plan:
+        out.append("record the orientation: search with intent 'orient', then "
+                   "update_plan(fields={'map': ...})")
+    if s.purpose == "suggest" and "project_read" not in s.plan:
+        from .projects import root_for
+        try:
+            root_for(vault, s.project, "")
+            out.append("read the project's own files: read_project")
+        except Refusal:
+            pass            # access is off: the suggestion rests on the Project note
+    return out
+
+
+@_gate('need')
+def _gate_need(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    # R13: one brief per asked topic, so every topic ends with a coverage verdict
+    unbriefed = [r["topic"] for r in s.coverage() if not r["brief"]]
+    if unbriefed:
+        out.append(f"open a brief for each asked topic still without one: "
+                   f"{', '.join(unbriefed[:8])} - open_brief(need, disqualifiers, "
+                   f"topic=...)")
+    elif not s.briefs:
+        out.append("open at least one brief: open_brief(need, disqualifiers)")
+    return out
+
+
+@_gate('search')
+def _gate_search(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if not s._search_done():
+        out.append("run rounds until the stopping rule fires: research_round, then "
+                   "checkpoint")
+    return out
+
+
+@_gate('judge')
+def _gate_judge(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    undecided = [c.source for c in s.candidates.values()
+                 if c.disposition == "undecided"]
+    if undecided:
+        more = (f" - decide(source=[...], disposition='reject'|'context'|'defer', "
+                f"reason=...) settles several sharing one reason in one call; "
+                f"decide's result and session_status list the rest"
+                if len(undecided) > 8 else "")
+        out.append(f"{len(undecided)} undecided candidate(s): "
+                   f"{', '.join(undecided[:8])}{more}")
+    return out
+
+
+@_gate('synthesise')
+def _gate_synthesise(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if s.synthesis is None:
+        out.append("record the cross-source synthesis: record_synthesis")
+    elif s.synthesis.get("outcome") == "offering" and not any(
+            o.get("status") in ("staged", "promoted") for o in s.offerings):
+        out.append("draft the offering: draft_offering")
+    else:
+        # Staged is not delivered (M0 pass 2: a guide was drafted, then left in
+        # staging): promote it - the person is asked under promotion.mode "person" -
+        # or the person declines it.
+        staged = [o["id"] for o in s.offerings if o.get("status") == "staged"]
+        if staged and not any(o.get("status") == "promoted" for o in s.offerings):
+            out.append(f"promote the staged offering: promote_offering(offering="
+                       f"'{staged[-1]}') - it is not in the vault until promoted")
+    return out
+
+
+@_gate('check_in')
+def _gate_check_in(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if not (s.question or s.project):
+        out.append("say what you are working on: update_plan(fields={'question': ..., 'project': ...})")
+    return out
+
+
+@_gate('find')
+def _gate_find(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if not s.uses and "nothing_found" not in s.plan:
+        out.append("log the sources you used (log_use), or update_plan(fields={'nothing_found': ...})")
+    return out
+
+
+@_gate('check_out')
+def _gate_check_out(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if s.purpose == "apply":
+        if not any(w["tool"] == "record_application" for w in s.writes) and \
+                "no_application" not in s.plan:
+            out.append("record_application, or update_plan(fields={'no_application': reason})")
+    elif s.purpose != "start_pursuit":
+        open_briefs = [b.id for b in s.briefs.values() if b.status == "open"]
+        if open_briefs:
+            out.append(f"close brief(s) {', '.join(open_briefs)}: close_brief")
+    return out
+
+
+# -- start_pursuit (W1) ------------------------------------------------
+@_gate('inventory')
+def _gate_inventory(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if not _filled(s.plan.get("inventory")):
+        out.append("record the kind-specific inventory: update_plan(fields={'inventory': ...})")
+    return out
+
+
+@_gate('plan')
+def _gate_plan(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if "no_dates" not in s.plan and not _has_dated_task(vault, s.project):
+        out.append("add at least one dated milestone (task_add), or "
+                   "update_plan(fields={'no_dates': reason})")
+    return out
+
+
+@_gate('seed')
+def _gate_seed(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    seeded = s.plan.get("ingested")
+    if not _filled(seeded):
+        out.append("record what was seeded: update_plan(fields={'ingested': ...}) (a list, or "
+                   "'none')")
+    elif not _is_none(seeded) and not (s.called.get("ingest") or
+                                       s.called.get("queue_source")):
+        # Self-reported until 2026-09-28: seeded sources are believed
+        # only once something was actually ingested or queued here.
+        out.append("the seeded sources were listed but none was ingested or queued in "
+                   "this session: ingest / queue_source them, or ingested='none'")
+    return out
+
+
+# -- learn (W2) ---------------------------------------------------------
+@_gate('goal')
+def _gate_goal(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if not _filled(s.plan.get("goal")):
+        out.append("what do they want to be able to do, and by when: "
+                   "update_plan(fields={'goal': ..., 'deadline': ...})")
+    return out
+
+
+@_gate('baseline')
+def _gate_baseline(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if not _filled(s.plan.get("baseline")):
+        out.append("2-3 diagnostic questions before teaching: ask_user, then "
+                   "update_plan(fields={'baseline': ...})")
+    return out
+
+
+@_gate('focus')
+def _gate_focus(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if "focus" not in s.plan:
+        out.append("read what the library holds, then choose the focus concepts: "
+                   "update_plan(fields={'focus': [...]})")
+    return out
+
+
+@_gate('practice')
+def _gate_practice(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if "practice_stopped" not in s.plan:
+        # A spent budget does not count as practice: the phase stays open,
+        # and the envelope says so, until every focus concept has its own
+        # understanding_record or someone says, visibly, why it stopped.
+        focus = s.plan.get("focus") or []
+        focus = [focus] if isinstance(focus, str) else list(focus)
+        practised = {str(w.get("concept", "")).casefold() for w in s.writes
+                    if w.get("tool") == "understanding_record"}
+        remaining = [c for c in focus if str(c).casefold() not in practised]
+        if remaining:
+            out.append(f"practise the remaining focus concept(s): {', '.join(remaining)} "
+                       f"(or update_plan(fields={{'practice_stopped': reason}}))")
+    return out
+
+
+@_gate('consolidate')
+def _gate_consolidate(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if "consolidated" not in s.plan or not any(
+            w.get("tool") == "understanding_record" and w.get("phase") == "consolidate"
+            for w in s.writes):
+        # The person's own explanation is the point of this phase: a flag
+        # without an understanding_record made here is not consolidation.
+        out.append("let them explain it in their own words, critique it against the "
+                   "sources, then understanding_record and update_plan(fields={'consolidated': ...})")
+    return out
+
+
+# -- add_capability (§4 F2) ----------------------------------------------
+@_gate('candidate')
+def _gate_candidate(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if not _filled(s.plan.get("candidate")):
+        out.append("name the candidate: update_plan(fields={'candidate': ...}) - a curated server "
+                   "(capability_candidates) or a repository URL the person gave")
+    return out
+
+
+@_gate('assess')
+def _gate_assess(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if not s.called.get("ingest"):
+        out.append("ingest the candidate's repository, so it is read as a source")
+    elif not _filled(s.plan.get("assessment")):
+        out.append("record the assessment: update_plan(fields={'assessment': ...}) - licence, "
+                   "maintenance, claims, caveats, what it can reach")
+    return out
+
+
+@_gate('propose')
+def _gate_propose(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if not s.capabilities:
+        out.append("propose its exact definition: capability_propose(...)")
+    return out
+
+
+@_gate('install')
+def _gate_install(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if not any(c.get("status") in ("installed", "declined") for c in s.capabilities.values()):
+        out.append("capability_install(name) - it asks the person; a decline is a "
+                   "finished outcome too")
+    return out
+
+
+@_gate('next')
+def _gate_next(s: Session, vault: Vault) -> list[str]:
+    out: list[str] = []
+    if "scheduled" not in s.plan or not _review_scheduled(vault, s.plan.get("focus") or []):
+        out.append("review dates as tasks - task_add(note='<project note>', text='Review: <concept>', due=..., "
+                   "heading='Understanding') - or enable the Spaced Repetition plugin, "
+                   "then update_plan(fields={'scheduled': ...})")
+    return out
+
+
+_phases.validate_checks(set(GATES))
+
 
 class SessionStore:
     def __init__(self, vault: Vault):

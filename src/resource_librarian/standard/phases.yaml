@@ -1,0 +1,353 @@
+# Session purposes, their phases, and each phase's tools and exit gate, declared as data
+# (W1 of docs/proposals/plan-forward-2026-11.md, owner 2026-11-20).
+#
+# `phases.py` loads and validates this file; `session.py`, `agent_runtime.py`, the workflow map
+# and the phase walk all read it, so a phase's tools, its exit gate and the tools that gate tells a
+# model to use are written down once.
+#
+# A gate is a list of named checks. Each check is a function in session.py's closed GATES registry
+# (it reads the session's state and returns what is still missing, in the words a model is shown);
+# this file names which checks a phase runs and which tools their remedies use. A remedy is a tool
+# name, or {tool, purposes} when it applies only to some purposes, or {tool, alternative_in} when
+# in those purposes it is one of two ways out (absence is by design, not a deadlock).
+#
+# Tool names are filtered against the registry when a bundle is built, so a tool that is not
+# registered here (a library without its Geo-Grapher service) is simply not offered.
+version: 1
+
+# Named tool groups, used in a bundle's tools as "@name".
+tool_groups:
+  # The library's own Geo-Grapher, read-only, for research phases (owner, 2026-11-20: agents
+  # researching a 96-paper corpus never reached its knowledge graphs, because no phase offered them).
+  graph_find: [mcp__geo-grapher__list_graphs, mcp__geo-grapher__paper_search_documents]
+  # paper_get_section needs a section id once a paper has several sections, and only the outline
+  # gives one (2026-11-20: a Lead read no section text at all without it).
+  graph_read: [mcp__geo-grapher__paper_get_outline, mcp__geo-grapher__paper_get_section,
+               mcp__geo-grapher__paper_get_claim, mcp__geo-grapher__search_entities,
+               mcp__geo-grapher__get_entity_content]
+  graph_check: [mcp__geo-grapher__paper_get_outline, mcp__geo-grapher__paper_get_section,
+                mcp__geo-grapher__paper_get_claim, mcp__geo-grapher__get_entity_content]
+  # Saying where a finding lands in the code is Synthesise's work (2026-11-20).
+  graph_code: [mcp__geo-grapher__search_entities]
+
+# Offered in every phase, after the phase's own tools. park_session and request_budget are what a
+# spent budget tells the model to use (Session.next_step): 2026-11-20, a Lead in Judge was told to
+# request_budget, found no such tool, and asked with ask_user, which extends nothing.
+tail: [read_result, macro_run, macro_plan, park_session, request_budget]
+
+# What a refusal or `next` tells a model to use, in any phase. Checked against every phase's offer.
+refusal_remedies: [park_session, request_budget, advance]
+
+# Frame must keep create_project offered until the session's Project note exists.
+bootstrap:
+  purposes: [add_project, suggest, start_pursuit]
+  tools: [create_project]
+
+purposes:
+  add_project: {mode: librarian, phases: [frame, ingest, map, need, search, judge, synthesise, check_out]}
+  explore: {mode: librarian, phases: [frame, map, need, search, judge, synthesise, check_out]}
+  suggest: {mode: librarian, phases: [frame, map, search, judge, synthesise, check_out]}
+  apply: {mode: reader, phases: [check_in, find, check_out]}
+  # Co-work Roadmap §2, W1: starting a course, job, project, research line or learning goal.
+  # Reuses "frame" (create_project's own gate) and "check_out" (close_session's).
+  start_pursuit: {mode: librarian, phases: [frame, inventory, plan, seed, check_out]}
+  # W2: stewarding, not answering. "map" was deliberately not reused: its exit condition is not
+  # "the library's own map" the other purposes mean.
+  learn: {mode: librarian, phases: [goal, baseline, focus, practice, consolidate, next]}
+  # Roadmap §4 F2: adding a capability (an outside MCP server), assessed as a source first.
+  add_capability: {mode: librarian, phases: [candidate, assess, propose, install, check_out]}
+  # HARNESS-03: rounds of manage -> preflight -> execute -> audit -> reduce.
+  audited: {mode: librarian, phases: [manage, preflight, execute, audit, reduce]}
+
+phases:
+  frame:
+    ask: "Which project is this for, what stage is it at, and what is fixed?"
+    budget: 24
+    bundle:
+      purpose: Frame a question and inspect the current library
+      tools: [session_status, get_note, search, topics_list, filters, update_plan, advance, ask_user]
+    gate:
+      - check: frame
+        remedies: [update_plan, {tool: create_project, alternative_in: [explore]}]
+  ingest:
+    ask: "What does the person already have (repositories, papers, notes) that belongs in the library?"
+    budget: 20
+    bundle:
+      purpose: Record and bring in what the person already has
+      tools: [update_plan, search, get_note, ingest, queue_source, advance, ask_user]
+    gate:
+      - check: ingest
+        remedies: [update_plan]
+  map:
+    ask: "What does the library already hold on this, and under which topics?"
+    budget: 20
+    bundle:
+      purpose: Map relevant sources and structure
+      tools: [get_note, search, read_source_file, source_verification_plan, request_raw_source_access,
+              record_assumptions, update_plan, advance, ask_user, dispatch_plan]
+    # suggest has no Need phase, so its brief is opened in Map, and its Map phase reads the
+    # project's own files when project access is on (the registry still refuses either if not allowed).
+    extras: {suggest: [open_brief, read_project]}
+    gate:
+      - check: map
+        remedies: [search, update_plan, {tool: read_project, purposes: [suggest], alternative_in: [suggest]}]
+  need:
+    ask: "What is needed, and what must a candidate not assume, require or depend on?"
+    budget: 18
+    bundle:
+      purpose: State and test the evidence needed next
+      tools: [search, get_note, read_source_file, record_assumptions, open_brief, update_plan, advance,
+              ask_user, "@graph_find"]
+    gate:
+      - check: need
+        remedies: [open_brief]
+  search:
+    ask: "What did the last round teach? Which 2-4 sub-threads are open, and what is the next named target?"
+    budget: 40
+    bundle:
+      purpose: Find, inspect, and rank evidence
+      tools: [search, get_note, read_source_file, web_search, ingest, queue_source, research_round,
+              checkpoint, advance, ask_user, "@graph_find", "@graph_read"]
+    gate:
+      - check: search
+        remedies: [research_round, checkpoint]
+  judge:
+    ask: "What role would each candidate play? A rejection needs its reason."
+    budget: 40
+    assumptions: true
+    bundle:
+      purpose: Judge staged and source evidence
+      tools: [get_note, search, staging_list, staging_show, staging_review, provenance_check, decide,
+              record_assumptions, advance, ask_user, session_status, add_candidate, "@graph_check"]
+    gate:
+      # The gate says "N undecided candidate(s)"; decide is the tool that settles one.
+      - check: judge
+        remedies: [decide, session_status]
+  synthesise:
+    ask: "Which sources together; at what cost; what is unknown; what to open first? Every claim carries its source and a verbatim quote."
+    budget: 16
+    bundle:
+      purpose: Record a grounded synthesis or identify the gap
+      tools: [get_note, search, record_synthesis, record_trace, draft_offering, promote_offering, advance,
+              ask_user, "@graph_check", "@graph_code"]
+    gate:
+      - check: synthesise
+        remedies: [record_synthesis, draft_offering, promote_offering]
+  check_out:
+    ask: "What did the library fail to answer?"
+    budget: 14
+    bundle:
+      purpose: Make a person-reviewed outcome concrete
+      # advance: back to an earlier phase when the outcome needs redoing (ST-F12)
+      tools: [get_note, draft_offering, record_application, close_brief, close_session, update_plan,
+              ask_user, staging_list, advance]
+    gate:
+      - check: check_out
+        remedies:
+          - {tool: record_application, purposes: [apply]}
+          - {tool: update_plan, purposes: [apply]}
+          - {tool: close_brief, purposes: [explore, add_project, suggest, add_capability], alternative_in: [apply]}
+  check_in:
+    ask: "What are you working on, and what do you need from the library?"
+    budget: 12
+    bundle:
+      purpose: Say what is being worked on and what is needed
+      tools: [update_plan, search, get_note, advance, ask_user]
+    gate:
+      - check: check_in
+        remedies: [update_plan]
+  find:
+    ask: "Find, qualify, open, extract: which sources did you use, and for what?"
+    budget: 30
+    bundle:
+      purpose: Find, open and use sources for the work in hand
+      tools: [search, get_note, read_source_file, log_use, update_plan, advance, ask_user]
+    gate:
+      - check: find
+        remedies: [log_use, update_plan]
+  inventory:
+    ask: "Kind-specific questions: what does this pursuit actually involve - modules and assessments, a role and its first-90-days, deliverables and stakeholders, or a research question and what's already known?"
+    budget: 18
+    assumptions: true
+    bundle:
+      purpose: Take the kind-specific inventory of a pursuit
+      tools: [update_plan, search, get_note, read_source_file, record_assumptions, advance, ask_user]
+    gate:
+      - check: inventory
+        remedies: [update_plan]
+  plan:
+    ask: "What are the milestones, and which of them have dates?"
+    budget: 16
+    bundle:
+      purpose: Set the milestones and their dates
+      tools: [update_plan, task_add, search, get_note, advance, ask_user]
+    gate:
+      - check: plan
+        remedies: [task_add, update_plan]
+  seed:
+    ask: "What reading, handbooks or onboarding material belongs in the library for this pursuit, and which of it matters enough to pin to the desk?"
+    budget: 20
+    bundle:
+      purpose: Seed the library with what the pursuit needs
+      tools: [update_plan, ingest, queue_source, search, get_note, advance, ask_user]
+    gate:
+      - check: seed
+        remedies: [update_plan, ingest, queue_source]
+  goal:
+    ask: "What do they want to be able to do, and by when?"
+    budget: 12
+    bundle:
+      purpose: "Learn: what they want to be able to do, and by when"
+      tools: [update_plan, search, get_note, advance, ask_user]
+    gate:
+      - check: goal
+        remedies: [update_plan]
+  baseline:
+    ask: "Before teaching anything: 2-3 questions on what they already know."
+    budget: 14
+    bundle:
+      purpose: "Learn: what they already know"
+      tools: [update_plan, get_note, search, advance, ask_user]
+    gate:
+      - check: baseline
+        remedies: [ask_user, update_plan]
+  focus:
+    ask: "What does the library hold on this, and which concepts should this session focus on?"
+    budget: 18
+    bundle:
+      purpose: "Learn: choose the concepts to focus on"
+      tools: [update_plan, search, get_note, read_source_file, advance, ask_user]
+    gate:
+      - check: focus
+        remedies: [update_plan]
+  practice:
+    ask: "Ask one question anchored in a source passage; the person answers; feedback cites the passage; record what they understand."
+    budget: 30
+    bundle:
+      purpose: "Learn: practise each focus concept against a source"
+      tools: [update_plan, understanding_record, search, get_note, read_source_file, advance, ask_user]
+    gate:
+      - check: practice
+        remedies: [understanding_record, update_plan]
+  consolidate:
+    ask: "Let the person explain it in their own words first; critique it against the sources, grounded like the scribe."
+    budget: 16
+    bundle:
+      purpose: "Learn: consolidate in their own words"
+      tools: [update_plan, understanding_record, search, get_note, read_source_file, advance, ask_user]
+    gate:
+      - check: consolidate
+        remedies: [understanding_record, update_plan]
+  next:
+    ask: "When should this be reviewed again, and is there a next session to propose?"
+    budget: 14
+    bundle:
+      purpose: "Learn: schedule the review and propose a next session"
+      # advance: back to practise again (ST-F12)
+      tools: [update_plan, task_add, get_note, search, close_session, ask_user, advance]
+    gate:
+      - check: next
+        remedies: [task_add, update_plan]
+  candidate:
+    ask: "Which server? One from capability_candidates (the curated list), or a repository URL the person gives - never one found by browsing on your own."
+    bundle:
+      purpose: Name the capability candidate
+      tools: [update_plan, capability_candidates, get_note, advance, ask_user]
+    gate:
+      - check: candidate
+        remedies: [update_plan, capability_candidates]
+  assess:
+    ask: "ingest its repository, read it as a source, and record the assessment: licence, maintenance, what it claims, caveats, what it can reach - its card is its own claim, and the narrowest tool that does the job is the one to want."
+    assumptions: true
+    bundle:
+      purpose: Assess the candidate as a source
+      tools: [update_plan, ingest, get_note, read_source_file, search, record_assumptions, advance, ask_user]
+    gate:
+      - check: assess
+        remedies: [ingest, update_plan]
+  propose:
+    ask: "Propose one exact, pinned definition: which launcher, which version, which secrets (as ${ENV} names only), and why this library needs it."
+    bundle:
+      purpose: Propose the exact capability definition
+      tools: [capability_propose, get_note, advance, ask_user]
+    gate:
+      - check: propose
+        remedies: [capability_propose]
+  install:
+    ask: "The person decides: capability_install asks them, and installs only on yes."
+    bundle:
+      purpose: The person decides whether to install
+      tools: [capability_install, get_note, advance, ask_user]
+    gate:
+      - check: install
+        remedies: [capability_install]
+  # The audited round (HARNESS-03 to -07; G5 readiness R1). The person's own controls -
+  # set_requirement, accept_artifact, reject_artifact, request_evidence - are in no bundle.
+  manage:
+    ask: "Which open requirement comes next, and what one bounded step serves it? Record it with update_plan(fields={'proposal': {'requirements': [...], 'step': ...}}); ask the person instead if the requirement is unclear."
+    budget: 12
+    bundle:
+      purpose: Read the session's state and propose one bounded step
+      tools: [audit_projection, update_plan, search, get_note, read_evidence, ask_user, advance]
+    gate:
+      - check: audited
+        remedies: [update_plan]
+  preflight:
+    ask: "The Core admits the proposal as a contract against the current state, or refuses it with the reason."
+    budget: 8
+    bundle:
+      purpose: Ask the Core to admit the proposal as a contract
+      tools: [admit_contract, audit_projection, ask_user, advance]
+    gate:
+      - check: audited
+        remedies: [admit_contract]
+  execute:
+    ask: "Do only what the admitted contract allows, through its tools."
+    budget: 30
+    bundle:
+      purpose: Do the contract's work within its targets
+      tools: [search, get_note, read_evidence, read_source_file, stage_artifact, ask_user, advance,
+              dispatch_plan, source_verification_plan, request_raw_source_access]
+    gate:
+      - check: audited
+        remedies: [stage_artifact]
+  audit:
+    ask: "Tier A checks every predicate of the contract's requirements on the actual artifacts; a missing or failed check is recorded, not skipped."
+    budget: 16
+    bundle:
+      purpose: Check each planned predicate and the protected targets
+      tools: [verify_grain, audit_targets, audit_projection, ask_user, advance]
+    gate:
+      - check: audited
+        remedies: [verify_grain, audit_targets]
+  reduce:
+    ask: "The Core turns the round's results into requirement statuses. Then start the next round, or close the session if every requirement is accounted for."
+    budget: 8
+    bundle:
+      purpose: Reduce the round's results to requirement statuses
+      # close_session is how an audited session ends (found missing 2026-11-19).
+      tools: [reduce_round, audit_projection, advance, close_session]
+    gate:
+      - check: audited
+        remedies: [reduce_round, close_session]
+
+# Bundles that are not a phase's own.
+bundles:
+  session:
+    purpose: Open, inspect, advance or safely park a research session
+    # create_project: a project can be the explicit frame for a new session.
+    tools: [open_session, resume_session, session_status, advance, ask_user, answer, park_session,
+            close_session, create_project]
+  research:
+    purpose: Use the phase-specific research bundle
+    tools: []
+  read:
+    purpose: Read-only help
+    tools: [get_note, search, read_source_file, read_file, read_source_section, verify_source_pages,
+            list_files, session_status]
+  draft:
+    purpose: Draft and review bounded text
+    tools: [get_note, search, record_trace, ask_user]
+  clerk:
+    purpose: Submit and inspect small asynchronous work
+    tools: [clerk_submit, clerk_next, session_status]

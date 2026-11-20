@@ -7305,3 +7305,31 @@ It follows a read of the owner's earlier harness, MARK XLVIII (MIT, commit `281d
 - **To adopt:** the safe preview-then-commit canvas flow; the canvas-planning design (node directives, least-privilege roles, fingerprint-bound approval); the dual-orchestrator step fields our workflows lack; and its typed relation vocabulary.
 
 None of it is plan work until the owner accepts a workstream.
+
+### W1, part 1: phases declared as data (2026-11-20)
+
+The owner accepted the plan forward and started W1 (`docs/proposals/plan-forward-2026-11.md`).
+
+`standard/phases.yaml` now declares, once:
+- each purpose's mode and phases;
+- each phase's question, default budget, assumptions flag and bundle (with named tool groups);
+- each phase's exit gate, as named checks with the tools their remedies use (`purposes` and `alternative_in` where a remedy is purpose-specific or one of two ways out);
+- the tail tools, the refusal remedies, the Frame bootstrap and the non-phase bundles.
+
+How the code reads it:
+- `phases.py` loads and validates the file.
+- `session.py` takes `PURPOSES`, `MODE`, `ASKS`, `DEFAULT_BUDGETS` and `ASSUMPTION_PHASES` from it.
+- `Session.missing` runs the declared checks, from a closed `GATES` registry whose names are validated against the file at import. Each check is the old `if p == ...` branch moved verbatim.
+- `agent_runtime.BUNDLES`, `GRAPH_*`, the bootstrap, Map's extras for `suggest`, and the tail are derived from the file.
+
+Checks:
+- **Nothing changed.** A dump of every purpose and phase from `HEAD` and from this tree is identical: phases, asks, budgets, modes, bundles, required actions, and each phase's gate text and offered tools.
+- **`phase_walk` reads the declared remedies** instead of regex-parsing `Session.missing`. It now also requires the refusal remedies (`park_session`, `request_budget`, `advance`) in every phase (OP6). That found a gap the old check could not see: `apply` sessions run at `consult` and were told to `request_budget`, which needed `contribute`. `request_budget` is now `consult`, like `ask_user`, `park_session` and `advance`, since it only asks the person.
+- **A drift guard:** a tool named in a check's text must be declared as its remedy. It found Practice's `understanding_record`.
+- **`scripts/workflow_map.py`** shows each phase's declared question and remedy tools.
+
+Tests: `tests/test_phase_declaration.py`.
+
+Lesson: the regenerated `workflow-map.canvas` overwrote a copy the owner had re-saved in Obsidian, unchecked. W2's safe canvas writes (pinned nodes, preview before commit) exist to prevent exactly this.
+
+Left in W1: the macros as YAML workflows (OP15), and the dual-orchestrator step fields.

@@ -688,7 +688,10 @@ def audit_projection(ctx: Context, token_budget: int = 6000) -> dict:
     return {**view, "staged_in": staging_folder(ctx, session.id)}
 
 
-@tool("request_budget", tier="contribute", effect="write", scope="session",
+# Tier consult, like ask_user, park_session and advance (W1, 2026-11-20): it only asks the person,
+# whose "Extend" adds the calls, and a spent budget tells every reader to use it - an apply
+# session, at consult, was told to request_budget and could never be offered it.
+@tool("request_budget", tier="consult", effect="write", scope="session",
       card=Card("Ask the person for more calls for this phase, with a one-click answer",
                 "the phase's budget is spent with its work unfinished",
                 "The person's 'Extend' answer adds the calls; 'Not now' leaves the phase as it "
