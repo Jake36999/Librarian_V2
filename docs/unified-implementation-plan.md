@@ -7228,3 +7228,18 @@ Changes:
 - The `PERMISSION_DENIED` rule text says a person's denial is not the mode. The Lead had read the driver's deny of `macro_run` as "plan mode".
 
 Test: `test_judge_decides_a_run_of_off_topic_hits_in_one_call`.
+
+### The DataManagement papers become Source notes, and a paper graph's citation is evidence (2026-11-20)
+
+The research run in Resource-Library could judge but not report. The 96 DataManagement papers had been read and enriched, but were never accepted from staging. They existed only as staged items, folder catalogue cards and the Geo-Grapher paper graph. Judge had nothing worth keeping, and no claim could quote a paper.
+
+The owner chose both routes:
+- **Ingest.** The 90 enriched papers were accepted into Sources under the library's `agent` promotion mode, each findable. The 6 partial ones were re-read first. The files stay where they are, labelled `third_party` by their folder roots. The Source notes are generated cards (`drafted_by`, with an origin mark on each section).
+- **Graph citations.** `graph_evidence.py` resolves a paper graph's `cite_as` (`<graph-label>/doc:N`) with one read of this library's own graph (`paper_get_document`). It finds the Source note of the same name.
+  - `add_candidate` takes a handle. It records the graph, title, provenance and note, and warns when the paper has no note yet.
+  - `decide` keeps the handle whole, as does the note resolver, which would otherwise cut it to `doc:N`.
+  - A claim in `draft_offering` may cite the handle. Its quote is checked against the paper's Source note by the unchanged checks. The Offering shows the note link and `cite as <handle>`, and lists the handles in `cite_as`.
+  - Without Geo-Grapher, a handle is refused with `GRAPH_UNAVAILABLE`.
+  - `add_candidate` is in the Judge bundle.
+
+Test: `tests/test_graph_evidence.py`.

@@ -149,6 +149,10 @@ _RULES = [
          "nothing was done. The refusal's message says which: 'denied by a person' is a "
          "person's answer to this one request, not the mode. Plan mode proposes and never "
          "writes."),
+    Rule("GRAPH_UNAVAILABLE", "sessions",
+         "A paper graph's citation ('<graph-label>/doc:N') is resolved by this library's own "
+         "Geo-Grapher; it is not connected now, so nothing was recorded. Cite the paper's "
+         "Source note by name instead, or try again once Geo-Grapher is running."),
     Rule("PERMISSION_UNANSWERED", "sessions",
          "A permission request waited for a person and nobody answered. The session is "
          "parked; silence is never approval."),

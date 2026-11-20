@@ -108,11 +108,11 @@
       "fixes": [],
       "evidence": {
         "path": "src/resource_librarian/tools/sessions.py",
-        "line": 1301,
+        "line": 1335,
         "symbol": "add_candidate"
       },
       "fingerprint": {
-        "source_sha256": "9cf5888d43dd7056cce73a52d67623fcf9fcafa01845cf6df60db2a53442469f",
+        "source_sha256": "a0b6d601e2ed11ba4d7ccff20ac45bd4532a7ec8ab9ece4d936ca718b0ee5d69",
         "schema_sha256": "7ed6fbc2fd45ad3f8d844bf67cbf32995ec491d78eed485d1bd4988d17c5d184",
         "effect": "write",
         "open_world": false,
@@ -1396,11 +1396,11 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/sessions.py",
-        "line": 1495,
+        "line": 1579,
         "symbol": "draft_offering"
       },
       "fingerprint": {
-        "source_sha256": "6799773c08e286b27f4e48dba715a3df309e9b2dcad76bd44b7e2656d894a944",
+        "source_sha256": "c25ab4aa5c1647da77cc3489c7f68eb3db9d033812de39fc178e3f425cc82787",
         "schema_sha256": "c94c85a38d69e20f5f4e8d7ec0440db4e80e5ec6aa092a98c054d1a8bd3fb0e2",
         "effect": "write",
         "open_world": false,

@@ -40,6 +40,9 @@ def note(ctx: Context, value: str) -> str:
         # This is a returned, root-qualified index name, not a vault path.
         # Never collapse it to README (or guess when it no longer exists).
         return value.strip()
+    from ..graph_evidence import is_handle
+    if is_handle(value):
+        return value.strip()            # a paper graph's cite_as, never cut to 'doc:N'
     name = _clean_note(value)
     stems: dict[str, list[str]] = {}
     for path in notes.iter_paths(ctx.vault.root):
@@ -92,7 +95,10 @@ def phase(ctx: Context, value: str) -> str:
 
 def candidate(ctx: Context, value: str) -> str:
     """A session candidate by name: the same cleaning as a note, matched against the
-    thread's own candidates first."""
+    thread's own candidates first. A paper graph's citation (`<graph>/doc:N`) is kept whole."""
+    from ..graph_evidence import is_handle
+    if is_handle(value):
+        return value.strip()
     session = _session(ctx)
     name = _clean_note(value)
     if session is None:

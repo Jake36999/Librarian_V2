@@ -17,6 +17,7 @@ from .. import agenda as _agenda, clerk, notes, registry, scribe
 from .. import intake as _intake
 from ..coordination import atomic_write_text, on_writer_thread
 from ..evidence import EvidenceStore
+from ..graph_evidence import is_handle, note_for
 from ..registry import PERSON_WAIT, REGISTRY, Card, Context, tool
 from ..revisions import WriteIntent
 from ..rules import Refusal
@@ -1333,9 +1334,25 @@ def checkpoint(ctx: Context, learned: str, subthreads: list[str] | None = None,
 
 @tool("add_candidate", tier="contribute", effect="write", phases=("search", "judge"),
       resolve={"source": "note", "brief": "brief"},
-      card=Card("Put a catalogued source forward as a candidate by hand",
-                "you know of a source a round did not surface"))
+      card=Card("Put a catalogued source forward as a candidate by hand: a note name, or a "
+                "paper graph's cite_as ('<graph-label>/doc:N', copied exactly from a paper "
+                "search or document result)",
+                "you know of a source a round did not surface, such as a paper you read in "
+                "the graph"))
 def add_candidate(ctx: Context, source: str, brief: str = "") -> dict:
+    from ..graph_evidence import is_handle, resolve
+    if is_handle(source):
+        # owner, 2026-11-20: a paper read in the graph is evidence; its Source note (same
+        # name as the graph's title) is what a claim's quote is checked against.
+        found = resolve(ctx, source)
+        _event(ctx, {"type": "candidate", "source": found["handle"], "brief": brief,
+                     "graph": found["graph"], "title": found["title"], "note": found["note"],
+                     "provenance": found["provenance"]})
+        return {"candidate": found["handle"], "title": found["title"],
+                "provenance": found["provenance"],
+                "note": found["note"] or None,
+                **({} if found["note"] else {"warning": "no Source note of this paper in the "
+                    "library yet: it can be kept, but a claim cannot quote it"})}
     if IndexGateway(ctx).run(lambda engine: engine.index.note_row(source)) is None:
         raise TypeError(f"no note named {source!r}")
     _event(ctx, {"type": "candidate", "source": source, "brief": brief})
@@ -1561,8 +1578,9 @@ def _quote_miss(ctx: Context, engine, source: str, quote: str) -> str:
 
 @tool("draft_offering", tier="contribute", effect="write", phases=("synthesise",),
       card=Card("Draft an offering with a summary and evidenced claims. Each claims item must "
-                "be {text, source, quote}; source is the exact catalogued note name and quote "
-                "is verbatim. Do not use evidence_quote.",
+                "be {text, source, quote}; source is the exact catalogued note name, or a "
+                "paper graph's cite_as ('<graph-label>/doc:N'), and quote is verbatim from "
+                "that paper. Do not use evidence_quote.",
                 "the Synthesise phase, after record_synthesis",
                 "Every quote is verified before anything is written; the draft is staged, "
                 "not written into the vault"))
@@ -1587,12 +1605,22 @@ def draft_offering(ctx: Context, title: str, summary: str, claims: list[dict],
             failures.append(f"claim {i}: a quote of fewer than {MIN_QUOTE_WORDS} words "
                             f"proves nothing")
             continue
+        cite_as = ""
+        if is_handle(source):
+            # A paper graph's cite_as: the quote is checked against the paper's Source note,
+            # by the same checks as any note (owner, 2026-11-20).
+            try:
+                cite_as, source = source, note_for(ctx, source)
+            except TypeError as exc:
+                failures.append(f"claim {i}: {exc}")
+                continue
         where = gateway.run(lambda engine: _quote_found(ctx, engine, source, quote))
         if not where:
             miss = gateway.run(lambda engine: _quote_miss(ctx, engine, source, quote))
             failures.append(f"claim {i}: {miss}")
             continue
-        checked.append({"text": text, "source": source, "quote": quote, "found_in": where})
+        checked.append({"text": text, "source": source, "quote": quote, "found_in": where,
+                        **({"cite_as": cite_as} if cite_as else {})})
     if failures:
         raise Refusal("EVIDENCE_QUOTE_VERIFIED", "; ".join(failures))
     review = _review_claims(ctx, gateway, checked) if _reviewing(ctx) else []
@@ -1626,7 +1654,9 @@ def draft_offering(ctx: Context, title: str, summary: str, claims: list[dict],
     sources = sorted({c["source"] for c in checked if not c["source"].startswith("project:")})
     fm = {"type": "offering", "offering_kind": kind, "status": "draft",
           "created": session.opened_at[:10], "sources": [f"[[{s}]]" for s in sources],
-          "project": session.project, "attested_by": "agent", "session": session.id}
+          "project": session.project, "attested_by": "agent", "session": session.id,
+          **({"cite_as": sorted({c["cite_as"] for c in checked if c.get("cite_as")})}
+             if any(c.get("cite_as") for c in checked) else {})}
     # The prose is the scribe's to write, from these parts alone; the quotes
     # are set by code, verbatim, under their claims.
     written = scribe.compose(scribe.offering(slug, summary, checked, session.synthesis),
@@ -1634,6 +1664,7 @@ def draft_offering(ctx: Context, title: str, summary: str, claims: list[dict],
     prose = written["sections"]
     claims_md = "\n\n".join(
         f"{i}. {text}\n   > {c['quote']}\n   - {_cite(c['source'])} ({c['found_in']})"
+        + (f"; cite as `{c['cite_as']}`" if c.get("cite_as") else "")
         + (f"\n   - ⚑ Challenged by review: {c['challenge']['reason']} The passage says: "
            f"\"{c['challenge']['counter_quote']}\" Kept because: {c['challenge']['rebuttal']}"
            if c.get("challenge") else "")
