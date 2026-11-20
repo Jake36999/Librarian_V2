@@ -58,7 +58,8 @@ def test_a_phase_bundle_is_never_clipped_by_the_tool_cap(purpose):
         bundle_id = phase.replace("_", "-")
         names = [n for n in (BUNDLES[bundle_id].names if bundle_id in BUNDLES else ())
                  if n in REGISTRY]
-        tail = [n for n in ("read_result", "macro_run", "macro_plan") if n not in names]
+        tail = [n for n in ("read_result", "macro_run", "macro_plan", "park_session",
+                                 "request_budget") if n not in names]
         # plus the at-most-two session-aware required actions (create_project, read_project)
         assert len(names) + len(tail) + 2 <= MAX_BUNDLE_TOOLS, (purpose, phase, len(names))
         offered = {s.name for s in bundle_selection("contribute", phase.replace("_", "-"),
@@ -93,7 +94,7 @@ def test_research_phases_offer_the_librarys_graphs_read_only():
     assert set(GRAPH_CHECK) <= set(BUNDLES["judge"].names) and set(GRAPH_CHECK) <= set(BUNDLES["synthesise"].names)
     assert all(name.startswith("mcp__geo-grapher__") for name in GRAPH_FIND + GRAPH_READ + GRAPH_CHECK)
     # The tail tools still fit after the largest research bundle.
-    assert len(BUNDLES["search"].names) + 4 <= MAX_BUNDLE_TOOLS
+    assert len(BUNDLES["search"].names) + 5 <= MAX_BUNDLE_TOOLS
 
 
 def test_an_unknown_macro_is_refused_before_anyone_is_asked(vault):

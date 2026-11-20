@@ -7243,3 +7243,7 @@ The owner chose both routes:
   - `add_candidate` is in the Judge bundle.
 
 Test: `tests/test_graph_evidence.py`.
+
+### A spent budget's own remedy is offered in every phase (2026-11-20)
+
+With the papers as Source notes, the Lead put three papers forward by `cite_as` and spent Judge's budget. The refusal told it to `request_budget`, but no research bundle offered that tool. The Lead asked with `ask_user` instead, which extends nothing, and parked. `request_budget` now joins `park_session` in the tail tools of every phase. The bundle cap rises from 20 to 22, so Search (twenty tools with Geo-Grapher's) keeps its whole tail. The owner had asked for the run to be pushed through, so a person's `extend_budget` (+20) let this run go on.

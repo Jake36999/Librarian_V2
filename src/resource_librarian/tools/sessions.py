@@ -1399,7 +1399,7 @@ def decide(ctx: Context, source: list[str],
         raise TypeError("a kept candidate needs its role: what would it do in this project?")
     if disposition == "keep" and len(names) > 1:
         raise TypeError("keep candidates one at a time, each with its own role; "
-                        "sources=[...] is for context, reject or defer")
+                        "a list in source is for context, reject or defer")
     if disposition == "context" and not (role.strip() or reason.strip()):
         raise TypeError("a context find says what background it gives (role or reason)")
     if disposition in ("reject", "defer") and not reason.strip():

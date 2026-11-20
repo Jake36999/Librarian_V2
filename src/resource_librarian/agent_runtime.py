@@ -23,8 +23,8 @@ from .vault import now_iso
 # tools (read_result, macro_run, macro_plan). The cap clips from the end, so it must hold all of
 # them: at 12, Map, Search and Judge would have silently lost their tail tools once the gate tools
 # were added (tests/test_phase_bundles.py). 20 since the research phases gained up to six read-only
-# Geo-Grapher tools (2026-11-20).
-MAX_BUNDLE_TOOLS = 20
+# Geo-Grapher tools (2026-11-20); 22 once request_budget joined the tail tools, the same day.
+MAX_BUNDLE_TOOLS = 22
 
 
 class ProfileCapacityError(RuntimeError):
@@ -689,9 +689,11 @@ def bundle_selection(tier: str, phase: str = "", *, projects_on: bool = True,
     # Prefer executable, registry-checked macros when a phase fills the cap;
     # Each expanded call still passes the registry and checkpoint guards;
     # source dispatch has its own explicit no-model dry run.
-    # park_session is what a spent budget tells the model to use (Session.next_step), so it is
-    # offered in every phase; the registry still decides whether it may run.
-    for name in ("read_result", "macro_run", "macro_plan", "park_session"):
+    # park_session and request_budget are what a spent budget tells the model to use
+    # (Session.next_step), so they are offered in every phase; the registry still decides whether
+    # they may run. 2026-11-20: a Lead in Judge with its budget spent was told to request_budget,
+    # found no such tool, and asked with ask_user instead, which extends nothing.
+    for name in ("read_result", "macro_run", "macro_plan", "park_session", "request_budget"):
         if name in by_name and name not in {spec.name for spec in selected}:
             selected.append(by_name[name])
     # A compact fallback gives a newly added phase usable reads without dumping

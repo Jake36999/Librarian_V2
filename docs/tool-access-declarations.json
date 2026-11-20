@@ -1009,11 +1009,11 @@
       "fixes": [],
       "evidence": {
         "path": "src/resource_librarian/tools/sessions.py",
-        "line": 1359,
+        "line": 1376,
         "symbol": "decide"
       },
       "fingerprint": {
-        "source_sha256": "943de26ed1ef65084e1784f741e480ed31671000ec15c4f7c05692584ec52f50",
+        "source_sha256": "28bd1c824bb08f791409177302f679c19e12c7188e0c28073fef3ab837bce6e4",
         "schema_sha256": "4887c0e220b48af807db79db6776f3957263b0026ee39fbb14a40d60c9378119",
         "effect": "write",
         "open_world": false,
