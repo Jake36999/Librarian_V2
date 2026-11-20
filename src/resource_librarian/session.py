@@ -848,8 +848,12 @@ class Session:
             undecided = [c.source for c in self.candidates.values()
                          if c.disposition == "undecided"]
             if undecided:
+                more = (f" - decide(source=[...], disposition='reject'|'context'|'defer', "
+                        f"reason=...) settles several sharing one reason in one call; "
+                        f"decide's result and session_status list the rest"
+                        if len(undecided) > 8 else "")
                 out.append(f"{len(undecided)} undecided candidate(s): "
-                           f"{', '.join(undecided[:8])}")
+                           f"{', '.join(undecided[:8])}{more}")
         elif p == "synthesise":
             if self.synthesis is None:
                 out.append("record the cross-source synthesis: record_synthesis")

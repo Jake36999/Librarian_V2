@@ -1359,24 +1359,40 @@ def log_use(ctx: Context, source: str, used_for: str) -> dict:
 @tool("decide", tier="contribute", effect="write", phases=("judge",),
       resolve={"source": "candidate"},
       card=Card("Decide a candidate: keep (with the role it would play), context (kept as "
-                "background only: it does not answer the need), reject or defer (with the "
-                "reason)", "the Judge phase"))
-def decide(ctx: Context, source: str,
+                "background only: it does not answer the need), reject or defer, and why. "
+                "`source` may be a list: one call decides several with the same disposition "
+                "and reason, e.g. rejecting a run of off-topic hits", "the Judge phase"))
+def decide(ctx: Context, source: list[str],
            disposition: Literal["keep", "context", "reject", "defer"],
-           reason: str = "", role: str = "") -> dict:
+           reason: str, role: str = "") -> dict:
+    # 2026-11-20 research run: the gate wanted all 82 candidates decided, one charged call
+    # each, against a Judge budget of 27. A run of off-topic hits shares one reason, so one
+    # call may decide them together; a kept candidate still states its own role. `source`
+    # and `reason` are required: the Lead (MiMo-V2.6-Flash) left out optional arguments
+    # it needed, call after call, when only `disposition` was required.
     session = _session(ctx)
-    if source not in session.candidates:
-        raise TypeError(f"{source!r} is not a candidate in this session")
+    names = [s for s in ([source] if isinstance(source, str) else list(source)) if s]
+    names = list(dict.fromkeys(names))
+    if not names:
+        raise TypeError("name the candidate: source='...', or source=[...] for several")
+    missing = [s for s in names if s not in session.candidates]
+    if missing:
+        raise TypeError(f"not candidates in this session: {missing[:8]}; nothing was decided")
     if disposition == "keep" and not role.strip():
         raise TypeError("a kept candidate needs its role: what would it do in this project?")
+    if disposition == "keep" and len(names) > 1:
+        raise TypeError("keep candidates one at a time, each with its own role; "
+                        "sources=[...] is for context, reject or defer")
     if disposition == "context" and not (role.strip() or reason.strip()):
         raise TypeError("a context find says what background it gives (role or reason)")
     if disposition in ("reject", "defer") and not reason.strip():
         raise TypeError(f"a {disposition}ed candidate needs its reason")
-    _event(ctx, {"type": "decision", "source": source, "disposition": disposition,
-                 "reason": reason, "role": role})
-    left = sum(1 for c in _session(ctx).candidates.values() if c.disposition == "undecided")
-    return {"decided": source, "undecided_left": left}
+    for name in names:
+        _event(ctx, {"type": "decision", "source": name, "disposition": disposition,
+                     "reason": reason, "role": role})
+    left = [c.source for c in _session(ctx).candidates.values() if c.disposition == "undecided"]
+    return {"decided": names[0] if len(names) == 1 else names, "undecided_left": len(left),
+            **({"undecided": left[:40]} if left else {})}
 
 
 # --------------------------------------------------------------- synthesise

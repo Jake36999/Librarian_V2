@@ -55,7 +55,7 @@ class Model:
                 continue
             if c["source"] in keep:
                 self.ok("decide", source=c["source"], disposition="keep",
-                        role="exposes host state to queries")
+                        role="exposes host state to queries", reason="answers the need")
             else:
                 self.ok("decide", source=c["source"], disposition="reject",
                         reason="does not do the job")
@@ -151,6 +151,38 @@ def test_explore_asks_for_disqualifiers_and_widens(library):
     status = m.ok("session_status")
     assert "widen the vocabulary" in status["next"] and "target='need'" in status["next"]
     assert m.ok("advance", target="need", reason="widen")["back"]
+
+
+def test_judge_decides_a_run_of_off_topic_hits_in_one_call(library):
+    """2026-11-20 research run: 82 candidates, one charged decide each, a Judge budget of 27.
+    Hits sharing one reason are settled together; a kept one still names its own role."""
+    m = Model(library)
+    m.ok("open_session", purpose="explore", question="host state as a database")
+    m.ok("advance")
+    m.ok("update_plan", fields={"map": "host tooling"})
+    m.ok("advance")
+    m.ok("open_brief", need="query operating system state", disqualifiers=["needs a GPU"])
+    m.ok("advance")
+    if m.ok("session_status")["phase"] == "search":
+        m.run_rounds(["zzqx unmatched wording"], brief="B1")
+        assert m.ok("advance")["moved"] == "judge"
+    for name in ("painter", "falco", "duckdb", "osquery"):
+        m.ok("add_candidate", source=name, brief="B1")
+    budget = m.ok("session_status")["budget_left"]
+
+    assert "error" in m("decide", source=["duckdb", "osquery"], disposition="keep", role="x",
+                        reason="both fit")
+    assert "error" in m("decide", source=["painter", "nonesuch"], disposition="reject",
+                        reason="off topic")
+    assert m.ok("session_status")["budget_left"] == budget        # refusals are free
+    out = m.ok("decide", source=["painter", "falco", "duckdb"], disposition="reject",
+               reason="does not expose host state as tables")
+    assert out["decided"] == ["painter", "falco", "duckdb"]
+    assert out["undecided_left"] == 1 and out["undecided"] == ["osquery"]
+    assert m.ok("session_status")["budget_left"] == budget - 1    # one call, one unit
+    out = m.ok("decide", source="osquery", disposition="keep", role="host state as SQL",
+               reason="answers the need")
+    assert out["undecided_left"] == 0 and "undecided" not in out
 
 
 def test_apply_as_a_reader(library):

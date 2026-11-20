@@ -720,7 +720,7 @@ def staging_decide(ctx: Context, item_ids: list[str],
                                                       "brief": brief, "via": "accepted"})
                 result["handoff"] = {"note": note, "path": path, "candidate": "undecided",
                                      "next": f"in judge: decide(source={note!r}, "
-                                             f"disposition=keep|reject, role=...)"}
+                                             f"disposition=keep|reject, reason=..., role=...)"}
             result["session"] = session_store.load(session_id).envelope(ctx.vault)
         except (Refusal, TypeError, OSError) as exc:
             result["handoff_warning"] = {"status": "not_recorded",

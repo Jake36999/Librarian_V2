@@ -509,7 +509,7 @@ BUNDLES = {
     "judge": ToolBundle("judge", "Judge staged and source evidence",
                          ("get_note", "search", "staging_list", "staging_show", "staging_review",
                           "provenance_check", "decide", "record_assumptions", "advance",
-                          "ask_user", *GRAPH_CHECK)),
+                          "ask_user", "session_status", *GRAPH_CHECK)),
     "synthesise": ToolBundle("synthesise", "Record a grounded synthesis or identify the gap",
                               ("get_note", "search", "record_synthesis", "record_trace",
                                "draft_offering", "promote_offering", "advance", "ask_user",

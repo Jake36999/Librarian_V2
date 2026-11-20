@@ -53,8 +53,8 @@ def add_project_walk(vault, call):
         if c["disposition"] == "undecided":
             keep = c["source"] == "osquery"
             ok("decide", source=c["source"], disposition="keep" if keep else "reject",
-               **({"role": "exposes host state to queries"} if keep
-                  else {"reason": "does not do the job"}))
+               reason="answers the need" if keep else "does not do the job",
+               **({"role": "exposes host state to queries"} if keep else {}))
     ok("record_assumptions", assumptions=[
         {"assumption": "the hosts can run a local agent", "settled_by": "unverifiable"}])
     ok("advance")

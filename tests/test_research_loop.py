@@ -65,7 +65,8 @@ def to_judge(m):
 def test_coverage_verdicts_are_earned_and_context_is_not_an_answer(library):
     m = Model(library)
     to_judge(m)
-    m.ok("decide", source="osquery", disposition="keep", role="host state as SQL tables")
+    m.ok("decide", source="osquery", disposition="keep", role="host state as SQL tables",
+         reason="answers the need")
     m.ok("decide", source="duckdb", disposition="context",
          reason="background on analytical SQL, not a host tool")
     m.ok("decide", source="painter", disposition="context", reason="named in a talk")

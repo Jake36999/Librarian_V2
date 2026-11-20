@@ -73,7 +73,8 @@ def test_with_no_briefs_the_refusal_says_to_open_one(library):
 def test_phase_and_enum_values_ignore_case(library):
     m = Model(library)
     to_judge(m)
-    out = m.ok("decide", source="[[osquery]]", disposition="Keep", role="host tables")
+    out = m.ok("decide", source="[[osquery]]", disposition="Keep", role="host tables",
+                 reason="exposes host state")
     assert any("'Keep' read as 'keep'" in a for a in out["adjusted_arguments"])
     moved = m.ok("advance", target="Synthesise")
     assert moved.get("moved") == "synthesise" or "synthesise" in json.dumps(moved)

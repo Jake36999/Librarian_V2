@@ -7213,3 +7213,18 @@ session only.
 
 Tests: `test_phase_bundles.py` (graph tools offered and within the cap; unknown macro refused with
 nothing pending), `test_app.py` (the resume note). `scripts/phase_walk.py`: 0 blocked phases.
+
+### Judge can settle a run of off-topic hits in one call (2026-11-20)
+
+The third unattended research run in Resource-Library reached Judge, then stopped with an honest blocker:
+- the gate wanted every one of 82 candidates decided;
+- each `decide` was one charged call, against a Judge budget of 27;
+- most candidates were keyword echoes (design notes, progress reports), all rejected for the same reason.
+
+Changes:
+- `decide`'s `source` is a list. A bare name still works and is read as a one-item list. One call decides several with the same disposition and reason, and is charged once. A kept candidate is still decided alone, with its own role. An unknown name refuses the whole call, so nothing is half-decided.
+- `source` and `reason` are now required; before, only `disposition` was. A first try with an optional `sources` failed: the Lead (MiMo-V2.6-Flash) sent calls carrying only the required field. A direct probe confirmed it: asked to reject with a reason, the model left out the optional `reason`. Every decision now says why, including a keep.
+- `decide` returns the next 40 undecided names. Judge's open item points at the batch form once more than eight remain, and `session_status` is in the Judge bundle.
+- The `PERMISSION_DENIED` rule text says a person's denial is not the mode. The Lead had read the driver's deny of `macro_run` as "plan mode".
+
+Test: `test_judge_decides_a_run_of_off_topic_hits_in_one_call`.

@@ -1009,12 +1009,12 @@
       "fixes": [],
       "evidence": {
         "path": "src/resource_librarian/tools/sessions.py",
-        "line": 1326,
+        "line": 1359,
         "symbol": "decide"
       },
       "fingerprint": {
-        "source_sha256": "2bde7a14ad8c0c08a4004bb7321c661facd0d8a65d7a10a2d5b29b5080e90ca3",
-        "schema_sha256": "0ae98b923306a7c985047a2aff667b9316920718ba162b7d311384f24fadf46b",
+        "source_sha256": "943de26ed1ef65084e1784f741e480ed31671000ec15c4f7c05692584ec52f50",
+        "schema_sha256": "4887c0e220b48af807db79db6776f3957263b0026ee39fbb14a40d60c9378119",
         "effect": "write",
         "open_world": false,
         "external": false,
@@ -4745,7 +4745,7 @@
         "symbol": "staging_decide"
       },
       "fingerprint": {
-        "source_sha256": "741b68159db295c61ea642ff09b989f9b76ff0038ce33196347917d754803844",
+        "source_sha256": "22661c8117b7b9449a2c30b4201ded1d38fb6a0e1c2a9f295ac92f262b3f02f1",
         "schema_sha256": "269eb5420887b52769f7072d567b1d112c73ed488a9eb3f534d0a6f0b35a1600",
         "effect": "vault_write",
         "open_world": false,

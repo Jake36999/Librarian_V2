@@ -145,8 +145,10 @@ _RULES = [
          'Accepted third-party, research and data folders are read-only. Attached sources '
          'are always read-only; only an explicit accepted child purpose can override an internal folder decision.'),
     Rule("PERMISSION_DENIED", "sessions",
-         "The permission mode or the tool's own setting denied this action; nothing was "
-         "done. Plan mode proposes and never writes."),
+         "A person, the tool's own setting or the permission mode denied this action; "
+         "nothing was done. The refusal's message says which: 'denied by a person' is a "
+         "person's answer to this one request, not the mode. Plan mode proposes and never "
+         "writes."),
     Rule("PERMISSION_UNANSWERED", "sessions",
          "A permission request waited for a person and nobody answered. The session is "
          "parked; silence is never approval."),
