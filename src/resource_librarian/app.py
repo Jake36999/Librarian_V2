@@ -2382,7 +2382,7 @@ class App:
         """Apply the Clerk/Scribe profile before each single-shot model call."""
         route = self._background_endpoint_route(endpoint, fallback_route)
         if not str(route.get("host_id") or route.get("provider") or "") or not route.get("model"):
-            raise ValueError("bind this legacy Clerk/Scribe endpoint to a Host Registry record before "
+            raise ValueError("assign this legacy Clerk/Scribe endpoint to a Host Registry record before "
                              "using a screened or verified profile")
         permitted, reason = route_permitted(profile, route)
         if not permitted:

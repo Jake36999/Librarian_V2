@@ -2,7 +2,9 @@
 
 For an agent session that needs one of the owner's libraries, its helper
 sub-agents, or the research already done, whatever folder the session started
-in. Checked against the code on 2026-11-12. File and line references are given so
+in. You are a **tier-0 agent**: read `docs/policy/` first. It says which documents
+carry authority (reports never do), what each tier may assume, and that models are
+**assigned** to roles, never bound. Checked against the code on 2026-11-12. File and line references are given so
 you can re-check rather than trust this page.
 
 ## 1. How access works, and why sessions fail to connect
@@ -130,7 +132,8 @@ helpers. A new library's routes have none, so `delegate` is refused. Only the
 person clears this, in the app:
 - Models → qualification, for the role. L0 is free. L1 is one real probe, about
   $0.005 per model, and asks the person to confirm the spend.
-- Or bind the role to a model the records already validated:
+- Or assign the role a model the records already validated (an assignment is
+  revisable, never permanent: `docs/policy/agent-roles-and-authority.md`):
   `deepseek-ai/DeepSeek-V4.1-Flash` and `XiaomiMiMo/MiMo-V2.6-Flash` passed 4/4
   cases on 2026-10-23 (`reports/2026-10-23-deepinfra-post-fix-validation.json`).
   Then qualify that route.

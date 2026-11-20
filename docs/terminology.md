@@ -11,7 +11,9 @@ delivery-status authority.
 | Core | The single mutable authority for one vault: coordinator, writer, index service, leases, session append path, and policy boundary. | A browser, Obsidian adapter, Cowork/MCP process, or CLI client. |
 | Registry tier | `consult`, `contribute`, or `curate`: the maximum tool authority of a caller. | A model-picker position, model quality level, or work budget. |
 | Role slot | A semantic assignment: `lead`, `scribe`, `clerk`, `research_helper`, `ocr`, `tts`, `stt`, or `embeddings`. | A legacy positional tier. |
-| Legacy position | The existing three-picker compatibility projection: Lead, Scribe, Clerk. | The canonical vault-scoped role-to-route binding. |
+| Legacy position | The existing three-picker compatibility projection: Lead, Scribe, Clerk. | The canonical vault-scoped role-to-route assignment. |
+| Assign (a model to a role) | Choose the route a role uses. Always revisable; qualification is evidence for that route at that time. **Say "assign", never "bind"** in prose, UI and agent instructions (owner, 2026-11-20): "bind" was read as permanent. The stored record is still `RoleRouteBinding` in code. | A permanent commitment, or a rule for later sessions. |
+| Agent tier | 0 = an outside agent (Claude Code, Codex, Antigravity…); 1 = Lead; 2 = Scribe, research helper; 3 = Clerk. Who does the work. See [policy/agent-roles-and-authority.md](policy/agent-roles-and-authority.md). | A registry tier (`consult`/`contribute`/`curate`) or a trust tier (`gold`/`silver`/`bronze`). |
 | Route | One host plus exact provider model, protocol adapter, expectation record, and qualification evidence. | A provider family or catalogue tile. |
 
 ## Model evidence and controls

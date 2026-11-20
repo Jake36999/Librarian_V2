@@ -100,7 +100,7 @@ TaskContract + RolePolicy + CollaborationPlan
 | TaskContract | Describe the work and hard capability requirements. | Select a provider or grant authority. |
 | RolePolicy | Describe authority, budgets, bundles, qualification floor, and checkpoint policy. | Invent a route or broaden permissions. |
 | CollaborationPlan | Describe solo/delegated/review/handoff topology and typed artifacts. | Give workers unrestricted shared state. |
-| RoleRouteBinding | Bind a vault role to a host, exact model, expectation record, and approved behaviour mode. | Contain a secret or silently replace another role. |
+| RoleRouteBinding | Record a vault role's assignment to a host, exact model, expectation record, and approved behaviour mode (revisable at any time; see `policy/agent-roles-and-authority.md`). | Contain a secret or silently replace another role. |
 | ModelExpectation | Declare exact route compatibility, parser/template/tool dialect, controls, provenance, and test requirements. | Establish reliability on its own. |
 | Contract Resolver | Intersect the preceding contracts and produce one allowed plan or a structured incompatibility. | Spend, reroute, or relax an unmet requirement. |
 | Protocol Adapter | Render, invoke, stream, parse, and normalise one allowed plan. | Make policy, write vault state, execute tools, or delegate. |

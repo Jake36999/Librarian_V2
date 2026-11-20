@@ -577,6 +577,11 @@ class FolderReview:
         selected = [c for c in all_cards if c['status'] == 'accepted' and c.get('decision')]
         surveys = {found.canonical_root: found}
         for member in selected:
+            if (member.get('decision') or {}).get('purpose') == 'exclude' and member['id'] != item_id:
+                # An excluded folder is never read, so a change inside it cannot make a graph
+                # stale. Checking it let one churning folder block every accept in the library
+                # (2026-11-20: D:/Librarian_V2/tmp refused six unrelated decisions on E:/).
+                continue
             source_root = member['source_root']
             if source_root not in surveys:
                 surveys[source_root] = self.surveyor(source_root)

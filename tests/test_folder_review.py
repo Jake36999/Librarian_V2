@@ -568,3 +568,25 @@ def test_third_party_graphs_follow_the_observed_modality_so_one_graph_holds_one_
     after = {c['path']: c for c in review.list()}
     assert after['third_party_beta']['decision']['graph'].endswith('-third-party-docs')
     assert after['third_party_alpha']['decision']['graph'].endswith('-third-party')
+
+
+def test_a_change_inside_an_excluded_folder_blocks_no_other_accept(library):
+    """2026-11-20: D:/Librarian_V2/tmp (accepted as exclude, and always changing) refused every
+    accept in Resource-Library with FOLDER_STALE, on an unrelated root. An excluded folder is
+    never read, so its changes cannot make a graph stale."""
+    from resource_librarian.folder_review import FolderReview
+    vault, source = library
+    review = FolderReview(vault, planner=fake_planner, applier=lambda _: {'graphs': []})
+    cards = review.survey(source)['cards']
+    beta = next(c for c in cards if c['path'] == 'third_party_beta')
+    review.accept(beta['id'], beta['folder_fingerprint'], purpose='exclude', graph='', person=True)
+    (source / 'third_party_beta/b.py').write_text('churn inside the excluded folder')
+    src = next(c for c in cards if c['path'] == 'src')
+    assert review.accept(src['id'], src['folder_fingerprint'], purpose='own-current',
+                         graph='library-code', person=True)['status'] == 'accepted'
+    # An accepted folder that is read still refuses when it changed.
+    (source / 'src/a.py').write_text('changed after acceptance')
+    alpha = next(c for c in cards if c['path'] == 'third_party_alpha')
+    with pytest.raises(ValueError, match='FOLDER_STALE'):
+        review.accept(alpha['id'], alpha['folder_fingerprint'], purpose='third-party',
+                      graph='library-third-party', person=True)

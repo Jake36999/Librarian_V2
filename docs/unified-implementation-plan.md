@@ -7102,3 +7102,37 @@ Its run log, session log and scripts were read; nothing in that library was chan
 `test_core_source_batch.py` (per-item fields, stray ids), `test_app.py` (role-scoped
 fingerprint), `test_app_reopen.py` (Host-managed takeover keeps the record), `test_clerk.py`
 (queue copy removed).
+
+### Policy pages, assign-not-bind, and an excluded folder no longer blocks accepts (2026-11-20)
+
+**Policy (owner direction).**
+- `docs/policy/README.md` sets which documents carry authority: owner direction, policy,
+  terminology, contracts and guides, design, the plan, then reports. Reports are dated records
+  and never policy.
+- `docs/policy/agent-roles-and-authority.md`:
+  - names the three senses of "tier": agent tiers 0–3, registry tiers, trust tiers;
+  - each agent finishes its own work;
+  - in-app agents stay blind to tier 0;
+  - models are **assigned** to roles, never bound, and an assignment is always revisable.
+- `docs/terminology.md` gains "Assign" and "Agent tier". The agent guide points tier-0 agents to
+  the policy pages.
+- The Lead's prompt (`loop.BASE`) gains one line: it finishes the work it is asked to do, and no
+  other agent will complete its steps.
+- Agent-facing wording changed from bind to assign (one refusal in `app.py`, the guide, the
+  architecture table). `RoleRouteBinding` keeps its name in code.
+- `docs/proposals/operators-and-views.md` defines one operator set across the relational, graph,
+  document, dimensional, provenance and temporal views. It adds 25 operators beyond the six the
+  owner named, a change-impact ("blast radius") detection design, and which views the current
+  visuals can show.
+
+**Fix.** `FolderReview.accept` re-checks every accepted folder in every root before a graph
+build. An accepted **exclude** folder is now skipped: it is never read, so its changes cannot
+make a graph stale. `D:/Librarian_V2/tmp` was refusing every accept in Resource-Library.
+Test: `test_folder_review.py::test_a_change_inside_an_excluded_folder_blocks_no_other_accept`.
+
+**Still open (design).**
+- Every accept re-checks and rebuilds every reviewed group in the library. So a root that is
+  edited all day (the `D:/Librarian_V2` working tree) blocks every folder decision until it is
+  surveyed again.
+- The fix is to rebuild only the groups an accept touches, which is a Geo-Grapher
+  `apply_review` change.

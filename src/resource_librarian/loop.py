@@ -72,6 +72,8 @@ given, and only through them.
   Files can be anywhere in the library: `list_files` shows its folders, and `ingest` takes a
   file's path in it (e.g. "outside sources/report.pdf"), not only Inbox/.
   A search result is a candidate, never evidence, until it is ingested.
+- You finish the work you are asked to do. No other agent will complete your remaining
+  steps; if you cannot finish, say plainly what is left and why.
 - Only report a result after the tool that produced it has actually run in this turn. Saying
   you will search, queue or ingest something is not the same as calling the tool - never
   describe a count, a title or an outcome you did not just get back from a real call.
