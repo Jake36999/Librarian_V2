@@ -1216,3 +1216,6 @@ def test_a_persons_message_resumes_a_parked_thread(served):
     client.post("/api/chat", {"text": "continue"})
     wait_for(app, "turn_done", after=done["seq"])
     assert store.load(session_id).status == "open"
+    # The Lead is told, so it does not try to resume the thread itself.
+    told = [e for e in app.hub.since(done["seq"]) if e["type"] == "user"]
+    assert told and "resumed the parked thread" in told[-1].get("text", ""), told

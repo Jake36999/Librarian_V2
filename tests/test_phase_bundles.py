@@ -82,3 +82,26 @@ def test_a_terminal_phase_can_go_back(vault):
     learn's next, so a model could not return to redo a phase."""
     from resource_librarian.agent_runtime import BUNDLES
     assert "advance" in BUNDLES["check-out"].names and "advance" in BUNDLES["next"].names
+
+
+def test_research_phases_offer_the_librarys_graphs_read_only():
+    """2026-11-20: agents researching a 96-paper corpus never reached its knowledge graphs; no
+    phase bundle offered Geo-Grapher. The paper graph is the access route for third-party papers."""
+    from resource_librarian.agent_runtime import BUNDLES, GRAPH_CHECK, GRAPH_FIND, GRAPH_READ, MAX_BUNDLE_TOOLS
+    assert set(GRAPH_FIND) <= set(BUNDLES["need"].names)
+    assert set(GRAPH_FIND + GRAPH_READ) <= set(BUNDLES["search"].names)
+    assert set(GRAPH_CHECK) <= set(BUNDLES["judge"].names) and set(GRAPH_CHECK) <= set(BUNDLES["synthesise"].names)
+    assert all(name.startswith("mcp__geo-grapher__") for name in GRAPH_FIND + GRAPH_READ + GRAPH_CHECK)
+    # The tail tools still fit after the largest research bundle.
+    assert len(BUNDLES["search"].names) + 4 <= MAX_BUNDLE_TOOLS
+
+
+def test_an_unknown_macro_is_refused_before_anyone_is_asked(vault):
+    """2026-11-20: macro_run('resume_session') waited 600 s for an approval, then parked the thread."""
+    from resource_librarian.broker import Broker
+    from resource_librarian.registry import REGISTRY, Context
+    broker = Broker(mode="auto", timeout=30)
+    out = REGISTRY.call("macro_run", {"macro": "resume_session", "inputs": {}},
+                        Context(tier="contribute", vault=vault, extras={"broker": broker}))
+    assert out.get("error") and "no macro" in str(out.get("detail")), out
+    assert not broker.pending()

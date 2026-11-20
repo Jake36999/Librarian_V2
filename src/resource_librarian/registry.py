@@ -436,6 +436,13 @@ class Registry:
                     out = {**out, "revision": revisions.issue_current(ctx, intent.note)}
                 return out
 
+            if spec.name == "macro_run":
+                # Refuse a macro that does not exist before anyone is asked to approve it:
+                # a Lead asked to run "resume_session" as a macro, waited 600 s for an approval
+                # and parked its thread, eight turns in a row (2026-11-20).
+                from .agent_runtime import MACROS
+                if kwargs.get("macro") not in MACROS:
+                    raise TypeError(f"no macro {kwargs.get('macro')!r}; macro is one of {sorted(MACROS)}")
             if broker is not None:
                 # The surface's permission mode, decided as the action runs;
                 # after the phase gate, so nobody is asked about a refused write.

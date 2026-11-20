@@ -7185,3 +7185,31 @@ thread is the resume. Test: `test_app.py::test_a_persons_message_resumes_a_parke
   `RESEARCH-OBJECTIVES.md`, so its briefs open without asking.
 - The run's driver answers any question as "the person is away; decide from the brief and
   record what you assumed".
+
+### Research phases can read the library's graphs; an unknown macro is refused at once (2026-11-20)
+
+The second unattended research run in Resource-Library opened all five briefs, then looped:
+- each turn the Lead called `macro_run('resume_session')`, a macro that does not exist;
+- `macro_run` asks a person even in Auto mode, and the ask came before the macro name was
+  checked;
+- the approval waited 600 s and the thread parked;
+- the Lead made no Geo-Grapher calls at all, because no research phase offered them.
+
+**Fixed.**
+- `Registry.call` refuses `macro_run` with an unknown macro before the broker asks.
+- The Need, Search, Judge and Synthesise bundles offer read-only Geo-Grapher tools:
+  - Need: list graphs, paper search;
+  - Search: those two, plus paper sections, paper claims, entity search, entity content;
+  - Judge and Synthesise: sections, claims, entity content.
+
+  The paper graph is the sanctioned route to third-party papers. Names are filtered against the
+  registry, so a library without its Geo service offers none. `MAX_BUNDLE_TOOLS` rises from 16 to
+  20, so the tail tools (`read_result`, macros, `park_session`) still fit.
+- When a person's message resumes a parked thread, the message the Lead receives says so,
+  and that it must not try to resume it.
+
+Geo-Grapher tools still start at Ask in each library. For this run the driver allowed them for the
+session only.
+
+Tests: `test_phase_bundles.py` (graph tools offered and within the cap; unknown macro refused with
+nothing pending), `test_app.py` (the resume note). `scripts/phase_walk.py`: 0 blocked phases.

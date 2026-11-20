@@ -2793,8 +2793,12 @@ class App:
             try:
                 # Only actual person messages contribute external PDF references.
                 loop.ctx.extras.setdefault("_person_pdf_messages", []).append(text)
-                self._resume_if_parked(loop)
-                result = loop.send(text, cancel=cancel)
+                resumed = self._resume_if_parked(loop)
+                # Say so in the message: a Lead that remembered the park tried to resume the
+                # thread itself each turn (an unknown macro, a 600 s wait, parked again).
+                sent = (text + "\n\n[Librarian: this message resumed the parked thread; it is open "
+                        "now. Do not try to resume it.]") if resumed else text
+                result = loop.send(sent, cancel=cancel)
                 self._touch_desk(text)
                 event = {"type": "turn_done", **result.to_dict(), "session": self.session_view()}
             except Exception as exc:                        # noqa: BLE001
@@ -2936,21 +2940,22 @@ class App:
             self._end_mutation()
             raise
 
-    def _resume_if_parked(self, loop: Loop) -> None:
+    def _resume_if_parked(self, loop: Loop) -> bool:
         """A person's message to a parked thread resumes it. A thread parked because a question
         went unanswered could not be resumed from inside its phase (resume_session is in no phase
         bundle), so every later "continue" was refused SESSION_REQUIRED; 30 turns went nowhere
         on 2026-11-20. The person writing to the thread is the resume."""
         session_id = loop.ctx.session
         if not session_id:
-            return
+            return False
         from .session import SessionStore
         try:
             parked = SessionStore(self.vault).load(session_id).status == "parked"
         except (FileNotFoundError, KeyError, ValueError):
-            return
+            return False
         if parked:
             self.person_call("resume_session", {"session_id": session_id}, session_id)
+        return parked
 
     def _touch_desk(self, text: str) -> None:
         """Notes a person linked in a message (the paperclip inserts `[[...]]`)

@@ -22,8 +22,9 @@ from .vault import now_iso
 # A phase offers its declared bundle, up to two session-aware required actions and the three tail
 # tools (read_result, macro_run, macro_plan). The cap clips from the end, so it must hold all of
 # them: at 12, Map, Search and Judge would have silently lost their tail tools once the gate tools
-# were added (tests/test_phase_bundles.py).
-MAX_BUNDLE_TOOLS = 16
+# were added (tests/test_phase_bundles.py). 20 since the research phases gained up to six read-only
+# Geo-Grapher tools (2026-11-20).
+MAX_BUNDLE_TOOLS = 20
 
 
 class ProfileCapacityError(RuntimeError):
@@ -467,6 +468,16 @@ class ToolBundle:
 # Names are deliberately filtered against the registry, so adding/removing a
 # capability never breaks an old bundle definition.  A phase needs a compact
 # affordance set, not the entire catalogue.
+# The library's own Geo-Grapher, read-only, for research phases (owner, 2026-11-20: agents researching
+# a 96-paper corpus never reached its knowledge graphs, because no phase bundle offered them). The
+# paper graph is the access route for third-party papers (catalogue -> graph -> section), so these
+# are the sanctioned way to read them. Names are filtered against the registry: a library without
+# its Geo service simply does not offer them.
+GRAPH_FIND = ("mcp__geo-grapher__list_graphs", "mcp__geo-grapher__paper_search_documents")
+GRAPH_READ = ("mcp__geo-grapher__paper_get_section", "mcp__geo-grapher__paper_get_claim", "mcp__geo-grapher__search_entities",
+              "mcp__geo-grapher__get_entity_content")
+GRAPH_CHECK = ("mcp__geo-grapher__paper_get_section", "mcp__geo-grapher__paper_get_claim", "mcp__geo-grapher__get_entity_content")
+
 BUNDLES = {
     "session": ToolBundle("session", "Open, inspect, advance or safely park a research session",
                            ("open_session", "resume_session", "session_status", "advance",
@@ -489,17 +500,20 @@ BUNDLES = {
                         "record_assumptions", "update_plan", "advance", "ask_user", "dispatch_plan")),
     "need": ToolBundle("need", "State and test the evidence needed next",
                         ("search", "get_note", "read_source_file", "record_assumptions",
-                         "open_brief", "update_plan", "advance", "ask_user")),
+                         "open_brief", "update_plan", "advance", "ask_user",
+                         *GRAPH_FIND)),
     "search": ToolBundle("search", "Find, inspect, and rank evidence",
                           ("search", "get_note", "read_source_file", "web_search", "ingest",
-                           "queue_source", "research_round", "checkpoint", "advance", "ask_user")),
+                           "queue_source", "research_round", "checkpoint", "advance", "ask_user",
+                           *GRAPH_FIND, *GRAPH_READ)),
     "judge": ToolBundle("judge", "Judge staged and source evidence",
                          ("get_note", "search", "staging_list", "staging_show", "staging_review",
                           "provenance_check", "decide", "record_assumptions", "advance",
-                          "ask_user")),
+                          "ask_user", *GRAPH_CHECK)),
     "synthesise": ToolBundle("synthesise", "Record a grounded synthesis or identify the gap",
                               ("get_note", "search", "record_synthesis", "record_trace",
-                               "draft_offering", "promote_offering", "advance", "ask_user")),
+                               "draft_offering", "promote_offering", "advance", "ask_user",
+                               *GRAPH_CHECK)),
     "check-out": ToolBundle("check-out", "Make a person-reviewed outcome concrete",
                              ("get_note", "draft_offering", "record_application", "close_brief",
                               "close_session", "update_plan", "ask_user", "staging_list",
