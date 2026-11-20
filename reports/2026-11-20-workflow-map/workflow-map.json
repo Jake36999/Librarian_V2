@@ -1,0 +1,908 @@
+{
+ "phases": {
+  "add_project": [
+   {
+    "phase": "frame",
+    "gate": [
+     "no Project note for 'P': create_project"
+    ],
+    "offered": [
+     "create_project",
+     "get_note",
+     "search",
+     "session_status",
+     "topics_list",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "ingest",
+    "gate": [
+     "record what the person already has: update_plan(fields={'ingested': ...}) (a list, or 'none')"
+    ],
+    "offered": [
+     "get_note",
+     "ingest",
+     "queue_source",
+     "search",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "map",
+    "gate": [
+     "record the orientation: search with intent 'orient', then update_plan(fields={'map': ...})"
+    ],
+    "offered": [
+     "dispatch_plan",
+     "get_note",
+     "read_source_file",
+     "record_assumptions",
+     "request_raw_source_access",
+     "search",
+     "source_verification_plan",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "need",
+    "gate": [
+     "open at least one brief: open_brief(need, disqualifiers)"
+    ],
+    "offered": [
+     "get_note",
+     "open_brief",
+     "read_source_file",
+     "record_assumptions",
+     "search",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "search",
+    "gate": [
+     "run rounds until the stopping rule fires: research_round, then checkpoint"
+    ],
+    "offered": [
+     "checkpoint",
+     "get_note",
+     "ingest",
+     "queue_source",
+     "read_source_file",
+     "research_round",
+     "search",
+     "web_search"
+    ]
+   },
+   {
+    "phase": "judge",
+    "gate": [
+     "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+    ],
+    "offered": [
+     "add_candidate",
+     "decide",
+     "get_note",
+     "record_assumptions",
+     "search",
+     "session_status",
+     "staging_list",
+     "staging_review",
+     "staging_show"
+    ]
+   },
+   {
+    "phase": "synthesise",
+    "gate": [
+     "record the cross-source synthesis: record_synthesis"
+    ],
+    "offered": [
+     "draft_offering",
+     "get_note",
+     "promote_offering",
+     "record_synthesis",
+     "record_trace",
+     "search"
+    ]
+   },
+   {
+    "phase": "check_out",
+    "gate": [],
+    "offered": [
+     "close_brief",
+     "close_session",
+     "get_note",
+     "record_application",
+     "staging_list",
+     "update_plan"
+    ]
+   }
+  ],
+  "explore": [
+   {
+    "phase": "frame",
+    "gate": [],
+    "offered": [
+     "get_note",
+     "search",
+     "session_status",
+     "topics_list",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "map",
+    "gate": [
+     "record the orientation: search with intent 'orient', then update_plan(fields={'map': ...})"
+    ],
+    "offered": [
+     "dispatch_plan",
+     "get_note",
+     "read_source_file",
+     "record_assumptions",
+     "request_raw_source_access",
+     "search",
+     "source_verification_plan",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "need",
+    "gate": [
+     "open at least one brief: open_brief(need, disqualifiers)"
+    ],
+    "offered": [
+     "get_note",
+     "open_brief",
+     "read_source_file",
+     "record_assumptions",
+     "search",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "search",
+    "gate": [
+     "run rounds until the stopping rule fires: research_round, then checkpoint"
+    ],
+    "offered": [
+     "checkpoint",
+     "get_note",
+     "ingest",
+     "queue_source",
+     "read_source_file",
+     "research_round",
+     "search",
+     "web_search"
+    ]
+   },
+   {
+    "phase": "judge",
+    "gate": [
+     "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+    ],
+    "offered": [
+     "add_candidate",
+     "decide",
+     "get_note",
+     "record_assumptions",
+     "search",
+     "session_status",
+     "staging_list",
+     "staging_review",
+     "staging_show"
+    ]
+   },
+   {
+    "phase": "synthesise",
+    "gate": [
+     "record the cross-source synthesis: record_synthesis"
+    ],
+    "offered": [
+     "draft_offering",
+     "get_note",
+     "promote_offering",
+     "record_synthesis",
+     "record_trace",
+     "search"
+    ]
+   },
+   {
+    "phase": "check_out",
+    "gate": [],
+    "offered": [
+     "close_brief",
+     "close_session",
+     "get_note",
+     "record_application",
+     "staging_list",
+     "update_plan"
+    ]
+   }
+  ],
+  "suggest": [
+   {
+    "phase": "frame",
+    "gate": [
+     "no Project note for 'P': create_project"
+    ],
+    "offered": [
+     "create_project",
+     "get_note",
+     "search",
+     "session_status",
+     "topics_list",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "map",
+    "gate": [
+     "record the orientation: search with intent 'orient', then update_plan(fields={'map': ...})"
+    ],
+    "offered": [
+     "dispatch_plan",
+     "get_note",
+     "open_brief",
+     "read_source_file",
+     "record_assumptions",
+     "request_raw_source_access",
+     "search",
+     "source_verification_plan",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "search",
+    "gate": [
+     "run rounds until the stopping rule fires: research_round, then checkpoint"
+    ],
+    "offered": [
+     "checkpoint",
+     "get_note",
+     "ingest",
+     "queue_source",
+     "read_source_file",
+     "research_round",
+     "search",
+     "web_search"
+    ]
+   },
+   {
+    "phase": "judge",
+    "gate": [
+     "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+    ],
+    "offered": [
+     "add_candidate",
+     "decide",
+     "get_note",
+     "record_assumptions",
+     "search",
+     "session_status",
+     "staging_list",
+     "staging_review",
+     "staging_show"
+    ]
+   },
+   {
+    "phase": "synthesise",
+    "gate": [
+     "record the cross-source synthesis: record_synthesis"
+    ],
+    "offered": [
+     "draft_offering",
+     "get_note",
+     "promote_offering",
+     "record_synthesis",
+     "record_trace",
+     "search"
+    ]
+   },
+   {
+    "phase": "check_out",
+    "gate": [],
+    "offered": [
+     "close_brief",
+     "close_session",
+     "get_note",
+     "record_application",
+     "staging_list",
+     "update_plan"
+    ]
+   }
+  ],
+  "apply": [
+   {
+    "phase": "check_in",
+    "gate": [],
+    "offered": [
+     "get_note",
+     "search",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "find",
+    "gate": [
+     "log the sources you used (log_use), or update_plan(fields={'nothing_found': ...})"
+    ],
+    "offered": [
+     "get_note",
+     "log_use",
+     "read_source_file",
+     "search",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "check_out",
+    "gate": [
+     "record_application, or update_plan(fields={'no_application': reason})"
+    ],
+    "offered": [
+     "close_session",
+     "get_note",
+     "record_application",
+     "staging_list",
+     "update_plan"
+    ]
+   }
+  ],
+  "start_pursuit": [
+   {
+    "phase": "frame",
+    "gate": [
+     "no Project note for 'P': create_project"
+    ],
+    "offered": [
+     "create_project",
+     "get_note",
+     "search",
+     "session_status",
+     "topics_list",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "inventory",
+    "gate": [
+     "record the kind-specific inventory: update_plan(fields={'inventory': ...})",
+     "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+    ],
+    "offered": [
+     "get_note",
+     "read_source_file",
+     "record_assumptions",
+     "search",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "plan",
+    "gate": [
+     "add at least one dated milestone (task_add), or update_plan(fields={'no_dates': reason})"
+    ],
+    "offered": [
+     "get_note",
+     "search",
+     "task_add",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "seed",
+    "gate": [
+     "record what was seeded: update_plan(fields={'ingested': ...}) (a list, or 'none')"
+    ],
+    "offered": [
+     "get_note",
+     "ingest",
+     "queue_source",
+     "search",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "check_out",
+    "gate": [],
+    "offered": [
+     "close_brief",
+     "close_session",
+     "get_note",
+     "record_application",
+     "staging_list",
+     "update_plan"
+    ]
+   }
+  ],
+  "learn": [
+   {
+    "phase": "goal",
+    "gate": [
+     "what do they want to be able to do, and by when: update_plan(fields={'goal': ..., 'deadline': ...})"
+    ],
+    "offered": [
+     "get_note",
+     "search",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "baseline",
+    "gate": [
+     "2-3 diagnostic questions before teaching: ask_user, then update_plan(fields={'baseline': ...})"
+    ],
+    "offered": [
+     "get_note",
+     "search",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "focus",
+    "gate": [
+     "read what the library holds, then choose the focus concepts: update_plan(fields={'focus': [...]})"
+    ],
+    "offered": [
+     "get_note",
+     "read_source_file",
+     "search",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "practice",
+    "gate": [],
+    "offered": [
+     "get_note",
+     "read_source_file",
+     "search",
+     "understanding_record",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "consolidate",
+    "gate": [
+     "let them explain it in their own words, critique it against the sources, then understanding_record and update_plan(fields={'consolidated': ...})"
+    ],
+    "offered": [
+     "get_note",
+     "read_source_file",
+     "search",
+     "understanding_record",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "next",
+    "gate": [
+     "review dates as tasks - task_add(note='<project note>', text='Review: <concept>', due=..., heading='Understanding') - or enable the Spaced Repetition plugin, then update_plan(fields={'scheduled': ...})"
+    ],
+    "offered": [
+     "close_session",
+     "get_note",
+     "search",
+     "task_add",
+     "update_plan"
+    ]
+   }
+  ],
+  "add_capability": [
+   {
+    "phase": "candidate",
+    "gate": [
+     "name the candidate: update_plan(fields={'candidate': ...}) - a curated server (capability_candidates) or a repository URL the person gave"
+    ],
+    "offered": [
+     "capability_candidates",
+     "get_note",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "assess",
+    "gate": [
+     "ingest the candidate's repository, so it is read as a source",
+     "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+    ],
+    "offered": [
+     "get_note",
+     "ingest",
+     "read_source_file",
+     "record_assumptions",
+     "search",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "propose",
+    "gate": [
+     "propose its exact definition: capability_propose(...)"
+    ],
+    "offered": [
+     "capability_propose",
+     "get_note"
+    ]
+   },
+   {
+    "phase": "install",
+    "gate": [
+     "capability_install(name) - it asks the person; a decline is a finished outcome too"
+    ],
+    "offered": [
+     "capability_install",
+     "get_note"
+    ]
+   },
+   {
+    "phase": "check_out",
+    "gate": [],
+    "offered": [
+     "close_brief",
+     "close_session",
+     "get_note",
+     "record_application",
+     "staging_list",
+     "update_plan"
+    ]
+   }
+  ],
+  "audited": [
+   {
+    "phase": "manage",
+    "gate": [
+     "no requirements yet: the person sets them with set_requirement"
+    ],
+    "offered": [
+     "audit_projection",
+     "get_note",
+     "read_evidence",
+     "search",
+     "update_plan"
+    ]
+   },
+   {
+    "phase": "preflight",
+    "gate": [
+     "no contract has been admitted: preflight admits one"
+    ],
+    "offered": [
+     "admit_contract",
+     "audit_projection"
+    ]
+   },
+   {
+    "phase": "execute",
+    "gate": [
+     "no contract has been admitted: preflight admits one"
+    ],
+    "offered": [
+     "dispatch_plan",
+     "get_note",
+     "read_evidence",
+     "read_source_file",
+     "request_raw_source_access",
+     "search",
+     "source_verification_plan",
+     "stage_artifact"
+    ]
+   },
+   {
+    "phase": "audit",
+    "gate": [
+     "no contract has been admitted: preflight admits one"
+    ],
+    "offered": [
+     "audit_projection",
+     "audit_targets",
+     "verify_grain"
+    ]
+   },
+   {
+    "phase": "reduce",
+    "gate": [
+     "no contract has been admitted: preflight admits one"
+    ],
+    "offered": [
+     "audit_projection",
+     "close_session",
+     "reduce_round"
+    ]
+   }
+  ]
+ },
+ "workflows": [
+  {
+   "name": "deep-read-staged",
+   "purpose": "read the whole text of every staged source, part by part - claims and limits with their pages, terms, and any reasoning stance a text teaches, staged as a lens (V1's lens scan, on the clerk channel)",
+   "steps": [
+    {
+     "id": "waiting",
+     "does": "staging_list",
+     "each": false,
+     "kind": "action"
+    },
+    {
+     "id": "read",
+     "does": "deep_read",
+     "each": true,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "draft-reflection",
+   "purpose": "draft a short reflection grounded only in a week's own gathered tasks, activity and desk (W3 weekly-review, step 4)",
+   "steps": [
+    {
+     "id": "draft",
+     "does": "reflection_draft",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "flag-sensitive",
+   "purpose": "mark one staged source for a person's review as possibly dual-use",
+   "steps": [
+    {
+     "id": "flag",
+     "does": "staging_flag",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "gather-activity",
+   "purpose": "what was read and written across every session - or one pursuit's, given a project - since a cutoff (W3 weekly-review, step 2)",
+   "steps": [
+    {
+     "id": "scan",
+     "does": "activity",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "gather-agenda",
+   "purpose": "every open, dated task across the vault - or one pursuit's, given a project - bucketed by when it falls (W3 weekly-review, step 1)",
+   "steps": [
+    {
+     "id": "scan",
+     "does": "agenda",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "gather-desk",
+   "purpose": "a pursuit's current working set (W3 weekly-review, step 3)",
+   "steps": [
+    {
+     "id": "show",
+     "does": "desk_show",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "ingest-cited",
+   "purpose": "record an external research report's cited links as evidence, then fetch and stage every cited arXiv or DOI paper (V1's ingest_resolved_links, declared)",
+   "steps": [
+    {
+     "id": "trace",
+     "does": "record_trace",
+     "each": false,
+     "kind": "action"
+    },
+    {
+     "id": "papers",
+     "does": "ingest",
+     "each": true,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "review-conversation",
+   "purpose": "find catalogued sources relevant to a snapshot of a conversation; writes nothing",
+   "steps": [
+    {
+     "id": "found",
+     "does": "search",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "review-due",
+   "purpose": "open one parked learn session per concept whose review task is due, framed for the review, for the person to resume from Sessions (Co-work Roadmap \u00a72 W4, \u00a74 D4)",
+   "steps": [
+    {
+     "id": "open",
+     "does": "review_due_open",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "review-item",
+   "purpose": "draft the unframed Bottom Line and run the sensitivity check for one staged source",
+   "steps": [
+    {
+     "id": "review",
+     "does": "staging_review",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "review-staged",
+   "purpose": "draft the unframed Bottom Line and run the sensitivity check for every staged source that has none yet (V1's draft_staging_promotions, declared)",
+   "steps": [
+    {
+     "id": "waiting",
+     "does": "staging_list",
+     "each": false,
+     "kind": "action"
+    },
+    {
+     "id": "review",
+     "does": "staging_review",
+     "each": true,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "run-queue",
+   "purpose": "take what is waiting in the intake queue through fetch, evidence, description and staging",
+   "steps": [
+    {
+     "id": "intake",
+     "does": "intake_run",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  },
+  {
+   "name": "sync-vault",
+   "purpose": "keep the vault's ignore rules current, commit what changed, and push it",
+   "steps": [
+    {
+     "id": "ignore",
+     "does": "gitignore_ensure",
+     "each": false,
+     "kind": "action"
+    },
+    {
+     "id": "commit",
+     "does": "vault_commit",
+     "each": false,
+     "kind": "action"
+    },
+    {
+     "id": "push",
+     "does": "vault_push",
+     "each": false,
+     "kind": "action"
+    }
+   ]
+  }
+ ],
+ "pipelines": [
+  {
+   "name": "clear-enrichment-backlog",
+   "purpose": "run the intake queue, then route each fetched source to review, a sensitivity flag, or nothing further",
+   "steps": [
+    {
+     "id": "intake",
+     "does": "run-queue",
+     "each": false,
+     "kind": "workflow"
+    },
+    {
+     "id": "next",
+     "does": "route",
+     "each": false,
+     "kind": "route"
+    }
+   ]
+  },
+  {
+   "name": "weekly-review",
+   "purpose": "gather a pursuit's tasks, cross-session activity and desk, then draft a reflection for the person to review (Co-work Roadmap \u00a72, W3)",
+   "steps": [
+    {
+     "id": "tasks",
+     "does": "gather-agenda",
+     "each": false,
+     "kind": "workflow"
+    },
+    {
+     "id": "work",
+     "does": "gather-activity",
+     "each": false,
+     "kind": "workflow"
+    },
+    {
+     "id": "desk",
+     "does": "gather-desk",
+     "each": false,
+     "kind": "workflow"
+    },
+    {
+     "id": "draft",
+     "does": "draft-reflection",
+     "each": false,
+     "kind": "workflow"
+    }
+   ]
+  }
+ ],
+ "macros": [
+  {
+   "name": "inspect_map_source",
+   "purpose": "Inspect a source then refresh its map",
+   "steps": [
+    "get_note",
+    "dik_rebuild"
+   ],
+   "writes": true
+  },
+  {
+   "name": "search_and_judge",
+   "purpose": "Search then inspect the chosen source",
+   "steps": [
+    "search",
+    "get_note"
+   ],
+   "writes": false
+  },
+  {
+   "name": "intake_to_stage",
+   "purpose": "Ingest one reference into reviewed staging",
+   "steps": [
+    "ingest"
+   ],
+   "writes": true
+  },
+  {
+   "name": "evidence_to_claim_check",
+   "purpose": "Read a pinned source file before a claim check",
+   "steps": [
+    "read_source_file"
+   ],
+   "writes": false
+  },
+  {
+   "name": "review_staged_candidate",
+   "purpose": "Review a staged candidate, then make the selected decision",
+   "steps": [
+    "staging_review",
+    "staging_decide"
+   ],
+   "writes": true
+  },
+  {
+   "name": "source_pages_to_claim_check",
+   "purpose": "Read a located generated section, then check the original PDF pages",
+   "steps": [
+    "read_source_section",
+    "verify_source_pages"
+   ],
+   "writes": false
+  }
+ ]
+}

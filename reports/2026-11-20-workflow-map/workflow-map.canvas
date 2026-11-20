@@ -1,0 +1,742 @@
+{
+ "nodes": [
+  {
+   "id": "add_project-0",
+   "type": "text",
+   "x": 20,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### frame\n**To leave:**\n- no Project note for 'P': create_project\n\n**Tools:** `create_project`, `get_note`, `search`, `session_status`, `topics_list`, `update_plan`"
+  },
+  {
+   "id": "add_project-1",
+   "type": "text",
+   "x": 20,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### ingest\n**To leave:**\n- record what the person already has: update_plan(fields={'ingested': ...}) (a list, or 'none')\n\n**Tools:** `get_note`, `ingest`, `queue_source`, `search`, `update_plan`"
+  },
+  {
+   "id": "add_project-2",
+   "type": "text",
+   "x": 20,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### map\n**To leave:**\n- record the orientation: search with intent 'orient', then update_plan(fields={'map': ...})\n\n**Tools:** `dispatch_plan`, `get_note`, `read_source_file`, `record_assumptions`, `request_raw_source_access`, `search`, `source_verification_plan`, `update_plan`"
+  },
+  {
+   "id": "add_project-3",
+   "type": "text",
+   "x": 20,
+   "y": 980,
+   "width": 400,
+   "height": 260,
+   "text": "### need\n**To leave:**\n- open at least one brief: open_brief(need, disqualifiers)\n\n**Tools:** `get_note`, `open_brief`, `read_source_file`, `record_assumptions`, `search`, `update_plan`"
+  },
+  {
+   "id": "add_project-4",
+   "type": "text",
+   "x": 20,
+   "y": 1280,
+   "width": 400,
+   "height": 260,
+   "text": "### search\n**To leave:**\n- run rounds until the stopping rule fires: research_round, then checkpoint\n\n**Tools:** `checkpoint`, `get_note`, `ingest`, `queue_source`, `read_source_file`, `research_round`, `search`, `web_search`"
+  },
+  {
+   "id": "add_project-5",
+   "type": "text",
+   "x": 20,
+   "y": 1580,
+   "width": 400,
+   "height": 260,
+   "text": "### judge\n**To leave:**\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Tools:** `add_candidate`, `decide`, `get_note`, `record_assumptions`, `search`, `session_status`, `staging_list`, `staging_review`, `staging_show`"
+  },
+  {
+   "id": "add_project-6",
+   "type": "text",
+   "x": 20,
+   "y": 1880,
+   "width": 400,
+   "height": 260,
+   "text": "### synthesise\n**To leave:**\n- record the cross-source synthesis: record_synthesis\n\n**Tools:** `draft_offering`, `get_note`, `promote_offering`, `record_synthesis`, `record_trace`, `search`"
+  },
+  {
+   "id": "add_project-7",
+   "type": "text",
+   "x": 20,
+   "y": 2180,
+   "width": 400,
+   "height": 260,
+   "text": "### check_out\n**To leave:**\n- nothing: advance\n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"
+  },
+  {
+   "id": "g-add_project",
+   "type": "group",
+   "x": 0,
+   "y": 0,
+   "width": 440,
+   "height": 2480,
+   "label": "add_project session"
+  },
+  {
+   "id": "explore-0",
+   "type": "text",
+   "x": 520,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### frame\n**To leave:**\n- nothing: advance\n\n**Tools:** `get_note`, `search`, `session_status`, `topics_list`, `update_plan`"
+  },
+  {
+   "id": "explore-1",
+   "type": "text",
+   "x": 520,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### map\n**To leave:**\n- record the orientation: search with intent 'orient', then update_plan(fields={'map': ...})\n\n**Tools:** `dispatch_plan`, `get_note`, `read_source_file`, `record_assumptions`, `request_raw_source_access`, `search`, `source_verification_plan`, `update_plan`"
+  },
+  {
+   "id": "explore-2",
+   "type": "text",
+   "x": 520,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### need\n**To leave:**\n- open at least one brief: open_brief(need, disqualifiers)\n\n**Tools:** `get_note`, `open_brief`, `read_source_file`, `record_assumptions`, `search`, `update_plan`"
+  },
+  {
+   "id": "explore-3",
+   "type": "text",
+   "x": 520,
+   "y": 980,
+   "width": 400,
+   "height": 260,
+   "text": "### search\n**To leave:**\n- run rounds until the stopping rule fires: research_round, then checkpoint\n\n**Tools:** `checkpoint`, `get_note`, `ingest`, `queue_source`, `read_source_file`, `research_round`, `search`, `web_search`"
+  },
+  {
+   "id": "explore-4",
+   "type": "text",
+   "x": 520,
+   "y": 1280,
+   "width": 400,
+   "height": 260,
+   "text": "### judge\n**To leave:**\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Tools:** `add_candidate`, `decide`, `get_note`, `record_assumptions`, `search`, `session_status`, `staging_list`, `staging_review`, `staging_show`"
+  },
+  {
+   "id": "explore-5",
+   "type": "text",
+   "x": 520,
+   "y": 1580,
+   "width": 400,
+   "height": 260,
+   "text": "### synthesise\n**To leave:**\n- record the cross-source synthesis: record_synthesis\n\n**Tools:** `draft_offering`, `get_note`, `promote_offering`, `record_synthesis`, `record_trace`, `search`"
+  },
+  {
+   "id": "explore-6",
+   "type": "text",
+   "x": 520,
+   "y": 1880,
+   "width": 400,
+   "height": 260,
+   "text": "### check_out\n**To leave:**\n- nothing: advance\n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"
+  },
+  {
+   "id": "g-explore",
+   "type": "group",
+   "x": 500,
+   "y": 0,
+   "width": 440,
+   "height": 2180,
+   "label": "explore session"
+  },
+  {
+   "id": "suggest-0",
+   "type": "text",
+   "x": 1020,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### frame\n**To leave:**\n- no Project note for 'P': create_project\n\n**Tools:** `create_project`, `get_note`, `search`, `session_status`, `topics_list`, `update_plan`"
+  },
+  {
+   "id": "suggest-1",
+   "type": "text",
+   "x": 1020,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### map\n**To leave:**\n- record the orientation: search with intent 'orient', then update_plan(fields={'map': ...})\n\n**Tools:** `dispatch_plan`, `get_note`, `open_brief`, `read_source_file`, `record_assumptions`, `request_raw_source_access`, `search`, `source_verification_plan`, `update_plan`"
+  },
+  {
+   "id": "suggest-2",
+   "type": "text",
+   "x": 1020,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### search\n**To leave:**\n- run rounds until the stopping rule fires: research_round, then checkpoint\n\n**Tools:** `checkpoint`, `get_note`, `ingest`, `queue_source`, `read_source_file`, `research_round`, `search`, `web_search`"
+  },
+  {
+   "id": "suggest-3",
+   "type": "text",
+   "x": 1020,
+   "y": 980,
+   "width": 400,
+   "height": 260,
+   "text": "### judge\n**To leave:**\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Tools:** `add_candidate`, `decide`, `get_note`, `record_assumptions`, `search`, `session_status`, `staging_list`, `staging_review`, `staging_show`"
+  },
+  {
+   "id": "suggest-4",
+   "type": "text",
+   "x": 1020,
+   "y": 1280,
+   "width": 400,
+   "height": 260,
+   "text": "### synthesise\n**To leave:**\n- record the cross-source synthesis: record_synthesis\n\n**Tools:** `draft_offering`, `get_note`, `promote_offering`, `record_synthesis`, `record_trace`, `search`"
+  },
+  {
+   "id": "suggest-5",
+   "type": "text",
+   "x": 1020,
+   "y": 1580,
+   "width": 400,
+   "height": 260,
+   "text": "### check_out\n**To leave:**\n- nothing: advance\n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"
+  },
+  {
+   "id": "g-suggest",
+   "type": "group",
+   "x": 1000,
+   "y": 0,
+   "width": 440,
+   "height": 1880,
+   "label": "suggest session"
+  },
+  {
+   "id": "apply-0",
+   "type": "text",
+   "x": 1520,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### check_in\n**To leave:**\n- nothing: advance\n\n**Tools:** `get_note`, `search`, `update_plan`"
+  },
+  {
+   "id": "apply-1",
+   "type": "text",
+   "x": 1520,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### find\n**To leave:**\n- log the sources you used (log_use), or update_plan(fields={'nothing_found': ...})\n\n**Tools:** `get_note`, `log_use`, `read_source_file`, `search`, `update_plan`"
+  },
+  {
+   "id": "apply-2",
+   "type": "text",
+   "x": 1520,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### check_out\n**To leave:**\n- record_application, or update_plan(fields={'no_application': reason})\n\n**Tools:** `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"
+  },
+  {
+   "id": "g-apply",
+   "type": "group",
+   "x": 1500,
+   "y": 0,
+   "width": 440,
+   "height": 980,
+   "label": "apply session"
+  },
+  {
+   "id": "start_pursuit-0",
+   "type": "text",
+   "x": 2020,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### frame\n**To leave:**\n- no Project note for 'P': create_project\n\n**Tools:** `create_project`, `get_note`, `search`, `session_status`, `topics_list`, `update_plan`"
+  },
+  {
+   "id": "start_pursuit-1",
+   "type": "text",
+   "x": 2020,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### inventory\n**To leave:**\n- record the kind-specific inventory: update_plan(fields={'inventory': ...})\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Tools:** `get_note`, `read_source_file`, `record_assumptions`, `search`, `update_plan`"
+  },
+  {
+   "id": "start_pursuit-2",
+   "type": "text",
+   "x": 2020,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### plan\n**To leave:**\n- add at least one dated milestone (task_add), or update_plan(fields={'no_dates': reason})\n\n**Tools:** `get_note`, `search`, `task_add`, `update_plan`"
+  },
+  {
+   "id": "start_pursuit-3",
+   "type": "text",
+   "x": 2020,
+   "y": 980,
+   "width": 400,
+   "height": 260,
+   "text": "### seed\n**To leave:**\n- record what was seeded: update_plan(fields={'ingested': ...}) (a list, or 'none')\n\n**Tools:** `get_note`, `ingest`, `queue_source`, `search`, `update_plan`"
+  },
+  {
+   "id": "start_pursuit-4",
+   "type": "text",
+   "x": 2020,
+   "y": 1280,
+   "width": 400,
+   "height": 260,
+   "text": "### check_out\n**To leave:**\n- nothing: advance\n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"
+  },
+  {
+   "id": "g-start_pursuit",
+   "type": "group",
+   "x": 2000,
+   "y": 0,
+   "width": 440,
+   "height": 1580,
+   "label": "start_pursuit session"
+  },
+  {
+   "id": "learn-0",
+   "type": "text",
+   "x": 2520,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### goal\n**To leave:**\n- what do they want to be able to do, and by when: update_plan(fields={'goal': ..., 'deadline': ...})\n\n**Tools:** `get_note`, `search`, `update_plan`"
+  },
+  {
+   "id": "learn-1",
+   "type": "text",
+   "x": 2520,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### baseline\n**To leave:**\n- 2-3 diagnostic questions before teaching: ask_user, then update_plan(fields={'baseline': ...})\n\n**Tools:** `get_note`, `search`, `update_plan`"
+  },
+  {
+   "id": "learn-2",
+   "type": "text",
+   "x": 2520,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### focus\n**To leave:**\n- read what the library holds, then choose the focus concepts: update_plan(fields={'focus': [...]})\n\n**Tools:** `get_note`, `read_source_file`, `search`, `update_plan`"
+  },
+  {
+   "id": "learn-3",
+   "type": "text",
+   "x": 2520,
+   "y": 980,
+   "width": 400,
+   "height": 260,
+   "text": "### practice\n**To leave:**\n- nothing: advance\n\n**Tools:** `get_note`, `read_source_file`, `search`, `understanding_record`, `update_plan`"
+  },
+  {
+   "id": "learn-4",
+   "type": "text",
+   "x": 2520,
+   "y": 1280,
+   "width": 400,
+   "height": 260,
+   "text": "### consolidate\n**To leave:**\n- let them explain it in their own words, critique it against the sources, then understanding_record and update_plan(fields={'consolidated': ...})\n\n**Tools:** `get_note`, `read_source_file`, `search`, `understanding_record`, `update_plan`"
+  },
+  {
+   "id": "learn-5",
+   "type": "text",
+   "x": 2520,
+   "y": 1580,
+   "width": 400,
+   "height": 260,
+   "text": "### next\n**To leave:**\n- review dates as tasks - task_add(note='<project note>', text='Review: <concept>', due=..., heading='Understanding') - or enable the Spaced Repetition plugin, then update_plan(fields={'scheduled': ...})\n\n**Tools:** `close_session`, `get_note`, `search`, `task_add`, `update_plan`"
+  },
+  {
+   "id": "g-learn",
+   "type": "group",
+   "x": 2500,
+   "y": 0,
+   "width": 440,
+   "height": 1880,
+   "label": "learn session"
+  },
+  {
+   "id": "add_capability-0",
+   "type": "text",
+   "x": 3020,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### candidate\n**To leave:**\n- name the candidate: update_plan(fields={'candidate': ...}) - a curated server (capability_candidates) or a repository URL the person gave\n\n**Tools:** `capability_candidates`, `get_note`, `update_plan`"
+  },
+  {
+   "id": "add_capability-1",
+   "type": "text",
+   "x": 3020,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### assess\n**To leave:**\n- ingest the candidate's repository, so it is read as a source\n- before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)\n\n**Tools:** `get_note`, `ingest`, `read_source_file`, `record_assumptions`, `search`, `update_plan`"
+  },
+  {
+   "id": "add_capability-2",
+   "type": "text",
+   "x": 3020,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### propose\n**To leave:**\n- propose its exact definition: capability_propose(...)\n\n**Tools:** `capability_propose`, `get_note`"
+  },
+  {
+   "id": "add_capability-3",
+   "type": "text",
+   "x": 3020,
+   "y": 980,
+   "width": 400,
+   "height": 260,
+   "text": "### install\n**To leave:**\n- capability_install(name) - it asks the person; a decline is a finished outcome too\n\n**Tools:** `capability_install`, `get_note`"
+  },
+  {
+   "id": "add_capability-4",
+   "type": "text",
+   "x": 3020,
+   "y": 1280,
+   "width": 400,
+   "height": 260,
+   "text": "### check_out\n**To leave:**\n- nothing: advance\n\n**Tools:** `close_brief`, `close_session`, `get_note`, `record_application`, `staging_list`, `update_plan`"
+  },
+  {
+   "id": "g-add_capability",
+   "type": "group",
+   "x": 3000,
+   "y": 0,
+   "width": 440,
+   "height": 1580,
+   "label": "add_capability session"
+  },
+  {
+   "id": "audited-0",
+   "type": "text",
+   "x": 3520,
+   "y": 80,
+   "width": 400,
+   "height": 260,
+   "text": "### manage\n**To leave:**\n- no requirements yet: the person sets them with set_requirement\n\n**Tools:** `audit_projection`, `get_note`, `read_evidence`, `search`, `update_plan`"
+  },
+  {
+   "id": "audited-1",
+   "type": "text",
+   "x": 3520,
+   "y": 380,
+   "width": 400,
+   "height": 260,
+   "text": "### preflight\n**To leave:**\n- no contract has been admitted: preflight admits one\n\n**Tools:** `admit_contract`, `audit_projection`"
+  },
+  {
+   "id": "audited-2",
+   "type": "text",
+   "x": 3520,
+   "y": 680,
+   "width": 400,
+   "height": 260,
+   "text": "### execute\n**To leave:**\n- no contract has been admitted: preflight admits one\n\n**Tools:** `dispatch_plan`, `get_note`, `read_evidence`, `read_source_file`, `request_raw_source_access`, `search`, `source_verification_plan`, `stage_artifact`"
+  },
+  {
+   "id": "audited-3",
+   "type": "text",
+   "x": 3520,
+   "y": 980,
+   "width": 400,
+   "height": 260,
+   "text": "### audit\n**To leave:**\n- no contract has been admitted: preflight admits one\n\n**Tools:** `audit_projection`, `audit_targets`, `verify_grain`"
+  },
+  {
+   "id": "audited-4",
+   "type": "text",
+   "x": 3520,
+   "y": 1280,
+   "width": 400,
+   "height": 260,
+   "text": "### reduce\n**To leave:**\n- no contract has been admitted: preflight admits one\n\n**Tools:** `audit_projection`, `close_session`, `reduce_round`"
+  },
+  {
+   "id": "g-audited",
+   "type": "group",
+   "x": 3500,
+   "y": 0,
+   "width": 440,
+   "height": 1580,
+   "label": "audited session"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e-add_project-1",
+   "fromNode": "add_project-0",
+   "fromSide": "bottom",
+   "toNode": "add_project-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_project-2",
+   "fromNode": "add_project-1",
+   "fromSide": "bottom",
+   "toNode": "add_project-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_project-3",
+   "fromNode": "add_project-2",
+   "fromSide": "bottom",
+   "toNode": "add_project-3",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_project-4",
+   "fromNode": "add_project-3",
+   "fromSide": "bottom",
+   "toNode": "add_project-4",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_project-5",
+   "fromNode": "add_project-4",
+   "fromSide": "bottom",
+   "toNode": "add_project-5",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_project-6",
+   "fromNode": "add_project-5",
+   "fromSide": "bottom",
+   "toNode": "add_project-6",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_project-7",
+   "fromNode": "add_project-6",
+   "fromSide": "bottom",
+   "toNode": "add_project-7",
+   "toSide": "top"
+  },
+  {
+   "id": "e-explore-1",
+   "fromNode": "explore-0",
+   "fromSide": "bottom",
+   "toNode": "explore-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-explore-2",
+   "fromNode": "explore-1",
+   "fromSide": "bottom",
+   "toNode": "explore-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-explore-3",
+   "fromNode": "explore-2",
+   "fromSide": "bottom",
+   "toNode": "explore-3",
+   "toSide": "top"
+  },
+  {
+   "id": "e-explore-4",
+   "fromNode": "explore-3",
+   "fromSide": "bottom",
+   "toNode": "explore-4",
+   "toSide": "top"
+  },
+  {
+   "id": "e-explore-5",
+   "fromNode": "explore-4",
+   "fromSide": "bottom",
+   "toNode": "explore-5",
+   "toSide": "top"
+  },
+  {
+   "id": "e-explore-6",
+   "fromNode": "explore-5",
+   "fromSide": "bottom",
+   "toNode": "explore-6",
+   "toSide": "top"
+  },
+  {
+   "id": "e-suggest-1",
+   "fromNode": "suggest-0",
+   "fromSide": "bottom",
+   "toNode": "suggest-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-suggest-2",
+   "fromNode": "suggest-1",
+   "fromSide": "bottom",
+   "toNode": "suggest-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-suggest-3",
+   "fromNode": "suggest-2",
+   "fromSide": "bottom",
+   "toNode": "suggest-3",
+   "toSide": "top"
+  },
+  {
+   "id": "e-suggest-4",
+   "fromNode": "suggest-3",
+   "fromSide": "bottom",
+   "toNode": "suggest-4",
+   "toSide": "top"
+  },
+  {
+   "id": "e-suggest-5",
+   "fromNode": "suggest-4",
+   "fromSide": "bottom",
+   "toNode": "suggest-5",
+   "toSide": "top"
+  },
+  {
+   "id": "e-apply-1",
+   "fromNode": "apply-0",
+   "fromSide": "bottom",
+   "toNode": "apply-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-apply-2",
+   "fromNode": "apply-1",
+   "fromSide": "bottom",
+   "toNode": "apply-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-start_pursuit-1",
+   "fromNode": "start_pursuit-0",
+   "fromSide": "bottom",
+   "toNode": "start_pursuit-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-start_pursuit-2",
+   "fromNode": "start_pursuit-1",
+   "fromSide": "bottom",
+   "toNode": "start_pursuit-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-start_pursuit-3",
+   "fromNode": "start_pursuit-2",
+   "fromSide": "bottom",
+   "toNode": "start_pursuit-3",
+   "toSide": "top"
+  },
+  {
+   "id": "e-start_pursuit-4",
+   "fromNode": "start_pursuit-3",
+   "fromSide": "bottom",
+   "toNode": "start_pursuit-4",
+   "toSide": "top"
+  },
+  {
+   "id": "e-learn-1",
+   "fromNode": "learn-0",
+   "fromSide": "bottom",
+   "toNode": "learn-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-learn-2",
+   "fromNode": "learn-1",
+   "fromSide": "bottom",
+   "toNode": "learn-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-learn-3",
+   "fromNode": "learn-2",
+   "fromSide": "bottom",
+   "toNode": "learn-3",
+   "toSide": "top"
+  },
+  {
+   "id": "e-learn-4",
+   "fromNode": "learn-3",
+   "fromSide": "bottom",
+   "toNode": "learn-4",
+   "toSide": "top"
+  },
+  {
+   "id": "e-learn-5",
+   "fromNode": "learn-4",
+   "fromSide": "bottom",
+   "toNode": "learn-5",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_capability-1",
+   "fromNode": "add_capability-0",
+   "fromSide": "bottom",
+   "toNode": "add_capability-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_capability-2",
+   "fromNode": "add_capability-1",
+   "fromSide": "bottom",
+   "toNode": "add_capability-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_capability-3",
+   "fromNode": "add_capability-2",
+   "fromSide": "bottom",
+   "toNode": "add_capability-3",
+   "toSide": "top"
+  },
+  {
+   "id": "e-add_capability-4",
+   "fromNode": "add_capability-3",
+   "fromSide": "bottom",
+   "toNode": "add_capability-4",
+   "toSide": "top"
+  },
+  {
+   "id": "e-audited-1",
+   "fromNode": "audited-0",
+   "fromSide": "bottom",
+   "toNode": "audited-1",
+   "toSide": "top"
+  },
+  {
+   "id": "e-audited-2",
+   "fromNode": "audited-1",
+   "fromSide": "bottom",
+   "toNode": "audited-2",
+   "toSide": "top"
+  },
+  {
+   "id": "e-audited-3",
+   "fromNode": "audited-2",
+   "fromSide": "bottom",
+   "toNode": "audited-3",
+   "toSide": "top"
+  },
+  {
+   "id": "e-audited-4",
+   "fromNode": "audited-3",
+   "fromSide": "bottom",
+   "toNode": "audited-4",
+   "toSide": "top"
+  }
+ ]
+}

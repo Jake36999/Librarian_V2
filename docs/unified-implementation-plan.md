@@ -7268,3 +7268,22 @@ The five DataManagement reports were redrafted with the fixes above: sections re
 - Open: one session holds one synthesis, so five reports drafted in one session share one "Together" and "Unknowns". After the redraft those sections were stale ("no outline tool"). A multi-question brief wants one synthesis per report, or one session per question.
 
 Test: `test_a_review_that_did_not_complete_says_why`.
+
+### The workflows drawn from the code, and the use cases they are measured against (2026-11-20)
+
+Owner, 20 November: translate the models' workflows into written use cases and diagrams a person can read, to find systematic gaps in what we expect of them.
+- `scripts/workflow_map.py` turns the Librarian on itself, with no model call. It forces a throwaway session into every phase of every purpose (`phase_walk.Walker`) and records:
+  - the exit gate the model is shown;
+  - the tools the live loop offers there;
+  - the YAML workflows and pipelines, the agent macros, and the batch and folder stages.
+
+  It writes Mermaid (`WORKFLOW-MAP.md`, rendered by Obsidian and importable into draw.io), an Obsidian canvas and JSON to `reports/2026-11-20-workflow-map/`.
+- `USE-CASES.md` there holds eight use cases. Each is measured against today's runs, and the gaps are recorded as open points OP1–OP16:
+  - the staged-but-unaccepted backlog;
+  - one synthesis per session;
+  - refusals that name tools the phase does not offer;
+  - relations that are never checked like claims;
+  - no organisation workflow;
+  - no published views;
+  - two step-sequencing mechanisms;
+  - phase gates kept as code rather than data.
