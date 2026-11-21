@@ -3033,13 +3033,13 @@ class App:
             return None
 
     # -- the person's own calls ---------------------------------------------
-    def person_call(self, name: str, arguments: dict[str, Any], session: str = ""
-                    ) -> dict[str, Any]:
+    def person_call(self, name: str, arguments: dict[str, Any], session: str = "",
+                    actor: dict[str, Any] | None = None) -> dict[str, Any]:
         with self._counted_call("person", f"the call {name!r}"):
-            return self._person_call(name, arguments, session)
+            return self._person_call(name, arguments, session, actor)
 
-    def _person_call(self, name: str, arguments: dict[str, Any], session: str
-                     ) -> dict[str, Any]:
+    def _person_call(self, name: str, arguments: dict[str, Any], session: str,
+                     actor: dict[str, Any] | None = None) -> dict[str, Any]:
         extras = {k: v for k, v in self._extras().items() if k != "broker"}
         # A profile can only narrow an *agent*.  A person's explicit UI/CLI
         # action remains their curate-tier authority, never accidentally
@@ -3047,6 +3047,10 @@ class App:
         extras.pop("agent_profile", None)
         extras.pop("profile_store", None)
         extras["caller_kind"] = "person"
+        if actor:
+            # F2 (W7, 2026-11-21): an outside agent using the person's surface says so, and what
+            # it decides is recorded as the agent's (tools/staging.py: decided_by_of).
+            extras["actor"] = {"kind": "agent", "name": str(actor.get("name") or "")[:80]}
         ctx = Context(tier="curate", vault=self.vault, session=session or None, extras=extras)
         result = self._surface_checkpoint(REGISTRY.call(name, arguments, ctx), name, arguments,
                                           requester="person")
@@ -4857,7 +4861,13 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 arguments = body.get("arguments") or {}
                 if not isinstance(arguments, dict):
                     raise ApiError(400, "arguments is a JSON object")
-                return app.person_call(name, arguments, str(body.get("session") or ""))
+                actor = body.get("actor")
+                if actor is not None and not (isinstance(actor, dict) and actor.get("kind") == "agent"
+                                              and isinstance(actor.get("name", ""), str)
+                                              and len(actor.get("name", "")) <= 80):
+                    raise ApiError(400, "actor is {kind: 'agent', name: '<who>'}")
+                return app.person_call(name, arguments, str(body.get("session") or ""),
+                                       actor=actor)
             if path == "/api/mode":
                 return app.set_mode(str(body.get("mode") or ""))
             if path == "/api/permission":

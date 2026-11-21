@@ -639,6 +639,10 @@ def status(vault: Vault, run_id: str = "") -> dict[str, Any]:
     run_id = run_id or latest(vault)
     out: dict[str, Any] = {"waiting": len(waiting(vault)), "running": live(vault),
                            "waiting_on_model": len(waiting_on_model(vault))}
+    # OP1 (W7, 2026-11-21): a finished batch's sources are read, not yet in the library.
+    accepting = StagingStore(vault).awaiting_acceptance()
+    if accepting["count"]:
+        out["awaiting_acceptance"] = accepting
     if not run_id:
         return out
     events = RunStore(vault).events(run_id)

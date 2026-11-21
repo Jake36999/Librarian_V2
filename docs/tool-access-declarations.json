@@ -204,11 +204,11 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/library.py",
-        "line": 517,
+        "line": 541,
         "symbol": "agenda_tool"
       },
       "fingerprint": {
-        "source_sha256": "84eecfc3aad2eaa1fdce946084dce2a87f477dc068a7e74ed9caee362f8941d5",
+        "source_sha256": "19cb52481ca3738d04a4c91d5c46fc11dca74516730f8683d0968ca1d21e259b",
         "schema_sha256": "b76e7a0d8e67a8dbe3de9cbc8aee278fd95c3c5a2d6b7069930f7e66f98571e8",
         "effect": "read",
         "open_world": false,
@@ -4741,11 +4741,11 @@
       ],
       "evidence": {
         "path": "src/resource_librarian/tools/staging.py",
-        "line": 521,
+        "line": 544,
         "symbol": "staging_decide"
       },
       "fingerprint": {
-        "source_sha256": "22661c8117b7b9449a2c30b4201ded1d38fb6a0e1c2a9f295ac92f262b3f02f1",
+        "source_sha256": "8ad839d93524b98349e069f529891d5cc9832f51698c0543c7eddc1824ec4162",
         "schema_sha256": "269eb5420887b52769f7072d567b1d112c73ed488a9eb3f534d0a6f0b35a1600",
         "effect": "vault_write",
         "open_world": false,

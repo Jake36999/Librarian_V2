@@ -36,6 +36,7 @@ import os
 import re
 import threading
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
@@ -208,6 +209,35 @@ class StagingStore:
         with _SUMMARIES_LOCK:
             _SUMMARIES[key] = fresh                 # a deleted file leaves the cache with it
         return [fresh[name][1] for name in sorted(fresh)]
+
+    def awaiting_acceptance(self, sample: int = 5) -> dict[str, Any]:
+        """Sources read in full or in part and accepted by no one yet (OP1, W7, 2026-11-21).
+
+        The 19-20 November ingestion read 96 papers to `enriched` and left them there: nothing
+        said the last step, accepting them, was still owed, so a research session found only
+        catalogue cards. This is what the agenda, `batch_status` and the Lead's context say."""
+        waiting = [s for s in self.summaries("source") if s["status"] in ("enriched", "partial")]
+        if not waiting:
+            return {"count": 0}
+        folder = self.folder("source")
+        ages = []
+        for s in waiting:
+            try:
+                ages.append((folder / f"{s['id']}.json").stat().st_mtime)
+            except OSError:
+                pass
+        mode = str(self.vault.setting("promotion", "mode") or "person")
+        oldest = (max(0, int((datetime.now(timezone.utc).timestamp() - min(ages)) // 86400))
+                  if ages else None)
+        return {"count": len(waiting),
+                "enriched": sum(1 for s in waiting if s["status"] == "enriched"),
+                "partial": sum(1 for s in waiting if s["status"] == "partial"),
+                "oldest_days": oldest,
+                "sample": [s["id"] for s in waiting[:sample]],
+                "decides": "a person" if mode != "agent" else "a person, or an agent under this "
+                                                              "library's agent promotion mode",
+                "next": "staging_decide(item_ids=[...], decision='accept'): they are not in the "
+                        "library until accepted"}
 
     def counts(self) -> dict[str, dict[str, int]]:
         out: dict[str, dict[str, int]] = {}

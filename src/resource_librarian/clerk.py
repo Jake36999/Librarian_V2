@@ -1479,6 +1479,18 @@ def from_config(settings: dict[str, Any]) -> Endpoint | None:
     as a reviewer spending 16k tokens reasoning and answering nothing, and
     answering correctly with 32k)."""
     provider = str(settings.get("provider") or "")
+    routes = task_routes(settings)
+    default = _endpoint(provider, settings) if provider else None
+    if not routes:
+        return default
+    return Router(default, routes)
+
+
+def task_routes(settings: dict[str, Any]) -> dict[str, "Endpoint"]:
+    """The `route_<task>` endpoints a `[clerk]` table names, by task (see `from_config`).
+
+    Read on its own too (OP8, W7, 2026-11-21): inside the Core the Clerk is the endpoint assigned
+    to its role, and these routes were ignored there, so a library's review route never ran."""
     routes: dict[str, Endpoint] = {}
     for key, value in settings.items():
         if not key.startswith("route_") or not str(value).strip():
@@ -1493,10 +1505,7 @@ def from_config(settings: dict[str, Any]) -> Endpoint | None:
         if str(settings.get(f"reasoning_effort_{task}") or "").strip():
             extra["reasoning_effort"] = str(settings[f"reasoning_effort_{task}"])
         routes[task] = _endpoint(target, {**({"model": model} if model else {}), **extra})
-    default = _endpoint(provider, settings) if provider else None
-    if not routes:
-        return default
-    return Router(default, routes)
+    return routes
 
 
 class Router(Endpoint):

@@ -7424,3 +7424,20 @@ With the owner's go-ahead, the second session's files are committed. They were w
 - `reports/2026-11-20-workflow-map/ingestion-and-research-run.canvas`.
 
 Reports are never policy (rank 7). The prototype renderer writes canvases directly and is superseded by W2's service in the proposal's P1.
+
+### W7's root causes: read work is told, attestation names the agent, the review route runs in the Core (2026-11-21)
+
+The owner started W7 with its root causes first (`docs/proposals/plan-forward-2026-11.md`, W7 revised).
+- **OP1: read work waiting for acceptance is told to someone.** `StagingStore.awaiting_acceptance()` counts sources read to `enriched` or `partial` that no one has accepted, with the oldest one's age and who decides here. It appears in three places:
+  - the agenda (`agenda.awaiting_acceptance`);
+  - `batch_status`;
+  - the Lead's library context: "N source(s) in staging have been read and are waiting to be accepted… they are not in the library yet".
+
+  On 19–20 November 96 read papers waited with nothing saying so, and a research session found only folder cards.
+- **F2: attestation names who accepted.** Every staging decision now goes through `decided_by_of(ctx)`. A person's surface (`curate`) is "person". An agent, including an outside agent on the person's surface that declares itself with `actor: {kind: agent, name}` on the Core's `/api/tool` route, is "agent". Under `promotion.mode = "person"` a declared agent's accept is refused (`PERSON_CONFIRMS`). Under `agent` mode, the note records `attested_by: agent`. The agent helper (`reports/2026-11-16-pilot-review/run-scripts/core.py`) always declares itself. An undeclared call cannot be told apart, which is why the policy rule stands beside the code. The 96 notes accepted on 20 November still say `person`; correcting them is an owner decision.
+- **OP8: the review route runs inside the Core.**
+  - Inside the Core the Clerk is the endpoint assigned to its role, and `[clerk] route_<task>` was ignored, so reviews ran on gemma. `clerk_endpoint` now wraps a surface's Clerk in a `Router` with the library's task routes (`clerk.task_routes`, split out of `from_config`).
+  - Each routed call still passes the Clerk profile's guard, identified by its own host and model, so a route not qualified for the role queues its task visibly. It never falls back.
+  - GLM-5.3, Resource-Library's `route_review`, was qualified as a Clerk there (L0 and L1 passed, screened, $0.0004).
+
+Tests: `tests/test_w7_root_causes.py`. Not yet checked live: a claim review running on GLM-5.3 inside the Core (the next drafted offering will show it on its review record). OP9's cause, three reviews that did not complete, is still open; failed reviews now record their reason.

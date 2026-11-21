@@ -8,6 +8,10 @@ def call(vault, method, path, body=None, timeout=600):
     if not rec:
         raise SystemExit(f"no connection record for {vault}")
     url = rec["url"].rstrip("/") + path
+    # F2 (2026-11-21): this helper is an outside agent's, so its tool calls say so, and what it
+    # accepts is recorded as an agent's acceptance, never as the person's.
+    if path.startswith("/api/tool/") and isinstance(body, dict) and "actor" not in body:
+        body = {**body, "actor": {"kind": "agent", "name": "agent helper (run-scripts/core.py)"}}
     data = None if body is None else json.dumps(body).encode()
     req = urllib.request.Request(url, data=data, method=method,
                                  headers={"X-Librarian-Token": str(rec["token"]), "Content-Type": "application/json"})

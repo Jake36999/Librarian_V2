@@ -717,6 +717,9 @@ class Loop:
         lenses = self.adopted_lenses()
         if lenses:
             parts.append(ADOPTED_LENSES + "\n" + "\n".join(lenses))
+        waiting = self.awaiting_acceptance()
+        if waiting:
+            parts.append(waiting)
         if self._answering:
             parts.append("A review of your last reply checked its claims against the notes they "
                          "cite and could not support these. Correct them, or show where the note "
@@ -730,6 +733,22 @@ class Loop:
                          "person that rests on one says so, as a caveat, in plain words:\n"
                          + "\n".join(f"- {a}" for a in unsettled))
         return "\n\n".join(parts)
+
+    def awaiting_acceptance(self) -> str:
+        """OP1 (W7, 2026-11-21): a research session on 20 November searched for papers that had
+        been read but never accepted, found only folder cards, and could not tell why."""
+        if self.ctx.vault is None:
+            return ""
+        try:
+            from .staging import StagingStore
+            waiting = StagingStore(self.ctx.vault).awaiting_acceptance(sample=0)
+        except (OSError, ValueError):
+            return ""
+        if not waiting.get("count"):
+            return ""
+        return (f"{waiting['count']} source(s) in staging have been read and are waiting to be "
+                f"accepted ({waiting['decides']} decides). They are not in the library yet: "
+                f"search and notes will not find them, and they cannot be cited until accepted.")
 
     def context_message(self) -> dict[str, str] | None:
         """Return a user-role message wrapping library_context, or None if empty."""

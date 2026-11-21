@@ -122,11 +122,34 @@ def _profile_endpoint(ctx: Context, role: str, endpoint: clerk.Endpoint | None,
     return endpoint
 
 
+
+def decided_by_of(ctx: Context) -> str:
+    """Who a staging decision is recorded as made by (F2, W7, 2026-11-21).
+
+    A person's own surface acts at `curate`; an agent acts below it. An outside agent that uses
+    the person's surface (the Core API) declares itself (`actor: {kind: agent}`), and is
+    recorded as the agent it is: on 20 November an agent accepted 96 papers through that surface
+    and every note said `attested_by: person`. Under promotion.mode = "person" the declared agent
+    may not accept, exactly as any agent may not."""
+    actor = ctx.extras.get("actor") if isinstance(ctx.extras.get("actor"), dict) else {}
+    if actor.get("kind") == "agent":
+        return "agent"
+    return "person" if ctx.tier == "curate" else "agent"
+
 def clerk_endpoint(ctx: Context) -> clerk.Endpoint | None:
     """The surface's endpoint, else the vault's configured one, else the
     surface's fallback (MCP sampling), else None and the tasks queue."""
     from .. import effort
     endpoint = ctx.extras.get("clerk")
+    if endpoint is not None and not isinstance(endpoint, clerk.Router) and \
+            not hasattr(endpoint, "profile") and ctx.vault is not None:
+        # OP8 (W7, 2026-11-21): a surface's Clerk (the Core's, assigned to the role) still takes
+        # the library's per-task routes, so `route_review` reviews claims inside the Core too.
+        # Each routed call still passes the Clerk profile's checks (a route not qualified for the
+        # role queues its task, visibly; it never falls back to another model).
+        routes = clerk.task_routes(ctx.vault.config().get("clerk") or {})
+        if routes:
+            endpoint = clerk.Router(endpoint, routes)
     if endpoint is None:
         endpoint = clerk.from_config(ctx.vault.config().get("clerk") or {})
     if endpoint is None:
@@ -450,7 +473,7 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
         if kwargs.get("fields") or kwargs.get("bottom_line") or kwargs.get("what_it_solves"):
             raise TypeError(BATCH_SHARED)
         batch = staging.prepare_source_batch(_store(ctx), items,
-            "person" if ctx.tier == "curate" else "agent", ctx.session or "",
+            decided_by_of(ctx), ctx.session or "",
             IndexGateway(ctx, include_vectors=False).run, item_fields=kwargs.get("item_fields"))
         # Initial staged snapshots include invalid/preflight-failed items too.
         initial = dict(observed)
@@ -469,7 +492,7 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
         if kwargs.get("item_fields"):
             raise TypeError("item_fields applies to a batch of new sources only; accept these one at a time")
         batch = staging.prepare_mixed_batch(_store(ctx), items,
-            "person" if ctx.tier == "curate" else "agent", ctx.session or "",
+            decided_by_of(ctx), ctx.session or "",
             IndexGateway(ctx, include_vectors=False).run)
         initial = dict(observed)
         if any(path in initial and initial[path] != stamp for path, stamp in batch["observed"]):
@@ -485,7 +508,7 @@ def _decision_intent(ctx: Context, kwargs: dict) -> WriteIntent | None:
         origin = str((item.get("found_for") or {}).get("session") or ctx.session or "")
         try:
             source_plan = staging.prepare_source(_store(ctx), item, kwargs.get("bottom_line") or "",
-                kwargs.get("what_it_solves") or "", "person" if ctx.tier == "curate" else "agent",
+                kwargs.get("what_it_solves") or "", decided_by_of(ctx),
                 origin, {**(kwargs.get("fields") or {}), **((kwargs.get("item_fields") or {}).get(item["id"]) or {})},
                 IndexGateway(ctx, include_vectors=False).run)
         except (Refusal, TypeError) as exc:
@@ -549,7 +572,7 @@ def staging_decide(ctx: Context, item_ids: list[str],
         # an accept rehearsed: every check, what would be written, nothing changed
         if decision != "accept":
             raise TypeError("dry_run rehearses an accept")
-        decided_by = "person" if ctx.tier == "curate" else "agent"
+        decided_by = decided_by_of(ctx)
         if len(item_ids) > 1:
             items = []
             for item_id in item_ids:
@@ -670,7 +693,7 @@ def staging_decide(ctx: Context, item_ids: list[str],
     promotion_session = next(iter(origins)) if len(origins) == 1 else (ctx.session or "")
     results = staging.decide(store, None, item_ids, decision, reason,
                              bottom_line, what_it_solves,
-                             decided_by="person" if ctx.tier == "curate" else "agent",
+                             decided_by=decided_by_of(ctx),
                              session=promotion_session, fields=fields,
                              index_call=IndexGateway(ctx,
                                  include_vectors=prepared.get("operation") not in ("stage_source", "stage_sources", "stage_mixed")).run,

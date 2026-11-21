@@ -547,11 +547,16 @@ def task_done(ctx: Context, note: str, text: str) -> dict:
                 "typed straight into Obsidian counts the same as one added with task_add. "
                 "`project` narrows it to that pursuit's note and its desk"))
 def agenda_tool(ctx: Context, project: str = "") -> dict:
-    if not project:
-        return agenda.scan(ctx.vault)
-    if not ctx.vault.project_note(project).exists():
+    if project and not ctx.vault.project_note(project).exists():
         raise TypeError(f"no pursuit named {project!r}; create_project first")
-    return agenda.scan(ctx.vault, only=desk.pursuit_notes(ctx.vault, project))
+    out = agenda.scan(ctx.vault, only=desk.pursuit_notes(ctx.vault, project) if project else None)
+    # OP1 (W7, 2026-11-21): read work nobody has accepted is a task too, owned by whoever
+    # decides acceptance here; on 19-20 November 96 papers waited with nothing saying so.
+    from ..staging import StagingStore
+    waiting = StagingStore(ctx.vault).awaiting_acceptance()
+    if waiting["count"]:
+        out["awaiting_acceptance"] = waiting
+    return out
 
 
 @tool("evaluate", tier="consult", effect="read",
