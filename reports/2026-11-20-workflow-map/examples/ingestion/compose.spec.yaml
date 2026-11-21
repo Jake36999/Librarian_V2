@@ -1,0 +1,94 @@
+# UC-C. Compose a process upward and promote it into the repertoire (to-be; owner direction 2026-11-21).
+# Order: action (L0) -> workflow (L1) -> pipeline (L2) -> sprint (L3). A process is a component of any parent process
+# later in the order (an action of a workflow, pipeline or sprint), or of one at its own layer if no cycle results;
+# never of an earlier one (a pipeline is never a component of an action). Defined terms: docs/proposals/diagram-workflows.md, section 12.
+diagram: UC-C
+kind: activity
+title: Compose a process upward and promote it into the repertoire
+target: {kind: use_case, ref: "../../../../docs/proposals/diagram-workflows.md#11-upward-composition-actions-workflows-pipelines-sprints"}
+lens: [the-root-cause-lens, the-guard-completeness-lens]
+perspective: Owner
+problem:
+  symptom: "Long workflows re-state instructions for steps that are already common actions."
+  why:
+    - "The largest flows are coded state machines, not compositions (OP16)."
+    - "Two mechanisms sequence steps: the agent macros and the YAML workflows (OP15)."
+  root: "There is no single, layered repertoire that new work is composed from and promoted back into."
+lanes: [Owner, Tier 0 agent, Oracle, Lead (tier 1), Helper (tier 2), Core]
+nodes:
+  - {id: s,   kind: start}
+  - {id: a1,  kind: activity, lane: Lead (tier 1),   step: 1,  label: "needs a capability its task calls for"}
+  - {id: a2,  kind: activity, lane: Core,            step: 2,  label: "searches the repertoire for an accepted process that covers it, lowest layer first"}
+  - {id: d1,  kind: decision, lane: Core,                      label: "an accepted process covers it?"}
+  - {id: a3,  kind: activity, lane: Lead (tier 1),   step: 3,  label: "drafts a process at the layer the task needs, from accepted processes as its components"}
+  - {id: a4,  kind: activity, lane: Core,            step: 4,  label: "validates the draft: schema, references, arguments and outputs"}
+  - {id: d2,  kind: decision, lane: Core,                      label: "draft valid?"}
+  - {id: x1,  kind: activity, lane: Lead (tier 1),             label: "revises the draft from the named problems"}
+  - {id: d3,  kind: decision, lane: Lead (tier 1),             label: "within two revisions?"}
+  - {id: a5,  kind: activity, lane: Core,            step: 5,  label: "validates the layer rule: components from earlier layers, or its own layer without a cycle"}
+  - {id: d4,  kind: decision, lane: Core,                      label: "layer rule holds?"}
+  - {id: x2,  kind: activity, lane: Lead (tier 1),             label: "recomposes the draft from processes of earlier layers"}
+  - {id: a6,  kind: activity, lane: Core,            step: 6,  label: "compiles the draft's manifest: its actions in order, their declared effects, and the blast radius"}
+  - {id: d5,  kind: decision, lane: Helper (tier 2),           label: "manifest within the parent's mandate?"}
+  - {id: x3,  kind: activity, lane: Lead (tier 1),             label: "reports the wider radius to tier 0"}
+  - {id: x4,  kind: activity, lane: Tier 0 agent,              label: "puts the decision to the Owner"}
+  - {id: x5,  kind: activity, lane: Owner,                     label: "decides the wider radius"}
+  - {id: d6,  kind: decision, lane: Owner,                     label: "Owner approves?"}
+  - {id: a7,  kind: activity, lane: Oracle,          step: 7,  label: "dry-runs the draft against its specification: Tier A checks first, then a Tier B review"}
+  - {id: d7,  kind: decision, lane: Oracle,                    label: "specification met?"}
+  - {id: x6,  kind: activity, lane: Lead (tier 1),             label: "revises the draft from the oracle's report"}
+  - {id: a8,  kind: activity, lane: Core,            step: 8,  label: "runs the process for the task, pinned to its text"}
+  - {id: a9,  kind: activity, lane: Lead (tier 1),   step: 9,  label: "proposes promoting the process into the repertoire"}
+  - {id: a10, kind: activity, lane: Core,            step: 10, label: "checks the proposal against the repertoire and puts it on the Owner's agenda"}
+  - {id: d8,  kind: decision, lane: Core,                      label: "duplicates an accepted process?"}
+  - {id: a11, kind: activity, lane: Owner,           step: 11, label: "accepts the process into the repertoire"}
+  - {id: d9,  kind: decision, lane: Owner,                     label: "accepted?"}
+  - {id: a12, kind: activity, lane: Core,            step: 12, label: "pins the process's digest and records its manifest and provenance"}
+  - {id: xe,  kind: activity, lane: Tier 0 agent,              label: "takes over the composition"}
+  - {id: xp,  kind: activity, lane: Tier 0 agent,              label: "reports the paused composition to the Owner"}
+  - {id: e1,  kind: end, outcome: success,   label: "the process is in the repertoire, available as a component of any later parent process"}
+  - {id: e2,  kind: end, outcome: reused,    label: "an accepted process is used; nothing new is added"}
+  - {id: e3,  kind: end, outcome: used once, label: "the process ran for this task and was not kept"}
+  - {id: e4,  kind: end, outcome: escalated, label: "escalated to tier 0: a failure of this use case"}
+  - {id: e5,  kind: end, outcome: paused,    label: "paused: the Owner declined the wider radius"}
+edges:
+  - {from: s,   to: a1}
+  - {from: a1,  to: a2}
+  - {from: a2,  to: d1}
+  - {from: d1,  to: a3,  guard: "nothing covers it"}
+  - {from: d1,  to: e2,  guard: "covered", ext: "2a"}
+  - {from: a3,  to: a4}
+  - {from: a4,  to: d2}
+  - {from: d2,  to: a5,  guard: "valid"}
+  - {from: d2,  to: x1,  guard: "invalid", ext: "4a"}
+  - {from: x1,  to: d3}
+  - {from: d3,  to: a4,  guard: "revisions left"}
+  - {from: d3,  to: xe,  guard: "none left"}
+  - {from: a5,  to: d4}
+  - {from: d4,  to: a6,  guard: "holds"}
+  - {from: d4,  to: x2,  guard: "uses a later layer, or makes a cycle", ext: "5a"}
+  - {from: x2,  to: a4}
+  - {from: a6,  to: d5}
+  - {from: d5,  to: a7,  guard: "within"}
+  - {from: d5,  to: x3,  guard: "wider", ext: "6a"}
+  - {from: x3,  to: x4}
+  - {from: x4,  to: x5}
+  - {from: x5,  to: d6}
+  - {from: d6,  to: a7,  guard: "approved"}
+  - {from: d6,  to: xp,  guard: "declined"}
+  - {from: a7,  to: d7}
+  - {from: d7,  to: a8,  guard: "met"}
+  - {from: d7,  to: x6,  guard: "not met", ext: "7a"}
+  - {from: x6,  to: d3}
+  - {from: a8,  to: a9}
+  - {from: a9,  to: a10}
+  - {from: a10, to: d8}
+  - {from: d8,  to: a11, guard: "new"}
+  - {from: d8,  to: e2,  guard: "duplicate", ext: "10a"}
+  - {from: a11, to: d9}
+  - {from: d9,  to: a12, guard: "accepted"}
+  - {from: d9,  to: e3,  guard: "declined", ext: "11a"}
+  - {from: a12, to: e1}
+  - {from: xe,  to: e4}
+  - {from: xp,  to: e5}
+provenance: {drafted_by: "tier 0 (Claude Code), owner direction 2026-11-21, after a Gemini discussion", at: 2026-11-21}

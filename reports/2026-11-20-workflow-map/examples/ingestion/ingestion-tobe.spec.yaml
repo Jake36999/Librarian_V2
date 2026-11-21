@@ -1,0 +1,169 @@
+# To-be: the ingestion run by the tiers, overseen by tier 0 on the Owner's behalf (owner direction, 2026-11-20).
+# Lanes in the owner's order: Owner, tier 0, Oracle, tier 1, Doctor, tier 2, tier 3; then the system actors.
+# - Tier 0 initiates (hands the run to a Lead and sets the oracle's spec), reviews once, and reports to the Owner.
+#   If the review is not satisfied it tasks the oracle with tidying up, waits for the oracle's response, makes
+#   one more pass, and reports. Counted in tier-0 turns: 2 is ideal, 3 expected, 4 rusty, 5-10 bad.
+# - The Owner's steps between start and report are decisions only the Owner can make, relayed by tier 0.
+# - The oracle judges and never acts; the doctor repairs failures at mapped extension points (UC-D); a shortfall
+#   no extension maps is a tier-1 misalignment, re-aligned by the Lead from the oracle's report.
+diagram: ingest-papers-tobe
+kind: activity
+title: Ingest a folder of papers, overseen by tier 0 for the Owner (to-be)
+target: {kind: use_case, ref: "../../USE-CASES.md#uc1-make-a-folder-of-papers-into-library-knowledge-as-is"}
+lens: [the-root-cause-lens, the-guard-completeness-lens, the-real-concurrency-lens]
+perspective: Owner
+problem:
+  symptom: "In the as-is run control came back to tier 0 six times on the happy path (graded bad), and every failure was resolved by tier 0 by hand."
+  why:
+    - "The ingestion ran as API calls from outside the Core, not as a workflow inside it."
+    - "No tier-1 or tier-2 agent had a step, so tier 0 did their work at tier-0 cost."
+    - "Nothing judged the run against its success guarantee except tier 0 itself."
+  root: "The ingestion is not a workflow the Core runs; failures have no owner below tier 0; completion has no judge apart from the worker."
+lanes: [Owner, Tier 0 agent, Oracle, Lead (tier 1), Doctor, Helper (tier 2), Clerk (tier 3), Core, Model host, Geo-Grapher]
+nodes:
+  - {id: s,   kind: start}
+  - {id: a1,  kind: activity, lane: Owner,           step: 1,  label: "directs the ingestion of a folder into a library, naming the subfolders to exclude"}
+  - {id: a2,  kind: activity, lane: Tier 0 agent,    step: 2,  label: "hands the ingestion to a Lead and sets the oracle's specification: UC1's success guarantee"}
+  - {id: a3,  kind: activity, lane: Lead (tier 1),   step: 3,  label: "opens an ingest-folder run for the folder"}
+  - {id: a4,  kind: activity, lane: Core,            step: 4,  label: "surveys the folder and proposes a decision per subfolder"}
+  - {id: d1,  kind: decision, lane: Core,                      label: "every other root current?"}
+  - {id: r1,  kind: ref,      lane: Doctor, use_case: UC-D,    label: "resolves the stale root (remedy R1)"}
+  - {id: a5,  kind: activity, lane: Lead (tier 1),   step: 5,  label: "applies the Owner's exclusions and the decisions policy allows"}
+  - {id: d2,  kind: decision, lane: Core,                      label: "Clerk qualified in this Core?"}
+  - {id: r2,  kind: ref,      lane: Doctor, use_case: UC-D,    label: "restores the Clerk's qualification (remedy R2)"}
+  - {id: a6,  kind: activity, lane: Clerk (tier 3),  step: 6,  label: "assesses each remaining subfolder's sensitivity"}
+  - {id: d3,  kind: decision, lane: Clerk (tier 3),            label: "subfolder sensitive?"}
+  - {id: x1,  kind: activity, lane: Lead (tier 1),             label: "reports the held subfolder to tier 0"}
+  - {id: x2,  kind: activity, lane: Tier 0 agent,              label: "puts the decision to the Owner"}
+  - {id: x3,  kind: activity, lane: Owner,                     label: "decides the held subfolder"}
+  - {id: a7,  kind: activity, lane: Core,            step: 7,  label: "accepts the remaining subfolders by policy, attested as the policy"}
+  - {id: a8,  kind: activity, lane: Core,            step: 8,  label: "queues the in-scope documents for each accepted root"}
+  - {id: a9,  kind: activity, lane: Helper (tier 2), step: 9,  label: "validates the queued count against the survey"}
+  - {id: d4,  kind: decision, lane: Helper (tier 2),           label: "queued count matches?"}
+  - {id: r3,  kind: ref,      lane: Doctor, use_case: UC-D,    label: "reconciles the queue (remedy R3)"}
+  - {id: a10, kind: activity, lane: Core,            step: 10, label: "captures and stages each document"}
+  - {id: a11, kind: activity, lane: Core,            step: 11, label: "approves the staged documents by policy, attested as the policy"}
+  - {id: f1,  kind: fork,     lane: Core,                      label: "for each approved document, in the Clerk pool"}
+  - {id: a12, kind: activity, lane: Core,            step: 12, label: "parses and converts each document"}
+  - {id: a13, kind: activity, lane: Clerk (tier 3),  step: 13, label: "reads each document part by part"}
+  - {id: m1,  kind: activity, lane: Model host,                label: "answers each Clerk task"}
+  - {id: dm,  kind: decision, lane: Model host,                label: "answered in time and in full?"}
+  - {id: a14, kind: activity, lane: Core,            step: 14, label: "enforces the library's spend ceiling"}
+  - {id: dc,  kind: decision, lane: Core,                      label: "spend under the ceiling?"}
+  - {id: x4,  kind: activity, lane: Lead (tier 1),             label: "reports the spend and the work left to tier 0"}
+  - {id: x5,  kind: activity, lane: Tier 0 agent,              label: "puts the budget decision to the Owner"}
+  - {id: j1,  kind: join,     lane: Core,                      label: "all documents processed"}
+  - {id: d5,  kind: decision, lane: Core,                      label: "every document fully read?"}
+  - {id: r4,  kind: ref,      lane: Doctor, use_case: UC-D,    label: "re-reads the partial documents (remedy R4)"}
+  - {id: a15, kind: activity, lane: Geo-Grapher,     step: 15, label: "imports each fully converted paper into the paper graph"}
+  - {id: d6,  kind: decision, lane: Core,                      label: "library's promotion mode?"}
+  - {id: x6,  kind: activity, lane: Core,                      label: "raises 'N documents await acceptance' on the Owner's agenda"}
+  - {id: x7,  kind: activity, lane: Owner,                     label: "accepts the documents"}
+  - {id: a16, kind: activity, lane: Core,            step: 16, label: "accepts the enriched documents by policy, attested as the policy"}
+  - {id: a17, kind: activity, lane: Core,            step: 17, label: "writes each Source note and validates it is findable"}
+  - {id: d7,  kind: decision, lane: Core,                      label: "findable by title, bottom line and concept?"}
+  - {id: r5,  kind: ref,      lane: Doctor, use_case: UC-D,    label: "repairs the note's index entry (remedy R5)"}
+  - {id: a18, kind: activity, lane: Oracle,          step: 18, label: "judges the run against the specification: deterministic checks first, then a model review"}
+  - {id: d8,  kind: decision, lane: Oracle,                    label: "specification met?"}
+  - {id: r6,  kind: ref,      lane: Doctor, use_case: UC-D,    label: "applies the catalogued remedy for the shortfall"}
+  - {id: x8,  kind: activity, lane: Helper (tier 2),           label: "scouts the shortfall's blast radius, read-only"}
+  - {id: x9,  kind: activity, lane: Lead (tier 1),             label: "re-aligns the run with the specification, from the oracle's report and the scouting"}
+  - {id: a19, kind: activity, lane: Lead (tier 1),   step: 19, label: "hands the result and the oracle's verdict to tier 0"}
+  - {id: a20, kind: activity, lane: Tier 0 agent,    step: 20, label: "reviews the result once against the specification"}
+  - {id: d9,  kind: decision, lane: Tier 0 agent,              label: "ready to hand over?"}
+  - {id: x10, kind: activity, lane: Tier 0 agent,              label: "tasks the oracle with tidy-up instructions"}
+  - {id: x11, kind: activity, lane: Oracle,                    label: "oversees the tidy-up, through the Lead and the doctor"}
+  - {id: x12, kind: activity, lane: Lead (tier 1),             label: "applies the oracle's instructions"}
+  - {id: x13, kind: activity, lane: Oracle,                    label: "judges again and submits its response to tier 0"}
+  - {id: x14, kind: activity, lane: Tier 0 agent,              label: "makes a second, final pass"}
+  - {id: a21, kind: activity, lane: Tier 0 agent,    step: 21, label: "reports the result to the Owner"}
+  - {id: xe,  kind: activity, lane: Tier 0 agent,              label: "takes over the escalated case"}
+  - {id: xp,  kind: activity, lane: Tier 0 agent,              label: "reports the paused run to the Owner, with the decision it needs"}
+  - {id: e1,  kind: end, outcome: success,   label: "the Owner has the result and its report: Source notes findable, labelled, in the graph"}
+  - {id: e2,  kind: end, outcome: escalated, label: "escalated to tier 0: a failure of this use case"}
+  - {id: e3,  kind: end, outcome: paused,    label: "paused for the Owner's decision"}
+edges:
+  - {from: s,   to: a1}
+  - {from: a1,  to: a2}
+  - {from: a2,  to: a3}
+  - {from: a3,  to: a4}
+  - {from: a4,  to: d1}
+  - {from: d1,  to: a5,  guard: "current"}
+  - {from: d1,  to: r1,  guard: "a root is stale", ext: "4a", observed: "as-is 3a"}
+  - {from: r1,  to: a4,  guard: "resolved"}
+  - {from: r1,  to: xe,  guard: "escalated"}
+  - {from: r1,  to: xp,  guard: "declined"}
+  - {from: a5,  to: d2}
+  - {from: d2,  to: a6,  guard: "qualified"}
+  - {from: d2,  to: r2,  guard: "qualification lost", ext: "6a", observed: "as-is 5a"}
+  - {from: r2,  to: a6,  guard: "resolved"}
+  - {from: r2,  to: xe,  guard: "escalated"}
+  - {from: r2,  to: xp,  guard: "declined"}
+  - {from: a6,  to: d3}
+  - {from: d3,  to: a7,  guard: "normal"}
+  - {from: d3,  to: x1,  guard: "sensitive", ext: "6b"}
+  - {from: x1,  to: x2}
+  - {from: x2,  to: x3}
+  - {from: x3,  to: a7}
+  - {from: a7,  to: a8}
+  - {from: a8,  to: a9}
+  - {from: a9,  to: d4}
+  - {from: d4,  to: a10, guard: "matches"}
+  - {from: d4,  to: r3,  guard: "mismatch", ext: "9a", observed: "as-is 8a"}
+  - {from: r3,  to: a8,  guard: "resolved"}
+  - {from: r3,  to: xe,  guard: "escalated"}
+  - {from: r3,  to: xp,  guard: "declined"}
+  - {from: a10, to: a11}
+  - {from: a11, to: f1}
+  - {from: f1,  to: a12}
+  - {from: f1,  to: a14}
+  - {from: a12, to: a13}
+  - {from: a13, to: m1}
+  - {from: m1,  to: dm}
+  - {from: dm,  to: j1,  guard: "answered"}
+  - {from: dm,  to: j1,  guard: "unavailable or partial page", ext: "13a", observed: "as-is 12a"}
+  - {from: a14, to: dc}
+  - {from: dc,  to: j1,  guard: "under the ceiling"}
+  - {from: dc,  to: x4,  guard: "ceiling reached", ext: "14a"}
+  - {from: x4,  to: x5}
+  - {from: x5,  to: xp}
+  - {from: j1,  to: d5}
+  - {from: d5,  to: a15, guard: "fully read"}
+  - {from: d5,  to: r4,  guard: "some partial", ext: "13b", observed: "as-is 12b"}
+  - {from: r4,  to: a15, guard: "resolved"}
+  - {from: r4,  to: xe,  guard: "escalated"}
+  - {from: r4,  to: xp,  guard: "declined"}
+  - {from: a15, to: d6}
+  - {from: d6,  to: a16, guard: "agent"}
+  - {from: d6,  to: x6,  guard: "person", ext: "16a", observed: "as-is 15a: the hand-off nobody owned"}
+  - {from: x6,  to: x7}
+  - {from: x7,  to: a17}
+  - {from: a16, to: a17}
+  - {from: a17, to: d7}
+  - {from: d7,  to: a18, guard: "findable"}
+  - {from: d7,  to: r5,  guard: "not findable", ext: "17a"}
+  - {from: r5,  to: a18, guard: "resolved"}
+  - {from: r5,  to: xe,  guard: "escalated"}
+  - {from: r5,  to: xp,  guard: "declined"}
+  - {from: a18, to: d8}
+  - {from: d8,  to: a19, guard: "met"}
+  - {from: d8,  to: r6,  guard: "shortfall at a mapped extension", ext: "18a"}
+  - {from: d8,  to: x8,  guard: "shortfall no extension maps (misalignment)", ext: "18b"}
+  - {from: r6,  to: a18, guard: "resolved"}
+  - {from: r6,  to: xe,  guard: "escalated"}
+  - {from: r6,  to: xp,  guard: "declined"}
+  - {from: x8,  to: x9}
+  - {from: x9,  to: a18}
+  - {from: a19, to: a20}
+  - {from: a20, to: d9}
+  - {from: d9,  to: a21, guard: "ready"}
+  - {from: d9,  to: x10, guard: "needs tidying", ext: "20a"}
+  - {from: x10, to: x11}
+  - {from: x11, to: x12}
+  - {from: x12, to: x13}
+  - {from: x13, to: x14}
+  - {from: x14, to: a21}
+  - {from: a21, to: e1}
+  - {from: xe,  to: e2}
+  - {from: xp,  to: e3}
+provenance: {drafted_by: "tier 0 (Claude Code), owner direction 2026-11-20", at: 2026-11-20}

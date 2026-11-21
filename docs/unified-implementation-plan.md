@@ -7412,3 +7412,15 @@ The owner directed it folded in:
   - a proposed order: W7's root causes → W1b → W3 → W9, with W2b P0 beside them.
 
 **Correction to the W1 part 3 entry above:** it said OP16 was closed. Only session phases became data; intake, the batch stages and folder review are still coded flows, not pipelines. That remainder is W1b.
+
+### The diagram-workflows session's work committed (2026-11-21)
+
+With the owner's go-ahead, the second session's files are committed. They were written by that session and are its work; this entry only records them. Nothing in `src/` is touched.
+- `docs/proposals/diagram-workflows.md`, the proposal (rank 5).
+- `reports/2026-11-20-workflow-map/USE-CASES.md`, rewritten as course-style use cases with an open points index. Its index still lists OP6, OP15 and OP16 as planned in W1. W1 closed OP6 and OP15, and part of OP16; the rest of OP16 is W1b.
+- `reports/2026-11-20-workflow-map/examples/`:
+  - `ingestion/`: specs, generated views and canvases for the as-is and to-be ingestion, the doctor, learning and composing, a remedy catalogue, and the prototype renderer;
+  - `manifests/`: the manifest prototype, `build_manifest.py`, with a manifest for `clear-enrichment-backlog` and two mandates.
+- `reports/2026-11-20-workflow-map/ingestion-and-research-run.canvas`.
+
+Reports are never policy (rank 7). The prototype renderer writes canvases directly and is superseded by W2's service in the proposal's P1.

@@ -1,0 +1,202 @@
+{
+ "nodes": [
+  {
+   "id": "title",
+   "type": "text",
+   "x": 20,
+   "y": -200,
+   "width": 1640,
+   "height": 220,
+   "text": "# Learn a remedy from an escalated case\n**Symptom:** A failure the doctor could not match went back to tier 0.\n**Root cause:** The catalogue only grows when a resolved case is written back into it.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `learn.spec.yaml`."
+  },
+  {
+   "id": "s",
+   "type": "text",
+   "x": 40,
+   "y": 140,
+   "width": 360,
+   "height": 70,
+   "text": "\u25cf start",
+   "color": "4"
+  },
+  {
+   "id": "a1",
+   "type": "text",
+   "x": 40,
+   "y": 340,
+   "width": 360,
+   "height": 150,
+   "text": "**1.** resolves the escalated case"
+  },
+  {
+   "id": "a2",
+   "type": "text",
+   "x": 40,
+   "y": 540,
+   "width": 360,
+   "height": 150,
+   "text": "**2.** proposes a remedy entry: symptom shape, remedy workflow, scope, rejoin"
+  },
+  {
+   "id": "a3",
+   "type": "text",
+   "x": 880,
+   "y": 740,
+   "width": 360,
+   "height": 150,
+   "text": "**3.** validates the entry: workflow exists, scope declared, blast radius bounded"
+  },
+  {
+   "id": "d1",
+   "type": "text",
+   "x": 880,
+   "y": 940,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 entry valid?",
+   "color": "5"
+  },
+  {
+   "id": "a4",
+   "type": "text",
+   "x": 460,
+   "y": 1140,
+   "width": 360,
+   "height": 150,
+   "text": "**4.** accepts the entry into the catalogue"
+  },
+  {
+   "id": "e2",
+   "type": "text",
+   "x": 1300,
+   "y": 1140,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c9 resolved this once; nothing added to the catalogue\n*outcome: not learned*",
+   "color": "1"
+  },
+  {
+   "id": "d2",
+   "type": "text",
+   "x": 460,
+   "y": 1340,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 accepted?",
+   "color": "5"
+  },
+  {
+   "id": "a5",
+   "type": "text",
+   "x": 880,
+   "y": 1540,
+   "width": 360,
+   "height": 150,
+   "text": "**5.** adds the entry, pinned to its digest"
+  },
+  {
+   "id": "e1",
+   "type": "text",
+   "x": 1300,
+   "y": 1740,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c9 the catalogue holds a remedy for this shape\n*outcome: learned*",
+   "color": "6"
+  },
+  {
+   "id": "lane-Tier-0-agent",
+   "type": "group",
+   "x": 20,
+   "y": 60,
+   "width": 400,
+   "height": 1940,
+   "label": "Tier 0 agent"
+  },
+  {
+   "id": "lane-Owner",
+   "type": "group",
+   "x": 440,
+   "y": 60,
+   "width": 400,
+   "height": 1940,
+   "label": "Owner"
+  },
+  {
+   "id": "lane-Core",
+   "type": "group",
+   "x": 860,
+   "y": 60,
+   "width": 400,
+   "height": 1940,
+   "label": "Core"
+  },
+  {
+   "id": "lane-Outcomes",
+   "type": "group",
+   "x": 1280,
+   "y": 60,
+   "width": 400,
+   "height": 1940,
+   "label": "Outcomes"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e0",
+   "fromNode": "s",
+   "toNode": "a1"
+  },
+  {
+   "id": "e1",
+   "fromNode": "a1",
+   "toNode": "a2"
+  },
+  {
+   "id": "e2",
+   "fromNode": "a2",
+   "toNode": "a3"
+  },
+  {
+   "id": "e3",
+   "fromNode": "a3",
+   "toNode": "d1"
+  },
+  {
+   "id": "e4",
+   "fromNode": "d1",
+   "toNode": "a4",
+   "label": "[valid]"
+  },
+  {
+   "id": "e5",
+   "fromNode": "d1",
+   "toNode": "e2",
+   "label": "[invalid] 3a",
+   "color": "1"
+  },
+  {
+   "id": "e6",
+   "fromNode": "a4",
+   "toNode": "d2"
+  },
+  {
+   "id": "e7",
+   "fromNode": "d2",
+   "toNode": "a5",
+   "label": "[accepted]"
+  },
+  {
+   "id": "e8",
+   "fromNode": "d2",
+   "toNode": "e2",
+   "label": "[declined] 4a",
+   "color": "1"
+  },
+  {
+   "id": "e9",
+   "fromNode": "a5",
+   "toNode": "e1"
+  }
+ ]
+}

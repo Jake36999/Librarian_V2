@@ -1,0 +1,138 @@
+{
+ "manifest": 1,
+ "process": "clear-enrichment-backlog",
+ "kind": "pipeline",
+ "layer": 2,
+ "origin": "standard",
+ "digest": "f45f06a594245f02",
+ "purpose": "run the intake queue, then route each fetched source to review, a sensitivity flag, or nothing further",
+ "inputs": {
+  "limit": {
+   "type": "integer",
+   "default": 10
+  }
+ },
+ "outputs": [],
+ "components": [
+  {
+   "step": "intake",
+   "kind": "workflow",
+   "name": "run-queue",
+   "layer": 1,
+   "components": [
+    {
+     "step": "intake",
+     "kind": "action",
+     "name": "intake_run",
+     "layer": 0
+    }
+   ]
+  },
+  {
+   "step": "next",
+   "kind": "route",
+   "decided_by": "reason",
+   "options": [
+    {
+     "option": "review",
+     "kind": "workflow",
+     "name": "review-item",
+     "layer": 1,
+     "components": [
+      {
+       "step": "review",
+       "kind": "action",
+       "name": "staging_review",
+       "layer": 0
+      }
+     ]
+    },
+    {
+     "option": "flag",
+     "kind": "workflow",
+     "name": "flag-sensitive",
+     "layer": 1,
+     "components": [
+      {
+       "step": "flag",
+       "kind": "action",
+       "name": "staging_flag",
+       "layer": 0
+      }
+     ]
+    },
+    {
+     "option": "done",
+     "kind": "end"
+    }
+   ]
+  }
+ ],
+ "actions": [
+  {
+   "order": 1,
+   "at": "clear-enrichment-backlog/intake/intake",
+   "branch": "",
+   "each": false,
+   "action": "intake_run",
+   "declared": true,
+   "tier": "contribute",
+   "effect": "write",
+   "open_world": true,
+   "idempotent": false,
+   "returns_content": false,
+   "access_fingerprint": "96a47e7b1915"
+  },
+  {
+   "order": 2,
+   "at": "clear-enrichment-backlog/next.review/review",
+   "branch": "next=review;",
+   "each": false,
+   "action": "staging_review",
+   "declared": true,
+   "tier": "contribute",
+   "effect": "write",
+   "open_world": true,
+   "idempotent": false,
+   "returns_content": true,
+   "access_fingerprint": "637720f983b4"
+  },
+  {
+   "order": 3,
+   "at": "clear-enrichment-backlog/next.flag/flag",
+   "branch": "next=flag;",
+   "each": false,
+   "action": "staging_flag",
+   "declared": true,
+   "tier": "contribute",
+   "effect": "write",
+   "open_world": false,
+   "idempotent": false,
+   "returns_content": false,
+   "access_fingerprint": "abff82c7e2c2"
+  }
+ ],
+ "rollup": {
+  "actions": 3,
+  "distinct_actions": [
+   "intake_run",
+   "staging_flag",
+   "staging_review"
+  ],
+  "highest_tier": "contribute",
+  "effects": [
+   "write"
+  ],
+  "open_world": true,
+  "not_idempotent": [
+   "intake_run",
+   "staging_flag",
+   "staging_review"
+  ],
+  "returns_content": [
+   "staging_review"
+  ],
+  "undeclared": [],
+  "model_routed_steps": 1
+ }
+}

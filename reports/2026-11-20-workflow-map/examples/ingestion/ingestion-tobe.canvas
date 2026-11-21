@@ -1,0 +1,1154 @@
+{
+ "nodes": [
+  {
+   "id": "title",
+   "type": "text",
+   "x": 20,
+   "y": -200,
+   "width": 4580,
+   "height": 220,
+   "text": "# Ingest a folder of papers, overseen by tier 0 for the Owner (to-be)\n**Symptom:** In the as-is run control came back to tier 0 six times on the happy path (graded bad), and every failure was resolved by tier 0 by hand.\n**Root cause:** The ingestion is not a workflow the Core runs; failures have no owner below tier 0; completion has no judge apart from the worker.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `ingestion-tobe.spec.yaml`."
+  },
+  {
+   "id": "s",
+   "type": "text",
+   "x": 40,
+   "y": 140,
+   "width": 360,
+   "height": 70,
+   "text": "\u25cf start",
+   "color": "4"
+  },
+  {
+   "id": "a1",
+   "type": "text",
+   "x": 40,
+   "y": 340,
+   "width": 360,
+   "height": 150,
+   "text": "**1.** directs the ingestion of a folder into a library, naming the subfolders to exclude"
+  },
+  {
+   "id": "a2",
+   "type": "text",
+   "x": 460,
+   "y": 540,
+   "width": 360,
+   "height": 150,
+   "text": "**2.** hands the ingestion to a Lead and sets the oracle's specification: UC1's success guarantee"
+  },
+  {
+   "id": "a3",
+   "type": "text",
+   "x": 1300,
+   "y": 740,
+   "width": 360,
+   "height": 150,
+   "text": "**3.** opens an ingest-folder run for the folder"
+  },
+  {
+   "id": "a4",
+   "type": "text",
+   "x": 2980,
+   "y": 940,
+   "width": 360,
+   "height": 150,
+   "text": "**4.** surveys the folder and proposes a decision per subfolder"
+  },
+  {
+   "id": "d1",
+   "type": "text",
+   "x": 2980,
+   "y": 1140,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 every other root current?",
+   "color": "5"
+  },
+  {
+   "id": "a5",
+   "type": "text",
+   "x": 1300,
+   "y": 1340,
+   "width": 360,
+   "height": 150,
+   "text": "**5.** applies the Owner's exclusions and the decisions policy allows"
+  },
+  {
+   "id": "r1",
+   "type": "text",
+   "x": 1720,
+   "y": 1340,
+   "width": 360,
+   "height": 150,
+   "text": "\u21c9 **UC-D**: resolves the stale root (remedy R1)",
+   "color": "2"
+  },
+  {
+   "id": "d2",
+   "type": "text",
+   "x": 2980,
+   "y": 1540,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 Clerk qualified in this Core?",
+   "color": "5"
+  },
+  {
+   "id": "xe",
+   "type": "text",
+   "x": 460,
+   "y": 1540,
+   "width": 360,
+   "height": 150,
+   "text": "takes over the escalated case"
+  },
+  {
+   "id": "xp",
+   "type": "text",
+   "x": 460,
+   "y": 1710,
+   "width": 360,
+   "height": 150,
+   "text": "reports the paused run to the Owner, with the decision it needs"
+  },
+  {
+   "id": "a6",
+   "type": "text",
+   "x": 2560,
+   "y": 1740,
+   "width": 360,
+   "height": 150,
+   "text": "**6.** assesses each remaining subfolder's sensitivity"
+  },
+  {
+   "id": "r2",
+   "type": "text",
+   "x": 1720,
+   "y": 1740,
+   "width": 360,
+   "height": 150,
+   "text": "\u21c9 **UC-D**: restores the Clerk's qualification (remedy R2)",
+   "color": "2"
+  },
+  {
+   "id": "e2",
+   "type": "text",
+   "x": 4240,
+   "y": 1740,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c9 escalated to tier 0: a failure of this use case\n*outcome: escalated*",
+   "color": "1"
+  },
+  {
+   "id": "e3",
+   "type": "text",
+   "x": 4240,
+   "y": 1910,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c9 paused for the Owner's decision\n*outcome: paused*",
+   "color": "1"
+  },
+  {
+   "id": "d3",
+   "type": "text",
+   "x": 2560,
+   "y": 1940,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 subfolder sensitive?",
+   "color": "5"
+  },
+  {
+   "id": "a7",
+   "type": "text",
+   "x": 2980,
+   "y": 2140,
+   "width": 360,
+   "height": 150,
+   "text": "**7.** accepts the remaining subfolders by policy, attested as the policy"
+  },
+  {
+   "id": "x1",
+   "type": "text",
+   "x": 1300,
+   "y": 2140,
+   "width": 360,
+   "height": 150,
+   "text": "reports the held subfolder to tier 0"
+  },
+  {
+   "id": "a8",
+   "type": "text",
+   "x": 2980,
+   "y": 2340,
+   "width": 360,
+   "height": 150,
+   "text": "**8.** queues the in-scope documents for each accepted root"
+  },
+  {
+   "id": "x2",
+   "type": "text",
+   "x": 460,
+   "y": 2340,
+   "width": 360,
+   "height": 150,
+   "text": "puts the decision to the Owner"
+  },
+  {
+   "id": "a9",
+   "type": "text",
+   "x": 2140,
+   "y": 2540,
+   "width": 360,
+   "height": 150,
+   "text": "**9.** validates the queued count against the survey"
+  },
+  {
+   "id": "x3",
+   "type": "text",
+   "x": 40,
+   "y": 2540,
+   "width": 360,
+   "height": 150,
+   "text": "decides the held subfolder"
+  },
+  {
+   "id": "d4",
+   "type": "text",
+   "x": 2140,
+   "y": 2740,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 queued count matches?",
+   "color": "5"
+  },
+  {
+   "id": "a10",
+   "type": "text",
+   "x": 2980,
+   "y": 2940,
+   "width": 360,
+   "height": 150,
+   "text": "**10.** captures and stages each document"
+  },
+  {
+   "id": "r3",
+   "type": "text",
+   "x": 1720,
+   "y": 2940,
+   "width": 360,
+   "height": 150,
+   "text": "\u21c9 **UC-D**: reconciles the queue (remedy R3)",
+   "color": "2"
+  },
+  {
+   "id": "a11",
+   "type": "text",
+   "x": 2980,
+   "y": 3140,
+   "width": 360,
+   "height": 150,
+   "text": "**11.** approves the staged documents by policy, attested as the policy"
+  },
+  {
+   "id": "f1",
+   "type": "text",
+   "x": 2980,
+   "y": 3340,
+   "width": 360,
+   "height": 150,
+   "text": "\u25ac for each approved document, in the Clerk pool",
+   "color": "3"
+  },
+  {
+   "id": "a12",
+   "type": "text",
+   "x": 2980,
+   "y": 3540,
+   "width": 360,
+   "height": 150,
+   "text": "**12.** parses and converts each document"
+  },
+  {
+   "id": "a14",
+   "type": "text",
+   "x": 2980,
+   "y": 3710,
+   "width": 360,
+   "height": 150,
+   "text": "**14.** enforces the library's spend ceiling"
+  },
+  {
+   "id": "a13",
+   "type": "text",
+   "x": 2560,
+   "y": 3740,
+   "width": 360,
+   "height": 150,
+   "text": "**13.** reads each document part by part"
+  },
+  {
+   "id": "dc",
+   "type": "text",
+   "x": 2980,
+   "y": 3880,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 spend under the ceiling?",
+   "color": "5"
+  },
+  {
+   "id": "m1",
+   "type": "text",
+   "x": 3400,
+   "y": 3940,
+   "width": 360,
+   "height": 150,
+   "text": "answers each Clerk task"
+  },
+  {
+   "id": "j1",
+   "type": "text",
+   "x": 2980,
+   "y": 4050,
+   "width": 360,
+   "height": 150,
+   "text": "\u25ac all documents processed",
+   "color": "3"
+  },
+  {
+   "id": "x4",
+   "type": "text",
+   "x": 1300,
+   "y": 3940,
+   "width": 360,
+   "height": 150,
+   "text": "reports the spend and the work left to tier 0"
+  },
+  {
+   "id": "dm",
+   "type": "text",
+   "x": 3400,
+   "y": 4140,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 answered in time and in full?",
+   "color": "5"
+  },
+  {
+   "id": "d5",
+   "type": "text",
+   "x": 2980,
+   "y": 4220,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 every document fully read?",
+   "color": "5"
+  },
+  {
+   "id": "x5",
+   "type": "text",
+   "x": 460,
+   "y": 4140,
+   "width": 360,
+   "height": 150,
+   "text": "puts the budget decision to the Owner"
+  },
+  {
+   "id": "a15",
+   "type": "text",
+   "x": 3820,
+   "y": 4340,
+   "width": 360,
+   "height": 150,
+   "text": "**15.** imports each fully converted paper into the paper graph"
+  },
+  {
+   "id": "r4",
+   "type": "text",
+   "x": 1720,
+   "y": 4340,
+   "width": 360,
+   "height": 150,
+   "text": "\u21c9 **UC-D**: re-reads the partial documents (remedy R4)",
+   "color": "2"
+  },
+  {
+   "id": "d6",
+   "type": "text",
+   "x": 2980,
+   "y": 4540,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 library's promotion mode?",
+   "color": "5"
+  },
+  {
+   "id": "a16",
+   "type": "text",
+   "x": 2980,
+   "y": 4740,
+   "width": 360,
+   "height": 150,
+   "text": "**16.** accepts the enriched documents by policy, attested as the policy"
+  },
+  {
+   "id": "x6",
+   "type": "text",
+   "x": 2980,
+   "y": 4910,
+   "width": 360,
+   "height": 150,
+   "text": "raises 'N documents await acceptance' on the Owner's agenda"
+  },
+  {
+   "id": "a17",
+   "type": "text",
+   "x": 2980,
+   "y": 5080,
+   "width": 360,
+   "height": 150,
+   "text": "**17.** writes each Source note and validates it is findable"
+  },
+  {
+   "id": "x7",
+   "type": "text",
+   "x": 40,
+   "y": 4940,
+   "width": 360,
+   "height": 150,
+   "text": "accepts the documents"
+  },
+  {
+   "id": "d7",
+   "type": "text",
+   "x": 2980,
+   "y": 5250,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 findable by title, bottom line and concept?",
+   "color": "5"
+  },
+  {
+   "id": "a18",
+   "type": "text",
+   "x": 880,
+   "y": 5340,
+   "width": 360,
+   "height": 150,
+   "text": "**18.** judges the run against the specification: deterministic checks first, then a model review"
+  },
+  {
+   "id": "r5",
+   "type": "text",
+   "x": 1720,
+   "y": 5340,
+   "width": 360,
+   "height": 150,
+   "text": "\u21c9 **UC-D**: repairs the note's index entry (remedy R5)",
+   "color": "2"
+  },
+  {
+   "id": "d8",
+   "type": "text",
+   "x": 880,
+   "y": 5540,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 specification met?",
+   "color": "5"
+  },
+  {
+   "id": "a19",
+   "type": "text",
+   "x": 1300,
+   "y": 5740,
+   "width": 360,
+   "height": 150,
+   "text": "**19.** hands the result and the oracle's verdict to tier 0"
+  },
+  {
+   "id": "r6",
+   "type": "text",
+   "x": 1720,
+   "y": 5740,
+   "width": 360,
+   "height": 150,
+   "text": "\u21c9 **UC-D**: applies the catalogued remedy for the shortfall",
+   "color": "2"
+  },
+  {
+   "id": "x8",
+   "type": "text",
+   "x": 2140,
+   "y": 5740,
+   "width": 360,
+   "height": 150,
+   "text": "scouts the shortfall's blast radius, read-only"
+  },
+  {
+   "id": "a20",
+   "type": "text",
+   "x": 460,
+   "y": 5940,
+   "width": 360,
+   "height": 150,
+   "text": "**20.** reviews the result once against the specification"
+  },
+  {
+   "id": "x9",
+   "type": "text",
+   "x": 1300,
+   "y": 5940,
+   "width": 360,
+   "height": 150,
+   "text": "re-aligns the run with the specification, from the oracle's report and the scouting"
+  },
+  {
+   "id": "d9",
+   "type": "text",
+   "x": 460,
+   "y": 6140,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 ready to hand over?",
+   "color": "5"
+  },
+  {
+   "id": "a21",
+   "type": "text",
+   "x": 460,
+   "y": 6340,
+   "width": 360,
+   "height": 150,
+   "text": "**21.** reports the result to the Owner"
+  },
+  {
+   "id": "x10",
+   "type": "text",
+   "x": 460,
+   "y": 6510,
+   "width": 360,
+   "height": 150,
+   "text": "tasks the oracle with tidy-up instructions"
+  },
+  {
+   "id": "e1",
+   "type": "text",
+   "x": 4240,
+   "y": 6540,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c9 the Owner has the result and its report: Source notes findable, labelled, in the graph\n*outcome: success*",
+   "color": "6"
+  },
+  {
+   "id": "x11",
+   "type": "text",
+   "x": 880,
+   "y": 6540,
+   "width": 360,
+   "height": 150,
+   "text": "oversees the tidy-up, through the Lead and the doctor"
+  },
+  {
+   "id": "x12",
+   "type": "text",
+   "x": 1300,
+   "y": 6740,
+   "width": 360,
+   "height": 150,
+   "text": "applies the oracle's instructions"
+  },
+  {
+   "id": "x13",
+   "type": "text",
+   "x": 880,
+   "y": 6940,
+   "width": 360,
+   "height": 150,
+   "text": "judges again and submits its response to tier 0"
+  },
+  {
+   "id": "x14",
+   "type": "text",
+   "x": 460,
+   "y": 7140,
+   "width": 360,
+   "height": 150,
+   "text": "makes a second, final pass"
+  },
+  {
+   "id": "lane-Owner",
+   "type": "group",
+   "x": 20,
+   "y": 60,
+   "width": 400,
+   "height": 7340,
+   "label": "Owner"
+  },
+  {
+   "id": "lane-Tier-0-agent",
+   "type": "group",
+   "x": 440,
+   "y": 60,
+   "width": 400,
+   "height": 7340,
+   "label": "Tier 0 agent"
+  },
+  {
+   "id": "lane-Oracle",
+   "type": "group",
+   "x": 860,
+   "y": 60,
+   "width": 400,
+   "height": 7340,
+   "label": "Oracle"
+  },
+  {
+   "id": "lane-Lead-tier-1-",
+   "type": "group",
+   "x": 1280,
+   "y": 60,
+   "width": 400,
+   "height": 7340,
+   "label": "Lead (tier 1)"
+  },
+  {
+   "id": "lane-Doctor",
+   "type": "group",
+   "x": 1700,
+   "y": 60,
+   "width": 400,
+   "height": 7340,
+   "label": "Doctor"
+  },
+  {
+   "id": "lane-Helper-tier-2-",
+   "type": "group",
+   "x": 2120,
+   "y": 60,
+   "width": 400,
+   "height": 7340,
+   "label": "Helper (tier 2)"
+  },
+  {
+   "id": "lane-Clerk-tier-3-",
+   "type": "group",
+   "x": 2540,
+   "y": 60,
+   "width": 400,
+   "height": 7340,
+   "label": "Clerk (tier 3)"
+  },
+  {
+   "id": "lane-Core",
+   "type": "group",
+   "x": 2960,
+   "y": 60,
+   "width": 400,
+   "height": 7340,
+   "label": "Core"
+  },
+  {
+   "id": "lane-Model-host",
+   "type": "group",
+   "x": 3380,
+   "y": 60,
+   "width": 400,
+   "height": 7340,
+   "label": "Model host"
+  },
+  {
+   "id": "lane-Geo-Grapher",
+   "type": "group",
+   "x": 3800,
+   "y": 60,
+   "width": 400,
+   "height": 7340,
+   "label": "Geo-Grapher"
+  },
+  {
+   "id": "lane-Outcomes",
+   "type": "group",
+   "x": 4220,
+   "y": 60,
+   "width": 400,
+   "height": 7340,
+   "label": "Outcomes"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e0",
+   "fromNode": "s",
+   "toNode": "a1"
+  },
+  {
+   "id": "e1",
+   "fromNode": "a1",
+   "toNode": "a2"
+  },
+  {
+   "id": "e2",
+   "fromNode": "a2",
+   "toNode": "a3"
+  },
+  {
+   "id": "e3",
+   "fromNode": "a3",
+   "toNode": "a4"
+  },
+  {
+   "id": "e4",
+   "fromNode": "a4",
+   "toNode": "d1"
+  },
+  {
+   "id": "e5",
+   "fromNode": "d1",
+   "toNode": "a5",
+   "label": "[current]"
+  },
+  {
+   "id": "e6",
+   "fromNode": "d1",
+   "toNode": "r1",
+   "label": "[a root is stale] 4a",
+   "color": "1"
+  },
+  {
+   "id": "e7",
+   "fromNode": "r1",
+   "toNode": "a4",
+   "label": "[resolved]"
+  },
+  {
+   "id": "e8",
+   "fromNode": "r1",
+   "toNode": "xe",
+   "label": "[escalated]"
+  },
+  {
+   "id": "e9",
+   "fromNode": "r1",
+   "toNode": "xp",
+   "label": "[declined]"
+  },
+  {
+   "id": "e10",
+   "fromNode": "a5",
+   "toNode": "d2"
+  },
+  {
+   "id": "e11",
+   "fromNode": "d2",
+   "toNode": "a6",
+   "label": "[qualified]"
+  },
+  {
+   "id": "e12",
+   "fromNode": "d2",
+   "toNode": "r2",
+   "label": "[qualification lost] 6a",
+   "color": "1"
+  },
+  {
+   "id": "e13",
+   "fromNode": "r2",
+   "toNode": "a6",
+   "label": "[resolved]"
+  },
+  {
+   "id": "e14",
+   "fromNode": "r2",
+   "toNode": "xe",
+   "label": "[escalated]"
+  },
+  {
+   "id": "e15",
+   "fromNode": "r2",
+   "toNode": "xp",
+   "label": "[declined]"
+  },
+  {
+   "id": "e16",
+   "fromNode": "a6",
+   "toNode": "d3"
+  },
+  {
+   "id": "e17",
+   "fromNode": "d3",
+   "toNode": "a7",
+   "label": "[normal]"
+  },
+  {
+   "id": "e18",
+   "fromNode": "d3",
+   "toNode": "x1",
+   "label": "[sensitive] 6b",
+   "color": "1"
+  },
+  {
+   "id": "e19",
+   "fromNode": "x1",
+   "toNode": "x2"
+  },
+  {
+   "id": "e20",
+   "fromNode": "x2",
+   "toNode": "x3"
+  },
+  {
+   "id": "e21",
+   "fromNode": "x3",
+   "toNode": "a7"
+  },
+  {
+   "id": "e22",
+   "fromNode": "a7",
+   "toNode": "a8"
+  },
+  {
+   "id": "e23",
+   "fromNode": "a8",
+   "toNode": "a9"
+  },
+  {
+   "id": "e24",
+   "fromNode": "a9",
+   "toNode": "d4"
+  },
+  {
+   "id": "e25",
+   "fromNode": "d4",
+   "toNode": "a10",
+   "label": "[matches]"
+  },
+  {
+   "id": "e26",
+   "fromNode": "d4",
+   "toNode": "r3",
+   "label": "[mismatch] 9a",
+   "color": "1"
+  },
+  {
+   "id": "e27",
+   "fromNode": "r3",
+   "toNode": "a8",
+   "label": "[resolved]"
+  },
+  {
+   "id": "e28",
+   "fromNode": "r3",
+   "toNode": "xe",
+   "label": "[escalated]"
+  },
+  {
+   "id": "e29",
+   "fromNode": "r3",
+   "toNode": "xp",
+   "label": "[declined]"
+  },
+  {
+   "id": "e30",
+   "fromNode": "a10",
+   "toNode": "a11"
+  },
+  {
+   "id": "e31",
+   "fromNode": "a11",
+   "toNode": "f1"
+  },
+  {
+   "id": "e32",
+   "fromNode": "f1",
+   "toNode": "a12"
+  },
+  {
+   "id": "e33",
+   "fromNode": "f1",
+   "toNode": "a14"
+  },
+  {
+   "id": "e34",
+   "fromNode": "a12",
+   "toNode": "a13"
+  },
+  {
+   "id": "e35",
+   "fromNode": "a13",
+   "toNode": "m1"
+  },
+  {
+   "id": "e36",
+   "fromNode": "m1",
+   "toNode": "dm"
+  },
+  {
+   "id": "e37",
+   "fromNode": "dm",
+   "toNode": "j1",
+   "label": "[answered]"
+  },
+  {
+   "id": "e38",
+   "fromNode": "dm",
+   "toNode": "j1",
+   "label": "[unavailable or partial page] 13a",
+   "color": "1"
+  },
+  {
+   "id": "e39",
+   "fromNode": "a14",
+   "toNode": "dc"
+  },
+  {
+   "id": "e40",
+   "fromNode": "dc",
+   "toNode": "j1",
+   "label": "[under the ceiling]"
+  },
+  {
+   "id": "e41",
+   "fromNode": "dc",
+   "toNode": "x4",
+   "label": "[ceiling reached] 14a",
+   "color": "1"
+  },
+  {
+   "id": "e42",
+   "fromNode": "x4",
+   "toNode": "x5"
+  },
+  {
+   "id": "e43",
+   "fromNode": "x5",
+   "toNode": "xp"
+  },
+  {
+   "id": "e44",
+   "fromNode": "j1",
+   "toNode": "d5"
+  },
+  {
+   "id": "e45",
+   "fromNode": "d5",
+   "toNode": "a15",
+   "label": "[fully read]"
+  },
+  {
+   "id": "e46",
+   "fromNode": "d5",
+   "toNode": "r4",
+   "label": "[some partial] 13b",
+   "color": "1"
+  },
+  {
+   "id": "e47",
+   "fromNode": "r4",
+   "toNode": "a15",
+   "label": "[resolved]"
+  },
+  {
+   "id": "e48",
+   "fromNode": "r4",
+   "toNode": "xe",
+   "label": "[escalated]"
+  },
+  {
+   "id": "e49",
+   "fromNode": "r4",
+   "toNode": "xp",
+   "label": "[declined]"
+  },
+  {
+   "id": "e50",
+   "fromNode": "a15",
+   "toNode": "d6"
+  },
+  {
+   "id": "e51",
+   "fromNode": "d6",
+   "toNode": "a16",
+   "label": "[agent]"
+  },
+  {
+   "id": "e52",
+   "fromNode": "d6",
+   "toNode": "x6",
+   "label": "[person] 16a",
+   "color": "1"
+  },
+  {
+   "id": "e53",
+   "fromNode": "x6",
+   "toNode": "x7"
+  },
+  {
+   "id": "e54",
+   "fromNode": "x7",
+   "toNode": "a17"
+  },
+  {
+   "id": "e55",
+   "fromNode": "a16",
+   "toNode": "a17"
+  },
+  {
+   "id": "e56",
+   "fromNode": "a17",
+   "toNode": "d7"
+  },
+  {
+   "id": "e57",
+   "fromNode": "d7",
+   "toNode": "a18",
+   "label": "[findable]"
+  },
+  {
+   "id": "e58",
+   "fromNode": "d7",
+   "toNode": "r5",
+   "label": "[not findable] 17a",
+   "color": "1"
+  },
+  {
+   "id": "e59",
+   "fromNode": "r5",
+   "toNode": "a18",
+   "label": "[resolved]"
+  },
+  {
+   "id": "e60",
+   "fromNode": "r5",
+   "toNode": "xe",
+   "label": "[escalated]"
+  },
+  {
+   "id": "e61",
+   "fromNode": "r5",
+   "toNode": "xp",
+   "label": "[declined]"
+  },
+  {
+   "id": "e62",
+   "fromNode": "a18",
+   "toNode": "d8"
+  },
+  {
+   "id": "e63",
+   "fromNode": "d8",
+   "toNode": "a19",
+   "label": "[met]"
+  },
+  {
+   "id": "e64",
+   "fromNode": "d8",
+   "toNode": "r6",
+   "label": "[shortfall at a mapped extension] 18a",
+   "color": "1"
+  },
+  {
+   "id": "e65",
+   "fromNode": "d8",
+   "toNode": "x8",
+   "label": "[shortfall no extension maps (misalignment)] 18b",
+   "color": "1"
+  },
+  {
+   "id": "e66",
+   "fromNode": "r6",
+   "toNode": "a18",
+   "label": "[resolved]"
+  },
+  {
+   "id": "e67",
+   "fromNode": "r6",
+   "toNode": "xe",
+   "label": "[escalated]"
+  },
+  {
+   "id": "e68",
+   "fromNode": "r6",
+   "toNode": "xp",
+   "label": "[declined]"
+  },
+  {
+   "id": "e69",
+   "fromNode": "x8",
+   "toNode": "x9"
+  },
+  {
+   "id": "e70",
+   "fromNode": "x9",
+   "toNode": "a18"
+  },
+  {
+   "id": "e71",
+   "fromNode": "a19",
+   "toNode": "a20"
+  },
+  {
+   "id": "e72",
+   "fromNode": "a20",
+   "toNode": "d9"
+  },
+  {
+   "id": "e73",
+   "fromNode": "d9",
+   "toNode": "a21",
+   "label": "[ready]"
+  },
+  {
+   "id": "e74",
+   "fromNode": "d9",
+   "toNode": "x10",
+   "label": "[needs tidying] 20a",
+   "color": "1"
+  },
+  {
+   "id": "e75",
+   "fromNode": "x10",
+   "toNode": "x11"
+  },
+  {
+   "id": "e76",
+   "fromNode": "x11",
+   "toNode": "x12"
+  },
+  {
+   "id": "e77",
+   "fromNode": "x12",
+   "toNode": "x13"
+  },
+  {
+   "id": "e78",
+   "fromNode": "x13",
+   "toNode": "x14"
+  },
+  {
+   "id": "e79",
+   "fromNode": "x14",
+   "toNode": "a21"
+  },
+  {
+   "id": "e80",
+   "fromNode": "a21",
+   "toNode": "e1"
+  },
+  {
+   "id": "e81",
+   "fromNode": "xe",
+   "toNode": "e2"
+  },
+  {
+   "id": "e82",
+   "fromNode": "xp",
+   "toNode": "e3"
+  }
+ ]
+}

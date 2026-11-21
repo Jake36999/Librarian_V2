@@ -1,0 +1,1 @@
+{"parent": "an ingestion sprint", "parent_layer": 3, "max_tier": "contribute", "effects": ["read", "write"], "open_world": true, "deny": []}

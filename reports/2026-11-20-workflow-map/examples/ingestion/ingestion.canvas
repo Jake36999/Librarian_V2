@@ -1,0 +1,683 @@
+{
+ "nodes": [
+  {
+   "id": "title",
+   "type": "text",
+   "x": 20,
+   "y": -200,
+   "width": 2900,
+   "height": 220,
+   "text": "# Ingest a folder of papers, directed by the Owner and orchestrated by a tier-0 agent\n**Symptom:** The research session found no papers to keep, though all 96 had been read.\n**Root cause:** The ingestion has no step that owns the last hand-off, and no signal when it is missing (OP1).\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `ingestion.spec.yaml`."
+  },
+  {
+   "id": "s",
+   "type": "text",
+   "x": 40,
+   "y": 140,
+   "width": 360,
+   "height": 70,
+   "text": "\u25cf start",
+   "color": "4"
+  },
+  {
+   "id": "a1",
+   "type": "text",
+   "x": 40,
+   "y": 340,
+   "width": 360,
+   "height": 150,
+   "text": "**1.** directs the ingestion of E:\\DataManagement into Resource-Library"
+  },
+  {
+   "id": "a2",
+   "type": "text",
+   "x": 460,
+   "y": 540,
+   "width": 360,
+   "height": 150,
+   "text": "**2.** attaches the folder to the library"
+  },
+  {
+   "id": "a3",
+   "type": "text",
+   "x": 880,
+   "y": 740,
+   "width": 360,
+   "height": 150,
+   "text": "**3.** surveys the folder and proposes a decision per subfolder"
+  },
+  {
+   "id": "d1",
+   "type": "text",
+   "x": 880,
+   "y": 940,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 every other root current?",
+   "color": "5"
+  },
+  {
+   "id": "a4",
+   "type": "text",
+   "x": 40,
+   "y": 1140,
+   "width": 360,
+   "height": 150,
+   "text": "**4.** decides the subfolders that need a person (excludes 11, 12, 13, _external)"
+  },
+  {
+   "id": "x1",
+   "type": "text",
+   "x": 460,
+   "y": 1140,
+   "width": 360,
+   "height": 150,
+   "text": "re-surveys the stale root and re-applies its decisions"
+  },
+  {
+   "id": "a5",
+   "type": "text",
+   "x": 460,
+   "y": 1340,
+   "width": 360,
+   "height": 150,
+   "text": "**5.** records the Owner's decisions"
+  },
+  {
+   "id": "d2",
+   "type": "text",
+   "x": 880,
+   "y": 1540,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 Clerk qualified in this Core?",
+   "color": "5"
+  },
+  {
+   "id": "a6",
+   "type": "text",
+   "x": 1300,
+   "y": 1740,
+   "width": 360,
+   "height": 150,
+   "text": "**6.** assesses each remaining subfolder's sensitivity"
+  },
+  {
+   "id": "x2",
+   "type": "text",
+   "x": 460,
+   "y": 1740,
+   "width": 360,
+   "height": 150,
+   "text": "restarts the Cores and re-qualifies the Clerk"
+  },
+  {
+   "id": "d3",
+   "type": "text",
+   "x": 1300,
+   "y": 1940,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 subfolder sensitive?",
+   "color": "5"
+  },
+  {
+   "id": "a7",
+   "type": "text",
+   "x": 880,
+   "y": 2140,
+   "width": 360,
+   "height": 150,
+   "text": "**7.** accepts the remaining subfolders by policy"
+  },
+  {
+   "id": "x3",
+   "type": "text",
+   "x": 40,
+   "y": 2140,
+   "width": 360,
+   "height": 150,
+   "text": "decides the held subfolder"
+  },
+  {
+   "id": "a8",
+   "type": "text",
+   "x": 460,
+   "y": 2340,
+   "width": 360,
+   "height": 150,
+   "text": "**8.** queues the in-scope documents, one accepted subfolder at a time"
+  },
+  {
+   "id": "d4",
+   "type": "text",
+   "x": 460,
+   "y": 2540,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 queued count matches the survey?",
+   "color": "5"
+  },
+  {
+   "id": "a9",
+   "type": "text",
+   "x": 880,
+   "y": 2740,
+   "width": 360,
+   "height": 150,
+   "text": "**9.** captures and stages each document (intake)"
+  },
+  {
+   "id": "a10",
+   "type": "text",
+   "x": 460,
+   "y": 2940,
+   "width": 360,
+   "height": 150,
+   "text": "**10.** approves the staged documents (agent promotion mode)"
+  },
+  {
+   "id": "f1",
+   "type": "text",
+   "x": 880,
+   "y": 3140,
+   "width": 360,
+   "height": 150,
+   "text": "\u25ac for each approved document, in the Clerk pool",
+   "color": "3"
+  },
+  {
+   "id": "a11",
+   "type": "text",
+   "x": 880,
+   "y": 3340,
+   "width": 360,
+   "height": 150,
+   "text": "**11.** parses and converts the document page by page"
+  },
+  {
+   "id": "a14",
+   "type": "text",
+   "x": 460,
+   "y": 3340,
+   "width": 360,
+   "height": 150,
+   "text": "**14.** tracks spend against the ceiling and reports progress"
+  },
+  {
+   "id": "a12",
+   "type": "text",
+   "x": 1300,
+   "y": 3540,
+   "width": 360,
+   "height": 150,
+   "text": "**12.** reads it part by part: claims, terms, relations, review"
+  },
+  {
+   "id": "dc",
+   "type": "text",
+   "x": 460,
+   "y": 3540,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 spend under the ceiling?",
+   "color": "5"
+  },
+  {
+   "id": "m1",
+   "type": "text",
+   "x": 1720,
+   "y": 3740,
+   "width": 360,
+   "height": 150,
+   "text": "answers each Clerk task"
+  },
+  {
+   "id": "j1",
+   "type": "text",
+   "x": 880,
+   "y": 3740,
+   "width": 360,
+   "height": 150,
+   "text": "\u25ac all documents processed",
+   "color": "3"
+  },
+  {
+   "id": "e4",
+   "type": "text",
+   "x": 2560,
+   "y": 3740,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c9 run stopped at the spend ceiling; Owner decides\n*outcome: failure*",
+   "color": "1"
+  },
+  {
+   "id": "dm",
+   "type": "text",
+   "x": 1720,
+   "y": 3940,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 answered in time and in full?",
+   "color": "5"
+  },
+  {
+   "id": "d5",
+   "type": "text",
+   "x": 880,
+   "y": 3940,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 document fully read?",
+   "color": "5"
+  },
+  {
+   "id": "a13",
+   "type": "text",
+   "x": 2140,
+   "y": 4140,
+   "width": 360,
+   "height": 150,
+   "text": "**13.** imports each fully converted paper into the paper graph"
+  },
+  {
+   "id": "x5",
+   "type": "text",
+   "x": 460,
+   "y": 4140,
+   "width": 360,
+   "height": 150,
+   "text": "re-approves the partial document"
+  },
+  {
+   "id": "d6",
+   "type": "text",
+   "x": 460,
+   "y": 4340,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 enriched documents accepted?",
+   "color": "5"
+  },
+  {
+   "id": "a15",
+   "type": "text",
+   "x": 460,
+   "y": 4540,
+   "width": 360,
+   "height": 150,
+   "text": "**15.** accepts the enriched documents into the library"
+  },
+  {
+   "id": "e2",
+   "type": "text",
+   "x": 2560,
+   "y": 4540,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c9 papers stay in staging; research finds nothing to keep (OP1)\n*outcome: failure*",
+   "color": "1"
+  },
+  {
+   "id": "a16",
+   "type": "text",
+   "x": 880,
+   "y": 4740,
+   "width": 360,
+   "height": 150,
+   "text": "**16.** writes each Source note and validates it is findable"
+  },
+  {
+   "id": "d7",
+   "type": "text",
+   "x": 880,
+   "y": 4940,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 findable by title, bottom line and concept?",
+   "color": "5"
+  },
+  {
+   "id": "a17",
+   "type": "text",
+   "x": 460,
+   "y": 5140,
+   "width": 360,
+   "height": 150,
+   "text": "**17.** verifies the counts and labels, and reports to the Owner"
+  },
+  {
+   "id": "e3",
+   "type": "text",
+   "x": 2560,
+   "y": 5140,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c9 note flagged written-but-not-findable\n*outcome: failure*",
+   "color": "1"
+  },
+  {
+   "id": "e1",
+   "type": "text",
+   "x": 2560,
+   "y": 5340,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c9 96 findable Source notes; files labelled third_party; papers in the graph\n*outcome: success*",
+   "color": "6"
+  },
+  {
+   "id": "lane-Owner",
+   "type": "group",
+   "x": 20,
+   "y": 60,
+   "width": 400,
+   "height": 5540,
+   "label": "Owner"
+  },
+  {
+   "id": "lane-Tier-0-agent",
+   "type": "group",
+   "x": 440,
+   "y": 60,
+   "width": 400,
+   "height": 5540,
+   "label": "Tier 0 agent"
+  },
+  {
+   "id": "lane-Core",
+   "type": "group",
+   "x": 860,
+   "y": 60,
+   "width": 400,
+   "height": 5540,
+   "label": "Core"
+  },
+  {
+   "id": "lane-Clerk-tier-3-",
+   "type": "group",
+   "x": 1280,
+   "y": 60,
+   "width": 400,
+   "height": 5540,
+   "label": "Clerk (tier 3)"
+  },
+  {
+   "id": "lane-Model-host",
+   "type": "group",
+   "x": 1700,
+   "y": 60,
+   "width": 400,
+   "height": 5540,
+   "label": "Model host"
+  },
+  {
+   "id": "lane-Geo-Grapher",
+   "type": "group",
+   "x": 2120,
+   "y": 60,
+   "width": 400,
+   "height": 5540,
+   "label": "Geo-Grapher"
+  },
+  {
+   "id": "lane-Outcomes",
+   "type": "group",
+   "x": 2540,
+   "y": 60,
+   "width": 400,
+   "height": 5540,
+   "label": "Outcomes"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e0",
+   "fromNode": "s",
+   "toNode": "a1"
+  },
+  {
+   "id": "e1",
+   "fromNode": "a1",
+   "toNode": "a2"
+  },
+  {
+   "id": "e2",
+   "fromNode": "a2",
+   "toNode": "a3"
+  },
+  {
+   "id": "e3",
+   "fromNode": "a3",
+   "toNode": "d1"
+  },
+  {
+   "id": "e4",
+   "fromNode": "d1",
+   "toNode": "a4",
+   "label": "[current]"
+  },
+  {
+   "id": "e5",
+   "fromNode": "d1",
+   "toNode": "x1",
+   "label": "[a root is stale] 3a",
+   "color": "1"
+  },
+  {
+   "id": "e6",
+   "fromNode": "x1",
+   "toNode": "a3"
+  },
+  {
+   "id": "e7",
+   "fromNode": "a4",
+   "toNode": "a5"
+  },
+  {
+   "id": "e8",
+   "fromNode": "a5",
+   "toNode": "d2"
+  },
+  {
+   "id": "e9",
+   "fromNode": "d2",
+   "toNode": "a6",
+   "label": "[qualified]"
+  },
+  {
+   "id": "e10",
+   "fromNode": "d2",
+   "toNode": "x2",
+   "label": "[qualification lost] 5a",
+   "color": "1"
+  },
+  {
+   "id": "e11",
+   "fromNode": "x2",
+   "toNode": "a6"
+  },
+  {
+   "id": "e12",
+   "fromNode": "a6",
+   "toNode": "d3"
+  },
+  {
+   "id": "e13",
+   "fromNode": "d3",
+   "toNode": "a7",
+   "label": "[normal]"
+  },
+  {
+   "id": "e14",
+   "fromNode": "d3",
+   "toNode": "x3",
+   "label": "[sensitive] 6a",
+   "color": "1"
+  },
+  {
+   "id": "e15",
+   "fromNode": "x3",
+   "toNode": "a7"
+  },
+  {
+   "id": "e16",
+   "fromNode": "a7",
+   "toNode": "a8"
+  },
+  {
+   "id": "e17",
+   "fromNode": "a8",
+   "toNode": "d4"
+  },
+  {
+   "id": "e18",
+   "fromNode": "d4",
+   "toNode": "a9",
+   "label": "[matches (96)]"
+  },
+  {
+   "id": "e19",
+   "fromNode": "d4",
+   "toNode": "a8",
+   "label": "[0 queued: subfolders are their own roots] 8a",
+   "color": "1"
+  },
+  {
+   "id": "e20",
+   "fromNode": "a9",
+   "toNode": "a10"
+  },
+  {
+   "id": "e21",
+   "fromNode": "a10",
+   "toNode": "f1"
+  },
+  {
+   "id": "e22",
+   "fromNode": "f1",
+   "toNode": "a11"
+  },
+  {
+   "id": "e23",
+   "fromNode": "f1",
+   "toNode": "a14"
+  },
+  {
+   "id": "e24",
+   "fromNode": "a11",
+   "toNode": "a12"
+  },
+  {
+   "id": "e25",
+   "fromNode": "a12",
+   "toNode": "m1"
+  },
+  {
+   "id": "e26",
+   "fromNode": "m1",
+   "toNode": "dm"
+  },
+  {
+   "id": "e27",
+   "fromNode": "dm",
+   "toNode": "j1",
+   "label": "[answered]"
+  },
+  {
+   "id": "e28",
+   "fromNode": "dm",
+   "toNode": "j1",
+   "label": "[unavailable or partial page] 12a",
+   "color": "1"
+  },
+  {
+   "id": "e29",
+   "fromNode": "a14",
+   "toNode": "dc"
+  },
+  {
+   "id": "e30",
+   "fromNode": "dc",
+   "toNode": "j1",
+   "label": "[under the ceiling]"
+  },
+  {
+   "id": "e31",
+   "fromNode": "dc",
+   "toNode": "e4",
+   "label": "[ceiling reached] 14a",
+   "color": "1"
+  },
+  {
+   "id": "e32",
+   "fromNode": "j1",
+   "toNode": "d5"
+  },
+  {
+   "id": "e33",
+   "fromNode": "d5",
+   "toNode": "a13",
+   "label": "[fully read]"
+  },
+  {
+   "id": "e34",
+   "fromNode": "d5",
+   "toNode": "x5",
+   "label": "[partial] 12b",
+   "color": "1"
+  },
+  {
+   "id": "e35",
+   "fromNode": "x5",
+   "toNode": "f1"
+  },
+  {
+   "id": "e36",
+   "fromNode": "a13",
+   "toNode": "d6"
+  },
+  {
+   "id": "e37",
+   "fromNode": "d6",
+   "toNode": "a15",
+   "label": "[accepted]"
+  },
+  {
+   "id": "e38",
+   "fromNode": "d6",
+   "toNode": "e2",
+   "label": "[nobody accepts] 15a",
+   "color": "1"
+  },
+  {
+   "id": "e39",
+   "fromNode": "a15",
+   "toNode": "a16"
+  },
+  {
+   "id": "e40",
+   "fromNode": "a16",
+   "toNode": "d7"
+  },
+  {
+   "id": "e41",
+   "fromNode": "d7",
+   "toNode": "a17",
+   "label": "[findable]"
+  },
+  {
+   "id": "e42",
+   "fromNode": "d7",
+   "toNode": "e3",
+   "label": "[not findable] 16a",
+   "color": "1"
+  },
+  {
+   "id": "e43",
+   "fromNode": "a17",
+   "toNode": "e1"
+  }
+ ]
+}

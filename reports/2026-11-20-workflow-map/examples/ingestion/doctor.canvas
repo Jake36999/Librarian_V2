@@ -1,0 +1,417 @@
+{
+ "nodes": [
+  {
+   "id": "title",
+   "type": "text",
+   "x": 20,
+   "y": -200,
+   "width": 2480,
+   "height": 220,
+   "text": "# Diagnose and resolve a failure at a mapped extension point (the doctor)\n**Symptom:** Each failure in the 19-20 November runs was diagnosed and fixed by the tier-0 agent, by hand.\n**Root cause:** The extension points are mapped but not used as an index of remedies.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `doctor.spec.yaml`."
+  },
+  {
+   "id": "s",
+   "type": "text",
+   "x": 40,
+   "y": 140,
+   "width": 360,
+   "height": 70,
+   "text": "\u25cf start",
+   "color": "4"
+  },
+  {
+   "id": "a1",
+   "type": "text",
+   "x": 40,
+   "y": 340,
+   "width": 360,
+   "height": 150,
+   "text": "**1.** records the symptom at its extension point: use case, extension, refusal code and evidence"
+  },
+  {
+   "id": "a2",
+   "type": "text",
+   "x": 460,
+   "y": 540,
+   "width": 360,
+   "height": 150,
+   "text": "**2.** matches the symptom against the remedy catalogue"
+  },
+  {
+   "id": "d1",
+   "type": "text",
+   "x": 460,
+   "y": 740,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 a catalogued remedy matches?",
+   "color": "5"
+  },
+  {
+   "id": "a3",
+   "type": "text",
+   "x": 40,
+   "y": 940,
+   "width": 360,
+   "height": 150,
+   "text": "**3.** computes the remedy's blast radius"
+  },
+  {
+   "id": "x1",
+   "type": "text",
+   "x": 460,
+   "y": 940,
+   "width": 360,
+   "height": 150,
+   "text": "drafts a diagnosis from the nearest catalogued cases"
+  },
+  {
+   "id": "d2",
+   "type": "text",
+   "x": 880,
+   "y": 1140,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 remedy within the doctor's scope?",
+   "color": "5"
+  },
+  {
+   "id": "x2",
+   "type": "text",
+   "x": 40,
+   "y": 1140,
+   "width": 360,
+   "height": 150,
+   "text": "hands the case and its diagnosis to tier 0"
+  },
+  {
+   "id": "a4",
+   "type": "text",
+   "x": 460,
+   "y": 1340,
+   "width": 360,
+   "height": 150,
+   "text": "**4.** runs the remedy's workflow"
+  },
+  {
+   "id": "x3",
+   "type": "text",
+   "x": 1300,
+   "y": 1340,
+   "width": 360,
+   "height": 150,
+   "text": "decides the remedy that is outside the doctor's scope"
+  },
+  {
+   "id": "r1",
+   "type": "text",
+   "x": 1720,
+   "y": 1340,
+   "width": 360,
+   "height": 150,
+   "text": "\u21c9 **UC-L**: resolves the case and proposes a new remedy",
+   "color": "2"
+  },
+  {
+   "id": "a5",
+   "type": "text",
+   "x": 40,
+   "y": 1540,
+   "width": 360,
+   "height": 150,
+   "text": "**5.** re-runs only the checks inside the blast radius"
+  },
+  {
+   "id": "d3",
+   "type": "text",
+   "x": 1300,
+   "y": 1540,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 Owner approves?",
+   "color": "5"
+  },
+  {
+   "id": "e2",
+   "type": "text",
+   "x": 2140,
+   "y": 1540,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c9 escalated to tier 0: a failure of the doctor's scope\n*outcome: escalated*",
+   "color": "1"
+  },
+  {
+   "id": "d4",
+   "type": "text",
+   "x": 40,
+   "y": 1740,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 checks pass?",
+   "color": "5"
+  },
+  {
+   "id": "e3",
+   "type": "text",
+   "x": 2140,
+   "y": 1740,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c9 the Owner declined the remedy; the calling use case pauses\n*outcome: declined*",
+   "color": "1"
+  },
+  {
+   "id": "a6",
+   "type": "text",
+   "x": 880,
+   "y": 1940,
+   "width": 360,
+   "height": 150,
+   "text": "**6.** validates that the symptom is gone at its extension point"
+  },
+  {
+   "id": "x4",
+   "type": "text",
+   "x": 40,
+   "y": 1940,
+   "width": 360,
+   "height": 150,
+   "text": "rolls the remedy back by its compensation step"
+  },
+  {
+   "id": "a7",
+   "type": "text",
+   "x": 40,
+   "y": 2140,
+   "width": 360,
+   "height": 150,
+   "text": "**7.** records the case in the catalogue's history: symptom, remedy, result"
+  },
+  {
+   "id": "d5",
+   "type": "text",
+   "x": 460,
+   "y": 2140,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c7 another catalogued remedy, within two attempts?",
+   "color": "5"
+  },
+  {
+   "id": "a8",
+   "type": "text",
+   "x": 460,
+   "y": 2340,
+   "width": 360,
+   "height": 150,
+   "text": "**8.** returns control to the step the extension rejoins"
+  },
+  {
+   "id": "e1",
+   "type": "text",
+   "x": 2140,
+   "y": 2540,
+   "width": 360,
+   "height": 150,
+   "text": "\u25c9 resolved; the calling use case rejoins its main flow\n*outcome: resolved*",
+   "color": "6"
+  },
+  {
+   "id": "lane-Core",
+   "type": "group",
+   "x": 20,
+   "y": 60,
+   "width": 400,
+   "height": 2740,
+   "label": "Core"
+  },
+  {
+   "id": "lane-Doctor",
+   "type": "group",
+   "x": 440,
+   "y": 60,
+   "width": 400,
+   "height": 2740,
+   "label": "Doctor"
+  },
+  {
+   "id": "lane-Helper-tier-2-",
+   "type": "group",
+   "x": 860,
+   "y": 60,
+   "width": 400,
+   "height": 2740,
+   "label": "Helper (tier 2)"
+  },
+  {
+   "id": "lane-Owner",
+   "type": "group",
+   "x": 1280,
+   "y": 60,
+   "width": 400,
+   "height": 2740,
+   "label": "Owner"
+  },
+  {
+   "id": "lane-Tier-0-agent",
+   "type": "group",
+   "x": 1700,
+   "y": 60,
+   "width": 400,
+   "height": 2740,
+   "label": "Tier 0 agent"
+  },
+  {
+   "id": "lane-Outcomes",
+   "type": "group",
+   "x": 2120,
+   "y": 60,
+   "width": 400,
+   "height": 2740,
+   "label": "Outcomes"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e0",
+   "fromNode": "s",
+   "toNode": "a1"
+  },
+  {
+   "id": "e1",
+   "fromNode": "a1",
+   "toNode": "a2"
+  },
+  {
+   "id": "e2",
+   "fromNode": "a2",
+   "toNode": "d1"
+  },
+  {
+   "id": "e3",
+   "fromNode": "d1",
+   "toNode": "a3",
+   "label": "[matched]"
+  },
+  {
+   "id": "e4",
+   "fromNode": "d1",
+   "toNode": "x1",
+   "label": "[no match: a new shape] 2a",
+   "color": "1"
+  },
+  {
+   "id": "e5",
+   "fromNode": "x1",
+   "toNode": "x2"
+  },
+  {
+   "id": "e6",
+   "fromNode": "x2",
+   "toNode": "r1"
+  },
+  {
+   "id": "e7",
+   "fromNode": "r1",
+   "toNode": "e2",
+   "label": "[learned]"
+  },
+  {
+   "id": "e8",
+   "fromNode": "r1",
+   "toNode": "e2",
+   "label": "[not learned]"
+  },
+  {
+   "id": "e9",
+   "fromNode": "a3",
+   "toNode": "d2"
+  },
+  {
+   "id": "e10",
+   "fromNode": "d2",
+   "toNode": "a4",
+   "label": "[within scope]"
+  },
+  {
+   "id": "e11",
+   "fromNode": "d2",
+   "toNode": "x3",
+   "label": "[outside scope: irreversible, too wide, or a person's decision] 3a",
+   "color": "1"
+  },
+  {
+   "id": "e12",
+   "fromNode": "x3",
+   "toNode": "d3"
+  },
+  {
+   "id": "e13",
+   "fromNode": "d3",
+   "toNode": "a4",
+   "label": "[approved]"
+  },
+  {
+   "id": "e14",
+   "fromNode": "d3",
+   "toNode": "e3",
+   "label": "[declined]"
+  },
+  {
+   "id": "e15",
+   "fromNode": "a4",
+   "toNode": "a5"
+  },
+  {
+   "id": "e16",
+   "fromNode": "a5",
+   "toNode": "d4"
+  },
+  {
+   "id": "e17",
+   "fromNode": "d4",
+   "toNode": "a6",
+   "label": "[pass]"
+  },
+  {
+   "id": "e18",
+   "fromNode": "d4",
+   "toNode": "x4",
+   "label": "[a check fails] 5a",
+   "color": "1"
+  },
+  {
+   "id": "e19",
+   "fromNode": "x4",
+   "toNode": "d5"
+  },
+  {
+   "id": "e20",
+   "fromNode": "d5",
+   "toNode": "a2",
+   "label": "[another remedy]"
+  },
+  {
+   "id": "e21",
+   "fromNode": "d5",
+   "toNode": "x2",
+   "label": "[none left]"
+  },
+  {
+   "id": "e22",
+   "fromNode": "a6",
+   "toNode": "a7"
+  },
+  {
+   "id": "e23",
+   "fromNode": "a7",
+   "toNode": "a8"
+  },
+  {
+   "id": "e24",
+   "fromNode": "a8",
+   "toNode": "e1"
+  }
+ ]
+}

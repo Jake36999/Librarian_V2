@@ -1,0 +1,67 @@
+# UC-D. Diagnose and resolve a failure at a mapped extension point (to-be).
+# The "doctor": its own actor, apart from the system and from the oracle, with its own model assignment. It resolves failures that arrive where the use cases say they
+# can, in the shapes those extensions describe, by matching them to a catalogue of remedies
+# (remedy-catalogue.yaml). Its scope is the catalogue; anything else goes back to tier 0 and is counted.
+diagram: UC-D
+kind: activity
+title: Diagnose and resolve a failure at a mapped extension point (the doctor)
+target: {kind: use_case, ref: "INGESTION-TOBE.md#3-the-doctor-uc-d"}
+lens: [the-root-cause-lens, the-guard-completeness-lens]
+perspective: Owner
+problem:
+  symptom: "Each failure in the 19-20 November runs was diagnosed and fixed by the tier-0 agent, by hand."
+  why:
+    - "No step inside the Core owns a failure once it is raised."
+    - "Failures arrive at known places (the use cases' extensions) in known shapes, but nothing keys a remedy to them."
+  root: "The extension points are mapped but not used as an index of remedies."
+lanes: [Core, Doctor, Helper (tier 2), Owner, Tier 0 agent]
+nodes:
+  - {id: s,  kind: start}
+  - {id: a1, kind: activity, lane: Core,                  step: 1, label: "records the symptom at its extension point: use case, extension, refusal code and evidence"}
+  - {id: a2, kind: activity, lane: Doctor, step: 2, label: "matches the symptom against the remedy catalogue"}
+  - {id: d1, kind: decision, lane: Doctor,          label: "a catalogued remedy matches?"}
+  - {id: x1, kind: activity, lane: Doctor,          label: "drafts a diagnosis from the nearest catalogued cases"}
+  - {id: x2, kind: activity, lane: Core,                           label: "hands the case and its diagnosis to tier 0"}
+  - {id: r1, kind: ref,      lane: Tier 0 agent, use_case: UC-L,   label: "resolves the case and proposes a new remedy"}
+  - {id: a3, kind: activity, lane: Core,                  step: 3, label: "computes the remedy's blast radius"}
+  - {id: d2, kind: decision, lane: Helper (tier 2),                label: "remedy within the doctor's scope?"}
+  - {id: x3, kind: activity, lane: Owner,                          label: "decides the remedy that is outside the doctor's scope"}
+  - {id: d3, kind: decision, lane: Owner,                          label: "Owner approves?"}
+  - {id: a4, kind: activity, lane: Doctor, step: 4, label: "runs the remedy's workflow"}
+  - {id: a5, kind: activity, lane: Core,                  step: 5, label: "re-runs only the checks inside the blast radius"}
+  - {id: d4, kind: decision, lane: Core,                           label: "checks pass?"}
+  - {id: x4, kind: activity, lane: Core,                           label: "rolls the remedy back by its compensation step"}
+  - {id: d5, kind: decision, lane: Doctor,          label: "another catalogued remedy, within two attempts?"}
+  - {id: a6, kind: activity, lane: Helper (tier 2),       step: 6, label: "validates that the symptom is gone at its extension point"}
+  - {id: a7, kind: activity, lane: Core,                  step: 7, label: "records the case in the catalogue's history: symptom, remedy, result"}
+  - {id: a8, kind: activity, lane: Doctor, step: 8, label: "returns control to the step the extension rejoins"}
+  - {id: e1, kind: end, outcome: resolved,  label: "resolved; the calling use case rejoins its main flow"}
+  - {id: e2, kind: end, outcome: escalated, label: "escalated to tier 0: a failure of the doctor's scope"}
+  - {id: e3, kind: end, outcome: declined,  label: "the Owner declined the remedy; the calling use case pauses"}
+edges:
+  - {from: s,  to: a1}
+  - {from: a1, to: a2}
+  - {from: a2, to: d1}
+  - {from: d1, to: a3, guard: "matched"}
+  - {from: d1, to: x1, guard: "no match: a new shape", ext: "2a"}
+  - {from: x1, to: x2}
+  - {from: x2, to: r1}
+  - {from: r1, to: e2, guard: "learned"}
+  - {from: r1, to: e2, guard: "not learned"}
+  - {from: a3, to: d2}
+  - {from: d2, to: a4, guard: "within scope"}
+  - {from: d2, to: x3, guard: "outside scope: irreversible, too wide, or a person's decision", ext: "3a"}
+  - {from: x3, to: d3}
+  - {from: d3, to: a4, guard: "approved"}
+  - {from: d3, to: e3, guard: "declined"}
+  - {from: a4, to: a5}
+  - {from: a5, to: d4}
+  - {from: d4, to: a6, guard: "pass"}
+  - {from: d4, to: x4, guard: "a check fails", ext: "5a"}
+  - {from: x4, to: d5}
+  - {from: d5, to: a2, guard: "another remedy"}
+  - {from: d5, to: x2, guard: "none left"}
+  - {from: a6, to: a7}
+  - {from: a7, to: a8}
+  - {from: a8, to: e1}
+provenance: {drafted_by: "tier 0 (Claude Code), owner direction 2026-11-20", at: 2026-11-20}

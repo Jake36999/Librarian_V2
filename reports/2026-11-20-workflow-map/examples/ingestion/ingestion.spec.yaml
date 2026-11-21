@@ -1,0 +1,110 @@
+# Diagram spec (docs/proposals/diagram-workflows.md, section 6): the ingestion of E:\DataManagement into
+# Resource-Library, 19-20 November 2026, as it actually ran. Hand-written from the run's record; the views,
+# the canvas, the decision tree and the test table are generated from this file by render_spec.py.
+diagram: ingest-papers-tier0
+kind: activity
+title: Ingest a folder of papers, directed by the Owner and orchestrated by a tier-0 agent
+target: {kind: use_case, ref: "../../USE-CASES.md#uc1-make-a-folder-of-papers-into-library-knowledge-as-is"}
+lens: [the-root-cause-lens, the-guard-completeness-lens, the-real-concurrency-lens]
+perspective: Owner
+problem:
+  symptom: "The research session found no papers to keep, though all 96 had been read."
+  why:
+    - "The papers existed only as staged items, catalogue cards and the paper graph."
+    - "Nobody accepted the enriched items out of staging."
+    - "Nothing told anyone the acceptance was still owed."
+  root: "The ingestion has no step that owns the last hand-off, and no signal when it is missing (OP1)."
+lanes: [Owner, Tier 0 agent, Core, Clerk (tier 3), Model host, Geo-Grapher]
+nodes:
+  - {id: s,   kind: start}
+  - {id: a1,  kind: activity, lane: Owner,          step: 1,  label: "directs the ingestion of E:\\DataManagement into Resource-Library"}
+  - {id: a2,  kind: activity, lane: Tier 0 agent,   step: 2,  label: "attaches the folder to the library"}
+  - {id: a3,  kind: activity, lane: Core,           step: 3,  label: "surveys the folder and proposes a decision per subfolder"}
+  - {id: d1,  kind: decision, lane: Core,                     label: "every other root current?"}
+  - {id: x1,  kind: activity, lane: Tier 0 agent,             label: "re-surveys the stale root and re-applies its decisions"}
+  - {id: a4,  kind: activity, lane: Owner,          step: 4,  label: "decides the subfolders that need a person (excludes 11, 12, 13, _external)"}
+  - {id: a5,  kind: activity, lane: Tier 0 agent,   step: 5,  label: "records the Owner's decisions"}
+  - {id: d2,  kind: decision, lane: Core,                     label: "Clerk qualified in this Core?"}
+  - {id: x2,  kind: activity, lane: Tier 0 agent,             label: "restarts the Cores and re-qualifies the Clerk"}
+  - {id: a6,  kind: activity, lane: Clerk (tier 3), step: 6,  label: "assesses each remaining subfolder's sensitivity"}
+  - {id: d3,  kind: decision, lane: Clerk (tier 3),           label: "subfolder sensitive?"}
+  - {id: x3,  kind: activity, lane: Owner,                    label: "decides the held subfolder"}
+  - {id: a7,  kind: activity, lane: Core,           step: 7,  label: "accepts the remaining subfolders by policy"}
+  - {id: a8,  kind: activity, lane: Tier 0 agent,   step: 8,  label: "queues the in-scope documents, one accepted subfolder at a time"}
+  - {id: d4,  kind: decision, lane: Tier 0 agent,             label: "queued count matches the survey?"}
+  - {id: a9,  kind: activity, lane: Core,           step: 9,  label: "captures and stages each document (intake)"}
+  - {id: a10, kind: activity, lane: Tier 0 agent,   step: 10, label: "approves the staged documents (agent promotion mode)"}
+  - {id: f1,  kind: fork,     lane: Core,                     label: "for each approved document, in the Clerk pool"}
+  - {id: a11, kind: activity, lane: Core,           step: 11, label: "parses and converts the document page by page"}
+  - {id: a12, kind: activity, lane: Clerk (tier 3), step: 12, label: "reads it part by part: claims, terms, relations, review"}
+  - {id: m1,  kind: activity, lane: Model host,               label: "answers each Clerk task"}
+  - {id: dm,  kind: decision, lane: Model host,               label: "answered in time and in full?"}
+  - {id: a14, kind: activity, lane: Tier 0 agent,   step: 14, label: "tracks spend against the ceiling and reports progress"}
+  - {id: dc,  kind: decision, lane: Tier 0 agent,             label: "spend under the ceiling?"}
+  - {id: j1,  kind: join,     lane: Core,                     label: "all documents processed"}
+  - {id: d5,  kind: decision, lane: Core,                     label: "document fully read?"}
+  - {id: x5,  kind: activity, lane: Tier 0 agent,             label: "re-approves the partial document"}
+  - {id: a13, kind: activity, lane: Geo-Grapher,    step: 13, label: "imports each fully converted paper into the paper graph"}
+  - {id: d6,  kind: decision, lane: Tier 0 agent,             label: "enriched documents accepted?"}
+  - {id: a15, kind: activity, lane: Tier 0 agent,   step: 15, label: "accepts the enriched documents into the library"}
+  - {id: a16, kind: activity, lane: Core,           step: 16, label: "writes each Source note and validates it is findable"}
+  - {id: d7,  kind: decision, lane: Core,                     label: "findable by title, bottom line and concept?"}
+  - {id: a17, kind: activity, lane: Tier 0 agent,   step: 17, label: "verifies the counts and labels, and reports to the Owner"}
+  - {id: e1,  kind: end, label: "96 findable Source notes; files labelled third_party; papers in the graph"}
+  - {id: e2,  kind: end, label: "papers stay in staging; research finds nothing to keep (OP1)"}
+  - {id: e3,  kind: end, label: "note flagged written-but-not-findable"}
+  - {id: e4,  kind: end, label: "run stopped at the spend ceiling; Owner decides"}
+edges:
+  - {from: s,   to: a1}
+  - {from: a1,  to: a2}
+  - {from: a2,  to: a3}
+  - {from: a3,  to: d1}
+  - {from: d1,  to: a4,  guard: "current"}
+  - {from: d1,  to: x1,  guard: "a root is stale", ext: "3a", observed: "D:\\Librarian_V2; fix 9c0592d for excluded folders; OP2 remains"}
+  - {from: x1,  to: a3}
+  - {from: a4,  to: a5}
+  - {from: a5,  to: d2}
+  - {from: d2,  to: a6,  guard: "qualified"}
+  - {from: d2,  to: x2,  guard: "qualification lost", ext: "5a", observed: "all 23 folders FOLDER_DRAFT_FAILED; fix cab623a"}
+  - {from: x2,  to: a6}
+  - {from: a6,  to: d3}
+  - {from: d3,  to: a7,  guard: "normal"}
+  - {from: d3,  to: x3,  guard: "sensitive", ext: "6a"}
+  - {from: x3,  to: a7}
+  - {from: a7,  to: a8}
+  - {from: a8,  to: d4}
+  - {from: d4,  to: a9,  guard: "matches (96)"}
+  - {from: d4,  to: a8,  guard: "0 queued: subfolders are their own roots", ext: "8a", observed: "dry count 0, then 96 per subfolder"}
+  - {from: a9,  to: a10}
+  - {from: a10, to: f1}
+  - {from: f1,  to: a11}
+  - {from: f1,  to: a14}
+  - {from: a11, to: a12}
+  - {from: a12, to: m1}
+  - {from: m1,  to: dm}
+  - {from: dm,  to: j1,  guard: "answered"}
+  - {from: dm,  to: j1,  guard: "unavailable or partial page", ext: "12a", observed: "6 of 96 partial"}
+  - {from: a14, to: dc}
+  - {from: dc,  to: j1,  guard: "under the ceiling"}
+  - {from: dc,  to: e4,  guard: "ceiling reached", ext: "14a"}
+  - {from: j1,  to: d5}
+  - {from: d5,  to: a13, guard: "fully read"}
+  - {from: d5,  to: x5,  guard: "partial", ext: "12b", observed: "3 completed on re-read; 3 accepted at 95-98%"}
+  - {from: x5,  to: f1}
+  - {from: a13, to: d6}
+  - {from: d6,  to: a15, guard: "accepted"}
+  - {from: d6,  to: e2,  guard: "nobody accepts", ext: "15a", observed: "19 Nov: all 96 stayed staged until 20 Nov"}
+  - {from: a15, to: a16}
+  - {from: a16, to: d7}
+  - {from: d7,  to: a17, guard: "findable"}
+  - {from: d7,  to: e3,  guard: "not findable", ext: "16a"}
+  - {from: a17, to: e1}
+evidence:
+  a3:  ["src/resource_librarian/folder_review.py"]
+  a8:  ["src/resource_librarian/folder_sources.py:queue"]
+  a11: ["src/resource_librarian/batch.py:STAGES (validate, parse)"]
+  a12: ["src/resource_librarian/batch.py:_read, _relate, _review (clerk_endpoint)"]
+  a13: ["src/resource_librarian/paper_graph.py:publish_artifact"]
+  a16: ["src/resource_librarian/promote.py (write, index, findability check)"]
+  d2:  ["commit cab623a (QualificationStore lock and merge)"]
+provenance: {drafted_by: "tier 0 (Claude Code), by hand from the run record", at: 2026-11-20}

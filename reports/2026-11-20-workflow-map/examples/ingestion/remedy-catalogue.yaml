@@ -1,0 +1,86 @@
+# The doctor's remedy catalogue (UC-D, doctor.spec.yaml), as proposed for the to-be ingestion.
+# An entry is keyed by WHERE a failure arrives (use case + extension) and WHAT it looks like (symptom).
+# It names a remedy workflow (a YAML workflow over registered actions), the remedy's scope, and where the
+# calling use case rejoins. Only entries a person accepted are used (UC-L). Nothing here runs yet: the
+# workflows marked "proposed" do not exist. `history` is what the as-is run of 19-20 Nov 2026 shows.
+catalogue: remedies
+version: 0
+entries:
+  - id: R1
+    at: {use_case: ingest-papers-tobe, extension: 4a}
+    symptom: {refusal: FOLDER_STALE, shape: "a root other than the one being decided changed since its survey"}
+    remedy: {workflow: resurvey-root, status: proposed,
+             does: "re-survey the stale root, then re-apply its recorded decisions, children before parents"}
+    scope: {side_effects: local_write, reversible: true, model_calls: 0,
+            blast_radius: "the stale root's reviewed groups",
+            note: "Today every accept rebuilds every group (OP2), so the true radius is the whole library. Until
+                   Geo-Grapher fixes that, the scope check sends this remedy to the Owner (UC-D 3a)."}
+    rejoin: 4
+    history: [{at: 2026-11-20, by: tier 0, result: resolved, detail: "D:\\Librarian_V2, 119 s, 5 decisions re-applied"}]
+
+  - id: R2
+    at: {use_case: ingest-papers-tobe, extension: 6a}
+    symptom: {refusal: FOLDER_DRAFT_FAILED, shape: "every folder check fails and no call reached a model; the
+              role's qualification reads not screened"}
+    remedy: {workflow: requalify-role, status: proposed,
+             does: "restart the affected Cores, run the role's L0/L1 qualification, confirm screened in each Core"}
+    scope: {side_effects: model_calls, reversible: true, model_calls: "a few, under a cent",
+            blast_radius: "the role's route in every library sharing the qualification file"}
+    rejoin: 6
+    history: [{at: 2026-11-20, by: tier 0, result: resolved,
+               detail: "root cause: Cores overwrote each other's qualification records; code fix cab623a, then re-qualified"}]
+
+  - id: R3
+    at: {use_case: ingest-papers-tobe, extension: 9a}
+    symptom: {shape: "queued count differs from the survey; 0 when the accepted subfolders are their own roots"}
+    remedy: {workflow: queue-per-root, status: proposed,
+             does: "count the documents per accepted root (dry run), then queue each root"}
+    scope: {side_effects: local_write, reversible: true, model_calls: 0, blast_radius: "this folder's queue ledger"}
+    rejoin: 8
+    history: [{at: 2026-11-20, by: tier 0, result: resolved, detail: "dry count 0, then 96 across 24 subfolders"}]
+
+  - id: R4
+    at: {use_case: ingest-papers-tobe, extension: 13b}
+    symptom: {shape: "items left partial: a stage queued for a model, or coverage short of full"}
+    remedy: {workflow: reread-partials, status: proposed,
+             does: "re-approve the partial items and run the approved batch again"}
+    scope: {side_effects: model_calls, reversible: true, model_calls: "one batch for the partial items",
+            blast_radius: "those items' staging records and conversions"}
+    rejoin: 15
+    history: [{at: 2026-11-20, by: tier 0, result: resolved, detail: "6 partial: 3 complete, 3 accepted at 95-98% read"}]
+
+  - id: R5
+    at: {use_case: ingest-papers-tobe, extension: 17a}
+    symptom: {shape: "promotion reports written but not findable (a title, bottom-line or concept search misses)"}
+    remedy: {workflow: reindex-note, status: proposed, does: "re-index the note and re-link its concepts, then re-check findability"}
+    scope: {side_effects: local_write, reversible: true, model_calls: 0, blast_radius: "one note's index rows"}
+    rejoin: 18
+    history: []
+
+  - id: R6
+    at: {use_case: ingest-papers-tobe, extension: 18a}
+    symptom: {shape: "the oracle finds a shortfall at a mapped extension: counts disagree between survey, queue ledger, staging and Source notes, or a label is wrong"}
+    remedy: {workflow: reconcile-ingest, status: proposed,
+             does: "read-only: list where each missing item stopped, then route each to R3, R4 or R5, or report"}
+    scope: {side_effects: none, reversible: true, model_calls: 0, blast_radius: "none (it only routes)"}
+    rejoin: 18
+    history: []
+
+  # Entries for other use cases: a failure outside this ingestion is referenced by the use case it belongs to.
+  - id: R7
+    at: {use_case: UC2, extension: "*b"}
+    symptom: {shape: "a refusal names a tool the phase does not offer"}
+    remedy: {workflow: none, status: outside the doctor's scope,
+             does: "a code change (the phase's bundle). The doctor records the case with its diagnosis and escalates."}
+    scope: {side_effects: external_write, reversible: false, blast_radius: "the Librarian's code"}
+    rejoin: null
+    history: [{at: 2026-11-20, by: tier 0, result: resolved, detail: "three cases, fixed in 0d6af41, 8129b3b, 9fd2fe9"}]
+
+  - id: R8
+    at: {use_case: UC2, extension: "*c"}
+    symptom: {refusal: BUDGET_SPENT, shape: "a phase's budget is spent with its work unfinished"}
+    remedy: {workflow: request-budget, status: exists (request_budget),
+             does: "ask the Owner for more calls with a one-click answer; never extend its own budget"}
+    scope: {side_effects: none, reversible: true, blast_radius: "this session's phase", person_decision: true}
+    rejoin: "the same step"
+    history: [{at: 2026-11-20, by: Owner (through tier 0), result: resolved, detail: "Judge +20, Synthesise +50, +50"}]
