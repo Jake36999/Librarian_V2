@@ -10,7 +10,11 @@ The word was used for three different things, and agents confused them. Always s
 |---|---|---|---|
 | **Agent tier** | 0, 1, 2, 3 | *Who* is doing the work: tier 0 is an outside agent, tiers 1–3 are the in-app roles (below) | A permission level |
 | **Registry tier** | `consult`, `contribute`, `curate` | The most a caller's tool calls may do. `curate` is a person's own authority | Model quality, or who is in charge |
-| **Trust tier** | `gold`, `silver`, `bronze` | How far a graph's or a source's content is trusted | Anything about agents |
+| **Trust tier** | `gold`, `silver`, `bronze` | How far a graph's, a source's or a remedy's content is trusted | Anything about agents |
+
+Two more words sound like tiers and are not (21 November 2026):
+- a **layer** (L0 action, L1 workflow, L2 pipeline, L3 sprint) is a process's place in the order ([composition.md](composition.md));
+- a **Tier A / Tier B audit** is a kind of check: deterministic, or a read-only model review.
 
 ### Agent tiers
 
@@ -38,6 +42,26 @@ to complete.
   2026-11-19 one sent 92 refused calls in 6 seconds, then reported accepts that had not happened.
 - **Neither tier speaks for the person.** Promotion-mode changes, lead-override checkpoints,
   sensitivity reviews and spending without approval stay with the person, whichever agent asks.
+
+## Review is kept apart from the work
+
+Owner, 21 November 2026 ([diagram-workflows](../proposals/diagram-workflows.md), section 10). A review that shares the worker's context repeats the worker's assumptions; a meta-reasoning loop told to "look at your work and correct it" produced "corrections" that were themselves wrong.
+
+- **Three roles, three acts.** A **worker** does the task. An **oracle** judges the output against its specification and never executes or repairs. A **doctor** repairs a failure the oracle tagged, by a catalogued remedy within its blast radius, then hands back to the oracle. Each role has its own language in its prompt, so a review cannot drift into redoing the task.
+- **Separate context, separate assignment.** The oracle and the doctor share no conversation with the worker or with each other. On any one run, each has a model assignment different from the worker's. The claim review already works this way: the reviewer sees one claim and its passage, never the draft.
+- **A verdict is a claim, not an order.** It carries its evidence, can be rebutted with evidence (a person decides), and is itself re-checked.
+- **One owner per specification.** Tier 0 sets the specification for a tier-1 run, or a tier-1 Lead sets it for a sub-run it delegates, never both. A tier-1 specification may only narrow its tier-0 parent's, never widen it.
+- **Where a verdict goes:**
+  - a pass goes to whoever set the specification, once;
+  - a failure at a mapped extension point goes to the doctor;
+  - an unmapped failure goes to the tier-1 Lead;
+  - anything critical (security, data loss, a boundary crossed, a person's decision) goes to tier 0 and the Owner at once.
+
+The roles exist in part today: the claim review, and the audited session's verifiers. Attaching an oracle to any run is planned (P6–P7 of the diagram-workflows proposal).
+
+## Attestation names who accepted
+
+**A record of acceptance says who actually accepted**: the person, or the agent acting under the library's agent promotion mode. Never "person" for an agent. On 20 November an agent accepted 96 papers through the person-facing API, and every note recorded `attested_by: person` (finding F2). Until the API records the agent, an agent that accepts through it says so in each reason, and reports it to the owner.
 
 ## Models are assigned to roles, not bound
 

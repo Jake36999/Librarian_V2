@@ -42,6 +42,66 @@ delivery-status authority.
 | Tier B audit | An experimental, read-only LLM assessment by Clerk. It is non-default until HARNESS-08's go/no-go and never upgrades a partial or human_judgment closure on its own. | Tier A, or human acceptance. |
 | Human accepted | A person accepted a specific artifact or interpretation revision. It is recorded with provenance. | `verified` closure, or proof that a claim is true. |
 
+## Composition
+
+Adopted by the owner, 21 November 2026, from [the diagram-workflows proposal](proposals/diagram-workflows.md) (section 12.1). The rules that use these words are in [policy/composition.md](policy/composition.md).
+
+| Term | Meaning | Must not be confused with |
+| --- | --- | --- |
+| Process | Any one action, workflow, pipeline or sprint. | A run, which executes a pinned copy of a process; or a session. |
+| Action | The smallest defined step an agent follows to complete a task, carried out by one registered tool (possibly one bounded model call). | A step, which is one use of an action inside a process. |
+| Workflow | A named sequence of actions (and workflows, without a cycle), invoked as one step. | A session, or a pipeline. |
+| Pipeline | A sequence of workflows and actions, with routing, concurrency and spend gates. | A sprint, or a batch run. |
+| Sprint | A sequence of pipelines toward one Owner objective, with its own success guarantee and budget. Named, not yet built. | A session's phase, or a calendar period. |
+| Order | action → workflow → pipeline → sprint. A process is built only from processes earlier in the order, or of its own kind without a cycle; never from a later one. | Any kind of tier. |
+| Layer | A process's position in the order: L0 action, L1 workflow, L2 pipeline, L3 sprint. | An agent tier, registry tier, trust tier, or a Tier A/B audit. |
+| Component | A process used inside another process. | A step, which is one use of a component at one place. |
+| Parent process | The process made when processes are combined: an action's parent process is a workflow, a workflow's a pipeline, a pipeline's a sprint. | The caller of a run (a run has a caller; a process has parents). |
+| Definition | The YAML text of a process (`workflows.Definition` in code). | The process itself. |
+| Step | One use of a component at one place in a process, with its own id and arguments. | The action it uses. |
+| Side effects | What a step can touch, least to most: `none`, `local_read`, `external_read`, `local_write`, `external_write`. Derived from the action's registry spec; a declared class may overstate, never understate. `external` means the action reaches beyond the vault. | A permission, or a registry tier. |
+| Acceptance criteria | Conditions on a step's own result (`is`, `in`, `empty`, `at_least`). A result that misses one fails the step. | A test suite, or an oracle's specification. |
+| Compensation | A step's declared undo: one registered action. It is shown when a later step fails, and never run automatically. | A retry, or a rollback the runner performs. |
+| Manifest | A process's compiled description (JSON): its component tree, its actions in order with their declared properties, a roll-up, and its digest. Generated, never edited. | The process's definition, or a diagram spec. |
+| Mandate | What a parent process allows its components: highest tier, effects, outside access, a deny list. | A role's registry tier. |
+| Repertoire | The set of accepted processes, shipped and promoted, that new work is composed from. | A library (a vault), or the remedy catalogue. |
+| Mount | The subset of the repertoire a role may use. | A role's permissions, or its prompt. |
+| Promote (a process) | Add it to the repertoire: validated, accepted by the Owner, digest-pinned. | Promoting an offering into the vault, which is a separate act. |
+
+## Use cases and diagrams
+
+Adopted 21 November 2026 ([diagram-workflows](proposals/diagram-workflows.md), section 12.2).
+
+| Term | Meaning | Must not be confused with |
+| --- | --- | --- |
+| Use case | An actor's goal and everything that can happen in pursuing it, written in the nine-field template. | A diagram, or a process. |
+| Spec (diagram spec) | The `.spec.yaml` describing one use case's behaviour: lanes, typed nodes, guarded edges, outcomes. | A process's definition. A process declares `implements: <spec id>` to link the two. |
+| Main success scenario | The numbered happy path: one actor per step, "Actor + verb + object". | A test, or a run. |
+| Extension | A path leaving the main success scenario at a numbered step (`13b`), ending with "rejoin at N" or "the use case ends". | A refusal code. An extension id is the *place*; a refusal code is the *shape*. |
+| Outcome (of a use case) | `success`, `resolved`, `learned`; neutral `reused` and `used once`; or `paused`, `declined`, `escalated`. | An execution outcome, which describes one attempt. |
+| Reference (`ref`) | A node that calls another use case and handles each of its outcomes. | A link, or a wikilink. |
+| Lane | A column of an activity diagram holding one actor's steps. | A role slot, or a model. |
+| Tier-0 turn | One return of control to tier 0; consecutive tier-0 steps are one turn. Graded: 2 ideal, 3 expected, 4 rusty, 5–10 bad. | A model call, or a chat turn. |
+
+## Review and failure handling
+
+Adopted 21 November 2026 ([diagram-workflows](proposals/diagram-workflows.md), sections 10 and 12.3–12.4). The authority rules are in [policy/agent-roles-and-authority.md](policy/agent-roles-and-authority.md).
+
+| Term | Meaning | Must not be confused with |
+| --- | --- | --- |
+| Owner | The person who runs the library; the only actor whose decisions are reserved. | Tier 0. |
+| Worker | The role doing a task: the Lead, a helper or the Clerk. | The oracle, which judges the task. |
+| Oracle | The role that judges a run's output against its specification. It never executes or repairs. It runs Tier A checks before any Tier B review. | The worker, the doctor, or a Tier B audit on its own. |
+| Doctor | The role that repairs a failure at a mapped extension point, by a catalogued remedy within its blast radius, then hands back to the oracle. | The oracle, or tier 0. |
+| Verdict | The oracle's judgement: a claim with its evidence. It can be rebutted, and is itself re-checked. | A fact, or an instruction to the worker. |
+| Symptom | What is observed at an extension point: refusal code, shape, evidence. | The root cause. |
+| Root cause | The answer at the end of the "why?" chain. | A proposed solution. |
+| Remedy | A workflow in the doctor's catalogue, keyed by use case, extension and symptom, with a declared scope and rejoin. | A one-off fix, or a code change (that escalates). |
+| Remedy catalogue | The doctor's accepted remedies and their case history. | The repertoire, or the model catalogue. |
+| Blast radius | What a change or a remedy can touch: the union of its actions' declared effects, followed through dependants, lineage and bridges. | A guess. |
+| Escalation | A failure handed back to tier 0 unresolved; a counted failure of the use case. | A pause for the Owner's decision. |
+| Fault register | Boolean system faults recorded before and after a remedy. Proposed set: `F_ESC`, `F_ATTEST`, `F_BLAST`, `F_SYMPTOM`; whether it stays at these four is an open decision. | A score, or a confidence. |
+
 ## Delivery status
 
 | Status | Meaning |

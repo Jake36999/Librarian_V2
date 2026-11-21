@@ -7390,3 +7390,25 @@ The diagram-workflows session found a YAML trap: a comma inside a written mappin
 `canvas/workflows.py` now reads a directive's value as a reference, a scalar, or (only when it starts with `{` or `[`) a mapping or list. A written mapping or list that parses with a bare null, or does not parse, is refused at compile time with "quote that value"; it is never guessed. A plain sentence with commas or colons stays a sentence.
 
 Tests: `test_a_plain_value_stays_what_it_says`, `test_a_comma_that_splits_a_written_mapping_is_refused`.
+
+### The diagram-workflows work folded into policy, terminology and the plan (2026-11-21)
+
+A second session analysed the system with the owner's systems-analysis course material and wrote `docs/proposals/diagram-workflows.md`:
+- the use cases rewritten in the course's form, with as-is and to-be cases and worked, rendered examples under `reports/2026-11-20-workflow-map/examples/`;
+- the oracle and doctor roles;
+- upward composition with manifests;
+- its terminology.
+
+The owner directed it folded in:
+- **Terminology** (`docs/terminology.md`) gains three sections: composition (process, action, workflow, pipeline, sprint, order, layer, component, parent process, definition, step, side effects, acceptance criteria, compensation, manifest, mandate, repertoire, mount, promote), use cases and diagrams, and review and failure handling. The fault register's size is marked open.
+- **Policy:**
+  - `docs/policy/composition.md` (new) states the order and its rules. It says exactly what `workflows.py` enforces today (rule 1, more strictly: a workflow holds only actions, a pipeline only workflows and routes) and what is planned (direct uses, sprints, manifests, mandates, the repertoire).
+  - `agent-roles-and-authority.md` gains two sections, review kept apart from the work and attestation names who accepted (finding F2), and names layers and Tier A/B audits as not tiers.
+  - The policy index lists the new page.
+- **The plan forward** now has:
+  - a status table and five course corrections: fix OP1's root before its symptom; F2; OP16 only partly closed; W3 needs declared state classes; review needs its own roles;
+  - new workstreams W1b (manifests, mandates, declared state, the coded flows as pipelines), W2b (the diagram workflows, P0–P5) and W9 (the oracle and doctor);
+  - W7 revised to put OP1, F2 and OP8 first;
+  - a proposed order: W7's root causes → W1b → W3 → W9, with W2b P0 beside them.
+
+**Correction to the W1 part 3 entry above:** it said OP16 was closed. Only session phases became data; intake, the batch stages and folder review are still coded flows, not pipelines. That remainder is W1b.

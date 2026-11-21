@@ -30,5 +30,6 @@ When two documents disagree, the higher one wins. Raise the conflict; do not res
 
 | Page | Covers |
 |---|---|
-| [agent-roles-and-authority.md](agent-roles-and-authority.md) | Outside agents (tier 0) and the in-app roles (tiers 1–3): who decides, who finishes the work, and what each may assume about the others |
-| [../terminology.md](../terminology.md) | The vocabulary, including **assign, not bind** |
+| [agent-roles-and-authority.md](agent-roles-and-authority.md) | Outside agents (tier 0) and the in-app roles (tiers 1–3): who decides, who finishes the work, what each may assume about the others; review kept apart from the work (worker, oracle, doctor); attestation names who accepted |
+| [composition.md](composition.md) | How processes are built and kept: the order action → workflow → pipeline → sprint, mandates and manifests, the repertoire and promotion |
+| [../terminology.md](../terminology.md) | The vocabulary, including **assign, not bind**, and the terms of composition, use cases, and review |

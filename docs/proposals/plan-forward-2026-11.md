@@ -8,6 +8,25 @@
 - the owner's notes of 20 November;
 - a look through the owner's earlier harness, MARK XLVIII / JARVIS, for tools this system lacks. It was read on 20 November 2026 at commit `281dc41`.
 
+## Where it stands, 21 November 2026
+
+| Workstream | Status |
+|---|---|
+| W1 Workflows as data | Done for phases, macros and step fields (`f6a85d6`, `f61e30c`, `af45e7c`). **Not done: the coded flows** (intake, batch stages, folder review) are still Python, not pipelines. OP16 is only partly closed; see W1b. |
+| W2 Canvas service | Done (`0cb1e7e`, `2829afb`). The diagram-workflows proposal builds on it (W2b). |
+| W3–W8 | Not started. |
+
+### Course corrections from the diagram-workflows work
+
+On 20–21 November a second session analysed the system with the owner's systems-analysis course material and wrote [the diagram-workflows proposal](diagram-workflows.md). It rewrote [the use cases](../../reports/2026-11-20-workflow-map/USE-CASES.md) in the course's form and drew worked examples. Five corrections follow for this plan.
+1. **Fix the root before the symptom.** The research run's failure was a symptom of OP1: enriched papers waited for an acceptance nobody owned. `1064cf0`, graph citations as evidence, was a sound change, but it treated the research side. OP1 moves to the front of W7.
+2. **Attestation is wrong today (finding F2).** An agent's acceptance through the person-facing API is recorded as `attested_by: person`. This is now a policy rule ([agent-roles-and-authority](../policy/agent-roles-and-authority.md#attestation-names-who-accepted)), and its fix joins W7.
+3. **W1 stopped short (OP16).** It made session phases data, but not the coded flows. The ingestion ran with tier 0 doing all the orchestration (finding F5), because no Core pipeline exists for it. W1b carries the rest.
+4. **W3 needs a prerequisite.** A computed blast radius needs each action to declare the kinds of state it can change. Today an action declares only read or write, open-world, idempotence and its access fingerprint. W1b adds the declaration.
+5. **Review needs its own roles.** The oracle (judge) and the doctor (repair) are kept apart from the worker, with separate context and assignment. This is now policy, and W9 builds it.
+
+The vocabulary those corrections use (process, action, workflow, pipeline, sprint, parent process, manifest, mandate, repertoire, oracle, doctor…) is now in [docs/terminology.md](../terminology.md). The rules are in [docs/policy/composition.md](../policy/composition.md).
+
 ## 0. Boundary: nothing depends on MARK XLVIII
 
 The owner is retiring MARK XLVIII and may move or delete it. The Librarian takes no dependency on it, now or later:
@@ -59,6 +78,20 @@ The modular action library the owner described exists: `workflows.py` runs YAML 
 - `phase_walk` reports no blocked phase;
 - the macros run as workflows with unchanged tests.
 
+### W1b. The order, enforced: manifests, mandates, and the coded flows as pipelines
+
+**Closes:** the rest of OP16, findings F5 and F2's root, and W3's prerequisite. Follows [policy/composition.md](../policy/composition.md) and the diagram-workflows proposal, section 11.
+1. **Action declarations.** Each action declares the kinds of state it can change (notes, staging, sessions, indexes, graphs, outside services), beside its effect and open-world flag.
+2. **Manifests.** Compile a JSON manifest per process: component tree, actions in order with step paths and declared properties, a roll-up, and the pinned digest. It is checked against a JSON Schema and rebuilt whenever the digest changes. The prototype is in `reports/2026-11-20-workflow-map/examples/manifests/build_manifest.py`.
+3. **Mandates.** A parent process states its mandate, and the suitability check runs from manifests alone before a component is integrated.
+4. **The order's direct uses.** Allow an action directly in a pipeline, and a workflow inside a workflow without a cycle, as the policy allows. Today the validator forbids both.
+5. **The coded flows as pipelines.** Express the folder ingestion (`ingest-folder`), the source batch stages and folder review as pipelines over registered actions, so a Lead can run them and tier 0 need not orchestrate. Session phases stay a state machine over declared data.
+
+**Done when:**
+- every shipped process has a manifest that validates;
+- the prototype's two checks (refused for a read-only parent, suitable for an ingestion sprint) run in the Core;
+- a folder ingestion runs as a pipeline with tier 0 taking no more than its hand-over and hand-back (2 tier-0 turns).
+
 ### W2. Canvas service, and canvas ⇄ workflow
 
 **Closes:** the owner's request to see and draw workflows.
@@ -71,6 +104,15 @@ The modular action library the owner described exists: `workflows.py` runs YAML 
 4. **Workflow → canvas.** Every shipped workflow and pipeline can be opened as a canvas.
 
 **Done when:** one of the shipped workflows can be drawn by hand, compiled, approved and run, and the run matches the YAML original.
+
+### W2b. Diagram workflows (the diagram-workflows proposal, P0–P5)
+
+A target is analysed through a lens and drawn as four views of one model: a use case diagram, an activity diagram, a written use case and test cases. The other three views check each one, and mismatches are flagged, never fixed silently.
+- **P0** needs no canvas or model: the spec schema, validators, Mermaid, and the decision tree that generates the test table. It can start at once.
+- **P1** draws canvases through W2's service. It is done when a re-render keeps a node the Owner moved.
+- **P2–P5** add the `modelling` lens pack and the drafting workflow, cross-view checks, the timeline, lineage and relationship kinds, and reading a hand-drawn canvas back.
+
+The worked examples (`reports/2026-11-20-workflow-map/examples/ingestion/`) already render with 0 problems and 0 flags.
 
 ### W3. Change-impact detection
 
@@ -141,6 +183,27 @@ It is paired with Geo-Grapher rebuilding only the groups a decision touches. Tha
 - Claim review on by default, on the library's review route, also inside the Core.
 - The cause of the "unchecked" reviews found, now that they record their reason.
 
+### W7, revised (21 November)
+
+Root causes first: **OP1** (an owner and an alert for enriched-but-unaccepted work), then **F2** (attestation names the agent or policy that accepted), then **OP8** (the review route applies inside the Core, which W9 needs for the oracle), then OP3–OP5, OP7 and OP9 as listed above. Add a planted test for each branch never exercised in the 20 November ingestion (finding F6): a sensitive subfolder, a note that is not findable, and the spend ceiling reached.
+
+### W9. Review kept apart from the work: the oracle and the doctor
+
+**Closes:** the policy section on review ([agent-roles-and-authority](../policy/agent-roles-and-authority.md#review-is-kept-apart-from-the-work)); the diagram-workflows proposal's P6–P8.
+1. **Specifications first, no code (P6):** UC-O (oracle), UC-D (doctor) and UC-L (learning a remedy) as specs. The to-be ingestion's final check becomes an oracle call.
+2. **The oracle as a role on any run (P7).**
+   - The specification comes from the use case's success guarantee, and its extensions label failures.
+   - `set_by` and narrowing are enforced.
+   - The oracle's model assignment must differ from the worker's.
+   - The result comes back once, to whoever set the specification.
+
+   This builds on the audited session's verifiers and the claim review.
+3. **Change, then blast radius, then checks, then oracle, then scouting, then remedy (P8).** This includes security checks: secrets, tier changes, new outbound calls, path escapes, injected instructions. It needs W3.
+
+**Needs:** W1b (manifests and declared state), W3, OP8, and a short fixed list of models for the oracle and doctor roles (an owner decision).
+
+**Done when:** a tier-1 ingestion run with a tier-0-set specification reports exactly once to tier 0, and a planted failure reaches the doctor keyed by its extension.
+
 ### W8. Topic filing, then the visuals
 
 - **Topic filing.** A multi-label pass over the 363 Unfiled notes in Resource-Library. B4 shows a model's single-label answer is a draft, not a filing.
@@ -148,9 +211,24 @@ It is paired with Geo-Grapher rebuilding only the groups a decision touches. Tha
 
 ## 3. Decisions for the owner
 
-1. Accept the order W1 → W8, or reorder. W1 comes first because W2, W3 and W7 each get cheaper once phases are data.
-2. Copying MARK's two canvas modules into the Librarian (W2). They are standard library only and MIT-licensed. They would be copied with their tests under the boundary in section 0, ideally before the repo is moved, though a move to another disk changes nothing but where we copy from.
-3. Making claim review default-on in every library (W7). It costs one Clerk call per claim.
+Settled:
+- The order W1 → W8 was accepted, and W1 and W2 are done.
+- MARK's canvas modules were copied in (W2).
+- The vocabulary and rules of composition, review and attestation were adopted on 21 November (terminology and policy).
+
+Proposed order now: **W7's root causes (OP1, F2, OP8) → W1b → W3 → W9**, with **W2b P0** beside them, then W4, W5, W6 and W8.
+- W7's three items are small, and each removes the cause of a failure we saw.
+- W1b is the prerequisite for W3 and W9, and it takes orchestration off tier 0.
+
+Open:
+1. The proposed order above.
+2. Claim review default-on in every library (W7), at one Clerk call per claim.
+3. The short fixed list of models for the oracle and doctor roles (W9).
+4. The diagram-workflows proposal's open decisions (its section 14):
+   - whether the fault register stays at four bits;
+   - separate but linked spec and process files;
+   - where specs live;
+   - the `modelling` lens pack.
 
 ## Appendix A. The designs we would adopt
 
