@@ -224,3 +224,32 @@ def test_drawing_a_workflow_previews_then_commits_and_spares_a_persons_canvas(va
     refused = REGISTRY.call("canvas_draw_workflow", {"name": "deep-read-staged",
                                                      "path": "Mine.canvas"}, person(vault))
     assert refused.get("refused") == "CANVAS_CONFLICT"
+
+
+@pytest.mark.parametrize("arg, expected", [
+    ("arg query: the owner said: do it", "the owner said: do it"),      # a sentence stays one
+    ("arg query: Doctor (Lead, tier 1)", "Doctor (Lead, tier 1)"),
+    ("arg limit: 3", 3),
+])
+def test_a_plain_value_stays_what_it_says(arg, expected):
+    drawing = copy.deepcopy(DRAWN)
+    drawing["nodes"][1]["text"] = f"role: step\nid: found\naction: search\n{arg}"
+    out = compile_canvas(drawing)
+    assert out["errors"] == []
+    name = arg.split(":", 1)[0].split(" ", 1)[1]
+    assert out["definition"]["steps"][0]["args"][name] == expected
+
+
+def test_a_comma_that_splits_a_written_mapping_is_refused():
+    """Found by the diagram-workflows session: {lane: Doctor (Lead, tier 1)} silently became
+    {'lane': 'Doctor (Lead', 'tier 1)': None}."""
+    drawing = copy.deepcopy(DRAWN)
+    drawing["nodes"][2]["text"] = ("role: step\nid: waiting\naction: staging_list\n"
+                                   "when: {from: steps.found.verdict, is: Doctor (Lead, tier 1)}")
+    errors = compile_canvas(drawing)["errors"]
+    assert any("split" in e and "quote" in e for e in errors), errors
+    drawing["nodes"][2]["text"] = ("role: step\nid: waiting\naction: staging_list\n"
+                                   'when: {from: steps.found.verdict, is: "Doctor (Lead, tier 1)"}')
+    out = compile_canvas(drawing)
+    assert out["errors"] == []
+    assert out["definition"]["steps"][1]["when"]["is"] == "Doctor (Lead, tier 1)"

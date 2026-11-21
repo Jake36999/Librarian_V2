@@ -7382,3 +7382,11 @@ The owner accepted W2 of `docs/proposals/plan-forward-2026-11.md`. The owner's o
 W2's done-when holds in `tests/test_canvas_service.py`: a workflow drawn by hand, compiled, saved, accepted and run gives the same outputs as the same workflow written in YAML.
 
 Left for the diagram-workflows proposal (another session): use case, activity and test-case views drawn through this service.
+
+### A drawn value means what it says (2026-11-20)
+
+The diagram-workflows session found a YAML trap: a comma inside a written mapping splits the value. `{lane: Doctor (Lead, tier 1)}` reads as `{'lane': 'Doctor (Lead', 'tier 1)': None}`. A colon in plain text is the same trap: `arg reason: the owner said: do it` became a mapping.
+
+`canvas/workflows.py` now reads a directive's value as a reference, a scalar, or (only when it starts with `{` or `[`) a mapping or list. A written mapping or list that parses with a bare null, or does not parse, is refused at compile time with "quote that value"; it is never guessed. A plain sentence with commas or colons stays a sentence.
+
+Tests: `test_a_plain_value_stays_what_it_says`, `test_a_comma_that_splits_a_written_mapping_is_refused`.

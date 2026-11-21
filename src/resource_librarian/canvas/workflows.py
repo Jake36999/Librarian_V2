@@ -52,14 +52,45 @@ def directives(text: str) -> tuple[dict[str, str], str]:
     return found, ""
 
 
+class AmbiguousValue(ValueError):
+    """A directive value YAML would silently read as something else."""
+
+
+def _has_null(value: Any) -> bool:
+    if isinstance(value, dict):
+        return any(v is None or _has_null(v) for v in value.values())
+    if isinstance(value, list):
+        return any(v is None or _has_null(v) for v in value)
+    return False
+
+
 def _value(raw: str) -> Any:
+    """A directive's value: a reference, a YAML scalar, or a mapping or list written as one.
+
+    Two YAML traps are guarded (found by the diagram-workflows session, 2026-11-20):
+    - plain text with a colon ("the owner said: do it") would become a mapping, so text that
+      does not start with `{` or `[` is only ever a scalar;
+    - a comma inside a written mapping ("{lane: Doctor (Lead, tier 1)}") silently splits the
+      value into a key with no value, so a mapping or list holding a bare null is refused."""
     raw = raw.strip()
     if REFERENCE.match(raw):
         return {"from": raw}
+    if not raw:
+        return ""
     try:
-        return yaml.safe_load(raw) if raw else ""
-    except yaml.YAMLError:
+        parsed = yaml.safe_load(raw)
+    except yaml.YAMLError as exc:
+        if raw[0] in "{[":
+            raise AmbiguousValue(f"{raw!r} is not a valid mapping or list ({exc.problem}); "
+                                 f"quote any value holding a comma or a colon") from exc
         return raw
+    if isinstance(parsed, (dict, list)):
+        if raw[0] not in "{[":
+            return raw                                   # a sentence with a colon is a sentence
+        if _has_null(parsed):
+            raise AmbiguousValue(f"{raw!r} reads as {parsed!r}: a comma or colon inside it split "
+                                 f"a value; quote that value (\"Doctor (Lead, tier 1)\")")
+    return parsed
 
 
 def _shown(value: Any) -> str:
@@ -104,17 +135,22 @@ def compile_canvas(payload: dict[str, Any]) -> dict[str, Any]:
                 errors.append(f"{where}: a step needs an `id:`")
                 continue
             step: dict[str, Any] = {"id": sid, "action": found["action"]}
-            args = {k.split(" ", 1)[1]: _value(v) for k, v in found.items() if k.startswith("arg ")}
-            if args:
-                step["args"] = args
-            for key in ("each", "when", "on_error", "side_effects"):
-                if key in found:
-                    step[key] = _value(found[key])
-            if "accept" in found:
-                accept = _value(found["accept"])
-                step["acceptance_criteria"] = accept if isinstance(accept, list) else [accept]
-            if "compensation" in found:
-                step["compensation"] = _value(found["compensation"])
+            try:
+                args = {k.split(" ", 1)[1]: _value(v) for k, v in found.items()
+                        if k.startswith("arg ")}
+                if args:
+                    step["args"] = args
+                for key in ("each", "when", "on_error", "side_effects"):
+                    if key in found:
+                        step[key] = _value(found[key])
+                if "accept" in found:
+                    accept = _value(found["accept"])
+                    step["acceptance_criteria"] = accept if isinstance(accept, list) else [accept]
+                if "compensation" in found:
+                    step["compensation"] = _value(found["compensation"])
+            except AmbiguousValue as exc:
+                errors.append(f"{where}: {exc}")
+                continue
             unknown = sorted(k for k in found if k not in {
                 "role", "id", "action", "each", "when", "on_error", "side_effects", "accept",
                 "compensation"} and not k.startswith("arg "))
@@ -159,18 +195,21 @@ def compile_canvas(payload: dict[str, Any]) -> dict[str, Any]:
                                   "purpose": anchor["prose"] or found.get("purpose", "")}
     inputs: dict[str, Any] = {}
     outputs: dict[str, Any] = {}
-    for key, value in found.items():
-        if key.startswith("input "):
-            kind, _, default = value.partition("=")
-            spec: dict[str, Any] = {"type": kind.strip()}
-            if _:
-                spec["default"] = _value(default)
-            inputs[key.split(" ", 1)[1]] = spec
-        elif key.startswith("output "):
-            outputs[key.split(" ", 1)[1]] = _value(value)
-    for key in ("tier", "macro"):
-        if key in found:
-            definition[key] = _value(found[key])
+    try:
+        for key, value in found.items():
+            if key.startswith("input "):
+                kind, _, default = value.partition("=")
+                spec: dict[str, Any] = {"type": kind.strip()}
+                if _:
+                    spec["default"] = _value(default)
+                inputs[key.split(" ", 1)[1]] = spec
+            elif key.startswith("output "):
+                outputs[key.split(" ", 1)[1]] = _value(value)
+        for key in ("tier", "macro"):
+            if key in found:
+                definition[key] = _value(found[key])
+    except AmbiguousValue as exc:
+        errors.append(f"{anchor['where']}: {exc}")
     if inputs:
         definition["inputs"] = inputs
     out_steps = []
