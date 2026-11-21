@@ -7441,3 +7441,10 @@ The owner started W7 with its root causes first (`docs/proposals/plan-forward-20
   - GLM-5.3, Resource-Library's `route_review`, was qualified as a Clerk there (L0 and L1 passed, screened, $0.0004).
 
 Tests: `tests/test_w7_root_causes.py`. Not yet checked live: a claim review running on GLM-5.3 inside the Core (the next drafted offering will show it on its review record). OP9's cause, three reviews that did not complete, is still open; failed reviews now record their reason.
+
+### A permission envelope, asked once, is planned (2026-11-21)
+
+Owner direction: map the permissions each action needs, so that whatever is composed from them, a run's permissions can be predicted. Then ask once, size the step budget to match, and let anything outside the expected run go first to the oracle as a scope question, then to tier 0 or the Owner.
+- **Plan forward.** W1b gains item 5, the permission envelope: one gate before the run, nothing asked again inside it, and the step budget sized from the manifest. W9 gains the oracle's scope judgments. A judgment of "in scope" is a reported verdict, and allows only what the mandate already permits.
+- **Policy.** `docs/policy/composition.md` gains rules 15–17, listed as not yet enforced. An envelope never holds a person's reserved decisions, a per-call always-ask tool, or anything above the parent's mandate.
+- **What exists.** `workflow_grant` already grants a person-started workflow (`granted_actions()`) or a source batch as a whole. A session's Lead still asks tool by tool; on 20 November it asked once per Geo-Grapher tool, and the always-ask `macro_run` waited 600 s each time.

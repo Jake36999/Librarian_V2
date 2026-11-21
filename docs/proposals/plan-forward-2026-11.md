@@ -85,7 +85,17 @@ The modular action library the owner described exists: `workflows.py` runs YAML 
 2. **Manifests.** Compile a JSON manifest per process: component tree, actions in order with step paths and declared properties, a roll-up, and the pinned digest. It is checked against a JSON Schema and rebuilt whenever the digest changes. The prototype is in `reports/2026-11-20-workflow-map/examples/manifests/build_manifest.py`.
 3. **Mandates.** A parent process states its mandate, and the suitability check runs from manifests alone before a component is integrated.
 4. **The order's direct uses.** Allow an action directly in a pipeline, and a workflow inside a workflow without a cycle, as the policy allows. Today the validator forbids both.
-5. **The coded flows as pipelines.** Express the folder ingestion (`ingest-folder`), the source batch stages and folder review as pipelines over registered actions, so a Lead can run them and tier 0 need not orchestrate. Session phases stay a state machine over declared data.
+5. **A permission envelope, asked once** (owner, 21 November 2026). Each action's permissions are declared: registry tier, effect, open-world, its broker setting, and whether it always asks. So whatever workflows, pipelines or sprints are built from them, a run's permissions can be predicted from its manifest.
+   - **One gate, before the run.** The person, or tier 0 for an agent-run sprint, approves the run's envelope once: the tools, their effects and outside access, and a step budget sized from the manifest (action steps, `each` bounds, and stated headroom).
+   - **Inside the envelope, the broker does not ask again.** This generalises the existing `workflow_grant`, which already authorises a person-started workflow for exactly `granted_actions()`, to agent-run sessions and pipelines. The aim is to end the 20 November pattern: every Geo-Grapher tool asked once per session, and an always-ask macro waiting 600 s each time.
+   - **Never in an envelope.** A decision reserved for a person (promotion under `person` mode, sensitivity reviews, spending without approval). A per-call always-ask tool (`project_edit`, `sandbox_output`). Anything above the parent process's mandate.
+   - **A call outside the envelope** goes first to the oracle (W9), which judges whether it is in scope of the run's specification.
+     - In scope, and within the mandate: allowed, and listed in the end-of-run report.
+     - Out of scope, uncertain, or above the mandate: handed to the orchestrating tier-0 agent or the Owner as one permission request.
+     - Critical: to the Owner at once.
+
+   **Done when:** a research or ingestion pipeline run asks for permission once, and each call outside its envelope is either judged in scope and reported at the end, or escalated.
+6. **The coded flows as pipelines.** Express the folder ingestion (`ingest-folder`), the source batch stages and folder review as pipelines over registered actions, so a Lead can run them and tier 0 need not orchestrate. Session phases stay a state machine over declared data.
 
 **Done when:**
 - every shipped process has a manifest that validates;
@@ -198,7 +208,8 @@ Root causes first: **OP1** (an owner and an alert for enriched-but-unaccepted wo
    - The result comes back once, to whoever set the specification.
 
    This builds on the audited session's verifiers and the claim review.
-3. **Change, then blast radius, then checks, then oracle, then scouting, then remedy (P8).** This includes security checks: secrets, tier changes, new outbound calls, path escapes, injected instructions. It needs W3.
+3. **Scope judgments for the permission envelope (W1b, item 5).** A call outside a run's envelope is judged by the oracle against the run's specification. Its "in scope" is a verdict like any other: a claim with evidence, reported at the end of the run, and re-checked. It can allow only what the run's mandate already permits.
+4. **Change, then blast radius, then checks, then oracle, then scouting, then remedy (P8).** This includes security checks: secrets, tier changes, new outbound calls, path escapes, injected instructions. It needs W3.
 
 **Needs:** W1b (manifests and declared state), W3, OP8, and a short fixed list of models for the oracle and doctor roles (an owner decision).
 

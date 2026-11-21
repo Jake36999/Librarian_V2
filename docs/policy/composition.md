@@ -31,6 +31,12 @@ Every unit of work is a **process**, of one of four kinds, in this order:
 12. **Composition starts from the repertoire.** Before drafting a process, look for an accepted one that covers the need, lowest layer first. A draft that duplicates an accepted process is not kept: the existing one is used.
 13. **A role is limited by its mount, not by a list of prohibitions.** A role sees, and composes from, only its subset of the repertoire, as a session phase offers only its bundle. A prose "forbidden" list is never the safeguard.
 
+## Permission for a run
+
+15. **A run's permission is asked once, for what its manifest predicts** (owner, 21 November 2026). The person, or tier 0 for an agent-run sprint, approves the envelope: tools, effects, outside access and step budget. Inside it, nothing is asked again.
+16. **An envelope never holds what a person reserves,** nor a per-call always-ask tool, nor anything above the parent's mandate.
+17. **A call outside the envelope is judged before it is asked.** The oracle decides whether it is in scope of the run's specification, and may allow only what the mandate already permits. Each allowance is reported at the end of the run. Anything else goes to the orchestrating agent or the Owner, and anything critical to the Owner at once.
+
 ## What a model decides
 
 14. **Code checks what code can check.** A threshold, a schema, a reference or a count is checked as code first. A model is given a closed choice between named options, never an open-ended check.
@@ -43,6 +49,7 @@ Planned:
 - rule 2's direct uses: an action in a pipeline, and a workflow inside a workflow;
 - sprints;
 - manifests and the mandate check (rules 9–10);
-- the repertoire and promotion (rules 11–12).
+- the repertoire and promotion (rules 11–12);
+- the permission envelope and the oracle's scope judgments (rules 15–17). Today only a person-started workflow or source batch is granted as a whole, for exactly the tools it names (`workflow_grant`). A session's Lead asks tool by tool.
 
 Until each is built, an agent follows the rule by hand and says so, and never claims the Core enforces it.
