@@ -1,0 +1,122 @@
+{
+  "nodes": [
+    {
+      "id": "librarian-group-0",
+      "type": "group",
+      "label": "G1 Use case diagram",
+      "x": 0,
+      "y": 0,
+      "width": 520,
+      "height": 480
+    },
+    {
+      "id": "librarian-card-0-0",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/geo-grapher/to-be/use-case-diagram.md",
+      "x": 20,
+      "y": 40,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-group-1",
+      "type": "group",
+      "label": "G2 Composition",
+      "x": 580,
+      "y": 0,
+      "width": 520,
+      "height": 480
+    },
+    {
+      "id": "librarian-card-1-0",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/geo-grapher/to-be/composition.md",
+      "x": 600,
+      "y": 40,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-group-2",
+      "type": "group",
+      "label": "G3 Use cases",
+      "x": 1160,
+      "y": 0,
+      "width": 520,
+      "height": 1740
+    },
+    {
+      "id": "librarian-card-2-0",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/geo-grapher/to-be/views/federated-search.views.md",
+      "x": 1180,
+      "y": 40,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-card-2-1",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/geo-grapher/to-be/views/graph-building.views.md",
+      "x": 1180,
+      "y": 460,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-card-2-2",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/geo-grapher/to-be/views/paper-import.views.md",
+      "x": 1180,
+      "y": 880,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-card-2-3",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/geo-grapher/to-be/views/query-graph.views.md",
+      "x": 1180,
+      "y": 1300,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-group-3",
+      "type": "group",
+      "label": "G4 States",
+      "x": 1740,
+      "y": 0,
+      "width": 520,
+      "height": 480
+    },
+    {
+      "id": "librarian-card-3-0",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/geo-grapher/to-be/states.md",
+      "x": 1760,
+      "y": 40,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-group-4",
+      "type": "group",
+      "label": "Index",
+      "x": 2320,
+      "y": 0,
+      "width": 520,
+      "height": 480
+    },
+    {
+      "id": "librarian-card-4-0",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/geo-grapher/to-be/INDEX.md",
+      "x": 2340,
+      "y": 40,
+      "width": 480,
+      "height": 400
+    }
+  ],
+  "edges": []
+}

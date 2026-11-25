@@ -1,0 +1,41 @@
+# UC-G4 to-be: bridge candidates become reviewed bridges, so graphs can be related (GT5).
+diagram: federated-search
+use_case: UC-G4
+status: PROPOSED_UNACCEPTED
+supersedes: [reports/2026-11-25-systems-analysis-finalisation/geo-grapher/as-is/federated-search.spec.yaml]
+kind: activity
+title: Search across graphs and their bridges (proposed)
+problem:
+  symptom: "As-is: no bridges exist; the computed candidates go nowhere."
+  root: "A candidate bridge is checked against its witnesses and decided like any other proposal; accepted bridges connect the results."
+lanes: [Owner, Lead (tier 1), Geo-Grapher service, Oracle]
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: choose, kind: activity, lane: Lead (tier 1), step: 1, label: "chooses 2-8 graphs, a query and a budget"}
+  - {id: dvalid, kind: decision, lane: Geo-Grapher service, label: "within the bounds?"}
+  - {id: invalid, kind: activity, lane: Geo-Grapher service, label: "refuses and names the bound"}
+  - {id: search, kind: activity, lane: Geo-Grapher service, step: 2, label: "searches each readable graph whole and selects envelopes under the budget"}
+  - {id: answer, kind: activity, lane: Geo-Grapher service, step: 3, label: "returns per-graph rankings, each omission's reason, and the accepted bridges between the hits"}
+  - {id: dbridged, kind: decision, lane: Lead (tier 1), label: "do accepted bridges relate the results?"}
+  - {id: propose, kind: activity, lane: Geo-Grapher service, label: "proposes bridge candidates between the hit entities, with their witnesses"}
+  - {id: check, kind: activity, lane: Oracle, label: "checks each candidate's witnesses (Tier A) before anyone decides"}
+  - {id: decide, kind: activity, lane: Owner, label: "accepts or rejects the checked candidates, or a standing policy does"}
+  - {id: compare, kind: activity, lane: Lead (tier 1), step: 4, label: "relates the graphs' results through their bridges"}
+  - {id: e1, kind: end, outcome: success, label: "the graphs' results are related through accepted bridges"}
+  - {id: e_refused, kind: end, outcome: refused, label: "out of bounds"}
+edges:
+  - {from: s, to: choose}
+  - {from: choose, to: dvalid}
+  - {from: dvalid, to: search, guard: "yes"}
+  - {from: dvalid, to: invalid, guard: "no", ext: 2a}
+  - {from: invalid, to: e_refused}
+  - {from: search, to: answer}
+  - {from: answer, to: dbridged}
+  - {from: dbridged, to: compare, guard: "yes"}
+  - {from: dbridged, to: propose, guard: "no", ext: 4a}
+  - {from: propose, to: check}
+  - {from: check, to: decide}
+  - {from: decide, to: compare}
+  - {from: compare, to: e1}
+evidence:
+  - "As-is weaknesses G-FED-01, G-FED-02; analyze_cross_graphs bridge_candidates (graph_server.py line 118)."

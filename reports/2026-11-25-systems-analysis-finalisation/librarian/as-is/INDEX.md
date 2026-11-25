@@ -86,8 +86,8 @@ Every weakness found in the as-is, and the to-be element that handles it.
 | W-INT-02 | gap | `source-intake` | A quarantined capture waits for someone to retry it, and nobody is told. | open: The to-be capture quarantines a failed sibling and carries on, but opens no ticket for it. |
 | W-ORA-01 | gap | `oracle` | Admitted contracts and Tier A checks exist only in audited sessions; ingestion, research and workflows are judged by whoever ran them. | `oracle` |
 | W-PAR-01 | risk | `source-parse` | A provisional paper projection is written before reading; if reading then fails, a catalogue-only projection remains. | `source-parse` |
-| W-PUB-01 | cost | `paper-publication` | Old and failed candidate paper databases are never cleaned up. | open: Cleaning old and failed candidate paper databases is Geo-Grapher's; decided in its pack. |
-| W-PUB-02 | gap | `paper-publication` | Publication needs an accepted current folder, so a source added without folder review is never published. | open: Publication still requires an accepted folder; decided in the Geo-Grapher pack. |
+| W-PUB-01 | cost | `paper-publication` | Old and failed candidate paper databases are never cleaned up. | open: Handled on Geo-Grapher's side (G-BLD-06, G-GEN-01): geo-grapher/to-be paper-import inserts into one active database, and snapshots are pruned by retention. |
+| W-PUB-02 | gap | `paper-publication` | Publication needs an accepted current folder, so a source added without folder review is never published. | open: Handled on Geo-Grapher's side (G-BLD-10): geo-grapher/to-be paper-import publishes a source without folder review into the library's own papers group. |
 | W-REA-01 | fault | `source-reading` | Read completion follows the remaining-part counts, not the validity of each part's answer. | `source-reading` |
 | W-REA-02 | gap | `source-reading` | The metadata stage copies a few literal Data facts and lists the unknown fields; there is no semantic metadata step. | `source-reading` |
 | W-RES-01 | cost | `research` | The candidate pool is the whole library: 82 of its own notes and folder cards had to be decided in the 20 November run (OP4). | `research` |

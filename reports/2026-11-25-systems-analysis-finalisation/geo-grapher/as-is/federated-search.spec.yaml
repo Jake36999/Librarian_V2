@@ -1,0 +1,51 @@
+# UC-G4 as-is: compare graphs by federated search, and their declared bridges (graph_router.py federated_search).
+diagram: federated-search
+use_case: UC-G4
+status: IMPLEMENTED_VERIFIED
+supersedes: []
+kind: activity
+title: Search across graphs and their bridges, as it runs today
+problem:
+  symptom: "No bridges exist between any of the 30 graphs, so a cross-graph search returns separate lists that nothing connects."
+  root: "Bridges are only ever declared by an operator; the bridge candidates Geo-Grapher can compute are read-only and go nowhere."
+lanes: [Owner, Lead (tier 1), Geo-Grapher service]
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: choose, kind: activity, lane: Lead (tier 1), step: 1, label: "chooses 2-8 graphs, a query, a mode and a token budget (federated_search)"}
+  - {id: dvalid, kind: decision, lane: Geo-Grapher service, label: "2-8 distinct graphs, budget 2048-32768 tokens (256 with a profile), query 1-500 characters?"}
+  - {id: invalid, kind: activity, lane: Geo-Grapher service, label: "refuses and names the bound"}
+  - {id: permit, kind: activity, lane: Geo-Grapher service, step: 2, label: "checks each graph's reader permission for this consumer"}
+  - {id: each, kind: activity, lane: Geo-Grapher service, step: 3, label: "searches each graph whole, in full and compact envelopes"}
+  - {id: davail, kind: decision, lane: Geo-Grapher service, label: "is every graph available?"}
+  - {id: omit, kind: activity, lane: Geo-Grapher service, label: "records the unavailable graph as omitted; the healthy graphs go on"}
+  - {id: select, kind: activity, lane: Geo-Grapher service, step: 4, label: "selects whole envelopes under the total budget (pc-mckp-v1); a graph whose smallest envelope cannot fit is omitted"}
+  - {id: answer, kind: activity, lane: Geo-Grapher service, step: 5, label: "returns per-graph rankings, with no global rank, and each omission's reason"}
+  - {id: bridges, kind: activity, lane: Lead (tier 1), step: 6, label: "lists the declared bridges between the selected graphs (list_bridges)"}
+  - {id: dbridges, kind: decision, lane: Geo-Grapher service, label: "are any bridges declared?"}
+  - {id: byhand, kind: activity, lane: Lead (tier 1), label: "relates the lists by hand; bridge candidates (analyze_cross_graphs) are read-only"}
+  - {id: declare, kind: activity, lane: Owner, label: "may declare a bridge as an operator; it stays an unverified assertion"}
+  - {id: compare, kind: activity, lane: Lead (tier 1), step: 7, label: "compares the graphs' results"}
+  - {id: e1, kind: end, outcome: success, label: "the graphs' results are compared"}
+  - {id: e_refused, kind: end, outcome: refused, label: "the request is out of bounds"}
+edges:
+  - {from: s, to: choose}
+  - {from: choose, to: dvalid}
+  - {from: dvalid, to: permit, guard: "yes"}
+  - {from: dvalid, to: invalid, guard: "no", ext: 2a}
+  - {from: invalid, to: e_refused}
+  - {from: permit, to: each}
+  - {from: each, to: davail}
+  - {from: davail, to: select, guard: "yes"}
+  - {from: davail, to: omit, guard: "no", ext: 4a}
+  - {from: omit, to: select}
+  - {from: select, to: answer}
+  - {from: answer, to: bridges}
+  - {from: bridges, to: dbridges}
+  - {from: dbridges, to: compare, guard: "yes"}
+  - {from: dbridges, to: byhand, guard: "none (today: none in any graph)", ext: 7a}
+  - {from: byhand, to: declare}
+  - {from: declare, to: compare}
+  - {from: compare, to: e1}
+evidence:
+  - "F:/uv-data/Geo_Grapher/src/geographer/graph_router.py lines 572-610 (federated_search); graph_server.py lines 117-130 (list_bridges, analyze_cross_graphs, federated_search)."
+  - "geographer-graph-building problem: 0 bridges exist (measured 22 November)."

@@ -1,0 +1,67 @@
+# Geo-Grapher's as-is weakness register (code at e71967a; measurements of 22 November). Same fields as the
+# Librarian's register. Where a weakness is the Geo-Grapher side of a Librarian one, `librarian` names it.
+weaknesses:
+  - {id: G-BLD-01, spec: graph-building, at: a5, kind: cost, librarian: W-FOL-01,
+     says: "Every folder accept loops serially over every reviewed group in the library, under a 14,400-second timeout.",
+     evidence: "geographer/folder_review.py lines 128-131; Librarian folder_review.py lines 263-312"}
+  - {id: G-BLD-02, spec: graph-building, at: x4, kind: fault,
+     says: "Parse failures (a missing tree-sitter grammar, bad UTF-8, TypeScript) are logged, and the snapshot still publishes status complete.",
+     evidence: "geographer/treesitter.py lines 22-30; parse_failures_json"}
+  - {id: G-BLD-03, spec: graph-building, at: a6, kind: cost,
+     says: "Each build appends a full, unpruned snapshot: 30 graphs use 77.2 GB, up to 19.5 GB for one documentation graph.",
+     evidence: "geographer/folder_review.py lines 138-154; measured 22 November"}
+  - {id: G-BLD-04, spec: graph-building, at: a16, kind: risk,
+     says: "The code stores and the catalogue are written without a WAL checkpoint.",
+     evidence: "graph_catalog.py lines 93-105; graph-building a6 and a16"}
+  - {id: G-BLD-05, spec: graph-building, at: e2, kind: fault,
+     says: "A failed build ends in an opaque GEOGRAPHER_CALL_FAILED, while the groups earlier in the loop may already be committed.",
+     evidence: "graph-building e2"}
+  - {id: G-BLD-06, spec: graph-building, at: a15, kind: cost, librarian: W-PUB-01,
+     says: "Each paper publication copies the whole previous paper database into a new generation and deletes nothing: 96 copies take 873 MB for one 16 MB database.",
+     evidence: "geographer/library_papers.py publish (backup into papers-native-<uuid>.sqlite; 'never edited or deleted here')"}
+  - {id: G-BLD-07, spec: graph-building, at: a13, kind: cost,
+     says: "Each PDF is published by a cold-start CLI subprocess.",
+     evidence: "Librarian paper_graph.py; graph-building a13"}
+  - {id: G-BLD-08, spec: graph-building, at: a17, kind: gap,
+     says: "Publication is recorded complete with no check of claims or concepts: 12 unread papers have 0 claims, and 72 have 0 concepts.",
+     evidence: "measured 22 November; graph-building a17"}
+  - {id: G-BLD-09, spec: graph-building, at: d9, kind: drift, librarian: W-CIT-02,
+     says: "48 published papers have no accepted Source note: the graph and the library disagree about what is in the library.",
+     evidence: "measured 22 November; OP1"}
+  - {id: G-BLD-10, spec: graph-building, at: d6, kind: gap, librarian: W-PUB-02,
+     says: "A paper is published only into an active reviewed folder group whose reviewed roots hold the original, so a source added without folder review is never published.",
+     evidence: "geographer/library_papers.py PAPER_SCOPE checks"}
+  - {id: G-BLD-11, spec: graph-building, at: a16, kind: gap, librarian: W-CIT-01,
+     says: "The import receipt returns a document count, not the new document's id, so neither side can store a link between the paper and its source.",
+     evidence: "geographer/library_papers.py publish return value"}
+  - {id: G-BLD-12, spec: graph-building, at: a14, kind: risk,
+     says: "The disk reserve grows with twice the previous paper database, so as generations pile up, publication will be refused (DISK_RESERVE).",
+     evidence: "geographer/library_papers.py lines 75-77"}
+  - {id: G-QRY-01, spec: query-graph, at: list, kind: cost,
+     says: "list_graphs answers with every graph and its snapshot; an agent that needs only the labels gets them from the Librarian, not from Geo-Grapher.",
+     evidence: "graph_server.py line 110 (router.summary); Librarian 9fd2fe9"}
+  - {id: G-QRY-02, spec: query-graph, at: toolarge, kind: gap,
+     says: "An item larger than the connection's limit is refused outright, with no pointer to a smaller part of it.",
+     evidence: "graph_router.py lines 560-562"}
+  - {id: G-FED-01, spec: federated-search, at: 7a, kind: gap,
+     says: "No bridges exist: bridges are only declared by hand, and the bridge candidates Geo-Grapher computes are read-only.",
+     evidence: "measured 22 November; graph_server.py line 118"}
+  - {id: G-FED-02, spec: federated-search, at: answer, kind: risk,
+     says: "With no global rank, relating one graph's results to another's is left to the agent.",
+     evidence: "graph_router.py: ranking independent_per_graph_no_global_rank"}
+  - {id: G-GEN-01, spec: "state:paper-generation", at: "*", kind: cost,
+     says: "A superseded or failed generation is retained forever; nothing ever deletes one.",
+     evidence: "geographer/library_papers.py comment: failed or unbound candidates remain"}
+themes:
+  - {id: GT1, name: "Rebuild instead of change", weaknesses: [G-BLD-01, G-BLD-03, G-BLD-06, G-BLD-07, G-BLD-12, G-GEN-01],
+     says: "A change copies or rebuilds everything near it, and nothing old is ever removed."}
+  - {id: GT2, name: "Status says more than was done", weaknesses: [G-BLD-02, G-BLD-05, G-BLD-08],
+     says: "Complete is recorded over parse failures, empty papers and half-committed loops."}
+  - {id: GT3, name: "Two stores, no stored link", weaknesses: [G-BLD-09, G-BLD-10, G-BLD-11],
+     says: "The paper graph and the library cannot point at each other, so they drift apart."}
+  - {id: GT4, name: "Durability", weaknesses: [G-BLD-04],
+     says: "Writes are not checkpointed."}
+  - {id: GT5, name: "Graphs stay islands", weaknesses: [G-FED-01, G-FED-02],
+     says: "Nothing connects one graph to another except a person's hand."}
+  - {id: GT6, name: "The agent interface answers too much or nothing", weaknesses: [G-QRY-01, G-QRY-02],
+     says: "Listing returns everything; a large item returns nothing."}

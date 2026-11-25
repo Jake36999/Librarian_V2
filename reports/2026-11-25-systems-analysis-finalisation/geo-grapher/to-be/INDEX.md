@@ -1,0 +1,24 @@
+# Geo-Grapher — to-be pack
+
+The preferred Geo-Grapher: a decision changes its own group as a delta, a paper is one checked insert whose receipt carries the link both sides store, the agent interface answers with what is needed, and bridge candidates become reviewed bridges. Nothing here is accepted or built (PROPOSED_UNACCEPTED).
+
+[Use case diagram](use-case-diagram.md) · [Composition](composition.md) · [States](states.md) · [Canvas](index.canvas)
+
+## Use cases
+
+| Id | Use case | Status | Nodes | Steps | Paths | Tier-0 turns (main / worst) | Weaknesses | Handles | Errors | Warnings |
+|---|---|---|---|---|---|---|---|---|---|---|
+| UC-G4 | [federated-search](views/federated-search.views.md) | `PROPOSED_UNACCEPTED` | 13 | 4 | 3 | — | 0 | 2 | 0 | 1 |
+| UC-G1 | [graph-building](views/graph-building.views.md) | `PROPOSED_UNACCEPTED` | 17 | 7 | 4 | — | 0 | 5 | 0 | 0 |
+| UC-G2 | [paper-import](views/paper-import.views.md) | `PROPOSED_UNACCEPTED` | 21 | 7 | 6 | — | 0 | 7 | 0 | 0 |
+| UC-G3 | [query-graph](views/query-graph.views.md) | `PROPOSED_UNACCEPTED` | 14 | 6 | 3 | — | 0 | 2 | 0 | 1 |
+
+Not drawn yet: UC-G5 Compare (deferred: not on the Librarian's path); UC-G6 Explore a graph in the 3D workspace (deferred: the person's UI); UC-G7 Build graphs of the Owner's own projects (deferred: outside folder review).
+
+## Checks
+
+Errors (0):
+
+Warnings (2):
+- federated-search: decision dvalid ('within the bounds?') tests a quantity but declares no boundary values
+- query-graph: decision dsize ('does the item fit the connection's limit?') tests a quantity but declares no boundary values

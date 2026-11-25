@@ -1,0 +1,14 @@
+# G4, to-be: a graph's paper store, changed in place, with rollback snapshots by retention.
+entities:
+  - id: paper-store
+    name: A graph's paper store
+    about: "One active database per graph; each paper is one transaction; snapshots exist only for rollback, by retention."
+    evidence: "To-be paper-import; as-is states.yaml (paper-generation)"
+    initial: active
+    final: [pruned]
+    transitions:
+      - {from: active, to: active, on: "a paper is inserted in one transaction, under compare-and-set", by: Geo-Grapher store}
+      - {from: active, to: snapshotted, on: "a rollback snapshot is taken on schedule or before a risky change", by: Geo-Grapher store}
+      - {from: snapshotted, to: active, on: "the snapshot is kept while the policy holds it", by: Geo-Grapher store}
+      - {from: snapshotted, to: pruned, on: "past the retention policy, and not pinned", by: Geo-Grapher store}
+      - {from: active, to: active, on: "a failed import rolls back its transaction; no file is left", by: Geo-Grapher store}

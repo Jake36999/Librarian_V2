@@ -17,7 +17,7 @@ So each as-is graph records its weaknesses and gaps beside its paths, and each t
 
 ### 1.1 Inventory
 
-There are 20 active specs, all rendered by `render_spec.py` or a wrapper around it. The folder `2026-11-21-isolated-incomplete-examples/` holds 109 more specs; it is quarantined and left out of everything below.
+There are 22 active specs (corrected from 20 during S1), all rendered by `render_spec.py` or a wrapper around it. The folder `2026-11-21-isolated-incomplete-examples/` holds 109 more specs; it is quarantined and left out of everything below.
 
 In the *Views* column: M = Mermaid activity diagram, W = written use case, D = decision tree, T = test table.
 
@@ -135,7 +135,12 @@ In priority order. "Keep" means an existing spec is canonical; "split" means it 
 | **S5. Compare and index** | A delta table per use case; the G1 diagrams and composition trees for both packs; the index canvases | Every to-be element traces to an as-is element or is marked new, with its OP or proposal section |
 | **S6. Owner review** | Walk the two packs side by side | The Owner accepts the as-is pack as current, and marks which to-be graphs are accepted as the plan |
 
-**Status.** S0 done 25 November (see that day's §19 entry). D5 was settled with it: the Owner approved S0, and with it the commit of the other sessions' terminology and policy edits. The re-rendered activation views come from the corrected spec: 12 steps and 47 extension scenarios, where the stale views had 11 and 30. S1–S6 and D1–D4 are open.
+**Status, 25 November.**
+- **S0 done.** D5 was settled with it: the Owner approved S0, and with it the commit of the other sessions' terminology and policy edits.
+- **D1 decided:** no swim-lane canvases.
+- **S1–S4 done** for the Librarian and Geo-Grapher; see [README.md](README.md).
+- **S5 mostly done.** Each to-be use case's `handles` table is its delta against the as-is, and each pack has its index canvas. A side-by-side delta page is not written.
+- **Open:** S6 (the Owner's review) and D2–D4.
 
 **Cost.** S0–S2 and S5 need no model. The as-is specs in S3 come from code and run records. The to-be specs in S4 come from the existing proposals. A Clerk-tier model may draft first versions of the new specs, lane by lane, per the proposal's §8, but every spec passes the deterministic checks before it counts.
 

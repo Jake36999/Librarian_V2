@@ -7520,3 +7520,31 @@ S4 for the Librarian (`librarian/to-be`): 19 proposed use cases, all passing the
 The 24 November to-be specs were split and relabelled only; their wording, which leans on rule and workstream codes, is unchanged. The as-is index shows, theme by theme, how much is handled.
 
 Tests: no code changed (reports only); the suite run above covers it.
+
+### Geo-Grapher mapped as it is, and as proposed (2026-11-25)
+
+The Geo-Grapher packs (`geo-grapher/as-is`, `geo-grapher/to-be`), from its code at `e71967a` (`F:/uv-data/Geo_Grapher`, read only; nothing there was changed).
+- **As-is:** three use cases that sit on the Librarian's path:
+  - graph building with paper publication (the 22 November spec, kept whole at 36 nodes);
+  - querying a graph over MCP;
+  - federated search with bridges.
+
+  Three more are deferred: compare and merge, the 3D workspace, own-project graphs.
+- **Its register: 17 weaknesses in six root causes.**
+  - Rebuild instead of change: a full database copy per paper (`library_papers.py` publish); 77.2 GB for 30 graphs.
+  - Complete over parse failures and empty papers.
+  - Two stores with no stored link: the import receipt returns a count, not the document id.
+  - No WAL checkpoint; graphs with no bridges; an agent interface that answers too much or nothing.
+
+  Where a weakness is the Geo-Grapher side of a Librarian one, the register names it.
+- **To-be:** four use cases that handle all 17.
+  - A decided group is applied as a delta, in one transaction, pruned by retention.
+  - A paper is one checked insert whose receipt carries the link both sides store; a source without folder review goes into the library's own papers group.
+  - Labels are paged; a large item answers with its parts.
+  - Bridge candidates are checked by the Oracle and decided.
+- The Librarian's open W-PUB-01 and W-PUB-02 now point at the Geo-Grapher elements that handle them.
+- [README.md](../reports/2026-11-25-systems-analysis-finalisation/README.md) indexes the four packs. `render_pack.py --check --all` passes: every view is newer than its spec.
+
+Open: S6 (the Owner's review); D2–D4. Two Owner decisions (W-ACT-05, W-ACC-04) and two to-be gaps (W-INT-02, W-ACC-01). A plain-language pass over the 24 November to-be wording.
+
+Tests: reports only; no code changed.

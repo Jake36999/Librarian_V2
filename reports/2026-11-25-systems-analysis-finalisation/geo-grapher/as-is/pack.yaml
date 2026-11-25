@@ -1,0 +1,62 @@
+# Geo-Grapher as it runs today (F:/uv-data/Geo_Grapher at e71967a). Rendered by ../../render_pack.py.
+pack: geo-grapher-as-is
+system: Geo-Grapher
+state: as-is
+about: >-
+  How Geo-Grapher builds, publishes and serves the library's graphs today, and how agents query them.
+  weaknesses.yaml records what goes wrong; where a weakness is the Geo-Grapher side of a Librarian one,
+  it names the Librarian id.
+actors:
+  - {id: owner, name: Owner}
+  - {id: lead, name: Lead (tier 1)}
+  - {id: core, name: Librarian Core}
+  - {id: model, name: Model worker}
+use_cases:
+  - id: UC-G1
+    name: Build the library's graphs from reviewed folders, and publish its papers
+    spec: graph-building
+    actors: [owner, core, model]
+    fields:
+      brief: "Accepting folder decisions has Geo-Grapher apply every reviewed group; later, each fully read PDF is published into its group's paper database."
+      primary_actor: Owner
+      supporting_actors: "Librarian Core, model worker, Geo-Grapher CLI, store and service"
+      preconditions: "Folder decisions accepted; Geo-Grapher enabled for the library"
+      trigger: "A folder accept; a source's publish stage"
+      success_guarantee: "Current code and paper graphs, served on loopback MCP"
+      minimal_guarantee: "Scope, hash and disk checks refuse a bad import"
+      open_questions: "OP2: apply only the changed group"
+    boundaries:
+      - {at: a14, values: ["free space 5 GiB + required", "exactly at the reserve", "1 byte under"], expect: "under the reserve: DISK_RESERVE"}
+  - id: UC-G3
+    name: Query a graph through MCP
+    spec: query-graph
+    actors: [lead]
+    fields:
+      brief: "An agent lists the graphs, searches one by label, pages the hits, reads an entity and cites it by handle."
+      primary_actor: "Lead (tier 1), or any agent"
+      supporting_actors: "Geo-Grapher service and store"
+      preconditions: "The graph is served and readable for the consumer's role"
+      trigger: "A question needs code or paper evidence"
+      success_guarantee: "The entity is read and cited by its handle"
+      minimal_guarantee: "A refusal names its reason"
+      open_questions: "Should listing return labels only, paged?"
+    boundaries:
+      - {at: dsize, values: ["item at max_result_chars", "one character over"], expect: "over: RESULT_TOO_LARGE"}
+  - id: UC-G4
+    name: Search across graphs and their bridges
+    spec: federated-search
+    actors: [lead, owner]
+    fields:
+      brief: "An agent compares 2-8 graphs: each is searched whole and ranked on its own, under one token budget; declared bridges connect them."
+      primary_actor: "Lead (tier 1)"
+      supporting_actors: "Geo-Grapher service, Owner (declares bridges)"
+      preconditions: "The graphs are readable"
+      trigger: "A comparison across projects"
+      success_guarantee: "Per-graph results, with every omission's reason"
+      minimal_guarantee: "One unavailable graph never hides the others"
+      open_questions: "Who turns bridge candidates into bridges?"
+    boundaries:
+      - {at: dvalid, values: ["1 graph", "2", "8", "9", "budget 2047", "2048", "32768", "32769"], expect: "outside 2-8 graphs or 2048-32768 tokens: refused"}
+  - {id: UC-G5, name: Compare, merge and copy graphs, actors: [owner], deferred: "diff-graphs, clone-report, drift-report, merge, copy-graph, delete-graph: not on the Librarian's path"}
+  - {id: UC-G6, name: Explore a graph in the 3D workspace, actors: [owner], deferred: "the person's UI; not on the Librarian's path"}
+  - {id: UC-G7, name: Build graphs of the Owner's own projects, actors: [owner], deferred: "ingest-graphs, ingest-workspace, init-workspace: outside folder review"}

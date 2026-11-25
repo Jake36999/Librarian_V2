@@ -1,0 +1,43 @@
+# UC-G3 to-be: the agent interface answers with what is needed (GT6).
+diagram: query-graph
+use_case: UC-G3
+status: PROPOSED_UNACCEPTED
+supersedes: [reports/2026-11-25-systems-analysis-finalisation/geo-grapher/as-is/query-graph.spec.yaml]
+kind: activity
+title: Query a graph through MCP (proposed)
+problem:
+  symptom: "As-is: listing returns every graph and snapshot; a large item returns nothing."
+  root: "Listing pages labels; a large item answers with its parts."
+lanes: [Lead (tier 1), Geo-Grapher service, Geo-Grapher store]
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: list, kind: activity, lane: Geo-Grapher service, step: 1, label: "lists the readable graphs' labels and kinds, paged"}
+  - {id: search, kind: activity, lane: Lead (tier 1), step: 2, label: "searches one graph by its label"}
+  - {id: dgraph, kind: decision, lane: Geo-Grapher service, label: "does the label resolve, and may this consumer read it?"}
+  - {id: refused, kind: activity, lane: Geo-Grapher service, label: "refuses, naming the readable labels nearest to it"}
+  - {id: rank, kind: activity, lane: Geo-Grapher store, step: 3, label: "ranks the hits and returns a page with next_offset"}
+  - {id: content, kind: activity, lane: Lead (tier 1), step: 4, label: "reads an entity's content"}
+  - {id: dsize, kind: decision, lane: Geo-Grapher service, label: "does the item fit the connection's limit?"}
+  - {id: parts, kind: activity, lane: Geo-Grapher service, label: "returns the item's outline and the handles of its parts instead"}
+  - {id: part, kind: activity, lane: Lead (tier 1), label: "reads the part it needs"}
+  - {id: context, kind: activity, lane: Geo-Grapher service, step: 5, label: "returns the architecture context"}
+  - {id: cite, kind: activity, lane: Lead (tier 1), step: 6, label: "cites the entity by its handle"}
+  - {id: e1, kind: end, outcome: success, label: "read and cited by handle"}
+  - {id: e_refused, kind: end, outcome: refused, label: "the graph is not readable"}
+edges:
+  - {from: s, to: list}
+  - {from: list, to: search}
+  - {from: search, to: dgraph}
+  - {from: dgraph, to: rank, guard: "yes"}
+  - {from: dgraph, to: refused, guard: "no", ext: 3a}
+  - {from: refused, to: e_refused}
+  - {from: rank, to: content}
+  - {from: content, to: dsize}
+  - {from: dsize, to: context, guard: "yes"}
+  - {from: dsize, to: parts, guard: "no", ext: 5a}
+  - {from: parts, to: part}
+  - {from: part, to: context}
+  - {from: context, to: cite}
+  - {from: cite, to: e1}
+evidence:
+  - "As-is weaknesses G-QRY-01, G-QRY-02."

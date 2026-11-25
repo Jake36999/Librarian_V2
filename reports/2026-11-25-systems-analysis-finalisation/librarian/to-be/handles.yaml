@@ -64,7 +64,7 @@ handles:
 open:
   - {weakness: W-INT-02, reason: "The to-be capture quarantines a failed sibling and carries on, but opens no ticket for it."}
   - {weakness: W-ACC-01, reason: "No to-be element keeps the person's draft through a stale-revision conflict; a Web UI design is needed."}
-  - {weakness: W-PUB-02, reason: "Publication still requires an accepted folder; decided in the Geo-Grapher pack."}
-  - {weakness: W-PUB-01, reason: "Cleaning old and failed candidate paper databases is Geo-Grapher's; decided in its pack."}
+  - {weakness: W-PUB-02, reason: "Handled on Geo-Grapher's side (G-BLD-10): geo-grapher/to-be paper-import publishes a source without folder review into the library's own papers group."}
+  - {weakness: W-PUB-01, reason: "Handled on Geo-Grapher's side (G-BLD-06, G-GEN-01): geo-grapher/to-be paper-import inserts into one active database, and snapshots are pruned by retention."}
   - {weakness: W-ACT-05, reason: "Owner decision: may a person's own surface skip the Broker, as it does today?"}
   - {weakness: W-ACC-04, reason: "Owner decision: whether to correct the attester on the 96 notes accepted on 20 November."}

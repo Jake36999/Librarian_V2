@@ -1,0 +1,59 @@
+# UC-G2 to-be: publish one read paper into the active paper database, and store its link (GT1, GT2, GT3).
+diagram: paper-import
+use_case: UC-G2
+status: PROPOSED_UNACCEPTED
+supersedes: [reports/2026-11-25-systems-analysis-finalisation/geo-grapher/as-is/graph-building.spec.yaml]
+kind: activity
+title: Publish a read paper and store its link (proposed)
+problem:
+  symptom: "As-is: each paper copies the whole paper database, is published empty without complaint, and leaves no link to its source."
+  root: "A paper is one insert into the active database, checked for content, and its receipt carries the link both sides store."
+lanes: [Core, Geo-Grapher service, Geo-Grapher store, Oracle]
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: send, kind: activity, lane: Core, step: 1, label: "sends the artifact, its hash, the source's identity and the graph to the running service (no cold start)"}
+  - {id: scope, kind: activity, lane: Geo-Grapher service, step: 2, label: "checks the hash, the full conversion and the source's provenance"}
+  - {id: dgroup, kind: decision, lane: Geo-Grapher service, label: "which graph holds it?"}
+  - {id: libgroup, kind: activity, lane: Geo-Grapher service, label: "uses the library's own papers group for a source added without folder review"}
+  - {id: dscope, kind: decision, lane: Geo-Grapher service, label: "in scope, and the disk reserve met for this paper's own size?"}
+  - {id: refuse, kind: activity, lane: Geo-Grapher service, label: "refuses with the named check"}
+  - {id: insert, kind: activity, lane: Geo-Grapher store, step: 3, label: "inserts the paper into the active database in one transaction, under compare-and-set on the graph row"}
+  - {id: dcas, kind: decision, lane: Geo-Grapher store, label: "did the graph row stay unchanged?"}
+  - {id: retry, kind: activity, lane: Geo-Grapher store, label: "retries once against the current row"}
+  - {id: content, kind: activity, lane: Geo-Grapher store, step: 4, label: "counts the paper's claims and concepts"}
+  - {id: dcontent, kind: decision, lane: Geo-Grapher store, label: "a multi-page paper with claims and concepts?"}
+  - {id: empty, kind: activity, lane: Geo-Grapher store, label: "marks the paper partial, with the reason"}
+  - {id: receipt, kind: activity, lane: Geo-Grapher service, step: 5, label: "checkpoints, and returns the document id, its link to the source's identity, and the counts"}
+  - {id: link, kind: activity, lane: Core, step: 6, label: "stores the link on the staged item, and moves it to the note when the source is accepted"}
+  - {id: judge, kind: activity, lane: Oracle, step: 7, label: "checks that both sides hold the link and the counts are what the reading found"}
+  - {id: dverdict, kind: decision, lane: Oracle, label: "the verdict?"}
+  - {id: ticket, kind: activity, lane: Core, label: "opens a ticket for the empty or partial paper"}
+  - {id: e1, kind: end, outcome: success, label: "published, linked both ways, with content"}
+  - {id: e_partial, kind: end, outcome: partial, label: "published partial, with a ticket"}
+  - {id: e_refused, kind: end, outcome: refused, label: "refused, nothing written"}
+edges:
+  - {from: s, to: send}
+  - {from: send, to: scope}
+  - {from: scope, to: dgroup}
+  - {from: dgroup, to: dscope, guard: its reviewed folder group}
+  - {from: dgroup, to: libgroup, guard: no folder group, ext: 3a}
+  - {from: libgroup, to: dscope}
+  - {from: dscope, to: insert, guard: "yes"}
+  - {from: dscope, to: refuse, guard: "no", ext: 3b}
+  - {from: refuse, to: e_refused}
+  - {from: insert, to: dcas}
+  - {from: dcas, to: content, guard: "yes"}
+  - {from: dcas, to: retry, guard: "no", ext: 4a}
+  - {from: retry, to: content}
+  - {from: content, to: dcontent}
+  - {from: dcontent, to: receipt, guard: "yes"}
+  - {from: dcontent, to: empty, guard: "no", ext: 5a}
+  - {from: empty, to: receipt}
+  - {from: receipt, to: link}
+  - {from: link, to: judge}
+  - {from: judge, to: dverdict}
+  - {from: dverdict, to: e1, guard: complete}
+  - {from: dverdict, to: ticket, guard: partial, ext: 7a}
+  - {from: ticket, to: e_partial}
+evidence:
+  - "As-is weaknesses G-BLD-06 to G-BLD-12; geographer/library_papers.py publish."

@@ -2,6 +2,20 @@
   "pack": "geo-grapher/as-is",
   "receipts": [
     {
+      "spec": "federated-search.spec.yaml",
+      "sha256": "58a59ea6fd325b4fdbfd76bb1a003a5a46cbf49c30b2a6dbf35fb42223442053",
+      "status": "IMPLEMENTED_VERIFIED",
+      "nodes": 17,
+      "steps": 7,
+      "scenarios": 4,
+      "tier0_turns_mss": null,
+      "tier0_turns_worst": null,
+      "weaknesses": 2,
+      "handles": 0,
+      "errors": [],
+      "warnings": []
+    },
+    {
       "spec": "graph-building.spec.yaml",
       "sha256": "6127b17d0542315b0efe1e7bcb7244ec0068085e90cdc34c08552e8614bbb626",
       "status": "IMPLEMENTED_VERIFIED",
@@ -10,18 +24,30 @@
       "scenarios": 11,
       "tier0_turns_mss": null,
       "tier0_turns_worst": null,
-      "weaknesses": 0,
+      "weaknesses": 12,
       "handles": 0,
       "errors": [],
       "warnings": [
-        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
         "decision d2 ('strata, store ownership, and disk valid?') tests a quantity but declares no boundary values"
       ]
+    },
+    {
+      "spec": "query-graph.spec.yaml",
+      "sha256": "083283c74a41c2e6a8ddb3f1eccd2dfcc1c15148cd2ccac892481f0b9d192168",
+      "status": "IMPLEMENTED_VERIFIED",
+      "nodes": 15,
+      "steps": 6,
+      "scenarios": 4,
+      "tier0_turns_mss": null,
+      "tier0_turns_worst": null,
+      "weaknesses": 2,
+      "handles": 0,
+      "errors": [],
+      "warnings": []
     }
   ],
   "errors": [],
   "warnings": [
-    "graph-building: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
     "graph-building: decision d2 ('strata, store ownership, and disk valid?') tests a quantity but declares no boundary values"
   ]
 }

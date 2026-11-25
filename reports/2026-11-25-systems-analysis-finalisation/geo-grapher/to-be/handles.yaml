@@ -1,0 +1,20 @@
+# Geo-Grapher's to-be answer to ../as-is/weaknesses.yaml.
+handles:
+  - {weakness: G-BLD-01, spec: graph-building, at: submit, how: "Only the one decided group is submitted and applied."}
+  - {weakness: G-BLD-02, spec: graph-building, at: partial, how: "Unparsed files make the snapshot partial, each named with its cause, and the Oracle's partial verdict opens a ticket."}
+  - {weakness: G-BLD-03, spec: graph-building, at: delta, how: "A delta snapshot of what changed, pruned by a retention policy."}
+  - {weakness: G-BLD-04, spec: graph-building, at: write, how: "One transaction per group, then a WAL checkpoint."}
+  - {weakness: G-BLD-05, spec: graph-building, at: refuse, how: "Checks run before anything is written, and a refusal names its code; one group is one transaction, so nothing is half committed."}
+  - {weakness: G-BLD-06, spec: paper-import, at: insert, how: "A paper is one insert into the active database; nothing is copied."}
+  - {weakness: G-BLD-07, spec: paper-import, at: send, how: "The running service imports the paper; there is no cold-start subprocess."}
+  - {weakness: G-BLD-08, spec: paper-import, at: dcontent, how: "A multi-page paper with no claims or concepts is marked partial and ticketed, never recorded complete."}
+  - {weakness: G-BLD-09, spec: paper-import, at: link, how: "The link is stored on the staged item and moves to the note on acceptance, so the graph and the library agree."}
+  - {weakness: G-BLD-10, spec: paper-import, at: libgroup, how: "A source added without folder review is published into the library's own papers group."}
+  - {weakness: G-BLD-11, spec: paper-import, at: receipt, how: "The receipt returns the document id and its link to the source's identity."}
+  - {weakness: G-BLD-12, spec: paper-import, at: dscope, how: "The disk reserve is checked against the paper's own size."}
+  - {weakness: G-QRY-01, spec: query-graph, at: list, how: "Listing returns the readable labels and kinds, paged."}
+  - {weakness: G-QRY-02, spec: query-graph, at: parts, how: "An oversized item answers with its outline and the handles of its parts."}
+  - {weakness: G-FED-01, spec: federated-search, at: propose, how: "Bridge candidates are proposed with their witnesses, checked by the Oracle and decided, so bridges come to exist."}
+  - {weakness: G-FED-02, spec: federated-search, at: answer, how: "Results come back with the accepted bridges between their hits."}
+  - {weakness: G-GEN-01, spec: "state:paper-store", at: "*", how: "Rollback snapshots are kept by a retention policy; a failed import leaves nothing behind."}
+open: []

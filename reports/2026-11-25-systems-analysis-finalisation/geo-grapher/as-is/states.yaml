@@ -1,0 +1,13 @@
+# G4, as-is: a paper database generation (geographer/library_papers.py publish).
+entities:
+  - id: paper-generation
+    name: A paper database generation
+    about: "Each publication makes a new generation by copying the active one and adding one paper."
+    evidence: "F:/uv-data/Geo_Grapher/src/geographer/library_papers.py publish"
+    initial: candidate
+    final: [superseded, failed]
+    transitions:
+      - {from: candidate, to: candidate, on: "the previous generation is copied in, and the paper loaded", by: Geo-Grapher service}
+      - {from: candidate, to: active, on: "the hash re-check and the catalogue's compare-and-set pass", by: Geo-Grapher store}
+      - {from: candidate, to: failed, on: "the artifact changed, or the graph row changed during import; the file stays", by: Geo-Grapher service}
+      - {from: active, to: superseded, on: "the next publication becomes active; this file stays", by: Geo-Grapher store}

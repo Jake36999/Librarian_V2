@@ -1,0 +1,47 @@
+# UC-G3 as-is: an agent queries one graph through Geo-Grapher's MCP (graph_server.py, graph_router.py at e71967a).
+diagram: query-graph
+use_case: UC-G3
+status: IMPLEMENTED_VERIFIED
+supersedes: []
+kind: activity
+title: Query a graph through MCP, as it runs today
+problem:
+  symptom: "On 20 November the Lead could not get the graph labels and guessed one; the Librarian now supplies them (9fd2fe9)."
+  root: "list_graphs answers with every graph and its snapshot; the cheap thing an agent needs, the labels, is not its own answer."
+lanes: [Lead (tier 1), Geo-Grapher service, Geo-Grapher store]
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: list, kind: activity, lane: Lead (tier 1), step: 1, label: "lists the graphs (list_graphs): every graph with its latest snapshot"}
+  - {id: search, kind: activity, lane: Lead (tier 1), step: 2, label: "searches one graph by its label, with the question verbatim and at most two identifier guesses (search_entities)"}
+  - {id: dgraph, kind: decision, lane: Geo-Grapher service, label: "does the label resolve, and may this consumer read the graph?"}
+  - {id: refused, kind: activity, lane: Geo-Grapher service, label: "refuses: unknown graph, or not readable for this role and profile"}
+  - {id: rank, kind: activity, lane: Geo-Grapher store, step: 3, label: "ranks the hits, exact qualified names before prose, and returns a page with next_offset"}
+  - {id: dmore, kind: decision, lane: Lead (tier 1), label: "are more hits needed?"}
+  - {id: page, kind: activity, lane: Lead (tier 1), label: "repeats the search with offset = next_offset"}
+  - {id: content, kind: activity, lane: Lead (tier 1), step: 4, label: "reads an entity's content (get_entity_content; documentary fragments by content_kind)"}
+  - {id: dsize, kind: decision, lane: Geo-Grapher service, label: "does the item fit this connection's max_result_chars?"}
+  - {id: toolarge, kind: activity, lane: Geo-Grapher service, label: "refuses with RESULT_TOO_LARGE; the agent must find a smaller item"}
+  - {id: context, kind: activity, lane: Geo-Grapher service, step: 5, label: "returns the entity's architecture context"}
+  - {id: cite, kind: activity, lane: Lead (tier 1), step: 6, label: "cites the entity by the cite_as handle it was given"}
+  - {id: e1, kind: end, outcome: success, label: "the entity is read and cited by its handle"}
+  - {id: e_refused, kind: end, outcome: refused, label: "the graph or the item is refused"}
+edges:
+  - {from: s, to: list}
+  - {from: list, to: search}
+  - {from: search, to: dgraph}
+  - {from: dgraph, to: rank, guard: "yes"}
+  - {from: dgraph, to: refused, guard: "no", ext: 3a}
+  - {from: refused, to: e_refused}
+  - {from: rank, to: dmore}
+  - {from: dmore, to: content, guard: "no"}
+  - {from: dmore, to: page, guard: "yes", ext: 4a}
+  - {from: page, to: rank}
+  - {from: content, to: dsize}
+  - {from: dsize, to: context, guard: "yes"}
+  - {from: dsize, to: toolarge, guard: "no", ext: 5a}
+  - {from: toolarge, to: e_refused}
+  - {from: context, to: cite}
+  - {from: cite, to: e1}
+evidence:
+  - "F:/uv-data/Geo_Grapher/src/geographer/graph_server.py lines 47, 94, 110-130 (tool descriptions); graph_router.py lines 25-46 (operations, role tool sets), 560-562 (RESULT_TOO_LARGE)."
+  - "Librarian 9fd2fe9: graph labels in the Lead's context."

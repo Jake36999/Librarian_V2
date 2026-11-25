@@ -1,0 +1,69 @@
+# Geo-Grapher as proposed. Rendered by ../../render_pack.py.
+pack: geo-grapher-to-be
+system: Geo-Grapher
+state: to-be
+about: >-
+  The preferred Geo-Grapher: a decision changes its own group as a delta, a paper is one checked insert
+  whose receipt carries the link both sides store, the agent interface answers with what is needed,
+  and bridge candidates become reviewed bridges. Nothing here is accepted or built (PROPOSED_UNACCEPTED).
+actors:
+  - {id: owner, name: Owner}
+  - {id: lead, name: Lead (tier 1)}
+  - {id: core, name: Librarian Core}
+  - {id: oracle, name: Oracle}
+use_cases:
+  - id: UC-G1
+    name: Apply one decided folder group
+    spec: graph-building
+    actors: [core, oracle]
+    fields:
+      brief: "The one decided group is applied as a delta in one transaction, pruned by retention, and its receipt judged."
+      primary_actor: "Librarian Core"
+      supporting_actors: "Geo-Grapher service and store, Oracle"
+      preconditions: "A decided group with its fingerprint"
+      trigger: "The Librarian's folder-review applies a decision"
+      success_guarantee: "The group's graph is current and fully parsed"
+      minimal_guarantee: "Nothing is written before every check passes"
+      open_questions: "The retention policy's numbers"
+  - id: UC-G2
+    name: Publish a read paper and store its link
+    spec: paper-import
+    actors: [core, oracle]
+    fields:
+      brief: "One checked insert into the active paper database; the receipt carries the link to the source, which the Librarian stores."
+      primary_actor: "Librarian Core"
+      supporting_actors: "Geo-Grapher service and store, Oracle"
+      preconditions: "A fully read, fully converted paper"
+      trigger: "The Librarian's publication stage"
+      success_guarantee: "Published with content, linked both ways"
+      minimal_guarantee: "An empty paper is partial and ticketed"
+      open_questions: "Does the library's own papers group need review before first use?"
+  - id: UC-G3
+    name: Query a graph through MCP
+    spec: query-graph
+    actors: [lead]
+    fields:
+      brief: "Paged labels, ranked hits, and large items answered by their parts."
+      primary_actor: "Lead (tier 1), or any agent"
+      supporting_actors: "Geo-Grapher service and store"
+      preconditions: "A readable graph"
+      trigger: "A question needs graph evidence"
+      success_guarantee: "Read and cited by handle"
+      minimal_guarantee: "A refusal names the nearest readable labels"
+      open_questions: "—"
+  - id: UC-G4
+    name: Search across graphs and their bridges
+    spec: federated-search
+    actors: [lead, owner, oracle]
+    fields:
+      brief: "Per-graph results related through accepted bridges; candidates are proposed, checked and decided."
+      primary_actor: "Lead (tier 1)"
+      supporting_actors: "Geo-Grapher service, Oracle, Owner"
+      preconditions: "Readable graphs"
+      trigger: "A comparison across projects"
+      success_guarantee: "Results related through accepted bridges"
+      minimal_guarantee: "A bridge is never accepted without its witnesses checked"
+      open_questions: "Which bridge kinds a standing policy may accept"
+  - {id: UC-G5, name: Compare, merge and copy graphs, actors: [owner], deferred: "not on the Librarian's path"}
+  - {id: UC-G6, name: Explore a graph in the 3D workspace, actors: [owner], deferred: "the person's UI"}
+  - {id: UC-G7, name: Build graphs of the Owner's own projects, actors: [owner], deferred: "outside folder review"}

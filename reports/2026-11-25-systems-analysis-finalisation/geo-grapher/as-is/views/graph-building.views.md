@@ -14,15 +14,15 @@ Supersedes: `reports/2026-11-22-geographer-graph-building/geographer-graph-build
 
 | Field | Content |
 |---|---|
-| **Use case name** | Geo-Grapher graph building across folder review and Librarian enrichment (as-is) |
-| **Brief description** | — |
-| **Primary actor** | — |
-| **Supporting actors** | — |
-| **Preconditions** | — |
-| **Trigger** | — |
-| **Success guarantee** | — |
-| **Minimal guarantee** | — |
-| **Open questions** | — |
+| **Use case name** | Build the library's graphs from reviewed folders, and publish its papers |
+| **Brief description** | Accepting folder decisions has Geo-Grapher apply every reviewed group; later, each fully read PDF is published into its group's paper database. |
+| **Primary actor** | Owner |
+| **Supporting actors** | Librarian Core, model worker, Geo-Grapher CLI, store and service |
+| **Preconditions** | Folder decisions accepted; Geo-Grapher enabled for the library |
+| **Trigger** | A folder accept; a source's publish stage |
+| **Success guarantee** | Current code and paper graphs, served on loopback MCP |
+| **Minimal guarantee** | Scope, hash and disk checks refuse a bad import |
+| **Open questions** | OP2: apply only the changed group |
 
 **Main success scenario** (generated: the guard-true path, in step order)
 
@@ -225,11 +225,26 @@ One test per path: the main success scenario, then each extension.
 
 ### Boundary values
 
-_None declared._
+| Decision | Values to test | Expected |
+|---|---|---|
+| under import_lock, re-checks paths, SHA-256 hashes, graph scope, authorship, and >= 5 GiB disk | free space 5 GiB + required; exactly at the reserve; 1 byte under | under the reserve: DISK_RESERVE |
 
 ## Weaknesses and gaps
 
-_None recorded._
+| Id | Kind | Where | Weakness | Evidence | Handled in the to-be by |
+|---|---|---|---|---|---|
+| G-BLD-01 | cost | a5 | Every folder accept loops serially over every reviewed group in the library, under a 14,400-second timeout. | geographer/folder_review.py lines 128-131; Librarian folder_review.py lines 263-312 | `graph-building` |
+| G-BLD-02 | fault | x4 | Parse failures (a missing tree-sitter grammar, bad UTF-8, TypeScript) are logged, and the snapshot still publishes status complete. | geographer/treesitter.py lines 22-30; parse_failures_json | `graph-building` |
+| G-BLD-03 | cost | a6 | Each build appends a full, unpruned snapshot: 30 graphs use 77.2 GB, up to 19.5 GB for one documentation graph. | geographer/folder_review.py lines 138-154; measured 22 November | `graph-building` |
+| G-BLD-04 | risk | a16 | The code stores and the catalogue are written without a WAL checkpoint. | graph_catalog.py lines 93-105; graph-building a6 and a16 | `graph-building` |
+| G-BLD-05 | fault | e2 | A failed build ends in an opaque GEOGRAPHER_CALL_FAILED, while the groups earlier in the loop may already be committed. | graph-building e2 | `graph-building` |
+| G-BLD-06 | cost | a15 | Each paper publication copies the whole previous paper database into a new generation and deletes nothing: 96 copies take 873 MB for one 16 MB database. | geographer/library_papers.py publish (backup into papers-native-<uuid>.sqlite; 'never edited or deleted here') | `paper-import` |
+| G-BLD-07 | cost | a13 | Each PDF is published by a cold-start CLI subprocess. | Librarian paper_graph.py; graph-building a13 | `paper-import` |
+| G-BLD-08 | gap | a17 | Publication is recorded complete with no check of claims or concepts: 12 unread papers have 0 claims, and 72 have 0 concepts. | measured 22 November; graph-building a17 | `paper-import` |
+| G-BLD-09 | drift | d9 | 48 published papers have no accepted Source note: the graph and the library disagree about what is in the library. | measured 22 November; OP1 | `paper-import` |
+| G-BLD-10 | gap | d6 | A paper is published only into an active reviewed folder group whose reviewed roots hold the original, so a source added without folder review is never published. | geographer/library_papers.py PAPER_SCOPE checks | `paper-import` |
+| G-BLD-11 | gap | a16 | The import receipt returns a document count, not the new document's id, so neither side can store a link between the paper and its source. | geographer/library_papers.py publish return value | `paper-import` |
+| G-BLD-12 | risk | a14 | The disk reserve grows with twice the previous paper database, so as generations pile up, publication will be refused (DISK_RESERVE). | geographer/library_papers.py lines 75-77 | `paper-import` |
 
 ## Evidence
 
@@ -240,5 +255,4 @@ _None recorded._
 Errors: none
 
 Warnings: 
-- written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions
 - decision d2 ('strata, store ownership, and disk valid?') tests a quantity but declares no boundary values
