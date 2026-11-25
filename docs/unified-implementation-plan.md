@@ -7472,3 +7472,12 @@ remain target integration. **W1b runtime implementation has not started.**
 Focused regression checks completed with 72 passes. Core-related selections stalled in
 asyncio/MCP socket initialization and shutdown and were interrupted; no full-suite or live-Core
 acceptance is claimed. Details are in the report's [verification record](../reports/2026-11-21-enrichment-baseline/verification.md).
+
+### The work since 21 November committed; the activation views re-rendered (2026-11-25)
+
+The Owner approved S0 of the [systems-analysis finalisation plan](../reports/2026-11-25-systems-analysis-finalisation/PLAN.md), which reviews the 20 active diagram specs and sets out how to finish the as-is and to-be packs.
+- **Committed as found** (`d1d6fd9`, 193 files): the enrichment-baseline, Geo-Grapher graph-building, proposed to-be enrichment, proposed process family and reconstruction report folders; the 22–23 November reviews and validation records; the workflow-map examples; and the other sessions' policy, terminology, proposal and plan edits. The Owner's approval of S0 covered those edits (D5). Left out: the quarantined `2026-11-21-isolated-incomplete-examples`, `.obsidian/` and the `week-03-concepts` build output.
+- **Re-rendered:** `librarian-current-activation`, with the reconstruction's `build_and_validate_diagrams.py`. Its views, canvas and PNG had been built from an earlier spec (sha256 `054b36e6…`). They now match the corrected spec (`7034c6e6…`): 12 steps and 47 extension scenarios, where they had 11 and 30. The other eight diagrams re-rendered byte-identical. Every check passed, including the preserved-canvas hashes, and no model was called.
+- **Open:** S1–S6 and decisions D1–D4.
+
+Tests: the full suite in a clean clone (HEAD plus these files), 2823 passed, 2 skipped, 5 deselected in 964 s. This also covers the 22 November entry's work, which had no full-suite run.
