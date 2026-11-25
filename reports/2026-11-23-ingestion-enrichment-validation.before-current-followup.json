@@ -1,0 +1,78 @@
+{
+  "completed_on": "2026-11-23",
+  "scope": "report diagrams, specifications, written views and consistency checks; no runtime/library processing",
+  "models": [
+    {
+      "model": "ingestion",
+      "canvas": "reports/2026-11-20-workflow-map/examples/ingestion/ingestion.canvas",
+      "nodes": 70,
+      "edges": 87,
+      "steps": 18,
+      "scenarios": 33,
+      "structural_reference_flags": [],
+      "card_overlaps": [],
+      "physical_lanes_and_labels": "verified",
+      "repeat_preview": "identical",
+      "canvas_sha256": "35025d8037d1e69f22dfc7fa3b276a9245330775d4b1b0089c1e23a0a50827bc"
+    },
+    {
+      "model": "ingestion-tobe",
+      "canvas": "reports/2026-11-20-workflow-map/examples/ingestion/accepted-ingestion-tobe.canvas",
+      "nodes": 111,
+      "edges": 156,
+      "steps": 24,
+      "scenarios": 69,
+      "structural_reference_flags": [],
+      "card_overlaps": [],
+      "physical_lanes_and_labels": "verified",
+      "repeat_preview": "identical",
+      "canvas_sha256": "916cc978976163cc9d578aff2642341a7a6a68ed621d350a3a05011e029a9c7e"
+    },
+    {
+      "model": "enrichment-cycle",
+      "canvas": "reports/2026-11-21-enrichment-baseline/enrichment-cycle.canvas",
+      "nodes": 207,
+      "edges": 340,
+      "steps": 38,
+      "scenarios": 3870,
+      "structural_reference_flags": [],
+      "card_overlaps": [],
+      "physical_lanes_and_labels": "verified",
+      "repeat_preview": "identical",
+      "canvas_sha256": "726f32a6b021b0a8ee6e19bfc2fb41ccb3182bccf325325e206a3773bbe400c5"
+    },
+    {
+      "model": "proposed-tobe-enrichment",
+      "canvas": "reports/2026-11-22-proposed-tobe-enrichment/proposed-tobe-enrichment.canvas",
+      "nodes": 100,
+      "edges": 149,
+      "steps": 23,
+      "scenarios": 73,
+      "structural_reference_flags": [],
+      "card_overlaps": [],
+      "physical_lanes_and_labels": "verified",
+      "repeat_preview": "identical",
+      "canvas_sha256": "29036ab5233243fb3b585ec7a87a24d19713c8766bc8e6868ad3e795c76fff1f"
+    },
+    {
+      "model": "source-enrichment-current",
+      "canvas": "reports/2026-11-21-enrichment-baseline/source-enrichment-current.canvas",
+      "nodes": 55,
+      "edges": 67,
+      "steps": 14,
+      "scenarios": 25,
+      "structural_reference_flags": [],
+      "card_overlaps": [],
+      "physical_lanes_and_labels": "verified",
+      "repeat_preview": "identical",
+      "canvas_sha256": "ddb9fdb3553ec50f9933f71952113ca8fa8d871b2d9555f3b61c0573c571f042"
+    }
+  ],
+  "semantic_boundaries": "passed",
+  "manual_preservation_and_reflow_refusal": "passed",
+  "concurrent_edit_commit_refusal": "passed",
+  "requirement_mappings": 34,
+  "local_links_checked": 368,
+  "new_paid_model_calls": 0,
+  "new_model_spend_usd": 0
+}

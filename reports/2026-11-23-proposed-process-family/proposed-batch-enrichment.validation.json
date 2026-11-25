@@ -1,0 +1,27 @@
+{
+  "status": "proposed report-model validation; no runtime execution or workflow acceptance",
+  "model": "proposed-batch-enrichment",
+  "source_sha256": "a5b45461d7a37ea471193351d0d32763b423729a85ed1e620676874bc4ca9218",
+  "canvas_revision": "4c50d537746ed070bde2edf9ad44335ee7c6db3bdde1866614aa1630c3d0ef40",
+  "canvas_nodes": 67,
+  "edges": 76,
+  "numbered_steps": 9,
+  "extension_scenarios": 34,
+  "structural_reference_flags": [],
+  "card_overlaps": [],
+  "edge_card_intersections": [],
+  "overview_text_overflow": [],
+  "detail_text_overflow": [],
+  "folded_terminal_behavior": "identical labels, actors, outcomes, guards and extensions",
+  "presentation_proof": "proposed-batch-enrichment.presentation-proof.json",
+  "minimum_actor_pitch": 600,
+  "call_outcomes": [
+    "escalated",
+    "partial",
+    "paused",
+    "reused",
+    "success"
+  ],
+  "write": "existing canvas service preview and revision/hash-checked commit; profile=None",
+  "curve_scope": "deterministic reading preview with native attachment sides; not an Obsidian host screenshot"
+}

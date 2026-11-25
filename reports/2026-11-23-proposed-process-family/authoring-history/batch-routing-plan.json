@@ -1,0 +1,116 @@
+{
+  "status": "proposed report artifact routing recipe; no live canvas or specification changed",
+  "spec": "proposed-batch-enrichment.spec.yaml",
+  "source_sha256": "32a38ece57b2014d9f09f39cb7a84c4ba278eba2b3aa631e050526d8a4bfa0a9",
+  "canvas_revision": null,
+  "source_dispatch_patch": {
+    "lane": "Core",
+    "label": "dispatches the selected Source item's proposed contract under the same recorded specification, Lead and ledger"
+  },
+  "minimum_column_pitch": 600,
+  "terminal_departures": [
+    {
+      "from": "dadmit",
+      "to": "pausehandoff",
+      "guard": "missing or reserved authority",
+      "ext": "2b"
+    },
+    {
+      "from": "dadmit",
+      "to": "escalatehandoff",
+      "guard": "run-wide state or authority-integrity failure",
+      "ext": "2c"
+    },
+    {
+      "from": "dcontrols",
+      "to": "pausehandoff",
+      "guard": "cancelled, interrupted, grant withheld or spend ceiling reached",
+      "ext": "4a"
+    },
+    {
+      "from": "dcontrols",
+      "to": "escalatehandoff",
+      "guard": "critical integrity or run-wide writer failure",
+      "ext": "4b"
+    }
+  ],
+  "terminal_fold": {
+    "node_origins": {
+      "pausehandoff_at_bdfe8aaefe": "pausehandoff",
+      "epaused_at_bdfe8aaefe": "epaused",
+      "escalatehandoff_at_d74d2f9cb5": "escalatehandoff",
+      "eescalated_at_d74d2f9cb5": "eescalated",
+      "pausehandoff_at_3c589ea0dc": "pausehandoff",
+      "epaused_at_3c589ea0dc": "epaused",
+      "escalatehandoff_at_b1dc83cf39": "escalatehandoff",
+      "eescalated_at_b1dc83cf39": "eescalated"
+    },
+    "terminal_tail_copies": [
+      {
+        "departure": "[\"dadmit\", \"pausehandoff\", \"missing or reserved authority\", \"2b\"]",
+        "original_tail": [
+          "pausehandoff",
+          "epaused"
+        ],
+        "local_tail": [
+          "pausehandoff_at_bdfe8aaefe",
+          "epaused_at_bdfe8aaefe"
+        ]
+      },
+      {
+        "departure": "[\"dadmit\", \"escalatehandoff\", \"run-wide state or authority-integrity failure\", \"2c\"]",
+        "original_tail": [
+          "escalatehandoff",
+          "eescalated"
+        ],
+        "local_tail": [
+          "escalatehandoff_at_d74d2f9cb5",
+          "eescalated_at_d74d2f9cb5"
+        ]
+      },
+      {
+        "departure": "[\"dcontrols\", \"pausehandoff\", \"cancelled, interrupted, grant withheld or spend ceiling reached\", \"4a\"]",
+        "original_tail": [
+          "pausehandoff",
+          "epaused"
+        ],
+        "local_tail": [
+          "pausehandoff_at_3c589ea0dc",
+          "epaused_at_3c589ea0dc"
+        ]
+      },
+      {
+        "departure": "[\"dcontrols\", \"escalatehandoff\", \"critical integrity or run-wide writer failure\", \"4b\"]",
+        "original_tail": [
+          "escalatehandoff",
+          "eescalated"
+        ],
+        "local_tail": [
+          "escalatehandoff_at_b1dc83cf39",
+          "eescalated_at_b1dc83cf39"
+        ]
+      }
+    ]
+  },
+  "geometry_exceptions": [
+    {
+      "node": "drecheck",
+      "anchor": "assess",
+      "y_offset": 0,
+      "prior_generated_y": 9140,
+      "tested_generated_y": 7140,
+      "reason": "The final independent repair decision is a shared review rejoin; its upward incoming recheck edge is explicit, and the verified branch re-enters assessment at the same row."
+    }
+  ],
+  "verification": {
+    "structural_reference_flags": [],
+    "extension_scenarios": 34,
+    "numbered_main_path": "unchanged",
+    "folded_terminal_labels_actors_outcomes_guards_extensions": "identical",
+    "canvas_nodes": 67,
+    "edges": 76,
+    "card_overlaps": [],
+    "edge_card_intersections": [],
+    "native_attachment_sides_only": true
+  }
+}

@@ -1,0 +1,1769 @@
+{
+  "kind": "observed_historical_enrichment_run_evidence",
+  "observed_at": "2026-11-22T17:28:08+00:00",
+  "library": "G:\\Libraries\\Resource-Library",
+  "scope": {
+    "actual_run_logs_discovered": 47,
+    "new_enrichment_runs_started": 0,
+    "new_model_calls": 0,
+    "new_spend_usd": 0,
+    "source_or_runtime_files_modified": false,
+    "services_started_or_stopped": false,
+    "sqlite_databases_opened_directly": false
+  },
+  "limits": [
+    "Historical execution evidence from 2026-11-20; does not establish current running Core version or model bindings.",
+    "No original-page or independent claim verification performed. Paper-graph receipts preserve those limitations.",
+    "Usage rows lack run and item IDs. Cost is a sum of provider-priced calls in each run time window, not an exact call-to-run join.",
+    "Usage outcome completed describes model-call completion; structured-output parsing may subsequently refuse it.",
+    "Finished batch, enriched item, complete publish stage, and accepted/catalogued note are separate observed states."
+  ],
+  "usage_file": {
+    "path": "G:\\Libraries\\Resource-Library\\.librarian\\runtime\\usage-20261120.jsonl",
+    "exists": true,
+    "bytes": 1894303,
+    "sha256": "ac5db56d35fcdffaad77b6af4b5cb97ec6436bd4dce2ce095d7eda00390cf4fa"
+  },
+  "runs": [
+    {
+      "id": "batch-2026-11-20-3b62fc",
+      "log": {
+        "path": "G:\\Libraries\\Resource-Library\\.librarian\\runs\\batch-2026-11-20-3b62fc.jsonl",
+        "exists": true,
+        "bytes": 6219,
+        "sha256": "7341c47121d05d852c9c68af1e02f17488d91bfdedf302fbe7c8208ba4bcfe0a"
+      },
+      "started_at": "2026-11-20T07:49:06+00:00",
+      "finished_at": "2026-11-20T07:50:41+00:00",
+      "terminal_event": {
+        "t": "2026-11-20T07:50:41+00:00",
+        "type": "finished"
+      },
+      "requested_by": "curate",
+      "settings": {
+        "optical_all_pages": false
+      },
+      "event_counts": {
+        "started": 1,
+        "stage": 9,
+        "done": 9,
+        "progress": 5,
+        "item": 1,
+        "finished": 1
+      },
+      "other_batch_logs_overlapping_window": [],
+      "window_usage": {
+        "calls": 40,
+        "reported_usd": 0.007969,
+        "calls_without_usd": 0,
+        "calls_without_input_tokens": 0,
+        "input_tokens": 61800,
+        "output_tokens": 15228,
+        "join_method": "inclusive UTC timestamp window; no run/item IDs",
+        "roles": {
+          "cleanup": 4,
+          "clerk": 36
+        },
+        "tasks": {
+          "pdf_to_markdown": 4,
+          "limits": 8,
+          "lens_perspective": 8,
+          "points": 8,
+          "terms": 8,
+          "lens_document": 1,
+          "chapter_relations": 1,
+          "sensitivity": 1,
+          "bottom_line": 1
+        },
+        "models": {
+          "deepseek-ai/DeepSeek-V4-Flash-0731": 4,
+          "google/gemma-4-26B-A4B-it": 36
+        },
+        "outcomes": {
+          "ok": 4,
+          "completed": 36
+        }
+      },
+      "items": [
+        {
+          "id": "a-bigdata-machine-learning-system-for-monitoring-r-22b5d8",
+          "name": "A BigData-Machine Learning system for Monitoring Road Surface Condition",
+          "staging_record": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\staging\\source\\a-bigdata-machine-learning-system-for-monitoring-r-22b5d8.json",
+            "exists": true,
+            "bytes": 25665,
+            "sha256": "1c1aca5ed01d2d393446b6dfb3a6f003a0459e95c511519c1e98a5d07a747d64"
+          },
+          "original_source": {
+            "path": "E:\\DataManagement\\10-Domain-Diverse-Baseline-Controls\\civil-transport\\A BigData-Machine Learning system for Monitoring Road Surface Condition.pdf",
+            "exists": true,
+            "bytes": 1024322,
+            "sha256": "bcef7cad6b0547fc1ac6a52a1c44adddb58c69d24f7cce302602073145a7e250"
+          },
+          "selected_run_result": {
+            "t": "2026-11-20T07:50:41+00:00",
+            "type": "item",
+            "item": "a-bigdata-machine-learning-system-for-monitoring-r-22b5d8",
+            "status": "enriched",
+            "coverage": "full"
+          },
+          "current_staging_status": "accepted",
+          "processing_run": "batch-2026-11-20-3b62fc",
+          "processing_at": "2026-11-20T07:50:41+00:00",
+          "coverage": "full",
+          "read_coverage": "8/8",
+          "not_examined": [],
+          "deep_read": {
+            "identity": {
+              "chunker": "paragraph-pack/1",
+              "chunk_chars": 6000,
+              "representation": "clean_file",
+              "recipe": "31f640b32ed94c24"
+            },
+            "chunk_count": 8,
+            "read_count": 8
+          },
+          "stages": {
+            "validate": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T07:49:06+00:00",
+                "stage": "validate",
+                "status": "complete",
+                "captured_at": "2026-11-20",
+                "canonical_url": "file:bcef7cad6b0547fc",
+                "key": "482a2a432a822654df9f"
+              },
+              "matching_previous_receipts": []
+            },
+            "parse": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T07:49:41+00:00",
+                "stage": "parse",
+                "status": "complete",
+                "chunks": 8,
+                "cleanup": "cleaned into .librarian/conversions/8c95e82f703660beb36b9e3f223adc3d.md",
+                "key": "8d3f412770f309703ed6"
+              },
+              "matching_previous_receipts": []
+            },
+            "read": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T07:50:17+00:00",
+                "stage": "read",
+                "status": "complete",
+                "coverage": "8/8",
+                "lenses_staged": [],
+                "key": "a62493f1b45a0755a5a8"
+              },
+              "matching_previous_receipts": []
+            },
+            "lenses": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T07:50:17+00:00",
+                "stage": "lenses",
+                "status": "complete",
+                "staged": 0,
+                "key": "a676daee3fb3b1f42cde"
+              },
+              "matching_previous_receipts": []
+            },
+            "data": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T07:50:18+00:00",
+                "stage": "data",
+                "status": "complete",
+                "records": 2,
+                "relations": 1,
+                "coverage": "full",
+                "key": "37168768b4e02d0dac2a"
+              },
+              "matching_previous_receipts": []
+            },
+            "relate": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T07:50:19+00:00",
+                "stage": "relate",
+                "status": "complete",
+                "relations": 0,
+                "key": "c293c5a7ca35f6e2d21b"
+              },
+              "matching_previous_receipts": []
+            },
+            "metadata": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T07:50:20+00:00",
+                "stage": "metadata",
+                "status": "complete",
+                "key": "931d7baefd163507a786"
+              },
+              "matching_previous_receipts": []
+            },
+            "review": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T07:50:21+00:00",
+                "stage": "review",
+                "status": "complete",
+                "draft": "ok",
+                "key": "f8e6cf2b65774da3011b"
+              },
+              "matching_previous_receipts": []
+            },
+            "publish": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T07:50:41+00:00",
+                "stage": "publish",
+                "status": "complete",
+                "key": "359b9ac0ed1a1d90b3be"
+              },
+              "matching_previous_receipts": []
+            }
+          },
+          "accepted_note": {
+            "path": "G:\\Libraries\\Resource-Library\\Sources\\document\\A BigData-Machine Learning system for Monitoring Road Surface Condition.md",
+            "exists": true,
+            "bytes": 8807,
+            "sha256": "e3783846424f48960b007c9d87c590417bd72065abe67b2cef40aa7920110f54"
+          },
+          "accepted_note_headings": [
+            "# A BigData-Machine Learning system for Monitoring Road Surface Condition",
+            "## Bottom Line",
+            "## What It Solves",
+            "## Claims",
+            "## Evidence & Limits",
+            "## Evidence",
+            "## Chapters"
+          ],
+          "accepted_note_coverage_lines": [
+            "coverage: full",
+            "Coverage: full."
+          ],
+          "acceptance_history": [
+            {
+              "decision": "accept",
+              "by": "person",
+              "at": "2026-11-20T13:42:36+00:00",
+              "reason": "owner instruction in chat 2026-11-20: ingest the DataManagement papers as library notes; applied by agent Claude"
+            }
+          ],
+          "promotion": {
+            "status": "catalogued",
+            "catalogued": true,
+            "step_ok": {
+              "write": true,
+              "concepts": true,
+              "index_notes": true,
+              "index": true,
+              "findability": true
+            }
+          },
+          "conversion": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\conversions\\8c95e82f703660beb36b9e3f223adc3d.md",
+            "exists": true,
+            "bytes": 43888,
+            "sha256": "b80ccc36fa4f1394767b7cf02e19557993c7d9eb396d08d6550fe35b8812ad09"
+          },
+          "paper_graph": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\derived\\paper-graph\\c109c4e2dd7a280c3d407663db0de4e4.nodes.json",
+            "exists": true,
+            "bytes": 65722,
+            "sha256": "7a06f81d55d36cca3ce791842a1561bc5923c15495fe09b25917603f5659ad11",
+            "receipt_sha256": "7a06f81d55d36cca3ce791842a1561bc5923c15495fe09b25917603f5659ad11",
+            "current_matches_receipt": true,
+            "receipt_coverage": {
+              "status": "full_conversion",
+              "page_verification": false,
+              "limitations": [
+                "Generated text and chapter detection require checking original pages; no claim verification performed",
+                "Claims are the Librarian reading's generated points and limits, located by page; unverified against the original"
+              ]
+            },
+            "authorship": "generated"
+          },
+          "data_record": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\derived\\dik\\a-bigdata-machine-learning-system-for-monitoring-road-surface-condition.json",
+            "exists": true,
+            "bytes": 3765,
+            "sha256": "2dd1ab10dc45aea7a45a1d91dfa92dc0759bdbb3b523fa907191a28cb5ad4fca",
+            "kind": "document",
+            "coverage": "full",
+            "records": 2,
+            "relations": 1,
+            "methods": {
+              "headings in the text": 2
+            },
+            "relation_bases": {
+              "document order": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "batch-2026-11-20-d297e0",
+      "log": {
+        "path": "G:\\Libraries\\Resource-Library\\.librarian\\runs\\batch-2026-11-20-d297e0.jsonl",
+        "exists": true,
+        "bytes": 25292,
+        "sha256": "6f3be53a722a7ba08564813603b2d68e2a017955f448e8f6fd88bbffef83a668"
+      },
+      "started_at": "2026-11-20T13:47:27+00:00",
+      "finished_at": "2026-11-20T14:02:05+00:00",
+      "terminal_event": {
+        "t": "2026-11-20T14:02:05+00:00",
+        "type": "finished"
+      },
+      "requested_by": "curate",
+      "settings": {
+        "optical_all_pages": false
+      },
+      "event_counts": {
+        "started": 1,
+        "stage": 42,
+        "progress": 20,
+        "done": 42,
+        "item": 6,
+        "finished": 1
+      },
+      "other_batch_logs_overlapping_window": [],
+      "window_usage": {
+        "calls": 182,
+        "reported_usd": 0.039595,
+        "calls_without_usd": 0,
+        "calls_without_input_tokens": 0,
+        "input_tokens": 313714,
+        "output_tokens": 69250,
+        "join_method": "inclusive UTC timestamp window; no run/item IDs",
+        "roles": {
+          "cleanup": 17,
+          "clerk": 165
+        },
+        "tasks": {
+          "pdf_to_markdown": 17,
+          "limits": 30,
+          "lens_perspective": 30,
+          "points": 31,
+          "terms": 33,
+          "chapter_relations": 5,
+          "sensitivity": 7,
+          "bottom_line": 6,
+          "lens_attention": 4,
+          "lens_discriminate": 4,
+          "lens_role": 4,
+          "lens_probe": 4,
+          "lens_synthesize": 2,
+          "lens_document": 2,
+          "lens_support": 2,
+          "probe_answers": 1
+        },
+        "models": {
+          "deepseek-ai/DeepSeek-V4-Flash-0731": 17,
+          "google/gemma-4-26B-A4B-it": 165
+        },
+        "outcomes": {
+          "ok": 17,
+          "completed": 165
+        }
+      },
+      "items": [
+        {
+          "id": "database-of-the-year-postgres-c88e31",
+          "name": "Database_of_the_Year_Postgres",
+          "staging_record": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\staging\\source\\database-of-the-year-postgres-c88e31.json",
+            "exists": true,
+            "bytes": 13735,
+            "sha256": "fcef96068bf0d1a0629444a5eca76aa214f82983c2659bdecfc858b5f7877ea8"
+          },
+          "original_source": {
+            "path": "E:\\DataManagement\\07-Storage-Indexing-Join-Factorization-and-Sync\\baseline\\Database_of_the_Year_Postgres.pdf",
+            "exists": true,
+            "bytes": 217606,
+            "sha256": "2fe895fd67bfb55f675ccc20034d65b62a8dafe72c8821270eec6667615c0f2e"
+          },
+          "selected_run_result": {
+            "t": "2026-11-20T13:52:10+00:00",
+            "type": "item",
+            "item": "database-of-the-year-postgres-c88e31",
+            "status": "enriched",
+            "coverage": "full"
+          },
+          "current_staging_status": "accepted",
+          "processing_run": "batch-2026-11-20-d297e0",
+          "processing_at": "2026-11-20T13:52:10+00:00",
+          "coverage": "full",
+          "read_coverage": "2/2",
+          "not_examined": [],
+          "deep_read": {
+            "identity": {
+              "chunker": "paragraph-pack/1",
+              "chunk_chars": 6000,
+              "representation": "clean_file",
+              "recipe": "31f640b32ed94c24"
+            },
+            "chunk_count": 2,
+            "read_count": 2
+          },
+          "stages": {
+            "validate": {
+              "persisted_status": "complete",
+              "selected_run_receipt": null,
+              "matching_previous_receipts": [
+                {
+                  "run": "batch-2026-11-20-d8c19c",
+                  "at": "2026-11-20T06:02:15+00:00",
+                  "key": "23e2e58fbd69786d52c2",
+                  "status": "complete"
+                }
+              ]
+            },
+            "parse": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:50:10+00:00",
+                "stage": "parse",
+                "status": "complete",
+                "chunks": 2,
+                "cleanup": "cleaned into .librarian/conversions/60cd5021ae0ed32fb8d5f320f22d794f.md",
+                "key": "95088ed7a42f0caf9872"
+              },
+              "matching_previous_receipts": []
+            },
+            "read": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:50:40+00:00",
+                "stage": "read",
+                "status": "complete",
+                "coverage": "2/2",
+                "lenses_staged": [],
+                "key": "4a8ea12c5c45569356ae"
+              },
+              "matching_previous_receipts": []
+            },
+            "lenses": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:50:40+00:00",
+                "stage": "lenses",
+                "status": "complete",
+                "staged": 1,
+                "lenses": [
+                  "lens-doc-hybrid-workload-optimization-8dab04"
+                ],
+                "key": "94f30ee7c50076dc6d83"
+              },
+              "matching_previous_receipts": []
+            },
+            "data": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:50:40+00:00",
+                "stage": "data",
+                "status": "complete",
+                "records": 3,
+                "relations": 2,
+                "coverage": "full",
+                "key": "956bcc90934d8caccbb7"
+              },
+              "matching_previous_receipts": []
+            },
+            "relate": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:50:41+00:00",
+                "stage": "relate",
+                "status": "complete",
+                "relations": 0,
+                "key": "477078e170c6b2bbc562"
+              },
+              "matching_previous_receipts": []
+            },
+            "metadata": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:50:42+00:00",
+                "stage": "metadata",
+                "status": "complete",
+                "key": "2abb2f2273972b23bc9f"
+              },
+              "matching_previous_receipts": []
+            },
+            "review": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:50:45+00:00",
+                "stage": "review",
+                "status": "complete",
+                "draft": "ok",
+                "key": "5772dfb011e463ef8a4c"
+              },
+              "matching_previous_receipts": []
+            },
+            "publish": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:52:10+00:00",
+                "stage": "publish",
+                "status": "complete",
+                "key": "ca2d499c4bf9550b3a2d"
+              },
+              "matching_previous_receipts": []
+            }
+          },
+          "accepted_note": {
+            "path": "G:\\Libraries\\Resource-Library\\Sources\\document\\Database_of_the_Year_Postgres.md",
+            "exists": true,
+            "bytes": 3455,
+            "sha256": "f3774d3ea3bfe4a08086165c8fd433249f1fa97706cab1d7c06ecd8e7ec30c67"
+          },
+          "accepted_note_headings": [
+            "# Database_of_the_Year_Postgres",
+            "## Bottom Line",
+            "## What It Solves",
+            "## Claims",
+            "## Evidence",
+            "## Chapters"
+          ],
+          "accepted_note_coverage_lines": [
+            "coverage: full",
+            "Coverage: full."
+          ],
+          "acceptance_history": [
+            {
+              "decision": "accept",
+              "by": "person",
+              "at": "2026-11-20T14:04:54+00:00",
+              "reason": "owner instruction in chat 2026-11-20: ingest the DataManagement papers as library notes (re-read partials included, coverage kept on the note); applied by agent Claude"
+            }
+          ],
+          "promotion": {
+            "status": "catalogued",
+            "catalogued": true,
+            "step_ok": {
+              "write": true,
+              "concepts": true,
+              "index_notes": true,
+              "index": true,
+              "findability": true
+            }
+          },
+          "conversion": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\conversions\\60cd5021ae0ed32fb8d5f320f22d794f.md",
+            "exists": true,
+            "bytes": 11337,
+            "sha256": "e9df12ad7d4af784bf5c95e4ea274f46c9a6a88d39d1b0dd2dc3eece879064f3"
+          },
+          "paper_graph": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\derived\\paper-graph\\e7e7c2692e63a2b9d21015e82b55a498.nodes.json",
+            "exists": true,
+            "bytes": 20312,
+            "sha256": "3f38cb318f91b0c0fedee77e2e71c25d41ef866b81018d88d014871df0c4d068",
+            "receipt_sha256": "3f38cb318f91b0c0fedee77e2e71c25d41ef866b81018d88d014871df0c4d068",
+            "current_matches_receipt": true,
+            "receipt_coverage": {
+              "status": "full_conversion",
+              "page_verification": false,
+              "limitations": [
+                "Generated text and chapter detection require checking original pages; no claim verification performed",
+                "Claims are the Librarian reading's generated points and limits, located by page; unverified against the original"
+              ]
+            },
+            "authorship": "generated"
+          },
+          "data_record": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\derived\\dik\\database-of-the-year-postgres.json",
+            "exists": true,
+            "bytes": 4361,
+            "sha256": "2fec92dd44951ef1edd224f65061704d280bc44aea5e7c23cdcf53c655c4a6e6",
+            "kind": "document",
+            "coverage": "full",
+            "records": 3,
+            "relations": 2,
+            "methods": {
+              "headings in the text": 3
+            },
+            "relation_bases": {
+              "document order": 2
+            }
+          }
+        },
+        {
+          "id": "ext-o4-2402-07630-g-retriever-709f58",
+          "name": "EXT_O4_2402.07630_G_Retriever",
+          "staging_record": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\staging\\source\\ext-o4-2402-07630-g-retriever-709f58.json",
+            "exists": true,
+            "bytes": 44187,
+            "sha256": "088d1b673119e87faa3a3353cac00df2867dcf2c20cde3aa8f5c7ba025597136"
+          },
+          "original_source": {
+            "path": "E:\\DataManagement\\04-Graph-Linearization-and-Prompt-Compression\\external\\EXT_O4_2402.07630_G_Retriever.pdf",
+            "exists": true,
+            "bytes": 4747389,
+            "sha256": "c88093cd95417a12b8c7166ecc1132c9b52d077a4f73f84e7100e25722902b98"
+          },
+          "selected_run_result": {
+            "t": "2026-11-20T13:53:32+00:00",
+            "type": "item",
+            "item": "ext-o4-2402-07630-g-retriever-709f58",
+            "status": "partial",
+            "coverage": "partial 20/21"
+          },
+          "current_staging_status": "accepted",
+          "processing_run": "batch-2026-11-20-d297e0",
+          "processing_at": "2026-11-20T13:53:32+00:00",
+          "coverage": "partial 20/21",
+          "read_coverage": "20/21",
+          "not_examined": [
+            "read: waiting for the clerk model",
+            "data: partial: 3 of 3 chapters opened",
+            "review: reading incomplete: 20 of 21 parts read",
+            "publish: not published until every part is read (20 of 21 read)"
+          ],
+          "deep_read": {
+            "identity": {
+              "chunker": "paragraph-pack/1",
+              "chunk_chars": 6000,
+              "representation": "file",
+              "recipe": "31f640b32ed94c24"
+            },
+            "chunk_count": 21,
+            "read_count": 20
+          },
+          "stages": {
+            "validate": {
+              "persisted_status": "complete",
+              "selected_run_receipt": null,
+              "matching_previous_receipts": [
+                {
+                  "run": "batch-2026-11-20-7cbbf3",
+                  "at": "2026-11-20T04:27:21+00:00",
+                  "key": "5a9d93a0d580e239d517",
+                  "status": "complete"
+                }
+              ]
+            },
+            "parse": {
+              "persisted_status": "complete",
+              "selected_run_receipt": null,
+              "matching_previous_receipts": [
+                {
+                  "run": "batch-2026-11-20-7cbbf3",
+                  "at": "2026-11-20T04:27:21+00:00",
+                  "key": "7ea4bcdbf2dabd6bb136",
+                  "status": "complete"
+                }
+              ]
+            },
+            "read": {
+              "persisted_status": "queued",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:53:27+00:00",
+                "stage": "read",
+                "status": "queued",
+                "task_failures": [
+                  {
+                    "task": "terms",
+                    "chunk": 15,
+                    "status": "refused",
+                    "reason": "invalid JSON (Expecting ',' delimiter: line 1 column 4194 (char 4193))"
+                  }
+                ],
+                "coverage": "20/21",
+                "reason": "waiting for the clerk model",
+                "key": "2eb78ebba3a3bf8fe7c5"
+              },
+              "matching_previous_receipts": []
+            },
+            "lenses": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:53:27+00:00",
+                "stage": "lenses",
+                "status": "complete",
+                "staged": 1,
+                "lenses": [
+                  "lens-rag-over-a-graph-via-prize-collecting-st-fd2e5c"
+                ],
+                "key": "cd9d039862eb6602504c"
+              },
+              "matching_previous_receipts": []
+            },
+            "data": {
+              "persisted_status": "partial",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:53:27+00:00",
+                "stage": "data",
+                "status": "partial",
+                "records": 3,
+                "relations": 2,
+                "coverage": "partial: 3 of 3 chapters opened",
+                "reason": "partial: 3 of 3 chapters opened",
+                "key": "92969104b938caf49edd"
+              },
+              "matching_previous_receipts": []
+            },
+            "relate": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:53:29+00:00",
+                "stage": "relate",
+                "status": "complete",
+                "relations": 0,
+                "key": "5f3af61e6fb8f99eaf77"
+              },
+              "matching_previous_receipts": []
+            },
+            "metadata": {
+              "persisted_status": "complete",
+              "selected_run_receipt": null,
+              "matching_previous_receipts": [
+                {
+                  "run": "batch-2026-11-20-7cbbf3",
+                  "at": "2026-11-20T04:32:07+00:00",
+                  "key": "0cee4fd4c284e06bfcb2",
+                  "status": "complete"
+                }
+              ]
+            },
+            "review": {
+              "persisted_status": "partial",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:53:31+00:00",
+                "stage": "review",
+                "status": "partial",
+                "draft": "ok",
+                "reason": "reading incomplete: 20 of 21 parts read",
+                "key": "414d9e3e16ccb579db92"
+              },
+              "matching_previous_receipts": []
+            },
+            "publish": {
+              "persisted_status": "partial",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:53:32+00:00",
+                "stage": "publish",
+                "status": "partial",
+                "reason": "not published until every part is read (20 of 21 read)",
+                "key": "6fa04701088d64d4da7a"
+              },
+              "matching_previous_receipts": []
+            }
+          },
+          "accepted_note": {
+            "path": "G:\\Libraries\\Resource-Library\\Sources\\document\\EXT_O4_2402.07630_G_Retriever.md",
+            "exists": true,
+            "bytes": 11847,
+            "sha256": "2c721240e05c6981ecfc8983b2788afee7524eaa1b26789fa084eb1010f04993"
+          },
+          "accepted_note_headings": [
+            "# EXT_O4_2402.07630_G_Retriever",
+            "## Bottom Line",
+            "## What It Solves",
+            "## Claims",
+            "## Evidence & Limits",
+            "## Evidence",
+            "## Chapters"
+          ],
+          "accepted_note_coverage_lines": [
+            "coverage: partial 20/21",
+            "Coverage: partial: 3 of 3 chapters opened."
+          ],
+          "acceptance_history": [
+            {
+              "decision": "accept",
+              "by": "person",
+              "at": "2026-11-20T14:04:55+00:00",
+              "reason": "owner instruction in chat 2026-11-20: ingest the DataManagement papers as library notes (re-read partials included, coverage kept on the note); applied by agent Claude"
+            }
+          ],
+          "promotion": {
+            "status": "catalogued",
+            "catalogued": true,
+            "step_ok": {
+              "write": true,
+              "concepts": true,
+              "index_notes": true,
+              "index": true,
+              "findability": true
+            }
+          },
+          "conversion": null,
+          "paper_graph": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\derived\\paper-graph\\1e615d7438f5c34f137a535090244100.nodes.json",
+            "exists": true,
+            "bytes": 1103,
+            "sha256": "eeec5d4f26ac8de89ee27d227617e7c6d176934da71e7a79675e959401a2c72d",
+            "receipt_sha256": "eeec5d4f26ac8de89ee27d227617e7c6d176934da71e7a79675e959401a2c72d",
+            "current_matches_receipt": true,
+            "receipt_coverage": {
+              "status": "catalogue_only",
+              "page_verification": false,
+              "limitations": [
+                "No verified persistent full conversion; catalogue summary is not source text"
+              ]
+            },
+            "authorship": "generated"
+          },
+          "data_record": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\derived\\dik\\ext-o4-2402-07630-g-retriever.json",
+            "exists": true,
+            "bytes": 5374,
+            "sha256": "4da640b5f412a8aca06efc1a0262c674639924a588249231ecd0253d3c22682f",
+            "kind": "document",
+            "coverage": "partial: 3 of 3 chapters opened",
+            "records": 3,
+            "relations": 2,
+            "methods": {
+              "fixed page runs (no headings found)": 3
+            },
+            "relation_bases": {
+              "document order": 2
+            }
+          }
+        },
+        {
+          "id": "ext-o5-2304-03468-simple-hhea-e464ad",
+          "name": "EXT_O5_2304.03468_Simple_HHEA",
+          "staging_record": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\staging\\source\\ext-o5-2304-03468-simple-hhea-e464ad.json",
+            "exists": true,
+            "bytes": 53368,
+            "sha256": "63c16d61c840164a10ef006b0f818ea4691e5216310358521970f4d5284bfd18"
+          },
+          "original_source": {
+            "path": "E:\\DataManagement\\05-Entity-Alignment-and-Identity-Bridging\\external\\EXT_O5_2304.03468_Simple_HHEA.pdf",
+            "exists": true,
+            "bytes": 2734712,
+            "sha256": "7d22ec495c018eacd8f4bbfee3f52fb2e2c8c81cba525c31a5d93f894ccec92a"
+          },
+          "selected_run_result": {
+            "t": "2026-11-20T13:56:45+00:00",
+            "type": "item",
+            "item": "ext-o5-2304-03468-simple-hhea-e464ad",
+            "status": "enriched",
+            "coverage": "full"
+          },
+          "current_staging_status": "accepted",
+          "processing_run": "batch-2026-11-20-d297e0",
+          "processing_at": "2026-11-20T13:56:45+00:00",
+          "coverage": "full",
+          "read_coverage": "15/15",
+          "not_examined": [],
+          "deep_read": {
+            "identity": {
+              "chunker": "paragraph-pack/1",
+              "chunk_chars": 6000,
+              "representation": "clean_file",
+              "recipe": "31f640b32ed94c24"
+            },
+            "chunk_count": 15,
+            "read_count": 15
+          },
+          "stages": {
+            "validate": {
+              "persisted_status": "complete",
+              "selected_run_receipt": null,
+              "matching_previous_receipts": [
+                {
+                  "run": "batch-2026-11-20-f011a3",
+                  "at": "2026-11-20T05:02:49+00:00",
+                  "key": "c67fd5807ecfc56183ae",
+                  "status": "complete"
+                }
+              ]
+            },
+            "parse": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:54:03+00:00",
+                "stage": "parse",
+                "status": "complete",
+                "chunks": 15,
+                "cleanup": "cleaned into .librarian/conversions/b9db25dfc8ee4b9d645eee741941d388.md",
+                "key": "a4651ff5a59c764eecc8"
+              },
+              "matching_previous_receipts": []
+            },
+            "read": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:56:15+00:00",
+                "stage": "read",
+                "status": "complete",
+                "coverage": "15/15",
+                "lenses_staged": [
+                  "lens-doc-information-quality-sensitivity-analysis-0dc679"
+                ],
+                "key": "b746a0333cca3700fa9b"
+              },
+              "matching_previous_receipts": []
+            },
+            "lenses": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:56:15+00:00",
+                "stage": "lenses",
+                "status": "complete",
+                "staged": 2,
+                "lenses": [
+                  "lens-doc-real-world-divergence-analysis-808ab8",
+                  "lens-doc-information-quality-sensitivity-analysis-0dc679"
+                ],
+                "key": "3ff9f9a09146c8ffcd25"
+              },
+              "matching_previous_receipts": []
+            },
+            "data": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:56:15+00:00",
+                "stage": "data",
+                "status": "complete",
+                "records": 4,
+                "relations": 3,
+                "coverage": "full",
+                "key": "c2b7994f9590f3f7139f"
+              },
+              "matching_previous_receipts": []
+            },
+            "relate": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:56:16+00:00",
+                "stage": "relate",
+                "status": "complete",
+                "relations": 0,
+                "key": "7fa151c9e534e7718372"
+              },
+              "matching_previous_receipts": []
+            },
+            "metadata": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:56:17+00:00",
+                "stage": "metadata",
+                "status": "complete",
+                "key": "46146aaee3537a4cd53c"
+              },
+              "matching_previous_receipts": []
+            },
+            "review": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:56:21+00:00",
+                "stage": "review",
+                "status": "complete",
+                "draft": "ok",
+                "key": "fbc16e9b6c10214335a1"
+              },
+              "matching_previous_receipts": []
+            },
+            "publish": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:56:45+00:00",
+                "stage": "publish",
+                "status": "complete",
+                "key": "fe6f72930ee5e45ce396"
+              },
+              "matching_previous_receipts": []
+            }
+          },
+          "accepted_note": {
+            "path": "G:\\Libraries\\Resource-Library\\Sources\\document\\EXT_O5_2304.03468_Simple_HHEA.md",
+            "exists": true,
+            "bytes": 14433,
+            "sha256": "797ff2cdca355619c2618a08c3f57e5e8ba0a8ad4051d677648cd5c09e1c57be"
+          },
+          "accepted_note_headings": [
+            "# EXT_O5_2304.03468_Simple_HHEA",
+            "## Bottom Line",
+            "## What It Solves",
+            "## Claims",
+            "## Evidence & Limits",
+            "## Evidence",
+            "## Chapters"
+          ],
+          "accepted_note_coverage_lines": [
+            "coverage: full",
+            "Coverage: full."
+          ],
+          "acceptance_history": [
+            {
+              "decision": "accept",
+              "by": "person",
+              "at": "2026-11-20T14:04:56+00:00",
+              "reason": "owner instruction in chat 2026-11-20: ingest the DataManagement papers as library notes (re-read partials included, coverage kept on the note); applied by agent Claude"
+            }
+          ],
+          "promotion": {
+            "status": "catalogued",
+            "catalogued": true,
+            "step_ok": {
+              "write": true,
+              "concepts": true,
+              "index_notes": true,
+              "index": true,
+              "findability": true
+            }
+          },
+          "conversion": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\conversions\\b9db25dfc8ee4b9d645eee741941d388.md",
+            "exists": true,
+            "bytes": 81570,
+            "sha256": "b9c3c2e62f092b076f1de5a29cfb050db0e596aab5609ec3a91e3ac539ef6c95"
+          },
+          "paper_graph": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\derived\\paper-graph\\1404f98945d64ad4348272f4504e4350.nodes.json",
+            "exists": true,
+            "bytes": 135856,
+            "sha256": "0b17f3e0cd6bd7a191e4dd114f74d20787e4557f0397fcc061f50a239e56fff6",
+            "receipt_sha256": "0b17f3e0cd6bd7a191e4dd114f74d20787e4557f0397fcc061f50a239e56fff6",
+            "current_matches_receipt": true,
+            "receipt_coverage": {
+              "status": "full_conversion",
+              "page_verification": false,
+              "limitations": [
+                "Generated text and chapter detection require checking original pages; no claim verification performed",
+                "Claims are the Librarian reading's generated points and limits, located by page; unverified against the original"
+              ]
+            },
+            "authorship": "generated"
+          },
+          "data_record": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\derived\\dik\\ext-o5-2304-03468-simple-hhea.json",
+            "exists": true,
+            "bytes": 7555,
+            "sha256": "0f7e04b5dac852cdbeb5bcb5a9b220e171c5d266aebcc5d54aac7643bee24d5a",
+            "kind": "document",
+            "coverage": "full",
+            "records": 4,
+            "relations": 3,
+            "methods": {
+              "headings in the text": 4
+            },
+            "relation_bases": {
+              "document order": 3
+            }
+          }
+        },
+        {
+          "id": "ext-o9-2409-02060-olmoe-569ca0",
+          "name": "EXT_O9_2409.02060_OLMoE",
+          "staging_record": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\staging\\source\\ext-o9-2409-02060-olmoe-569ca0.json",
+            "exists": true,
+            "bytes": 60491,
+            "sha256": "40247489d51fbf0c254c9104f1af92b18042077329fdb122007c2378c10ec390"
+          },
+          "original_source": {
+            "path": "E:\\DataManagement\\09-MoE-Routing-LoRA-Adapters-and-GM-Translation\\external\\EXT_O9_2409.02060_OLMoE.pdf",
+            "exists": true,
+            "bytes": 6501620,
+            "sha256": "44511ee5d5a919140acae60509a3aec1cf4ba7d1a47913c488f945d635981658"
+          },
+          "selected_run_result": {
+            "t": "2026-11-20T13:58:12+00:00",
+            "type": "item",
+            "item": "ext-o9-2409-02060-olmoe-569ca0",
+            "status": "partial",
+            "coverage": "partial 43/44"
+          },
+          "current_staging_status": "accepted",
+          "processing_run": "batch-2026-11-20-d297e0",
+          "processing_at": "2026-11-20T13:58:12+00:00",
+          "coverage": "partial 43/44",
+          "read_coverage": "43/44",
+          "not_examined": [
+            "read: waiting for the clerk model",
+            "data: partial: 7 of 7 chapters opened",
+            "review: reading incomplete: 43 of 44 parts read",
+            "publish: not published until every part is read (43 of 44 read)"
+          ],
+          "deep_read": {
+            "identity": {
+              "chunker": "paragraph-pack/1",
+              "chunk_chars": 6000,
+              "representation": "file",
+              "recipe": "31f640b32ed94c24"
+            },
+            "chunk_count": 44,
+            "read_count": 43
+          },
+          "stages": {
+            "validate": {
+              "persisted_status": "complete",
+              "selected_run_receipt": null,
+              "matching_previous_receipts": [
+                {
+                  "run": "batch-2026-11-20-66ad9a",
+                  "at": "2026-11-20T07:29:30+00:00",
+                  "key": "734bbc43bcb6c9cdc8fc",
+                  "status": "complete"
+                }
+              ]
+            },
+            "parse": {
+              "persisted_status": "complete",
+              "selected_run_receipt": null,
+              "matching_previous_receipts": [
+                {
+                  "run": "batch-2026-11-20-66ad9a",
+                  "at": "2026-11-20T07:32:03+00:00",
+                  "key": "30dac7117108c130fbb5",
+                  "status": "complete"
+                }
+              ]
+            },
+            "read": {
+              "persisted_status": "queued",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:58:07+00:00",
+                "stage": "read",
+                "status": "queued",
+                "task_failures": [
+                  {
+                    "task": "terms",
+                    "chunk": 0,
+                    "status": "refused",
+                    "reason": "invalid JSON (Expecting ',' delimiter: line 1 column 773 (char 772))"
+                  }
+                ],
+                "coverage": "43/44",
+                "reason": "waiting for the clerk model",
+                "key": "ebd923bab92612a79a15"
+              },
+              "matching_previous_receipts": []
+            },
+            "lenses": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:58:07+00:00",
+                "stage": "lenses",
+                "status": "complete",
+                "staged": 1,
+                "lenses": [
+                  "lens-olmes-evaluation-standard-6c2055"
+                ],
+                "key": "9fe14af9b17a7be7ce2d"
+              },
+              "matching_previous_receipts": []
+            },
+            "data": {
+              "persisted_status": "partial",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:58:07+00:00",
+                "stage": "data",
+                "status": "partial",
+                "records": 7,
+                "relations": 6,
+                "coverage": "partial: 7 of 7 chapters opened",
+                "reason": "partial: 7 of 7 chapters opened",
+                "key": "cfd25990cb4f563ae6d6"
+              },
+              "matching_previous_receipts": []
+            },
+            "relate": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:58:09+00:00",
+                "stage": "relate",
+                "status": "complete",
+                "relations": 0,
+                "key": "02d682c5644cefc905e1"
+              },
+              "matching_previous_receipts": []
+            },
+            "metadata": {
+              "persisted_status": "complete",
+              "selected_run_receipt": null,
+              "matching_previous_receipts": [
+                {
+                  "run": "batch-2026-11-20-66ad9a",
+                  "at": "2026-11-20T07:36:50+00:00",
+                  "key": "b9122c6fe33dd96e2ba5",
+                  "status": "complete"
+                }
+              ]
+            },
+            "review": {
+              "persisted_status": "partial",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:58:12+00:00",
+                "stage": "review",
+                "status": "partial",
+                "draft": "ok",
+                "reason": "reading incomplete: 43 of 44 parts read",
+                "key": "4517e095a677c8c11a8c"
+              },
+              "matching_previous_receipts": []
+            },
+            "publish": {
+              "persisted_status": "partial",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:58:12+00:00",
+                "stage": "publish",
+                "status": "partial",
+                "reason": "not published until every part is read (43 of 44 read)",
+                "key": "7cede1fe55a2107051f9"
+              },
+              "matching_previous_receipts": []
+            }
+          },
+          "accepted_note": {
+            "path": "G:\\Libraries\\Resource-Library\\Sources\\document\\EXT_O9_2409.02060_OLMoE.md",
+            "exists": true,
+            "bytes": 12917,
+            "sha256": "58713516c426d10c3703d969ecd1650444b27155866288274baeb3ca3f7d183e"
+          },
+          "accepted_note_headings": [
+            "# EXT_O9_2409.02060_OLMoE",
+            "## Bottom Line",
+            "## What It Solves",
+            "## Claims",
+            "## Evidence & Limits",
+            "## Evidence",
+            "## Chapters"
+          ],
+          "accepted_note_coverage_lines": [
+            "coverage: partial 43/44",
+            "Coverage: partial: 7 of 7 chapters opened."
+          ],
+          "acceptance_history": [
+            {
+              "decision": "accept",
+              "by": "person",
+              "at": "2026-11-20T14:04:58+00:00",
+              "reason": "owner instruction in chat 2026-11-20: ingest the DataManagement papers as library notes (re-read partials included, coverage kept on the note); applied by agent Claude"
+            }
+          ],
+          "promotion": {
+            "status": "catalogued",
+            "catalogued": true,
+            "step_ok": {
+              "write": true,
+              "concepts": true,
+              "index_notes": true,
+              "index": true,
+              "findability": true
+            }
+          },
+          "conversion": null,
+          "paper_graph": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\derived\\paper-graph\\b6d9ad3d1ddd6bb9d75ce5847608ed8a.nodes.json",
+            "exists": true,
+            "bytes": 1093,
+            "sha256": "ef4937a571ec1c563fde4d7a4dadfe97a8bf63984a33260297c8e648f3356dac",
+            "receipt_sha256": "ef4937a571ec1c563fde4d7a4dadfe97a8bf63984a33260297c8e648f3356dac",
+            "current_matches_receipt": true,
+            "receipt_coverage": {
+              "status": "catalogue_only",
+              "page_verification": false,
+              "limitations": [
+                "No verified persistent full conversion; catalogue summary is not source text"
+              ]
+            },
+            "authorship": "generated"
+          },
+          "data_record": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\derived\\dik\\ext-o9-2409-02060-olmoe.json",
+            "exists": true,
+            "bytes": 10669,
+            "sha256": "b08554b5e76f50dd4791297acb5bfc59ac4ae8c6aaf93a1c3041db4cc586c7e0",
+            "kind": "document",
+            "coverage": "partial: 7 of 7 chapters opened",
+            "records": 7,
+            "relations": 6,
+            "methods": {
+              "fixed page runs (no headings found)": 7
+            },
+            "relation_bases": {
+              "document order": 6
+            }
+          }
+        },
+        {
+          "id": "improving-nosql-storage-schema-based-on-z-curve-fo-3ceca6",
+          "name": "Improving_NoSQL_Storage_Schema_Based_on_Z-Curve_for_Spatial_Vector_Data",
+          "staging_record": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\staging\\source\\improving-nosql-storage-schema-based-on-z-curve-fo-3ceca6.json",
+            "exists": true,
+            "bytes": 36477,
+            "sha256": "98069853aa6a1efcf4450de2185afebaf24079430883799e22cc31d1e29222f5"
+          },
+          "original_source": {
+            "path": "E:\\DataManagement\\07-Storage-Indexing-Join-Factorization-and-Sync\\baseline\\Improving_NoSQL_Storage_Schema_Based_on_Z-Curve_for_Spatial_Vector_Data.pdf",
+            "exists": true,
+            "bytes": 10697347,
+            "sha256": "01e14b9af4b7c33c2ccdccfbf5bb794cdceb8584adee832b9edddf2673cfd814"
+          },
+          "selected_run_result": {
+            "t": "2026-11-20T14:01:09+00:00",
+            "type": "item",
+            "item": "improving-nosql-storage-schema-based-on-z-curve-fo-3ceca6",
+            "status": "enriched",
+            "coverage": "full"
+          },
+          "current_staging_status": "accepted",
+          "processing_run": "batch-2026-11-20-d297e0",
+          "processing_at": "2026-11-20T14:01:09+00:00",
+          "coverage": "full",
+          "read_coverage": "10/10",
+          "not_examined": [],
+          "deep_read": {
+            "identity": {
+              "chunker": "paragraph-pack/1",
+              "chunk_chars": 6000,
+              "representation": "clean_file",
+              "recipe": "31f640b32ed94c24"
+            },
+            "chunk_count": 10,
+            "read_count": 10
+          },
+          "stages": {
+            "validate": {
+              "persisted_status": "complete",
+              "selected_run_receipt": null,
+              "matching_previous_receipts": [
+                {
+                  "run": "batch-2026-11-20-d8c19c",
+                  "at": "2026-11-20T06:09:40+00:00",
+                  "key": "3a7dcd404315d24bb00e",
+                  "status": "complete"
+                }
+              ]
+            },
+            "parse": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T13:58:45+00:00",
+                "stage": "parse",
+                "status": "complete",
+                "chunks": 10,
+                "cleanup": "cleaned into .librarian/conversions/f8a309e315f4e40628b9298518c6e299.md",
+                "key": "39a3d28c05bc5ca47a80"
+              },
+              "matching_previous_receipts": []
+            },
+            "read": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T14:00:34+00:00",
+                "stage": "read",
+                "status": "complete",
+                "coverage": "10/10",
+                "lenses_staged": [
+                  "lens-improved-z-curve-storage-schema-e112da"
+                ],
+                "key": "20cfdd187a90d4958c2f"
+              },
+              "matching_previous_receipts": []
+            },
+            "lenses": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T14:00:34+00:00",
+                "stage": "lenses",
+                "status": "complete",
+                "staged": 4,
+                "lenses": [
+                  "lens-improved-z-curve-storage-schema-row-key--ff5173",
+                  "lens-spatial-adjacency-to-physical-storage-ma-df2246",
+                  "lens-doc-trade-off-between-redundancy-and-query-a-0058ce",
+                  "lens-improved-z-curve-storage-schema-e112da"
+                ],
+                "key": "56d8c10b758bd9571278"
+              },
+              "matching_previous_receipts": []
+            },
+            "data": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T14:00:34+00:00",
+                "stage": "data",
+                "status": "complete",
+                "records": 2,
+                "relations": 1,
+                "coverage": "full",
+                "key": "dac3b419c5a18ea66abf"
+              },
+              "matching_previous_receipts": []
+            },
+            "relate": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T14:00:35+00:00",
+                "stage": "relate",
+                "status": "complete",
+                "relations": 0,
+                "key": "3e33e37a430db9583704"
+              },
+              "matching_previous_receipts": []
+            },
+            "metadata": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T14:00:36+00:00",
+                "stage": "metadata",
+                "status": "complete",
+                "key": "22034b6a1a4cc95b8da6"
+              },
+              "matching_previous_receipts": []
+            },
+            "review": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T14:00:39+00:00",
+                "stage": "review",
+                "status": "complete",
+                "draft": "ok",
+                "key": "276e105b532292123d2e"
+              },
+              "matching_previous_receipts": []
+            },
+            "publish": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T14:01:09+00:00",
+                "stage": "publish",
+                "status": "complete",
+                "key": "d19338102ee9aff6c30d"
+              },
+              "matching_previous_receipts": []
+            }
+          },
+          "accepted_note": {
+            "path": "G:\\Libraries\\Resource-Library\\Sources\\document\\Improving_NoSQL_Storage_Schema_Based_on_Z-Curve_for_Spatial_Vector_Data.md",
+            "exists": true,
+            "bytes": 11433,
+            "sha256": "dc6e7649cab24ac314491c6f04e818d1cbbd89414eaded596060ec938f2bbc3e"
+          },
+          "accepted_note_headings": [
+            "# Improving_NoSQL_Storage_Schema_Based_on_Z-Curve_for_Spatial_Vector_Data",
+            "## Bottom Line",
+            "## What It Solves",
+            "## Claims",
+            "## Evidence & Limits",
+            "## Evidence",
+            "## Chapters"
+          ],
+          "accepted_note_coverage_lines": [
+            "coverage: full",
+            "Coverage: full."
+          ],
+          "acceptance_history": [
+            {
+              "decision": "accept",
+              "by": "person",
+              "at": "2026-11-20T14:04:58+00:00",
+              "reason": "owner instruction in chat 2026-11-20: ingest the DataManagement papers as library notes (re-read partials included, coverage kept on the note); applied by agent Claude"
+            }
+          ],
+          "promotion": {
+            "status": "catalogued",
+            "catalogued": true,
+            "step_ok": {
+              "write": true,
+              "concepts": true,
+              "index_notes": true,
+              "index": true,
+              "findability": true
+            }
+          },
+          "conversion": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\conversions\\f8a309e315f4e40628b9298518c6e299.md",
+            "exists": true,
+            "bytes": 52852,
+            "sha256": "c4c66d5481073ed48879933d1382810b8f161d5549ee108aed481c3a21c4abee"
+          },
+          "paper_graph": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\derived\\paper-graph\\e6554b47f4ea9b21b1bc660c64a4dcb9.nodes.json",
+            "exists": true,
+            "bytes": 80810,
+            "sha256": "7a0a50ebae2e597fbf02786e2026a190ef36d956742071c3e60665f5d969da64",
+            "receipt_sha256": "7a0a50ebae2e597fbf02786e2026a190ef36d956742071c3e60665f5d969da64",
+            "current_matches_receipt": true,
+            "receipt_coverage": {
+              "status": "full_conversion",
+              "page_verification": false,
+              "limitations": [
+                "Generated text and chapter detection require checking original pages; no claim verification performed",
+                "Claims are the Librarian reading's generated points and limits, located by page; unverified against the original"
+              ]
+            },
+            "authorship": "generated"
+          },
+          "data_record": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\derived\\dik\\improving-nosql-storage-schema-based-on-z-curve-for-spatial-vector-data.json",
+            "exists": true,
+            "bytes": 3575,
+            "sha256": "85f2a297cd0a0eb3ec248b0a1c0ed32d39f3dc6129c4651c6dbc42469aea5660",
+            "kind": "document",
+            "coverage": "full",
+            "records": 2,
+            "relations": 1,
+            "methods": {
+              "headings in the text": 2
+            },
+            "relation_bases": {
+              "document order": 1
+            }
+          }
+        },
+        {
+          "id": "mixture-of-experts-knowledge-graph-retrieval-augme-11e2dd",
+          "name": "Mixture-of-Experts Knowledge Graph Retrieval-Augmented Generation for Multi-Agent LLM-based Recommendation",
+          "staging_record": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\staging\\source\\mixture-of-experts-knowledge-graph-retrieval-augme-11e2dd.json",
+            "exists": true,
+            "bytes": 55924,
+            "sha256": "dd7bb9577a6b416129d7101bdfeb026631cf589f2ed37323fefe6357401c9203"
+          },
+          "original_source": {
+            "path": "E:\\DataManagement\\03-Retrieval-Routing-and-Graph-Query-Systems\\baseline\\Mixture-of-Experts Knowledge Graph Retrieval-Augmented Generation for Multi-Agent LLM-based Recommendation.pdf",
+            "exists": true,
+            "bytes": 3407344,
+            "sha256": "0d978b98f0ba99dd8f8bb8be6b20c33ebf7cbc6370fb099e75caea780d77e6d9"
+          },
+          "selected_run_result": {
+            "t": "2026-11-20T14:02:05+00:00",
+            "type": "item",
+            "item": "mixture-of-experts-knowledge-graph-retrieval-augme-11e2dd",
+            "status": "partial",
+            "coverage": "partial 17/18"
+          },
+          "current_staging_status": "accepted",
+          "processing_run": "batch-2026-11-20-d297e0",
+          "processing_at": "2026-11-20T14:02:05+00:00",
+          "coverage": "partial 17/18",
+          "read_coverage": "17/18",
+          "not_examined": [
+            "read: waiting for the clerk model",
+            "data: partial: 2 of 2 chapters opened",
+            "relate: fewer than two fully read chapters",
+            "review: reading incomplete: 17 of 18 parts read",
+            "publish: not published until every part is read (17 of 18 read)"
+          ],
+          "deep_read": {
+            "identity": {
+              "chunker": "paragraph-pack/1",
+              "chunk_chars": 6000,
+              "representation": "file",
+              "recipe": "31f640b32ed94c24"
+            },
+            "chunk_count": 18,
+            "read_count": 17
+          },
+          "stages": {
+            "validate": {
+              "persisted_status": "complete",
+              "selected_run_receipt": null,
+              "matching_previous_receipts": [
+                {
+                  "run": "batch-2026-11-20-cf347e",
+                  "at": "2026-11-20T03:36:20+00:00",
+                  "key": "70f4d9334496b8cfd26b",
+                  "status": "complete"
+                }
+              ]
+            },
+            "parse": {
+              "persisted_status": "complete",
+              "selected_run_receipt": null,
+              "matching_previous_receipts": [
+                {
+                  "run": "batch-2026-11-20-cf347e",
+                  "at": "2026-11-20T03:37:03+00:00",
+                  "key": "bf5bd438b6255710a453",
+                  "status": "complete"
+                }
+              ]
+            },
+            "read": {
+              "persisted_status": "queued",
+              "selected_run_receipt": {
+                "t": "2026-11-20T14:02:01+00:00",
+                "stage": "read",
+                "status": "queued",
+                "task_failures": [
+                  {
+                    "task": "terms",
+                    "chunk": 7,
+                    "status": "refused",
+                    "reason": "invalid JSON (Invalid control character at: line 1 column 1435 (char 1434))"
+                  }
+                ],
+                "coverage": "17/18",
+                "reason": "waiting for the clerk model",
+                "key": "139af487d2b588ad9404"
+              },
+              "matching_previous_receipts": []
+            },
+            "lenses": {
+              "persisted_status": "complete",
+              "selected_run_receipt": {
+                "t": "2026-11-20T14:02:01+00:00",
+                "stage": "lenses",
+                "status": "complete",
+                "staged": 0,
+                "key": "dc738fa18adee8ce5e01"
+              },
+              "matching_previous_receipts": []
+            },
+            "data": {
+              "persisted_status": "partial",
+              "selected_run_receipt": {
+                "t": "2026-11-20T14:02:01+00:00",
+                "stage": "data",
+                "status": "partial",
+                "records": 2,
+                "relations": 1,
+                "coverage": "partial: 2 of 2 chapters opened",
+                "reason": "partial: 2 of 2 chapters opened",
+                "key": "5b5f293e8baa29328cf5"
+              },
+              "matching_previous_receipts": []
+            },
+            "relate": {
+              "persisted_status": "partial",
+              "selected_run_receipt": {
+                "t": "2026-11-20T14:02:02+00:00",
+                "stage": "relate",
+                "status": "partial",
+                "reason": "fewer than two fully read chapters",
+                "key": "11bdbc9c75967ba1fd6a"
+              },
+              "matching_previous_receipts": []
+            },
+            "metadata": {
+              "persisted_status": "complete",
+              "selected_run_receipt": null,
+              "matching_previous_receipts": [
+                {
+                  "run": "batch-2026-11-20-cf347e",
+                  "at": "2026-11-20T03:39:55+00:00",
+                  "key": "9f477c71aef9ecc45221",
+                  "status": "complete"
+                }
+              ]
+            },
+            "review": {
+              "persisted_status": "partial",
+              "selected_run_receipt": {
+                "t": "2026-11-20T14:02:05+00:00",
+                "stage": "review",
+                "status": "partial",
+                "draft": "ok",
+                "reason": "reading incomplete: 17 of 18 parts read",
+                "key": "b64bc3a947df35fb184a"
+              },
+              "matching_previous_receipts": []
+            },
+            "publish": {
+              "persisted_status": "partial",
+              "selected_run_receipt": {
+                "t": "2026-11-20T14:02:05+00:00",
+                "stage": "publish",
+                "status": "partial",
+                "reason": "not published until every part is read (17 of 18 read)",
+                "key": "8d0a7c05014861b5e978"
+              },
+              "matching_previous_receipts": []
+            }
+          },
+          "accepted_note": {
+            "path": "G:\\Libraries\\Resource-Library\\Sources\\document\\Mixture-of-Experts Knowledge Graph Retrieval-Augmented Generation for Multi-Agent LLM-based Recommendation.md",
+            "exists": true,
+            "bytes": 12412,
+            "sha256": "77976e2b561aed73f5ed57fa3291e1d980a8387348ee80452f536856d2d647a4"
+          },
+          "accepted_note_headings": [
+            "# Mixture-of-Experts Knowledge Graph Retrieval-Augmented Generation for Multi-Agent LLM-based Recommendation",
+            "## Bottom Line",
+            "## What It Solves",
+            "## Claims",
+            "## Evidence & Limits",
+            "## Evidence",
+            "## Chapters"
+          ],
+          "accepted_note_coverage_lines": [
+            "coverage: partial 17/18",
+            "Coverage: partial: 2 of 2 chapters opened."
+          ],
+          "acceptance_history": [
+            {
+              "decision": "accept",
+              "by": "person",
+              "at": "2026-11-20T14:05:00+00:00",
+              "reason": "owner instruction in chat 2026-11-20: ingest the DataManagement papers as library notes (re-read partials included, coverage kept on the note); applied by agent Claude"
+            }
+          ],
+          "promotion": {
+            "status": "catalogued",
+            "catalogued": true,
+            "step_ok": {
+              "write": true,
+              "concepts": true,
+              "index_notes": true,
+              "index": true,
+              "findability": true
+            }
+          },
+          "conversion": null,
+          "paper_graph": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\derived\\paper-graph\\6205410a3541d2d82d90aa6a681e69cc.nodes.json",
+            "exists": true,
+            "bytes": 1256,
+            "sha256": "9f7c876bfd23d67cf6d32332624ede7cf149cee94223b6387bbf5f84c67a0931",
+            "receipt_sha256": "9f7c876bfd23d67cf6d32332624ede7cf149cee94223b6387bbf5f84c67a0931",
+            "current_matches_receipt": true,
+            "receipt_coverage": {
+              "status": "catalogue_only",
+              "page_verification": false,
+              "limitations": [
+                "No verified persistent full conversion; catalogue summary is not source text"
+              ]
+            },
+            "authorship": "generated"
+          },
+          "data_record": {
+            "path": "G:\\Libraries\\Resource-Library\\.librarian\\derived\\dik\\mixture-of-experts-knowledge-graph-retrieval-augmented-generation-for-multi-agen.json",
+            "exists": true,
+            "bytes": 3958,
+            "sha256": "21e41aa8ab699185818a2c9f05f0d975f16bd4238b34027802e585a38b71519c",
+            "kind": "document",
+            "coverage": "partial: 2 of 2 chapters opened",
+            "records": 2,
+            "relations": 1,
+            "methods": {
+              "fixed page runs (no headings found)": 2
+            },
+            "relation_bases": {
+              "document order": 1
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "live_core_check": {
+    "checked_on": "2026-11-22",
+    "method": "authenticated read-only GET /api/meta against Resource-Library Core",
+    "core_version": "2.1.0.dev0",
+    "protocol_version": "2",
+    "ui_build_id": "development",
+    "writer": "ready",
+    "vault_lease": "held",
+    "limit": "Handshake does not expose a Git commit or establish the version that performed the historical runs. No model route changes or calls."
+  }
+}

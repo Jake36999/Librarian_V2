@@ -1,0 +1,519 @@
+# Proposed report model with equivalent local report exits; no runtime implementation.
+diagram: proposed-batch-enrichment
+kind: activity
+title: Proposed to-be mixed-batch enrichment
+target:
+  kind: use_case
+  ref: proposed-batch-enrichment.md#use-case-description
+lens:
+- the-guard-completeness-lens
+- the-real-concurrency-lens
+- the-root-cause-lens
+perspective: Owner
+problem:
+  symptom: The current mixed dispatcher accounts for source and folder stages but has no integrated agent owner
+    for meaning, package conformance or bounded repair.
+  why:
+  - Folder descriptions need accountable model authorship without being confused with reading their documents.
+  - Stage completion and part counters do not by themselves establish that every required output is complete.
+  root: Retain the existing mixed ledger while adding bounded Lead ownership, Clerk/Scribe proposals and independent
+    child-contract review.
+lanes:
+- Oracle
+- Lead (tier 1)
+- Doctor
+- Clerk (tier 2)
+- Scribe (tier 3)
+- Core
+nodes:
+- id: s
+  kind: start
+- id: contract
+  kind: note
+  lane: Lead (tier 1)
+  label: Proposed child of ingestion. It inherits one commission, Lead and mixed ledger; source references describe
+    the selected item's work, not another batch worker.
+- id: bind
+  kind: activity
+  lane: Lead (tier 1)
+  step: 1
+  label: owns the parent's admitted mixed work and required child outputs; plans accepted components within the
+    existing mandate
+- id: admit
+  kind: activity
+  lane: Core
+  step: 2
+  label: checks recorded parent specification, approved selection, start grants, role assignments and receipt keys;
+    keeps the original mixed ledger
+- id: dadmit
+  kind: decision
+  lane: Core
+  label: recorded admission and frozen work?
+- id: nextitem
+  kind: activity
+  lane: Core
+  step: 3
+  label: selects the next frozen item in mixed order; retains completed siblings and each item's original identity
+- id: controls
+  kind: activity
+  lane: Core
+  step: 4
+  label: checks spend before the item and writer, cancellation, grants and critical flags at every dispatch or commit;
+    reuses only compatible receipts
+- id: dcontrols
+  kind: decision
+  lane: Core
+  label: recorded controls permit this item?
+- id: dkind
+  kind: decision
+  lane: Core
+  label: recorded staged-item kind?
+- id: source
+  kind: ref
+  lane: Core
+  step: 5
+  use_case: proposed-source-enrichment
+  label: dispatches the selected Source item's proposed contract under the same recorded specification, Lead and
+    ledger
+- id: foldervalidate
+  kind: activity
+  lane: Core
+  label: 'folder_validate: checks inventory evidence, fingerprints, access and recorded sensitivity restrictions
+    before drafting'
+- id: dfoldervalidate
+  kind: decision
+  lane: Core
+  label: folder validation result?
+- id: folderroute
+  kind: activity
+  lane: Core
+  label: checks the assigned qualified route, production-drafting grant and remaining allowance; an unavailable
+    route earns no task completion
+- id: dfolderroute
+  kind: decision
+  lane: Core
+  label: recorded folder drafting route and grant available?
+- id: folderplan
+  kind: activity
+  lane: Clerk (tier 2)
+  label: directs bounded Scribe description work from approved inventory metadata; retains the folder's actual purpose
+    and withheld content
+- id: folderscribe
+  kind: activity
+  lane: Scribe (tier 3)
+  label: drafts inventory-grounded folder description and sensitivity findings with supporting locators and explicit
+    unknowns; documents remain unread
+- id: folderreview
+  kind: activity
+  lane: Clerk (tier 2)
+  label: proofreads the draft against inventory evidence, authors the folder proposal and records uncertainty or
+    sensitivity requiring a parent decision
+- id: foldercheck
+  kind: activity
+  lane: Core
+  label: checks returned schema, literal inventory provenance and current fingerprints; stores the agent-authored
+    proposal and actual task status
+- id: dfoldercheck
+  kind: decision
+  lane: Core
+  label: folder description checks and task status?
+- id: folderdata
+  kind: activity
+  lane: Core
+  label: 'folder_data: materializes inventory Data and the submitted proposal through the existing guarded writer'
+- id: dfolderdata
+  kind: decision
+  lane: Core
+  label: folder Data write result?
+- id: foldercoverage
+  kind: activity
+  lane: Core
+  label: records metadata-only folder coverage, source content not examined, with the exact complete, queued or
+    partial stage status
+- id: folderqueued
+  kind: activity
+  lane: Core
+  label: retains deferred or disabled drafting with its route, task gaps, attempts and known or unknown cost; applicable
+    inventory work stays explicit
+- id: folderfault
+  kind: activity
+  lane: Core
+  label: records the originating stage, existing refusal or fault flag, actor, evidence and accountable ticket owner;
+    does not invent another fault taxonomy
+- id: ditemcritical
+  kind: decision
+  lane: Core
+  label: existing flag requires immediate critical stop?
+- id: faileditem
+  kind: activity
+  lane: Core
+  label: retains this item's failed stage and earlier receipts, skips its remaining stages and leaves completed
+    siblings intact
+- id: account
+  kind: activity
+  lane: Core
+  step: 6
+  label: updates the original mixed ledger with actual source or folder results, reading and derivation gaps, publication
+    and separate pending decisions
+- id: dmore
+  kind: decision
+  lane: Core
+  label: another frozen item?
+- id: assess
+  kind: activity
+  lane: Clerk (tier 2)
+  step: 7
+  label: reconciles source and metadata-only folder packages against the required outputs; explains gaps without
+    granting reading credit or accepting proposals
+- id: oracle
+  kind: activity
+  lane: Oracle
+  step: 8
+  label: judges the mixed child contract from checks and isolated evidence review; verifies item accounting, coverage
+    distinctions and outstanding obligations
+- id: dverdict
+  kind: decision
+  lane: Oracle
+  label: mixed child-contract verdict?
+- id: ticket
+  kind: activity
+  lane: Core
+  label: links the verified shortfall to its existing stage ticket, evidence and responsible tier; keeps required
+    repair visible in the original ledger
+- id: dremedymatch
+  kind: decision
+  lane: Core
+  label: an accepted remedy maps to the existing symptom and extension?
+- id: scope
+  kind: activity
+  lane: Core
+  label: computes affected records, actual blast radius and recorded remedy grant; finished partial processing still
+    requires its real re-approval
+- id: dremedygrant
+  kind: decision
+  lane: Core
+  label: accepted remedy within recorded scope, authority and attempt allowance?
+- id: doctor
+  kind: activity
+  lane: Doctor
+  label: executes only the accepted mapped remedy within the admitted scope; unavailable authority stays unresolved
+    and new remedies remain proposals
+- id: repaircheck
+  kind: activity
+  lane: Core
+  label: reruns affected deterministic checks and records actual remedy result, changed evidence, remaining allowance
+    and unresolved task outcomes
+- id: recheck
+  kind: activity
+  lane: Oracle
+  label: independently rechecks the original shortfall and affected child obligations; a Doctor result alone does
+    not close the ticket
+- id: drecheck
+  kind: decision
+  lane: Oracle
+  label: repair independently verified within the bounded attempt policy?
+- id: unmapped
+  kind: activity
+  lane: Lead (tier 1)
+  label: owns unmapped diagnosis from bounded Clerk or Scribe evidence; proposes a new remedy or authority request
+    to the invoking parent
+- id: dunmapped
+  kind: decision
+  lane: Lead (tier 1)
+  label: truthful handback for the unresolved requirement?
+- id: fullhandoff
+  kind: activity
+  lane: Lead (tier 1)
+  step: 9
+  label: returns the verified mixed package to the invoking parent with true decision actors and pending Source,
+    folder and lens worklists
+- id: partialhandoff
+  kind: activity
+  lane: Lead (tier 1)
+  label: returns completed work, explicit unmet child outputs and accountable tickets; retains the parent's pending
+    decisions and original mixed accounting
+- id: pausehandoff
+  kind: activity
+  lane: Lead (tier 1)
+  label: returns the stop reason, retained receipts and exact continuation or reserved-authority request to the
+    parent; does not commission another run
+- id: escalatehandoff
+  kind: activity
+  lane: Lead (tier 1)
+  label: immediately reports critical or run-wide trust failure to the invoking parent for its Owner or tier-0 route,
+    preserving evidence and completed work
+- id: noworkhandoff
+  kind: activity
+  lane: Lead (tier 1)
+  label: returns no fresh child work and reconciled receipt states; outstanding parent decisions remain outstanding
+    rather than becoming implied success
+- id: e1
+  kind: end
+  outcome: success
+  label: required mixed child outputs satisfied; parent acceptance and final specification verdict remain separate
+- id: epartial
+  kind: end
+  outcome: partial
+  label: mixed work accounted for with explicit unmet child outputs or repair obligations
+- id: enowork
+  kind: end
+  outcome: reused
+  label: no fresh admitted child work; parent must still account for its remaining obligations
+- id: epaused
+  kind: end
+  outcome: paused
+  label: retained work awaits explicit continuation, a reserved decision or required authority from the parent
+- id: eescalated
+  kind: end
+  outcome: escalated
+  label: critical or run-wide failure prevents a trustworthy child completion handback
+- id: pausehandoff_at_bdfe8aaefe
+  kind: activity
+  lane: Lead (tier 1)
+  label: returns the stop reason, retained receipts and exact continuation or reserved-authority request to the
+    parent; does not commission another run
+- id: epaused_at_bdfe8aaefe
+  kind: end
+  outcome: paused
+  label: retained work awaits explicit continuation, a reserved decision or required authority from the parent
+- id: escalatehandoff_at_d74d2f9cb5
+  kind: activity
+  lane: Lead (tier 1)
+  label: immediately reports critical or run-wide trust failure to the invoking parent for its Owner or tier-0 route,
+    preserving evidence and completed work
+- id: eescalated_at_d74d2f9cb5
+  kind: end
+  outcome: escalated
+  label: critical or run-wide failure prevents a trustworthy child completion handback
+- id: pausehandoff_at_3c589ea0dc
+  kind: activity
+  lane: Lead (tier 1)
+  label: returns the stop reason, retained receipts and exact continuation or reserved-authority request to the
+    parent; does not commission another run
+- id: epaused_at_3c589ea0dc
+  kind: end
+  outcome: paused
+  label: retained work awaits explicit continuation, a reserved decision or required authority from the parent
+- id: escalatehandoff_at_b1dc83cf39
+  kind: activity
+  lane: Lead (tier 1)
+  label: immediately reports critical or run-wide trust failure to the invoking parent for its Owner or tier-0 route,
+    preserving evidence and completed work
+- id: eescalated_at_b1dc83cf39
+  kind: end
+  outcome: escalated
+  label: critical or run-wide failure prevents a trustworthy child completion handback
+edges:
+- from: s
+  to: contract
+- from: contract
+  to: bind
+- from: bind
+  to: admit
+- from: admit
+  to: dadmit
+- from: dadmit
+  to: nextitem
+  guard: admitted nonempty frozen set
+- from: dadmit
+  to: noworkhandoff
+  guard: no fresh approved work; parent ledger reconciled
+  ext: 2a
+- from: dadmit
+  to: pausehandoff_at_bdfe8aaefe
+  guard: missing or reserved authority
+  ext: 2b
+- from: dadmit
+  to: escalatehandoff_at_d74d2f9cb5
+  guard: run-wide state or authority-integrity failure
+  ext: 2c
+- from: nextitem
+  to: controls
+- from: controls
+  to: dcontrols
+- from: dcontrols
+  to: dkind
+  guard: active within recorded controls
+- from: dcontrols
+  to: pausehandoff_at_3c589ea0dc
+  guard: cancelled, interrupted, grant withheld or spend ceiling reached
+  ext: 4a
+- from: dcontrols
+  to: escalatehandoff_at_b1dc83cf39
+  guard: critical integrity or run-wide writer failure
+  ext: 4b
+- from: dkind
+  to: source
+  guard: source
+- from: dkind
+  to: foldervalidate
+  guard: folder metadata card
+  ext: 4c
+- from: source
+  to: account
+  guard: success
+- from: source
+  to: account
+  guard: partial
+  ext: 5a
+- from: source
+  to: account
+  guard: reused
+  ext: 5b
+- from: source
+  to: pausehandoff
+  guard: paused
+  ext: 5c
+- from: source
+  to: escalatehandoff
+  guard: escalated
+  ext: 5d
+- from: foldervalidate
+  to: dfoldervalidate
+- from: dfoldervalidate
+  to: folderroute
+  guard: valid current inventory and access
+- from: dfoldervalidate
+  to: folderfault
+  guard: failed or stale
+- from: folderroute
+  to: dfolderroute
+- from: dfolderroute
+  to: folderplan
+  guard: qualified assigned route and drafting authority available
+- from: dfolderroute
+  to: folderqueued
+  guard: disabled, deferred or unavailable within bounded route policy
+- from: dfolderroute
+  to: folderfault
+  guard: invalid grant, returned refusal or route-integrity failure
+- from: folderplan
+  to: folderscribe
+- from: folderscribe
+  to: folderreview
+- from: folderreview
+  to: foldercheck
+- from: foldercheck
+  to: dfoldercheck
+- from: dfoldercheck
+  to: folderdata
+  guard: valid proposal or explicit unresolved fields
+- from: dfoldercheck
+  to: folderqueued
+  guard: pending required task or recoverable transport outage
+- from: dfoldercheck
+  to: folderfault
+  guard: failed, including FOLDER_PROVENANCE or FOLDER_DRAFT_FAILED
+- from: folderqueued
+  to: folderdata
+- from: folderdata
+  to: dfolderdata
+- from: dfolderdata
+  to: foldercoverage
+  guard: write succeeded
+- from: dfolderdata
+  to: folderfault
+  guard: write failed or state changed
+- from: foldercoverage
+  to: account
+- from: folderfault
+  to: ditemcritical
+- from: ditemcritical
+  to: faileditem
+  guard: noncritical item failure
+- from: ditemcritical
+  to: escalatehandoff
+  guard: critical flag requires immediate stop
+- from: faileditem
+  to: account
+- from: account
+  to: dmore
+- from: dmore
+  to: assess
+  guard: frozen set accounted for
+- from: dmore
+  to: nextitem
+  guard: another frozen item
+  ext: 6a
+- from: assess
+  to: oracle
+- from: oracle
+  to: dverdict
+- from: dverdict
+  to: fullhandoff
+  guard: required child outputs satisfied
+- from: dverdict
+  to: partialhandoff
+  guard: truthful partial package with no authorized repair now
+  ext: 8a
+- from: dverdict
+  to: ticket
+  guard: actionable required shortfall with retained evidence
+  ext: 8b
+- from: dverdict
+  to: escalatehandoff
+  guard: critical or run-wide trust failure
+  ext: 8c
+- from: ticket
+  to: dremedymatch
+- from: dremedymatch
+  to: scope
+  guard: accepted remedy mapped
+- from: dremedymatch
+  to: unmapped
+  guard: unmapped or remedy only proposed
+- from: scope
+  to: dremedygrant
+- from: dremedygrant
+  to: doctor
+  guard: existing mandate and accepted bounded attempt permit remedy
+- from: dremedygrant
+  to: pausehandoff
+  guard: reserved, too wide, exhausted, or fresh processing approval required
+- from: doctor
+  to: repaircheck
+- from: repaircheck
+  to: recheck
+- from: recheck
+  to: drecheck
+- from: drecheck
+  to: assess
+  guard: verified repair; reconcile affected package before handback
+- from: drecheck
+  to: partialhandoff
+  guard: unresolved or bounded attempt exhausted; preserve ticket
+- from: drecheck
+  to: escalatehandoff
+  guard: critical integrity failure
+- from: unmapped
+  to: dunmapped
+- from: dunmapped
+  to: partialhandoff
+  guard: return unmet requirement with diagnosis and proposed next step
+- from: dunmapped
+  to: pausehandoff
+  guard: parent decision or accepted remedy required to continue
+- from: fullhandoff
+  to: e1
+- from: partialhandoff
+  to: epartial
+- from: pausehandoff
+  to: epaused
+- from: escalatehandoff
+  to: eescalated
+- from: noworkhandoff
+  to: enowork
+- from: pausehandoff_at_bdfe8aaefe
+  to: epaused_at_bdfe8aaefe
+- from: escalatehandoff_at_d74d2f9cb5
+  to: eescalated_at_d74d2f9cb5
+- from: pausehandoff_at_3c589ea0dc
+  to: epaused_at_3c589ea0dc
+- from: escalatehandoff_at_b1dc83cf39
+  to: eescalated_at_b1dc83cf39
+provenance:
+  drafted_by: tier 0 (Codex), Owner request for to-be counterparts of corrected current graphs
+  at: 2026-11-23
+  status: proposed behavioral integration; not runtime implementation or acceptance
+  based_on: corrected batch-enrichment-current; current batch._begin/_run/_finish_item and FOLDER_STAGES; accepted
+    role and authority direction

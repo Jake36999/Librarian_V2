@@ -1,0 +1,227 @@
+diagram: librarian-batch-enrichment-tobe
+title: "Librarian Mixed-Batch Enrichment L2 Pipeline (Proposed To-Be)"
+problem:
+  symptom: "Batches ran sessionless with before-item-only budget checks, redundant folder drafting, and UC-D recovery without Oracle verification."
+  root: "Record batch activation trigger, reuse NAT-13 folder receipts, enforce MC-10 atomic pre-dispatch reserve, Oracle gate, and single-pass Doctor re-entry."
+lanes:
+  - Oracle
+  - Lead (tier 1)
+  - Doctor
+  - Clerk (tier 2)
+  - Scribe (tier 3)
+  - Core
+
+nodes:
+  - id: s
+    kind: start
+    label: start
+  - id: activate
+    kind: activity
+    lane: Core
+    step: 1
+    label: "records narrowed L2 batch mandate, parent spec_owner, F-02 checkpoint & commissioned_by / decided_by"
+  - id: dtrigger
+    kind: decision
+    lane: Core
+    label: "batch start authority source?"
+  - id: useradmit
+    kind: activity
+    lane: Core
+    label: "binds Context 3 direct curate process_approved selection (spec_owner=person)"
+  - id: t0admit
+    kind: activity
+    lane: Core
+    label: "validates Context-1 commissioned mandate_id (or scoped stage_only grant); records decided_by=agent"
+  - id: bind
+    kind: activity
+    lane: Lead (tier 1)
+    step: 2
+    label: "owns delegated L2 sub-run spec (sub_spec_owner=lead_tier1 <= parent)"
+  - id: admit
+    kind: activity
+    lane: Core
+    step: 3
+    label: "validates session-bound F-02 checkpoint, frozen selection, and role routes"
+  - id: dadmit
+    kind: decision
+    lane: Core
+    label: "admitted mixed work?"
+  - id: nextitem
+    kind: activity
+    lane: Core
+    step: 4
+    label: "picks next frozen source or folder item; isolates sibling faults"
+  - id: controls
+    kind: activity
+    lane: Core
+    step: 5
+    label: "checks cancel/writer lease and reserves MC-10 budget before item dispatch"
+  - id: dcontrols
+    kind: decision
+    lane: Core
+    label: "controls allow item?"
+  - id: dkind
+    kind: decision
+    lane: Core
+    label: "item kind?"
+  - id: source
+    kind: ref
+    lane: Core
+    step: 6
+    use_case: librarian-source-enrichment-tobe
+    label: "runs singleton Source enrichment child under shared commission & MC-10"
+  - id: fval
+    kind: activity
+    lane: Core
+    label: "folder_validate: verifies survey digest, access, and sensitivity flags"
+  - id: froute
+    kind: activity
+    lane: Core
+    label: "checks folder drafting grant, NAT-13 intake receipt, & MC-10 reserve"
+  - id: dfroute
+    kind: decision
+    lane: Core
+    label: "folder drafting needed & permitted?"
+  - id: fscribe
+    kind: activity
+    lane: Scribe (tier 3)
+    label: "drafts inventory-grounded folder summary without reading documents"
+  - id: freview
+    kind: activity
+    lane: Clerk (tier 2)
+    label: "reviews folder summary organization & semantic sensitivity"
+  - id: fdata
+    kind: activity
+    lane: Core
+    label: "runs scripted provenance.py arithmetic cap check & writes folder_data Silver DIK receipt"
+  - id: ffail
+    kind: activity
+    lane: Core
+    label: "records failed folder stage without interrupting sibling items"
+  - id: account
+    kind: activity
+    lane: Core
+    step: 7
+    label: "updates mixed parent ledger with coverage, MC-10 spend, and worklists"
+  - id: dmore
+    kind: decision
+    lane: Core
+    label: "more frozen items?"
+  - id: assess
+    kind: activity
+    lane: Clerk (tier 2)
+    step: 8
+    label: "explains semantic partial gaps across items (Core account step owns literal counts)"
+  - id: oracle
+    kind: activity
+    lane: Oracle
+    step: 9
+    label: "verifies mixed L2 ledger & MC-10 totals via distinct qualified Oracle route (GLM-5.3 current adapter); emits Tickets on fault"
+  - id: dverdict
+    kind: decision
+    lane: Oracle
+    label: "Oracle mixed-batch verdict?"
+  - id: doctor
+    kind: ref
+    lane: Doctor
+    use_case: librarian-doctor-tobe
+    label: "runs bounded accepted YAML repair without auto-rollback"
+  - id: reentry
+    kind: activity
+    lane: Core
+    label: "verifies single-pass Doctor repair receipt (attempt <= 1)"
+  - id: fullhandoff
+    kind: activity
+    lane: Lead (tier 1)
+    step: 10
+    label: "hands verified mixed package & separate pending worklists to parent"
+  - id: partialhandoff
+    kind: activity
+    lane: Lead (tier 1)
+    label: "returns completed items beside explicit unmet tickets/partials"
+  - id: noworkhandoff
+    kind: activity
+    lane: Lead (tier 1)
+    label: "returns compatible reuse receipt with pending parent decisions preserved"
+  - id: pausehandoff
+    kind: activity
+    lane: Lead (tier 1)
+    label: "returns cancel, MC-10 limit, or ORACLE_ROUTE_COLLISION (unverified) pause Ticket with retained state"
+  - id: eschandoff
+    kind: activity
+    lane: Lead (tier 1)
+    label: "escalates critical fault with retained sibling receipts and logs"
+  - id: e1
+    kind: end
+    outcome: success
+    label: "mixed batch obligations met; parent acceptance separate"
+  - id: epartial
+    kind: end
+    outcome: partial
+    label: "mixed batch partial with explicit unmet items or tickets"
+  - id: enowork
+    kind: end
+    outcome: reused
+    label: "no fresh batch work; compatible receipts reconciled"
+  - id: epaused
+    kind: end
+    outcome: paused
+    label: "paused on cancel, reserved grant, MC-10 cap, or ORACLE_ROUTE_COLLISION"
+  - id: eescalated
+    kind: end
+    outcome: escalated
+    label: "critical or unrecoverable fault escalated to parent"
+
+edges:
+  - {from: s, to: activate}
+  - {from: activate, to: dtrigger}
+  - {from: dtrigger, to: bind, guard: "system triggered (parent ingest or schedule)"}
+  - {from: dtrigger, to: useradmit, guard: "user directed (Owner curate start)", ext: "1a"}
+  - {from: dtrigger, to: t0admit, guard: "tier 0 directed (Context-1 commissioned mandate_id or scoped stage_only)", ext: "1b"}
+  - {from: useradmit, to: bind}
+  - {from: t0admit, to: bind}
+  - {from: bind, to: admit}
+  - {from: admit, to: dadmit}
+  - {from: dadmit, to: nextitem, guard: "nonempty frozen selection"}
+  - {from: dadmit, to: noworkhandoff, guard: "no fresh work", ext: "3a"}
+  - {from: dadmit, to: pausehandoff, guard: "missing start authority", ext: "3b"}
+  - {from: nextitem, to: controls}
+  - {from: controls, to: dcontrols}
+  - {from: dcontrols, to: dkind, guard: "controls and MC-10 reserve active"}
+  - {from: dcontrols, to: pausehandoff, guard: "cancelled or MC-10 cap reached", ext: "5a"}
+  - {from: dcontrols, to: eschandoff, guard: "critical writer or integrity failure", ext: "5b"}
+  - {from: dkind, to: source, guard: "source"}
+  - {from: dkind, to: fval, guard: "folder metadata card", ext: "5c"}
+  - {from: source, to: account, guard: "success"}
+  - {from: source, to: account, guard: "partial", ext: "6a"}
+  - {from: source, to: account, guard: "reused", ext: "6b"}
+  - {from: source, to: pausehandoff, guard: "paused", ext: "6c"}
+  - {from: source, to: eschandoff, guard: "escalated", ext: "6d"}
+  - {from: fval, to: froute}
+  - {from: froute, to: dfroute}
+  - {from: dfroute, to: fscribe, guard: "drafting permitted"}
+  - {from: dfroute, to: fdata, guard: "scripted/reused NAT-13 receipt"}
+  - {from: dfroute, to: ffail, guard: "stale or invalid folder card"}
+  - {from: fscribe, to: freview}
+  - {from: freview, to: fdata}
+  - {from: fdata, to: account}
+  - {from: ffail, to: account}
+  - {from: account, to: dmore}
+  - {from: dmore, to: assess, guard: "frozen list done"}
+  - {from: dmore, to: nextitem, guard: "another item", ext: "7a"}
+  - {from: assess, to: oracle}
+  - {from: oracle, to: dverdict}
+  - {from: dverdict, to: fullhandoff, guard: "satisfied (distinct Oracle route)"}
+  - {from: dverdict, to: doctor, guard: "mapped repairable shortfall", ext: "9a"}
+  - {from: dverdict, to: partialhandoff, guard: "truthful partial return", ext: "9b"}
+  - {from: dverdict, to: eschandoff, guard: "critical integrity failure", ext: "9c"}
+  - {from: dverdict, to: pausehandoff, guard: "ORACLE_ROUTE_COLLISION (no distinct qualified route; never marked independently reviewed)", ext: "9d"}
+  - {from: doctor, to: reentry, guard: "resolved"}
+  - {from: reentry, to: assess}
+  - {from: doctor, to: partialhandoff, guard: "declined"}
+  - {from: doctor, to: eschandoff, guard: "escalated"}
+  - {from: fullhandoff, to: e1}
+  - {from: partialhandoff, to: epartial}
+  - {from: noworkhandoff, to: enowork}
+  - {from: pausehandoff, to: epaused}
+  - {from: eschandoff, to: eescalated}

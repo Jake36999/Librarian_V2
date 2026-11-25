@@ -5,6 +5,8 @@
 # workflows marked "proposed" do not exist. `history` is what the as-is run of 19-20 Nov 2026 shows.
 catalogue: remedies
 version: 0
+# Diagram correspondence corrected 23 November 2026. Entries remain proposals;
+# rejoin node names prevent numeric step changes from bypassing the required checks.
 entries:
   - id: R1
     at: {use_case: ingest-papers-tobe, extension: 4a}
@@ -19,51 +21,61 @@ entries:
     history: [{at: 2026-11-20, by: tier 0, result: resolved, detail: "D:\\Librarian_V2, 119 s, 5 decisions re-applied"}]
 
   - id: R2
-    at: {use_case: ingest-papers-tobe, extension: 6a}
+    at: {use_case: ingest-papers-tobe, extension: 5a}
     symptom: {refusal: FOLDER_DRAFT_FAILED, shape: "every folder check fails and no call reached a model; the
               role's qualification reads not screened"}
     remedy: {workflow: requalify-role, status: proposed,
              does: "restart the affected Cores, run the role's L0/L1 qualification, confirm screened in each Core"}
     scope: {side_effects: model_calls, reversible: true, model_calls: "a few, under a cent",
             blast_radius: "the role's route in every library sharing the qualification file"}
-    rejoin: 6
+    rejoin: "d2: recheck recorded qualification before drafting"
     history: [{at: 2026-11-20, by: tier 0, result: resolved,
                detail: "root cause: Cores overwrote each other's qualification records; code fix cab623a, then re-qualified"}]
 
   - id: R3
-    at: {use_case: ingest-papers-tobe, extension: 9a}
+    at: {use_case: ingest-papers-tobe, extension: 10a}
     symptom: {shape: "queued count differs from the survey; 0 when the accepted subfolders are their own roots"}
     remedy: {workflow: queue-per-root, status: proposed,
              does: "count the documents per accepted root (dry run), then queue each root"}
     scope: {side_effects: local_write, reversible: true, model_calls: 0, blast_radius: "this folder's queue ledger"}
-    rejoin: 8
+    rejoin: "a8: queue authorized documents per accepted root"
     history: [{at: 2026-11-20, by: tier 0, result: resolved, detail: "dry count 0, then 96 across 24 subfolders"}]
 
   - id: R4
-    at: {use_case: ingest-papers-tobe, extension: 13b}
+    at: {use_case: ingest-papers-tobe, extension: 17e}
     symptom: {shape: "items left partial: a stage queued for a model, or coverage short of full"}
     remedy: {workflow: reread-partials, status: proposed,
              does: "re-approve the partial items and run the approved batch again"}
     scope: {side_effects: model_calls, reversible: true, model_calls: "one batch for the partial items",
             blast_radius: "those items' staging records and conversions"}
-    rejoin: 15
-    history: [{at: 2026-11-20, by: tier 0, result: resolved, detail: "6 partial: 3 complete, 3 accepted at 95-98% read"}]
+    rejoin: "enrich: re-enter admitted affected processing, then recheck actual reading and publication obligations"
+    history: [{at: 2026-11-20, by: tier 0, result: partial, detail: "6 partial: 3 completed; 3 remained partial and were explicitly accepted at 95-98% read, not credited with complete reading"}]
 
   - id: R5
-    at: {use_case: ingest-papers-tobe, extension: 17a}
+    at: {use_case: ingest-papers-tobe, extension: 20a}
     symptom: {shape: "promotion reports written but not findable (a title, bottom-line or concept search misses)"}
     remedy: {workflow: reindex-note, status: proposed, does: "re-index the note and re-link its concepts, then re-check findability"}
-    scope: {side_effects: local_write, reversible: true, model_calls: 0, blast_radius: "one note's index rows"}
-    rejoin: 18
+    scope: {side_effects: local_write, reversible: true, model_calls: 0, blast_radius: "the note's index rows and explicitly authorized existing backlinks; no unsupported content rewrite or new concepts"}
+    rejoin: "d7: repeat findability checks on the committed note, without another Source write"
     history: []
 
   - id: R6
-    at: {use_case: ingest-papers-tobe, extension: 18a}
+    at: {use_case: ingest-papers-tobe, extension: 21a}
     symptom: {shape: "the oracle finds a shortfall at a mapped extension: counts disagree between survey, queue ledger, staging and Source notes, or a label is wrong"}
     remedy: {workflow: reconcile-ingest, status: proposed,
              does: "read-only: list where each missing item stopped, then route each to R3, R4 or R5, or report"}
     scope: {side_effects: none, reversible: true, model_calls: 0, blast_radius: "none (it only routes)"}
-    rejoin: 18
+    rejoin: "a18: independent Oracle recheck of the parent obligations"
+    history: []
+
+  - id: R1-application
+    at: {use_case: ingest-papers-tobe, extension: 8a}
+    symptom: {refusal: FOLDER_STALE, shape: "folder application reports a stale reviewed root or group"}
+    remedy: {workflow: resurvey-root, status: proposed,
+             does: "the same proposed R1 resurvey/reapply workflow, admitted against the actual application-stage evidence and scope"}
+    scope: {side_effects: local_write, reversible: true, model_calls: 0,
+            blast_radius: "today the whole library while OP2 rebuilds every group; reserved scope goes to the Owner"}
+    rejoin: "a7: revalidate and reapply the authorized folder decision after the scoped resurvey remedy"
     history: []
 
   # Entries for other use cases: a failure outside this ingestion is referenced by the use case it belongs to.

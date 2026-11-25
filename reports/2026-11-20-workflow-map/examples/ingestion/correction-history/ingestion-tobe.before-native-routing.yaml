@@ -1,0 +1,988 @@
+# Corrected folder-application scope and observed/current/target boundary, 23 November 2026.
+diagram: ingest-papers-tobe
+kind: activity
+title: 'Proposed ingestion: Owner or tier-0 commissioning, Lead ownership and independent Oracle review'
+target:
+  kind: use_case
+  ref: ../../USE-CASES.md#uc1-make-a-folder-of-papers-into-library-knowledge-as-is
+lens:
+- the-root-cause-lens
+- the-guard-completeness-lens
+- the-real-concurrency-lens
+perspective: Owner
+problem:
+  symptom: Historical ingestion left orchestration and unresolved acceptance handoffs with tier 0.
+  why:
+  - Approval, processing start, per-item enrichment and later acceptance were compressed into one apparent operation.
+  - Semantic decisions were assigned to scripts, and Oracle review was confused with coordinating repairs.
+  root: The parent needs accountable role ownership, explicit authority and truthful child outcomes, composed through
+    existing registered processes.
+lanes:
+- Owner
+- Tier 0 agent
+- Oracle
+- Lead (tier 1)
+- Doctor
+- Clerk (tier 2)
+- Scribe (tier 3)
+- Core
+- Model host
+- Geo-Grapher
+nodes:
+- id: ownerreport
+  kind: activity
+  lane: Owner
+  label: receives the Lead result and Oracle verdict directly, without an absent tier-0 intermediary
+- id: delivery
+  kind: activity
+  lane: Core
+  label: records the parent result delivered to its actual specification owner; retains outstanding decisions and
+    limitations
+- id: s
+  kind: start
+- id: a1
+  kind: activity
+  lane: Owner
+  label: states the ingestion goal, roots, pre-read exclusions, required outputs, permitted partials and budget;
+    grants only the intended authority
+  step: 1
+- id: dentry
+  kind: decision
+  lane: Core
+  label: commissioning route?
+- id: a2
+  kind: activity
+  lane: Tier 0 agent
+  label: commissions the Lead on the Owner's behalf and supplies the agent-authored obligations for independent
+    Oracle review
+  step: 2
+- id: directowner
+  kind: activity
+  lane: Owner
+  label: commissions the Lead directly and supplies or approves the obligations; no tier-0 agent is required
+- id: a3
+  kind: activity
+  lane: Lead (tier 1)
+  label: owns execution against the commissioned specification; asks Core to store its version, grants and actual
+    specification owner
+  step: 3
+- id: a4
+  kind: activity
+  lane: Core
+  label: inventories roots, fingerprints and literal facts; excludes hidden/scratch content before reading and resolves
+    deepest-root ownership
+  step: 4
+- id: d1
+  kind: decision
+  lane: Core
+  label: reviewed roots current?
+- id: r1
+  kind: ref
+  lane: Doctor
+  label: evaluates accepted R1 for stale evidence using its actual whole-library radius; a local mandate cannot
+    silently permit a global rebuild
+  use_case: UC-D
+- id: a5
+  kind: activity
+  lane: Lead (tier 1)
+  label: binds the Owner's exclusions, purpose constraints and decision grants to the eligible worklist
+  step: 5
+- id: d2
+  kind: decision
+  lane: Core
+  label: assigned folder-review role qualified on its selected route?
+- id: r2
+  kind: ref
+  lane: Doctor
+  label: restores confirmed lost qualification with accepted R2; provider timeouts and parser faults retain their
+    distinct evidence
+  use_case: UC-D
+- id: draftfault
+  kind: activity
+  lane: Lead (tier 1)
+  label: diagnoses the actual post-draft transport, schema, provenance or missing-output failure from recorded evidence;
+    retains existing flags and reports the unresolved scope without assuming qualification loss
+- id: a6
+  kind: activity
+  lane: Clerk (tier 2)
+  label: interprets folder purpose, proposes descriptions and judges sensitivity; may direct bounded Scribe tasks
+  step: 6
+- id: d3
+  kind: decision
+  lane: Clerk (tier 2)
+  label: folder decision reserved or sensitive?
+- id: x1
+  kind: activity
+  lane: Lead (tier 1)
+  label: reports the held folder, evidence and required decision to the actual specification owner
+- id: dheldroute
+  kind: decision
+  lane: Core
+  label: tier-0 overseer present for this run?
+- id: x2
+  kind: activity
+  lane: Tier 0 agent
+  label: relays the reserved folder decision to the Owner
+- id: x3
+  kind: decision
+  lane: Owner
+  label: Owner's held-folder decision?
+- id: exclude
+  kind: activity
+  lane: Core
+  label: records the excluded subtree; removes it from eligible work without reading it
+- id: folderapprove
+  kind: activity
+  lane: Lead (tier 1)
+  label: makes normal folder decisions within grant and preserves the Owner's explicit reserved decisions; supplies
+    actual actors/reasons for Core to apply
+  step: 7
+- id: a7
+  kind: activity
+  lane: Core
+  label: submits affirmative folder decisions and read barriers for group application; acceptance is recorded only
+    after the CLI succeeds
+  step: 8
+- id: dfolder
+  kind: decision
+  lane: Core
+  label: folder application result?
+- id: folderfault
+  kind: activity
+  lane: Lead (tier 1)
+  label: retains GEOGRAPHER_CALL_FAILED or other folder refusal; requests capability/scope diagnosis and a mapped
+    accepted remedy only when applicable
+- id: dinput
+  kind: decision
+  lane: Core
+  label: requested Source-eligible subset remains after common folder-group application?
+- id: a8
+  kind: activity
+  lane: Core
+  label: queues Source-eligible third-party, research-docs and own-docs inputs per deepest accepted root; retains
+    enqueue history
+  step: 9
+- id: a9
+  kind: activity
+  lane: Core
+  label: reconciles literal eligible counts with current staging/processing state and the parent mixed-item ledger
+  step: 10
+- id: d4
+  kind: decision
+  lane: Core
+  label: current eligible count and queue reconcile?
+- id: countdiagnosis
+  kind: activity
+  lane: Clerk (tier 2)
+  label: investigates unexplained count mismatch read-only; distinguishes historical queued keys from current pending
+    items
+- id: r3
+  kind: ref
+  lane: Doctor
+  label: applies accepted R3 only for a matching per-root queue defect, retaining the mismatch evidence
+  use_case: UC-D
+- id: a10
+  kind: activity
+  lane: Core
+  label: captures immutable evidence and per-reference outcomes; isolates parser/quarantine failures and preserves
+    successful siblings
+  step: 11
+- id: dcapture
+  kind: decision
+  lane: Core
+  label: usable captured Sources remain?
+- id: capturefault
+  kind: activity
+  lane: Lead (tier 1)
+  label: reports required capture gaps with existing flags; chooses authorized bounded retry or a truthful held/escalated
+    result
+- id: capturedescribe
+  kind: activity
+  lane: Clerk (tier 2)
+  label: writes neutral evidence-based Source descriptions, directing Scribes only for bounded drafting
+  step: 12
+- id: capturestore
+  kind: activity
+  lane: Core
+  label: stages Source records and records their parent ledger keys; folder metadata retains folder_validate, folder_describe
+    and folder_data with separate review
+  step: 13
+- id: dapprove
+  kind: decision
+  lane: Core
+  label: ingestion approval delegated and unreserved?
+- id: approvalowner
+  kind: decision
+  lane: Owner
+  label: Owner's staged-work approval?
+- id: a11
+  kind: activity
+  lane: Lead (tier 1)
+  label: approves the staged selection within the ingestion grant; supplies the actual authority, executor and reason
+    to the approval action
+  step: 14
+- id: approvalrecord
+  kind: activity
+  lane: Core
+  label: records the affirmative authorized ingestion approval; queues work without starting processing
+- id: startrequest
+  kind: activity
+  lane: Lead (tier 1)
+  label: requests explicit processing start for the approved set within its recorded grant
+  step: 15
+- id: dstartauthority
+  kind: decision
+  lane: Core
+  label: explicit processing-start authority available?
+- id: startowner
+  kind: decision
+  lane: Owner
+  label: grant processing start for this approved selection?
+- id: startrun
+  kind: activity
+  lane: Core
+  label: validates start authority and freezes selection/settings; returns the existing active run instead of dispatching
+    another
+  step: 16
+- id: enrich
+  kind: ref
+  lane: Core
+  label: runs the source-enrichment child; each item owns all nine ordered stages including publication before the
+    next item
+  step: 17
+  use_case: proposed-tobe-enrichment
+- id: d5
+  kind: decision
+  lane: Core
+  label: returned source coverage and publication satisfy the actual parent obligations?
+- id: r4
+  kind: ref
+  lane: Doctor
+  label: requests accepted bounded R4 for required partial reading; any finished-partial reapproval/start remains
+    authorized and independent checks rerun
+  use_case: UC-D
+- id: partialchoice
+  kind: activity
+  lane: Lead (tier 1)
+  label: retains explicit partial coverage/publication gaps; checks whether the parent permits accepting those particular
+    Sources
+- id: ledger
+  kind: activity
+  lane: Core
+  label: reconciles returned Source states with the original mixed-item ledger; issues separate Source and lens
+    worklists with owner, current state and remaining decision
+  step: 18
+- id: d6
+  kind: decision
+  lane: Core
+  label: Source promotion mode, sensitivity, interruption state and delegated acceptance authority?
+- id: x6
+  kind: activity
+  lane: Core
+  label: keeps the Source decision on the named Owner's agenda/context; independently routes required lens accept/reject/defer
+    work
+- id: x7
+  kind: decision
+  lane: Owner
+  label: Owner's Source decision?
+- id: a16
+  kind: activity
+  lane: Lead (tier 1)
+  label: makes affirmative Source acceptance decisions only within grant, for full or explicitly permitted partial
+    outputs; no lens is accepted implicitly
+  step: 19
+- id: acceptrecord
+  kind: activity
+  lane: Core
+  label: records only affirmative authorized Source decisions with actual actor/reason; separately retains pending,
+    rejected or deferred lens decisions
+- id: a17
+  kind: activity
+  lane: Core
+  label: applies the guarded Source writer and retains the actual commit/refusal/attempt state; Source acceptance
+    does not accept lenses
+  step: 20
+- id: d7
+  kind: decision
+  lane: Core
+  label: required retrieval checks pass for written notes?
+- id: r5
+  kind: ref
+  lane: Doctor
+  label: evaluates accepted R5 against the actual failed index obligation; reindexing is not assumed to cure every
+    content/retrieval miss
+  use_case: UC-D
+- id: contentdiagnosis
+  kind: activity
+  lane: Clerk (tier 2)
+  label: diagnoses content-related retrieval gaps read-only; never manufactures concepts or enables vectors merely
+    to force a pass
+- id: a18
+  kind: activity
+  lane: Oracle
+  label: judges the parent specification using deterministic evidence and independent semantic review, including
+    separate decision obligations and actual partial results
+  step: 21
+- id: d8
+  kind: decision
+  lane: Oracle
+  label: parent specification met?
+- id: r6
+  kind: ref
+  lane: Doctor
+  label: evaluates the accepted catalogued remedy for a mapped shortfall, with actual radius and independent verification
+  use_case: UC-D
+- id: x8
+  kind: activity
+  lane: Clerk (tier 2)
+  label: scouts an unmapped shortfall and its actual affected scope read-only
+- id: x9
+  kind: activity
+  lane: Lead (tier 1)
+  label: coordinates authorized correction from Oracle evidence and Clerk scouting; asks Oracle to judge the revised
+    evidence
+- id: a19
+  kind: activity
+  lane: Lead (tier 1)
+  label: hands one truthful result package and Oracle verdict to the recorded specification owner
+  step: 22
+- id: dresultroute
+  kind: decision
+  lane: Core
+  label: result owner is a tier-0 overseer?
+- id: a20
+  kind: activity
+  lane: Tier 0 agent
+  label: reviews the Lead's result and independent verdict against the commissioned specification
+  step: 23
+- id: d9
+  kind: decision
+  lane: Tier 0 agent
+  label: ready to return to the Owner?
+- id: x10
+  kind: activity
+  lane: Tier 0 agent
+  label: returns the remaining obligations to the Lead for bounded correction and requests an independent Oracle
+    recheck
+- id: x11
+  kind: activity
+  lane: Lead (tier 1)
+  label: coordinates the approved correction through the assigned agents and accepted Doctor remedies
+- id: x12
+  kind: activity
+  lane: Lead (tier 1)
+  label: submits changed artifacts and evidence for independent review; Oracle does not issue worker orders
+- id: x13
+  kind: activity
+  lane: Oracle
+  label: judges the corrected obligations and returns its verdict to the specification owner
+- id: dlast
+  kind: decision
+  lane: Oracle
+  label: corrected required obligations met?
+- id: x14
+  kind: activity
+  lane: Tier 0 agent
+  label: makes the final review of the corrected result
+- id: a21
+  kind: activity
+  lane: Lead (tier 1)
+  label: returns the result to the Owner directly or with the tier-0 reviewed report, retaining all remaining decision
+    owners and limitations
+  step: 24
+- id: x4
+  kind: activity
+  lane: Lead (tier 1)
+  label: reports actual stop reason, spend evidence, completed items and remaining work; distinguishes cancellation,
+    interruption and before-item ceiling stop
+- id: x5
+  kind: activity
+  lane: Tier 0 agent
+  label: relays a reserved budget or continuation decision to the Owner when acting as overseer
+- id: dpauseroute
+  kind: decision
+  lane: Core
+  label: tier-0 overseer present for paused result?
+- id: xp
+  kind: activity
+  lane: Lead (tier 1)
+  label: returns the paused package and named required decision directly to the Owner or through the overseer; retains
+    completed work
+- id: xe
+  kind: activity
+  lane: Lead (tier 1)
+  label: returns unresolved fault evidence to the actual specification owner and immediately notifies the Owner/overseer
+    for critical findings
+- id: reuseledger
+  kind: activity
+  lane: Core
+  label: reconciles no-new-work/current results against the parent ledger and separate outstanding decisions; never
+    infers work from enqueue-history counts
+- id: e1
+  kind: end
+  label: 'Owner receives the specified result: actual Source acceptance/findability, per-item coverage/publication
+    and independent lens decisions are explicit'
+  outcome: success
+- id: e2
+  kind: end
+  label: unresolved or critical fault escalated to the actual specification owner; completed work and existing flags
+    retained
+  outcome: escalated
+- id: e3
+  kind: end
+  label: paused for a named Owner/authority decision, cancellation, interruption or ceiling stop; truthful continuation
+    retained
+  outcome: paused
+- id: reused
+  kind: end
+  label: existing or excluded work reconciled; no duplicate processing or implicit acceptance
+  outcome: reused
+- id: publicationdiagnosis
+  kind: activity
+  lane: Lead (tier 1)
+  label: diagnoses required publication-only gaps from current admission, artifact and Geo evidence; never treats
+    them as an automatic reread
+- id: nonsource
+  kind: activity
+  label: accounts for common folder application; no Source intake applies to this purpose, while remaining requirements
+    still reach Oracle review
+  lane: Core
+- id: draftcheck
+  kind: activity
+  lane: Core
+  label: validates the returned draft status, required fields and literal provenance; records provider, schema and
+    missing-evidence flags without judging semantic adequacy
+- id: ddraft
+  kind: decision
+  lane: Core
+  label: returned folder draft structurally valid with the Clerk's explicit sensitivity finding?
+- id: dwrite
+  kind: decision
+  lane: Core
+  label: guarded Source write result and current commit state?
+- id: findcheck
+  kind: activity
+  lane: Core
+  label: checks required title, Bottom-Line and concept retrieval only for a confirmed committed Source note; records
+    actual searches
+- id: writestate
+  kind: activity
+  lane: Core
+  label: reconciles the attempt, lease, current note/hash and commit evidence read-only; preserves human edits and
+    records the reserved write checkpoint without assuming a commit
+- id: writeowner
+  kind: decision
+  lane: Owner
+  label: Owner's bounded decision for the held or unconfirmed Source write?
+- id: indexcheck
+  kind: activity
+  lane: Core
+  label: 'proposed: obtains parser/capability evidence and compares requested coverage; today the folder CLI omits
+    parse failures, so additional evidence is required'
+- id: dindex
+  kind: decision
+  lane: Core
+  label: proposed coverage check has sufficient capability and extraction evidence?
+- id: indexfault
+  kind: activity
+  lane: Lead (tier 1)
+  label: holds the unmet quality requirement with the Lead; missing current CLI evidence is not an existing Core
+    capability check
+- id: dreuse
+  kind: decision
+  lane: Core
+  label: reconciled current states leave any in-scope parent obligation?
+- id: dsourcework
+  kind: decision
+  lane: Core
+  label: reconciled current worklist contains a decidable Source acceptance still owed?
+- id: applygroups
+  kind: activity
+  lane: Geo-Grapher
+  label: applies all accepted non-excluded groups, including documents and papers; ingests supported code/text and
+    may reuse matching complete snapshots
+- id: applicationreceipt
+  kind: activity
+  lane: Core
+  label: checks CLI exit, JSON and pinned version; records successful application and accepted decisions; returned
+    JSON does not attest parser completeness
+- id: r1application
+  kind: ref
+  lane: Doctor
+  label: handles application-stage FOLDER_STALE through the same scoped R1 remedy; no local mandate authorizes a
+    global rebuild
+  use_case: UC-D
+edges:
+- from: s
+  to: a1
+- from: a1
+  to: dentry
+- from: dentry
+  to: a2
+  guard: tier-0 overseer commissions
+- from: dentry
+  to: directowner
+  guard: Owner commissions directly
+  ext: 1a
+- from: directowner
+  to: a3
+- from: a2
+  to: a3
+- from: a3
+  to: a4
+- from: a4
+  to: d1
+- from: d1
+  to: a5
+  guard: current
+- from: d1
+  to: r1
+  guard: stale root
+  ext: 4a
+  observed: historical 3a
+- from: a5
+  to: d2
+- from: a6
+  to: draftcheck
+- from: d2
+  to: a6
+  guard: qualified
+- from: d2
+  to: r2
+  guard: confirmed lost qualification
+  ext: 5a
+  observed: historical 5a
+- from: draftfault
+  to: xe
+- from: d3
+  to: folderapprove
+  guard: normal and delegated
+- from: d3
+  to: x1
+  guard: reserved or sensitive
+  ext: 6a
+- from: x1
+  to: dheldroute
+- from: dheldroute
+  to: x2
+  guard: overseer present
+- from: dheldroute
+  to: x3
+  guard: direct Owner run
+- from: x2
+  to: x3
+- from: x3
+  to: folderapprove
+  guard: approve/apply
+- from: x3
+  to: exclude
+  guard: exclude
+- from: x3
+  to: xp
+  guard: decline
+- from: x3
+  to: xp
+  guard: hold
+- from: exclude
+  to: folderapprove
+- from: folderapprove
+  to: a7
+- from: dfolder
+  to: indexcheck
+  guard: CLI application succeeded; proposed coverage check follows
+- from: dfolder
+  to: r1application
+  guard: FOLDER_STALE
+  ext: 8a
+- from: dfolder
+  to: folderfault
+  guard: GEOGRAPHER_CALL_FAILED or another refusal
+  ext: 8b
+- from: folderfault
+  to: xe
+- from: dinput
+  to: a8
+  guard: nonempty Source-eligible requested subset
+- from: dinput
+  to: reuseledger
+  guard: excluded or no eligible input
+  ext: 8d
+- from: a8
+  to: a9
+- from: a9
+  to: d4
+- from: d4
+  to: a10
+  guard: reconciles
+- from: d4
+  to: countdiagnosis
+  guard: unexplained mismatch
+  ext: 10a
+  observed: 'historical 8a: zero top-level then 96 per-root'
+- from: countdiagnosis
+  to: r3
+- from: a10
+  to: dcapture
+- from: dcapture
+  to: capturedescribe
+  guard: usable Sources with per-reference outcomes
+- from: dcapture
+  to: capturefault
+  guard: required capture gaps
+  ext: 11a
+- from: dcapture
+  to: reuseledger
+  guard: duplicates/exclusions only; no new source
+  ext: 11b
+- from: capturefault
+  to: xe
+- from: capturedescribe
+  to: capturestore
+- from: capturestore
+  to: dapprove
+- from: dapprove
+  to: a11
+  guard: delegated and unreserved
+- from: dapprove
+  to: approvalowner
+  guard: person mode, sensitive or reserved approval
+  ext: 14a
+- from: approvalowner
+  to: approvalrecord
+  guard: approve
+- from: approvalowner
+  to: xp
+  guard: decline or hold
+- from: a11
+  to: approvalrecord
+- from: approvalrecord
+  to: startrequest
+- from: startrequest
+  to: dstartauthority
+- from: dstartauthority
+  to: startrun
+  guard: explicit grant valid
+- from: dstartauthority
+  to: startowner
+  guard: reserved or absent start grant
+  ext: 15a
+- from: startowner
+  to: startrun
+  guard: grant
+- from: startowner
+  to: xp
+  guard: decline or hold
+- from: startrun
+  to: enrich
+- from: enrich
+  to: d5
+  guard: success
+- from: enrich
+  to: partialchoice
+  guard: partial
+  ext: 17a
+- from: enrich
+  to: reuseledger
+  guard: reused
+  ext: 17b
+- from: enrich
+  to: x4
+  guard: paused
+  ext: 17c
+- from: enrich
+  to: xe
+  guard: escalated
+  ext: 17d
+- from: partialchoice
+  to: d5
+- from: d5
+  to: ledger
+  guard: full or expressly permitted partial meets parent obligations
+- from: d5
+  to: r4
+  guard: required partial reading has a matching accepted bounded R4
+  ext: 17e
+  observed: historical 12b
+- from: d5
+  to: xp
+  guard: required work failed/pending without permitted continuation
+  ext: 17f
+- from: ledger
+  to: dsourcework
+- from: d6
+  to: a16
+  guard: agent mode; delegated, non-sensitive and not interrupted
+- from: d6
+  to: x6
+  guard: person mode, sensitive, interrupted or otherwise reserved
+  ext: 19a
+  observed: historical 15a unowned acceptance
+- from: x6
+  to: x7
+- from: x7
+  to: acceptrecord
+  guard: accept specified full/permitted-partial Sources
+- from: x7
+  to: xp
+  guard: decline
+- from: x7
+  to: xp
+  guard: hold
+- from: a16
+  to: acceptrecord
+- from: acceptrecord
+  to: a17
+- from: a17
+  to: dwrite
+- from: d7
+  to: a18
+  guard: required checks pass
+- from: d7
+  to: r5
+  guard: written note fails candidate index obligation
+  ext: 20a
+- from: d7
+  to: contentdiagnosis
+  guard: written note has an unmapped content/retrieval gap
+  ext: 20b
+- from: contentdiagnosis
+  to: x9
+- from: a18
+  to: d8
+- from: d8
+  to: a19
+  guard: met
+- from: d8
+  to: r6
+  guard: mapped failure shortfall, excluding legitimate pending/reserved decisions
+  ext: 21a
+- from: d8
+  to: x8
+  guard: unmapped failure or misalignment, excluding legitimate pending/reserved decisions
+  ext: 21b
+- from: x8
+  to: x9
+- from: x9
+  to: a18
+- from: a19
+  to: dresultroute
+- from: dresultroute
+  to: a20
+  guard: tier-0 specification owner
+- from: dresultroute
+  to: ownerreport
+  guard: direct Owner specification owner
+  ext: 22a
+- from: ownerreport
+  to: delivery
+- from: a20
+  to: d9
+- from: d9
+  to: a21
+  guard: ready
+- from: d9
+  to: x10
+  guard: needs bounded correction
+  ext: 23a
+- from: x10
+  to: x11
+- from: x11
+  to: x12
+- from: x12
+  to: x13
+- from: x13
+  to: dlast
+- from: dlast
+  to: x14
+  guard: met
+- from: dlast
+  to: xp
+  guard: not met; further authority or work needed
+- from: x14
+  to: a21
+- from: a21
+  to: delivery
+- from: delivery
+  to: e1
+- from: x4
+  to: dpauseroute
+- from: dpauseroute
+  to: x5
+  guard: overseer present
+- from: dpauseroute
+  to: xp
+  guard: direct Owner run
+- from: x5
+  to: xp
+- from: xp
+  to: e3
+- from: xe
+  to: e2
+- from: reuseledger
+  to: dreuse
+- from: r1
+  to: a4
+  guard: resolved
+- from: r1
+  to: xp
+  guard: declined
+- from: r1
+  to: xe
+  guard: escalated
+- from: r2
+  to: d2
+  guard: resolved
+- from: r2
+  to: xp
+  guard: declined
+- from: r2
+  to: xe
+  guard: escalated
+- from: r3
+  to: a8
+  guard: resolved
+- from: r3
+  to: xp
+  guard: declined
+- from: r3
+  to: xe
+  guard: escalated
+- from: r4
+  to: enrich
+  guard: resolved
+- from: r4
+  to: xp
+  guard: declined
+- from: r4
+  to: xe
+  guard: escalated
+- from: r5
+  to: d7
+  guard: resolved
+- from: r5
+  to: xp
+  guard: declined
+- from: r5
+  to: xe
+  guard: escalated
+- from: r6
+  to: a18
+  guard: resolved
+- from: r6
+  to: xp
+  guard: declined
+- from: r6
+  to: xe
+  guard: escalated
+- from: d5
+  to: publicationdiagnosis
+  guard: required publication-only gap without matching reading fault
+  ext: 17g
+- from: publicationdiagnosis
+  to: xp
+- to: ddraft
+  from: draftcheck
+- to: d3
+  from: ddraft
+  guard: usable returned draft, required fields/provenance valid and sensitivity finding recorded
+- to: draftfault
+  from: ddraft
+  guard: transport refusal, invalid schema/provenance or partial/queued/failed draft
+  ext: 6b
+- to: xe
+  from: ddraft
+  guard: critical integrity or authority-boundary evidence in draft
+  ext: 6c
+- to: findcheck
+  from: dwrite
+  guard: confirmed committed, including a committed note already flagged written-but-not-findable
+- to: d7
+  from: findcheck
+- to: writestate
+  from: dwrite
+  guard: unknown/interrupted outcome, human-edit conflict or unconfirmed/uncommitted refusal
+  ext: 20c
+- to: xe
+  from: dwrite
+  guard: critical integrity or authority-boundary evidence in write
+  ext: 20d
+- to: writeowner
+  from: writestate
+- to: a17
+  from: writeowner
+  guard: specific bounded guarded retry authorized after compatible-state reconciliation; no unresolved human edit
+- to: xp
+  from: writeowner
+  guard: decline, hold or follow-on recovery/compensation needs separate scope
+- to: xe
+  from: writeowner
+  guard: unresolved integrity/scope finding requires escalation
+- to: dindex
+  from: indexcheck
+- to: dinput
+  from: dindex
+  guard: required coverage/capability evidence available and acceptable under the specification
+- to: indexfault
+  from: dindex
+  guard: required evidence unavailable, degraded beyond allowance or failed
+  ext: 8e
+- to: xe
+  from: dindex
+  guard: critical integrity or authority-boundary finding
+  ext: 8f
+- to: xp
+  from: indexfault
+- to: a18
+  from: nonsource
+- to: reused
+  from: dreuse
+  guard: no in-scope source, lens, folder or required result obligation remains; existing evidence already settles
+    the parent contract
+- to: ledger
+  from: dreuse
+  guard: Source/lens/folder decisions or result checks remain; no duplicate child execution
+- to: d6
+  from: dsourcework
+  guard: yes; actually decidable Source acceptance remains
+- to: a18
+  from: dsourcework
+  guard: no Source acceptance owed; preserve any independent lens/folder/result obligations for Oracle
+  ext: 18a
+- to: xp
+  from: dsourcework
+  guard: Source acceptance not currently decidable; preserve state and required continuation
+  ext: 18b
+- to: xp
+  from: d8
+  guard: remaining requirement is a legitimate pending/reserved decision, not a repair fault
+  ext: 21c
+- from: a7
+  to: applygroups
+- from: applygroups
+  to: applicationreceipt
+- from: applicationreceipt
+  to: dfolder
+- from: dinput
+  to: nonsource
+  guard: own-code/data/log purpose only; no Source-eligible requested subset
+  ext: 8c
+- from: r1application
+  to: a7
+  guard: resolved
+- from: r1application
+  to: xp
+  guard: declined
+- from: r1application
+  to: xe
+  guard: escalated
+provenance:
+  drafted_by: tier 0 (Claude Code), owner direction 2026-11-20
+  at: 2026-11-20
+  revised_at: '2026-11-23'
+evidence:
+  applygroups:
+  - src/resource_librarian/folder_review.py:accept / accept_by_policy
+  - F:/uv-data/Geo_Grapher/src/geographer/folder_review.py:apply_review
+  applicationreceipt:
+  - src/resource_librarian/folder_review.py:cli
+  - F:/uv-data/Geo_Grapher/src/geographer/pipeline.py:ingest (parse_failures not included by apply_review)

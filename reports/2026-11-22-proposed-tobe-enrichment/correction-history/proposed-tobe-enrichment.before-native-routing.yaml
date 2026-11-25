@@ -1,0 +1,259 @@
+# Proposed behaviour for review, not an executable process definition or implemented Core capability.
+# Ingestion supplies authorized captured source work. Acceptance/promotion remains the parent's next gate.
+diagram: proposed-tobe-enrichment
+kind: activity
+title: Proposed to-be enrichment
+target: {kind: use_case, ref: "PROPOSAL.md#use-case-description"}
+lens: [the-root-cause-lens, the-guard-completeness-lens, the-real-concurrency-lens]
+perspective: Owner
+problem:
+  symptom: "Enrichment needs repeated coordination from tier 0, and completed part reading does not by itself account for every required derived output."
+  why:
+    - "Source stages and bounded task pools exist, but their orchestration, ownership and repair are not integrated into one delegated run."
+    - "Required whole-source derivations can remain queued after every part is counted as read."
+  root: "The run needs one accountable Lead, separate completion evidence for reading and derivations, and independent judgement with bounded repair."
+lanes: [Owner, Tier 0 agent, Oracle, Lead (tier 1), Doctor, Clerk (tier 2), Scribe (tier 3), Core, Model host, Geo-Grapher]
+nodes:
+  - {id: s, kind: start}
+  - {id: a1, kind: activity, lane: Owner, step: 1, label: "sets or has already authorized the enrichment goal, captured sources, required outputs, coverage and spending"}
+  - {id: dentry, kind: decision, lane: Core, label: "recorded parent invocation or standalone commissioner?"}
+  - {id: parentbind, kind: activity, lane: Core, label: "binds the child to its invoking parent's authorized specification, Lead, source subset and receipt keys; no repeated Owner or tier-0 commissioning"}
+  - {id: a2, kind: activity, lane: Tier 0 agent, step: 2, label: "delegates the bounded enrichment to a Lead and sets its specification, including when supporting another project"}
+  - {id: direct, kind: activity, lane: Owner, label: "commissions the Lead directly and owns the run specification"}
+  - {id: a3, kind: activity, lane: Lead (tier 1), step: 3, label: "owns completion and plans the run from accepted components without widening the parent's mandate"}
+  - {id: a4, kind: activity, lane: Core, step: 4, label: "checks specification schema, pinned IDs, recorded start authority, role qualifications, grants and counters; preserves the parent's batch ledger"}
+  - {id: dadmit, kind: decision, lane: Core, label: "run admitted?"}
+  - {id: ownerstart, kind: activity, lane: Owner, label: "decides the missing start, sensitivity or spending authority; existing authority is not asked for again"}
+  - {id: downerstart, kind: decision, lane: Owner, label: "authorized?"}
+  - {id: radmit, kind: ref, lane: Doctor, use_case: UC-D, label: "resolves a mapped qualification or admission fault using an accepted remedy within scope"}
+  - {id: nowork, kind: activity, lane: Lead (tier 1), label: "returns no-source-work to the invoking parent or standalone commissioner; preserves the parent's pending decisions and original item accounting"}
+  - {id: stagecontract, kind: note, lane: Core, label: "Target integration: Core checks grants, counters and critical flags at every dispatch/commit. Agents own meaning. Deferred routes return queued tasks; no silent model substitution."}
+  - {id: a5, kind: activity, lane: Core, step: 5, label: "validate: checks source hashes, evidence, paths and compatible recipe/route receipts; applies stops and spend controls; old publication never bypasses fresh admission"}
+  - {id: dvalidate, kind: decision, lane: Core, label: "source validation result?"}
+  - {id: a6, kind: activity, lane: Core, step: 6, label: "parse: runs scripted AST, text or PDF extraction and page mapping; retains original evidence and records extraction limits"}
+  - {id: dparse, kind: decision, lane: Core, label: "scripted extraction result?"}
+  - {id: conversionplan, kind: activity, lane: Clerk (tier 2), label: "assigns needed model-assisted transcription or cleanup to a Scribe within the approved route and allowance"}
+  - {id: conversionwork, kind: activity, lane: Scribe (tier 3), label: "transcribes or cleans the supplied material, preserves page or part anchors and explains any uncertain or missing content"}
+  - {id: conversionreview, kind: activity, lane: Clerk (tier 2), label: "checks available conversion against original evidence for fidelity; records uncertainty and missing material; does not attest unread pages"}
+  - {id: conversioncheck, kind: activity, lane: Core, label: "checks returned fields, hashes and literal anchors; stores task outcomes and the Clerk's fidelity verdict with actual representation coverage"}
+  - {id: dconversion, kind: decision, lane: Core, label: "conversion task and anchor-check status?"}
+  - {id: conversiongap, kind: activity, lane: Core, label: "retains returned cleanup-error partial or missing-material partial/queued status and usable raw extraction; absent content receives no reading credit"}
+  - {id: conversionfallback, kind: activity, lane: Core, label: "keeps unmapped cleanup unused; restores original page-mapped text; parse may complete only when usable text and no other gap remain"}
+  - {id: conversionoutage, kind: activity, lane: Core, label: "records transport code, attempts, retry-after and known/unknown cost; defers further equivalent calls on the failed route pending bounded direction"}
+  - {id: conversionroute, kind: decision, lane: Lead (tier 1), label: "retry affected conversion within the grant, retain fallback, or pause the affected work?"}
+  - {id: dconversionretry, kind: decision, lane: Core, label: "retry counter, backoff, current qualification and existing grant permit this same-route attempt?"}
+  - {id: a7, kind: activity, lane: Clerk (tier 2), step: 7, label: "assigns bounded part-reading tasks to Scribes, keeping source description separate from the requesting project's fit judgement"}
+  - {id: a8, kind: activity, lane: Scribe (tier 3), step: 8, label: "reads assigned parts and returns located source-stated points, limits, term usages and candidate reasoning stances"}
+  - {id: host, kind: activity, lane: Model host, label: "answers the bounded tasks through qualified role assignments and the existing task pool"}
+  - {id: a9, kind: activity, lane: Core, step: 9, label: "checks task schemas, literal quote locations and current-text receipt keys; counts completed parts and records queued or refused tasks"}
+  - {id: dreadtransport, kind: decision, lane: Core, label: "recorded transport incident, critical flag or application task result?"}
+  - {id: readoutage, kind: activity, lane: Core, label: "records 429/timeout/unavailable route and bounded attempts; defers equivalent failed-route calls; retains task gaps, receipts and unpriced cost"}
+  - {id: readroute, kind: decision, lane: Lead (tier 1), label: "retry only pending affected tasks within the grant, keep queued gaps, or pause?"}
+  - {id: dreadretry, kind: decision, lane: Core, label: "same-route pending-task retry within counters, backoff, qualification and existing authority?"}
+  - {id: a10, kind: activity, lane: Clerk (tier 2), step: 10, label: "proofreads the readings and directs the existing lens chain: perspective, attention, blind challenge, role, probe and synthesis"}
+  - {id: a11, kind: activity, lane: Clerk (tier 2), step: 11, label: "reconciles the accumulated readings across the source, corroborates supported stances and resolves probes; records unfinished required derivations separately"}
+  - {id: dread, kind: decision, lane: Core, label: "recorded part-reading and required-derivation status?"}
+  - {id: partialread, kind: activity, lane: Core, label: "keeps completed part coverage separate from queued derivations and unread parts; later applicable stages use only the evidence actually obtained"}
+  - {id: a12, kind: activity, lane: Core, step: 12, label: "lenses: schema-checks and persists agent-submitted proposals, dispositions, citations and discard reasons; keeps acceptance separate"}
+  - {id: dlenses, kind: decision, lane: Core, label: "lenses stage failed?"}
+  - {id: a13, kind: activity, lane: Clerk (tier 2), step: 13, label: "data: proposes the organization of components, chapters and source claims using the readings and script-derived source structure"}
+  - {id: ddata, kind: decision, lane: Core, label: "Data proposal schema, reference and write status?"}
+  - {id: a14, kind: activity, lane: Clerk (tier 2), step: 14, label: "relate: relates fully read components with evidence, preserving inferred document relations and structurally observed repository relations"}
+  - {id: drelate, kind: decision, lane: Core, label: "relate stage failed?"}
+  - {id: a15, kind: activity, lane: Clerk (tier 2), step: 15, label: "metadata: proposes content-model field values from the evidence, explains Unknowns and submits the proposal for acceptance"}
+  - {id: dmetadata, kind: decision, lane: Core, label: "metadata proposal field, schema and write status?"}
+  - {id: a16, kind: activity, lane: Clerk (tier 2), step: 16, label: "review: produces a grounded, kind-specific source draft and Bottom Line with evidence, coverage and explicit unread material"}
+  - {id: dreview, kind: decision, lane: Core, label: "source review failed?"}
+  - {id: a17, kind: activity, lane: Core, step: 17, label: "publish: checks full reading/conversion, artifact binding and projection compatibility; freshly validates enabled, accepted, current, trusted folder assignment"}
+  - {id: dpublication, kind: decision, lane: Core, label: "paper publication applicability and preparation?"}
+  - {id: a18, kind: activity, lane: Geo-Grapher, step: 18, label: "revalidates folder/artifact admission and publishes the eligible reading claims; reports actual result or late refusal; Source acceptance is separate"}
+  - {id: dpubresult, kind: decision, lane: Core, label: "publication result?"}
+  - {id: pubna, kind: activity, lane: Core, label: "records publication as not applicable for a non-PDF or a fully read PDF lacking a full-conversion artifact; retains its limitation"}
+  - {id: pubgap, kind: activity, lane: Core, label: "retains reading and the exact publication gap: FOLDER_STALE, awaiting_accepted_folder, disabled Geo, stale artifact or returned/caught failure"}
+  - {id: itemfailed, kind: activity, lane: Core, label: "records the failed stage and noncritical ticket; retains the item's completed work and leaves other frozen items runnable"}
+  - {id: a19, kind: activity, lane: Clerk (tier 2), step: 19, label: "assembles the source enrichment proposal and reconciles its content, explaining gaps in reading, derivations, drafts or publication for the Oracle"}
+  - {id: dmore, kind: decision, lane: Core, label: "unprocessed entries remain in the pinned source list?"}
+  - {id: a20, kind: activity, lane: Oracle, step: 20, label: "judges the enrichment package against its specification: deterministic checks first, then isolated model judgement, with evidence for the verdict"}
+  - {id: dverdict, kind: decision, lane: Oracle, label: "enrichment verdict?"}
+  - {id: rwork, kind: ref, lane: Doctor, use_case: UC-D, label: "remedies a mapped enrichment shortfall, then returns the repair for independent Oracle recheck"}
+  - {id: resume, kind: activity, lane: Core, label: "checks requested scope and compatible receipts; unfinished work resumes pinned inputs; finished partials need re-approval/new batch; publication gets fresh admission"}
+  - {id: dresume, kind: decision, lane: Core, label: "repair re-entry authorized and within the remaining allowance?"}
+  - {id: repairperson, kind: activity, lane: Owner, label: "decides the explicit re-approval or additional authority needed for the affected repair work"}
+  - {id: drepairperson, kind: decision, lane: Owner, label: "repair re-entry approved?"}
+  - {id: scout, kind: activity, lane: Clerk (tier 2), label: "investigates an unmapped shortfall from evidence and directs bounded Scribe scouting tasks"}
+  - {id: realign, kind: activity, lane: Lead (tier 1), label: "re-aligns within the specification using permitted actions; proposes new remedies for Owner acceptance rather than adding them itself"}
+  - {id: drealign, kind: decision, lane: Lead (tier 1), label: "does the proposed correction address the cause with evidence of progress?"}
+  - {id: partialreport, kind: activity, lane: Lead (tier 1), label: "returns partial coverage and verdict to the invoking parent or standalone commissioner, with separate Source/lens worklists, named owners and known/unknown spend"}
+  - {id: a21, kind: activity, lane: Lead (tier 1), step: 21, label: "hands back verdict, evidence, coverage, known/unknown spend and tickets; names separate owners and current states for Source and lens decisions"}
+  - {id: drecipient, kind: decision, lane: Core, label: "recorded invoking parent or standalone specification owner?"}
+  - {id: parentreturn, kind: activity, lane: Core, label: "returns the child package and verdict to the invoking parent, which owns acceptance and the final Owner or tier-0 handoff"}
+  - {id: a22, kind: activity, lane: Tier 0 agent, step: 22, label: "reviews the handback once against the delegated goal without repeating the workers' tasks"}
+  - {id: dhandback, kind: decision, lane: Tier 0 agent, label: "handback meets the delegated goal?"}
+  - {id: tidy, kind: activity, lane: Tier 0 agent, label: "returns evidence for one bounded tidy-up and independent recheck; the Lead and Doctor do work, the Oracle judges"}
+  - {id: dtidy, kind: decision, lane: Core, label: "within the declared tidy-up and final-pass allowance?"}
+  - {id: a23, kind: activity, lane: Tier 0 agent, step: 23, label: "returns the result to its active project or reports it to the Owner, with the remaining acceptance step explicit"}
+  - {id: directreport, kind: activity, lane: Owner, label: "receives the Lead's enrichment result and Oracle verdict directly"}
+  - {id: delivered, kind: activity, lane: Core, label: "records handback and separate Source-acceptance/lens-review worklists with actual states and owners; neither decision is implied by enrichment"}
+  - {id: paused, kind: activity, lane: Lead (tier 1), label: "explains the pause, retained work and next decision or continuation needed; submits the checkpoint notice for delivery"}
+  - {id: escalated, kind: activity, lane: Lead (tier 1), label: "explains the unresolved issue, evidence and required intervention to tier 0 or the Owner, with completed and partial work accounted for"}
+  - {id: critical, kind: activity, lane: Owner, label: "receives critical security, data-loss or authority-boundary evidence immediately, with tier 0 when present"}
+  - {id: e1, kind: end, outcome: success, label: "the enrichment specification is met; grounded outputs and the separate acceptance obligation are handed back"}
+  - {id: epartial, kind: end, outcome: partial, label: "a permitted partial enrichment is returned with its true coverage and remaining work"}
+  - {id: enowork, kind: end, outcome: reused, label: "no source work was admitted; the caller retains the accounted no-work result"}
+  - {id: epaused, kind: end, outcome: paused, label: "the affected enrichment is paused for an explicit decision or authorized continuation"}
+  - {id: eescalated, kind: end, outcome: escalated, label: "the accountable actor receives the unresolved or critical enrichment failure"}
+edges:
+  - {from: s, to: a1}
+  - {from: a1, to: dentry}
+  - {from: dentry, to: a2, guard: "standalone commission delegated by tier 0"}
+  - {from: dentry, to: direct, guard: "standalone commission directly from Owner", ext: "1a"}
+  - {from: dentry, to: parentbind, guard: "invoking parent supplies an existing authorized commission", ext: "1b"}
+  - {from: parentbind, to: a3}
+  - {from: direct, to: a3}
+  - {from: a2, to: a3}
+  - {from: a3, to: a4}
+  - {from: a4, to: dadmit}
+  - {from: dadmit, to: stagecontract, guard: "admitted nonempty source selection"}
+  - {from: dadmit, to: ownerstart, guard: "noncritical missing explicit authority or reserved decision", ext: "4a"}
+  - {from: dadmit, to: radmit, guard: "noncritical mapped admission fault with an accepted remedy", ext: "4b"}
+  - {from: dadmit, to: escalated, guard: "noncritical unmapped admission fault or no suitable qualified independent assignment", ext: "4c"}
+  - {from: dadmit, to: critical, guard: "critical security, data-loss or authority-boundary fault", ext: "4d"}
+  - {from: dadmit, to: nowork, guard: "normal outcome: no source work selected or all selected work already settled", ext: "4e"}
+  - {from: nowork, to: enowork}
+  - {from: ownerstart, to: downerstart}
+  - {from: downerstart, to: a4, guard: "authorized"}
+  - {from: downerstart, to: paused, guard: "declined or waiting"}
+  - {from: radmit, to: a4, guard: "resolved"}
+  - {from: radmit, to: paused, guard: "declined"}
+  - {from: radmit, to: escalated, guard: "escalated"}
+  - {from: stagecontract, to: a5}
+  - {from: a5, to: dvalidate}
+  - {from: dvalidate, to: a6, guard: "valid and permitted"}
+  - {from: dvalidate, to: itemfailed, guard: "noncritical source validation failed", ext: "5a"}
+  - {from: dvalidate, to: paused, guard: "cancelled, interrupted or spending stop", ext: "5b"}
+  - {from: dvalidate, to: critical, guard: "critical security, data-loss or boundary fault", ext: "5c"}
+  - {from: a6, to: dparse}
+  - {from: dparse, to: a7, guard: "noncritical and not failed; no model conversion requested; preserve actual partial or queued extraction status"}
+  - {from: dparse, to: itemfailed, guard: "noncritical uncaught stage failure", ext: "6a"}
+  - {from: dparse, to: conversionplan, guard: "noncritical permitted model transcription or cleanup requested", ext: "6b"}
+  - {from: dparse, to: critical, guard: "critical integrity or authority-boundary finding", ext: "6c"}
+  - {from: conversionplan, to: conversionwork}
+  - {from: conversionwork, to: conversionreview}
+  - {from: conversionreview, to: conversioncheck}
+  - {from: conversioncheck, to: dconversion}
+  - {from: dconversion, to: a7, guard: "noncritical usable mapped representation and Clerk review; retain actual complete or partial coverage"}
+  - {from: dconversion, to: conversiongap, guard: "noncritical, no transport outage: returned task error/refusal, or unusable representation without usable-original anchor fallback; retain partial/queued gaps"}
+  - {from: dconversion, to: conversionfallback, guard: "noncritical successful cleanup loses anchors; usable original page-mapped text and no transport outage"}
+  - {from: conversionfallback, to: a7}
+  - {from: dconversion, to: itemfailed, guard: "noncritical uncaught stage/writer failure"}
+  - {from: dconversion, to: critical, guard: "critical integrity or authority-boundary finding"}
+  - {from: dconversion, to: conversionoutage, guard: "noncritical transport 429, timeout or unavailable route"}
+  - {from: conversionoutage, to: conversionroute}
+  - {from: conversionroute, to: dconversionretry, guard: "Lead requests bounded same-route retry"}
+  - {from: dconversionretry, to: a6, guard: "permitted bounded parse re-entry; reuse compatible extraction and retry only affected conversion work"}
+  - {from: dconversionretry, to: conversiongap, guard: "retry not currently permitted; retain returned-error partial or missing-material gaps"}
+  - {from: conversionroute, to: conversiongap, guard: "retain usable fallback and exact returned-error partial or missing-material gaps"}
+  - {from: conversionroute, to: paused, guard: "pause affected work; no silent model substitution"}
+  - {from: conversiongap, to: a7}
+  - {from: a7, to: a8}
+  - {from: a8, to: host}
+  - {from: host, to: a9}
+  - {from: a9, to: dreadtransport}
+  - {from: dreadtransport, to: a10, guard: "noncritical application task result; invalid JSON or grounding refusal remains task evidence, not transport success"}
+  - {from: dreadtransport, to: readoutage, guard: "noncritical 429, timeout or unavailable route", ext: "9a"}
+  - {from: dreadtransport, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "9b"}
+  - {from: readoutage, to: readroute}
+  - {from: readroute, to: dreadretry, guard: "Lead requests bounded retry of pending tasks only"}
+  - {from: dreadretry, to: a7, guard: "permitted attempt; reuse matching completed tasks"}
+  - {from: dreadretry, to: a10, guard: "retry not currently permitted; keep task gaps and defer failed-route dispatch"}
+  - {from: readroute, to: a10, guard: "continue with actual queued gaps and completed evidence; failed route stays deferred"}
+  - {from: readroute, to: paused, guard: "pause affected work; route reassignment requires fresh authorized qualification"}
+  - {from: a10, to: a11}
+  - {from: a11, to: dread}
+  - {from: dread, to: a12, guard: "noncritical; parts read and required derivations complete or explicitly inapplicable"}
+  - {from: dread, to: partialread, guard: "noncritical, nonfailed and no new transport incident; unread parts or required derivations remain", ext: "11a"}
+  - {from: dread, to: itemfailed, guard: "noncritical reading stage failed", ext: "11b"}
+  - {from: dread, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "11c"}
+  - {from: dread, to: readoutage, guard: "noncritical new transport incident during lens or source-wide work", ext: "11d"}
+  - {from: partialread, to: a12}
+  - {from: a12, to: dlenses}
+  - {from: dlenses, to: a13, guard: "noncritical and not failed; optional rejection or none found is valid"}
+  - {from: dlenses, to: itemfailed, guard: "noncritical failed stage", ext: "12a"}
+  - {from: dlenses, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "12b"}
+  - {from: a13, to: ddata}
+  - {from: ddata, to: a14, guard: "noncritical and not failed; preserve partial or inapplicable outcomes"}
+  - {from: ddata, to: itemfailed, guard: "noncritical failed stage", ext: "13a"}
+  - {from: ddata, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "13b"}
+  - {from: a14, to: drelate}
+  - {from: drelate, to: a15, guard: "noncritical and not failed; preserve inferred origin, queued or inapplicable outcomes"}
+  - {from: drelate, to: itemfailed, guard: "noncritical failed stage", ext: "14a"}
+  - {from: drelate, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "14b"}
+  - {from: a15, to: dmetadata}
+  - {from: dmetadata, to: a16, guard: "noncritical and not failed; unknown fields remain explicit"}
+  - {from: dmetadata, to: itemfailed, guard: "noncritical failed stage", ext: "15a"}
+  - {from: dmetadata, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "15b"}
+  - {from: a16, to: dreview}
+  - {from: dreview, to: a17, guard: "noncritical and not failed; retain low confidence, partial or queued draft status"}
+  - {from: dreview, to: itemfailed, guard: "noncritical failed or refused source review", ext: "16a"}
+  - {from: dreview, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "16b"}
+  - {from: a17, to: dpublication}
+  - {from: dpublication, to: a18, guard: "noncritical fully read PDF, compatible full conversion/artifact and freshly enabled, accepted, current, trusted folder assignment"}
+  - {from: dpublication, to: pubna, guard: "noncritical normal outcome: non-PDF, or fully read PDF without full conversion", ext: "17a"}
+  - {from: dpublication, to: pubgap, guard: "noncritical PDF reading incomplete, or full-reading/full-conversion artifact/folder admission blocked; preserve exact reason", ext: "17b"}
+  - {from: dpublication, to: itemfailed, guard: "noncritical uncaught publication preparation exception", ext: "17c"}
+  - {from: dpublication, to: critical, guard: "critical integrity or authority-boundary finding", ext: "17d"}
+  - {from: a18, to: dpubresult}
+  - {from: dpubresult, to: a19, guard: "published with no critical finding"}
+  - {from: dpubresult, to: pubgap, guard: "noncritical returned disabled/refused, late FOLDER_STALE/awaiting_accepted_folder/artifact mismatch or caught publication error", ext: "18a"}
+  - {from: dpubresult, to: itemfailed, guard: "noncritical uncaught stage failure", ext: "18b"}
+  - {from: dpubresult, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "18c"}
+  - {from: pubna, to: a19}
+  - {from: pubgap, to: a19}
+  - {from: itemfailed, to: a19}
+  - {from: a19, to: dmore}
+  - {from: dmore, to: a20, guard: "noncritical initial frozen set accounted for"}
+  - {from: dmore, to: a5, guard: "noncritical another frozen source", ext: "19a"}
+  - {from: dmore, to: critical, guard: "critical integrity, false attestation or boundary finding in package assembly", ext: "19b"}
+  - {from: a20, to: dverdict}
+  - {from: dverdict, to: a21, guard: "specification met with no outstanding required output or declared partial-result gap"}
+  - {from: dverdict, to: partialreport, guard: "only explicitly permitted declared gaps remain", ext: "20a"}
+  - {from: dverdict, to: rwork, guard: "noncritical mapped shortfall with an accepted bounded remedy", ext: "20b"}
+  - {from: dverdict, to: scout, guard: "noncritical unmapped shortfall, uncertainty or no accepted remedy", ext: "20c"}
+  - {from: dverdict, to: critical, guard: "critical security, data-loss, attestation or authority-boundary finding", ext: "20d"}
+  - {from: rwork, to: resume, guard: "resolved"}
+  - {from: rwork, to: paused, guard: "declined"}
+  - {from: rwork, to: escalated, guard: "escalated"}
+  - {from: resume, to: dresume}
+  - {from: dresume, to: a5, guard: "authorized affected work and allowance remaining"}
+  - {from: dresume, to: repairperson, guard: "person re-approval or explicit authority needed"}
+  - {from: dresume, to: escalated, guard: "allowance exhausted, no progress or outside mandate"}
+  - {from: repairperson, to: drepairperson}
+  - {from: drepairperson, to: a4, guard: "approved; re-admit changed authority and affected work"}
+  - {from: drepairperson, to: paused, guard: "declined or waiting"}
+  - {from: scout, to: realign}
+  - {from: realign, to: drealign}
+  - {from: drealign, to: resume, guard: "evidence supports a correction; request scripted authority and allowance checks"}
+  - {from: drealign, to: escalated, guard: "needs a code change, lacks a justified correction or shows no progress"}
+  - {from: partialreport, to: epartial}
+  - {from: a21, to: drecipient}
+  - {from: drecipient, to: a22, guard: "standalone run; tier 0 owns this specification"}
+  - {from: drecipient, to: directreport, guard: "standalone run; Owner owns this specification", ext: "21a"}
+  - {from: drecipient, to: parentreturn, guard: "invoked as a child of the parent process", ext: "21b"}
+  - {from: parentreturn, to: delivered}
+  - {from: a22, to: dhandback}
+  - {from: dhandback, to: a23, guard: "ready"}
+  - {from: dhandback, to: tidy, guard: "bounded correction or recheck needed", ext: "22a"}
+  - {from: tidy, to: dtidy}
+  - {from: dtidy, to: a20, guard: "one tidy-up remains; Oracle judges the submitted evidence"}
+  - {from: dtidy, to: escalated, guard: "final pass still fails or allowance exhausted"}
+  - {from: a23, to: delivered}
+  - {from: directreport, to: delivered}
+  - {from: delivered, to: e1}
+  - {from: paused, to: epaused}
+  - {from: escalated, to: eescalated}
+  - {from: critical, to: eescalated}
+provenance:
+  drafted_by: "tier 0 (Codex), Owner request 22 November 2026"
+  at: 2026-11-22
+  status: "proposed to-be enrichment for review; not accepted policy or implemented execution"
+  based_on: "current source enrichment contracts, the requirements baseline, and the Owner's ingestion/as-is and accepted to-be canvas examples"

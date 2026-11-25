@@ -1,683 +1,1741 @@
 {
- "nodes": [
-  {
-   "id": "title",
-   "type": "text",
-   "x": 20,
-   "y": -200,
-   "width": 2900,
-   "height": 220,
-   "text": "# Ingest a folder of papers, directed by the Owner and orchestrated by a tier-0 agent\n**Symptom:** The research session found no papers to keep, though all 96 had been read.\n**Root cause:** The ingestion has no step that owns the last hand-off, and no signal when it is missing (OP1).\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `ingestion.spec.yaml`."
-  },
-  {
-   "id": "s",
-   "type": "text",
-   "x": 40,
-   "y": 140,
-   "width": 360,
-   "height": 70,
-   "text": "\u25cf start",
-   "color": "4"
-  },
-  {
-   "id": "a1",
-   "type": "text",
-   "x": 40,
-   "y": 340,
-   "width": 360,
-   "height": 150,
-   "text": "**1.** directs the ingestion of E:\\DataManagement into Resource-Library"
-  },
-  {
-   "id": "a2",
-   "type": "text",
-   "x": 460,
-   "y": 540,
-   "width": 360,
-   "height": 150,
-   "text": "**2.** attaches the folder to the library"
-  },
-  {
-   "id": "a3",
-   "type": "text",
-   "x": 880,
-   "y": 740,
-   "width": 360,
-   "height": 150,
-   "text": "**3.** surveys the folder and proposes a decision per subfolder"
-  },
-  {
-   "id": "d1",
-   "type": "text",
-   "x": 880,
-   "y": 940,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 every other root current?",
-   "color": "5"
-  },
-  {
-   "id": "a4",
-   "type": "text",
-   "x": 40,
-   "y": 1140,
-   "width": 360,
-   "height": 150,
-   "text": "**4.** decides the subfolders that need a person (excludes 11, 12, 13, _external)"
-  },
-  {
-   "id": "x1",
-   "type": "text",
-   "x": 460,
-   "y": 1140,
-   "width": 360,
-   "height": 150,
-   "text": "re-surveys the stale root and re-applies its decisions"
-  },
-  {
-   "id": "a5",
-   "type": "text",
-   "x": 460,
-   "y": 1340,
-   "width": 360,
-   "height": 150,
-   "text": "**5.** records the Owner's decisions"
-  },
-  {
-   "id": "d2",
-   "type": "text",
-   "x": 880,
-   "y": 1540,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 Clerk qualified in this Core?",
-   "color": "5"
-  },
-  {
-   "id": "a6",
-   "type": "text",
-   "x": 1300,
-   "y": 1740,
-   "width": 360,
-   "height": 150,
-   "text": "**6.** assesses each remaining subfolder's sensitivity"
-  },
-  {
-   "id": "x2",
-   "type": "text",
-   "x": 460,
-   "y": 1740,
-   "width": 360,
-   "height": 150,
-   "text": "restarts the Cores and re-qualifies the Clerk"
-  },
-  {
-   "id": "d3",
-   "type": "text",
-   "x": 1300,
-   "y": 1940,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 subfolder sensitive?",
-   "color": "5"
-  },
-  {
-   "id": "a7",
-   "type": "text",
-   "x": 880,
-   "y": 2140,
-   "width": 360,
-   "height": 150,
-   "text": "**7.** accepts the remaining subfolders by policy"
-  },
-  {
-   "id": "x3",
-   "type": "text",
-   "x": 40,
-   "y": 2140,
-   "width": 360,
-   "height": 150,
-   "text": "decides the held subfolder"
-  },
-  {
-   "id": "a8",
-   "type": "text",
-   "x": 460,
-   "y": 2340,
-   "width": 360,
-   "height": 150,
-   "text": "**8.** queues the in-scope documents, one accepted subfolder at a time"
-  },
-  {
-   "id": "d4",
-   "type": "text",
-   "x": 460,
-   "y": 2540,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 queued count matches the survey?",
-   "color": "5"
-  },
-  {
-   "id": "a9",
-   "type": "text",
-   "x": 880,
-   "y": 2740,
-   "width": 360,
-   "height": 150,
-   "text": "**9.** captures and stages each document (intake)"
-  },
-  {
-   "id": "a10",
-   "type": "text",
-   "x": 460,
-   "y": 2940,
-   "width": 360,
-   "height": 150,
-   "text": "**10.** approves the staged documents (agent promotion mode)"
-  },
-  {
-   "id": "f1",
-   "type": "text",
-   "x": 880,
-   "y": 3140,
-   "width": 360,
-   "height": 150,
-   "text": "\u25ac for each approved document, in the Clerk pool",
-   "color": "3"
-  },
-  {
-   "id": "a11",
-   "type": "text",
-   "x": 880,
-   "y": 3340,
-   "width": 360,
-   "height": 150,
-   "text": "**11.** parses and converts the document page by page"
-  },
-  {
-   "id": "a14",
-   "type": "text",
-   "x": 460,
-   "y": 3340,
-   "width": 360,
-   "height": 150,
-   "text": "**14.** tracks spend against the ceiling and reports progress"
-  },
-  {
-   "id": "a12",
-   "type": "text",
-   "x": 1300,
-   "y": 3540,
-   "width": 360,
-   "height": 150,
-   "text": "**12.** reads it part by part: claims, terms, relations, review"
-  },
-  {
-   "id": "dc",
-   "type": "text",
-   "x": 460,
-   "y": 3540,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 spend under the ceiling?",
-   "color": "5"
-  },
-  {
-   "id": "m1",
-   "type": "text",
-   "x": 1720,
-   "y": 3740,
-   "width": 360,
-   "height": 150,
-   "text": "answers each Clerk task"
-  },
-  {
-   "id": "j1",
-   "type": "text",
-   "x": 880,
-   "y": 3740,
-   "width": 360,
-   "height": 150,
-   "text": "\u25ac all documents processed",
-   "color": "3"
-  },
-  {
-   "id": "e4",
-   "type": "text",
-   "x": 2560,
-   "y": 3740,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c9 run stopped at the spend ceiling; Owner decides\n*outcome: failure*",
-   "color": "1"
-  },
-  {
-   "id": "dm",
-   "type": "text",
-   "x": 1720,
-   "y": 3940,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 answered in time and in full?",
-   "color": "5"
-  },
-  {
-   "id": "d5",
-   "type": "text",
-   "x": 880,
-   "y": 3940,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 document fully read?",
-   "color": "5"
-  },
-  {
-   "id": "a13",
-   "type": "text",
-   "x": 2140,
-   "y": 4140,
-   "width": 360,
-   "height": 150,
-   "text": "**13.** imports each fully converted paper into the paper graph"
-  },
-  {
-   "id": "x5",
-   "type": "text",
-   "x": 460,
-   "y": 4140,
-   "width": 360,
-   "height": 150,
-   "text": "re-approves the partial document"
-  },
-  {
-   "id": "d6",
-   "type": "text",
-   "x": 460,
-   "y": 4340,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 enriched documents accepted?",
-   "color": "5"
-  },
-  {
-   "id": "a15",
-   "type": "text",
-   "x": 460,
-   "y": 4540,
-   "width": 360,
-   "height": 150,
-   "text": "**15.** accepts the enriched documents into the library"
-  },
-  {
-   "id": "e2",
-   "type": "text",
-   "x": 2560,
-   "y": 4540,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c9 papers stay in staging; research finds nothing to keep (OP1)\n*outcome: failure*",
-   "color": "1"
-  },
-  {
-   "id": "a16",
-   "type": "text",
-   "x": 880,
-   "y": 4740,
-   "width": 360,
-   "height": 150,
-   "text": "**16.** writes each Source note and validates it is findable"
-  },
-  {
-   "id": "d7",
-   "type": "text",
-   "x": 880,
-   "y": 4940,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 findable by title, bottom line and concept?",
-   "color": "5"
-  },
-  {
-   "id": "a17",
-   "type": "text",
-   "x": 460,
-   "y": 5140,
-   "width": 360,
-   "height": 150,
-   "text": "**17.** verifies the counts and labels, and reports to the Owner"
-  },
-  {
-   "id": "e3",
-   "type": "text",
-   "x": 2560,
-   "y": 5140,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c9 note flagged written-but-not-findable\n*outcome: failure*",
-   "color": "1"
-  },
-  {
-   "id": "e1",
-   "type": "text",
-   "x": 2560,
-   "y": 5340,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c9 96 findable Source notes; files labelled third_party; papers in the graph\n*outcome: success*",
-   "color": "6"
-  },
-  {
-   "id": "lane-Owner",
-   "type": "group",
-   "x": 20,
-   "y": 60,
-   "width": 400,
-   "height": 5540,
-   "label": "Owner"
-  },
-  {
-   "id": "lane-Tier-0-agent",
-   "type": "group",
-   "x": 440,
-   "y": 60,
-   "width": 400,
-   "height": 5540,
-   "label": "Tier 0 agent"
-  },
-  {
-   "id": "lane-Core",
-   "type": "group",
-   "x": 860,
-   "y": 60,
-   "width": 400,
-   "height": 5540,
-   "label": "Core"
-  },
-  {
-   "id": "lane-Clerk-tier-3-",
-   "type": "group",
-   "x": 1280,
-   "y": 60,
-   "width": 400,
-   "height": 5540,
-   "label": "Clerk (tier 3)"
-  },
-  {
-   "id": "lane-Model-host",
-   "type": "group",
-   "x": 1700,
-   "y": 60,
-   "width": 400,
-   "height": 5540,
-   "label": "Model host"
-  },
-  {
-   "id": "lane-Geo-Grapher",
-   "type": "group",
-   "x": 2120,
-   "y": 60,
-   "width": 400,
-   "height": 5540,
-   "label": "Geo-Grapher"
-  },
-  {
-   "id": "lane-Outcomes",
-   "type": "group",
-   "x": 2540,
-   "y": 60,
-   "width": 400,
-   "height": 5540,
-   "label": "Outcomes"
+  "nodes": [
+    {
+      "id": "librarian-title",
+      "type": "text",
+      "x": 20,
+      "y": -200,
+      "width": 3980,
+      "height": 220,
+      "text": "# DataManagement ingestion: observed path and current-code alternatives\n**Symptom:** On 19 November the research session found no accepted papers to keep, although processing had produced staged readings and graph artifacts.\n**Root cause:** Historical OP1: no accountable final acceptance handoff; later backlog visibility fixes must not rewrite this run.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `ingestion.spec.yaml`."
+    },
+    {
+      "id": "librarian-s",
+      "type": "text",
+      "x": 40,
+      "y": 140,
+      "width": 360,
+      "height": 70,
+      "text": "● start",
+      "color": "4",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-scopeNote",
+      "type": "text",
+      "x": 640,
+      "y": 340,
+      "width": 360,
+      "height": 150,
+      "text": "Historical default follows the partial cohort. Other branches are current-code alternatives; red arrows mean alternatives, not failure. Unexercised paths are not claimed as events.",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-a1",
+      "type": "text",
+      "x": 40,
+      "y": 540,
+      "width": 360,
+      "height": 150,
+      "text": "**1.** directs E:\\DataManagement ingestion into Resource-Library with pre-read exclusions; later partial acceptance remains an explicit decision",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-a2",
+      "type": "text",
+      "x": 640,
+      "y": 740,
+      "width": 360,
+      "height": 150,
+      "text": "**2.** attaches the folder on the Owner's behalf",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-a3",
+      "type": "text",
+      "x": 1240,
+      "y": 940,
+      "width": 360,
+      "height": 150,
+      "text": "**3.** inventories roots, fingerprints and literal folder facts; excludes hidden and scratch content before reading",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-d1",
+      "type": "text",
+      "x": 1240,
+      "y": 1140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ reviewed roots current?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a4",
+      "type": "text",
+      "x": 40,
+      "y": 1540,
+      "width": 360,
+      "height": 150,
+      "text": "**4.** decides purpose and exclusions: 11, 12, 13 and _external remain unread",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-x1",
+      "type": "text",
+      "x": 640,
+      "y": 1340,
+      "width": 360,
+      "height": 150,
+      "text": "requests the stale root survey and authorized decision reapplication; preserves the actual library-wide affected scope",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-a5",
+      "type": "text",
+      "x": 640,
+      "y": 1740,
+      "width": 360,
+      "height": 150,
+      "text": "**5.** submits the Owner's folder decisions with their actual authority and reason",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-d2",
+      "type": "text",
+      "x": 1240,
+      "y": 1940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ assigned folder-review Clerk qualified in this Core?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a6",
+      "type": "text",
+      "x": 1840,
+      "y": 2340,
+      "width": 360,
+      "height": 150,
+      "text": "**6.** drafts folder descriptions and sensitivity findings through the historical legacy model transport",
+      "librarian": {
+        "actor_lane": "Model worker (legacy transport)"
+      }
+    },
+    {
+      "id": "librarian-x2",
+      "type": "text",
+      "x": 640,
+      "y": 2140,
+      "width": 360,
+      "height": 150,
+      "text": "restores qualification after the recorded shared-store defect, then requests a fresh qualification check",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-draftcheck",
+      "type": "text",
+      "x": 1240,
+      "y": 2540,
+      "width": 360,
+      "height": 150,
+      "text": "validates the returned draft status, required fields and literal provenance; records provider, schema and missing-evidence flags without judging semantic adequacy",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-ddraft",
+      "type": "text",
+      "x": 1240,
+      "y": 2740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ returned folder draft structurally valid with the Clerk's explicit sensitivity finding?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-d3",
+      "type": "text",
+      "x": 1840,
+      "y": 3140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ model-reported sensitivity or reserved folder decision?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Model worker (legacy transport)"
+      }
+    },
+    {
+      "id": "librarian-draftfault",
+      "type": "text",
+      "x": 640,
+      "y": 2940,
+      "width": 360,
+      "height": 150,
+      "text": "diagnoses the actual post-draft transport, schema, provenance or missing-output failure from recorded evidence; retains existing flags and reports the unresolved scope without assuming qualification loss",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-escalatereport",
+      "type": "text",
+      "x": 640,
+      "y": 10940,
+      "width": 360,
+      "height": 150,
+      "text": "reports unresolved processing/capture/integrity faults with originating stage, existing flags and retained evidence",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-a7",
+      "type": "text",
+      "x": 1240,
+      "y": 3740,
+      "width": 360,
+      "height": 150,
+      "text": "**7.** submits affirmative folder decisions and read barriers for group application; acceptance is recorded only after the CLI succeeds",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-x3",
+      "type": "text",
+      "x": 40,
+      "y": 3340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Owner's decision for the held folder?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-escalated",
+      "type": "text",
+      "x": 3640,
+      "y": 11140,
+      "width": 360,
+      "height": 150,
+      "text": "◉ unresolved fault reported to the Owner without discarding completed work\n*outcome: escalated*",
+      "color": "1",
+      "librarian": {
+        "actor_lane": "Outcomes"
+      }
+    },
+    {
+      "id": "librarian-applygroups",
+      "type": "text",
+      "x": 3040,
+      "y": 3940,
+      "width": 360,
+      "height": 150,
+      "text": "applies all accepted non-excluded groups, including documents and papers; ingests supported code/text and may reuse matching complete snapshots",
+      "librarian": {
+        "actor_lane": "Geo-Grapher"
+      }
+    },
+    {
+      "id": "librarian-exclude",
+      "type": "text",
+      "x": 1240,
+      "y": 3540,
+      "width": 360,
+      "height": 150,
+      "text": "records exclusion and removes that subtree from the eligible worklist without reading it",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-pausedreport",
+      "type": "text",
+      "x": 640,
+      "y": 10740,
+      "width": 360,
+      "height": 150,
+      "text": "reports distinct cancellation, interruption, ceiling stop or pending decision, completed siblings and exact continuation point to the Owner",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-applicationreceipt",
+      "type": "text",
+      "x": 1240,
+      "y": 4140,
+      "width": 360,
+      "height": 150,
+      "text": "checks CLI exit, JSON and pinned version; records successful application and accepted decisions; returned JSON does not attest parser completeness",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-e4",
+      "type": "text",
+      "x": 3640,
+      "y": 10940,
+      "width": 360,
+      "height": 150,
+      "text": "◉ paused with a named decision owner, retained work and the actual stop reason\n*outcome: paused*",
+      "color": "1",
+      "librarian": {
+        "actor_lane": "Outcomes"
+      }
+    },
+    {
+      "id": "librarian-dfolder",
+      "type": "text",
+      "x": 1240,
+      "y": 4340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ folder application result?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dinput",
+      "type": "text",
+      "x": 1240,
+      "y": 4940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ requested Source-eligible subset remains after common folder-group application?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-x1application",
+      "type": "text",
+      "x": 640,
+      "y": 4740,
+      "width": 360,
+      "height": 150,
+      "text": "requests application-stage stale-root resurvey and authorized reapplication; retains actual library-wide scope",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-folderfault",
+      "type": "text",
+      "x": 640,
+      "y": 4540,
+      "width": 360,
+      "height": 150,
+      "text": "retains GEOGRAPHER_CALL_FAILED or other folder refusal; investigates actual capability/scope before authorized retry",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-a8",
+      "type": "text",
+      "x": 640,
+      "y": 5340,
+      "width": 360,
+      "height": 150,
+      "text": "**8.** requests Source queueing per deepest accepted root for third-party, research-docs and own-docs content",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-reuseledger",
+      "type": "text",
+      "x": 1240,
+      "y": 8140,
+      "width": 360,
+      "height": 150,
+      "text": "reconciles no-new-work or already-current results with the parent ledger; does not count enqueue history as outstanding work",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-nonsource",
+      "type": "text",
+      "x": 3640,
+      "y": 5140,
+      "width": 360,
+      "height": 150,
+      "text": "◉ returns the common folder-application receipt; no Source intake applies on this branch and parser completeness is not attested\n*outcome: reused*",
+      "color": "6",
+      "librarian": {
+        "actor_lane": "Outcomes"
+      }
+    },
+    {
+      "id": "librarian-d4",
+      "type": "text",
+      "x": 1240,
+      "y": 5540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ scripted current-item count reconciles with eligible inventory?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-reused",
+      "type": "text",
+      "x": 3640,
+      "y": 8340,
+      "width": 360,
+      "height": 150,
+      "text": "◉ existing or excluded work accounted for; no duplicate Source processing claimed\n*outcome: reused*",
+      "color": "6",
+      "librarian": {
+        "actor_lane": "Outcomes"
+      }
+    },
+    {
+      "id": "librarian-a9",
+      "type": "text",
+      "x": 1240,
+      "y": 5940,
+      "width": 360,
+      "height": 150,
+      "text": "**9.** captures immutable source evidence and records each reference result; retains exclusions, duplicates and isolated parser/quarantine failures",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-queuefix",
+      "type": "text",
+      "x": 640,
+      "y": 5740,
+      "width": 360,
+      "height": 150,
+      "text": "investigates unexplained mismatch; requests per-root queueing without treating historical queued ledger entries as current pending work",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-dcapture",
+      "type": "text",
+      "x": 1240,
+      "y": 6140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ usable captured Sources remain?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-capturedescribe",
+      "type": "text",
+      "x": 1840,
+      "y": 6540,
+      "width": 360,
+      "height": 150,
+      "text": "**10.** writes neutral descriptions from captured evidence through the legacy model transport",
+      "librarian": {
+        "actor_lane": "Model worker (legacy transport)"
+      }
+    },
+    {
+      "id": "librarian-capturefault",
+      "type": "text",
+      "x": 640,
+      "y": 6340,
+      "width": 360,
+      "height": 150,
+      "text": "retains failed references and successful siblings separately; reports required capture gaps for a bounded decision",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-capturestore",
+      "type": "text",
+      "x": 1240,
+      "y": 6740,
+      "width": 360,
+      "height": 150,
+      "text": "**11.** stages Source evidence and records mixed-batch item identities; folder cards remain distinct from Source content",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a10",
+      "type": "text",
+      "x": 640,
+      "y": 6940,
+      "width": 360,
+      "height": 150,
+      "text": "**12.** submits the Owner-authorized ingestion approvals with executor, decision authority and recorded attestation distinguished",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-startrequest",
+      "type": "text",
+      "x": 640,
+      "y": 7140,
+      "width": 360,
+      "height": 150,
+      "text": "**13.** requests an explicit processing start through the existing curate/person authority; approval alone only queues",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-dstartauthority",
+      "type": "text",
+      "x": 1240,
+      "y": 7340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ current explicit processing-start authority present?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-startrun",
+      "type": "text",
+      "x": 1240,
+      "y": 7740,
+      "width": 360,
+      "height": 150,
+      "text": "**14.** validates the existing curate/person start permission and freezes the approved selection; returns the active run instead of duplicating it",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-startowner",
+      "type": "text",
+      "x": 40,
+      "y": 7540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ grant processing start for the approved set?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-enrich",
+      "type": "text",
+      "x": 1240,
+      "y": 7940,
+      "width": 360,
+      "height": 150,
+      "text": "**15.** ⇉ **batch-enrichment-current**: dispatches the approved mixed batch: Sources use nine stages; folder metadata uses its separate three-stage chain",
+      "color": "2",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a14",
+      "type": "text",
+      "x": 640,
+      "y": 8540,
+      "width": 360,
+      "height": 150,
+      "text": "observes progress/spend; Core checks ceiling before each item and cancellation between stages. Task-pool concurrency is internal to the child, not document-level parallelism",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-d5",
+      "type": "text",
+      "x": 1240,
+      "y": 8740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ returned coverage and obligations permit acceptance?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-d6",
+      "type": "text",
+      "x": 640,
+      "y": 9140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Source decision owner acts on the returned package?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-x5",
+      "type": "text",
+      "x": 640,
+      "y": 8940,
+      "width": 360,
+      "height": 150,
+      "text": "obtains a new authorized approval/start for finished partial work; unfinished frozen-run resume remains distinct",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-a15",
+      "type": "text",
+      "x": 640,
+      "y": 9540,
+      "width": 360,
+      "height": 150,
+      "text": "**16.** accepts 96 Sources under the Owner's direction, retaining 93 fully read/published items and three accepted partials with publication gaps",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-e2",
+      "type": "text",
+      "x": 3640,
+      "y": 9340,
+      "width": 360,
+      "height": 150,
+      "text": "◉ 19 November: processing retained in staging while Source acceptance was unowned (historical OP1)\n*outcome: paused*",
+      "color": "1",
+      "librarian": {
+        "actor_lane": "Outcomes"
+      }
+    },
+    {
+      "id": "librarian-sourceledger",
+      "type": "text",
+      "x": 1240,
+      "y": 9740,
+      "width": 360,
+      "height": 150,
+      "text": "persists the actual Source decision; hands independent lens proposals to their own decision owner with accept/reject/defer still separate",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a16",
+      "type": "text",
+      "x": 1240,
+      "y": 9940,
+      "width": 360,
+      "height": 150,
+      "text": "**17.** applies the guarded Source writer and retains the actual commit/refusal/attempt state; Source acceptance does not accept lenses",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dwrite",
+      "type": "text",
+      "x": 1240,
+      "y": 10140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ guarded Source write result and current commit state?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-findcheck",
+      "type": "text",
+      "x": 1240,
+      "y": 11340,
+      "width": 360,
+      "height": 150,
+      "text": "checks required title, Bottom-Line and concept retrieval only for a confirmed committed Source note; records actual searches",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-writestate",
+      "type": "text",
+      "x": 1240,
+      "y": 10340,
+      "width": 360,
+      "height": 150,
+      "text": "reconciles the attempt, lease, current note/hash and commit evidence read-only; preserves human edits and records the reserved write checkpoint without assuming a commit",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-d7",
+      "type": "text",
+      "x": 1240,
+      "y": 11540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ required retrieval checks pass for the written notes?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-writeowner",
+      "type": "text",
+      "x": 40,
+      "y": 10540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Owner's bounded decision for the held or unconfirmed Source write?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-a17",
+      "type": "text",
+      "x": 640,
+      "y": 11940,
+      "width": 360,
+      "height": 150,
+      "text": "**18.** reconciles current Source states, coverage, publication receipts, labels and separate lens decisions; reports the dated cohort truth to the Owner",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-e3",
+      "type": "text",
+      "x": 3640,
+      "y": 11740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ Source note remains written; required retrieval failed and the actual miss is retained\n*outcome: failure*",
+      "color": "1",
+      "librarian": {
+        "actor_lane": "Outcomes"
+      }
+    },
+    {
+      "id": "librarian-e1",
+      "type": "text",
+      "x": 3640,
+      "y": 12140,
+      "width": 360,
+      "height": 150,
+      "text": "◉ 96 accepted Source notes; 93 fully read/published; three explicitly accepted partials retain publication gaps\n*outcome: success*",
+      "color": "6",
+      "librarian": {
+        "actor_lane": "Outcomes"
+      }
+    },
+    {
+      "id": "librarian-lane-Owner",
+      "type": "group",
+      "x": 20,
+      "y": 60,
+      "width": 400,
+      "height": 12330,
+      "label": "Owner"
+    },
+    {
+      "id": "librarian-lane-Tier-0-agent",
+      "type": "group",
+      "x": 620,
+      "y": 60,
+      "width": 400,
+      "height": 12330,
+      "label": "Tier 0 agent"
+    },
+    {
+      "id": "librarian-lane-Core",
+      "type": "group",
+      "x": 1220,
+      "y": 60,
+      "width": 400,
+      "height": 12330,
+      "label": "Core"
+    },
+    {
+      "id": "librarian-lane-Model-worker-legacy-transport-",
+      "type": "group",
+      "x": 1820,
+      "y": 60,
+      "width": 400,
+      "height": 12330,
+      "label": "Model worker (legacy transport)"
+    },
+    {
+      "id": "librarian-lane-Model-host",
+      "type": "group",
+      "x": 2420,
+      "y": 60,
+      "width": 400,
+      "height": 12330,
+      "label": "Model host"
+    },
+    {
+      "id": "librarian-lane-Geo-Grapher",
+      "type": "group",
+      "x": 3020,
+      "y": 60,
+      "width": 400,
+      "height": 12330,
+      "label": "Geo-Grapher"
+    },
+    {
+      "id": "librarian-lane-Outcomes",
+      "type": "group",
+      "x": 3620,
+      "y": 60,
+      "width": 400,
+      "height": 12330,
+      "label": "Outcomes"
+    }
+  ],
+  "edges": [
+    {
+      "id": "librarian-edge-0396b62158ef2a74",
+      "fromNode": "librarian-s",
+      "toNode": "librarian-scopeNote",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-b684b6d78faec0ef",
+      "fromNode": "librarian-a1",
+      "toNode": "librarian-a2",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-95420e5041207b89",
+      "fromNode": "librarian-a2",
+      "toNode": "librarian-a3",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-73a8cf7a08309bed",
+      "fromNode": "librarian-a3",
+      "toNode": "librarian-d1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-acb26646294c3b32",
+      "fromNode": "librarian-d1",
+      "toNode": "librarian-a4",
+      "label": "[current]",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-edge-6018aca50965a874",
+      "fromNode": "librarian-d1",
+      "toNode": "librarian-x1",
+      "label": "[stale root] 3a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-03b40dc13809bd99",
+      "fromNode": "librarian-x1",
+      "toNode": "librarian-a3",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-59846c00c9f550ac",
+      "fromNode": "librarian-a4",
+      "toNode": "librarian-a5",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-45e32c9031f3078d",
+      "fromNode": "librarian-a5",
+      "toNode": "librarian-d2",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-04f256cf30d1e28b",
+      "fromNode": "librarian-d2",
+      "toNode": "librarian-a6",
+      "label": "[qualified]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-6d2f4d23f2d05791",
+      "fromNode": "librarian-d2",
+      "toNode": "librarian-x2",
+      "label": "[qualification lost] 5a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-82153b82368d9a24",
+      "fromNode": "librarian-x2",
+      "toNode": "librarian-d2",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-da52defbeff67acc",
+      "fromNode": "librarian-draftfault",
+      "toNode": "librarian-escalatereport",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-8819827026101966",
+      "fromNode": "librarian-a6",
+      "toNode": "librarian-draftcheck",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-34706a9138d257c2",
+      "fromNode": "librarian-d3",
+      "toNode": "librarian-a7",
+      "label": "[normal and already authorized]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-bb4b589c2256a63d",
+      "fromNode": "librarian-d3",
+      "toNode": "librarian-x3",
+      "label": "[reserved or sensitive] 6a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-fce89f2f9dfbcbbe",
+      "fromNode": "librarian-x3",
+      "toNode": "librarian-a7",
+      "fromSide": "right",
+      "toSide": "left",
+      "label": "[approve/apply]"
+    },
+    {
+      "id": "librarian-edge-803d34e8140199db",
+      "fromNode": "librarian-x3",
+      "toNode": "librarian-exclude",
+      "label": "[exclude]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-0687c8b3c720186e",
+      "fromNode": "librarian-x3",
+      "toNode": "librarian-pausedreport",
+      "label": "[decline]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-40e14d866e8a7027",
+      "fromNode": "librarian-x3",
+      "toNode": "librarian-pausedreport",
+      "label": "[hold]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-3a1521247d7cb778",
+      "fromNode": "librarian-exclude",
+      "toNode": "librarian-a7",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-aec5c307e3a319a4",
+      "fromNode": "librarian-dfolder",
+      "toNode": "librarian-dinput",
+      "label": "[applied with accepted current assignment]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-3dd2ad6ecac173cc",
+      "fromNode": "librarian-dfolder",
+      "toNode": "librarian-x1application",
+      "label": "[FOLDER_STALE] 7a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-4f593aa8e31a6f43",
+      "fromNode": "librarian-dfolder",
+      "toNode": "librarian-folderfault",
+      "label": "[GEOGRAPHER_CALL_FAILED or another refusal] 7b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-2a6111c0e95a5f49",
+      "fromNode": "librarian-folderfault",
+      "toNode": "librarian-escalatereport",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-ac56aabfad432b4c",
+      "fromNode": "librarian-dinput",
+      "toNode": "librarian-a8",
+      "label": "[nonempty Source-eligible requested subset]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-8825edb46e0ed807",
+      "fromNode": "librarian-dinput",
+      "toNode": "librarian-reuseledger",
+      "label": "[excluded or no eligible input] 7d",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-4c5319dafddfd9ae",
+      "fromNode": "librarian-a8",
+      "toNode": "librarian-d4",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-a7acc2855187cdbf",
+      "fromNode": "librarian-d4",
+      "toNode": "librarian-a9",
+      "label": "[matches current eligible cohort (96)]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-99de969790940186",
+      "fromNode": "librarian-d4",
+      "toNode": "librarian-queuefix",
+      "label": "[zero/mismatch from root ownership or another discrepancy] 8a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-d720659cf255c2db",
+      "fromNode": "librarian-queuefix",
+      "toNode": "librarian-a8",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-edge-3ab0a7b6578c0659",
+      "fromNode": "librarian-a9",
+      "toNode": "librarian-dcapture",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-3ab80bdc9d059f81",
+      "fromNode": "librarian-dcapture",
+      "toNode": "librarian-capturedescribe",
+      "label": "[usable captured Sources with per-reference outcomes]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-03a8ff072c4dce37",
+      "fromNode": "librarian-dcapture",
+      "toNode": "librarian-capturefault",
+      "label": "[required capture gaps or no usable source] 9a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-0ec0d0c4a552de4d",
+      "fromNode": "librarian-dcapture",
+      "toNode": "librarian-reuseledger",
+      "label": "[only duplicates/exclusions and no new work] 9b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-d07bd749a8b4e959",
+      "fromNode": "librarian-capturefault",
+      "toNode": "librarian-escalatereport",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-d62e65692e955f0d",
+      "fromNode": "librarian-capturedescribe",
+      "toNode": "librarian-capturestore",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-34708273215b1772",
+      "fromNode": "librarian-capturestore",
+      "toNode": "librarian-a10",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-ca71709ffde2e4fb",
+      "fromNode": "librarian-a10",
+      "toNode": "librarian-startrequest",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-25d33ab9ceb26c9d",
+      "fromNode": "librarian-startrequest",
+      "toNode": "librarian-dstartauthority",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-a50511cd870cacd0",
+      "fromNode": "librarian-dstartauthority",
+      "toNode": "librarian-startrun",
+      "label": "[valid explicit start authority]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-0c13707826f43f50",
+      "fromNode": "librarian-dstartauthority",
+      "toNode": "librarian-startowner",
+      "label": "[reserved or absent authority] 13a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-08ac943810531a13",
+      "fromNode": "librarian-startowner",
+      "toNode": "librarian-startrun",
+      "label": "[grant]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-5fb3fd2141b9c707",
+      "fromNode": "librarian-startowner",
+      "toNode": "librarian-pausedreport",
+      "label": "[decline or hold]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-5b3b684f5f6741bf",
+      "fromNode": "librarian-startrun",
+      "toNode": "librarian-enrich",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-90cb7f2e29956115",
+      "fromNode": "librarian-enrich",
+      "toNode": "librarian-a14",
+      "label": "[partial]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-3868c7b043f2f47a",
+      "fromNode": "librarian-enrich",
+      "toNode": "librarian-a14",
+      "label": "[success] 15a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-4496feb06f859f1f",
+      "fromNode": "librarian-enrich",
+      "toNode": "librarian-reuseledger",
+      "label": "[reused] 15b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-38595bf1b7f355de",
+      "fromNode": "librarian-enrich",
+      "toNode": "librarian-pausedreport",
+      "label": "[paused] 15c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-3faac2d421c41579",
+      "fromNode": "librarian-enrich",
+      "toNode": "librarian-escalatereport",
+      "label": "[escalated] 15d",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-46ef9cbf117e4631",
+      "fromNode": "librarian-a14",
+      "toNode": "librarian-d5",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-a8a8a4ef9a474e57",
+      "fromNode": "librarian-d5",
+      "toNode": "librarian-d6",
+      "label": "[full or explicitly permitted partial with truthful obligations]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-f4ebbb059bb8da29",
+      "fromNode": "librarian-d5",
+      "toNode": "librarian-x5",
+      "label": "[required partial needs new approved work] 15e",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-068ec200752d6c25",
+      "fromNode": "librarian-d5",
+      "toNode": "librarian-pausedreport",
+      "label": "[failed or pending required work without acceptance authority] 15f",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-8e17eefa6c223ce8",
+      "fromNode": "librarian-x5",
+      "toNode": "librarian-startrequest",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-e916e65f0f8e0940",
+      "fromNode": "librarian-d6",
+      "toNode": "librarian-a15",
+      "label": "[affirmative authorized Source decision]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-0694244cc62e48f9",
+      "fromNode": "librarian-d6",
+      "toNode": "librarian-e2",
+      "label": "[nobody accepts] 16a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-d509e0bee9b77de0",
+      "fromNode": "librarian-d6",
+      "toNode": "librarian-pausedreport",
+      "label": "[decline or hold] 16b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-b8a74600ca6a0b25",
+      "fromNode": "librarian-a15",
+      "toNode": "librarian-sourceledger",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-36ad9476e1fe7841",
+      "fromNode": "librarian-sourceledger",
+      "toNode": "librarian-a16",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-6ce235ed747754ee",
+      "fromNode": "librarian-a16",
+      "toNode": "librarian-dwrite",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-3f2a942317c2d719",
+      "fromNode": "librarian-d7",
+      "toNode": "librarian-a17",
+      "label": "[required checks pass]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-38bfc5d38aba1749",
+      "fromNode": "librarian-d7",
+      "toNode": "librarian-e3",
+      "label": "[required title/Bottom-Line/concept retrieval misses] 17a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-57b13eef312926f4",
+      "fromNode": "librarian-a17",
+      "toNode": "librarian-e1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-00bb03a4389e6e7b",
+      "fromNode": "librarian-pausedreport",
+      "toNode": "librarian-e4",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-30c2c4752f9c4c8d",
+      "fromNode": "librarian-escalatereport",
+      "toNode": "librarian-escalated",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-1af3ca218e1fe16b",
+      "fromNode": "librarian-reuseledger",
+      "toNode": "librarian-reused",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-7d7f78c93d0a70d1",
+      "fromNode": "librarian-draftcheck",
+      "toNode": "librarian-ddraft",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-7e2c347a1588e995",
+      "fromNode": "librarian-ddraft",
+      "toNode": "librarian-d3",
+      "label": "[usable returned draft, required fields/provenance valid and sensitivity finding recorded]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-dd2ecbce7998b5e4",
+      "fromNode": "librarian-ddraft",
+      "toNode": "librarian-draftfault",
+      "label": "[transport refusal, invalid schema/provenance or partial/queued/failed draft] 6b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-022c1ce3cf55395e",
+      "fromNode": "librarian-ddraft",
+      "toNode": "librarian-escalatereport",
+      "label": "[critical integrity or authority-boundary evidence in draft] 6c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-7d583f39c2f37ca1",
+      "fromNode": "librarian-dwrite",
+      "toNode": "librarian-findcheck",
+      "label": "[confirmed committed, including a committed note already flagged written-but-not-findable]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-7c0282fe76937d14",
+      "fromNode": "librarian-findcheck",
+      "toNode": "librarian-d7",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-fd928feee50c0cf4",
+      "fromNode": "librarian-dwrite",
+      "toNode": "librarian-writestate",
+      "label": "[unknown/interrupted outcome, human-edit conflict or unconfirmed/uncommitted refusal] 17b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-794fcc8f047fba68",
+      "fromNode": "librarian-dwrite",
+      "toNode": "librarian-escalatereport",
+      "label": "[critical integrity or authority-boundary evidence in write] 17c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-303cdca3ad18f2c1",
+      "fromNode": "librarian-writestate",
+      "toNode": "librarian-writeowner",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-a022cdee1230c794",
+      "fromNode": "librarian-writeowner",
+      "toNode": "librarian-a16",
+      "label": "[specific bounded guarded retry authorized after compatible-state reconciliation; no unresolved human edit]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-be120b375a8bd5db",
+      "fromNode": "librarian-writeowner",
+      "toNode": "librarian-pausedreport",
+      "label": "[decline, hold or follow-on recovery/compensation needs separate scope]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-836db6b8ce822343",
+      "fromNode": "librarian-writeowner",
+      "toNode": "librarian-escalatereport",
+      "label": "[unresolved integrity/scope finding requires escalation]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-7e78fc2d025eea75",
+      "fromNode": "librarian-a7",
+      "toNode": "librarian-applygroups",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-3556e4678c8fabc7",
+      "fromNode": "librarian-applygroups",
+      "toNode": "librarian-applicationreceipt",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-847f506734fa3e83",
+      "fromNode": "librarian-applicationreceipt",
+      "toNode": "librarian-dfolder",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-503d4a1b3be06829",
+      "fromNode": "librarian-scopeNote",
+      "toNode": "librarian-a1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-07029227567632b6",
+      "fromNode": "librarian-x1application",
+      "toNode": "librarian-a7",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-7199b163b69fe5ca",
+      "fromNode": "librarian-dinput",
+      "toNode": "librarian-nonsource",
+      "label": "[own-code/data/log purpose only; no Source-eligible requested subset] 7c",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "report_ingestion_corrections": {
+    "generator": "render_corrected.py",
+    "spec": "ingestion.spec.yaml",
+    "roles": {
+      "s": null,
+      "a1": "Owner",
+      "a2": "Tier 0 agent",
+      "a3": "Core",
+      "d1": "Core",
+      "x1": "Tier 0 agent",
+      "a4": "Owner",
+      "a5": "Tier 0 agent",
+      "d2": "Core",
+      "x2": "Tier 0 agent",
+      "draftfault": "Tier 0 agent",
+      "a6": "Model worker (legacy transport)",
+      "d3": "Model worker (legacy transport)",
+      "x3": "Owner",
+      "exclude": "Core",
+      "a7": "Core",
+      "dfolder": "Core",
+      "folderfault": "Tier 0 agent",
+      "dinput": "Core",
+      "a8": "Tier 0 agent",
+      "d4": "Core",
+      "queuefix": "Tier 0 agent",
+      "a9": "Core",
+      "dcapture": "Core",
+      "capturefault": "Tier 0 agent",
+      "capturedescribe": "Model worker (legacy transport)",
+      "capturestore": "Core",
+      "a10": "Tier 0 agent",
+      "startrequest": "Tier 0 agent",
+      "dstartauthority": "Core",
+      "startowner": "Owner",
+      "startrun": "Core",
+      "enrich": "Core",
+      "a14": "Tier 0 agent",
+      "d5": "Core",
+      "x5": "Tier 0 agent",
+      "d6": "Tier 0 agent",
+      "a15": "Tier 0 agent",
+      "sourceledger": "Core",
+      "a16": "Core",
+      "d7": "Core",
+      "a17": "Tier 0 agent",
+      "pausedreport": "Tier 0 agent",
+      "escalatereport": "Tier 0 agent",
+      "reuseledger": "Core",
+      "e1": null,
+      "e2": null,
+      "e3": null,
+      "e4": null,
+      "escalated": null,
+      "reused": null,
+      "nonsource": null,
+      "draftcheck": "Core",
+      "ddraft": "Core",
+      "dwrite": "Core",
+      "findcheck": "Core",
+      "writestate": "Core",
+      "writeowner": "Owner",
+      "applygroups": "Geo-Grapher",
+      "applicationreceipt": "Core",
+      "scopeNote": "Tier 0 agent",
+      "x1application": "Tier 0 agent"
+    },
+    "managed_nodes": [
+      "librarian-a1",
+      "librarian-a10",
+      "librarian-a14",
+      "librarian-a15",
+      "librarian-a16",
+      "librarian-a17",
+      "librarian-a2",
+      "librarian-a3",
+      "librarian-a4",
+      "librarian-a5",
+      "librarian-a6",
+      "librarian-a7",
+      "librarian-a8",
+      "librarian-a9",
+      "librarian-applicationreceipt",
+      "librarian-applygroups",
+      "librarian-capturedescribe",
+      "librarian-capturefault",
+      "librarian-capturestore",
+      "librarian-d1",
+      "librarian-d2",
+      "librarian-d3",
+      "librarian-d4",
+      "librarian-d5",
+      "librarian-d6",
+      "librarian-d7",
+      "librarian-dcapture",
+      "librarian-ddraft",
+      "librarian-dfolder",
+      "librarian-dinput",
+      "librarian-draftcheck",
+      "librarian-draftfault",
+      "librarian-dstartauthority",
+      "librarian-dwrite",
+      "librarian-e1",
+      "librarian-e2",
+      "librarian-e3",
+      "librarian-e4",
+      "librarian-enrich",
+      "librarian-escalated",
+      "librarian-escalatereport",
+      "librarian-exclude",
+      "librarian-findcheck",
+      "librarian-folderfault",
+      "librarian-lane-Core",
+      "librarian-lane-Geo-Grapher",
+      "librarian-lane-Model-host",
+      "librarian-lane-Model-worker-legacy-transport-",
+      "librarian-lane-Outcomes",
+      "librarian-lane-Owner",
+      "librarian-lane-Tier-0-agent",
+      "librarian-nonsource",
+      "librarian-pausedreport",
+      "librarian-queuefix",
+      "librarian-reused",
+      "librarian-reuseledger",
+      "librarian-s",
+      "librarian-scopeNote",
+      "librarian-sourceledger",
+      "librarian-startowner",
+      "librarian-startrequest",
+      "librarian-startrun",
+      "librarian-title",
+      "librarian-writeowner",
+      "librarian-writestate",
+      "librarian-x1",
+      "librarian-x1application",
+      "librarian-x2",
+      "librarian-x3",
+      "librarian-x5"
+    ],
+    "managed_edges": [
+      "librarian-edge-0396b62158ef2a74",
+      "librarian-edge-b684b6d78faec0ef",
+      "librarian-edge-95420e5041207b89",
+      "librarian-edge-73a8cf7a08309bed",
+      "librarian-edge-acb26646294c3b32",
+      "librarian-edge-6018aca50965a874",
+      "librarian-edge-03b40dc13809bd99",
+      "librarian-edge-59846c00c9f550ac",
+      "librarian-edge-45e32c9031f3078d",
+      "librarian-edge-04f256cf30d1e28b",
+      "librarian-edge-6d2f4d23f2d05791",
+      "librarian-edge-82153b82368d9a24",
+      "librarian-edge-da52defbeff67acc",
+      "librarian-edge-8819827026101966",
+      "librarian-edge-34706a9138d257c2",
+      "librarian-edge-bb4b589c2256a63d",
+      "librarian-edge-fce89f2f9dfbcbbe",
+      "librarian-edge-803d34e8140199db",
+      "librarian-edge-0687c8b3c720186e",
+      "librarian-edge-40e14d866e8a7027",
+      "librarian-edge-3a1521247d7cb778",
+      "librarian-edge-aec5c307e3a319a4",
+      "librarian-edge-3dd2ad6ecac173cc",
+      "librarian-edge-4f593aa8e31a6f43",
+      "librarian-edge-2a6111c0e95a5f49",
+      "librarian-edge-ac56aabfad432b4c",
+      "librarian-edge-8825edb46e0ed807",
+      "librarian-edge-4c5319dafddfd9ae",
+      "librarian-edge-a7acc2855187cdbf",
+      "librarian-edge-99de969790940186",
+      "librarian-edge-d720659cf255c2db",
+      "librarian-edge-3ab0a7b6578c0659",
+      "librarian-edge-3ab80bdc9d059f81",
+      "librarian-edge-03a8ff072c4dce37",
+      "librarian-edge-0ec0d0c4a552de4d",
+      "librarian-edge-d07bd749a8b4e959",
+      "librarian-edge-d62e65692e955f0d",
+      "librarian-edge-34708273215b1772",
+      "librarian-edge-ca71709ffde2e4fb",
+      "librarian-edge-25d33ab9ceb26c9d",
+      "librarian-edge-a50511cd870cacd0",
+      "librarian-edge-0c13707826f43f50",
+      "librarian-edge-08ac943810531a13",
+      "librarian-edge-5fb3fd2141b9c707",
+      "librarian-edge-5b3b684f5f6741bf",
+      "librarian-edge-90cb7f2e29956115",
+      "librarian-edge-3868c7b043f2f47a",
+      "librarian-edge-4496feb06f859f1f",
+      "librarian-edge-38595bf1b7f355de",
+      "librarian-edge-3faac2d421c41579",
+      "librarian-edge-46ef9cbf117e4631",
+      "librarian-edge-a8a8a4ef9a474e57",
+      "librarian-edge-f4ebbb059bb8da29",
+      "librarian-edge-068ec200752d6c25",
+      "librarian-edge-8e17eefa6c223ce8",
+      "librarian-edge-e916e65f0f8e0940",
+      "librarian-edge-0694244cc62e48f9",
+      "librarian-edge-d509e0bee9b77de0",
+      "librarian-edge-b8a74600ca6a0b25",
+      "librarian-edge-36ad9476e1fe7841",
+      "librarian-edge-6ce235ed747754ee",
+      "librarian-edge-3f2a942317c2d719",
+      "librarian-edge-38bfc5d38aba1749",
+      "librarian-edge-57b13eef312926f4",
+      "librarian-edge-00bb03a4389e6e7b",
+      "librarian-edge-30c2c4752f9c4c8d",
+      "librarian-edge-1af3ca218e1fe16b",
+      "librarian-edge-7d7f78c93d0a70d1",
+      "librarian-edge-7e2c347a1588e995",
+      "librarian-edge-dd2ecbce7998b5e4",
+      "librarian-edge-022c1ce3cf55395e",
+      "librarian-edge-7d583f39c2f37ca1",
+      "librarian-edge-7c0282fe76937d14",
+      "librarian-edge-fd928feee50c0cf4",
+      "librarian-edge-794fcc8f047fba68",
+      "librarian-edge-303cdca3ad18f2c1",
+      "librarian-edge-a022cdee1230c794",
+      "librarian-edge-be120b375a8bd5db",
+      "librarian-edge-836db6b8ce822343",
+      "librarian-edge-7e78fc2d025eea75",
+      "librarian-edge-3556e4678c8fabc7",
+      "librarian-edge-847f506734fa3e83",
+      "librarian-edge-503d4a1b3be06829",
+      "librarian-edge-07029227567632b6",
+      "librarian-edge-7199b163b69fe5ca"
+    ],
+    "initial_spec_sha256": "6fae9b2d8e887321c7881f286586c3d97164d522113798fa125066faf21dbbfd"
   }
- ],
- "edges": [
-  {
-   "id": "e0",
-   "fromNode": "s",
-   "toNode": "a1"
-  },
-  {
-   "id": "e1",
-   "fromNode": "a1",
-   "toNode": "a2"
-  },
-  {
-   "id": "e2",
-   "fromNode": "a2",
-   "toNode": "a3"
-  },
-  {
-   "id": "e3",
-   "fromNode": "a3",
-   "toNode": "d1"
-  },
-  {
-   "id": "e4",
-   "fromNode": "d1",
-   "toNode": "a4",
-   "label": "[current]"
-  },
-  {
-   "id": "e5",
-   "fromNode": "d1",
-   "toNode": "x1",
-   "label": "[a root is stale] 3a",
-   "color": "1"
-  },
-  {
-   "id": "e6",
-   "fromNode": "x1",
-   "toNode": "a3"
-  },
-  {
-   "id": "e7",
-   "fromNode": "a4",
-   "toNode": "a5"
-  },
-  {
-   "id": "e8",
-   "fromNode": "a5",
-   "toNode": "d2"
-  },
-  {
-   "id": "e9",
-   "fromNode": "d2",
-   "toNode": "a6",
-   "label": "[qualified]"
-  },
-  {
-   "id": "e10",
-   "fromNode": "d2",
-   "toNode": "x2",
-   "label": "[qualification lost] 5a",
-   "color": "1"
-  },
-  {
-   "id": "e11",
-   "fromNode": "x2",
-   "toNode": "a6"
-  },
-  {
-   "id": "e12",
-   "fromNode": "a6",
-   "toNode": "d3"
-  },
-  {
-   "id": "e13",
-   "fromNode": "d3",
-   "toNode": "a7",
-   "label": "[normal]"
-  },
-  {
-   "id": "e14",
-   "fromNode": "d3",
-   "toNode": "x3",
-   "label": "[sensitive] 6a",
-   "color": "1"
-  },
-  {
-   "id": "e15",
-   "fromNode": "x3",
-   "toNode": "a7"
-  },
-  {
-   "id": "e16",
-   "fromNode": "a7",
-   "toNode": "a8"
-  },
-  {
-   "id": "e17",
-   "fromNode": "a8",
-   "toNode": "d4"
-  },
-  {
-   "id": "e18",
-   "fromNode": "d4",
-   "toNode": "a9",
-   "label": "[matches (96)]"
-  },
-  {
-   "id": "e19",
-   "fromNode": "d4",
-   "toNode": "a8",
-   "label": "[0 queued: subfolders are their own roots] 8a",
-   "color": "1"
-  },
-  {
-   "id": "e20",
-   "fromNode": "a9",
-   "toNode": "a10"
-  },
-  {
-   "id": "e21",
-   "fromNode": "a10",
-   "toNode": "f1"
-  },
-  {
-   "id": "e22",
-   "fromNode": "f1",
-   "toNode": "a11"
-  },
-  {
-   "id": "e23",
-   "fromNode": "f1",
-   "toNode": "a14"
-  },
-  {
-   "id": "e24",
-   "fromNode": "a11",
-   "toNode": "a12"
-  },
-  {
-   "id": "e25",
-   "fromNode": "a12",
-   "toNode": "m1"
-  },
-  {
-   "id": "e26",
-   "fromNode": "m1",
-   "toNode": "dm"
-  },
-  {
-   "id": "e27",
-   "fromNode": "dm",
-   "toNode": "j1",
-   "label": "[answered]"
-  },
-  {
-   "id": "e28",
-   "fromNode": "dm",
-   "toNode": "j1",
-   "label": "[unavailable or partial page] 12a",
-   "color": "1"
-  },
-  {
-   "id": "e29",
-   "fromNode": "a14",
-   "toNode": "dc"
-  },
-  {
-   "id": "e30",
-   "fromNode": "dc",
-   "toNode": "j1",
-   "label": "[under the ceiling]"
-  },
-  {
-   "id": "e31",
-   "fromNode": "dc",
-   "toNode": "e4",
-   "label": "[ceiling reached] 14a",
-   "color": "1"
-  },
-  {
-   "id": "e32",
-   "fromNode": "j1",
-   "toNode": "d5"
-  },
-  {
-   "id": "e33",
-   "fromNode": "d5",
-   "toNode": "a13",
-   "label": "[fully read]"
-  },
-  {
-   "id": "e34",
-   "fromNode": "d5",
-   "toNode": "x5",
-   "label": "[partial] 12b",
-   "color": "1"
-  },
-  {
-   "id": "e35",
-   "fromNode": "x5",
-   "toNode": "f1"
-  },
-  {
-   "id": "e36",
-   "fromNode": "a13",
-   "toNode": "d6"
-  },
-  {
-   "id": "e37",
-   "fromNode": "d6",
-   "toNode": "a15",
-   "label": "[accepted]"
-  },
-  {
-   "id": "e38",
-   "fromNode": "d6",
-   "toNode": "e2",
-   "label": "[nobody accepts] 15a",
-   "color": "1"
-  },
-  {
-   "id": "e39",
-   "fromNode": "a15",
-   "toNode": "a16"
-  },
-  {
-   "id": "e40",
-   "fromNode": "a16",
-   "toNode": "d7"
-  },
-  {
-   "id": "e41",
-   "fromNode": "d7",
-   "toNode": "a17",
-   "label": "[findable]"
-  },
-  {
-   "id": "e42",
-   "fromNode": "d7",
-   "toNode": "e3",
-   "label": "[not findable] 16a",
-   "color": "1"
-  },
-  {
-   "id": "e43",
-   "fromNode": "a17",
-   "toNode": "e1"
-  }
- ]
 }

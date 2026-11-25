@@ -1,0 +1,1765 @@
+{
+  "status": "report model validation; not execution, runtime rollout or new Owner acceptance",
+  "spec": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.spec.yaml",
+  "spec_sha256": "5815c4b1a831e5d33eda16507c3c1b252ec6aec4cb29e323c4a14afaa6db97bc",
+  "canvas": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas",
+  "base_revision": "b89231a91625c8360a42c547af722e67a7c6d415ca62482741706f86b9a7bb83",
+  "proposal_hash": "ed739abae9fed7291606ef7cc552756d97c9f9fe6f54f0550e8bf6ace749393a",
+  "scenarios": 56,
+  "structural_problems": [],
+  "cross_view_reference_flags": [],
+  "changes": {
+    "migrated_ids": {
+      "s": "librarian-s",
+      "a1": "librarian-a1",
+      "a2": "librarian-a2",
+      "a3": "librarian-a3",
+      "a4": "librarian-a4",
+      "d1": "librarian-d1",
+      "r1": "librarian-r1",
+      "a5": "librarian-a5",
+      "d2": "librarian-d2",
+      "r2": "librarian-r2",
+      "a6": "librarian-a6",
+      "d3": "librarian-d3",
+      "x1": "librarian-x1",
+      "x2": "librarian-x2",
+      "x3": "librarian-x3",
+      "a7": "librarian-a7",
+      "a8": "librarian-a8",
+      "a9": "librarian-a9",
+      "d4": "librarian-d4",
+      "r3": "librarian-r3",
+      "a10": "librarian-a10",
+      "a11": "librarian-a11",
+      "x4": "librarian-x4",
+      "x5": "librarian-x5",
+      "d5": "librarian-d5",
+      "r4": "librarian-r4",
+      "d6": "librarian-d6",
+      "x6": "librarian-x6",
+      "x7": "librarian-x7",
+      "a16": "librarian-a16",
+      "a17": "librarian-a17",
+      "d7": "librarian-d7",
+      "r5": "librarian-r5",
+      "a18": "librarian-a18",
+      "d8": "librarian-d8",
+      "r6": "librarian-r6",
+      "x8": "librarian-x8",
+      "x9": "librarian-x9",
+      "a19": "librarian-a19",
+      "a20": "librarian-a20",
+      "d9": "librarian-d9",
+      "x10": "librarian-x10",
+      "x11": "librarian-x11",
+      "x12": "librarian-x12",
+      "x13": "librarian-x13",
+      "x14": "librarian-x14",
+      "a21": "librarian-a21",
+      "xe": "librarian-xe",
+      "xp": "librarian-xp",
+      "e1": "librarian-e1",
+      "e2": "librarian-e2",
+      "e3": "librarian-e3",
+      "title": "librarian-title",
+      "lane-Owner": "librarian-lane-Owner",
+      "lane-Tier-0-agent": "librarian-lane-Tier-0-agent",
+      "lane-Oracle": "librarian-lane-Oracle",
+      "lane-Lead-tier-1-": "librarian-lane-Lead-tier-1-",
+      "lane-Doctor": "librarian-lane-Doctor",
+      "lane-Helper-tier-2-": "librarian-lane-Clerk-tier-2-",
+      "lane-Clerk-tier-3-": "librarian-lane-Scribe-tier-3-",
+      "lane-Core": "librarian-lane-Core",
+      "lane-Model-host": "librarian-lane-Model-host",
+      "lane-Geo-Grapher": "librarian-lane-Geo-Grapher",
+      "lane-Outcomes": "librarian-lane-Outcomes"
+    },
+    "retired_nodes_removed": [
+      "a12",
+      "a13",
+      "a14",
+      "a15",
+      "dc",
+      "dm",
+      "f1",
+      "j1",
+      "m1"
+    ],
+    "retired_anchors_retained_for_owner_edges": [],
+    "owner_nodes_preserved": 0,
+    "owner_edges_preserved": 131,
+    "geometry_changes": [
+      {
+        "node": "librarian-a2",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 460,
+        "new_x": 460,
+        "old_y": 540,
+        "new_y": 740
+      },
+      {
+        "node": "librarian-a3",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 740,
+        "new_y": 940
+      },
+      {
+        "node": "librarian-a4",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 940,
+        "new_y": 1140
+      },
+      {
+        "node": "librarian-d1",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 1140,
+        "new_y": 1340
+      },
+      {
+        "node": "librarian-a5",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 1340,
+        "new_y": 1540
+      },
+      {
+        "node": "librarian-r1",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 1720,
+        "new_x": 1720,
+        "old_y": 1340,
+        "new_y": 2940
+      },
+      {
+        "node": "librarian-d2",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 1540,
+        "new_y": 1740
+      },
+      {
+        "node": "librarian-xp",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 460,
+        "new_x": 1300,
+        "old_y": 1710,
+        "new_y": 9540
+      },
+      {
+        "node": "librarian-xp",
+        "reason": "actor reassignment",
+        "from": "Tier 0 agent",
+        "to": "Lead (tier 1)",
+        "old_x": 460,
+        "new_x": 1300,
+        "old_y": 1710,
+        "new_y": 9540
+      },
+      {
+        "node": "librarian-xe",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 460,
+        "new_x": 1300,
+        "old_y": 1540,
+        "new_y": 8140
+      },
+      {
+        "node": "librarian-xe",
+        "reason": "actor reassignment",
+        "from": "Tier 0 agent",
+        "to": "Lead (tier 1)",
+        "old_x": 460,
+        "new_x": 1300,
+        "old_y": 1540,
+        "new_y": 8140
+      },
+      {
+        "node": "librarian-a6",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2560,
+        "new_x": 2140,
+        "old_y": 1740,
+        "new_y": 1940
+      },
+      {
+        "node": "librarian-a6",
+        "reason": "actor reassignment",
+        "from": "Clerk (tier 3)",
+        "to": "Clerk (tier 2)",
+        "old_x": 2560,
+        "new_x": 2140,
+        "old_y": 1740,
+        "new_y": 1940
+      },
+      {
+        "node": "librarian-r2",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 1720,
+        "new_x": 1720,
+        "old_y": 1740,
+        "new_y": 1940
+      },
+      {
+        "node": "librarian-e3",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 4240,
+        "new_x": 4240,
+        "old_y": 1910,
+        "new_y": 9740
+      },
+      {
+        "node": "librarian-e2",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 4240,
+        "new_x": 4240,
+        "old_y": 1740,
+        "new_y": 8340
+      },
+      {
+        "node": "librarian-d3",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2560,
+        "new_x": 2140,
+        "old_y": 1940,
+        "new_y": 2140
+      },
+      {
+        "node": "librarian-d3",
+        "reason": "actor reassignment",
+        "from": "Clerk (tier 3)",
+        "to": "Clerk (tier 2)",
+        "old_x": 2560,
+        "new_x": 2140,
+        "old_y": 1940,
+        "new_y": 2140
+      },
+      {
+        "node": "librarian-x1",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 2140,
+        "new_y": 2540
+      },
+      {
+        "node": "librarian-a7",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 2140,
+        "new_y": 2540
+      },
+      {
+        "node": "librarian-x2",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 460,
+        "new_x": 460,
+        "old_y": 2340,
+        "new_y": 4340
+      },
+      {
+        "node": "librarian-x3",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 40,
+        "new_x": 40,
+        "old_y": 2540,
+        "new_y": 4540
+      },
+      {
+        "node": "librarian-a8",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 2340,
+        "new_y": 3140
+      },
+      {
+        "node": "librarian-a9",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2140,
+        "new_x": 2980,
+        "old_y": 2540,
+        "new_y": 3340
+      },
+      {
+        "node": "librarian-a9",
+        "reason": "actor reassignment",
+        "from": "Helper (tier 2)",
+        "to": "Core",
+        "old_x": 2140,
+        "new_x": 2980,
+        "old_y": 2540,
+        "new_y": 3340
+      },
+      {
+        "node": "librarian-d4",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2140,
+        "new_x": 2980,
+        "old_y": 2740,
+        "new_y": 3540
+      },
+      {
+        "node": "librarian-d4",
+        "reason": "actor reassignment",
+        "from": "Helper (tier 2)",
+        "to": "Core",
+        "old_x": 2140,
+        "new_x": 2980,
+        "old_y": 2740,
+        "new_y": 3540
+      },
+      {
+        "node": "librarian-a10",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 2940,
+        "new_y": 3740
+      },
+      {
+        "node": "librarian-r3",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 1720,
+        "new_x": 1720,
+        "old_y": 2940,
+        "new_y": 3940
+      },
+      {
+        "node": "librarian-a11",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2980,
+        "new_x": 1300,
+        "old_y": 3140,
+        "new_y": 4740
+      },
+      {
+        "node": "librarian-a11",
+        "reason": "actor reassignment",
+        "from": "Core",
+        "to": "Lead (tier 1)",
+        "old_x": 2980,
+        "new_x": 1300,
+        "old_y": 3140,
+        "new_y": 4740
+      },
+      {
+        "node": "librarian-d5",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 4220,
+        "new_y": 5940
+      },
+      {
+        "node": "librarian-x4",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 3940,
+        "new_y": 6140
+      },
+      {
+        "node": "librarian-r4",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 1720,
+        "new_x": 1720,
+        "old_y": 4340,
+        "new_y": 6140
+      },
+      {
+        "node": "librarian-d6",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 4540,
+        "new_y": 6340
+      },
+      {
+        "node": "librarian-x5",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 460,
+        "new_x": 460,
+        "old_y": 4140,
+        "new_y": 7540
+      },
+      {
+        "node": "librarian-a16",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2980,
+        "new_x": 1300,
+        "old_y": 4740,
+        "new_y": 6540
+      },
+      {
+        "node": "librarian-a16",
+        "reason": "actor reassignment",
+        "from": "Core",
+        "to": "Lead (tier 1)",
+        "old_x": 2980,
+        "new_x": 1300,
+        "old_y": 4740,
+        "new_y": 6540
+      },
+      {
+        "node": "librarian-x6",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 4910,
+        "new_y": 7540
+      },
+      {
+        "node": "librarian-x7",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 40,
+        "new_x": 40,
+        "old_y": 4940,
+        "new_y": 7740
+      },
+      {
+        "node": "librarian-a17",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 5080,
+        "new_y": 6940
+      },
+      {
+        "node": "librarian-d7",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 5250,
+        "new_y": 7140
+      },
+      {
+        "node": "librarian-a18",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 880,
+        "new_x": 880,
+        "old_y": 5340,
+        "new_y": 7340
+      },
+      {
+        "node": "librarian-r5",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 1720,
+        "new_x": 1720,
+        "old_y": 5340,
+        "new_y": 7340
+      },
+      {
+        "node": "librarian-d8",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 880,
+        "new_x": 880,
+        "old_y": 5540,
+        "new_y": 7540
+      },
+      {
+        "node": "librarian-x9",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 5940,
+        "new_y": 7940
+      },
+      {
+        "node": "librarian-a19",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 5740,
+        "new_y": 7740
+      },
+      {
+        "node": "librarian-r6",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 1720,
+        "new_x": 1720,
+        "old_y": 5740,
+        "new_y": 7740
+      },
+      {
+        "node": "librarian-x8",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 2140,
+        "new_x": 2140,
+        "old_y": 5740,
+        "new_y": 7740
+      },
+      {
+        "node": "librarian-a20",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 460,
+        "new_x": 460,
+        "old_y": 5940,
+        "new_y": 8140
+      },
+      {
+        "node": "librarian-a21",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 460,
+        "new_x": 1300,
+        "old_y": 6340,
+        "new_y": 8540
+      },
+      {
+        "node": "librarian-a21",
+        "reason": "actor reassignment",
+        "from": "Tier 0 agent",
+        "to": "Lead (tier 1)",
+        "old_x": 460,
+        "new_x": 1300,
+        "old_y": 6340,
+        "new_y": 8540
+      },
+      {
+        "node": "librarian-d9",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 460,
+        "new_x": 460,
+        "old_y": 6140,
+        "new_y": 8340
+      },
+      {
+        "node": "librarian-e1",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 4240,
+        "new_x": 4240,
+        "old_y": 6540,
+        "new_y": 8740
+      },
+      {
+        "node": "librarian-x10",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 460,
+        "new_x": 460,
+        "old_y": 6510,
+        "new_y": 8540
+      },
+      {
+        "node": "librarian-x11",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 880,
+        "new_x": 1300,
+        "old_y": 6540,
+        "new_y": 8740
+      },
+      {
+        "node": "librarian-x11",
+        "reason": "actor reassignment",
+        "from": "Oracle",
+        "to": "Lead (tier 1)",
+        "old_x": 880,
+        "new_x": 1300,
+        "old_y": 6540,
+        "new_y": 8740
+      },
+      {
+        "node": "librarian-x12",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 6740,
+        "new_y": 8940
+      },
+      {
+        "node": "librarian-x13",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 880,
+        "new_x": 880,
+        "old_y": 6940,
+        "new_y": 9140
+      },
+      {
+        "node": "librarian-x14",
+        "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+        "old_x": 460,
+        "new_x": 460,
+        "old_y": 7140,
+        "new_y": 9540
+      },
+      {
+        "node": "librarian-acceptrecord",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 6740
+      },
+      {
+        "node": "librarian-approvalowner",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 40,
+        "y": 4740
+      },
+      {
+        "node": "librarian-approvalrecord",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 4940
+      },
+      {
+        "node": "librarian-capturedescribe",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2140,
+        "y": 4140
+      },
+      {
+        "node": "librarian-capturefault",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 1300,
+        "y": 4140
+      },
+      {
+        "node": "librarian-capturestore",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 4340
+      },
+      {
+        "node": "librarian-contentdiagnosis",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2140,
+        "y": 7340
+      },
+      {
+        "node": "librarian-countdiagnosis",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2140,
+        "y": 3740
+      },
+      {
+        "node": "librarian-dapprove",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 4540
+      },
+      {
+        "node": "librarian-dcapture",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 3940
+      },
+      {
+        "node": "librarian-dentry",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 540
+      },
+      {
+        "node": "librarian-dfolder",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 2740
+      },
+      {
+        "node": "librarian-dheldroute",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 4140
+      },
+      {
+        "node": "librarian-dinput",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 2940
+      },
+      {
+        "node": "librarian-directowner",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 40,
+        "y": 740
+      },
+      {
+        "node": "librarian-dlast",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 880,
+        "y": 9340
+      },
+      {
+        "node": "librarian-dpauseroute",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 7340
+      },
+      {
+        "node": "librarian-draftfault",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 1300,
+        "y": 1940
+      },
+      {
+        "node": "librarian-dresultroute",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 7940
+      },
+      {
+        "node": "librarian-dstartauthority",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 5340
+      },
+      {
+        "node": "librarian-enrich",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 5740
+      },
+      {
+        "node": "librarian-exclude",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 4740
+      },
+      {
+        "node": "librarian-folderapprove",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 1300,
+        "y": 2340
+      },
+      {
+        "node": "librarian-folderfault",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 1300,
+        "y": 2940
+      },
+      {
+        "node": "librarian-ledger",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 6140
+      },
+      {
+        "node": "librarian-partialchoice",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 1300,
+        "y": 5940
+      },
+      {
+        "node": "librarian-publicationdiagnosis",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 1300,
+        "y": 6340
+      },
+      {
+        "node": "librarian-reused",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 4240,
+        "y": 6740
+      },
+      {
+        "node": "librarian-reuseledger",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 6540
+      },
+      {
+        "node": "librarian-startowner",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 40,
+        "y": 5540
+      },
+      {
+        "node": "librarian-startrequest",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 1300,
+        "y": 5140
+      },
+      {
+        "node": "librarian-startrun",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 5540
+      },
+      {
+        "node": "librarian-wholeindex",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 3820,
+        "y": 3140
+      }
+    ],
+    "initial_generated_reflow": true,
+    "initial_semantic_checksum_verified": "371e2fae23c4f4f2cfbf27eb34007ebc48b706f39b1e3d3c2fbb84ec6fce926f",
+    "group_changes": [
+      {
+        "group": "librarian-lane-Owner",
+        "reason": "background extent for new cards",
+        "old_height": 7340,
+        "new_height": 9930
+      },
+      {
+        "group": "librarian-lane-Tier-0-agent",
+        "reason": "background extent for new cards",
+        "old_height": 7340,
+        "new_height": 9930
+      },
+      {
+        "group": "librarian-lane-Oracle",
+        "reason": "background extent for new cards",
+        "old_height": 7340,
+        "new_height": 9930
+      },
+      {
+        "group": "librarian-lane-Lead-tier-1-",
+        "reason": "background extent for new cards",
+        "old_height": 7340,
+        "new_height": 9930
+      },
+      {
+        "group": "librarian-lane-Doctor",
+        "reason": "background extent for new cards",
+        "old_height": 7340,
+        "new_height": 9930
+      },
+      {
+        "group": "librarian-lane-Clerk-tier-2-",
+        "reason": "background extent for new cards",
+        "old_height": 7340,
+        "new_height": 9930
+      },
+      {
+        "group": "librarian-lane-Scribe-tier-3-",
+        "reason": "background extent for new cards",
+        "old_height": 7340,
+        "new_height": 9930
+      },
+      {
+        "group": "librarian-lane-Core",
+        "reason": "background extent for new cards",
+        "old_height": 7340,
+        "new_height": 9930
+      },
+      {
+        "group": "librarian-lane-Model-host",
+        "reason": "background extent for new cards",
+        "old_height": 7340,
+        "new_height": 9930
+      },
+      {
+        "group": "librarian-lane-Geo-Grapher",
+        "reason": "background extent for new cards",
+        "old_height": 7340,
+        "new_height": 9930
+      },
+      {
+        "group": "librarian-lane-Outcomes",
+        "reason": "background extent for new cards",
+        "old_height": 7340,
+        "new_height": 9930
+      }
+    ],
+    "preexisting_overlaps_preserved": []
+  },
+  "write": "service.preview(profile=None, adopt=True), final provenance-aware proposal, guarded service.commit",
+  "accepted_renderer_sha256": "b3253960a08ccfdc05d93719c1b841393ec6024a409e4a2638510a1f6b27a955",
+  "commit": {
+    "written": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas",
+    "revision": "ed739abae9fed7291606ef7cc552756d97c9f9fe6f54f0550e8bf6ace749393a",
+    "backup": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas.20261122T225815738165.bak",
+    "changes": {
+      "migrated_ids": {
+        "s": "librarian-s",
+        "a1": "librarian-a1",
+        "a2": "librarian-a2",
+        "a3": "librarian-a3",
+        "a4": "librarian-a4",
+        "d1": "librarian-d1",
+        "r1": "librarian-r1",
+        "a5": "librarian-a5",
+        "d2": "librarian-d2",
+        "r2": "librarian-r2",
+        "a6": "librarian-a6",
+        "d3": "librarian-d3",
+        "x1": "librarian-x1",
+        "x2": "librarian-x2",
+        "x3": "librarian-x3",
+        "a7": "librarian-a7",
+        "a8": "librarian-a8",
+        "a9": "librarian-a9",
+        "d4": "librarian-d4",
+        "r3": "librarian-r3",
+        "a10": "librarian-a10",
+        "a11": "librarian-a11",
+        "x4": "librarian-x4",
+        "x5": "librarian-x5",
+        "d5": "librarian-d5",
+        "r4": "librarian-r4",
+        "d6": "librarian-d6",
+        "x6": "librarian-x6",
+        "x7": "librarian-x7",
+        "a16": "librarian-a16",
+        "a17": "librarian-a17",
+        "d7": "librarian-d7",
+        "r5": "librarian-r5",
+        "a18": "librarian-a18",
+        "d8": "librarian-d8",
+        "r6": "librarian-r6",
+        "x8": "librarian-x8",
+        "x9": "librarian-x9",
+        "a19": "librarian-a19",
+        "a20": "librarian-a20",
+        "d9": "librarian-d9",
+        "x10": "librarian-x10",
+        "x11": "librarian-x11",
+        "x12": "librarian-x12",
+        "x13": "librarian-x13",
+        "x14": "librarian-x14",
+        "a21": "librarian-a21",
+        "xe": "librarian-xe",
+        "xp": "librarian-xp",
+        "e1": "librarian-e1",
+        "e2": "librarian-e2",
+        "e3": "librarian-e3",
+        "title": "librarian-title",
+        "lane-Owner": "librarian-lane-Owner",
+        "lane-Tier-0-agent": "librarian-lane-Tier-0-agent",
+        "lane-Oracle": "librarian-lane-Oracle",
+        "lane-Lead-tier-1-": "librarian-lane-Lead-tier-1-",
+        "lane-Doctor": "librarian-lane-Doctor",
+        "lane-Helper-tier-2-": "librarian-lane-Clerk-tier-2-",
+        "lane-Clerk-tier-3-": "librarian-lane-Scribe-tier-3-",
+        "lane-Core": "librarian-lane-Core",
+        "lane-Model-host": "librarian-lane-Model-host",
+        "lane-Geo-Grapher": "librarian-lane-Geo-Grapher",
+        "lane-Outcomes": "librarian-lane-Outcomes"
+      },
+      "retired_nodes_removed": [
+        "a12",
+        "a13",
+        "a14",
+        "a15",
+        "dc",
+        "dm",
+        "f1",
+        "j1",
+        "m1"
+      ],
+      "retired_anchors_retained_for_owner_edges": [],
+      "owner_nodes_preserved": 0,
+      "owner_edges_preserved": 131,
+      "geometry_changes": [
+        {
+          "node": "librarian-a2",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 460,
+          "new_x": 460,
+          "old_y": 540,
+          "new_y": 740
+        },
+        {
+          "node": "librarian-a3",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 740,
+          "new_y": 940
+        },
+        {
+          "node": "librarian-a4",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 940,
+          "new_y": 1140
+        },
+        {
+          "node": "librarian-d1",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 1140,
+          "new_y": 1340
+        },
+        {
+          "node": "librarian-a5",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 1340,
+          "new_y": 1540
+        },
+        {
+          "node": "librarian-r1",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 1720,
+          "new_x": 1720,
+          "old_y": 1340,
+          "new_y": 2940
+        },
+        {
+          "node": "librarian-d2",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 1540,
+          "new_y": 1740
+        },
+        {
+          "node": "librarian-xp",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 460,
+          "new_x": 1300,
+          "old_y": 1710,
+          "new_y": 9540
+        },
+        {
+          "node": "librarian-xp",
+          "reason": "actor reassignment",
+          "from": "Tier 0 agent",
+          "to": "Lead (tier 1)",
+          "old_x": 460,
+          "new_x": 1300,
+          "old_y": 1710,
+          "new_y": 9540
+        },
+        {
+          "node": "librarian-xe",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 460,
+          "new_x": 1300,
+          "old_y": 1540,
+          "new_y": 8140
+        },
+        {
+          "node": "librarian-xe",
+          "reason": "actor reassignment",
+          "from": "Tier 0 agent",
+          "to": "Lead (tier 1)",
+          "old_x": 460,
+          "new_x": 1300,
+          "old_y": 1540,
+          "new_y": 8140
+        },
+        {
+          "node": "librarian-a6",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2560,
+          "new_x": 2140,
+          "old_y": 1740,
+          "new_y": 1940
+        },
+        {
+          "node": "librarian-a6",
+          "reason": "actor reassignment",
+          "from": "Clerk (tier 3)",
+          "to": "Clerk (tier 2)",
+          "old_x": 2560,
+          "new_x": 2140,
+          "old_y": 1740,
+          "new_y": 1940
+        },
+        {
+          "node": "librarian-r2",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 1720,
+          "new_x": 1720,
+          "old_y": 1740,
+          "new_y": 1940
+        },
+        {
+          "node": "librarian-e3",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 4240,
+          "new_x": 4240,
+          "old_y": 1910,
+          "new_y": 9740
+        },
+        {
+          "node": "librarian-e2",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 4240,
+          "new_x": 4240,
+          "old_y": 1740,
+          "new_y": 8340
+        },
+        {
+          "node": "librarian-d3",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2560,
+          "new_x": 2140,
+          "old_y": 1940,
+          "new_y": 2140
+        },
+        {
+          "node": "librarian-d3",
+          "reason": "actor reassignment",
+          "from": "Clerk (tier 3)",
+          "to": "Clerk (tier 2)",
+          "old_x": 2560,
+          "new_x": 2140,
+          "old_y": 1940,
+          "new_y": 2140
+        },
+        {
+          "node": "librarian-x1",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 2140,
+          "new_y": 2540
+        },
+        {
+          "node": "librarian-a7",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 2140,
+          "new_y": 2540
+        },
+        {
+          "node": "librarian-x2",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 460,
+          "new_x": 460,
+          "old_y": 2340,
+          "new_y": 4340
+        },
+        {
+          "node": "librarian-x3",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 40,
+          "new_x": 40,
+          "old_y": 2540,
+          "new_y": 4540
+        },
+        {
+          "node": "librarian-a8",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 2340,
+          "new_y": 3140
+        },
+        {
+          "node": "librarian-a9",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2140,
+          "new_x": 2980,
+          "old_y": 2540,
+          "new_y": 3340
+        },
+        {
+          "node": "librarian-a9",
+          "reason": "actor reassignment",
+          "from": "Helper (tier 2)",
+          "to": "Core",
+          "old_x": 2140,
+          "new_x": 2980,
+          "old_y": 2540,
+          "new_y": 3340
+        },
+        {
+          "node": "librarian-d4",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2140,
+          "new_x": 2980,
+          "old_y": 2740,
+          "new_y": 3540
+        },
+        {
+          "node": "librarian-d4",
+          "reason": "actor reassignment",
+          "from": "Helper (tier 2)",
+          "to": "Core",
+          "old_x": 2140,
+          "new_x": 2980,
+          "old_y": 2740,
+          "new_y": 3540
+        },
+        {
+          "node": "librarian-a10",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 2940,
+          "new_y": 3740
+        },
+        {
+          "node": "librarian-r3",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 1720,
+          "new_x": 1720,
+          "old_y": 2940,
+          "new_y": 3940
+        },
+        {
+          "node": "librarian-a11",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2980,
+          "new_x": 1300,
+          "old_y": 3140,
+          "new_y": 4740
+        },
+        {
+          "node": "librarian-a11",
+          "reason": "actor reassignment",
+          "from": "Core",
+          "to": "Lead (tier 1)",
+          "old_x": 2980,
+          "new_x": 1300,
+          "old_y": 3140,
+          "new_y": 4740
+        },
+        {
+          "node": "librarian-d5",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 4220,
+          "new_y": 5940
+        },
+        {
+          "node": "librarian-x4",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 3940,
+          "new_y": 6140
+        },
+        {
+          "node": "librarian-r4",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 1720,
+          "new_x": 1720,
+          "old_y": 4340,
+          "new_y": 6140
+        },
+        {
+          "node": "librarian-d6",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 4540,
+          "new_y": 6340
+        },
+        {
+          "node": "librarian-x5",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 460,
+          "new_x": 460,
+          "old_y": 4140,
+          "new_y": 7540
+        },
+        {
+          "node": "librarian-a16",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2980,
+          "new_x": 1300,
+          "old_y": 4740,
+          "new_y": 6540
+        },
+        {
+          "node": "librarian-a16",
+          "reason": "actor reassignment",
+          "from": "Core",
+          "to": "Lead (tier 1)",
+          "old_x": 2980,
+          "new_x": 1300,
+          "old_y": 4740,
+          "new_y": 6540
+        },
+        {
+          "node": "librarian-x6",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 4910,
+          "new_y": 7540
+        },
+        {
+          "node": "librarian-x7",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 40,
+          "new_x": 40,
+          "old_y": 4940,
+          "new_y": 7740
+        },
+        {
+          "node": "librarian-a17",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 5080,
+          "new_y": 6940
+        },
+        {
+          "node": "librarian-d7",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 5250,
+          "new_y": 7140
+        },
+        {
+          "node": "librarian-a18",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 880,
+          "new_x": 880,
+          "old_y": 5340,
+          "new_y": 7340
+        },
+        {
+          "node": "librarian-r5",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 1720,
+          "new_x": 1720,
+          "old_y": 5340,
+          "new_y": 7340
+        },
+        {
+          "node": "librarian-d8",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 880,
+          "new_x": 880,
+          "old_y": 5540,
+          "new_y": 7540
+        },
+        {
+          "node": "librarian-x9",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 5940,
+          "new_y": 7940
+        },
+        {
+          "node": "librarian-a19",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 5740,
+          "new_y": 7740
+        },
+        {
+          "node": "librarian-r6",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 1720,
+          "new_x": 1720,
+          "old_y": 5740,
+          "new_y": 7740
+        },
+        {
+          "node": "librarian-x8",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 2140,
+          "new_x": 2140,
+          "old_y": 5740,
+          "new_y": 7740
+        },
+        {
+          "node": "librarian-a20",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 460,
+          "new_x": 460,
+          "old_y": 5940,
+          "new_y": 8140
+        },
+        {
+          "node": "librarian-a21",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 460,
+          "new_x": 1300,
+          "old_y": 6340,
+          "new_y": 8540
+        },
+        {
+          "node": "librarian-a21",
+          "reason": "actor reassignment",
+          "from": "Tier 0 agent",
+          "to": "Lead (tier 1)",
+          "old_x": 460,
+          "new_x": 1300,
+          "old_y": 6340,
+          "new_y": 8540
+        },
+        {
+          "node": "librarian-d9",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 460,
+          "new_x": 460,
+          "old_y": 6140,
+          "new_y": 8340
+        },
+        {
+          "node": "librarian-e1",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 4240,
+          "new_x": 4240,
+          "old_y": 6540,
+          "new_y": 8740
+        },
+        {
+          "node": "librarian-x10",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 460,
+          "new_x": 460,
+          "old_y": 6510,
+          "new_y": 8540
+        },
+        {
+          "node": "librarian-x11",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 880,
+          "new_x": 1300,
+          "old_y": 6540,
+          "new_y": 8740
+        },
+        {
+          "node": "librarian-x11",
+          "reason": "actor reassignment",
+          "from": "Oracle",
+          "to": "Lead (tier 1)",
+          "old_x": 880,
+          "new_x": 1300,
+          "old_y": 6540,
+          "new_y": 8740
+        },
+        {
+          "node": "librarian-x12",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 6740,
+          "new_y": 8940
+        },
+        {
+          "node": "librarian-x13",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 880,
+          "new_x": 880,
+          "old_y": 6940,
+          "new_y": 9140
+        },
+        {
+          "node": "librarian-x14",
+          "reason": "restructured main/extension flow; original prototype geometry verified unchanged",
+          "old_x": 460,
+          "new_x": 460,
+          "old_y": 7140,
+          "new_y": 9540
+        },
+        {
+          "node": "librarian-acceptrecord",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 6740
+        },
+        {
+          "node": "librarian-approvalowner",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 40,
+          "y": 4740
+        },
+        {
+          "node": "librarian-approvalrecord",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 4940
+        },
+        {
+          "node": "librarian-capturedescribe",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2140,
+          "y": 4140
+        },
+        {
+          "node": "librarian-capturefault",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 1300,
+          "y": 4140
+        },
+        {
+          "node": "librarian-capturestore",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 4340
+        },
+        {
+          "node": "librarian-contentdiagnosis",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2140,
+          "y": 7340
+        },
+        {
+          "node": "librarian-countdiagnosis",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2140,
+          "y": 3740
+        },
+        {
+          "node": "librarian-dapprove",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 4540
+        },
+        {
+          "node": "librarian-dcapture",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 3940
+        },
+        {
+          "node": "librarian-dentry",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 540
+        },
+        {
+          "node": "librarian-dfolder",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 2740
+        },
+        {
+          "node": "librarian-dheldroute",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 4140
+        },
+        {
+          "node": "librarian-dinput",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 2940
+        },
+        {
+          "node": "librarian-directowner",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 40,
+          "y": 740
+        },
+        {
+          "node": "librarian-dlast",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 880,
+          "y": 9340
+        },
+        {
+          "node": "librarian-dpauseroute",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 7340
+        },
+        {
+          "node": "librarian-draftfault",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 1300,
+          "y": 1940
+        },
+        {
+          "node": "librarian-dresultroute",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 7940
+        },
+        {
+          "node": "librarian-dstartauthority",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 5340
+        },
+        {
+          "node": "librarian-enrich",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 5740
+        },
+        {
+          "node": "librarian-exclude",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 4740
+        },
+        {
+          "node": "librarian-folderapprove",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 1300,
+          "y": 2340
+        },
+        {
+          "node": "librarian-folderfault",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 1300,
+          "y": 2940
+        },
+        {
+          "node": "librarian-ledger",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 6140
+        },
+        {
+          "node": "librarian-partialchoice",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 1300,
+          "y": 5940
+        },
+        {
+          "node": "librarian-publicationdiagnosis",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 1300,
+          "y": 6340
+        },
+        {
+          "node": "librarian-reused",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 4240,
+          "y": 6740
+        },
+        {
+          "node": "librarian-reuseledger",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 6540
+        },
+        {
+          "node": "librarian-startowner",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 40,
+          "y": 5540
+        },
+        {
+          "node": "librarian-startrequest",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 1300,
+          "y": 5140
+        },
+        {
+          "node": "librarian-startrun",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 5540
+        },
+        {
+          "node": "librarian-wholeindex",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 3820,
+          "y": 3140
+        }
+      ],
+      "initial_generated_reflow": true,
+      "initial_semantic_checksum_verified": "371e2fae23c4f4f2cfbf27eb34007ebc48b706f39b1e3d3c2fbb84ec6fce926f",
+      "group_changes": [
+        {
+          "group": "librarian-lane-Owner",
+          "reason": "background extent for new cards",
+          "old_height": 7340,
+          "new_height": 9930
+        },
+        {
+          "group": "librarian-lane-Tier-0-agent",
+          "reason": "background extent for new cards",
+          "old_height": 7340,
+          "new_height": 9930
+        },
+        {
+          "group": "librarian-lane-Oracle",
+          "reason": "background extent for new cards",
+          "old_height": 7340,
+          "new_height": 9930
+        },
+        {
+          "group": "librarian-lane-Lead-tier-1-",
+          "reason": "background extent for new cards",
+          "old_height": 7340,
+          "new_height": 9930
+        },
+        {
+          "group": "librarian-lane-Doctor",
+          "reason": "background extent for new cards",
+          "old_height": 7340,
+          "new_height": 9930
+        },
+        {
+          "group": "librarian-lane-Clerk-tier-2-",
+          "reason": "background extent for new cards",
+          "old_height": 7340,
+          "new_height": 9930
+        },
+        {
+          "group": "librarian-lane-Scribe-tier-3-",
+          "reason": "background extent for new cards",
+          "old_height": 7340,
+          "new_height": 9930
+        },
+        {
+          "group": "librarian-lane-Core",
+          "reason": "background extent for new cards",
+          "old_height": 7340,
+          "new_height": 9930
+        },
+        {
+          "group": "librarian-lane-Model-host",
+          "reason": "background extent for new cards",
+          "old_height": 7340,
+          "new_height": 9930
+        },
+        {
+          "group": "librarian-lane-Geo-Grapher",
+          "reason": "background extent for new cards",
+          "old_height": 7340,
+          "new_height": 9930
+        },
+        {
+          "group": "librarian-lane-Outcomes",
+          "reason": "background extent for new cards",
+          "old_height": 7340,
+          "new_height": 9930
+        }
+      ],
+      "preexisting_overlaps_preserved": []
+    }
+  },
+  "reading_aid_text_overflow": [
+    "librarian-a1",
+    "librarian-a10",
+    "librarian-a11",
+    "librarian-a16",
+    "librarian-a17",
+    "librarian-a18",
+    "librarian-a2",
+    "librarian-a21",
+    "librarian-a3",
+    "librarian-a4",
+    "librarian-a7",
+    "librarian-a8",
+    "librarian-acceptrecord",
+    "librarian-capturestore",
+    "librarian-contentdiagnosis",
+    "librarian-countdiagnosis",
+    "librarian-draftfault",
+    "librarian-e1",
+    "librarian-e2",
+    "librarian-e3",
+    "librarian-enrich",
+    "librarian-folderfault",
+    "librarian-ledger",
+    "librarian-partialchoice",
+    "librarian-publicationdiagnosis",
+    "librarian-r1",
+    "librarian-r2",
+    "librarian-r4",
+    "librarian-r5",
+    "librarian-r6",
+    "librarian-reuseledger",
+    "librarian-wholeindex",
+    "librarian-x10",
+    "librarian-x4",
+    "librarian-x6",
+    "librarian-x9",
+    "librarian-xe",
+    "librarian-xp"
+  ],
+  "reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.corrected-overview.png"
+}

@@ -2,6 +2,12 @@
 
 **Status:** proposal (rank 5 in `docs/policy/README.md`). Owner direction, 20 November 2026. It extends workstream W2 (canvas service) of [the plan forward](plan-forward-2026-11.md), and runs beside it rather than through the main workflow. It becomes plan work only once the owner accepts a phase.
 
+**Owner clarifications, 21 November 2026:** tier 0 is the Overseer and may delegate through
+Librarian on the owner's behalf; tier 1 is Lead, tier 2 Clerk, tier 3 Scribe. Specifications are
+Core-owned. The fault register is a ticket service with tiered flags and responsible actors.
+GLM-5.3 is the current, revisable assignment for both oracle and doctor. These choices update the
+design; they do not claim that the missing runtime integration has been delivered.
+
 **Inputs:**
 - the owner's systems-analysis course material (CO1605):
   - *Introduction to Systems Analysis* (week 1): problem versus symptom, stakeholders, scope, the 7-step process;
@@ -83,10 +89,10 @@ The course rule is that an actor is a role, not a person or a product, and need 
 | Actor | Kind | Typically |
 |---|---|---|
 | Owner | human | primary |
-| Outside agent (tier 0, through MCP) | model | primary |
+| Overseer (tier 0, outside harness through MCP, CLI or Core API) | model | primary; may delegate Librarian work on the owner's behalf |
 | Lead (tier 1) | model | primary or secondary |
-| Scribe and helper (tier 2) | model | secondary |
-| Clerk (tier 3) | model | secondary |
+| Clerk (tier 2) | model | secondary; proofreading, claim checks, synthesis and Scribe direction |
+| Scribe (tier 3) | model | secondary; bounded reading and writing |
 | Core | the system | the system boundary itself |
 | Geo-Grapher | system | secondary |
 | Model host (DeepInfra, in our case) | external system | secondary. Its timeouts, refusals and unavailability are extensions in their own right, as in the 19–20 November runs. |
@@ -100,7 +106,8 @@ A model is **assigned** to a role (`docs/policy/`), so a diagram names the role,
 | The Owner as researcher | Wants findings that hold up |
 | The Owner as budget holder | Wants cost bounded |
 | The Lead | Needs the next step offered in its phase |
-| The Clerk | Needs small, unambiguous tasks |
+| The Clerk | Needs evidence and bounded responsibilities for checks, synthesis and delegation |
+| The Scribe | Needs small, unambiguous reading and writing tasks |
 | A future reader of an offering | Needs provenance and labelled authorship |
 | Third-party authors | Their work cited, never passed off as ours |
 
@@ -123,7 +130,11 @@ The left-to-right kinds (`timeline`, `lineage`, and `activity` with swimlanes) a
 
 ## 6. The diagram spec
 
-One schema for every kind; each kind constrains which node and edge kinds it allows. Written as YAML (or JSON) and stored beside what it describes.
+One schema for every kind; each kind constrains which node and edge kinds it allows. YAML (or
+JSON) is the authoring representation. Specifications belong within the Librarian Core, which
+owns their storage and the revision used by a run. Reports and exported views may carry review
+copies; they are not a second runtime spec store. The physical storage backend remains part of
+the implementation design.
 
 ```yaml
 diagram: uc3-verify-claims          # stable id
@@ -254,7 +265,7 @@ Owner direction, 20 November 2026. The worked example's to-be ingestion ([INGEST
 
 | Role | What it does | What it never does | Its language |
 |---|---|---|---|
-| **Worker** (Lead, helper, Clerk) | Does the task | Judges whether its own work is done | "Do": *open, read, draft, queue* |
+| **Worker** (Lead, Clerk, Scribe or assigned helper) | Does the task | Judges whether its own work is done | "Do": *open, read, draft, queue* |
 | **Oracle** | Judges a run's output against its specification | Executes or repairs anything; it is read-only | "Judge": *the spec says…, the evidence shows…, verdict…* |
 | **Doctor** | Repairs a failure the oracle tagged, by a catalogued remedy within its blast radius | Judges completion; it hands back to the oracle to judge again | "Diagnose and remedy": *symptom, remedy, radius, rejoin* |
 
@@ -288,7 +299,7 @@ Where a verdict goes depends on its severity:
 
 Every oracle has **exactly one specification owner**. Either:
 - **tier 0 sets it for a tier-1 run**: the Owner, or a tier-0 agent acting for them, hands a Lead a task with its success guarantee; or
-- **a tier-1 Lead sets it for a sub-run it delegates**, to a helper or the Clerk.
+- **a tier-1 Lead sets it for a sub-run it delegates**, to a Clerk, Scribe or assigned helper.
 
 Never both for the same run.
 - The spec records `set_by`.
@@ -296,7 +307,13 @@ Never both for the same run.
 
 **The specification is the use case.** Its success guarantee is what the oracle checks, and its extensions are how a failure is labelled. A verdict of "failed at 14b" is exactly the key the doctor's catalogue is indexed by. So the use cases written for review (UC1–UC8) become both the oracle's specification and the doctor's index. Nothing new needs to be authored.
 
-**This is what lets tier 0 step back.** Tier 0 sets the spec and the terminal fallback (escalate, keep what passed, or abort), then waits for one notification: a pass, a counted escalation, or the fallback taken. Between those, the oracle and the doctor run at tiers 1 and 2. Today tier 0 polls, as it did through every turn of the 19–20 November runs.
+**This is what lets tier 0 delegate.** Tier 0 may use Librarian's DeepInfra agents to parallelise
+work on the owner's behalf, including work supporting another project. For a delegated run it
+sets the spec and terminal fallback (escalate, keep what passed, or abort), then receives one
+terminal notification. The Lead and its workers own execution; the oracle and doctor support
+them with bounded review and repair. A person can initiate the same work directly without an
+outside agent. Permissions and budgets remain explicit; reducing tier-0 turns never removes an
+ingestion requirement or a reserved decision.
 
 ### 10.4 What exists already
 
@@ -333,19 +350,28 @@ The chain from a change to its review is where security and correctness workflow
      - paths that escape their containment;
      - text that reads as instructions to a model, using the existing injection markers.
 4. **A failure goes to the oracle**, which writes a report and a suggestion: a claim, with evidence (10.2).
-5. **Tier-2 helpers scout the blast zone**, read-only: what else reaches the failing point, and what changed nearby.
+5. **Tier-2 Clerks scout the blast zone**, read-only, and may direct Scribes on bounded reading tasks: what else reaches the failing point, and what changed nearby.
 6. **The tier-1 Lead synthesises the findings** and presents a solution.
 7. **The doctor applies it** if the solution is a catalogued remedy within its scope. If not, the Owner decides, and a critical finding goes straight to tier 0 and the Owner (10.2).
 
 As an activity diagram this is the same shape as the to-be ingestion: one main path, and every failure point a reference (to UC-O, the oracle, or UC-D, the doctor) with its outcomes checked by the renderer.
 
-### 10.6 A short, fixed list of models for each role
+### 10.6 Model assignments for review and repair
 
-To keep the oracle and the doctor predictable, **each role gets a short, fixed list of models it may be assigned**, one or two each, qualified for that role and measured in it. Never "any capable model".
+The owner's current assignment for **both oracle and doctor is GLM-5.3** (21 November 2026).
+The existing adapter and role-assignment mechanism allows either role to use a better-suited
+qualified route later. There is no fixed model shortlist or hard-coded dependency on GLM-5.3.
 
-**Rule.** For any single run, the oracle's model is a different assignment from the worker's, and from the doctor's. The Core refuses a run whose oracle would grade its own worker. Assignments stay revisable, and a model is never bound to a role.
+**Independence.** Oracle, doctor and worker have separate contexts and role assignments. Oracle
+and doctor may use the same selected model while keeping their contexts and responsibilities
+separate. The policy's independence requirement relative to the worker still applies: if the
+worker also uses GLM-5.3, a suitable qualified review assignment is needed before the result is
+treated as independent. General run-level enforcement is W9 work, not an existing Core guarantee.
 
-**Starting point.** The library's existing review route (`route_review`, GLM-5.3 in Resource-Library) is a natural first oracle candidate, distinct from the Lead and the Clerk. Inside the Core it is not yet honoured (OP8), so fixing that comes first.
+**Existing route foundation.** OP8 was implemented in `8489387`: the library's review task route
+is honoured inside the Core under the existing qualification guard. The delivery record still
+leaves its live GLM-5.3 claim-review confirmation open. That route fix is a foundation for W9,
+not proof that the general oracle and doctor roles already execute.
 
 ### 10.7 How both grow
 
@@ -462,23 +488,34 @@ The order and promotion are drawn as an activity diagram in [compose.spec.yaml](
   - Gemini's summary says roles "do not require separate prompt architectures". That holds for *what* a role can do. A role still needs its own language (10.1): what it may *do* is set by its mount, how it *speaks* by its mandate.
 - **Dynamic composition, promoted back.** An orchestrating agent composes a process for a new task at whatever layer it needs (UC-C), and a process that proves itself is promoted, so the repertoire grows with use.
 
-### 11.4 The fault register: a Boolean signature for the doctor and the oracle
+### 11.4 The fault register as a ticket service
 
-Gemini proposed recording each failure as a fixed set of Boolean faults, not a weighted score. Adopted here for **system-level invariants only**, as four bits in strict order of priority:
+Owner direction, 21 November 2026: the fault register is a **ticket service with tiered flags**,
+based on the failures already defined and who should address them. A ticket identifies the use
+case and extension, refusal or symptom, supporting evidence, affected scope, responsible actor,
+required decision, and the record of remedy attempts and re-checks. These are behavioral
+requirements for the planned service, not a new ticket schema or a separate execution engine.
 
-| Bit | Name | Set when | Example |
-|---|---|---|---|
-| b3 | `F_ESC` | A failure is escalated to tier 0 unresolved | Any escalated path in the to-be diagrams |
-| b2 | `F_ATTEST` | An attestation or policy invariant is breached | An agent's acceptance recorded as `attested_by: person` (finding F2) |
-| b1 | `F_BLAST` | A remedy exceeds its declared blast radius | Re-surveying one stale root rebuilds every group (OP2) |
-| b0 | `F_SYMPTOM` | The extension point's check still fails after a remedy | UC-D steps 5–6 failing |
+Routing uses the existing review and authority rules (10.2):
 
-The doctor evaluates each remedy attempt with three checks on the register before (`before`) and after (`after`):
-- **Regression:** `after & ~before != 0`, meaning the remedy set a new fault. Roll it back at once by its compensation step (UC-D `x4`).
-- **Progress:** no new fault, and at least one fault cleared (`before & ~after != 0`).
-- **Circuit breaker:** `mask & 0b1110 != 0`. An escalation, attestation or blast-radius fault stops automation and goes to tier 0 and the Owner, as section 10.2 routes a critical verdict.
+| Existing failure or decision | Responsible actor | Required handling |
+|---|---|---|
+| Mapped extension with an accepted remedy inside its scope | Doctor, then oracle | Apply the bounded remedy and re-check its result |
+| Unmapped failure or misalignment | Lead, supported by Clerks and Scribes | Investigate and realign within the specification; escalate what exceeds that authority |
+| Critical finding: security, data loss or a boundary crossed | Overseer and Owner | Escalate at once |
+| A reserved person decision, including sensitivity or unapproved spending | Owner, relayed by the initiating Overseer or Lead | Pause the affected work for that decision |
+| Unresolved failure after bounded repair | Overseer, or Owner for person-started work | Report the remaining failure with evidence; do not mark it resolved |
 
-The case record in UC-D step 7 stores `(use case, extension, before, remedy, after)`. The difference `before ^ after` is what a remedy measurably fixed, which is the evidence its trust tier (bronze, silver, gold) is earned from.
+The earlier diagnostic names `F_ESC`, `F_ATTEST`, `F_BLAST` and `F_SYMPTOM` may label unresolved
+escalation, attestation breaches, excess blast radius and a symptom that persists. They do not
+define a fixed four-bit register, severity order or permission grant. Use-case extension IDs and
+existing refusal codes retain their meanings; a generic label must not hide the actual failure.
+
+Before and after evidence distinguishes progress from regression. A new boundary breach or
+critical finding stops automated repair and follows its escalation route. A declared compensation
+is shown for a person to decide, as composition policy requires; the ticket service does not
+automatically run an undo. A worker's success assertion cannot close a ticket in place of the
+oracle's re-check.
 
 **A remedy may be searched for only safely.** Trying several candidate remedies needs either an isolated dry run, or a verified compensation step behind the scope check (UC-D `d2`), so a failed attempt leaves nothing behind.
 
@@ -486,7 +523,9 @@ The case record in UC-D step 7 stores `(use case, extension, before, remedy, aft
 - the Root-Cause lens, at the analysis frame;
 - the Owner's acceptance in UC-L, before a remedy joins the catalogue.
 
-The 20 November run has an example. `1064cf0`, graph citations as evidence, was a sound proposed solution, but it treated the research-side symptom. The root, an unowned hand-off in staging (OP1), is still open.
+The 20 November run has an example. `1064cf0`, graph citations as evidence, was a sound proposed
+solution, but it treated the research-side symptom. The unowned staging hand-off (OP1) was
+subsequently addressed by the W7 backlog notifications in `8489387`.
 
 ### 11.5 Audit: the target standard against the legacy harness
 
@@ -501,11 +540,12 @@ Gemini compared the target against an earlier harness, `E:\Aletheia_project\AI_o
 | References | Silent drift to undefined names or empty files | Validation before any run: every reference, outcome edge, refusal code and target exists |
 | The repertoire's upkeep | Duplicate and divergent copies | Promotion only through UC-C: validated, accepted by the Owner, digest-pinned, its trust measured |
 
-### 11.6 Two open decisions
+### 11.6 Storage decision and spec linkage
 
-1. **How many fault bits?** Proposal: keep the register **universal and small**, the four system-level bits above.
-   - Faults specific to one use case are already named exactly by its **extension ids** (`13b`, `18a`), so they need no bits of their own.
-   - Generating bits per spec from its decision nodes would make registers incomparable across use cases.
+1. **Storage ownership is settled.** Specifications belong within the Librarian Core. The
+   physical backend and integration are implementation choices; a report is an authoring or
+   evidence artifact, not the authoritative runtime store. Faults are tracked through the ticket
+   service in 11.4; there is no remaining decision about a universal four-bit register.
 2. **Behaviour spec and execution YAML: one schema or two?** Proposal: keep them **separate and linked** for now.
    - The `.spec.yaml` describes behaviour, including people and model hosts, which no process file can.
    - The process YAML (`workflows.py`) holds only registered actions and the processes built from them.
@@ -583,7 +623,7 @@ At this scale a word must mean one thing. This section is binding for this propo
 | Term | Means | Is not |
 |---|---|---|
 | **Owner** | The person who runs the library; the only actor whose decisions are reserved | Tier 0 |
-| **Agent tier** (from docs/terminology.md) | 0 = an outside agent (Claude Code, Codex…); 1 = Lead; 2 = Scribe and research helper; 3 = Clerk | Registry tier (consult, contribute, curate), trust tier (gold, silver, bronze), layer (L0–L3), or Tier A/B audit |
+| **Agent tier** (from docs/terminology.md) | 0 = Overseer in an outside harness (Codex, Claude…); 1 = Lead; 2 = Clerk; 3 = Scribe | Registry tier (consult, contribute, curate), trust tier (gold, silver, bronze), layer (L0–L3), or Tier A/B audit |
 | **Oracle** | The actor that judges a run's output against its specification and never executes or repairs. Its verdict is a claim, with evidence. | The worker, the doctor, or a Tier B audit on its own (an oracle runs Tier A before Tier B) |
 | **Doctor** | The actor that repairs a failure at a mapped extension point, by a catalogued remedy within its blast radius, then hands back to the oracle | The oracle, or tier 0 |
 | **Tier A / Tier B audit** (from docs/terminology.md) | Tier A: deterministic, target-scoped checks. Tier B: a read-only model assessment. An oracle runs Tier A first and Tier B only after it passes. Gemini's "hard oracle" and "soft oracle" are these. | Agent tiers |
@@ -599,7 +639,7 @@ At this scale a word must mean one thing. This section is binding for this propo
 | **Catalogue** (remedy catalogue) | The doctor's accepted remedies and their case history | The repertoire, which holds every process, or the model catalogue |
 | **Blast radius** | What a change or a remedy can touch: computed as the union of its actions' declared effects, and followed through dependants, lineage and bridges | A guess |
 | **Escalation** | A failure handed back to tier 0 unresolved. It is a counted failure of the use case (`F_ESC`). | A pause for the Owner's decision |
-| **Fault register** | The four Boolean system faults (11.4) recorded before and after a remedy | A score, or a confidence |
+| **Fault register** | The ticket service (11.4): existing failure identifiers and evidence, tiered flags, responsible actors, remedy history and re-checks | A fixed four-bit mask, score, confidence or permission grant |
 | **Verdict** | The oracle's judgement: a claim with its evidence, which can be rebutted and is itself re-checked | A fact, or an instruction to the worker |
 
 ## 13. Risks and limits
@@ -612,17 +652,16 @@ At this scale a word must mean one thing. This section is binding for this propo
 
 ## 14. Decisions for the owner
 
-1. Accept P0 to start now, beside the main work.
-2. The `modelling` lens pack. Draft it from section 7, then accept it as a person's decision.
-3. Where diagram specs live. Proposal:
-   - specs of the Librarian itself under `reports/<date>-workflow-map/specs/`, regenerated from code where possible;
-   - specs a library makes about its own material in that library's vault, as notes with their canvases beside them.
-4. The oracle and the doctor (section 10):
-   - accept P6 (specs only, no code) to follow P0;
-   - choose the fixed list of models for the oracle and doctor roles. The first oracle candidate, the library's review route, needs OP8 fixed first.
-5. Upward composition (section 11):
-   - the order as written: action → workflow → pipeline → sprint, each process built from earlier ones (or its own kind without a cycle), never later ones;
-   - **repertoire** as the name for the set of accepted processes;
-   - the two open decisions in 11.6: a universal four-bit fault register, and separate but linked spec and process files;
-   - manifests (11.7): YAML for the process, compiled JSON for its manifest, and the mandate check before any process becomes a component of a parent process.
-6. The terms in section 12 that are new (process through promote, outcome, reference, turn, oracle, doctor, remedy, fault register, verdict) to be added to `docs/terminology.md` once accepted.
+Settled by the owner's direction and the policy:
+- role tiers: Overseer 0, Lead 1, Clerk 2, Scribe 3, with delegation on the owner's behalf;
+- specifications stored within the Core, with reports and canvases serving as review artifacts;
+- fault tracking as tickets with tiered flags and responsible actors, not a fixed four-bit mask;
+- GLM-5.3 currently assigned to both oracle and doctor, with revisable assignments through the adapter;
+- upward composition, repertoire, manifests and the vocabulary adopted into terminology and policy.
+
+Open implementation and scope decisions:
+1. Adoption of the product implementation phases P0–P8. The current work is the requirements
+   baseline and one faithful enrichment-cycle model; it does not authorise runtime implementation.
+2. The `modelling` lens pack: draft from section 7, then accept it as a person's decision.
+3. The separate-but-linked behavior spec and process representation in 11.6, and its parity checks.
+4. The Core's physical specification storage and integration, using its existing authority boundary.

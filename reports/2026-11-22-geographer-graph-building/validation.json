@@ -1,0 +1,18 @@
+{
+  "source": "geographer-graph-building.spec.yaml",
+  "source_sha256": "ae602a7793999691fb6ff7c07a05609374c79412bd33bf0ed7a8105b60610b59",
+  "renderer": "reports\\2026-11-20-workflow-map\\examples\\ingestion\\render_spec.py",
+  "structural_problems": [],
+  "cross_view_flags": [],
+  "numbered_main_steps": 18,
+  "paths": 11,
+  "nodes": 44,
+  "edges": 40,
+  "overlapping_cards": [],
+  "canvas_revision": "05aada6ec5c2074415857ee60de34c584263318a430a5ab3e4b307c961b7282c",
+  "preview": {
+    "width": 2250,
+    "height": 4897,
+    "text_overflow_cards": []
+  }
+}

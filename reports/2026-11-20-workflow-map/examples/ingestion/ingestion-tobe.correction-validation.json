@@ -1,0 +1,436 @@
+{
+  "status": "report model validation; not execution, runtime rollout or new Owner acceptance",
+  "spec": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.spec.yaml",
+  "spec_sha256": "c954fc9622d740dff7c3d722cfc0e19e5a14c03b6634eee636a8f4d3a49dd64e",
+  "canvas": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas",
+  "base_revision": "2cb3fc2536ad1e3f588ae7c0b0b2e4f5a15894f63860399a61e9613b9fa4f743",
+  "proposal_hash": "0dddcc6901ed9c995c39a9d3d7fc851729feede09b41e39fb40a7b9653c4831b",
+  "scenarios": 69,
+  "structural_problems": [],
+  "cross_view_reference_flags": [],
+  "changes": {
+    "migrated_ids": {},
+    "retired_nodes_removed": [],
+    "retired_anchors_retained_for_owner_edges": [],
+    "owner_nodes_preserved": 0,
+    "owner_edges_preserved": 0,
+    "geometry_changes": [],
+    "generated_reflow": false,
+    "initial_generated_reflow": false,
+    "initial_semantic_checksum_verified": null,
+    "reflow_validation": {
+      "mode": "validated_generation",
+      "revision": "2cb3fc2536ad1e3f588ae7c0b0b2e4f5a15894f63860399a61e9613b9fa4f743",
+      "receipt": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.correction-validation.json"
+    },
+    "generated_routing": {
+      "column_spacing_changes": [],
+      "edge_port_changes": [
+        {
+          "edge": "librarian-edge-a82b5604c4146554",
+          "before": {
+            "fromSide": "bottom",
+            "toSide": "top"
+          },
+          "after": {
+            "fromSide": "right",
+            "toSide": "right"
+          }
+        },
+        {
+          "edge": "librarian-edge-8ba90d76c7091b29",
+          "before": {
+            "fromSide": "bottom",
+            "toSide": "top"
+          },
+          "after": {
+            "fromSide": "right",
+            "toSide": "right"
+          }
+        },
+        {
+          "edge": "librarian-edge-4f8bcf385557a952",
+          "before": {
+            "fromSide": "bottom",
+            "toSide": "top"
+          },
+          "after": {
+            "fromSide": "right",
+            "toSide": "right"
+          }
+        },
+        {
+          "edge": "librarian-edge-e41e73667e31abc7",
+          "before": {
+            "fromSide": "right",
+            "toSide": "left"
+          },
+          "after": {
+            "fromSide": "left",
+            "toSide": "left"
+          }
+        },
+        {
+          "edge": "librarian-edge-3d24fcad1e481d0a",
+          "before": {
+            "fromSide": "bottom",
+            "toSide": "right"
+          },
+          "after": {
+            "fromSide": "left",
+            "toSide": "top"
+          }
+        },
+        {
+          "edge": "librarian-edge-029768368dfbb0c8",
+          "before": {
+            "fromSide": "bottom",
+            "toSide": "top"
+          },
+          "after": {
+            "fromSide": "left",
+            "toSide": "top"
+          }
+        },
+        {
+          "edge": "librarian-edge-306fa571662f023f",
+          "before": {
+            "fromSide": "left",
+            "toSide": "right"
+          },
+          "after": {
+            "fromSide": "bottom",
+            "toSide": "bottom"
+          }
+        },
+        {
+          "edge": "librarian-edge-f458729a5991de8c",
+          "before": {
+            "fromSide": "right",
+            "toSide": "left"
+          },
+          "after": {
+            "fromSide": "bottom",
+            "toSide": "top"
+          }
+        },
+        {
+          "edge": "librarian-edge-3038a24d908e8e64",
+          "before": {
+            "fromSide": "right",
+            "toSide": "left"
+          },
+          "after": {
+            "fromSide": "left",
+            "toSide": "left"
+          }
+        },
+        {
+          "edge": "librarian-edge-ec937217a7f7c28d",
+          "before": {
+            "fromSide": "right",
+            "toSide": "left"
+          },
+          "after": {
+            "fromSide": "left",
+            "toSide": "left"
+          }
+        },
+        {
+          "edge": "librarian-edge-c6895e1065557688",
+          "before": {
+            "fromSide": "top",
+            "toSide": "bottom"
+          },
+          "after": {
+            "fromSide": "top",
+            "toSide": "left"
+          }
+        },
+        {
+          "edge": "librarian-edge-61a7328369b0c00e",
+          "before": {
+            "fromSide": "bottom",
+            "toSide": "top"
+          },
+          "after": {
+            "fromSide": "right",
+            "toSide": "right"
+          }
+        },
+        {
+          "edge": "librarian-edge-0930a97e8ade82d7",
+          "before": {
+            "fromSide": "left",
+            "toSide": "left"
+          },
+          "after": {
+            "fromSide": "bottom",
+            "toSide": "left"
+          }
+        },
+        {
+          "edge": "librarian-edge-db6637d4b6025b44",
+          "before": {
+            "fromSide": "bottom",
+            "toSide": "top"
+          },
+          "after": {
+            "fromSide": "right",
+            "toSide": "right"
+          }
+        },
+        {
+          "edge": "librarian-edge-f931915b0f318b51",
+          "before": {
+            "fromSide": "left",
+            "toSide": "right"
+          },
+          "after": {
+            "fromSide": "bottom",
+            "toSide": "right"
+          }
+        },
+        {
+          "edge": "librarian-edge-7ea15595f1f8a88a",
+          "before": {
+            "fromSide": "bottom",
+            "toSide": "top"
+          },
+          "after": {
+            "fromSide": "right",
+            "toSide": "right"
+          }
+        }
+      ],
+      "edge_card_intersections": [],
+      "curve_scope": "deterministic report preview; native Canvas attachment sides only"
+    },
+    "group_changes": [],
+    "preexisting_overlaps_preserved": []
+  },
+  "write": "service.preview(profile=None, adopt=True), final provenance-aware proposal, guarded service.commit",
+  "accepted_renderer_sha256": "b3253960a08ccfdc05d93719c1b841393ec6024a409e4a2638510a1f6b27a955",
+  "commit": {
+    "written": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas",
+    "revision": "0dddcc6901ed9c995c39a9d3d7fc851729feede09b41e39fb40a7b9653c4831b",
+    "backup": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas.20261123T155406651013.bak",
+    "changes": {
+      "migrated_ids": {},
+      "retired_nodes_removed": [],
+      "retired_anchors_retained_for_owner_edges": [],
+      "owner_nodes_preserved": 0,
+      "owner_edges_preserved": 0,
+      "geometry_changes": [],
+      "generated_reflow": false,
+      "initial_generated_reflow": false,
+      "initial_semantic_checksum_verified": null,
+      "reflow_validation": {
+        "mode": "validated_generation",
+        "revision": "2cb3fc2536ad1e3f588ae7c0b0b2e4f5a15894f63860399a61e9613b9fa4f743",
+        "receipt": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.correction-validation.json"
+      },
+      "generated_routing": {
+        "column_spacing_changes": [],
+        "edge_port_changes": [
+          {
+            "edge": "librarian-edge-a82b5604c4146554",
+            "before": {
+              "fromSide": "bottom",
+              "toSide": "top"
+            },
+            "after": {
+              "fromSide": "right",
+              "toSide": "right"
+            }
+          },
+          {
+            "edge": "librarian-edge-8ba90d76c7091b29",
+            "before": {
+              "fromSide": "bottom",
+              "toSide": "top"
+            },
+            "after": {
+              "fromSide": "right",
+              "toSide": "right"
+            }
+          },
+          {
+            "edge": "librarian-edge-4f8bcf385557a952",
+            "before": {
+              "fromSide": "bottom",
+              "toSide": "top"
+            },
+            "after": {
+              "fromSide": "right",
+              "toSide": "right"
+            }
+          },
+          {
+            "edge": "librarian-edge-e41e73667e31abc7",
+            "before": {
+              "fromSide": "right",
+              "toSide": "left"
+            },
+            "after": {
+              "fromSide": "left",
+              "toSide": "left"
+            }
+          },
+          {
+            "edge": "librarian-edge-3d24fcad1e481d0a",
+            "before": {
+              "fromSide": "bottom",
+              "toSide": "right"
+            },
+            "after": {
+              "fromSide": "left",
+              "toSide": "top"
+            }
+          },
+          {
+            "edge": "librarian-edge-029768368dfbb0c8",
+            "before": {
+              "fromSide": "bottom",
+              "toSide": "top"
+            },
+            "after": {
+              "fromSide": "left",
+              "toSide": "top"
+            }
+          },
+          {
+            "edge": "librarian-edge-306fa571662f023f",
+            "before": {
+              "fromSide": "left",
+              "toSide": "right"
+            },
+            "after": {
+              "fromSide": "bottom",
+              "toSide": "bottom"
+            }
+          },
+          {
+            "edge": "librarian-edge-f458729a5991de8c",
+            "before": {
+              "fromSide": "right",
+              "toSide": "left"
+            },
+            "after": {
+              "fromSide": "bottom",
+              "toSide": "top"
+            }
+          },
+          {
+            "edge": "librarian-edge-3038a24d908e8e64",
+            "before": {
+              "fromSide": "right",
+              "toSide": "left"
+            },
+            "after": {
+              "fromSide": "left",
+              "toSide": "left"
+            }
+          },
+          {
+            "edge": "librarian-edge-ec937217a7f7c28d",
+            "before": {
+              "fromSide": "right",
+              "toSide": "left"
+            },
+            "after": {
+              "fromSide": "left",
+              "toSide": "left"
+            }
+          },
+          {
+            "edge": "librarian-edge-c6895e1065557688",
+            "before": {
+              "fromSide": "top",
+              "toSide": "bottom"
+            },
+            "after": {
+              "fromSide": "top",
+              "toSide": "left"
+            }
+          },
+          {
+            "edge": "librarian-edge-61a7328369b0c00e",
+            "before": {
+              "fromSide": "bottom",
+              "toSide": "top"
+            },
+            "after": {
+              "fromSide": "right",
+              "toSide": "right"
+            }
+          },
+          {
+            "edge": "librarian-edge-0930a97e8ade82d7",
+            "before": {
+              "fromSide": "left",
+              "toSide": "left"
+            },
+            "after": {
+              "fromSide": "bottom",
+              "toSide": "left"
+            }
+          },
+          {
+            "edge": "librarian-edge-db6637d4b6025b44",
+            "before": {
+              "fromSide": "bottom",
+              "toSide": "top"
+            },
+            "after": {
+              "fromSide": "right",
+              "toSide": "right"
+            }
+          },
+          {
+            "edge": "librarian-edge-f931915b0f318b51",
+            "before": {
+              "fromSide": "left",
+              "toSide": "right"
+            },
+            "after": {
+              "fromSide": "bottom",
+              "toSide": "right"
+            }
+          },
+          {
+            "edge": "librarian-edge-7ea15595f1f8a88a",
+            "before": {
+              "fromSide": "bottom",
+              "toSide": "top"
+            },
+            "after": {
+              "fromSide": "right",
+              "toSide": "right"
+            }
+          }
+        ],
+        "edge_card_intersections": [],
+        "curve_scope": "deterministic report preview; native Canvas attachment sides only"
+      },
+      "group_changes": [],
+      "preexisting_overlaps_preserved": []
+    }
+  },
+  "reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.corrected-overview.png",
+  "overview_scale": 0.35,
+  "overview_text_overflow": [],
+  "overview_purpose": "reduced orientation image; text scales with saved card geometry",
+  "detail_reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.corrected-readable.png",
+  "detail_scale": 0.8,
+  "detail_text_overflow": [],
+  "preview": "deterministic raster of saved canvas positions; not an Obsidian application screenshot",
+  "previous_validation": {
+    "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\correction-history\\ingestion-tobe.correction-validation.c36b69e9f72dc20f.json",
+    "sha256": "c36b69e9f72dc20f0c94bc54706b770ba57b4b07fc588992ee94ee03332a2b5b"
+  },
+  "initial_migration_validation": {
+    "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\correction-history\\ingestion-tobe.correction-validation.f7b6db288207038a.json",
+    "sha256": "f7b6db288207038a2a770bdb70d8c24a978489d5b599dd6f5b1712bc15776b00"
+  }
+}

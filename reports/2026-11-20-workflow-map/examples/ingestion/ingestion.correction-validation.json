@@ -1,0 +1,750 @@
+{
+  "status": "report model validation; not execution, runtime rollout or new Owner acceptance",
+  "spec": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.spec.yaml",
+  "spec_sha256": "505a0a576c41c2ea82255faf59c344d083eb1341f0792d3f124fbae2dc90c426",
+  "canvas": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.canvas",
+  "base_revision": "2770997c0474989a60a6cbacd50c12c19f531d1ef734cfa2682b256382877977",
+  "proposal_hash": "0a0b1af08f1ae2553ed4e0927d162ab60068ab1f9e2c612c949c7e6c737485b5",
+  "scenarios": 31,
+  "structural_problems": [],
+  "cross_view_reference_flags": [],
+  "changes": {
+    "migrated_ids": {},
+    "retired_nodes_removed": [],
+    "retired_anchors_retained_for_owner_edges": [],
+    "owner_nodes_preserved": 0,
+    "owner_edges_preserved": 0,
+    "geometry_changes": [],
+    "generated_reflow": false,
+    "initial_generated_reflow": false,
+    "initial_semantic_checksum_verified": null,
+    "reflow_validation": {
+      "mode": "validated_generation",
+      "revision": "2770997c0474989a60a6cbacd50c12c19f531d1ef734cfa2682b256382877977",
+      "receipt": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.correction-validation.json"
+    },
+    "generated_routing": {
+      "column_spacing_changes": [
+        {
+          "node": "librarian-scopeNote",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-a2",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-a3",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-d1",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-x1",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-a5",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-d2",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-a6",
+          "old_x": 1300,
+          "new_x": 1840
+        },
+        {
+          "node": "librarian-x2",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-draftcheck",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-ddraft",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-d3",
+          "old_x": 1300,
+          "new_x": 1840
+        },
+        {
+          "node": "librarian-draftfault",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-escalatereport",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-a7",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-escalated",
+          "old_x": 2560,
+          "new_x": 3640
+        },
+        {
+          "node": "librarian-applygroups",
+          "old_x": 2140,
+          "new_x": 3040
+        },
+        {
+          "node": "librarian-exclude",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-pausedreport",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-applicationreceipt",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-e4",
+          "old_x": 2560,
+          "new_x": 3640
+        },
+        {
+          "node": "librarian-dfolder",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-dinput",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-x1application",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-folderfault",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-a8",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-reuseledger",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-nonsource",
+          "old_x": 2560,
+          "new_x": 3640
+        },
+        {
+          "node": "librarian-d4",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-reused",
+          "old_x": 2560,
+          "new_x": 3640
+        },
+        {
+          "node": "librarian-a9",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-queuefix",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-dcapture",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-capturedescribe",
+          "old_x": 1300,
+          "new_x": 1840
+        },
+        {
+          "node": "librarian-capturefault",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-capturestore",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-a10",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-startrequest",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-dstartauthority",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-startrun",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-enrich",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-a14",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-d5",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-d6",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-x5",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-a15",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-e2",
+          "old_x": 2560,
+          "new_x": 3640
+        },
+        {
+          "node": "librarian-sourceledger",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-a16",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-dwrite",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-findcheck",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-writestate",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-d7",
+          "old_x": 880,
+          "new_x": 1240
+        },
+        {
+          "node": "librarian-a17",
+          "old_x": 460,
+          "new_x": 640
+        },
+        {
+          "node": "librarian-e3",
+          "old_x": 2560,
+          "new_x": 3640
+        },
+        {
+          "node": "librarian-e1",
+          "old_x": 2560,
+          "new_x": 3640
+        },
+        {
+          "node": "librarian-lane-Tier-0-agent",
+          "old_x": 440,
+          "new_x": 620
+        },
+        {
+          "node": "librarian-lane-Core",
+          "old_x": 860,
+          "new_x": 1220
+        },
+        {
+          "node": "librarian-lane-Model-worker-legacy-transport-",
+          "old_x": 1280,
+          "new_x": 1820
+        },
+        {
+          "node": "librarian-lane-Model-host",
+          "old_x": 1700,
+          "new_x": 2420
+        },
+        {
+          "node": "librarian-lane-Geo-Grapher",
+          "old_x": 2120,
+          "new_x": 3020
+        },
+        {
+          "node": "librarian-lane-Outcomes",
+          "old_x": 2540,
+          "new_x": 3620
+        }
+      ],
+      "edge_port_changes": [
+        {
+          "edge": "librarian-edge-acb26646294c3b32",
+          "before": {
+            "fromSide": "left",
+            "toSide": "right"
+          },
+          "after": {
+            "fromSide": "bottom",
+            "toSide": "bottom"
+          }
+        },
+        {
+          "edge": "librarian-edge-7d583f39c2f37ca1",
+          "before": {
+            "fromSide": "bottom",
+            "toSide": "top"
+          },
+          "after": {
+            "fromSide": "right",
+            "toSide": "right"
+          }
+        }
+      ],
+      "edge_card_intersections": [],
+      "curve_scope": "deterministic report preview; native Canvas attachment sides only"
+    },
+    "group_changes": [],
+    "preexisting_overlaps_preserved": []
+  },
+  "write": "service.preview(profile=None, adopt=True), final provenance-aware proposal, guarded service.commit",
+  "accepted_renderer_sha256": "b3253960a08ccfdc05d93719c1b841393ec6024a409e4a2638510a1f6b27a955",
+  "commit": {
+    "written": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.canvas",
+    "revision": "0a0b1af08f1ae2553ed4e0927d162ab60068ab1f9e2c612c949c7e6c737485b5",
+    "backup": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.canvas.20261123T154823415380.bak",
+    "changes": {
+      "migrated_ids": {},
+      "retired_nodes_removed": [],
+      "retired_anchors_retained_for_owner_edges": [],
+      "owner_nodes_preserved": 0,
+      "owner_edges_preserved": 0,
+      "geometry_changes": [],
+      "generated_reflow": false,
+      "initial_generated_reflow": false,
+      "initial_semantic_checksum_verified": null,
+      "reflow_validation": {
+        "mode": "validated_generation",
+        "revision": "2770997c0474989a60a6cbacd50c12c19f531d1ef734cfa2682b256382877977",
+        "receipt": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.correction-validation.json"
+      },
+      "generated_routing": {
+        "column_spacing_changes": [
+          {
+            "node": "librarian-scopeNote",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-a2",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-a3",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-d1",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-x1",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-a5",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-d2",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-a6",
+            "old_x": 1300,
+            "new_x": 1840
+          },
+          {
+            "node": "librarian-x2",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-draftcheck",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-ddraft",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-d3",
+            "old_x": 1300,
+            "new_x": 1840
+          },
+          {
+            "node": "librarian-draftfault",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-escalatereport",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-a7",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-escalated",
+            "old_x": 2560,
+            "new_x": 3640
+          },
+          {
+            "node": "librarian-applygroups",
+            "old_x": 2140,
+            "new_x": 3040
+          },
+          {
+            "node": "librarian-exclude",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-pausedreport",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-applicationreceipt",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-e4",
+            "old_x": 2560,
+            "new_x": 3640
+          },
+          {
+            "node": "librarian-dfolder",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-dinput",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-x1application",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-folderfault",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-a8",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-reuseledger",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-nonsource",
+            "old_x": 2560,
+            "new_x": 3640
+          },
+          {
+            "node": "librarian-d4",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-reused",
+            "old_x": 2560,
+            "new_x": 3640
+          },
+          {
+            "node": "librarian-a9",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-queuefix",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-dcapture",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-capturedescribe",
+            "old_x": 1300,
+            "new_x": 1840
+          },
+          {
+            "node": "librarian-capturefault",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-capturestore",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-a10",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-startrequest",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-dstartauthority",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-startrun",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-enrich",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-a14",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-d5",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-d6",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-x5",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-a15",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-e2",
+            "old_x": 2560,
+            "new_x": 3640
+          },
+          {
+            "node": "librarian-sourceledger",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-a16",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-dwrite",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-findcheck",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-writestate",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-d7",
+            "old_x": 880,
+            "new_x": 1240
+          },
+          {
+            "node": "librarian-a17",
+            "old_x": 460,
+            "new_x": 640
+          },
+          {
+            "node": "librarian-e3",
+            "old_x": 2560,
+            "new_x": 3640
+          },
+          {
+            "node": "librarian-e1",
+            "old_x": 2560,
+            "new_x": 3640
+          },
+          {
+            "node": "librarian-lane-Tier-0-agent",
+            "old_x": 440,
+            "new_x": 620
+          },
+          {
+            "node": "librarian-lane-Core",
+            "old_x": 860,
+            "new_x": 1220
+          },
+          {
+            "node": "librarian-lane-Model-worker-legacy-transport-",
+            "old_x": 1280,
+            "new_x": 1820
+          },
+          {
+            "node": "librarian-lane-Model-host",
+            "old_x": 1700,
+            "new_x": 2420
+          },
+          {
+            "node": "librarian-lane-Geo-Grapher",
+            "old_x": 2120,
+            "new_x": 3020
+          },
+          {
+            "node": "librarian-lane-Outcomes",
+            "old_x": 2540,
+            "new_x": 3620
+          }
+        ],
+        "edge_port_changes": [
+          {
+            "edge": "librarian-edge-acb26646294c3b32",
+            "before": {
+              "fromSide": "left",
+              "toSide": "right"
+            },
+            "after": {
+              "fromSide": "bottom",
+              "toSide": "bottom"
+            }
+          },
+          {
+            "edge": "librarian-edge-7d583f39c2f37ca1",
+            "before": {
+              "fromSide": "bottom",
+              "toSide": "top"
+            },
+            "after": {
+              "fromSide": "right",
+              "toSide": "right"
+            }
+          }
+        ],
+        "edge_card_intersections": [],
+        "curve_scope": "deterministic report preview; native Canvas attachment sides only"
+      },
+      "group_changes": [],
+      "preexisting_overlaps_preserved": []
+    }
+  },
+  "reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.corrected-overview.png",
+  "overview_scale": 0.35,
+  "overview_text_overflow": [],
+  "overview_purpose": "reduced orientation image; text scales with saved card geometry",
+  "detail_reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.corrected-readable.png",
+  "detail_scale": 0.8,
+  "detail_text_overflow": [],
+  "preview": "deterministic raster of saved canvas positions; not an Obsidian application screenshot",
+  "previous_validation": {
+    "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\correction-history\\ingestion.correction-validation.54269ad709a72b50.json",
+    "sha256": "54269ad709a72b50942be3129b7de67fa69fff84e1511c1db0cff29f57f18074"
+  },
+  "initial_migration_validation": {
+    "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\correction-history\\ingestion.correction-validation.80837ee1119c649c.json",
+    "sha256": "80837ee1119c649c0d0b8cebbf5ff5c055f4b5e74b5e2bfa7f9deeee30f98ec2"
+  }
+}

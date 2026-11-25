@@ -1,0 +1,3196 @@
+{
+  "generated_at_utc": "2026-11-24T19:36:13Z",
+  "repository_commit": "d9435e1",
+  "search_scope": {
+    "mandated_roots_inspected": [
+      "D:\\Resource-Library\\internal docs\\chatgpt-review",
+      "D:\\Resource-Library\\06-Papers",
+      "D:\\Resource-Library\\internal docs",
+      "D:\\Resource-Library\\branch offerings\\Library Methodology",
+      "D:\\Resource-Library\\09-Applications",
+      "D:\\Resource-Library\\01-Resources",
+      "D:\\Resource-Library\\03-Patterns"
+    ],
+    "additional_roots_inspected": [
+      "D:\\Resource-Library (root & .v2\\docs & 02-Glossary & 05-Canvases & 08-Workflows & 10-Models)",
+      "D:\\Librarian_V2\\docs (policy, proposals, phase8, experiments, root)",
+      "D:\\Librarian_V2\\reports (2026-10-20 through 2026-11-23)",
+      "F:\\uv-data\\Geo_Grapher\\docs (INGESTION_POLICY.md, phase67/)",
+      "G:\\Libraries (Resource-Library, Nonlinear Field Lab, Parallax logs & catalogs)"
+    ],
+    "corpus_totals_discovered": null,
+    "access_and_coverage_limitations": [
+      "E:\\DataManagement contained 0 discoverable docs at inspection time.",
+      "D:\\Librarian_V2\\reports\\2026-11-21-isolated-incomplete-examples\\files and retained-scratch (~47k files) were excluded from deep traversal per README withdrawal notice (only README.md, top-level listing, and owner's decision example canvas were inspected).",
+      "Bulky vaults D:\\Resource-Library\\06-Papers (223 files) and 01-Resources (235 files) were metadata/keyword-scanned in full and deep-read selectively on ingestion/medallion/graph-relevant items rather than exhaustively prose-read line-by-line.",
+      "Geo-Grapher's internal 18 design documents in F:\\uv-data\\Geo_Grapher\\docs\\phase67\\* were only sampled for Librarian-boundary contracts; full Geo-Grapher reconstruction is deliberately deferred to Phase 2 per prompt sequencing.",
+      "G:\\Libraries\\Resource-Library is only a partial mirror (363 md Sources, 0 Offerings, 0 Concepts, 0 Applications) compared to D:\\Resource-Library; absence in G:\\Libraries is never treated as non-existence.",
+      "Absence of a feature in current D:\\Librarian_V2\\src\\resource_librarian code without an explicit rejection record in docs/policy, access-model, capability-matrix, or Master Finalization is classified UNIMPLEMENTED_UNDROPPED rather than DECIDED_AGAINST."
+    ]
+  },
+  "status_taxonomy": [
+    "IMPLEMENTED_VERIFIED",
+    "IMPLEMENTED_PARTIAL",
+    "ACCEPTED_NORMATIVE",
+    "ACCEPTED_UNIMPLEMENTED",
+    "PROPOSED_UNACCEPTED",
+    "UNIMPLEMENTED_UNDROPPED",
+    "DECIDED_AGAINST",
+    "UNRESOLVED_CONFLICTING"
+  ],
+  "document_count": 134,
+  "glossary_count": 23,
+  "documents": [
+    {
+      "id": "DOC-POL-01",
+      "title": "Policy Authority Precedence Index",
+      "path": "D:\\Librarian_V2\\docs\\policy\\README.md",
+      "doc_type": "policy",
+      "date": "2026-11-12",
+      "author_origin": "Librarian V2 Core Policy (Owner / Claude)",
+      "topic_area": "Governance & Precedence",
+      "evidence_kind": "specification",
+      "acceptance_status": "ACCEPTED_NORMATIVE",
+      "status_evidence": "Defines Ranks 1-7 authoritative precedence order for Librarian V2; Rank 1 policy document.",
+      "related": [
+        "DOC-POL-02",
+        "DOC-POL-03",
+        "DOC-POL-04",
+        "DOC-PLN-01"
+      ],
+      "gaps_conflicts": "Supersedes historical V1/report claims when documents disagree; requires ongoing doc maintenance (MF-003/042).",
+      "uri": "file:///D:/Librarian_V2/docs/policy/README.md",
+      "size_bytes": 2473,
+      "line_count": 35
+    },
+    {
+      "id": "DOC-POL-02",
+      "title": "Agent Roles, Authority, and Three-Tier Disambiguation",
+      "path": "D:\\Librarian_V2\\docs\\policy\\agent-roles-and-authority.md",
+      "doc_type": "policy",
+      "date": "2026-11-12",
+      "author_origin": "Librarian V2 Core Policy",
+      "topic_area": "Actor Ownership, Model Assignment & Tiers",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Rank 1 policy separating Core scripts vs semantic work, assign-never-bind, GLM-5.3 Oracle/Doctor, and 3 tier senses; registry tiers and role routes implemented, while full Oracle/Doctor runtime (W9) remains planned.",
+      "related": [
+        "DOC-POL-01",
+        "DOC-POL-03",
+        "DOC-POL-12",
+        "DOC-PLN-02"
+      ],
+      "gaps_conflicts": "Enforces three distinct 'tier' meanings (Agent 0-3, Registry consult/contribute/curate, Trust gold/silver/bronze) violated in earlier informal docs and isolated drafts.",
+      "uri": "file:///D:/Librarian_V2/docs/policy/agent-roles-and-authority.md",
+      "size_bytes": 9791,
+      "line_count": 129
+    },
+    {
+      "id": "DOC-POL-03",
+      "title": "Workflow, Pipeline, Sprint Composition & Recovery Rules",
+      "path": "D:\\Librarian_V2\\docs\\policy\\composition.md",
+      "doc_type": "policy",
+      "date": "2026-11-12",
+      "author_origin": "Librarian V2 Core Policy",
+      "topic_area": "Process Composition & Doctor Recovery",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Rank 1 composition rules (17 rules incl. upward action->workflow->pipeline->sprint, Rule 8 no auto-run compensation, Rules 15-17 permission envelope & Oracle judgement).",
+      "related": [
+        "DOC-POL-01",
+        "DOC-POL-02",
+        "DOC-PLN-02",
+        "DOC-MAP-06"
+      ],
+      "gaps_conflicts": "Rule 8 directly conflicts with older doctor.spec.yaml v1 auto-rollback x4 (DOC-MAP-06); Rule 8 governs.",
+      "uri": "file:///D:/Librarian_V2/docs/policy/composition.md",
+      "size_bytes": 4997,
+      "line_count": 55
+    },
+    {
+      "id": "DOC-POL-04",
+      "title": "Librarian V2 Normative Terminology",
+      "path": "D:\\Librarian_V2\\docs\\terminology.md",
+      "doc_type": "glossary_spec",
+      "date": "2026-11-12",
+      "author_origin": "Librarian V2 Core Policy (REMED / BASE-03)",
+      "topic_area": "Terminology & Delivery Status Vocabulary",
+      "evidence_kind": "specification",
+      "acceptance_status": "ACCEPTED_NORMATIVE",
+      "status_evidence": "Normative vocabulary across authority, model evidence, durable work state, composition, use-case diagrams, review/failure, and delivery status.",
+      "related": [
+        "DOC-POL-01",
+        "DOC-PLN-04",
+        "DOC-RPT-04"
+      ],
+      "gaps_conflicts": "Reconciles legacy 'stage' vs 'phase', 'staged' vs 'accepted/promoted', and delivery status labels.",
+      "uri": "file:///D:/Librarian_V2/docs/terminology.md",
+      "size_bytes": 14479,
+      "line_count": 133
+    },
+    {
+      "id": "DOC-POL-05",
+      "title": "Product Contract: Single Core Writer, Leases & Client Handshake",
+      "path": "D:\\Librarian_V2\\docs\\product-contract.md",
+      "doc_type": "contract",
+      "date": "2026-10-25",
+      "author_origin": "Librarian V2 Core",
+      "topic_area": "Core Lifecycle, Leases & Protocol",
+      "evidence_kind": "specification",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Enforced via CORE-01..07 and ACCEPT-02 Obsidian dirty-doc/handshake verification.",
+      "related": [
+        "DOC-POL-10",
+        "DOC-PLN-04",
+        "DOC-PLN-05"
+      ],
+      "gaps_conflicts": "Mixed 3-client concurrent live traffic in ACCEPT-02 remained partial (MF-001).",
+      "uri": "file:///D:/Librarian_V2/docs/product-contract.md",
+      "size_bytes": 4886,
+      "line_count": 98
+    },
+    {
+      "id": "DOC-POL-06",
+      "title": "Access Model, Authorship Strata, Token Budgets & Graphify Retirement",
+      "path": "D:\\Librarian_V2\\docs\\access-model.md",
+      "doc_type": "specification",
+      "date": "2026-11-14",
+      "author_origin": "Librarian V2 Owner Decisions (C0-1 / Phase 8)",
+      "topic_area": "Access Control, Medallion Conversion Layer & Geo Boundary",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Defines authorship x domain, S1-S6b/R scope, hidden .librarian/conversions/<id>.md, DECIDED C0-1 token budget, and retires Graphify / bans persistent source graphs on conversion.",
+      "related": [
+        "DOC-POL-08",
+        "DOC-POL-09",
+        "DOC-PLN-01",
+        "DOC-GEO-01"
+      ],
+      "gaps_conflicts": "Graphify explicitly DECIDED_AGAINST/RETIRED here (`:159`), superseding all V1 graphify usage (DOC-V1D-16, DOC-V1D-17).",
+      "uri": "file:///D:/Librarian_V2/docs/access-model.md",
+      "size_bytes": 20730,
+      "line_count": 172
+    },
+    {
+      "id": "DOC-POL-07",
+      "title": "Staging Write Safety, Single/Batch/Mixed Acceptance & Resume Contracts",
+      "path": "D:\\Librarian_V2\\docs\\staging-write-safety.md",
+      "doc_type": "specification",
+      "date": "2026-10-28",
+      "author_origin": "Librarian V2 Core",
+      "topic_area": "Staging Airlock, Promotion & Resume Safety",
+      "evidence_kind": "specification",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Defines 200-file dependency cap, retained originals, promotion_progress CAS resume, and per-item mixed/source acceptance guards verified in test_staging_safety/test_core_* suites.",
+      "related": [
+        "DOC-PLN-01",
+        "DOC-PLN-04",
+        "DOC-RPT-04"
+      ],
+      "gaps_conflicts": "Hard crash multi-resource atomicity across SQLite + Markdown + Geo DB is explicitly NOT claimed; relies on CAS resume & idempotent checkpoints.",
+      "uri": "file:///D:/Librarian_V2/docs/staging-write-safety.md",
+      "size_bytes": 33597,
+      "line_count": 508
+    },
+    {
+      "id": "DOC-POL-08",
+      "title": "Content Authorship Permanent Policy",
+      "path": "D:\\Librarian_V2\\docs\\library-notes\\Content authorship.md",
+      "doc_type": "owner_policy",
+      "date": "2026-11-14",
+      "author_origin": "Owner permanent policy",
+      "topic_area": "Provenance, Third-Party Handling & Graph Domains",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "ACCEPTED_UNIMPLEMENTED",
+      "status_evidence": "Explicitly marked 'owner policy', 'prepared for About/Content authorship.md in each library when its setup/maintenance is approved. It has not been written into a live library at C0.'",
+      "related": [
+        "DOC-POL-06",
+        "DOC-POL-09",
+        "DOC-GEO-01"
+      ],
+      "gaps_conflicts": "Explains why 'unlicensed' is used synonymously with 'third_party' here; unclassifiable objects must be catalogued, not graphed.",
+      "uri": "file:///D:/Librarian_V2/docs/library-notes/Content authorship.md",
+      "size_bytes": 1969,
+      "line_count": 20
+    },
+    {
+      "id": "DOC-POL-09",
+      "title": "Wave L Folder Review Policy & Geo-Grapher Integration Boundary",
+      "path": "D:\\Librarian_V2\\docs\\WAVE_L_FOLDER_REVIEW.md",
+      "doc_type": "specification",
+      "date": "2026-11-15",
+      "author_origin": "Librarian V2 Phase 8 / Wave L",
+      "topic_area": "Folder Intake, Bronze Trust Tier & Scope Gates",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Defines folder review persistence, third-party bronze graph trust tier, PLAN_SCOPE guard, and credential refusal.",
+      "related": [
+        "DOC-POL-06",
+        "DOC-POL-10",
+        "DOC-RPT-05"
+      ],
+      "gaps_conflicts": "Phase 8 audit (DOC-RPT-05) found folder_review application later had OP1/OP2 bugs fixed in Nov 16-22 commits or partially open.",
+      "uri": "file:///D:/Librarian_V2/docs/WAVE_L_FOLDER_REVIEW.md",
+      "size_bytes": 4847,
+      "line_count": 47
+    },
+    {
+      "id": "DOC-POL-10",
+      "title": "Phase 8 Folder Intake Specification",
+      "path": "D:\\Librarian_V2\\docs\\phase8\\FOLDER_INTAKE.md",
+      "doc_type": "specification",
+      "date": "2026-11-15",
+      "author_origin": "Librarian V2 Phase 8",
+      "topic_area": "Folder Intake & Taxonomy Classification",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Specifies Librarian folder intake scan and review card creation (folder_intake.py / folder_review.py).",
+      "related": [
+        "DOC-POL-09",
+        "DOC-RPT-05"
+      ],
+      "gaps_conflicts": "Per-folder override/withhold ergonomics remained limited in live Geo/Librarian UI (DOC-RPT-11 F14/F15).",
+      "uri": "file:///D:/Librarian_V2/docs/phase8/FOLDER_INTAKE.md",
+      "size_bytes": 3138,
+      "line_count": 47
+    },
+    {
+      "id": "DOC-POL-11",
+      "title": "Geo-Grapher Phase 6/7 Preparation & Domain Contract",
+      "path": "D:\\Librarian_V2\\docs\\geo-grapher-phase67-preparation.md",
+      "doc_type": "contract",
+      "date": "2026-11-13",
+      "author_origin": "Librarian V2 / Geo-Grapher integration",
+      "topic_area": "Librarian-Geo Boundary",
+      "evidence_kind": "specification",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Sets boundary for Phase 6/7 Geo-Grapher service readiness and domain rules.",
+      "related": [
+        "DOC-GEO-01",
+        "DOC-GEO-02",
+        "DOC-GEO-03"
+      ],
+      "gaps_conflicts": "Does not cover November W5 cross-graph bridges (still 0 live bridges).",
+      "uri": "file:///D:/Librarian_V2/docs/geo-grapher-phase67-preparation.md",
+      "size_bytes": 4838,
+      "line_count": 35
+    },
+    {
+      "id": "DOC-POL-12",
+      "title": "Role Routing & Service Selection Contract",
+      "path": "D:\\Librarian_V2\\docs\\role-routing.md",
+      "doc_type": "specification",
+      "date": "2026-10-25",
+      "author_origin": "Librarian V2 Core (ROUTE-03/04/05)",
+      "topic_area": "Model Roles, Routes & Services",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Header notes 'implemented routing boundary; adapter transport extraction and live qualification remain separate tasks'. `.librarian/agents/routes.json` is authoritative.",
+      "related": [
+        "DOC-POL-02",
+        "DOC-POL-13",
+        "DOC-PLN-06"
+      ],
+      "gaps_conflicts": "Live qualification of routes and cancellation unification partially landed later (ADAPT-04B) while PDF/OCR service envelopes kept gaps (MF-028).",
+      "uri": "file:///D:/Librarian_V2/docs/role-routing.md",
+      "size_bytes": 3587,
+      "line_count": 64
+    },
+    {
+      "id": "DOC-POL-13",
+      "title": "Model Hosts & L0-L3 Qualification Contract",
+      "path": "D:\\Librarian_V2\\docs\\qualification.md",
+      "doc_type": "specification",
+      "date": "2026-10-30",
+      "author_origin": "Librarian V2 Core",
+      "topic_area": "Model Qualification & Release Leads",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "L0-L3 framework and resumable L2/L3 jobs implemented; release leads stay `pending_release_ci` pending external release pipeline.",
+      "related": [
+        "DOC-POL-12",
+        "DOC-PLN-05",
+        "DOC-PLN-06"
+      ],
+      "gaps_conflicts": "No live L3-verified bundled release leads yet; live user keys still required.",
+      "uri": "file:///D:/Librarian_V2/docs/qualification.md",
+      "size_bytes": 8255,
+      "line_count": 146
+    },
+    {
+      "id": "DOC-POL-14",
+      "title": "V1-to-V2 Capability Matrix (ACCEPT-03)",
+      "path": "D:\\Librarian_V2\\docs\\capability-matrix.md",
+      "doc_type": "capability_matrix",
+      "date": "2026-10-30",
+      "author_origin": "Librarian V2 Release Documentation",
+      "topic_area": "V1->V2 Feature Accounting & Exclusions",
+      "evidence_kind": "specification",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Canonical ACCEPT-03 table marking V1 features as ported, changed, internal pack, partial, excluded, dropped, deferred, retired, or not adopted.",
+      "related": [
+        "DOC-RPT-01",
+        "DOC-V1D-23",
+        "DOC-PLN-05"
+      ],
+      "gaps_conflicts": "Updated through Oct 30; later Nov 2026 plan-forward items (W1-W9) extend capability scope beyond ACCEPT-03.",
+      "uri": "file:///D:/Librarian_V2/docs/capability-matrix.md",
+      "size_bytes": 9687,
+      "line_count": 81
+    },
+    {
+      "id": "DOC-POL-15",
+      "title": "V1-to-V2 Migration Contract",
+      "path": "D:\\Librarian_V2\\docs\\migration.md",
+      "doc_type": "specification",
+      "date": "2026-10-30",
+      "author_origin": "Librarian V2 Core",
+      "topic_area": "V1 Migration & Guided Import",
+      "evidence_kind": "specification",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Records guided read-only V1 import (`v1_import_plan/stage/status`) while excluding V1 internal queue/survey/backlogs.",
+      "related": [
+        "DOC-POL-14",
+        "DOC-RPT-04"
+      ],
+      "gaps_conflicts": "NAT-13/14 (MF-020/029) notes v1_export parses raw text and note separately and drops Aliases/Related Terms on Concepts.",
+      "uri": "file:///D:/Librarian_V2/docs/migration.md",
+      "size_bytes": 1421,
+      "line_count": 27
+    },
+    {
+      "id": "DOC-POL-16",
+      "title": "Core Index Ownership & Offline Compatibility Boundary",
+      "path": "D:\\Librarian_V2\\docs\\index-ownership.md",
+      "doc_type": "specification",
+      "date": "2026-10-25",
+      "author_origin": "Librarian V2 Core (INDEX-04)",
+      "topic_area": "IndexService Single Owner & SQLite Safety",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "States INDEX-04 gateway/pack boundary implemented (`CORE_REQUIRED` on missing IndexService, 0 serving-path SQLite debt) and Windows file_access locking.",
+      "related": [
+        "DOC-PLN-01",
+        "DOC-PLN-04",
+        "DOC-RPT-04"
+      ],
+      "gaps_conflicts": "Desk and lens SQLite stores tracked separately; NAT-02 rename chunk preservation remained open in MF-014.",
+      "uri": "file:///D:/Librarian_V2/docs/index-ownership.md",
+      "size_bytes": 8126,
+      "line_count": 141
+    },
+    {
+      "id": "DOC-POL-17",
+      "title": "Tier-0 Agent Integration & Core Operations Guide",
+      "path": "D:\\Librarian_V2\\docs\\agent-guide.md",
+      "doc_type": "guide",
+      "date": "2026-11-16",
+      "author_origin": "Librarian V2 Owner / Core",
+      "topic_area": "Tier-0 Agent Access, Core Management & Content Roots",
+      "evidence_kind": "specification",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Checked against code 2026-11-12 + updated 2026-11-16 ('Agents manage Cores'); codifies thin MCP proxy and rule against opening repos as libraries.",
+      "related": [
+        "DOC-POL-02",
+        "DOC-POL-05",
+        "DOC-POL-18"
+      ],
+      "gaps_conflicts": "Notes incident on 2026-11-11 where opening Geo_Grapher as a library wrote vault artifacts inside the code repo.",
+      "uri": "file:///D:/Librarian_V2/docs/agent-guide.md",
+      "size_bytes": 22499,
+      "line_count": 364
+    },
+    {
+      "id": "DOC-POL-18",
+      "title": "Librarian Operator Guide",
+      "path": "D:\\Librarian_V2\\docs\\operator-guide.md",
+      "doc_type": "guide",
+      "date": "2026-10-31",
+      "author_origin": "Librarian V2 Release / Ops",
+      "topic_area": "Installation, Host CLI, Health & Secrets",
+      "evidence_kind": "specification",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Host commands and keychain/SecretStorage paths implemented; signed stable installer & tray bundle remain release-gated (RELEASE-02/03).",
+      "related": [
+        "DOC-POL-05",
+        "DOC-POL-17",
+        "DOC-PLN-05"
+      ],
+      "gaps_conflicts": "Clean separation of editable dev install vs signed wheelhouse release.",
+      "uri": "file:///D:/Librarian_V2/docs/operator-guide.md",
+      "size_bytes": 5711,
+      "line_count": 116
+    },
+    {
+      "id": "DOC-PLN-01",
+      "title": "Unified Implementation Plan & Progress Log",
+      "path": "D:\\Librarian_V2\\docs\\unified-implementation-plan.md",
+      "doc_type": "implementation_plan",
+      "date": "2026-11-22",
+      "author_origin": "Librarian V2 Core Maintainers",
+      "topic_area": "Execution Sequence, Completed Fixes & Workstreams",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Canonical sequencing & progress ledger (\u00a73-\u00a719 through commit d9435e1 on Nov 22, 2026), explicitly tracking completed fixes (OP1, OP8, F2, deep_read.spread, batch._review) vs open work.",
+      "related": [
+        "DOC-POL-01",
+        "DOC-PLN-02",
+        "DOC-PLN-04",
+        "DOC-RPT-04"
+      ],
+      "gaps_conflicts": "Master finalization docs (DOC-RPT-04) note manifest/plan crosswalk (MF-003) was drafted for approval without editing this file directly; Nov 16-22 \u00a719 log advances beyond Nov 4 snapshot.",
+      "uri": "file:///D:/Librarian_V2/docs/unified-implementation-plan.md",
+      "size_bytes": 483184,
+      "line_count": 7474
+    },
+    {
+      "id": "DOC-PLN-02",
+      "title": "Plan Forward 2026-11 (Workstreams W1-W9)",
+      "path": "D:\\Librarian_V2\\docs\\proposals\\plan-forward-2026-11.md",
+      "doc_type": "proposal_plan",
+      "date": "2026-11-20",
+      "author_origin": "Owner-guided planning synthesis (Rank 5)",
+      "topic_area": "W1-W9 Pipeline, Graph, Blast Radius & Oracle/Doctor Roadmap",
+      "evidence_kind": "proposal",
+      "acceptance_status": "ACCEPTED_UNIMPLEMENTED",
+      "status_evidence": "Ranked architectural direction (W1-W9): W1/W2 implemented Nov 21-22 per unified plan \u00a719; W1b (YAML flows/mandates), W3 (blast radius), W4 (views), W5 (relations), W6 (reorg), W8 (titles/topics), W9 (runtime Oracle/Doctor) remain unimplemented.",
+      "related": [
+        "DOC-PLN-01",
+        "DOC-PLN-03",
+        "DOC-PLN-09",
+        "DOC-POL-02"
+      ],
+      "gaps_conflicts": "Rank 5 proposal elevated in part by unified plan \u00a719 adoption of W1/W2; remaining workstreams await implementation.",
+      "uri": "file:///D:/Librarian_V2/docs/proposals/plan-forward-2026-11.md",
+      "size_bytes": 28628,
+      "line_count": 339
+    },
+    {
+      "id": "DOC-PLN-03",
+      "title": "Diagram Workflows & Four-View Specification Convention",
+      "path": "D:\\Librarian_V2\\docs\\proposals\\diagram-workflows.md",
+      "doc_type": "specification_proposal",
+      "date": "2026-11-20",
+      "author_origin": "Librarian V2 Architecture (with 2026-11-21..23 tooling)",
+      "topic_area": "Use Cases, Activity Specs, Swimlanes & Lens Validation",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Enforced directly by render_spec.py (DOC-MAP-05) and build_family.py (DOC-MAP-22); defines USE-CASES, Mermaid, Canvas, decision-tree/validation gates.",
+      "related": [
+        "DOC-MAP-05",
+        "DOC-MAP-01",
+        "DOC-MAP-11",
+        "DOC-MAP-18"
+      ],
+      "gaps_conflicts": "Manual user example `decision example - user made.canvas` (DOC-MAP-11) explores sub-columns & edge color semantics outside this spec.",
+      "uri": "file:///D:/Librarian_V2/docs/proposals/diagram-workflows.md",
+      "size_bytes": 60683,
+      "line_count": 667
+    },
+    {
+      "id": "DOC-PLN-04",
+      "title": "Regression Manifest",
+      "path": "D:\\Librarian_V2\\docs\\regression-manifest.md",
+      "doc_type": "verification_manifest",
+      "date": "2026-11-05",
+      "author_origin": "Librarian V2 Core",
+      "topic_area": "Verification Commands, Test Suites & Historical Debt",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Living test contract linking pytest targets to BASE/CORE/INDEX/ROUTE/ADAPT/DEPLOY/HARNESS/ACCEPT milestones.",
+      "related": [
+        "DOC-PLN-01",
+        "DOC-PLN-05",
+        "DOC-RPT-04"
+      ],
+      "gaps_conflicts": "01-MASTER-SYSTEM-REPORT flags several manifest rows lag \u00a719 closures until MF-003 executes.",
+      "uri": "file:///D:/Librarian_V2/docs/regression-manifest.md",
+      "size_bytes": 56089,
+      "line_count": 629
+    },
+    {
+      "id": "DOC-PLN-05",
+      "title": "Release Implementation Queue (R0-R5 & G0-G5)",
+      "path": "D:\\Librarian_V2\\docs\\release-implementation-queue.md",
+      "doc_type": "release_plan",
+      "date": "2026-10-30",
+      "author_origin": "Librarian V2 Release Track",
+      "topic_area": "Release Gating & External Blockers",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "ACCEPTED_UNIMPLEMENTED",
+      "status_evidence": "Records G0-G5 green on 2026-10-30 while R0-R5 stay externally blocked awaiting freeze, wheelhouse, signing, and live L3 leads.",
+      "related": [
+        "DOC-PLN-01",
+        "DOC-POL-13",
+        "DOC-RPT-04"
+      ],
+      "gaps_conflicts": "release_leads.json intentionally marked `pending_release_ci`.",
+      "uri": "file:///D:/Librarian_V2/docs/release-implementation-queue.md",
+      "size_bytes": 15740,
+      "line_count": 295
+    },
+    {
+      "id": "DOC-PLN-06",
+      "title": "Model Invocation Architecture v1.0",
+      "path": "D:\\Librarian_V2\\docs\\model-invocation-architecture.md",
+      "doc_type": "specification",
+      "date": "2026-10-25",
+      "author_origin": "Librarian V2 Core (ADAPT-01..11)",
+      "topic_area": "Protocol Adapters, InvocationPlan & Expectations Registry",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Document header marked ADAPT-01 Partial at draft time; regression-manifest later records ADAPT-01 through ADAPT-11 + 04B implemented in commits through `6960d84`.",
+      "related": [
+        "DOC-POL-12",
+        "DOC-PLN-04",
+        "DOC-POL-13"
+      ],
+      "gaps_conflicts": "Model invocation envelope still needs unified per-operation reservation/receipt tracking in Clerk/OCR/PDF/TTS paths (MF-019/024/028).",
+      "uri": "file:///D:/Librarian_V2/docs/model-invocation-architecture.md",
+      "size_bytes": 33776,
+      "line_count": 891
+    },
+    {
+      "id": "DOC-PLN-07",
+      "title": "Long-Horizon Harness Design Specification",
+      "path": "D:\\Librarian_V2\\docs\\long-horizon-harness-design.md",
+      "doc_type": "design_spec",
+      "date": "2026-10-29",
+      "author_origin": "Librarian V2 Research Sprint",
+      "topic_area": "Long-Horizon Session State, Verifiers & Bounded Context",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Controls HARNESS-01..07 (implemented in Core), HARNESS-08 Tier B experimental, HARNESS-09 selective invalidation deferred.",
+      "related": [
+        "DOC-PLN-08",
+        "DOC-RPT-02",
+        "DOC-RPT-04"
+      ],
+      "gaps_conflicts": "Distinguishes implemented Session/closure helpers from full MEA audited engagement.",
+      "uri": "file:///D:/Librarian_V2/docs/long-horizon-harness-design.md",
+      "size_bytes": 32297,
+      "line_count": 251
+    },
+    {
+      "id": "DOC-PLN-08",
+      "title": "Audited-Engagement Harness & Evidence-Control Specification v1.1",
+      "path": "D:\\Librarian_V2\\docs\\audited-engagement-harness.md",
+      "doc_type": "specification",
+      "date": "2026-10-29",
+      "author_origin": "Librarian V2 Core (reconciled HARNESS-01)",
+      "topic_area": "Manage-Execute-Audit Loop & Evidence Control",
+      "evidence_kind": "proposal",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Header explicitly states: 'Proposed implementation specification, not implemented. Reconciled under HARNESS-01 on 2026-10-29.' HARNESS-01..07 landed core subset.",
+      "related": [
+        "DOC-PLN-07",
+        "DOC-RPT-02"
+      ],
+      "gaps_conflicts": "Unidentified 'Long horizon harness paper' citation flagged unverified by DOC-RPT-02.",
+      "uri": "file:///D:/Librarian_V2/docs/audited-engagement-harness.md",
+      "size_bytes": 72764,
+      "line_count": 1531
+    },
+    {
+      "id": "DOC-PLN-09",
+      "title": "Operators and Views Across Data Models",
+      "path": "D:\\Librarian_V2\\docs\\proposals\\operators-and-views.md",
+      "doc_type": "proposal",
+      "date": "2026-11-20",
+      "author_origin": "Owner direction (Rank 5 proposal)",
+      "topic_area": "Cross-Model Algebra, Blast Radius & Provenance Views",
+      "evidence_kind": "proposal",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Status line: 'proposal (rank 5 in docs/policy/README.md). Owner direction, 2026-11-20.' Maps relational/graph/document/dimensional/provenance/temporal operators.",
+      "related": [
+        "DOC-PLN-02",
+        "DOC-RPT-13",
+        "DOC-V1D-40"
+      ],
+      "gaps_conflicts": "Unified read-only structured query compiler (W4) and blast radius triggers (W3) not yet built.",
+      "uri": "file:///D:/Librarian_V2/docs/proposals/operators-and-views.md",
+      "size_bytes": 10746,
+      "line_count": 162
+    },
+    {
+      "id": "DOC-PLN-10",
+      "title": "Memory & Context Design Addendum (MC-01..MC-16)",
+      "path": "D:\\Librarian_V2\\docs\\proposals\\memory-context-design-addendum.md",
+      "doc_type": "proposal",
+      "date": "2026-11-03",
+      "author_origin": "Librarian V2 Memory/Context Review",
+      "topic_area": "Context Window Bounds, Durable Handles, Lineage & Withdrawal",
+      "evidence_kind": "proposal",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Consolidated into Master Finalization Spec (DOC-RPT-04b \u00a72) as MC-01..16 (assigned to MF-011/012/021/036-041); queued pending execution approval.",
+      "related": [
+        "DOC-RPT-04",
+        "DOC-PLN-01"
+      ],
+      "gaps_conflicts": "Loop-local result handles vs durable cross-restart references remain a key unresolved gap.",
+      "uri": "file:///D:/Librarian_V2/docs/proposals/memory-context-design-addendum.md",
+      "size_bytes": 15877,
+      "line_count": 143
+    },
+    {
+      "id": "DOC-V1D-01",
+      "title": "V1 Design Specification",
+      "path": "D:\\Resource-Library\\internal docs\\Design Specification.md",
+      "doc_type": "design_spec",
+      "date": "2026-09-01",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "V1 Catalogue Architecture, Modes A-D & Policy Boundaries",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "DECIDED_AGAINST",
+      "status_evidence": "Governing V1 spec (`status: draft for approval`, treated operationally active in V1), largely superseded/consolidated by V2 Plan (DOC-V1D-20) and V2 Core while preserving staging airlock, provenance, and consult principles.",
+      "related": [
+        "DOC-V1D-02",
+        "DOC-V1D-04",
+        "DOC-V1D-20",
+        "DOC-POL-14"
+      ],
+      "gaps_conflicts": "Multi-entry V1 CLI/builder architecture superseded by single V2 intake; individual methods (e.g. airlock, derived-before-asked) carried forward.",
+      "uri": "file:///D:/Resource-Library/internal docs/Design Specification.md",
+      "size_bytes": 50459,
+      "line_count": 806
+    },
+    {
+      "id": "DOC-V1D-02",
+      "title": "V1 Implementation Brief",
+      "path": "D:\\Resource-Library\\internal docs\\Implementation Brief.md",
+      "doc_type": "implementation_brief",
+      "date": "2026-09-01",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "V1 Vault Structure, build_solutions_library.py & Scout API",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "DECIDED_AGAINST",
+      "status_evidence": "Records V1 `build_solutions_library.py` (213 KB) and `scout/` 48 tests; `build_solutions_library.py` clobber hazard replaced in V2 by VaultWriter + staged promotion.",
+      "related": [
+        "DOC-V1D-01",
+        "DOC-V1D-09",
+        "DOC-V1D-20"
+      ],
+      "gaps_conflicts": "Historical record of why prose-overwriting batch generators were abandoned.",
+      "uri": "file:///D:/Resource-Library/internal docs/Implementation Brief.md",
+      "size_bytes": 15041,
+      "line_count": 250
+    },
+    {
+      "id": "DOC-V1D-03",
+      "title": "Research - System Definition",
+      "path": "D:\\Resource-Library\\internal docs\\Research - System Definition.md",
+      "doc_type": "research",
+      "date": "2026-09-01",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Core Problem Framing & Catalogue Axioms",
+      "evidence_kind": "research",
+      "acceptance_status": "ACCEPTED_NORMATIVE",
+      "status_evidence": "Foundational distinction ('identifies and locates solutions; does not extract them', `EXECUTION_SANDBOX_ONLY`, no LLM on deterministic metadata) carried into V2.",
+      "related": [
+        "DOC-V1D-01",
+        "DOC-V1D-05",
+        "DOC-V1D-07"
+      ],
+      "gaps_conflicts": "Direct source access later refined in V2 `access-model.md` (authorship strata).",
+      "uri": "file:///D:/Resource-Library/internal docs/Research - System Definition.md",
+      "size_bytes": 13514,
+      "line_count": 201
+    },
+    {
+      "id": "DOC-V1D-04",
+      "title": "System Implementation Status (V1)",
+      "path": "D:\\Resource-Library\\internal docs\\System Implementation Status.md",
+      "doc_type": "status_record",
+      "date": "2026-09-24",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "V1 Code-vs-Docs Reconciliation",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Establishes 'where note and code disagree, code is current truth' rule for V1 snapshot.",
+      "related": [
+        "DOC-V1D-01",
+        "DOC-V1D-06",
+        "DOC-V1D-22"
+      ],
+      "gaps_conflicts": "Historical V1 baseline prior to V2 migration.",
+      "uri": "file:///D:/Resource-Library/internal docs/System Implementation Status.md",
+      "size_bytes": 6059,
+      "line_count": 121
+    },
+    {
+      "id": "DOC-V1D-05",
+      "title": "Data Information Knowledge (DIK Layering Specification)",
+      "path": "D:\\Resource-Library\\internal docs\\Data Information Knowledge.md",
+      "doc_type": "design_spec",
+      "date": "2026-09-04",
+      "author_origin": "Resource-Library V1 (with Owner Medallion framing)",
+      "topic_area": "Medallion / DIK Storage & Epistemic Claim Grading",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Governs Bronze=Data (surveys/components/facts), Silver=Information (Resource/Source notes, `**Not read:**` & `## Evidence` honesty), Gold=Knowledge (Transferable Capability, Offerings, Applications). Partially realized in V2 `dik.py`, `evidence.py`, `staging.py`, `Offerings/`, `Applications/`.",
+      "related": [
+        "DOC-V1D-07",
+        "DOC-V1D-08",
+        "DOC-V1D-39",
+        "DOC-V1D-42",
+        "DOC-V1D-44"
+      ],
+      "gaps_conflicts": "V2 `dik.py` implements structural Data builders and `sources_data`, while `**Not read:**` / full claim-grade enforcement and Knowledge->feedback compounding remain partial.",
+      "uri": "file:///D:/Resource-Library/internal docs/Data Information Knowledge.md",
+      "size_bytes": 7522,
+      "line_count": 137
+    },
+    {
+      "id": "DOC-V1D-06",
+      "title": "Operating Modes - Librarian and Reader",
+      "path": "D:\\Resource-Library\\internal docs\\Operating Modes - Librarian and Reader.md",
+      "doc_type": "design_spec",
+      "date": "2026-09-24",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Librarian vs Reader Identities, 1A Suggestion Synthesis & Semiotics",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Unified Modes A-D, consult/borrow, and MCP tiers; introduced Mode 1A proactive suggestion (`suggest` purpose implemented in V2), mapped user's semantics/semiotics/pragmatics onto DIK, and flagged missing AST mapping (later assigned to Geo-Grapher).",
+      "related": [
+        "DOC-V1D-05",
+        "DOC-V1D-31",
+        "DOC-PLN-02"
+      ],
+      "gaps_conflicts": "Proactive project suggestion (`suggest`) now exists as a V2 session purpose, whereas AST-driven DIK input still lags (MF-040).",
+      "uri": "file:///D:/Resource-Library/internal docs/Operating Modes - Librarian and Reader.md",
+      "size_bytes": 12274,
+      "line_count": 208
+    },
+    {
+      "id": "DOC-V1D-07",
+      "title": "Note Content Model",
+      "path": "D:\\Resource-Library\\internal docs\\Note Content Model.md",
+      "doc_type": "content_model",
+      "date": "2026-09-03",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Schema-in-Vault (NO_SCHEMA_DRIFT) & Note Shapes",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Operationalized in V1 `integrity.py`; V2 replaces single fixed schema with vault-configurable Note Content Models (`schema.py`, profiles), preserving closed vs open axis derivation and raw `github_license_spdx` retention.",
+      "related": [
+        "DOC-V1D-05",
+        "DOC-V1D-15",
+        "DOC-RPT-04"
+      ],
+      "gaps_conflicts": "Strict V1 `## Evidence` & `**Not read:**` checks partly relaxed/refactored in V2 generic Source templates.",
+      "uri": "file:///D:/Resource-Library/internal docs/Note Content Model.md",
+      "size_bytes": 21995,
+      "line_count": 462
+    },
+    {
+      "id": "DOC-V1D-08",
+      "title": "Use Contexts And Agnostic Description",
+      "path": "D:\\Resource-Library\\internal docs\\Use Contexts And Agnostic Description.md",
+      "doc_type": "design_note",
+      "date": "2026-09-04",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Domain-Agnostic Description, Comparing Context & Medallion Insight",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Named the 4 query contexts (Designing/Solving/Sourcing/Comparing), the 'Stewardship Trap', `## Transferable Capability`, and the agnostic Medallion definition ('grading material by level of refinement, so that every stage is reproducible from the one before it...').",
+      "related": [
+        "DOC-V1D-05",
+        "DOC-V1D-39",
+        "DOC-V1D-44"
+      ],
+      "gaps_conflicts": "Comparing context ('what else does the same job differently?') remains weak in V2 lexical retrieval without topics/transferable abstractions.",
+      "uri": "file:///D:/Resource-Library/internal docs/Use Contexts And Agnostic Description.md",
+      "size_bytes": 8309,
+      "line_count": 143
+    },
+    {
+      "id": "DOC-V1D-09",
+      "title": "Library Assessment - September 2026",
+      "path": "D:\\Resource-Library\\internal docs\\Library Assessment 2026-09.md",
+      "doc_type": "assessment",
+      "date": "2026-09-01",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Template Failure Audit & Dogfooding Gaps",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Diagnosed 39/64 templated `What It Solves` blocks, lack of situational workflows (`08-Workflows`), and 12 unconsulted donor repos; drove V1 prose rewrite and V2 evidence-bound Clerk drafting.",
+      "related": [
+        "DOC-V1D-02",
+        "DOC-V1D-43",
+        "DOC-V1D-44"
+      ],
+      "gaps_conflicts": "Demonstrated why generic templated batch enrichment destroys retrieval precision.",
+      "uri": "file:///D:/Resource-Library/internal docs/Library Assessment 2026-09.md",
+      "size_bytes": 6318,
+      "line_count": 88
+    },
+    {
+      "id": "DOC-V1D-10",
+      "title": "Capability Register 2026-09-12",
+      "path": "D:\\Resource-Library\\internal docs\\Capability Register 2026-09-12.md",
+      "doc_type": "register",
+      "date": "2026-09-12",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "V1 Code-Counted Surface, Bounds & Six Derived Axes",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Generated from V1 code: 28 CLI subcommands, 20 MCP tools across 3 tiers, 5 LM tasks, 6 derived axes (0.958 on `agent_surface`), boundary clamps (`MAX_LIMIT=50`, `MAX_TEXT=20000`, etc.).",
+      "related": [
+        "DOC-V1D-11",
+        "DOC-V1D-13",
+        "DOC-POL-14"
+      ],
+      "gaps_conflicts": "V1 `MAX_LIMIT=50` clamp carried directly into V2 `registry.py` and caused F-01Staging pager bug in DOC-RPT-10.",
+      "uri": "file:///D:/Resource-Library/internal docs/Capability Register 2026-09-12.md",
+      "size_bytes": 5955,
+      "line_count": 159
+    },
+    {
+      "id": "DOC-V1D-11",
+      "title": "Capability Digest Grain 2026-09-10",
+      "path": "D:\\Resource-Library\\internal docs\\Capability Digest Grain 2026-09-10.md",
+      "doc_type": "assessment",
+      "date": "2026-09-10",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Repository Ingestion Grain & Capability Digest",
+      "evidence_kind": "research",
+      "acceptance_status": "UNIMPLEMENTED_UNDROPPED",
+      "status_evidence": "Established capability-sized slices over repo internals (import closure / entry points); V2 `dik.py` retains chapter/component extraction only partially without V1 `digest` MCP parity (MF-040).",
+      "related": [
+        "DOC-V1D-10",
+        "DOC-V1D-32",
+        "DOC-RPT-04"
+      ],
+      "gaps_conflicts": "Open candidate experiment MF-040 ('Pilot DIK capability-sized code digest').",
+      "uri": "file:///D:/Resource-Library/internal docs/Capability Digest Grain 2026-09-10.md",
+      "size_bytes": 8044,
+      "line_count": 181
+    },
+    {
+      "id": "DOC-V1D-12",
+      "title": "Service Map (V1)",
+      "path": "D:\\Resource-Library\\internal docs\\Service Map.md",
+      "doc_type": "architecture_map",
+      "date": "2026-09-25",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "V1 Service Topology & Entry Points",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "DECIDED_AGAINST",
+      "status_evidence": "Maps V1 fragmented entry points (`populate`, `intake`, `papers`, `enrich`, `lens`, `scout`, `consult`); consolidated into V2 unified intake/staging/registry.",
+      "related": [
+        "DOC-V1D-20",
+        "DOC-V1D-23",
+        "DOC-V1D-31"
+      ],
+      "gaps_conflicts": "Shows exact fragmentation V2 consolidated.",
+      "uri": "file:///D:/Resource-Library/internal docs/Service Map.md",
+      "size_bytes": 81654,
+      "line_count": 1294
+    },
+    {
+      "id": "DOC-V1D-13",
+      "title": "Search At Four Hundred 2026-09-12",
+      "path": "D:\\Resource-Library\\internal docs\\Search At Four Hundred 2026-09-12.md",
+      "doc_type": "evaluation",
+      "date": "2026-09-12",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Lexical + RRF Search Benchmarking (~240 answerable notes)",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Measured V1 lexical retrieval (hit@1 0.88, MRR 0.92; 30 scenarios useful@5 0.83) and IDF coverage selectivity; transferred into V2 `search.py`.",
+      "related": [
+        "DOC-V1D-32",
+        "DOC-V1D-10"
+      ],
+      "gaps_conflicts": "LM Studio vector path unavailable during benchmark \u2014 tie between no-vectors and vectors-heavy is unmeasured, not proof against vectors.",
+      "uri": "file:///D:/Resource-Library/internal docs/Search At Four Hundred 2026-09-12.md",
+      "size_bytes": 7203,
+      "line_count": 169
+    },
+    {
+      "id": "DOC-V1D-14",
+      "title": "Five Systems One Substrate 2026-09-11",
+      "path": "D:\\Resource-Library\\internal docs\\Five Systems One Substrate 2026-09-11.md",
+      "doc_type": "architecture_assessment",
+      "date": "2026-09-11",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Multi-Project Shared Substrate Convergence",
+      "evidence_kind": "research",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Analyzed shared infrastructure patterns across Owner projects before DOC-V1D-18 Consolidation Plan.",
+      "related": [
+        "DOC-V1D-17",
+        "DOC-V1D-18"
+      ],
+      "gaps_conflicts": "Conceptual convergence input rather than runtime spec.",
+      "uri": "file:///D:/Resource-Library/internal docs/Five Systems One Substrate 2026-09-11.md",
+      "size_bytes": 6217,
+      "line_count": 131
+    },
+    {
+      "id": "DOC-V1D-15",
+      "title": "Licence Resolution 2026-09-03",
+      "path": "D:\\Resource-Library\\internal docs\\Licence Resolution 2026-09-03.md",
+      "doc_type": "operational_record",
+      "date": "2026-09-03",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Licence Verification & Dual-Field Preservation",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Established rule preserving raw `github_license_spdx` beside derived `license_class`, treating disagreement as the finding.",
+      "related": [
+        "DOC-V1D-07",
+        "DOC-POL-08"
+      ],
+      "gaps_conflicts": "Folder-level unlicensed repo classification still sparked UI/policy ambiguity in Nov 2026 (DOC-RPT-11 F15).",
+      "uri": "file:///D:/Resource-Library/internal docs/Licence Resolution 2026-09-03.md",
+      "size_bytes": 15337,
+      "line_count": 226
+    },
+    {
+      "id": "DOC-V1D-16",
+      "title": "Research Report 2026-09-03 - Lineage, Parsing and Graph Reasoning",
+      "path": "D:\\Resource-Library\\internal docs\\Research Report 2026-09-03 - Lineage, Parsing and Graph Reasoning.md",
+      "doc_type": "research_report",
+      "date": "2026-09-03",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "AST/CST Parsing, Lineage, GraphRAG Communities & Markdown Schemas",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Evaluated OpenMetadata vs mdast schema style (`validate, do not generate` adopted in V1 Note Content Model), Tree-sitter/jcodemunch-mcp (CST/AST indexing later adapted in Geo-Grapher), and GraphRAG hierarchical Leiden communities (partially carried to V2 `communities.py`, untested/unwired in serving).",
+      "related": [
+        "DOC-V1D-07",
+        "DOC-V1D-40",
+        "DOC-V1D-41",
+        "DOC-RPT-04"
+      ],
+      "gaps_conflicts": "Community summarization (`communities.py`) remains UNIMPLEMENTED_UNDROPPED / unverified at runtime (MF-039).",
+      "uri": "file:///D:/Resource-Library/internal docs/Research Report 2026-09-03 - Lineage, Parsing and Graph Reasoning.md",
+      "size_bytes": 62746,
+      "line_count": 977
+    },
+    {
+      "id": "DOC-V1D-17",
+      "title": "Research Report 2026-09-17 - Orchestration, Deployment and UX Across Four Projects",
+      "path": "D:\\Resource-Library\\internal docs\\Research Report 2026-09-17 - Orchestration, Deployment and UX Across Four Projects.md",
+      "doc_type": "research_report",
+      "date": "2026-09-17",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Local-First Architecture, Read-Only HUD Discipline & Dual Orchestration",
+      "evidence_kind": "research",
+      "acceptance_status": "ACCEPTED_NORMATIVE",
+      "status_evidence": "Identified 'reader-never-participant' UX invariant, local-first consensus across 4 projects, and ToolSet copy drift; directly informed Librarian V2 Core-single-writer & Geo-Grapher origins.",
+      "related": [
+        "DOC-V1D-18",
+        "DOC-V1D-19",
+        "DOC-V1D-20"
+      ],
+      "gaps_conflicts": "Relied on `graphify-out/` graphs in V1 before Graphify was retired (DOC-POL-06).",
+      "uri": "file:///D:/Resource-Library/internal docs/Research Report 2026-09-17 - Orchestration, Deployment and UX Across Four Projects.md",
+      "size_bytes": 50477,
+      "line_count": 657
+    },
+    {
+      "id": "DOC-V1D-18",
+      "title": "Research Report 2026-09-18 - Six Prior AI Harnesses, Lineage and Recurring Patterns",
+      "path": "D:\\Resource-Library\\internal docs\\Research Report 2026-09-18 - Six Prior AI Harnesses, Lineage and Recurring Patterns.md",
+      "doc_type": "research_report",
+      "date": "2026-09-18",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Origin of Lenses, Governance Contracts & 'Declared-Not-Enforced' Anti-Pattern",
+      "evidence_kind": "research",
+      "acceptance_status": "ACCEPTED_NORMATIVE",
+      "status_evidence": "Traced 'lenses' (Aletheia), `governance_contracts`, and documented 5 historical instances of Owner's 'declared-but-not-enforced' failure mode \u2014 directly explaining the strict V2 policy/Core-gate emphasis.",
+      "related": [
+        "DOC-V1D-17",
+        "DOC-V1D-19",
+        "DOC-V1D-36"
+      ],
+      "gaps_conflicts": "DAG Engine five-layer compiler remains shelved.",
+      "uri": "file:///D:/Resource-Library/internal docs/Research Report 2026-09-18 - Six Prior AI Harnesses, Lineage and Recurring Patterns.md",
+      "size_bytes": 19623,
+      "line_count": 262
+    },
+    {
+      "id": "DOC-V1D-19",
+      "title": "Consolidation Plan 2026-09-18 - Four Projects Onto A Shared Framework",
+      "path": "D:\\Resource-Library\\internal docs\\Consolidation Plan 2026-09-18 - Four Projects Onto A Shared Framework.md",
+      "doc_type": "consolidation_plan",
+      "date": "2026-09-18",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Cross-Project Consolidation Precursor to Librarian V2",
+      "evidence_kind": "proposal",
+      "acceptance_status": "DECIDED_AGAINST",
+      "status_evidence": "Precursor multi-repo unification proposal superseded by building Librarian V2 (DOC-V1D-20) and later Geo-Grapher as separate bounded services.",
+      "related": [
+        "DOC-V1D-17",
+        "DOC-V1D-20"
+      ],
+      "gaps_conflicts": "Shared substrate vision narrowed to Librarian + Geo-Grapher + content-roots.",
+      "uri": "file:///D:/Resource-Library/internal docs/Consolidation Plan 2026-09-18 - Four Projects Onto A Shared Framework.md",
+      "size_bytes": 16380,
+      "line_count": 105
+    },
+    {
+      "id": "DOC-V1D-20",
+      "title": "PLAN - Librarian V2",
+      "path": "D:\\Resource-Library\\PLAN - Librarian V2.md",
+      "doc_type": "architecture_plan",
+      "date": "2026-09-25",
+      "author_origin": "Resource-Library / V2 Inception",
+      "topic_area": "Original V2 Master Blueprint (Single Intake, Clerk/Scribe, Lenses, Search)",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Header says `proposed - awaiting approval before construction`, subsequently approved & constructed (M0-M5b + Co-work Roadmap + V2 repo) with later refinements in DOC-PLN-01.",
+      "related": [
+        "DOC-V1D-22",
+        "DOC-V1D-23",
+        "DOC-V2E-01",
+        "DOC-PLN-01"
+      ],
+      "gaps_conflicts": "Some original V2 targets (book-level P1-L7 lens synthesis, component search parity, automated feedback learning) stayed incomplete.",
+      "uri": "file:///D:/Resource-Library/PLAN - Librarian V2.md",
+      "size_bytes": 80330,
+      "line_count": 1059
+    },
+    {
+      "id": "DOC-V1D-21",
+      "title": "Review Note - Librarian - Round Two",
+      "path": "D:\\Resource-Library\\Review note - Librarian - Round Two.md",
+      "doc_type": "owner_review",
+      "date": "2026-09-25",
+      "author_origin": "Owner review note",
+      "topic_area": "Approval & Review Conditions on V2 Plan",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "ACCEPTED_NORMATIVE",
+      "status_evidence": "Direct Owner review constraints feeding into V2 construction.",
+      "related": [
+        "DOC-V1D-20",
+        "DOC-V1D-23"
+      ],
+      "gaps_conflicts": "Short directives superseded by detailed Nov 2026 Core policies.",
+      "uri": "file:///D:/Resource-Library/Review note - Librarian - Round Two.md",
+      "size_bytes": 18695,
+      "line_count": 26
+    },
+    {
+      "id": "DOC-V1D-22",
+      "title": "Meta Analysis And Final Shape 2026-09-04",
+      "path": "D:\\Resource-Library\\internal docs\\Meta Analysis And Final Shape 2026-09-04.md",
+      "doc_type": "assessment",
+      "date": "2026-09-04",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Architectural Shape Synthesis (V1)",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Synthesized V1 end-shape lessons (minimal schema, explicit evidence, reusable workflows) carried forward into V2.",
+      "related": [
+        "DOC-V1D-01",
+        "DOC-V1D-05",
+        "DOC-V1D-20"
+      ],
+      "gaps_conflicts": "Pre-V2 architecture snapshot.",
+      "uri": "file:///D:/Resource-Library/internal docs/Meta Analysis And Final Shape 2026-09-04.md",
+      "size_bytes": 13986,
+      "line_count": 297
+    },
+    {
+      "id": "DOC-V1D-23",
+      "title": "System Assessment 2026-09-24 & System Review 2026-09-25",
+      "path": "D:\\Resource-Library\\internal docs\\System Review 2026-09-25.md",
+      "doc_type": "system_review",
+      "date": "2026-09-25",
+      "author_origin": "Resource-Library V1->V2 Transition",
+      "topic_area": "V1 Systemic Failures Motivating V2 Redesign",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Audited V1 gaps (4,650 LOC unairlocked scripts, weak session/project memory, stale indexes) justifying V2 consolidated Core.",
+      "related": [
+        "DOC-V1D-24",
+        "DOC-V1D-25",
+        "DOC-V1D-20"
+      ],
+      "gaps_conflicts": "Companion `System Assessment 2026-09-24.md` also in `internal docs/`.",
+      "uri": "file:///D:/Resource-Library/internal docs/System Review 2026-09-25.md",
+      "size_bytes": 41803,
+      "line_count": 490
+    },
+    {
+      "id": "DOC-V1D-24",
+      "title": "Local V1 Against The V2 Plan 2026-09-25",
+      "path": "D:\\Resource-Library\\internal docs\\Local V1 Against The V2 Plan 2026-09-25.md",
+      "doc_type": "assessment",
+      "date": "2026-09-25",
+      "author_origin": "Resource-Library V1->V2 Audit",
+      "topic_area": "V1 Capability vs V2 Plan Reconciliation",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Checked every local V1 module against V2 architectural blueprint before V2 parity builds.",
+      "related": [
+        "DOC-V1D-25",
+        "DOC-V1D-20",
+        "DOC-V1D-31"
+      ],
+      "gaps_conflicts": "Point-in-time Sep 25 snapshot; updated Sep 30 in DOC-V1D-30/31.",
+      "uri": "file:///D:/Resource-Library/internal docs/Local V1 Against The V2 Plan 2026-09-25.md",
+      "size_bytes": 9391,
+      "line_count": 123
+    },
+    {
+      "id": "DOC-V1D-25",
+      "title": "Review - V2 Against How V1 Is Built 2026-09-26",
+      "path": "D:\\Resource-Library\\internal docs\\Review - V2 Against How V1 Is Built 2026-09-26.md",
+      "doc_type": "system_review",
+      "date": "2026-09-26",
+      "author_origin": "Resource-Library V1->V2 Audit",
+      "topic_area": "Early V2 Implementation Audit vs V1",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Identified early missing V2 lens pipeline & repo survey depth; corrected 2 days later after lens-chain build (DOC-V1D-28).",
+      "related": [
+        "DOC-V1D-24",
+        "DOC-V1D-28",
+        "DOC-V1D-30"
+      ],
+      "gaps_conflicts": "Critique of missing lenses explicitly superseded by Sept 28 Lens Chain build & evaluation.",
+      "uri": "file:///D:/Resource-Library/internal docs/Review - V2 Against How V1 Is Built 2026-09-26.md",
+      "size_bytes": 6565,
+      "line_count": 111
+    },
+    {
+      "id": "DOC-V1D-26",
+      "title": "Literature Alignment - Agentic AI Trust and Architecture 2026-09-26",
+      "path": "D:\\Resource-Library\\internal docs\\Literature Alignment - Agentic AI Trust and Architecture 2026-09-26.md",
+      "doc_type": "research_assessment",
+      "date": "2026-09-26",
+      "author_origin": "Resource-Library",
+      "topic_area": "External Agentic Literature vs Librarian Architecture",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Aligned trust, delegation, and verification principles (AgentSpec, Reflexion, ToT) with V2 role isolation and deterministic gating.",
+      "related": [
+        "DOC-RPT-02",
+        "DOC-V1D-27",
+        "DOC-PLN-07"
+      ],
+      "gaps_conflicts": "Filename on disk check: note in folder may match full title.",
+      "uri": "file:///D:/Resource-Library/internal docs/Literature Alignment - Agentic AI Trust and Architecture 2026-09-26.md",
+      "size_bytes": 34567,
+      "line_count": 385
+    },
+    {
+      "id": "DOC-V1D-27",
+      "title": "Review - Co-work Roadmap and Lens Methodology 2026-09-27",
+      "path": "D:\\Resource-Library\\internal docs\\Review - Co-work Roadmap and Lens Methodology 2026-09-27.md",
+      "doc_type": "system_review",
+      "date": "2026-09-27",
+      "author_origin": "Resource-Library V2",
+      "topic_area": "Lens Methodology & Co-Work Phases",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Evaluated lens methodology integration into V2 session co-work phases prior to DOC-V1D-28.",
+      "related": [
+        "DOC-V2E-01",
+        "DOC-V1D-28",
+        "DOC-V1D-36"
+      ],
+      "gaps_conflicts": "Early review prior to Oct 1 parity and Nov 2026 harness refinements.",
+      "uri": "file:///D:/Resource-Library/internal docs/Review - Co-work Roadmap and Lens Methodology 2026-09-27.md",
+      "size_bytes": 48563,
+      "line_count": 660
+    },
+    {
+      "id": "DOC-V1D-28",
+      "title": "Lens Chain Evaluation 2026-09-28",
+      "path": "D:\\Resource-Library\\internal docs\\Lens Chain Evaluation 2026-09-28.md",
+      "doc_type": "evaluation",
+      "date": "2026-09-28",
+      "author_origin": "Resource-Library V2",
+      "topic_area": "Lens Extraction Quality, Model Tiering & Quote Matching",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Measured V2 lens chain across models on 3 gold sources after quote-matching/challenge fixes: API tier strong; local 4B misses stances; DeepSeek-V4-Flash emits invalid lens output.",
+      "related": [
+        "DOC-V1D-27",
+        "DOC-V1D-30",
+        "DOC-RPT-04b"
+      ],
+      "gaps_conflicts": "Small gold set (3 sources); book-level cross-chapter lens synthesis (P1-L7) remained unimplemented.",
+      "uri": "file:///D:/Resource-Library/internal docs/Lens Chain Evaluation 2026-09-28.md",
+      "size_bytes": 9451,
+      "line_count": 163
+    },
+    {
+      "id": "DOC-V1D-29",
+      "title": "V2 Early Milestone Results (M0-M5b Summary Set)",
+      "path": "D:\\Resource-Library\\internal docs\\Librarian V2 - M0 Results 2026-09-25.md",
+      "doc_type": "test_report",
+      "date": "2026-09-26",
+      "author_origin": "Librarian V2 Build Milestones",
+      "topic_area": "Early V2 Subsystem Verification (M0, M2, M3, M4, M5, M5b)",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Documents initial M0-M5b subsystem validation in `.v2/` (Companion files: M2, M3, M4, M5, M5b Results); vector retrieval benchmark (M2) stayed off/unvalidated in default search.",
+      "related": [
+        "DOC-V1D-20",
+        "DOC-V2E-04",
+        "DOC-RPT-01"
+      ],
+      "gaps_conflicts": "Milestone-level unit checks did not cover multi-turn autonomous completion (exposed later in M0 Completion Suite DOC-V2E-04).",
+      "uri": "file:///D:/Resource-Library/internal docs/Librarian V2 - M0 Results 2026-09-25.md",
+      "size_bytes": 9548,
+      "line_count": 168
+    },
+    {
+      "id": "DOC-V1D-30",
+      "title": "Apples-to-Apples V1 and V2 Comparison 2026-09-30",
+      "path": "D:\\Resource-Library\\internal docs\\chatgpt-review\\Apples-to-Apples V1 and V2 Comparison - 2026-09-30.md",
+      "doc_type": "comparison_audit",
+      "date": "2026-09-30",
+      "author_origin": "ChatGPT / V1-V2 Audit",
+      "topic_area": "Consolidation vs Service Parity, Single-Pathway Semantics of ingest()",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Clarified V2 has one consolidated intake path (`intake.ingest` + `intake_run`), NOT one automatic call running PDF cleanup, deep read, lenses, and promotion; mapped all V1 service parity gaps.",
+      "related": [
+        "DOC-V1D-31",
+        "DOC-V1D-32",
+        "DOC-V2E-05",
+        "DOC-RPT-01"
+      ],
+      "gaps_conflicts": "Identified UX confusion from overloaded term `ingest` and missing topics (`Unfiled`).",
+      "uri": "file:///D:/Resource-Library/internal docs/chatgpt-review/Apples-to-Apples V1 and V2 Comparison - 2026-09-30.md",
+      "size_bytes": 17142,
+      "line_count": 74
+    },
+    {
+      "id": "DOC-V1D-31",
+      "title": "Deeper V1 Service and V2 Tooling Audit 2026-09-30",
+      "path": "D:\\Resource-Library\\internal docs\\chatgpt-review\\Deeper V1 Service and V2 Tooling Audit - 2026-09-30.md",
+      "doc_type": "system_audit",
+      "date": "2026-09-30",
+      "author_origin": "ChatGPT / V1-V2 Audit",
+      "topic_area": "Method Continuity, Queued Intake Context Drop, Candidate Handoff & Feedback Loop",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Diagnosed 4 critical structural breaks: (1) `intake_run` drops brief/need/disqualifiers, (2) accepted Source->Judge candidate manual bridge, (3) missing project write tool, (4) `record_application` lacks `unresolved_sources`/ranking feedback loop.",
+      "related": [
+        "DOC-V1D-30",
+        "DOC-V1D-33",
+        "DOC-RPT-01"
+      ],
+      "gaps_conflicts": "Project file writing later handled via read-only `content_roots` + Workbench/proposed diff boundaries; queued intake framing and feedback compounding remain partly open.",
+      "uri": "file:///D:/Resource-Library/internal docs/chatgpt-review/Deeper V1 Service and V2 Tooling Audit - 2026-09-30.md",
+      "size_bytes": 23583,
+      "line_count": 136
+    },
+    {
+      "id": "DOC-V1D-32",
+      "title": "Search Methods - V1 Implementation and V2 Transfer 2026-09-30",
+      "path": "D:\\Resource-Library\\internal docs\\chatgpt-review\\Search Methods - V1 Implementation and V2 Transfer 2026-09-30.md",
+      "doc_type": "system_review",
+      "date": "2026-09-30",
+      "author_origin": "ChatGPT / Search Audit",
+      "topic_area": "Two Search Loops (Research vs Internal), RRF Ranking & Component Search Gap",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Confirmed V2 preserves V1 lexical RRF & coverage rules + adds `in_text`/section search; flagged lost V1 6-signal Scout ranking integration, missing `find_components`, and absent query feedback.",
+      "related": [
+        "DOC-V1D-13",
+        "DOC-V1D-31",
+        "DOC-V1D-11"
+      ],
+      "gaps_conflicts": "Confirms neither V1 nor V2 had a validated query-use ranking loop.",
+      "uri": "file:///D:/Resource-Library/internal docs/chatgpt-review/Search Methods - V1 Implementation and V2 Transfer 2026-09-30.md",
+      "size_bytes": 27069,
+      "line_count": 157
+    },
+    {
+      "id": "DOC-V1D-33",
+      "title": "Requirements - V2 Research Pipeline and Project Access 2026-09-30",
+      "path": "D:\\Resource-Library\\internal docs\\chatgpt-review\\Requirements - V2 Research Pipeline and Project Access 2026-09-30.md",
+      "doc_type": "requirements",
+      "date": "2026-09-30",
+      "author_origin": "ChatGPT Review (Proposed Requirements)",
+      "topic_area": "Need-Framed Research vs Unframed Source Staging & Project Access",
+      "evidence_kind": "proposal",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Marked `status: proposed`; drove V2 addendum (`DOC-V2E-02`) keeping source descriptions unframed while linking session need/disqualifiers via `found_for`.",
+      "related": [
+        "DOC-V1D-31",
+        "DOC-V2E-02",
+        "DOC-V1D-05"
+      ],
+      "gaps_conflicts": "Served as requirements feeder into Requirements Addendum 2026-09-30.",
+      "uri": "file:///D:/Resource-Library/internal docs/chatgpt-review/Requirements - V2 Research Pipeline and Project Access 2026-09-30.md",
+      "size_bytes": 29456,
+      "line_count": 300
+    },
+    {
+      "id": "DOC-V1D-34",
+      "title": "Librarian Uni Session Performance 2026-09-30",
+      "path": "D:\\Resource-Library\\internal docs\\chatgpt-review\\Librarian Uni session performance - 2026-09-30.md",
+      "doc_type": "incident_report",
+      "date": "2026-09-30",
+      "author_origin": "ChatGPT Review",
+      "topic_area": "Observed Failure in Real UCLan Research Session",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Documents model confusion around phase gates, queue vs direct `ingest`, and staging approval during live Librarian-Uni usage, triggering M0 suite design.",
+      "related": [
+        "DOC-V2E-03",
+        "DOC-V2E-04"
+      ],
+      "gaps_conflicts": "Diagnosed prompt/tool clarity vs genuine Core gate functioning.",
+      "uri": "file:///D:/Resource-Library/internal docs/chatgpt-review/Librarian Uni session performance - 2026-09-30.md",
+      "size_bytes": 5325,
+      "line_count": 37
+    },
+    {
+      "id": "DOC-V1D-35",
+      "title": "Developing Pipelines - Our Own Rudimentary Method",
+      "path": "D:\\Resource-Library\\branch offerings\\Library Methodology\\Developing Pipelines - Our Own Rudimentary Method.md",
+      "doc_type": "branch_report",
+      "date": "2026-09-18",
+      "author_origin": "Resource-Library Branch Offering",
+      "topic_area": "Empirical Pipeline Construction Method & Verification Discipline",
+      "evidence_kind": "research",
+      "acceptance_status": "ACCEPTED_NORMATIVE",
+      "status_evidence": "Branch methodology (`status: draft`) codifying build-observe-audit cycles that directly shaped Librarian V2 reconstruction & diagram workflows.",
+      "related": [
+        "DOC-V1D-36",
+        "DOC-V1D-37",
+        "DOC-PLN-03"
+      ],
+      "gaps_conflicts": "Advisory branch offering, not a formal Core specification.",
+      "uri": "file:///D:/Resource-Library/branch offerings/Library Methodology/Developing Pipelines - Our Own Rudimentary Method.md",
+      "size_bytes": 6923,
+      "line_count": 112
+    },
+    {
+      "id": "DOC-V1D-36",
+      "title": "Lenses for Source Assessment - A Redo of the NotebookLM Compilation",
+      "path": "D:\\Resource-Library\\branch offerings\\Library Methodology\\Lenses for Source Assessment - A Redo of the NotebookLM Compilation.md",
+      "doc_type": "branch_report",
+      "date": "2026-09-18",
+      "author_origin": "Resource-Library Branch Offering",
+      "topic_area": "Grounded Lens Formulation & Untrusted Summary Re-Audit",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Replaced hallucinated NotebookLM claims with primary-source-checked source-assessment lenses.",
+      "related": [
+        "DOC-V1D-28",
+        "DOC-V1D-35",
+        "DOC-V1D-38"
+      ],
+      "gaps_conflicts": "Exemplar of source-grounded offering discipline required by `/write-an-offering`.",
+      "uri": "file:///D:/Resource-Library/branch offerings/Library Methodology/Lenses for Source Assessment - A Redo of the NotebookLM Compilation.md",
+      "size_bytes": 13957,
+      "line_count": 189
+    },
+    {
+      "id": "DOC-V1D-37",
+      "title": "Resource Library Self-Audit - Proven Formats Against Our Own Infrastructure",
+      "path": "D:\\Resource-Library\\branch offerings\\Library Methodology\\Resource Library Self-Audit - Proven Formats Against Our Own Infrastructure.md",
+      "doc_type": "branch_report",
+      "date": "2026-09-25",
+      "author_origin": "Resource-Library Branch Offering",
+      "topic_area": "Self-Audit of Vault Infrastructure vs Catalogued Formats",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Audited vault formats against catalogued specs; informed V2 single-writer SQLite and schema contracts.",
+      "related": [
+        "DOC-V1D-09",
+        "DOC-V1D-35"
+      ],
+      "gaps_conflicts": "V1 snapshot.",
+      "uri": "file:///D:/Resource-Library/branch offerings/Library Methodology/Resource Library Self-Audit - Proven Formats Against Our Own Infrastructure.md",
+      "size_bytes": 10289,
+      "line_count": 141
+    },
+    {
+      "id": "DOC-V1D-38",
+      "title": "Application - Automated Lens Extraction Pipeline",
+      "path": "D:\\Resource-Library\\09-Applications\\Application - Automated Lens Extraction Pipeline.md",
+      "doc_type": "application_record",
+      "date": "2026-09-18",
+      "author_origin": "Resource-Library V1 Applications",
+      "topic_area": "Chunked Lens Extraction, Quote Verification & Staging Application",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Knowledge-layer record of building & testing the 4-step lens extraction pipeline (`PERSPECTIVE->ATTENTION->ROLE->SYNTHESIZE`).",
+      "related": [
+        "DOC-V1D-28",
+        "DOC-V1D-36"
+      ],
+      "gaps_conflicts": "Cross-chapter book-level lens synthesis later flagged unimplemented.",
+      "uri": "file:///D:/Resource-Library/09-Applications/Application - Automated Lens Extraction Pipeline.md",
+      "size_bytes": 13034,
+      "line_count": 140
+    },
+    {
+      "id": "DOC-V1D-39",
+      "title": "Victor-Kipruto-Rop - medallion-lakehouse-platform (Source Note)",
+      "path": "D:\\Resource-Library\\01-Resources\\Victor-Kipruto-Rop - medallion-lakehouse-platform.md",
+      "doc_type": "resource_note",
+      "date": "2026-09-04",
+      "author_origin": "Resource-Library V1 Catalogued Source",
+      "topic_area": "Origin of Medallion Layering Adoption in Resource-Library",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Catalogued donor note behind `Glossary - Medallion Architecture` and `Pattern - Medallion Layering`.",
+      "related": [
+        "DOC-V1D-05",
+        "DOC-V1D-08",
+        "DOC-V1D-42",
+        "DOC-V1D-44"
+      ],
+      "gaps_conflicts": "Domain concepts translated agnostically into DIK + staging + replayable derived views.",
+      "uri": "file:///D:/Resource-Library/01-Resources/Victor-Kipruto-Rop - medallion-lakehouse-platform.md",
+      "size_bytes": 8350,
+      "line_count": 134
+    },
+    {
+      "id": "DOC-V1D-40",
+      "title": "V1 Ingestion, Medallion, Graph & Queue Pattern Notes (8 Core Patterns)",
+      "path": "D:\\Resource-Library\\03-Patterns\\Pattern - Medallion Layering.md",
+      "doc_type": "pattern",
+      "date": "2026-09-04",
+      "author_origin": "Resource-Library V1 Patterns",
+      "topic_area": "Medallion Layering, Lifecycle Staging, Provenance, Graph Communities & Local Queues",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Cluster of 8 V1 architectural patterns (`Medallion Layering`, `Lifecycle Staging`, `Run Provenance Capture`, `Graph Community Summarisation`, `Program Graph Construction`, `Knowledge Graph Routing`, `Model Inference Pipeline`, `Local Durable Queue`); Staging/Provenance/Queues/Inference implemented in V2 Core, whereas `Graph Community Summarisation` (`communities.py`) and cross-graph routing (`W5`) remain partial/unwired.",
+      "related": [
+        "DOC-V1D-05",
+        "DOC-V1D-16",
+        "DOC-V1D-39",
+        "DOC-RPT-04"
+      ],
+      "gaps_conflicts": "Sibling patterns exist as individual `.md` notes under `D:\\Resource-Library\\03-Patterns\\`.",
+      "uri": "file:///D:/Resource-Library/03-Patterns/Pattern - Medallion Layering.md",
+      "size_bytes": 1709,
+      "line_count": 42
+    },
+    {
+      "id": "DOC-V1D-41",
+      "title": "Schema Extension - Containers and Papers",
+      "path": "D:\\Resource-Library\\internal docs\\Schema Extension - Containers and Papers.md",
+      "doc_type": "design_spec",
+      "date": "2026-09-03",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Container Expansion (Awesome-lists) & Academic Paper Shapes",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Container axes and paper Source kind carried into V2; container child auto-expansion and arXiv/DOI specialized paper ingestion partly unified under V2 `intake` + `deep_read`.",
+      "related": [
+        "DOC-V1D-07",
+        "DOC-V1D-42"
+      ],
+      "gaps_conflicts": "OpenAlex search parity noted missing in Sep 30 comparison (DOC-V1D-30).",
+      "uri": "file:///D:/Resource-Library/internal docs/Schema Extension - Containers and Papers.md",
+      "size_bytes": 6790,
+      "line_count": 98
+    },
+    {
+      "id": "DOC-V1D-42",
+      "title": "Schema Extension - Scouting Pipeline",
+      "path": "D:\\Resource-Library\\internal docs\\Schema Extension - Scouting Pipeline.md",
+      "doc_type": "design_spec",
+      "date": "2026-09-01",
+      "author_origin": "Resource-Library V1",
+      "topic_area": "Multi-Stage Discovery, Ranking & Deep-Dive Queue Schema",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Fed V1 `scout` SQLite candidate queue & V2 `scout_*` / `intake_queue` design.",
+      "related": [
+        "DOC-V1D-02",
+        "DOC-V1D-32"
+      ],
+      "gaps_conflicts": "V1 six-signal GitHub ranker differs from V2 deterministic `scout_rank` heuristic.",
+      "uri": "file:///D:/Resource-Library/internal docs/Schema Extension - Scouting Pipeline.md",
+      "size_bytes": 10839,
+      "line_count": 159
+    },
+    {
+      "id": "DOC-V1D-43",
+      "title": "Workflow - Ingest An External Data Source & Build A Knowledge Catalogue",
+      "path": "D:\\Resource-Library\\08-Workflows\\Workflow - Ingest An External Data Source.md",
+      "doc_type": "workflow_guide",
+      "date": "2026-09-01",
+      "author_origin": "Resource-Library V1 Workflows",
+      "topic_area": "Situational Ingestion & Catalogue-Building SOPs",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Companion workflow `Workflow - Build A Knowledge Catalogue.md` in same folder; conceptual staging/check discipline carried into V2 `standard/workflows/` & `ingestion` canvases.",
+      "related": [
+        "DOC-V1D-09",
+        "DOC-V1D-30"
+      ],
+      "gaps_conflicts": "Prose workflows in V1 are non-executable guidance unlike V2 YAML workflows (`workflows.py`).",
+      "uri": "file:///D:/Resource-Library/08-Workflows/Workflow - Ingest An External Data Source.md",
+      "size_bytes": 6412,
+      "line_count": 89
+    },
+    {
+      "id": "DOC-V1D-44",
+      "title": "Glossary - Medallion Architecture & Core Provenance/Lineage Definitions",
+      "path": "D:\\Resource-Library\\02-Glossary\\Glossary - Medallion Architecture.md",
+      "doc_type": "glossary_note",
+      "date": "2026-09-04",
+      "author_origin": "Resource-Library V1 Glossary",
+      "topic_area": "Bronze/Silver/Gold Data Layers vs Provenance vs Lineage",
+      "evidence_kind": "specification",
+      "acceptance_status": "ACCEPTED_NORMATIVE",
+      "status_evidence": "Defines Medallion (Bronze/Silver/Gold storage refinement), paired with `Glossary - Provenance.md` (act of production) and `Glossary - Data Lineage.md` (dataset relationships).",
+      "related": [
+        "DOC-V1D-05",
+        "DOC-V1D-08",
+        "DOC-V1D-39",
+        "DOC-POL-04"
+      ],
+      "gaps_conflicts": "V2 reused the words `gold`/`silver`/`bronze` for Trust Tiers in `agent-roles-and-authority.md`, creating a critical homonym collision resolved in our Glossary.",
+      "uri": "file:///D:/Resource-Library/02-Glossary/Glossary - Medallion Architecture.md",
+      "size_bytes": 1015,
+      "line_count": 32
+    },
+    {
+      "id": "DOC-V1D-45",
+      "title": "REPORT - Outside Agent Engagement 2026-09-10",
+      "path": "D:\\Resource-Library\\REPORT - Outside Agent Engagement 2026-09-10.md",
+      "doc_type": "field_trial",
+      "date": "2026-09-10",
+      "author_origin": "External Codex Agent Trial on V1",
+      "topic_area": "Reader Checkout, Borrow vs Consult & Real-Project Adoption",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Observed an external agent using V1 (`consult` / `borrow` / `application`); exposed need for `record_application` and `Operating Modes` distinction.",
+      "related": [
+        "DOC-V1D-06",
+        "DOC-V1D-31"
+      ],
+      "gaps_conflicts": "Wait-on-approval and borrow mechanics reshaped into V2 `apply` session purpose.",
+      "uri": "file:///D:/Resource-Library/REPORT - Outside Agent Engagement 2026-09-10.md",
+      "size_bytes": 12344,
+      "line_count": 280
+    },
+    {
+      "id": "DOC-V1D-46",
+      "title": "Application - Librarian V2 Agent Delegation Review 2026-10",
+      "path": "D:\\Resource-Library\\09-Applications\\Application - Librarian V2 Agent Delegation Review 2026-10.md",
+      "doc_type": "application_record",
+      "date": "2026-10-15",
+      "author_origin": "Resource-Library V1/V2 Bridge",
+      "topic_area": "Early V2 Delegation & Agent Structure Review",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Live application record transferred into `G:\\Libraries\\Resource-Library\\Sources\\document\\` and catalogued.",
+      "related": [
+        "DOC-V1D-20",
+        "DOC-V1D-47"
+      ],
+      "gaps_conflicts": "Early V2 delegation findings superseded by Nov 2026 policy & stress tests.",
+      "uri": "file:///D:/Resource-Library/09-Applications/Application - Librarian V2 Agent Delegation Review 2026-10.md",
+      "size_bytes": 7684,
+      "line_count": 46
+    },
+    {
+      "id": "DOC-V1D-47",
+      "title": "Test Directive 2026-09-28",
+      "path": "D:\\Resource-Library\\Test Directive 2026-09-28.md",
+      "doc_type": "directive",
+      "date": "2026-09-28",
+      "author_origin": "Owner Directive",
+      "topic_area": "Model & Pipeline Testing Rules",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "ACCEPTED_NORMATIVE",
+      "status_evidence": "Owner testing directive governing Sep-Oct model evaluations (`M0`, `Lens Chain Evaluation`).",
+      "related": [
+        "DOC-V1D-28",
+        "DOC-V2E-03",
+        "DOC-V2E-04"
+      ],
+      "gaps_conflicts": "Pre-qualification; evolved into L0-L3 qualification framework (DOC-POL-13).",
+      "uri": "file:///D:/Resource-Library/Test Directive 2026-09-28.md",
+      "size_bytes": 10184,
+      "line_count": 76
+    },
+    {
+      "id": "DOC-V2E-01",
+      "title": "Librarian V2 Co-work Roadmap",
+      "path": "D:\\Resource-Library\\.v2\\docs\\Co-work Roadmap.md",
+      "doc_type": "roadmap",
+      "date": "2026-09-27",
+      "author_origin": "Librarian V2 Early Build",
+      "topic_area": "Phase Paths, Bundles, Session Loop & Lens Chain Construction",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Implemented session purposes, phase gates, and lens extraction in `.v2/`; later expanded in D:\\Librarian_V2\\.",
+      "related": [
+        "DOC-V1D-20",
+        "DOC-V1D-27",
+        "DOC-V2E-02"
+      ],
+      "gaps_conflicts": "Early roadmap superseded by `docs/unified-implementation-plan.md`.",
+      "uri": "file:///D:/Resource-Library/.v2/docs/Co-work Roadmap.md",
+      "size_bytes": 110639,
+      "line_count": 1250
+    },
+    {
+      "id": "DOC-V2E-02",
+      "title": "Requirements Addendum 2026-09-30 (AR1 / P1-P5)",
+      "path": "D:\\Resource-Library\\.v2\\docs\\Requirements Addendum 2026-09-30.md",
+      "doc_type": "requirements",
+      "date": "2026-09-30",
+      "author_origin": "Librarian V2 Early Build",
+      "topic_area": "Resolver Fixes, write_note, Person-Only Batch Start & Lead Eligibility",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "P1-P4 largely implemented (`write_note`, ID resolvers, person batch start); P1-L7 book-level lens synthesis and automated R10 `eligible_leads` remained open.",
+      "related": [
+        "DOC-V1D-33",
+        "DOC-V2E-03",
+        "DOC-V2E-04"
+      ],
+      "gaps_conflicts": "Status `proposed` in header, operationally executed via P1-P3 commits before Oct 1 M0 run.",
+      "uri": "file:///D:/Resource-Library/.v2/docs/Requirements Addendum 2026-09-30.md",
+      "size_bytes": 25361,
+      "line_count": 340
+    },
+    {
+      "id": "DOC-V2E-03",
+      "title": "M0 Completion Suite Specification 2026-09-30",
+      "path": "D:\\Resource-Library\\.v2\\docs\\M0 Completion Suite - Spec 2026-09-30.md",
+      "doc_type": "test_spec",
+      "date": "2026-09-30",
+      "author_origin": "Librarian V2 Testing",
+      "topic_area": "Whole-Task Replay Protocol With Scripted Person",
+      "evidence_kind": "specification",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Specified `completion_suite.py` (T1 UCLan, T2 Agile, T3 Study Plan; scripted curatorial acceptances without batch engine).",
+      "related": [
+        "DOC-V2E-04",
+        "DOC-V1D-34"
+      ],
+      "gaps_conflicts": "Explicitly notes it does not exercise approved batch (`process_approved`).",
+      "uri": "file:///D:/Resource-Library/.v2/docs/M0 Completion Suite - Spec 2026-09-30.md",
+      "size_bytes": 8759,
+      "line_count": 153
+    },
+    {
+      "id": "DOC-V2E-04",
+      "title": "M0 Completion Results 2026-10-01",
+      "path": "D:\\Resource-Library\\.v2\\docs\\model-tests\\M0 Results 2026-10-01.md",
+      "doc_type": "test_report",
+      "date": "2026-10-01",
+      "author_origin": "Librarian V2 Empirical Benchmark",
+      "topic_area": "Model Lead & Clerk Cost/Reliability Measurements & U+2028 Bug Fix",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Run across `d58a89b` & `b155f67` ($2.55 spend): caught & fixed U+2028 JSONL crash (`vault.jsonl_lines`), measured Clerk Qwen3.5-397B costing 51% of spend, showed R13 Offering gap.",
+      "related": [
+        "DOC-V2E-03",
+        "DOC-V2E-05",
+        "DOC-V2E-06"
+      ],
+      "gaps_conflicts": "n=1 per cell and tight caps limit direct ranking across Tier 1 leads (`eligible_leads.json` stayed empty).",
+      "uri": "file:///D:/Resource-Library/.v2/docs/model-tests/M0 Results 2026-10-01.md",
+      "size_bytes": 13111,
+      "line_count": 221
+    },
+    {
+      "id": "DOC-V2E-05",
+      "title": "V1-V2 Parity Ledger 2026-10-01",
+      "path": "D:\\Resource-Library\\.v2\\docs\\Parity Ledger 2026-10-01.md",
+      "doc_type": "ledger",
+      "date": "2026-10-01",
+      "author_origin": "Librarian V2 Transition",
+      "topic_area": "Oct 1 V1->V2 Feature Tracking",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Marked `current` on 2026-10-01; later expanded in `DOC-RPT-01` and `DOC-POL-14`.",
+      "related": [
+        "DOC-V1D-30",
+        "DOC-V2E-06",
+        "DOC-RPT-01",
+        "DOC-POL-14"
+      ],
+      "gaps_conflicts": "Superseded in currency by Oct 20 parity report & Oct 30 ACCEPT-03 matrix.",
+      "uri": "file:///D:/Resource-Library/.v2/docs/Parity Ledger 2026-10-01.md",
+      "size_bytes": 11854,
+      "line_count": 96
+    },
+    {
+      "id": "DOC-V2E-06",
+      "title": "Finalisation Assessment 2026-10-01",
+      "path": "D:\\Resource-Library\\.v2\\docs\\Finalisation Assessment 2026-10-01.md",
+      "doc_type": "assessment",
+      "date": "2026-10-01",
+      "author_origin": "Librarian V2 Transition",
+      "topic_area": "Go-Forward Assessment of `.v2/` Codebase",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Evaluated `.v2/` readiness prior to promoting Librarian V2 into its own repository (`D:\\Librarian_V2`).",
+      "related": [
+        "DOC-V2E-04",
+        "DOC-V2E-05",
+        "DOC-RPT-01"
+      ],
+      "gaps_conflicts": "Pre-standalone-repo snapshot.",
+      "uri": "file:///D:/Resource-Library/.v2/docs/Finalisation Assessment 2026-10-01.md",
+      "size_bytes": 9330,
+      "line_count": 177
+    },
+    {
+      "id": "DOC-RPT-01",
+      "title": "V1-to-V2 Capability Parity Verification Report (2026-10-20)",
+      "path": "D:\\Librarian_V2\\reports\\2026-10-20-v1-v2-capability-parity.md",
+      "doc_type": "parity_audit",
+      "date": "2026-10-20",
+      "author_origin": "Librarian V2 Code & Test Parity Verification",
+      "topic_area": "Code-Verified Accounting of Every V1 Service in V2",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Systematically verified V1 modules against `src/resource_librarian/` before ACCEPT-03 (`DOC-POL-14`); identified carried, redesigned, deferred, and unimplemented capabilities.",
+      "related": [
+        "DOC-POL-14",
+        "DOC-V1D-30",
+        "DOC-V1D-31"
+      ],
+      "gaps_conflicts": "Predates November Wave L, Phase 8, and Nov 16-22 batch/folder/deep-read additions.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-10-20-v1-v2-capability-parity.md",
+      "size_bytes": 9537,
+      "line_count": 105
+    },
+    {
+      "id": "DOC-RPT-02",
+      "title": "Long-Horizon Co-Work Harness Research Report (51 Papers)",
+      "path": "D:\\Librarian_V2\\reports\\2026-10-29-long-horizon-harness-research\\RESEARCH-REPORT.md",
+      "doc_type": "research_report",
+      "date": "2026-10-29",
+      "author_origin": "Librarian V2 Research Sprint",
+      "topic_area": "Literature Review for HARNESS-01..09, Semantic Drift & Tier A/B Verification",
+      "evidence_kind": "research",
+      "acceptance_status": "ACCEPTED_NORMATIVE",
+      "status_evidence": "Screened 50 unique PDFs; ruled in favour of deterministic checks, typed task state, and isolated verifiers while rejecting uncalibrated scalar drift/confidence gates, swarms, and MCTS.",
+      "related": [
+        "DOC-PLN-07",
+        "DOC-PLN-08",
+        "DOC-RPT-03"
+      ],
+      "gaps_conflicts": "Flagged missing bibliographic backing for 'Long horizon harness paper' and MEA acronym in `audited-engagement-harness.md`.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-10-29-long-horizon-harness-research/RESEARCH-REPORT.md",
+      "size_bytes": 39952,
+      "line_count": 176
+    },
+    {
+      "id": "DOC-RPT-03",
+      "title": "Development-Agent Requirements Research",
+      "path": "D:\\Librarian_V2\\reports\\2026-10-29-long-horizon-harness-research\\DEVELOPMENT-AGENT-RESEARCH.md",
+      "doc_type": "research_report",
+      "date": "2026-10-29",
+      "author_origin": "Librarian V2 Research Sprint",
+      "topic_area": "Workbench/Sandbox Containment, Prompt Injection & Coding Agents",
+      "evidence_kind": "research",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Fed `development-agent-harness.md` (explicitly deferred outside contained Docker slice MF-015/016/023 in Master Plan).",
+      "related": [
+        "DOC-RPT-02",
+        "DOC-RPT-04c"
+      ],
+      "gaps_conflicts": "Found `_archive_outputs` in workbench copies outputs before checking size (tracked later in NAT-04/05).",
+      "uri": "file:///D:/Librarian_V2/reports/2026-10-29-long-horizon-harness-research/DEVELOPMENT-AGENT-RESEARCH.md",
+      "size_bytes": 8803,
+      "line_count": 45
+    },
+    {
+      "id": "DOC-RPT-04",
+      "title": "Master System Report (01-MASTER-SYSTEM-REPORT)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-04-master-finalization\\01-MASTER-SYSTEM-REPORT.md",
+      "doc_type": "master_synthesis_report",
+      "date": "2026-11-04",
+      "author_origin": "Claude / Codex QA Synthesis",
+      "topic_area": "Baseline Accounting at `40ec923`, Gap Matrix (MEM/NAT/MC/UI/EK)",
+      "evidence_kind": "research",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Header explicitly states: 'Proposed synthesis for approval; not runtime implementation or release certification.' Records 1,939 passing tests at `40ec923` and reconciles 27+ gap families.",
+      "related": [
+        "DOC-RPT-04b",
+        "DOC-RPT-04c",
+        "DOC-RPT-04d",
+        "DOC-PLN-01"
+      ],
+      "gaps_conflicts": "Identifies critical ingestion/enrichment code risks (NAT-01 equal-count deep_read reuse bug, NAT-02 rename chunk loss, NAT-09 unreserved inner calls, NAT-13 batch reuse without content digest).",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-04-master-finalization/01-MASTER-SYSTEM-REPORT.md",
+      "size_bytes": 52200,
+      "line_count": 197
+    },
+    {
+      "id": "DOC-RPT-04b",
+      "title": "Unified Requirements & Specifications (02-UNIFIED-REQUIREMENTS-AND-SPECIFICATIONS)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-04-master-finalization\\02-UNIFIED-REQUIREMENTS-AND-SPECIFICATIONS.md",
+      "doc_type": "specification_proposal",
+      "date": "2026-11-04",
+      "author_origin": "Master Finalization Synthesis",
+      "topic_area": "MC-01..MC-16 & NAT-01..NAT-17 Normative Proposal Contracts",
+      "evidence_kind": "proposal",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Proposed canonical addendum consolidating MC-01..16, N-01..N-17, UI D1-D6; pending explicit owner adoption.",
+      "related": [
+        "DOC-RPT-04",
+        "DOC-RPT-04c",
+        "DOC-PLN-10"
+      ],
+      "gaps_conflicts": "Enforces invariant A-01 (Markdown + EvidenceStore + single-owner SQLite; no Temporal/LangGraph/GraphRAG/React).",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-04-master-finalization/02-UNIFIED-REQUIREMENTS-AND-SPECIFICATIONS.md",
+      "size_bytes": 67010,
+      "line_count": 442
+    },
+    {
+      "id": "DOC-RPT-04c",
+      "title": "Master Finalization Plan (03-MASTER-FINALIZATION-PLAN)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-04-master-finalization\\03-MASTER-FINALIZATION-PLAN.md",
+      "doc_type": "execution_plan_proposal",
+      "date": "2026-11-04",
+      "author_origin": "Master Finalization Synthesis",
+      "topic_area": "75-Row MF-001..MF-051 Queue, File Ownership & Dependency Graph",
+      "evidence_kind": "proposal",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "All MF implementation rows explicitly start `planned`; defines release-critical path (24 rows) vs optional Knowledge Wave 3 (MF-036..041).",
+      "related": [
+        "DOC-RPT-04",
+        "DOC-RPT-04b",
+        "DOC-RPT-04d"
+      ],
+      "gaps_conflicts": "Precedes mid-November Geo/Phase 8/W1-W9 commits; many MF packets vs W1-W9 plan-forward workstreams need cross-reconciliation.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-04-master-finalization/03-MASTER-FINALIZATION-PLAN.md",
+      "size_bytes": 99015,
+      "line_count": 288
+    },
+    {
+      "id": "DOC-RPT-04d",
+      "title": "Master Plan Integration Summary (04-PLAN-INTEGRATION-SUMMARY)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-04-master-finalization\\04-PLAN-INTEGRATION-SUMMARY.md",
+      "doc_type": "crosswalk",
+      "date": "2026-11-04",
+      "author_origin": "Master Finalization Synthesis",
+      "topic_area": "MEM/NAT/UI/EK/DT -> MF Crosswalk & Codex QA Corrections",
+      "evidence_kind": "proposal",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Documents Codex QA decoupling of MF-044 from MF-041 experiment via MF-051.",
+      "related": [
+        "DOC-RPT-04",
+        "DOC-RPT-04c",
+        "DOC-PLN-01"
+      ],
+      "gaps_conflicts": "Remains unapplied to canonical `unified-implementation-plan.md` pending approval.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-04-master-finalization/04-PLAN-INTEGRATION-SUMMARY.md",
+      "size_bytes": 12408,
+      "line_count": 93
+    },
+    {
+      "id": "DOC-RPT-05",
+      "title": "Phase 8 Ingestion Contract Audit (2026-11-15)",
+      "path": "D:\\Librarian_V2\\reports\\PHASE8_INGESTION_CONTRACT_AUDIT_20261115.md",
+      "doc_type": "system_audit",
+      "date": "2026-11-15",
+      "author_origin": "Librarian V2 Phase 8 Verification",
+      "topic_area": "Folder Intake, Mixed Batch, Provisional Projections & Geo Publication Audit",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Audited Phase 8 ingestion & Geo contract defects; catalyzed OP1-OP8 & Nov 16-22 fixes tracked in DOC-PLN-01 \u00a719.",
+      "related": [
+        "DOC-RPT-06",
+        "DOC-POL-09",
+        "DOC-POL-10",
+        "DOC-PLN-01"
+      ],
+      "gaps_conflicts": "Also catalogued as a Source note inside live `G:\\Libraries\\Resource-Library\\Sources\\document\\`.",
+      "uri": "file:///D:/Librarian_V2/reports/PHASE8_INGESTION_CONTRACT_AUDIT_20261115.md",
+      "size_bytes": 6535,
+      "line_count": 50
+    },
+    {
+      "id": "DOC-RPT-06",
+      "title": "Phase 8 Pilot Recovery Report (2026-11-15)",
+      "path": "D:\\Librarian_V2\\reports\\PHASE8_PILOT_RECOVERY_20261115.md",
+      "doc_type": "incident_report",
+      "date": "2026-11-15",
+      "author_origin": "Librarian V2 Phase 8 Recovery",
+      "topic_area": "Live Vault Recovery, Stale Folders & Batch Resume",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Documents concrete recovery steps on initial Nov 15 pilot runs.",
+      "related": [
+        "DOC-RPT-05",
+        "DOC-RPT-07"
+      ],
+      "gaps_conflicts": "Companion historical evidence before Nov 16 pilot review.",
+      "uri": "file:///D:/Librarian_V2/reports/PHASE8_PILOT_RECOVERY_20261115.md",
+      "size_bytes": 5681,
+      "line_count": 43
+    },
+    {
+      "id": "DOC-RPT-07",
+      "title": "Pilot Review Report (2026-11-16)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-16-pilot-review\\PILOT-REVIEW.md",
+      "doc_type": "pilot_review",
+      "date": "2026-11-16",
+      "author_origin": "Librarian V2 Live Library Pilot",
+      "topic_area": "G:\\Libraries Real-Data Trial: Slowness, Batch Failures, Title & Graph Bloat",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Uncovered first-40 bullet truncation (`spread` added Nov 17), part-locator bug (fixed Nov 17), SQLite journal growth (fixed), `batch._review` crashes (retried Nov 18), while title/Unfiled & Geo paper-DB cloning remain open.",
+      "related": [
+        "DOC-RPT-08",
+        "DOC-PLN-01",
+        "DOC-MAP-14"
+      ],
+      "gaps_conflicts": "Point-in-time Nov 16 bugs partially remediated in Nov 17-22 commits (verified per commit log in DOC-PLN-01 \u00a719).",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-16-pilot-review/PILOT-REVIEW.md",
+      "size_bytes": 13200,
+      "line_count": 171
+    },
+    {
+      "id": "DOC-RPT-08",
+      "title": "Storage and Speed Optimisation Review (2026-11-16)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-16-pilot-review\\STORAGE-AND-SPEED-OPTIMISATION.md",
+      "doc_type": "performance_review",
+      "date": "2026-11-16",
+      "author_origin": "Librarian V2 Pilot",
+      "topic_area": "Indexing Bottlenecks, WAL Checkpoints, Caching & Geo Cloning Cost",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Led to cached `StagingStore.summaries`, `resolve_read_path` caching, `journal_size_limit=64MB`; O(N^2) Geo paper-DB copying remains unresolved.",
+      "related": [
+        "DOC-RPT-07",
+        "DOC-PLN-01",
+        "DOC-MAP-14"
+      ],
+      "gaps_conflicts": "Geo cloning and non-incremental code rebuild remain open.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-16-pilot-review/STORAGE-AND-SPEED-OPTIMISATION.md",
+      "size_bytes": 5046,
+      "line_count": 57
+    },
+    {
+      "id": "DOC-RPT-09",
+      "title": "Stress-Test Coverage Matrix (2026-11-19)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-19-stress-test\\COVERAGE.md",
+      "doc_type": "test_report",
+      "date": "2026-11-19",
+      "author_origin": "Claude Stress Test Suite on dbb08b7 / da7bf8a",
+      "topic_area": "Phases, Permission Grants, Checkpoints, Staging, Clerk, UI & Regression Sweep",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Ran 200-item batch cancel/resume, 98-note batch tier enforcement, live MiMo UI runs, and 2,523 passing unit tests; exposed F-01..F-16.",
+      "related": [
+        "DOC-RPT-10",
+        "DOC-RPT-11"
+      ],
+      "gaps_conflicts": "Pre-d9435e1 snapshot; tests exact code behavior including `process_approved` MCP `TIER_REFUSED` & 200-item cancel/resume.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-19-stress-test/COVERAGE.md",
+      "size_bytes": 13484,
+      "line_count": 32
+    },
+    {
+      "id": "DOC-RPT-10",
+      "title": "Stress-Test Findings (F-01..F-16)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-19-stress-test\\FINDINGS.md",
+      "doc_type": "defect_report",
+      "date": "2026-11-19",
+      "author_origin": "Claude Stress Test Suite",
+      "topic_area": "Critical Staging Pager, Macro Hijack, Ask-Mode Pipeline Silent Grants & Clerk XML Leak",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Reproduced F-01 (`MAX_LIMIT=50` breaks Staging 'Show 50 more'), F-02 (macro checkpoint cross-session/cancel hijack), F-03 (vault pipelines auto-grant `contribute` writes in Ask mode silently).",
+      "related": [
+        "DOC-RPT-09",
+        "DOC-V1D-10"
+      ],
+      "gaps_conflicts": "F-03 directly proves safety risk of auto-granting composite vault pipelines without Rule 15-17 permission envelopes.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-19-stress-test/FINDINGS.md",
+      "size_bytes": 34830,
+      "line_count": 367
+    },
+    {
+      "id": "DOC-RPT-11",
+      "title": "Geo-Grapher Workspace Design Review (2026-11-19)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-19-stress-test\\GEO-GRAPHER-DESIGN-REVIEW.md",
+      "doc_type": "design_review",
+      "date": "2026-11-19",
+      "author_origin": "UI/UX Sub-Agent Review",
+      "topic_area": "Geo UI, Relational Operators, Per-Folder Role Controls & 'Unlicensed' Policy",
+      "evidence_kind": "research",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Evaluated Owner's 7 directions (F1-F19); highlighted F14 (folder review cannot override guessed role, only include/exclude) and F15 (nested git repo with no licence is not flagged unless a rule decides).",
+      "related": [
+        "DOC-POL-08",
+        "DOC-RPT-13"
+      ],
+      "gaps_conflicts": "UI/control-panel review items reserved for UX / Phase 2 Geo-Grapher follow-up.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-19-stress-test/GEO-GRAPHER-DESIGN-REVIEW.md",
+      "size_bytes": 18759,
+      "line_count": 134
+    },
+    {
+      "id": "DOC-RPT-12",
+      "title": "Operators and Data Models Assessment (2026-11-20)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-20-operators\\OPERATORS-AND-DATA-MODELS.md",
+      "doc_type": "assessment",
+      "date": "2026-11-20",
+      "author_origin": "Librarian V2 Core / Geo Assessment",
+      "topic_area": "Implemented vs Missing Data Operators Across Librarian & Geo Stores",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Precursor assessment establishing what queries/operators actually exist before DOC-PLN-09.",
+      "related": [
+        "DOC-PLN-09",
+        "DOC-PLN-02"
+      ],
+      "gaps_conflicts": "Confirms schema-validated read-only query compiler is not yet built.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-20-operators/OPERATORS-AND-DATA-MODELS.md",
+      "size_bytes": 15215,
+      "line_count": 191
+    },
+    {
+      "id": "DOC-RPT-13",
+      "title": "Isolation Notice for Withdrawn Codex Drafts (2026-11-21)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-21-isolated-incomplete-examples\\README.md",
+      "doc_type": "isolation_record",
+      "date": "2026-11-21",
+      "author_origin": "Owner / Codex Quarantine",
+      "topic_area": "Withdrawn Incorrect Workflow Maps & Reverted Edits",
+      "evidence_kind": "other",
+      "acceptance_status": "DECIDED_AGAINST",
+      "status_evidence": "Explicit notice withdrawing quarantined Codex continuation files: 'not reflective of the system's state, are not accepted workflow designs, and must not be used as implementation specifications'.",
+      "related": [
+        "DOC-MAP-11"
+      ],
+      "gaps_conflicts": "Preserves `accepted-ingestion-tobe`, Nov 20 maps, and `decision example - user made.canvas` outside rollback notice.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-21-isolated-incomplete-examples/README.md",
+      "size_bytes": 2533,
+      "line_count": 21
+    },
+    {
+      "id": "DOC-MAP-01",
+      "title": "Core Use Cases Specification (2026-11-20)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\USE-CASES.md",
+      "doc_type": "use_case_catalog",
+      "date": "2026-11-20",
+      "author_origin": "Librarian V2 Workflow Mapping",
+      "topic_area": "Authoritative Use Cases Across Librarian Lifecycle",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Catalogues core use cases accompanying `docs/proposals/diagram-workflows.md`.",
+      "related": [
+        "DOC-PLN-03",
+        "DOC-MAP-02",
+        "DOC-MAP-03"
+      ],
+      "gaps_conflicts": "Pre-dates Nov 22-23 discovery of missing mixed folder stages & provisional pre-read paper projections.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-20-workflow-map/USE-CASES.md",
+      "size_bytes": 36521,
+      "line_count": 523
+    },
+    {
+      "id": "DOC-MAP-02",
+      "title": "Current Ingestion Activity Canvas (ingestion.canvas)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.canvas",
+      "doc_type": "activity_diagram_canvas",
+      "date": "2026-11-23",
+      "author_origin": "Owner-reviewed Current-State Map (amended Nov 22-23)",
+      "topic_area": "As-Is Librarian Ingestion Lifecycle (Intake + Batch Invocation + Acceptance)",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Corrected current-state ingestion diagram validated in DOC-MAP-23/24 (`2026-11-23-ingestion-enrichment-validation.json`, 0 structural/routing defects).",
+      "related": [
+        "DOC-MAP-03",
+        "DOC-MAP-08",
+        "DOC-MAP-10",
+        "DOC-MAP-16"
+      ],
+      "gaps_conflicts": "Shows actual current splits (`tier 0` repeated orchestration, OP2 rebuild amplification, separate accept gates).",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-20-workflow-map/examples/ingestion/ingestion.canvas",
+      "size_bytes": 49261,
+      "line_count": null
+    },
+    {
+      "id": "DOC-MAP-03",
+      "title": "Accepted Ingestion To-Be Target Canvas (accepted-ingestion-tobe.canvas)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas",
+      "doc_type": "accepted_design_canvas",
+      "date": "2026-11-20",
+      "author_origin": "Owner-Accepted Design Baseline",
+      "topic_area": "Accepted Target State for Librarian Ingestion (Rank 3 Accepted Target)",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "ACCEPTED_UNIMPLEMENTED",
+      "status_evidence": "Explicitly excluded from Nov 21 rollback (DOC-RPT-13) and cited as accepted target in DOC-MAP-19 (`existing ingestion target... supplies the previously reviewed authority and recovery requirements`); runtime Lead/Oracle/Doctor orchestration not yet implemented.",
+      "related": [
+        "DOC-MAP-04",
+        "DOC-MAP-06",
+        "DOC-MAP-19"
+      ],
+      "gaps_conflicts": "Lacked explicit mixed source/folder batch child decomposition addressed later in DOC-MAP-18..21.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-20-workflow-map/examples/ingestion/accepted-ingestion-tobe.canvas",
+      "size_bytes": 88051,
+      "line_count": null
+    },
+    {
+      "id": "DOC-MAP-04",
+      "title": "Ingestion To-Be Activity Spec (ingestion-tobe.spec.yaml)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.spec.yaml",
+      "doc_type": "activity_spec_yaml",
+      "date": "2026-11-20",
+      "author_origin": "Owner-Accepted Workflow Spec",
+      "topic_area": "Formal Spec Backing accepted-ingestion-tobe & UC-O / UC-D / UC-L",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "ACCEPTED_UNIMPLEMENTED",
+      "status_evidence": "Machine-checkable YAML spec linking Owner -> Overseer -> Lead -> Clerk -> Scribe -> Oracle -> Doctor -> Core -> Model host -> Geo-Grapher.",
+      "related": [
+        "DOC-MAP-03",
+        "DOC-MAP-05",
+        "DOC-MAP-06"
+      ],
+      "gaps_conflicts": "Paired with `proposed-ingestion.spec.yaml` (DOC-MAP-19) which extends it for mixed batches.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-20-workflow-map/examples/ingestion/ingestion-tobe.spec.yaml",
+      "size_bytes": 29250,
+      "line_count": 1024
+    },
+    {
+      "id": "DOC-MAP-05",
+      "title": "Activity Spec Validator & Canvas Renderer (render_spec.py)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\render_spec.py",
+      "doc_type": "toolchain_script",
+      "date": "2026-11-20",
+      "author_origin": "Librarian V2 Diagram Tooling",
+      "topic_area": "Diagram Schema, Path Enumeration, Single-Success Check & Reference Checking",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Enforces 400-wide columns (`colw=420, rowh=200, w=360, h=150`), colour legend, `cross_check`, `check_references`, and exactly 1 SUCCESS end.",
+      "related": [
+        "DOC-PLN-03",
+        "DOC-MAP-22"
+      ],
+      "gaps_conflicts": "Layout diverges from `decision example - user made.canvas` (double-wide sub-column lane & semantic edge colors).",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-20-workflow-map/examples/ingestion/render_spec.py",
+      "size_bytes": 25358,
+      "line_count": 530
+    },
+    {
+      "id": "DOC-MAP-06",
+      "title": "Doctor Recovery Sub-Use-Case Spec (UC-D / doctor.spec.yaml)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\doctor.spec.yaml",
+      "doc_type": "activity_spec_yaml",
+      "date": "2026-11-20",
+      "author_origin": "Workflow Map Examples",
+      "topic_area": "Doctor Triage, Mapped Remedies & Rollback Boundary",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "UNRESOLVED_CONFLICTING",
+      "status_evidence": "Referenced across to-be maps as `UC-D` (paired with `remedy-catalogue.yaml`); however its internal `x4` auto-rollback step conflicts directly with `docs/policy/composition.md` Rule 8 ('show compensation, never auto-run'), and validation rests on `Helper (tier 2)` rather than independent `Oracle`.",
+      "related": [
+        "DOC-POL-03",
+        "DOC-MAP-06b",
+        "DOC-MAP-04",
+        "DOC-MAP-17",
+        "DOC-MAP-20"
+      ],
+      "gaps_conflicts": "CONFLICT resolved in favour of `composition.md` Rule 8 (Rank 1 Policy); requires a dedicated corrected `librarian-doctor-tobe` diagram.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-20-workflow-map/examples/ingestion/doctor.spec.yaml",
+      "size_bytes": 4621,
+      "line_count": 67
+    },
+    {
+      "id": "DOC-MAP-06b",
+      "title": "Doctor Remedy Catalogue v0 (remedy-catalogue.yaml)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\remedy-catalogue.yaml",
+      "doc_type": "remedy_catalogue_yaml",
+      "date": "2026-11-23",
+      "author_origin": "Workflow Map Examples (revised Nov 23)",
+      "topic_area": "Mapped Remedies R1-R8, Blast Radius & Rejoin Targets",
+      "evidence_kind": "proposal",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Header states: 'Only entries a person accepted are used (UC-L). Nothing here runs yet: the workflows marked proposed do not exist.' Only `R8` (`request_budget`) exists in runtime.",
+      "related": [
+        "DOC-MAP-06",
+        "DOC-MAP-04",
+        "DOC-MAP-19"
+      ],
+      "gaps_conflicts": "Demonstrates why to-be flows referencing `UC-D` remain unexecuted proposals until remedies are authored as YAML workflows and accepted.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-20-workflow-map/examples/ingestion/remedy-catalogue.yaml",
+      "size_bytes": 7071,
+      "line_count": 98
+    },
+    {
+      "id": "DOC-MAP-07",
+      "title": "Enrichment Baseline Requirements & Observed Evidence Notes",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-21-enrichment-baseline\\requirements-evidence.md",
+      "doc_type": "evidence_baseline",
+      "date": "2026-11-21",
+      "author_origin": "Librarian V2 Enrichment Baseline",
+      "topic_area": "Anchored Code, Run Evidence & Constraints for Enrichment",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Paired with `observed-enrichment.md` and `model-notes.md` in same folder; anchors actual Nov 20 enrichment logs & stage contracts.",
+      "related": [
+        "DOC-MAP-08",
+        "DOC-MAP-09",
+        "DOC-MAP-10"
+      ],
+      "gaps_conflicts": "Supplements nov-22..23 corrections after mixed folder stages and pre-read `.nodes.json` were discovered.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-21-enrichment-baseline/requirements-evidence.md",
+      "size_bytes": 60539,
+      "line_count": 180
+    },
+    {
+      "id": "DOC-MAP-08",
+      "title": "Current Mixed-Batch Enrichment Dispatcher (batch-enrichment-current)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-21-enrichment-baseline\\batch-enrichment-current.md",
+      "doc_type": "current_state_spec",
+      "date": "2026-11-23",
+      "author_origin": "Tier 0 (Codex) with Owner Corrections",
+      "topic_area": "Mixed Source/Folder `process_approved` Dispatch & Folder Chain",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Accurately decomposes `batch.py::start`, `_run`, `FOLDER_STAGES` (`folder_validate -> folder_describe -> folder_data`), and metadata-only folder coverage; backed by `batch-enrichment-current.spec.yaml` & `.canvas`.",
+      "related": [
+        "DOC-MAP-02",
+        "DOC-MAP-09",
+        "DOC-MAP-16",
+        "DOC-MAP-20"
+      ],
+      "gaps_conflicts": "Notes 12 folder-item failures at `folder_describe` in inspected `G:\\Libraries` logs.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-21-enrichment-baseline/batch-enrichment-current.md",
+      "size_bytes": 3328,
+      "line_count": 26
+    },
+    {
+      "id": "DOC-MAP-09",
+      "title": "Current Source Enrichment Child Contract (source-enrichment-current)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-21-enrichment-baseline\\source-enrichment-current.md",
+      "doc_type": "current_state_spec",
+      "date": "2026-11-23",
+      "author_origin": "Tier 0 (Codex) with Owner Corrections",
+      "topic_area": "9-Stage Source Pipeline (`validate -> ... -> publish`), Fallback & Pre-Projection",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Accurately decomposes `batch.py` 9 stages, pre-read `.nodes.json` (`text_layer=False`), cleanup fallback, and single-PDF Geo CLI copy/pointer-switch.",
+      "related": [
+        "DOC-MAP-08",
+        "DOC-MAP-12",
+        "DOC-MAP-16",
+        "DOC-MAP-21"
+      ],
+      "gaps_conflicts": "Highlights open flaw: `batch._read` completion follows remaining-part counts even when whole-source derivation stays queued.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-21-enrichment-baseline/source-enrichment-current.md",
+      "size_bytes": 8231,
+      "line_count": 46
+    },
+    {
+      "id": "DOC-MAP-10",
+      "title": "Enrichment Cycle Spec (Historical Pre-Split Baseline)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-21-enrichment-baseline\\enrichment-cycle.spec.yaml",
+      "doc_type": "activity_spec_yaml",
+      "date": "2026-11-21",
+      "author_origin": "Pre-Correction Baseline",
+      "topic_area": "Superseded Monolithic Enrichment Cycle",
+      "evidence_kind": "other",
+      "acceptance_status": "DECIDED_AGAINST",
+      "status_evidence": "Superseded by the split into `batch-enrichment-current` + `source-enrichment-current` (DOC-MAP-08/09) after Nov 22-23 review caught missing folder branch & pre-projection.",
+      "related": [
+        "DOC-MAP-08",
+        "DOC-MAP-09",
+        "DOC-MAP-15"
+      ],
+      "gaps_conflicts": "Retained as audit lineage only.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-21-enrichment-baseline/enrichment-cycle.spec.yaml",
+      "size_bytes": 60296,
+      "line_count": 559
+    },
+    {
+      "id": "DOC-MAP-11",
+      "title": "Owner-Made Canvas Layout & Edge-Color Example (decision example - user made.canvas)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-21-isolated-incomplete-examples\\decision example - user made.canvas",
+      "doc_type": "notation_example_canvas",
+      "date": "2026-11-21",
+      "author_origin": "Owner manual canvas authoring",
+      "topic_area": "Alternative Diagram Notation: Double-Width Sub-Column Lead Lane & Green/Orange/Red Edges",
+      "evidence_kind": "proposal",
+      "acceptance_status": "UNRESOLVED_CONFLICTING",
+      "status_evidence": "Explicitly excluded from Nov 21 rollback (DOC-RPT-13). Uses 330x190 cards, 695px Lead sub-column lane, green/orange/red edges (`4`/`2`/`1`), and shows minor stale lane metadata (`a0` inside Lead column with Core metadata).",
+      "related": [
+        "DOC-PLN-03",
+        "DOC-MAP-05",
+        "DOC-RPT-13"
+      ],
+      "gaps_conflicts": "Schema conflict with accepted `render_spec.py` (strict single 400px columns); assessed in Reports as a candidate future notation extension rather than violating accepted renderer now.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-21-isolated-incomplete-examples/decision example - user made.canvas",
+      "size_bytes": 8167,
+      "line_count": null
+    },
+    {
+      "id": "DOC-MAP-12",
+      "title": "Geo-Grapher As-Is Graph Building Review & Activity Spec",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-22-geographer-graph-building\\README.md",
+      "doc_type": "current_state_analysis",
+      "date": "2026-11-22",
+      "author_origin": "Antigravity (Code & Log Inspection)",
+      "topic_area": "Geo-Grapher Folder-Build & Enrichment-Publish Graph Building As-Is",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Backed by `geographer-graph-building.spec.yaml`; documented 77.2 GB total graph bloat, 96 cloned paper DBs, 48 unaccepted NFL PDFs, 0 bridges, and silent TS FallbackUnavailable.",
+      "related": [
+        "DOC-MAP-13",
+        "DOC-MAP-14",
+        "DOC-GEO-01"
+      ],
+      "gaps_conflicts": "Companion `geographer-graph-building.canvas` validated on Nov 23 (DOC-MAP-23); internal Geo-Grapher redesign deferred to Phase 2.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-22-geographer-graph-building/README.md",
+      "size_bytes": 7118,
+      "line_count": 49
+    },
+    {
+      "id": "DOC-MAP-13",
+      "title": "Cross-Library Ingest & Enrichment Logs Audit (`G:\\Libraries`)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-22-libraries-ingest-enrichment-audit.md",
+      "doc_type": "operational_audit",
+      "date": "2026-11-22",
+      "author_origin": "Antigravity (Live Vault & SQLite Inspection)",
+      "topic_area": "Empirical Counts Across Nonlinear Field Lab, Parallax, and Resource-Library",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Observed exact counts from `G:\\Libraries` logs/DBs (12 failed folder items, 41 `FOLDER_STALE`, 27 `awaiting_accepted_folder`, 363 RL Sources vs 0 RL Concepts/Offerings/Applications, OP1-OP8).",
+      "related": [
+        "DOC-MAP-12",
+        "DOC-MAP-14",
+        "DOC-MAP-09"
+      ],
+      "gaps_conflicts": "Captured Nov 22 runtime evidence across all 3 active libraries.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-22-libraries-ingest-enrichment-audit.md",
+      "size_bytes": 30776,
+      "line_count": 219
+    },
+    {
+      "id": "DOC-MAP-14",
+      "title": "Ingestion & Enrichment Graph Accuracy Review (2026-11-22)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-22-ingestion-enrichment-graph-review.md",
+      "doc_type": "graph_accuracy_review",
+      "date": "2026-11-22",
+      "author_origin": "Antigravity",
+      "topic_area": "Critique of Nov 20-21 Graphs Against Code & G:\\Libraries Logs",
+      "evidence_kind": "research",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Exposed omitted mixed folder branch, omitted pre-read `.nodes.json`, overstated Clerk/Scribe/Oracle/Doctor autonomy in current maps, and Geo copy amplification.",
+      "related": [
+        "DOC-MAP-13",
+        "DOC-MAP-16",
+        "DOC-MAP-17"
+      ],
+      "gaps_conflicts": "Triggered Nov 23 follow-up graph corrections (DOC-MAP-16).",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-22-ingestion-enrichment-graph-review.md",
+      "size_bytes": 25838,
+      "line_count": 126
+    },
+    {
+      "id": "DOC-MAP-15",
+      "title": "Focused Proposed To-Be Enrichment (2026-11-22 Draft)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-22-proposed-tobe-enrichment\\PROPOSAL.md",
+      "doc_type": "proposal",
+      "date": "2026-11-22",
+      "author_origin": "Codex Proposal (Supporting Precursor)",
+      "topic_area": "Early Integrated Source To-Be Proposal",
+      "evidence_kind": "proposal",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Paired with `proposed-tobe-enrichment.spec.yaml`; explicitly marked 'supporting design work' incorporated into DOC-MAP-18..21.",
+      "related": [
+        "DOC-MAP-18",
+        "DOC-MAP-21"
+      ],
+      "gaps_conflicts": "Contained standalone commissioning framing corrected in Nov 23 family (shared parent commission).",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-22-proposed-tobe-enrichment/PROPOSAL.md",
+      "size_bytes": 28859,
+      "line_count": 168
+    },
+    {
+      "id": "DOC-MAP-16",
+      "title": "Current Graph Follow-Up Corrections (2026-11-23)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-23-current-graph-followup.md",
+      "doc_type": "correction_record",
+      "date": "2026-11-23",
+      "author_origin": "Codex Follow-Up Response",
+      "topic_area": "Corrections Split Mixed Batch from Source Child & Pre-Read Projections",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Documented splitting `batch-enrichment-current` + `source-enrichment-current`, adding pre-read projection branch, and removing unverified autonomous tier claims from current maps.",
+      "related": [
+        "DOC-MAP-08",
+        "DOC-MAP-09",
+        "DOC-MAP-24"
+      ],
+      "gaps_conflicts": "Re-reviewed in DOC-MAP-17 alongside ChatGPT's proposed to-be family.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-23-current-graph-followup.md",
+      "size_bytes": 5640,
+      "line_count": 23
+    },
+    {
+      "id": "DOC-MAP-17",
+      "title": "Routing Fixes & To-Be Process Family Summary (2026-11-23)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-23-routing-and-tobe-proposals.md",
+      "doc_type": "proposal_summary",
+      "date": "2026-11-23",
+      "author_origin": "ChatGPT / Codex",
+      "topic_area": "Routing Repairs Across 5 Current Maps & 3 Proposed To-Be Canvases",
+      "evidence_kind": "proposal",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Summarizes Nov 23 routing repairs (`*_at_<hash>` clone nodes for edge routing) and the unaccepted `2026-11-23-proposed-process-family`.",
+      "related": [
+        "DOC-MAP-18",
+        "DOC-MAP-22",
+        "DOC-MAP-23"
+      ],
+      "gaps_conflicts": "Routing clone workaround (`*_at_<hash>`) and several to-be omissions/regressions are evaluated in Work Products 2 and 3.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-23-routing-and-tobe-proposals.md",
+      "size_bytes": 5791,
+      "line_count": 37
+    },
+    {
+      "id": "DOC-MAP-18",
+      "title": "Proposed To-Be Process Family Index (README)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-23-proposed-process-family\\README.md",
+      "doc_type": "proposal_index",
+      "date": "2026-11-23",
+      "author_origin": "ChatGPT / Codex",
+      "topic_area": "Parent/Child To-Be Map Trio Overview",
+      "evidence_kind": "proposal",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Index for unaccepted Nov 23 to-be trio (`proposed-ingestion`, `proposed-batch-enrichment`, `proposed-source-enrichment`).",
+      "related": [
+        "DOC-MAP-19",
+        "DOC-MAP-20",
+        "DOC-MAP-21"
+      ],
+      "gaps_conflicts": "Target of user's core request: assess for lost depth, missing technical steps, and methodological gaps.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-23-proposed-process-family/README.md",
+      "size_bytes": 3853,
+      "line_count": 27
+    },
+    {
+      "id": "DOC-MAP-19",
+      "title": "Proposed To-Be Ingestion (proposed-ingestion.md & spec/canvas)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-23-proposed-process-family\\proposed-ingestion.md",
+      "doc_type": "proposal_spec",
+      "date": "2026-11-23",
+      "author_origin": "ChatGPT / Codex",
+      "topic_area": "Proposed Parent Ingestion Flow With Lead, Mixed Child & Group Geo Receipt",
+      "evidence_kind": "proposal",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Status: `behavioral proposal, 23 November 2026`. Composes accepted-ingestion-tobe with mixed child.",
+      "related": [
+        "DOC-MAP-03",
+        "DOC-MAP-18",
+        "DOC-MAP-20"
+      ],
+      "gaps_conflicts": "Retains ambiguous/outdated `UC-D` Doctor link, lacks explicit W1b pipeline-grant/permission-envelope gates, W3 blast-radius trigger, and queue brief-context preservation.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-23-proposed-process-family/proposed-ingestion.md",
+      "size_bytes": 7504,
+      "line_count": 47
+    },
+    {
+      "id": "DOC-MAP-20",
+      "title": "Proposed To-Be Mixed-Batch Enrichment (proposed-batch-enrichment.md)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-23-proposed-process-family\\proposed-batch-enrichment.md",
+      "doc_type": "proposal_spec",
+      "date": "2026-11-23",
+      "author_origin": "ChatGPT / Codex",
+      "topic_area": "Proposed Mixed Dispatcher With Clerk Folder Drafting & Scoped Oracle/Doctor",
+      "evidence_kind": "proposal",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Status: `behavioral proposal, 23 November 2026`. Proposes keeping mixed source+folder ledger while upgrading folder descriptions to Clerk/Scribe + Oracle review.",
+      "related": [
+        "DOC-MAP-08",
+        "DOC-MAP-19",
+        "DOC-MAP-21"
+      ],
+      "gaps_conflicts": "Does not explicitly preserve NAT-13 content/route/recipe digest in batch reuse key or per-call reservation (`MC-10`).",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-23-proposed-process-family/proposed-batch-enrichment.md",
+      "size_bytes": 9100,
+      "line_count": 54
+    },
+    {
+      "id": "DOC-MAP-21",
+      "title": "Proposed To-Be Source Enrichment (proposed-source-enrichment.md)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-23-proposed-process-family\\proposed-source-enrichment.md",
+      "doc_type": "proposal_spec",
+      "date": "2026-11-23",
+      "author_origin": "ChatGPT / Codex",
+      "topic_area": "Proposed 9-Stage Source Child With Clerk/Scribe Authorship & Whole-Source Accounting",
+      "evidence_kind": "proposal",
+      "acceptance_status": "PROPOSED_UNACCEPTED",
+      "status_evidence": "Status: `proposal, 23 November 2026`. Separates whole-source derivations from part counters; keeps Geo publication conditional at stage 9.",
+      "related": [
+        "DOC-MAP-09",
+        "DOC-MAP-20",
+        "DOC-MAP-15"
+      ],
+      "gaps_conflicts": "Weak on NAT-01 chunk-digest invalidation, W8 title/topic classification failure, quarantine/dead-letter disposition of poisoned conversion inputs, and cross-graph bridge emission (W5).",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-23-proposed-process-family/proposed-source-enrichment.md",
+      "size_bytes": 9999,
+      "line_count": 53
+    },
+    {
+      "id": "DOC-MAP-22",
+      "title": "Process Family Canvas Builder & Validator (build_family.py)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-23-proposed-process-family\\build_family.py",
+      "doc_type": "toolchain_script",
+      "date": "2026-11-23",
+      "author_origin": "ChatGPT / Codex",
+      "topic_area": "Programmatic Spec Validation, Canvas Commit & PNG Preview Render",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Wraps `render_spec`, `build_artifacts`, `canvas.service.commit`, and PNG edge/card intersection checks.",
+      "related": [
+        "DOC-MAP-05",
+        "DOC-MAP-23"
+      ],
+      "gaps_conflicts": "Permits `*_at_<hash>` terminal-clone nodes inside `.spec.yaml` to silence routing intersections.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-23-proposed-process-family/build_family.py",
+      "size_bytes": 7824,
+      "line_count": 131
+    },
+    {
+      "id": "DOC-MAP-23",
+      "title": "Routing and To-Be Validation Report (2026-11-23)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-23-routing-and-tobe-validation.json",
+      "doc_type": "validation_artifact",
+      "date": "2026-11-23",
+      "author_origin": "build_family.py automated checks",
+      "topic_area": "Structural Validation Results Across 8 Maps",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Confirms zero overlaps, text-fit, and preview intersection errors across 5 current + 3 proposed maps on Nov 23.",
+      "related": [
+        "DOC-MAP-17",
+        "DOC-MAP-22",
+        "DOC-MAP-24"
+      ],
+      "gaps_conflicts": "Structural/visual validation only \u2014 does NOT establish domain correctness or Owner acceptance.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-23-routing-and-tobe-validation.json",
+      "size_bytes": 5956,
+      "line_count": 156
+    },
+    {
+      "id": "DOC-MAP-24",
+      "title": "Current Ingestion/Enrichment Validation Report (2026-11-23)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-23-ingestion-enrichment-validation.json",
+      "doc_type": "validation_artifact",
+      "date": "2026-11-23",
+      "author_origin": "build_artifacts.py automated checks",
+      "topic_area": "Validation Results for Current-State Activity Maps",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Confirms valid syntax, references, and visual geometry on corrected current maps.",
+      "related": [
+        "DOC-MAP-02",
+        "DOC-MAP-08",
+        "DOC-MAP-09"
+      ],
+      "gaps_conflicts": "Does not measure runtime behavioral conformance.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-23-ingestion-enrichment-validation.json",
+      "size_bytes": 4369,
+      "line_count": 110
+    },
+    {
+      "id": "DOC-GEO-01",
+      "title": "Geo-Grapher Ingestion, Strata & Authorship Policy",
+      "path": "F:\\uv-data\\Geo_Grapher\\docs\\INGESTION_POLICY.md",
+      "doc_type": "policy",
+      "date": "2026-11-14",
+      "author_origin": "Geo-Grapher Owner Policy",
+      "topic_area": "Internal vs External Strata, Single-Stratum Groups & C1-C4 Fail-Closed Guards",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Enforced by `geographer/folder_review.py` & `geographer/library_papers.py` during Librarian `folder_review` and `paper_graph` import.",
+      "related": [
+        "DOC-POL-06",
+        "DOC-POL-08",
+        "DOC-MAP-12"
+      ],
+      "gaps_conflicts": "Internal Geo-Grapher reconstruction is explicitly deferred to Phase 2; boundary constraints govern Librarian's side.",
+      "uri": "file:///F:/uv-data/Geo_Grapher/docs/INGESTION_POLICY.md",
+      "size_bytes": 4416,
+      "line_count": 69
+    },
+    {
+      "id": "DOC-GEO-02",
+      "title": "Geo-Grapher Phase 6/7 Rulings Index",
+      "path": "F:\\uv-data\\Geo_Grapher\\docs\\phase67\\RULINGS_INDEX.md",
+      "doc_type": "rulings_register",
+      "date": "2026-11-12",
+      "author_origin": "Geo-Grapher Phase 6/7",
+      "topic_area": "Index of Owner Rulings Governing Geo-Grapher",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Authoritative index of Geo-Grapher Phase 6/7 decisions.",
+      "related": [
+        "DOC-GEO-01",
+        "DOC-GEO-03",
+        "DOC-POL-11"
+      ],
+      "gaps_conflicts": "Full internal Geo-Grapher doc audit reserved for Phase 2.",
+      "uri": "file:///F:/uv-data/Geo_Grapher/docs/phase67/RULINGS_INDEX.md",
+      "size_bytes": 2557,
+      "line_count": 24
+    },
+    {
+      "id": "DOC-GEO-03",
+      "title": "Geo-Grapher Recovery Accounting Contract (Review 4)",
+      "path": "F:\\uv-data\\Geo_Grapher\\docs\\phase67\\RECOVERY_DESIGN.md",
+      "doc_type": "design_spec",
+      "date": "2026-11-14",
+      "author_origin": "Geo-Grapher Phase 6/7",
+      "topic_area": "Bounded Recovery Patterns (FP1-FP9), 3-Step Ledger, FP4 Default-Off & Semantic Isolation",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Direct structural precedent for Librarian bounded recovery & Doctor design: max 3 recovery steps, max 2 paid calls, FP9 text-tool-call rejection without execution, FP4 self-check disabled after empirical 0/11 rescue regression.",
+      "related": [
+        "DOC-GEO-02",
+        "DOC-PLN-07",
+        "DOC-POL-03"
+      ],
+      "gaps_conflicts": "Methodological contrast: Geo-Grapher measured & turned off failing recovery (FP4) cleanly based on paired evaluation; Librarian's `UC-D` has no live empirical baseline yet.",
+      "uri": "file:///F:/uv-data/Geo_Grapher/docs/phase67/RECOVERY_DESIGN.md",
+      "size_bytes": 7112,
+      "line_count": 36
+    },
+    {
+      "id": "DOC-UIR-01",
+      "title": "UI Review (Nov 17 \u2014 Staging Default Filter & Acceptance Gaps)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-17-ui-review\\UI-REVIEW.md",
+      "doc_type": "ui_review",
+      "date": "2026-11-17",
+      "author_origin": "Librarian V2 UI QA Review",
+      "topic_area": "Staging Status Filter Visibility, Chat/Review Parity",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Verified Item 5 Staging '0 waiting' defect when staged items leave status='staged' while processed items sit in other statuses; informed Nov 18-19 fixes.",
+      "related": [
+        "DOC-UIR-02",
+        "DOC-UIR-03",
+        "DOC-RPT-10"
+      ],
+      "gaps_conflicts": "Which-sources selector in ui/app.js:6325-6332 still omits accepted and processing statuses in d9435e1.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-17-ui-review/UI-REVIEW.md",
+      "size_bytes": 10331,
+      "line_count": 135
+    },
+    {
+      "id": "DOC-UIR-02",
+      "title": "Page-by-Page UI Review (Nov 18 \u2014 B1-B9 Findings)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-18-ui-review\\PAGE-REVIEW.md",
+      "doc_type": "ui_review",
+      "date": "2026-11-18",
+      "author_origin": "Librarian V2 Page-by-Page QA",
+      "topic_area": "Staging Cap B2, Banner B3, Plan/Staging Status Alignment B6, Lens Sticky Controls",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Logged B1-B9 across Queue/Staging/Plan/Lenses pages prior to Nov 18 FIXES-APPLIED.",
+      "related": [
+        "DOC-UIR-01",
+        "DOC-UIR-03",
+        "DOC-UIR-04"
+      ],
+      "gaps_conflicts": "Addressed partially in FIXES-APPLIED; 50-row registry clamp persisted until paginated row chunks added.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-18-ui-review/PAGE-REVIEW.md",
+      "size_bytes": 9518,
+      "line_count": 73
+    },
+    {
+      "id": "DOC-UIR-03",
+      "title": "UI Fixes Applied (Nov 18 \u2014 Workflow Grant & Person-Start Alignment)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-18-ui-review\\FIXES-APPLIED.md",
+      "doc_type": "fix_record",
+      "date": "2026-11-18",
+      "author_origin": "Librarian V2 UI Engineering Log",
+      "topic_area": "Person-Started workflow_grant vs Agent-Call Restriction",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Introduced Core workflow_grant so person-started workflows/batches avoid 98 per-write Ask prompts while excluding agent calls (broker.py:175-181).",
+      "related": [
+        "DOC-UIR-02",
+        "DOC-UIR-04",
+        "DOC-POL-03"
+      ],
+      "gaps_conflicts": "Leaves agent/MCP callers without a delegated commission envelope in Ask mode.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-18-ui-review/FIXES-APPLIED.md",
+      "size_bytes": 9859,
+      "line_count": 70
+    },
+    {
+      "id": "DOC-UIR-04",
+      "title": "Agent UI/UX Review (Nov 19 \u2014 A1-A9 & F-01..F-25 Findings)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-19-agent-review\\REVIEW-UI-UX.md",
+      "doc_type": "ui_review",
+      "date": "2026-11-19",
+      "author_origin": "Librarian V2 Live Agent UI/UX Audit",
+      "topic_area": "MCP Ask-Mode F-03 Stalls, Staging F-09 Conflict, Search F-12 Facets",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Recorded F-01..F-25 incl. F-03 MCP 600s cross-tab hang (later capped to 150s PERMISSION_UNANSWERED in d9435e1) and F-09 Staging Bottom-Line conflict.",
+      "related": [
+        "DOC-UIR-03",
+        "DOC-UIR-05",
+        "DOC-RPT-10"
+      ],
+      "gaps_conflicts": "F-09 form-discard reload, Search F-12 facet gaps, and F-03 lack of MCP envelope remain live/partial in d9435e1.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-19-agent-review/REVIEW-UI-UX.md",
+      "size_bytes": 31828,
+      "line_count": 134
+    },
+    {
+      "id": "DOC-UIR-05",
+      "title": "Workflow & Pipeline Execution Review (Nov 19 \u2014 Defects 1-6)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-19-agent-review\\WORKFLOW-REVIEW.md",
+      "doc_type": "workflow_review",
+      "date": "2026-11-19",
+      "author_origin": "Librarian V2 Live Workflow Audit",
+      "topic_area": "15 Standard Workflows/Pipelines, action_done Result Drop, deep-read-staged & Router",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Tested all 15 workflows/pipelines; exposed Defect 1 (app.js discarding action_done result \u2014 still open at app.js:8472), Defect 3 (fixed via read_access.py:114-120), Defect 4 (fixed in tools/workflows.py:16-33), Defect 5 (fixed in broker.py:300-322).",
+      "related": [
+        "DOC-UIR-04",
+        "DOC-POL-03",
+        "DOC-MAP-01"
+      ],
+      "gaps_conflicts": "Defect 1 (ui/app.js:8472 _result discarded) and hidden Clerk queue count visibility remain open in d9435e1.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-19-agent-review/WORKFLOW-REVIEW.md",
+      "size_bytes": 21871,
+      "line_count": 118
+    },
+    {
+      "id": "DOC-MAP-25",
+      "title": "Process Composition Specification (UC-C \u2014 compose.spec.yaml)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\compose.spec.yaml",
+      "doc_type": "activity_spec_yaml",
+      "date": "2026-11-20",
+      "author_origin": "Librarian V2 Workflow Mapping",
+      "topic_area": "Upward Composition action -> workflow -> pipeline -> sprint",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Formalizes DOC-POL-03 Rule 1-4 composition order with explicit ref parent/child orchestration.",
+      "related": [
+        "DOC-POL-03",
+        "DOC-MAP-01",
+        "DOC-MAP-04"
+      ],
+      "gaps_conflicts": "Upward sprint composition across Contexts 1-3 is modeled in 2026-11-24 diagrams.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-20-workflow-map/examples/ingestion/compose.spec.yaml",
+      "size_bytes": 6893,
+      "line_count": 94
+    },
+    {
+      "id": "DOC-MAP-26",
+      "title": "End-to-End Source Lifecycle & Session Purposes Map (WORKFLOW-MAP.md)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\WORKFLOW-MAP.md",
+      "doc_type": "workflow_map",
+      "date": "2026-11-20",
+      "author_origin": "Librarian V2 Workflow Mapping",
+      "topic_area": "8 Session Purposes, YAML Workflows & Lifecycle Boundaries",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "IMPLEMENTED_PARTIAL",
+      "status_evidence": "Maps all 8 session purposes (add_project..audited) and standard YAML workflows.",
+      "related": [
+        "DOC-MAP-01",
+        "DOC-MAP-25",
+        "DOC-PLN-02"
+      ],
+      "gaps_conflicts": "W1b delegated mandate envelope not yet wired for MCP Tier 0.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-20-workflow-map/WORKFLOW-MAP.md",
+      "size_bytes": 23565,
+      "line_count": 428
+    },
+    {
+      "id": "DOC-MAP-27",
+      "title": "Revised Proposed Ingestion Narrative (INGESTION-TOBE.md)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\INGESTION-TOBE.md",
+      "doc_type": "accepted_design_doc",
+      "date": "2026-11-22",
+      "author_origin": "Librarian V2 Workflow Mapping",
+      "topic_area": "Owner / Tier 0 / Lead / Oracle / Doctor Integration Contract",
+      "evidence_kind": "accepted_design",
+      "acceptance_status": "ACCEPTED_UNIMPLEMENTED",
+      "status_evidence": "Explains 24-step accepted-ingestion-tobe.canvas with Lead ownership, independent Oracle check, common folder application boundary, and R1-R6 Doctor rejoin.",
+      "related": [
+        "DOC-MAP-03",
+        "DOC-MAP-04",
+        "DOC-MAP-17"
+      ],
+      "gaps_conflicts": "Explicitly marks runtime integration as proposed/unimplemented despite accepted graph.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-20-workflow-map/examples/ingestion/INGESTION-TOBE.md",
+      "size_bytes": 18680,
+      "line_count": 140
+    },
+    {
+      "id": "DOC-MAP-28",
+      "title": "Enrichment Baseline Model & Actor Notes (model-notes.md)",
+      "path": "D:\\Librarian_V2\\reports\\2026-11-21-enrichment-baseline\\model-notes.md",
+      "doc_type": "current_state_spec",
+      "date": "2026-11-22",
+      "author_origin": "Librarian V2 Enrichment Baseline",
+      "topic_area": "38-Step Baseline, Ticket Routing Table, GLM-5.3 Doctor/Oracle & process_approved Gate",
+      "evidence_kind": "implementation_record",
+      "acceptance_status": "IMPLEMENTED_VERIFIED",
+      "status_evidence": "Documents exact actor splits across Core/Clerk/Scribe/Lead/Oracle/Doctor, GLM-5.3 current role assignment, and curate batch gate.",
+      "related": [
+        "DOC-MAP-07",
+        "DOC-MAP-08",
+        "DOC-MAP-09"
+      ],
+      "gaps_conflicts": "Principal enrichment-baseline commentary paired with batch/source-enrichment-current.",
+      "uri": "file:///D:/Librarian_V2/reports/2026-11-21-enrichment-baseline/model-notes.md",
+      "size_bytes": 28688,
+      "line_count": 163
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Data (DIK Layer 1) / Bronze (Medallion Layer 1)",
+      "aliases": [
+        "Raw Data",
+        "Bronze Layer",
+        "Semantics (Owner informal frame)"
+      ],
+      "definition": "The immutable captured artifact and mechanical structural facts derived before interpretation (`EvidenceStore` `.evidence/<kind>/<sha256>.json`, `.librarian/quarantine/`, `.librarian/intake_queue.json`, `folder_intake` inventory facts, `.librarian/derived/dik/` component/chapter structures). May assert only that a component/byte sequence existed at a source/commit/date.",
+      "semantic_shift": "V1 stored `.Data/surveys/*.json` & `source_components.sqlite`; V2 unified evidence into content-addressed `.evidence/` + structured `dik.py` JSON sidecars + explicit `quarantine/`. Must NOT be confused with Trust Tier `bronze`.",
+      "sources": [
+        "DOC-V1D-05",
+        "DOC-V1D-06",
+        "DOC-V1D-39",
+        "DOC-V1D-44"
+      ]
+    },
+    {
+      "term": "Information (DIK Layer 2) / Silver (Medallion Layer 2)",
+      "aliases": [
+        "Curated Information",
+        "Silver Layer",
+        "Semiotics (Owner informal frame)"
+      ],
+      "definition": "Cleaned, conformed, **unframed (project-neutral)** descriptions emerging from relating Data points (`**Not read:**` where inferred in V1; in V2: hidden `.librarian/conversions/<evidence-id>.md` page-anchored text, `.librarian/staging/` airlock items, promoted `Sources/<kind>/<name>.md`, `Concepts/`, and rebuildable `.librarian/index.sqlite` / `Indexes/` / `.librarian/derived/paper-graph/`).",
+      "semantic_shift": "V1 placed Resource notes here manually with `## Evidence` & `**Not read:**` guards; V2 added the hidden page-anchored `.librarian/conversions/` layer for third-party content governance and formal Staging CAS/lease airlock. Must NOT be confused with Trust Tier `silver`.",
+      "sources": [
+        "DOC-V1D-05",
+        "DOC-V1D-07",
+        "DOC-V1D-08",
+        "DOC-POL-06",
+        "DOC-POL-07"
+      ]
+    },
+    {
+      "term": "Knowledge (DIK Layer 3) / Gold (Medallion Layer 3)",
+      "aliases": [
+        "Framed Knowledge",
+        "Gold Layer",
+        "Pragmatics (Owner informal frame)"
+      ],
+      "definition": "Information interpreted and tested **against a specific project need, perspective, or real execution** (`Transferable Capability`, `Session`, `Brief`, `Candidate`, verified `Offerings/` gated by `EVIDENCE_QUOTE_VERIFIED`, and real-use `Applications/`). Knowledge cannot be asserted solely from a README; it requires either a new framing perspective over held Data/Information or real Application evidence.",
+      "semantic_shift": "V1 separated `09-Applications/` and `branch offerings/`; V2 formalized prospective knowledge as `Offerings/` (created in `synthesise` with exact substring quote verification) and realised knowledge as `Applications/`. Must NOT be confused with Trust Tier `gold`.",
+      "sources": [
+        "DOC-V1D-05",
+        "DOC-V1D-06",
+        "DOC-V1D-08",
+        "DOC-V1D-46"
+      ]
+    },
+    {
+      "term": "Medallion Architecture (Agnostic Definition)",
+      "aliases": [
+        "Bronze / Silver / Gold Storage Refinement"
+      ],
+      "definition": "Grading material by level of refinement so that every derived stage is reproducible from the immutable stage before it, and errors are corrected by **replaying** rather than patching in place.",
+      "semantic_shift": "Adopted from lakehouse terminology (`Victor-Kipruto-Rop`, `DOC-V1D-39`) and generalized in `Use Contexts And Agnostic Description` (`DOC-V1D-08`) to govern V1/V2 vault storage + rebuildable indexes (`MARKDOWN_IS_TRUTH` + `EvidenceStore`).",
+      "sources": [
+        "DOC-V1D-08",
+        "DOC-V1D-39",
+        "DOC-V1D-40",
+        "DOC-V1D-44"
+      ]
+    },
+    {
+      "term": "Tier \u2014 Sense 1: Agent Tiers (0, 1, 2, 3)",
+      "aliases": [
+        "Reasoning Hierarchy",
+        "Overseer / Lead / Clerk / Scribe"
+      ],
+      "definition": "Task/reasoning hierarchy: **Tier 0** (external overseer e.g. Claude/Codex outside vault via MCP `contribute`), **Tier 1** (`Lead`: session orchestrator & judgment inside a vault), **Tier 2** (`Clerk`: bounded drafting, descriptions, proofreading), **Tier 3** (`Scribe`: narrow chunk extraction, atomic formatting). **Oracle** (independent judge) and **Doctor** (scoped repairer) use isolated contexts and configured models (currently GLM-5.3).",
+      "semantic_shift": "Early V2 (`PLAN - Librarian V2`, `M0 Results`) treated `[clerk]`/`[scribe]` inconsistently (Qwen-397B as Clerk costing 51% of M0 spend). `docs/policy/agent-roles-and-authority.md` (`DOC-POL-02`) standardized the 4-tier assignment and 'assign, never bind' rule.",
+      "sources": [
+        "DOC-POL-02",
+        "DOC-V2E-04",
+        "DOC-POL-08"
+      ]
+    },
+    {
+      "term": "Tier \u2014 Sense 2: Registry Permission Tiers (`consult`, `contribute`, `curate`)",
+      "aliases": [
+        "MCP Tiers",
+        "Access Tiers",
+        "Tool Tiers"
+      ],
+      "definition": "Write-authority boundary enforced by `Registry` and MCP server (`mcp_server.py`): **`consult`** (read + log use/applications), **`contribute`** (stage proposals, open/decide session candidates, write drafts inside permitted session phases; max tier for agents), **`curate`** (accept staged items into library `Sources/`/`Concepts/`/`topics`, accept vault pipelines, approve `process_approved` batches \u2014 **Owner/person-only** when `promotion.mode='person'`).",
+      "semantic_shift": "Originated in V1 `mcp_server.py` alongside `consult/borrow`; V2 added session-phase write gates on top (`session.WRITES`) and `Broker` permission modes (`Ask`/`Auto`/`Plan`). Note `process_approved` batch start requires `curate` (`TIER_REFUSED` via MCP `contribute`).",
+      "sources": [
+        "DOC-POL-02",
+        "DOC-V1D-06",
+        "DOC-V1D-10",
+        "DOC-RPT-09"
+      ]
+    },
+    {
+      "term": "Tier \u2014 Sense 3: Trust / Qualification Tiers (`gold`, `silver`, `bronze`)",
+      "aliases": [
+        "Confidence Tier",
+        "W5 Relation Tier",
+        "Graph Trust Score"
+      ],
+      "definition": "Quality/trust classification on graphs, nodes, or checked cross-graph W5 relations: e.g., `bronze` for third-party code graphs or weak structural match; higher tiers earned through verification/evidence checks. Separate from Medallion storage layers even though the names collide.",
+      "semantic_shift": "Introduced in Wave L (`DOC-POL-09`) and `agent-roles-and-authority.md` (`DOC-POL-02`) alongside W5 relation scoring (`DOC-PLN-02`), creating an explicit homonym risk with Bronze/Silver/Gold Medallion layers.",
+      "sources": [
+        "DOC-POL-02",
+        "DOC-POL-09",
+        "DOC-PLN-02"
+      ]
+    },
+    {
+      "term": "Assign (never Bind)",
+      "aliases": [
+        "Role Route Binding",
+        "Model-Role Assignment"
+      ],
+      "definition": "Model selection rule: models are configured dynamically against roles (`routes.json`) through a qualification record; workflows never hard-bind a specific vendor/model checkpoint inside architectural definitions.",
+      "semantic_shift": "Adopted across Oct-Nov 2026 specs (`DOC-POL-02`, `DOC-POL-12`, `DOC-PLN-06`) after Sept/Oct hardcoded tier defaults caused brittle routing.",
+      "sources": [
+        "DOC-POL-02",
+        "DOC-POL-12",
+        "DOC-PLN-06"
+      ]
+    },
+    {
+      "term": "Core / IndexService / VaultWriter",
+      "aliases": [
+        "Librarian Core",
+        "Single Writer"
+      ],
+      "definition": "The single long-lived process per mutable library holding the vault lease, serializing all SQLite reads/writes on a dedicated `IndexService` worker thread, and serializing all vault Markdown/JSONL writes through `VaultWriter` with atomic temp+replace and revision CAS tokens.",
+      "semantic_shift": "Built in CORE-01..07 and INDEX-01..05 to eliminate V1 multi-process SQLite `SQLITE_BUSY` races and uncoordinated direct file writes.",
+      "sources": [
+        "DOC-POL-05",
+        "DOC-POL-16",
+        "DOC-PLN-01"
+      ]
+    },
+    {
+      "term": "Ingest (`intake.ingest`) vs Enrichment Batch (`process_approved`) vs Acceptance (`staging_decide` / `promote`)",
+      "aliases": [
+        "Single Ingestion Pathway",
+        "Two-Gate Staging Airlock"
+      ],
+      "definition": "**CRITICAL DISTINCTION:** In V2, `ingest(ref)` **does NOT accept into the library**; it captures bytes/structure into `.evidence/`, runs mechanical fact derivation, calls `clerk` for a short unframed description, and **stages** an item (`staged_sources`). **`process_approved`** (person/curate-started, after approving items for batch) runs the 9 source stages (`validate -> parse -> read -> lenses -> data -> relate -> metadata -> review -> publish`) or 3 folder stages (`folder_validate -> folder_describe -> folder_data`), reducing status to `enriched`/`partial`/`failed`. **`staging_decide(..., 'accept')` -> `promote`** executes guarded library publication into `Sources/` + index + findability check.",
+      "semantic_shift": "Cause of recurring model & user confusion since V2 launched (`DOC-V1D-30`, `DOC-V1D-34`, `DOC-MAP-02`). V2 consolidated V1's fragmented `populate`/`papers`/`enrich`/`lens` into these two explicit airlock gates.",
+      "sources": [
+        "DOC-V1D-30",
+        "DOC-POL-07",
+        "DOC-MAP-02",
+        "DOC-MAP-08",
+        "DOC-MAP-09"
+      ]
+    },
+    {
+      "term": "Staging Airlock",
+      "aliases": [
+        "Proposal Airlock",
+        ".librarian/staging/"
+      ],
+      "definition": "The quarantine/review buffer separating unverified extracted drafts, folder classification cards, concept/topic proposals, source revisions, and draft offerings from canonical reader-facing Markdown.",
+      "semantic_shift": "Renamed from V1 'proposal airlock' (`propose_resource`) into V2 multi-kind `StagingStore` (`source`, `lens`, `concept`, `folder`, `topic`, `revision`, `offering`).",
+      "sources": [
+        "DOC-V1D-01",
+        "DOC-POL-07",
+        "DOC-V1D-31"
+      ]
+    },
+    {
+      "term": "Authorship (`owner_created` / `generated` / `third_party` ['unlicensed']) & Domain (`internal` / `external`)",
+      "aliases": [
+        "Strata",
+        "Content Authorship"
+      ],
+      "definition": "`owner_created` = owner's own code/notes (ingested in full); `generated` = Librarian/agent outputs (never cited as original source); `third_party` (also called `unlicensed` in Owner notes) = external works studied & cited (restricted to S1-S6b/R scope, stored under `.librarian/conversions/` for agents, external graph domain only).",
+      "semantic_shift": "Formalized Nov 14, 2026 (`DOC-POL-06`, `DOC-POL-08`, `DOC-GEO-01`); explains why nested repos or vendor trees trigger `third_party`/`unlicensed` handling.",
+      "sources": [
+        "DOC-POL-06",
+        "DOC-POL-08",
+        "DOC-GEO-01"
+      ]
+    },
+    {
+      "term": "Provenance vs Data Lineage",
+      "aliases": [
+        "Run Provenance",
+        "Lineage Chain"
+      ],
+      "definition": "**Provenance** is the recorded history of *how* an artifact came to exist (which code, commit, inputs, route/model, version, environment). **Lineage** describes structural derivation relationships *between* datasets/artifacts (`original -> conversion -> reading -> claim -> source note -> offering`).",
+      "semantic_shift": "Clarified explicitly in V1 Glossary (`DOC-V1D-44`) and carried into `provenance.py`, `EvidenceStore`, and `operators-and-views.md` \u00a73.",
+      "sources": [
+        "DOC-V1D-44",
+        "DOC-PLN-09",
+        "DOC-V1D-40"
+      ]
+    },
+    {
+      "term": "Lens (Reasoning Lens)",
+      "aliases": [
+        "Evaluative Lens",
+        "Stance"
+      ],
+      "definition": "A reusable analytical perspective extracted from deep reading (`PERSPECTIVE -> ATTENTION -> ROLE -> SYNTHESIZE`) with grounded verbatim quote checks, staged in Staging and promoted to `.librarian/lenses.sqlite`, adoptable into sessions or applied to diagrams.",
+      "semantic_shift": "Originated in Aletheia (`configs/reasoning_lenses_v0_1.yaml`, May 2025, `DOC-V1D-18`), matured into V1 `lens.py` chunk scanner, then V2 `deep_read` lens chain + `.librarian/lenses.sqlite` + diagram validation lenses (`the-root-cause-lens`, etc.).",
+      "sources": [
+        "DOC-V1D-18",
+        "DOC-V1D-28",
+        "DOC-V1D-36",
+        "DOC-V1D-38"
+      ]
+    },
+    {
+      "id": "GL-DIK-DATA",
+      "term": "DIK Builder (`dik.py`) vs Paper Graph (`paper_graph.py`) vs Geo-Grapher",
+      "aliases": [
+        "graphify (retired)",
+        "Knowledge Graph Builders"
+      ],
+      "definition": "**`dik.py`** derives mechanical local repository/document structural Data (`.librarian/derived/dik/` chapters/components/sections); **`paper_graph.py`** serializes pre-read provisional or post-read populated `.nodes.json` paper claims/terms and shells out to Geo-Grapher CLI (`import-library-paper`); **Geo-Grapher** (`geographer`) builds persistent SQLite AST/call/doc/paper graphs + MCP query service. **`graphify` is retired**.",
+      "semantic_shift": "V1 used external `graphify-out/graph.json`; Nov 2026 policy retired `graphify` (`DOC-POL-06:159`) in favour of native Geo-Grapher + Librarian `dik.py` + `paper_graph.py`.",
+      "sources": [
+        "DOC-POL-06",
+        "DOC-MAP-12",
+        "DOC-V1D-17"
+      ]
+    },
+    {
+      "term": "Action -> Workflow -> Pipeline -> Sprint (Composition Hierarchy)",
+      "aliases": [
+        "Composition Ladder",
+        "Rule 1-17"
+      ],
+      "definition": "Strict upward composition hierarchy (`DOC-POL-03`): deterministic single **Action** (tool) -> **Workflow** (sequences Actions + asks/checks) -> **Pipeline** (sequences Workflows) -> **Sprint** (tracks milestones across Pipelines). No downward inversion or nested pipelines inside workflows.",
+      "semantic_shift": "Formalized in `composition.md` (`DOC-POL-03`) to prevent ad-hoc Python orchestrators and unsafe auto-grants (`F-03`).",
+      "sources": [
+        "DOC-POL-03",
+        "DOC-RPT-10",
+        "DOC-MAP-19"
+      ]
+    },
+    {
+      "term": "OP1-OP8 Operational Pathologies (Phase 8 / Nov 2026 Audit)",
+      "aliases": [
+        "Operational Gaps OP1-OP8"
+      ],
+      "definition": "Eight runtime ingestion/enrichment/Geo boundary issues tracked in Nov 15-22 audits: **OP1** split-brain (`awaiting_acceptance()` added Nov 21), **OP2** non-incremental all-group Geo rebuild on unrelated stale root, **OP3-OP7** silent TS failures/O(N^2) paper-DB cloning/0 bridges/queue drops/mixed folder failures, **OP8** malformed `terms` JSON retry (`route_review` added Nov 21).",
+      "semantic_shift": "Several code-level pieces (OP1 status helper, OP8 review retry) landed in `d9435e1`, while OP2 group amplification and Geo O(N^2) paper DB cloning remained live on Nov 22.",
+      "sources": [
+        "DOC-PLN-01",
+        "DOC-MAP-12",
+        "DOC-MAP-13",
+        "DOC-RPT-05"
+      ]
+    },
+    {
+      "term": "Quarantine vs Withdrawal vs Deletion",
+      "aliases": [
+        ".librarian/quarantine/",
+        "Soft Suppression"
+      ],
+      "definition": "**Quarantine** holds unfetchable/malformed/oversized or rejected artifacts explicitly with reasons instead of silent dropping. **Withdrawal** (proposed in `MC-14`) suppresses current retrieval/merge across derived views/vectors while preserving audit lineage. **Deletion** removes bytes physically, leaving an unavailable audit marker.",
+      "semantic_shift": "V1 lacked unified quarantine (silent drops noted in early audits); V2 added `.librarian/quarantine/` and fresh-rejection quarantine safety (`DOC-PLN-04`), while withdrawal propagation (`MC-14` / `MF-012/036`) remains proposed.",
+      "sources": [
+        "DOC-POL-07",
+        "DOC-PLN-10",
+        "DOC-RPT-04b"
+      ]
+    },
+    {
+      "term": "EVIDENCE_QUOTE_VERIFIED / PHASE_GATE / PERSON_CONFIRMS / TIER_REFUSED / CORE_REQUIRED / FOLDER_STALE",
+      "aliases": [
+        "Named Enforced Refusals"
+      ],
+      "definition": "Machine-enforced Core refusals: **`EVIDENCE_QUOTE_VERIFIED`** requires `draft_offering` citations to match exact contiguous substrings of stored source text; **`PHASE_GATE`** blocks writes outside allowed session phases; **`PERSON_CONFIRMS`** requires UI/person confirmation when `promotion.mode='person'`; **`TIER_REFUSED`** blocks `contribute`/MCP agents from `curate` actions; **`CORE_REQUIRED`** refuses offline SQLite fallback when a Core is active/expected; **`FOLDER_STALE`** blocks paper Geo publication when parent folder survey fingerprint changed.",
+      "semantic_shift": "Carried from V1 named refusals (`EVIDENCE_REQUIRED`, etc.) into machine-checked Core invariants across `registry.py`, `session.py`, `promote.py`, `offerings.py`, `paper_graph.py`.",
+      "sources": [
+        "DOC-POL-02",
+        "DOC-POL-07",
+        "DOC-POL-16",
+        "DOC-MAP-09"
+      ]
+    },
+    {
+      "term": "Delegated Commission Envelope",
+      "aliases": [
+        "Mandate",
+        "Rule 15 Permission Envelope",
+        "delegated_mandate"
+      ],
+      "definition": "PROPOSED (`composition.md` Rules 15-17, NOT ACCEPTED / NOT IMPLEMENTED): A single upfront, Core-stored authorization envelope (`mandate_id`) declaring permitted tools, write effects, target roots, budget ceiling, permitted partials, and expiration. In Context 1 (user directing Tier 0 to work with Librarian), the human's explicit instruction and stated scope ARE the commission, and Tier 0 approves the Rule 15 envelope on the user's behalf with zero second human approval step (`spec_owner: tier0_on_behalf_of_person`, `commissioned_by: person, decided_by: agent`), holding the permissions needed inside that commissioned scope while reserving out-of-scope/budget raises, uncommissioned standing global governance changes, `ORACLE_ROUTE_COLLISION`, plus any Owner-retained `OD-05` sensitivity/challenged-claim exception. Distinct from Context 2 (`external_project_caller` bounded to research helpers, S1-S6b source access, async queue or opt-in `stage_only` intake, no vault acceptance, and `Applications/` authoring), Context 3 (direct human UI `spec_owner: person` without Tier 0), and present-day `d9435e1` (`librarian-current-activation`, `IMPLEMENTED_VERIFIED`).",
+      "semantic_shift": "Replaces fragile session-by-session Ask prompts (`F-03` 150s/600s timeouts) and extends the concept of `App.start_action`'s `workflow_grant` to Context-1 commissioned runs without impersonating `person` identity.",
+      "sources": [
+        "DOC-POL-03",
+        "DOC-POL-02",
+        "DOC-UIR-03",
+        "DOC-UIR-04"
+      ]
+    },
+    {
+      "term": "Activation Contexts (Contexts 1, 2, 3)",
+      "aliases": [
+        "Entry Contexts",
+        "User-Tier0 / External-MCP / Direct-UI"
+      ],
+      "definition": "Separates present-day `d9435e1` activation (`librarian-current-activation`, `IMPLEMENTED_VERIFIED`) from three distinct `PROPOSED_UNACCEPTED` upstream L3 models: **Context 1** (Human directs Tier 0 agent to operate Librarian; instruction + scope IS the commission, `spec_owner=tier0_on_behalf_of_person`, `OD-05` flags Rule-16 sensitivity/challenged-claim Owner ruling), **Context 2** (External-project Tier 0 via MCP under explicit 5-domain bounds, `spec_owner=external_project_caller`, no vault acceptance, and agent-authored `extapply` -> Core-stored `recordapp` `Applications/` logging), and **Context 3** (Human operates Librarian Web UI directly with zero Tier 0 actor, `spec_owner=person`).",
+      "semantic_shift": "Supersedes Phase 1's single-node 3-way `dtrigger` shorthand by separating present-day verified behaviour, `spec_owner`, delegated authority boundaries, handoff, and user notification across contexts.",
+      "sources": [
+        "DOC-POL-02",
+        "DOC-POL-17",
+        "DOC-MAP-01",
+        "DOC-UIR-04"
+      ]
+    },
+    {
+      "term": "Ticket (Routed Fault Record)",
+      "aliases": [
+        "Fault Ticket",
+        "Recoverable Shortfall Record"
+      ],
+      "definition": "PROPOSED (`NOT ACCEPTED / NOT IMPLEMENTED`): A structured, Core-persisted fault/hold record used by `Doctor`, `Oracle`, `Lead`, and Staging/Agenda workflows. Preserves applicable failure or extension identifiers (e.g., `R1`\u2013`R6`, `3b`, `4a`, `6c`/`6d`, `7c`, `8a`, `10b`/`10c`, `14c`/`14d`, `17c`/`17d`, `20d`), tiered flags/refusal codes (`FOLDER_STALE`, `EMPTY_PAPER_GRAPH`, `THIRD_PARTY_ROUTE_REQUIRED`, `not_findable`, `ORACLE_ROUTE_COLLISION` with `review_status='unverified_route_collision'`), raw evidence hashes, accountable actor, `repair_history`, immediate critical routing vs bounded Doctor recovery, independent `Oracle` recheck verdict, and explicit human/agent notification target.",
+      "semantic_shift": "Replaces unrouted error logs and auto-rollback failures (`UC-D` `x4`) with traceable policy-routed accountability (`DOC-MAP-28`) and fail-closed route-collision holds.",
+      "sources": [
+        "DOC-POL-03",
+        "DOC-MAP-28",
+        "DOC-MAP-06b"
+      ]
+    },
+    {
+      "term": "Applications Record (`record_application`)",
+      "aliases": [
+        "Applications/",
+        "Gold Precedent Log"
+      ],
+      "definition": "Gold-layer Vault record (`Applications/Application - <title>.md`) created at checkout of an `apply` session (`tools/sessions.py:1948-2049`): External Tier 0 authors external need, what was found/taken, replaced, project files/changes, and verification (`extapply`), while Core validates `sources_used` citations (`[[note]]`), stores the append-only Markdown + project-sidecar JSON pointer, and auto-queues fetchable `unresolved_sources` leads (`recordapp`).",
+      "semantic_shift": "Core persistence implemented in `d9435e1`; PROPOSED (NOT ACCEPTED) Context 2 extensions add source snapshot/locator pinning (`cite_as`/`evidence_sha256`), external environment constraints, repeatability verification status, and non-blocking empty-`sources_used` (`no_match_workaround`) logging.",
+      "sources": [
+        "DOC-V1D-05",
+        "DOC-V1D-31",
+        "DOC-MAP-26",
+        "DOC-RPT-04"
+      ]
+    }
+  ]
+}

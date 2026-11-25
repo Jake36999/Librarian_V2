@@ -1,0 +1,64 @@
+{
+  "status": "report model validation; not execution, runtime rollout or new Owner acceptance",
+  "spec": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.spec.yaml",
+  "spec_sha256": "c954fc9622d740dff7c3d722cfc0e19e5a14c03b6634eee636a8f4d3a49dd64e",
+  "canvas": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas",
+  "base_revision": "2cb3fc2536ad1e3f588ae7c0b0b2e4f5a15894f63860399a61e9613b9fa4f743",
+  "proposal_hash": "2cb3fc2536ad1e3f588ae7c0b0b2e4f5a15894f63860399a61e9613b9fa4f743",
+  "scenarios": 69,
+  "structural_problems": [],
+  "cross_view_reference_flags": [],
+  "changes": {
+    "migrated_ids": {},
+    "retired_nodes_removed": [],
+    "retired_anchors_retained_for_owner_edges": [],
+    "owner_nodes_preserved": 0,
+    "owner_edges_preserved": 0,
+    "geometry_changes": [],
+    "generated_reflow": false,
+    "initial_generated_reflow": false,
+    "initial_semantic_checksum_verified": null,
+    "reflow_validation": null,
+    "generated_routing": {},
+    "group_changes": [],
+    "preexisting_overlaps_preserved": []
+  },
+  "write": "service.preview(profile=None, adopt=True), final provenance-aware proposal, guarded service.commit",
+  "accepted_renderer_sha256": "b3253960a08ccfdc05d93719c1b841393ec6024a409e4a2638510a1f6b27a955",
+  "commit": {
+    "written": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas",
+    "revision": "2cb3fc2536ad1e3f588ae7c0b0b2e4f5a15894f63860399a61e9613b9fa4f743",
+    "backup": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas.20261123T155014216117.bak",
+    "changes": {
+      "migrated_ids": {},
+      "retired_nodes_removed": [],
+      "retired_anchors_retained_for_owner_edges": [],
+      "owner_nodes_preserved": 0,
+      "owner_edges_preserved": 0,
+      "geometry_changes": [],
+      "generated_reflow": false,
+      "initial_generated_reflow": false,
+      "initial_semantic_checksum_verified": null,
+      "reflow_validation": null,
+      "generated_routing": {},
+      "group_changes": [],
+      "preexisting_overlaps_preserved": []
+    }
+  },
+  "reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.corrected-overview.png",
+  "overview_scale": 0.35,
+  "overview_text_overflow": [],
+  "overview_purpose": "reduced orientation image; text scales with saved card geometry",
+  "detail_reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.corrected-readable.png",
+  "detail_scale": 0.8,
+  "detail_text_overflow": [],
+  "preview": "deterministic raster of saved canvas positions; not an Obsidian application screenshot",
+  "previous_validation": {
+    "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\correction-history\\ingestion-tobe.correction-validation.e1b436cb641948e6.json",
+    "sha256": "e1b436cb641948e6b266f82319a441d67ddf8f35ee6ec6984a4867302cb16785"
+  },
+  "initial_migration_validation": {
+    "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\correction-history\\ingestion-tobe.correction-validation.f7b6db288207038a.json",
+    "sha256": "f7b6db288207038a2a770bdb70d8c24a978489d5b599dd6f5b1712bc15776b00"
+  }
+}

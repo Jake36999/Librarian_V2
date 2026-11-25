@@ -1,0 +1,25 @@
+{
+  "status": "descriptive diagram checks; not a new runtime execution",
+  "model": "batch-enrichment-current",
+  "source_sha256": "ac4237e20401db11b10890a977f84721d820284ec3e30252b3738b50b08b8328",
+  "canvas_revision": "fd580ff05b08bfad8e2d053c2d92a3e87ea5f8204a03880d58233176dc3fb381",
+  "canvas_nodes": 36,
+  "edges": 40,
+  "numbered_steps": 5,
+  "extension_scenarios": 16,
+  "structural_reference_flags": [],
+  "card_overlaps": [],
+  "detail_text_overflow": [],
+  "edge_card_intersections": [],
+  "overview_clipped_at_reduced_scale": [],
+  "generated_relayout": [],
+  "call_outcomes": [
+    "escalated",
+    "partial",
+    "paused",
+    "reused",
+    "success"
+  ],
+  "write": "existing canvas service preview and revision/hash-checked commit; profile=None",
+  "previous_validation": "correction-history\\batch-enrichment-current.96787140d00d0224.json"
+}

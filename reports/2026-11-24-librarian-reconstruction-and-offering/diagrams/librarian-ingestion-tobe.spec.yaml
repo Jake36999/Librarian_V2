@@ -1,0 +1,367 @@
+diagram: librarian-ingestion-tobe
+title: "Librarian Shared L2 Ingestion & Governance Pipeline (Proposed To-Be)"
+problem:
+  symptom: "Prior draft hid distinct Context 1/2/3 entry callers inside one trigger switch, overloaded Owner with 7 main-path steps & 3 serial Gate-2 prompts, risked blocking external Tier 0 on curate, and skipped final Oracle on code-only roots."
+  root: "Accept narrowed parent mandates from Context 1/2/3 or scheduler (never widening parent scope), delegate routine screening & acceptance via Lead + Oracle (GLM-5.3) + 4-point Doctor, consolidate Gate 2, and emit canonical 5-outcome receipts + tickets."
+lanes:
+  - Specification owner
+  - Lead (tier 1)
+  - Clerk (tier 2)
+  - Doctor
+  - Oracle
+  - Core
+  - Geo-Grapher
+
+nodes:
+  - id: s
+    kind: start
+    label: start
+  - id: admit_mandate
+    kind: activity
+    lane: Core
+    step: 1
+    label: "admits narrowed L2 mandate, parent spec_owner, budget & commissioned_by provenance (no widen)"
+  - id: leadbind
+    kind: activity
+    lane: Lead (tier 1)
+    step: 2
+    label: "owns L2 sub-run spec (sub_spec_owner=lead_tier1 <= parent) & narrowed grant envelope"
+  - id: rootinv
+    kind: activity
+    lane: Core
+    step: 3
+    label: "surveys roots, fingerprints, licences & exclusions ($0); reuses NAT-13 folder receipts"
+  - id: droot
+    kind: decision
+    lane: Core
+    label: "roots & folder-route valid?"
+  - id: doctorroot
+    kind: ref
+    lane: Doctor
+    use_case: librarian-doctor-tobe
+    label: "attempts scoped R1/R2 Ticket recovery (GLM-5.3 isolated adapter; single-pass)"
+  - id: reentryroot
+    kind: activity
+    lane: Core
+    label: "verifies bounded R1/R2 repair progress (attempt <= 1)"
+  - id: folderscreen
+    kind: activity
+    lane: Clerk (tier 2)
+    step: 4
+    label: "screens only new/ambiguous folders for purpose, unlicensed third-party risk & sensitivity (docs unread)"
+  - id: dfolderauth
+    kind: decision
+    lane: Core
+    label: "folder decision covered by Context-1 commission or standing policy?"
+  - id: leadfolder
+    kind: activity
+    lane: Lead (tier 1)
+    step: 5
+    label: "approves in-scope folders (Context 1 commission or standing policy); applies exclusions"
+  - id: dheldcaller
+    kind: decision
+    lane: Core
+    label: "interactive Specification owner available?"
+  - id: ownerfolder
+    kind: decision
+    lane: Specification owner
+    label: "Owner reserved folder choice?"
+  - id: excl
+    kind: activity
+    lane: Core
+    label: "records excluded subtree and read barrier"
+  - id: queueagenda
+    kind: activity
+    lane: Core
+    label: "logs Rule-16/OD-05 or Context-2 hold Ticket on vault Agenda without blocking caller"
+  - id: folderapply
+    kind: activity
+    lane: Core
+    step: 6
+    label: "submits only changed/selected accepted groups (OP2 single-group fix)"
+  - id: geoapply
+    kind: activity
+    lane: Geo-Grapher
+    step: 7
+    label: "indexes changed folder group incrementally; returns parse/coverage receipt"
+  - id: dgeo
+    kind: decision
+    lane: Core
+    label: "single-group Geo receipt?"
+  - id: doctorgeo
+    kind: ref
+    lane: Doctor
+    use_case: librarian-doctor-tobe
+    label: "runs bounded group/service Ticket recovery without global rebuild"
+  - id: reentrygeo
+    kind: activity
+    lane: Core
+    label: "confirms single-pass Geo recovery receipt"
+  - id: oraclecov
+    kind: decision
+    lane: Oracle
+    label: "degraded parse within caller tolerance?"
+  - id: dinput
+    kind: decision
+    lane: Core
+    label: "Source-eligible files or queued refs in scope?"
+  - id: capture
+    kind: activity
+    lane: Core
+    step: 8
+    label: "fetches immutable Bronze .evidence/, extracts literal header/DOI metadata, quarantines poison siblings & restores _framing"
+  - id: dcap
+    kind: decision
+    lane: Core
+    label: "capture & queue reconciliation?"
+  - id: describe
+    kind: activity
+    lane: Clerk (tier 2)
+    step: 9
+    label: "proposes W8 human-readable Source title (when literal header is slug/filename), neutral Silver description, semantic fields (Unknown if unsupported) & W8 topics"
+  - id: stage
+    kind: activity
+    lane: Core
+    step: 10
+    label: "validates & stores proposed title, Silver staging record & explicit Unknowns; queues W8 topic_propose if Unfiled-only"
+  - id: dgate1
+    kind: decision
+    lane: Core
+    label: "Gate 1 & batch-start authority in mandate?"
+  - id: dgate1caller
+    kind: decision
+    lane: Core
+    label: "interactive Specification owner present?"
+  - id: ownergate1
+    kind: decision
+    lane: Specification owner
+    label: "approve & start batch?"
+  - id: startrun
+    kind: activity
+    lane: Core
+    step: 11
+    label: "Lead approves within grant; Core validates F-02 checkpoint & freezes mixed batch"
+  - id: batch
+    kind: ref
+    lane: Core
+    step: 12
+    use_case: librarian-batch-enrichment-tobe
+    label: "runs mixed source + folder enrichment child against frozen ledger"
+  - id: ledger
+    kind: activity
+    lane: Core
+    step: 13
+    label: "reconciles F-01 paginated ledger; separates Folder, Source, Lens, Topic & W5 Bridge lists"
+  - id: oraclebatch
+    kind: activity
+    lane: Oracle
+    step: 14
+    label: "screens batch outputs, partial gaps & Geo receipts via distinct qualified Oracle route (GLM-5.3 current adapter)"
+  - id: dbatchscreen
+    kind: decision
+    lane: Oracle
+    label: "pre-promotion batch quality?"
+  - id: doctorbatch
+    kind: ref
+    lane: Doctor
+    use_case: librarian-doctor-tobe
+    label: "runs bounded R4 partial/publish Ticket repair on affected subset"
+  - id: reentrybatch
+    kind: activity
+    lane: Core
+    label: "merges verified R4 repair into parent ledger (attempt <= 1)"
+  - id: dgate2
+    kind: decision
+    lane: Core
+    label: "Gate 2 acceptance authority?"
+  - id: leadaccept
+    kind: activity
+    lane: Lead (tier 1)
+    step: 15
+    label: "accepts in-scope Sources & cards (decided_by=agent; preserves flags); defers OD-05/reserved items"
+  - id: dgate2caller
+    kind: decision
+    lane: Core
+    label: "interactive Specification owner present?"
+  - id: ownergate2
+    kind: decision
+    lane: Specification owner
+    label: "consolidated independent Folder/Source/Lens/Topic choices?"
+  - id: promote
+    kind: activity
+    lane: Core
+    step: 16
+    label: "commits approved Sources (PromotionGuard CAS, index.upsert, DA-3 handoff) & separate approved metadata"
+  - id: oraclefinal
+    kind: activity
+    lane: Oracle
+    step: 17
+    label: "verifies findability, DATA_IS_UNFRAMED neutrality & F-01..F-03 via distinct qualified Oracle route (GLM-5.3 current adapter)"
+  - id: doracle
+    kind: decision
+    lane: Oracle
+    label: "parent obligations & findability met?"
+  - id: doctorphase
+    kind: ref
+    lane: Doctor
+    use_case: librarian-doctor-tobe
+    label: "repairs candidate index/findability (R5) or mapped parent Ticket"
+  - id: reentryfinal
+    kind: activity
+    lane: Core
+    label: "confirms single-pass post-promotion repair"
+  - id: deliver
+    kind: activity
+    lane: Lead (tier 1)
+    step: 18
+    label: "packages Oracle verdict, evidence hashes, spend, coverage, deferred tabs & Agenda Tickets"
+  - id: dfinalkind
+    kind: decision
+    lane: Core
+    label: "full obligations clean vs permitted partial?"
+  - id: recorddelivery
+    kind: activity
+    lane: Core
+    step: 19
+    label: "persists final run receipt, MC-10 cost ledger, coverage, deferrals & handover record"
+  - id: notifyowner
+    kind: activity
+    lane: Specification owner
+    step: 20
+    label: "receives verified catalogue result, spend, deferred work & notification payload"
+  - id: recordpartial
+    kind: activity
+    lane: Core
+    label: "persists partial coverage, spend, deferred items & open Ticket ledger"
+  - id: notifypartial
+    kind: activity
+    lane: Specification owner
+    label: "receives truthful partial result, not_examined list, spend & Agenda resume Tickets"
+  - id: reuseout
+    kind: activity
+    lane: Core
+    label: "reconciles reused/excluded inputs with zero duplicate batch dispatch ($0 spend)"
+  - id: pauseout
+    kind: activity
+    lane: Lead (tier 1)
+    label: "returns held gate/ORACLE_ROUTE_COLLISION Ticket, spend, F-02/F-03 refusal, or resume path"
+  - id: escout
+    kind: activity
+    lane: Lead (tier 1)
+    label: "routes critical/unresolved Ticket immediately with flags, hashes & Rule-8 compensation"
+  - id: e1
+    kind: end
+    outcome: success
+    label: "parent receives Oracle-verified full catalogue state; notification recorded"
+  - id: epartial
+    kind: end
+    outcome: partial
+    label: "permitted partial or deferred worklist returned with explicit gaps & Tickets"
+  - id: ereused
+    kind: end
+    outcome: reused
+    label: "existing/excluded scope reconciled cleanly"
+  - id: epaused
+    kind: end
+    outcome: paused
+    label: "paused on Rule-16/OD-05 Ticket, staged-only gate, MC-10 cap, or ORACLE_ROUTE_COLLISION"
+  - id: eescalated
+    kind: end
+    outcome: escalated
+    label: "escalated unresolved critical integrity Ticket"
+
+edges:
+  - {from: s, to: admit_mandate}
+  - {from: admit_mandate, to: leadbind}
+  - {from: leadbind, to: rootinv}
+  - {from: rootinv, to: droot}
+  - {from: droot, to: folderscreen, guard: "current & route ready"}
+  - {from: droot, to: doctorroot, guard: "stale root or lost route qualification (R1/R2)", ext: "3a"}
+  - {from: droot, to: escout, guard: "critical security, data-loss, or authority breach", ext: "3b"}
+  - {from: doctorroot, to: reentryroot, guard: "resolved"}
+  - {from: reentryroot, to: folderscreen}
+  - {from: doctorroot, to: pauseout, guard: "declined"}
+  - {from: doctorroot, to: escout, guard: "escalated"}
+  - {from: folderscreen, to: dfolderauth}
+  - {from: dfolderauth, to: leadfolder, guard: "covered by Context-1 task commission (in-scope) or standing non-sensitive policy"}
+  - {from: dfolderauth, to: dheldcaller, guard: "Context-3 direct UI, Context-2 out-of-scope folder, unlicensed/symlink/out-of-scope, or OD-05 policy hold", ext: "4a"}
+  - {from: dheldcaller, to: ownerfolder, guard: "interactive UI/Owner present"}
+  - {from: dheldcaller, to: queueagenda, guard: "MCP Tier 0 / Context-2 / scheduled run (log Agenda Ticket without blocking)"}
+  - {from: ownerfolder, to: folderapply, guard: "approve"}
+  - {from: ownerfolder, to: excl, guard: "exclude subtree"}
+  - {from: ownerfolder, to: pauseout, guard: "hold or decline"}
+  - {from: excl, to: folderapply}
+  - {from: leadfolder, to: folderapply}
+  - {from: folderapply, to: geoapply}
+  - {from: geoapply, to: dgeo}
+  - {from: dgeo, to: dinput, guard: "valid receipt"}
+  - {from: dgeo, to: doctorgeo, guard: "FOLDER_STALE or mapped Geo service fault", ext: "7a"}
+  - {from: doctorgeo, to: reentrygeo, guard: "resolved"}
+  - {from: reentrygeo, to: dinput}
+  - {from: doctorgeo, to: oraclecov, guard: "declined"}
+  - {from: doctorgeo, to: escout, guard: "escalated"}
+  - {from: dgeo, to: oraclecov, guard: "degraded parse coverage (e.g. tree_sitter skips)", ext: "7b"}
+  - {from: dgeo, to: escout, guard: "critical Geo DB or security violation", ext: "7c"}
+  - {from: oraclecov, to: dinput, guard: "acceptable for scope (gap recorded)"}
+  - {from: oraclecov, to: pauseout, guard: "below required quality"}
+  - {from: dinput, to: capture, guard: "Source-eligible inputs present"}
+  - {from: dinput, to: oraclefinal, guard: "code/graph folder scope only (no Source notes)", ext: "8a"}
+  - {from: dinput, to: reuseout, guard: "all inputs already current or excluded", ext: "8b"}
+  - {from: capture, to: dcap}
+  - {from: dcap, to: describe, guard: "usable Sources captured"}
+  - {from: dcap, to: reuseout, guard: "duplicates only", ext: "8c"}
+  - {from: dcap, to: pauseout, guard: "all targets quarantined/unreachable", ext: "8d"}
+  - {from: describe, to: stage}
+  - {from: stage, to: dgate1}
+  - {from: dgate1, to: startrun, guard: "authorized by Context-1 task commission or Context-3 curate start"}
+  - {from: dgate1, to: dgate1caller, guard: "Context-2 stage_only scope or Context-3 awaiting human batch start", ext: "10a"}
+  - {from: dgate1caller, to: ownergate1, guard: "interactive UI/Owner present"}
+  - {from: dgate1caller, to: queueagenda, guard: "Context-2 / scheduled (stage_only or awaiting curate)"}
+  - {from: ownergate1, to: startrun, guard: "approve & start"}
+  - {from: ownergate1, to: pauseout, guard: "stage only / defer"}
+  - {from: startrun, to: batch}
+  - {from: batch, to: ledger, guard: "success"}
+  - {from: batch, to: ledger, guard: "partial", ext: "12a"}
+  - {from: batch, to: reuseout, guard: "reused", ext: "12b"}
+  - {from: batch, to: pauseout, guard: "paused", ext: "12c"}
+  - {from: batch, to: escout, guard: "escalated", ext: "12d"}
+  - {from: ledger, to: oraclebatch}
+  - {from: oraclebatch, to: dbatchscreen}
+  - {from: dbatchscreen, to: dgate2, guard: "ready for acceptance routing (distinct Oracle route pass)"}
+  - {from: dbatchscreen, to: doctorbatch, guard: "repairable partial or publish gap (R4)", ext: "14a"}
+  - {from: doctorbatch, to: reentrybatch, guard: "resolved"}
+  - {from: reentrybatch, to: dgate2}
+  - {from: doctorbatch, to: dgate2, guard: "declined"}
+  - {from: doctorbatch, to: escout, guard: "escalated"}
+  - {from: dbatchscreen, to: pauseout, guard: "unmet required output blocks promotion", ext: "14b"}
+  - {from: dbatchscreen, to: pauseout, guard: "ORACLE_ROUTE_COLLISION (no distinct qualified route; never marked independently reviewed)", ext: "14c"}
+  - {from: dbatchscreen, to: escout, guard: "critical security, data-loss, or integrity violation in batch", ext: "14d"}
+  - {from: dgate2, to: leadaccept, guard: "authorized by Context-1 task commission (decided_by=agent) or standing agent policy"}
+  - {from: dgate2, to: dgate2caller, guard: "Context-2 no-accept, Context-3 human UI review, uncommissioned taxonomy change, or OD-05 policy hold", ext: "15a"}
+  - {from: dgate2caller, to: ownergate2, guard: "interactive UI/Owner present"}
+  - {from: dgate2caller, to: queueagenda, guard: "Context-2 / scheduled (queue for human or Context-1 curate)"}
+  - {from: ownergate2, to: promote, guard: "accept selected items"}
+  - {from: ownergate2, to: pauseout, guard: "hold or defer all"}
+  - {from: leadaccept, to: promote}
+  - {from: promote, to: oraclefinal}
+  - {from: oraclefinal, to: doracle}
+  - {from: doracle, to: deliver, guard: "met (distinct Oracle route pass)"}
+  - {from: doracle, to: doctorphase, guard: "index/findability miss or mapped shortfall (R5/R6)", ext: "17a"}
+  - {from: doctorphase, to: reentryfinal, guard: "resolved"}
+  - {from: reentryfinal, to: oraclefinal}
+  - {from: doctorphase, to: pauseout, guard: "declined"}
+  - {from: doctorphase, to: escout, guard: "escalated"}
+  - {from: doracle, to: pauseout, guard: "unmapped gap requires Owner decision", ext: "17b"}
+  - {from: doracle, to: pauseout, guard: "ORACLE_ROUTE_COLLISION (no distinct qualified route; never marked independently reviewed)", ext: "17c"}
+  - {from: doracle, to: escout, guard: "critical integrity or authority-boundary finding", ext: "17d"}
+  - {from: deliver, to: dfinalkind}
+  - {from: dfinalkind, to: recorddelivery, guard: "all required & optional clean"}
+  - {from: dfinalkind, to: recordpartial, guard: "permitted partial coverage or deferred lenses", ext: "18a"}
+  - {from: recorddelivery, to: notifyowner}
+  - {from: notifyowner, to: e1}
+  - {from: recordpartial, to: notifypartial}
+  - {from: notifypartial, to: epartial}
+  - {from: queueagenda, to: pauseout}
+  - {from: reuseout, to: ereused}
+  - {from: pauseout, to: epaused}
+  - {from: escout, to: eescalated}

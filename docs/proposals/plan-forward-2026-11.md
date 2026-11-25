@@ -14,13 +14,31 @@
 |---|---|
 | W1 Workflows as data | Done for phases, macros and step fields (`f6a85d6`, `f61e30c`, `af45e7c`). **Not done: the coded flows** (intake, batch stages, folder review) are still Python, not pipelines. OP16 is only partly closed; see W1b. |
 | W2 Canvas service | Done (`0cb1e7e`, `2829afb`). The diagram-workflows proposal builds on it (W2b). |
-| W3–W8 | Not started. |
+| W7 Research-session fixes | Partial: OP1, F2 and OP8 implemented in `8489387`. OP3–OP5, OP7, OP9 and the remaining failure-branch checks are open. The live GLM-5.3 review-route confirmation remains open. |
+| W1b, W2b, W3–W6, W8 and W9 | Runtime implementation not started. The existing manifest and diagram examples are prototypes, not enforcement. |
+
+**Current authorised work:** a requirements/evidence baseline followed by one comprehensive,
+faithful enrichment-cycle model. This authorises analysis and modelling, not runtime changes to
+W1b–W9. The owner's clarifications below govern that work.
+
+### Owner clarifications, 21 November 2026
+
+- Agent tiers are Overseer (0), Lead (1), Clerk (2), Scribe (3). Tier 0 may delegate through
+  Librarian and its DeepInfra agents on the owner's behalf, including for another project,
+  within granted authority. Existing numeric settings are not silently remapped.
+- Specifications belong within the Librarian Core. Report copies and canvases support review;
+  they do not supply an alternative runtime store.
+- The fault register is a ticket service with tiered flags based on existing failures and the
+  responsible actor, rather than a fixed universal four-bit mask.
+- GLM-5.3 is currently assigned to both doctor and oracle. Assignments remain revisable through
+  the existing adapter and role-selection mechanism; separate contexts and worker-reviewer
+  independence remain requirements.
 
 ### Course corrections from the diagram-workflows work
 
 On 20–21 November a second session analysed the system with the owner's systems-analysis course material and wrote [the diagram-workflows proposal](diagram-workflows.md). It rewrote [the use cases](../../reports/2026-11-20-workflow-map/USE-CASES.md) in the course's form and drew worked examples. Five corrections follow for this plan.
 1. **Fix the root before the symptom.** The research run's failure was a symptom of OP1: enriched papers waited for an acceptance nobody owned. `1064cf0`, graph citations as evidence, was a sound change, but it treated the research side. OP1 moves to the front of W7.
-2. **Attestation is wrong today (finding F2).** An agent's acceptance through the person-facing API is recorded as `attested_by: person`. This is now a policy rule ([agent-roles-and-authority](../policy/agent-roles-and-authority.md#attestation-names-who-accepted)), and its fix joins W7.
+2. **Attestation was wrong in the run (finding F2).** An agent's acceptance through the person-facing API was recorded as `attested_by: person`. The fix in `8489387` records declared agents correctly and enforces person-only promotion for them. Undeclared callers and the historical 96-note record still require the distinction stated in [policy](../policy/agent-roles-and-authority.md#attestation-names-who-accepted).
 3. **W1 stopped short (OP16).** It made session phases data, but not the coded flows. The ingestion ran with tier 0 doing all the orchestration (finding F5), because no Core pipeline exists for it. W1b carries the rest.
 4. **W3 needs a prerequisite.** A computed blast radius needs each action to declare the kinds of state it can change. Today an action declares only read or write, open-world, idempotence and its access fingerprint. W1b adds the declaration.
 5. **Review needs its own roles.** The oracle (judge) and the doctor (repair) are kept apart from the worker, with separate context and assignment. This is now policy, and W9 builds it.
@@ -195,7 +213,13 @@ It is paired with Geo-Grapher rebuilding only the groups a decision touches. Tha
 
 ### W7, revised (21 November)
 
-Root causes first: **OP1** (an owner and an alert for enriched-but-unaccepted work), then **F2** (attestation names the agent or policy that accepted), then **OP8** (the review route applies inside the Core, which W9 needs for the oracle), then OP3–OP5, OP7 and OP9 as listed above. Add a planted test for each branch never exercised in the 20 November ingestion (finding F6): a sensitive subfolder, a note that is not findable, and the spend ceiling reached.
+The first packet is implemented in `8489387`: **OP1** (an alert identifying who decides on
+enriched-but-unaccepted work), **F2** (attestation names a declared agent), and **OP8** (the review
+route applies inside the Core under qualification checks). Live review-route confirmation is
+still open. Remaining: OP3–OP5, OP7 and OP9 as listed above, plus a planted test for each branch
+never exercised in the 20 November ingestion (finding F6): a sensitive subfolder, a note that is
+not findable, and the spend ceiling reached. Historical misattributed notes are a separate Owner
+decision, not automatically corrected by the new code.
 
 ### W9. Review kept apart from the work: the oracle and the doctor
 
@@ -210,8 +234,16 @@ Root causes first: **OP1** (an owner and an alert for enriched-but-unaccepted wo
    This builds on the audited session's verifiers and the claim review.
 3. **Scope judgments for the permission envelope (W1b, item 5).** A call outside a run's envelope is judged by the oracle against the run's specification. Its "in scope" is a verdict like any other: a claim with evidence, reported at the end of the run, and re-checked. It can allow only what the run's mandate already permits.
 4. **Change, then blast radius, then checks, then oracle, then scouting, then remedy (P8).** This includes security checks: secrets, tier changes, new outbound calls, path escapes, injected instructions. It needs W3.
+5. **Fault tickets.** Track the existing extension/refusal, evidence, tiered flags, responsible
+   actor, remedy attempts and oracle re-check. Route mapped failures to the doctor, unmapped
+   failures to the Lead, reserved decisions to the Owner and critical findings to tier 0 and the
+   Owner. This follows the existing rules; a fixed four-bit mask is not the ticket model.
 
-**Needs:** W1b (manifests and declared state), W3, OP8, and a short fixed list of models for the oracle and doctor roles (an owner decision).
+**Needs:** W1b (manifests and declared state), W3 and the OP8 review-route foundation. The current
+oracle and doctor assignment is GLM-5.3, revisable through the existing adapter and role-selection
+mechanism. Both roles keep separate contexts; the worker-reviewer independence requirement must
+be reconciled if the worker uses the same route. Core-owned specification storage and general
+run integration remain to be implemented.
 
 **Done when:** a tier-1 ingestion run with a tier-0-set specification reports exactly once to tier 0, and a planted failure reaches the doctor keyed by its extension.
 
@@ -226,19 +258,28 @@ Settled:
 - The order W1 → W8 was accepted, and W1 and W2 are done.
 - MARK's canvas modules were copied in (W2).
 - The vocabulary and rules of composition, review and attestation were adopted on 21 November (terminology and policy).
+- OP1, F2 and OP8's first W7 packet is implemented (`8489387`); the rest of W7 remains open.
+- Tier 0 may delegate Librarian work on the owner's behalf; the role order is Overseer, Lead,
+  Clerk, Scribe. Authority comes from explicit grants and existing gates, not the role number.
+- Specifications are Core-owned; faults are tickets with tiered flags and responsible actors.
+- GLM-5.3 is the current doctor and oracle assignment; either may be reassigned through the adapter.
+- The next authorised contribution is the baseline and one complete enrichment-cycle model,
+  preserving the established ingestion requirements and accepted diagram method.
 
-Proposed order now: **W7's root causes (OP1, F2, OP8) → W1b → W3 → W9**, with **W2b P0** beside them, then W4, W5, W6 and W8.
-- W7's three items are small, and each removes the cause of a failure we saw.
+Proposed implementation order after the completed W7 root packet and the current analysis:
+**W1b → W3 → W9**, with **W2b P0** beside them, then W4, W5, W6 and W8. Remaining W7 work stays
+visible rather than being treated as closed with its first packet.
 - W1b is the prerequisite for W3 and W9, and it takes orchestration off tier 0.
+- Full out-of-envelope scope judgments depend on W9, while W9 depends on W1b's manifests and
+  declared state. Build those deterministic foundations first; do not claim the complete envelope
+  before its oracle integration exists.
 
 Open:
 1. The proposed order above.
 2. Claim review default-on in every library (W7), at one Clerk call per claim.
-3. The short fixed list of models for the oracle and doctor roles (W9).
-4. The diagram-workflows proposal's open decisions (its section 14):
-   - whether the fault register stays at four bits;
+3. The diagram-workflows proposal's open implementation decisions (its section 14):
    - separate but linked spec and process files;
-   - where specs live;
+   - the physical backend and integration for Core-owned specs;
    - the `modelling` lens pack.
 
 ## Appendix A. The designs we would adopt

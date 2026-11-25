@@ -1,0 +1,1174 @@
+{
+  "nodes": [
+    {
+      "id": "librarian-title",
+      "type": "text",
+      "x": 20,
+      "y": -200,
+      "width": 3380,
+      "height": 220,
+      "text": "# Current Activation Paths: Present-Day UI, MCP, Broker & Staging Flow (d9435e1)\n**Symptom:** MCP agents hit contribute caps, zero folder MCP tools, curate process_approved refusals, 150s Ask waits (F-03), F-09 form wipes, and silently discarded workflow results (app.js:8472).\n**Root cause:** Document verified present-day UI, MCP, Broker, Staging, and Applications behaviour separately from proposed to-be envelopes and preserved historical DataManagement traces.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `librarian-current-activation.spec.yaml`."
+    },
+    {
+      "id": "librarian-s",
+      "type": "text",
+      "x": 40,
+      "y": 140,
+      "width": 360,
+      "height": 70,
+      "text": "● start",
+      "color": "4"
+    },
+    {
+      "id": "librarian-hist_note",
+      "type": "text",
+      "x": 2440,
+      "y": 340,
+      "width": 360,
+      "height": 150,
+      "text": "d9435e1 current-state map; links batch/source current contracts without retrofitting historical DataManagement ingestion.canvas."
+    },
+    {
+      "id": "librarian-initiate",
+      "type": "text",
+      "x": 40,
+      "y": 540,
+      "width": 360,
+      "height": 150,
+      "text": "**1.** initiates via Web UI (Staging/Folders/Chat/workflow), instructs Tier 0 (Context 1), or runs ext-project build (Context 2)"
+    },
+    {
+      "id": "librarian-dcontext",
+      "type": "text",
+      "x": 2440,
+      "y": 740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ which present-day activation surface & context enters Core?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-ui_intake",
+      "type": "text",
+      "x": 1840,
+      "y": 3140,
+      "width": 360,
+      "height": 150,
+      "text": "**2.** submits Add source (URL/arXiv/DOI/file) or /api/folders/* at curate tier (person_call bypasses Broker)"
+    },
+    {
+      "id": "librarian-chat_lead",
+      "type": "text",
+      "x": 1240,
+      "y": 940,
+      "width": 360,
+      "height": 150,
+      "text": "handles UI Chat+Attach; calls tools & asks person tool-by-tool in Modes: Ask (no sprint envelope)"
+    },
+    {
+      "id": "librarian-ui_wf_start",
+      "type": "text",
+      "x": 2440,
+      "y": 940,
+      "width": 360,
+      "height": 150,
+      "text": "starts background paperclip workflow at contribute with workflow_grant (read_access exempts deep_read only)"
+    },
+    {
+      "id": "librarian-c1_call",
+      "type": "text",
+      "x": 640,
+      "y": 940,
+      "width": 360,
+      "height": 150,
+      "text": "calls MCP capped at contribute (0 folder MCP tools; process_approved refused) or actor=agent /api/tool CLI"
+    },
+    {
+      "id": "librarian-c2_call",
+      "type": "text",
+      "x": 640,
+      "y": 1140,
+      "width": 360,
+      "height": 150,
+      "text": "calls search/read_source_section, delegate/dispatch_plan, queue_source, ingest, or record_application"
+    },
+    {
+      "id": "librarian-capture_stage",
+      "type": "text",
+      "x": 2440,
+      "y": 3340,
+      "width": 360,
+      "height": 150,
+      "text": "**3.** captures Bronze .evidence/ or HTTP OP2 all-groups folder apply; restores _framing & writes staging"
+    },
+    {
+      "id": "librarian-dchat_broker",
+      "type": "text",
+      "x": 2440,
+      "y": 1140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Broker check on Chat write call?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-dwf_route",
+      "type": "text",
+      "x": 2440,
+      "y": 1340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ workflow step tier & third-party read route?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-dc1_broker",
+      "type": "text",
+      "x": 2440,
+      "y": 1540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Context 1 tier, folder surface & Broker Ask check?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-dc2_gate",
+      "type": "text",
+      "x": 2440,
+      "y": 1740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Context 2 MCP tier & S1-S6b third-party check?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-dcap_curr",
+      "type": "text",
+      "x": 2440,
+      "y": 3540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ capture outcome?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-ui_hold_notice",
+      "type": "text",
+      "x": 1840,
+      "y": 6140,
+      "width": 360,
+      "height": 150,
+      "text": "surfaces Ask prompt, refusal, F-09 reload conflict, or waiting/deferred Staging item"
+    },
+    {
+      "id": "librarian-wf_source_ref",
+      "type": "text",
+      "x": 2440,
+      "y": 1940,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **source-enrichment-current**: executes current source-stage subset (deep-read-staged) under workflow_grant",
+      "color": "2"
+    },
+    {
+      "id": "librarian-wf_refused",
+      "type": "text",
+      "x": 2440,
+      "y": 2140,
+      "width": 360,
+      "height": 150,
+      "text": "fails action_done with TIER_REFUSED (curate op) or THIRD_PARTY_ROUTE_REQUIRED (non-deep_read)"
+    },
+    {
+      "id": "librarian-c1_refusal",
+      "type": "text",
+      "x": 640,
+      "y": 2540,
+      "width": 360,
+      "height": 150,
+      "text": "stops at TIER_REFUSED / THIRD_PARTY_ROUTE_REQUIRED / 150s PERMISSION_UNANSWERED; reports manual UI step"
+    },
+    {
+      "id": "librarian-c2_helpers",
+      "type": "text",
+      "x": 1240,
+      "y": 1940,
+      "width": 360,
+      "height": 150,
+      "text": "runs contribute read-only DeepInfra delegate / dispatch_plan DAGs with zero Ask prompt"
+    },
+    {
+      "id": "librarian-clerk_draft",
+      "type": "text",
+      "x": 1240,
+      "y": 3940,
+      "width": 360,
+      "height": 150,
+      "text": "**4.** drafts neutral summary via clerk_endpoint (slug/filename titles & Unfiled if <=1 topic remain)"
+    },
+    {
+      "id": "librarian-reuse_curr",
+      "type": "text",
+      "x": 2440,
+      "y": 5140,
+      "width": 360,
+      "height": 150,
+      "text": "links already_held note or screened_out record without duplicate ingestion"
+    },
+    {
+      "id": "librarian-quar_curr",
+      "type": "text",
+      "x": 2440,
+      "y": 3740,
+      "width": 360,
+      "height": 150,
+      "text": "quarantines failed ref & enqueues settled queue entry for retry"
+    },
+    {
+      "id": "librarian-user_paused",
+      "type": "text",
+      "x": 40,
+      "y": 6340,
+      "width": 360,
+      "height": 150,
+      "text": "receives refusal, Ask timeout, or manual Staging handover requirement"
+    },
+    {
+      "id": "librarian-ui_drop_result",
+      "type": "text",
+      "x": 1840,
+      "y": 2140,
+      "width": 360,
+      "height": 150,
+      "text": "app.js:8472 discards action_done.result (_result); updates staged state without workflow result drawer"
+    },
+    {
+      "id": "librarian-ui_fail_notice",
+      "type": "text",
+      "x": 1840,
+      "y": 7140,
+      "width": 360,
+      "height": 150,
+      "text": "surfaces error banner or uncaught batch/write failure"
+    },
+    {
+      "id": "librarian-dc2_outcome",
+      "type": "text",
+      "x": 2440,
+      "y": 2340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Context 2 source readiness & Applications/ path?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-dgate1_auth",
+      "type": "text",
+      "x": 2440,
+      "y": 4140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Gate 1 approve & curate process_approved start authority?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-user_reused",
+      "type": "text",
+      "x": 40,
+      "y": 5340,
+      "width": 360,
+      "height": 150,
+      "text": "receives reused catalogue note or Applications/ precedent without new batch dispatch"
+    },
+    {
+      "id": "librarian-epaused",
+      "type": "text",
+      "x": 3040,
+      "y": 6540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ paused on Ask timeout, TIER_REFUSED, PERSON_CONFIRMS, F-09 conflict, or manual UI wait\n*outcome: paused*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-user_partial_at_3e515c0970",
+      "type": "text",
+      "x": 40,
+      "y": 2340,
+      "width": 360,
+      "height": 150,
+      "text": "receives partial/captured/queued/embedding_warnings result or unshown workflow outcome"
+    },
+    {
+      "id": "librarian-user_esc",
+      "type": "text",
+      "x": 40,
+      "y": 7340,
+      "width": 360,
+      "height": 150,
+      "text": "receives failure alert & retained sibling/staging state"
+    },
+    {
+      "id": "librarian-c2_record_app",
+      "type": "text",
+      "x": 2440,
+      "y": 2540,
+      "width": 360,
+      "height": 150,
+      "text": "writes append-only Applications/ note (attested_by=agent, [[note]]) + project sidecar & queues unresolved_sources"
+    },
+    {
+      "id": "librarian-c2_queue_only",
+      "type": "text",
+      "x": 2440,
+      "y": 2740,
+      "width": 360,
+      "height": 150,
+      "text": "refuses empty sources_used (TypeError) or queues leads via queue_source without enrichment/acceptance"
+    },
+    {
+      "id": "librarian-gate1_ui",
+      "type": "text",
+      "x": 40,
+      "y": 4540,
+      "width": 360,
+      "height": 150,
+      "text": "**5.** reviews Staging (Which sources hides processing/accepted); approves Gate 1 & clicks Process approved"
+    },
+    {
+      "id": "librarian-accept_captured",
+      "type": "text",
+      "x": 2440,
+      "y": 5540,
+      "width": 360,
+      "height": 150,
+      "text": "promotes captured/partial note with explicit coverage & not_examined list"
+    },
+    {
+      "id": "librarian-dmanual_handover",
+      "type": "text",
+      "x": 40,
+      "y": 4340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ human takes over Gate 1 / Process approved in Web UI?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-ereused",
+      "type": "text",
+      "x": 3040,
+      "y": 5540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ reused existing note, screened_out record, or Applications/ precedent\n*outcome: reused*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-epartial_at_3e515c0970",
+      "type": "text",
+      "x": 3040,
+      "y": 2540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ completed with partial coverage, queued leads, or discarded workflow drawer\n*outcome: partial*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-eescalated",
+      "type": "text",
+      "x": 3040,
+      "y": 7540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ critical/uncaught write or batch failure escalated with retained state\n*outcome: escalated*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-c2_deliver_reuse",
+      "type": "text",
+      "x": 640,
+      "y": 2740,
+      "width": 360,
+      "height": 150,
+      "text": "delivers ext-project result + Applications/ link (no snapshot hashes/locators/verification schema)"
+    },
+    {
+      "id": "librarian-c2_deliver_partial",
+      "type": "text",
+      "x": 640,
+      "y": 2940,
+      "width": 360,
+      "height": 150,
+      "text": "returns external workaround/gap notice & queued unresolved lead IDs to user"
+    },
+    {
+      "id": "librarian-start_batch",
+      "type": "text",
+      "x": 2440,
+      "y": 4740,
+      "width": 360,
+      "height": 150,
+      "text": "**6.** validates curate person_call, single _LIVE lock & freezes mixed Source + Folder selection"
+    },
+    {
+      "id": "librarian-user_partial",
+      "type": "text",
+      "x": 40,
+      "y": 7140,
+      "width": 360,
+      "height": 150,
+      "text": "receives partial/captured/queued/embedding_warnings result or unshown workflow outcome"
+    },
+    {
+      "id": "librarian-batch_ref",
+      "type": "text",
+      "x": 2440,
+      "y": 4940,
+      "width": 360,
+      "height": 150,
+      "text": "**7.** ⇉ **batch-enrichment-current**: dispatches frozen mixed batch via batch-enrichment-current (9 Source + 3 Folder stages)",
+      "color": "2"
+    },
+    {
+      "id": "librarian-epartial",
+      "type": "text",
+      "x": 3040,
+      "y": 7340,
+      "width": 360,
+      "height": 150,
+      "text": "◉ completed with partial coverage, queued leads, or discarded workflow drawer\n*outcome: partial*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-gate2_ui",
+      "type": "text",
+      "x": 40,
+      "y": 5740,
+      "width": 360,
+      "height": 150,
+      "text": "**8.** reviews enriched summary (F-09 conflict reload wipes edits) & clicks Accept; Folders/Lenses separate"
+    },
+    {
+      "id": "librarian-dpartial_accept",
+      "type": "text",
+      "x": 2440,
+      "y": 5340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ partial/failed item disposition & promotion mode?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-dgate2_curr",
+      "type": "text",
+      "x": 2440,
+      "y": 5940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Gate 2 decision & PromotionGuard CAS check?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-promote_curr",
+      "type": "text",
+      "x": 2440,
+      "y": 6740,
+      "width": 360,
+      "height": 150,
+      "text": "**9.** commits Sources/ note via PromotionGuard (200-file CAS), IndexGateway FTS, DA-3 & post-write vectors"
+    },
+    {
+      "id": "librarian-dfind_curr",
+      "type": "text",
+      "x": 2440,
+      "y": 6940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ post-promotion catalogued & vector status?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-ui_done",
+      "type": "text",
+      "x": 1840,
+      "y": 7740,
+      "width": 360,
+      "height": 150,
+      "text": "**10.** shows ok banner & Search/Staging updates (manual Rewrite indexes if needed; no Oracle/Doctor runtime)"
+    },
+    {
+      "id": "librarian-user_done",
+      "type": "text",
+      "x": 40,
+      "y": 7940,
+      "width": 360,
+      "height": 150,
+      "text": "**11.** receives catalogued Source note in Search/Vault; Folders/Lenses/Topics remain separate on Staging"
+    },
+    {
+      "id": "librarian-e1",
+      "type": "text",
+      "x": 3040,
+      "y": 8140,
+      "width": 360,
+      "height": 150,
+      "text": "◉ Source catalogued & findable via current UI/batch path; pending tabs separate\n*outcome: success*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-lane-Human-user",
+      "type": "group",
+      "x": 20,
+      "y": 60,
+      "width": 400,
+      "height": 8330,
+      "label": "Human user"
+    },
+    {
+      "id": "librarian-lane-Tier-0-agent-MCP-CLI-API-",
+      "type": "group",
+      "x": 620,
+      "y": 60,
+      "width": 400,
+      "height": 8330,
+      "label": "Tier 0 agent (MCP / CLI-API)"
+    },
+    {
+      "id": "librarian-lane-In-app-Lead-Model-worker",
+      "type": "group",
+      "x": 1220,
+      "y": 60,
+      "width": 400,
+      "height": 8330,
+      "label": "In-app Lead / Model worker"
+    },
+    {
+      "id": "librarian-lane-Librarian-Web-UI",
+      "type": "group",
+      "x": 1820,
+      "y": 60,
+      "width": 400,
+      "height": 8330,
+      "label": "Librarian Web UI"
+    },
+    {
+      "id": "librarian-lane-Core",
+      "type": "group",
+      "x": 2420,
+      "y": 60,
+      "width": 400,
+      "height": 8330,
+      "label": "Core"
+    },
+    {
+      "id": "librarian-lane-Outcomes",
+      "type": "group",
+      "x": 3020,
+      "y": 60,
+      "width": 400,
+      "height": 8330,
+      "label": "Outcomes"
+    }
+  ],
+  "edges": [
+    {
+      "id": "librarian-e0",
+      "fromNode": "librarian-s",
+      "toNode": "librarian-hist_note",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e1",
+      "fromNode": "librarian-hist_note",
+      "toNode": "librarian-initiate",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e2",
+      "fromNode": "librarian-initiate",
+      "toNode": "librarian-dcontext",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e3",
+      "fromNode": "librarian-dcontext",
+      "toNode": "librarian-ui_intake",
+      "label": "[Context 3: direct Web UI Staging Add source / Folders (person_call, curate)]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e4",
+      "fromNode": "librarian-dcontext",
+      "toNode": "librarian-chat_lead",
+      "label": "[Context 3: Web UI Chat + Attach with in-app Lead (app.js:8924)] 1a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e5",
+      "fromNode": "librarian-dcontext",
+      "toNode": "librarian-ui_wf_start",
+      "label": "[Context 3: Web UI paperclip Run a workflow (App.start_action)] 1b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e6",
+      "fromNode": "librarian-dcontext",
+      "toNode": "librarian-c1_call",
+      "label": "[Context 1: user directs Tier 0 agent (MCP / actor=agent API)] 1c",
+      "color": "1",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e7",
+      "fromNode": "librarian-dcontext",
+      "toNode": "librarian-c2_call",
+      "label": "[Context 2: external-project Tier 0 MCP during external build] 1d",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-e8",
+      "fromNode": "librarian-ui_intake",
+      "toNode": "librarian-capture_stage",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e9",
+      "fromNode": "librarian-chat_lead",
+      "toNode": "librarian-dchat_broker",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e10",
+      "fromNode": "librarian-dchat_broker",
+      "toNode": "librarian-capture_stage",
+      "label": "[Auto mode or human clicks Allow in UI]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e11",
+      "fromNode": "librarian-dchat_broker",
+      "toNode": "librarian-ui_hold_notice",
+      "label": "[Ask unanswered (600s park) or Plan PERMISSION_DENIED]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e12",
+      "fromNode": "librarian-ui_wf_start",
+      "toNode": "librarian-dwf_route",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e13",
+      "fromNode": "librarian-dwf_route",
+      "toNode": "librarian-wf_source_ref",
+      "label": "[deep-read-staged single-source workflow (read_access carveout)]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e14",
+      "fromNode": "librarian-dwf_route",
+      "toNode": "librarian-wf_refused",
+      "label": "[curate step or non-deep_read 3rd-party raw file]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e15",
+      "fromNode": "librarian-wf_refused",
+      "toNode": "librarian-ui_hold_notice",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e16",
+      "fromNode": "librarian-wf_source_ref",
+      "toNode": "librarian-ui_drop_result",
+      "label": "[success]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e17",
+      "fromNode": "librarian-wf_source_ref",
+      "toNode": "librarian-ui_drop_result",
+      "label": "[partial]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e18",
+      "fromNode": "librarian-wf_source_ref",
+      "toNode": "librarian-ui_drop_result",
+      "label": "[reused]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e19",
+      "fromNode": "librarian-wf_source_ref",
+      "toNode": "librarian-ui_hold_notice",
+      "label": "[paused]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e20",
+      "fromNode": "librarian-wf_source_ref",
+      "toNode": "librarian-ui_fail_notice",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e21",
+      "fromNode": "librarian-ui_drop_result",
+      "toNode": "librarian-user_partial_at_3e515c0970",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e22",
+      "fromNode": "librarian-c1_call",
+      "toNode": "librarian-dc1_broker",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-e23",
+      "fromNode": "librarian-dc1_broker",
+      "toNode": "librarian-capture_stage",
+      "label": "[contribute ingest/intake_run permitted or HTTP/CLI intake]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e24",
+      "fromNode": "librarian-dc1_broker",
+      "toNode": "librarian-c1_refusal",
+      "label": "[no MCP folder tools, Plan deny, or Ask 150s PERMISSION_UNANSWERED]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e25",
+      "fromNode": "librarian-c1_refusal",
+      "toNode": "librarian-user_paused",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e26",
+      "fromNode": "librarian-c2_call",
+      "toNode": "librarian-dc2_gate",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e27",
+      "fromNode": "librarian-dc2_gate",
+      "toNode": "librarian-c2_helpers",
+      "label": "[contribute delegate/dispatch_plan + S1-S6b reads]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e28",
+      "fromNode": "librarian-dc2_gate",
+      "toNode": "librarian-c1_refusal",
+      "label": "[consult delegate TIER_REFUSED or raw 3rd-party THIRD_PARTY_ROUTE_REQUIRED]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e29",
+      "fromNode": "librarian-c2_helpers",
+      "toNode": "librarian-dc2_outcome",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e30",
+      "fromNode": "librarian-dc2_outcome",
+      "toNode": "librarian-c2_record_app",
+      "label": "[sources_used >= 1 catalogued & Broker write permitted]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e31",
+      "fromNode": "librarian-dc2_outcome",
+      "toNode": "librarian-c2_queue_only",
+      "label": "[sources_used=[] TypeError or non-blocking queue_source]",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e32",
+      "fromNode": "librarian-dc2_outcome",
+      "toNode": "librarian-capture_stage",
+      "label": "[contribute ingest captures missing ref into Staging]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e33",
+      "fromNode": "librarian-dc2_outcome",
+      "toNode": "librarian-c1_refusal",
+      "label": "[Ask 150s PERMISSION_UNANSWERED on session/queue/application]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e34",
+      "fromNode": "librarian-c2_record_app",
+      "toNode": "librarian-c2_deliver_reuse",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e35",
+      "fromNode": "librarian-c2_deliver_reuse",
+      "toNode": "librarian-user_reused",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e36",
+      "fromNode": "librarian-c2_queue_only",
+      "toNode": "librarian-c2_deliver_partial",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e37",
+      "fromNode": "librarian-c2_deliver_partial",
+      "toNode": "librarian-user_partial",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e38",
+      "fromNode": "librarian-capture_stage",
+      "toNode": "librarian-dcap_curr",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e39",
+      "fromNode": "librarian-dcap_curr",
+      "toNode": "librarian-clerk_draft",
+      "label": "[usable captured item]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e40",
+      "fromNode": "librarian-dcap_curr",
+      "toNode": "librarian-reuse_curr",
+      "label": "[already_held duplicate or screened_out] 3a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e41",
+      "fromNode": "librarian-dcap_curr",
+      "toNode": "librarian-quar_curr",
+      "label": "[quarantined or capture error] 3b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e42",
+      "fromNode": "librarian-reuse_curr",
+      "toNode": "librarian-user_reused",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e43",
+      "fromNode": "librarian-quar_curr",
+      "toNode": "librarian-ui_hold_notice",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e44",
+      "fromNode": "librarian-clerk_draft",
+      "toNode": "librarian-dgate1_auth",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e45",
+      "fromNode": "librarian-dgate1_auth",
+      "toNode": "librarian-gate1_ui",
+      "label": "[Context 3 UI human approve + Process approved sources]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e46",
+      "fromNode": "librarian-dgate1_auth",
+      "toNode": "librarian-accept_captured",
+      "label": "[Context 3 UI Accept as captured (skips batch)] 5a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e47",
+      "fromNode": "librarian-dgate1_auth",
+      "toNode": "librarian-dmanual_handover",
+      "label": "[MCP TIER_REFUSED on process_approved / PERSON_CONFIRMS / SENSITIVITY_REVIEW] 5b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e48",
+      "fromNode": "librarian-dmanual_handover",
+      "toNode": "librarian-start_batch",
+      "label": "[human completes Gate 1 & clicks Process approved in UI]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e49",
+      "fromNode": "librarian-dmanual_handover",
+      "toNode": "librarian-ui_hold_notice",
+      "label": "[left waiting or deferred in Staging]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e50",
+      "fromNode": "librarian-gate1_ui",
+      "toNode": "librarian-start_batch",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e51",
+      "fromNode": "librarian-start_batch",
+      "toNode": "librarian-batch_ref",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e52",
+      "fromNode": "librarian-batch_ref",
+      "toNode": "librarian-gate2_ui",
+      "label": "[success]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e53",
+      "fromNode": "librarian-batch_ref",
+      "toNode": "librarian-dpartial_accept",
+      "label": "[partial] 7a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e54",
+      "fromNode": "librarian-batch_ref",
+      "toNode": "librarian-reuse_curr",
+      "label": "[reused] 7b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e55",
+      "fromNode": "librarian-batch_ref",
+      "toNode": "librarian-ui_hold_notice",
+      "label": "[paused] 7c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e56",
+      "fromNode": "librarian-batch_ref",
+      "toNode": "librarian-ui_fail_notice",
+      "label": "[escalated] 7d",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e57",
+      "fromNode": "librarian-dpartial_accept",
+      "toNode": "librarian-accept_captured",
+      "label": "[person accepts partial in UI (coverage=partial explicit)]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e58",
+      "fromNode": "librarian-dpartial_accept",
+      "toNode": "librarian-ui_hold_notice",
+      "label": "[PERSON_CONFIRMS / SENSITIVITY_REVIEW / OP1 left unaccepted]",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e59",
+      "fromNode": "librarian-accept_captured",
+      "toNode": "librarian-user_partial",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e60",
+      "fromNode": "librarian-gate2_ui",
+      "toNode": "librarian-dgate2_curr",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e61",
+      "fromNode": "librarian-dgate2_curr",
+      "toNode": "librarian-promote_curr",
+      "label": "[Accept confirmed (curate or declared agent under promotion.mode=agent)]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e62",
+      "fromNode": "librarian-dgate2_curr",
+      "toNode": "librarian-ui_hold_notice",
+      "label": "[Defer or Reject in Staging] 8a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e63",
+      "fromNode": "librarian-dgate2_curr",
+      "toNode": "librarian-ui_hold_notice",
+      "label": "[F-09 stale staged_revision or DOCUMENT_ACTIVE lease] 8b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e64",
+      "fromNode": "librarian-promote_curr",
+      "toNode": "librarian-dfind_curr",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e65",
+      "fromNode": "librarian-dfind_curr",
+      "toNode": "librarian-ui_done",
+      "label": "[catalogued & vectors clean]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e66",
+      "fromNode": "librarian-dfind_curr",
+      "toNode": "librarian-user_partial",
+      "label": "[not_findable or embedding_warnings (note kept; manual Rewrite indexes)] 9a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e67",
+      "fromNode": "librarian-dfind_curr",
+      "toNode": "librarian-ui_fail_notice",
+      "label": "[uncaught write or index failure] 9b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e68",
+      "fromNode": "librarian-ui_done",
+      "toNode": "librarian-user_done",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e69",
+      "fromNode": "librarian-user_done",
+      "toNode": "librarian-e1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e70",
+      "fromNode": "librarian-ui_hold_notice",
+      "toNode": "librarian-user_paused",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e71",
+      "fromNode": "librarian-user_paused",
+      "toNode": "librarian-epaused",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e72",
+      "fromNode": "librarian-user_partial",
+      "toNode": "librarian-epartial",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e73",
+      "fromNode": "librarian-user_reused",
+      "toNode": "librarian-ereused",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-e74",
+      "fromNode": "librarian-ui_fail_notice",
+      "toNode": "librarian-user_esc",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e75",
+      "fromNode": "librarian-user_esc",
+      "toNode": "librarian-eescalated",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e76",
+      "fromNode": "librarian-user_partial_at_3e515c0970",
+      "toNode": "librarian-epartial_at_3e515c0970",
+      "fromSide": "right",
+      "toSide": "bottom"
+    }
+  ]
+}

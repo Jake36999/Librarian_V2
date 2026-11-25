@@ -1,0 +1,2399 @@
+{
+  "nodes": [
+    {
+      "id": "librarian-title",
+      "type": "text",
+      "x": 20,
+      "y": -200,
+      "width": 4580,
+      "height": 220,
+      "text": "# Proposed to-be enrichment\n**Symptom:** Enrichment needs repeated coordination from tier 0, and completed part reading does not by itself account for every required derived output.\n**Root cause:** The run needs one accountable Lead, separate completion evidence for reading and derivations, and independent judgement with bounded repair.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `proposed-tobe-enrichment.spec.yaml`."
+    },
+    {
+      "id": "librarian-s",
+      "type": "text",
+      "x": 40,
+      "y": 140,
+      "width": 360,
+      "height": 70,
+      "text": "● start",
+      "color": "4"
+    },
+    {
+      "id": "librarian-a1",
+      "type": "text",
+      "x": 40,
+      "y": 340,
+      "width": 360,
+      "height": 150,
+      "text": "**1.** sets or has already authorized the enrichment goal, captured sources, required outputs, coverage and spending",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-dentry",
+      "type": "text",
+      "x": 4240,
+      "y": 540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ recorded parent invocation or standalone commissioner?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a2",
+      "type": "text",
+      "x": 640,
+      "y": 940,
+      "width": 360,
+      "height": 150,
+      "text": "**2.** delegates the bounded enrichment to a Lead and sets its specification, including when supporting another project",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-direct",
+      "type": "text",
+      "x": 40,
+      "y": 740,
+      "width": 360,
+      "height": 150,
+      "text": "commissions the Lead directly and owns the run specification",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-parentbind",
+      "type": "text",
+      "x": 4240,
+      "y": 740,
+      "width": 360,
+      "height": 150,
+      "text": "binds the child to its invoking parent's authorized specification, Lead, source subset and receipt keys; no repeated Owner or tier-0 commissioning",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a3",
+      "type": "text",
+      "x": 1840,
+      "y": 1140,
+      "width": 360,
+      "height": 150,
+      "text": "**3.** owns completion and plans the run from accepted components without widening the parent's mandate",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-a4",
+      "type": "text",
+      "x": 4240,
+      "y": 1340,
+      "width": 360,
+      "height": 150,
+      "text": "**4.** checks specification schema, pinned IDs, recorded start authority, role qualifications, grants and counters; preserves the parent's batch ledger",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dadmit",
+      "type": "text",
+      "x": 4240,
+      "y": 1540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ run admitted?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-stagecontract",
+      "type": "text",
+      "x": 4240,
+      "y": 2140,
+      "width": 360,
+      "height": 150,
+      "text": "Target integration: Core checks grants, counters and critical flags at every dispatch/commit. Agents own meaning. Deferred routes return queued tasks; no silent model substitution.",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-ownerstart",
+      "type": "text",
+      "x": 40,
+      "y": 1740,
+      "width": 360,
+      "height": 150,
+      "text": "decides the missing start, sensitivity or spending authority; existing authority is not asked for again",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-radmit",
+      "type": "text",
+      "x": 2440,
+      "y": 1740,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **UC-D**: resolves a mapped qualification or admission fault using an accepted remedy within scope",
+      "color": "2",
+      "librarian": {
+        "actor_lane": "Doctor"
+      }
+    },
+    {
+      "id": "librarian-escalated",
+      "type": "text",
+      "x": 1840,
+      "y": 9140,
+      "width": 360,
+      "height": 150,
+      "text": "explains the unresolved issue, evidence and required intervention to tier 0 or the Owner, with completed and partial work accounted for",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-critical",
+      "type": "text",
+      "x": 40,
+      "y": 8140,
+      "width": 360,
+      "height": 150,
+      "text": "receives critical security, data-loss or authority-boundary evidence immediately, with tier 0 when present",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-nowork",
+      "type": "text",
+      "x": 1840,
+      "y": 2440,
+      "width": 360,
+      "height": 150,
+      "text": "returns no-source-work to the invoking parent or standalone commissioner; preserves the parent's pending decisions and original item accounting",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-a5",
+      "type": "text",
+      "x": 4240,
+      "y": 2340,
+      "width": 360,
+      "height": 150,
+      "text": "**5.** validate: checks source hashes, evidence, paths and compatible recipe/route receipts; applies stops and spend controls; old publication never bypasses fresh admission",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-downerstart",
+      "type": "text",
+      "x": 40,
+      "y": 1940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ authorized?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-paused",
+      "type": "text",
+      "x": 1840,
+      "y": 1940,
+      "width": 360,
+      "height": 150,
+      "text": "explains the pause, retained work and next decision or continuation needed; submits the checkpoint notice for delivery",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-eescalated",
+      "type": "text",
+      "x": 6040,
+      "y": 14940,
+      "width": 360,
+      "height": 150,
+      "text": "◉ the accountable actor receives the unresolved or critical enrichment failure\n*outcome: escalated*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-enowork",
+      "type": "text",
+      "x": 6040,
+      "y": 2440,
+      "width": 360,
+      "height": 150,
+      "text": "◉ no source work was admitted; the caller retains the accounted no-work result\n*outcome: reused*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-dvalidate",
+      "type": "text",
+      "x": 4240,
+      "y": 2540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ source validation result?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-epaused",
+      "type": "text",
+      "x": 6040,
+      "y": 1940,
+      "width": 360,
+      "height": 150,
+      "text": "◉ the affected enrichment is paused for an explicit decision or authorized continuation\n*outcome: paused*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-a6",
+      "type": "text",
+      "x": 4240,
+      "y": 2740,
+      "width": 360,
+      "height": 150,
+      "text": "**6.** parse: runs scripted AST, text or PDF extraction and page mapping; retains original evidence and records extraction limits",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-itemfailed",
+      "type": "text",
+      "x": 4240,
+      "y": 10540,
+      "width": 360,
+      "height": 150,
+      "text": "records the failed stage and noncritical ticket; retains the item's completed work and leaves other frozen items runnable",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-critical_at_5709aeb668",
+      "type": "text",
+      "x": 40,
+      "y": 2640,
+      "width": 360,
+      "height": 150,
+      "text": "receives critical security, data-loss or authority-boundary evidence immediately, with tier 0 when present",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-dparse",
+      "type": "text",
+      "x": 4240,
+      "y": 2940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ scripted extraction result?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a19",
+      "type": "text",
+      "x": 3040,
+      "y": 10740,
+      "width": 360,
+      "height": 150,
+      "text": "**19.** assembles the source enrichment proposal and reconciles its content, explaining gaps in reading, derivations, drafts or publication for the Oracle",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-eescalated_at_5709aeb668",
+      "type": "text",
+      "x": 6040,
+      "y": 2640,
+      "width": 360,
+      "height": 150,
+      "text": "◉ the accountable actor receives the unresolved or critical enrichment failure\n*outcome: escalated*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-a7",
+      "type": "text",
+      "x": 3040,
+      "y": 5140,
+      "width": 360,
+      "height": 150,
+      "text": "**7.** assigns bounded part-reading tasks to Scribes, keeping source description separate from the requesting project's fit judgement",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-conversionplan",
+      "type": "text",
+      "x": 3040,
+      "y": 2990,
+      "width": 360,
+      "height": 150,
+      "text": "assigns needed model-assisted transcription or cleanup to a Scribe within the approved route and allowance",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-dmore",
+      "type": "text",
+      "x": 4240,
+      "y": 10940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ unprocessed entries remain in the pinned source list?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a8",
+      "type": "text",
+      "x": 3640,
+      "y": 5340,
+      "width": 360,
+      "height": 150,
+      "text": "**8.** reads assigned parts and returns located source-stated points, limits, term usages and candidate reasoning stances",
+      "librarian": {
+        "actor_lane": "Scribe (tier 3)"
+      }
+    },
+    {
+      "id": "librarian-conversionwork",
+      "type": "text",
+      "x": 3640,
+      "y": 3140,
+      "width": 360,
+      "height": 150,
+      "text": "transcribes or cleans the supplied material, preserves page or part anchors and explains any uncertain or missing content",
+      "librarian": {
+        "actor_lane": "Scribe (tier 3)"
+      }
+    },
+    {
+      "id": "librarian-a20",
+      "type": "text",
+      "x": 1240,
+      "y": 11140,
+      "width": 360,
+      "height": 150,
+      "text": "**20.** judges the enrichment package against its specification: deterministic checks first, then isolated model judgement, with evidence for the verdict",
+      "librarian": {
+        "actor_lane": "Oracle"
+      }
+    },
+    {
+      "id": "librarian-host",
+      "type": "text",
+      "x": 4840,
+      "y": 5540,
+      "width": 360,
+      "height": 150,
+      "text": "answers the bounded tasks through qualified role assignments and the existing task pool",
+      "librarian": {
+        "actor_lane": "Model host"
+      }
+    },
+    {
+      "id": "librarian-conversionreview",
+      "type": "text",
+      "x": 3040,
+      "y": 3190,
+      "width": 360,
+      "height": 150,
+      "text": "checks available conversion against original evidence for fidelity; records uncertainty and missing material; does not attest unread pages",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-dverdict",
+      "type": "text",
+      "x": 1240,
+      "y": 11340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ enrichment verdict?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Oracle"
+      }
+    },
+    {
+      "id": "librarian-a9",
+      "type": "text",
+      "x": 4240,
+      "y": 5740,
+      "width": 360,
+      "height": 150,
+      "text": "**9.** checks task schemas, literal quote locations and current-text receipt keys; counts completed parts and records queued or refused tasks",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-conversioncheck",
+      "type": "text",
+      "x": 4240,
+      "y": 3740,
+      "width": 360,
+      "height": 150,
+      "text": "checks returned fields, hashes and literal anchors; stores task outcomes and the Clerk's fidelity verdict with actual representation coverage",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a21",
+      "type": "text",
+      "x": 1840,
+      "y": 13340,
+      "width": 360,
+      "height": 150,
+      "text": "**21.** hands back verdict, evidence, coverage, known/unknown spend and tickets; names separate owners and current states for Source and lens decisions",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-partialreport",
+      "type": "text",
+      "x": 1840,
+      "y": 11540,
+      "width": 360,
+      "height": 150,
+      "text": "returns partial coverage and verdict to the invoking parent or standalone commissioner, with separate Source/lens worklists, named owners and known/unknown spend",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-rwork",
+      "type": "text",
+      "x": 2440,
+      "y": 11540,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **UC-D**: remedies a mapped enrichment shortfall, then returns the repair for independent Oracle recheck",
+      "color": "2",
+      "librarian": {
+        "actor_lane": "Doctor"
+      }
+    },
+    {
+      "id": "librarian-scout",
+      "type": "text",
+      "x": 3040,
+      "y": 11540,
+      "width": 360,
+      "height": 150,
+      "text": "investigates an unmapped shortfall from evidence and directs bounded Scribe scouting tasks",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-dreadtransport",
+      "type": "text",
+      "x": 4240,
+      "y": 5940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ recorded transport incident, critical flag or application task result?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dconversion",
+      "type": "text",
+      "x": 4240,
+      "y": 3940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ conversion task and anchor-check status?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-drecipient",
+      "type": "text",
+      "x": 4240,
+      "y": 13540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ recorded invoking parent or standalone specification owner?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-epartial",
+      "type": "text",
+      "x": 6040,
+      "y": 11740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ a permitted partial enrichment is returned with its true coverage and remaining work\n*outcome: partial*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-resume",
+      "type": "text",
+      "x": 4240,
+      "y": 12140,
+      "width": 360,
+      "height": 150,
+      "text": "checks requested scope and compatible receipts; unfinished work resumes pinned inputs; finished partials need re-approval/new batch; publication gets fresh admission",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-realign",
+      "type": "text",
+      "x": 1840,
+      "y": 11740,
+      "width": 360,
+      "height": 150,
+      "text": "re-aligns within the specification using permitted actions; proposes new remedies for Owner acceptance rather than adding them itself",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-a10",
+      "type": "text",
+      "x": 3040,
+      "y": 6140,
+      "width": 360,
+      "height": 150,
+      "text": "**10.** proofreads the readings and directs the existing lens chain: perspective, attention, blind challenge, role, probe and synthesis",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-readoutage",
+      "type": "text",
+      "x": 4240,
+      "y": 6740,
+      "width": 360,
+      "height": 150,
+      "text": "records 429/timeout/unavailable route and bounded attempts; defers equivalent failed-route calls; retains task gaps, receipts and unpriced cost",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-conversiongap",
+      "type": "text",
+      "x": 4240,
+      "y": 4940,
+      "width": 360,
+      "height": 150,
+      "text": "retains returned cleanup-error partial or missing-material partial/queued status and usable raw extraction; absent content receives no reading credit",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-conversionfallback",
+      "type": "text",
+      "x": 4240,
+      "y": 4140,
+      "width": 360,
+      "height": 150,
+      "text": "keeps unmapped cleanup unused; restores original page-mapped text; parse may complete only when usable text and no other gap remain",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-conversionoutage",
+      "type": "text",
+      "x": 4240,
+      "y": 4340,
+      "width": 360,
+      "height": 150,
+      "text": "records transport code, attempts, retry-after and known/unknown cost; defers further equivalent calls on the failed route pending bounded direction",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a22",
+      "type": "text",
+      "x": 640,
+      "y": 13940,
+      "width": 360,
+      "height": 150,
+      "text": "**22.** reviews the handback once against the delegated goal without repeating the workers' tasks",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-directreport",
+      "type": "text",
+      "x": 40,
+      "y": 13740,
+      "width": 360,
+      "height": 150,
+      "text": "receives the Lead's enrichment result and Oracle verdict directly",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-parentreturn",
+      "type": "text",
+      "x": 4240,
+      "y": 13740,
+      "width": 360,
+      "height": 150,
+      "text": "returns the child package and verdict to the invoking parent, which owns acceptance and the final Owner or tier-0 handoff",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dresume",
+      "type": "text",
+      "x": 4240,
+      "y": 12340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ repair re-entry authorized and within the remaining allowance?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-drealign",
+      "type": "text",
+      "x": 1840,
+      "y": 11940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ does the proposed correction address the cause with evidence of progress?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-a11",
+      "type": "text",
+      "x": 3040,
+      "y": 6340,
+      "width": 360,
+      "height": 150,
+      "text": "**11.** reconciles the accumulated readings across the source, corroborates supported stances and resolves probes; records unfinished required derivations separately",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-readroute",
+      "type": "text",
+      "x": 1840,
+      "y": 6940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ retry only pending affected tasks within the grant, keep queued gaps, or pause?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-conversionroute",
+      "type": "text",
+      "x": 1840,
+      "y": 4540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ retry affected conversion within the grant, retain fallback, or pause the affected work?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-dhandback",
+      "type": "text",
+      "x": 640,
+      "y": 14140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ handback meets the delegated goal?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-delivered",
+      "type": "text",
+      "x": 4240,
+      "y": 15340,
+      "width": 360,
+      "height": 150,
+      "text": "records handback and separate Source-acceptance/lens-review worklists with actual states and owners; neither decision is implied by enrichment",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-repairperson",
+      "type": "text",
+      "x": 40,
+      "y": 12540,
+      "width": 360,
+      "height": 150,
+      "text": "decides the explicit re-approval or additional authority needed for the affected repair work",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-dread",
+      "type": "text",
+      "x": 4240,
+      "y": 6540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ recorded part-reading and required-derivation status?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dreadretry",
+      "type": "text",
+      "x": 4240,
+      "y": 7140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ same-route pending-task retry within counters, backoff, qualification and existing authority?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dconversionretry",
+      "type": "text",
+      "x": 4240,
+      "y": 4740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ retry counter, backoff, current qualification and existing grant permit this same-route attempt?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a23",
+      "type": "text",
+      "x": 640,
+      "y": 15140,
+      "width": 360,
+      "height": 150,
+      "text": "**23.** returns the result to its active project or reports it to the Owner, with the remaining acceptance step explicit",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-tidy",
+      "type": "text",
+      "x": 640,
+      "y": 14340,
+      "width": 360,
+      "height": 150,
+      "text": "returns evidence for one bounded tidy-up and independent recheck; the Lead and Doctor do work, the Oracle judges",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-e1",
+      "type": "text",
+      "x": 6040,
+      "y": 15540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ the enrichment specification is met; grounded outputs and the separate acceptance obligation are handed back\n*outcome: success*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-drepairperson",
+      "type": "text",
+      "x": 40,
+      "y": 12740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ repair re-entry approved?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-a12",
+      "type": "text",
+      "x": 4240,
+      "y": 7340,
+      "width": 360,
+      "height": 150,
+      "text": "**12.** lenses: schema-checks and persists agent-submitted proposals, dispositions, citations and discard reasons; keeps acceptance separate",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-partialread",
+      "type": "text",
+      "x": 4240,
+      "y": 6940,
+      "width": 360,
+      "height": 150,
+      "text": "keeps completed part coverage separate from queued derivations and unread parts; later applicable stages use only the evidence actually obtained",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dtidy",
+      "type": "text",
+      "x": 4240,
+      "y": 11540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ within the declared tidy-up and final-pass allowance?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dlenses",
+      "type": "text",
+      "x": 4240,
+      "y": 7540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ lenses stage failed?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a13",
+      "type": "text",
+      "x": 3040,
+      "y": 7740,
+      "width": 360,
+      "height": 150,
+      "text": "**13.** data: proposes the organization of components, chapters and source claims using the readings and script-derived source structure",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-ddata",
+      "type": "text",
+      "x": 4240,
+      "y": 7940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Data proposal schema, reference and write status?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a14",
+      "type": "text",
+      "x": 3040,
+      "y": 8140,
+      "width": 360,
+      "height": 150,
+      "text": "**14.** relate: relates fully read components with evidence, preserving inferred document relations and structurally observed repository relations",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-drelate",
+      "type": "text",
+      "x": 4240,
+      "y": 8340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ relate stage failed?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a15",
+      "type": "text",
+      "x": 3040,
+      "y": 8540,
+      "width": 360,
+      "height": 150,
+      "text": "**15.** metadata: proposes content-model field values from the evidence, explains Unknowns and submits the proposal for acceptance",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-dmetadata",
+      "type": "text",
+      "x": 4240,
+      "y": 8740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ metadata proposal field, schema and write status?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a16",
+      "type": "text",
+      "x": 3040,
+      "y": 8940,
+      "width": 360,
+      "height": 150,
+      "text": "**16.** review: produces a grounded, kind-specific source draft and Bottom Line with evidence, coverage and explicit unread material",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-dreview",
+      "type": "text",
+      "x": 4240,
+      "y": 9140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ source review failed?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a17",
+      "type": "text",
+      "x": 4240,
+      "y": 9340,
+      "width": 360,
+      "height": 150,
+      "text": "**17.** publish: checks full reading/conversion, artifact binding and projection compatibility; freshly validates enabled, accepted, current, trusted folder assignment",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dpublication",
+      "type": "text",
+      "x": 4240,
+      "y": 9540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ paper publication applicability and preparation?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a18",
+      "type": "text",
+      "x": 5440,
+      "y": 9940,
+      "width": 360,
+      "height": 150,
+      "text": "**18.** revalidates folder/artifact admission and publishes the eligible reading claims; reports actual result or late refusal; Source acceptance is separate",
+      "librarian": {
+        "actor_lane": "Geo-Grapher"
+      }
+    },
+    {
+      "id": "librarian-pubna",
+      "type": "text",
+      "x": 4240,
+      "y": 9740,
+      "width": 360,
+      "height": 150,
+      "text": "records publication as not applicable for a non-PDF or a fully read PDF lacking a full-conversion artifact; retains its limitation",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-pubgap",
+      "type": "text",
+      "x": 4240,
+      "y": 10340,
+      "width": 360,
+      "height": 150,
+      "text": "retains reading and the exact publication gap: FOLDER_STALE, awaiting_accepted_folder, disabled Geo, stale artifact or returned/caught failure",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dpubresult",
+      "type": "text",
+      "x": 4240,
+      "y": 10140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ publication result?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-lane-Owner",
+      "type": "group",
+      "x": 20,
+      "y": 60,
+      "width": 400,
+      "height": 15730,
+      "label": "Owner"
+    },
+    {
+      "id": "librarian-lane-Tier-0-agent",
+      "type": "group",
+      "x": 620,
+      "y": 60,
+      "width": 400,
+      "height": 15730,
+      "label": "Tier 0 agent"
+    },
+    {
+      "id": "librarian-lane-Oracle",
+      "type": "group",
+      "x": 1220,
+      "y": 60,
+      "width": 400,
+      "height": 15730,
+      "label": "Oracle"
+    },
+    {
+      "id": "librarian-lane-Lead-tier-1-",
+      "type": "group",
+      "x": 1820,
+      "y": 60,
+      "width": 400,
+      "height": 15730,
+      "label": "Lead (tier 1)"
+    },
+    {
+      "id": "librarian-lane-Doctor",
+      "type": "group",
+      "x": 2420,
+      "y": 60,
+      "width": 400,
+      "height": 15730,
+      "label": "Doctor"
+    },
+    {
+      "id": "librarian-lane-Clerk-tier-2-",
+      "type": "group",
+      "x": 3020,
+      "y": 60,
+      "width": 400,
+      "height": 15730,
+      "label": "Clerk (tier 2)"
+    },
+    {
+      "id": "librarian-lane-Scribe-tier-3-",
+      "type": "group",
+      "x": 3620,
+      "y": 60,
+      "width": 400,
+      "height": 15730,
+      "label": "Scribe (tier 3)"
+    },
+    {
+      "id": "librarian-lane-Core",
+      "type": "group",
+      "x": 4220,
+      "y": 60,
+      "width": 400,
+      "height": 15730,
+      "label": "Core"
+    },
+    {
+      "id": "librarian-lane-Model-host",
+      "type": "group",
+      "x": 4820,
+      "y": 60,
+      "width": 400,
+      "height": 15730,
+      "label": "Model host"
+    },
+    {
+      "id": "librarian-lane-Geo-Grapher",
+      "type": "group",
+      "x": 5420,
+      "y": 60,
+      "width": 400,
+      "height": 15730,
+      "label": "Geo-Grapher"
+    },
+    {
+      "id": "librarian-lane-Outcomes",
+      "type": "group",
+      "x": 6020,
+      "y": 60,
+      "width": 400,
+      "height": 15730,
+      "label": "Outcomes"
+    }
+  ],
+  "edges": [
+    {
+      "id": "librarian-e0",
+      "fromNode": "librarian-s",
+      "toNode": "librarian-a1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e1",
+      "fromNode": "librarian-a1",
+      "toNode": "librarian-dentry",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e2",
+      "fromNode": "librarian-dentry",
+      "toNode": "librarian-a2",
+      "label": "[standalone commission delegated by tier 0]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e3",
+      "fromNode": "librarian-dentry",
+      "toNode": "librarian-direct",
+      "label": "[standalone commission directly from Owner] 1a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e4",
+      "fromNode": "librarian-dentry",
+      "toNode": "librarian-parentbind",
+      "label": "[invoking parent supplies an existing authorized commission] 1b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e5",
+      "fromNode": "librarian-parentbind",
+      "toNode": "librarian-a3",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e6",
+      "fromNode": "librarian-direct",
+      "toNode": "librarian-a3",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e7",
+      "fromNode": "librarian-a2",
+      "toNode": "librarian-a3",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e8",
+      "fromNode": "librarian-a3",
+      "toNode": "librarian-a4",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e9",
+      "fromNode": "librarian-a4",
+      "toNode": "librarian-dadmit",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e10",
+      "fromNode": "librarian-dadmit",
+      "toNode": "librarian-stagecontract",
+      "label": "[admitted nonempty source selection]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e11",
+      "fromNode": "librarian-dadmit",
+      "toNode": "librarian-ownerstart",
+      "label": "[noncritical missing explicit authority or reserved decision] 4a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e12",
+      "fromNode": "librarian-dadmit",
+      "toNode": "librarian-radmit",
+      "label": "[noncritical mapped admission fault with an accepted remedy] 4b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e13",
+      "fromNode": "librarian-dadmit",
+      "toNode": "librarian-escalated",
+      "label": "[noncritical unmapped admission fault or no suitable qualified independent assignment] 4c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e14",
+      "fromNode": "librarian-dadmit",
+      "toNode": "librarian-critical",
+      "label": "[critical security, data-loss or authority-boundary fault] 4d",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e15",
+      "fromNode": "librarian-dadmit",
+      "toNode": "librarian-nowork",
+      "label": "[normal outcome: no source work selected or all selected work already settled] 4e",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e16",
+      "fromNode": "librarian-nowork",
+      "toNode": "librarian-enowork",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e17",
+      "fromNode": "librarian-ownerstart",
+      "toNode": "librarian-downerstart",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e18",
+      "fromNode": "librarian-downerstart",
+      "toNode": "librarian-a4",
+      "label": "[authorized]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e19",
+      "fromNode": "librarian-downerstart",
+      "toNode": "librarian-paused",
+      "label": "[declined or waiting]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e20",
+      "fromNode": "librarian-radmit",
+      "toNode": "librarian-a4",
+      "label": "[resolved]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e21",
+      "fromNode": "librarian-radmit",
+      "toNode": "librarian-paused",
+      "label": "[declined]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e22",
+      "fromNode": "librarian-radmit",
+      "toNode": "librarian-escalated",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e23",
+      "fromNode": "librarian-stagecontract",
+      "toNode": "librarian-a5",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e24",
+      "fromNode": "librarian-a5",
+      "toNode": "librarian-dvalidate",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e25",
+      "fromNode": "librarian-dvalidate",
+      "toNode": "librarian-a6",
+      "label": "[valid and permitted]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e26",
+      "fromNode": "librarian-dvalidate",
+      "toNode": "librarian-itemfailed",
+      "label": "[noncritical source validation failed] 5a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e27",
+      "fromNode": "librarian-dvalidate",
+      "toNode": "librarian-paused",
+      "label": "[cancelled, interrupted or spending stop] 5b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e28",
+      "fromNode": "librarian-dvalidate",
+      "toNode": "librarian-critical_at_5709aeb668",
+      "label": "[critical security, data-loss or boundary fault] 5c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e29",
+      "fromNode": "librarian-a6",
+      "toNode": "librarian-dparse",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e30",
+      "fromNode": "librarian-dparse",
+      "toNode": "librarian-a7",
+      "label": "[noncritical and not failed; no model conversion requested; preserve actual partial or queued extraction status]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e31",
+      "fromNode": "librarian-dparse",
+      "toNode": "librarian-itemfailed",
+      "label": "[noncritical uncaught stage failure] 6a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e32",
+      "fromNode": "librarian-dparse",
+      "toNode": "librarian-conversionplan",
+      "label": "[noncritical permitted model transcription or cleanup requested] 6b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e33",
+      "fromNode": "librarian-dparse",
+      "toNode": "librarian-critical",
+      "label": "[critical integrity or authority-boundary finding] 6c",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e34",
+      "fromNode": "librarian-conversionplan",
+      "toNode": "librarian-conversionwork",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e35",
+      "fromNode": "librarian-conversionwork",
+      "toNode": "librarian-conversionreview",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e36",
+      "fromNode": "librarian-conversionreview",
+      "toNode": "librarian-conversioncheck",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e37",
+      "fromNode": "librarian-conversioncheck",
+      "toNode": "librarian-dconversion",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e38",
+      "fromNode": "librarian-dconversion",
+      "toNode": "librarian-a7",
+      "label": "[noncritical usable mapped representation and Clerk review; retain actual complete or partial coverage]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e39",
+      "fromNode": "librarian-dconversion",
+      "toNode": "librarian-conversiongap",
+      "label": "[noncritical, no transport outage: returned task error/refusal, or unusable representation without usable-original anchor fallback; retain partial/queued gaps]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e40",
+      "fromNode": "librarian-dconversion",
+      "toNode": "librarian-conversionfallback",
+      "label": "[noncritical successful cleanup loses anchors; usable original page-mapped text and no transport outage]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e41",
+      "fromNode": "librarian-conversionfallback",
+      "toNode": "librarian-a7",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e42",
+      "fromNode": "librarian-dconversion",
+      "toNode": "librarian-itemfailed",
+      "label": "[noncritical uncaught stage/writer failure]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e43",
+      "fromNode": "librarian-dconversion",
+      "toNode": "librarian-critical",
+      "label": "[critical integrity or authority-boundary finding]",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e44",
+      "fromNode": "librarian-dconversion",
+      "toNode": "librarian-conversionoutage",
+      "label": "[noncritical transport 429, timeout or unavailable route]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e45",
+      "fromNode": "librarian-conversionoutage",
+      "toNode": "librarian-conversionroute",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e46",
+      "fromNode": "librarian-conversionroute",
+      "toNode": "librarian-dconversionretry",
+      "label": "[Lead requests bounded same-route retry]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e47",
+      "fromNode": "librarian-dconversionretry",
+      "toNode": "librarian-a6",
+      "label": "[permitted bounded parse re-entry; reuse compatible extraction and retry only affected conversion work]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e48",
+      "fromNode": "librarian-dconversionretry",
+      "toNode": "librarian-conversiongap",
+      "label": "[retry not currently permitted; retain returned-error partial or missing-material gaps]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e49",
+      "fromNode": "librarian-conversionroute",
+      "toNode": "librarian-conversiongap",
+      "label": "[retain usable fallback and exact returned-error partial or missing-material gaps]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e50",
+      "fromNode": "librarian-conversionroute",
+      "toNode": "librarian-paused",
+      "label": "[pause affected work; no silent model substitution]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e51",
+      "fromNode": "librarian-conversiongap",
+      "toNode": "librarian-a7",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e52",
+      "fromNode": "librarian-a7",
+      "toNode": "librarian-a8",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e53",
+      "fromNode": "librarian-a8",
+      "toNode": "librarian-host",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e54",
+      "fromNode": "librarian-host",
+      "toNode": "librarian-a9",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e55",
+      "fromNode": "librarian-a9",
+      "toNode": "librarian-dreadtransport",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e56",
+      "fromNode": "librarian-dreadtransport",
+      "toNode": "librarian-a10",
+      "label": "[noncritical application task result; invalid JSON or grounding refusal remains task evidence, not transport success]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e57",
+      "fromNode": "librarian-dreadtransport",
+      "toNode": "librarian-readoutage",
+      "label": "[noncritical 429, timeout or unavailable route] 9a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e58",
+      "fromNode": "librarian-dreadtransport",
+      "toNode": "librarian-critical",
+      "label": "[critical integrity, false attestation or boundary finding] 9b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e59",
+      "fromNode": "librarian-readoutage",
+      "toNode": "librarian-readroute",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e60",
+      "fromNode": "librarian-readroute",
+      "toNode": "librarian-dreadretry",
+      "label": "[Lead requests bounded retry of pending tasks only]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e61",
+      "fromNode": "librarian-dreadretry",
+      "toNode": "librarian-a7",
+      "label": "[permitted attempt; reuse matching completed tasks]",
+      "fromSide": "left",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-e62",
+      "fromNode": "librarian-dreadretry",
+      "toNode": "librarian-a10",
+      "label": "[retry not currently permitted; keep task gaps and defer failed-route dispatch]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e63",
+      "fromNode": "librarian-readroute",
+      "toNode": "librarian-a10",
+      "label": "[continue with actual queued gaps and completed evidence; failed route stays deferred]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e64",
+      "fromNode": "librarian-readroute",
+      "toNode": "librarian-paused",
+      "label": "[pause affected work; route reassignment requires fresh authorized qualification]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e65",
+      "fromNode": "librarian-a10",
+      "toNode": "librarian-a11",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e66",
+      "fromNode": "librarian-a11",
+      "toNode": "librarian-dread",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e67",
+      "fromNode": "librarian-dread",
+      "toNode": "librarian-a12",
+      "label": "[noncritical; parts read and required derivations complete or explicitly inapplicable]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e68",
+      "fromNode": "librarian-dread",
+      "toNode": "librarian-partialread",
+      "label": "[noncritical, nonfailed and no new transport incident; unread parts or required derivations remain] 11a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e69",
+      "fromNode": "librarian-dread",
+      "toNode": "librarian-itemfailed",
+      "label": "[noncritical reading stage failed] 11b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e70",
+      "fromNode": "librarian-dread",
+      "toNode": "librarian-critical",
+      "label": "[critical integrity, false attestation or boundary finding] 11c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e71",
+      "fromNode": "librarian-dread",
+      "toNode": "librarian-readoutage",
+      "label": "[noncritical new transport incident during lens or source-wide work] 11d",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e72",
+      "fromNode": "librarian-partialread",
+      "toNode": "librarian-a12",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e73",
+      "fromNode": "librarian-a12",
+      "toNode": "librarian-dlenses",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e74",
+      "fromNode": "librarian-dlenses",
+      "toNode": "librarian-a13",
+      "label": "[noncritical and not failed; optional rejection or none found is valid]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e75",
+      "fromNode": "librarian-dlenses",
+      "toNode": "librarian-itemfailed",
+      "label": "[noncritical failed stage] 12a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e76",
+      "fromNode": "librarian-dlenses",
+      "toNode": "librarian-critical",
+      "label": "[critical integrity, false attestation or boundary finding] 12b",
+      "color": "1",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e77",
+      "fromNode": "librarian-a13",
+      "toNode": "librarian-ddata",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e78",
+      "fromNode": "librarian-ddata",
+      "toNode": "librarian-a14",
+      "label": "[noncritical and not failed; preserve partial or inapplicable outcomes]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e79",
+      "fromNode": "librarian-ddata",
+      "toNode": "librarian-itemfailed",
+      "label": "[noncritical failed stage] 13a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e80",
+      "fromNode": "librarian-ddata",
+      "toNode": "librarian-critical",
+      "label": "[critical integrity, false attestation or boundary finding] 13b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e81",
+      "fromNode": "librarian-a14",
+      "toNode": "librarian-drelate",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e82",
+      "fromNode": "librarian-drelate",
+      "toNode": "librarian-a15",
+      "label": "[noncritical and not failed; preserve inferred origin, queued or inapplicable outcomes]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e83",
+      "fromNode": "librarian-drelate",
+      "toNode": "librarian-itemfailed",
+      "label": "[noncritical failed stage] 14a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e84",
+      "fromNode": "librarian-drelate",
+      "toNode": "librarian-critical",
+      "label": "[critical integrity, false attestation or boundary finding] 14b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e85",
+      "fromNode": "librarian-a15",
+      "toNode": "librarian-dmetadata",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e86",
+      "fromNode": "librarian-dmetadata",
+      "toNode": "librarian-a16",
+      "label": "[noncritical and not failed; unknown fields remain explicit]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e87",
+      "fromNode": "librarian-dmetadata",
+      "toNode": "librarian-itemfailed",
+      "label": "[noncritical failed stage] 15a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e88",
+      "fromNode": "librarian-dmetadata",
+      "toNode": "librarian-critical",
+      "label": "[critical integrity, false attestation or boundary finding] 15b",
+      "color": "1",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e89",
+      "fromNode": "librarian-a16",
+      "toNode": "librarian-dreview",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e90",
+      "fromNode": "librarian-dreview",
+      "toNode": "librarian-a17",
+      "label": "[noncritical and not failed; retain low confidence, partial or queued draft status]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e91",
+      "fromNode": "librarian-dreview",
+      "toNode": "librarian-itemfailed",
+      "label": "[noncritical failed or refused source review] 16a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e92",
+      "fromNode": "librarian-dreview",
+      "toNode": "librarian-critical",
+      "label": "[critical integrity, false attestation or boundary finding] 16b",
+      "color": "1",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-e93",
+      "fromNode": "librarian-a17",
+      "toNode": "librarian-dpublication",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e94",
+      "fromNode": "librarian-dpublication",
+      "toNode": "librarian-a18",
+      "label": "[noncritical fully read PDF, compatible full conversion/artifact and freshly enabled, accepted, current, trusted folder assignment]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e95",
+      "fromNode": "librarian-dpublication",
+      "toNode": "librarian-pubna",
+      "label": "[noncritical normal outcome: non-PDF, or fully read PDF without full conversion] 17a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e96",
+      "fromNode": "librarian-dpublication",
+      "toNode": "librarian-pubgap",
+      "label": "[noncritical PDF reading incomplete, or full-reading/full-conversion artifact/folder admission blocked; preserve exact reason] 17b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e97",
+      "fromNode": "librarian-dpublication",
+      "toNode": "librarian-itemfailed",
+      "label": "[noncritical uncaught publication preparation exception] 17c",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e98",
+      "fromNode": "librarian-dpublication",
+      "toNode": "librarian-critical",
+      "label": "[critical integrity or authority-boundary finding] 17d",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e99",
+      "fromNode": "librarian-a18",
+      "toNode": "librarian-dpubresult",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e100",
+      "fromNode": "librarian-dpubresult",
+      "toNode": "librarian-a19",
+      "label": "[published with no critical finding]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e101",
+      "fromNode": "librarian-dpubresult",
+      "toNode": "librarian-pubgap",
+      "label": "[noncritical returned disabled/refused, late FOLDER_STALE/awaiting_accepted_folder/artifact mismatch or caught publication error] 18a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e102",
+      "fromNode": "librarian-dpubresult",
+      "toNode": "librarian-itemfailed",
+      "label": "[noncritical uncaught stage failure] 18b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e103",
+      "fromNode": "librarian-dpubresult",
+      "toNode": "librarian-critical",
+      "label": "[critical integrity, false attestation or boundary finding] 18c",
+      "color": "1",
+      "fromSide": "top",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e104",
+      "fromNode": "librarian-pubna",
+      "toNode": "librarian-a19",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e105",
+      "fromNode": "librarian-pubgap",
+      "toNode": "librarian-a19",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e106",
+      "fromNode": "librarian-itemfailed",
+      "toNode": "librarian-a19",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e107",
+      "fromNode": "librarian-a19",
+      "toNode": "librarian-dmore",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e108",
+      "fromNode": "librarian-dmore",
+      "toNode": "librarian-a20",
+      "label": "[noncritical initial frozen set accounted for]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e109",
+      "fromNode": "librarian-dmore",
+      "toNode": "librarian-a5",
+      "label": "[noncritical another frozen source] 19a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e110",
+      "fromNode": "librarian-dmore",
+      "toNode": "librarian-critical",
+      "label": "[critical integrity, false attestation or boundary finding in package assembly] 19b",
+      "color": "1",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-e111",
+      "fromNode": "librarian-a20",
+      "toNode": "librarian-dverdict",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e112",
+      "fromNode": "librarian-dverdict",
+      "toNode": "librarian-a21",
+      "label": "[specification met with no outstanding required output or declared partial-result gap]",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e113",
+      "fromNode": "librarian-dverdict",
+      "toNode": "librarian-partialreport",
+      "label": "[only explicitly permitted declared gaps remain] 20a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e114",
+      "fromNode": "librarian-dverdict",
+      "toNode": "librarian-rwork",
+      "label": "[noncritical mapped shortfall with an accepted bounded remedy] 20b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e115",
+      "fromNode": "librarian-dverdict",
+      "toNode": "librarian-scout",
+      "label": "[noncritical unmapped shortfall, uncertainty or no accepted remedy] 20c",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e116",
+      "fromNode": "librarian-dverdict",
+      "toNode": "librarian-critical",
+      "label": "[critical security, data-loss, attestation or authority-boundary finding] 20d",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e117",
+      "fromNode": "librarian-rwork",
+      "toNode": "librarian-resume",
+      "label": "[resolved]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e118",
+      "fromNode": "librarian-rwork",
+      "toNode": "librarian-paused",
+      "label": "[declined]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e119",
+      "fromNode": "librarian-rwork",
+      "toNode": "librarian-escalated",
+      "label": "[escalated]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e120",
+      "fromNode": "librarian-resume",
+      "toNode": "librarian-dresume",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e121",
+      "fromNode": "librarian-dresume",
+      "toNode": "librarian-a5",
+      "label": "[authorized affected work and allowance remaining]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e122",
+      "fromNode": "librarian-dresume",
+      "toNode": "librarian-repairperson",
+      "label": "[person re-approval or explicit authority needed]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e123",
+      "fromNode": "librarian-dresume",
+      "toNode": "librarian-escalated",
+      "label": "[allowance exhausted, no progress or outside mandate]",
+      "fromSide": "left",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-e124",
+      "fromNode": "librarian-repairperson",
+      "toNode": "librarian-drepairperson",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e125",
+      "fromNode": "librarian-drepairperson",
+      "toNode": "librarian-a4",
+      "label": "[approved; re-admit changed authority and affected work]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e126",
+      "fromNode": "librarian-drepairperson",
+      "toNode": "librarian-paused",
+      "label": "[declined or waiting]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e127",
+      "fromNode": "librarian-scout",
+      "toNode": "librarian-realign",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e128",
+      "fromNode": "librarian-realign",
+      "toNode": "librarian-drealign",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e129",
+      "fromNode": "librarian-drealign",
+      "toNode": "librarian-resume",
+      "label": "[evidence supports a correction; request scripted authority and allowance checks]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e130",
+      "fromNode": "librarian-drealign",
+      "toNode": "librarian-escalated",
+      "label": "[needs a code change, lacks a justified correction or shows no progress]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e131",
+      "fromNode": "librarian-partialreport",
+      "toNode": "librarian-epartial",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e132",
+      "fromNode": "librarian-a21",
+      "toNode": "librarian-drecipient",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e133",
+      "fromNode": "librarian-drecipient",
+      "toNode": "librarian-a22",
+      "label": "[standalone run; tier 0 owns this specification]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e134",
+      "fromNode": "librarian-drecipient",
+      "toNode": "librarian-directreport",
+      "label": "[standalone run; Owner owns this specification] 21a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e135",
+      "fromNode": "librarian-drecipient",
+      "toNode": "librarian-parentreturn",
+      "label": "[invoked as a child of the parent process] 21b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e136",
+      "fromNode": "librarian-parentreturn",
+      "toNode": "librarian-delivered",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e137",
+      "fromNode": "librarian-a22",
+      "toNode": "librarian-dhandback",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e138",
+      "fromNode": "librarian-dhandback",
+      "toNode": "librarian-a23",
+      "label": "[ready]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e139",
+      "fromNode": "librarian-dhandback",
+      "toNode": "librarian-tidy",
+      "label": "[bounded correction or recheck needed] 22a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e140",
+      "fromNode": "librarian-tidy",
+      "toNode": "librarian-dtidy",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-e141",
+      "fromNode": "librarian-dtidy",
+      "toNode": "librarian-a20",
+      "label": "[one tidy-up remains; Oracle judges the submitted evidence]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e142",
+      "fromNode": "librarian-dtidy",
+      "toNode": "librarian-escalated",
+      "label": "[final pass still fails or allowance exhausted]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e143",
+      "fromNode": "librarian-a23",
+      "toNode": "librarian-delivered",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e144",
+      "fromNode": "librarian-directreport",
+      "toNode": "librarian-delivered",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e145",
+      "fromNode": "librarian-delivered",
+      "toNode": "librarian-e1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e146",
+      "fromNode": "librarian-paused",
+      "toNode": "librarian-epaused",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e147",
+      "fromNode": "librarian-escalated",
+      "toNode": "librarian-eescalated",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e148",
+      "fromNode": "librarian-critical",
+      "toNode": "librarian-eescalated",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e149",
+      "fromNode": "librarian-critical_at_5709aeb668",
+      "toNode": "librarian-eescalated_at_5709aeb668",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ]
+}

@@ -1,0 +1,205 @@
+{
+  "node_origins": {
+    "xp_at_5b075aa469": "xp",
+    "e3_at_5b075aa469": "e3",
+    "xp_at_28b89735bd": "xp",
+    "e3_at_28b89735bd": "e3",
+    "xp_at_70f85b1c1a": "xp",
+    "e3_at_70f85b1c1a": "e3",
+    "xp_at_e41e73667e": "xp",
+    "e3_at_e41e73667e": "e3",
+    "xe_at_1020338efc": "xe",
+    "e2_at_1020338efc": "e2",
+    "xp_at_bd1c221f4a": "xp",
+    "e3_at_bd1c221f4a": "e3",
+    "xp_at_ec937217a7": "xp",
+    "e3_at_ec937217a7": "e3",
+    "xe_at_6b561aa06e": "xe",
+    "e2_at_6b561aa06e": "e2",
+    "xe_at_b2c32ae828": "xe",
+    "e2_at_b2c32ae828": "e2",
+    "xe_at_0930a97e8a": "xe",
+    "e2_at_0930a97e8a": "e2",
+    "xp_at_8ccb73d0cf": "xp",
+    "e3_at_8ccb73d0cf": "e3",
+    "xp_at_851951d0e1": "xp",
+    "e3_at_851951d0e1": "e3",
+    "xe_at_a35069041c": "xe",
+    "e2_at_a35069041c": "e2",
+    "xp_at_a356314b53": "xp",
+    "e3_at_a356314b53": "e3"
+  },
+  "terminal_tail_copies": [
+    {
+      "departure": "[\"x3\", \"xp\", \"decline\", null]",
+      "original_tail": [
+        "xp",
+        "e3"
+      ],
+      "local_tail": [
+        "xp_at_5b075aa469",
+        "e3_at_5b075aa469"
+      ]
+    },
+    {
+      "departure": "[\"x3\", \"xp\", \"hold\", null]",
+      "original_tail": [
+        "xp",
+        "e3"
+      ],
+      "local_tail": [
+        "xp_at_28b89735bd",
+        "e3_at_28b89735bd"
+      ]
+    },
+    {
+      "departure": "[\"approvalowner\", \"xp\", \"decline or hold\", null]",
+      "original_tail": [
+        "xp",
+        "e3"
+      ],
+      "local_tail": [
+        "xp_at_70f85b1c1a",
+        "e3_at_70f85b1c1a"
+      ]
+    },
+    {
+      "departure": "[\"startowner\", \"xp\", \"decline or hold\", null]",
+      "original_tail": [
+        "xp",
+        "e3"
+      ],
+      "local_tail": [
+        "xp_at_e41e73667e",
+        "e3_at_e41e73667e"
+      ]
+    },
+    {
+      "departure": "[\"enrich\", \"xe\", \"escalated\", \"17d\"]",
+      "original_tail": [
+        "xe",
+        "e2"
+      ],
+      "local_tail": [
+        "xe_at_1020338efc",
+        "e2_at_1020338efc"
+      ]
+    },
+    {
+      "departure": "[\"dpauseroute\", \"xp\", \"direct Owner run\", null]",
+      "original_tail": [
+        "xp",
+        "e3"
+      ],
+      "local_tail": [
+        "xp_at_bd1c221f4a",
+        "e3_at_bd1c221f4a"
+      ]
+    },
+    {
+      "departure": "[\"x5\", \"xp\", null, null]",
+      "original_tail": [
+        "xp",
+        "e3"
+      ],
+      "local_tail": [
+        "xp_at_ec937217a7",
+        "e3_at_ec937217a7"
+      ]
+    },
+    {
+      "departure": "[\"ddraft\", \"xe\", \"critical integrity or authority-boundary evidence in draft\", \"6c\"]",
+      "original_tail": [
+        "xe",
+        "e2"
+      ],
+      "local_tail": [
+        "xe_at_6b561aa06e",
+        "e2_at_6b561aa06e"
+      ]
+    },
+    {
+      "departure": "[\"dwrite\", \"xe\", \"critical integrity or authority-boundary evidence in write\", \"20d\"]",
+      "original_tail": [
+        "xe",
+        "e2"
+      ],
+      "local_tail": [
+        "xe_at_b2c32ae828",
+        "e2_at_b2c32ae828"
+      ]
+    },
+    {
+      "departure": "[\"writeowner\", \"xe\", \"unresolved integrity/scope finding requires escalation\", null]",
+      "original_tail": [
+        "xe",
+        "e2"
+      ],
+      "local_tail": [
+        "xe_at_0930a97e8a",
+        "e2_at_0930a97e8a"
+      ]
+    },
+    {
+      "departure": "[\"dsourcework\", \"xp\", \"Source acceptance not currently decidable; preserve state and required continuation\", \"18b\"]",
+      "original_tail": [
+        "xp",
+        "e3"
+      ],
+      "local_tail": [
+        "xp_at_8ccb73d0cf",
+        "e3_at_8ccb73d0cf"
+      ]
+    },
+    {
+      "departure": "[\"dfolderapply\", \"xp\", \"stale, refused or blocked; preserve current work\", null]",
+      "original_tail": [
+        "xp",
+        "e3"
+      ],
+      "local_tail": [
+        "xp_at_851951d0e1",
+        "e3_at_851951d0e1"
+      ]
+    },
+    {
+      "departure": "[\"dlensrecord\", \"xe\", \"critical integrity or authority finding\", null]",
+      "original_tail": [
+        "xe",
+        "e2"
+      ],
+      "local_tail": [
+        "xe_at_a35069041c",
+        "e2_at_a35069041c"
+      ]
+    },
+    {
+      "departure": "[\"drepairadmit\", \"xp\", \"missing, reserved or exhausted continuation authority\", null]",
+      "original_tail": [
+        "xp",
+        "e3"
+      ],
+      "local_tail": [
+        "xp_at_a356314b53",
+        "e3_at_a356314b53"
+      ]
+    }
+  ],
+  "original_spec": "authoring-history/proposed-ingestion.before-routing.yaml",
+  "original_spec_sha256": "d4fb794254bd96256918ec58c11524fe89ff70afd348f2ae9668f45aca1af62a",
+  "normalized_spec_sha256": "2a0f125f639bd631790ef08e47c4b55aa22452ccff8547818366bfd9c9f5b394",
+  "folded_behavior_equivalence": "passed",
+  "numbered_steps_unchanged": true,
+  "original_scenarios": 84,
+  "normalized_scenarios": 84,
+  "node_y_overrides": {
+    "nonsource": 21340,
+    "a21": 23740,
+    "ownerreport": 23540,
+    "ledger": 13540,
+    "a18": 20340,
+    "x5": 12940
+  },
+  "minimum_actor_pitch": 600,
+  "edge_card_intersections": []
+}

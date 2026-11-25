@@ -1,0 +1,3120 @@
+{
+  "nodes": [
+    {
+      "id": "librarian-title",
+      "type": "text",
+      "x": 20,
+      "y": -200,
+      "width": 6380,
+      "height": 220,
+      "text": "# Proposed ingestion: Owner or tier-0 commissioning, Lead ownership and independent Oracle review\n**Symptom:** Historical ingestion left orchestration and unresolved acceptance handoffs with tier 0.\n**Root cause:** The parent needs accountable role ownership, explicit authority and truthful child outcomes, composed through existing registered processes.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `ingestion-tobe.spec.yaml`."
+    },
+    {
+      "id": "librarian-s",
+      "type": "text",
+      "x": 40,
+      "y": 140,
+      "width": 360,
+      "height": 70,
+      "text": "● start",
+      "color": "4",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-a1",
+      "type": "text",
+      "x": 40,
+      "y": 340,
+      "width": 360,
+      "height": 150,
+      "text": "**1.** states the ingestion goal, roots, pre-read exclusions, required outputs, permitted partials and budget; grants only the intended authority",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-dentry",
+      "type": "text",
+      "x": 4240,
+      "y": 540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ commissioning route?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a2",
+      "type": "text",
+      "x": 640,
+      "y": 940,
+      "width": 360,
+      "height": 150,
+      "text": "**2.** commissions the Lead on the Owner's behalf and supplies the agent-authored obligations for independent Oracle review",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-directowner",
+      "type": "text",
+      "x": 40,
+      "y": 740,
+      "width": 360,
+      "height": 150,
+      "text": "commissions the Lead directly and supplies or approves the obligations; no tier-0 agent is required",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-a3",
+      "type": "text",
+      "x": 1840,
+      "y": 1140,
+      "width": 360,
+      "height": 150,
+      "text": "**3.** owns execution against the commissioned specification; asks Core to store its version, grants and actual specification owner",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-a4",
+      "type": "text",
+      "x": 4240,
+      "y": 1340,
+      "width": 360,
+      "height": 150,
+      "text": "**4.** inventories roots, fingerprints and literal facts; excludes hidden/scratch content before reading and resolves deepest-root ownership",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-d1",
+      "type": "text",
+      "x": 4240,
+      "y": 1540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ reviewed roots current?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a5",
+      "type": "text",
+      "x": 1840,
+      "y": 1940,
+      "width": 360,
+      "height": 150,
+      "text": "**5.** binds the Owner's exclusions, purpose constraints and decision grants to the eligible worklist",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-r1",
+      "type": "text",
+      "x": 2440,
+      "y": 1740,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **UC-D**: evaluates accepted R1 for stale evidence using its actual whole-library radius; a local mandate cannot silently permit a global rebuild",
+      "color": "2",
+      "librarian": {
+        "actor_lane": "Doctor"
+      }
+    },
+    {
+      "id": "librarian-d2",
+      "type": "text",
+      "x": 4240,
+      "y": 2140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ assigned folder-review role qualified on its selected route?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-xp",
+      "type": "text",
+      "x": 1840,
+      "y": 18540,
+      "width": 360,
+      "height": 150,
+      "text": "returns the paused package and named required decision directly to the Owner or through the overseer; retains completed work",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-xe",
+      "type": "text",
+      "x": 1840,
+      "y": 16140,
+      "width": 360,
+      "height": 150,
+      "text": "returns unresolved fault evidence to the actual specification owner and immediately notifies the Owner/overseer for critical findings",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-a6",
+      "type": "text",
+      "x": 3040,
+      "y": 2540,
+      "width": 360,
+      "height": 150,
+      "text": "**6.** interprets folder purpose, proposes descriptions and judges sensitivity; may direct bounded Scribe tasks",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-r2",
+      "type": "text",
+      "x": 2440,
+      "y": 2340,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **UC-D**: restores confirmed lost qualification with accepted R2; provider timeouts and parser faults retain their distinct evidence",
+      "color": "2",
+      "librarian": {
+        "actor_lane": "Doctor"
+      }
+    },
+    {
+      "id": "librarian-e3",
+      "type": "text",
+      "x": 6040,
+      "y": 18740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ paused for a named Owner/authority decision, cancellation, interruption or ceiling stop; truthful continuation retained\n*outcome: paused*",
+      "color": "1",
+      "librarian": {
+        "actor_lane": "Outcomes"
+      }
+    },
+    {
+      "id": "librarian-e2",
+      "type": "text",
+      "x": 6040,
+      "y": 16340,
+      "width": 360,
+      "height": 150,
+      "text": "◉ unresolved or critical fault escalated to the actual specification owner; completed work and existing flags retained\n*outcome: escalated*",
+      "color": "1",
+      "librarian": {
+        "actor_lane": "Outcomes"
+      }
+    },
+    {
+      "id": "librarian-draftcheck",
+      "type": "text",
+      "x": 4240,
+      "y": 2740,
+      "width": 360,
+      "height": 150,
+      "text": "validates the returned draft status, required fields and literal provenance; records provider, schema and missing-evidence flags without judging semantic adequacy",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-ddraft",
+      "type": "text",
+      "x": 4240,
+      "y": 2940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ returned folder draft structurally valid with the Clerk's explicit sensitivity finding?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-d3",
+      "type": "text",
+      "x": 3040,
+      "y": 3740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ folder decision reserved or sensitive?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-draftfault",
+      "type": "text",
+      "x": 1840,
+      "y": 3140,
+      "width": 360,
+      "height": 150,
+      "text": "diagnoses the actual post-draft transport, schema, provenance or missing-output failure from recorded evidence; retains existing flags and reports the unresolved scope without assuming qualification loss",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-xe_at_6b561aa06e",
+      "type": "text",
+      "x": 1840,
+      "y": 3340,
+      "width": 360,
+      "height": 150,
+      "text": "returns unresolved fault evidence to the actual specification owner and immediately notifies the Owner/overseer for critical findings",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-folderapprove",
+      "type": "text",
+      "x": 1840,
+      "y": 4940,
+      "width": 360,
+      "height": 150,
+      "text": "**7.** makes normal folder decisions within grant and preserves the Owner's explicit reserved decisions; supplies actual actors/reasons for Core to apply",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-x1",
+      "type": "text",
+      "x": 1840,
+      "y": 3940,
+      "width": 360,
+      "height": 150,
+      "text": "reports the held folder, evidence and required decision to the actual specification owner",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-e2_at_6b561aa06e",
+      "type": "text",
+      "x": 6040,
+      "y": 3540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ unresolved or critical fault escalated to the actual specification owner; completed work and existing flags retained\n*outcome: escalated*",
+      "color": "1",
+      "librarian": {
+        "actor_lane": "Outcomes"
+      }
+    },
+    {
+      "id": "librarian-a7",
+      "type": "text",
+      "x": 4240,
+      "y": 5140,
+      "width": 360,
+      "height": 150,
+      "text": "**8.** submits affirmative folder decisions and read barriers for group application; acceptance is recorded only after the CLI succeeds",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dheldroute",
+      "type": "text",
+      "x": 4240,
+      "y": 4140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ tier-0 overseer present for this run?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-applygroups",
+      "type": "text",
+      "x": 5440,
+      "y": 5340,
+      "width": 360,
+      "height": 150,
+      "text": "applies all accepted non-excluded groups, including documents and papers; ingests supported code/text and may reuse matching complete snapshots",
+      "librarian": {
+        "actor_lane": "Geo-Grapher"
+      }
+    },
+    {
+      "id": "librarian-x2",
+      "type": "text",
+      "x": 640,
+      "y": 4340,
+      "width": 360,
+      "height": 150,
+      "text": "relays the reserved folder decision to the Owner",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-x3",
+      "type": "text",
+      "x": 40,
+      "y": 4540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Owner's held-folder decision?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-applicationreceipt",
+      "type": "text",
+      "x": 4240,
+      "y": 5540,
+      "width": 360,
+      "height": 150,
+      "text": "checks CLI exit, JSON and pinned version; records successful application and accepted decisions; returned JSON does not attest parser completeness",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-exclude",
+      "type": "text",
+      "x": 4240,
+      "y": 4740,
+      "width": 360,
+      "height": 150,
+      "text": "records the excluded subtree; removes it from eligible work without reading it",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-xp_at_5b075aa469",
+      "type": "text",
+      "x": 1840,
+      "y": 12540,
+      "width": 360,
+      "height": 150,
+      "text": "returns the paused package and named required decision directly to the Owner or through the overseer; retains completed work",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-dfolder",
+      "type": "text",
+      "x": 4240,
+      "y": 5740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ folder application result?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-e3_at_5b075aa469",
+      "type": "text",
+      "x": 6040,
+      "y": 12740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ paused for a named Owner/authority decision, cancellation, interruption or ceiling stop; truthful continuation retained\n*outcome: paused*",
+      "color": "1",
+      "librarian": {
+        "actor_lane": "Outcomes"
+      }
+    },
+    {
+      "id": "librarian-indexcheck",
+      "type": "text",
+      "x": 4240,
+      "y": 6140,
+      "width": 360,
+      "height": 150,
+      "text": "proposed: obtains parser/capability evidence and compares requested coverage; today the folder CLI omits parse failures, so additional evidence is required",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-r1application",
+      "type": "text",
+      "x": 2440,
+      "y": 5940,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **UC-D**: handles application-stage FOLDER_STALE through the same scoped R1 remedy; no local mandate authorizes a global rebuild",
+      "color": "2",
+      "librarian": {
+        "actor_lane": "Doctor"
+      }
+    },
+    {
+      "id": "librarian-folderfault",
+      "type": "text",
+      "x": 1840,
+      "y": 5940,
+      "width": 360,
+      "height": 150,
+      "text": "retains GEOGRAPHER_CALL_FAILED or other folder refusal; requests capability/scope diagnosis and a mapped accepted remedy only when applicable",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-dindex",
+      "type": "text",
+      "x": 4240,
+      "y": 6340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ proposed coverage check has sufficient capability and extraction evidence?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dinput",
+      "type": "text",
+      "x": 4240,
+      "y": 6740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ requested Source-eligible subset remains after common folder-group application?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-indexfault",
+      "type": "text",
+      "x": 1840,
+      "y": 6540,
+      "width": 360,
+      "height": 150,
+      "text": "holds the unmet quality requirement with the Lead; missing current CLI evidence is not an existing Core capability check",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-xe_at_1020338efc",
+      "type": "text",
+      "x": 1840,
+      "y": 14340,
+      "width": 360,
+      "height": 150,
+      "text": "returns unresolved fault evidence to the actual specification owner and immediately notifies the Owner/overseer for critical findings",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-a8",
+      "type": "text",
+      "x": 4240,
+      "y": 7140,
+      "width": 360,
+      "height": 150,
+      "text": "**9.** queues Source-eligible third-party, research-docs and own-docs inputs per deepest accepted root; retains enqueue history",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-reuseledger",
+      "type": "text",
+      "x": 4240,
+      "y": 10940,
+      "width": 360,
+      "height": 150,
+      "text": "reconciles no-new-work/current results against the parent ledger and separate outstanding decisions; never infers work from enqueue-history counts",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-nonsource",
+      "type": "text",
+      "x": 4240,
+      "y": 15140,
+      "width": 360,
+      "height": 150,
+      "text": "accounts for common folder application; no Source intake applies to this purpose, while remaining requirements still reach Oracle review",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-e2_at_1020338efc",
+      "type": "text",
+      "x": 6040,
+      "y": 14540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ unresolved or critical fault escalated to the actual specification owner; completed work and existing flags retained\n*outcome: escalated*",
+      "color": "1",
+      "librarian": {
+        "actor_lane": "Outcomes"
+      }
+    },
+    {
+      "id": "librarian-a9",
+      "type": "text",
+      "x": 4240,
+      "y": 7340,
+      "width": 360,
+      "height": 150,
+      "text": "**10.** reconciles literal eligible counts with current staging/processing state and the parent mixed-item ledger",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dreuse",
+      "type": "text",
+      "x": 4240,
+      "y": 11140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ reconciled current states leave any in-scope parent obligation?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a18",
+      "type": "text",
+      "x": 1240,
+      "y": 15340,
+      "width": 360,
+      "height": 150,
+      "text": "**21.** judges the parent specification using deterministic evidence and independent semantic review, including separate decision obligations and actual partial results",
+      "librarian": {
+        "actor_lane": "Oracle"
+      }
+    },
+    {
+      "id": "librarian-d4",
+      "type": "text",
+      "x": 4240,
+      "y": 7540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ current eligible count and queue reconcile?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-reused",
+      "type": "text",
+      "x": 6040,
+      "y": 11340,
+      "width": 360,
+      "height": 150,
+      "text": "◉ existing or excluded work reconciled; no duplicate processing or implicit acceptance\n*outcome: reused*",
+      "color": "6",
+      "librarian": {
+        "actor_lane": "Outcomes"
+      }
+    },
+    {
+      "id": "librarian-ledger",
+      "type": "text",
+      "x": 4240,
+      "y": 12140,
+      "width": 360,
+      "height": 150,
+      "text": "**18.** reconciles returned Source states with the original mixed-item ledger; issues separate Source and lens worklists with owner, current state and remaining decision",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-d8",
+      "type": "text",
+      "x": 1240,
+      "y": 15540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ parent specification met?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Oracle"
+      }
+    },
+    {
+      "id": "librarian-a10",
+      "type": "text",
+      "x": 4240,
+      "y": 8140,
+      "width": 360,
+      "height": 150,
+      "text": "**11.** captures immutable evidence and per-reference outcomes; isolates parser/quarantine failures and preserves successful siblings",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-countdiagnosis",
+      "type": "text",
+      "x": 3040,
+      "y": 7740,
+      "width": 360,
+      "height": 150,
+      "text": "investigates unexplained count mismatch read-only; distinguishes historical queued keys from current pending items",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-dsourcework",
+      "type": "text",
+      "x": 4240,
+      "y": 12340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ reconciled current worklist contains a decidable Source acceptance still owed?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a19",
+      "type": "text",
+      "x": 1840,
+      "y": 16540,
+      "width": 360,
+      "height": 150,
+      "text": "**22.** hands one truthful result package and Oracle verdict to the recorded specification owner",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-r6",
+      "type": "text",
+      "x": 2440,
+      "y": 15740,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **UC-D**: evaluates the accepted catalogued remedy for a mapped shortfall, with actual radius and independent verification",
+      "color": "2",
+      "librarian": {
+        "actor_lane": "Doctor"
+      }
+    },
+    {
+      "id": "librarian-x8",
+      "type": "text",
+      "x": 3040,
+      "y": 15740,
+      "width": 360,
+      "height": 150,
+      "text": "scouts an unmapped shortfall and its actual affected scope read-only",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-dcapture",
+      "type": "text",
+      "x": 4240,
+      "y": 8340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ usable captured Sources remain?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-r3",
+      "type": "text",
+      "x": 2440,
+      "y": 7940,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **UC-D**: applies accepted R3 only for a matching per-root queue defect, retaining the mismatch evidence",
+      "color": "2",
+      "librarian": {
+        "actor_lane": "Doctor"
+      }
+    },
+    {
+      "id": "librarian-d6",
+      "type": "text",
+      "x": 4240,
+      "y": 12940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Source promotion mode, sensitivity, interruption state and delegated acceptance authority?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dresultroute",
+      "type": "text",
+      "x": 4240,
+      "y": 16740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ result owner is a tier-0 overseer?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-x9",
+      "type": "text",
+      "x": 1840,
+      "y": 15940,
+      "width": 360,
+      "height": 150,
+      "text": "coordinates authorized correction from Oracle evidence and Clerk scouting; asks Oracle to judge the revised evidence",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-capturedescribe",
+      "type": "text",
+      "x": 3040,
+      "y": 8740,
+      "width": 360,
+      "height": 150,
+      "text": "**12.** writes neutral evidence-based Source descriptions, directing Scribes only for bounded drafting",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-capturefault",
+      "type": "text",
+      "x": 1840,
+      "y": 8540,
+      "width": 360,
+      "height": 150,
+      "text": "reports required capture gaps with existing flags; chooses authorized bounded retry or a truthful held/escalated result",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-a16",
+      "type": "text",
+      "x": 1840,
+      "y": 13540,
+      "width": 360,
+      "height": 150,
+      "text": "**19.** makes affirmative Source acceptance decisions only within grant, for full or explicitly permitted partial outputs; no lens is accepted implicitly",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-x6",
+      "type": "text",
+      "x": 4240,
+      "y": 13140,
+      "width": 360,
+      "height": 150,
+      "text": "keeps the Source decision on the named Owner's agenda/context; independently routes required lens accept/reject/defer work",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a20",
+      "type": "text",
+      "x": 640,
+      "y": 17140,
+      "width": 360,
+      "height": 150,
+      "text": "**23.** reviews the Lead's result and independent verdict against the commissioned specification",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-ownerreport",
+      "type": "text",
+      "x": 40,
+      "y": 17340,
+      "width": 360,
+      "height": 150,
+      "text": "receives the Lead result and Oracle verdict directly, without an absent tier-0 intermediary",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-capturestore",
+      "type": "text",
+      "x": 4240,
+      "y": 8940,
+      "width": 360,
+      "height": 150,
+      "text": "**13.** stages Source records and records their parent ledger keys; folder metadata retains folder_validate, folder_describe and folder_data with separate review",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-acceptrecord",
+      "type": "text",
+      "x": 4240,
+      "y": 13740,
+      "width": 360,
+      "height": 150,
+      "text": "records only affirmative authorized Source decisions with actual actor/reason; separately retains pending, rejected or deferred lens decisions",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-x7",
+      "type": "text",
+      "x": 40,
+      "y": 13340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Owner's Source decision?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-d9",
+      "type": "text",
+      "x": 640,
+      "y": 17340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ ready to return to the Owner?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-delivery",
+      "type": "text",
+      "x": 4240,
+      "y": 19140,
+      "width": 360,
+      "height": 150,
+      "text": "records the parent result delivered to its actual specification owner; retains outstanding decisions and limitations",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dapprove",
+      "type": "text",
+      "x": 4240,
+      "y": 9140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ ingestion approval delegated and unreserved?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a17",
+      "type": "text",
+      "x": 4240,
+      "y": 13940,
+      "width": 360,
+      "height": 150,
+      "text": "**20.** applies the guarded Source writer and retains the actual commit/refusal/attempt state; Source acceptance does not accept lenses",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-a21",
+      "type": "text",
+      "x": 1840,
+      "y": 17540,
+      "width": 360,
+      "height": 150,
+      "text": "**24.** returns the result to the Owner directly or with the tier-0 reviewed report, retaining all remaining decision owners and limitations",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-x10",
+      "type": "text",
+      "x": 640,
+      "y": 17540,
+      "width": 360,
+      "height": 150,
+      "text": "returns the remaining obligations to the Lead for bounded correction and requests an independent Oracle recheck",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-e1",
+      "type": "text",
+      "x": 6040,
+      "y": 19340,
+      "width": 360,
+      "height": 150,
+      "text": "◉ Owner receives the specified result: actual Source acceptance/findability, per-item coverage/publication and independent lens decisions are explicit\n*outcome: success*",
+      "color": "6",
+      "librarian": {
+        "actor_lane": "Outcomes"
+      }
+    },
+    {
+      "id": "librarian-a11",
+      "type": "text",
+      "x": 1840,
+      "y": 9540,
+      "width": 360,
+      "height": 150,
+      "text": "**14.** approves the staged selection within the ingestion grant; supplies the actual authority, executor and reason to the approval action",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-approvalowner",
+      "type": "text",
+      "x": 40,
+      "y": 9340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Owner's staged-work approval?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-dwrite",
+      "type": "text",
+      "x": 4240,
+      "y": 14140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ guarded Source write result and current commit state?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-x11",
+      "type": "text",
+      "x": 1840,
+      "y": 17740,
+      "width": 360,
+      "height": 150,
+      "text": "coordinates the approved correction through the assigned agents and accepted Doctor remedies",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-approvalrecord",
+      "type": "text",
+      "x": 4240,
+      "y": 9740,
+      "width": 360,
+      "height": 150,
+      "text": "records the affirmative authorized ingestion approval; queues work without starting processing",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-findcheck",
+      "type": "text",
+      "x": 4240,
+      "y": 14740,
+      "width": 360,
+      "height": 150,
+      "text": "checks required title, Bottom-Line and concept retrieval only for a confirmed committed Source note; records actual searches",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-writestate",
+      "type": "text",
+      "x": 4240,
+      "y": 14340,
+      "width": 360,
+      "height": 150,
+      "text": "reconciles the attempt, lease, current note/hash and commit evidence read-only; preserves human edits and records the reserved write checkpoint without assuming a commit",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-x12",
+      "type": "text",
+      "x": 1840,
+      "y": 17940,
+      "width": 360,
+      "height": 150,
+      "text": "submits changed artifacts and evidence for independent review; Oracle does not issue worker orders",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-startrequest",
+      "type": "text",
+      "x": 1840,
+      "y": 9940,
+      "width": 360,
+      "height": 150,
+      "text": "**15.** requests explicit processing start for the approved set within its recorded grant",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-d7",
+      "type": "text",
+      "x": 4240,
+      "y": 14940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ required retrieval checks pass for written notes?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-writeowner",
+      "type": "text",
+      "x": 40,
+      "y": 14540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Owner's bounded decision for the held or unconfirmed Source write?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-x13",
+      "type": "text",
+      "x": 1240,
+      "y": 18140,
+      "width": 360,
+      "height": 150,
+      "text": "judges the corrected obligations and returns its verdict to the specification owner",
+      "librarian": {
+        "actor_lane": "Oracle"
+      }
+    },
+    {
+      "id": "librarian-dstartauthority",
+      "type": "text",
+      "x": 4240,
+      "y": 10140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ explicit processing-start authority available?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-r5",
+      "type": "text",
+      "x": 2440,
+      "y": 15140,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **UC-D**: evaluates accepted R5 against the actual failed index obligation; reindexing is not assumed to cure every content/retrieval miss",
+      "color": "2",
+      "librarian": {
+        "actor_lane": "Doctor"
+      }
+    },
+    {
+      "id": "librarian-contentdiagnosis",
+      "type": "text",
+      "x": 3040,
+      "y": 15140,
+      "width": 360,
+      "height": 150,
+      "text": "diagnoses content-related retrieval gaps read-only; never manufactures concepts or enables vectors merely to force a pass",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-dlast",
+      "type": "text",
+      "x": 1240,
+      "y": 18340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ corrected required obligations met?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Oracle"
+      }
+    },
+    {
+      "id": "librarian-startrun",
+      "type": "text",
+      "x": 4240,
+      "y": 10540,
+      "width": 360,
+      "height": 150,
+      "text": "**16.** validates start authority and freezes selection/settings; returns the existing active run instead of dispatching another",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-startowner",
+      "type": "text",
+      "x": 40,
+      "y": 10340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ grant processing start for this approved selection?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Owner"
+      }
+    },
+    {
+      "id": "librarian-x14",
+      "type": "text",
+      "x": 640,
+      "y": 18540,
+      "width": 360,
+      "height": 150,
+      "text": "makes the final review of the corrected result",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-enrich",
+      "type": "text",
+      "x": 4240,
+      "y": 10740,
+      "width": 360,
+      "height": 150,
+      "text": "**17.** ⇉ **proposed-tobe-enrichment**: runs the source-enrichment child; each item owns all nine ordered stages including publication before the next item",
+      "color": "2",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-d5",
+      "type": "text",
+      "x": 4240,
+      "y": 11740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ returned source coverage and publication satisfy the actual parent obligations?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-partialchoice",
+      "type": "text",
+      "x": 1840,
+      "y": 10940,
+      "width": 360,
+      "height": 150,
+      "text": "retains explicit partial coverage/publication gaps; checks whether the parent permits accepting those particular Sources",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-x4",
+      "type": "text",
+      "x": 1840,
+      "y": 11140,
+      "width": 360,
+      "height": 150,
+      "text": "reports actual stop reason, spend evidence, completed items and remaining work; distinguishes cancellation, interruption and before-item ceiling stop",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-r4",
+      "type": "text",
+      "x": 2440,
+      "y": 11940,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **UC-D**: requests accepted bounded R4 for required partial reading; any finished-partial reapproval/start remains authorized and independent checks rerun",
+      "color": "2",
+      "librarian": {
+        "actor_lane": "Doctor"
+      }
+    },
+    {
+      "id": "librarian-publicationdiagnosis",
+      "type": "text",
+      "x": 1840,
+      "y": 11940,
+      "width": 360,
+      "height": 150,
+      "text": "diagnoses required publication-only gaps from current admission, artifact and Geo evidence; never treats them as an automatic reread",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-dpauseroute",
+      "type": "text",
+      "x": 4240,
+      "y": 11340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ tier-0 overseer present for paused result?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-x5",
+      "type": "text",
+      "x": 640,
+      "y": 11540,
+      "width": 360,
+      "height": 150,
+      "text": "relays a reserved budget or continuation decision to the Owner when acting as overseer",
+      "librarian": {
+        "actor_lane": "Tier 0 agent"
+      }
+    },
+    {
+      "id": "librarian-lane-Owner",
+      "type": "group",
+      "x": 20,
+      "y": 60,
+      "width": 400,
+      "height": 19530,
+      "label": "Owner"
+    },
+    {
+      "id": "librarian-lane-Tier-0-agent",
+      "type": "group",
+      "x": 620,
+      "y": 60,
+      "width": 400,
+      "height": 19530,
+      "label": "Tier 0 agent"
+    },
+    {
+      "id": "librarian-lane-Oracle",
+      "type": "group",
+      "x": 1220,
+      "y": 60,
+      "width": 400,
+      "height": 19530,
+      "label": "Oracle"
+    },
+    {
+      "id": "librarian-lane-Lead-tier-1-",
+      "type": "group",
+      "x": 1820,
+      "y": 60,
+      "width": 400,
+      "height": 19530,
+      "label": "Lead (tier 1)"
+    },
+    {
+      "id": "librarian-lane-Doctor",
+      "type": "group",
+      "x": 2420,
+      "y": 60,
+      "width": 400,
+      "height": 19530,
+      "label": "Doctor"
+    },
+    {
+      "id": "librarian-lane-Clerk-tier-2-",
+      "type": "group",
+      "x": 3020,
+      "y": 60,
+      "width": 400,
+      "height": 19530,
+      "label": "Clerk (tier 2)"
+    },
+    {
+      "id": "librarian-lane-Scribe-tier-3-",
+      "type": "group",
+      "x": 3620,
+      "y": 60,
+      "width": 400,
+      "height": 19530,
+      "label": "Scribe (tier 3)"
+    },
+    {
+      "id": "librarian-lane-Core",
+      "type": "group",
+      "x": 4220,
+      "y": 60,
+      "width": 400,
+      "height": 19530,
+      "label": "Core"
+    },
+    {
+      "id": "librarian-lane-Model-host",
+      "type": "group",
+      "x": 4820,
+      "y": 60,
+      "width": 400,
+      "height": 19530,
+      "label": "Model host"
+    },
+    {
+      "id": "librarian-lane-Geo-Grapher",
+      "type": "group",
+      "x": 5420,
+      "y": 60,
+      "width": 400,
+      "height": 19530,
+      "label": "Geo-Grapher"
+    },
+    {
+      "id": "librarian-lane-Outcomes",
+      "type": "group",
+      "x": 6020,
+      "y": 60,
+      "width": 400,
+      "height": 19530,
+      "label": "Outcomes"
+    }
+  ],
+  "edges": [
+    {
+      "id": "librarian-edge-d6180c6ec7200079",
+      "fromNode": "librarian-s",
+      "toNode": "librarian-a1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-8fb30393edb2f7e9",
+      "fromNode": "librarian-a1",
+      "toNode": "librarian-dentry",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-2b5746d2bf25a621",
+      "fromNode": "librarian-dentry",
+      "toNode": "librarian-a2",
+      "label": "[tier-0 overseer commissions]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-dbe5641d09007da8",
+      "fromNode": "librarian-dentry",
+      "toNode": "librarian-directowner",
+      "label": "[Owner commissions directly] 1a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-b3e89260677f5e08",
+      "fromNode": "librarian-directowner",
+      "toNode": "librarian-a3",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-95420e5041207b89",
+      "fromNode": "librarian-a2",
+      "toNode": "librarian-a3",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-dd692af557958223",
+      "fromNode": "librarian-a3",
+      "toNode": "librarian-a4",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-4a21d8cbbbd43885",
+      "fromNode": "librarian-a4",
+      "toNode": "librarian-d1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-68b167fffcf2398e",
+      "fromNode": "librarian-d1",
+      "toNode": "librarian-a5",
+      "label": "[current]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-abee8a93a8057bfe",
+      "fromNode": "librarian-d1",
+      "toNode": "librarian-r1",
+      "label": "[stale root] 4a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-45e32c9031f3078d",
+      "fromNode": "librarian-a5",
+      "toNode": "librarian-d2",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-8819827026101966",
+      "fromNode": "librarian-a6",
+      "toNode": "librarian-draftcheck",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-04f256cf30d1e28b",
+      "fromNode": "librarian-d2",
+      "toNode": "librarian-a6",
+      "label": "[qualified]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-cb12d3717d35c250",
+      "fromNode": "librarian-d2",
+      "toNode": "librarian-r2",
+      "label": "[confirmed lost qualification] 5a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-a82b5604c4146554",
+      "fromNode": "librarian-draftfault",
+      "toNode": "librarian-xe",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-b58b00ff6f842d33",
+      "fromNode": "librarian-d3",
+      "toNode": "librarian-folderapprove",
+      "label": "[normal and delegated]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-736fd566cc933fe6",
+      "fromNode": "librarian-d3",
+      "toNode": "librarian-x1",
+      "label": "[reserved or sensitive] 6a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-8b4a6757d77dd89f",
+      "fromNode": "librarian-x1",
+      "toNode": "librarian-dheldroute",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-fc0066550b208e0e",
+      "fromNode": "librarian-dheldroute",
+      "toNode": "librarian-x2",
+      "label": "[overseer present]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-c74b169fc2badac5",
+      "fromNode": "librarian-dheldroute",
+      "toNode": "librarian-x3",
+      "label": "[direct Owner run]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-4b75d228034b2ee0",
+      "fromNode": "librarian-x2",
+      "toNode": "librarian-x3",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-36d5ada64296de6e",
+      "fromNode": "librarian-x3",
+      "toNode": "librarian-folderapprove",
+      "label": "[approve/apply]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-803d34e8140199db",
+      "fromNode": "librarian-x3",
+      "toNode": "librarian-exclude",
+      "label": "[exclude]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-5c58040bb697865c",
+      "fromNode": "librarian-x3",
+      "toNode": "librarian-xp_at_5b075aa469",
+      "label": "[decline]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-37be2b52cba07f83",
+      "fromNode": "librarian-x3",
+      "toNode": "librarian-xp_at_5b075aa469",
+      "label": "[hold]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-29d6cfd6961b7f60",
+      "fromNode": "librarian-exclude",
+      "toNode": "librarian-folderapprove",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-af1af52a252af059",
+      "fromNode": "librarian-folderapprove",
+      "toNode": "librarian-a7",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-e0e6743f048f9c6c",
+      "fromNode": "librarian-dfolder",
+      "toNode": "librarian-indexcheck",
+      "label": "[CLI application succeeded; proposed coverage check follows]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-f8d0c4a6eeb1ca8e",
+      "fromNode": "librarian-dfolder",
+      "toNode": "librarian-r1application",
+      "label": "[FOLDER_STALE] 8a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-43749b1b5921bbdf",
+      "fromNode": "librarian-dfolder",
+      "toNode": "librarian-folderfault",
+      "label": "[GEOGRAPHER_CALL_FAILED or another refusal] 8b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-8ba90d76c7091b29",
+      "fromNode": "librarian-folderfault",
+      "toNode": "librarian-xe",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-ac56aabfad432b4c",
+      "fromNode": "librarian-dinput",
+      "toNode": "librarian-a8",
+      "label": "[nonempty Source-eligible requested subset]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-d40e743d0de7d643",
+      "fromNode": "librarian-dinput",
+      "toNode": "librarian-reuseledger",
+      "label": "[excluded or no eligible input] 8d",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-378af5937e4355e4",
+      "fromNode": "librarian-a8",
+      "toNode": "librarian-a9",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-1d67ce2b02dabcad",
+      "fromNode": "librarian-a9",
+      "toNode": "librarian-d4",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-fc721ab33cd6b0e3",
+      "fromNode": "librarian-d4",
+      "toNode": "librarian-a10",
+      "label": "[reconciles]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-ee71125d72a17bf8",
+      "fromNode": "librarian-d4",
+      "toNode": "librarian-countdiagnosis",
+      "label": "[unexplained mismatch] 10a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-de6c762ba7d48b8c",
+      "fromNode": "librarian-countdiagnosis",
+      "toNode": "librarian-r3",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-4003f430f8f827f3",
+      "fromNode": "librarian-a10",
+      "toNode": "librarian-dcapture",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-72358353ac3364f8",
+      "fromNode": "librarian-dcapture",
+      "toNode": "librarian-capturedescribe",
+      "label": "[usable Sources with per-reference outcomes]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-ca421f6dec8e74f7",
+      "fromNode": "librarian-dcapture",
+      "toNode": "librarian-capturefault",
+      "label": "[required capture gaps] 11a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-e0e00b7c9597e43d",
+      "fromNode": "librarian-dcapture",
+      "toNode": "librarian-reuseledger",
+      "label": "[duplicates/exclusions only; no new source] 11b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-4f8bcf385557a952",
+      "fromNode": "librarian-capturefault",
+      "toNode": "librarian-xe",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-d62e65692e955f0d",
+      "fromNode": "librarian-capturedescribe",
+      "toNode": "librarian-capturestore",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-67cbac245b416f8d",
+      "fromNode": "librarian-capturestore",
+      "toNode": "librarian-dapprove",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-78db0eaf8c5ec379",
+      "fromNode": "librarian-dapprove",
+      "toNode": "librarian-a11",
+      "label": "[delegated and unreserved]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-049cab68be9fefa3",
+      "fromNode": "librarian-dapprove",
+      "toNode": "librarian-approvalowner",
+      "label": "[person mode, sensitive or reserved approval] 14a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-34c62a7a1e161e79",
+      "fromNode": "librarian-approvalowner",
+      "toNode": "librarian-approvalrecord",
+      "label": "[approve]",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-fca519026ad5c16b",
+      "fromNode": "librarian-approvalowner",
+      "toNode": "librarian-xp_at_5b075aa469",
+      "label": "[decline or hold]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-69155e6ced0cd047",
+      "fromNode": "librarian-a11",
+      "toNode": "librarian-approvalrecord",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-bced070f6967798d",
+      "fromNode": "librarian-approvalrecord",
+      "toNode": "librarian-startrequest",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-25d33ab9ceb26c9d",
+      "fromNode": "librarian-startrequest",
+      "toNode": "librarian-dstartauthority",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-921ae5386c140f21",
+      "fromNode": "librarian-dstartauthority",
+      "toNode": "librarian-startrun",
+      "label": "[explicit grant valid]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-cba2e51f1be2ea88",
+      "fromNode": "librarian-dstartauthority",
+      "toNode": "librarian-startowner",
+      "label": "[reserved or absent start grant] 15a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-08ac943810531a13",
+      "fromNode": "librarian-startowner",
+      "toNode": "librarian-startrun",
+      "label": "[grant]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-e41e73667e31abc7",
+      "fromNode": "librarian-startowner",
+      "toNode": "librarian-xp",
+      "label": "[decline or hold]",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-5b3b684f5f6741bf",
+      "fromNode": "librarian-startrun",
+      "toNode": "librarian-enrich",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-edf5db1fbc865005",
+      "fromNode": "librarian-enrich",
+      "toNode": "librarian-d5",
+      "label": "[success]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-eec0a6f28d2ea052",
+      "fromNode": "librarian-enrich",
+      "toNode": "librarian-partialchoice",
+      "label": "[partial] 17a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-15e84980dd5439a3",
+      "fromNode": "librarian-enrich",
+      "toNode": "librarian-reuseledger",
+      "label": "[reused] 17b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-60a0ce9f0461503c",
+      "fromNode": "librarian-enrich",
+      "toNode": "librarian-x4",
+      "label": "[paused] 17c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-d6c929ff36d105b8",
+      "fromNode": "librarian-enrich",
+      "toNode": "librarian-xe_at_1020338efc",
+      "label": "[escalated] 17d",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-df52df5d63afdaa7",
+      "fromNode": "librarian-partialchoice",
+      "toNode": "librarian-d5",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-cec7fb0c52b2e803",
+      "fromNode": "librarian-d5",
+      "toNode": "librarian-ledger",
+      "label": "[full or expressly permitted partial meets parent obligations]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-7a4beafc5c7c1d66",
+      "fromNode": "librarian-d5",
+      "toNode": "librarian-r4",
+      "label": "[required partial reading has a matching accepted bounded R4] 17e",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-1fcfd988dbff573a",
+      "fromNode": "librarian-d5",
+      "toNode": "librarian-xp_at_5b075aa469",
+      "label": "[required work failed/pending without permitted continuation] 17f",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-4dff861de04ca317",
+      "fromNode": "librarian-ledger",
+      "toNode": "librarian-dsourcework",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-517d5f69ea65e714",
+      "fromNode": "librarian-d6",
+      "toNode": "librarian-a16",
+      "label": "[agent mode; delegated, non-sensitive and not interrupted]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-9f160ad0732c66c8",
+      "fromNode": "librarian-d6",
+      "toNode": "librarian-x6",
+      "label": "[person mode, sensitive, interrupted or otherwise reserved] 19a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-e6ccc55d4d603b86",
+      "fromNode": "librarian-x6",
+      "toNode": "librarian-x7",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-db4ff7a09063706c",
+      "fromNode": "librarian-x7",
+      "toNode": "librarian-acceptrecord",
+      "label": "[accept specified full/permitted-partial Sources]",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-c4225218f4b42b28",
+      "fromNode": "librarian-x7",
+      "toNode": "librarian-xp",
+      "label": "[decline]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-fd36304a530bb13d",
+      "fromNode": "librarian-x7",
+      "toNode": "librarian-xp",
+      "label": "[hold]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-e09a696daa1ecf92",
+      "fromNode": "librarian-a16",
+      "toNode": "librarian-acceptrecord",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-57a704e61533b48f",
+      "fromNode": "librarian-acceptrecord",
+      "toNode": "librarian-a17",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-7dd35728c2433c27",
+      "fromNode": "librarian-a17",
+      "toNode": "librarian-dwrite",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-3d24fcad1e481d0a",
+      "fromNode": "librarian-d7",
+      "toNode": "librarian-a18",
+      "label": "[required checks pass]",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-029768368dfbb0c8",
+      "fromNode": "librarian-d7",
+      "toNode": "librarian-r5",
+      "label": "[written note fails candidate index obligation] 20a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-ecbc779e05726ef3",
+      "fromNode": "librarian-d7",
+      "toNode": "librarian-contentdiagnosis",
+      "label": "[written note has an unmapped content/retrieval gap] 20b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-7c58e02e26efdc9a",
+      "fromNode": "librarian-contentdiagnosis",
+      "toNode": "librarian-x9",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-5928d7d267a65da3",
+      "fromNode": "librarian-a18",
+      "toNode": "librarian-d8",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-d14649b3e0fd82d6",
+      "fromNode": "librarian-d8",
+      "toNode": "librarian-a19",
+      "label": "[met]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-3148e290e08f3c7d",
+      "fromNode": "librarian-d8",
+      "toNode": "librarian-r6",
+      "label": "[mapped failure shortfall, excluding legitimate pending/reserved decisions] 21a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-763a1c977510d55a",
+      "fromNode": "librarian-d8",
+      "toNode": "librarian-x8",
+      "label": "[unmapped failure or misalignment, excluding legitimate pending/reserved decisions] 21b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-6b2be85d452a590c",
+      "fromNode": "librarian-x8",
+      "toNode": "librarian-x9",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-39ee29d2f9606ac8",
+      "fromNode": "librarian-x9",
+      "toNode": "librarian-a18",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-7547c73d1dccfc04",
+      "fromNode": "librarian-a19",
+      "toNode": "librarian-dresultroute",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-891e10848b00790c",
+      "fromNode": "librarian-dresultroute",
+      "toNode": "librarian-a20",
+      "label": "[tier-0 specification owner]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-306fa571662f023f",
+      "fromNode": "librarian-dresultroute",
+      "toNode": "librarian-ownerreport",
+      "label": "[direct Owner specification owner] 22a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-edge-f458729a5991de8c",
+      "fromNode": "librarian-ownerreport",
+      "toNode": "librarian-delivery",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-4a04089ddeeff10f",
+      "fromNode": "librarian-a20",
+      "toNode": "librarian-d9",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-ad81f47731886593",
+      "fromNode": "librarian-d9",
+      "toNode": "librarian-a21",
+      "label": "[ready]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-cb52d66e0ee6576a",
+      "fromNode": "librarian-d9",
+      "toNode": "librarian-x10",
+      "label": "[needs bounded correction] 23a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-8cc259b1f3d4444c",
+      "fromNode": "librarian-x10",
+      "toNode": "librarian-x11",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-0ef8d3361a76ce62",
+      "fromNode": "librarian-x11",
+      "toNode": "librarian-x12",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-1c7a0f73558a0f5b",
+      "fromNode": "librarian-x12",
+      "toNode": "librarian-x13",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-568a193d6d241ef0",
+      "fromNode": "librarian-x13",
+      "toNode": "librarian-dlast",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-7e46197bccad8abe",
+      "fromNode": "librarian-dlast",
+      "toNode": "librarian-x14",
+      "label": "[met]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-d79654127460f349",
+      "fromNode": "librarian-dlast",
+      "toNode": "librarian-xp",
+      "label": "[not met; further authority or work needed]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-3038a24d908e8e64",
+      "fromNode": "librarian-x14",
+      "toNode": "librarian-a21",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-e56249fd0c4b3598",
+      "fromNode": "librarian-a21",
+      "toNode": "librarian-delivery",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-1ca4aef96a74f746",
+      "fromNode": "librarian-delivery",
+      "toNode": "librarian-e1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-31c839660f88a975",
+      "fromNode": "librarian-x4",
+      "toNode": "librarian-dpauseroute",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-c33adf3b8bd0a64c",
+      "fromNode": "librarian-dpauseroute",
+      "toNode": "librarian-x5",
+      "label": "[overseer present]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-49d36d4ea9f473cc",
+      "fromNode": "librarian-dpauseroute",
+      "toNode": "librarian-xp_at_5b075aa469",
+      "label": "[direct Owner run]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-ec937217a7f7c28d",
+      "fromNode": "librarian-x5",
+      "toNode": "librarian-xp",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-32aa4776d3d651fa",
+      "fromNode": "librarian-xp",
+      "toNode": "librarian-e3",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-ec5b85aa328fbf70",
+      "fromNode": "librarian-xe",
+      "toNode": "librarian-e2",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-44821d105421fee6",
+      "fromNode": "librarian-reuseledger",
+      "toNode": "librarian-dreuse",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-85b7e4a930e71af2",
+      "fromNode": "librarian-r1",
+      "toNode": "librarian-a4",
+      "label": "[resolved]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-e8f46ff007dde2e8",
+      "fromNode": "librarian-r1",
+      "toNode": "librarian-xp",
+      "label": "[declined]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-dc59ef507379c574",
+      "fromNode": "librarian-r1",
+      "toNode": "librarian-xe",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-c4778e016039d6f8",
+      "fromNode": "librarian-r2",
+      "toNode": "librarian-d2",
+      "label": "[resolved]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-014664c3386ae97b",
+      "fromNode": "librarian-r2",
+      "toNode": "librarian-xp",
+      "label": "[declined]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-bed9fededfb52819",
+      "fromNode": "librarian-r2",
+      "toNode": "librarian-xe",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-9eee076d79c57536",
+      "fromNode": "librarian-r3",
+      "toNode": "librarian-a8",
+      "label": "[resolved]",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-c0f7227dc13aae26",
+      "fromNode": "librarian-r3",
+      "toNode": "librarian-xp",
+      "label": "[declined]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-d8bec601eb3f11b3",
+      "fromNode": "librarian-r3",
+      "toNode": "librarian-xe",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-82f37b12068ae4fd",
+      "fromNode": "librarian-r4",
+      "toNode": "librarian-enrich",
+      "label": "[resolved]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-8c07eb51eabf1825",
+      "fromNode": "librarian-r4",
+      "toNode": "librarian-xp",
+      "label": "[declined]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-25fc65e86f49b410",
+      "fromNode": "librarian-r4",
+      "toNode": "librarian-xe",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-c6895e1065557688",
+      "fromNode": "librarian-r5",
+      "toNode": "librarian-d7",
+      "label": "[resolved]",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-db9201000344f6e8",
+      "fromNode": "librarian-r5",
+      "toNode": "librarian-xp",
+      "label": "[declined]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-77e673e87d5ee859",
+      "fromNode": "librarian-r5",
+      "toNode": "librarian-xe",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-718e41e76a8a082d",
+      "fromNode": "librarian-r6",
+      "toNode": "librarian-a18",
+      "label": "[resolved]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-c57c76151dc48556",
+      "fromNode": "librarian-r6",
+      "toNode": "librarian-xp",
+      "label": "[declined]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-68e2189f8f00dc84",
+      "fromNode": "librarian-r6",
+      "toNode": "librarian-xe",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-1c41e62409096c67",
+      "fromNode": "librarian-d5",
+      "toNode": "librarian-publicationdiagnosis",
+      "label": "[required publication-only gap without matching reading fault] 17g",
+      "color": "1",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-61a7328369b0c00e",
+      "fromNode": "librarian-publicationdiagnosis",
+      "toNode": "librarian-xp",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-7d7f78c93d0a70d1",
+      "fromNode": "librarian-draftcheck",
+      "toNode": "librarian-ddraft",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-7e2c347a1588e995",
+      "fromNode": "librarian-ddraft",
+      "toNode": "librarian-d3",
+      "label": "[usable returned draft, required fields/provenance valid and sensitivity finding recorded]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-dd2ecbce7998b5e4",
+      "fromNode": "librarian-ddraft",
+      "toNode": "librarian-draftfault",
+      "label": "[transport refusal, invalid schema/provenance or partial/queued/failed draft] 6b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-a5d88c59c0d112fc",
+      "fromNode": "librarian-ddraft",
+      "toNode": "librarian-xe_at_6b561aa06e",
+      "label": "[critical integrity or authority-boundary evidence in draft] 6c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-7d583f39c2f37ca1",
+      "fromNode": "librarian-dwrite",
+      "toNode": "librarian-findcheck",
+      "label": "[confirmed committed, including a committed note already flagged written-but-not-findable]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-7c0282fe76937d14",
+      "fromNode": "librarian-findcheck",
+      "toNode": "librarian-d7",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-97e8ef5ed21baafa",
+      "fromNode": "librarian-dwrite",
+      "toNode": "librarian-writestate",
+      "label": "[unknown/interrupted outcome, human-edit conflict or unconfirmed/uncommitted refusal] 20c",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-bfcd3a0fa3f8fb25",
+      "fromNode": "librarian-dwrite",
+      "toNode": "librarian-xe_at_1020338efc",
+      "label": "[critical integrity or authority-boundary evidence in write] 20d",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-303cdca3ad18f2c1",
+      "fromNode": "librarian-writestate",
+      "toNode": "librarian-writeowner",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-ffcfde966fa058fe",
+      "fromNode": "librarian-writeowner",
+      "toNode": "librarian-a17",
+      "label": "[specific bounded guarded retry authorized after compatible-state reconciliation; no unresolved human edit]",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-73e769deb46d4606",
+      "fromNode": "librarian-writeowner",
+      "toNode": "librarian-xp",
+      "label": "[decline, hold or follow-on recovery/compensation needs separate scope]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-0930a97e8ade82d7",
+      "fromNode": "librarian-writeowner",
+      "toNode": "librarian-xe",
+      "label": "[unresolved integrity/scope finding requires escalation]",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-720a86af3a424df4",
+      "fromNode": "librarian-indexcheck",
+      "toNode": "librarian-dindex",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-d4c37fd901937a33",
+      "fromNode": "librarian-dindex",
+      "toNode": "librarian-dinput",
+      "label": "[required coverage/capability evidence available and acceptable under the specification]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-5e36889f61bb8cfd",
+      "fromNode": "librarian-dindex",
+      "toNode": "librarian-indexfault",
+      "label": "[required evidence unavailable, degraded beyond allowance or failed] 8e",
+      "fromSide": "left",
+      "toSide": "right",
+      "color": "1"
+    },
+    {
+      "id": "librarian-edge-8921e907d04b2b61",
+      "fromNode": "librarian-dindex",
+      "toNode": "librarian-xe_at_1020338efc",
+      "label": "[critical integrity or authority-boundary finding] 8f",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-db6637d4b6025b44",
+      "fromNode": "librarian-indexfault",
+      "toNode": "librarian-xp",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-f931915b0f318b51",
+      "fromNode": "librarian-nonsource",
+      "toNode": "librarian-a18",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-8d7e16366ff71ef5",
+      "fromNode": "librarian-dreuse",
+      "toNode": "librarian-reused",
+      "label": "[no in-scope source, lens, folder or required result obligation remains; existing evidence already settles the parent contract]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-f9fefd2b406ed239",
+      "fromNode": "librarian-dreuse",
+      "toNode": "librarian-ledger",
+      "label": "[Source/lens/folder decisions or result checks remain; no duplicate child execution]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-8cbe7d23fd07ba48",
+      "fromNode": "librarian-dsourcework",
+      "toNode": "librarian-d6",
+      "label": "[yes; actually decidable Source acceptance remains]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-b9fc2f669266d609",
+      "fromNode": "librarian-dsourcework",
+      "toNode": "librarian-a18",
+      "label": "[no Source acceptance owed; preserve any independent lens/folder/result obligations for Oracle] 18a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-e2dcecc8d07641e3",
+      "fromNode": "librarian-dsourcework",
+      "toNode": "librarian-xp_at_5b075aa469",
+      "label": "[Source acceptance not currently decidable; preserve state and required continuation] 18b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-1ce0c4333f0f5017",
+      "fromNode": "librarian-d8",
+      "toNode": "librarian-xp",
+      "label": "[remaining requirement is a legitimate pending/reserved decision, not a repair fault] 21c",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-7e78fc2d025eea75",
+      "fromNode": "librarian-a7",
+      "toNode": "librarian-applygroups",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-3556e4678c8fabc7",
+      "fromNode": "librarian-applygroups",
+      "toNode": "librarian-applicationreceipt",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-847f506734fa3e83",
+      "fromNode": "librarian-applicationreceipt",
+      "toNode": "librarian-dfolder",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-edge-7ea15595f1f8a88a",
+      "fromNode": "librarian-dinput",
+      "toNode": "librarian-nonsource",
+      "label": "[own-code/data/log purpose only; no Source-eligible requested subset] 8c",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-9ee0c50922222358",
+      "fromNode": "librarian-r1application",
+      "toNode": "librarian-a7",
+      "label": "[resolved]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-f64eeb3adefae7d8",
+      "fromNode": "librarian-r1application",
+      "toNode": "librarian-xp",
+      "label": "[declined]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-bf4a58b86ccd7f81",
+      "fromNode": "librarian-r1application",
+      "toNode": "librarian-xe",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-edge-63883a7825d91d02",
+      "fromNode": "librarian-xp_at_5b075aa469",
+      "toNode": "librarian-e3_at_5b075aa469",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-e213c6a0fe0343e8",
+      "fromNode": "librarian-xe_at_1020338efc",
+      "toNode": "librarian-e2_at_1020338efc",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-edge-44ae19db674ff482",
+      "fromNode": "librarian-xe_at_6b561aa06e",
+      "toNode": "librarian-e2_at_6b561aa06e",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "report_ingestion_corrections": {
+    "generator": "render_corrected.py",
+    "spec": "ingestion-tobe.spec.yaml",
+    "roles": {
+      "ownerreport": "Owner",
+      "delivery": "Core",
+      "s": null,
+      "a1": "Owner",
+      "dentry": "Core",
+      "a2": "Tier 0 agent",
+      "directowner": "Owner",
+      "a3": "Lead (tier 1)",
+      "a4": "Core",
+      "d1": "Core",
+      "r1": "Doctor",
+      "a5": "Lead (tier 1)",
+      "d2": "Core",
+      "r2": "Doctor",
+      "draftfault": "Lead (tier 1)",
+      "a6": "Clerk (tier 2)",
+      "d3": "Clerk (tier 2)",
+      "x1": "Lead (tier 1)",
+      "dheldroute": "Core",
+      "x2": "Tier 0 agent",
+      "x3": "Owner",
+      "exclude": "Core",
+      "folderapprove": "Lead (tier 1)",
+      "a7": "Core",
+      "dfolder": "Core",
+      "folderfault": "Lead (tier 1)",
+      "dinput": "Core",
+      "a8": "Core",
+      "a9": "Core",
+      "d4": "Core",
+      "countdiagnosis": "Clerk (tier 2)",
+      "r3": "Doctor",
+      "a10": "Core",
+      "dcapture": "Core",
+      "capturefault": "Lead (tier 1)",
+      "capturedescribe": "Clerk (tier 2)",
+      "capturestore": "Core",
+      "dapprove": "Core",
+      "approvalowner": "Owner",
+      "a11": "Lead (tier 1)",
+      "approvalrecord": "Core",
+      "startrequest": "Lead (tier 1)",
+      "dstartauthority": "Core",
+      "startowner": "Owner",
+      "startrun": "Core",
+      "enrich": "Core",
+      "d5": "Core",
+      "r4": "Doctor",
+      "partialchoice": "Lead (tier 1)",
+      "ledger": "Core",
+      "d6": "Core",
+      "x6": "Core",
+      "x7": "Owner",
+      "a16": "Lead (tier 1)",
+      "acceptrecord": "Core",
+      "a17": "Core",
+      "d7": "Core",
+      "r5": "Doctor",
+      "contentdiagnosis": "Clerk (tier 2)",
+      "a18": "Oracle",
+      "d8": "Oracle",
+      "r6": "Doctor",
+      "x8": "Clerk (tier 2)",
+      "x9": "Lead (tier 1)",
+      "a19": "Lead (tier 1)",
+      "dresultroute": "Core",
+      "a20": "Tier 0 agent",
+      "d9": "Tier 0 agent",
+      "x10": "Tier 0 agent",
+      "x11": "Lead (tier 1)",
+      "x12": "Lead (tier 1)",
+      "x13": "Oracle",
+      "dlast": "Oracle",
+      "x14": "Tier 0 agent",
+      "a21": "Lead (tier 1)",
+      "x4": "Lead (tier 1)",
+      "x5": "Tier 0 agent",
+      "dpauseroute": "Core",
+      "xp": "Lead (tier 1)",
+      "xe": "Lead (tier 1)",
+      "reuseledger": "Core",
+      "e1": null,
+      "e2": null,
+      "e3": null,
+      "reused": null,
+      "publicationdiagnosis": "Lead (tier 1)",
+      "nonsource": "Core",
+      "draftcheck": "Core",
+      "ddraft": "Core",
+      "dwrite": "Core",
+      "findcheck": "Core",
+      "writestate": "Core",
+      "writeowner": "Owner",
+      "indexcheck": "Core",
+      "dindex": "Core",
+      "indexfault": "Lead (tier 1)",
+      "dreuse": "Core",
+      "dsourcework": "Core",
+      "applygroups": "Geo-Grapher",
+      "applicationreceipt": "Core",
+      "r1application": "Doctor",
+      "xp_at_5b075aa469": "Lead (tier 1)",
+      "e3_at_5b075aa469": null,
+      "xe_at_1020338efc": "Lead (tier 1)",
+      "e2_at_1020338efc": null,
+      "xe_at_6b561aa06e": "Lead (tier 1)",
+      "e2_at_6b561aa06e": null
+    },
+    "managed_nodes": [
+      "librarian-a1",
+      "librarian-a10",
+      "librarian-a11",
+      "librarian-a16",
+      "librarian-a17",
+      "librarian-a18",
+      "librarian-a19",
+      "librarian-a2",
+      "librarian-a20",
+      "librarian-a21",
+      "librarian-a3",
+      "librarian-a4",
+      "librarian-a5",
+      "librarian-a6",
+      "librarian-a7",
+      "librarian-a8",
+      "librarian-a9",
+      "librarian-acceptrecord",
+      "librarian-applicationreceipt",
+      "librarian-applygroups",
+      "librarian-approvalowner",
+      "librarian-approvalrecord",
+      "librarian-capturedescribe",
+      "librarian-capturefault",
+      "librarian-capturestore",
+      "librarian-contentdiagnosis",
+      "librarian-countdiagnosis",
+      "librarian-d1",
+      "librarian-d2",
+      "librarian-d3",
+      "librarian-d4",
+      "librarian-d5",
+      "librarian-d6",
+      "librarian-d7",
+      "librarian-d8",
+      "librarian-d9",
+      "librarian-dapprove",
+      "librarian-dcapture",
+      "librarian-ddraft",
+      "librarian-delivery",
+      "librarian-dentry",
+      "librarian-dfolder",
+      "librarian-dheldroute",
+      "librarian-dindex",
+      "librarian-dinput",
+      "librarian-directowner",
+      "librarian-dlast",
+      "librarian-dpauseroute",
+      "librarian-draftcheck",
+      "librarian-draftfault",
+      "librarian-dresultroute",
+      "librarian-dreuse",
+      "librarian-dsourcework",
+      "librarian-dstartauthority",
+      "librarian-dwrite",
+      "librarian-e1",
+      "librarian-e2",
+      "librarian-e2_at_1020338efc",
+      "librarian-e2_at_6b561aa06e",
+      "librarian-e3",
+      "librarian-e3_at_5b075aa469",
+      "librarian-enrich",
+      "librarian-exclude",
+      "librarian-findcheck",
+      "librarian-folderapprove",
+      "librarian-folderfault",
+      "librarian-indexcheck",
+      "librarian-indexfault",
+      "librarian-lane-Clerk-tier-2-",
+      "librarian-lane-Core",
+      "librarian-lane-Doctor",
+      "librarian-lane-Geo-Grapher",
+      "librarian-lane-Lead-tier-1-",
+      "librarian-lane-Model-host",
+      "librarian-lane-Oracle",
+      "librarian-lane-Outcomes",
+      "librarian-lane-Owner",
+      "librarian-lane-Scribe-tier-3-",
+      "librarian-lane-Tier-0-agent",
+      "librarian-ledger",
+      "librarian-nonsource",
+      "librarian-ownerreport",
+      "librarian-partialchoice",
+      "librarian-publicationdiagnosis",
+      "librarian-r1",
+      "librarian-r1application",
+      "librarian-r2",
+      "librarian-r3",
+      "librarian-r4",
+      "librarian-r5",
+      "librarian-r6",
+      "librarian-reused",
+      "librarian-reuseledger",
+      "librarian-s",
+      "librarian-startowner",
+      "librarian-startrequest",
+      "librarian-startrun",
+      "librarian-title",
+      "librarian-writeowner",
+      "librarian-writestate",
+      "librarian-x1",
+      "librarian-x10",
+      "librarian-x11",
+      "librarian-x12",
+      "librarian-x13",
+      "librarian-x14",
+      "librarian-x2",
+      "librarian-x3",
+      "librarian-x4",
+      "librarian-x5",
+      "librarian-x6",
+      "librarian-x7",
+      "librarian-x8",
+      "librarian-x9",
+      "librarian-xe",
+      "librarian-xe_at_1020338efc",
+      "librarian-xe_at_6b561aa06e",
+      "librarian-xp",
+      "librarian-xp_at_5b075aa469"
+    ],
+    "managed_edges": [
+      "librarian-edge-d6180c6ec7200079",
+      "librarian-edge-8fb30393edb2f7e9",
+      "librarian-edge-2b5746d2bf25a621",
+      "librarian-edge-dbe5641d09007da8",
+      "librarian-edge-b3e89260677f5e08",
+      "librarian-edge-95420e5041207b89",
+      "librarian-edge-dd692af557958223",
+      "librarian-edge-4a21d8cbbbd43885",
+      "librarian-edge-68b167fffcf2398e",
+      "librarian-edge-abee8a93a8057bfe",
+      "librarian-edge-45e32c9031f3078d",
+      "librarian-edge-8819827026101966",
+      "librarian-edge-04f256cf30d1e28b",
+      "librarian-edge-cb12d3717d35c250",
+      "librarian-edge-a82b5604c4146554",
+      "librarian-edge-b58b00ff6f842d33",
+      "librarian-edge-736fd566cc933fe6",
+      "librarian-edge-8b4a6757d77dd89f",
+      "librarian-edge-fc0066550b208e0e",
+      "librarian-edge-c74b169fc2badac5",
+      "librarian-edge-4b75d228034b2ee0",
+      "librarian-edge-36d5ada64296de6e",
+      "librarian-edge-803d34e8140199db",
+      "librarian-edge-5c58040bb697865c",
+      "librarian-edge-37be2b52cba07f83",
+      "librarian-edge-29d6cfd6961b7f60",
+      "librarian-edge-af1af52a252af059",
+      "librarian-edge-e0e6743f048f9c6c",
+      "librarian-edge-f8d0c4a6eeb1ca8e",
+      "librarian-edge-43749b1b5921bbdf",
+      "librarian-edge-8ba90d76c7091b29",
+      "librarian-edge-ac56aabfad432b4c",
+      "librarian-edge-d40e743d0de7d643",
+      "librarian-edge-378af5937e4355e4",
+      "librarian-edge-1d67ce2b02dabcad",
+      "librarian-edge-fc721ab33cd6b0e3",
+      "librarian-edge-ee71125d72a17bf8",
+      "librarian-edge-de6c762ba7d48b8c",
+      "librarian-edge-4003f430f8f827f3",
+      "librarian-edge-72358353ac3364f8",
+      "librarian-edge-ca421f6dec8e74f7",
+      "librarian-edge-e0e00b7c9597e43d",
+      "librarian-edge-4f8bcf385557a952",
+      "librarian-edge-d62e65692e955f0d",
+      "librarian-edge-67cbac245b416f8d",
+      "librarian-edge-78db0eaf8c5ec379",
+      "librarian-edge-049cab68be9fefa3",
+      "librarian-edge-34c62a7a1e161e79",
+      "librarian-edge-fca519026ad5c16b",
+      "librarian-edge-69155e6ced0cd047",
+      "librarian-edge-bced070f6967798d",
+      "librarian-edge-25d33ab9ceb26c9d",
+      "librarian-edge-921ae5386c140f21",
+      "librarian-edge-cba2e51f1be2ea88",
+      "librarian-edge-08ac943810531a13",
+      "librarian-edge-e41e73667e31abc7",
+      "librarian-edge-5b3b684f5f6741bf",
+      "librarian-edge-edf5db1fbc865005",
+      "librarian-edge-eec0a6f28d2ea052",
+      "librarian-edge-15e84980dd5439a3",
+      "librarian-edge-60a0ce9f0461503c",
+      "librarian-edge-d6c929ff36d105b8",
+      "librarian-edge-df52df5d63afdaa7",
+      "librarian-edge-cec7fb0c52b2e803",
+      "librarian-edge-7a4beafc5c7c1d66",
+      "librarian-edge-1fcfd988dbff573a",
+      "librarian-edge-4dff861de04ca317",
+      "librarian-edge-517d5f69ea65e714",
+      "librarian-edge-9f160ad0732c66c8",
+      "librarian-edge-e6ccc55d4d603b86",
+      "librarian-edge-db4ff7a09063706c",
+      "librarian-edge-c4225218f4b42b28",
+      "librarian-edge-fd36304a530bb13d",
+      "librarian-edge-e09a696daa1ecf92",
+      "librarian-edge-57a704e61533b48f",
+      "librarian-edge-7dd35728c2433c27",
+      "librarian-edge-3d24fcad1e481d0a",
+      "librarian-edge-029768368dfbb0c8",
+      "librarian-edge-ecbc779e05726ef3",
+      "librarian-edge-7c58e02e26efdc9a",
+      "librarian-edge-5928d7d267a65da3",
+      "librarian-edge-d14649b3e0fd82d6",
+      "librarian-edge-3148e290e08f3c7d",
+      "librarian-edge-763a1c977510d55a",
+      "librarian-edge-6b2be85d452a590c",
+      "librarian-edge-39ee29d2f9606ac8",
+      "librarian-edge-7547c73d1dccfc04",
+      "librarian-edge-891e10848b00790c",
+      "librarian-edge-306fa571662f023f",
+      "librarian-edge-f458729a5991de8c",
+      "librarian-edge-4a04089ddeeff10f",
+      "librarian-edge-ad81f47731886593",
+      "librarian-edge-cb52d66e0ee6576a",
+      "librarian-edge-8cc259b1f3d4444c",
+      "librarian-edge-0ef8d3361a76ce62",
+      "librarian-edge-1c7a0f73558a0f5b",
+      "librarian-edge-568a193d6d241ef0",
+      "librarian-edge-7e46197bccad8abe",
+      "librarian-edge-d79654127460f349",
+      "librarian-edge-3038a24d908e8e64",
+      "librarian-edge-e56249fd0c4b3598",
+      "librarian-edge-1ca4aef96a74f746",
+      "librarian-edge-31c839660f88a975",
+      "librarian-edge-c33adf3b8bd0a64c",
+      "librarian-edge-49d36d4ea9f473cc",
+      "librarian-edge-ec937217a7f7c28d",
+      "librarian-edge-32aa4776d3d651fa",
+      "librarian-edge-ec5b85aa328fbf70",
+      "librarian-edge-44821d105421fee6",
+      "librarian-edge-85b7e4a930e71af2",
+      "librarian-edge-e8f46ff007dde2e8",
+      "librarian-edge-dc59ef507379c574",
+      "librarian-edge-c4778e016039d6f8",
+      "librarian-edge-014664c3386ae97b",
+      "librarian-edge-bed9fededfb52819",
+      "librarian-edge-9eee076d79c57536",
+      "librarian-edge-c0f7227dc13aae26",
+      "librarian-edge-d8bec601eb3f11b3",
+      "librarian-edge-82f37b12068ae4fd",
+      "librarian-edge-8c07eb51eabf1825",
+      "librarian-edge-25fc65e86f49b410",
+      "librarian-edge-c6895e1065557688",
+      "librarian-edge-db9201000344f6e8",
+      "librarian-edge-77e673e87d5ee859",
+      "librarian-edge-718e41e76a8a082d",
+      "librarian-edge-c57c76151dc48556",
+      "librarian-edge-68e2189f8f00dc84",
+      "librarian-edge-1c41e62409096c67",
+      "librarian-edge-61a7328369b0c00e",
+      "librarian-edge-7d7f78c93d0a70d1",
+      "librarian-edge-7e2c347a1588e995",
+      "librarian-edge-dd2ecbce7998b5e4",
+      "librarian-edge-a5d88c59c0d112fc",
+      "librarian-edge-7d583f39c2f37ca1",
+      "librarian-edge-7c0282fe76937d14",
+      "librarian-edge-97e8ef5ed21baafa",
+      "librarian-edge-bfcd3a0fa3f8fb25",
+      "librarian-edge-303cdca3ad18f2c1",
+      "librarian-edge-ffcfde966fa058fe",
+      "librarian-edge-73e769deb46d4606",
+      "librarian-edge-0930a97e8ade82d7",
+      "librarian-edge-720a86af3a424df4",
+      "librarian-edge-d4c37fd901937a33",
+      "librarian-edge-5e36889f61bb8cfd",
+      "librarian-edge-8921e907d04b2b61",
+      "librarian-edge-db6637d4b6025b44",
+      "librarian-edge-f931915b0f318b51",
+      "librarian-edge-8d7e16366ff71ef5",
+      "librarian-edge-f9fefd2b406ed239",
+      "librarian-edge-8cbe7d23fd07ba48",
+      "librarian-edge-b9fc2f669266d609",
+      "librarian-edge-e2dcecc8d07641e3",
+      "librarian-edge-1ce0c4333f0f5017",
+      "librarian-edge-7e78fc2d025eea75",
+      "librarian-edge-3556e4678c8fabc7",
+      "librarian-edge-847f506734fa3e83",
+      "librarian-edge-7ea15595f1f8a88a",
+      "librarian-edge-9ee0c50922222358",
+      "librarian-edge-f64eeb3adefae7d8",
+      "librarian-edge-bf4a58b86ccd7f81",
+      "librarian-edge-63883a7825d91d02",
+      "librarian-edge-e213c6a0fe0343e8",
+      "librarian-edge-44ae19db674ff482"
+    ],
+    "initial_spec_sha256": "9a27d04cbd24c6ecc2952cbcd7c16d424b2539f815aa0bf0361c158b3d0ddc39"
+  }
+}

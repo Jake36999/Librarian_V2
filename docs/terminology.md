@@ -13,7 +13,7 @@ delivery-status authority.
 | Role slot | A semantic assignment: `lead`, `scribe`, `clerk`, `research_helper`, `ocr`, `tts`, `stt`, or `embeddings`. | A legacy positional tier. |
 | Legacy position | The existing three-picker compatibility projection: Lead, Scribe, Clerk. | The canonical vault-scoped role-to-route assignment. |
 | Assign (a model to a role) | Choose the route a role uses. Always revisable; qualification is evidence for that route at that time. **Say "assign", never "bind"** in prose, UI and agent instructions (owner, 2026-11-20): "bind" was read as permanent. The stored record is still `RoleRouteBinding` in code. | A permanent commitment, or a rule for later sessions. |
-| Agent tier | 0 = an outside agent (Claude Code, Codex, Antigravity…); 1 = Lead; 2 = Scribe, research helper; 3 = Clerk. Who does the work. See [policy/agent-roles-and-authority.md](policy/agent-roles-and-authority.md). | A registry tier (`consult`/`contribute`/`curate`) or a trust tier (`gold`/`silver`/`bronze`). |
+| Agent tier | 0 = Overseer, an outside agent (Codex, Claude, Antigravity…) working on the owner's behalf, including using Librarian for another project; 1 = Lead; 2 = Clerk; 3 = Scribe. Clerks proofread, check claims, synthesise and direct Scribes; Scribes perform many small reading and writing tasks. See [policy/agent-roles-and-authority.md](policy/agent-roles-and-authority.md). | A registry tier (`consult`/`contribute`/`curate`), trust tier (`gold`/`silver`/`bronze`), or legacy numeric configuration field. |
 | Route | One host plus exact provider model, protocol adapter, expectation record, and qualification evidence. | A provider family or catalogue tile. |
 
 ## Model evidence and controls
@@ -75,7 +75,7 @@ Adopted 21 November 2026 ([diagram-workflows](proposals/diagram-workflows.md), s
 | Term | Meaning | Must not be confused with |
 | --- | --- | --- |
 | Use case | An actor's goal and everything that can happen in pursuing it, written in the nine-field template. | A diagram, or a process. |
-| Spec (diagram spec) | The `.spec.yaml` describing one use case's behaviour: lanes, typed nodes, guarded edges, outcomes. | A process's definition. A process declares `implements: <spec id>` to link the two. |
+| Spec (diagram spec) | The behaviour of one use case: lanes, typed nodes, guarded edges and outcomes, represented as `.spec.yaml` in the examples. Specifications belong within the Core; report copies and rendered views are authoring or review artifacts. | A process's definition. Linking the two through `implements: <spec id>` is proposed, not current runtime enforcement. |
 | Main success scenario | The numbered happy path: one actor per step, "Actor + verb + object". | A test, or a run. |
 | Extension | A path leaving the main success scenario at a numbered step (`13b`), ending with "rejoin at N" or "the use case ends". | A refusal code. An extension id is the *place*; a refusal code is the *shape*. |
 | Outcome (of a use case) | `success`, `resolved`, `learned`; neutral `reused` and `used once`; or `paused`, `declined`, `escalated`. | An execution outcome, which describes one attempt. |
@@ -90,7 +90,7 @@ Adopted 21 November 2026 ([diagram-workflows](proposals/diagram-workflows.md), s
 | Term | Meaning | Must not be confused with |
 | --- | --- | --- |
 | Owner | The person who runs the library; the only actor whose decisions are reserved. | Tier 0. |
-| Worker | The role doing a task: the Lead, a helper or the Clerk. | The oracle, which judges the task. |
+| Worker | The role doing a task: a Lead, Clerk, Scribe or assigned helper. | The oracle, which judges the task. |
 | Oracle | The role that judges a run's output against its specification. It never executes or repairs. It runs Tier A checks before any Tier B review. | The worker, the doctor, or a Tier B audit on its own. |
 | Doctor | The role that repairs a failure at a mapped extension point, by a catalogued remedy within its blast radius, then hands back to the oracle. | The oracle, or tier 0. |
 | Verdict | The oracle's judgement: a claim with its evidence. It can be rebutted, and is itself re-checked. | A fact, or an instruction to the worker. |
@@ -100,7 +100,8 @@ Adopted 21 November 2026 ([diagram-workflows](proposals/diagram-workflows.md), s
 | Remedy catalogue | The doctor's accepted remedies and their case history. | The repertoire, or the model catalogue. |
 | Blast radius | What a change or a remedy can touch: the union of its actions' declared effects, followed through dependants, lineage and bridges. | A guess. |
 | Escalation | A failure handed back to tier 0 unresolved; a counted failure of the use case. | A pause for the Owner's decision. |
-| Fault register | Boolean system faults recorded before and after a remedy. Proposed set: `F_ESC`, `F_ATTEST`, `F_BLAST`, `F_SYMPTOM`; whether it stays at these four is an open decision. | A score, or a confidence. |
+| Fault register | A ticket service for failures and misalignments, carrying evidence, existing failure/extension identifiers, tiered flags, the responsible actor, repair history and re-checks. Existing diagnostic labels may be attached; a fixed four-bit mask does not define the service. | A score, confidence, agent tier or permission grant. |
+| Fault ticket | One tracked failure or misalignment, assigned according to the existing routing and authority rules until its repair is checked or its required decision is recorded. | A new authority to repair, or proof of resolution from a worker's assertion alone. |
 
 ## Delivery status
 

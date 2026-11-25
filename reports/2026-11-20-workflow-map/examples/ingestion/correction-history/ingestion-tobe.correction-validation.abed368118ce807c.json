@@ -1,0 +1,1750 @@
+{
+  "status": "report model validation; not execution, runtime rollout or new Owner acceptance",
+  "spec": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.spec.yaml",
+  "spec_sha256": "3c25b4f407d3e8fcb3a8757b79b5b7be55599fe9f62236210edea340e20a49c6",
+  "canvas": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas",
+  "base_revision": "88aad5990bd359068836234b1eaba559e7b94c5333b7103538ad2afca1e0ca81",
+  "proposal_hash": "8dea0199335877ff77da73c28c243fceca6ab8a1b12966a53b4d49c1fbd2fa8f",
+  "scenarios": 69,
+  "structural_problems": [],
+  "cross_view_reference_flags": [],
+  "changes": {
+    "migrated_ids": {},
+    "retired_nodes_removed": [
+      "librarian-wholeindex"
+    ],
+    "retired_anchors_retained_for_owner_edges": [],
+    "owner_nodes_preserved": 0,
+    "owner_edges_preserved": 0,
+    "geometry_changes": [
+      {
+        "node": "librarian-a2",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 460,
+        "new_x": 460,
+        "old_y": 740,
+        "new_y": 940
+      },
+      {
+        "node": "librarian-a3",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 940,
+        "new_y": 1140
+      },
+      {
+        "node": "librarian-a4",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 1140,
+        "new_y": 1340
+      },
+      {
+        "node": "librarian-d1",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 1340,
+        "new_y": 1540
+      },
+      {
+        "node": "librarian-a5",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 1540,
+        "new_y": 1940
+      },
+      {
+        "node": "librarian-r1",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1720,
+        "new_x": 1720,
+        "old_y": 3340,
+        "new_y": 1740
+      },
+      {
+        "node": "librarian-d2",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 1740,
+        "new_y": 2140
+      },
+      {
+        "node": "librarian-xp",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 10740,
+        "new_y": 17740
+      },
+      {
+        "node": "librarian-xe",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 9940,
+        "new_y": 15340
+      },
+      {
+        "node": "librarian-a6",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2140,
+        "new_x": 2140,
+        "old_y": 1940,
+        "new_y": 2540
+      },
+      {
+        "node": "librarian-r2",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1720,
+        "new_x": 1720,
+        "old_y": 1940,
+        "new_y": 2340
+      },
+      {
+        "node": "librarian-e3",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 4240,
+        "new_x": 4240,
+        "old_y": 10940,
+        "new_y": 17940
+      },
+      {
+        "node": "librarian-e2",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 4240,
+        "new_x": 4240,
+        "old_y": 10140,
+        "new_y": 15540
+      },
+      {
+        "node": "librarian-draftcheck",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 2140,
+        "new_y": 2740
+      },
+      {
+        "node": "librarian-ddraft",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 2340,
+        "new_y": 2940
+      },
+      {
+        "node": "librarian-d3",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2140,
+        "new_x": 2140,
+        "old_y": 2540,
+        "new_y": 3340
+      },
+      {
+        "node": "librarian-draftfault",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 2540,
+        "new_y": 3140
+      },
+      {
+        "node": "librarian-folderapprove",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 2740,
+        "new_y": 4540
+      },
+      {
+        "node": "librarian-x1",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 2940,
+        "new_y": 3540
+      },
+      {
+        "node": "librarian-a7",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 2940,
+        "new_y": 4740
+      },
+      {
+        "node": "librarian-dheldroute",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 4540,
+        "new_y": 3740
+      },
+      {
+        "node": "librarian-x2",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 460,
+        "new_x": 460,
+        "old_y": 4740,
+        "new_y": 3940
+      },
+      {
+        "node": "librarian-x3",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 40,
+        "new_x": 40,
+        "old_y": 4940,
+        "new_y": 4140
+      },
+      {
+        "node": "librarian-exclude",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 5140,
+        "new_y": 4340
+      },
+      {
+        "node": "librarian-dfolder",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 3140,
+        "new_y": 5340
+      },
+      {
+        "node": "librarian-indexcheck",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 5540,
+        "new_y": 5740
+      },
+      {
+        "node": "librarian-folderfault",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 3340,
+        "new_y": 5540
+      },
+      {
+        "node": "librarian-dindex",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 7140,
+        "new_y": 5940
+      },
+      {
+        "node": "librarian-dinput",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 3340,
+        "new_y": 6340
+      },
+      {
+        "node": "librarian-indexfault",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 7340,
+        "new_y": 6140
+      },
+      {
+        "node": "librarian-a8",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 3540,
+        "new_y": 6740
+      },
+      {
+        "node": "librarian-reuseledger",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 8540,
+        "new_y": 10540
+      },
+      {
+        "node": "librarian-nonsource",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 8340,
+        "new_y": 6540
+      },
+      {
+        "node": "librarian-a9",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 3740,
+        "new_y": 6940
+      },
+      {
+        "node": "librarian-dreuse",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 9140,
+        "new_y": 10740
+      },
+      {
+        "node": "librarian-a18",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 880,
+        "new_x": 880,
+        "old_y": 8340,
+        "new_y": 14540
+      },
+      {
+        "node": "librarian-d4",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 3940,
+        "new_y": 7140
+      },
+      {
+        "node": "librarian-reused",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 4240,
+        "new_x": 4240,
+        "old_y": 9340,
+        "new_y": 10940
+      },
+      {
+        "node": "librarian-ledger",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 6540,
+        "new_y": 11740
+      },
+      {
+        "node": "librarian-d8",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 880,
+        "new_x": 880,
+        "old_y": 8540,
+        "new_y": 14740
+      },
+      {
+        "node": "librarian-a10",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 4140,
+        "new_y": 7740
+      },
+      {
+        "node": "librarian-countdiagnosis",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2140,
+        "new_x": 2140,
+        "old_y": 4140,
+        "new_y": 7340
+      },
+      {
+        "node": "librarian-dsourcework",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 6740,
+        "new_y": 11940
+      },
+      {
+        "node": "librarian-a19",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 8740,
+        "new_y": 15740
+      },
+      {
+        "node": "librarian-r6",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1720,
+        "new_x": 1720,
+        "old_y": 8740,
+        "new_y": 14940
+      },
+      {
+        "node": "librarian-x8",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2140,
+        "new_x": 2140,
+        "old_y": 8740,
+        "new_y": 14940
+      },
+      {
+        "node": "librarian-dcapture",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 4340,
+        "new_y": 7940
+      },
+      {
+        "node": "librarian-r3",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1720,
+        "new_x": 1720,
+        "old_y": 4340,
+        "new_y": 7540
+      },
+      {
+        "node": "librarian-d6",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 6940,
+        "new_y": 12140
+      },
+      {
+        "node": "librarian-dresultroute",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 8940,
+        "new_y": 15940
+      },
+      {
+        "node": "librarian-x9",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 8940,
+        "new_y": 15140
+      },
+      {
+        "node": "librarian-capturedescribe",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2140,
+        "new_x": 2140,
+        "old_y": 4540,
+        "new_y": 8340
+      },
+      {
+        "node": "librarian-capturefault",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 4540,
+        "new_y": 8140
+      },
+      {
+        "node": "librarian-a16",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 7140,
+        "new_y": 12740
+      },
+      {
+        "node": "librarian-x6",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 9340,
+        "new_y": 12340
+      },
+      {
+        "node": "librarian-a20",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 460,
+        "new_x": 460,
+        "old_y": 9140,
+        "new_y": 16340
+      },
+      {
+        "node": "librarian-ownerreport",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 40,
+        "new_x": 40,
+        "old_y": 9140,
+        "new_y": 16140
+      },
+      {
+        "node": "librarian-capturestore",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 4740,
+        "new_y": 8540
+      },
+      {
+        "node": "librarian-acceptrecord",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 7340,
+        "new_y": 12940
+      },
+      {
+        "node": "librarian-x7",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 40,
+        "new_x": 40,
+        "old_y": 9540,
+        "new_y": 12540
+      },
+      {
+        "node": "librarian-d9",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 460,
+        "new_x": 460,
+        "old_y": 9340,
+        "new_y": 16540
+      },
+      {
+        "node": "librarian-delivery",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 9740,
+        "new_y": 18340
+      },
+      {
+        "node": "librarian-dapprove",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 4940,
+        "new_y": 8740
+      },
+      {
+        "node": "librarian-a17",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 7540,
+        "new_y": 13140
+      },
+      {
+        "node": "librarian-a21",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 9540,
+        "new_y": 18140
+      },
+      {
+        "node": "librarian-x10",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 460,
+        "new_x": 460,
+        "old_y": 9540,
+        "new_y": 16740
+      },
+      {
+        "node": "librarian-e1",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 4240,
+        "new_x": 4240,
+        "old_y": 9940,
+        "new_y": 18540
+      },
+      {
+        "node": "librarian-a11",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 5140,
+        "new_y": 9140
+      },
+      {
+        "node": "librarian-approvalowner",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 40,
+        "new_x": 40,
+        "old_y": 5140,
+        "new_y": 8940
+      },
+      {
+        "node": "librarian-dwrite",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 7740,
+        "new_y": 13340
+      },
+      {
+        "node": "librarian-x11",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 9740,
+        "new_y": 16940
+      },
+      {
+        "node": "librarian-approvalrecord",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 5340,
+        "new_y": 9340
+      },
+      {
+        "node": "librarian-findcheck",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 7940,
+        "new_y": 13940
+      },
+      {
+        "node": "librarian-writestate",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 9540,
+        "new_y": 13540
+      },
+      {
+        "node": "librarian-x12",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 10140,
+        "new_y": 17140
+      },
+      {
+        "node": "librarian-startrequest",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 5540,
+        "new_y": 9540
+      },
+      {
+        "node": "librarian-d7",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 8140,
+        "new_y": 14140
+      },
+      {
+        "node": "librarian-writeowner",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 40,
+        "new_x": 40,
+        "old_y": 9740,
+        "new_y": 13740
+      },
+      {
+        "node": "librarian-x13",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 880,
+        "new_x": 880,
+        "old_y": 10340,
+        "new_y": 17340
+      },
+      {
+        "node": "librarian-dstartauthority",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 5740,
+        "new_y": 9740
+      },
+      {
+        "node": "librarian-r5",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1720,
+        "new_x": 1720,
+        "old_y": 8340,
+        "new_y": 14340
+      },
+      {
+        "node": "librarian-contentdiagnosis",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2140,
+        "new_x": 2140,
+        "old_y": 8340,
+        "new_y": 14340
+      },
+      {
+        "node": "librarian-dlast",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 880,
+        "new_x": 880,
+        "old_y": 10540,
+        "new_y": 17540
+      },
+      {
+        "node": "librarian-startrun",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 5940,
+        "new_y": 10140
+      },
+      {
+        "node": "librarian-startowner",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 40,
+        "new_x": 40,
+        "old_y": 5940,
+        "new_y": 9940
+      },
+      {
+        "node": "librarian-x14",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 460,
+        "new_x": 460,
+        "old_y": 10740,
+        "new_y": 17740
+      },
+      {
+        "node": "librarian-enrich",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 6140,
+        "new_y": 10340
+      },
+      {
+        "node": "librarian-d5",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 6340,
+        "new_y": 11340
+      },
+      {
+        "node": "librarian-partialchoice",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 6340,
+        "new_y": 10540
+      },
+      {
+        "node": "librarian-x4",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 6540,
+        "new_y": 10740
+      },
+      {
+        "node": "librarian-r4",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1720,
+        "new_x": 1720,
+        "old_y": 6540,
+        "new_y": 11540
+      },
+      {
+        "node": "librarian-publicationdiagnosis",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 1300,
+        "new_x": 1300,
+        "old_y": 6740,
+        "new_y": 11540
+      },
+      {
+        "node": "librarian-dpauseroute",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 2980,
+        "new_x": 2980,
+        "old_y": 8740,
+        "new_y": 10940
+      },
+      {
+        "node": "librarian-x5",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 460,
+        "new_x": 460,
+        "old_y": 8940,
+        "new_y": 11140
+      },
+      {
+        "node": "librarian-applicationreceipt",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 5140
+      },
+      {
+        "node": "librarian-applygroups",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 3820,
+        "y": 4940
+      },
+      {
+        "node": "librarian-r1application",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 1720,
+        "y": 5540
+      }
+    ],
+    "generated_reflow": true,
+    "initial_generated_reflow": false,
+    "initial_semantic_checksum_verified": null,
+    "reflow_validation": {
+      "mode": "validated_generation",
+      "revision": "916cc978976163cc9d578aff2642341a7a6a68ed621d350a3a05011e029a9c7e",
+      "receipt": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.correction-validation.json"
+    },
+    "group_changes": [
+      {
+        "group": "librarian-lane-Owner",
+        "reason": "background extent for new cards",
+        "old_height": 11130,
+        "new_height": 18730
+      },
+      {
+        "group": "librarian-lane-Tier-0-agent",
+        "reason": "background extent for new cards",
+        "old_height": 11130,
+        "new_height": 18730
+      },
+      {
+        "group": "librarian-lane-Oracle",
+        "reason": "background extent for new cards",
+        "old_height": 11130,
+        "new_height": 18730
+      },
+      {
+        "group": "librarian-lane-Lead-tier-1-",
+        "reason": "background extent for new cards",
+        "old_height": 11130,
+        "new_height": 18730
+      },
+      {
+        "group": "librarian-lane-Doctor",
+        "reason": "background extent for new cards",
+        "old_height": 11130,
+        "new_height": 18730
+      },
+      {
+        "group": "librarian-lane-Clerk-tier-2-",
+        "reason": "background extent for new cards",
+        "old_height": 11130,
+        "new_height": 18730
+      },
+      {
+        "group": "librarian-lane-Scribe-tier-3-",
+        "reason": "background extent for new cards",
+        "old_height": 11130,
+        "new_height": 18730
+      },
+      {
+        "group": "librarian-lane-Core",
+        "reason": "background extent for new cards",
+        "old_height": 11130,
+        "new_height": 18730
+      },
+      {
+        "group": "librarian-lane-Model-host",
+        "reason": "background extent for new cards",
+        "old_height": 11130,
+        "new_height": 18730
+      },
+      {
+        "group": "librarian-lane-Geo-Grapher",
+        "reason": "background extent for new cards",
+        "old_height": 11130,
+        "new_height": 18730
+      },
+      {
+        "group": "librarian-lane-Outcomes",
+        "reason": "background extent for new cards",
+        "old_height": 11130,
+        "new_height": 18730
+      }
+    ],
+    "preexisting_overlaps_preserved": []
+  },
+  "write": "service.preview(profile=None, adopt=True), final provenance-aware proposal, guarded service.commit",
+  "accepted_renderer_sha256": "b3253960a08ccfdc05d93719c1b841393ec6024a409e4a2638510a1f6b27a955",
+  "commit": {
+    "written": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas",
+    "revision": "8dea0199335877ff77da73c28c243fceca6ab8a1b12966a53b4d49c1fbd2fa8f",
+    "backup": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas.20261123T111145659903.bak",
+    "changes": {
+      "migrated_ids": {},
+      "retired_nodes_removed": [
+        "librarian-wholeindex"
+      ],
+      "retired_anchors_retained_for_owner_edges": [],
+      "owner_nodes_preserved": 0,
+      "owner_edges_preserved": 0,
+      "geometry_changes": [
+        {
+          "node": "librarian-a2",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 460,
+          "new_x": 460,
+          "old_y": 740,
+          "new_y": 940
+        },
+        {
+          "node": "librarian-a3",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 940,
+          "new_y": 1140
+        },
+        {
+          "node": "librarian-a4",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 1140,
+          "new_y": 1340
+        },
+        {
+          "node": "librarian-d1",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 1340,
+          "new_y": 1540
+        },
+        {
+          "node": "librarian-a5",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 1540,
+          "new_y": 1940
+        },
+        {
+          "node": "librarian-r1",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1720,
+          "new_x": 1720,
+          "old_y": 3340,
+          "new_y": 1740
+        },
+        {
+          "node": "librarian-d2",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 1740,
+          "new_y": 2140
+        },
+        {
+          "node": "librarian-xp",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 10740,
+          "new_y": 17740
+        },
+        {
+          "node": "librarian-xe",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 9940,
+          "new_y": 15340
+        },
+        {
+          "node": "librarian-a6",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2140,
+          "new_x": 2140,
+          "old_y": 1940,
+          "new_y": 2540
+        },
+        {
+          "node": "librarian-r2",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1720,
+          "new_x": 1720,
+          "old_y": 1940,
+          "new_y": 2340
+        },
+        {
+          "node": "librarian-e3",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 4240,
+          "new_x": 4240,
+          "old_y": 10940,
+          "new_y": 17940
+        },
+        {
+          "node": "librarian-e2",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 4240,
+          "new_x": 4240,
+          "old_y": 10140,
+          "new_y": 15540
+        },
+        {
+          "node": "librarian-draftcheck",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 2140,
+          "new_y": 2740
+        },
+        {
+          "node": "librarian-ddraft",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 2340,
+          "new_y": 2940
+        },
+        {
+          "node": "librarian-d3",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2140,
+          "new_x": 2140,
+          "old_y": 2540,
+          "new_y": 3340
+        },
+        {
+          "node": "librarian-draftfault",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 2540,
+          "new_y": 3140
+        },
+        {
+          "node": "librarian-folderapprove",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 2740,
+          "new_y": 4540
+        },
+        {
+          "node": "librarian-x1",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 2940,
+          "new_y": 3540
+        },
+        {
+          "node": "librarian-a7",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 2940,
+          "new_y": 4740
+        },
+        {
+          "node": "librarian-dheldroute",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 4540,
+          "new_y": 3740
+        },
+        {
+          "node": "librarian-x2",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 460,
+          "new_x": 460,
+          "old_y": 4740,
+          "new_y": 3940
+        },
+        {
+          "node": "librarian-x3",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 40,
+          "new_x": 40,
+          "old_y": 4940,
+          "new_y": 4140
+        },
+        {
+          "node": "librarian-exclude",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 5140,
+          "new_y": 4340
+        },
+        {
+          "node": "librarian-dfolder",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 3140,
+          "new_y": 5340
+        },
+        {
+          "node": "librarian-indexcheck",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 5540,
+          "new_y": 5740
+        },
+        {
+          "node": "librarian-folderfault",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 3340,
+          "new_y": 5540
+        },
+        {
+          "node": "librarian-dindex",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 7140,
+          "new_y": 5940
+        },
+        {
+          "node": "librarian-dinput",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 3340,
+          "new_y": 6340
+        },
+        {
+          "node": "librarian-indexfault",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 7340,
+          "new_y": 6140
+        },
+        {
+          "node": "librarian-a8",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 3540,
+          "new_y": 6740
+        },
+        {
+          "node": "librarian-reuseledger",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 8540,
+          "new_y": 10540
+        },
+        {
+          "node": "librarian-nonsource",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 8340,
+          "new_y": 6540
+        },
+        {
+          "node": "librarian-a9",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 3740,
+          "new_y": 6940
+        },
+        {
+          "node": "librarian-dreuse",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 9140,
+          "new_y": 10740
+        },
+        {
+          "node": "librarian-a18",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 880,
+          "new_x": 880,
+          "old_y": 8340,
+          "new_y": 14540
+        },
+        {
+          "node": "librarian-d4",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 3940,
+          "new_y": 7140
+        },
+        {
+          "node": "librarian-reused",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 4240,
+          "new_x": 4240,
+          "old_y": 9340,
+          "new_y": 10940
+        },
+        {
+          "node": "librarian-ledger",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 6540,
+          "new_y": 11740
+        },
+        {
+          "node": "librarian-d8",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 880,
+          "new_x": 880,
+          "old_y": 8540,
+          "new_y": 14740
+        },
+        {
+          "node": "librarian-a10",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 4140,
+          "new_y": 7740
+        },
+        {
+          "node": "librarian-countdiagnosis",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2140,
+          "new_x": 2140,
+          "old_y": 4140,
+          "new_y": 7340
+        },
+        {
+          "node": "librarian-dsourcework",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 6740,
+          "new_y": 11940
+        },
+        {
+          "node": "librarian-a19",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 8740,
+          "new_y": 15740
+        },
+        {
+          "node": "librarian-r6",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1720,
+          "new_x": 1720,
+          "old_y": 8740,
+          "new_y": 14940
+        },
+        {
+          "node": "librarian-x8",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2140,
+          "new_x": 2140,
+          "old_y": 8740,
+          "new_y": 14940
+        },
+        {
+          "node": "librarian-dcapture",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 4340,
+          "new_y": 7940
+        },
+        {
+          "node": "librarian-r3",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1720,
+          "new_x": 1720,
+          "old_y": 4340,
+          "new_y": 7540
+        },
+        {
+          "node": "librarian-d6",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 6940,
+          "new_y": 12140
+        },
+        {
+          "node": "librarian-dresultroute",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 8940,
+          "new_y": 15940
+        },
+        {
+          "node": "librarian-x9",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 8940,
+          "new_y": 15140
+        },
+        {
+          "node": "librarian-capturedescribe",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2140,
+          "new_x": 2140,
+          "old_y": 4540,
+          "new_y": 8340
+        },
+        {
+          "node": "librarian-capturefault",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 4540,
+          "new_y": 8140
+        },
+        {
+          "node": "librarian-a16",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 7140,
+          "new_y": 12740
+        },
+        {
+          "node": "librarian-x6",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 9340,
+          "new_y": 12340
+        },
+        {
+          "node": "librarian-a20",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 460,
+          "new_x": 460,
+          "old_y": 9140,
+          "new_y": 16340
+        },
+        {
+          "node": "librarian-ownerreport",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 40,
+          "new_x": 40,
+          "old_y": 9140,
+          "new_y": 16140
+        },
+        {
+          "node": "librarian-capturestore",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 4740,
+          "new_y": 8540
+        },
+        {
+          "node": "librarian-acceptrecord",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 7340,
+          "new_y": 12940
+        },
+        {
+          "node": "librarian-x7",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 40,
+          "new_x": 40,
+          "old_y": 9540,
+          "new_y": 12540
+        },
+        {
+          "node": "librarian-d9",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 460,
+          "new_x": 460,
+          "old_y": 9340,
+          "new_y": 16540
+        },
+        {
+          "node": "librarian-delivery",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 9740,
+          "new_y": 18340
+        },
+        {
+          "node": "librarian-dapprove",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 4940,
+          "new_y": 8740
+        },
+        {
+          "node": "librarian-a17",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 7540,
+          "new_y": 13140
+        },
+        {
+          "node": "librarian-a21",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 9540,
+          "new_y": 18140
+        },
+        {
+          "node": "librarian-x10",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 460,
+          "new_x": 460,
+          "old_y": 9540,
+          "new_y": 16740
+        },
+        {
+          "node": "librarian-e1",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 4240,
+          "new_x": 4240,
+          "old_y": 9940,
+          "new_y": 18540
+        },
+        {
+          "node": "librarian-a11",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 5140,
+          "new_y": 9140
+        },
+        {
+          "node": "librarian-approvalowner",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 40,
+          "new_x": 40,
+          "old_y": 5140,
+          "new_y": 8940
+        },
+        {
+          "node": "librarian-dwrite",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 7740,
+          "new_y": 13340
+        },
+        {
+          "node": "librarian-x11",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 9740,
+          "new_y": 16940
+        },
+        {
+          "node": "librarian-approvalrecord",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 5340,
+          "new_y": 9340
+        },
+        {
+          "node": "librarian-findcheck",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 7940,
+          "new_y": 13940
+        },
+        {
+          "node": "librarian-writestate",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 9540,
+          "new_y": 13540
+        },
+        {
+          "node": "librarian-x12",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 10140,
+          "new_y": 17140
+        },
+        {
+          "node": "librarian-startrequest",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 5540,
+          "new_y": 9540
+        },
+        {
+          "node": "librarian-d7",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 8140,
+          "new_y": 14140
+        },
+        {
+          "node": "librarian-writeowner",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 40,
+          "new_x": 40,
+          "old_y": 9740,
+          "new_y": 13740
+        },
+        {
+          "node": "librarian-x13",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 880,
+          "new_x": 880,
+          "old_y": 10340,
+          "new_y": 17340
+        },
+        {
+          "node": "librarian-dstartauthority",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 5740,
+          "new_y": 9740
+        },
+        {
+          "node": "librarian-r5",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1720,
+          "new_x": 1720,
+          "old_y": 8340,
+          "new_y": 14340
+        },
+        {
+          "node": "librarian-contentdiagnosis",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2140,
+          "new_x": 2140,
+          "old_y": 8340,
+          "new_y": 14340
+        },
+        {
+          "node": "librarian-dlast",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 880,
+          "new_x": 880,
+          "old_y": 10540,
+          "new_y": 17540
+        },
+        {
+          "node": "librarian-startrun",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 5940,
+          "new_y": 10140
+        },
+        {
+          "node": "librarian-startowner",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 40,
+          "new_x": 40,
+          "old_y": 5940,
+          "new_y": 9940
+        },
+        {
+          "node": "librarian-x14",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 460,
+          "new_x": 460,
+          "old_y": 10740,
+          "new_y": 17740
+        },
+        {
+          "node": "librarian-enrich",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 6140,
+          "new_y": 10340
+        },
+        {
+          "node": "librarian-d5",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 6340,
+          "new_y": 11340
+        },
+        {
+          "node": "librarian-partialchoice",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 6340,
+          "new_y": 10540
+        },
+        {
+          "node": "librarian-x4",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 6540,
+          "new_y": 10740
+        },
+        {
+          "node": "librarian-r4",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1720,
+          "new_x": 1720,
+          "old_y": 6540,
+          "new_y": 11540
+        },
+        {
+          "node": "librarian-publicationdiagnosis",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 1300,
+          "new_x": 1300,
+          "old_y": 6740,
+          "new_y": 11540
+        },
+        {
+          "node": "librarian-dpauseroute",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 2980,
+          "new_x": 2980,
+          "old_y": 8740,
+          "new_y": 10940
+        },
+        {
+          "node": "librarian-x5",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 460,
+          "new_x": 460,
+          "old_y": 8940,
+          "new_y": 11140
+        },
+        {
+          "node": "librarian-applicationreceipt",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 5140
+        },
+        {
+          "node": "librarian-applygroups",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 3820,
+          "y": 4940
+        },
+        {
+          "node": "librarian-r1application",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 1720,
+          "y": 5540
+        }
+      ],
+      "generated_reflow": true,
+      "initial_generated_reflow": false,
+      "initial_semantic_checksum_verified": null,
+      "reflow_validation": {
+        "mode": "validated_generation",
+        "revision": "916cc978976163cc9d578aff2642341a7a6a68ed621d350a3a05011e029a9c7e",
+        "receipt": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.correction-validation.json"
+      },
+      "group_changes": [
+        {
+          "group": "librarian-lane-Owner",
+          "reason": "background extent for new cards",
+          "old_height": 11130,
+          "new_height": 18730
+        },
+        {
+          "group": "librarian-lane-Tier-0-agent",
+          "reason": "background extent for new cards",
+          "old_height": 11130,
+          "new_height": 18730
+        },
+        {
+          "group": "librarian-lane-Oracle",
+          "reason": "background extent for new cards",
+          "old_height": 11130,
+          "new_height": 18730
+        },
+        {
+          "group": "librarian-lane-Lead-tier-1-",
+          "reason": "background extent for new cards",
+          "old_height": 11130,
+          "new_height": 18730
+        },
+        {
+          "group": "librarian-lane-Doctor",
+          "reason": "background extent for new cards",
+          "old_height": 11130,
+          "new_height": 18730
+        },
+        {
+          "group": "librarian-lane-Clerk-tier-2-",
+          "reason": "background extent for new cards",
+          "old_height": 11130,
+          "new_height": 18730
+        },
+        {
+          "group": "librarian-lane-Scribe-tier-3-",
+          "reason": "background extent for new cards",
+          "old_height": 11130,
+          "new_height": 18730
+        },
+        {
+          "group": "librarian-lane-Core",
+          "reason": "background extent for new cards",
+          "old_height": 11130,
+          "new_height": 18730
+        },
+        {
+          "group": "librarian-lane-Model-host",
+          "reason": "background extent for new cards",
+          "old_height": 11130,
+          "new_height": 18730
+        },
+        {
+          "group": "librarian-lane-Geo-Grapher",
+          "reason": "background extent for new cards",
+          "old_height": 11130,
+          "new_height": 18730
+        },
+        {
+          "group": "librarian-lane-Outcomes",
+          "reason": "background extent for new cards",
+          "old_height": 11130,
+          "new_height": 18730
+        }
+      ],
+      "preexisting_overlaps_preserved": []
+    }
+  },
+  "reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.corrected-overview.png",
+  "overview_scale": 0.35,
+  "overview_text_overflow": [],
+  "overview_purpose": "reduced orientation image; clipping at the minimum preview font is expected",
+  "detail_reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.corrected-readable.png",
+  "detail_scale": 0.8,
+  "detail_text_overflow": [],
+  "preview": "deterministic raster of saved canvas positions; not an Obsidian application screenshot",
+  "previous_validation": {
+    "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\correction-history\\ingestion-tobe.correction-validation.26e1f4a0f23bf1bc.json",
+    "sha256": "26e1f4a0f23bf1bc0579605fb8b0268054c4a49125df0a3c2c7d04a9122dc268"
+  },
+  "initial_migration_validation": {
+    "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\correction-history\\ingestion-tobe.correction-validation.f7b6db288207038a.json",
+    "sha256": "f7b6db288207038a2a770bdb70d8c24a978489d5b599dd6f5b1712bc15776b00"
+  }
+}

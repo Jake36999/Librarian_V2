@@ -1,110 +1,596 @@
-# Diagram spec (docs/proposals/diagram-workflows.md, section 6): the ingestion of E:\DataManagement into
-# Resource-Library, 19-20 November 2026, as it actually ran. Hand-written from the run's record; the views,
-# the canvas, the decision tree and the test table are generated from this file by render_spec.py.
+# Corrected folder-application scope and observed/current/target boundary, 23 November 2026.
 diagram: ingest-papers-tier0
 kind: activity
-title: Ingest a folder of papers, directed by the Owner and orchestrated by a tier-0 agent
-target: {kind: use_case, ref: "../../USE-CASES.md#uc1-make-a-folder-of-papers-into-library-knowledge-as-is"}
-lens: [the-root-cause-lens, the-guard-completeness-lens, the-real-concurrency-lens]
+title: 'DataManagement ingestion: observed path and current-code alternatives'
+target:
+  kind: use_case
+  ref: ../../USE-CASES.md#uc1-make-a-folder-of-papers-into-library-knowledge-as-is
+lens:
+- the-root-cause-lens
+- the-guard-completeness-lens
+- the-real-concurrency-lens
 perspective: Owner
 problem:
-  symptom: "The research session found no papers to keep, though all 96 had been read."
+  symptom: On 19 November the research session found no accepted papers to keep, although processing had produced
+    staged readings and graph artifacts.
   why:
-    - "The papers existed only as staged items, catalogue cards and the paper graph."
-    - "Nobody accepted the enriched items out of staging."
-    - "Nothing told anyone the acceptance was still owed."
-  root: "The ingestion has no step that owns the last hand-off, and no signal when it is missing (OP1)."
-lanes: [Owner, Tier 0 agent, Core, Clerk (tier 3), Model host, Geo-Grapher]
+  - Enrichment and Source acceptance were separate operations.
+  - The final acceptance handoff was unowned and invisible in that run.
+  root: 'Historical OP1: no accountable final acceptance handoff; later backlog visibility fixes must not rewrite
+    this run.'
+lanes:
+- Owner
+- Tier 0 agent
+- Core
+- Model worker (legacy transport)
+- Model host
+- Geo-Grapher
 nodes:
-  - {id: s,   kind: start}
-  - {id: a1,  kind: activity, lane: Owner,          step: 1,  label: "directs the ingestion of E:\\DataManagement into Resource-Library"}
-  - {id: a2,  kind: activity, lane: Tier 0 agent,   step: 2,  label: "attaches the folder to the library"}
-  - {id: a3,  kind: activity, lane: Core,           step: 3,  label: "surveys the folder and proposes a decision per subfolder"}
-  - {id: d1,  kind: decision, lane: Core,                     label: "every other root current?"}
-  - {id: x1,  kind: activity, lane: Tier 0 agent,             label: "re-surveys the stale root and re-applies its decisions"}
-  - {id: a4,  kind: activity, lane: Owner,          step: 4,  label: "decides the subfolders that need a person (excludes 11, 12, 13, _external)"}
-  - {id: a5,  kind: activity, lane: Tier 0 agent,   step: 5,  label: "records the Owner's decisions"}
-  - {id: d2,  kind: decision, lane: Core,                     label: "Clerk qualified in this Core?"}
-  - {id: x2,  kind: activity, lane: Tier 0 agent,             label: "restarts the Cores and re-qualifies the Clerk"}
-  - {id: a6,  kind: activity, lane: Clerk (tier 3), step: 6,  label: "assesses each remaining subfolder's sensitivity"}
-  - {id: d3,  kind: decision, lane: Clerk (tier 3),           label: "subfolder sensitive?"}
-  - {id: x3,  kind: activity, lane: Owner,                    label: "decides the held subfolder"}
-  - {id: a7,  kind: activity, lane: Core,           step: 7,  label: "accepts the remaining subfolders by policy"}
-  - {id: a8,  kind: activity, lane: Tier 0 agent,   step: 8,  label: "queues the in-scope documents, one accepted subfolder at a time"}
-  - {id: d4,  kind: decision, lane: Tier 0 agent,             label: "queued count matches the survey?"}
-  - {id: a9,  kind: activity, lane: Core,           step: 9,  label: "captures and stages each document (intake)"}
-  - {id: a10, kind: activity, lane: Tier 0 agent,   step: 10, label: "approves the staged documents (agent promotion mode)"}
-  - {id: f1,  kind: fork,     lane: Core,                     label: "for each approved document, in the Clerk pool"}
-  - {id: a11, kind: activity, lane: Core,           step: 11, label: "parses and converts the document page by page"}
-  - {id: a12, kind: activity, lane: Clerk (tier 3), step: 12, label: "reads it part by part: claims, terms, relations, review"}
-  - {id: m1,  kind: activity, lane: Model host,               label: "answers each Clerk task"}
-  - {id: dm,  kind: decision, lane: Model host,               label: "answered in time and in full?"}
-  - {id: a14, kind: activity, lane: Tier 0 agent,   step: 14, label: "tracks spend against the ceiling and reports progress"}
-  - {id: dc,  kind: decision, lane: Tier 0 agent,             label: "spend under the ceiling?"}
-  - {id: j1,  kind: join,     lane: Core,                     label: "all documents processed"}
-  - {id: d5,  kind: decision, lane: Core,                     label: "document fully read?"}
-  - {id: x5,  kind: activity, lane: Tier 0 agent,             label: "re-approves the partial document"}
-  - {id: a13, kind: activity, lane: Geo-Grapher,    step: 13, label: "imports each fully converted paper into the paper graph"}
-  - {id: d6,  kind: decision, lane: Tier 0 agent,             label: "enriched documents accepted?"}
-  - {id: a15, kind: activity, lane: Tier 0 agent,   step: 15, label: "accepts the enriched documents into the library"}
-  - {id: a16, kind: activity, lane: Core,           step: 16, label: "writes each Source note and validates it is findable"}
-  - {id: d7,  kind: decision, lane: Core,                     label: "findable by title, bottom line and concept?"}
-  - {id: a17, kind: activity, lane: Tier 0 agent,   step: 17, label: "verifies the counts and labels, and reports to the Owner"}
-  - {id: e1,  kind: end, label: "96 findable Source notes; files labelled third_party; papers in the graph"}
-  - {id: e2,  kind: end, label: "papers stay in staging; research finds nothing to keep (OP1)"}
-  - {id: e3,  kind: end, label: "note flagged written-but-not-findable"}
-  - {id: e4,  kind: end, label: "run stopped at the spend ceiling; Owner decides"}
+- id: s
+  kind: start
+- id: a1
+  kind: activity
+  lane: Owner
+  label: directs E:\DataManagement ingestion into Resource-Library with pre-read exclusions; later partial acceptance
+    remains an explicit decision
+  step: 1
+- id: a2
+  kind: activity
+  lane: Tier 0 agent
+  label: attaches the folder on the Owner's behalf
+  step: 2
+- id: a3
+  kind: activity
+  lane: Core
+  label: inventories roots, fingerprints and literal folder facts; excludes hidden and scratch content before reading
+  step: 3
+- id: d1
+  kind: decision
+  lane: Core
+  label: reviewed roots current?
+- id: x1
+  kind: activity
+  lane: Tier 0 agent
+  label: requests the stale root survey and authorized decision reapplication; preserves the actual library-wide
+    affected scope
+- id: a4
+  kind: activity
+  lane: Owner
+  label: 'decides purpose and exclusions: 11, 12, 13 and _external remain unread'
+  step: 4
+- id: a5
+  kind: activity
+  lane: Tier 0 agent
+  label: submits the Owner's folder decisions with their actual authority and reason
+  step: 5
+- id: d2
+  kind: decision
+  lane: Core
+  label: assigned folder-review Clerk qualified in this Core?
+- id: x2
+  kind: activity
+  lane: Tier 0 agent
+  label: restores qualification after the recorded shared-store defect, then requests a fresh qualification check
+- id: draftfault
+  kind: activity
+  lane: Tier 0 agent
+  label: diagnoses the actual post-draft transport, schema, provenance or missing-output failure from recorded evidence;
+    retains existing flags and reports the unresolved scope without assuming qualification loss
+- id: a6
+  kind: activity
+  lane: Model worker (legacy transport)
+  label: drafts folder descriptions and sensitivity findings through the historical legacy model transport
+  step: 6
+- id: d3
+  kind: decision
+  lane: Model worker (legacy transport)
+  label: model-reported sensitivity or reserved folder decision?
+- id: x3
+  kind: decision
+  lane: Owner
+  label: Owner's decision for the held folder?
+- id: exclude
+  kind: activity
+  lane: Core
+  label: records exclusion and removes that subtree from the eligible worklist without reading it
+- id: a7
+  kind: activity
+  lane: Core
+  label: submits affirmative folder decisions and read barriers for group application; acceptance is recorded only
+    after the CLI succeeds
+  step: 7
+- id: dfolder
+  kind: decision
+  lane: Core
+  label: folder application result?
+- id: folderfault
+  kind: activity
+  lane: Tier 0 agent
+  label: retains GEOGRAPHER_CALL_FAILED or other folder refusal; investigates actual capability/scope before authorized
+    retry
+- id: dinput
+  kind: decision
+  lane: Core
+  label: requested Source-eligible subset remains after common folder-group application?
+- id: a8
+  kind: activity
+  lane: Tier 0 agent
+  label: requests Source queueing per deepest accepted root for third-party, research-docs and own-docs content
+  step: 8
+- id: d4
+  kind: decision
+  lane: Core
+  label: scripted current-item count reconciles with eligible inventory?
+- id: queuefix
+  kind: activity
+  lane: Tier 0 agent
+  label: investigates unexplained mismatch; requests per-root queueing without treating historical queued ledger
+    entries as current pending work
+- id: a9
+  kind: activity
+  lane: Core
+  label: captures immutable source evidence and records each reference result; retains exclusions, duplicates and
+    isolated parser/quarantine failures
+  step: 9
+- id: dcapture
+  kind: decision
+  lane: Core
+  label: usable captured Sources remain?
+- id: capturefault
+  kind: activity
+  lane: Tier 0 agent
+  label: retains failed references and successful siblings separately; reports required capture gaps for a bounded
+    decision
+- id: capturedescribe
+  kind: activity
+  lane: Model worker (legacy transport)
+  label: writes neutral descriptions from captured evidence through the legacy model transport
+  step: 10
+- id: capturestore
+  kind: activity
+  lane: Core
+  label: stages Source evidence and records mixed-batch item identities; folder cards remain distinct from Source
+    content
+  step: 11
+- id: a10
+  kind: activity
+  lane: Tier 0 agent
+  label: submits the Owner-authorized ingestion approvals with executor, decision authority and recorded attestation
+    distinguished
+  step: 12
+- id: startrequest
+  kind: activity
+  lane: Tier 0 agent
+  label: requests an explicit processing start through the existing curate/person authority; approval alone only
+    queues
+  step: 13
+- id: dstartauthority
+  kind: decision
+  lane: Core
+  label: current explicit processing-start authority present?
+- id: startowner
+  kind: decision
+  lane: Owner
+  label: grant processing start for the approved set?
+- id: startrun
+  kind: activity
+  lane: Core
+  label: validates the existing curate/person start permission and freezes the approved selection; returns the active
+    run instead of duplicating it
+  step: 14
+- id: enrich
+  kind: ref
+  lane: Core
+  label: 'dispatches the approved mixed batch: Sources use nine stages; folder metadata uses its separate three-stage
+    chain'
+  step: 15
+  use_case: batch-enrichment-current
+- id: a14
+  kind: note
+  lane: Tier 0 agent
+  label: observes progress/spend; Core checks ceiling before each item and cancellation between stages. Task-pool
+    concurrency is internal to the child, not document-level parallelism
+- id: d5
+  kind: decision
+  lane: Core
+  label: returned coverage and obligations permit acceptance?
+- id: x5
+  kind: activity
+  lane: Tier 0 agent
+  label: obtains a new authorized approval/start for finished partial work; unfinished frozen-run resume remains
+    distinct
+- id: d6
+  kind: decision
+  lane: Tier 0 agent
+  label: Source decision owner acts on the returned package?
+- id: a15
+  kind: activity
+  lane: Tier 0 agent
+  label: accepts 96 Sources under the Owner's direction, retaining 93 fully read/published items and three accepted
+    partials with publication gaps
+  step: 16
+- id: sourceledger
+  kind: activity
+  lane: Core
+  label: persists the actual Source decision; hands independent lens proposals to their own decision owner with
+    accept/reject/defer still separate
+- id: a16
+  kind: activity
+  lane: Core
+  label: applies the guarded Source writer and retains the actual commit/refusal/attempt state; Source acceptance
+    does not accept lenses
+  step: 17
+- id: d7
+  kind: decision
+  lane: Core
+  label: required retrieval checks pass for the written notes?
+- id: a17
+  kind: activity
+  lane: Tier 0 agent
+  label: reconciles current Source states, coverage, publication receipts, labels and separate lens decisions; reports
+    the dated cohort truth to the Owner
+  step: 18
+- id: pausedreport
+  kind: activity
+  lane: Tier 0 agent
+  label: reports distinct cancellation, interruption, ceiling stop or pending decision, completed siblings and exact
+    continuation point to the Owner
+- id: escalatereport
+  kind: activity
+  lane: Tier 0 agent
+  label: reports unresolved processing/capture/integrity faults with originating stage, existing flags and retained
+    evidence
+- id: reuseledger
+  kind: activity
+  lane: Core
+  label: reconciles no-new-work or already-current results with the parent ledger; does not count enqueue history
+    as outstanding work
+- id: e1
+  kind: end
+  label: 96 accepted Source notes; 93 fully read/published; three explicitly accepted partials retain publication
+    gaps
+  outcome: success
+- id: e2
+  kind: end
+  label: '19 November: processing retained in staging while Source acceptance was unowned (historical OP1)'
+  outcome: paused
+- id: e3
+  kind: end
+  label: Source note remains written; required retrieval failed and the actual miss is retained
+  outcome: failure
+- id: e4
+  kind: end
+  label: paused with a named decision owner, retained work and the actual stop reason
+  outcome: paused
+- id: escalated
+  kind: end
+  label: unresolved fault reported to the Owner without discarding completed work
+  outcome: escalated
+- id: reused
+  kind: end
+  label: existing or excluded work accounted for; no duplicate Source processing claimed
+  outcome: reused
+- id: nonsource
+  kind: end
+  outcome: reused
+  label: returns the common folder-application receipt; no Source intake applies on this branch and parser completeness
+    is not attested
+- id: draftcheck
+  kind: activity
+  lane: Core
+  label: validates the returned draft status, required fields and literal provenance; records provider, schema and
+    missing-evidence flags without judging semantic adequacy
+- id: ddraft
+  kind: decision
+  lane: Core
+  label: returned folder draft structurally valid with the Clerk's explicit sensitivity finding?
+- id: dwrite
+  kind: decision
+  lane: Core
+  label: guarded Source write result and current commit state?
+- id: findcheck
+  kind: activity
+  lane: Core
+  label: checks required title, Bottom-Line and concept retrieval only for a confirmed committed Source note; records
+    actual searches
+- id: writestate
+  kind: activity
+  lane: Core
+  label: reconciles the attempt, lease, current note/hash and commit evidence read-only; preserves human edits and
+    records the reserved write checkpoint without assuming a commit
+- id: writeowner
+  kind: decision
+  lane: Owner
+  label: Owner's bounded decision for the held or unconfirmed Source write?
+- id: applygroups
+  kind: activity
+  lane: Geo-Grapher
+  label: applies all accepted non-excluded groups, including documents and papers; ingests supported code/text and
+    may reuse matching complete snapshots
+- id: applicationreceipt
+  kind: activity
+  lane: Core
+  label: checks CLI exit, JSON and pinned version; records successful application and accepted decisions; returned
+    JSON does not attest parser completeness
+- id: scopeNote
+  kind: note
+  lane: Tier 0 agent
+  label: Historical default follows the partial cohort. Other branches are current-code alternatives; red arrows
+    mean alternatives, not failure. Unexercised paths are not claimed as events.
+- id: x1application
+  kind: activity
+  lane: Tier 0 agent
+  label: requests application-stage stale-root resurvey and authorized reapplication; retains actual library-wide
+    scope
 edges:
-  - {from: s,   to: a1}
-  - {from: a1,  to: a2}
-  - {from: a2,  to: a3}
-  - {from: a3,  to: d1}
-  - {from: d1,  to: a4,  guard: "current"}
-  - {from: d1,  to: x1,  guard: "a root is stale", ext: "3a", observed: "D:\\Librarian_V2; fix 9c0592d for excluded folders; OP2 remains"}
-  - {from: x1,  to: a3}
-  - {from: a4,  to: a5}
-  - {from: a5,  to: d2}
-  - {from: d2,  to: a6,  guard: "qualified"}
-  - {from: d2,  to: x2,  guard: "qualification lost", ext: "5a", observed: "all 23 folders FOLDER_DRAFT_FAILED; fix cab623a"}
-  - {from: x2,  to: a6}
-  - {from: a6,  to: d3}
-  - {from: d3,  to: a7,  guard: "normal"}
-  - {from: d3,  to: x3,  guard: "sensitive", ext: "6a"}
-  - {from: x3,  to: a7}
-  - {from: a7,  to: a8}
-  - {from: a8,  to: d4}
-  - {from: d4,  to: a9,  guard: "matches (96)"}
-  - {from: d4,  to: a8,  guard: "0 queued: subfolders are their own roots", ext: "8a", observed: "dry count 0, then 96 per subfolder"}
-  - {from: a9,  to: a10}
-  - {from: a10, to: f1}
-  - {from: f1,  to: a11}
-  - {from: f1,  to: a14}
-  - {from: a11, to: a12}
-  - {from: a12, to: m1}
-  - {from: m1,  to: dm}
-  - {from: dm,  to: j1,  guard: "answered"}
-  - {from: dm,  to: j1,  guard: "unavailable or partial page", ext: "12a", observed: "6 of 96 partial"}
-  - {from: a14, to: dc}
-  - {from: dc,  to: j1,  guard: "under the ceiling"}
-  - {from: dc,  to: e4,  guard: "ceiling reached", ext: "14a"}
-  - {from: j1,  to: d5}
-  - {from: d5,  to: a13, guard: "fully read"}
-  - {from: d5,  to: x5,  guard: "partial", ext: "12b", observed: "3 completed on re-read; 3 accepted at 95-98%"}
-  - {from: x5,  to: f1}
-  - {from: a13, to: d6}
-  - {from: d6,  to: a15, guard: "accepted"}
-  - {from: d6,  to: e2,  guard: "nobody accepts", ext: "15a", observed: "19 Nov: all 96 stayed staged until 20 Nov"}
-  - {from: a15, to: a16}
-  - {from: a16, to: d7}
-  - {from: d7,  to: a17, guard: "findable"}
-  - {from: d7,  to: e3,  guard: "not findable", ext: "16a"}
-  - {from: a17, to: e1}
+- from: s
+  to: scopeNote
+- from: a1
+  to: a2
+- from: a2
+  to: a3
+- from: a3
+  to: d1
+- from: d1
+  to: a4
+  guard: current
+- from: d1
+  to: x1
+  guard: stale root
+  ext: 3a
+  observed: D:\Librarian_V2; excluded-folder fix 9c0592d; OP2 scope remains
+- from: x1
+  to: a3
+- from: a4
+  to: a5
+- from: a5
+  to: d2
+- from: d2
+  to: a6
+  guard: qualified
+- from: d2
+  to: x2
+  guard: qualification lost
+  ext: 5a
+  observed: 23 FOLDER_DRAFT_FAILED; QualificationStore fix cab623a
+- from: x2
+  to: d2
+- from: draftfault
+  to: escalatereport
+- from: a6
+  to: draftcheck
+- from: d3
+  to: a7
+  guard: normal and already authorized
+- from: d3
+  to: x3
+  guard: reserved or sensitive
+  ext: 6a
+- from: x3
+  to: a7
+  guard: approve/apply
+- from: x3
+  to: exclude
+  guard: exclude
+- from: x3
+  to: pausedreport
+  guard: decline
+- from: x3
+  to: pausedreport
+  guard: hold
+- from: exclude
+  to: a7
+- from: dfolder
+  to: dinput
+  guard: applied with accepted current assignment
+- from: dfolder
+  to: x1application
+  guard: FOLDER_STALE
+  ext: 7a
+- from: dfolder
+  to: folderfault
+  guard: GEOGRAPHER_CALL_FAILED or another refusal
+  ext: 7b
+- from: folderfault
+  to: escalatereport
+- from: dinput
+  to: a8
+  guard: nonempty Source-eligible requested subset
+- from: dinput
+  to: reuseledger
+  guard: excluded or no eligible input
+  ext: 7d
+- from: a8
+  to: d4
+- from: d4
+  to: a9
+  guard: matches current eligible cohort (96)
+- from: d4
+  to: queuefix
+  guard: zero/mismatch from root ownership or another discrepancy
+  ext: 8a
+  observed: dry count 0, then 96 per subfolder
+- from: queuefix
+  to: a8
+- from: a9
+  to: dcapture
+- from: dcapture
+  to: capturedescribe
+  guard: usable captured Sources with per-reference outcomes
+- from: dcapture
+  to: capturefault
+  guard: required capture gaps or no usable source
+  ext: 9a
+- from: dcapture
+  to: reuseledger
+  guard: only duplicates/exclusions and no new work
+  ext: 9b
+- from: capturefault
+  to: escalatereport
+- from: capturedescribe
+  to: capturestore
+- from: capturestore
+  to: a10
+- from: a10
+  to: startrequest
+- from: startrequest
+  to: dstartauthority
+- from: dstartauthority
+  to: startrun
+  guard: valid explicit start authority
+- from: dstartauthority
+  to: startowner
+  guard: reserved or absent authority
+  ext: 13a
+- from: startowner
+  to: startrun
+  guard: grant
+- from: startowner
+  to: pausedreport
+  guard: decline or hold
+- from: startrun
+  to: enrich
+- from: enrich
+  to: a14
+  guard: partial
+  observed: 'After bounded rereading: 93 fully read/published; three accepted at 95–98% with partial coverage'
+- from: enrich
+  to: a14
+  guard: success
+  ext: 15a
+- from: enrich
+  to: reuseledger
+  guard: reused
+  ext: 15b
+- from: enrich
+  to: pausedreport
+  guard: paused
+  ext: 15c
+- from: enrich
+  to: escalatereport
+  guard: escalated
+  ext: 15d
+- from: a14
+  to: d5
+- from: d5
+  to: d6
+  guard: full or explicitly permitted partial with truthful obligations
+- from: d5
+  to: x5
+  guard: required partial needs new approved work
+  ext: 15e
+  observed: Six initially partial; three completed on reread; three explicitly accepted partial
+- from: d5
+  to: pausedreport
+  guard: failed or pending required work without acceptance authority
+  ext: 15f
+- from: x5
+  to: startrequest
+- from: d6
+  to: a15
+  guard: affirmative authorized Source decision
+- from: d6
+  to: e2
+  guard: nobody accepts
+  ext: 16a
+  observed: 19 November stranded until 20 November
+- from: d6
+  to: pausedreport
+  guard: decline or hold
+  ext: 16b
+- from: a15
+  to: sourceledger
+- from: sourceledger
+  to: a16
+- from: a16
+  to: dwrite
+- from: d7
+  to: a17
+  guard: required checks pass
+- from: d7
+  to: e3
+  guard: required title/Bottom-Line/concept retrieval misses
+  ext: 17a
+- from: a17
+  to: e1
+- from: pausedreport
+  to: e4
+- from: escalatereport
+  to: escalated
+- from: reuseledger
+  to: reused
+- to: ddraft
+  from: draftcheck
+- to: d3
+  from: ddraft
+  guard: usable returned draft, required fields/provenance valid and sensitivity finding recorded
+- to: draftfault
+  from: ddraft
+  guard: transport refusal, invalid schema/provenance or partial/queued/failed draft
+  ext: 6b
+- to: escalatereport
+  from: ddraft
+  guard: critical integrity or authority-boundary evidence in draft
+  ext: 6c
+- to: findcheck
+  from: dwrite
+  guard: confirmed committed, including a committed note already flagged written-but-not-findable
+- to: d7
+  from: findcheck
+- to: writestate
+  from: dwrite
+  guard: unknown/interrupted outcome, human-edit conflict or unconfirmed/uncommitted refusal
+  ext: 17b
+- to: escalatereport
+  from: dwrite
+  guard: critical integrity or authority-boundary evidence in write
+  ext: 17c
+- to: writeowner
+  from: writestate
+- to: a16
+  from: writeowner
+  guard: specific bounded guarded retry authorized after compatible-state reconciliation; no unresolved human edit
+- to: pausedreport
+  from: writeowner
+  guard: decline, hold or follow-on recovery/compensation needs separate scope
+- to: escalatereport
+  from: writeowner
+  guard: unresolved integrity/scope finding requires escalation
+- from: a7
+  to: applygroups
+- from: applygroups
+  to: applicationreceipt
+- from: applicationreceipt
+  to: dfolder
+- from: scopeNote
+  to: a1
+- from: x1application
+  to: a7
+- from: dinput
+  to: nonsource
+  guard: own-code/data/log purpose only; no Source-eligible requested subset
+  ext: 7c
 evidence:
-  a3:  ["src/resource_librarian/folder_review.py"]
-  a8:  ["src/resource_librarian/folder_sources.py:queue"]
-  a11: ["src/resource_librarian/batch.py:STAGES (validate, parse)"]
-  a12: ["src/resource_librarian/batch.py:_read, _relate, _review (clerk_endpoint)"]
-  a13: ["src/resource_librarian/paper_graph.py:publish_artifact"]
-  a16: ["src/resource_librarian/promote.py (write, index, findability check)"]
-  d2:  ["commit cab623a (QualificationStore lock and merge)"]
-provenance: {drafted_by: "tier 0 (Claude Code), by hand from the run record", at: 2026-11-20}
+  a3:
+  - src/resource_librarian/folder_review.py
+  a8:
+  - src/resource_librarian/folder_sources.py
+  enrich:
+  - reports/2026-11-21-enrichment-baseline/source-enrichment-current.spec.yaml
+  - src/resource_librarian/batch.py:STAGES
+  a16:
+  - src/resource_librarian/promote.py
+  d2:
+  - commit cab623a
+  d7:
+  - 'reports/2026-11-22-libraries-ingest-enrichment-audit.md: later cross-library cases; not this cohort'
+  applygroups:
+  - src/resource_librarian/folder_review.py:accept / accept_by_policy
+  - F:/uv-data/Geo_Grapher/src/geographer/folder_review.py:apply_review
+  applicationreceipt:
+  - src/resource_librarian/folder_review.py:cli
+  - F:/uv-data/Geo_Grapher/src/geographer/pipeline.py:ingest (parse_failures not included by apply_review)
+provenance:
+  drafted_by: tier 0 (Claude Code), by hand from the run record
+  at: 2026-11-20
+  revised_at: '2026-11-23'

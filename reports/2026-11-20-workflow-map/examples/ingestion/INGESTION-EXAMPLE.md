@@ -1,165 +1,102 @@
-# Worked example: ingesting a folder of papers, orchestrated by a tier-0 agent
+# DataManagement ingestion: observed path and current-code alternatives
 
-20 November 2026. An example of the [diagram workflow](../../../../docs/proposals/diagram-workflows.md) applied to a real run: the ingestion of `E:\DataManagement` (96 papers) into Resource-Library on 19–20 November 2026. The Owner directed it; a tier-0 agent (Claude Code, through the Core's API and MCP) orchestrated it.
+Revised 23 November 2026 against the retained run evidence and [graph review](../../../2026-11-22-ingestion-enrichment-graph-review.md). This records the Owner-directed, tier-0-orchestrated ingestion of 96 papers from `E:\DataManagement` into Resource-Library. Its final result was **96 accepted Sources: 93 fully read/published items and three accepted partials**, with their incomplete coverage and publication gaps retained. It does not claim 96 complete graph publications.
 
-The analysis is one **diagram spec**, [ingestion.spec.yaml](ingestion.spec.yaml), written by hand from the run's record. Everything else is generated from it by a prototype renderer, [render_spec.py](render_spec.py), with no model call:
-- [ingestion.views.md](ingestion.views.md):
-  - the validation result;
-  - the activity diagram with swimlanes (Mermaid);
-  - the written use case (main success scenario and extensions);
-  - the decision tree;
-  - the test table;
-  - the cross-view check.
-- [ingestion.canvas](ingestion.canvas): the same activity diagram as an Obsidian canvas. There is one column per actor, plus an Outcomes column, and extensions are drawn as red arrows.
+The historical [spec](ingestion.spec.yaml), [canvas](ingestion.canvas) and [generated views](ingestion.views.md) describe the parent use case. Its `enrich` reference calls the [current mixed-batch child](../../../2026-11-21-enrichment-baseline/batch-enrichment-current.md), which dispatches Sources to the [nine-stage source child](../../../2026-11-21-enrichment-baseline/source-enrichment-current.md) and folder metadata to its own three-stage chain. These current-code contracts do not add autonomous Lead, Oracle or Doctor loops to this history. The [to-be companion](INGESTION-TOBE.md) separately proposes those responsibilities.
 
-```text
-python render_spec.py ingestion.spec.yaml
-```
+## Boundary and ownership
 
-## 1. The analysis frame (before drawing)
+The system boundary is Librarian. Core inventories, counts, captures evidence, applies declared rules, stores decisions, dispatches stages and checks writer/search facts. The agent owns interpretation, folder descriptions and sensitivity assessment. The historical folder-review lane is labelled **Model worker (legacy transport)**. It records the observed transport without retroactively asserting either the old numeric Clerk slot or the proposed tier-2/tier-3 management split. The bounded source reads remain inside the current child under its **Model worker (legacy transport)** lane. There was no demonstrated autonomous Lead/Clerk/Scribe orchestration in this run.
 
-**Symptom.** The research session found no papers to keep, though all 96 had been read.
+Hidden/scratch and Owner-excluded material remains withheld. Eligible ownership follows the deepest accepted root. Core submits the affirmative decisions and read barriers in `a7`; Geo-Grapher then applies **all accepted, non-excluded groups**, including own-docs, research-docs and third-party/paper groups. It invokes code/text snapshot ingestion with `reuse_complete=True`, so matching complete snapshots can be reused. This common application happens before `dinput` chooses whether any Source-eligible requested subset remains. The own-code/data/log branch does not call another indexing operation.
 
-**Why?**
-1. The papers existed only as staged items, catalogue cards and the paper graph.
-2. Nobody accepted the enriched items out of staging.
-3. Nothing told anyone the acceptance was still owed.
+Core's actual CLI boundary checks exit status, valid JSON and the pinned version. The returned folder-application JSON identifies graph/snapshot results but omits parser failures; a successful receipt does not attest complete extraction of every language. The former `wholeindex → indexcheck → dindex` capability-verification chain was therefore removed from this current/historical view. Such validation remains proposed in the to-be view.
 
-**Root cause.** The ingestion has no step that owns the last hand-off, and no signal when it is missing (OP1).
+The [mixed-batch child](../../../2026-11-21-enrichment-baseline/batch-enrichment-current.md) shows `process_approved` dispatching the frozen source/folder set. Folder metadata uses `folder_validate → folder_describe → folder_data`, with its own failures and review obligation. Source reading receives no credit for those metadata cards. Historical enqueue entries saying `queued` are reconciled to current staging/processing state rather than counted as current pending work by themselves.
 
-**Not the root cause.** "Let a graph citation count as evidence" (`1064cf0`) was a *proposed solution*: a good one, but it fixed the research side, not the ingestion.
+The default path deliberately follows the recorded **partial** child result and the Owner's explicit partial acceptance. A full-success child return is an alternative; a red extension arrow means departure from that historical default, not necessarily failure. Unexercised guards describe current-code alternatives and are not asserted to have occurred in the DataManagement cohort.
 
-**Scope.** Inside the boundary: the Core, its staging, its intake and batch stages, and its Source notes. Outside, drawn as actors:
-- the Owner;
-- the tier-0 agent;
-- the Clerk;
-- Geo-Grapher;
-- the model host (DeepInfra, in our case).
+## Historical main scenario
 
-**Perspective.** The Owner's: what had to be true for the papers to be usable.
+1. **Owner** directs E:\DataManagement ingestion into Resource-Library with pre-read exclusions; later partial acceptance remains an explicit decision.
+2. **Tier 0 agent** attaches the folder on the Owner's behalf.
+3. **Core** inventories roots, fingerprints and literal folder facts; excludes hidden and scratch content before reading.
+4. **Owner** decides purpose and exclusions: 11, 12, 13 and _external remain unread.
+5. **Tier 0 agent** submits the Owner's folder decisions with their actual authority and reason.
+6. **Model worker (legacy transport)** drafts folder descriptions and sensitivity findings through the historical legacy model transport.
+7. **Core** submits affirmative folder decisions and read barriers for group application; acceptance is recorded only after the CLI succeeds.
+8. **Tier 0 agent** requests Source queueing per deepest accepted root for third-party, research-docs and own-docs content.
+9. **Core** captures immutable source evidence and records each reference result; retains exclusions, duplicates and isolated parser/quarantine failures.
+10. **Model worker (legacy transport)** writes neutral descriptions from captured evidence through the legacy model transport.
+11. **Core** stages Source evidence and records mixed-batch item identities; folder cards remain distinct from Source content.
+12. **Tier 0 agent** submits the Owner-authorized ingestion approvals with executor, decision authority and recorded attestation distinguished.
+13. **Tier 0 agent** requests an explicit processing start through the existing curate/person authority; approval alone only queues.
+14. **Core** validates the existing curate/person start permission and freezes the approved selection; returns the active run instead of duplicating it.
+15. **Core** dispatches the approved mixed batch: Sources use nine stages; folder metadata uses its separate three-stage chain.
+16. **Tier 0 agent** accepts 96 Sources under the Owner's direction, retaining 93 fully read/published items and three accepted partials with publication gaps.
+17. **Core** applies the guarded Source writer and retains the actual commit/refusal/attempt state; Source acceptance does not accept lenses.
+18. **Tier 0 agent** reconciles current Source states, coverage, publication receipts, labels and separate lens decisions; reports the dated cohort truth to the Owner.
 
-**Lenses.**
-- **Root-Cause**, for the frame above.
-- **Guard-Completeness**: every decision drawn with all its ways out.
-- **Real-Concurrency**: what ran beside the reading.
+The Source acceptance decision remains separate from the independent lens worklist. A Source acceptance does not accept any lens. Pending lens acceptance, rejection or deferment retains its own responsible actor and matters to completion only as required by the parent contract.
 
-## 2. View 1: use case diagram (who and what)
+## Processing contract and outcomes
 
-```mermaid
-flowchart LR
-  owner([Owner])
-  t0([Tier-0 agent])
-  subgraph boundary["Librarian: Resource-Library"]
-    uc1([Ingest a folder of papers])
-    ucq([Queue documents])
-    ucr([Read a document])
-    uca([Accept a document])
-    ucg([Publish to the paper graph])
-    ucs([Assess a folder's sensitivity])
-  end
-  lead([Lead, tier 1])
-  helper([Scribe and helper, tier 2])
-  clerk([Clerk, tier 3])
-  host([Model host])
-  geo([Geo-Grapher])
-  owner --- uc1
-  t0 --- uc1
-  uc1 -. include .-> ucq
-  uc1 -. include .-> ucr
-  uc1 -. include .-> uca
-  uc1 -. include .-> ucs
-  ucr -. include .-> ucg
-  ucs --- clerk
-  ucr --- clerk
-  clerk --- host
-  ucg --- geo
-  lead -. "no part in this run" .- uc1
-  helper -. "no part in this run" .- uc1
-```
+Approval queues work. The existing curate/person-authorized start is a separate request; it freezes the approved selection. An already-running batch is returned rather than duplicated. Future delegated start authority is proposed in the to-be view and must not be inferred from the historical agent promotion mode.
 
-Each oval is an end goal; the steps are in the activity diagram, per the course's granularity rule.
-- **Owner** (primary) starts the use case.
-- **The tier-0 agent** carries it out on the Owner's behalf.
-- **Clerk** (tier 3), with the **Model host** behind it, does every model task: the folder checks, then reading, relating and reviewing each document.
-- **Geo-Grapher** imports the converted papers.
+The mixed-batch child executes frozen items sequentially and dispatches by item kind. Each source runs **validate → parse → read → lenses → Data → relate → metadata → review → publish**, including publication before the next item. Its bounded task pool provides internal model-call concurrency. Spend observation is not another document worker: the configured ceiling is checked before each item; cancellation is checked between stages. A ceiling is not a hard per-call billing guarantee, and unpriced calls retain unknown cost.
 
-**Tiers 1 and 2 had no step in this run.** Every batch stage calls the Clerk (`batch.py`, `clerk_endpoint`), and the tier-0 agent called the Core directly. Section 6 takes this up.
-
-## 3. Views 2–4: generated from the spec
-
-[ingestion.views.md](ingestion.views.md) holds the full output:
-- **Activity diagram (how).** Six swimlanes (Owner, Tier-0 agent, Core, Clerk, Model host, Geo-Grapher), 9 decisions, one fork and join, 4 ends. The fork is the Clerk pool reading documents while the tier-0 agent tracks spend against the ceiling.
-- **Written use case (what exactly).** A 17-step main success scenario, every step "Actor + verb + object". There are 9 extensions, each numbered by its step, and each ends in "rejoin at N" or "the use case ends". 6 are marked *observed* with what happened; 3 are *anticipated*.
-- **Decision tree.** 11 paths: the main success scenario, 9 extensions, and 1 concurrent branch.
-- **Test table.** One test per path, each with its expected outcome.
-
-The written use case in the views file is **generated**, not written. Where it reads awkwardly ("Qualification lost."), the spec's guard text is too terse for prose. That is a reason to give each guard a short condition sentence in a later version of the schema.
-
-### Boundary-value tests
-
-The course's boundary-value method (on the limit, just inside it and just outside it; empty; the wrong type) applies to every guard on a number. These are written by hand: the prototype does not generate them yet.
-
-**None of these tests has been run.** The "Expected" column is the behaviour we want. Where it matches what the run showed (0 queued, 20 of 21 parts), that is noted; the rest are requirements to test against.
-
-| Guard | Value | Why | Expected |
-|---|---|---|---|
-| spend under the ceiling? | spend = ceiling − 1¢ | just inside | run continues |
-| | spend = ceiling | on the limit | run stops (14a) and the Owner decides |
-| | spend = ceiling + 1¢ | just over, e.g. a parallel call landing late | run stops; the overspend is reported, never hidden |
-| | no ceiling set | empty | refused before any model call |
-| queued count matches the survey? | 0 | subfolders are their own roots (observed) | 8a: queue per subfolder |
-| | 96 | expected | continue |
-| | 97 | one more than surveyed (a file added since) | flag; re-survey before reading |
-| document fully read? | 21 of 21 parts | complete | enriched |
-| | 20 of 21 | one short (observed: 95–98%) | 12b: re-approve, or accept with `coverage: partial` |
-| | 0 of 21 | nothing read | stays partial; never accepted |
-| findable by title, bottom line and concept? | all three hit | complete | 16 then 17 |
-| | two of three | one search misses | 16a: flagged *written but not findable* |
-
-## 4. What the tooling caught
-
-Each of these came from the deterministic checks, not from re-reading by eye:
-1. **Guards on activities.** The first draft put "answered?" on the model host's activity and "under the ceiling?" on the spend tracking. The validator refused: guarded branches belong on a **decision node**. That is the course's notation, and it matters because a decision is what the tree unfolds.
-2. **An extension numbered by the wrong step.** The partial-read branch was numbered `11a`, the step before parsing. The cross-check found its decision sits after reading (step 12) and asked for `12x`. It is now `12b`.
-3. **Too many scenarios.** The first tree walker followed each recovered extension on through every later branch, giving 57 paths. The course counts one scenario per extension, ended where it rejoins. With that rule there are 11 paths, and every one is a single test.
-4. **Exactly one way to succeed.** The cross-check requires that exactly one path reaches the success end, and that every extension has a path. Both hold now.
-
-## 5. Findings about the system
-
-| # | Finding | Where in the views | Open point |
-|---|---|---|---|
-| F1 | The ingestion's last hand-off (step 15) has no owner and no alert. Extension 15a ends the use case with the papers stranded. | 15a, test T10 | OP1 |
-| F2 | The tier-0 agent made steps 10 (approve) and 15 (accept) under the library's agent promotion mode. The notes then recorded `attested_by: person`, because the agent used the person's API. | steps 10, 15 | New: attestation must name who actually accepted |
-| F3 | A stale root anywhere in the library blocks every folder decision (3a). Re-surveying is a recovery, not a fix. | 3a, test T2 | OP2 |
-| F4 | Lost qualification (5a) surfaced only as 23 identical failures with no model call. Nothing named the cause until the tier-0 agent dug in. | 5a, test T3 | Fixed `cab623a`; the diagnosis was manual |
-| F5 | Tiers 1 and 2 had no part. All orchestration sat with the tier-0 agent, outside the Core's own workflows. | use case diagram | OP16; see section 6 |
-| F6 | Two branches were never exercised (anticipated): sensitive subfolder (6a), and the not-findable note (16a). The spend ceiling (14a) was set but never reached. | 6a, 14a, 16a | Worth a planted test each |
-
-## 6. To-be: the same ingestion with the tiers doing their own work
-
-The policy says each agent finishes its own work, and the in-app agents stay blind to tier 0. In the run, the tier-0 agent did everything a Lead could have done. A to-be version moves the orchestration inside the Core, where its gates and logs apply:
-
-| Step | As-is (who had the ball) | To-be |
-|---|---|---|
-| 1 | Owner directs the tier-0 agent | Owner directs the ingestion, in the app or through the tier-0 agent |
-| 2, 5, 8 | Tier-0 agent calls the Core's API | A **Lead** session runs an `ingest-folder` pipeline (UC8): attach, record the Owner's decisions, queue |
-| 10, 15 | Tier-0 agent approves and accepts | The Core by agent policy, attested as the policy, or the Owner (person mode). Never "person" when an agent did it (F2). |
-| 14 | Tier-0 agent tracks spend | The Core's spend ceiling, already enforced; the Lead reports progress |
-| 17 | Tier-0 agent verifies counts | A **tier-2 helper** (read-only) verifies counts, labels and findability, and the Lead reports |
-| oversight | (none separate) | The **tier-0 agent** watches the run's log and reports to the Owner, stepping in only on a blocker |
-| new 15b | — | The pipeline's last step raises "N enriched documents await acceptance" on the agenda (OP1) |
-
-The next spec to draw is the to-be version as its own `.spec.yaml`, rendered the same way. It would then show, side by side, which lane each step moved to.
-
-## 7. How this example used the proposed workflow
-
-| Workflow step (proposal, section 8) | Here |
+| Child outcome | Historical parent continuation |
 |---|---|
-| 1. Name a target and a kind | UC1, as run by a tier-0 agent; `activity` |
-| 2. Choose lenses | Root-Cause, Guard-Completeness, Real-Concurrency |
-| 3. Gather without a model | The run's records: the commits, the ingest log, the staging counts, `batch.STAGES` |
-| 4. Draft the spec | By hand, for this example. In the product, the Clerk drafts lane by lane. |
-| 5. Validate | `render_spec.py`; it caught finding 1 of section 4 |
-| 6. Cross-check the views | It caught finding 2 of section 4 |
-| 7. Render | Mermaid, canvas, tree and test table |
-| 8–9. Stage and approve | Not done here: these files are reports, not vault notes |
+| `partial` | Main cohort result: check whether actual partials are permitted; accept only with truthful coverage and publication limits. |
+| `success` | Rejoin the same eligibility/decision checks; this alternate does not rewrite the historical 93/3 split. |
+| `reused` | Reconcile existing/no-new-work states and remaining decisions without duplicating work. |
+| `paused` | Retain completed siblings and distinguish cancellation, interruption, ceiling stop and a pending decision. |
+| `escalated` | Report unresolved fault, originating stage and existing flags to the Owner through tier 0. |
+
+Six items were initially partial; three became complete on bounded rereading. Three were accepted at about 95–98% with partial coverage. Re-approving finished partial work and admitting a new batch differs from resuming an unfinished frozen run. A failed/queued required task receives no reading credit. Successful siblings and previous receipts survive isolated input or stage failures.
+
+Publication admission requires the current trusted accepted **folder assignment**, appropriate complete reading/conversion, artifact binding and enabled Geo. It does not require an already accepted Source note. Disabled, stale or refused publication retains the reading and actual publication reason; optional/not-applicable publication does not become a fabricated success.
+
+## Findings, with dates and populations
+
+| Finding | Evidence and correction |
+|---|---|
+| F1: historical OP1 | On 19 November the enriched cohort was left staged; acceptance occurred on 20 November. This was an unowned/invisible handoff. Later W7 `awaiting_acceptance()` visibility in agenda, status and context must be acknowledged; a backlog alone does not prove the alert remains broken. |
+| F2: decision attribution | Historical records may say `by: person` while their reason attributes the Owner's decision and Claude's execution. Separate authority, executor and recorded attestation. Those records alone do not prove impersonation or disprove current agent-actor handling. |
+| F3: stale root | `9c0592d` addressed excluded-root interference. OP2 remains: the existing rebuild can have whole-library scope, so a seemingly local retry needs the actual radius. |
+| F4: qualification | The shared qualification-store overwrite defect caused 23 `FOLDER_DRAFT_FAILED` refusals and was fixed in `cab623a`. Timeout, parser capability and task refusals have different evidence and must not all use that diagnosis. |
+| F5: orchestration | Tier 0 coordinated this run through Core calls. The to-be assigns accountable Lead ownership and independent checking without claiming those roles already ran. |
+| F6: retrieval and controls | Sensitive-folder and written-but-not-findable branches were not exercised in this 96-item cohort. Four later cross-library not-findable cases were reported by the 22 November audit. Preserve the already-written note and actual missing query; vectors being off or zero concepts is not a proven common cause. Eight cancellations and zero observed ceiling stops are cross-library audit counts, not DataManagement counts. |
+
+The cross-library audit also reports 750 processed Sources and 689 lenses awaiting decisions. These are dated reported worklist counts, not a permission to accept them or a result of this 96-item run. Its 12 folder-card failures are item attempts across two batches: validation completed, description failed, and no successful `folder_data` execution was observed in that sample.
+
+## Extension and node correspondence
+
+Retained behavior keeps its node ID. Renumbering follows the corrected main scenario; extensions identify graph branches, not new runtime error codes.
+
+| Previous extension or nodes | Corrected location |
+|---|---|
+| `3a` stale root; `5a` qualification; `6a` sensitive; `8a` per-root queue | Same extension IDs; recovered qualification now rechecks `d2`; held decisions have affirmative/exclude/decline/hold guards. |
+| `12a`, `a11`, `a12`, `m1`, `dm` | `enrich` and the current child's parse/read/transport/task-validation boundaries. Model host reports transport; Core validates application task structure/status; semantic interpretation belongs to the worker. |
+| `f1`, `j1`, `a13` | Removed misleading document fork/join and post-join publication. `enrich` owns sequential per-item publication. |
+| `a14`, `14a` | `a14` is a progress/control note; child stop returns through `15c`. No fake concurrent spend worker. |
+| `12b` partial reread | `15e`; new authorized approval/start is distinct from unfinished-run resume. |
+| `15a` nobody accepts | `16a`, retaining the dated OP1 episode. |
+| `16a` not findable | `17a`, retaining written-but-not-findable state. |
+| Newly explicit | Common Geo folder-group application, CLI-only receipt validation, purpose-based Source applicability, mixed source/folder dispatch, isolated capture failures and all five child outcomes. |
+
+## Regeneration and verification
+
+Use the report-local safe renderer from this directory:
+
+```powershell
+..\..\..\..\.venv\Scripts\python.exe -B render_corrected.py --commit --png
+```
+
+This maintains the saved actor-column style, retained card positions and manual edge attachment sides; it also writes the accepted to-be canvas under `accepted-ingestion-tobe.canvas`. Do not use the prototype's file-writing entry point to overwrite those accepted layouts. Child artifacts have their own renderers; see the mixed-batch companion and `reports/2026-11-21-enrichment-baseline/render_current.py` for source execution, plus `reports/2026-11-22-proposed-tobe-enrichment/render_proposal.py` for the focused target.
+
+The prototype's structural, path, cross-view and reference checks can be run in memory against the actual child contracts. Their generated test tables are diagram consistency scenarios, not newly executed runtime tests. No library processing, acceptance, indexing, service changes or paid calls accompany this documentation correction.
+
+## Source-backed folder-application boundary
+
+The configured Geo wheel matches the inspected source for this path. [Core folder application](../../../../src/resource_librarian/folder_review.py#L577) sends the accepted decision set; [CLI receipt handling](../../../../src/resource_librarian/folder_review.py#L266) checks process/JSON/version, while Geo `apply_review` invokes all non-excluded graph groups and omits its internal parser-failure report from the returned JSON. Snapshot structural completion is not a language-extraction completeness guarantee.

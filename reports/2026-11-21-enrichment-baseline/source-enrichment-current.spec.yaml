@@ -1,0 +1,152 @@
+# Current source-processing contract, checked against batch.py and retained November runs.
+# Model worker describes the legacy clerk/cleanup/ocr transports, not deployed tiered orchestration.
+diagram: source-enrichment-current
+kind: activity
+title: "Current source enrichment: scripted stages and legacy model tasks"
+target: {kind: use_case, ref: "source-enrichment-current.md#use-case-description"}
+lens: [the-guard-completeness-lens, the-real-concurrency-lens]
+perspective: Owner
+problem:
+  symptom: "An ingestion summary can hide processing-start, per-item publication, partial outputs and later acceptance."
+  why:
+    - "A finished batch can contain partial or failed items, and model-call completion does not mean a valid task answer."
+    - "The current batch has scripted services and legacy model tasks, without the proposed autonomous Lead/Clerk/Scribe and Oracle/Doctor loop."
+  root: "The parent needs the actual nine-stage child contract and per-item outcomes, separate from proposed coordination."
+lanes: [Tier 0 agent, Model worker (legacy transport), Core, Model host, Geo-Grapher]
+nodes:
+  - {id: s, kind: start}
+  - {id: boundary, kind: note, lane: Tier 0 agent, label: "Source-only detail of the current mixed-batch dispatcher. Folder metadata uses its separate three-stage chain there. Approval/start and Source/lens decisions stay with the parent."}
+  - {id: bind, kind: activity, lane: Core, step: 1, label: "binds the source subset to the admitted batch, frozen selection, settings, grants and exact completion keys"}
+  - {id: dwork, kind: decision, lane: Core, label: "source work in the admitted subset?"}
+  - {id: controls, kind: activity, lane: Core, step: 2, label: "checks the configured spend ceiling before each item and cancellation/active-writer state between stages; reuses only matching complete receipts"}
+  - {id: dcontrols, kind: decision, lane: Core, label: "recorded run controls permit processing?"}
+  - {id: validate, kind: activity, lane: Core, step: 3, label: "validate: checks captured evidence, source identity and duplicate note constraints"}
+  - {id: dvalidate, kind: decision, lane: Core, label: "validation result?"}
+  - {id: parse, kind: activity, lane: Core, step: 4, label: "parse: fetches and extracts text with scripts, maps pages and records extraction quality; dispatches model work only where configured and needed"}
+  - {id: dparse, kind: decision, lane: Core, label: "scripted extraction result and configured conversion request?"}
+  - {id: convert, kind: activity, lane: Model worker (legacy transport), label: "performs configured PDF cleanup or OCR; returns text, page anchors, actual covered pages and explicit task errors"}
+  - {id: conversioncheck, kind: activity, lane: Core, label: "checks returned structure and literal page mapping; retains original bytes and unused generated evidence"}
+  - {id: dconversion, kind: decision, lane: Core, label: "conversion result and usable original text?"}
+  - {id: fallback, kind: activity, lane: Core, label: "uses original page-mapped text: returned cleanup error retains partial status; unusable generated anchors may still permit complete parse when original text is usable"}
+  - {id: parsegap, kind: activity, lane: Core, label: "retains partial/queued conversion or absent readable text and actual OCR gaps; missing material receives no reading credit"}
+  - {id: dprojection, kind: decision, lane: Core, label: "parse continued without an early partial return; PDF or paper projection applicable?"}
+  - {id: preproject, kind: activity, lane: Core, label: "writes a free provisional paper-graph .nodes.json before reading, with text_layer=False; catalogue-only or zero-claim output is possible"}
+  - {id: dpreproject, kind: decision, lane: Core, label: "provisional projection write result?"}
+  - {id: parsefinal, kind: decision, lane: Core, label: "source units and quality verdict after provisional projection if applicable?"}
+  - {id: read, kind: activity, lane: Model worker (legacy transport), step: 5, label: "read: performs bounded points, limits, terms and grounded lens tasks; source-wide derivations retain their own outcomes"}
+  - {id: host, kind: activity, lane: Model host, label: "answers bounded calls through configured legacy routes and their existing task pool; reports transport completion or failure"}
+  - {id: readcheck, kind: activity, lane: Core, label: "checks schemas, literal support, keys and part counters; preserves task/derivation records, although batch read completion currently follows remaining-part counts"}
+  - {id: dread, kind: decision, lane: Core, label: "read stage result?"}
+  - {id: lenses, kind: activity, lane: Core, step: 6, label: "lenses: records proposals already derived during reading; zero candidates or nothing read can be valid; no lens is accepted here"}
+  - {id: dlenses, kind: decision, lane: Core, label: "lenses stage result?"}
+  - {id: data, kind: activity, lane: Core, step: 7, label: "Data: assembles kind-specific records from scripted structure and existing current-text readings; preserves partial or inapplicable coverage"}
+  - {id: ddata, kind: decision, lane: Core, label: "Data stage result and document relation applicability?"}
+  - {id: relate, kind: activity, lane: Model worker (legacy transport), step: 8, label: "relate: proposes relations between eligible fully read document components; zero added relations can be valid"}
+  - {id: relatestatic, kind: activity, lane: Core, label: "retains existing static relations or records relations as not applicable; does not invent a model call"}
+  - {id: drelate, kind: decision, lane: Core, label: "relate stage result?"}
+  - {id: metadata, kind: activity, lane: Core, step: 9, label: "metadata: copies limited literal Data facts where available and lists required unknown fields; this script is not a general semantic metadata model"}
+  - {id: dmetadata, kind: decision, lane: Core, label: "metadata stage result?"}
+  - {id: review, kind: activity, lane: Model worker (legacy transport), step: 10, label: "review: drafts the kind-specific Bottom Line and sensitivity findings from source evidence, retaining no answer, refusal and low confidence"}
+  - {id: reviewcheck, kind: activity, lane: Core, label: "checks returned draft structure, literal grounding and reading counters; a usable draft does not override incomplete reading"}
+  - {id: dreview, kind: decision, lane: Core, label: "review stage result?"}
+  - {id: pubcheck, kind: activity, lane: Core, step: 11, label: "publish: checks PDF applicability, actual full reading, persistent conversion, artifact binding and current trusted accepted folder assignment"}
+  - {id: dpublication, kind: decision, lane: Core, label: "publication admission result?"}
+  - {id: publish, kind: activity, lane: Geo-Grapher, step: 12, label: "copies the prior paper DB into a new generation, imports the artifact and switches the active catalog pointer through one CLI call"}
+  - {id: publishstorage, kind: note, lane: Geo-Grapher, label: "The call may fail during copy, import or registration. Old and failed-candidate DBs may remain; the candidate is checkpointed and the catalog uses WAL."}
+  - {id: dpubresult, kind: decision, lane: Core, label: "publication call result?"}
+  - {id: pubna, kind: activity, lane: Core, label: "records publish as not applicable for non-PDF or a fully read PDF without a full-conversion artifact; retains limitations"}
+  - {id: pubgap, kind: activity, lane: Core, label: "records incomplete reading, disabled Geo, awaiting accepted folder, FOLDER_STALE or a caught publication refusal/error as partial without erasing reading"}
+  - {id: itemfailed, kind: activity, lane: Core, label: "records a failed stage and stops this item's remaining stages; another frozen item's completed work is retained"}
+  - {id: reduce, kind: activity, lane: Core, step: 13, label: "reduces declared stage statuses to enriched, partial or failed and persists each item's actual coverage and reasons"}
+  - {id: dmore, kind: decision, lane: Core, label: "more frozen source items?"}
+  - {id: summary, kind: activity, lane: Core, step: 14, label: "returns per-item stage/coverage/publication receipts and pending Source/lens decisions; reported spend retains unpriced-call limitations"}
+  - {id: dresult, kind: decision, lane: Core, label: "source-subset result from recorded statuses?"}
+  - {id: stopped, kind: activity, lane: Core, label: "persists cancellation, ceiling stop or interruption with completed receipts and pending work for explicit continuation"}
+  - {id: e1, kind: end, outcome: success, label: "the batch marks source processing enriched from stage statuses; parent acceptance and independent judgment of any derivation gaps remain separate"}
+  - {id: epartial, kind: end, outcome: partial, label: "recorded partial/failed source items remain; other derivation gaps are reported separately and acceptance is not implied"}
+  - {id: enowork, kind: end, outcome: reused, label: "no source work in this admitted selection; the parent retains its authoritative item accounting"}
+  - {id: epaused, kind: end, outcome: paused, label: "processing stopped with retained receipts and explicit continuation requirements"}
+  - {id: eescalated, kind: end, outcome: escalated, label: "a run-wide writer, state or authority failure prevents a trustworthy completion handback"}
+edges:
+  - {from: s, to: boundary}
+  - {from: boundary, to: bind}
+  - {from: bind, to: dwork}
+  - {from: dwork, to: controls, guard: "nonempty source subset"}
+  - {from: dwork, to: enowork, guard: "empty or already-settled selection", ext: "1a"}
+  - {from: controls, to: dcontrols}
+  - {from: dcontrols, to: validate, guard: "active, within the configured ceiling and writer available"}
+  - {from: dcontrols, to: stopped, guard: "cancelled, interrupted or ceiling reached", ext: "2a", observed: "eight cancellations and no ceiling stop in the cross-library audit"}
+  - {from: dcontrols, to: eescalated, guard: "run-wide writer, state or authority failure", ext: "2b"}
+  - {from: validate, to: dvalidate}
+  - {from: dvalidate, to: parse, guard: "not failed"}
+  - {from: dvalidate, to: itemfailed, guard: "failed", ext: "3a"}
+  - {from: parse, to: dparse}
+  - {from: dparse, to: dprojection, guard: "scripted parse continued without requested model assistance"}
+  - {from: dparse, to: convert, guard: "configured model cleanup or OCR needed", ext: "4a"}
+  - {from: dparse, to: parsegap, guard: "fetch or OCR precondition returned partial before provisional projection", ext: "4b"}
+  - {from: dparse, to: itemfailed, guard: "uncaught stage failure", ext: "4c"}
+  - {from: convert, to: conversioncheck}
+  - {from: conversioncheck, to: dconversion}
+  - {from: dconversion, to: dprojection, guard: "usable mapped cleanup, or completed OCR without an early partial return"}
+  - {from: dconversion, to: fallback, guard: "returned cleanup error or unusable generated anchors, with usable original text"}
+  - {from: dconversion, to: dprojection, guard: "returned cleanup error or unusable anchors without usable original text; projection and final chunk check still run"}
+  - {from: dconversion, to: parsegap, guard: "OCR returned partial before provisional projection"}
+  - {from: dconversion, to: itemfailed, guard: "uncaught fatal stage failure"}
+  - {from: fallback, to: dprojection}
+  - {from: dprojection, to: preproject, guard: "PDF or paper; parse did not return early"}
+  - {from: dprojection, to: parsefinal, guard: "other source kind; no paper projection", ext: "4d"}
+  - {from: preproject, to: dpreproject}
+  - {from: dpreproject, to: parsefinal, guard: "provisional artifact written; not published"}
+  - {from: dpreproject, to: itemfailed, guard: "uncaught projection write failure", ext: "4e"}
+  - {from: parsefinal, to: read, guard: "usable units and no needs_ocr/js_shell verdict; preserve any recorded cleanup-error partial result"}
+  - {from: parsefinal, to: parsegap, guard: "no readable units, or quality verdict still needs_ocr/js_shell", ext: "4f"}
+  - {from: parsegap, to: read}
+  - {from: read, to: host}
+  - {from: host, to: readcheck}
+  - {from: readcheck, to: dread}
+  - {from: dread, to: lenses, guard: "not failed; keep queued/partial tasks and derivations visible"}
+  - {from: dread, to: itemfailed, guard: "failed", ext: "5a"}
+  - {from: lenses, to: dlenses}
+  - {from: dlenses, to: data, guard: "not failed; none found or inapplicable is valid"}
+  - {from: dlenses, to: itemfailed, guard: "failed", ext: "6a"}
+  - {from: data, to: ddata}
+  - {from: ddata, to: relate, guard: "not failed; eligible document components for model relation work"}
+  - {from: ddata, to: relatestatic, guard: "not failed; static or inapplicable relations", ext: "7a"}
+  - {from: ddata, to: itemfailed, guard: "failed", ext: "7b"}
+  - {from: relate, to: drelate}
+  - {from: relatestatic, to: drelate}
+  - {from: drelate, to: metadata, guard: "not failed; retain queued, partial or inapplicable results"}
+  - {from: drelate, to: itemfailed, guard: "failed", ext: "8a"}
+  - {from: metadata, to: dmetadata}
+  - {from: dmetadata, to: review, guard: "not failed; Unknown is explicit"}
+  - {from: dmetadata, to: itemfailed, guard: "failed", ext: "9a"}
+  - {from: review, to: reviewcheck}
+  - {from: reviewcheck, to: dreview}
+  - {from: dreview, to: pubcheck, guard: "not failed; keep queued/partial review and actual coverage"}
+  - {from: dreview, to: itemfailed, guard: "failed or refused stage", ext: "10a"}
+  - {from: pubcheck, to: dpublication}
+  - {from: dpublication, to: publish, guard: "fully read PDF, full conversion and enabled current trusted accepted folder assignment"}
+  - {from: dpublication, to: pubna, guard: "non-PDF, or fully read PDF without a full-conversion artifact", ext: "11a"}
+  - {from: dpublication, to: pubgap, guard: "reading incomplete, disabled Geo, missing/stale folder assignment or caught admission refusal", ext: "11b"}
+  - {from: dpublication, to: itemfailed, guard: "uncaught preparation exception", ext: "11c"}
+  - {from: publish, to: publishstorage}
+  - {from: publishstorage, to: dpubresult}
+  - {from: dpubresult, to: reduce, guard: "published"}
+  - {from: dpubresult, to: pubgap, guard: "returned refusal/disabled or caught publication error", ext: "12a"}
+  - {from: dpubresult, to: itemfailed, guard: "uncaught stage failure", ext: "12b"}
+  - {from: pubna, to: reduce}
+  - {from: pubgap, to: reduce}
+  - {from: itemfailed, to: reduce}
+  - {from: reduce, to: dmore}
+  - {from: dmore, to: summary, guard: "frozen source subset accounted for"}
+  - {from: dmore, to: controls, guard: "another frozen source", ext: "13a"}
+  - {from: summary, to: dresult}
+  - {from: dresult, to: e1, guard: "all recorded source-stage statuses complete or inapplicable; not an independent content verdict"}
+  - {from: dresult, to: epartial, guard: "recorded partial/failed item or incomplete stage status remains; latent derivation gaps are handed back separately", ext: "14a"}
+  - {from: stopped, to: epaused}
+provenance:
+  drafted_by: "tier 0 (Codex), current-contract correction authorized by Owner"
+  at: 2026-11-22
+  revised_at: 2026-11-23
+  status: "descriptive current source-stage contract; analysis artifact, not a new executable workflow"
+  based_on: "batch.py, paper_graph.py, observed-run-evidence.json and the qualified cross-library audit"

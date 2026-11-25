@@ -1,0 +1,62 @@
+{
+  "status": "report model validation; not execution, runtime rollout or new Owner acceptance",
+  "spec": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.spec.yaml",
+  "spec_sha256": "505a0a576c41c2ea82255faf59c344d083eb1341f0792d3f124fbae2dc90c426",
+  "canvas": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.canvas",
+  "base_revision": "2770997c0474989a60a6cbacd50c12c19f531d1ef734cfa2682b256382877977",
+  "proposal_hash": "2770997c0474989a60a6cbacd50c12c19f531d1ef734cfa2682b256382877977",
+  "scenarios": 31,
+  "structural_problems": [],
+  "cross_view_reference_flags": [],
+  "changes": {
+    "migrated_ids": {},
+    "retired_nodes_removed": [],
+    "retired_anchors_retained_for_owner_edges": [],
+    "owner_nodes_preserved": 0,
+    "owner_edges_preserved": 0,
+    "geometry_changes": [],
+    "generated_reflow": false,
+    "initial_generated_reflow": false,
+    "initial_semantic_checksum_verified": null,
+    "reflow_validation": null,
+    "group_changes": [],
+    "preexisting_overlaps_preserved": []
+  },
+  "write": "service.preview(profile=None, adopt=True), final provenance-aware proposal, guarded service.commit",
+  "accepted_renderer_sha256": "b3253960a08ccfdc05d93719c1b841393ec6024a409e4a2638510a1f6b27a955",
+  "commit": {
+    "written": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.canvas",
+    "revision": "2770997c0474989a60a6cbacd50c12c19f531d1ef734cfa2682b256382877977",
+    "backup": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.canvas.20261123T112037289422.bak",
+    "changes": {
+      "migrated_ids": {},
+      "retired_nodes_removed": [],
+      "retired_anchors_retained_for_owner_edges": [],
+      "owner_nodes_preserved": 0,
+      "owner_edges_preserved": 0,
+      "geometry_changes": [],
+      "generated_reflow": false,
+      "initial_generated_reflow": false,
+      "initial_semantic_checksum_verified": null,
+      "reflow_validation": null,
+      "group_changes": [],
+      "preexisting_overlaps_preserved": []
+    }
+  },
+  "reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.corrected-overview.png",
+  "overview_scale": 0.35,
+  "overview_text_overflow": [],
+  "overview_purpose": "reduced orientation image; text scales with saved card geometry",
+  "detail_reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.corrected-readable.png",
+  "detail_scale": 0.8,
+  "detail_text_overflow": [],
+  "preview": "deterministic raster of saved canvas positions; not an Obsidian application screenshot",
+  "previous_validation": {
+    "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\correction-history\\ingestion.correction-validation.287f2f2b980c3d3a.json",
+    "sha256": "287f2f2b980c3d3a54a831913ae187a82f499f4810471de7ef53a73dad8b067e"
+  },
+  "initial_migration_validation": {
+    "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\correction-history\\ingestion.correction-validation.80837ee1119c649c.json",
+    "sha256": "80837ee1119c649c0d0b8cebbf5ff5c055f4b5e74b5e2bfa7f9deeee30f98ec2"
+  }
+}

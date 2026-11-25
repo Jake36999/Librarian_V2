@@ -1,0 +1,29 @@
+{
+  "status": "proposal artifact validation, not runtime execution or Owner acceptance",
+  "model_sha256": "b0005fbd2a58a98e5481a867057ac75cce83dca8f1ebc8d7ed7ad92f316a149c",
+  "supplied_renderer_sha256": "b3253960a08ccfdc05d93719c1b841393ec6024a409e4a2638510a1f6b27a955",
+  "behavior_nodes": 90,
+  "canvas_nodes": 102,
+  "edges": 150,
+  "main_steps": 23,
+  "extension_scenarios": 73,
+  "main_tier0_turns_by_prototype": 2,
+  "structural_problems": [],
+  "cross_view_reference_flags": [],
+  "card_overlaps": [],
+  "actor_reassignments": [],
+  "generated_relayout": [],
+  "ownership_rule": "agents own interpretation, proposals and semantic judgement; Core performs declared scripts and mechanical checks/storage/dispatch",
+  "canvas_revision": "746b894ffd11cadf1b41c83535d2f7a3547c959a5500318887eab39814ea8b8e",
+  "write": "existing canvas service preview then revision/hash-checked commit; profile=None",
+  "doctor_reference_contract": [
+    "declined",
+    "escalated",
+    "resolved"
+  ],
+  "overview_text_overflow": [],
+  "reading_detail_text_overflow": [],
+  "edge_card_intersections": [],
+  "preview": "deterministic raster reading aids, not an Obsidian application screenshot",
+  "previous_validation": "correction-history/validation.3aa93f973e098ffe.json"
+}

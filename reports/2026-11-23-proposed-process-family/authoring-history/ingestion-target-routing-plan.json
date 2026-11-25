@@ -1,0 +1,4049 @@
+{
+  "original_spec_sha256": "3c25b4f407d3e8fcb3a8757b79b5b7be55599fe9f62236210edea340e20a49c6",
+  "original_canvas_revision": "8dea0199335877ff77da73c28c243fceca6ab8a1b12966a53b4d49c1fbd2fa8f",
+  "terminal_departures": [
+    {
+      "from": "x3",
+      "to": "xp",
+      "guard": "decline"
+    },
+    {
+      "from": "enrich",
+      "to": "xe",
+      "guard": "escalated",
+      "ext": "17d"
+    },
+    {
+      "to": "xe",
+      "from": "ddraft",
+      "guard": "critical integrity or authority-boundary evidence in draft",
+      "ext": "6c"
+    }
+  ],
+  "shared_terminal_redirects": [
+    {
+      "from": "x3",
+      "to": "xp",
+      "guard": "hold",
+      "ext": null,
+      "new_to": "xp_at_5b075aa469"
+    },
+    {
+      "from": "approvalowner",
+      "to": "xp",
+      "guard": "decline or hold",
+      "ext": null,
+      "new_to": "xp_at_5b075aa469"
+    },
+    {
+      "from": "d5",
+      "to": "xp",
+      "guard": "required work failed/pending without permitted continuation",
+      "ext": "17f",
+      "new_to": "xp_at_5b075aa469"
+    },
+    {
+      "from": "dpauseroute",
+      "to": "xp",
+      "guard": "direct Owner run",
+      "ext": null,
+      "new_to": "xp_at_5b075aa469"
+    },
+    {
+      "from": "dwrite",
+      "to": "xe",
+      "guard": "critical integrity or authority-boundary evidence in write",
+      "ext": "20d",
+      "new_to": "xe_at_1020338efc"
+    },
+    {
+      "from": "dindex",
+      "to": "xe",
+      "guard": "critical integrity or authority-boundary finding",
+      "ext": "8f",
+      "new_to": "xe_at_1020338efc"
+    },
+    {
+      "from": "dsourcework",
+      "to": "xp",
+      "guard": "Source acceptance not currently decidable; preserve state and required continuation",
+      "ext": "18b",
+      "new_to": "xp_at_5b075aa469"
+    }
+  ],
+  "recipe": {
+    "minimum_pitch": 600,
+    "nonsource_y": "a18 -200",
+    "a21_y": "d9 +200",
+    "ownerreport_y": "generated +400"
+  },
+  "spec": {
+    "diagram": "ingest-papers-tobe",
+    "kind": "activity",
+    "title": "Proposed ingestion: Owner or tier-0 commissioning, Lead ownership and independent Oracle review",
+    "target": {
+      "kind": "use_case",
+      "ref": "../../USE-CASES.md#uc1-make-a-folder-of-papers-into-library-knowledge-as-is"
+    },
+    "lens": [
+      "the-root-cause-lens",
+      "the-guard-completeness-lens",
+      "the-real-concurrency-lens"
+    ],
+    "perspective": "Owner",
+    "problem": {
+      "symptom": "Historical ingestion left orchestration and unresolved acceptance handoffs with tier 0.",
+      "why": [
+        "Approval, processing start, per-item enrichment and later acceptance were compressed into one apparent operation.",
+        "Semantic decisions were assigned to scripts, and Oracle review was confused with coordinating repairs."
+      ],
+      "root": "The parent needs accountable role ownership, explicit authority and truthful child outcomes, composed through existing registered processes."
+    },
+    "lanes": [
+      "Owner",
+      "Tier 0 agent",
+      "Oracle",
+      "Lead (tier 1)",
+      "Doctor",
+      "Clerk (tier 2)",
+      "Scribe (tier 3)",
+      "Core",
+      "Model host",
+      "Geo-Grapher"
+    ],
+    "nodes": [
+      {
+        "id": "ownerreport",
+        "kind": "activity",
+        "lane": "Owner",
+        "label": "receives the Lead result and Oracle verdict directly, without an absent tier-0 intermediary"
+      },
+      {
+        "id": "delivery",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "records the parent result delivered to its actual specification owner; retains outstanding decisions and limitations"
+      },
+      {
+        "id": "s",
+        "kind": "start"
+      },
+      {
+        "id": "a1",
+        "kind": "activity",
+        "lane": "Owner",
+        "label": "states the ingestion goal, roots, pre-read exclusions, required outputs, permitted partials and budget; grants only the intended authority",
+        "step": 1
+      },
+      {
+        "id": "dentry",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "commissioning route?"
+      },
+      {
+        "id": "a2",
+        "kind": "activity",
+        "lane": "Tier 0 agent",
+        "label": "commissions the Lead on the Owner's behalf and supplies the agent-authored obligations for independent Oracle review",
+        "step": 2
+      },
+      {
+        "id": "directowner",
+        "kind": "activity",
+        "lane": "Owner",
+        "label": "commissions the Lead directly and supplies or approves the obligations; no tier-0 agent is required"
+      },
+      {
+        "id": "a3",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "owns execution against the commissioned specification; asks Core to store its version, grants and actual specification owner",
+        "step": 3
+      },
+      {
+        "id": "a4",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "inventories roots, fingerprints and literal facts; excludes hidden/scratch content before reading and resolves deepest-root ownership",
+        "step": 4
+      },
+      {
+        "id": "d1",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "reviewed roots current?"
+      },
+      {
+        "id": "r1",
+        "kind": "ref",
+        "lane": "Doctor",
+        "label": "evaluates accepted R1 for stale evidence using its actual whole-library radius; a local mandate cannot silently permit a global rebuild",
+        "use_case": "UC-D"
+      },
+      {
+        "id": "a5",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "binds the Owner's exclusions, purpose constraints and decision grants to the eligible worklist",
+        "step": 5
+      },
+      {
+        "id": "d2",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "assigned folder-review role qualified on its selected route?"
+      },
+      {
+        "id": "r2",
+        "kind": "ref",
+        "lane": "Doctor",
+        "label": "restores confirmed lost qualification with accepted R2; provider timeouts and parser faults retain their distinct evidence",
+        "use_case": "UC-D"
+      },
+      {
+        "id": "draftfault",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "diagnoses the actual post-draft transport, schema, provenance or missing-output failure from recorded evidence; retains existing flags and reports the unresolved scope without assuming qualification loss"
+      },
+      {
+        "id": "a6",
+        "kind": "activity",
+        "lane": "Clerk (tier 2)",
+        "label": "interprets folder purpose, proposes descriptions and judges sensitivity; may direct bounded Scribe tasks",
+        "step": 6
+      },
+      {
+        "id": "d3",
+        "kind": "decision",
+        "lane": "Clerk (tier 2)",
+        "label": "folder decision reserved or sensitive?"
+      },
+      {
+        "id": "x1",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "reports the held folder, evidence and required decision to the actual specification owner"
+      },
+      {
+        "id": "dheldroute",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "tier-0 overseer present for this run?"
+      },
+      {
+        "id": "x2",
+        "kind": "activity",
+        "lane": "Tier 0 agent",
+        "label": "relays the reserved folder decision to the Owner"
+      },
+      {
+        "id": "x3",
+        "kind": "decision",
+        "lane": "Owner",
+        "label": "Owner's held-folder decision?"
+      },
+      {
+        "id": "exclude",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "records the excluded subtree; removes it from eligible work without reading it"
+      },
+      {
+        "id": "folderapprove",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "makes normal folder decisions within grant and preserves the Owner's explicit reserved decisions; supplies actual actors/reasons for Core to apply",
+        "step": 7
+      },
+      {
+        "id": "a7",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "submits affirmative folder decisions and read barriers for group application; acceptance is recorded only after the CLI succeeds",
+        "step": 8
+      },
+      {
+        "id": "dfolder",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "folder application result?"
+      },
+      {
+        "id": "folderfault",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "retains GEOGRAPHER_CALL_FAILED or other folder refusal; requests capability/scope diagnosis and a mapped accepted remedy only when applicable"
+      },
+      {
+        "id": "dinput",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "requested Source-eligible subset remains after common folder-group application?"
+      },
+      {
+        "id": "a8",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "queues Source-eligible third-party, research-docs and own-docs inputs per deepest accepted root; retains enqueue history",
+        "step": 9
+      },
+      {
+        "id": "a9",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "reconciles literal eligible counts with current staging/processing state and the parent mixed-item ledger",
+        "step": 10
+      },
+      {
+        "id": "d4",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "current eligible count and queue reconcile?"
+      },
+      {
+        "id": "countdiagnosis",
+        "kind": "activity",
+        "lane": "Clerk (tier 2)",
+        "label": "investigates unexplained count mismatch read-only; distinguishes historical queued keys from current pending items"
+      },
+      {
+        "id": "r3",
+        "kind": "ref",
+        "lane": "Doctor",
+        "label": "applies accepted R3 only for a matching per-root queue defect, retaining the mismatch evidence",
+        "use_case": "UC-D"
+      },
+      {
+        "id": "a10",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "captures immutable evidence and per-reference outcomes; isolates parser/quarantine failures and preserves successful siblings",
+        "step": 11
+      },
+      {
+        "id": "dcapture",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "usable captured Sources remain?"
+      },
+      {
+        "id": "capturefault",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "reports required capture gaps with existing flags; chooses authorized bounded retry or a truthful held/escalated result"
+      },
+      {
+        "id": "capturedescribe",
+        "kind": "activity",
+        "lane": "Clerk (tier 2)",
+        "label": "writes neutral evidence-based Source descriptions, directing Scribes only for bounded drafting",
+        "step": 12
+      },
+      {
+        "id": "capturestore",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "stages Source records and records their parent ledger keys; folder metadata retains folder_validate, folder_describe and folder_data with separate review",
+        "step": 13
+      },
+      {
+        "id": "dapprove",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "ingestion approval delegated and unreserved?"
+      },
+      {
+        "id": "approvalowner",
+        "kind": "decision",
+        "lane": "Owner",
+        "label": "Owner's staged-work approval?"
+      },
+      {
+        "id": "a11",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "approves the staged selection within the ingestion grant; supplies the actual authority, executor and reason to the approval action",
+        "step": 14
+      },
+      {
+        "id": "approvalrecord",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "records the affirmative authorized ingestion approval; queues work without starting processing"
+      },
+      {
+        "id": "startrequest",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "requests explicit processing start for the approved set within its recorded grant",
+        "step": 15
+      },
+      {
+        "id": "dstartauthority",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "explicit processing-start authority available?"
+      },
+      {
+        "id": "startowner",
+        "kind": "decision",
+        "lane": "Owner",
+        "label": "grant processing start for this approved selection?"
+      },
+      {
+        "id": "startrun",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "validates start authority and freezes selection/settings; returns the existing active run instead of dispatching another",
+        "step": 16
+      },
+      {
+        "id": "enrich",
+        "kind": "ref",
+        "lane": "Core",
+        "label": "runs the source-enrichment child; each item owns all nine ordered stages including publication before the next item",
+        "step": 17,
+        "use_case": "proposed-tobe-enrichment"
+      },
+      {
+        "id": "d5",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "returned source coverage and publication satisfy the actual parent obligations?"
+      },
+      {
+        "id": "r4",
+        "kind": "ref",
+        "lane": "Doctor",
+        "label": "requests accepted bounded R4 for required partial reading; any finished-partial reapproval/start remains authorized and independent checks rerun",
+        "use_case": "UC-D"
+      },
+      {
+        "id": "partialchoice",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "retains explicit partial coverage/publication gaps; checks whether the parent permits accepting those particular Sources"
+      },
+      {
+        "id": "ledger",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "reconciles returned Source states with the original mixed-item ledger; issues separate Source and lens worklists with owner, current state and remaining decision",
+        "step": 18
+      },
+      {
+        "id": "d6",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "Source promotion mode, sensitivity, interruption state and delegated acceptance authority?"
+      },
+      {
+        "id": "x6",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "keeps the Source decision on the named Owner's agenda/context; independently routes required lens accept/reject/defer work"
+      },
+      {
+        "id": "x7",
+        "kind": "decision",
+        "lane": "Owner",
+        "label": "Owner's Source decision?"
+      },
+      {
+        "id": "a16",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "makes affirmative Source acceptance decisions only within grant, for full or explicitly permitted partial outputs; no lens is accepted implicitly",
+        "step": 19
+      },
+      {
+        "id": "acceptrecord",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "records only affirmative authorized Source decisions with actual actor/reason; separately retains pending, rejected or deferred lens decisions"
+      },
+      {
+        "id": "a17",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "applies the guarded Source writer and retains the actual commit/refusal/attempt state; Source acceptance does not accept lenses",
+        "step": 20
+      },
+      {
+        "id": "d7",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "required retrieval checks pass for written notes?"
+      },
+      {
+        "id": "r5",
+        "kind": "ref",
+        "lane": "Doctor",
+        "label": "evaluates accepted R5 against the actual failed index obligation; reindexing is not assumed to cure every content/retrieval miss",
+        "use_case": "UC-D"
+      },
+      {
+        "id": "contentdiagnosis",
+        "kind": "activity",
+        "lane": "Clerk (tier 2)",
+        "label": "diagnoses content-related retrieval gaps read-only; never manufactures concepts or enables vectors merely to force a pass"
+      },
+      {
+        "id": "a18",
+        "kind": "activity",
+        "lane": "Oracle",
+        "label": "judges the parent specification using deterministic evidence and independent semantic review, including separate decision obligations and actual partial results",
+        "step": 21
+      },
+      {
+        "id": "d8",
+        "kind": "decision",
+        "lane": "Oracle",
+        "label": "parent specification met?"
+      },
+      {
+        "id": "r6",
+        "kind": "ref",
+        "lane": "Doctor",
+        "label": "evaluates the accepted catalogued remedy for a mapped shortfall, with actual radius and independent verification",
+        "use_case": "UC-D"
+      },
+      {
+        "id": "x8",
+        "kind": "activity",
+        "lane": "Clerk (tier 2)",
+        "label": "scouts an unmapped shortfall and its actual affected scope read-only"
+      },
+      {
+        "id": "x9",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "coordinates authorized correction from Oracle evidence and Clerk scouting; asks Oracle to judge the revised evidence"
+      },
+      {
+        "id": "a19",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "hands one truthful result package and Oracle verdict to the recorded specification owner",
+        "step": 22
+      },
+      {
+        "id": "dresultroute",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "result owner is a tier-0 overseer?"
+      },
+      {
+        "id": "a20",
+        "kind": "activity",
+        "lane": "Tier 0 agent",
+        "label": "reviews the Lead's result and independent verdict against the commissioned specification",
+        "step": 23
+      },
+      {
+        "id": "d9",
+        "kind": "decision",
+        "lane": "Tier 0 agent",
+        "label": "ready to return to the Owner?"
+      },
+      {
+        "id": "x10",
+        "kind": "activity",
+        "lane": "Tier 0 agent",
+        "label": "returns the remaining obligations to the Lead for bounded correction and requests an independent Oracle recheck"
+      },
+      {
+        "id": "x11",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "coordinates the approved correction through the assigned agents and accepted Doctor remedies"
+      },
+      {
+        "id": "x12",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "submits changed artifacts and evidence for independent review; Oracle does not issue worker orders"
+      },
+      {
+        "id": "x13",
+        "kind": "activity",
+        "lane": "Oracle",
+        "label": "judges the corrected obligations and returns its verdict to the specification owner"
+      },
+      {
+        "id": "dlast",
+        "kind": "decision",
+        "lane": "Oracle",
+        "label": "corrected required obligations met?"
+      },
+      {
+        "id": "x14",
+        "kind": "activity",
+        "lane": "Tier 0 agent",
+        "label": "makes the final review of the corrected result"
+      },
+      {
+        "id": "a21",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "returns the result to the Owner directly or with the tier-0 reviewed report, retaining all remaining decision owners and limitations",
+        "step": 24
+      },
+      {
+        "id": "x4",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "reports actual stop reason, spend evidence, completed items and remaining work; distinguishes cancellation, interruption and before-item ceiling stop"
+      },
+      {
+        "id": "x5",
+        "kind": "activity",
+        "lane": "Tier 0 agent",
+        "label": "relays a reserved budget or continuation decision to the Owner when acting as overseer"
+      },
+      {
+        "id": "dpauseroute",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "tier-0 overseer present for paused result?"
+      },
+      {
+        "id": "xp",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "returns the paused package and named required decision directly to the Owner or through the overseer; retains completed work"
+      },
+      {
+        "id": "xe",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "returns unresolved fault evidence to the actual specification owner and immediately notifies the Owner/overseer for critical findings"
+      },
+      {
+        "id": "reuseledger",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "reconciles no-new-work/current results against the parent ledger and separate outstanding decisions; never infers work from enqueue-history counts"
+      },
+      {
+        "id": "e1",
+        "kind": "end",
+        "label": "Owner receives the specified result: actual Source acceptance/findability, per-item coverage/publication and independent lens decisions are explicit",
+        "outcome": "success"
+      },
+      {
+        "id": "e2",
+        "kind": "end",
+        "label": "unresolved or critical fault escalated to the actual specification owner; completed work and existing flags retained",
+        "outcome": "escalated"
+      },
+      {
+        "id": "e3",
+        "kind": "end",
+        "label": "paused for a named Owner/authority decision, cancellation, interruption or ceiling stop; truthful continuation retained",
+        "outcome": "paused"
+      },
+      {
+        "id": "reused",
+        "kind": "end",
+        "label": "existing or excluded work reconciled; no duplicate processing or implicit acceptance",
+        "outcome": "reused"
+      },
+      {
+        "id": "publicationdiagnosis",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "diagnoses required publication-only gaps from current admission, artifact and Geo evidence; never treats them as an automatic reread"
+      },
+      {
+        "id": "nonsource",
+        "kind": "activity",
+        "label": "accounts for common folder application; no Source intake applies to this purpose, while remaining requirements still reach Oracle review",
+        "lane": "Core"
+      },
+      {
+        "id": "draftcheck",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "validates the returned draft status, required fields and literal provenance; records provider, schema and missing-evidence flags without judging semantic adequacy"
+      },
+      {
+        "id": "ddraft",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "returned folder draft structurally valid with the Clerk's explicit sensitivity finding?"
+      },
+      {
+        "id": "dwrite",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "guarded Source write result and current commit state?"
+      },
+      {
+        "id": "findcheck",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "checks required title, Bottom-Line and concept retrieval only for a confirmed committed Source note; records actual searches"
+      },
+      {
+        "id": "writestate",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "reconciles the attempt, lease, current note/hash and commit evidence read-only; preserves human edits and records the reserved write checkpoint without assuming a commit"
+      },
+      {
+        "id": "writeowner",
+        "kind": "decision",
+        "lane": "Owner",
+        "label": "Owner's bounded decision for the held or unconfirmed Source write?"
+      },
+      {
+        "id": "indexcheck",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "proposed: obtains parser/capability evidence and compares requested coverage; today the folder CLI omits parse failures, so additional evidence is required"
+      },
+      {
+        "id": "dindex",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "proposed coverage check has sufficient capability and extraction evidence?"
+      },
+      {
+        "id": "indexfault",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "holds the unmet quality requirement with the Lead; missing current CLI evidence is not an existing Core capability check"
+      },
+      {
+        "id": "dreuse",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "reconciled current states leave any in-scope parent obligation?"
+      },
+      {
+        "id": "dsourcework",
+        "kind": "decision",
+        "lane": "Core",
+        "label": "reconciled current worklist contains a decidable Source acceptance still owed?"
+      },
+      {
+        "id": "applygroups",
+        "kind": "activity",
+        "lane": "Geo-Grapher",
+        "label": "applies all accepted non-excluded groups, including documents and papers; ingests supported code/text and may reuse matching complete snapshots"
+      },
+      {
+        "id": "applicationreceipt",
+        "kind": "activity",
+        "lane": "Core",
+        "label": "checks CLI exit, JSON and pinned version; records successful application and accepted decisions; returned JSON does not attest parser completeness"
+      },
+      {
+        "id": "r1application",
+        "kind": "ref",
+        "lane": "Doctor",
+        "label": "handles application-stage FOLDER_STALE through the same scoped R1 remedy; no local mandate authorizes a global rebuild",
+        "use_case": "UC-D"
+      },
+      {
+        "id": "xp_at_5b075aa469",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "returns the paused package and named required decision directly to the Owner or through the overseer; retains completed work"
+      },
+      {
+        "id": "e3_at_5b075aa469",
+        "kind": "end",
+        "label": "paused for a named Owner/authority decision, cancellation, interruption or ceiling stop; truthful continuation retained",
+        "outcome": "paused"
+      },
+      {
+        "id": "xe_at_1020338efc",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "returns unresolved fault evidence to the actual specification owner and immediately notifies the Owner/overseer for critical findings"
+      },
+      {
+        "id": "e2_at_1020338efc",
+        "kind": "end",
+        "label": "unresolved or critical fault escalated to the actual specification owner; completed work and existing flags retained",
+        "outcome": "escalated"
+      },
+      {
+        "id": "xe_at_6b561aa06e",
+        "kind": "activity",
+        "lane": "Lead (tier 1)",
+        "label": "returns unresolved fault evidence to the actual specification owner and immediately notifies the Owner/overseer for critical findings"
+      },
+      {
+        "id": "e2_at_6b561aa06e",
+        "kind": "end",
+        "label": "unresolved or critical fault escalated to the actual specification owner; completed work and existing flags retained",
+        "outcome": "escalated"
+      }
+    ],
+    "edges": [
+      {
+        "from": "s",
+        "to": "a1"
+      },
+      {
+        "from": "a1",
+        "to": "dentry"
+      },
+      {
+        "from": "dentry",
+        "to": "a2",
+        "guard": "tier-0 overseer commissions"
+      },
+      {
+        "from": "dentry",
+        "to": "directowner",
+        "guard": "Owner commissions directly",
+        "ext": "1a"
+      },
+      {
+        "from": "directowner",
+        "to": "a3"
+      },
+      {
+        "from": "a2",
+        "to": "a3"
+      },
+      {
+        "from": "a3",
+        "to": "a4"
+      },
+      {
+        "from": "a4",
+        "to": "d1"
+      },
+      {
+        "from": "d1",
+        "to": "a5",
+        "guard": "current"
+      },
+      {
+        "from": "d1",
+        "to": "r1",
+        "guard": "stale root",
+        "ext": "4a",
+        "observed": "historical 3a"
+      },
+      {
+        "from": "a5",
+        "to": "d2"
+      },
+      {
+        "from": "a6",
+        "to": "draftcheck"
+      },
+      {
+        "from": "d2",
+        "to": "a6",
+        "guard": "qualified"
+      },
+      {
+        "from": "d2",
+        "to": "r2",
+        "guard": "confirmed lost qualification",
+        "ext": "5a",
+        "observed": "historical 5a"
+      },
+      {
+        "from": "draftfault",
+        "to": "xe"
+      },
+      {
+        "from": "d3",
+        "to": "folderapprove",
+        "guard": "normal and delegated"
+      },
+      {
+        "from": "d3",
+        "to": "x1",
+        "guard": "reserved or sensitive",
+        "ext": "6a"
+      },
+      {
+        "from": "x1",
+        "to": "dheldroute"
+      },
+      {
+        "from": "dheldroute",
+        "to": "x2",
+        "guard": "overseer present"
+      },
+      {
+        "from": "dheldroute",
+        "to": "x3",
+        "guard": "direct Owner run"
+      },
+      {
+        "from": "x2",
+        "to": "x3"
+      },
+      {
+        "from": "x3",
+        "to": "folderapprove",
+        "guard": "approve/apply"
+      },
+      {
+        "from": "x3",
+        "to": "exclude",
+        "guard": "exclude"
+      },
+      {
+        "from": "x3",
+        "to": "xp_at_5b075aa469",
+        "guard": "decline"
+      },
+      {
+        "from": "x3",
+        "to": "xp_at_5b075aa469",
+        "guard": "hold"
+      },
+      {
+        "from": "exclude",
+        "to": "folderapprove"
+      },
+      {
+        "from": "folderapprove",
+        "to": "a7"
+      },
+      {
+        "from": "dfolder",
+        "to": "indexcheck",
+        "guard": "CLI application succeeded; proposed coverage check follows"
+      },
+      {
+        "from": "dfolder",
+        "to": "r1application",
+        "guard": "FOLDER_STALE",
+        "ext": "8a"
+      },
+      {
+        "from": "dfolder",
+        "to": "folderfault",
+        "guard": "GEOGRAPHER_CALL_FAILED or another refusal",
+        "ext": "8b"
+      },
+      {
+        "from": "folderfault",
+        "to": "xe"
+      },
+      {
+        "from": "dinput",
+        "to": "a8",
+        "guard": "nonempty Source-eligible requested subset"
+      },
+      {
+        "from": "dinput",
+        "to": "reuseledger",
+        "guard": "excluded or no eligible input",
+        "ext": "8d"
+      },
+      {
+        "from": "a8",
+        "to": "a9"
+      },
+      {
+        "from": "a9",
+        "to": "d4"
+      },
+      {
+        "from": "d4",
+        "to": "a10",
+        "guard": "reconciles"
+      },
+      {
+        "from": "d4",
+        "to": "countdiagnosis",
+        "guard": "unexplained mismatch",
+        "ext": "10a",
+        "observed": "historical 8a: zero top-level then 96 per-root"
+      },
+      {
+        "from": "countdiagnosis",
+        "to": "r3"
+      },
+      {
+        "from": "a10",
+        "to": "dcapture"
+      },
+      {
+        "from": "dcapture",
+        "to": "capturedescribe",
+        "guard": "usable Sources with per-reference outcomes"
+      },
+      {
+        "from": "dcapture",
+        "to": "capturefault",
+        "guard": "required capture gaps",
+        "ext": "11a"
+      },
+      {
+        "from": "dcapture",
+        "to": "reuseledger",
+        "guard": "duplicates/exclusions only; no new source",
+        "ext": "11b"
+      },
+      {
+        "from": "capturefault",
+        "to": "xe"
+      },
+      {
+        "from": "capturedescribe",
+        "to": "capturestore"
+      },
+      {
+        "from": "capturestore",
+        "to": "dapprove"
+      },
+      {
+        "from": "dapprove",
+        "to": "a11",
+        "guard": "delegated and unreserved"
+      },
+      {
+        "from": "dapprove",
+        "to": "approvalowner",
+        "guard": "person mode, sensitive or reserved approval",
+        "ext": "14a"
+      },
+      {
+        "from": "approvalowner",
+        "to": "approvalrecord",
+        "guard": "approve"
+      },
+      {
+        "from": "approvalowner",
+        "to": "xp_at_5b075aa469",
+        "guard": "decline or hold"
+      },
+      {
+        "from": "a11",
+        "to": "approvalrecord"
+      },
+      {
+        "from": "approvalrecord",
+        "to": "startrequest"
+      },
+      {
+        "from": "startrequest",
+        "to": "dstartauthority"
+      },
+      {
+        "from": "dstartauthority",
+        "to": "startrun",
+        "guard": "explicit grant valid"
+      },
+      {
+        "from": "dstartauthority",
+        "to": "startowner",
+        "guard": "reserved or absent start grant",
+        "ext": "15a"
+      },
+      {
+        "from": "startowner",
+        "to": "startrun",
+        "guard": "grant"
+      },
+      {
+        "from": "startowner",
+        "to": "xp",
+        "guard": "decline or hold"
+      },
+      {
+        "from": "startrun",
+        "to": "enrich"
+      },
+      {
+        "from": "enrich",
+        "to": "d5",
+        "guard": "success"
+      },
+      {
+        "from": "enrich",
+        "to": "partialchoice",
+        "guard": "partial",
+        "ext": "17a"
+      },
+      {
+        "from": "enrich",
+        "to": "reuseledger",
+        "guard": "reused",
+        "ext": "17b"
+      },
+      {
+        "from": "enrich",
+        "to": "x4",
+        "guard": "paused",
+        "ext": "17c"
+      },
+      {
+        "from": "enrich",
+        "to": "xe_at_1020338efc",
+        "guard": "escalated",
+        "ext": "17d"
+      },
+      {
+        "from": "partialchoice",
+        "to": "d5"
+      },
+      {
+        "from": "d5",
+        "to": "ledger",
+        "guard": "full or expressly permitted partial meets parent obligations"
+      },
+      {
+        "from": "d5",
+        "to": "r4",
+        "guard": "required partial reading has a matching accepted bounded R4",
+        "ext": "17e",
+        "observed": "historical 12b"
+      },
+      {
+        "from": "d5",
+        "to": "xp_at_5b075aa469",
+        "guard": "required work failed/pending without permitted continuation",
+        "ext": "17f"
+      },
+      {
+        "from": "ledger",
+        "to": "dsourcework"
+      },
+      {
+        "from": "d6",
+        "to": "a16",
+        "guard": "agent mode; delegated, non-sensitive and not interrupted"
+      },
+      {
+        "from": "d6",
+        "to": "x6",
+        "guard": "person mode, sensitive, interrupted or otherwise reserved",
+        "ext": "19a",
+        "observed": "historical 15a unowned acceptance"
+      },
+      {
+        "from": "x6",
+        "to": "x7"
+      },
+      {
+        "from": "x7",
+        "to": "acceptrecord",
+        "guard": "accept specified full/permitted-partial Sources"
+      },
+      {
+        "from": "x7",
+        "to": "xp",
+        "guard": "decline"
+      },
+      {
+        "from": "x7",
+        "to": "xp",
+        "guard": "hold"
+      },
+      {
+        "from": "a16",
+        "to": "acceptrecord"
+      },
+      {
+        "from": "acceptrecord",
+        "to": "a17"
+      },
+      {
+        "from": "a17",
+        "to": "dwrite"
+      },
+      {
+        "from": "d7",
+        "to": "a18",
+        "guard": "required checks pass"
+      },
+      {
+        "from": "d7",
+        "to": "r5",
+        "guard": "written note fails candidate index obligation",
+        "ext": "20a"
+      },
+      {
+        "from": "d7",
+        "to": "contentdiagnosis",
+        "guard": "written note has an unmapped content/retrieval gap",
+        "ext": "20b"
+      },
+      {
+        "from": "contentdiagnosis",
+        "to": "x9"
+      },
+      {
+        "from": "a18",
+        "to": "d8"
+      },
+      {
+        "from": "d8",
+        "to": "a19",
+        "guard": "met"
+      },
+      {
+        "from": "d8",
+        "to": "r6",
+        "guard": "mapped failure shortfall, excluding legitimate pending/reserved decisions",
+        "ext": "21a"
+      },
+      {
+        "from": "d8",
+        "to": "x8",
+        "guard": "unmapped failure or misalignment, excluding legitimate pending/reserved decisions",
+        "ext": "21b"
+      },
+      {
+        "from": "x8",
+        "to": "x9"
+      },
+      {
+        "from": "x9",
+        "to": "a18"
+      },
+      {
+        "from": "a19",
+        "to": "dresultroute"
+      },
+      {
+        "from": "dresultroute",
+        "to": "a20",
+        "guard": "tier-0 specification owner"
+      },
+      {
+        "from": "dresultroute",
+        "to": "ownerreport",
+        "guard": "direct Owner specification owner",
+        "ext": "22a"
+      },
+      {
+        "from": "ownerreport",
+        "to": "delivery"
+      },
+      {
+        "from": "a20",
+        "to": "d9"
+      },
+      {
+        "from": "d9",
+        "to": "a21",
+        "guard": "ready"
+      },
+      {
+        "from": "d9",
+        "to": "x10",
+        "guard": "needs bounded correction",
+        "ext": "23a"
+      },
+      {
+        "from": "x10",
+        "to": "x11"
+      },
+      {
+        "from": "x11",
+        "to": "x12"
+      },
+      {
+        "from": "x12",
+        "to": "x13"
+      },
+      {
+        "from": "x13",
+        "to": "dlast"
+      },
+      {
+        "from": "dlast",
+        "to": "x14",
+        "guard": "met"
+      },
+      {
+        "from": "dlast",
+        "to": "xp",
+        "guard": "not met; further authority or work needed"
+      },
+      {
+        "from": "x14",
+        "to": "a21"
+      },
+      {
+        "from": "a21",
+        "to": "delivery"
+      },
+      {
+        "from": "delivery",
+        "to": "e1"
+      },
+      {
+        "from": "x4",
+        "to": "dpauseroute"
+      },
+      {
+        "from": "dpauseroute",
+        "to": "x5",
+        "guard": "overseer present"
+      },
+      {
+        "from": "dpauseroute",
+        "to": "xp_at_5b075aa469",
+        "guard": "direct Owner run"
+      },
+      {
+        "from": "x5",
+        "to": "xp"
+      },
+      {
+        "from": "xp",
+        "to": "e3"
+      },
+      {
+        "from": "xe",
+        "to": "e2"
+      },
+      {
+        "from": "reuseledger",
+        "to": "dreuse"
+      },
+      {
+        "from": "r1",
+        "to": "a4",
+        "guard": "resolved"
+      },
+      {
+        "from": "r1",
+        "to": "xp",
+        "guard": "declined"
+      },
+      {
+        "from": "r1",
+        "to": "xe",
+        "guard": "escalated"
+      },
+      {
+        "from": "r2",
+        "to": "d2",
+        "guard": "resolved"
+      },
+      {
+        "from": "r2",
+        "to": "xp",
+        "guard": "declined"
+      },
+      {
+        "from": "r2",
+        "to": "xe",
+        "guard": "escalated"
+      },
+      {
+        "from": "r3",
+        "to": "a8",
+        "guard": "resolved"
+      },
+      {
+        "from": "r3",
+        "to": "xp",
+        "guard": "declined"
+      },
+      {
+        "from": "r3",
+        "to": "xe",
+        "guard": "escalated"
+      },
+      {
+        "from": "r4",
+        "to": "enrich",
+        "guard": "resolved"
+      },
+      {
+        "from": "r4",
+        "to": "xp",
+        "guard": "declined"
+      },
+      {
+        "from": "r4",
+        "to": "xe",
+        "guard": "escalated"
+      },
+      {
+        "from": "r5",
+        "to": "d7",
+        "guard": "resolved"
+      },
+      {
+        "from": "r5",
+        "to": "xp",
+        "guard": "declined"
+      },
+      {
+        "from": "r5",
+        "to": "xe",
+        "guard": "escalated"
+      },
+      {
+        "from": "r6",
+        "to": "a18",
+        "guard": "resolved"
+      },
+      {
+        "from": "r6",
+        "to": "xp",
+        "guard": "declined"
+      },
+      {
+        "from": "r6",
+        "to": "xe",
+        "guard": "escalated"
+      },
+      {
+        "from": "d5",
+        "to": "publicationdiagnosis",
+        "guard": "required publication-only gap without matching reading fault",
+        "ext": "17g"
+      },
+      {
+        "from": "publicationdiagnosis",
+        "to": "xp"
+      },
+      {
+        "to": "ddraft",
+        "from": "draftcheck"
+      },
+      {
+        "to": "d3",
+        "from": "ddraft",
+        "guard": "usable returned draft, required fields/provenance valid and sensitivity finding recorded"
+      },
+      {
+        "to": "draftfault",
+        "from": "ddraft",
+        "guard": "transport refusal, invalid schema/provenance or partial/queued/failed draft",
+        "ext": "6b"
+      },
+      {
+        "to": "xe_at_6b561aa06e",
+        "from": "ddraft",
+        "guard": "critical integrity or authority-boundary evidence in draft",
+        "ext": "6c"
+      },
+      {
+        "to": "findcheck",
+        "from": "dwrite",
+        "guard": "confirmed committed, including a committed note already flagged written-but-not-findable"
+      },
+      {
+        "to": "d7",
+        "from": "findcheck"
+      },
+      {
+        "to": "writestate",
+        "from": "dwrite",
+        "guard": "unknown/interrupted outcome, human-edit conflict or unconfirmed/uncommitted refusal",
+        "ext": "20c"
+      },
+      {
+        "to": "xe_at_1020338efc",
+        "from": "dwrite",
+        "guard": "critical integrity or authority-boundary evidence in write",
+        "ext": "20d"
+      },
+      {
+        "to": "writeowner",
+        "from": "writestate"
+      },
+      {
+        "to": "a17",
+        "from": "writeowner",
+        "guard": "specific bounded guarded retry authorized after compatible-state reconciliation; no unresolved human edit"
+      },
+      {
+        "to": "xp",
+        "from": "writeowner",
+        "guard": "decline, hold or follow-on recovery/compensation needs separate scope"
+      },
+      {
+        "to": "xe",
+        "from": "writeowner",
+        "guard": "unresolved integrity/scope finding requires escalation"
+      },
+      {
+        "to": "dindex",
+        "from": "indexcheck"
+      },
+      {
+        "to": "dinput",
+        "from": "dindex",
+        "guard": "required coverage/capability evidence available and acceptable under the specification"
+      },
+      {
+        "to": "indexfault",
+        "from": "dindex",
+        "guard": "required evidence unavailable, degraded beyond allowance or failed",
+        "ext": "8e"
+      },
+      {
+        "to": "xe_at_1020338efc",
+        "from": "dindex",
+        "guard": "critical integrity or authority-boundary finding",
+        "ext": "8f"
+      },
+      {
+        "to": "xp",
+        "from": "indexfault"
+      },
+      {
+        "to": "a18",
+        "from": "nonsource"
+      },
+      {
+        "to": "reused",
+        "from": "dreuse",
+        "guard": "no in-scope source, lens, folder or required result obligation remains; existing evidence already settles the parent contract"
+      },
+      {
+        "to": "ledger",
+        "from": "dreuse",
+        "guard": "Source/lens/folder decisions or result checks remain; no duplicate child execution"
+      },
+      {
+        "to": "d6",
+        "from": "dsourcework",
+        "guard": "yes; actually decidable Source acceptance remains"
+      },
+      {
+        "to": "a18",
+        "from": "dsourcework",
+        "guard": "no Source acceptance owed; preserve any independent lens/folder/result obligations for Oracle",
+        "ext": "18a"
+      },
+      {
+        "to": "xp_at_5b075aa469",
+        "from": "dsourcework",
+        "guard": "Source acceptance not currently decidable; preserve state and required continuation",
+        "ext": "18b"
+      },
+      {
+        "to": "xp",
+        "from": "d8",
+        "guard": "remaining requirement is a legitimate pending/reserved decision, not a repair fault",
+        "ext": "21c"
+      },
+      {
+        "from": "a7",
+        "to": "applygroups"
+      },
+      {
+        "from": "applygroups",
+        "to": "applicationreceipt"
+      },
+      {
+        "from": "applicationreceipt",
+        "to": "dfolder"
+      },
+      {
+        "from": "dinput",
+        "to": "nonsource",
+        "guard": "own-code/data/log purpose only; no Source-eligible requested subset",
+        "ext": "8c"
+      },
+      {
+        "from": "r1application",
+        "to": "a7",
+        "guard": "resolved"
+      },
+      {
+        "from": "r1application",
+        "to": "xp",
+        "guard": "declined"
+      },
+      {
+        "from": "r1application",
+        "to": "xe",
+        "guard": "escalated"
+      },
+      {
+        "from": "xp_at_5b075aa469",
+        "to": "e3_at_5b075aa469"
+      },
+      {
+        "from": "xe_at_1020338efc",
+        "to": "e2_at_1020338efc"
+      },
+      {
+        "from": "xe_at_6b561aa06e",
+        "to": "e2_at_6b561aa06e"
+      }
+    ],
+    "provenance": {
+      "drafted_by": "tier 0 (Claude Code), owner direction 2026-11-20",
+      "at": "2026-11-20",
+      "revised_at": "2026-11-23"
+    },
+    "evidence": {
+      "applygroups": [
+        "src/resource_librarian/folder_review.py:accept / accept_by_policy",
+        "F:/uv-data/Geo_Grapher/src/geographer/folder_review.py:apply_review"
+      ],
+      "applicationreceipt": [
+        "src/resource_librarian/folder_review.py:cli",
+        "F:/uv-data/Geo_Grapher/src/geographer/pipeline.py:ingest (parse_failures not included by apply_review)"
+      ]
+    },
+    "_file": "ingestion-tobe.spec.yaml"
+  },
+  "fold": {
+    "node_origins": {
+      "xp_at_5b075aa469": "xp",
+      "e3_at_5b075aa469": "e3",
+      "xe_at_1020338efc": "xe",
+      "e2_at_1020338efc": "e2",
+      "xe_at_6b561aa06e": "xe",
+      "e2_at_6b561aa06e": "e2"
+    },
+    "terminal_tail_copies": [
+      {
+        "departure": "[\"x3\", \"xp\", \"decline\", null]",
+        "original_tail": [
+          "xp",
+          "e3"
+        ],
+        "local_tail": [
+          "xp_at_5b075aa469",
+          "e3_at_5b075aa469"
+        ]
+      },
+      {
+        "departure": "[\"enrich\", \"xe\", \"escalated\", \"17d\"]",
+        "original_tail": [
+          "xe",
+          "e2"
+        ],
+        "local_tail": [
+          "xe_at_1020338efc",
+          "e2_at_1020338efc"
+        ]
+      },
+      {
+        "departure": "[\"ddraft\", \"xe\", \"critical integrity or authority-boundary evidence in draft\", \"6c\"]",
+        "original_tail": [
+          "xe",
+          "e2"
+        ],
+        "local_tail": [
+          "xe_at_6b561aa06e",
+          "e2_at_6b561aa06e"
+        ]
+      }
+    ]
+  },
+  "canvas": {
+    "nodes": [
+      {
+        "id": "librarian-title",
+        "type": "text",
+        "x": 20,
+        "y": -200,
+        "width": 6380,
+        "height": 220,
+        "text": "# Proposed ingestion: Owner or tier-0 commissioning, Lead ownership and independent Oracle review\n**Symptom:** Historical ingestion left orchestration and unresolved acceptance handoffs with tier 0.\n**Root cause:** The parent needs accountable role ownership, explicit authority and truthful child outcomes, composed through existing registered processes.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `ingestion-tobe.spec.yaml`."
+      },
+      {
+        "id": "librarian-s",
+        "type": "text",
+        "x": 40,
+        "y": 140,
+        "width": 360,
+        "height": 70,
+        "text": "\u25cf start",
+        "color": "4"
+      },
+      {
+        "id": "librarian-a1",
+        "type": "text",
+        "x": 40,
+        "y": 340,
+        "width": 360,
+        "height": 150,
+        "text": "**1.** states the ingestion goal, roots, pre-read exclusions, required outputs, permitted partials and budget; grants only the intended authority"
+      },
+      {
+        "id": "librarian-dentry",
+        "type": "text",
+        "x": 4240,
+        "y": 540,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 commissioning route?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-a2",
+        "type": "text",
+        "x": 640,
+        "y": 940,
+        "width": 360,
+        "height": 150,
+        "text": "**2.** commissions the Lead on the Owner's behalf and supplies the agent-authored obligations for independent Oracle review"
+      },
+      {
+        "id": "librarian-directowner",
+        "type": "text",
+        "x": 40,
+        "y": 740,
+        "width": 360,
+        "height": 150,
+        "text": "commissions the Lead directly and supplies or approves the obligations; no tier-0 agent is required"
+      },
+      {
+        "id": "librarian-a3",
+        "type": "text",
+        "x": 1840,
+        "y": 1140,
+        "width": 360,
+        "height": 150,
+        "text": "**3.** owns execution against the commissioned specification; asks Core to store its version, grants and actual specification owner"
+      },
+      {
+        "id": "librarian-a4",
+        "type": "text",
+        "x": 4240,
+        "y": 1340,
+        "width": 360,
+        "height": 150,
+        "text": "**4.** inventories roots, fingerprints and literal facts; excludes hidden/scratch content before reading and resolves deepest-root ownership"
+      },
+      {
+        "id": "librarian-d1",
+        "type": "text",
+        "x": 4240,
+        "y": 1540,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 reviewed roots current?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-a5",
+        "type": "text",
+        "x": 1840,
+        "y": 1940,
+        "width": 360,
+        "height": 150,
+        "text": "**5.** binds the Owner's exclusions, purpose constraints and decision grants to the eligible worklist"
+      },
+      {
+        "id": "librarian-r1",
+        "type": "text",
+        "x": 2440,
+        "y": 1740,
+        "width": 360,
+        "height": 150,
+        "text": "\u21c9 **UC-D**: evaluates accepted R1 for stale evidence using its actual whole-library radius; a local mandate cannot silently permit a global rebuild",
+        "color": "2"
+      },
+      {
+        "id": "librarian-d2",
+        "type": "text",
+        "x": 4240,
+        "y": 2140,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 assigned folder-review role qualified on its selected route?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-xp",
+        "type": "text",
+        "x": 1840,
+        "y": 18540,
+        "width": 360,
+        "height": 150,
+        "text": "returns the paused package and named required decision directly to the Owner or through the overseer; retains completed work"
+      },
+      {
+        "id": "librarian-xe",
+        "type": "text",
+        "x": 1840,
+        "y": 16140,
+        "width": 360,
+        "height": 150,
+        "text": "returns unresolved fault evidence to the actual specification owner and immediately notifies the Owner/overseer for critical findings"
+      },
+      {
+        "id": "librarian-a6",
+        "type": "text",
+        "x": 3040,
+        "y": 2540,
+        "width": 360,
+        "height": 150,
+        "text": "**6.** interprets folder purpose, proposes descriptions and judges sensitivity; may direct bounded Scribe tasks"
+      },
+      {
+        "id": "librarian-r2",
+        "type": "text",
+        "x": 2440,
+        "y": 2340,
+        "width": 360,
+        "height": 150,
+        "text": "\u21c9 **UC-D**: restores confirmed lost qualification with accepted R2; provider timeouts and parser faults retain their distinct evidence",
+        "color": "2"
+      },
+      {
+        "id": "librarian-e3",
+        "type": "text",
+        "x": 6040,
+        "y": 18740,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c9 paused for a named Owner/authority decision, cancellation, interruption or ceiling stop; truthful continuation retained\n*outcome: paused*",
+        "color": "1"
+      },
+      {
+        "id": "librarian-e2",
+        "type": "text",
+        "x": 6040,
+        "y": 16340,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c9 unresolved or critical fault escalated to the actual specification owner; completed work and existing flags retained\n*outcome: escalated*",
+        "color": "1"
+      },
+      {
+        "id": "librarian-draftcheck",
+        "type": "text",
+        "x": 4240,
+        "y": 2740,
+        "width": 360,
+        "height": 150,
+        "text": "validates the returned draft status, required fields and literal provenance; records provider, schema and missing-evidence flags without judging semantic adequacy"
+      },
+      {
+        "id": "librarian-ddraft",
+        "type": "text",
+        "x": 4240,
+        "y": 2940,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 returned folder draft structurally valid with the Clerk's explicit sensitivity finding?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-d3",
+        "type": "text",
+        "x": 3040,
+        "y": 3740,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 folder decision reserved or sensitive?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-draftfault",
+        "type": "text",
+        "x": 1840,
+        "y": 3140,
+        "width": 360,
+        "height": 150,
+        "text": "diagnoses the actual post-draft transport, schema, provenance or missing-output failure from recorded evidence; retains existing flags and reports the unresolved scope without assuming qualification loss"
+      },
+      {
+        "id": "librarian-xe_at_6b561aa06e",
+        "type": "text",
+        "x": 1840,
+        "y": 3340,
+        "width": 360,
+        "height": 150,
+        "text": "returns unresolved fault evidence to the actual specification owner and immediately notifies the Owner/overseer for critical findings"
+      },
+      {
+        "id": "librarian-folderapprove",
+        "type": "text",
+        "x": 1840,
+        "y": 4940,
+        "width": 360,
+        "height": 150,
+        "text": "**7.** makes normal folder decisions within grant and preserves the Owner's explicit reserved decisions; supplies actual actors/reasons for Core to apply"
+      },
+      {
+        "id": "librarian-x1",
+        "type": "text",
+        "x": 1840,
+        "y": 3940,
+        "width": 360,
+        "height": 150,
+        "text": "reports the held folder, evidence and required decision to the actual specification owner"
+      },
+      {
+        "id": "librarian-e2_at_6b561aa06e",
+        "type": "text",
+        "x": 6040,
+        "y": 3540,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c9 unresolved or critical fault escalated to the actual specification owner; completed work and existing flags retained\n*outcome: escalated*",
+        "color": "1"
+      },
+      {
+        "id": "librarian-a7",
+        "type": "text",
+        "x": 4240,
+        "y": 5140,
+        "width": 360,
+        "height": 150,
+        "text": "**8.** submits affirmative folder decisions and read barriers for group application; acceptance is recorded only after the CLI succeeds"
+      },
+      {
+        "id": "librarian-dheldroute",
+        "type": "text",
+        "x": 4240,
+        "y": 4140,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 tier-0 overseer present for this run?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-applygroups",
+        "type": "text",
+        "x": 5440,
+        "y": 5340,
+        "width": 360,
+        "height": 150,
+        "text": "applies all accepted non-excluded groups, including documents and papers; ingests supported code/text and may reuse matching complete snapshots"
+      },
+      {
+        "id": "librarian-x2",
+        "type": "text",
+        "x": 640,
+        "y": 4340,
+        "width": 360,
+        "height": 150,
+        "text": "relays the reserved folder decision to the Owner"
+      },
+      {
+        "id": "librarian-x3",
+        "type": "text",
+        "x": 40,
+        "y": 4540,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 Owner's held-folder decision?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-applicationreceipt",
+        "type": "text",
+        "x": 4240,
+        "y": 5540,
+        "width": 360,
+        "height": 150,
+        "text": "checks CLI exit, JSON and pinned version; records successful application and accepted decisions; returned JSON does not attest parser completeness"
+      },
+      {
+        "id": "librarian-exclude",
+        "type": "text",
+        "x": 4240,
+        "y": 4740,
+        "width": 360,
+        "height": 150,
+        "text": "records the excluded subtree; removes it from eligible work without reading it"
+      },
+      {
+        "id": "librarian-xp_at_5b075aa469",
+        "type": "text",
+        "x": 1840,
+        "y": 12540,
+        "width": 360,
+        "height": 150,
+        "text": "returns the paused package and named required decision directly to the Owner or through the overseer; retains completed work"
+      },
+      {
+        "id": "librarian-dfolder",
+        "type": "text",
+        "x": 4240,
+        "y": 5740,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 folder application result?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-e3_at_5b075aa469",
+        "type": "text",
+        "x": 6040,
+        "y": 12740,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c9 paused for a named Owner/authority decision, cancellation, interruption or ceiling stop; truthful continuation retained\n*outcome: paused*",
+        "color": "1"
+      },
+      {
+        "id": "librarian-indexcheck",
+        "type": "text",
+        "x": 4240,
+        "y": 6140,
+        "width": 360,
+        "height": 150,
+        "text": "proposed: obtains parser/capability evidence and compares requested coverage; today the folder CLI omits parse failures, so additional evidence is required"
+      },
+      {
+        "id": "librarian-r1application",
+        "type": "text",
+        "x": 2440,
+        "y": 5940,
+        "width": 360,
+        "height": 150,
+        "text": "\u21c9 **UC-D**: handles application-stage FOLDER_STALE through the same scoped R1 remedy; no local mandate authorizes a global rebuild",
+        "color": "2"
+      },
+      {
+        "id": "librarian-folderfault",
+        "type": "text",
+        "x": 1840,
+        "y": 5940,
+        "width": 360,
+        "height": 150,
+        "text": "retains GEOGRAPHER_CALL_FAILED or other folder refusal; requests capability/scope diagnosis and a mapped accepted remedy only when applicable"
+      },
+      {
+        "id": "librarian-dindex",
+        "type": "text",
+        "x": 4240,
+        "y": 6340,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 proposed coverage check has sufficient capability and extraction evidence?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-dinput",
+        "type": "text",
+        "x": 4240,
+        "y": 6740,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 requested Source-eligible subset remains after common folder-group application?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-indexfault",
+        "type": "text",
+        "x": 1840,
+        "y": 6540,
+        "width": 360,
+        "height": 150,
+        "text": "holds the unmet quality requirement with the Lead; missing current CLI evidence is not an existing Core capability check"
+      },
+      {
+        "id": "librarian-xe_at_1020338efc",
+        "type": "text",
+        "x": 1840,
+        "y": 14340,
+        "width": 360,
+        "height": 150,
+        "text": "returns unresolved fault evidence to the actual specification owner and immediately notifies the Owner/overseer for critical findings"
+      },
+      {
+        "id": "librarian-a8",
+        "type": "text",
+        "x": 4240,
+        "y": 7140,
+        "width": 360,
+        "height": 150,
+        "text": "**9.** queues Source-eligible third-party, research-docs and own-docs inputs per deepest accepted root; retains enqueue history"
+      },
+      {
+        "id": "librarian-reuseledger",
+        "type": "text",
+        "x": 4240,
+        "y": 10940,
+        "width": 360,
+        "height": 150,
+        "text": "reconciles no-new-work/current results against the parent ledger and separate outstanding decisions; never infers work from enqueue-history counts"
+      },
+      {
+        "id": "librarian-nonsource",
+        "type": "text",
+        "x": 4240,
+        "y": 15140,
+        "width": 360,
+        "height": 150,
+        "text": "accounts for common folder application; no Source intake applies to this purpose, while remaining requirements still reach Oracle review"
+      },
+      {
+        "id": "librarian-e2_at_1020338efc",
+        "type": "text",
+        "x": 6040,
+        "y": 14540,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c9 unresolved or critical fault escalated to the actual specification owner; completed work and existing flags retained\n*outcome: escalated*",
+        "color": "1"
+      },
+      {
+        "id": "librarian-a9",
+        "type": "text",
+        "x": 4240,
+        "y": 7340,
+        "width": 360,
+        "height": 150,
+        "text": "**10.** reconciles literal eligible counts with current staging/processing state and the parent mixed-item ledger"
+      },
+      {
+        "id": "librarian-dreuse",
+        "type": "text",
+        "x": 4240,
+        "y": 11140,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 reconciled current states leave any in-scope parent obligation?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-a18",
+        "type": "text",
+        "x": 1240,
+        "y": 15340,
+        "width": 360,
+        "height": 150,
+        "text": "**21.** judges the parent specification using deterministic evidence and independent semantic review, including separate decision obligations and actual partial results"
+      },
+      {
+        "id": "librarian-d4",
+        "type": "text",
+        "x": 4240,
+        "y": 7540,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 current eligible count and queue reconcile?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-reused",
+        "type": "text",
+        "x": 6040,
+        "y": 11340,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c9 existing or excluded work reconciled; no duplicate processing or implicit acceptance\n*outcome: reused*",
+        "color": "6"
+      },
+      {
+        "id": "librarian-ledger",
+        "type": "text",
+        "x": 4240,
+        "y": 12140,
+        "width": 360,
+        "height": 150,
+        "text": "**18.** reconciles returned Source states with the original mixed-item ledger; issues separate Source and lens worklists with owner, current state and remaining decision"
+      },
+      {
+        "id": "librarian-d8",
+        "type": "text",
+        "x": 1240,
+        "y": 15540,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 parent specification met?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-a10",
+        "type": "text",
+        "x": 4240,
+        "y": 8140,
+        "width": 360,
+        "height": 150,
+        "text": "**11.** captures immutable evidence and per-reference outcomes; isolates parser/quarantine failures and preserves successful siblings"
+      },
+      {
+        "id": "librarian-countdiagnosis",
+        "type": "text",
+        "x": 3040,
+        "y": 7740,
+        "width": 360,
+        "height": 150,
+        "text": "investigates unexplained count mismatch read-only; distinguishes historical queued keys from current pending items"
+      },
+      {
+        "id": "librarian-dsourcework",
+        "type": "text",
+        "x": 4240,
+        "y": 12340,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 reconciled current worklist contains a decidable Source acceptance still owed?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-a19",
+        "type": "text",
+        "x": 1840,
+        "y": 16540,
+        "width": 360,
+        "height": 150,
+        "text": "**22.** hands one truthful result package and Oracle verdict to the recorded specification owner"
+      },
+      {
+        "id": "librarian-r6",
+        "type": "text",
+        "x": 2440,
+        "y": 15740,
+        "width": 360,
+        "height": 150,
+        "text": "\u21c9 **UC-D**: evaluates the accepted catalogued remedy for a mapped shortfall, with actual radius and independent verification",
+        "color": "2"
+      },
+      {
+        "id": "librarian-x8",
+        "type": "text",
+        "x": 3040,
+        "y": 15740,
+        "width": 360,
+        "height": 150,
+        "text": "scouts an unmapped shortfall and its actual affected scope read-only"
+      },
+      {
+        "id": "librarian-dcapture",
+        "type": "text",
+        "x": 4240,
+        "y": 8340,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 usable captured Sources remain?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-r3",
+        "type": "text",
+        "x": 2440,
+        "y": 7940,
+        "width": 360,
+        "height": 150,
+        "text": "\u21c9 **UC-D**: applies accepted R3 only for a matching per-root queue defect, retaining the mismatch evidence",
+        "color": "2"
+      },
+      {
+        "id": "librarian-d6",
+        "type": "text",
+        "x": 4240,
+        "y": 12940,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 Source promotion mode, sensitivity, interruption state and delegated acceptance authority?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-dresultroute",
+        "type": "text",
+        "x": 4240,
+        "y": 16740,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 result owner is a tier-0 overseer?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-x9",
+        "type": "text",
+        "x": 1840,
+        "y": 15940,
+        "width": 360,
+        "height": 150,
+        "text": "coordinates authorized correction from Oracle evidence and Clerk scouting; asks Oracle to judge the revised evidence"
+      },
+      {
+        "id": "librarian-capturedescribe",
+        "type": "text",
+        "x": 3040,
+        "y": 8740,
+        "width": 360,
+        "height": 150,
+        "text": "**12.** writes neutral evidence-based Source descriptions, directing Scribes only for bounded drafting"
+      },
+      {
+        "id": "librarian-capturefault",
+        "type": "text",
+        "x": 1840,
+        "y": 8540,
+        "width": 360,
+        "height": 150,
+        "text": "reports required capture gaps with existing flags; chooses authorized bounded retry or a truthful held/escalated result"
+      },
+      {
+        "id": "librarian-a16",
+        "type": "text",
+        "x": 1840,
+        "y": 13540,
+        "width": 360,
+        "height": 150,
+        "text": "**19.** makes affirmative Source acceptance decisions only within grant, for full or explicitly permitted partial outputs; no lens is accepted implicitly"
+      },
+      {
+        "id": "librarian-x6",
+        "type": "text",
+        "x": 4240,
+        "y": 13140,
+        "width": 360,
+        "height": 150,
+        "text": "keeps the Source decision on the named Owner's agenda/context; independently routes required lens accept/reject/defer work"
+      },
+      {
+        "id": "librarian-a20",
+        "type": "text",
+        "x": 640,
+        "y": 17140,
+        "width": 360,
+        "height": 150,
+        "text": "**23.** reviews the Lead's result and independent verdict against the commissioned specification"
+      },
+      {
+        "id": "librarian-ownerreport",
+        "type": "text",
+        "x": 40,
+        "y": 17340,
+        "width": 360,
+        "height": 150,
+        "text": "receives the Lead result and Oracle verdict directly, without an absent tier-0 intermediary"
+      },
+      {
+        "id": "librarian-capturestore",
+        "type": "text",
+        "x": 4240,
+        "y": 8940,
+        "width": 360,
+        "height": 150,
+        "text": "**13.** stages Source records and records their parent ledger keys; folder metadata retains folder_validate, folder_describe and folder_data with separate review"
+      },
+      {
+        "id": "librarian-acceptrecord",
+        "type": "text",
+        "x": 4240,
+        "y": 13740,
+        "width": 360,
+        "height": 150,
+        "text": "records only affirmative authorized Source decisions with actual actor/reason; separately retains pending, rejected or deferred lens decisions"
+      },
+      {
+        "id": "librarian-x7",
+        "type": "text",
+        "x": 40,
+        "y": 13340,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 Owner's Source decision?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-d9",
+        "type": "text",
+        "x": 640,
+        "y": 17340,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 ready to return to the Owner?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-delivery",
+        "type": "text",
+        "x": 4240,
+        "y": 19140,
+        "width": 360,
+        "height": 150,
+        "text": "records the parent result delivered to its actual specification owner; retains outstanding decisions and limitations"
+      },
+      {
+        "id": "librarian-dapprove",
+        "type": "text",
+        "x": 4240,
+        "y": 9140,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 ingestion approval delegated and unreserved?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-a17",
+        "type": "text",
+        "x": 4240,
+        "y": 13940,
+        "width": 360,
+        "height": 150,
+        "text": "**20.** applies the guarded Source writer and retains the actual commit/refusal/attempt state; Source acceptance does not accept lenses"
+      },
+      {
+        "id": "librarian-a21",
+        "type": "text",
+        "x": 1840,
+        "y": 17540,
+        "width": 360,
+        "height": 150,
+        "text": "**24.** returns the result to the Owner directly or with the tier-0 reviewed report, retaining all remaining decision owners and limitations"
+      },
+      {
+        "id": "librarian-x10",
+        "type": "text",
+        "x": 640,
+        "y": 17540,
+        "width": 360,
+        "height": 150,
+        "text": "returns the remaining obligations to the Lead for bounded correction and requests an independent Oracle recheck"
+      },
+      {
+        "id": "librarian-e1",
+        "type": "text",
+        "x": 6040,
+        "y": 19340,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c9 Owner receives the specified result: actual Source acceptance/findability, per-item coverage/publication and independent lens decisions are explicit\n*outcome: success*",
+        "color": "6"
+      },
+      {
+        "id": "librarian-a11",
+        "type": "text",
+        "x": 1840,
+        "y": 9540,
+        "width": 360,
+        "height": 150,
+        "text": "**14.** approves the staged selection within the ingestion grant; supplies the actual authority, executor and reason to the approval action"
+      },
+      {
+        "id": "librarian-approvalowner",
+        "type": "text",
+        "x": 40,
+        "y": 9340,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 Owner's staged-work approval?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-dwrite",
+        "type": "text",
+        "x": 4240,
+        "y": 14140,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 guarded Source write result and current commit state?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-x11",
+        "type": "text",
+        "x": 1840,
+        "y": 17740,
+        "width": 360,
+        "height": 150,
+        "text": "coordinates the approved correction through the assigned agents and accepted Doctor remedies"
+      },
+      {
+        "id": "librarian-approvalrecord",
+        "type": "text",
+        "x": 4240,
+        "y": 9740,
+        "width": 360,
+        "height": 150,
+        "text": "records the affirmative authorized ingestion approval; queues work without starting processing"
+      },
+      {
+        "id": "librarian-findcheck",
+        "type": "text",
+        "x": 4240,
+        "y": 14740,
+        "width": 360,
+        "height": 150,
+        "text": "checks required title, Bottom-Line and concept retrieval only for a confirmed committed Source note; records actual searches"
+      },
+      {
+        "id": "librarian-writestate",
+        "type": "text",
+        "x": 4240,
+        "y": 14340,
+        "width": 360,
+        "height": 150,
+        "text": "reconciles the attempt, lease, current note/hash and commit evidence read-only; preserves human edits and records the reserved write checkpoint without assuming a commit"
+      },
+      {
+        "id": "librarian-x12",
+        "type": "text",
+        "x": 1840,
+        "y": 17940,
+        "width": 360,
+        "height": 150,
+        "text": "submits changed artifacts and evidence for independent review; Oracle does not issue worker orders"
+      },
+      {
+        "id": "librarian-startrequest",
+        "type": "text",
+        "x": 1840,
+        "y": 9940,
+        "width": 360,
+        "height": 150,
+        "text": "**15.** requests explicit processing start for the approved set within its recorded grant"
+      },
+      {
+        "id": "librarian-d7",
+        "type": "text",
+        "x": 4240,
+        "y": 14940,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 required retrieval checks pass for written notes?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-writeowner",
+        "type": "text",
+        "x": 40,
+        "y": 14540,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 Owner's bounded decision for the held or unconfirmed Source write?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-x13",
+        "type": "text",
+        "x": 1240,
+        "y": 18140,
+        "width": 360,
+        "height": 150,
+        "text": "judges the corrected obligations and returns its verdict to the specification owner"
+      },
+      {
+        "id": "librarian-dstartauthority",
+        "type": "text",
+        "x": 4240,
+        "y": 10140,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 explicit processing-start authority available?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-r5",
+        "type": "text",
+        "x": 2440,
+        "y": 15140,
+        "width": 360,
+        "height": 150,
+        "text": "\u21c9 **UC-D**: evaluates accepted R5 against the actual failed index obligation; reindexing is not assumed to cure every content/retrieval miss",
+        "color": "2"
+      },
+      {
+        "id": "librarian-contentdiagnosis",
+        "type": "text",
+        "x": 3040,
+        "y": 15140,
+        "width": 360,
+        "height": 150,
+        "text": "diagnoses content-related retrieval gaps read-only; never manufactures concepts or enables vectors merely to force a pass"
+      },
+      {
+        "id": "librarian-dlast",
+        "type": "text",
+        "x": 1240,
+        "y": 18340,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 corrected required obligations met?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-startrun",
+        "type": "text",
+        "x": 4240,
+        "y": 10540,
+        "width": 360,
+        "height": 150,
+        "text": "**16.** validates start authority and freezes selection/settings; returns the existing active run instead of dispatching another"
+      },
+      {
+        "id": "librarian-startowner",
+        "type": "text",
+        "x": 40,
+        "y": 10340,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 grant processing start for this approved selection?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-x14",
+        "type": "text",
+        "x": 640,
+        "y": 18540,
+        "width": 360,
+        "height": 150,
+        "text": "makes the final review of the corrected result"
+      },
+      {
+        "id": "librarian-enrich",
+        "type": "text",
+        "x": 4240,
+        "y": 10740,
+        "width": 360,
+        "height": 150,
+        "text": "**17.** \u21c9 **proposed-tobe-enrichment**: runs the source-enrichment child; each item owns all nine ordered stages including publication before the next item",
+        "color": "2"
+      },
+      {
+        "id": "librarian-d5",
+        "type": "text",
+        "x": 4240,
+        "y": 11740,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 returned source coverage and publication satisfy the actual parent obligations?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-partialchoice",
+        "type": "text",
+        "x": 1840,
+        "y": 10940,
+        "width": 360,
+        "height": 150,
+        "text": "retains explicit partial coverage/publication gaps; checks whether the parent permits accepting those particular Sources"
+      },
+      {
+        "id": "librarian-x4",
+        "type": "text",
+        "x": 1840,
+        "y": 11140,
+        "width": 360,
+        "height": 150,
+        "text": "reports actual stop reason, spend evidence, completed items and remaining work; distinguishes cancellation, interruption and before-item ceiling stop"
+      },
+      {
+        "id": "librarian-r4",
+        "type": "text",
+        "x": 2440,
+        "y": 11940,
+        "width": 360,
+        "height": 150,
+        "text": "\u21c9 **UC-D**: requests accepted bounded R4 for required partial reading; any finished-partial reapproval/start remains authorized and independent checks rerun",
+        "color": "2"
+      },
+      {
+        "id": "librarian-publicationdiagnosis",
+        "type": "text",
+        "x": 1840,
+        "y": 11940,
+        "width": 360,
+        "height": 150,
+        "text": "diagnoses required publication-only gaps from current admission, artifact and Geo evidence; never treats them as an automatic reread"
+      },
+      {
+        "id": "librarian-dpauseroute",
+        "type": "text",
+        "x": 4240,
+        "y": 11340,
+        "width": 360,
+        "height": 150,
+        "text": "\u25c7 tier-0 overseer present for paused result?",
+        "color": "5"
+      },
+      {
+        "id": "librarian-x5",
+        "type": "text",
+        "x": 640,
+        "y": 11540,
+        "width": 360,
+        "height": 150,
+        "text": "relays a reserved budget or continuation decision to the Owner when acting as overseer"
+      },
+      {
+        "id": "librarian-lane-Owner",
+        "type": "group",
+        "x": 20,
+        "y": 60,
+        "width": 400,
+        "height": 19530,
+        "label": "Owner"
+      },
+      {
+        "id": "librarian-lane-Tier-0-agent",
+        "type": "group",
+        "x": 620,
+        "y": 60,
+        "width": 400,
+        "height": 19530,
+        "label": "Tier 0 agent"
+      },
+      {
+        "id": "librarian-lane-Oracle",
+        "type": "group",
+        "x": 1220,
+        "y": 60,
+        "width": 400,
+        "height": 19530,
+        "label": "Oracle"
+      },
+      {
+        "id": "librarian-lane-Lead-tier-1-",
+        "type": "group",
+        "x": 1820,
+        "y": 60,
+        "width": 400,
+        "height": 19530,
+        "label": "Lead (tier 1)"
+      },
+      {
+        "id": "librarian-lane-Doctor",
+        "type": "group",
+        "x": 2420,
+        "y": 60,
+        "width": 400,
+        "height": 19530,
+        "label": "Doctor"
+      },
+      {
+        "id": "librarian-lane-Clerk-tier-2-",
+        "type": "group",
+        "x": 3020,
+        "y": 60,
+        "width": 400,
+        "height": 19530,
+        "label": "Clerk (tier 2)"
+      },
+      {
+        "id": "librarian-lane-Scribe-tier-3-",
+        "type": "group",
+        "x": 3620,
+        "y": 60,
+        "width": 400,
+        "height": 19530,
+        "label": "Scribe (tier 3)"
+      },
+      {
+        "id": "librarian-lane-Core",
+        "type": "group",
+        "x": 4220,
+        "y": 60,
+        "width": 400,
+        "height": 19530,
+        "label": "Core"
+      },
+      {
+        "id": "librarian-lane-Model-host",
+        "type": "group",
+        "x": 4820,
+        "y": 60,
+        "width": 400,
+        "height": 19530,
+        "label": "Model host"
+      },
+      {
+        "id": "librarian-lane-Geo-Grapher",
+        "type": "group",
+        "x": 5420,
+        "y": 60,
+        "width": 400,
+        "height": 19530,
+        "label": "Geo-Grapher"
+      },
+      {
+        "id": "librarian-lane-Outcomes",
+        "type": "group",
+        "x": 6020,
+        "y": 60,
+        "width": 400,
+        "height": 19530,
+        "label": "Outcomes"
+      }
+    ],
+    "edges": [
+      {
+        "id": "librarian-e0",
+        "fromNode": "librarian-s",
+        "toNode": "librarian-a1",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e1",
+        "fromNode": "librarian-a1",
+        "toNode": "librarian-dentry",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e2",
+        "fromNode": "librarian-dentry",
+        "toNode": "librarian-a2",
+        "label": "[tier-0 overseer commissions]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e3",
+        "fromNode": "librarian-dentry",
+        "toNode": "librarian-directowner",
+        "label": "[Owner commissions directly] 1a",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e4",
+        "fromNode": "librarian-directowner",
+        "toNode": "librarian-a3",
+        "fromSide": "top",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e5",
+        "fromNode": "librarian-a2",
+        "toNode": "librarian-a3",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e6",
+        "fromNode": "librarian-a3",
+        "toNode": "librarian-a4",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e7",
+        "fromNode": "librarian-a4",
+        "toNode": "librarian-d1",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e8",
+        "fromNode": "librarian-d1",
+        "toNode": "librarian-a5",
+        "label": "[current]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e9",
+        "fromNode": "librarian-d1",
+        "toNode": "librarian-r1",
+        "label": "[stale root] 4a",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e10",
+        "fromNode": "librarian-a5",
+        "toNode": "librarian-d2",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e11",
+        "fromNode": "librarian-a6",
+        "toNode": "librarian-draftcheck",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e12",
+        "fromNode": "librarian-d2",
+        "toNode": "librarian-a6",
+        "label": "[qualified]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e13",
+        "fromNode": "librarian-d2",
+        "toNode": "librarian-r2",
+        "label": "[confirmed lost qualification] 5a",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e14",
+        "fromNode": "librarian-draftfault",
+        "toNode": "librarian-xe",
+        "fromSide": "right",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e15",
+        "fromNode": "librarian-d3",
+        "toNode": "librarian-folderapprove",
+        "label": "[normal and delegated]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e16",
+        "fromNode": "librarian-d3",
+        "toNode": "librarian-x1",
+        "label": "[reserved or sensitive] 6a",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e17",
+        "fromNode": "librarian-x1",
+        "toNode": "librarian-dheldroute",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e18",
+        "fromNode": "librarian-dheldroute",
+        "toNode": "librarian-x2",
+        "label": "[overseer present]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e19",
+        "fromNode": "librarian-dheldroute",
+        "toNode": "librarian-x3",
+        "label": "[direct Owner run]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e20",
+        "fromNode": "librarian-x2",
+        "toNode": "librarian-x3",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e21",
+        "fromNode": "librarian-x3",
+        "toNode": "librarian-folderapprove",
+        "label": "[approve/apply]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e22",
+        "fromNode": "librarian-x3",
+        "toNode": "librarian-exclude",
+        "label": "[exclude]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e23",
+        "fromNode": "librarian-x3",
+        "toNode": "librarian-xp_at_5b075aa469",
+        "label": "[decline]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e24",
+        "fromNode": "librarian-x3",
+        "toNode": "librarian-xp_at_5b075aa469",
+        "label": "[hold]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e25",
+        "fromNode": "librarian-exclude",
+        "toNode": "librarian-folderapprove",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e26",
+        "fromNode": "librarian-folderapprove",
+        "toNode": "librarian-a7",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e27",
+        "fromNode": "librarian-dfolder",
+        "toNode": "librarian-indexcheck",
+        "label": "[CLI application succeeded; proposed coverage check follows]",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e28",
+        "fromNode": "librarian-dfolder",
+        "toNode": "librarian-r1application",
+        "label": "[FOLDER_STALE] 8a",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e29",
+        "fromNode": "librarian-dfolder",
+        "toNode": "librarian-folderfault",
+        "label": "[GEOGRAPHER_CALL_FAILED or another refusal] 8b",
+        "color": "1",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e30",
+        "fromNode": "librarian-folderfault",
+        "toNode": "librarian-xe",
+        "fromSide": "right",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e31",
+        "fromNode": "librarian-dinput",
+        "toNode": "librarian-a8",
+        "label": "[nonempty Source-eligible requested subset]",
+        "fromSide": "right",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e32",
+        "fromNode": "librarian-dinput",
+        "toNode": "librarian-reuseledger",
+        "label": "[excluded or no eligible input] 8d",
+        "color": "1",
+        "fromSide": "right",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e33",
+        "fromNode": "librarian-a8",
+        "toNode": "librarian-a9",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e34",
+        "fromNode": "librarian-a9",
+        "toNode": "librarian-d4",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e35",
+        "fromNode": "librarian-d4",
+        "toNode": "librarian-a10",
+        "label": "[reconciles]",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e36",
+        "fromNode": "librarian-d4",
+        "toNode": "librarian-countdiagnosis",
+        "label": "[unexplained mismatch] 10a",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e37",
+        "fromNode": "librarian-countdiagnosis",
+        "toNode": "librarian-r3",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e38",
+        "fromNode": "librarian-a10",
+        "toNode": "librarian-dcapture",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e39",
+        "fromNode": "librarian-dcapture",
+        "toNode": "librarian-capturedescribe",
+        "label": "[usable Sources with per-reference outcomes]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e40",
+        "fromNode": "librarian-dcapture",
+        "toNode": "librarian-capturefault",
+        "label": "[required capture gaps] 11a",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e41",
+        "fromNode": "librarian-dcapture",
+        "toNode": "librarian-reuseledger",
+        "label": "[duplicates/exclusions only; no new source] 11b",
+        "color": "1",
+        "fromSide": "right",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e42",
+        "fromNode": "librarian-capturefault",
+        "toNode": "librarian-xe",
+        "fromSide": "right",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e43",
+        "fromNode": "librarian-capturedescribe",
+        "toNode": "librarian-capturestore",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e44",
+        "fromNode": "librarian-capturestore",
+        "toNode": "librarian-dapprove",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e45",
+        "fromNode": "librarian-dapprove",
+        "toNode": "librarian-a11",
+        "label": "[delegated and unreserved]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e46",
+        "fromNode": "librarian-dapprove",
+        "toNode": "librarian-approvalowner",
+        "label": "[person mode, sensitive or reserved approval] 14a",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e47",
+        "fromNode": "librarian-approvalowner",
+        "toNode": "librarian-approvalrecord",
+        "label": "[approve]",
+        "fromSide": "top",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e48",
+        "fromNode": "librarian-approvalowner",
+        "toNode": "librarian-xp_at_5b075aa469",
+        "label": "[decline or hold]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e49",
+        "fromNode": "librarian-a11",
+        "toNode": "librarian-approvalrecord",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e50",
+        "fromNode": "librarian-approvalrecord",
+        "toNode": "librarian-startrequest",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e51",
+        "fromNode": "librarian-startrequest",
+        "toNode": "librarian-dstartauthority",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e52",
+        "fromNode": "librarian-dstartauthority",
+        "toNode": "librarian-startrun",
+        "label": "[explicit grant valid]",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e53",
+        "fromNode": "librarian-dstartauthority",
+        "toNode": "librarian-startowner",
+        "label": "[reserved or absent start grant] 15a",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e54",
+        "fromNode": "librarian-startowner",
+        "toNode": "librarian-startrun",
+        "label": "[grant]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e55",
+        "fromNode": "librarian-startowner",
+        "toNode": "librarian-xp",
+        "label": "[decline or hold]",
+        "fromSide": "left",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e56",
+        "fromNode": "librarian-startrun",
+        "toNode": "librarian-enrich",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e57",
+        "fromNode": "librarian-enrich",
+        "toNode": "librarian-d5",
+        "label": "[success]",
+        "fromSide": "right",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e58",
+        "fromNode": "librarian-enrich",
+        "toNode": "librarian-partialchoice",
+        "label": "[partial] 17a",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e59",
+        "fromNode": "librarian-enrich",
+        "toNode": "librarian-reuseledger",
+        "label": "[reused] 17b",
+        "color": "1",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e60",
+        "fromNode": "librarian-enrich",
+        "toNode": "librarian-x4",
+        "label": "[paused] 17c",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e61",
+        "fromNode": "librarian-enrich",
+        "toNode": "librarian-xe_at_1020338efc",
+        "label": "[escalated] 17d",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e62",
+        "fromNode": "librarian-partialchoice",
+        "toNode": "librarian-d5",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e63",
+        "fromNode": "librarian-d5",
+        "toNode": "librarian-ledger",
+        "label": "[full or expressly permitted partial meets parent obligations]",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e64",
+        "fromNode": "librarian-d5",
+        "toNode": "librarian-r4",
+        "label": "[required partial reading has a matching accepted bounded R4] 17e",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e65",
+        "fromNode": "librarian-d5",
+        "toNode": "librarian-xp_at_5b075aa469",
+        "label": "[required work failed/pending without permitted continuation] 17f",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e66",
+        "fromNode": "librarian-ledger",
+        "toNode": "librarian-dsourcework",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e67",
+        "fromNode": "librarian-d6",
+        "toNode": "librarian-a16",
+        "label": "[agent mode; delegated, non-sensitive and not interrupted]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e68",
+        "fromNode": "librarian-d6",
+        "toNode": "librarian-x6",
+        "label": "[person mode, sensitive, interrupted or otherwise reserved] 19a",
+        "color": "1",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e69",
+        "fromNode": "librarian-x6",
+        "toNode": "librarian-x7",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e70",
+        "fromNode": "librarian-x7",
+        "toNode": "librarian-acceptrecord",
+        "label": "[accept specified full/permitted-partial Sources]",
+        "fromSide": "top",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e71",
+        "fromNode": "librarian-x7",
+        "toNode": "librarian-xp",
+        "label": "[decline]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e72",
+        "fromNode": "librarian-x7",
+        "toNode": "librarian-xp",
+        "label": "[hold]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e73",
+        "fromNode": "librarian-a16",
+        "toNode": "librarian-acceptrecord",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e74",
+        "fromNode": "librarian-acceptrecord",
+        "toNode": "librarian-a17",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e75",
+        "fromNode": "librarian-a17",
+        "toNode": "librarian-dwrite",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e76",
+        "fromNode": "librarian-d7",
+        "toNode": "librarian-a18",
+        "label": "[required checks pass]",
+        "fromSide": "left",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e77",
+        "fromNode": "librarian-d7",
+        "toNode": "librarian-r5",
+        "label": "[written note fails candidate index obligation] 20a",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e78",
+        "fromNode": "librarian-d7",
+        "toNode": "librarian-contentdiagnosis",
+        "label": "[written note has an unmapped content/retrieval gap] 20b",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e79",
+        "fromNode": "librarian-contentdiagnosis",
+        "toNode": "librarian-x9",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e80",
+        "fromNode": "librarian-a18",
+        "toNode": "librarian-d8",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e81",
+        "fromNode": "librarian-d8",
+        "toNode": "librarian-a19",
+        "label": "[met]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e82",
+        "fromNode": "librarian-d8",
+        "toNode": "librarian-r6",
+        "label": "[mapped failure shortfall, excluding legitimate pending/reserved decisions] 21a",
+        "color": "1",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e83",
+        "fromNode": "librarian-d8",
+        "toNode": "librarian-x8",
+        "label": "[unmapped failure or misalignment, excluding legitimate pending/reserved decisions] 21b",
+        "color": "1",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e84",
+        "fromNode": "librarian-x8",
+        "toNode": "librarian-x9",
+        "fromSide": "top",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e85",
+        "fromNode": "librarian-x9",
+        "toNode": "librarian-a18",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e86",
+        "fromNode": "librarian-a19",
+        "toNode": "librarian-dresultroute",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e87",
+        "fromNode": "librarian-dresultroute",
+        "toNode": "librarian-a20",
+        "label": "[tier-0 specification owner]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e88",
+        "fromNode": "librarian-dresultroute",
+        "toNode": "librarian-ownerreport",
+        "label": "[direct Owner specification owner] 22a",
+        "color": "1",
+        "fromSide": "bottom",
+        "toSide": "bottom"
+      },
+      {
+        "id": "librarian-e89",
+        "fromNode": "librarian-ownerreport",
+        "toNode": "librarian-delivery",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e90",
+        "fromNode": "librarian-a20",
+        "toNode": "librarian-d9",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e91",
+        "fromNode": "librarian-d9",
+        "toNode": "librarian-a21",
+        "label": "[ready]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e92",
+        "fromNode": "librarian-d9",
+        "toNode": "librarian-x10",
+        "label": "[needs bounded correction] 23a",
+        "color": "1",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e93",
+        "fromNode": "librarian-x10",
+        "toNode": "librarian-x11",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e94",
+        "fromNode": "librarian-x11",
+        "toNode": "librarian-x12",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e95",
+        "fromNode": "librarian-x12",
+        "toNode": "librarian-x13",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e96",
+        "fromNode": "librarian-x13",
+        "toNode": "librarian-dlast",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e97",
+        "fromNode": "librarian-dlast",
+        "toNode": "librarian-x14",
+        "label": "[met]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e98",
+        "fromNode": "librarian-dlast",
+        "toNode": "librarian-xp",
+        "label": "[not met; further authority or work needed]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e99",
+        "fromNode": "librarian-x14",
+        "toNode": "librarian-a21",
+        "fromSide": "left",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e100",
+        "fromNode": "librarian-a21",
+        "toNode": "librarian-delivery",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e101",
+        "fromNode": "librarian-delivery",
+        "toNode": "librarian-e1",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e102",
+        "fromNode": "librarian-x4",
+        "toNode": "librarian-dpauseroute",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e103",
+        "fromNode": "librarian-dpauseroute",
+        "toNode": "librarian-x5",
+        "label": "[overseer present]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e104",
+        "fromNode": "librarian-dpauseroute",
+        "toNode": "librarian-xp_at_5b075aa469",
+        "label": "[direct Owner run]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e105",
+        "fromNode": "librarian-x5",
+        "toNode": "librarian-xp",
+        "fromSide": "left",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e106",
+        "fromNode": "librarian-xp",
+        "toNode": "librarian-e3",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e107",
+        "fromNode": "librarian-xe",
+        "toNode": "librarian-e2",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e108",
+        "fromNode": "librarian-reuseledger",
+        "toNode": "librarian-dreuse",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e109",
+        "fromNode": "librarian-r1",
+        "toNode": "librarian-a4",
+        "label": "[resolved]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e110",
+        "fromNode": "librarian-r1",
+        "toNode": "librarian-xp",
+        "label": "[declined]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e111",
+        "fromNode": "librarian-r1",
+        "toNode": "librarian-xe",
+        "label": "[escalated]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e112",
+        "fromNode": "librarian-r2",
+        "toNode": "librarian-d2",
+        "label": "[resolved]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e113",
+        "fromNode": "librarian-r2",
+        "toNode": "librarian-xp",
+        "label": "[declined]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e114",
+        "fromNode": "librarian-r2",
+        "toNode": "librarian-xe",
+        "label": "[escalated]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e115",
+        "fromNode": "librarian-r3",
+        "toNode": "librarian-a8",
+        "label": "[resolved]",
+        "fromSide": "top",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e116",
+        "fromNode": "librarian-r3",
+        "toNode": "librarian-xp",
+        "label": "[declined]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e117",
+        "fromNode": "librarian-r3",
+        "toNode": "librarian-xe",
+        "label": "[escalated]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e118",
+        "fromNode": "librarian-r4",
+        "toNode": "librarian-enrich",
+        "label": "[resolved]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e119",
+        "fromNode": "librarian-r4",
+        "toNode": "librarian-xp",
+        "label": "[declined]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e120",
+        "fromNode": "librarian-r4",
+        "toNode": "librarian-xe",
+        "label": "[escalated]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e121",
+        "fromNode": "librarian-r5",
+        "toNode": "librarian-d7",
+        "label": "[resolved]",
+        "fromSide": "top",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e122",
+        "fromNode": "librarian-r5",
+        "toNode": "librarian-xp",
+        "label": "[declined]",
+        "fromSide": "right",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e123",
+        "fromNode": "librarian-r5",
+        "toNode": "librarian-xe",
+        "label": "[escalated]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e124",
+        "fromNode": "librarian-r6",
+        "toNode": "librarian-a18",
+        "label": "[resolved]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e125",
+        "fromNode": "librarian-r6",
+        "toNode": "librarian-xp",
+        "label": "[declined]",
+        "fromSide": "right",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e126",
+        "fromNode": "librarian-r6",
+        "toNode": "librarian-xe",
+        "label": "[escalated]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e127",
+        "fromNode": "librarian-d5",
+        "toNode": "librarian-publicationdiagnosis",
+        "label": "[required publication-only gap without matching reading fault] 17g",
+        "color": "1",
+        "fromSide": "top",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e128",
+        "fromNode": "librarian-publicationdiagnosis",
+        "toNode": "librarian-xp",
+        "fromSide": "right",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e129",
+        "fromNode": "librarian-draftcheck",
+        "toNode": "librarian-ddraft",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e130",
+        "fromNode": "librarian-ddraft",
+        "toNode": "librarian-d3",
+        "label": "[usable returned draft, required fields/provenance valid and sensitivity finding recorded]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e131",
+        "fromNode": "librarian-ddraft",
+        "toNode": "librarian-draftfault",
+        "label": "[transport refusal, invalid schema/provenance or partial/queued/failed draft] 6b",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e132",
+        "fromNode": "librarian-ddraft",
+        "toNode": "librarian-xe_at_6b561aa06e",
+        "label": "[critical integrity or authority-boundary evidence in draft] 6c",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e133",
+        "fromNode": "librarian-dwrite",
+        "toNode": "librarian-findcheck",
+        "label": "[confirmed committed, including a committed note already flagged written-but-not-findable]",
+        "fromSide": "right",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e134",
+        "fromNode": "librarian-findcheck",
+        "toNode": "librarian-d7",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e135",
+        "fromNode": "librarian-dwrite",
+        "toNode": "librarian-writestate",
+        "label": "[unknown/interrupted outcome, human-edit conflict or unconfirmed/uncommitted refusal] 20c",
+        "color": "1",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e136",
+        "fromNode": "librarian-dwrite",
+        "toNode": "librarian-xe_at_1020338efc",
+        "label": "[critical integrity or authority-boundary evidence in write] 20d",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e137",
+        "fromNode": "librarian-writestate",
+        "toNode": "librarian-writeowner",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e138",
+        "fromNode": "librarian-writeowner",
+        "toNode": "librarian-a17",
+        "label": "[specific bounded guarded retry authorized after compatible-state reconciliation; no unresolved human edit]",
+        "fromSide": "top",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e139",
+        "fromNode": "librarian-writeowner",
+        "toNode": "librarian-xp",
+        "label": "[decline, hold or follow-on recovery/compensation needs separate scope]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e140",
+        "fromNode": "librarian-writeowner",
+        "toNode": "librarian-xe",
+        "label": "[unresolved integrity/scope finding requires escalation]",
+        "fromSide": "bottom",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e141",
+        "fromNode": "librarian-indexcheck",
+        "toNode": "librarian-dindex",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e142",
+        "fromNode": "librarian-dindex",
+        "toNode": "librarian-dinput",
+        "label": "[required coverage/capability evidence available and acceptable under the specification]",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e143",
+        "fromNode": "librarian-dindex",
+        "toNode": "librarian-indexfault",
+        "label": "[required evidence unavailable, degraded beyond allowance or failed] 8e",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e144",
+        "fromNode": "librarian-dindex",
+        "toNode": "librarian-xe_at_1020338efc",
+        "label": "[critical integrity or authority-boundary finding] 8f",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e145",
+        "fromNode": "librarian-indexfault",
+        "toNode": "librarian-xp",
+        "fromSide": "right",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e146",
+        "fromNode": "librarian-nonsource",
+        "toNode": "librarian-a18",
+        "fromSide": "bottom",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e147",
+        "fromNode": "librarian-dreuse",
+        "toNode": "librarian-reused",
+        "label": "[no in-scope source, lens, folder or required result obligation remains; existing evidence already settles the parent contract]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e148",
+        "fromNode": "librarian-dreuse",
+        "toNode": "librarian-ledger",
+        "label": "[Source/lens/folder decisions or result checks remain; no duplicate child execution]",
+        "fromSide": "right",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e149",
+        "fromNode": "librarian-dsourcework",
+        "toNode": "librarian-d6",
+        "label": "[yes; actually decidable Source acceptance remains]",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e150",
+        "fromNode": "librarian-dsourcework",
+        "toNode": "librarian-a18",
+        "label": "[no Source acceptance owed; preserve any independent lens/folder/result obligations for Oracle] 18a",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e151",
+        "fromNode": "librarian-dsourcework",
+        "toNode": "librarian-xp_at_5b075aa469",
+        "label": "[Source acceptance not currently decidable; preserve state and required continuation] 18b",
+        "color": "1",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e152",
+        "fromNode": "librarian-d8",
+        "toNode": "librarian-xp",
+        "label": "[remaining requirement is a legitimate pending/reserved decision, not a repair fault] 21c",
+        "color": "1",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e153",
+        "fromNode": "librarian-a7",
+        "toNode": "librarian-applygroups",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e154",
+        "fromNode": "librarian-applygroups",
+        "toNode": "librarian-applicationreceipt",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e155",
+        "fromNode": "librarian-applicationreceipt",
+        "toNode": "librarian-dfolder",
+        "fromSide": "bottom",
+        "toSide": "top"
+      },
+      {
+        "id": "librarian-e156",
+        "fromNode": "librarian-dinput",
+        "toNode": "librarian-nonsource",
+        "label": "[own-code/data/log purpose only; no Source-eligible requested subset] 8c",
+        "color": "1",
+        "fromSide": "right",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e157",
+        "fromNode": "librarian-r1application",
+        "toNode": "librarian-a7",
+        "label": "[resolved]",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e158",
+        "fromNode": "librarian-r1application",
+        "toNode": "librarian-xp",
+        "label": "[declined]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e159",
+        "fromNode": "librarian-r1application",
+        "toNode": "librarian-xe",
+        "label": "[escalated]",
+        "fromSide": "left",
+        "toSide": "right"
+      },
+      {
+        "id": "librarian-e160",
+        "fromNode": "librarian-xp_at_5b075aa469",
+        "toNode": "librarian-e3_at_5b075aa469",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e161",
+        "fromNode": "librarian-xe_at_1020338efc",
+        "toNode": "librarian-e2_at_1020338efc",
+        "fromSide": "right",
+        "toSide": "left"
+      },
+      {
+        "id": "librarian-e162",
+        "fromNode": "librarian-xe_at_6b561aa06e",
+        "toNode": "librarian-e2_at_6b561aa06e",
+        "fromSide": "right",
+        "toSide": "left"
+      }
+    ]
+  },
+  "checks": {
+    "edge_card_intersections": [],
+    "card_overlaps": [],
+    "main_forward": true
+  }
+}

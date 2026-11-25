@@ -1,628 +1,88 @@
 {
- "nodes": [
-  {
-   "id": "title",
-   "type": "text",
-   "x": 20,
-   "y": -200,
-   "width": 2900,
-   "height": 220,
-   "text": "# Compose a process upward and promote it into the repertoire\n**Symptom:** Long workflows re-state instructions for steps that are already common actions.\n**Root cause:** There is no single, layered repertoire that new work is composed from and promoted back into.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `compose.spec.yaml`."
-  },
-  {
-   "id": "s",
-   "type": "text",
-   "x": 40,
-   "y": 140,
-   "width": 360,
-   "height": 70,
-   "text": "\u25cf start",
-   "color": "4"
-  },
-  {
-   "id": "a1",
-   "type": "text",
-   "x": 1300,
-   "y": 340,
-   "width": 360,
-   "height": 150,
-   "text": "**1.** needs a capability its task calls for"
-  },
-  {
-   "id": "a2",
-   "type": "text",
-   "x": 2140,
-   "y": 540,
-   "width": 360,
-   "height": 150,
-   "text": "**2.** searches the repertoire for an accepted process that covers it, lowest layer first"
-  },
-  {
-   "id": "d1",
-   "type": "text",
-   "x": 2140,
-   "y": 740,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 an accepted process covers it?",
-   "color": "5"
-  },
-  {
-   "id": "a3",
-   "type": "text",
-   "x": 1300,
-   "y": 940,
-   "width": 360,
-   "height": 150,
-   "text": "**3.** drafts a process at the layer the task needs, from accepted processes as its components"
-  },
-  {
-   "id": "e2",
-   "type": "text",
-   "x": 2560,
-   "y": 940,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c9 an accepted process is used; nothing new is added\n*outcome: reused*",
-   "color": "6"
-  },
-  {
-   "id": "a4",
-   "type": "text",
-   "x": 2140,
-   "y": 1140,
-   "width": 360,
-   "height": 150,
-   "text": "**4.** validates the draft: schema, references, arguments and outputs"
-  },
-  {
-   "id": "d2",
-   "type": "text",
-   "x": 2140,
-   "y": 1340,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 draft valid?",
-   "color": "5"
-  },
-  {
-   "id": "a5",
-   "type": "text",
-   "x": 2140,
-   "y": 1540,
-   "width": 360,
-   "height": 150,
-   "text": "**5.** validates the layer rule: components from earlier layers, or its own layer without a cycle"
-  },
-  {
-   "id": "x1",
-   "type": "text",
-   "x": 1300,
-   "y": 1540,
-   "width": 360,
-   "height": 150,
-   "text": "revises the draft from the named problems"
-  },
-  {
-   "id": "d4",
-   "type": "text",
-   "x": 2140,
-   "y": 1740,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 layer rule holds?",
-   "color": "5"
-  },
-  {
-   "id": "d3",
-   "type": "text",
-   "x": 1300,
-   "y": 1740,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 within two revisions?",
-   "color": "5"
-  },
-  {
-   "id": "a6",
-   "type": "text",
-   "x": 2140,
-   "y": 1940,
-   "width": 360,
-   "height": 150,
-   "text": "**6.** compiles the draft's manifest: its actions in order, their declared effects, and the blast radius"
-  },
-  {
-   "id": "x2",
-   "type": "text",
-   "x": 1300,
-   "y": 1940,
-   "width": 360,
-   "height": 150,
-   "text": "recomposes the draft from processes of earlier layers"
-  },
-  {
-   "id": "xe",
-   "type": "text",
-   "x": 460,
-   "y": 1940,
-   "width": 360,
-   "height": 150,
-   "text": "takes over the composition"
-  },
-  {
-   "id": "d5",
-   "type": "text",
-   "x": 1720,
-   "y": 2140,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 manifest within the parent's mandate?",
-   "color": "5"
-  },
-  {
-   "id": "e4",
-   "type": "text",
-   "x": 2560,
-   "y": 2140,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c9 escalated to tier 0: a failure of this use case\n*outcome: escalated*",
-   "color": "1"
-  },
-  {
-   "id": "a7",
-   "type": "text",
-   "x": 880,
-   "y": 2340,
-   "width": 360,
-   "height": 150,
-   "text": "**7.** dry-runs the draft against its specification: Tier A checks first, then a Tier B review"
-  },
-  {
-   "id": "x3",
-   "type": "text",
-   "x": 1300,
-   "y": 2340,
-   "width": 360,
-   "height": 150,
-   "text": "reports the wider radius to tier 0"
-  },
-  {
-   "id": "d7",
-   "type": "text",
-   "x": 880,
-   "y": 2540,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 specification met?",
-   "color": "5"
-  },
-  {
-   "id": "x4",
-   "type": "text",
-   "x": 460,
-   "y": 2540,
-   "width": 360,
-   "height": 150,
-   "text": "puts the decision to the Owner"
-  },
-  {
-   "id": "a8",
-   "type": "text",
-   "x": 2140,
-   "y": 2740,
-   "width": 360,
-   "height": 150,
-   "text": "**8.** runs the process for the task, pinned to its text"
-  },
-  {
-   "id": "x6",
-   "type": "text",
-   "x": 1300,
-   "y": 2740,
-   "width": 360,
-   "height": 150,
-   "text": "revises the draft from the oracle's report"
-  },
-  {
-   "id": "x5",
-   "type": "text",
-   "x": 40,
-   "y": 2740,
-   "width": 360,
-   "height": 150,
-   "text": "decides the wider radius"
-  },
-  {
-   "id": "a9",
-   "type": "text",
-   "x": 1300,
-   "y": 2940,
-   "width": 360,
-   "height": 150,
-   "text": "**9.** proposes promoting the process into the repertoire"
-  },
-  {
-   "id": "d6",
-   "type": "text",
-   "x": 40,
-   "y": 2940,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 Owner approves?",
-   "color": "5"
-  },
-  {
-   "id": "a10",
-   "type": "text",
-   "x": 2140,
-   "y": 3140,
-   "width": 360,
-   "height": 150,
-   "text": "**10.** checks the proposal against the repertoire and puts it on the Owner's agenda"
-  },
-  {
-   "id": "xp",
-   "type": "text",
-   "x": 460,
-   "y": 3140,
-   "width": 360,
-   "height": 150,
-   "text": "reports the paused composition to the Owner"
-  },
-  {
-   "id": "d8",
-   "type": "text",
-   "x": 2140,
-   "y": 3340,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 duplicates an accepted process?",
-   "color": "5"
-  },
-  {
-   "id": "e5",
-   "type": "text",
-   "x": 2560,
-   "y": 3340,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c9 paused: the Owner declined the wider radius\n*outcome: paused*",
-   "color": "1"
-  },
-  {
-   "id": "a11",
-   "type": "text",
-   "x": 40,
-   "y": 3540,
-   "width": 360,
-   "height": 150,
-   "text": "**11.** accepts the process into the repertoire"
-  },
-  {
-   "id": "d9",
-   "type": "text",
-   "x": 40,
-   "y": 3740,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c7 accepted?",
-   "color": "5"
-  },
-  {
-   "id": "a12",
-   "type": "text",
-   "x": 2140,
-   "y": 3940,
-   "width": 360,
-   "height": 150,
-   "text": "**12.** pins the process's digest and records its manifest and provenance"
-  },
-  {
-   "id": "e3",
-   "type": "text",
-   "x": 2560,
-   "y": 3940,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c9 the process ran for this task and was not kept\n*outcome: used once*",
-   "color": "6"
-  },
-  {
-   "id": "e1",
-   "type": "text",
-   "x": 2560,
-   "y": 4140,
-   "width": 360,
-   "height": 150,
-   "text": "\u25c9 the process is in the repertoire, available as a component of any later parent process\n*outcome: success*",
-   "color": "6"
-  },
-  {
-   "id": "lane-Owner",
-   "type": "group",
-   "x": 20,
-   "y": 60,
-   "width": 400,
-   "height": 4340,
-   "label": "Owner"
-  },
-  {
-   "id": "lane-Tier-0-agent",
-   "type": "group",
-   "x": 440,
-   "y": 60,
-   "width": 400,
-   "height": 4340,
-   "label": "Tier 0 agent"
-  },
-  {
-   "id": "lane-Oracle",
-   "type": "group",
-   "x": 860,
-   "y": 60,
-   "width": 400,
-   "height": 4340,
-   "label": "Oracle"
-  },
-  {
-   "id": "lane-Lead-tier-1-",
-   "type": "group",
-   "x": 1280,
-   "y": 60,
-   "width": 400,
-   "height": 4340,
-   "label": "Lead (tier 1)"
-  },
-  {
-   "id": "lane-Helper-tier-2-",
-   "type": "group",
-   "x": 1700,
-   "y": 60,
-   "width": 400,
-   "height": 4340,
-   "label": "Helper (tier 2)"
-  },
-  {
-   "id": "lane-Core",
-   "type": "group",
-   "x": 2120,
-   "y": 60,
-   "width": 400,
-   "height": 4340,
-   "label": "Core"
-  },
-  {
-   "id": "lane-Outcomes",
-   "type": "group",
-   "x": 2540,
-   "y": 60,
-   "width": 400,
-   "height": 4340,
-   "label": "Outcomes"
-  }
- ],
- "edges": [
-  {
-   "id": "e0",
-   "fromNode": "s",
-   "toNode": "a1"
-  },
-  {
-   "id": "e1",
-   "fromNode": "a1",
-   "toNode": "a2"
-  },
-  {
-   "id": "e2",
-   "fromNode": "a2",
-   "toNode": "d1"
-  },
-  {
-   "id": "e3",
-   "fromNode": "d1",
-   "toNode": "a3",
-   "label": "[nothing covers it]"
-  },
-  {
-   "id": "e4",
-   "fromNode": "d1",
-   "toNode": "e2",
-   "label": "[covered] 2a",
-   "color": "1"
-  },
-  {
-   "id": "e5",
-   "fromNode": "a3",
-   "toNode": "a4"
-  },
-  {
-   "id": "e6",
-   "fromNode": "a4",
-   "toNode": "d2"
-  },
-  {
-   "id": "e7",
-   "fromNode": "d2",
-   "toNode": "a5",
-   "label": "[valid]"
-  },
-  {
-   "id": "e8",
-   "fromNode": "d2",
-   "toNode": "x1",
-   "label": "[invalid] 4a",
-   "color": "1"
-  },
-  {
-   "id": "e9",
-   "fromNode": "x1",
-   "toNode": "d3"
-  },
-  {
-   "id": "e10",
-   "fromNode": "d3",
-   "toNode": "a4",
-   "label": "[revisions left]"
-  },
-  {
-   "id": "e11",
-   "fromNode": "d3",
-   "toNode": "xe",
-   "label": "[none left]"
-  },
-  {
-   "id": "e12",
-   "fromNode": "a5",
-   "toNode": "d4"
-  },
-  {
-   "id": "e13",
-   "fromNode": "d4",
-   "toNode": "a6",
-   "label": "[holds]"
-  },
-  {
-   "id": "e14",
-   "fromNode": "d4",
-   "toNode": "x2",
-   "label": "[uses a later layer, or makes a cycle] 5a",
-   "color": "1"
-  },
-  {
-   "id": "e15",
-   "fromNode": "x2",
-   "toNode": "a4"
-  },
-  {
-   "id": "e16",
-   "fromNode": "a6",
-   "toNode": "d5"
-  },
-  {
-   "id": "e17",
-   "fromNode": "d5",
-   "toNode": "a7",
-   "label": "[within]"
-  },
-  {
-   "id": "e18",
-   "fromNode": "d5",
-   "toNode": "x3",
-   "label": "[wider] 6a",
-   "color": "1"
-  },
-  {
-   "id": "e19",
-   "fromNode": "x3",
-   "toNode": "x4"
-  },
-  {
-   "id": "e20",
-   "fromNode": "x4",
-   "toNode": "x5"
-  },
-  {
-   "id": "e21",
-   "fromNode": "x5",
-   "toNode": "d6"
-  },
-  {
-   "id": "e22",
-   "fromNode": "d6",
-   "toNode": "a7",
-   "label": "[approved]"
-  },
-  {
-   "id": "e23",
-   "fromNode": "d6",
-   "toNode": "xp",
-   "label": "[declined]"
-  },
-  {
-   "id": "e24",
-   "fromNode": "a7",
-   "toNode": "d7"
-  },
-  {
-   "id": "e25",
-   "fromNode": "d7",
-   "toNode": "a8",
-   "label": "[met]"
-  },
-  {
-   "id": "e26",
-   "fromNode": "d7",
-   "toNode": "x6",
-   "label": "[not met] 7a",
-   "color": "1"
-  },
-  {
-   "id": "e27",
-   "fromNode": "x6",
-   "toNode": "d3"
-  },
-  {
-   "id": "e28",
-   "fromNode": "a8",
-   "toNode": "a9"
-  },
-  {
-   "id": "e29",
-   "fromNode": "a9",
-   "toNode": "a10"
-  },
-  {
-   "id": "e30",
-   "fromNode": "a10",
-   "toNode": "d8"
-  },
-  {
-   "id": "e31",
-   "fromNode": "d8",
-   "toNode": "a11",
-   "label": "[new]"
-  },
-  {
-   "id": "e32",
-   "fromNode": "d8",
-   "toNode": "e2",
-   "label": "[duplicate] 10a",
-   "color": "1"
-  },
-  {
-   "id": "e33",
-   "fromNode": "a11",
-   "toNode": "d9"
-  },
-  {
-   "id": "e34",
-   "fromNode": "d9",
-   "toNode": "a12",
-   "label": "[accepted]"
-  },
-  {
-   "id": "e35",
-   "fromNode": "d9",
-   "toNode": "e3",
-   "label": "[declined] 11a",
-   "color": "1"
-  },
-  {
-   "id": "e36",
-   "fromNode": "a12",
-   "toNode": "e1"
-  },
-  {
-   "id": "e37",
-   "fromNode": "xe",
-   "toNode": "e4"
-  },
-  {
-   "id": "e38",
-   "fromNode": "xp",
-   "toNode": "e5"
-  }
- ]
+	"nodes":[
+		{"id":"title","type":"text","x":20,"y":-200,"width":2900,"height":220,"text":"# Compose a process upward and promote it into the repertoire\n**Symptom:** Long workflows re-state instructions for steps that are already common actions.\n**Root cause:** There is no single, layered repertoire that new work is composed from and promoted back into.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `compose.spec.yaml`."},
+		{"id":"s","type":"text","x":40,"y":140,"width":360,"height":70,"text":"● start","color":"4"},
+		{"id":"a1","type":"text","x":1300,"y":340,"width":360,"height":150,"text":"**1.** needs a capability its task calls for"},
+		{"id":"a2","type":"text","x":2140,"y":540,"width":360,"height":150,"text":"**2.** searches the repertoire for an accepted process that covers it, lowest layer first"},
+		{"id":"d1","type":"text","x":2140,"y":740,"width":360,"height":150,"text":"◇ an accepted process covers it?","color":"5"},
+		{"id":"a3","type":"text","x":1300,"y":940,"width":360,"height":150,"text":"**3.** drafts a process at the layer the task needs, from accepted processes as its components"},
+		{"id":"e2","type":"text","x":2560,"y":940,"width":360,"height":150,"text":"◉ an accepted process is used; nothing new is added\n*outcome: reused*","color":"6"},
+		{"id":"a4","type":"text","x":2140,"y":1140,"width":360,"height":150,"text":"**4.** validates the draft: schema, references, arguments and outputs"},
+		{"id":"d2","type":"text","x":2140,"y":1340,"width":360,"height":150,"text":"◇ draft valid?","color":"5"},
+		{"id":"a5","type":"text","x":2140,"y":1540,"width":360,"height":150,"text":"**5.** validates the layer rule: components from earlier layers, or its own layer without a cycle"},
+		{"id":"x1","type":"text","x":1300,"y":1540,"width":360,"height":150,"text":"revises the draft from the named problems"},
+		{"id":"d4","type":"text","x":2140,"y":1740,"width":360,"height":150,"text":"◇ layer rule holds?","color":"5"},
+		{"id":"d3","type":"text","x":1300,"y":1740,"width":360,"height":150,"text":"◇ within two revisions?","color":"5"},
+		{"id":"a6","type":"text","x":2140,"y":1940,"width":360,"height":150,"text":"**6.** compiles the draft's manifest: its actions in order, their declared effects, and the blast radius"},
+		{"id":"x2","type":"text","x":1300,"y":1940,"width":360,"height":150,"text":"recomposes the draft from processes of earlier layers"},
+		{"id":"xe","type":"text","x":460,"y":1940,"width":360,"height":150,"text":"takes over the composition"},
+		{"id":"d5","type":"text","x":1720,"y":2140,"width":360,"height":150,"text":"◇ manifest within the parent's mandate?","color":"5"},
+		{"id":"e4","type":"text","x":2560,"y":2140,"width":360,"height":150,"text":"◉ escalated to tier 0: a failure of this use case\n*outcome: escalated*","color":"1"},
+		{"id":"a7","type":"text","x":880,"y":2340,"width":360,"height":150,"text":"**7.** dry-runs the draft against its specification: Tier A checks first, then a Tier B review"},
+		{"id":"x3","type":"text","x":1300,"y":2340,"width":360,"height":150,"text":"reports the wider radius to tier 0"},
+		{"id":"d7","type":"text","x":880,"y":2540,"width":360,"height":150,"text":"◇ specification met?","color":"5"},
+		{"id":"x4","type":"text","x":460,"y":2540,"width":360,"height":150,"text":"puts the decision to the Owner"},
+		{"id":"a8","type":"text","x":2140,"y":2740,"width":360,"height":150,"text":"**8.** runs the process for the task, pinned to its text"},
+		{"id":"x6","type":"text","x":1300,"y":2740,"width":360,"height":150,"text":"revises the draft from the oracle's report"},
+		{"id":"x5","type":"text","x":40,"y":2740,"width":360,"height":150,"text":"decides the wider radius"},
+		{"id":"a9","type":"text","x":1300,"y":2940,"width":360,"height":150,"text":"**9.** proposes promoting the process into the repertoire"},
+		{"id":"d6","type":"text","x":40,"y":2940,"width":360,"height":150,"text":"◇ Owner approves?","color":"5"},
+		{"id":"a10","type":"text","x":2140,"y":3140,"width":360,"height":150,"text":"**10.** checks the proposal against the repertoire and puts it on the Owner's agenda"},
+		{"id":"xp","type":"text","x":460,"y":3140,"width":360,"height":150,"text":"reports the paused composition to the Owner"},
+		{"id":"d8","type":"text","x":2140,"y":3340,"width":360,"height":150,"text":"◇ duplicates an accepted process?","color":"5"},
+		{"id":"e5","type":"text","x":2560,"y":3340,"width":360,"height":150,"text":"◉ paused: the Owner declined the wider radius\n*outcome: paused*","color":"1"},
+		{"id":"a11","type":"text","x":40,"y":3540,"width":360,"height":150,"text":"**11.** accepts the process into the repertoire"},
+		{"id":"d9","type":"text","x":40,"y":3740,"width":360,"height":150,"text":"◇ accepted?","color":"5"},
+		{"id":"a12","type":"text","x":2140,"y":3940,"width":360,"height":150,"text":"**12.** pins the process's digest and records its manifest and provenance"},
+		{"id":"e3","type":"text","x":2560,"y":3940,"width":360,"height":150,"text":"◉ the process ran for this task and was not kept\n*outcome: used once*","color":"6"},
+		{"id":"e1","type":"text","x":2560,"y":4140,"width":360,"height":150,"text":"◉ the process is in the repertoire, available as a component of any later parent process\n*outcome: success*","color":"6"},
+		{"id":"lane-Owner","type":"group","x":20,"y":60,"width":400,"height":4340,"label":"Owner"},
+		{"id":"lane-Tier-0-agent","type":"group","x":440,"y":60,"width":400,"height":4340,"label":"Tier 0 agent"},
+		{"id":"lane-Oracle","type":"group","x":860,"y":60,"width":400,"height":4340,"label":"Oracle"},
+		{"id":"lane-Lead-tier-1-","type":"group","x":1280,"y":60,"width":400,"height":4340,"label":"Lead (tier 1)"},
+		{"id":"lane-Helper-tier-2-","type":"group","x":1700,"y":60,"width":400,"height":4340,"label":"Helper (tier 2)"},
+		{"id":"lane-Core","type":"group","x":2120,"y":60,"width":400,"height":4340,"label":"Core"},
+		{"id":"lane-Outcomes","type":"group","x":2540,"y":60,"width":400,"height":4340,"label":"Outcomes"}
+	],
+	"edges":[
+		{"id":"e0","fromNode":"s","toNode":"a1","fromSide":"right","toSide":"left"},
+		{"id":"e1","fromNode":"a1","toNode":"a2","fromSide":"right","toSide":"left"},
+		{"id":"e2","fromNode":"a2","toNode":"d1","fromSide":"bottom","toSide":"top"},
+		{"id":"e3","fromNode":"d1","toNode":"a3","label":"[nothing covers it]","fromSide":"left","toSide":"right"},
+		{"id":"e4","fromNode":"d1","toNode":"e2","label":"[covered] 2a","color":"1","fromSide":"bottom","toSide":"top"},
+		{"id":"e5","fromNode":"a3","toNode":"a4","fromSide":"right","toSide":"left"},
+		{"id":"e6","fromNode":"a4","toNode":"d2","fromSide":"bottom","toSide":"top"},
+		{"id":"e7","fromNode":"d2","toNode":"a5","label":"[valid]","fromSide":"bottom","toSide":"top"},
+		{"id":"e8","fromNode":"d2","toNode":"x1","label":"[invalid] 4a","color":"1","fromSide":"left","toSide":"right"},
+		{"id":"e9","fromNode":"x1","toNode":"d3","fromSide":"bottom","toSide":"top"},
+		{"id":"e10","fromNode":"d3","toNode":"a4","label":"[revisions left]","fromSide":"top","toSide":"bottom"},
+		{"id":"e11","fromNode":"d3","toNode":"xe","label":"[none left]","fromSide":"left","toSide":"right"},
+		{"id":"e12","fromNode":"a5","toNode":"d4","fromSide":"bottom","toSide":"top"},
+		{"id":"e13","fromNode":"d4","toNode":"a6","label":"[holds]","fromSide":"bottom","toSide":"top"},
+		{"id":"e14","fromNode":"d4","toNode":"x2","label":"[uses a later layer, or makes a cycle] 5a","color":"1","fromSide":"left","toSide":"right"},
+		{"id":"e15","fromNode":"x2","toNode":"a4","fromSide":"top","toSide":"bottom"},
+		{"id":"e16","fromNode":"a6","toNode":"d5","fromSide":"bottom","toSide":"top"},
+		{"id":"e17","fromNode":"d5","toNode":"a7","label":"[within]","fromSide":"left","toSide":"right"},
+		{"id":"e18","fromNode":"d5","toNode":"x3","label":"[wider] 6a","color":"1","fromSide":"bottom","toSide":"top"},
+		{"id":"e19","fromNode":"x3","toNode":"x4","fromSide":"left","toSide":"right"},
+		{"id":"e20","fromNode":"x4","toNode":"x5","fromSide":"bottom","toSide":"top"},
+		{"id":"e21","fromNode":"x5","toNode":"d6","fromSide":"bottom","toSide":"top"},
+		{"id":"e22","fromNode":"d6","toNode":"a7","label":"[approved]","fromSide":"top","toSide":"bottom"},
+		{"id":"e23","fromNode":"d6","toNode":"xp","label":"[declined]","fromSide":"bottom","toSide":"top"},
+		{"id":"e24","fromNode":"a7","toNode":"d7","fromSide":"bottom","toSide":"top"},
+		{"id":"e25","fromNode":"d7","toNode":"a8","label":"[met]","fromSide":"right","toSide":"left"},
+		{"id":"e26","fromNode":"d7","toNode":"x6","label":"[not met] 7a","color":"1","fromSide":"bottom","toSide":"top"},
+		{"id":"e27","fromNode":"x6","toNode":"d3","fromSide":"top","toSide":"bottom"},
+		{"id":"e28","fromNode":"a8","toNode":"a9","fromSide":"left","toSide":"right"},
+		{"id":"e29","fromNode":"a9","toNode":"a10","fromSide":"right","toSide":"left"},
+		{"id":"e30","fromNode":"a10","toNode":"d8","fromSide":"bottom","toSide":"top"},
+		{"id":"e31","fromNode":"d8","toNode":"a11","label":"[new]","fromSide":"left","toSide":"right"},
+		{"id":"e32","fromNode":"d8","toNode":"e2","label":"[duplicate] 10a","color":"1","fromSide":"top","toSide":"bottom"},
+		{"id":"e33","fromNode":"a11","toNode":"d9","fromSide":"bottom","toSide":"top"},
+		{"id":"e34","fromNode":"d9","toNode":"a12","label":"[accepted]","fromSide":"right","toSide":"left"},
+		{"id":"e35","fromNode":"d9","toNode":"e3","label":"[declined] 11a","color":"1","fromSide":"right","toSide":"left"},
+		{"id":"e36","fromNode":"a12","toNode":"e1","fromSide":"bottom","toSide":"top"},
+		{"id":"e37","fromNode":"xe","toNode":"e4","fromSide":"right","toSide":"left"},
+		{"id":"e38","fromNode":"xp","toNode":"e5","fromSide":"right","toSide":"left"}
+	]
 }

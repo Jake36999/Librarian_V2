@@ -1,0 +1,159 @@
+{
+  "status": "report model validation; not execution, runtime rollout or new Owner acceptance",
+  "spec": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.spec.yaml",
+  "spec_sha256": "0bf94d0f37ea171e34f2306ea7831752b46ed171316dbbd27e293fffff988406",
+  "canvas": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas",
+  "base_revision": "5aa5167016ba68b8f17ad2e82484aea6afac227cf54e3e2acb40590d0a31146c",
+  "proposal_hash": "916cc978976163cc9d578aff2642341a7a6a68ed621d350a3a05011e029a9c7e",
+  "scenarios": 69,
+  "structural_problems": [],
+  "cross_view_reference_flags": [],
+  "changes": {
+    "migrated_ids": {},
+    "retired_nodes_removed": [],
+    "retired_anchors_retained_for_owner_edges": [],
+    "owner_nodes_preserved": 0,
+    "owner_edges_preserved": 0,
+    "geometry_changes": [
+      {
+        "node": "librarian-e1",
+        "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+        "old_x": 4240,
+        "new_x": 4240,
+        "old_y": 9740,
+        "new_y": 9940
+      },
+      {
+        "node": "librarian-delivery",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 2980,
+        "y": 9740
+      },
+      {
+        "node": "librarian-ownerreport",
+        "reason": "new card in accepted downward-flow layout",
+        "x": 40,
+        "y": 9140
+      }
+    ],
+    "generated_reflow": true,
+    "initial_generated_reflow": false,
+    "initial_semantic_checksum_verified": null,
+    "reflow_validation": {
+      "mode": "validated_generation",
+      "revision": "5aa5167016ba68b8f17ad2e82484aea6afac227cf54e3e2acb40590d0a31146c",
+      "receipt": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.correction-validation.json"
+    },
+    "group_changes": [],
+    "preexisting_overlaps_preserved": []
+  },
+  "write": "service.preview(profile=None, adopt=True), final provenance-aware proposal, guarded service.commit",
+  "accepted_renderer_sha256": "b3253960a08ccfdc05d93719c1b841393ec6024a409e4a2638510a1f6b27a955",
+  "commit": {
+    "written": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas",
+    "revision": "916cc978976163cc9d578aff2642341a7a6a68ed621d350a3a05011e029a9c7e",
+    "backup": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\accepted-ingestion-tobe.canvas.20261123T101823810728.bak",
+    "changes": {
+      "migrated_ids": {},
+      "retired_nodes_removed": [],
+      "retired_anchors_retained_for_owner_edges": [],
+      "owner_nodes_preserved": 0,
+      "owner_edges_preserved": 0,
+      "geometry_changes": [
+        {
+          "node": "librarian-e1",
+          "reason": "restructured main/extension flow; latest validated saved generation verified unchanged",
+          "old_x": 4240,
+          "new_x": 4240,
+          "old_y": 9740,
+          "new_y": 9940
+        },
+        {
+          "node": "librarian-delivery",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 2980,
+          "y": 9740
+        },
+        {
+          "node": "librarian-ownerreport",
+          "reason": "new card in accepted downward-flow layout",
+          "x": 40,
+          "y": 9140
+        }
+      ],
+      "generated_reflow": true,
+      "initial_generated_reflow": false,
+      "initial_semantic_checksum_verified": null,
+      "reflow_validation": {
+        "mode": "validated_generation",
+        "revision": "5aa5167016ba68b8f17ad2e82484aea6afac227cf54e3e2acb40590d0a31146c",
+        "receipt": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.correction-validation.json"
+      },
+      "group_changes": [],
+      "preexisting_overlaps_preserved": []
+    }
+  },
+  "reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.corrected-overview.png",
+  "overview_scale": 0.35,
+  "overview_text_overflow": [
+    "librarian-a1",
+    "librarian-a10",
+    "librarian-a11",
+    "librarian-a16",
+    "librarian-a17",
+    "librarian-a18",
+    "librarian-a2",
+    "librarian-a21",
+    "librarian-a3",
+    "librarian-a4",
+    "librarian-a7",
+    "librarian-a8",
+    "librarian-acceptrecord",
+    "librarian-capturestore",
+    "librarian-contentdiagnosis",
+    "librarian-countdiagnosis",
+    "librarian-delivery",
+    "librarian-draftcheck",
+    "librarian-draftfault",
+    "librarian-e1",
+    "librarian-e2",
+    "librarian-e3",
+    "librarian-enrich",
+    "librarian-findcheck",
+    "librarian-folderapprove",
+    "librarian-folderfault",
+    "librarian-indexcheck",
+    "librarian-indexfault",
+    "librarian-ledger",
+    "librarian-nonsource",
+    "librarian-partialchoice",
+    "librarian-publicationdiagnosis",
+    "librarian-r1",
+    "librarian-r2",
+    "librarian-r4",
+    "librarian-r5",
+    "librarian-r6",
+    "librarian-reuseledger",
+    "librarian-wholeindex",
+    "librarian-writestate",
+    "librarian-x10",
+    "librarian-x4",
+    "librarian-x6",
+    "librarian-x9",
+    "librarian-xe",
+    "librarian-xp"
+  ],
+  "overview_purpose": "reduced orientation image; clipping at the minimum preview font is expected",
+  "detail_reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion-tobe.corrected-readable.png",
+  "detail_scale": 0.8,
+  "detail_text_overflow": [],
+  "preview": "deterministic raster of saved canvas positions; not an Obsidian application screenshot",
+  "previous_validation": {
+    "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\correction-history\\ingestion-tobe.correction-validation.ca96987aca16a829.json",
+    "sha256": "ca96987aca16a8292405abd6695f26c29436081f93bb7efa47839b5257f8b3a4"
+  },
+  "initial_migration_validation": {
+    "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\correction-history\\ingestion-tobe.correction-validation.f7b6db288207038a.json",
+    "sha256": "f7b6db288207038a2a770bdb70d8c24a978489d5b599dd6f5b1712bc15776b00"
+  }
+}

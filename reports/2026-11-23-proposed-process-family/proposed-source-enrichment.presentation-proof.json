@@ -1,0 +1,224 @@
+{
+  "node_origins": {
+    "paused_at_72362cad54": "paused",
+    "epaused_at_72362cad54": "epaused",
+    "escalated_at_a2bce665b2": "escalated",
+    "eescalated_at_a2bce665b2": "eescalated",
+    "critical_at_082eb1e9e8": "critical",
+    "eescalated_at_082eb1e9e8": "eescalated",
+    "critical_at_84834aba8e": "critical",
+    "eescalated_at_84834aba8e": "eescalated",
+    "critical_at_21ac1dd149": "critical",
+    "eescalated_at_21ac1dd149": "eescalated",
+    "critical_at_70138e5e7f": "critical",
+    "eescalated_at_70138e5e7f": "eescalated",
+    "critical_at_12ca5746cd": "critical",
+    "eescalated_at_12ca5746cd": "eescalated",
+    "critical_at_d58f1c5e42": "critical",
+    "eescalated_at_d58f1c5e42": "eescalated",
+    "critical_at_f908e42c8c": "critical",
+    "eescalated_at_f908e42c8c": "eescalated",
+    "critical_at_f1ee331a36": "critical",
+    "eescalated_at_f1ee331a36": "eescalated",
+    "critical_at_32afc38531": "critical",
+    "eescalated_at_32afc38531": "eescalated",
+    "critical_at_6c831f6dee": "critical",
+    "eescalated_at_6c831f6dee": "eescalated",
+    "critical_at_b16d607888": "critical",
+    "eescalated_at_b16d607888": "eescalated",
+    "critical_at_3b7680bae7": "critical",
+    "eescalated_at_3b7680bae7": "eescalated",
+    "critical_at_551635187c": "critical",
+    "eescalated_at_551635187c": "eescalated",
+    "critical_at_1161cb252f": "critical",
+    "eescalated_at_1161cb252f": "eescalated"
+  },
+  "terminal_tail_copies": [
+    {
+      "departure": "[\"dcontrols\", \"paused\", \"cancelled, interrupted, ceiling stop or missing/reserved authority\", \"2a\"]",
+      "original_tail": [
+        "paused",
+        "epaused"
+      ],
+      "local_tail": [
+        "paused_at_72362cad54",
+        "epaused_at_72362cad54"
+      ]
+    },
+    {
+      "departure": "[\"dcontrols\", \"escalated\", \"run-wide writer/state failure or unavailable qualified assignment\", \"2b\"]",
+      "original_tail": [
+        "escalated",
+        "eescalated"
+      ],
+      "local_tail": [
+        "escalated_at_a2bce665b2",
+        "eescalated_at_a2bce665b2"
+      ]
+    },
+    {
+      "departure": "[\"dcontrols\", \"critical\", \"critical flag\", \"2c\"]",
+      "original_tail": [
+        "critical",
+        "eescalated"
+      ],
+      "local_tail": [
+        "critical_at_082eb1e9e8",
+        "eescalated_at_082eb1e9e8"
+      ]
+    },
+    {
+      "departure": "[\"dvalidate\", \"critical\", \"critical flag\", \"3b\"]",
+      "original_tail": [
+        "critical",
+        "eescalated"
+      ],
+      "local_tail": [
+        "critical_at_84834aba8e",
+        "eescalated_at_84834aba8e"
+      ]
+    },
+    {
+      "departure": "[\"dparse\", \"critical\", \"critical flag\", \"4d\"]",
+      "original_tail": [
+        "critical",
+        "eescalated"
+      ],
+      "local_tail": [
+        "critical_at_21ac1dd149",
+        "eescalated_at_21ac1dd149"
+      ]
+    },
+    {
+      "departure": "[\"dconversion\", \"critical\", \"critical flag\", null]",
+      "original_tail": [
+        "critical",
+        "eescalated"
+      ],
+      "local_tail": [
+        "critical_at_70138e5e7f",
+        "eescalated_at_70138e5e7f"
+      ]
+    },
+    {
+      "departure": "[\"dpreproject\", \"critical\", \"critical flag\", \"4g\"]",
+      "original_tail": [
+        "critical",
+        "eescalated"
+      ],
+      "local_tail": [
+        "critical_at_12ca5746cd",
+        "eescalated_at_12ca5746cd"
+      ]
+    },
+    {
+      "departure": "[\"dreadtransport\", \"critical\", \"critical flag\", \"7b\"]",
+      "original_tail": [
+        "critical",
+        "eescalated"
+      ],
+      "local_tail": [
+        "critical_at_d58f1c5e42",
+        "eescalated_at_d58f1c5e42"
+      ]
+    },
+    {
+      "departure": "[\"dread\", \"critical\", \"critical flag\", \"8d\"]",
+      "original_tail": [
+        "critical",
+        "eescalated"
+      ],
+      "local_tail": [
+        "critical_at_f908e42c8c",
+        "eescalated_at_f908e42c8c"
+      ]
+    },
+    {
+      "departure": "[\"dlenses\", \"critical\", \"critical flag\", \"9b\"]",
+      "original_tail": [
+        "critical",
+        "eescalated"
+      ],
+      "local_tail": [
+        "critical_at_f1ee331a36",
+        "eescalated_at_f1ee331a36"
+      ]
+    },
+    {
+      "departure": "[\"ddata\", \"critical\", \"critical flag\", \"10c\"]",
+      "original_tail": [
+        "critical",
+        "eescalated"
+      ],
+      "local_tail": [
+        "critical_at_32afc38531",
+        "eescalated_at_32afc38531"
+      ]
+    },
+    {
+      "departure": "[\"drelate\", \"critical\", \"critical flag\", \"11b\"]",
+      "original_tail": [
+        "critical",
+        "eescalated"
+      ],
+      "local_tail": [
+        "critical_at_6c831f6dee",
+        "eescalated_at_6c831f6dee"
+      ]
+    },
+    {
+      "departure": "[\"dmetadata\", \"critical\", \"critical flag\", \"12b\"]",
+      "original_tail": [
+        "critical",
+        "eescalated"
+      ],
+      "local_tail": [
+        "critical_at_b16d607888",
+        "eescalated_at_b16d607888"
+      ]
+    },
+    {
+      "departure": "[\"dreview\", \"critical\", \"critical flag\", \"13b\"]",
+      "original_tail": [
+        "critical",
+        "eescalated"
+      ],
+      "local_tail": [
+        "critical_at_3b7680bae7",
+        "eescalated_at_3b7680bae7"
+      ]
+    },
+    {
+      "departure": "[\"dpublication\", \"critical\", \"critical flag\", \"14d\"]",
+      "original_tail": [
+        "critical",
+        "eescalated"
+      ],
+      "local_tail": [
+        "critical_at_551635187c",
+        "eescalated_at_551635187c"
+      ]
+    },
+    {
+      "departure": "[\"dpubresult\", \"critical\", \"critical flag\", \"15c\"]",
+      "original_tail": [
+        "critical",
+        "eescalated"
+      ],
+      "local_tail": [
+        "critical_at_1161cb252f",
+        "eescalated_at_1161cb252f"
+      ]
+    }
+  ],
+  "original_spec": "authoring-history/proposed-source-enrichment.before-routing.yaml",
+  "original_spec_sha256": "a963d0a51c2ea1e593840dc91d0ba420f0b0578d747d3041e168abdf29def449",
+  "normalized_spec_sha256": "020d61bfd4667ff8a8c7d59b0bcbe3372a0c6429a9bcfbd16b254adddc09e1e1",
+  "folded_behavior_equivalence": "passed",
+  "numbered_steps_unchanged": true,
+  "original_scenarios": 83,
+  "normalized_scenarios": 83,
+  "node_y_overrides": {},
+  "minimum_actor_pitch": 600,
+  "edge_card_intersections": []
+}

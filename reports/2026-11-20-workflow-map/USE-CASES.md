@@ -49,13 +49,15 @@ Supporting actors are added where they matter.
 |---|---|---|
 | **Owner** | The person who runs the library | Primary actor (human) |
 | **Lead** | The tier-1 agent that carries out a session in the app | Primary or supporting actor (model) |
-| **Outside agent** | A tier-0 agent working through the MCP server | Primary actor (model) |
-| **Clerk** | The tier-3 agent that does bounded tasks: folder checks, descriptions, claim reviews | Supporting actor (model) |
-| **Scribe** | The tier-2 agent that writes prose from given parts | Supporting actor (model) |
-| **Core** | The Librarian itself: registry, gates, staging, index | The system |
+| **Outside agent / Overseer** | A tier-0 agent working on the Owner's behalf through an external harness and the Librarian's permitted interfaces | Primary actor (model) |
+| **Clerk** | The tier-2 agent that proofreads, checks claims, synthesizes and directs Scribes | Supporting actor (model) |
+| **Scribe** | The tier-3 agent that performs bounded reading, writing and transcription tasks | Supporting actor (model) |
+| **Core** | Scripted registry, gates, extraction, staging, writer and index services within Librarian | System component |
 | **Geo-Grapher** | The library's own graph service: code and paper graphs | Supporting system |
 
 Which model plays a role is an *assignment*, revisable at any time, so no use case names a model in its MSS.
+
+The role names above follow the Owner's 21–22 November clarification. Legacy implementation labels in historical cases describe their original transports; they do not reverse Clerk tier 2 and Scribe tier 3 or establish that autonomous tiered coordination was deployed.
 
 ```mermaid
 flowchart LR
@@ -81,74 +83,64 @@ flowchart LR
 
 ## UC1. Make a folder of papers into library knowledge (as-is)
 
+Revised 22 November 2026. This current capability description separates processing from later Source acceptance. The [historical DataManagement parent](examples/ingestion/INGESTION-EXAMPLE.md) records the particular 19–20 November actors and 96-Source outcome; the [proposed parent](examples/ingestion/INGESTION-TOBE.md) adds Lead ownership, delegated authority and independent Oracle/Doctor loops. Their more detailed extension numbers have their own correspondence tables.
+
 | Field | Content |
 |---|---|
 | **Use case name** | Make a folder of papers into library knowledge |
-| **Brief description** | An attached folder's documents become Source notes, labelled with their origin, that search, research and reports can use, and their text joins the paper graph |
-| **Primary actor** | Owner |
-| **Supporting actors** | Clerk, Core, Geo-Grapher |
-| **Preconditions** | The library's Core is running; a Clerk is assigned and qualified; the folder is readable |
-| **Trigger** | The Owner attaches a folder to the library |
-| **Success guarantee** | Every in-scope document is a findable Source note. Its file keeps its authorship label (`third_party` for papers). Its full text is in the paper graph. Nothing in an excluded folder was read. |
-| **Activity diagram** | [WORKFLOW-MAP §1](WORKFLOW-MAP.md#1-a-sources-life-end-to-end) |
+| **Brief description** | Eligible attached documents become usable accepted Source notes, with actual reading/publication coverage and remaining decisions explicit. |
+| **Primary actor** | Owner; an authorized tier-0 agent may act on the Owner's behalf. |
+| **Supporting actors** | Clerk (tier 2 for interpretation), bounded legacy model workers inside the child, Core, model host and Geo-Grapher. These role terms do not claim deployed autonomous tiered orchestration. |
+| **Preconditions** | Core is running; the folder is readable; required routes are qualified; actual scope and authority are available. |
+| **Trigger** | The Owner requests ingestion into the library. |
+| **Success guarantee** | Every required accepted Source passes the specified retrieval checks and retains its authorship label. Coverage, partial acceptance and publication eligibility/results are truthful; only eligible papers claim full graph publication. Excluded/hidden/scratch contents stay unread. Source and lens decisions remain independent. |
+| **Activity diagrams** | [Observed ingestion and current-code alternatives](examples/ingestion/ingestion.canvas), [proposed ingestion](examples/ingestion/accepted-ingestion-tobe.canvas), [current mixed batch](../2026-11-21-enrichment-baseline/batch-enrichment-current.md), and its [source-only detail](../2026-11-21-enrichment-baseline/source-enrichment-current.md). |
 
 **Main success scenario**
-1. The Owner attaches the folder to the library.
-2. The Core surveys the folder and proposes a decision for each subfolder.
-3. The Owner decides the subfolders that need a person: their purpose, or exclusion.
-4. The Clerk assesses each remaining subfolder's sensitivity.
-5. The Core accepts the remaining subfolders by the library's policy.
-6. The Core queues every in-scope document, without a model call.
-7. The Core captures each queued document and stages it.
-8. The Owner approves the staged documents for reading.
-9. The Core reads each approved document: parse, read, lenses, data, relate, metadata, review.
-10. The Core publishes each fully converted document to the paper graph.
-11. The Owner accepts the enriched documents into the library.
-12. The Core writes each accepted document as a Source note and validates that it is findable.
+
+1. The Owner states the goal, permitted roots, pre-read exclusions and required outputs.
+2. The Owner or authorized tier-0 agent attaches the folder to the library.
+3. The Core inventories current roots, fingerprints and literal folder facts, excluding hidden and scratch content before reading.
+4. The model worker through the legacy transport interprets folder purpose, proposes descriptions and assesses sensitivity.
+5. The Owner or authorized actor makes affirmative normal folder decisions within the actual grant.
+6. The Core submits authorized folder decisions for common Geo-Grapher group application, checks CLI exit/JSON/version and records successful assignments; the receipt does not attest parser completeness.
+7. The Core queues Source-eligible documents per deepest accepted root and reconciles current eligible counts.
+8. The Core captures immutable evidence and retains each reference's result separately.
+9. The model worker through the legacy transport supplies neutral evidence-based descriptions for usable captured Sources.
+10. The Core stages the Sources and retains the original mixed-item ledger, including separately processed folder metadata items.
+11. The Owner or authorized actor approves the staged selection for ingestion.
+12. The Owner or authorized actor explicitly requests processing start within the existing curate/person authority.
+13. The Core validates start permission and freezes the approved selection, returning an existing active run rather than duplicating it.
+14. The Core runs the existing mixed approved batch, dispatching each Source or folder card to its actual stage chain and retaining the original ledger and decision worklists.
+15. The Owner or authorized actor decides affirmative Source acceptance, including only expressly permitted partials.
+16. The Core records the actual Source decision, applies the guarded writer and validates required title, Bottom-Line and concept findability.
+17. The Owner receives the result with actual Source, publication and separate lens decision states and named remaining decision owners.
+
+The source detail owns **validate → parse → read → lenses → Data → relate → metadata → review → publish**. Folder cards use `folder_validate → folder_describe → folder_data`, with source content not examined. The dispatcher preserves the original mixed-item order. These references describe one existing worker, not extra batch starts. Bounded model-task concurrency stays within stages; accepting a Source does not accept a lens.
 
 **Extensions**
-- **2a** *observed*
-  - `2a1` Another root in the same library has changed since its survey.
-  - `2a2` The Core refuses every folder decision as stale.
-  - `2a3` The Owner re-surveys the stale root and re-applies its decisions. Rejoin at 3. (`9c0592d` stopped an *excluded* folder from causing this.)
-- **3a**
-  - `3a1` The Owner excludes a subfolder.
-  - `3a2` The Core never reads its contents. Rejoin at 4.
-- **4a** *observed*
-  - `4a1` The Clerk's qualification has been lost.
-  - `4a2` The Core holds every subfolder.
-  - `4a3` The Owner, or an agent managing the Cores, re-qualifies the Clerk. Rejoin at 4. (The cause was Cores overwriting each other's shared qualification records, fixed in `cab623a`.)
-- **4b**
-  - `4b1` The Clerk judges a subfolder sensitive.
-  - `4b2` The Core holds it for the Owner's decision. Rejoin at 3.
-- **6a** *observed*
-  - `6a1` Each accepted subfolder is its own root, so queuing the top folder finds nothing.
-  - `6a2` The Core queues per accepted subfolder. Rejoin at 7.
-- **8a**
-  - `8a1` The library's promotion mode is `agent`.
-  - `8a2` The Core approves by policy, recording the policy as approver. Rejoin at 9.
-- **9a** *observed*
-  - `9a1` A step needs a model that is not available, or a page reads only in part.
-  - `9a2` The Core leaves the document *partial*, recording which stage waits.
-  - `9a3` The Owner re-approves it. Rejoin at 9. *(Of 96, 6 were partial. 3 became complete; 3 were accepted at 95–98% read, keeping `coverage: partial`.)*
-- **10a**
-  - `10a1` The document has no verified full conversion.
-  - `10a2` The Core leaves it catalogue-only in the graph, and says so. Rejoin at 11.
-- **11a** *observed*
-  - `11a1` Nobody accepts the enriched documents.
-  - `11a2` The documents stay in staging, and nothing reports the backlog.
-  - `11a3` ?? (OP1)
-- **11b**
-  - `11b1` The library's promotion mode is `agent`.
-  - `11b2` An agent accepts by policy, recording itself in the reason. Rejoin at 12.
-- **12a**
-  - `12a1` A note cannot be found by its title, its bottom line and a concept.
-  - `12a2` The Core flags it for maintenance as *written but not findable*. The use case ends for that document.
+
+- **3a — stale root (observed).** The Core retains stale-evidence refusal. The authorized actor assesses the actual rebuild scope and requests the appropriate re-survey; fresh inventory follows. Rejoin at 3. The excluded-root fix was `9c0592d`; whole-library rebuild scope remains OP2.
+- **4a — lost qualification (observed).** The Core retains the existing refusal and blocks the affected draft. The authorized operator restores qualification after the shared-store defect (`cab623a`) and requests a fresh check. Rejoin at 4. A provider timeout, task refusal or missing parser capability retains its own cause rather than automatically taking this branch.
+- **5a — sensitive or reserved decision (anticipated in this historical cohort).** The Owner explicitly approves, excludes, declines or holds. Approval rejoins at 6. Exclusion removes the subtree without reading it and rejoins at 7. Decline/hold retains the work and responsible Owner; the use case ends paused.
+- **6a — application fails or is refused (current capability).** The Core retains `GEOGRAPHER_CALL_FAILED`, staleness or the originating refusal. An unsuccessful assignment is not treated as accepted. A bounded authorized repair rejoins at 3 or 6 for fresh evidence; otherwise the use case ends held/escalated.
+- **7a — top-level queue is empty or mismatched (observed).** The Core reconciles deepest-root ownership and current staging/processing state, not just historical `queued` ledger entries. The authorized actor investigates unexplained gaps and queues per accepted root. Rejoin at 7.
+- **7b — own-code/data/log input (current capability).** Common folder application at step 6 already invoked Geo-Grapher for all accepted non-excluded purposes, including documents and papers. This purpose has no Source intake; it does not trigger another indexing call. The current receipt omits parse failures, so extraction completeness is not attested.
+- **8a — duplicate, exclusion or isolated capture/parser failure (current capability).** The Core preserves per-reference outcomes and successful siblings; no failed reference earns source-reading credit. Remaining usable Sources rejoin at 9; no-work is reused or a required unresolved gap ends held/escalated.
+- **12a — start authority absent or reserved (current capability).** The Owner grants or declines the explicit start. Grant rejoins at 13; decline/hold ends paused. Ingestion approval alone does not start the batch, and agent promotion mode does not silently supply delegated start authority.
+- **14a — child partial (observed).** The parent retains actual coverage and stage/publication gaps. A finished partial may receive a new authorized approval/start, rejoining at 11; unfinished-run resume remains distinct. An explicitly permitted partial rejoins at 15. Required failed/pending work without a permitted continuation ends held/escalated. Of the historical 96, six were initially partial; three completed on reread and three were accepted at roughly 95–98% with `coverage: partial`.
+- **14b — child reused (current capability).** The Core reconciles existing/no-new-work state and separate pending decisions without duplicate processing. The use case ends reused.
+- **14c — child paused or escalated (current capability).** The Core retains completed items and the actual reason: cancellation, interruption, before-item ceiling stop, or unresolved stage/integrity fault. The responsible actor reports the continuation or required decision. The use case ends paused/escalated. Publication remains inside each item's child sequence; a rejected late folder/admission check does not erase completed reading.
+- **15a — no affirmative Source decision (observed).** On 19 November the 96 items remained staged until 20 November. Current `awaiting_acceptance()` visibility names pending Source work; the target also assigns the decision owner. Decline or hold never reaches the writer. The use case ends paused with retained staging (historical OP1).
+- **15b — person mode, sensitivity or interrupted promotion (current capability).** The Owner makes the reserved Source decision. Acceptance rejoins at 16; decline/hold ends paused. A Source decision does not resolve a lens's accept/reject/defer obligation.
+- **16a — written but not findable (anticipated in the historical cohort; later cross-library cases reported 22 November).** The Core preserves the written note and actual failed query. Index evidence and content gaps are diagnosed separately; reindexing is not assumed to cure every failure. The use case ends with written-but-not-findable status; no concepts or vectors are manufactured to force success.
 
 **Open questions / assumptions**
-- **OP1** (`11a3`). Who is told that enriched documents are waiting, and when? An agenda item for the Owner, a line in the Lead's library context, or both? Until then, UC2 can run against a corpus that is not in the library.
-- **OP2** (`2a`). Every folder accept re-checks and rebuilds every reviewed group, so a root edited all day keeps blocking decisions in unrelated folders. Should a decision touch only its own group? That is Geo-Grapher's to change.
-- *Assumption.* A folder's purpose fixes the authorship of every file under it (`research-docs` and `third-party` → `third_party`), and a Source note written from such a file is generated content about a third-party work.
+
+- **OP1 — historical unowned acceptance handoff, current visibility partly addressed.** W7 added `awaiting_acceptance()` to agenda, status and library context. The proposed parent assigns Source and lens decision owners and a truthful final handoff. Backlog counts alone do not show that current alerts failed; completing pending decisions remains separate authorized work.
+- **OP2 — actual folder-rebuild scope.** A folder decision can still rebuild every reviewed group. A local remedy must declare and be authorized for its actual whole-library radius; narrowing rebuild scope remains a separately scoped Geo-Grapher change.
+- **Authorship assumption.** Folder purpose determines file authorship (`research-docs` and `third-party` → `third_party`); generated Source prose remains about that work.
+- **Publication assumption.** Current/trusted accepted folder assignment and reading/conversion/artifact admission are prerequisites; an already accepted Source note is not. The historical result is 96 accepted Sources with 93 fully read/published and three accepted partials, not 96 full publications.
 
 ---
 
@@ -511,8 +503,8 @@ flowchart LR
 
 | OP | Use case and step | Open question | Planned in |
 |---|---|---|---|
-| OP1 | UC1 `11a3` | Who is told that enriched documents wait for acceptance? | W7 |
-| OP2 | UC1 `2a`, UC6 `7a2` | Should a folder decision rebuild only its own group? | W6 (Geo-Grapher) |
+| OP1 | UC1 `15a` | Historical handoff lacked ownership; W7 visibility added, proposed Source/lens decision ownership remains explicit | W7 |
+| OP2 | UC1 `3a`/`6a`, UC6 `7a2` | Should a folder decision rebuild only its own group? Retain actual whole-library remedy scope meanwhile | W6 (Geo-Grapher) |
 | OP3 | UC2 `12a3` | One session per question, or a synthesis per brief? | W7 |
 | OP4 | UC2 `6a3` | Keep the library's own notes out of an outside-corpus brief? | W7 |
 | OP5 | UC2 `*c` | Budget per visit, or per session? | W7 |

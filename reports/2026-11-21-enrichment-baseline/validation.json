@@ -1,0 +1,709 @@
+{
+  "source": "enrichment-cycle.spec.yaml",
+  "source_sha256": "e71c1703e1549df7c057b30f7ee32d79b1d3414d4537d9c6796d992a4613230e",
+  "renderer": "reports\\2026-11-20-workflow-map\\examples\\ingestion\\render_spec.py",
+  "renderer_sha256": "b3253960a08ccfdc05d93719c1b841393ec6024a409e4a2638510a1f6b27a955",
+  "structural_problems": [],
+  "cross_view_flags": [],
+  "numbered_main_steps": 38,
+  "extension_scenarios": 3870,
+  "nodes": 207,
+  "edges": 340,
+  "overlapping_cards": [],
+  "actor_reassignments": [
+    {
+      "node": "librarian-lensreview",
+      "from": "Owner",
+      "to": "Clerk (tier 2)",
+      "old_x": 40,
+      "new_x": 2140,
+      "old_y": 13740,
+      "new_y": 13740,
+      "y_preserved": true,
+      "intentional_y_adjustment": 0
+    }
+  ],
+  "group_extensions": [],
+  "generated_relayout": [
+    {
+      "node": "librarian-ticket",
+      "before": {
+        "x": 2980,
+        "y": 22340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 22540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-critical",
+      "before": {
+        "x": 40,
+        "y": 22740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 40,
+        "y": 22940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dticket",
+      "before": {
+        "x": 2980,
+        "y": 22540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 22740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-eescalated",
+      "before": {
+        "x": 4240,
+        "y": 25340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 4240,
+        "y": 25540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-doctor",
+      "before": {
+        "x": 1720,
+        "y": 22740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1720,
+        "y": 22940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-scout",
+      "before": {
+        "x": 2140,
+        "y": 22740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2140,
+        "y": 22940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-decisionowner",
+      "before": {
+        "x": 40,
+        "y": 23340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 40,
+        "y": 23540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-scopejudge",
+      "before": {
+        "x": 880,
+        "y": 22740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 880,
+        "y": 22940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-escalation",
+      "before": {
+        "x": 1300,
+        "y": 25140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1300,
+        "y": 25340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dremedy",
+      "before": {
+        "x": 2980,
+        "y": 22940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 23140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-realign",
+      "before": {
+        "x": 1300,
+        "y": 24340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1300,
+        "y": 24540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-downer",
+      "before": {
+        "x": 40,
+        "y": 23540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 40,
+        "y": 23740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dscope",
+      "before": {
+        "x": 2980,
+        "y": 23140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 23340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-repair",
+      "before": {
+        "x": 1720,
+        "y": 23740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1720,
+        "y": 23940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-drealign",
+      "before": {
+        "x": 1300,
+        "y": 24540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1300,
+        "y": 24740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-compensation",
+      "before": {
+        "x": 40,
+        "y": 23740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 40,
+        "y": 23940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-decisionrecord",
+      "before": {
+        "x": 2980,
+        "y": 23740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 23940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-paused",
+      "before": {
+        "x": 1300,
+        "y": 23740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1300,
+        "y": 23940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-scoperecord",
+      "before": {
+        "x": 2980,
+        "y": 23340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 23540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-recheck",
+      "before": {
+        "x": 880,
+        "y": 23940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 880,
+        "y": 24140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-realigncheck",
+      "before": {
+        "x": 880,
+        "y": 24740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 880,
+        "y": 24940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-drejoin",
+      "before": {
+        "x": 2980,
+        "y": 25340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 25540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-epaused",
+      "before": {
+        "x": 4240,
+        "y": 23940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 4240,
+        "y": 24140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-drecheck",
+      "before": {
+        "x": 880,
+        "y": 24140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 880,
+        "y": 24340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-drealigncheck",
+      "before": {
+        "x": 880,
+        "y": 24940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 880,
+        "y": 25140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-close",
+      "before": {
+        "x": 2980,
+        "y": 25140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 25340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-ownindex",
+      "before": {
+        "x": 2980,
+        "y": 21740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 21940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dtidybound",
+      "before": {
+        "x": 2980,
+        "y": 22140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 22340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-ownverify",
+      "before": {
+        "x": 2980,
+        "y": 21940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 22140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dfolderaccept",
+      "before": {
+        "x": 40,
+        "y": 13940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 40,
+        "y": 13740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-lensreview",
+      "before": {
+        "x": 2140,
+        "y": 13740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2140,
+        "y": 20740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-folderapply",
+      "before": {
+        "x": 2980,
+        "y": 21340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 21140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-lensrecord",
+      "before": {
+        "x": 2980,
+        "y": 20540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 21340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dlensrecord",
+      "before": {
+        "x": 2980,
+        "y": 21140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 21740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-lane-Owner",
+      "before": {
+        "x": 20,
+        "y": 60,
+        "width": 400,
+        "height": 25530
+      },
+      "after": {
+        "x": 20,
+        "y": 60,
+        "width": 400,
+        "height": 25730
+      }
+    },
+    {
+      "node": "librarian-lane-Tier-0-agent",
+      "before": {
+        "x": 440,
+        "y": 60,
+        "width": 400,
+        "height": 25530
+      },
+      "after": {
+        "x": 440,
+        "y": 60,
+        "width": 400,
+        "height": 25730
+      }
+    },
+    {
+      "node": "librarian-lane-Oracle",
+      "before": {
+        "x": 860,
+        "y": 60,
+        "width": 400,
+        "height": 25530
+      },
+      "after": {
+        "x": 860,
+        "y": 60,
+        "width": 400,
+        "height": 25730
+      }
+    },
+    {
+      "node": "librarian-lane-Lead-tier-1-",
+      "before": {
+        "x": 1280,
+        "y": 60,
+        "width": 400,
+        "height": 25530
+      },
+      "after": {
+        "x": 1280,
+        "y": 60,
+        "width": 400,
+        "height": 25730
+      }
+    },
+    {
+      "node": "librarian-lane-Doctor",
+      "before": {
+        "x": 1700,
+        "y": 60,
+        "width": 400,
+        "height": 25530
+      },
+      "after": {
+        "x": 1700,
+        "y": 60,
+        "width": 400,
+        "height": 25730
+      }
+    },
+    {
+      "node": "librarian-lane-Clerk-tier-2-",
+      "before": {
+        "x": 2120,
+        "y": 60,
+        "width": 400,
+        "height": 25530
+      },
+      "after": {
+        "x": 2120,
+        "y": 60,
+        "width": 400,
+        "height": 25730
+      }
+    },
+    {
+      "node": "librarian-lane-Scribe-tier-3-",
+      "before": {
+        "x": 2540,
+        "y": 60,
+        "width": 400,
+        "height": 25530
+      },
+      "after": {
+        "x": 2540,
+        "y": 60,
+        "width": 400,
+        "height": 25730
+      }
+    },
+    {
+      "node": "librarian-lane-Core",
+      "before": {
+        "x": 2960,
+        "y": 60,
+        "width": 400,
+        "height": 25530
+      },
+      "after": {
+        "x": 2960,
+        "y": 60,
+        "width": 400,
+        "height": 25730
+      }
+    },
+    {
+      "node": "librarian-lane-Model-host",
+      "before": {
+        "x": 3380,
+        "y": 60,
+        "width": 400,
+        "height": 25530
+      },
+      "after": {
+        "x": 3380,
+        "y": 60,
+        "width": 400,
+        "height": 25730
+      }
+    },
+    {
+      "node": "librarian-lane-Geo-Grapher",
+      "before": {
+        "x": 3800,
+        "y": 60,
+        "width": 400,
+        "height": 25530
+      },
+      "after": {
+        "x": 3800,
+        "y": 60,
+        "width": 400,
+        "height": 25730
+      }
+    },
+    {
+      "node": "librarian-lane-Outcomes",
+      "before": {
+        "x": 4220,
+        "y": 60,
+        "width": 400,
+        "height": 25530
+      },
+      "after": {
+        "x": 4220,
+        "y": 60,
+        "width": 400,
+        "height": 25730
+      }
+    }
+  ],
+  "ownership_rule": "agents own interpretation, proposals and semantic judgement; Core performs declared scripts and mechanical checks/storage/dispatch",
+  "layout": "accepted actor columns and card dimensions; main flow downward, branches beside the flow, explicit edge attachment sides",
+  "canvas_revision": "726f32a6b021b0a8ee6e19bfc2fb41ccb3182bccf325325e206a3773bbe400c5",
+  "canvas_service": "preview then revision/hash-checked commit, profile=None",
+  "scope": "analysis artifact checks; not live pipeline, model qualification or runtime readiness evidence"
+}

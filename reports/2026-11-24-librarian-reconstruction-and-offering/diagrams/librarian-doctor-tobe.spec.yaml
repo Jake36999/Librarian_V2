@@ -1,0 +1,159 @@
+diagram: librarian-doctor-tobe
+title: "Librarian Doctor Recovery & Ticket Workflow (Proposed To-Be, Rule-8 Compliant)"
+problem:
+  symptom: "Prior UC-D auto-rolled back compensation (x4), used Helper (tier 2), omitted activation triggers/ticket routing, and blocked non-interactive runs on Owner escalation."
+  root: "Enforce structured Ticket intake (extension ID, flags, owner, repair history), accepted-only YAML remedies + W3/DOC-GEO-03 bounds, revisable GLM-5.3 isolated adapters, non-blocking caller routing, shown compensation (Rule 8), and Oracle recheck."
+lanes:
+  - Owner
+  - Oracle
+  - Lead (tier 1)
+  - Doctor
+  - Clerk (tier 2)
+  - Core
+
+nodes:
+  - id: s
+    kind: start
+    label: start
+  - id: intake
+    kind: activity
+    lane: Core
+    step: 1
+    label: "records Ticket (ext ID, tiered flags, evidence hash, accountable actor, repair_history=0, required Oracle, mandate)"
+  - id: dtrigger
+    kind: decision
+    lane: Core
+    label: "activation context for Ticket?"
+  - id: userdoc
+    kind: activity
+    lane: Core
+    label: "binds Context 3 UI Owner repair request (spec_owner=person)"
+  - id: t0doc
+    kind: activity
+    lane: Core
+    label: "binds Context 1 commissioned mandate or Context 2 scoped grant (in-scope remedies run; never widens)"
+  - id: dremedy
+    kind: decision
+    lane: Core
+    label: "accepted YAML remedy matches?"
+  - id: scout
+    kind: activity
+    lane: Clerk (tier 2)
+    label: "scouts unmapped defect scope read-only; attaches diagnostic findings to Ticket"
+  - id: draftprop
+    kind: activity
+    lane: Doctor
+    label: "proposes new YAML remedy draft on Ticket (GLM-5.3 isolated adapter); never installs or executes it"
+  - id: blast
+    kind: activity
+    lane: Core
+    step: 2
+    label: "computes W3 blast radius vs parent mandate, <=3 recovery steps, & <=2 paid-call budget"
+  - id: dgrant
+    kind: decision
+    lane: Core
+    label: "within parent mandate and DOC-GEO-03 bounds?"
+  - id: downeravail
+    kind: decision
+    lane: Core
+    label: "interactive Owner directly present?"
+  - id: askowner
+    kind: activity
+    lane: Lead (tier 1)
+    label: "routes Ticket with exact blast radius & Rule-16 reserved scope request to Owner"
+  - id: downer
+    kind: decision
+    lane: Owner
+    label: "Owner grants expanded scope?"
+  - id: runremedy
+    kind: activity
+    lane: Doctor
+    step: 3
+    label: "runs accepted YAML remedy via revisable adapter (currently GLM-5.3, isolated context; FP9 strip XML)"
+  - id: checkrepair
+    kind: activity
+    lane: Core
+    step: 4
+    label: "reruns deterministic checks, records changed hashes/repair_history on Ticket, & checks worker route separation"
+  - id: drepaired
+    kind: decision
+    lane: Core
+    label: "deterministic checks passed?"
+  - id: showcomp
+    kind: activity
+    lane: Core
+    label: "attaches shown compensation plan & failed attempt to Ticket (Rule 8: never auto-runs)"
+  - id: dcomp
+    kind: decision
+    lane: Lead (tier 1)
+    label: "noncritical hold vs critical escalation?"
+  - id: oracle
+    kind: activity
+    lane: Oracle
+    step: 5
+    label: "verifies cleared Ticket via distinct qualified Oracle route (GLM-5.3 current adapter; switches reviewer on collision)"
+  - id: doracle
+    kind: decision
+    lane: Oracle
+    label: "Oracle confirms shortfall resolved?"
+  - id: closeresolved
+    kind: activity
+    lane: Core
+    step: 6
+    label: "marks Ticket resolved with repair history, Oracle pass verdict & user/caller notification receipt"
+  - id: haltdecline
+    kind: activity
+    lane: Lead (tier 1)
+    label: "keeps Ticket open (declined/deferred) with evidence, compensation & Agenda notification target"
+  - id: haltescalate
+    kind: activity
+    lane: Lead (tier 1)
+    label: "routes critical escalated Ticket immediately with flags, hashes & Rule-8 compensation"
+  - id: e1
+    kind: end
+    outcome: resolved
+    label: "accepted remedy verified by Oracle; ticket closed"
+  - id: e2
+    kind: end
+    outcome: declined
+    label: "unmapped, deferred, or declined without auto-rollback; ticket retained"
+  - id: e3
+    kind: end
+    outcome: escalated
+    label: "bounds exhausted or critical fault; escalated with displayed compensation"
+
+edges:
+  - {from: s, to: intake}
+  - {from: intake, to: dtrigger}
+  - {from: dtrigger, to: dremedy, guard: "system triggered"}
+  - {from: dtrigger, to: userdoc, guard: "user directed", ext: "1a"}
+  - {from: dtrigger, to: t0doc, guard: "tier 0 directed", ext: "1b"}
+  - {from: userdoc, to: dremedy}
+  - {from: t0doc, to: dremedy}
+  - {from: dremedy, to: blast, guard: "accepted YAML remedy matched"}
+  - {from: dremedy, to: scout, guard: "unmapped or proposed-only", ext: "1c"}
+  - {from: scout, to: draftprop}
+  - {from: draftprop, to: haltdecline}
+  - {from: blast, to: dgrant}
+  - {from: dgrant, to: runremedy, guard: "within W3 scope and DOC-GEO-03 bounds"}
+  - {from: dgrant, to: downeravail, guard: "wider than narrowed mandate (never widens autonomously)", ext: "2a"}
+  - {from: downeravail, to: askowner, guard: "user directed"}
+  - {from: downeravail, to: haltdecline, guard: "tier 0 or system triggered (do not block)"}
+  - {from: askowner, to: downer}
+  - {from: downer, to: runremedy, guard: "granted"}
+  - {from: downer, to: haltdecline, guard: "declined"}
+  - {from: downer, to: haltescalate, guard: "critical"}
+  - {from: dgrant, to: haltescalate, guard: "critical security, data-loss, or boundary violation (immediate)", ext: "2b"}
+  - {from: runremedy, to: checkrepair}
+  - {from: checkrepair, to: drepaired}
+  - {from: drepaired, to: oracle, guard: "checks passed"}
+  - {from: drepaired, to: showcomp, guard: "checks failed or step/call cap hit", ext: "4a"}
+  - {from: showcomp, to: dcomp}
+  - {from: dcomp, to: haltdecline, guard: "hold with shown compensation"}
+  - {from: dcomp, to: haltescalate, guard: "escalate unresolved fault"}
+  - {from: oracle, to: doracle}
+  - {from: doracle, to: closeresolved, guard: "resolved (distinct Oracle route pass)"}
+  - {from: doracle, to: showcomp, guard: "failed independent recheck or ORACLE_ROUTE_COLLISION (never marked resolved)", ext: "5a"}
+  - {from: closeresolved, to: e1}
+  - {from: haltdecline, to: e2}
+  - {from: haltescalate, to: e3}

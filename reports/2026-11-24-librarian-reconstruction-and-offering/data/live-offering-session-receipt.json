@@ -1,0 +1,3096 @@
+{
+  "session_id": "20261124-2011-59594c",
+  "draft_result": {
+    "staged": ".librarian/staging/offerings/20261124-2011-59594c-librarian-v2-ingestion-and-enrichment-to.md",
+    "offering": "20261124-2011-59594c-librarian-v2-ingestion-and-enrichment-to",
+    "claims_verified": 5,
+    "next": "promote_offering(offering='20261124-2011-59594c-librarian-v2-ingestion-and-enrichment-to'): a staged offering is not in the vault yet",
+    "composed_by": "google/gemma-4-26B-A4B-it",
+    "kept_as_given": [
+      "open_first"
+    ],
+    "session": {
+      "session": "20261124-2011-59594c",
+      "purpose": "explore",
+      "project": "",
+      "taint_sources": [],
+      "mode": "librarian",
+      "status": "open",
+      "phase": "synthesise",
+      "phases": [
+        "frame",
+        "map",
+        "need",
+        "search",
+        "judge",
+        "synthesise",
+        "check_out"
+      ],
+      "open_items": [
+        "promote the staged offering: promote_offering(offering='20261124-2011-59594c-librarian-v2-ingestion-and-enrichment-to') - it is not in the vault until promoted"
+      ],
+      "budget_left": 11,
+      "next": "Which sources together; at what cost; what is unknown; what to open first? Every claim carries its source and a verbatim quote. Still needed: promote the staged offering: promote_offering(offering='20261124-2011-59594c-librarian-v2-ingestion-and-enrichment-to') - it is not in the vault until promoted",
+      "coverage": [
+        {
+          "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+          "brief": "B1",
+          "verdict": "open"
+        }
+      ],
+      "library_item_count": 0,
+      "library_item_counts": {},
+      "library_items": []
+    }
+  },
+  "promote_result": {
+    "promoted": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md",
+    "path": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md",
+    "findable": true,
+    "by": "agent setting",
+    "session": {
+      "session": "20261124-2011-59594c",
+      "purpose": "explore",
+      "project": "",
+      "taint_sources": [],
+      "mode": "librarian",
+      "status": "open",
+      "phase": "synthesise",
+      "phases": [
+        "frame",
+        "map",
+        "need",
+        "search",
+        "judge",
+        "synthesise",
+        "check_out"
+      ],
+      "open_items": [],
+      "budget_left": 11,
+      "next": "synthesise is complete: advance to check_out",
+      "coverage": [
+        {
+          "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+          "brief": "B1",
+          "verdict": "open"
+        }
+      ],
+      "library_item_count": 0,
+      "library_item_counts": {},
+      "library_items": []
+    }
+  },
+  "close_result": {
+    "closed": "20261124-2011-59594c",
+    "completion": {
+      "complete": true,
+      "ledger": [
+        {
+          "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+          "brief": "B1",
+          "verdict": "covered",
+          "kept": [
+            "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+            "audited-engagement-harness",
+            "memory-context-design-addendum",
+            "Application - Librarian V2 Agent Delegation Review 2026-10",
+            "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+          ],
+          "context": [
+            "INGESTION-RUN",
+            "PROGRESS-REPORT",
+            "Folder - Librarian_V2 - 099c38f8",
+            "unified-implementation-plan"
+          ],
+          "undecided": 0,
+          "note": "Five primary sources kept and verified via get_note, draft_offering, and promote_offering."
+        }
+      ],
+      "gaps": [],
+      "made": [
+        {
+          "offering": "Librarian V2 Ingestion and Enrichment To-Be Refinements",
+          "status": "promoted",
+          "path": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md"
+        }
+      ]
+    },
+    "session": {
+      "session": "20261124-2011-59594c",
+      "purpose": "explore",
+      "project": "",
+      "taint_sources": [],
+      "mode": "librarian",
+      "status": "closed",
+      "phase": "check_out",
+      "phases": [
+        "frame",
+        "map",
+        "need",
+        "search",
+        "judge",
+        "synthesise",
+        "check_out"
+      ],
+      "open_items": [],
+      "budget_left": 9,
+      "next": "this session is closed; resume_session reopens it to discuss what it made",
+      "coverage": [
+        {
+          "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+          "brief": "B1",
+          "verdict": "covered"
+        }
+      ],
+      "library_item_count": 0,
+      "library_item_counts": {},
+      "library_items": []
+    }
+  },
+  "final_status": {
+    "session": {
+      "session": "20261124-2011-59594c",
+      "purpose": "explore",
+      "project": "",
+      "taint_sources": [],
+      "mode": "librarian",
+      "status": "closed",
+      "phase": "check_out",
+      "phases": [
+        "frame",
+        "map",
+        "need",
+        "search",
+        "judge",
+        "synthesise",
+        "check_out"
+      ],
+      "open_items": [],
+      "budget_left": 9,
+      "next": "this session is closed; resume_session reopens it to discuss what it made",
+      "coverage": [
+        {
+          "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+          "brief": "B1",
+          "verdict": "covered"
+        }
+      ],
+      "library_item_count": 0,
+      "library_item_counts": {},
+      "library_items": []
+    },
+    "purpose": "explore",
+    "project": "",
+    "taint_sources": [],
+    "mode": "librarian",
+    "status": "closed",
+    "phase": "check_out",
+    "phases": [
+      "frame",
+      "map",
+      "need",
+      "search",
+      "judge",
+      "synthesise",
+      "check_out"
+    ],
+    "open_items": [],
+    "budget_left": 9,
+    "next": "this session is closed; resume_session reopens it to discuss what it made",
+    "coverage": [
+      {
+        "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+        "brief": "B1",
+        "verdict": "covered"
+      }
+    ],
+    "library_item_count": 0,
+    "library_item_counts": {},
+    "library_items": [],
+    "question": "Which governance, budget-reservation, state-reuse, verification, and graph-boundary controls must the refined Librarian V2 ingestion and enrichment to-be pipeline preserve or add?",
+    "opened_at": "2026-11-24T20:11:39+00:00",
+    "plan": {
+      "map": "Vault holds 240 document notes, 102 model notes, and 21 pages under Unfiled. Strong catalogued sources cover AuditedEngagement governance, MC-01..MC-16 memory and budget specs, Phase 8 review verification, DeepInfra delegation benchmarks, and GraphRAG community summarization."
+    },
+    "briefs": {
+      "B1": {
+        "id": "B1",
+        "need": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+        "disqualifiers": [
+          "Must not drop Silver DATA_IS_UNFRAMED isolation or the two-gate staging airlock",
+          "Must not allow automatic compensation execution or self-attested Doctor closure without Oracle verification",
+          "Must not infer V1 feature rejection solely from absence in V2 runtime code"
+        ],
+        "constraints": {},
+        "verdict": "covered",
+        "status": "closed",
+        "closing_note": "Five primary sources kept and verified via get_note, draft_offering, and promote_offering.",
+        "topic": "",
+        "coverage": "covered",
+        "held": [
+          "INGESTION-RUN",
+          "PROGRESS-REPORT",
+          "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+          "Folder - Librarian_V2 - 099c38f8",
+          "unified-implementation-plan"
+        ]
+      }
+    },
+    "candidates": [
+      {
+        "source": "INGESTION-RUN",
+        "brief": "B1",
+        "found_in": 0,
+        "query": "",
+        "disposition": "context",
+        "reason": "Brief-seeded library note retained as background context while centering the offering claims on the five primary governance, memory/budget, verification, delegation, and graph-summary anchors.",
+        "role": ""
+      },
+      {
+        "source": "PROGRESS-REPORT",
+        "brief": "B1",
+        "found_in": 0,
+        "query": "",
+        "disposition": "context",
+        "reason": "Brief-seeded library note retained as background context while centering the offering claims on the five primary governance, memory/budget, verification, delegation, and graph-summary anchors.",
+        "role": ""
+      },
+      {
+        "source": "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+        "brief": "B1",
+        "found_in": 0,
+        "query": "",
+        "disposition": "keep",
+        "reason": "Primary evidence anchor: Document Phase 8 resume/key-reuse and superficial draft-status verification defects.",
+        "role": "Document Phase 8 resume/key-reuse and superficial draft-status verification defects."
+      },
+      {
+        "source": "Folder - Librarian_V2 - 099c38f8",
+        "brief": "B1",
+        "found_in": 0,
+        "query": "",
+        "disposition": "context",
+        "reason": "Brief-seeded library note retained as background context while centering the offering claims on the five primary governance, memory/budget, verification, delegation, and graph-summary anchors.",
+        "role": ""
+      },
+      {
+        "source": "unified-implementation-plan",
+        "brief": "B1",
+        "found_in": 0,
+        "query": "",
+        "disposition": "context",
+        "reason": "Brief-seeded library note retained as background context while centering the offering claims on the five primary governance, memory/budget, verification, delegation, and graph-summary anchors.",
+        "role": ""
+      },
+      {
+        "source": "audited-engagement-harness",
+        "brief": "B1",
+        "found_in": 0,
+        "query": "",
+        "disposition": "keep",
+        "reason": "Primary evidence anchor: Anchor authority boundaries across Core, VaultCoordinator, VaultWriter, IndexService, and policy broker.",
+        "role": "Anchor authority boundaries across Core, VaultCoordinator, VaultWriter, IndexService, and policy broker."
+      },
+      {
+        "source": "memory-context-design-addendum",
+        "brief": "B1",
+        "found_in": 0,
+        "query": "",
+        "disposition": "keep",
+        "reason": "Primary evidence anchor: Define worker request snapshots, constraints, budget reserves, and evidence/caveat returns (MC-01..MC-16).",
+        "role": "Define worker request snapshots, constraints, budget reserves, and evidence/caveat returns (MC-01..MC-16)."
+      },
+      {
+        "source": "Application - Librarian V2 Agent Delegation Review 2026-10",
+        "brief": "B1",
+        "found_in": 0,
+        "query": "",
+        "disposition": "keep",
+        "reason": "Primary evidence anchor: Provide empirical delegation metrics contrasting cheap quote location against semantic support and coverage checks.",
+        "role": "Provide empirical delegation metrics contrasting cheap quote location against semantic support and coverage checks."
+      },
+      {
+        "source": "EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+        "brief": "B1",
+        "found_in": 0,
+        "query": "",
+        "disposition": "keep",
+        "reason": "Primary evidence anchor: Provide foundational rationale for hierarchical entity/community graphs and summaries for global corpus sensemaking.",
+        "role": "Provide foundational rationale for hierarchical entity/community graphs and summaries for global corpus sensemaking."
+      }
+    ],
+    "rounds": [],
+    "checkpoints": [],
+    "questions": [],
+    "uses": [],
+    "writes": [
+      {
+        "t": "2026-11-24T20:15:25+00:00",
+        "tool": "promote_offering",
+        "path": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md",
+        "phase": "synthesise"
+      }
+    ],
+    "offerings": [
+      {
+        "t": "2026-11-24T20:15:25+00:00",
+        "id": "20261124-2011-59594c-librarian-v2-ingestion-and-enrichment-to",
+        "title": "Librarian V2 Ingestion and Enrichment To-Be Refinements",
+        "status": "promoted",
+        "path": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md",
+        "claims": 5
+      }
+    ],
+    "synthesis": {
+      "t": "2026-11-24T20:14:42+00:00",
+      "outcome": "offering",
+      "together": "Together, these five sources establish the core non-regression constraints for Librarian V2's refined to-be pipeline: preserving strict Core/VaultCoordinator/VaultWriter/IndexService/broker write boundaries (audited-engagement-harness), requiring parent requirements, input snapshots, constraints, and budget reserves up front on worker dispatches beside evidence/caveat returns (memory-context-design-addendum), eliminating status-blind key reuse that lets resumed runs skip queued or partial stages (PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115), pairing cheap verbatim quote checking with independent support and coverage verification (Application - Librarian V2 Agent Delegation Review 2026-10), and sustaining entity/community graph summaries for corpus-wide sensemaking (EXT_O1_2404.16130_GraphRAG_Local_to_Global).",
+      "unknowns": "Internal Geo-Grapher construction fixes under Phase 2 RRM-7, empirical ranking lift from search_feedback, and Owner disposition of RL's 439 Unfiled notes, 326 staged lenses, and UNIMPLEMENTED_UNDROPPED V1 parity items.",
+      "open_first": "audited-engagement-harness",
+      "cost": "",
+      "reason": "",
+      "kept": [
+        "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+        "audited-engagement-harness",
+        "memory-context-design-addendum",
+        "Application - Librarian V2 Agent Delegation Review 2026-10",
+        "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+      ]
+    },
+    "summary": "Promoted grounded suggestion offering refining Librarian V2 ingestion, enrichment, recovery, and Geo-Grapher boundary governance.",
+    "gaps": "Phase 2 Geo-Grapher internal construction mechanics (RRM-7) and live RL Unfiled/staged-lens curation remain outside this offering.",
+    "history": [
+      "frame",
+      "map",
+      "need",
+      "judge",
+      "synthesise",
+      "check_out"
+    ],
+    "model_events": [],
+    "lenses": [],
+    "capabilities": [],
+    "assumptions": [
+      {
+        "assumption": "All five kept catalogued Source notes reflect current indexed text in Resource-Library without unindexed edits.",
+        "settled_by": "get_note",
+        "how": "Retrieved current note sections and frontmatter for all five target sources via Core get_note inside session 20261124-2011-59594c.",
+        "phase": "judge",
+        "visit": 1
+      },
+      {
+        "assumption": "Internal Geo-Grapher graph-construction mechanics belong to Phase 2 RRM-7 and remain unchanged in Phase 1.",
+        "settled_by": "unverifiable",
+        "how": "Scoped explicitly to Librarian-side Geo boundary contracts in Phase 1 before reapplying RRM-7 to Geo-Grapher internals in Phase 2.",
+        "phase": "judge",
+        "visit": 1
+      }
+    ],
+    "completion": {
+      "complete": true,
+      "ledger": [
+        {
+          "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+          "brief": "B1",
+          "verdict": "covered",
+          "kept": [
+            "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+            "audited-engagement-harness",
+            "memory-context-design-addendum",
+            "Application - Librarian V2 Agent Delegation Review 2026-10",
+            "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+          ],
+          "context": [
+            "INGESTION-RUN",
+            "PROGRESS-REPORT",
+            "Folder - Librarian_V2 - 099c38f8",
+            "unified-implementation-plan"
+          ],
+          "undecided": 0,
+          "note": "Five primary sources kept and verified via get_note, draft_offering, and promote_offering."
+        }
+      ],
+      "gaps": [],
+      "made": [
+        {
+          "offering": "Librarian V2 Ingestion and Enrichment To-Be Refinements",
+          "status": "promoted",
+          "path": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md"
+        }
+      ]
+    },
+    "messages": [],
+    "min_rewind_index": 0
+  },
+  "tool_calls_count": 27,
+  "transcript": [
+    {
+      "tool": "session_status",
+      "args": {},
+      "result": {
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "5 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan",
+            "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 5 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        },
+        "purpose": "explore",
+        "project": "",
+        "taint_sources": [],
+        "mode": "librarian",
+        "status": "open",
+        "phase": "judge",
+        "phases": [
+          "frame",
+          "map",
+          "need",
+          "search",
+          "judge",
+          "synthesise",
+          "check_out"
+        ],
+        "open_items": [
+          "5 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan",
+          "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+        ],
+        "budget_left": 27,
+        "next": "What role would each candidate play? A rejection needs its reason. Still needed: 5 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan",
+        "coverage": [
+          {
+            "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+            "brief": "B1",
+            "verdict": "open"
+          }
+        ],
+        "library_item_count": 0,
+        "library_item_counts": {},
+        "library_items": [],
+        "question": "Which governance, budget-reservation, state-reuse, verification, and graph-boundary controls must the refined Librarian V2 ingestion and enrichment to-be pipeline preserve or add?",
+        "opened_at": "2026-11-24T20:11:39+00:00",
+        "plan": {
+          "map": "Vault holds 240 document notes, 102 model notes, and 21 pages under Unfiled. Strong catalogued sources cover AuditedEngagement governance, MC-01..MC-16 memory and budget specs, Phase 8 review verification, DeepInfra delegation benchmarks, and GraphRAG community summarization."
+        },
+        "briefs": {
+          "B1": {
+            "id": "B1",
+            "need": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+            "disqualifiers": [
+              "Must not drop Silver DATA_IS_UNFRAMED isolation or the two-gate staging airlock",
+              "Must not allow automatic compensation execution or self-attested Doctor closure without Oracle verification",
+              "Must not infer V1 feature rejection solely from absence in V2 runtime code"
+            ],
+            "constraints": {},
+            "verdict": "covered",
+            "status": "open",
+            "closing_note": "",
+            "topic": "",
+            "coverage": "",
+            "held": [
+              "INGESTION-RUN",
+              "PROGRESS-REPORT",
+              "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+              "Folder - Librarian_V2 - 099c38f8",
+              "unified-implementation-plan"
+            ]
+          }
+        },
+        "candidates": [
+          {
+            "source": "INGESTION-RUN",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "undecided",
+            "reason": "",
+            "role": ""
+          },
+          {
+            "source": "PROGRESS-REPORT",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "undecided",
+            "reason": "",
+            "role": ""
+          },
+          {
+            "source": "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "undecided",
+            "reason": "",
+            "role": ""
+          },
+          {
+            "source": "Folder - Librarian_V2 - 099c38f8",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "undecided",
+            "reason": "",
+            "role": ""
+          },
+          {
+            "source": "unified-implementation-plan",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "undecided",
+            "reason": "",
+            "role": ""
+          }
+        ],
+        "rounds": [],
+        "checkpoints": [],
+        "questions": [],
+        "uses": [],
+        "writes": [],
+        "offerings": [],
+        "synthesis": null,
+        "summary": "",
+        "gaps": "",
+        "history": [
+          "frame",
+          "map",
+          "need",
+          "judge"
+        ],
+        "model_events": [],
+        "lenses": [],
+        "capabilities": [],
+        "assumptions": [],
+        "completion": {
+          "complete": false,
+          "ledger": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open",
+              "kept": [],
+              "context": [],
+              "undecided": 5
+            }
+          ],
+          "gaps": [
+            "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture. (open)"
+          ],
+          "made": []
+        },
+        "messages": [],
+        "min_rewind_index": 0
+      }
+    },
+    {
+      "tool": "add_candidate",
+      "args": {
+        "source": "audited-engagement-harness",
+        "brief": "B1"
+      },
+      "result": {
+        "candidate": "audited-engagement-harness",
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "6 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness",
+            "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 6 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "get_note",
+      "args": {
+        "name": "audited-engagement-harness"
+      },
+      "result": {
+        "catalogue": {
+          "authorship": "generated",
+          "when_relevant": "",
+          "relevance_status": "not recorded",
+          "use_rollup": {
+            "authorship": "generated",
+            "basis": "recorded log_use events and Application notes; not efficacy evidence",
+            "log_use_count": 0,
+            "application_count": 0,
+            "recent_uses": [],
+            "applications": [],
+            "truncated": false,
+            "limitations": []
+          },
+          "chapters": [
+            {
+              "title": "Librarian V2 audited-engagement harness and evidence-control specification",
+              "locator": "parts 1-1",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "Librarian will add an opt-in, bounded AuditedEngagement mode for work whose requirements can be checked against durable, inspectable state.",
+                "AuditedEngagement uses a Manage–Execute–Audit loop but remains one execution mode rather than the default."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            },
+            {
+              "title": "3. Research-to-product decisions",
+              "locator": "parts 2-2",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "AuditedEngagement is an opt-in session purpose where typed events coordinate requirements, contracts, evidence, audits, and checkpoints.",
+                "Session reduction is the deterministic fold of validated Session events that changes requirement status."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            },
+            {
+              "title": "5. Product modes and the Auditable Closure Gate",
+              "locator": "parts 3-3",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "Six gates, including Host lifecycle and SQLite ownership, are required prerequisites for the system.",
+                "Normal sessions, existing macros, and legacy tiers must continue to work through 2.x while gates are completed."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            },
+            {
+              "title": "7. Durable data contract",
+              "locator": "parts 4-4",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "The active Core owns every transition, and all components must use the Core API and its boundaries.",
+                "The broker must compute effective authority as the intersection of several factors, including caller permission, role/profile permission ceiling, and session phase."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            },
+            {
+              "title": "stale | untrusted | blocked | superseded",
+              "locator": "parts 5-5",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "A user-authored or user-locked constraint must not be rewritten by a model, though a model may propose a new constraint as a checkpoint option.",
+                "An AuditedSubtaskContract is immutable after preflight and requires a new contract if a target, constraint, route, tool bundle, context policy, or state epoch changes materially."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            },
+            {
+              "title": "8. State machine and transition invariants",
+              "locator": "parts 6-6",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "Policy corrections are typed, bounded, and auditable, and cannot override the constraint ledger.",
+                "A state transition is valid only when a durable Session event records the prior state, event type, actor, state epoch, input references, result, and resulting state."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            },
+            {
+              "title": "10. Context and tool-surface control",
+              "locator": "parts 7-7",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "A result must be labelled environment_feasible and cannot be labelled semantically correct, constraint-complete, secure, or guaranteed to succeed.",
+                "When a before-state artifact is required, Core captures an EvidenceSnapshot, validates the target's fingerprint and lease, and then the Executor can receive a mutation-capable contract."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            },
+            {
+              "title": "12. Audit model",
+              "locator": "parts 8-8",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "Work budget controls Core-side turns, action attempts, delegated work, audit work, time, and cost.",
+                "Tier A deterministic audit runs after a mutation-capable contract and before Tier B, returning clean, suspect, or violation integrity statuses."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            }
+          ],
+          "chapters_total": 13,
+          "chapters_truncated": true,
+          "original": {
+            "available": true,
+            "path": "D:\\Librarian_V2\\docs\\audited-engagement-harness.md",
+            "name": "audited-engagement-harness.md",
+            "download_source": "audited-engagement-harness",
+            "representation": "original"
+          }
+        },
+        "found": true,
+        "name": "audited-engagement-harness",
+        "path": "Sources/document/audited-engagement-harness.md",
+        "shape": "source",
+        "kind": "document",
+        "frontmatter": {
+          "type": "source",
+          "kind": "document",
+          "title": "audited-engagement-harness",
+          "canonical_url": "file:a2d2c382c37adce1",
+          "status": "active",
+          "primary_topic": "Unfiled",
+          "captured_at": "2026-11-17",
+          "file": "D:/Librarian_V2/docs/audited-engagement-harness.md",
+          "drafted_by": "google/gemma-4-26B-A4B-it",
+          "coverage": "full",
+          "dik": ".librarian/derived/dik/audited-engagement-harness.json",
+          "evidence": [
+            "3d82b8116cfb12faebe8a3538ff554a3"
+          ],
+          "attested_by": "person",
+          "catalogued_at": "2026-11-18T04:12:54+00:00"
+        },
+        "sections": {
+          "opening": "# audited-engagement-harness",
+          "Bottom Line": "The audited-engagement-harness is a proposed implementation specification for an opt-in, bounded AuditedEngagement mode within Librarian that uses a Manage–Execute–Audit loop.",
+          "What It Solves": "It addresses the need for long-running, mutation-capable work to be resumable and to require pre-mutation evidence and feasibility checks. It ensures that requirements can be checked against durable, inspectable state and prevents a model from becoming the authority for vault mutations or human decisions.",
+          "Claims": "*Origin: source-stated - what the text itself says, part by part.*\n\n- Librarian will add an opt-in, bounded AuditedEngagement mode for work whose requirements can be checked against durable, inspectable state. (part 1)\n- AuditedEngagement uses a Manage–Execute–Audit loop but remains one execution mode rather than the default. (part 1)\n- The implementation must preserve authority boundaries for the Core, VaultCoordinator, VaultWriter, IndexService, and policy broker. (part 1)\n- Goals include making long-running, mutation-capable work resumable and requiring pre-mutation evidence and feasibility checks. (part 1)\n- AuditedEngagement is an opt-in session purpose where typed events coordinate requirements, contracts, evidence, audits, and checkpoints. (part 2)\n- Session reduction is the deterministic fold of validated Session events that changes requirement status. (part 2)\n- Integrity refers to whether work stayed within contract protected targets and audit constraints, separate from semantic correctness. (part 2)\n- Six gates, including Host lifecycle and SQLite ownership, are required prerequisites for the system. (part 3)\n- Normal sessions, existing macros, and legacy tiers must continue to work through 2.x while gates are completed. (part 3)\n- Modes include Standard session, Plan-only engagement, AuditedEngagement, and Workbench-linked AuditedEngagement. (part 3)\n- The active Core owns every transition, and all components must use the Core API and its boundaries. (part 4)\n- The broker must compute effective authority as the intersection of several factors, including caller permission, role/profile permission ceiling, and session phase. (part 4)\n- No component may widen the intersection of effective authority; semantic ranking or Manager recommendations may only select among already eligible options. (part 4)\n- A user-authored or user-locked constraint must not be rewritten by a model, though a model may propose a new constraint as a checkpoint option. (part 5)\n- An AuditedSubtaskContract is immutable after preflight and requires a new contract if a target, constraint, route, tool bundle, context policy, or state epoch changes materially. (part 5)\n- A mutation contract requiring before-state evidence must acquire all required pre-mutation snapshots before its first write. (part 5)\n- Policy corrections are typed, bounded, and auditable, and cannot override the constraint ledger. (part 6)\n- A state transition is valid only when a durable Session event records the prior state, event type, actor, state epoch, input references, result, and resulting state. (part 6)\n- Reduction MAY reach COMPLETED only if every authoritative Requirement has the specified clean verification evidence at the current epoch. (part 6)\n- A result must be labelled environment_feasible and cannot be labelled semantically correct, constraint-complete, secure, or guaranteed to succeed. (part 7)\n- When a before-state artifact is required, Core captures an EvidenceSnapshot, validates the target's fingerprint and lease, and then the Executor can receive a mutation-capable contract. (part 7)\n- A ContextCapsule uses a profile- and route-configurable hard token budget, reserving space for contract fields, target content, evidence, and local context in a specific order. (part 7)\n- Work budget controls Core-side turns, action attempts, delegated work, audit work, time, and cost. (part 8)\n- Tier A deterministic audit runs after a mutation-capable contract and before Tier B, returning clean, suspect, or violation integrity statuses. (part 8)\n- Tier B read-only LLM audit is invoked only after Tier A is clean and requires a fresh audit capsule without raw Executor reasoning. (part 8)\n- The invalidation engine follows typed dependency edges to mark dependent records stale or untrusted, preserving original source and historical audit records. (part 9)\n- Deterministic rules or human decisions, rather than models, create authoritative invalidation events. (part 9)\n- The first implementation should emit deterministic, low-cost signals such as stall, environment drift, evidence coverage, scope mismatch, and optional semantic drift. (part 9)\n- Markdown lacking a Librarian shape receives a virtual, root-scoped workspace_document identity for search and context. (part 10)\n- A derived-index phase builds a disposable structural graph for adopted Markdown without mutating user files. (part 10)\n- Context retrieval prioritizes direct evidence and semantic links, using structural relations as an explainable fallback. (part 10)\n- Traces must not contain API keys, secret references, raw provider payloads, hidden reasoning, full prompt text, or browser session credentials. (part 11)\n- Evaluated engagements record various metrics including admission outcome, completion status, integrity violations, and resource shares like token, time, and cost. (part 11)\n- Cost estimates are considered estimates rather than provider invoices unless reconciled under an explicit accounting policy. (part 11)\n- Phase D adds trust-zone labels, evidence-first interrogation cards, and links AuditedEngagement rounds to Workbench records. (part 12)\n- Phase E focuses on read-only structural parsing, layered dedupe, and tuning capsule budgets using recorded engagement outcomes. (part 12)\n- Phase F requires completing handshake/lifecycle checks, running deterministic L0 and L1–L3 suites, and shipping behind a per-vault feature flag. (part 12)\n- AuditedEngagement mutations only occur within active Core, VaultWriter, target lease, and IndexService authority boundaries. (part 13)\n- Tier A blocks completion if it detects out-of-scope writes, audit writes, stale target state, or missing deterministic verification. (part 13)\n- Untrusted input cannot use its content to gain write, execution, credential, route, or promotion authority in the same episode. (part 13)\n- … and 25 more across the text (all kept in the staged item's deep-read record)",
+          "Evidence & Limits": "*Origin: source-stated - the limits the source itself states.*\n\n- Proposed implementation specification, not implemented. (part 1)\n- Tier B is experimental and non-default until HARNESS-08's go/no-go (§12.3). (part 1)\n- Deferred: trust-zone propagation, learned tool selection, graph context, generic behaviour-tree framework, and automatic promotion or route switching. (part 1)\n- Non-goals include: autonomous goal expansion, self-authored permanent policies, self-approved promotion, or automatic model failover. (part 1)\n- The LongHorizon-Harness loop is optional and does not prove a gain on every task or route. (part 2)\n- Do not assume a stronger model always reduces total cost or that a hybrid pairing is superior. (part 2)\n- Long task duration alone is not sufficient for admission to the Auditable Closure Gate. (part 2)\n- A successful gate does not establish that the task is feasible in a domain sense, that its constraints are complete, or that the anticipated result is correct. (part 3)\n- Legacy tiers are a compatibility projection and MUST NOT become a second authority for a live AuditedEngagement route. (part 3)\n- A staged research summary normally remains partial or human_judgment unless its exact claim coverage and resolution rule are separately specified. (part 3)\n- Tier B audit is experimental (HARNESS-08). (part 4)\n- Tier A auditors cannot claim semantic completeness beyond deterministic checks. (part 4)\n- Records are logical records and not a separate engagement store or a persistent class per record. (part 4)\n- A user-authored or user-locked constraint MUST NOT be rewritten by a model. (part 5)\n- The contract is immutable after preflight; changes to targets, constraints, routes, tool bundles, context policy, or state epoch require a new contract. (part 5)\n- The contract MUST express a bounded action, not a vague goal. (part 5)\n- Policy corrections are not self-modifying model policy and cannot override the constraint ledger. (part 6)\n- At most five active corrections MAY be rendered in a capsule. (part 6)\n- The Manager does not receive direct vault tools, shell tools, network tools, or raw Executor chat. (part 6)\n- The system MUST NOT hash an entire vault to judge audit integrity to avoid false violations for independent documents. (part 7)\n- The assembler MUST NOT evict contract facts, target state, or mandatory evidence. (part 7)\n- The assembler MUST NOT claim to implement a trained graph-conditioned selector unless one is actually trained, versioned, and qualified. (part 7)\n- Model behaviour exposes provider-native thinking only when the exact expectation record and trusted adapter permit them. (part 8)\n- Tier A does not infer that an open-ended conclusion is true. (part 8)\n- Tier B is experimental and non-default until HARNESS-08's predeclared go/no-go result. (part 8)\n- Green signals never prove correctness. (part 9)\n- An embedding similarity score, action-loop entropy score, citation-to-claim ratio, or numeric threshold MUST remain advisory until formula version, test corpus, false positive/negative analysis, and profile/route calibration are met. (part 9)\n- Labels do not establish that content is true, harmless, user-approved, or safe to execute. (part 9)\n- The product adaptation does not claim to reproduce a particular paper's parser, accuracy, memory, or depth result. (part 10)\n- Context retrieval begins shallow and expands only under the capsule budget. (part 10)\n- Near-duplicate suggestions require human resolution and cannot silently collapse evidence provenance. (part 10)\n- The trace MUST NOT contain API keys, secret references, raw provider payloads, hidden reasoning, full prompt text, unrestricted document text, or browser session credentials. (part 11)\n- Cost estimates are estimates, not provider invoices, unless reconciled to a provider source under an explicit accounting policy. (part 11)\n- This is an implementation map, not authorization to bypass existing contracts. (part 11)\n- Poisoned or ambiguous input cannot acquire write/execution authority. (part 12)\n- A frontier-lead/open-executor hypothesis is an experiment, not an assumed improvement. (part 12)\n- Do not deploy policy changes by inferred traffic splitting. (part 12)\n- The specification was informed by a locally supplied corpus and references that do not independently certify a Librarian implementation. (part 13)\n- Simulator studies and proxy metrics do not prove a universal prompt or embedding threshold. (part 13)\n- Formal/solver verification applies only where the artifact has an appropriate verifier. (part 13)\n- … and 12 more across the text (all kept in the staged item's deep-read record)",
+          "Evidence": "- `3d82b8116cfb12faebe8a3538ff554a3` page from file:audited-engagement-harness.md#a2d2c382c37adce1, fetched 2026-11-17",
+          "Chapters": "*Origin: structurally observed divisions, with the claims read from each.*\n\n- Librarian V2 audited-engagement harness and evidence-control specification (parts 1-1) - full: Librarian will add an opt-in, bounded AuditedEngagement mode for work whose requirements can be checked against durable, inspectable state. *(source-stated)*\n- 3. Research-to-product decisions (parts 2-2) - full: AuditedEngagement is an opt-in session purpose where typed events coordinate requirements, contracts, evidence, audits, and checkpoints. *(source-stated)*\n- 5. Product modes and the Auditable Closure Gate (parts 3-3) - full: Six gates, including Host lifecycle and SQLite ownership, are required prerequisites for the system. *(source-stated)*\n- 7. Durable data contract (parts 4-4) - full: The active Core owns every transition, and all components must use the Core API and its boundaries. *(source-stated)*\n- stale | untrusted | blocked | superseded (parts 5-5) - full: A user-authored or user-locked constraint must not be rewritten by a model, though a model may propose a new constraint as a checkpoint option. *(source-stated)*\n- 8. State machine and transition invariants (parts 6-6) - full: Policy corrections are typed, bounded, and auditable, and cannot override the constraint ledger. *(source-stated)*\n- 10. Context and tool-surface control (parts 7-7) - full: A result must be labelled environment_feasible and cannot be labelled semantically correct, constraint-complete, secure, or guaranteed to succeed. *(source-stated)*\n- 12. Audit model (parts 8-8) - full: Work budget controls Core-side turns, action attempts, delegated work, audit work, time, and cost. *(source-stated)*\n- 14. Runtime quality signals and interruptibility (parts 9-9) - full: The invalidation engine follows typed dependency edges to mark dependent records stale or untrusted, preserving original source and historical audit records. *(source-stated)*\n- 17. Human co-work experience (parts 10-10) - full: Markdown lacking a Librarian shape receives a virtual, root-scoped workspace_document identity for search and context. *(source-stated)*\n- 19. Implementation architecture and module mapping (parts 11-11) - full: Traces must not contain API keys, secret references, raw provider payloads, hidden reasoning, full prompt text, or browser session credentials. *(source-stated)*\n- 21. Test and evaluation contract (parts 12-12) - full: Phase D adds trust-zone labels, evidence-first interrogation cards, and links AuditedEngagement rounds to Workbench records. *(source-stated)*\n- 23. Research basis and interpretation limits (parts 13-13) - full: AuditedEngagement mutations only occur within active Core, VaultWriter, target lease, and IndexService authority boundaries. *(source-stated)*\n\nCoverage: full."
+        },
+        "linked_from": [
+          "Topic - Unfiled"
+        ],
+        "revision": "rev1.eyJjIjoicGVyc29uIiwiZiI6IjdiZTUyZWE1YjA3OWQzNGFkZWI2IiwiayI6Im5vdGUiLCJzIjoiMjAyNjExMjQtMjAxMS01OTU5NGMiLCJ0IjoiU291cmNlcy9kb2N1bWVudC9hdWRpdGVkLWVuZ2FnZW1lbnQtaGFybmVzcy5tZCJ9.hYZnDKdFHW_vBRXro8yEKGmH",
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "6 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness",
+            "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 6 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "add_candidate",
+      "args": {
+        "source": "memory-context-design-addendum",
+        "brief": "B1"
+      },
+      "result": {
+        "candidate": "memory-context-design-addendum",
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "7 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum",
+            "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 7 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "get_note",
+      "args": {
+        "name": "memory-context-design-addendum"
+      },
+      "result": {
+        "catalogue": {
+          "authorship": "generated",
+          "when_relevant": "",
+          "relevance_status": "not recorded",
+          "use_rollup": {
+            "authorship": "generated",
+            "basis": "recorded log_use events and Application notes; not efficacy evidence",
+            "log_use_count": 0,
+            "application_count": 0,
+            "recent_uses": [],
+            "applications": [],
+            "truncated": false,
+            "limitations": []
+          },
+          "chapters": [
+            {
+              "title": "Candidate addendum: memory, context and worker continuity",
+              "locator": "parts 1-2",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "The proposed clauses specify observable outcomes without prescribing specific implementations like graph databases or particular prompts.",
+                "MC-01 requires that complete input for model calls fits within supported allowances after accounting for overhead and reserves."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            },
+            {
+              "title": "Adoption and placement",
+              "locator": "parts 3-3",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "Consolidation must produce versioned proposals with source references and must not replace canonical instructions or original evidence.",
+                "Memory withdrawal must affect retrieval eligibility, summaries, and derivatives, and must not resurrect withdrawn records as current memory."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            }
+          ],
+          "chapters_total": 2,
+          "chapters_truncated": false,
+          "original": {
+            "available": true,
+            "path": "D:\\Librarian_V2\\docs\\proposals\\memory-context-design-addendum.md",
+            "name": "memory-context-design-addendum.md",
+            "download_source": "memory-context-design-addendum",
+            "representation": "original"
+          }
+        },
+        "found": true,
+        "name": "memory-context-design-addendum",
+        "path": "Sources/document/memory-context-design-addendum.md",
+        "shape": "source",
+        "kind": "document",
+        "frontmatter": {
+          "type": "source",
+          "kind": "document",
+          "title": "memory-context-design-addendum",
+          "canonical_url": "file:26e258308ada5966",
+          "status": "active",
+          "primary_topic": "Unfiled",
+          "captured_at": "2026-11-17",
+          "file": "D:/Librarian_V2/docs/proposals/memory-context-design-addendum.md",
+          "drafted_by": "google/gemma-4-26B-A4B-it",
+          "coverage": "full",
+          "dik": ".librarian/derived/dik/memory-context-design-addendum.json",
+          "evidence": [
+            "841446ee1209773cea9dc7ea499b4a38"
+          ],
+          "attested_by": "person",
+          "catalogued_at": "2026-11-18T04:12:56+00:00"
+        },
+        "sections": {
+          "opening": "# memory-context-design-addendum",
+          "Bottom Line": "This is a proposed addendum to the long-horizon harness design that specifies requirements for memory, context, and worker continuity.",
+          "What It Solves": "The proposed clauses address the need to ensure model call inputs fit within supported allowances and that derived working contexts retain critical information like goals and constraints during compaction. It also aims to ensure that evidence required for resumable decisions remains resolvable beyond the originating worker.",
+          "Claims": "*Origin: source-stated - what the text itself says, part by part.*\n\n- The proposed clauses specify observable outcomes without prescribing specific implementations like graph databases or particular prompts. (part 1)\n- MC-01 requires that complete input for model calls fits within supported allowances after accounting for overhead and reserves. (part 1)\n- MC-02 mandates that derived working context retains operative goals, constraints, exceptions, and evidence identities during compaction. (part 1)\n- MC-03 requires that evidence for resumable decisions has an identity resolvable beyond the originating worker, including source version and locator. (part 1)\n- MC-04, conditional on reusable memory, requires that remembered procedures expose assumptions and be checked against current facts before guiding action. (part 1)\n- Transformations like paraphrasing or indexing must retain lineage to distinguish between source statements, observations, inference, and model-produced text. (part 2)\n- Worker requests must identify parent work, requirements, input snapshots, constraints, and budget, while results must include evidence references and caveats. (part 2)\n- Worker results are proposals that must be checked against current requirement revisions, evidence freshness, and scope before acceptance. (part 2)\n- Concurrent workers must draw from the same controlling allowance through serialized or atomic reservations to avoid double counting. (part 2)\n- The system must distinguish between no eligible match, incomplete search, access failure, stale evidence, partial coverage, and contradictory evidence. (part 2)\n- Consolidation must produce versioned proposals with source references and must not replace canonical instructions or original evidence. (part 3)\n- Memory withdrawal must affect retrieval eligibility, summaries, and derivatives, and must not resurrect withdrawn records as current memory. (part 3)\n- Graph relations must distinguish between declared structure, source-stated relations, and inferred associations. (part 3)\n- Memory operations like retrieval expansion and consolidation must have configured resource limits and observable exhaustion outcomes. (part 3)\n- Active constraints and source evidence must not be silently evicted to satisfy cache or storage caps. (part 3)",
+          "Evidence & Limits": "*Origin: source-stated - the limits the source itself states.*\n\n- The status is proposed, 3 November 2026; not adopted. (part 1)\n- Requirements marked conditional apply only if the named feature is adopted. (part 1)\n- MC-04 is new, conditional on reusable experience/procedure memory. (part 1)\n- MC-05 is new, conditional on cross-session fact/decision/preference reuse. (part 1)\n- MC-07 is lineage bookkeeping, not a claim of comprehensive taint enforcement. (part 2)\n- The exact packet schema for MC-08 remains open. (part 2)\n- MC-09 does not promise exactly-once external execution. (part 2)\n- MC-10 does not prescribe an extra billing subsystem. (part 2)\n- MC-14 is not a legal compliance claim. (part 3)\n- MC-15 paths do not create unsupported transitive or causal claims; community membership, degree and paths remain advisory. (part 3)\n- MC-16 limits are implementation and qualification choices. (part 3)\n- Spec adoption and implementation qualification are separate decisions; the prior implementation queue remains a proposal. (part 3)",
+          "Evidence": "- `841446ee1209773cea9dc7ea499b4a38` page from file:memory-context-design-addendum.md#26e258308ada5966, fetched 2026-11-17",
+          "Chapters": "*Origin: structurally observed divisions, with the claims read from each.*\n\n- Candidate addendum: memory, context and worker continuity (parts 1-2) - full: The proposed clauses specify observable outcomes without prescribing specific implementations like graph databases or particular prompts. *(source-stated)*\n- Adoption and placement (parts 3-3) - full: Consolidation must produce versioned proposals with source references and must not replace canonical instructions or original evidence. *(source-stated)*\n\nCoverage: full."
+        },
+        "linked_from": [
+          "Topic - Unfiled"
+        ],
+        "revision": "rev1.eyJjIjoicGVyc29uIiwiZiI6ImNlNjExMmVkYmJiYWU0MTgzODg5IiwiayI6Im5vdGUiLCJzIjoiMjAyNjExMjQtMjAxMS01OTU5NGMiLCJ0IjoiU291cmNlcy9kb2N1bWVudC9tZW1vcnktY29udGV4dC1kZXNpZ24tYWRkZW5kdW0ubWQifQ.fAKPmPsk-XtNmUAXW7ojn0Vm",
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "7 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum",
+            "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 7 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "get_note",
+      "args": {
+        "name": "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115"
+      },
+      "result": {
+        "catalogue": {
+          "authorship": "generated",
+          "when_relevant": "",
+          "relevance_status": "not recorded",
+          "use_rollup": {
+            "authorship": "generated",
+            "basis": "recorded log_use events and Application notes; not efficacy evidence",
+            "log_use_count": 0,
+            "application_count": 0,
+            "recent_uses": [],
+            "applications": [],
+            "truncated": false,
+            "limitations": []
+          },
+          "chapters": [
+            {
+              "title": "Verification of the two external regression reviews — 2026-11-15",
+              "locator": "parts 1-2",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "The scope includes the current Librarian feature working tree, Geo-Grapher source, supplied reviews, and preserved pilot logs.",
+                "The investigation was read-only and involved no product changes or paid dispatch."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            },
+            {
+              "title": "Geo hook corrections",
+              "locator": "parts 3-3",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "SP-08 claims that the assertion that no live Geo reload means stale is not established by imports and is contradicted by live catalog architecture.",
+                "SP-09 claims that the statement that batch cannot process code at all is overstated because batch._data branches on repository and calls dik.repository."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            },
+            {
+              "title": "Revised proposal following owner clarification and review",
+              "locator": "parts 4-5",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "A prior broad suite had 2503 passed, 2 failed, 2 skipped, and 5 deselected tests.",
+                "PDFs inside approved content roots, the vault, or explicitly referenced by users are freely readable without grants or prompts."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            }
+          ],
+          "chapters_total": 3,
+          "chapters_truncated": false,
+          "original": {
+            "available": true,
+            "path": "D:\\Librarian_V2\\reports\\PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115.md",
+            "name": "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115.md",
+            "download_source": "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+            "representation": "original"
+          }
+        },
+        "found": true,
+        "name": "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+        "path": "Sources/document/PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115.md",
+        "shape": "source",
+        "kind": "document",
+        "frontmatter": {
+          "type": "source",
+          "kind": "document",
+          "title": "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+          "canonical_url": "file:7a85d18da1bedec5",
+          "status": "active",
+          "primary_topic": "Unfiled",
+          "captured_at": "2026-11-17",
+          "file": "D:/Librarian_V2/reports/PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115.md",
+          "drafted_by": "google/gemma-4-26B-A4B-it",
+          "coverage": "full",
+          "dik": ".librarian/derived/dik/phase8-external-review-verification-20261115.json",
+          "evidence": [
+            "f62c38868b7b5db8f2b8291d46082ffb"
+          ],
+          "attested_by": "person",
+          "catalogued_at": "2026-11-18T04:08:37+00:00"
+        },
+        "sections": {
+          "opening": "# PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+          "Bottom Line": "This is a verification report of two external regression reviews regarding the Librarian feature and Geo-Grapher source.",
+          "What It Solves": "The report investigates technical issues such as resume processes skipping stages, lack of fidelity verification in terminal reviews, and slow cancellation processes. It provides findings and proposed solutions for these confirmed behaviors within the current working tree.",
+          "Claims": "*Origin: source-stated - what the text itself says, part by part.*\n\n- The scope includes the current Librarian feature working tree, Geo-Grapher source, supplied reviews, and preserved pilot logs. (part 1)\n- The investigation was read-only and involved no product changes or paid dispatch. (part 1)\n- Import-graph slices and `_compatibility` copies are considered leads rather than evidence of current runtime behaviour. (part 1)\n- Finding a present gap does not establish historical regression attribution. (part 1)\n- batch.py:645 reuses matching logged keys without status checks, causing resumes to skip queued or partial stages. (part 2)\n- Conversion is optional and uses a raw fallback; missing direct imports are irrelevant because pdf_to_markdown is called through REGISTRY. (part 2)\n- Terminal review does not verify fidelity or source equivalence as it only checks if draft.status is ok. (part 2)\n- Passive queues are confirmed, and intake is intentionally separate from person-started processing. (part 2)\n- Active calls are not universally cancellable, as observed when a cancel HTTP request timed out. (part 2)\n- SP-08 claims that the assertion that no live Geo reload means stale is not established by imports and is contradicted by live catalog architecture. (part 3)\n- SP-09 claims that the statement that batch cannot process code at all is overstated because batch._data branches on repository and calls dik.repository. (part 3)\n- SP-11 confirms a missing override for audited contracts but states it is not an accidental regression against prior owner instructions. (part 3)\n- The text identifies a sequencing issue where publication currently happens in parse before later read/review stages. (part 3)\n- The text notes that current exported section arrays are empty, representing a gap in claims/concepts projection. (part 3)\n- A prior broad suite had 2503 passed, 2 failed, 2 skipped, and 5 deselected tests. (part 4)\n- PDFs inside approved content roots, the vault, or explicitly referenced by users are freely readable without grants or prompts. (part 4)\n- P0 tasks include preserving the cancelled pilot ledger, diagnosing the queued Clerk outcome, and resolving two integration failures. (part 4)\n- P1 requires binding ingestion jobs to targets and using hidden Markdown representations for full enrichment and verified ingestion. (part 4)\n- Full PDF ingestion must visually inspect every page, including those with text layers, to persist images, transcriptions, LaTeX, and figure descriptions. (part 4)\n- Optical-first processing is evaluated as a candidate default for full ingestion. (part 5)\n- A single optical pass may replace mechanical extraction and text cleanup if it passes coverage and fidelity checks. (part 5)\n- Cost comparisons must include rendered-image input, transcription, visual-description output, reasoning, retries, and verification. (part 5)\n- The built-in one-sentence OCR test only establishes basic service operation. (part 5)\n- A bounded measured page comparison within the authorized pilot budget is required before claiming lower cost or scaling. (part 5)",
+          "Evidence & Limits": "*Origin: source-stated - the limits the source itself states.*\n\n- Scope is limited to current Librarian feature working tree, Geo-Grapher source, supplied reviews, and preserved pilot logs. (part 1)\n- Investigation is read-only with no product changes or paid dispatch. (part 1)\n- Import-graph slices and `_compatibility` copies are leads, not evidence of current runtime behaviour. (part 1)\n- No historical regression attribution is established merely by finding a present gap. (part 1)\n- batch._review:315 checks draft.status == ok but neither proves coverage nor source equivalence. (part 2)\n- A model-generated draft or citation-valid answer alone cannot close the gate. (part 2)\n- The exact underlying queued-provider reason for 429s remains unestablished. (part 2)\n- Unknown-authorship and rename cases need separate tests. (part 2)\n- The supplied pseudocode references APIs/statuses that do not exist (`get_stage`, `get_or_create`, `completed`, numeric coverage_of). (part 3)\n- A lack of direct import is not proof of a missing transitive call. (part 3)\n- No new paid tests were run. (part 3)\n- Community synchronization is not established; community-to-Geo synchronization and automatic contextual bridges are not established implementations. (part 3)\n- Review verification run is targeted evidence, not full-suite or live-catalog certification. (part 4)\n- Full enrichment and verified ingestion require an intact hidden Markdown representation bound to the original digest with usable page locators. (part 4)\n- Moving publication alone cannot populate the currently hardcoded empty arrays. (part 4)\n- The configured OCR prompt currently asks only for text transcription and cannot establish visual-content coverage. (part 4)\n- A single optical pass may replace mechanical extraction plus text cleanup when it passes coverage and fidelity checks. (part 5)\n- The built-in one-sentence OCR test establishes basic service operation only. (part 5)\n- Cost comparison must include rendered-image input, transcription and visual-description output, reasoning, retries and verification. (part 5)\n- Use representative text, equations, tables and figures in free adapter/response fixtures, then a bounded measured page comparison within the authorized pilot budget before claiming lower cost or scaling. (part 5)",
+          "Evidence": "- `f62c38868b7b5db8f2b8291d46082ffb` page from file:PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115.md#7a85d18da1bedec5, fetched 2026-11-17",
+          "Chapters": "*Origin: structurally observed divisions, with the claims read from each.*\n\n- Verification of the two external regression reviews — 2026-11-15 (parts 1-2) - full: The scope includes the current Librarian feature working tree, Geo-Grapher source, supplied reviews, and preserved pilot logs. *(source-stated)*\n- Geo hook corrections (parts 3-3) - full: SP-08 claims that the assertion that no live Geo reload means stale is not established by imports and is contradicted by live catalog architecture. *(source-stated)*\n- Revised proposal following owner clarification and review (parts 4-5) - full: A prior broad suite had 2503 passed, 2 failed, 2 skipped, and 5 deselected tests. *(source-stated)*\n\nCoverage: full."
+        },
+        "linked_from": [
+          "Topic - Unfiled"
+        ],
+        "revision": "rev1.eyJjIjoicGVyc29uIiwiZiI6IjI0MmJkOTdjY2E3YmYyNjJjY2QxIiwiayI6Im5vdGUiLCJzIjoiMjAyNjExMjQtMjAxMS01OTU5NGMiLCJ0IjoiU291cmNlcy9kb2N1bWVudC9QSEFTRThfRVhURVJOQUxfUkVWSUVXX1ZFUklGSUNBVElPTl8yMDI2MTExNS5tZCJ9.at9_y82xMFlRknZoHWIYZp37",
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "7 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum",
+            "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 7 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "add_candidate",
+      "args": {
+        "source": "Application - Librarian V2 Agent Delegation Review 2026-10",
+        "brief": "B1"
+      },
+      "result": {
+        "candidate": "Application - Librarian V2 Agent Delegation Review 2026-10",
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "8 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10",
+            "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 8 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "get_note",
+      "args": {
+        "name": "Application - Librarian V2 Agent Delegation Review 2026-10"
+      },
+      "result": {
+        "catalogue": {
+          "authorship": "generated",
+          "when_relevant": "",
+          "relevance_status": "not recorded",
+          "use_rollup": {
+            "authorship": "generated",
+            "basis": "recorded log_use events and Application notes; not efficacy evidence",
+            "log_use_count": 0,
+            "application_count": 0,
+            "recent_uses": [],
+            "applications": [],
+            "truncated": false,
+            "limitations": []
+          },
+          "chapters": [
+            {
+              "title": "Application - Librarian V2 Agent Delegation Review 2026-10",
+              "locator": "parts 1-1",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "The project measured how Claude and Codex use and build the Librarian and delegate to DeepInfra, focusing on token usage, quota loss, and resume costs.",
+                "Anchored extraction involves a model emitting typed JSON with a verbatim quote and page, where a script verifies the quote exists on that page."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            },
+            {
+              "title": "Patterns And Insights",
+              "locator": "parts 2-2",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "Quote location is cheap to automate, but support and coverage are not.",
+                "Hosted-model readers differ more than their price suggests, with quote-location ranges from 99.2% to 64.5%."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            }
+          ],
+          "chapters_total": 2,
+          "chapters_truncated": false,
+          "original": {
+            "available": true,
+            "path": "D:\\Resource-Library\\09-Applications\\Application - Librarian V2 Agent Delegation Review 2026-10.md",
+            "name": "Application - Librarian V2 Agent Delegation Review 2026-10.md",
+            "download_source": "Application - Librarian V2 Agent Delegation Review 2026-10",
+            "representation": "original"
+          }
+        },
+        "found": true,
+        "name": "Application - Librarian V2 Agent Delegation Review 2026-10",
+        "path": "Sources/document/Application - Librarian V2 Agent Delegation Review 2026-10.md",
+        "shape": "source",
+        "kind": "document",
+        "frontmatter": {
+          "type": "source",
+          "kind": "document",
+          "title": "Application - Librarian V2 Agent Delegation Review 2026-10",
+          "canonical_url": "file:bc8e5a2e0b2a2dd9",
+          "status": "active",
+          "primary_topic": "Unfiled",
+          "captured_at": "2026-11-17",
+          "file": "D:/Resource-Library/09-Applications/Application - Librarian V2 Agent Delegation Review 2026-10.md",
+          "drafted_by": "google/gemma-4-26B-A4B-it",
+          "coverage": "full",
+          "dik": ".librarian/derived/dik/application-librarian-v2-agent-delegation-review-2026-10.json",
+          "evidence": [
+            "f7667c10a94f9b576df70b4f971151b9"
+          ],
+          "attested_by": "person",
+          "catalogued_at": "2026-11-18T04:11:21+00:00"
+        },
+        "sections": {
+          "opening": "# Application - Librarian V2 Agent Delegation Review 2026-10",
+          "Bottom Line": "This is an application record for the Librarian V2 project that reviews how Claude and Codex use and build the Librarian and delegate to DeepInfra.",
+          "What It Solves": "The project addresses issues where lead agents hit usage limits and lose context during handoffs. It provides a baseline of orchestrator tokens, quota loss, resume cost, and review hold-up using evidence from receipts, ledgers, git, and session logs.",
+          "Claims": "*Origin: source-stated - what the text itself says, part by part.*\n\n- The project measured how Claude and Codex use and build the Librarian and delegate to DeepInfra, focusing on token usage, quota loss, and resume costs. (part 1)\n- Anchored extraction involves a model emitting typed JSON with a verbatim quote and page, where a script verifies the quote exists on that page. (part 1)\n- A cheap model asked to rate applicability finds an analogy almost everywhere, meaning the rating does not discriminate. (part 1)\n- The research identified various metrics and methods, including drift-propagation equations, constraint-compliance, and selective communication under a budget. (part 1)\n- The process replaced hand reading of 1.8 MB of transcripts, 50 PDFs, and ten architecture files, costing approximately $4.5 at live DeepInfra prices. (part 1)\n- Quote location is cheap to automate, but support and coverage are not. (part 2)\n- Hosted-model readers differ more than their price suggests, with quote-location ranges from 99.2% to 64.5%. (part 2)\n- Lead agents were blocked up to 57% of a 103-hour window, with Claude locked out for 62 hours by a weekly limit. (part 2)\n- A paper intake step should not discard papers based on a first-page keyword screen. (part 2)\n- Intake should reject identifiers that do not match a paper's own first page. (part 2)",
+          "Evidence & Limits": "*Origin: source-stated - the limits the source itself states.*\n\n- A quote on the page proves the evidence exists, not that it supports the claim and not that nothing was left out. (part 1)\n- A cheap model asked to rate applicability finds an analogy almost everywhere, so the rating does not discriminate. (part 1)\n- The drift method scored lowest outside its home domain, including code. (part 1)\n- The findings from the research folder are ideas, not code. (part 1)\n- A runner limit of 16,384 output tokens bounds one call. (part 2)\n- Fetch bibliographic identifiers from the first page only. (part 2)\n- Agent-use evidence had to be reconstructed from logs, commit text and a scratchpad outside the repository. (part 2)\n- Notes in 06-Papers written from memory are secondary sources. (part 2)",
+          "Evidence": "- `f7667c10a94f9b576df70b4f971151b9` page from file:Application - Librarian V2 Agent Delegation Review 2026-10.md#bc8e5a2e0b2a2dd9, fetched 2026-11-17",
+          "Chapters": "*Origin: structurally observed divisions, with the claims read from each.*\n\n- Application - Librarian V2 Agent Delegation Review 2026-10 (parts 1-1) - full: The project measured how Claude and Codex use and build the Librarian and delegate to DeepInfra, focusing on token usage, quota loss, and resume costs. *(source-stated)*\n- Patterns And Insights (parts 2-2) - full: Quote location is cheap to automate, but support and coverage are not. *(source-stated)*\n\nCoverage: full."
+        },
+        "linked_from": [
+          "Topic - Unfiled",
+          "workspace:Resource-Library-acbc4ddb/06-Papers/Paper Index.md",
+          "workspace:Resource-Library-acbc4ddb/09-Applications/Application Index.md"
+        ],
+        "revision": "rev1.eyJjIjoicGVyc29uIiwiZiI6IjBjNTY2MzdkNzc5NDUyM2U4N2UxIiwiayI6Im5vdGUiLCJzIjoiMjAyNjExMjQtMjAxMS01OTU5NGMiLCJ0IjoiU291cmNlcy9kb2N1bWVudC9BcHBsaWNhdGlvbiAtIExpYnJhcmlhbiBWMiBBZ2VudCBEZWxlZ2F0aW9uIFJldmlldyAyMDI2LTEwLm1kIn0.0uNvzDRe9dJzX-bX6OYEKd_7",
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "8 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10",
+            "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 8 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "add_candidate",
+      "args": {
+        "source": "EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+        "brief": "B1"
+      },
+      "result": {
+        "candidate": "EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "9 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10 - decide(source=[...], disposition='reject'|'context'|'defer', reason=...) settles several sharing one reason in one call; decide's result and session_status list the rest",
+            "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 9 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10 - decide(source=[...], disposition='reject'|'context'|'defer', reason=...) settles several sharing one reason in one call; decide's result and session_status list the rest",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "get_note",
+      "args": {
+        "name": "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+      },
+      "result": {
+        "catalogue": {
+          "authorship": "generated",
+          "when_relevant": "",
+          "relevance_status": "not recorded",
+          "use_rollup": {
+            "authorship": "generated",
+            "basis": "recorded log_use events and Application notes; not efficacy evidence",
+            "log_use_count": 0,
+            "application_count": 0,
+            "recent_uses": [],
+            "applications": [],
+            "truncated": false,
+            "limitations": []
+          },
+          "chapters": [
+            {
+              "title": "pp. 1-10",
+              "locator": "pp. 1-10",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "RAG fails on global questions directed at an entire text corpus because these are query-focused summarization (QFS) tasks rather than explicit retrieval tasks.",
+                "Prior QFS methods do not scale to the quantities of text indexed by typical RAG systems."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            },
+            {
+              "title": "pp. 11-20",
+              "locator": "pp. 11-20",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "For both News and Podcast datasets, global search conditions (C0-C3) and source text summarization (TS) had greater comprehensiveness than vector RAG (SS), with statistically significant differences (p <.05).",
+                "In the Podcast dataset, all global search conditions had significantly greater diversity than SS across all distance thresholds (p<.05)."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            },
+            {
+              "title": "pp. 21-26",
+              "locator": "pp. 21-26",
+              "status": "observed",
+              "coverage": "full",
+              "summary": [
+                "The goal is to identify all entities of specific types from a text document and all relationships among them.",
+                "Step 1 involves identifying entities and extracting their name, type, and a comprehensive description."
+              ],
+              "summary_truncated": true,
+              "authorship": "generated",
+              "basis": "deep_read chapter claims; source-stated, not independently verified"
+            }
+          ],
+          "chapters_total": 3,
+          "chapters_truncated": false,
+          "original": {
+            "available": true,
+            "path": "E:\\DataManagement\\01-Knowledge-Graphs-Ontologies-and-Classification\\external\\EXT_O1_2404.16130_GraphRAG_Local_to_Global.pdf",
+            "name": "EXT_O1_2404.16130_GraphRAG_Local_to_Global.pdf",
+            "download_source": "EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+            "representation": "original"
+          }
+        },
+        "found": true,
+        "name": "EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+        "path": "Sources/document/EXT_O1_2404.16130_GraphRAG_Local_to_Global.md",
+        "shape": "source",
+        "kind": "document",
+        "frontmatter": {
+          "type": "source",
+          "kind": "document",
+          "title": "EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+          "canonical_url": "file:730f1a9f38d16689",
+          "status": "active",
+          "primary_topic": "Unfiled",
+          "captured_at": "2026-11-20",
+          "file": "E:/DataManagement/01-Knowledge-Graphs-Ontologies-and-Classification/external/EXT_O1_2404.16130_GraphRAG_Local_to_Global.pdf",
+          "drafted_by": "google/gemma-4-26B-A4B-it",
+          "coverage": "full",
+          "dik": ".librarian/derived/dik/ext-o1-2404-16130-graphrag-local-to-global.json",
+          "evidence": [
+            "8b8fa095a4c52e4fcf76db34ca058c9e"
+          ],
+          "attested_by": "person",
+          "catalogued_at": "2026-11-20T13:43:53+00:00"
+        },
+        "sections": {
+          "opening": "# EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+          "Bottom Line": "GraphRAG is a graph-based approach to question answering over private text corpora that uses an LLM to build an entity knowledge graph and pre-generate community summaries.",
+          "What It Solves": "Conventional vector RAG fails on global sensemaking questions that require a summary of an entire text corpus rather than the retrieval of specific records. GraphRAG addresses this by using map-reduce processing to generate partial responses from community summaries which are then summarized into a final response.",
+          "Claims": "*Origin: source-stated - what the text itself says, part by part.*\n\n- RAG fails on global questions directed at an entire text corpus because these are query-focused summarization (QFS) tasks rather than explicit retrieval tasks. (p. 1)\n- Prior QFS methods do not scale to the quantities of text indexed by typical RAG systems. (p. 1)\n- GraphRAG is a graph-based approach to question answering over private text corpora that scales with question generality and source text quantity. (p. 1)\n- Vector RAG works well for queries answered by information in a small set of records but does not support sensemaking queries requiring global understanding of an entire dataset. (p. 2)\n- GraphRAG is a graph-based RAG approach that enables sensemaking over the entirety of a large text corpus. (p. 2)\n- GraphRAG constructs a knowledge graph, partitions it into a hierarchy of communities, and generates community-level summaries in a bottom-up manner. (p. 2)\n- GraphRAG leverages summaries over large sections of data as \"self-memory\" and generates a graph index to create a thematic partitioning via graph-based community detection. (p. 3)\n- GraphRAG uses the inherent modularity of graphs to recursively create increasingly global summaries by using an LLM to summarize the community hierarchy. (p. 3)\n- The authors propose an approach for generating questions to evaluate global sensemaking over an entire corpus, rather than explicit fact retrieval. (p. 3)\n- The Graph RAG pipeline uses an LLM-derived graph index consisting of nodes, edges, and covariates extracted and summarized by domain-tailored LLM prompts. (p. 4)\n- Community detection partitions the graph index into groups that the LLM can summarize in parallel during indexing and query time. (p. 4)\n- A global answer is produced via query-focused summarization over all community summaries relevant to a query. (p. 4)\n- LLM prompts can be tailored to specific domains by choosing domain-appropriate few-shot exemplars for in-context learning. (p. 5)\n- LLMs can be prompted to extract entities, relationships, and claims, which is a form of abstractive summarization. (p. 5)\n- Each hierarchy level provides a community partition that covers graph nodes in a mutually exclusive, collectively exhaustive way. (p. 6)\n- GraphRAG generates community summaries by adding element summaries for nodes, edges, and related claims to a template. (p. 6)\n- Algorithm 1 describes a prompting procedure to generate K*N*M high-level questions requiring global understanding of a corpus. (p. 7)\n- The procedure prompts an LLM to describe K user personas, identify N tasks per user, and generate M questions per user-task pair. (p. 7)\n- Directness is a control criterion that evaluates the concision of an answer and serves as a reference for judging other criteria. (p. 8)\n- Directness is effectively in opposition to comprehensiveness and diversity. (p. 8)\n- A fixed context window size of 8k tokens was used for generating community and global answers. (p. 9)\n- Graph indexing with a 600 token window took 281 minutes for the Podcast dataset. (p. 9)\n- All Graph RAG conditions outperformed naïve RAG on comprehensiveness and diversity. (p. 10)\n- Conditions C1-C3 showed slight improvements in answer comprehensiveness and diversity over TS. (p. 10)\n- For both News and Podcast datasets, global search conditions (C0-C3) and source text summarization (TS) had greater comprehensiveness than vector RAG (SS), with statistically significant differences (p <.05). (p. 11)\n- In the Podcast dataset, all global search conditions had significantly greater diversity than SS across all distance thresholds (p<.05). (p. 11)\n- GraphRAG combines knowledge graph generation and query-focused summarization to support human sensemaking over entire text corpora. (p. 12)\n- Initial evaluations show GraphRAG provides substantial improvements over a vector RAG baseline in answer comprehensiveness and diversity. (p. 12)\n- The default GraphRAG initialization pipeline uses GPT-4 prompts for default graph extraction and claim extraction. (pp. 18-19)\n- Entity extraction uses a multipart LLM prompt to identify entity names, types, and descriptions, as well as relationships between entities. (pp. 18-19)\n- Graph RAG is the winner for Comprehensiveness because it provides a more detailed list from a wider range of entertainment sectors. (p. 20)\n- Graph RAG is the winner for Diversity because it covers a varied range of figures and cites specific data sources for each. (p. 20)\n- The goal is to identify all entities of specific types from a text document and all relationships among them. (p. 21)\n- Step 1 involves identifying entities and extracting their name, type, and a comprehensive description. (p. 21)\n- The goal is to write a comprehensive report of a community using a list of entities, their relationships, and optional claims. (p. 22)\n- The report informs decision-makers about community information and potential impact, including legal compliance, technical capabilities, and reputation. (p. 22)\n- When referencing data, do not list more than 5 record ids in a single reference; use the top 5 most relevant ids and add '+more'. (pp. 24-25)\n- Points supported by data should list relevant reports as references using the format [Data: Reports (report ids)]. (pp. 24-25)\n- Table 6 presents pairwise comparisons of six conditions on four metrics across 125 questions and two datasets. (p. 26)\n- Winning conditions received 100, losing conditions 0, and ties 50, with scores averaged over five evaluation runs. (p. 26)\n- … and 50 more across the text (all kept in the staged item's deep-read record)",
+          "Evidence & Limits": "*Origin: source-stated - the limits the source itself states.*\n\n- RAG fails on global questions directed at an entire text corpus, such as “What are the main themes in the dataset?”, because this is a query-focused summarization (QFS) task rather than an explicit retrieval task. (p. 1)\n- Prior QFS methods do not scale to the quantities of text indexed by typical RAG systems. (p. 1)\n- The approach is shown for a class of global sensemaking questions over datasets in the 1 million token range. (p. 1)\n- vector RAG works well for queries that can be answered with information localized within a small set of records. (p. 2)\n- vector RAG approaches do not support sensemaking queries, meaning queries that require global understanding of the entire dataset. (p. 2)\n- The challenge arises when the volume of data requires a RAG approach, since vector RAG approaches are unable to support sensemaking over an entire corpus. (p. 2)\n- Longer text chunks require fewer LLM calls but suffer from degraded recall of information that appears early in the chunk. (p. 4)\n- Some criteria are generic to vector RAG systems and not relevant to global sensemaking, such as 'context relevance', 'faithfulness', and 'answer relevance'. (p. 4)\n- The work lacks a gold standard for evaluation. (p. 4)\n- The default prompt extracts the broad class of “named entities” like people, places, and organizations. (p. 5)\n- Domains with specialized knowledge (e.g., science, medicine, law) will benefit from few-shot exemplars specialized to those domains. (p. 5)\n- In this manuscript, the analysis uses exact string matching for entity matching. (p. 5)\n- Leaf-level community element summaries are added to the LLM context window until the token limit is reached. (p. 6)\n- Higher-level community summaries are generated by substituting sub-community summaries for longer element summaries if they do not fit within the token limit. (p. 6)\n- It is an open question whether a particular level in the hierarchical community structure offers the best balance of summary detail and scope for general sensemaking questions. (p. 6)\n- The procedure generates questions that require understanding of the entire corpus and do not require retrieval of specific low-level facts. (p. 7)\n- There is a lack of gold standard answers to the activity-based sensemaking questions. (p. 7)\n- The evaluation uses a head-to-head comparison approach using an LLM evaluator to judge relative performance. (p. 7)\n- Directness is effectively in opposition to comprehensiveness and diversity, so no method is expected to win across all four criteria. (p. 8)\n- To account for inherent stochasticity of LLM generation, comparisons are run with multiple replicates and results are averaged. (p. 8)\n- The graph index for C0-C3 used generic prompts for entity and relationship extraction with entity types and few-shot examples tailored to the domain. (p. 8)\n- A fixed context window size of 8k tokens was used for generating community summaries, community answers, and global answers. (p. 9)\n- Graph indexing used a 600 token window. (p. 9)\n- The distance threshold influences the number of clusters in the diversity metric. (p. 9)\n- Evaluation focused on sensemaking questions specific to two corpora each containing approximately 1 million tokens. (p. 11)\n- More work is needed to understand how performance generalizes to datasets from various domains with different use cases. (p. 11)\n- There are risks to downstream sensemaking and decision-making tasks if generated answers do not accurately represent the source data. (p. 12)\n- System use should be accompanied by clear disclosures of AI use and the potential for errors in outputs. (p. 12)\n- The prompts described are designed for GPT-4 and used in the default GraphRAG initialization pipeline. (pp. 18-19)\n- LLMs tend to extract fewer entities from chunks of larger size; for example, GPT-4 extracted almost twice as many entity references when the chunk size was 600 tokens than when it was 2400. (pp. 18-19)\n- Identify all entities of the provided entity types from a potentially relevant text document. (p. 21)\n- Identify all pairs of (source entity, target entity) that are *clearly related* to each other. (p. 21)\n- The report is based on a list of entities, their relationships, and optional associated claims. (p. 22)\n- Do not include information where the supporting evidence for it is not provided. (p. 22)\n- The response should summarize all reports from multiple analysts who focused on different parts of the dataset. (p. 23)\n- Analysts’ reports are provided in descending order of helpfulness. (p. 23)\n- Do not mention the roles of multiple analysts in the analysis process. (pp. 24-25)\n- Do not include information where the supporting evidence for it is not provided. (pp. 24-25)\n- Shapiro-Wilk tests indicated that the data did not follow a normal distribution. (p. 26)\n- Non-parametric tests (Wilcoxon signed-rank tests) were employed to assess performance differences. (p. 26)\n- … and 15 more across the text (all kept in the staged item's deep-read record)",
+          "Evidence": "- `8b8fa095a4c52e4fcf76db34ca058c9e` pdf_text from file:EXT_O1_2404.16130_GraphRAG_Local_to_Global.pdf#730f1a9f38d16689, fetched 2026-11-20",
+          "Chapters": "*Origin: structurally observed divisions, with the claims read from each.*\n\n- pp. 1-10 (pp. 1-10) - full: RAG fails on global questions directed at an entire text corpus because these are query-focused summarization (QFS) tasks rather than explicit retrieval tasks. *(source-stated)*\n- pp. 11-20 (pp. 11-20) - full: For both News and Podcast datasets, global search conditions (C0-C3) and source text summarization (TS) had greater comprehensiveness than vector RAG (SS), with statistically significant differences (p <.05). *(source-stated)*\n- pp. 21-26 (pp. 21-26) - full: The goal is to identify all entities of specific types from a text document and all relationships among them. *(source-stated)*\n\nCoverage: full."
+        },
+        "linked_from": [
+          "Topic - Unfiled"
+        ],
+        "revision": "rev1.eyJjIjoicGVyc29uIiwiZiI6IjM0MGEyZDg4MjI5NGRmYjVlNTIxIiwiayI6Im5vdGUiLCJzIjoiMjAyNjExMjQtMjAxMS01OTU5NGMiLCJ0IjoiU291cmNlcy9kb2N1bWVudC9FWFRfTzFfMjQwNC4xNjEzMF9HcmFwaFJBR19Mb2NhbF90b19HbG9iYWwubWQifQ.tqxaRAqVEBJduO48kWBIfqSx",
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "9 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10 - decide(source=[...], disposition='reject'|'context'|'defer', reason=...) settles several sharing one reason in one call; decide's result and session_status list the rest",
+            "before committing: record what you are assuming and how each was settled - record_assumptions([{assumption, settled_by, how}]), where settled_by is a tool you called here, an answered question's id, or 'unverifiable' (an empty list if you assume nothing)"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 9 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10 - decide(source=[...], disposition='reject'|'context'|'defer', reason=...) settles several sharing one reason in one call; decide's result and session_status list the rest",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "record_assumptions",
+      "args": {
+        "assumptions": [
+          {
+            "assumption": "All five kept catalogued Source notes reflect current indexed text in Resource-Library without unindexed edits.",
+            "settled_by": "get_note",
+            "how": "Retrieved current note sections and frontmatter for all five target sources via Core get_note inside session 20261124-2011-59594c."
+          },
+          {
+            "assumption": "Internal Geo-Grapher graph-construction mechanics belong to Phase 2 RRM-7 and remain unchanged in Phase 1.",
+            "settled_by": "unverifiable",
+            "how": "Scoped explicitly to Librarian-side Geo boundary contracts in Phase 1 before reapplying RRM-7 to Geo-Grapher internals in Phase 2."
+          }
+        ]
+      },
+      "result": {
+        "recorded": 2,
+        "unverifiable": [
+          "Internal Geo-Grapher graph-construction mechanics belong to Phase 2 RRM-7 and remain unchanged in Phase 1."
+        ],
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "9 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10 - decide(source=[...], disposition='reject'|'context'|'defer', reason=...) settles several sharing one reason in one call; decide's result and session_status list the rest"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 9 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10 - decide(source=[...], disposition='reject'|'context'|'defer', reason=...) settles several sharing one reason in one call; decide's result and session_status list the rest",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "session_status",
+      "args": {},
+      "result": {
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "9 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10 - decide(source=[...], disposition='reject'|'context'|'defer', reason=...) settles several sharing one reason in one call; decide's result and session_status list the rest"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 9 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10 - decide(source=[...], disposition='reject'|'context'|'defer', reason=...) settles several sharing one reason in one call; decide's result and session_status list the rest",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        },
+        "purpose": "explore",
+        "project": "",
+        "taint_sources": [],
+        "mode": "librarian",
+        "status": "open",
+        "phase": "judge",
+        "phases": [
+          "frame",
+          "map",
+          "need",
+          "search",
+          "judge",
+          "synthesise",
+          "check_out"
+        ],
+        "open_items": [
+          "9 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10 - decide(source=[...], disposition='reject'|'context'|'defer', reason=...) settles several sharing one reason in one call; decide's result and session_status list the rest"
+        ],
+        "budget_left": 27,
+        "next": "What role would each candidate play? A rejection needs its reason. Still needed: 9 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, audited-engagement-harness, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10 - decide(source=[...], disposition='reject'|'context'|'defer', reason=...) settles several sharing one reason in one call; decide's result and session_status list the rest",
+        "coverage": [
+          {
+            "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+            "brief": "B1",
+            "verdict": "open"
+          }
+        ],
+        "library_item_count": 0,
+        "library_item_counts": {},
+        "library_items": [],
+        "question": "Which governance, budget-reservation, state-reuse, verification, and graph-boundary controls must the refined Librarian V2 ingestion and enrichment to-be pipeline preserve or add?",
+        "opened_at": "2026-11-24T20:11:39+00:00",
+        "plan": {
+          "map": "Vault holds 240 document notes, 102 model notes, and 21 pages under Unfiled. Strong catalogued sources cover AuditedEngagement governance, MC-01..MC-16 memory and budget specs, Phase 8 review verification, DeepInfra delegation benchmarks, and GraphRAG community summarization."
+        },
+        "briefs": {
+          "B1": {
+            "id": "B1",
+            "need": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+            "disqualifiers": [
+              "Must not drop Silver DATA_IS_UNFRAMED isolation or the two-gate staging airlock",
+              "Must not allow automatic compensation execution or self-attested Doctor closure without Oracle verification",
+              "Must not infer V1 feature rejection solely from absence in V2 runtime code"
+            ],
+            "constraints": {},
+            "verdict": "covered",
+            "status": "open",
+            "closing_note": "",
+            "topic": "",
+            "coverage": "",
+            "held": [
+              "INGESTION-RUN",
+              "PROGRESS-REPORT",
+              "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+              "Folder - Librarian_V2 - 099c38f8",
+              "unified-implementation-plan"
+            ]
+          }
+        },
+        "candidates": [
+          {
+            "source": "INGESTION-RUN",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "undecided",
+            "reason": "",
+            "role": ""
+          },
+          {
+            "source": "PROGRESS-REPORT",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "undecided",
+            "reason": "",
+            "role": ""
+          },
+          {
+            "source": "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "undecided",
+            "reason": "",
+            "role": ""
+          },
+          {
+            "source": "Folder - Librarian_V2 - 099c38f8",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "undecided",
+            "reason": "",
+            "role": ""
+          },
+          {
+            "source": "unified-implementation-plan",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "undecided",
+            "reason": "",
+            "role": ""
+          },
+          {
+            "source": "audited-engagement-harness",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "undecided",
+            "reason": "",
+            "role": ""
+          },
+          {
+            "source": "memory-context-design-addendum",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "undecided",
+            "reason": "",
+            "role": ""
+          },
+          {
+            "source": "Application - Librarian V2 Agent Delegation Review 2026-10",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "undecided",
+            "reason": "",
+            "role": ""
+          },
+          {
+            "source": "EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "undecided",
+            "reason": "",
+            "role": ""
+          }
+        ],
+        "rounds": [],
+        "checkpoints": [],
+        "questions": [],
+        "uses": [],
+        "writes": [],
+        "offerings": [],
+        "synthesis": null,
+        "summary": "",
+        "gaps": "",
+        "history": [
+          "frame",
+          "map",
+          "need",
+          "judge"
+        ],
+        "model_events": [],
+        "lenses": [],
+        "capabilities": [],
+        "assumptions": [
+          {
+            "assumption": "All five kept catalogued Source notes reflect current indexed text in Resource-Library without unindexed edits.",
+            "settled_by": "get_note",
+            "how": "Retrieved current note sections and frontmatter for all five target sources via Core get_note inside session 20261124-2011-59594c.",
+            "phase": "judge",
+            "visit": 1
+          },
+          {
+            "assumption": "Internal Geo-Grapher graph-construction mechanics belong to Phase 2 RRM-7 and remain unchanged in Phase 1.",
+            "settled_by": "unverifiable",
+            "how": "Scoped explicitly to Librarian-side Geo boundary contracts in Phase 1 before reapplying RRM-7 to Geo-Grapher internals in Phase 2.",
+            "phase": "judge",
+            "visit": 1
+          }
+        ],
+        "completion": {
+          "complete": false,
+          "ledger": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open",
+              "kept": [],
+              "context": [],
+              "undecided": 9
+            }
+          ],
+          "gaps": [
+            "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture. (open)"
+          ],
+          "made": []
+        },
+        "messages": [],
+        "min_rewind_index": 0
+      }
+    },
+    {
+      "tool": "decide",
+      "args": {
+        "source": [
+          "audited-engagement-harness"
+        ],
+        "disposition": "keep",
+        "reason": "Primary evidence anchor: Anchor authority boundaries across Core, VaultCoordinator, VaultWriter, IndexService, and policy broker.",
+        "role": "Anchor authority boundaries across Core, VaultCoordinator, VaultWriter, IndexService, and policy broker."
+      },
+      "result": {
+        "decided": "audited-engagement-harness",
+        "undecided_left": 8,
+        "undecided": [
+          "INGESTION-RUN",
+          "PROGRESS-REPORT",
+          "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+          "Folder - Librarian_V2 - 099c38f8",
+          "unified-implementation-plan",
+          "memory-context-design-addendum",
+          "Application - Librarian V2 Agent Delegation Review 2026-10",
+          "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+        ],
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "8 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10, EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 8 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, memory-context-design-addendum, Application - Librarian V2 Agent Delegation Review 2026-10, EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "decide",
+      "args": {
+        "source": [
+          "memory-context-design-addendum"
+        ],
+        "disposition": "keep",
+        "reason": "Primary evidence anchor: Define worker request snapshots, constraints, budget reserves, and evidence/caveat returns (MC-01..MC-16).",
+        "role": "Define worker request snapshots, constraints, budget reserves, and evidence/caveat returns (MC-01..MC-16)."
+      },
+      "result": {
+        "decided": "memory-context-design-addendum",
+        "undecided_left": 7,
+        "undecided": [
+          "INGESTION-RUN",
+          "PROGRESS-REPORT",
+          "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+          "Folder - Librarian_V2 - 099c38f8",
+          "unified-implementation-plan",
+          "Application - Librarian V2 Agent Delegation Review 2026-10",
+          "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+        ],
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "7 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, Application - Librarian V2 Agent Delegation Review 2026-10, EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 7 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, Application - Librarian V2 Agent Delegation Review 2026-10, EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "decide",
+      "args": {
+        "source": [
+          "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115"
+        ],
+        "disposition": "keep",
+        "reason": "Primary evidence anchor: Document Phase 8 resume/key-reuse and superficial draft-status verification defects.",
+        "role": "Document Phase 8 resume/key-reuse and superficial draft-status verification defects."
+      },
+      "result": {
+        "decided": "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+        "undecided_left": 6,
+        "undecided": [
+          "INGESTION-RUN",
+          "PROGRESS-REPORT",
+          "Folder - Librarian_V2 - 099c38f8",
+          "unified-implementation-plan",
+          "Application - Librarian V2 Agent Delegation Review 2026-10",
+          "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+        ],
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "6 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, Application - Librarian V2 Agent Delegation Review 2026-10, EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 6 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, Application - Librarian V2 Agent Delegation Review 2026-10, EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "decide",
+      "args": {
+        "source": [
+          "Application - Librarian V2 Agent Delegation Review 2026-10"
+        ],
+        "disposition": "keep",
+        "reason": "Primary evidence anchor: Provide empirical delegation metrics contrasting cheap quote location against semantic support and coverage checks.",
+        "role": "Provide empirical delegation metrics contrasting cheap quote location against semantic support and coverage checks."
+      },
+      "result": {
+        "decided": "Application - Librarian V2 Agent Delegation Review 2026-10",
+        "undecided_left": 5,
+        "undecided": [
+          "INGESTION-RUN",
+          "PROGRESS-REPORT",
+          "Folder - Librarian_V2 - 099c38f8",
+          "unified-implementation-plan",
+          "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+        ],
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "5 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 5 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan, EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "decide",
+      "args": {
+        "source": [
+          "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+        ],
+        "disposition": "keep",
+        "reason": "Primary evidence anchor: Provide foundational rationale for hierarchical entity/community graphs and summaries for global corpus sensemaking.",
+        "role": "Provide foundational rationale for hierarchical entity/community graphs and summaries for global corpus sensemaking."
+      },
+      "result": {
+        "decided": "EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+        "undecided_left": 4,
+        "undecided": [
+          "INGESTION-RUN",
+          "PROGRESS-REPORT",
+          "Folder - Librarian_V2 - 099c38f8",
+          "unified-implementation-plan"
+        ],
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "4 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan"
+          ],
+          "budget_left": 27,
+          "next": "What role would each candidate play? A rejection needs its reason. Still needed: 4 undecided candidate(s): INGESTION-RUN, PROGRESS-REPORT, Folder - Librarian_V2 - 099c38f8, unified-implementation-plan",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "decide",
+      "args": {
+        "source": [
+          "INGESTION-RUN",
+          "PROGRESS-REPORT",
+          "Folder - Librarian_V2 - 099c38f8",
+          "unified-implementation-plan"
+        ],
+        "disposition": "context",
+        "reason": "Brief-seeded library note retained as background context while centering the offering claims on the five primary governance, memory/budget, verification, delegation, and graph-summary anchors."
+      },
+      "result": {
+        "decided": [
+          "INGESTION-RUN",
+          "PROGRESS-REPORT",
+          "Folder - Librarian_V2 - 099c38f8",
+          "unified-implementation-plan"
+        ],
+        "undecided_left": 0,
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "judge",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [],
+          "budget_left": 27,
+          "next": "judge is complete: advance to synthesise",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "advance",
+      "args": {},
+      "result": {
+        "moved": "synthesise",
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "synthesise",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "record the cross-source synthesis: record_synthesis"
+          ],
+          "budget_left": 11,
+          "next": "Which sources together; at what cost; what is unknown; what to open first? Every claim carries its source and a verbatim quote. Still needed: record the cross-source synthesis: record_synthesis",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "record_synthesis",
+      "args": {
+        "outcome": "offering",
+        "together": "Together, these five sources establish the core non-regression constraints for Librarian V2's refined to-be pipeline: preserving strict Core/VaultCoordinator/VaultWriter/IndexService/broker write boundaries (audited-engagement-harness), requiring parent requirements, input snapshots, constraints, and budget reserves up front on worker dispatches beside evidence/caveat returns (memory-context-design-addendum), eliminating status-blind key reuse that lets resumed runs skip queued or partial stages (PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115), pairing cheap verbatim quote checking with independent support and coverage verification (Application - Librarian V2 Agent Delegation Review 2026-10), and sustaining entity/community graph summaries for corpus-wide sensemaking (EXT_O1_2404.16130_GraphRAG_Local_to_Global).",
+        "unknowns": "Internal Geo-Grapher construction fixes under Phase 2 RRM-7, empirical ranking lift from search_feedback, and Owner disposition of RL's 439 Unfiled notes, 326 staged lenses, and UNIMPLEMENTED_UNDROPPED V1 parity items.",
+        "open_first": "audited-engagement-harness"
+      },
+      "result": {
+        "recorded": "offering",
+        "kept": [
+          "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+          "audited-engagement-harness",
+          "memory-context-design-addendum",
+          "Application - Librarian V2 Agent Delegation Review 2026-10",
+          "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+        ],
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "synthesise",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "draft the offering: draft_offering"
+          ],
+          "budget_left": 11,
+          "next": "Which sources together; at what cost; what is unknown; what to open first? Every claim carries its source and a verbatim quote. Still needed: draft the offering: draft_offering",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "draft_offering",
+      "args": {
+        "title": "Librarian V2 Ingestion and Enrichment To-Be Refinements",
+        "summary": "Synthesises five verified vault sources into non-regressive refinements for Librarian V2's ingestion, enrichment, recovery, and Geo-Grapher boundary to-be pipeline. Preserves single-Core governance and Silver neutrality while requiring status-aware resume keys, snapshot/budget worker contracts, independent support/coverage checks, and hierarchical graph summaries.",
+        "claims": [
+          {
+            "source": "audited-engagement-harness",
+            "text": "Any AuditedEngagement implementation must preserve authority boundaries for the Core, VaultCoordinator, VaultWriter, IndexService, and policy broker.",
+            "quote": "The implementation must preserve authority boundaries for the Core, VaultCoordinator, VaultWriter, IndexService, and policy broker."
+          },
+          {
+            "source": "memory-context-design-addendum",
+            "text": "Worker requests must identify parent work, requirements, input snapshots, constraints, and budget, while results must include evidence references and caveats.",
+            "quote": "Worker requests must identify parent work, requirements, input snapshots, constraints, and budget, while results must include evidence references and caveats."
+          },
+          {
+            "source": "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+            "text": "In the audited Phase 8 code at batch.py:645, reusing matching logged keys without status checks caused resumed runs to skip queued or partial stages.",
+            "quote": "batch.py:645 reuses matching logged keys without status checks, causing resumes to skip queued or partial stages."
+          },
+          {
+            "source": "Application - Librarian V2 Agent Delegation Review 2026-10",
+            "text": "Empirical delegation review showed that quote location is cheap to automate, whereas support and coverage are not.",
+            "quote": "Quote location is cheap to automate, but support and coverage are not."
+          },
+          {
+            "source": "EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+            "text": "GraphRAG supports global corpus queries by constructing a knowledge graph, partitioning hierarchical communities, and generating bottom-up community summaries.",
+            "quote": "GraphRAG constructs a knowledge graph, partitions it into a hierarchy of communities, and generates community-level summaries in a bottom-up manner."
+          }
+        ],
+        "kind": "suggestion"
+      },
+      "result": {
+        "staged": ".librarian/staging/offerings/20261124-2011-59594c-librarian-v2-ingestion-and-enrichment-to.md",
+        "offering": "20261124-2011-59594c-librarian-v2-ingestion-and-enrichment-to",
+        "claims_verified": 5,
+        "next": "promote_offering(offering='20261124-2011-59594c-librarian-v2-ingestion-and-enrichment-to'): a staged offering is not in the vault yet",
+        "composed_by": "google/gemma-4-26B-A4B-it",
+        "kept_as_given": [
+          "open_first"
+        ],
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "synthesise",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "promote the staged offering: promote_offering(offering='20261124-2011-59594c-librarian-v2-ingestion-and-enrichment-to') - it is not in the vault until promoted"
+          ],
+          "budget_left": 11,
+          "next": "Which sources together; at what cost; what is unknown; what to open first? Every claim carries its source and a verbatim quote. Still needed: promote the staged offering: promote_offering(offering='20261124-2011-59594c-librarian-v2-ingestion-and-enrichment-to') - it is not in the vault until promoted",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "promote_offering",
+      "args": {
+        "offering": "20261124-2011-59594c-librarian-v2-ingestion-and-enrichment-to"
+      },
+      "result": {
+        "promoted": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md",
+        "path": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md",
+        "findable": true,
+        "by": "agent setting",
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "synthesise",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [],
+          "budget_left": 11,
+          "next": "synthesise is complete: advance to check_out",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "session_status",
+      "args": {},
+      "result": {
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "synthesise",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [],
+          "budget_left": 11,
+          "next": "synthesise is complete: advance to check_out",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        },
+        "purpose": "explore",
+        "project": "",
+        "taint_sources": [],
+        "mode": "librarian",
+        "status": "open",
+        "phase": "synthesise",
+        "phases": [
+          "frame",
+          "map",
+          "need",
+          "search",
+          "judge",
+          "synthesise",
+          "check_out"
+        ],
+        "open_items": [],
+        "budget_left": 11,
+        "next": "synthesise is complete: advance to check_out",
+        "coverage": [
+          {
+            "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+            "brief": "B1",
+            "verdict": "open"
+          }
+        ],
+        "library_item_count": 0,
+        "library_item_counts": {},
+        "library_items": [],
+        "question": "Which governance, budget-reservation, state-reuse, verification, and graph-boundary controls must the refined Librarian V2 ingestion and enrichment to-be pipeline preserve or add?",
+        "opened_at": "2026-11-24T20:11:39+00:00",
+        "plan": {
+          "map": "Vault holds 240 document notes, 102 model notes, and 21 pages under Unfiled. Strong catalogued sources cover AuditedEngagement governance, MC-01..MC-16 memory and budget specs, Phase 8 review verification, DeepInfra delegation benchmarks, and GraphRAG community summarization."
+        },
+        "briefs": {
+          "B1": {
+            "id": "B1",
+            "need": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+            "disqualifiers": [
+              "Must not drop Silver DATA_IS_UNFRAMED isolation or the two-gate staging airlock",
+              "Must not allow automatic compensation execution or self-attested Doctor closure without Oracle verification",
+              "Must not infer V1 feature rejection solely from absence in V2 runtime code"
+            ],
+            "constraints": {},
+            "verdict": "covered",
+            "status": "open",
+            "closing_note": "",
+            "topic": "",
+            "coverage": "",
+            "held": [
+              "INGESTION-RUN",
+              "PROGRESS-REPORT",
+              "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+              "Folder - Librarian_V2 - 099c38f8",
+              "unified-implementation-plan"
+            ]
+          }
+        },
+        "candidates": [
+          {
+            "source": "INGESTION-RUN",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "context",
+            "reason": "Brief-seeded library note retained as background context while centering the offering claims on the five primary governance, memory/budget, verification, delegation, and graph-summary anchors.",
+            "role": ""
+          },
+          {
+            "source": "PROGRESS-REPORT",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "context",
+            "reason": "Brief-seeded library note retained as background context while centering the offering claims on the five primary governance, memory/budget, verification, delegation, and graph-summary anchors.",
+            "role": ""
+          },
+          {
+            "source": "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "keep",
+            "reason": "Primary evidence anchor: Document Phase 8 resume/key-reuse and superficial draft-status verification defects.",
+            "role": "Document Phase 8 resume/key-reuse and superficial draft-status verification defects."
+          },
+          {
+            "source": "Folder - Librarian_V2 - 099c38f8",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "context",
+            "reason": "Brief-seeded library note retained as background context while centering the offering claims on the five primary governance, memory/budget, verification, delegation, and graph-summary anchors.",
+            "role": ""
+          },
+          {
+            "source": "unified-implementation-plan",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "context",
+            "reason": "Brief-seeded library note retained as background context while centering the offering claims on the five primary governance, memory/budget, verification, delegation, and graph-summary anchors.",
+            "role": ""
+          },
+          {
+            "source": "audited-engagement-harness",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "keep",
+            "reason": "Primary evidence anchor: Anchor authority boundaries across Core, VaultCoordinator, VaultWriter, IndexService, and policy broker.",
+            "role": "Anchor authority boundaries across Core, VaultCoordinator, VaultWriter, IndexService, and policy broker."
+          },
+          {
+            "source": "memory-context-design-addendum",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "keep",
+            "reason": "Primary evidence anchor: Define worker request snapshots, constraints, budget reserves, and evidence/caveat returns (MC-01..MC-16).",
+            "role": "Define worker request snapshots, constraints, budget reserves, and evidence/caveat returns (MC-01..MC-16)."
+          },
+          {
+            "source": "Application - Librarian V2 Agent Delegation Review 2026-10",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "keep",
+            "reason": "Primary evidence anchor: Provide empirical delegation metrics contrasting cheap quote location against semantic support and coverage checks.",
+            "role": "Provide empirical delegation metrics contrasting cheap quote location against semantic support and coverage checks."
+          },
+          {
+            "source": "EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "keep",
+            "reason": "Primary evidence anchor: Provide foundational rationale for hierarchical entity/community graphs and summaries for global corpus sensemaking.",
+            "role": "Provide foundational rationale for hierarchical entity/community graphs and summaries for global corpus sensemaking."
+          }
+        ],
+        "rounds": [],
+        "checkpoints": [],
+        "questions": [],
+        "uses": [],
+        "writes": [
+          {
+            "t": "2026-11-24T20:15:25+00:00",
+            "tool": "promote_offering",
+            "path": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md",
+            "phase": "synthesise"
+          }
+        ],
+        "offerings": [
+          {
+            "t": "2026-11-24T20:15:25+00:00",
+            "id": "20261124-2011-59594c-librarian-v2-ingestion-and-enrichment-to",
+            "title": "Librarian V2 Ingestion and Enrichment To-Be Refinements",
+            "status": "promoted",
+            "path": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md",
+            "claims": 5
+          }
+        ],
+        "synthesis": {
+          "t": "2026-11-24T20:14:42+00:00",
+          "outcome": "offering",
+          "together": "Together, these five sources establish the core non-regression constraints for Librarian V2's refined to-be pipeline: preserving strict Core/VaultCoordinator/VaultWriter/IndexService/broker write boundaries (audited-engagement-harness), requiring parent requirements, input snapshots, constraints, and budget reserves up front on worker dispatches beside evidence/caveat returns (memory-context-design-addendum), eliminating status-blind key reuse that lets resumed runs skip queued or partial stages (PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115), pairing cheap verbatim quote checking with independent support and coverage verification (Application - Librarian V2 Agent Delegation Review 2026-10), and sustaining entity/community graph summaries for corpus-wide sensemaking (EXT_O1_2404.16130_GraphRAG_Local_to_Global).",
+          "unknowns": "Internal Geo-Grapher construction fixes under Phase 2 RRM-7, empirical ranking lift from search_feedback, and Owner disposition of RL's 439 Unfiled notes, 326 staged lenses, and UNIMPLEMENTED_UNDROPPED V1 parity items.",
+          "open_first": "audited-engagement-harness",
+          "cost": "",
+          "reason": "",
+          "kept": [
+            "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+            "audited-engagement-harness",
+            "memory-context-design-addendum",
+            "Application - Librarian V2 Agent Delegation Review 2026-10",
+            "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+          ]
+        },
+        "summary": "",
+        "gaps": "",
+        "history": [
+          "frame",
+          "map",
+          "need",
+          "judge",
+          "synthesise"
+        ],
+        "model_events": [],
+        "lenses": [],
+        "capabilities": [],
+        "assumptions": [
+          {
+            "assumption": "All five kept catalogued Source notes reflect current indexed text in Resource-Library without unindexed edits.",
+            "settled_by": "get_note",
+            "how": "Retrieved current note sections and frontmatter for all five target sources via Core get_note inside session 20261124-2011-59594c.",
+            "phase": "judge",
+            "visit": 1
+          },
+          {
+            "assumption": "Internal Geo-Grapher graph-construction mechanics belong to Phase 2 RRM-7 and remain unchanged in Phase 1.",
+            "settled_by": "unverifiable",
+            "how": "Scoped explicitly to Librarian-side Geo boundary contracts in Phase 1 before reapplying RRM-7 to Geo-Grapher internals in Phase 2.",
+            "phase": "judge",
+            "visit": 1
+          }
+        ],
+        "completion": {
+          "complete": false,
+          "ledger": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open",
+              "kept": [
+                "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+                "audited-engagement-harness",
+                "memory-context-design-addendum",
+                "Application - Librarian V2 Agent Delegation Review 2026-10",
+                "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+              ],
+              "context": [
+                "INGESTION-RUN",
+                "PROGRESS-REPORT",
+                "Folder - Librarian_V2 - 099c38f8",
+                "unified-implementation-plan"
+              ],
+              "undecided": 0
+            }
+          ],
+          "gaps": [
+            "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture. (open)"
+          ],
+          "made": [
+            {
+              "offering": "Librarian V2 Ingestion and Enrichment To-Be Refinements",
+              "status": "promoted",
+              "path": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md"
+            }
+          ]
+        },
+        "messages": [],
+        "min_rewind_index": 0
+      }
+    },
+    {
+      "tool": "advance",
+      "args": {},
+      "result": {
+        "moved": "check_out",
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "check_out",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [
+            "close brief(s) B1: close_brief"
+          ],
+          "budget_left": 9,
+          "next": "What did the library fail to answer? Still needed: close brief(s) B1: close_brief",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "open"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "close_brief",
+      "args": {
+        "brief": "B1",
+        "coverage": "covered",
+        "note": "Five primary sources kept and verified via get_note, draft_offering, and promote_offering."
+      },
+      "result": {
+        "closed": "B1",
+        "coverage": "covered",
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "open",
+          "phase": "check_out",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [],
+          "budget_left": 9,
+          "next": "everything is done: close_session(summary, gaps)",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "covered"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "close_session",
+      "args": {
+        "summary": "Promoted grounded suggestion offering refining Librarian V2 ingestion, enrichment, recovery, and Geo-Grapher boundary governance.",
+        "gaps": "Phase 2 Geo-Grapher internal construction mechanics (RRM-7) and live RL Unfiled/staged-lens curation remain outside this offering."
+      },
+      "result": {
+        "closed": "20261124-2011-59594c",
+        "completion": {
+          "complete": true,
+          "ledger": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "covered",
+              "kept": [
+                "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+                "audited-engagement-harness",
+                "memory-context-design-addendum",
+                "Application - Librarian V2 Agent Delegation Review 2026-10",
+                "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+              ],
+              "context": [
+                "INGESTION-RUN",
+                "PROGRESS-REPORT",
+                "Folder - Librarian_V2 - 099c38f8",
+                "unified-implementation-plan"
+              ],
+              "undecided": 0,
+              "note": "Five primary sources kept and verified via get_note, draft_offering, and promote_offering."
+            }
+          ],
+          "gaps": [],
+          "made": [
+            {
+              "offering": "Librarian V2 Ingestion and Enrichment To-Be Refinements",
+              "status": "promoted",
+              "path": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md"
+            }
+          ]
+        },
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "closed",
+          "phase": "check_out",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [],
+          "budget_left": 9,
+          "next": "this session is closed; resume_session reopens it to discuss what it made",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "covered"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        }
+      }
+    },
+    {
+      "tool": "session_status",
+      "args": {},
+      "result": {
+        "session": {
+          "session": "20261124-2011-59594c",
+          "purpose": "explore",
+          "project": "",
+          "taint_sources": [],
+          "mode": "librarian",
+          "status": "closed",
+          "phase": "check_out",
+          "phases": [
+            "frame",
+            "map",
+            "need",
+            "search",
+            "judge",
+            "synthesise",
+            "check_out"
+          ],
+          "open_items": [],
+          "budget_left": 9,
+          "next": "this session is closed; resume_session reopens it to discuss what it made",
+          "coverage": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "covered"
+            }
+          ],
+          "library_item_count": 0,
+          "library_item_counts": {},
+          "library_items": []
+        },
+        "purpose": "explore",
+        "project": "",
+        "taint_sources": [],
+        "mode": "librarian",
+        "status": "closed",
+        "phase": "check_out",
+        "phases": [
+          "frame",
+          "map",
+          "need",
+          "search",
+          "judge",
+          "synthesise",
+          "check_out"
+        ],
+        "open_items": [],
+        "budget_left": 9,
+        "next": "this session is closed; resume_session reopens it to discuss what it made",
+        "coverage": [
+          {
+            "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+            "brief": "B1",
+            "verdict": "covered"
+          }
+        ],
+        "library_item_count": 0,
+        "library_item_counts": {},
+        "library_items": [],
+        "question": "Which governance, budget-reservation, state-reuse, verification, and graph-boundary controls must the refined Librarian V2 ingestion and enrichment to-be pipeline preserve or add?",
+        "opened_at": "2026-11-24T20:11:39+00:00",
+        "plan": {
+          "map": "Vault holds 240 document notes, 102 model notes, and 21 pages under Unfiled. Strong catalogued sources cover AuditedEngagement governance, MC-01..MC-16 memory and budget specs, Phase 8 review verification, DeepInfra delegation benchmarks, and GraphRAG community summarization."
+        },
+        "briefs": {
+          "B1": {
+            "id": "B1",
+            "need": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+            "disqualifiers": [
+              "Must not drop Silver DATA_IS_UNFRAMED isolation or the two-gate staging airlock",
+              "Must not allow automatic compensation execution or self-attested Doctor closure without Oracle verification",
+              "Must not infer V1 feature rejection solely from absence in V2 runtime code"
+            ],
+            "constraints": {},
+            "verdict": "covered",
+            "status": "closed",
+            "closing_note": "Five primary sources kept and verified via get_note, draft_offering, and promote_offering.",
+            "topic": "",
+            "coverage": "covered",
+            "held": [
+              "INGESTION-RUN",
+              "PROGRESS-REPORT",
+              "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+              "Folder - Librarian_V2 - 099c38f8",
+              "unified-implementation-plan"
+            ]
+          }
+        },
+        "candidates": [
+          {
+            "source": "INGESTION-RUN",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "context",
+            "reason": "Brief-seeded library note retained as background context while centering the offering claims on the five primary governance, memory/budget, verification, delegation, and graph-summary anchors.",
+            "role": ""
+          },
+          {
+            "source": "PROGRESS-REPORT",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "context",
+            "reason": "Brief-seeded library note retained as background context while centering the offering claims on the five primary governance, memory/budget, verification, delegation, and graph-summary anchors.",
+            "role": ""
+          },
+          {
+            "source": "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "keep",
+            "reason": "Primary evidence anchor: Document Phase 8 resume/key-reuse and superficial draft-status verification defects.",
+            "role": "Document Phase 8 resume/key-reuse and superficial draft-status verification defects."
+          },
+          {
+            "source": "Folder - Librarian_V2 - 099c38f8",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "context",
+            "reason": "Brief-seeded library note retained as background context while centering the offering claims on the five primary governance, memory/budget, verification, delegation, and graph-summary anchors.",
+            "role": ""
+          },
+          {
+            "source": "unified-implementation-plan",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "context",
+            "reason": "Brief-seeded library note retained as background context while centering the offering claims on the five primary governance, memory/budget, verification, delegation, and graph-summary anchors.",
+            "role": ""
+          },
+          {
+            "source": "audited-engagement-harness",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "keep",
+            "reason": "Primary evidence anchor: Anchor authority boundaries across Core, VaultCoordinator, VaultWriter, IndexService, and policy broker.",
+            "role": "Anchor authority boundaries across Core, VaultCoordinator, VaultWriter, IndexService, and policy broker."
+          },
+          {
+            "source": "memory-context-design-addendum",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "keep",
+            "reason": "Primary evidence anchor: Define worker request snapshots, constraints, budget reserves, and evidence/caveat returns (MC-01..MC-16).",
+            "role": "Define worker request snapshots, constraints, budget reserves, and evidence/caveat returns (MC-01..MC-16)."
+          },
+          {
+            "source": "Application - Librarian V2 Agent Delegation Review 2026-10",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "keep",
+            "reason": "Primary evidence anchor: Provide empirical delegation metrics contrasting cheap quote location against semantic support and coverage checks.",
+            "role": "Provide empirical delegation metrics contrasting cheap quote location against semantic support and coverage checks."
+          },
+          {
+            "source": "EXT_O1_2404.16130_GraphRAG_Local_to_Global",
+            "brief": "B1",
+            "found_in": 0,
+            "query": "",
+            "disposition": "keep",
+            "reason": "Primary evidence anchor: Provide foundational rationale for hierarchical entity/community graphs and summaries for global corpus sensemaking.",
+            "role": "Provide foundational rationale for hierarchical entity/community graphs and summaries for global corpus sensemaking."
+          }
+        ],
+        "rounds": [],
+        "checkpoints": [],
+        "questions": [],
+        "uses": [],
+        "writes": [
+          {
+            "t": "2026-11-24T20:15:25+00:00",
+            "tool": "promote_offering",
+            "path": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md",
+            "phase": "synthesise"
+          }
+        ],
+        "offerings": [
+          {
+            "t": "2026-11-24T20:15:25+00:00",
+            "id": "20261124-2011-59594c-librarian-v2-ingestion-and-enrichment-to",
+            "title": "Librarian V2 Ingestion and Enrichment To-Be Refinements",
+            "status": "promoted",
+            "path": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md",
+            "claims": 5
+          }
+        ],
+        "synthesis": {
+          "t": "2026-11-24T20:14:42+00:00",
+          "outcome": "offering",
+          "together": "Together, these five sources establish the core non-regression constraints for Librarian V2's refined to-be pipeline: preserving strict Core/VaultCoordinator/VaultWriter/IndexService/broker write boundaries (audited-engagement-harness), requiring parent requirements, input snapshots, constraints, and budget reserves up front on worker dispatches beside evidence/caveat returns (memory-context-design-addendum), eliminating status-blind key reuse that lets resumed runs skip queued or partial stages (PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115), pairing cheap verbatim quote checking with independent support and coverage verification (Application - Librarian V2 Agent Delegation Review 2026-10), and sustaining entity/community graph summaries for corpus-wide sensemaking (EXT_O1_2404.16130_GraphRAG_Local_to_Global).",
+          "unknowns": "Internal Geo-Grapher construction fixes under Phase 2 RRM-7, empirical ranking lift from search_feedback, and Owner disposition of RL's 439 Unfiled notes, 326 staged lenses, and UNIMPLEMENTED_UNDROPPED V1 parity items.",
+          "open_first": "audited-engagement-harness",
+          "cost": "",
+          "reason": "",
+          "kept": [
+            "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+            "audited-engagement-harness",
+            "memory-context-design-addendum",
+            "Application - Librarian V2 Agent Delegation Review 2026-10",
+            "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+          ]
+        },
+        "summary": "Promoted grounded suggestion offering refining Librarian V2 ingestion, enrichment, recovery, and Geo-Grapher boundary governance.",
+        "gaps": "Phase 2 Geo-Grapher internal construction mechanics (RRM-7) and live RL Unfiled/staged-lens curation remain outside this offering.",
+        "history": [
+          "frame",
+          "map",
+          "need",
+          "judge",
+          "synthesise",
+          "check_out"
+        ],
+        "model_events": [],
+        "lenses": [],
+        "capabilities": [],
+        "assumptions": [
+          {
+            "assumption": "All five kept catalogued Source notes reflect current indexed text in Resource-Library without unindexed edits.",
+            "settled_by": "get_note",
+            "how": "Retrieved current note sections and frontmatter for all five target sources via Core get_note inside session 20261124-2011-59594c.",
+            "phase": "judge",
+            "visit": 1
+          },
+          {
+            "assumption": "Internal Geo-Grapher graph-construction mechanics belong to Phase 2 RRM-7 and remain unchanged in Phase 1.",
+            "settled_by": "unverifiable",
+            "how": "Scoped explicitly to Librarian-side Geo boundary contracts in Phase 1 before reapplying RRM-7 to Geo-Grapher internals in Phase 2.",
+            "phase": "judge",
+            "visit": 1
+          }
+        ],
+        "completion": {
+          "complete": true,
+          "ledger": [
+            {
+              "topic": "Establish evidenced requirements to refine the Librarian V2 ingestion, mixed-batch/source enrichment, bounded Doctor recovery, and Geo-Grapher boundary to-be architecture.",
+              "brief": "B1",
+              "verdict": "covered",
+              "kept": [
+                "PHASE8_EXTERNAL_REVIEW_VERIFICATION_20261115",
+                "audited-engagement-harness",
+                "memory-context-design-addendum",
+                "Application - Librarian V2 Agent Delegation Review 2026-10",
+                "EXT_O1_2404.16130_GraphRAG_Local_to_Global"
+              ],
+              "context": [
+                "INGESTION-RUN",
+                "PROGRESS-REPORT",
+                "Folder - Librarian_V2 - 099c38f8",
+                "unified-implementation-plan"
+              ],
+              "undecided": 0,
+              "note": "Five primary sources kept and verified via get_note, draft_offering, and promote_offering."
+            }
+          ],
+          "gaps": [],
+          "made": [
+            {
+              "offering": "Librarian V2 Ingestion and Enrichment To-Be Refinements",
+              "status": "promoted",
+              "path": "Offerings/Insights/Librarian V2 Ingestion and Enrichment To-Be Refinements.md"
+            }
+          ]
+        },
+        "messages": [],
+        "min_rewind_index": 0
+      }
+    }
+  ]
+}

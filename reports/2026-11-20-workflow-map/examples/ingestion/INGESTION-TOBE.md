@@ -1,207 +1,140 @@
-# To-be: ingestion run by the tiers, overseen by tier 0, with an oracle and a doctor
+# Proposed ingestion with Lead ownership, independent Oracle review and bounded Doctor recovery
 
-20 November 2026. The second half of the [worked example](INGESTION-EXAMPLE.md). The as-is spec drew the ingestion as it ran. This one draws it as it should run when a tier-0 agent oversees it on the Owner's behalf, under five owner directions:
-1. **The Owner and tier-0 lanes are the quietest.** Tier-0 models cost the most tokens, so every step a tier-1 model can do moves down.
-2. **Tier 0 does three things at most:**
-   - it initiates: hands the run to a Lead, and sets the oracle's specification;
-   - it reviews the result once;
-   - it reports to the Owner.
+Revised 22 November 2026. The [spec](ingestion-tobe.spec.yaml), [accepted canvas](accepted-ingestion-tobe.canvas) and [generated views](ingestion-tobe.views.md) describe a **proposed parent integration**. The [historical example](INGESTION-EXAMPLE.md) records the separate DataManagement run. The corrected responsibilities follow the [approved graph review](../../../2026-11-22-ingestion-enrichment-graph-review.md); they do not claim that the complete autonomous process is already implemented.
 
-   If the review is not satisfied, tier 0 tasks the oracle with tidying up, waits for the oracle's response, makes one more pass, then reports. **The last step is always reporting to the Owner.**
-3. **Owner steps in between are decisions only the Owner can make**, relayed by tier 0. Without a tier-0 overseer, these would be tier-1 permission requests, made directly when the permission mode is not Auto.
-4. **The oracle and the doctor are actors of their own**, outside the system and outside each other:
-   - the oracle judges and never acts;
-   - the doctor repairs failures at mapped extension points (UC-D);
-   - a shortfall that no extension maps is a tier-1 *misalignment*, which the Lead re-aligns from the oracle's report;
-   - an escalation back to tier 0 is a **failure end**, counted.
-5. **Lanes in the owner's order:** Owner, tier 0, Oracle, tier 1, Doctor, tier 2, tier 3, then the system actors (Core, Model host, Geo-Grapher). The doctor sits next to tiers 2 and 3, the agents whose failures it will mostly repair. The oracle sits next to tier 1, where a shortfall is most often a misalignment.
+The Owner can commission the Lead directly, or an external tier-0 Overseer can do so on the Owner's behalf. Tier 0 remains able to use Librarian and delegate work to its DeepInfra agents for other projects within actual authority. Its absence does not block a direct user run. Lead owns execution and correction; Oracle independently judges and rechecks. Oracle does not coordinate jobs or issue worker orders.
 
-Everything below is generated from four specs by [render_spec.py](render_spec.py), with no model call:
+## Roles, specification and composition
 
-| Spec | Use case | Views | Canvas | Paths | Problems / flags |
-|---|---|---|---|---|---|
-| [ingestion.spec.yaml](ingestion.spec.yaml) | As-is ingestion | [views](ingestion.views.md) | [canvas](ingestion.canvas) | 11 | 0 / 0 |
-| [ingestion-tobe.spec.yaml](ingestion-tobe.spec.yaml) | To-be ingestion | [views](ingestion-tobe.views.md) | [canvas](ingestion-tobe.canvas) | 26 | 0 / 0 |
-| [doctor.spec.yaml](doctor.spec.yaml) | UC-D: diagnose and resolve | [views](doctor.views.md) | [canvas](doctor.canvas) | 8 | 0 / 0 |
-| [learn.spec.yaml](learn.spec.yaml) | UC-L: learn a remedy | [views](learn.views.md) | [canvas](learn.canvas) | 3 | 0 / 0 |
+The [23 November routing correction](../../../2026-11-23-routing-and-tobe-proposals.md) preserves this model's 24 numbered steps and 69 scenarios. Six equivalent local reporting/end cards and deliberate placement changes keep the native curves clear; [the presentation proof](ingestion-tobe.presentation-proof.json) preserves the original actors, labels, outcomes and guarded transitions. The new [three-part target family](../../../2026-11-23-proposed-process-family/README.md) is a separate proposal derived from the corrected current decomposition.
 
-The doctor's remedies are in [remedy-catalogue.yaml](remedy-catalogue.yaml).
-
-## 1. The to-be happy path
-
-From [ingestion-tobe.views.md](ingestion-tobe.views.md), generated:
-1. The **Owner** directs the ingestion of a folder into a library, naming the subfolders to exclude.
-2. The **Tier 0 agent** hands the ingestion to a Lead, and sets the oracle's specification: UC1's success guarantee.
-3. The **Lead** opens an ingest-folder run for the folder.
-4. The **Core** surveys the folder and proposes a decision per subfolder.
-5. The **Lead** applies the Owner's exclusions and the decisions policy allows.
-6. The **Clerk** assesses each remaining subfolder's sensitivity.
-7. The **Core** accepts the remaining subfolders by policy, attested as the policy.
-8. The **Core** queues the in-scope documents for each accepted root.
-9. The **Helper** validates the queued count against the survey.
-10. The **Core** captures and stages each document.
-11. The **Core** approves the staged documents by policy, attested as the policy.
-12. The **Core** parses and converts each document.
-13. The **Clerk** reads each document part by part.
-14. The **Core** enforces the library's spend ceiling (concurrently with 12–13).
-15. **Geo-Grapher** imports each fully converted paper into the paper graph.
-16. The **Core** accepts the enriched documents by policy, attested as the policy.
-17. The **Core** writes each Source note and validates it is findable.
-18. The **Oracle** judges the run against the specification: deterministic checks first, then a model review.
-19. The **Lead** hands the result and the oracle's verdict to tier 0.
-20. The **Tier 0 agent** reviews the result once against the specification.
-21. The **Tier 0 agent** reports the result to the Owner.
-
-The Owner's subfolder exclusions now come with the direction at step 1, so the happy path has no Owner step between the start and the report.
-
-### Tier-0 turns: the measure
-
-A **turn** is one return of control to tier 0. Consecutive tier-0 steps on a path count as one turn, since the agent is invoked once and does them together. The renderer counts turns on every path, to its end, and grades them on the owner's scale:
-
-| Turns | Grade |
+| Actor | Responsibility |
 |---|---|
-| 2 | ideal |
-| 3 | expected |
-| 4 | rusty |
-| 5–10 | bad |
-| 10–15 | might as well have done it themselves |
+| Owner / tier 0 | Define or approve the goal, required outputs, scope, grants and budgets; make reserved decisions. Tier 0 commissions, reviews and returns the result when present. |
+| Lead, tier 1 | Own completion, direction, dispatch requests, bounded correction and the final truthful handoff to the recorded specification owner. |
+| Clerk, tier 2 | Interpret evidence, propose descriptions and semantic decisions, check claims/synthesis, investigate unexplained mismatches and direct Scribes. |
+| Scribe, tier 3 | Perform bounded reads/writes under the Clerk; detailed tasks live in the enrichment child rather than duplicated parent cards. |
+| Core | Store the agent/Owner-authored specification inside Librarian, inventory/count, apply explicit rules and decisions, validate authority/structure/grounding, persist evidence and dispatch registered work. |
+| Oracle | Judge specified obligations independently, including repaired obligations; return a verdict to the specification owner. |
+| Doctor | Match an existing failure shape and execute only an accepted, authorized bounded remedy; return all declared outcomes. |
+| Model host / Geo-Grapher | Return transport results / graph or publication results; their response alone does not establish semantic success. |
 
-| | As-is run | To-be |
-|---|---|---|
-| Main success scenario | **6 (bad)** | **2 (ideal)**: initiate (2); review and report (20–21) |
-| Worst graded path | 7 (bad) | **3 (expected)** |
-| Paths at 3 turns | — | 6b: a sensitive subfolder, which tier 0 relays to the Owner. 20a: the review sends the result back to the oracle; tier 0 waits, makes a second pass, then reports. |
-| Escalations | — (every failure was resolved by tier 0 by hand) | 6, each drawn as a failure end and not graded |
+The agreed hierarchy is **action → workflow → pipeline → sprint**. Compose existing registered components upward at their actual layer. This parent use case connects several processes; it is not evidence of a second runtime engine, a separate spec store or a pipeline embedded inside an action/workflow. Doctor and Oracle currently use GLM 5.3 through revisable role adapters; the graph does not hard-lock their model selection.
 
-Every other path is 2 turns (ideal), including each pause for an Owner decision. The pause reaches the Owner through tier 0, in the same turn as its report.
+The fault register is a routed ticket service using existing flags, refusal codes, extension evidence and responsible actors. Waiting decisions and legitimate rejected optional outputs are not automatically repair faults. Existing legacy transport labels do not define current role tiers.
 
-### Lane load
+## Main scenario
 
-Counted by the renderer (`## Lane load` in each views file), as actions and decisions per lane, not tokens. Tier 0's 4 nodes on the main scenario are its initiation, its review, the review's decision and its report: 2 turns.
+1. **Owner** states the ingestion goal, roots, pre-read exclusions, required outputs, permitted partials and budget; grants only the intended authority.
+2. **Tier 0 agent** commissions the Lead on the Owner's behalf and supplies the agent-authored obligations for independent Oracle review.
+3. **Lead (tier 1)** owns execution against the commissioned specification; asks Core to store its version, grants and actual specification owner.
+4. **Core** inventories roots, fingerprints and literal facts; excludes hidden/scratch content before reading and resolves deepest-root ownership.
+5. **Lead (tier 1)** binds the Owner's exclusions, purpose constraints and decision grants to the eligible worklist.
+6. **Clerk (tier 2)** interprets folder purpose, proposes descriptions and judges sensitivity; may direct bounded Scribe tasks.
+7. **Lead (tier 1)** makes normal folder decisions within grant and preserves the Owner's explicit reserved decisions; supplies actual actors/reasons for Core to apply.
+8. **Core** submits affirmative folder decisions and read barriers for group application; acceptance is recorded only after the CLI succeeds.
+9. **Core** queues Source-eligible third-party, research-docs and own-docs inputs per deepest accepted root; retains enqueue history.
+10. **Core** reconciles literal eligible counts with current staging/processing state and the parent mixed-item ledger.
+11. **Core** captures immutable evidence and per-reference outcomes; isolates parser/quarantine failures and preserves successful siblings.
+12. **Clerk (tier 2)** writes neutral evidence-based Source descriptions, directing Scribes only for bounded drafting.
+13. **Core** stages Source records and records their parent ledger keys; folder metadata retains folder_validate, folder_describe and folder_data with separate review.
+14. **Lead (tier 1)** approves the staged selection within the ingestion grant; supplies the actual authority, executor and reason to the approval action.
+15. **Lead (tier 1)** requests explicit processing start for the approved set within its recorded grant.
+16. **Core** validates start authority and freezes selection/settings; returns the existing active run instead of dispatching another.
+17. **Core** runs the source-enrichment child; each item owns all nine ordered stages including publication before the next item.
+18. **Core** reconciles returned Source states with the original mixed-item ledger; issues separate Source and lens worklists with owner, current state and remaining decision.
+19. **Lead (tier 1)** makes affirmative Source acceptance decisions only within grant, for full or explicitly permitted partial outputs; no lens is accepted implicitly.
+20. **Core** applies the guarded Source writer and retains the actual commit/refusal/attempt state; Source acceptance does not accept lenses.
+21. **Oracle** judges the parent specification using deterministic evidence and independent semantic review, including separate decision obligations and actual partial results.
+22. **Lead (tier 1)** hands one truthful result package and Oracle verdict to the recorded specification owner.
+23. **Tier 0 agent** reviews the Lead's result and independent verdict against the commissioned specification.
+24. **Lead (tier 1)** returns the result to the Owner directly or with the tier-0 reviewed report, retaining all remaining decision owners and limitations.
 
-| Lane | As-is, main scenario | To-be, main scenario | To-be, anywhere |
-|---|---|---|---|
-| Owner | 2 | **1** | 3 |
-| **Tier 0 agent** | **8** (6 turns) | **4** (2 turns) | 10 |
-| Oracle | — | 2 | 4 |
-| Lead (tier 1) | — | 3 | 7 |
-| Doctor | — | 0 | 6 |
-| Helper (tier 2) | — | 2 | 3 |
-| Clerk (tier 3) | 3 | 3 | 3 |
-| Core | 9 | 13 | 16 |
-| Model host | 2 | 2 | 2 |
-| Geo-Grapher | 1 | 1 | 1 |
+The direct-Owner route joins Lead execution at `a3` and returns through `ownerreport` and the shared Core delivery receipt, bypassing tier-0 commissioning/review/reporting. A held folder decision reaches the Owner directly when no overseer exists. All pause/escalation packages go to the actual specification owner, with critical findings immediately notified to the Owner/overseer.
 
-### How it can end
+## Approval, execution and output boundaries
 
-There are 26 paths:
-- 1 **success**;
-- 7 **paused**, for an Owner decision: the budget ceiling, or a remedy the Owner declined;
-- 6 **escalated**, one per doctor call;
-- 12 that rejoin the main flow: a failure the doctor resolved, a decision the Owner made, the concurrent spend check, a partial page picked up later, a misalignment the Lead re-aligned, or the oracle's tidy-up.
+Ingestion approval queues work. A separate explicit processing-start request must be authorized; Core freezes the approved set and returns an existing active run instead of creating a second one. Today's curate/person start is existing behavior. Delegated Lead start is proposed integration and must have an explicit grant; agent promotion mode alone does not provide it.
 
-**An escalated path is a failure of this use case, by design.** The doctor could not resolve the case, so tier 0 had to take it over (one tier-0 step, "takes over the escalated case"). The measure to drive down is escalations per run.
+The parent keeps its original mixed-item ledger, current staging/processing states and separate Source/lens worklists. Historical queue keys are enqueue history. The actual folder-application boundary applies every accepted non-excluded group, including document and paper groups, before purpose-specific Source intake. Own-code/data/log purposes therefore account for the **same common application receipt** without making another Geo indexing call or entering Source capture/acceptance. Folder metadata retains its separate three-stage processing/review contract; a source-only enrichment child gives those cards no source-reading credit. A child no-work result reconciles current decisions before a reused end.
 
-## 2. Extensions as references
+The `enrich` reference calls [proposed source enrichment](../../../2026-11-22-proposed-tobe-enrichment/PROPOSAL.md), with these complete outcomes:
 
-Every repairable failure point in the to-be ingestion is a **reference** to another use case (UML's call-behaviour action, drawn `[[…]]` in Mermaid and as an orange card in the Doctor's lane on the canvas), not an improvised fix:
-
-| Extension | Symptom | Handled by | Remedy | As-is |
-|---|---|---|---|---|
-| 4a | a stale root elsewhere | Doctor (UC-D) | R1 re-survey the root | 3a, resolved by hand |
-| 6a | Clerk qualification lost | Doctor (UC-D) | R2 re-qualify the role | 5a, resolved by hand (`cab623a`) |
-| 6b | subfolder sensitive | Lead → tier 0 → Owner decides | — | anticipated |
-| 9a | queued count mismatch | Doctor (UC-D) | R3 queue per root | 8a, resolved by hand |
-| 13a | model unavailable or partial page | (rejoins at the join; 13b picks it up) | — | 12a |
-| 13b | some documents partial | Doctor (UC-D) | R4 re-read the partials | 12b, resolved by hand |
-| 14a | spend ceiling reached | Lead → tier 0 → Owner (the use case pauses) | — | anticipated |
-| 16a | the library's promotion mode is person | Core raises an agenda item; Owner accepts | — | **15a: the hand-off nobody owned** |
-| 17a | note not findable | Doctor (UC-D) | R5 re-index the note | anticipated |
-| 18a | oracle: shortfall at a mapped extension | Doctor (UC-D) | R6 reconcile and route | — |
-| 18b | oracle: shortfall no extension maps (misalignment) | Helper scouts the blast radius; Lead re-aligns; oracle judges again | — | — |
-| 20a | tier 0's review: needs tidying | Tier 0 tasks the oracle; oracle oversees the Lead and doctor; oracle judges again and responds; tier 0 makes a second pass | — | — |
-
-**The renderer checks every reference against the spec it calls.** UC-D can end *resolved*, *declined* or *escalated*, so each of the six calls must handle all three, and nothing else. This was tested: deleting one call's *declined* branch made the renderer report `r1 calls UC-D but does not handle its outcome 'declined'`.
-
-This is what lets a tier-0 agent working outside a use case stay inside the map. If it meets a stale root while doing something else, the stale root is not new: it is UC1's extension 4a. Its pathway is the reference, R1 then rejoin. The agent cites the use case and extension instead of reasoning the fix out again. The catalogue's R7 and R8 show the same for the research use case (UC2 `*b` and `*c`).
-
-## 3. The doctor (UC-D)
-
-[doctor.views.md](doctor.views.md), generated:
-
-**Main success scenario**
-1. The **Core** records the symptom at its extension point: use case, extension, refusal code and evidence.
-2. The **Doctor** (its own actor, with its own model assignment) matches the symptom against the remedy catalogue.
-3. The **Core** computes the remedy's blast radius.
-4. The **Doctor** runs the remedy's workflow.
-5. The **Core** re-runs only the checks inside the blast radius.
-6. The **Helper** validates that the symptom is gone at its extension point.
-7. The **Core** records the case in the catalogue's history: symptom, remedy, result.
-8. The **Doctor** returns control to the step the extension rejoins.
-
-**Extensions**
-- **2a. No match: a new shape.**
-  1. The Doctor drafts a diagnosis from the nearest catalogued cases.
-  2. The Core hands the case to tier 0, which resolves it and may propose a new remedy (UC-L).
-  3. The use case ends **escalated**.
-- **3a. Outside the doctor's scope** (irreversible, too wide, or a person's decision).
-  1. The Owner decides.
-  2. If the Owner approves, rejoin at 4. If not, the use case ends **declined**, and the calling use case pauses.
-- **5a. A check fails after the remedy.**
-  1. The Core rolls the remedy back by its compensation step.
-  2. If another remedy is left, within two attempts, rejoin at 2. If none is left, escalate as in 2a.
-
-On the doctor's main scenario the Owner and tier 0 have **no step at all**: they appear only in extensions 2a and 3a.
-
-**The doctor's scope is the catalogue, and the blast radius gates it.** Step 3 is workstream W3's change-impact detection applied to a remedy: what the remedy will touch. Step 5 is the same tool used the other way: re-run only what the remedy touched.
-
-R1 shows why the gate matters. Re-surveying a root should touch only that root's groups. Today every folder accept rebuilds every group (OP2), so R1's real radius is the whole library, and the scope check sends it to the Owner. When Geo-Grapher's rebuild is fixed, the same entry becomes a remedy the doctor runs alone.
-
-## 4. The catalogue
-
-[remedy-catalogue.yaml](remedy-catalogue.yaml) has eight entries. Each is keyed by **where** a failure arrives (use case and extension) and **what it looks like** (refusal code and shape). Each names:
-- the remedy workflow, a YAML workflow over registered actions;
-- its scope: side effects, reversibility, model calls and blast radius;
-- the step the caller rejoins;
-- its history: what the as-is run shows.
-
-Six entries come from failures the tier-0 agent resolved by hand on 19–20 November. They are the doctor's first cases, with the fixes already known.
-
-None of the remedy workflows exists yet (`status: proposed`), except `request_budget` (R8).
-
-## 5. How the doctor grows
-
-UC-L ([learn.views.md](learn.views.md)) is the only way the doctor's scope widens:
-1. Tier 0 resolves an escalated case.
-2. Tier 0 proposes a catalogue entry.
-3. The Core validates it: the workflow exists, the scope is declared, the radius is bounded.
-4. The Owner accepts it.
-5. The entry is pinned to its digest.
-
-Each escalation is therefore a chance to remove the next one.
-
-The matching in step 2 can grow in stages, each needing more history than the last:
-
-| Stage | Matches by | Needs |
-|---|---|---|
-| 1 | Exact key: use case, extension and refusal code | The catalogue as written |
-| 2 | Shape: the symptom's fields, such as "queued 0 where the survey found N" | A few cases per entry |
-| 3 | Similarity to past cases' evidence (embeddings, or a small classifier trained on the history) | Enough recorded cases to learn from; it proposes a match, and the Helper validates it before anything runs |
-| 4 | Remedy trust tiers: success rate per entry maps to bronze (the Owner approves each run), silver (the doctor runs it, the Helper checks) and gold (it runs as part of the workflow) | Measured success and rollback rates (workstream W5's tiers, applied to remedies) |
-
-The history the Core records at step 7 is the training data. The blast radius bounds what any learned match may do, so the doctor's influence grows only as far as its record and its declared scope allow.
-
-## 6. What this leaves to build
-
-| Piece | Workstream |
+| Child outcome | Parent continuation |
 |---|---|
-| The ingestion as a workflow the Core runs (`ingest-folder`), so a Lead can run it | W1 (workflows as data) |
-| The doctor's symptom record at each extension point (use case, extension, code, evidence) | W1: the extension ids come from the use cases' specs |
-| Blast radius for a remedy, and targeted re-checks | W3 |
-| The remedy workflows R1–R6 | New; each is a small YAML workflow over existing actions |
-| The oracle as a role on a workflow run: the spec set by tier 0 (or by a tier-1 Lead for a sub-run), a separate model assignment, and one hand-back to whoever set the spec | [diagram-workflows proposal, section 10](../../../../docs/proposals/diagram-workflows.md) (P6, P7) |
-| Tier-0 turns counted on real runs, not only on diagrams: each return of control to tier 0 logged and graded on the same scale | New; the renderer's count is the specification for it |
-| Remedy trust tiers | W5 |
-| Attestation that names who accepted (the policy or a person, never "person" for an agent) | W7 (finding F2 in the as-is example) |
+| `success` | Check the actual coverage/publication contract, then reconcile decision worklists. |
+| `partial` | Preserve per-item gaps; permit acceptance only for explicitly allowed partials. Required partial reading may request accepted R4; required publication-only gaps need their own diagnosis/authority, not an automatic reread. |
+| `reused` | Reconcile existing/no-new-work states and separate decisions without duplicate processing. |
+| `paused` | Return actual cancellation, interruption, before-item ceiling stop or pending decision with completed siblings and the continuation point. |
+| `escalated` | Return unresolved fault with originating stage, existing flags and evidence to the actual specification owner. |
 
-Nothing here is built, and nothing is committed.
+The child owns each frozen item's **validate → parse → read → lenses → Data → relate → metadata → review → publish** sequence before the next item. Its task pool supplies bounded internal concurrency. Publication is not a post-batch join. Spend checks occur before items, cancellation between stages; unknown cost remains unknown. Transport completion, valid structured task output and semantic adequacy are separate facts.
+
+Publication requires the accepted/current/trusted **folder assignment**, actual required reading/conversion, matching artifact and enabled Geo. Source acceptance comes later and is not a publication prerequisite. A Source may be accepted with explicitly permitted partial coverage without a false complete-graph claim. Separate lens accept/reject/defer obligations remain explicit; zero candidates, optional rejection and not-applicable outputs can be valid.
+
+The actual accepting actor appears before Core records/applies an affirmative decision. Person mode, sensitivity, interrupted promotion or absent authority requires an Owner decision. `x3` has approve/apply, exclude, decline and hold guards; `x7` has accept, decline and hold guards. Decline/hold never reaches the guarded writer. A written note failing a required query stays written; its actual failed retrieval remains visible.
+
+## Current folder application and proposed quality evidence
+
+`a7 → applygroups → applicationreceipt → dfolder` preserves the existing common application boundary. Geo-Grapher ingests supported code/text for all accepted non-excluded groups and can reuse matching complete snapshots. Core currently checks CLI exit, JSON and version; the returned folder JSON omits parser failures. This is why a successful current receipt cannot establish parser-capability or language-coverage completeness.
+
+The target's `indexcheck → dindex` is a **proposed common evidence gate after application**, not a second indexing call and not an existing Core check. It requires additional registered diagnostic evidence absent from today's CLI response. Missing or unacceptable required evidence goes to the Lead's held outcome. Successful quality evidence allows `dinput` to choose the requested Source subset; non-Source purposes keep their common receipt and proceed to parent Oracle review.
+
+Application-stage stale recovery uses the separate `r1application` call site for the same scoped R1 remedy; its real library-wide radius and three UC-D outcomes remain explicit.
+
+## Recovery and independent checking
+
+Every Doctor reference calls [UC-D](doctor.spec.yaml) and handles **resolved**, **declined** and **escalated**. `resolved` means the accepted bounded remedy and independent verification succeeded, then the caller checks fresh evidence. It is not authority to bypass a gate.
+
+| Call | Matching problem and fresh rejoin |
+|---|---|
+| `r1` / `r1application`, R1 | Survey-stage recovery re-enters inventory `a4`; application-stage recovery re-enters the authorized application `a7` after its scoped resurvey/reapply remedy. The actual radius can cover the whole library; a local grant cannot silently permit that work. |
+| `r2`, R2 | Confirmed lost qualification: re-enter `d2`. Provider timeout, invalid task output and missing parser capability retain their own diagnoses. |
+| `r3`, R3 | Matching per-root queue defect: re-enter `a8` and scripted count reconciliation. Clerk investigates unexplained mismatch first. |
+| `r4`, R4 | Required partial reading: re-enter `enrich`, then fresh `d5` coverage/publication checks. Finished partial work requires authorized reapproval/new admission; unfinished-run resume is distinct. |
+| `r5`, R5 | Candidate index obligation: re-enter `d7`. R5 is not proof reindexing fixes every Bottom-Line/content miss. Clerk diagnoses unmapped content gaps; concepts/vectors are not fabricated or switched on to force success. |
+| `r6`, R6 | Mapped final shortfall: Oracle rejudges at `a18`. Unmapped evidence goes through Clerk scouting and Lead correction, then Oracle review. |
+
+The Lead coordinates tier-0-requested correction (`x11`, `x12`); Oracle judges the changed evidence (`x13`). If required obligations remain unmet, the run pauses rather than claiming success. Compensation is an explicit authorized decision when applicable; this diagram adds no automatic rollback. New remedies remain proposed until accepted through the established learning/catalogue process. The [remedy catalogue](remedy-catalogue.yaml) requires matching extension keys/rejoin references or documented legacy aliases after this numbering change.
+
+## Correspondence with the accepted earlier map
+
+Retained behavior keeps its node IDs. The following table preserves extension lineage while the main scenario is numbered consecutively.
+
+| Previous target extension / node | Corrected location |
+|---|---|
+| `4a` stale root | `4a`: `r1 → a4`; `8a`: `r1application → a7` after its scoped remedy. Shared remedy, separate call sites and actual scope remain explicit. |
+| `6a` qualification | `5a`, `r2 → d2`. |
+| `6b` held folder | `6a`, with explicit Owner approve/exclude/decline/hold and a direct-Owner path. |
+| `9a` queue mismatch | `10a`, Clerk diagnosis then matching R3 and count recheck. |
+| `13a`, `a12`, `a13`, `m1`, `dm` | Source child transport, task-validation and semantic worker boundaries. |
+| `f1`, `j1`, `a15` | Removed misleading document fork/join and post-join publication; `enrich` owns the sequential per-item stages. |
+| `14a`, `a14` | Child before-item spend control and `17c` paused result; cancellation/interruption remain distinct reasons. |
+| `13b` partials | `17e`, R4 reading-only; `17a` returns partial and `17g` isolates publication-only shortfall. |
+| `16a` person acceptance | `19a`, now includes sensitivity, interruption and absent grant; Source/lens worklists remain separate. |
+| `17a` not findable | `20a` candidate R5; `20b` unmapped content/retrieval diagnosis. |
+| `18a` / `18b` final shortfall | `21a` mapped / `21b` unmapped. |
+| `20a` tier-0 correction | `23a`, Lead coordinates and Oracle only judges. |
+| New route/admission branches | `1a`, `22a` direct Owner; ingestion approval `14a`; start authority `15a`; capture/folder outcomes and all five child returns explicit. |
+
+The old six-turn historical / two-turn target figures depended on the earlier graph. Updated generated lane-load and scenario counts describe these corrected representations; they measure diagram control returns, not observed token cost or proven runtime orchestration.
+
+## Dated evidence and remaining integration
+
+The historical cohort ends with 96 accepted Sources, 93 fully read/published and three accepted partials. Four not-findable notes, 750 processed Sources and 689 lens decisions, eight cancellations and zero ceiling stops are later cross-library audit reports with different populations. They do not rewrite F6's historical sample. W7 added `awaiting_acceptance()` visibility to agenda/status/context; backlog size alone does not demonstrate that current handoff alert is defective. Written-but-not-findable, unread legacy publication reconciliation and old projection repair retain their own bounded scope; ordinary ingestion does not automatically rebuild or reread every graph.
+
+Existing scripts, stage ordering, start/permission gates, writer and current visibility are distinct from the proposed integrated Lead/Clerk/Scribe assignment, independent Oracle loop, Doctor remedy wiring and delegated grants. Dependency installation, global retention cleanup, production backlog decisions and live graph repair remain separate work.
+
+## Regeneration and verification
+
+From this directory use:
+
+```powershell
+..\..\..\..\.venv\Scripts\python.exe -B render_corrected.py --commit --png
+```
+
+The report-local renderer updates **accepted-ingestion-tobe.canvas**, preserving accepted actor-column dimensions, retained card geometry and manual edge attachment sides. The prototype's ordinary entry point would write the superseded `ingestion-tobe.canvas` name and reset saved layout; use its validation/path/reference functions in memory only when checking these corrected parents.
+
+The historical parent calls the [current mixed-batch child](../../../2026-11-21-enrichment-baseline/batch-enrichment-current.md), which references the source child rendered by `reports/2026-11-21-enrichment-baseline/render_current.py`; the focused target uses `reports/2026-11-22-proposed-tobe-enrichment/render_proposal.py`. Their exact five-outcome contracts and UC-D's three outcomes must all be loaded for parent reference checks. Generated scenarios/tests establish graph consistency; they are not newly executed runtime tests. No library processing, paid calls, acceptance or live service changes accompany these graph corrections.
+
+The corrected [remedy catalogue](remedy-catalogue.yaml) tracks current extension IDs and explicit rejoin gates. Its entries remain proposed, including the application-stage R1 correspondence; no remedy was promoted or executed by this diagram revision.

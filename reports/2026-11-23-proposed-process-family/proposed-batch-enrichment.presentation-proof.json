@@ -1,0 +1,71 @@
+{
+  "node_origins": {
+    "pausehandoff_at_bdfe8aaefe": "pausehandoff",
+    "epaused_at_bdfe8aaefe": "epaused",
+    "escalatehandoff_at_d74d2f9cb5": "escalatehandoff",
+    "eescalated_at_d74d2f9cb5": "eescalated",
+    "pausehandoff_at_3c589ea0dc": "pausehandoff",
+    "epaused_at_3c589ea0dc": "epaused",
+    "escalatehandoff_at_b1dc83cf39": "escalatehandoff",
+    "eescalated_at_b1dc83cf39": "eescalated"
+  },
+  "terminal_tail_copies": [
+    {
+      "departure": "[\"dadmit\", \"pausehandoff\", \"missing or reserved authority\", \"2b\"]",
+      "original_tail": [
+        "pausehandoff",
+        "epaused"
+      ],
+      "local_tail": [
+        "pausehandoff_at_bdfe8aaefe",
+        "epaused_at_bdfe8aaefe"
+      ]
+    },
+    {
+      "departure": "[\"dadmit\", \"escalatehandoff\", \"run-wide state or authority-integrity failure\", \"2c\"]",
+      "original_tail": [
+        "escalatehandoff",
+        "eescalated"
+      ],
+      "local_tail": [
+        "escalatehandoff_at_d74d2f9cb5",
+        "eescalated_at_d74d2f9cb5"
+      ]
+    },
+    {
+      "departure": "[\"dcontrols\", \"pausehandoff\", \"cancelled, interrupted, grant withheld or spend ceiling reached\", \"4a\"]",
+      "original_tail": [
+        "pausehandoff",
+        "epaused"
+      ],
+      "local_tail": [
+        "pausehandoff_at_3c589ea0dc",
+        "epaused_at_3c589ea0dc"
+      ]
+    },
+    {
+      "departure": "[\"dcontrols\", \"escalatehandoff\", \"critical integrity or run-wide writer failure\", \"4b\"]",
+      "original_tail": [
+        "escalatehandoff",
+        "eescalated"
+      ],
+      "local_tail": [
+        "escalatehandoff_at_b1dc83cf39",
+        "eescalated_at_b1dc83cf39"
+      ]
+    }
+  ],
+  "original_spec": "authoring-history/proposed-batch-enrichment.before-routing.yaml",
+  "original_spec_sha256": "d574b29ca1eab5ed4ee63e6a2e95d89c6cef2c0bf13e275b85f7de70d1054a3d",
+  "normalized_spec_sha256": "a5b45461d7a37ea471193351d0d32763b423729a85ed1e620676874bc4ca9218",
+  "folded_behavior_equivalence": "passed",
+  "numbered_steps_unchanged": true,
+  "original_scenarios": 34,
+  "normalized_scenarios": 34,
+  "node_y_overrides": {
+    "drecheck": 7140
+  },
+  "minimum_actor_pitch": 600,
+  "edge_card_intersections": [],
+  "mechanical_dispatch_owner": "Core; inherited Lead owns Source execution"
+}

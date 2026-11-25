@@ -1,0 +1,415 @@
+{
+  "base": "proposed-tobe-enrichment.canvas",
+  "nodes": {
+    "librarian-title": {
+      "x": 20,
+      "y": -200
+    },
+    "librarian-s": {
+      "x": 40,
+      "y": 140
+    },
+    "librarian-a1": {
+      "x": 40,
+      "y": 340
+    },
+    "librarian-dentry": {
+      "x": 4240,
+      "y": 540
+    },
+    "librarian-a2": {
+      "x": 640,
+      "y": 940
+    },
+    "librarian-direct": {
+      "x": 40,
+      "y": 740
+    },
+    "librarian-parentbind": {
+      "x": 4240,
+      "y": 740
+    },
+    "librarian-a3": {
+      "x": 1840,
+      "y": 1140
+    },
+    "librarian-a4": {
+      "x": 4240,
+      "y": 1340
+    },
+    "librarian-dadmit": {
+      "x": 4240,
+      "y": 1540
+    },
+    "librarian-stagecontract": {
+      "x": 4240,
+      "y": 2140
+    },
+    "librarian-ownerstart": {
+      "x": 40,
+      "y": 1740
+    },
+    "librarian-radmit": {
+      "x": 2440,
+      "y": 1740
+    },
+    "librarian-escalated": {
+      "x": 1840,
+      "y": 9140
+    },
+    "librarian-critical": {
+      "x": 40,
+      "y": 8140
+    },
+    "librarian-nowork": {
+      "x": 1840,
+      "y": 2440
+    },
+    "librarian-a5": {
+      "x": 4240,
+      "y": 2340
+    },
+    "librarian-downerstart": {
+      "x": 40,
+      "y": 1940
+    },
+    "librarian-paused": {
+      "x": 1840,
+      "y": 1940
+    },
+    "librarian-eescalated": {
+      "x": 6040,
+      "y": 14940
+    },
+    "librarian-enowork": {
+      "x": 6040,
+      "y": 2440
+    },
+    "librarian-dvalidate": {
+      "x": 4240,
+      "y": 2540
+    },
+    "librarian-epaused": {
+      "x": 6040,
+      "y": 1940
+    },
+    "librarian-a6": {
+      "x": 4240,
+      "y": 2740
+    },
+    "librarian-itemfailed": {
+      "x": 4240,
+      "y": 10540
+    },
+    "librarian-dparse": {
+      "x": 4240,
+      "y": 2940
+    },
+    "librarian-a19": {
+      "x": 3040,
+      "y": 10740
+    },
+    "librarian-a7": {
+      "x": 3040,
+      "y": 5140
+    },
+    "librarian-conversionplan": {
+      "x": 3040,
+      "y": 2990
+    },
+    "librarian-dmore": {
+      "x": 4240,
+      "y": 10940
+    },
+    "librarian-a8": {
+      "x": 3640,
+      "y": 5340
+    },
+    "librarian-conversionwork": {
+      "x": 3640,
+      "y": 3140
+    },
+    "librarian-a20": {
+      "x": 1240,
+      "y": 11140
+    },
+    "librarian-host": {
+      "x": 4840,
+      "y": 5540
+    },
+    "librarian-conversionreview": {
+      "x": 3040,
+      "y": 3190
+    },
+    "librarian-dverdict": {
+      "x": 1240,
+      "y": 11340
+    },
+    "librarian-a9": {
+      "x": 4240,
+      "y": 5740
+    },
+    "librarian-conversioncheck": {
+      "x": 4240,
+      "y": 3740
+    },
+    "librarian-a21": {
+      "x": 1840,
+      "y": 13340
+    },
+    "librarian-partialreport": {
+      "x": 1840,
+      "y": 11540
+    },
+    "librarian-rwork": {
+      "x": 2440,
+      "y": 11540
+    },
+    "librarian-scout": {
+      "x": 3040,
+      "y": 11540
+    },
+    "librarian-dreadtransport": {
+      "x": 4240,
+      "y": 5940
+    },
+    "librarian-dconversion": {
+      "x": 4240,
+      "y": 3940
+    },
+    "librarian-drecipient": {
+      "x": 4240,
+      "y": 13540
+    },
+    "librarian-epartial": {
+      "x": 6040,
+      "y": 11740
+    },
+    "librarian-resume": {
+      "x": 4240,
+      "y": 12140
+    },
+    "librarian-realign": {
+      "x": 1840,
+      "y": 11740
+    },
+    "librarian-a10": {
+      "x": 3040,
+      "y": 6140
+    },
+    "librarian-readoutage": {
+      "x": 4240,
+      "y": 6740
+    },
+    "librarian-conversiongap": {
+      "x": 4240,
+      "y": 4940
+    },
+    "librarian-conversionfallback": {
+      "x": 4240,
+      "y": 4140
+    },
+    "librarian-conversionoutage": {
+      "x": 4240,
+      "y": 4340
+    },
+    "librarian-a22": {
+      "x": 640,
+      "y": 13940
+    },
+    "librarian-directreport": {
+      "x": 40,
+      "y": 13740
+    },
+    "librarian-parentreturn": {
+      "x": 4240,
+      "y": 13740
+    },
+    "librarian-dresume": {
+      "x": 4240,
+      "y": 12340
+    },
+    "librarian-drealign": {
+      "x": 1840,
+      "y": 11940
+    },
+    "librarian-a11": {
+      "x": 3040,
+      "y": 6340
+    },
+    "librarian-readroute": {
+      "x": 1840,
+      "y": 6940
+    },
+    "librarian-conversionroute": {
+      "x": 1840,
+      "y": 4540
+    },
+    "librarian-dhandback": {
+      "x": 640,
+      "y": 14140
+    },
+    "librarian-delivered": {
+      "x": 4240,
+      "y": 15340
+    },
+    "librarian-repairperson": {
+      "x": 40,
+      "y": 12540
+    },
+    "librarian-dread": {
+      "x": 4240,
+      "y": 6540
+    },
+    "librarian-dreadretry": {
+      "x": 4240,
+      "y": 7140
+    },
+    "librarian-dconversionretry": {
+      "x": 4240,
+      "y": 4740
+    },
+    "librarian-a23": {
+      "x": 640,
+      "y": 15140
+    },
+    "librarian-tidy": {
+      "x": 640,
+      "y": 14340
+    },
+    "librarian-e1": {
+      "x": 6040,
+      "y": 15540
+    },
+    "librarian-drepairperson": {
+      "x": 40,
+      "y": 12740
+    },
+    "librarian-a12": {
+      "x": 4240,
+      "y": 7340
+    },
+    "librarian-partialread": {
+      "x": 4240,
+      "y": 6940
+    },
+    "librarian-dtidy": {
+      "x": 4240,
+      "y": 11540
+    },
+    "librarian-dlenses": {
+      "x": 4240,
+      "y": 7540
+    },
+    "librarian-a13": {
+      "x": 3040,
+      "y": 7740
+    },
+    "librarian-ddata": {
+      "x": 4240,
+      "y": 7940
+    },
+    "librarian-a14": {
+      "x": 3040,
+      "y": 8140
+    },
+    "librarian-drelate": {
+      "x": 4240,
+      "y": 8340
+    },
+    "librarian-a15": {
+      "x": 3040,
+      "y": 8540
+    },
+    "librarian-dmetadata": {
+      "x": 4240,
+      "y": 8740
+    },
+    "librarian-a16": {
+      "x": 3040,
+      "y": 8940
+    },
+    "librarian-dreview": {
+      "x": 4240,
+      "y": 9140
+    },
+    "librarian-a17": {
+      "x": 4240,
+      "y": 9340
+    },
+    "librarian-dpublication": {
+      "x": 4240,
+      "y": 9540
+    },
+    "librarian-a18": {
+      "x": 5440,
+      "y": 9940
+    },
+    "librarian-pubna": {
+      "x": 4240,
+      "y": 9740
+    },
+    "librarian-pubgap": {
+      "x": 4240,
+      "y": 10340
+    },
+    "librarian-dpubresult": {
+      "x": 4240,
+      "y": 10140
+    },
+    "librarian-lane-Owner": {
+      "x": 20,
+      "y": 60
+    },
+    "librarian-lane-Tier-0-agent": {
+      "x": 620,
+      "y": 60
+    },
+    "librarian-lane-Oracle": {
+      "x": 1220,
+      "y": 60
+    },
+    "librarian-lane-Lead-tier-1-": {
+      "x": 1820,
+      "y": 60
+    },
+    "librarian-lane-Doctor": {
+      "x": 2420,
+      "y": 60
+    },
+    "librarian-lane-Clerk-tier-2-": {
+      "x": 3020,
+      "y": 60
+    },
+    "librarian-lane-Scribe-tier-3-": {
+      "x": 3620,
+      "y": 60
+    },
+    "librarian-lane-Core": {
+      "x": 4220,
+      "y": 60
+    },
+    "librarian-lane-Model-host": {
+      "x": 4820,
+      "y": 60
+    },
+    "librarian-lane-Geo-Grapher": {
+      "x": 5420,
+      "y": 60
+    },
+    "librarian-lane-Outcomes": {
+      "x": 6020,
+      "y": 60
+    }
+  },
+  "unresolved": [
+    {
+      "edge": "librarian-e28",
+      "from": "librarian-dvalidate",
+      "to": "librarian-critical",
+      "cards": [
+        "librarian-conversionwork"
+      ]
+    }
+  ]
+}

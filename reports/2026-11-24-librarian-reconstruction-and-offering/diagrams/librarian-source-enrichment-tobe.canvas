@@ -1,0 +1,1277 @@
+{
+  "nodes": [
+    {
+      "id": "librarian-title",
+      "type": "text",
+      "x": 20,
+      "y": -200,
+      "width": 5180,
+      "height": 220,
+      "text": "# Librarian Source Enrichment L1 Workflow (Proposed To-Be)\n**Symptom:** Part-count masked failed _document_pass/relate_chapters, before-item-only budget checks leaked inner calls, and 0-claim Geo paper DBs silently passed.\n**Root cause:** Record activation trigger, enforce NAT-13 keys + MC-10 reserve, whole-source derivation checks, poison quarantine, Geo non-zero verification, and zero mid-loop Owner blocks.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `librarian-source-enrichment-tobe.spec.yaml`."
+    },
+    {
+      "id": "librarian-s",
+      "type": "text",
+      "x": 40,
+      "y": 140,
+      "width": 360,
+      "height": 70,
+      "text": "● start",
+      "color": "4"
+    },
+    {
+      "id": "librarian-bind",
+      "type": "text",
+      "x": 3040,
+      "y": 340,
+      "width": 360,
+      "height": 150,
+      "text": "**1.** binds Source, narrowed L1 sub-run mandate (sub_spec_owner=lead_tier1 <= parent), NAT-13 & MF-013/014"
+    },
+    {
+      "id": "librarian-dwork",
+      "type": "text",
+      "x": 3040,
+      "y": 540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ L1 workflow admission source?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-controls",
+      "type": "text",
+      "x": 3040,
+      "y": 1140,
+      "width": 360,
+      "height": 150,
+      "text": "**2.** checks cancel/lease flags and runs MC-10 atomic pre-dispatch budget reserve"
+    },
+    {
+      "id": "librarian-userread",
+      "type": "text",
+      "x": 3040,
+      "y": 740,
+      "width": 360,
+      "height": 150,
+      "text": "admits Context 3 UI reread/deep_read_note under person/workflow_grant route"
+    },
+    {
+      "id": "librarian-t0read",
+      "type": "text",
+      "x": 3040,
+      "y": 940,
+      "width": 360,
+      "height": 150,
+      "text": "verifies Context 1/2 Delegated Commission Envelope for Source L1 workflow"
+    },
+    {
+      "id": "librarian-enowork",
+      "type": "text",
+      "x": 4840,
+      "y": 740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ no new work admitted; compatible NAT-13 receipts reused\n*outcome: reused*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-dcontrols",
+      "type": "text",
+      "x": 3040,
+      "y": 1340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ controls permit dispatch?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-validate",
+      "type": "text",
+      "x": 3040,
+      "y": 2140,
+      "width": 360,
+      "height": 150,
+      "text": "**3.** verifies evidence hash, NAT-13 route/recipe key, and fresh publish state"
+    },
+    {
+      "id": "librarian-retpause_at_f4db34be67",
+      "type": "text",
+      "x": 640,
+      "y": 1540,
+      "width": 360,
+      "height": 150,
+      "text": "returns MC-10 ceiling, cancel, or ORACLE_ROUTE_COLLISION (unverified) pause Ticket"
+    },
+    {
+      "id": "librarian-retesc_at_d6c25aad81",
+      "type": "text",
+      "x": 640,
+      "y": 1740,
+      "width": 360,
+      "height": 150,
+      "text": "escalates critical integrity or authority-boundary fault to invoking parent"
+    },
+    {
+      "id": "librarian-dvalidate",
+      "type": "text",
+      "x": 3040,
+      "y": 2340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ validation result?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-epaused_at_f4db34be67",
+      "type": "text",
+      "x": 4840,
+      "y": 1740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ paused on cancel, MC-10 budget cap, or ORACLE_ROUTE_COLLISION Ticket\n*outcome: paused*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-eescalated_at_d6c25aad81",
+      "type": "text",
+      "x": 4840,
+      "y": 1940,
+      "width": 360,
+      "height": 150,
+      "text": "◉ critical or unresolved integrity fault escalated\n*outcome: escalated*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-parse",
+      "type": "text",
+      "x": 3040,
+      "y": 2540,
+      "width": 360,
+      "height": 150,
+      "text": "**4.** runs scripted fetch, AST/PDF text extract, and page map; saves originals"
+    },
+    {
+      "id": "librarian-quarantine",
+      "type": "text",
+      "x": 3040,
+      "y": 5940,
+      "width": 360,
+      "height": 150,
+      "text": "quarantines poison item to .librarian/quarantine/ and drops provisional cache"
+    },
+    {
+      "id": "librarian-dparse",
+      "type": "text",
+      "x": 3040,
+      "y": 2740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ parse & conversion need?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-retpartial_at_c22be28a21",
+      "type": "text",
+      "x": 640,
+      "y": 6140,
+      "width": 360,
+      "height": 150,
+      "text": "returns noncritical partial Source with unmet tasks/quarantine explicit"
+    },
+    {
+      "id": "librarian-dprov",
+      "type": "text",
+      "x": 3040,
+      "y": 4140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ PDF needing provisional cache?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-convplan",
+      "type": "text",
+      "x": 1840,
+      "y": 2940,
+      "width": 360,
+      "height": 150,
+      "text": "assigns bounded OCR or cleanup task under qualified role and MC-10 reserve"
+    },
+    {
+      "id": "librarian-parsegap",
+      "type": "text",
+      "x": 3040,
+      "y": 2940,
+      "width": 360,
+      "height": 150,
+      "text": "records unread pages or missing units without granting read credit"
+    },
+    {
+      "id": "librarian-epartial_at_c22be28a21",
+      "type": "text",
+      "x": 4840,
+      "y": 6340,
+      "width": 360,
+      "height": 150,
+      "text": "◉ partial or quarantined Source returned; gap explicit\n*outcome: partial*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-preproj",
+      "type": "text",
+      "x": 3040,
+      "y": 4340,
+      "width": 360,
+      "height": 150,
+      "text": "marks provisional .nodes.json (text_layer=False); never counted published"
+    },
+    {
+      "id": "librarian-readplan",
+      "type": "text",
+      "x": 1840,
+      "y": 4540,
+      "width": 360,
+      "height": 150,
+      "text": "**5.** assigns spread chunks, blind lens tasks, and required whole-source passes"
+    },
+    {
+      "id": "librarian-convert",
+      "type": "text",
+      "x": 2440,
+      "y": 3140,
+      "width": 360,
+      "height": 150,
+      "text": "converts pages with [page N] anchors and explicit unread/error markers"
+    },
+    {
+      "id": "librarian-read",
+      "type": "text",
+      "x": 2440,
+      "y": 4740,
+      "width": 360,
+      "height": 150,
+      "text": "**6.** executes bounded chunk and synthesis tasks with MC-10 spend reservation"
+    },
+    {
+      "id": "librarian-convrev",
+      "type": "text",
+      "x": 1840,
+      "y": 3340,
+      "width": 360,
+      "height": 150,
+      "text": "verifies conversion fidelity without attesting unread pages"
+    },
+    {
+      "id": "librarian-host",
+      "type": "text",
+      "x": 3640,
+      "y": 4940,
+      "width": 360,
+      "height": 150,
+      "text": "**7.** answers task requests via qualified route; settles reserved vs actual cost"
+    },
+    {
+      "id": "librarian-convchk",
+      "type": "text",
+      "x": 3040,
+      "y": 3540,
+      "width": 360,
+      "height": 150,
+      "text": "stores conversion with source_authorship metadata and reconciles spend"
+    },
+    {
+      "id": "librarian-readchk",
+      "type": "text",
+      "x": 3040,
+      "y": 5140,
+      "width": 360,
+      "height": 150,
+      "text": "**8.** verifies schemas/quotes (E4/E5) and separates chunk vs _document_pass state"
+    },
+    {
+      "id": "librarian-dconv",
+      "type": "text",
+      "x": 3040,
+      "y": 3740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ conversion usable?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-readproof",
+      "type": "text",
+      "x": 1840,
+      "y": 5340,
+      "width": 360,
+      "height": 150,
+      "text": "**9.** reconciles whole-source _document_pass and relate_chapters synthesis (P1-L7)"
+    },
+    {
+      "id": "librarian-fallback",
+      "type": "text",
+      "x": 3040,
+      "y": 3940,
+      "width": 360,
+      "height": 150,
+      "text": "restores original extracted text and keeps conversion gap explicit"
+    },
+    {
+      "id": "librarian-dread",
+      "type": "text",
+      "x": 3040,
+      "y": 5540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ chunk reads + whole derivations complete?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-lenses",
+      "type": "text",
+      "x": 3040,
+      "y": 6540,
+      "width": 360,
+      "height": 150,
+      "text": "**10.** stores blind E4/E5 grounded lens candidates (parent acceptance separate)"
+    },
+    {
+      "id": "librarian-dpoison",
+      "type": "text",
+      "x": 3040,
+      "y": 5740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ bounded retries exhausted on poison/ungrounded text?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-data",
+      "type": "text",
+      "x": 3040,
+      "y": 6740,
+      "width": 360,
+      "height": 150,
+      "text": "**11.** extracts scripted DIK structural records & static AST code relations ($0; DATA_IS_UNFRAMED)"
+    },
+    {
+      "id": "librarian-partialread",
+      "type": "text",
+      "x": 3040,
+      "y": 6140,
+      "width": 360,
+      "height": 150,
+      "text": "keeps item partial with unread chunks or missing _document_pass explicit"
+    },
+    {
+      "id": "librarian-drelate",
+      "type": "text",
+      "x": 3040,
+      "y": 6940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ multi-chapter document needing semantic relations?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-relate",
+      "type": "text",
+      "x": 1840,
+      "y": 7340,
+      "width": 360,
+      "height": 150,
+      "text": "**12.** proposes semantic chapter relations across read chapters (Core persists)"
+    },
+    {
+      "id": "librarian-relateskip",
+      "type": "text",
+      "x": 3040,
+      "y": 7140,
+      "width": 360,
+      "height": 150,
+      "text": "retains Core static AST relations or marks chapter-relate N/A"
+    },
+    {
+      "id": "librarian-metapropose",
+      "type": "text",
+      "x": 1840,
+      "y": 7540,
+      "width": 360,
+      "height": 150,
+      "text": "**13.** proposes semantic content-model metadata fields from evidence; retains Unknown where insufficient"
+    },
+    {
+      "id": "librarian-metadata",
+      "type": "text",
+      "x": 3040,
+      "y": 7740,
+      "width": 360,
+      "height": 150,
+      "text": "**14.** derives deterministic facts/readiness, validates proposed fields against schema, & stores proposals + Unknowns"
+    },
+    {
+      "id": "librarian-review",
+      "type": "text",
+      "x": 1840,
+      "y": 7940,
+      "width": 360,
+      "height": 150,
+      "text": "**15.** drafts neutral Bottom Line & sensitivity check with low_confidence rescue"
+    },
+    {
+      "id": "librarian-reviewchk",
+      "type": "text",
+      "x": 3040,
+      "y": 8140,
+      "width": 360,
+      "height": 150,
+      "text": "**16.** checks Bottom Line schema, literal quote grounding, flags & reading counters (does not override incomplete reading)"
+    },
+    {
+      "id": "librarian-dpub",
+      "type": "text",
+      "x": 3040,
+      "y": 8340,
+      "width": 360,
+      "height": 150,
+      "text": "**17.** ◇ eligible for Geo paper publication?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-publish",
+      "type": "text",
+      "x": 4240,
+      "y": 8740,
+      "width": 360,
+      "height": 150,
+      "text": "**18.** imports full-conversion paper into catalog; returns claim/concept/error counts"
+    },
+    {
+      "id": "librarian-pubna",
+      "type": "text",
+      "x": 3040,
+      "y": 8540,
+      "width": 360,
+      "height": 150,
+      "text": "marks non-PDF or missing full conversion as publication N/A"
+    },
+    {
+      "id": "librarian-pubgap",
+      "type": "text",
+      "x": 3040,
+      "y": 9340,
+      "width": 360,
+      "height": 150,
+      "text": "records EMPTY_PAPER_GRAPH or Geo refusal without closing requirement"
+    },
+    {
+      "id": "librarian-pubreceipt",
+      "type": "text",
+      "x": 3040,
+      "y": 8940,
+      "width": 360,
+      "height": 150,
+      "text": "**19.** enforces non-zero claims on multi-page PDF and triggers W5 bridge check"
+    },
+    {
+      "id": "librarian-oracle",
+      "type": "text",
+      "x": 40,
+      "y": 9540,
+      "width": 360,
+      "height": 150,
+      "text": "**20.** audits raw receipts, MC-10 ledger & Silver fidelity via distinct qualified Oracle route (GLM-5.3 current revisable adapter)"
+    },
+    {
+      "id": "librarian-dpubok",
+      "type": "text",
+      "x": 3040,
+      "y": 9140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ publish receipt valid and non-empty?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-dverdict",
+      "type": "text",
+      "x": 40,
+      "y": 9740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Source Oracle verdict?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-handback",
+      "type": "text",
+      "x": 640,
+      "y": 10740,
+      "width": 360,
+      "height": 150,
+      "text": "**21.** returns verified Source package, costs, coverage & independent worklists to batch"
+    },
+    {
+      "id": "librarian-doctor",
+      "type": "text",
+      "x": 1240,
+      "y": 9940,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **librarian-doctor-tobe**: executes bounded YAML Ticket remedy via revisable adapter (GLM-5.3 current)",
+      "color": "2"
+    },
+    {
+      "id": "librarian-retpartial",
+      "type": "text",
+      "x": 640,
+      "y": 10140,
+      "width": 360,
+      "height": 150,
+      "text": "returns noncritical partial Source with unmet tasks/quarantine explicit"
+    },
+    {
+      "id": "librarian-retesc",
+      "type": "text",
+      "x": 640,
+      "y": 10340,
+      "width": 360,
+      "height": 150,
+      "text": "escalates critical integrity or authority-boundary fault to invoking parent"
+    },
+    {
+      "id": "librarian-retpause",
+      "type": "text",
+      "x": 640,
+      "y": 9940,
+      "width": 360,
+      "height": 150,
+      "text": "returns MC-10 ceiling, cancel, or ORACLE_ROUTE_COLLISION (unverified) pause Ticket"
+    },
+    {
+      "id": "librarian-e1",
+      "type": "text",
+      "x": 4840,
+      "y": 10940,
+      "width": 360,
+      "height": 150,
+      "text": "◉ Source meets full Silver & publish obligations\n*outcome: success*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-reentry",
+      "type": "text",
+      "x": 3040,
+      "y": 10140,
+      "width": 360,
+      "height": 150,
+      "text": "confirms single-pass repair receipt (attempt <= 1) & re-admits check"
+    },
+    {
+      "id": "librarian-epartial",
+      "type": "text",
+      "x": 4840,
+      "y": 10340,
+      "width": 360,
+      "height": 150,
+      "text": "◉ partial or quarantined Source returned; gap explicit\n*outcome: partial*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-eescalated",
+      "type": "text",
+      "x": 4840,
+      "y": 10540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ critical or unresolved integrity fault escalated\n*outcome: escalated*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-epaused",
+      "type": "text",
+      "x": 4840,
+      "y": 10140,
+      "width": 360,
+      "height": 150,
+      "text": "◉ paused on cancel, MC-10 budget cap, or ORACLE_ROUTE_COLLISION Ticket\n*outcome: paused*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-lane-Oracle",
+      "type": "group",
+      "x": 20,
+      "y": 60,
+      "width": 400,
+      "height": 11130,
+      "label": "Oracle"
+    },
+    {
+      "id": "librarian-lane-Lead-tier-1-",
+      "type": "group",
+      "x": 620,
+      "y": 60,
+      "width": 400,
+      "height": 11130,
+      "label": "Lead (tier 1)"
+    },
+    {
+      "id": "librarian-lane-Doctor",
+      "type": "group",
+      "x": 1220,
+      "y": 60,
+      "width": 400,
+      "height": 11130,
+      "label": "Doctor"
+    },
+    {
+      "id": "librarian-lane-Clerk-tier-2-",
+      "type": "group",
+      "x": 1820,
+      "y": 60,
+      "width": 400,
+      "height": 11130,
+      "label": "Clerk (tier 2)"
+    },
+    {
+      "id": "librarian-lane-Scribe-tier-3-",
+      "type": "group",
+      "x": 2420,
+      "y": 60,
+      "width": 400,
+      "height": 11130,
+      "label": "Scribe (tier 3)"
+    },
+    {
+      "id": "librarian-lane-Core",
+      "type": "group",
+      "x": 3020,
+      "y": 60,
+      "width": 400,
+      "height": 11130,
+      "label": "Core"
+    },
+    {
+      "id": "librarian-lane-Model-host",
+      "type": "group",
+      "x": 3620,
+      "y": 60,
+      "width": 400,
+      "height": 11130,
+      "label": "Model host"
+    },
+    {
+      "id": "librarian-lane-Geo-Grapher",
+      "type": "group",
+      "x": 4220,
+      "y": 60,
+      "width": 400,
+      "height": 11130,
+      "label": "Geo-Grapher"
+    },
+    {
+      "id": "librarian-lane-Outcomes",
+      "type": "group",
+      "x": 4820,
+      "y": 60,
+      "width": 400,
+      "height": 11130,
+      "label": "Outcomes"
+    }
+  ],
+  "edges": [
+    {
+      "id": "librarian-e0",
+      "fromNode": "librarian-s",
+      "toNode": "librarian-bind",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e1",
+      "fromNode": "librarian-bind",
+      "toNode": "librarian-dwork",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e2",
+      "fromNode": "librarian-dwork",
+      "toNode": "librarian-controls",
+      "label": "[system triggered (batch item admitted)]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e3",
+      "fromNode": "librarian-dwork",
+      "toNode": "librarian-userread",
+      "label": "[user directed (targeted reread/revision)] 1a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e4",
+      "fromNode": "librarian-dwork",
+      "toNode": "librarian-t0read",
+      "label": "[tier 0 directed (external grant verified)] 1b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e5",
+      "fromNode": "librarian-dwork",
+      "toNode": "librarian-enowork",
+      "label": "[none admitted / reused] 1c",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e6",
+      "fromNode": "librarian-userread",
+      "toNode": "librarian-controls",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e7",
+      "fromNode": "librarian-t0read",
+      "toNode": "librarian-controls",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e8",
+      "fromNode": "librarian-controls",
+      "toNode": "librarian-dcontrols",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e9",
+      "fromNode": "librarian-dcontrols",
+      "toNode": "librarian-validate",
+      "label": "[controls and MC-10 reserve ok]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e10",
+      "fromNode": "librarian-dcontrols",
+      "toNode": "librarian-retpause_at_f4db34be67",
+      "label": "[paused or MC-10 cap hit] 2a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e11",
+      "fromNode": "librarian-dcontrols",
+      "toNode": "librarian-retesc_at_d6c25aad81",
+      "label": "[critical writer or lease fault] 2b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e12",
+      "fromNode": "librarian-validate",
+      "toNode": "librarian-dvalidate",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e13",
+      "fromNode": "librarian-dvalidate",
+      "toNode": "librarian-parse",
+      "label": "[stage work required]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e14",
+      "fromNode": "librarian-dvalidate",
+      "toNode": "librarian-quarantine",
+      "label": "[unrecoverable poison or hash corruption] 3a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e15",
+      "fromNode": "librarian-parse",
+      "toNode": "librarian-dparse",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e16",
+      "fromNode": "librarian-dparse",
+      "toNode": "librarian-dprov",
+      "label": "[native extraction usable]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e17",
+      "fromNode": "librarian-dparse",
+      "toNode": "librarian-convplan",
+      "label": "[OCR or cleanup required] 4a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e18",
+      "fromNode": "librarian-dparse",
+      "toNode": "librarian-parsegap",
+      "label": "[early fetch partial or missing units] 4b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e19",
+      "fromNode": "librarian-convplan",
+      "toNode": "librarian-convert",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e20",
+      "fromNode": "librarian-convert",
+      "toNode": "librarian-convrev",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e21",
+      "fromNode": "librarian-convrev",
+      "toNode": "librarian-convchk",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e22",
+      "fromNode": "librarian-convchk",
+      "toNode": "librarian-dconv",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e23",
+      "fromNode": "librarian-dconv",
+      "toNode": "librarian-dprov",
+      "label": "[usable conversion]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e24",
+      "fromNode": "librarian-dconv",
+      "toNode": "librarian-fallback",
+      "label": "[unusable output or outage]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e25",
+      "fromNode": "librarian-fallback",
+      "toNode": "librarian-dprov",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e26",
+      "fromNode": "librarian-dprov",
+      "toNode": "librarian-preproj",
+      "label": "[PDF/paper]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e27",
+      "fromNode": "librarian-dprov",
+      "toNode": "librarian-readplan",
+      "label": "[non-PDF] 4c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e28",
+      "fromNode": "librarian-preproj",
+      "toNode": "librarian-readplan",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e29",
+      "fromNode": "librarian-parsegap",
+      "toNode": "librarian-readplan",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e30",
+      "fromNode": "librarian-readplan",
+      "toNode": "librarian-read",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e31",
+      "fromNode": "librarian-read",
+      "toNode": "librarian-host",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e32",
+      "fromNode": "librarian-host",
+      "toNode": "librarian-readchk",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e33",
+      "fromNode": "librarian-readchk",
+      "toNode": "librarian-readproof",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e34",
+      "fromNode": "librarian-readproof",
+      "toNode": "librarian-dread",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e35",
+      "fromNode": "librarian-dread",
+      "toNode": "librarian-lenses",
+      "label": "[chunks and _document_pass/relate complete]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e36",
+      "fromNode": "librarian-dread",
+      "toNode": "librarian-dpoison",
+      "label": "[unread parts or missing synthesis pass] 9a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e37",
+      "fromNode": "librarian-dpoison",
+      "toNode": "librarian-quarantine",
+      "label": "[exhausted ungrounded/poison]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e38",
+      "fromNode": "librarian-dpoison",
+      "toNode": "librarian-partialread",
+      "label": "[noncritical partial retained]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e39",
+      "fromNode": "librarian-quarantine",
+      "toNode": "librarian-retpartial_at_c22be28a21",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e40",
+      "fromNode": "librarian-partialread",
+      "toNode": "librarian-lenses",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e41",
+      "fromNode": "librarian-lenses",
+      "toNode": "librarian-data",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e42",
+      "fromNode": "librarian-data",
+      "toNode": "librarian-drelate",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e43",
+      "fromNode": "librarian-drelate",
+      "toNode": "librarian-relate",
+      "label": "[2+ read chapters with claims]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e44",
+      "fromNode": "librarian-drelate",
+      "toNode": "librarian-relateskip",
+      "label": "[code repo (AST in Core Data) or <2 chapters] 11a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e45",
+      "fromNode": "librarian-relate",
+      "toNode": "librarian-metapropose",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e46",
+      "fromNode": "librarian-relateskip",
+      "toNode": "librarian-metapropose",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e47",
+      "fromNode": "librarian-metapropose",
+      "toNode": "librarian-metadata",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e48",
+      "fromNode": "librarian-metadata",
+      "toNode": "librarian-review",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e49",
+      "fromNode": "librarian-review",
+      "toNode": "librarian-reviewchk",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e50",
+      "fromNode": "librarian-reviewchk",
+      "toNode": "librarian-dpub",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e51",
+      "fromNode": "librarian-dpub",
+      "toNode": "librarian-publish",
+      "label": "[full conversion and trusted folder group]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e52",
+      "fromNode": "librarian-dpub",
+      "toNode": "librarian-pubna",
+      "label": "[non-PDF or no conversion] 17a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e53",
+      "fromNode": "librarian-dpub",
+      "toNode": "librarian-pubgap",
+      "label": "[missing folder or Geo disabled] 17b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e54",
+      "fromNode": "librarian-pubna",
+      "toNode": "librarian-oracle",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e55",
+      "fromNode": "librarian-pubgap",
+      "toNode": "librarian-oracle",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e56",
+      "fromNode": "librarian-publish",
+      "toNode": "librarian-pubreceipt",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e57",
+      "fromNode": "librarian-pubreceipt",
+      "toNode": "librarian-dpubok",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e58",
+      "fromNode": "librarian-dpubok",
+      "toNode": "librarian-oracle",
+      "label": "[valid non-zero graph & bridge checked]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e59",
+      "fromNode": "librarian-dpubok",
+      "toNode": "librarian-pubgap",
+      "label": "[EMPTY_PAPER_GRAPH or late refusal] 19a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e60",
+      "fromNode": "librarian-oracle",
+      "toNode": "librarian-dverdict",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e61",
+      "fromNode": "librarian-dverdict",
+      "toNode": "librarian-handback",
+      "label": "[all obligations met (distinct Oracle route)]",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e62",
+      "fromNode": "librarian-dverdict",
+      "toNode": "librarian-doctor",
+      "label": "[mapped shortfall needs bounded repair] 20a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e63",
+      "fromNode": "librarian-dverdict",
+      "toNode": "librarian-retpartial",
+      "label": "[permitted partial gap] 20b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e64",
+      "fromNode": "librarian-dverdict",
+      "toNode": "librarian-retesc",
+      "label": "[critical finding] 20c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e65",
+      "fromNode": "librarian-dverdict",
+      "toNode": "librarian-retpause",
+      "label": "[ORACLE_ROUTE_COLLISION (no distinct qualified route; never marked independently reviewed)] 20d",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e66",
+      "fromNode": "librarian-doctor",
+      "toNode": "librarian-reentry",
+      "label": "[resolved]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e67",
+      "fromNode": "librarian-reentry",
+      "toNode": "librarian-validate",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e68",
+      "fromNode": "librarian-doctor",
+      "toNode": "librarian-retpartial",
+      "label": "[declined]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e69",
+      "fromNode": "librarian-doctor",
+      "toNode": "librarian-retesc",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e70",
+      "fromNode": "librarian-handback",
+      "toNode": "librarian-e1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e71",
+      "fromNode": "librarian-retpartial",
+      "toNode": "librarian-epartial",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e72",
+      "fromNode": "librarian-retpause",
+      "toNode": "librarian-epaused",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e73",
+      "fromNode": "librarian-retesc",
+      "toNode": "librarian-eescalated",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e74",
+      "fromNode": "librarian-retpause_at_f4db34be67",
+      "toNode": "librarian-epaused_at_f4db34be67",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e75",
+      "fromNode": "librarian-retesc_at_d6c25aad81",
+      "toNode": "librarian-eescalated_at_d6c25aad81",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e76",
+      "fromNode": "librarian-retpartial_at_c22be28a21",
+      "toNode": "librarian-epartial_at_c22be28a21",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ]
+}

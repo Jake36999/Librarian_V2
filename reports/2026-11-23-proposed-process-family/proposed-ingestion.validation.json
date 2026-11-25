@@ -1,0 +1,26 @@
+{
+  "status": "proposed report-model validation; no runtime execution or workflow acceptance",
+  "model": "proposed-ingestion",
+  "source_sha256": "2a0f125f639bd631790ef08e47c4b55aa22452ccff8547818366bfd9c9f5b394",
+  "canvas_revision": "0254efb9f830a6898121e81faf40118b11afae943e1ff34957ba784e1fc8b0f1",
+  "canvas_nodes": 157,
+  "edges": 203,
+  "numbered_steps": 24,
+  "extension_scenarios": 84,
+  "structural_reference_flags": [],
+  "card_overlaps": [],
+  "edge_card_intersections": [],
+  "overview_text_overflow": [],
+  "detail_text_overflow": [],
+  "folded_terminal_behavior": "identical labels, actors, outcomes, guards and extensions",
+  "presentation_proof": "proposed-ingestion.presentation-proof.json",
+  "minimum_actor_pitch": 600,
+  "call_outcomes": [
+    "escalated",
+    "paused",
+    "reused",
+    "success"
+  ],
+  "write": "existing canvas service preview and revision/hash-checked commit; profile=None",
+  "curve_scope": "deterministic reading preview with native attachment sides; not an Obsidian host screenshot"
+}

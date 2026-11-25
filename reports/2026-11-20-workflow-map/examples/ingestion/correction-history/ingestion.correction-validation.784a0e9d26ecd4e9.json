@@ -1,0 +1,101 @@
+{
+  "status": "report model validation; not execution, runtime rollout or new Owner acceptance",
+  "spec": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.spec.yaml",
+  "spec_sha256": "a3d78dfa37b3d0e1ebabe7a106f2601daad9f46554d26b5ce9bf45b548454cd7",
+  "canvas": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.canvas",
+  "base_revision": "35025d8037d1e69f22dfc7fa3b276a9245330775d4b1b0089c1e23a0a50827bc",
+  "proposal_hash": "35025d8037d1e69f22dfc7fa3b276a9245330775d4b1b0089c1e23a0a50827bc",
+  "scenarios": 33,
+  "structural_problems": [],
+  "cross_view_reference_flags": [],
+  "changes": {
+    "migrated_ids": {},
+    "retired_nodes_removed": [],
+    "retired_anchors_retained_for_owner_edges": [],
+    "owner_nodes_preserved": 0,
+    "owner_edges_preserved": 0,
+    "geometry_changes": [],
+    "generated_reflow": true,
+    "initial_generated_reflow": false,
+    "initial_semantic_checksum_verified": null,
+    "reflow_validation": {
+      "mode": "validated_generation",
+      "revision": "35025d8037d1e69f22dfc7fa3b276a9245330775d4b1b0089c1e23a0a50827bc",
+      "receipt": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.correction-validation.json"
+    },
+    "group_changes": [],
+    "preexisting_overlaps_preserved": []
+  },
+  "write": "service.preview(profile=None, adopt=True), final provenance-aware proposal, guarded service.commit",
+  "accepted_renderer_sha256": "b3253960a08ccfdc05d93719c1b841393ec6024a409e4a2638510a1f6b27a955",
+  "commit": {
+    "written": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.canvas",
+    "revision": "35025d8037d1e69f22dfc7fa3b276a9245330775d4b1b0089c1e23a0a50827bc",
+    "backup": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.canvas.20261123T101823208722.bak",
+    "changes": {
+      "migrated_ids": {},
+      "retired_nodes_removed": [],
+      "retired_anchors_retained_for_owner_edges": [],
+      "owner_nodes_preserved": 0,
+      "owner_edges_preserved": 0,
+      "geometry_changes": [],
+      "generated_reflow": true,
+      "initial_generated_reflow": false,
+      "initial_semantic_checksum_verified": null,
+      "reflow_validation": {
+        "mode": "validated_generation",
+        "revision": "35025d8037d1e69f22dfc7fa3b276a9245330775d4b1b0089c1e23a0a50827bc",
+        "receipt": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.correction-validation.json"
+      },
+      "group_changes": [],
+      "preexisting_overlaps_preserved": []
+    }
+  },
+  "reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.corrected-overview.png",
+  "overview_scale": 0.35,
+  "overview_text_overflow": [
+    "librarian-a1",
+    "librarian-a10",
+    "librarian-a14",
+    "librarian-a15",
+    "librarian-a16",
+    "librarian-a17",
+    "librarian-a6",
+    "librarian-a7",
+    "librarian-a9",
+    "librarian-capturestore",
+    "librarian-draftcheck",
+    "librarian-draftfault",
+    "librarian-e1",
+    "librarian-e2",
+    "librarian-enrich",
+    "librarian-escalatereport",
+    "librarian-findcheck",
+    "librarian-folderfault",
+    "librarian-indexcheck",
+    "librarian-indexfault",
+    "librarian-nonsource",
+    "librarian-pausedreport",
+    "librarian-queuefix",
+    "librarian-reuseledger",
+    "librarian-sourceledger",
+    "librarian-startrequest",
+    "librarian-startrun",
+    "librarian-wholeindex",
+    "librarian-writestate",
+    "librarian-x5"
+  ],
+  "overview_purpose": "reduced orientation image; clipping at the minimum preview font is expected",
+  "detail_reading_aid": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\ingestion.corrected-readable.png",
+  "detail_scale": 0.8,
+  "detail_text_overflow": [],
+  "preview": "deterministic raster of saved canvas positions; not an Obsidian application screenshot",
+  "previous_validation": {
+    "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\correction-history\\ingestion.correction-validation.4a7f451a500a47af.json",
+    "sha256": "4a7f451a500a47afe29b926c40cab112c45aabd36646677a6f2aa543f061394a"
+  },
+  "initial_migration_validation": {
+    "path": "D:\\Librarian_V2\\reports\\2026-11-20-workflow-map\\examples\\ingestion\\correction-history\\ingestion.correction-validation.80837ee1119c649c.json",
+    "sha256": "80837ee1119c649c0d0b8cebbf5ff5c055f4b5e74b5e2bfa7f9deeee30f98ec2"
+  }
+}

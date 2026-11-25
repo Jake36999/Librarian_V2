@@ -1,0 +1,1368 @@
+{
+  "nodes": [
+    {
+      "id": "librarian-title",
+      "type": "text",
+      "x": 20,
+      "y": -200,
+      "width": 3980,
+      "height": 220,
+      "text": "# Proposed to-be mixed-batch enrichment\n**Symptom:** The current mixed dispatcher accounts for source and folder stages but has no integrated agent owner for meaning, package conformance or bounded repair.\n**Root cause:** Retain the existing mixed ledger while adding bounded Lead ownership, Clerk/Scribe proposals and independent child-contract review.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `proposed-batch-enrichment.spec.yaml`."
+    },
+    {
+      "id": "librarian-s",
+      "type": "text",
+      "x": 40,
+      "y": 140,
+      "width": 360,
+      "height": 70,
+      "text": "● start",
+      "color": "4"
+    },
+    {
+      "id": "librarian-contract",
+      "type": "text",
+      "x": 640,
+      "y": 340,
+      "width": 360,
+      "height": 150,
+      "text": "Proposed child of ingestion. It inherits one commission, Lead and mixed ledger; source references describe the selected item's work, not another batch worker.",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-bind",
+      "type": "text",
+      "x": 640,
+      "y": 540,
+      "width": 360,
+      "height": 150,
+      "text": "**1.** owns the parent's admitted mixed work and required child outputs; plans accepted components within the existing mandate",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-admit",
+      "type": "text",
+      "x": 3040,
+      "y": 740,
+      "width": 360,
+      "height": 150,
+      "text": "**2.** checks recorded parent specification, approved selection, start grants, role assignments and receipt keys; keeps the original mixed ledger",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dadmit",
+      "type": "text",
+      "x": 3040,
+      "y": 940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ recorded admission and frozen work?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-nextitem",
+      "type": "text",
+      "x": 3040,
+      "y": 1940,
+      "width": 360,
+      "height": 150,
+      "text": "**3.** selects the next frozen item in mixed order; retains completed siblings and each item's original identity",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-noworkhandoff",
+      "type": "text",
+      "x": 640,
+      "y": 1140,
+      "width": 360,
+      "height": 150,
+      "text": "returns no fresh child work and reconciled receipt states; outstanding parent decisions remain outstanding rather than becoming implied success",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-pausehandoff_at_bdfe8aaefe",
+      "type": "text",
+      "x": 640,
+      "y": 1340,
+      "width": 360,
+      "height": 150,
+      "text": "returns the stop reason, retained receipts and exact continuation or reserved-authority request to the parent; does not commission another run",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-escalatehandoff_at_d74d2f9cb5",
+      "type": "text",
+      "x": 640,
+      "y": 1540,
+      "width": 360,
+      "height": 150,
+      "text": "immediately reports critical or run-wide trust failure to the invoking parent for its Owner or tier-0 route, preserving evidence and completed work",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-controls",
+      "type": "text",
+      "x": 3040,
+      "y": 2140,
+      "width": 360,
+      "height": 150,
+      "text": "**4.** checks spend before the item and writer, cancellation, grants and critical flags at every dispatch or commit; reuses only compatible receipts",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-enowork",
+      "type": "text",
+      "x": 3640,
+      "y": 1340,
+      "width": 360,
+      "height": 150,
+      "text": "◉ no fresh admitted child work; parent must still account for its remaining obligations\n*outcome: reused*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-epaused_at_bdfe8aaefe",
+      "type": "text",
+      "x": 3640,
+      "y": 1540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ retained work awaits explicit continuation, a reserved decision or required authority from the parent\n*outcome: paused*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-eescalated_at_d74d2f9cb5",
+      "type": "text",
+      "x": 3640,
+      "y": 1740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ critical or run-wide failure prevents a trustworthy child completion handback\n*outcome: escalated*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-dcontrols",
+      "type": "text",
+      "x": 3040,
+      "y": 2340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ recorded controls permit this item?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dkind",
+      "type": "text",
+      "x": 3040,
+      "y": 3140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ recorded staged-item kind?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-pausehandoff_at_3c589ea0dc",
+      "type": "text",
+      "x": 640,
+      "y": 2540,
+      "width": 360,
+      "height": 150,
+      "text": "returns the stop reason, retained receipts and exact continuation or reserved-authority request to the parent; does not commission another run",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-escalatehandoff_at_b1dc83cf39",
+      "type": "text",
+      "x": 640,
+      "y": 2740,
+      "width": 360,
+      "height": 150,
+      "text": "immediately reports critical or run-wide trust failure to the invoking parent for its Owner or tier-0 route, preserving evidence and completed work",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-source",
+      "type": "text",
+      "x": 3040,
+      "y": 6540,
+      "width": 360,
+      "height": 150,
+      "text": "**5.** ⇉ **proposed-source-enrichment**: dispatches the selected Source item's proposed contract under the same recorded specification, Lead and ledger",
+      "color": "2",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-foldervalidate",
+      "type": "text",
+      "x": 3040,
+      "y": 3340,
+      "width": 360,
+      "height": 150,
+      "text": "folder_validate: checks inventory evidence, fingerprints, access and recorded sensitivity restrictions before drafting",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-epaused_at_3c589ea0dc",
+      "type": "text",
+      "x": 3640,
+      "y": 2740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ retained work awaits explicit continuation, a reserved decision or required authority from the parent\n*outcome: paused*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-eescalated_at_b1dc83cf39",
+      "type": "text",
+      "x": 3640,
+      "y": 2940,
+      "width": 360,
+      "height": 150,
+      "text": "◉ critical or run-wide failure prevents a trustworthy child completion handback\n*outcome: escalated*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-account",
+      "type": "text",
+      "x": 3040,
+      "y": 6740,
+      "width": 360,
+      "height": 150,
+      "text": "**6.** updates the original mixed ledger with actual source or folder results, reading and derivation gaps, publication and separate pending decisions",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-pausehandoff",
+      "type": "text",
+      "x": 640,
+      "y": 8540,
+      "width": 360,
+      "height": 150,
+      "text": "returns the stop reason, retained receipts and exact continuation or reserved-authority request to the parent; does not commission another run",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-escalatehandoff",
+      "type": "text",
+      "x": 640,
+      "y": 9540,
+      "width": 360,
+      "height": 150,
+      "text": "immediately reports critical or run-wide trust failure to the invoking parent for its Owner or tier-0 route, preserving evidence and completed work",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-dfoldervalidate",
+      "type": "text",
+      "x": 3040,
+      "y": 3540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ folder validation result?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dmore",
+      "type": "text",
+      "x": 3040,
+      "y": 6940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ another frozen item?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-epaused",
+      "type": "text",
+      "x": 3640,
+      "y": 8740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ retained work awaits explicit continuation, a reserved decision or required authority from the parent\n*outcome: paused*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-eescalated",
+      "type": "text",
+      "x": 3640,
+      "y": 9740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ critical or run-wide failure prevents a trustworthy child completion handback\n*outcome: escalated*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-folderroute",
+      "type": "text",
+      "x": 3040,
+      "y": 3740,
+      "width": 360,
+      "height": 150,
+      "text": "checks the assigned qualified route, production-drafting grant and remaining allowance; an unavailable route earns no task completion",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-folderfault",
+      "type": "text",
+      "x": 3040,
+      "y": 5940,
+      "width": 360,
+      "height": 150,
+      "text": "records the originating stage, existing refusal or fault flag, actor, evidence and accountable ticket owner; does not invent another fault taxonomy",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-assess",
+      "type": "text",
+      "x": 1840,
+      "y": 7140,
+      "width": 360,
+      "height": 150,
+      "text": "**7.** reconciles source and metadata-only folder packages against the required outputs; explains gaps without granting reading credit or accepting proposals",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-dfolderroute",
+      "type": "text",
+      "x": 3040,
+      "y": 3940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ recorded folder drafting route and grant available?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-ditemcritical",
+      "type": "text",
+      "x": 3040,
+      "y": 6140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ existing flag requires immediate critical stop?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-oracle",
+      "type": "text",
+      "x": 40,
+      "y": 7340,
+      "width": 360,
+      "height": 150,
+      "text": "**8.** judges the mixed child contract from checks and isolated evidence review; verifies item accounting, coverage distinctions and outstanding obligations",
+      "librarian": {
+        "actor_lane": "Oracle"
+      }
+    },
+    {
+      "id": "librarian-folderplan",
+      "type": "text",
+      "x": 1840,
+      "y": 4140,
+      "width": 360,
+      "height": 150,
+      "text": "directs bounded Scribe description work from approved inventory metadata; retains the folder's actual purpose and withheld content",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-folderqueued",
+      "type": "text",
+      "x": 3040,
+      "y": 5140,
+      "width": 360,
+      "height": 150,
+      "text": "retains deferred or disabled drafting with its route, task gaps, attempts and known or unknown cost; applicable inventory work stays explicit",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-faileditem",
+      "type": "text",
+      "x": 3040,
+      "y": 6340,
+      "width": 360,
+      "height": 150,
+      "text": "retains this item's failed stage and earlier receipts, skips its remaining stages and leaves completed siblings intact",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dverdict",
+      "type": "text",
+      "x": 40,
+      "y": 7540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ mixed child-contract verdict?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Oracle"
+      }
+    },
+    {
+      "id": "librarian-folderscribe",
+      "type": "text",
+      "x": 2440,
+      "y": 4340,
+      "width": 360,
+      "height": 150,
+      "text": "drafts inventory-grounded folder description and sensitivity findings with supporting locators and explicit unknowns; documents remain unread",
+      "librarian": {
+        "actor_lane": "Scribe (tier 3)"
+      }
+    },
+    {
+      "id": "librarian-folderdata",
+      "type": "text",
+      "x": 3040,
+      "y": 5340,
+      "width": 360,
+      "height": 150,
+      "text": "folder_data: materializes inventory Data and the submitted proposal through the existing guarded writer",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-fullhandoff",
+      "type": "text",
+      "x": 640,
+      "y": 9940,
+      "width": 360,
+      "height": 150,
+      "text": "**9.** returns the verified mixed package to the invoking parent with true decision actors and pending Source, folder and lens worklists",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-partialhandoff",
+      "type": "text",
+      "x": 640,
+      "y": 9340,
+      "width": 360,
+      "height": 150,
+      "text": "returns completed work, explicit unmet child outputs and accountable tickets; retains the parent's pending decisions and original mixed accounting",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-ticket",
+      "type": "text",
+      "x": 3040,
+      "y": 7740,
+      "width": 360,
+      "height": 150,
+      "text": "links the verified shortfall to its existing stage ticket, evidence and responsible tier; keeps required repair visible in the original ledger",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-folderreview",
+      "type": "text",
+      "x": 1840,
+      "y": 4540,
+      "width": 360,
+      "height": 150,
+      "text": "proofreads the draft against inventory evidence, authors the folder proposal and records uncertainty or sensitivity requiring a parent decision",
+      "librarian": {
+        "actor_lane": "Clerk (tier 2)"
+      }
+    },
+    {
+      "id": "librarian-dfolderdata",
+      "type": "text",
+      "x": 3040,
+      "y": 5540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ folder Data write result?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-e1",
+      "type": "text",
+      "x": 3640,
+      "y": 10140,
+      "width": 360,
+      "height": 150,
+      "text": "◉ required mixed child outputs satisfied; parent acceptance and final specification verdict remain separate\n*outcome: success*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-epartial",
+      "type": "text",
+      "x": 3640,
+      "y": 9540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ mixed work accounted for with explicit unmet child outputs or repair obligations\n*outcome: partial*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-dremedymatch",
+      "type": "text",
+      "x": 3040,
+      "y": 7940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ an accepted remedy maps to the existing symptom and extension?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-foldercheck",
+      "type": "text",
+      "x": 3040,
+      "y": 4740,
+      "width": 360,
+      "height": 150,
+      "text": "checks returned schema, literal inventory provenance and current fingerprints; stores the agent-authored proposal and actual task status",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-foldercoverage",
+      "type": "text",
+      "x": 3040,
+      "y": 5740,
+      "width": 360,
+      "height": 150,
+      "text": "records metadata-only folder coverage, source content not examined, with the exact complete, queued or partial stage status",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-scope",
+      "type": "text",
+      "x": 3040,
+      "y": 8140,
+      "width": 360,
+      "height": 150,
+      "text": "computes affected records, actual blast radius and recorded remedy grant; finished partial processing still requires its real re-approval",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-unmapped",
+      "type": "text",
+      "x": 640,
+      "y": 8140,
+      "width": 360,
+      "height": 150,
+      "text": "owns unmapped diagnosis from bounded Clerk or Scribe evidence; proposes a new remedy or authority request to the invoking parent",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-dfoldercheck",
+      "type": "text",
+      "x": 3040,
+      "y": 4940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ folder description checks and task status?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dremedygrant",
+      "type": "text",
+      "x": 3040,
+      "y": 8340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ accepted remedy within recorded scope, authority and attempt allowance?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-dunmapped",
+      "type": "text",
+      "x": 640,
+      "y": 8340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ truthful handback for the unresolved requirement?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Lead (tier 1)"
+      }
+    },
+    {
+      "id": "librarian-doctor",
+      "type": "text",
+      "x": 1240,
+      "y": 8540,
+      "width": 360,
+      "height": 150,
+      "text": "executes only the accepted mapped remedy within the admitted scope; unavailable authority stays unresolved and new remedies remain proposals",
+      "librarian": {
+        "actor_lane": "Doctor"
+      }
+    },
+    {
+      "id": "librarian-repaircheck",
+      "type": "text",
+      "x": 3040,
+      "y": 8740,
+      "width": 360,
+      "height": 150,
+      "text": "reruns affected deterministic checks and records actual remedy result, changed evidence, remaining allowance and unresolved task outcomes",
+      "librarian": {
+        "actor_lane": "Core"
+      }
+    },
+    {
+      "id": "librarian-recheck",
+      "type": "text",
+      "x": 40,
+      "y": 8940,
+      "width": 360,
+      "height": 150,
+      "text": "independently rechecks the original shortfall and affected child obligations; a Doctor result alone does not close the ticket",
+      "librarian": {
+        "actor_lane": "Oracle"
+      }
+    },
+    {
+      "id": "librarian-drecheck",
+      "type": "text",
+      "x": 40,
+      "y": 7140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ repair independently verified within the bounded attempt policy?",
+      "color": "5",
+      "librarian": {
+        "actor_lane": "Oracle"
+      }
+    },
+    {
+      "id": "librarian-lane-Oracle",
+      "type": "group",
+      "x": 20,
+      "y": 60,
+      "width": 400,
+      "height": 10330,
+      "label": "Oracle"
+    },
+    {
+      "id": "librarian-lane-Lead-tier-1-",
+      "type": "group",
+      "x": 620,
+      "y": 60,
+      "width": 400,
+      "height": 10330,
+      "label": "Lead (tier 1)"
+    },
+    {
+      "id": "librarian-lane-Doctor",
+      "type": "group",
+      "x": 1220,
+      "y": 60,
+      "width": 400,
+      "height": 10330,
+      "label": "Doctor"
+    },
+    {
+      "id": "librarian-lane-Clerk-tier-2-",
+      "type": "group",
+      "x": 1820,
+      "y": 60,
+      "width": 400,
+      "height": 10330,
+      "label": "Clerk (tier 2)"
+    },
+    {
+      "id": "librarian-lane-Scribe-tier-3-",
+      "type": "group",
+      "x": 2420,
+      "y": 60,
+      "width": 400,
+      "height": 10330,
+      "label": "Scribe (tier 3)"
+    },
+    {
+      "id": "librarian-lane-Core",
+      "type": "group",
+      "x": 3020,
+      "y": 60,
+      "width": 400,
+      "height": 10330,
+      "label": "Core"
+    },
+    {
+      "id": "librarian-lane-Outcomes",
+      "type": "group",
+      "x": 3620,
+      "y": 60,
+      "width": 400,
+      "height": 10330,
+      "label": "Outcomes"
+    }
+  ],
+  "edges": [
+    {
+      "id": "librarian-e0",
+      "fromNode": "librarian-s",
+      "toNode": "librarian-contract",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e1",
+      "fromNode": "librarian-contract",
+      "toNode": "librarian-bind",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e2",
+      "fromNode": "librarian-bind",
+      "toNode": "librarian-admit",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e3",
+      "fromNode": "librarian-admit",
+      "toNode": "librarian-dadmit",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e4",
+      "fromNode": "librarian-dadmit",
+      "toNode": "librarian-nextitem",
+      "label": "[admitted nonempty frozen set]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e5",
+      "fromNode": "librarian-dadmit",
+      "toNode": "librarian-noworkhandoff",
+      "label": "[no fresh approved work; parent ledger reconciled] 2a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e6",
+      "fromNode": "librarian-dadmit",
+      "toNode": "librarian-pausehandoff_at_bdfe8aaefe",
+      "label": "[missing or reserved authority] 2b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e7",
+      "fromNode": "librarian-dadmit",
+      "toNode": "librarian-escalatehandoff_at_d74d2f9cb5",
+      "label": "[run-wide state or authority-integrity failure] 2c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e8",
+      "fromNode": "librarian-nextitem",
+      "toNode": "librarian-controls",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e9",
+      "fromNode": "librarian-controls",
+      "toNode": "librarian-dcontrols",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e10",
+      "fromNode": "librarian-dcontrols",
+      "toNode": "librarian-dkind",
+      "label": "[active within recorded controls]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e11",
+      "fromNode": "librarian-dcontrols",
+      "toNode": "librarian-pausehandoff_at_3c589ea0dc",
+      "label": "[cancelled, interrupted, grant withheld or spend ceiling reached] 4a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e12",
+      "fromNode": "librarian-dcontrols",
+      "toNode": "librarian-escalatehandoff_at_b1dc83cf39",
+      "label": "[critical integrity or run-wide writer failure] 4b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e13",
+      "fromNode": "librarian-dkind",
+      "toNode": "librarian-source",
+      "label": "[source]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e14",
+      "fromNode": "librarian-dkind",
+      "toNode": "librarian-foldervalidate",
+      "label": "[folder metadata card] 4c",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e15",
+      "fromNode": "librarian-source",
+      "toNode": "librarian-account",
+      "label": "[success]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e16",
+      "fromNode": "librarian-source",
+      "toNode": "librarian-account",
+      "label": "[partial] 5a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e17",
+      "fromNode": "librarian-source",
+      "toNode": "librarian-account",
+      "label": "[reused] 5b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e18",
+      "fromNode": "librarian-source",
+      "toNode": "librarian-pausehandoff",
+      "label": "[paused] 5c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e19",
+      "fromNode": "librarian-source",
+      "toNode": "librarian-escalatehandoff",
+      "label": "[escalated] 5d",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e20",
+      "fromNode": "librarian-foldervalidate",
+      "toNode": "librarian-dfoldervalidate",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e21",
+      "fromNode": "librarian-dfoldervalidate",
+      "toNode": "librarian-folderroute",
+      "label": "[valid current inventory and access]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e22",
+      "fromNode": "librarian-dfoldervalidate",
+      "toNode": "librarian-folderfault",
+      "label": "[failed or stale]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e23",
+      "fromNode": "librarian-folderroute",
+      "toNode": "librarian-dfolderroute",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e24",
+      "fromNode": "librarian-dfolderroute",
+      "toNode": "librarian-folderplan",
+      "label": "[qualified assigned route and drafting authority available]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e25",
+      "fromNode": "librarian-dfolderroute",
+      "toNode": "librarian-folderqueued",
+      "label": "[disabled, deferred or unavailable within bounded route policy]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e26",
+      "fromNode": "librarian-dfolderroute",
+      "toNode": "librarian-folderfault",
+      "label": "[invalid grant, returned refusal or route-integrity failure]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e27",
+      "fromNode": "librarian-folderplan",
+      "toNode": "librarian-folderscribe",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e28",
+      "fromNode": "librarian-folderscribe",
+      "toNode": "librarian-folderreview",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e29",
+      "fromNode": "librarian-folderreview",
+      "toNode": "librarian-foldercheck",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e30",
+      "fromNode": "librarian-foldercheck",
+      "toNode": "librarian-dfoldercheck",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e31",
+      "fromNode": "librarian-dfoldercheck",
+      "toNode": "librarian-folderdata",
+      "label": "[valid proposal or explicit unresolved fields]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e32",
+      "fromNode": "librarian-dfoldercheck",
+      "toNode": "librarian-folderqueued",
+      "label": "[pending required task or recoverable transport outage]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e33",
+      "fromNode": "librarian-dfoldercheck",
+      "toNode": "librarian-folderfault",
+      "label": "[failed, including FOLDER_PROVENANCE or FOLDER_DRAFT_FAILED]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e34",
+      "fromNode": "librarian-folderqueued",
+      "toNode": "librarian-folderdata",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e35",
+      "fromNode": "librarian-folderdata",
+      "toNode": "librarian-dfolderdata",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e36",
+      "fromNode": "librarian-dfolderdata",
+      "toNode": "librarian-foldercoverage",
+      "label": "[write succeeded]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e37",
+      "fromNode": "librarian-dfolderdata",
+      "toNode": "librarian-folderfault",
+      "label": "[write failed or state changed]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e38",
+      "fromNode": "librarian-foldercoverage",
+      "toNode": "librarian-account",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e39",
+      "fromNode": "librarian-folderfault",
+      "toNode": "librarian-ditemcritical",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e40",
+      "fromNode": "librarian-ditemcritical",
+      "toNode": "librarian-faileditem",
+      "label": "[noncritical item failure]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e41",
+      "fromNode": "librarian-ditemcritical",
+      "toNode": "librarian-escalatehandoff",
+      "label": "[critical flag requires immediate stop]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e42",
+      "fromNode": "librarian-faileditem",
+      "toNode": "librarian-account",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e43",
+      "fromNode": "librarian-account",
+      "toNode": "librarian-dmore",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e44",
+      "fromNode": "librarian-dmore",
+      "toNode": "librarian-assess",
+      "label": "[frozen set accounted for]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e45",
+      "fromNode": "librarian-dmore",
+      "toNode": "librarian-nextitem",
+      "label": "[another frozen item] 6a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e46",
+      "fromNode": "librarian-assess",
+      "toNode": "librarian-oracle",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e47",
+      "fromNode": "librarian-oracle",
+      "toNode": "librarian-dverdict",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e48",
+      "fromNode": "librarian-dverdict",
+      "toNode": "librarian-fullhandoff",
+      "label": "[required child outputs satisfied]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e49",
+      "fromNode": "librarian-dverdict",
+      "toNode": "librarian-partialhandoff",
+      "label": "[truthful partial package with no authorized repair now] 8a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e50",
+      "fromNode": "librarian-dverdict",
+      "toNode": "librarian-ticket",
+      "label": "[actionable required shortfall with retained evidence] 8b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e51",
+      "fromNode": "librarian-dverdict",
+      "toNode": "librarian-escalatehandoff",
+      "label": "[critical or run-wide trust failure] 8c",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e52",
+      "fromNode": "librarian-ticket",
+      "toNode": "librarian-dremedymatch",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e53",
+      "fromNode": "librarian-dremedymatch",
+      "toNode": "librarian-scope",
+      "label": "[accepted remedy mapped]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e54",
+      "fromNode": "librarian-dremedymatch",
+      "toNode": "librarian-unmapped",
+      "label": "[unmapped or remedy only proposed]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e55",
+      "fromNode": "librarian-scope",
+      "toNode": "librarian-dremedygrant",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e56",
+      "fromNode": "librarian-dremedygrant",
+      "toNode": "librarian-doctor",
+      "label": "[existing mandate and accepted bounded attempt permit remedy]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e57",
+      "fromNode": "librarian-dremedygrant",
+      "toNode": "librarian-pausehandoff",
+      "label": "[reserved, too wide, exhausted, or fresh processing approval required]",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-e58",
+      "fromNode": "librarian-doctor",
+      "toNode": "librarian-repaircheck",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e59",
+      "fromNode": "librarian-repaircheck",
+      "toNode": "librarian-recheck",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e60",
+      "fromNode": "librarian-recheck",
+      "toNode": "librarian-drecheck",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e61",
+      "fromNode": "librarian-drecheck",
+      "toNode": "librarian-assess",
+      "label": "[verified repair; reconcile affected package before handback]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e62",
+      "fromNode": "librarian-drecheck",
+      "toNode": "librarian-partialhandoff",
+      "label": "[unresolved or bounded attempt exhausted; preserve ticket]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e63",
+      "fromNode": "librarian-drecheck",
+      "toNode": "librarian-escalatehandoff",
+      "label": "[critical integrity failure]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e64",
+      "fromNode": "librarian-unmapped",
+      "toNode": "librarian-dunmapped",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e65",
+      "fromNode": "librarian-dunmapped",
+      "toNode": "librarian-partialhandoff",
+      "label": "[return unmet requirement with diagnosis and proposed next step]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e66",
+      "fromNode": "librarian-dunmapped",
+      "toNode": "librarian-pausehandoff",
+      "label": "[parent decision or accepted remedy required to continue]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e67",
+      "fromNode": "librarian-fullhandoff",
+      "toNode": "librarian-e1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e68",
+      "fromNode": "librarian-partialhandoff",
+      "toNode": "librarian-epartial",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e69",
+      "fromNode": "librarian-pausehandoff",
+      "toNode": "librarian-epaused",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e70",
+      "fromNode": "librarian-escalatehandoff",
+      "toNode": "librarian-eescalated",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e71",
+      "fromNode": "librarian-noworkhandoff",
+      "toNode": "librarian-enowork",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e72",
+      "fromNode": "librarian-pausehandoff_at_bdfe8aaefe",
+      "toNode": "librarian-epaused_at_bdfe8aaefe",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e73",
+      "fromNode": "librarian-escalatehandoff_at_d74d2f9cb5",
+      "toNode": "librarian-eescalated_at_d74d2f9cb5",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e74",
+      "fromNode": "librarian-pausehandoff_at_3c589ea0dc",
+      "toNode": "librarian-epaused_at_3c589ea0dc",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e75",
+      "fromNode": "librarian-escalatehandoff_at_b1dc83cf39",
+      "toNode": "librarian-eescalated_at_b1dc83cf39",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ]
+}

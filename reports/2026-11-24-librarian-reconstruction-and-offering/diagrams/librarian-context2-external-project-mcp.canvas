@@ -1,0 +1,686 @@
+{
+  "nodes": [
+    {
+      "id": "librarian-title",
+      "type": "text",
+      "x": 20,
+      "y": -200,
+      "width": 3380,
+      "height": 220,
+      "text": "# Context 2: External-Project Tier 0 Accesses Librarian via MCP (Proposed To-Be)\n**Symptom:** External project agents hit delegate contribute-tier blocks, Chat-tab Ask timeouts on MCP writes, conflated Context-1/3 acceptance authority, and Applications logs missing authorship/repeatability provenance.\n**Root cause:** Enforce explicit Context-2 authority boundaries (consult research delegation budget, S1-S6b source access, queue/stage_only intake, no vault acceptance, agent-authored & Core-stored Applications/) and dual project/Librarian notifications.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `librarian-context2-external-project-mcp.spec.yaml`."
+    },
+    {
+      "id": "librarian-s",
+      "type": "text",
+      "x": 40,
+      "y": 140,
+      "width": 360,
+      "height": 70,
+      "text": "● start",
+      "color": "4"
+    },
+    {
+      "id": "librarian-extgoal",
+      "type": "text",
+      "x": 2440,
+      "y": 340,
+      "width": 360,
+      "height": 150,
+      "text": "**1.** tasks External Tier 0 with building or researching in an external project outside Librarian"
+    },
+    {
+      "id": "librarian-identifyneed",
+      "type": "text",
+      "x": 1840,
+      "y": 540,
+      "width": 360,
+      "height": 150,
+      "text": "**2.** frames external knowledge or parallel-read need; calls Librarian MCP (apply / explore / delegate)"
+    },
+    {
+      "id": "librarian-mcpenv",
+      "type": "text",
+      "x": 1240,
+      "y": 740,
+      "width": 360,
+      "height": 150,
+      "text": "**3.** records spec_owner=external_project_caller; enforces helper budget, S1-S6b, queue/stage_only, no vault accept"
+    },
+    {
+      "id": "librarian-dmode",
+      "type": "text",
+      "x": 1240,
+      "y": 940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ external-project MCP mode valid?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-parallelhelpers",
+      "type": "text",
+      "x": 40,
+      "y": 2140,
+      "width": 360,
+      "height": 150,
+      "text": "**4.** Lead sets narrowed helper sub-spec; Clerk/Scribe run DeepInfra delegate/dispatch_plan in budget"
+    },
+    {
+      "id": "librarian-mcpblocked",
+      "type": "text",
+      "x": 1240,
+      "y": 1140,
+      "width": 360,
+      "height": 150,
+      "text": "returns fast structured PERMISSION_UNANSWERED/tier/scope Ticket instead of blind 150s UI hang"
+    },
+    {
+      "id": "librarian-reusedapp",
+      "type": "text",
+      "x": 1240,
+      "y": 1340,
+      "width": 360,
+      "height": 150,
+      "text": "confirms unchanged catalogued Sources & matching Applications/ precedent ($0 new spend)"
+    },
+    {
+      "id": "librarian-checkcatalog",
+      "type": "text",
+      "x": 1240,
+      "y": 2340,
+      "width": 360,
+      "height": 150,
+      "text": "**5.** returns verified catalogue citations, ref: handles, spend & checks unresolved external leads"
+    },
+    {
+      "id": "librarian-notifyblocked",
+      "type": "text",
+      "x": 1840,
+      "y": 1340,
+      "width": 360,
+      "height": 150,
+      "text": "reports exact Context-2 MCP authority/route gap & resume choice to external-project user"
+    },
+    {
+      "id": "librarian-reuseext",
+      "type": "text",
+      "x": 1840,
+      "y": 1540,
+      "width": 360,
+      "height": 150,
+      "text": "reuses verified precedent directly in external project"
+    },
+    {
+      "id": "librarian-dmissing",
+      "type": "text",
+      "x": 1240,
+      "y": 2540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ catalogued Sources satisfy external need?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-userpause",
+      "type": "text",
+      "x": 2440,
+      "y": 4140,
+      "width": 360,
+      "height": 150,
+      "text": "receives paused external notice, Ticket ID, & Librarian Agenda resume link"
+    },
+    {
+      "id": "librarian-userreuse",
+      "type": "text",
+      "x": 2440,
+      "y": 1740,
+      "width": 360,
+      "height": 150,
+      "text": "receives reused Library precedent & unchanged Application link"
+    },
+    {
+      "id": "librarian-extapply",
+      "type": "text",
+      "x": 1840,
+      "y": 4940,
+      "width": 360,
+      "height": 150,
+      "text": "**6.** applies verified findings in external project & submits authored Application proposal"
+    },
+    {
+      "id": "librarian-queueasync",
+      "type": "text",
+      "x": 1240,
+      "y": 2740,
+      "width": 360,
+      "height": 150,
+      "text": "enqueues unresolved_sources into .librarian/staging/source without hijacking external build"
+    },
+    {
+      "id": "librarian-ingestchild",
+      "type": "text",
+      "x": 1240,
+      "y": 2940,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **librarian-ingestion-tobe**: Lead runs narrowed L2 stage_only intake child (sub_spec_owner=lead_tier1 <= Context 2; no accept)",
+      "color": "2"
+    },
+    {
+      "id": "librarian-epaused",
+      "type": "text",
+      "x": 3040,
+      "y": 4340,
+      "width": 360,
+      "height": 150,
+      "text": "◉ Librarian MCP grant/gate paused cleanly on Agenda; external user notified\n*outcome: paused*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-ereused",
+      "type": "text",
+      "x": 3040,
+      "y": 1940,
+      "width": 360,
+      "height": 150,
+      "text": "◉ existing Library precedent reused without re-ingestion\n*outcome: reused*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-recordapp",
+      "type": "text",
+      "x": 1240,
+      "y": 5140,
+      "width": 360,
+      "height": 150,
+      "text": "**7.** validates citations, stores append-only Applications/ + sidecar & auto-enqueues unresolved_sources"
+    },
+    {
+      "id": "librarian-applypartial",
+      "type": "text",
+      "x": 1840,
+      "y": 3140,
+      "width": 360,
+      "height": 150,
+      "text": "applies held partial evidence in external project & records unresolved_sources leads + spend"
+    },
+    {
+      "id": "librarian-reuseingest",
+      "type": "text",
+      "x": 1240,
+      "y": 3140,
+      "width": 360,
+      "height": 150,
+      "text": "reconciles reused source note & links candidate to active apply session"
+    },
+    {
+      "id": "librarian-queuepause",
+      "type": "text",
+      "x": 1240,
+      "y": 3940,
+      "width": 360,
+      "height": 150,
+      "text": "keeps staged/enriched Source on Librarian Agenda for human/Context-1 acceptance; returns resume ref"
+    },
+    {
+      "id": "librarian-dcrit_ex",
+      "type": "text",
+      "x": 1240,
+      "y": 3340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ critical security/data-loss/boundary breach vs mapped shortfall?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-userhandover",
+      "type": "text",
+      "x": 2440,
+      "y": 5340,
+      "width": 360,
+      "height": 150,
+      "text": "**8.** receives ext deliverable + locators, spend, Applications/ link & Agenda queued-lead receipt"
+    },
+    {
+      "id": "librarian-userpartial",
+      "type": "text",
+      "x": 2440,
+      "y": 3340,
+      "width": 360,
+      "height": 150,
+      "text": "receives external deliverable, coverage gaps, spend & queued Library Agenda leads"
+    },
+    {
+      "id": "librarian-escticket",
+      "type": "text",
+      "x": 1240,
+      "y": 4140,
+      "width": 360,
+      "height": 150,
+      "text": "routes critical escalated Ticket immediately with flags, evidence & Rule-8 compensation"
+    },
+    {
+      "id": "librarian-doctorex",
+      "type": "text",
+      "x": 640,
+      "y": 3540,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **librarian-doctor-tobe**: attempts bounded MCP/intake Ticket repair (GLM-5.3 isolated adapter)",
+      "color": "2"
+    },
+    {
+      "id": "librarian-e1",
+      "type": "text",
+      "x": 3040,
+      "y": 5540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ external task completed with repeatable Applications/ precedent & queued leads\n*outcome: success*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-epartial",
+      "type": "text",
+      "x": 3040,
+      "y": 3540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ external task completed with partial/async-queued Library leads; user notified\n*outcome: partial*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-notifyesc",
+      "type": "text",
+      "x": 1840,
+      "y": 4340,
+      "width": 360,
+      "height": 150,
+      "text": "alerts external-project user immediately with critical Ticket ID & retained evidence"
+    },
+    {
+      "id": "librarian-reentryex",
+      "type": "text",
+      "x": 1240,
+      "y": 3740,
+      "width": 360,
+      "height": 150,
+      "text": "confirms single-pass Doctor repair before retrying external lookup"
+    },
+    {
+      "id": "librarian-useresc",
+      "type": "text",
+      "x": 2440,
+      "y": 4540,
+      "width": 360,
+      "height": 150,
+      "text": "receives urgent external failure notice & Librarian Ticket link"
+    },
+    {
+      "id": "librarian-eescalated",
+      "type": "text",
+      "x": 3040,
+      "y": 4740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ critical Librarian MCP/intake Ticket escalated; user notified\n*outcome: escalated*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-lane-Lead-Clerk-Scribe-tier-1-3-",
+      "type": "group",
+      "x": 20,
+      "y": 60,
+      "width": 400,
+      "height": 5730,
+      "label": "Lead / Clerk / Scribe (tier 1-3)"
+    },
+    {
+      "id": "librarian-lane-Doctor",
+      "type": "group",
+      "x": 620,
+      "y": 60,
+      "width": 400,
+      "height": 5730,
+      "label": "Doctor"
+    },
+    {
+      "id": "librarian-lane-Core",
+      "type": "group",
+      "x": 1220,
+      "y": 60,
+      "width": 400,
+      "height": 5730,
+      "label": "Core"
+    },
+    {
+      "id": "librarian-lane-Tier-0-agent-external-project-",
+      "type": "group",
+      "x": 1820,
+      "y": 60,
+      "width": 400,
+      "height": 5730,
+      "label": "Tier 0 agent (external project)"
+    },
+    {
+      "id": "librarian-lane-Human-user-ext-project-",
+      "type": "group",
+      "x": 2420,
+      "y": 60,
+      "width": 400,
+      "height": 5730,
+      "label": "Human user (ext project)"
+    },
+    {
+      "id": "librarian-lane-Outcomes",
+      "type": "group",
+      "x": 3020,
+      "y": 60,
+      "width": 400,
+      "height": 5730,
+      "label": "Outcomes"
+    }
+  ],
+  "edges": [
+    {
+      "id": "librarian-e0",
+      "fromNode": "librarian-s",
+      "toNode": "librarian-extgoal",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e1",
+      "fromNode": "librarian-extgoal",
+      "toNode": "librarian-identifyneed",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e2",
+      "fromNode": "librarian-identifyneed",
+      "toNode": "librarian-mcpenv",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e3",
+      "fromNode": "librarian-mcpenv",
+      "toNode": "librarian-dmode",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e4",
+      "fromNode": "librarian-dmode",
+      "toNode": "librarian-parallelhelpers",
+      "label": "[authorized read/helper/apply MCP session]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e5",
+      "fromNode": "librarian-dmode",
+      "toNode": "librarian-mcpblocked",
+      "label": "[ungranted write or missing MCP route] 3a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e6",
+      "fromNode": "librarian-dmode",
+      "toNode": "librarian-reusedapp",
+      "label": "[unchanged Sources & Application precedent] 3b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e7",
+      "fromNode": "librarian-mcpblocked",
+      "toNode": "librarian-notifyblocked",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e8",
+      "fromNode": "librarian-notifyblocked",
+      "toNode": "librarian-userpause",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e9",
+      "fromNode": "librarian-userpause",
+      "toNode": "librarian-epaused",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e10",
+      "fromNode": "librarian-reusedapp",
+      "toNode": "librarian-reuseext",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e11",
+      "fromNode": "librarian-reuseext",
+      "toNode": "librarian-userreuse",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e12",
+      "fromNode": "librarian-userreuse",
+      "toNode": "librarian-ereused",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e13",
+      "fromNode": "librarian-parallelhelpers",
+      "toNode": "librarian-checkcatalog",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e14",
+      "fromNode": "librarian-checkcatalog",
+      "toNode": "librarian-dmissing",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e15",
+      "fromNode": "librarian-dmissing",
+      "toNode": "librarian-extapply",
+      "label": "[held Sources satisfy external project]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e16",
+      "fromNode": "librarian-dmissing",
+      "toNode": "librarian-queueasync",
+      "label": "[missing refs queued asynchronously (default Context-2 queue scope)] 5a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e17",
+      "fromNode": "librarian-dmissing",
+      "toNode": "librarian-ingestchild",
+      "label": "[scoped stage_only intake within project-intake grant] 5b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e18",
+      "fromNode": "librarian-queueasync",
+      "toNode": "librarian-applypartial",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e19",
+      "fromNode": "librarian-applypartial",
+      "toNode": "librarian-userpartial",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e20",
+      "fromNode": "librarian-userpartial",
+      "toNode": "librarian-epartial",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e21",
+      "fromNode": "librarian-ingestchild",
+      "toNode": "librarian-extapply",
+      "label": "[success]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e22",
+      "fromNode": "librarian-ingestchild",
+      "toNode": "librarian-applypartial",
+      "label": "[partial]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e23",
+      "fromNode": "librarian-ingestchild",
+      "toNode": "librarian-reuseingest",
+      "label": "[reused]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e24",
+      "fromNode": "librarian-reuseingest",
+      "toNode": "librarian-extapply",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e25",
+      "fromNode": "librarian-ingestchild",
+      "toNode": "librarian-queuepause",
+      "label": "[paused]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e26",
+      "fromNode": "librarian-queuepause",
+      "toNode": "librarian-userpause",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e27",
+      "fromNode": "librarian-ingestchild",
+      "toNode": "librarian-dcrit_ex",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e28",
+      "fromNode": "librarian-dcrit_ex",
+      "toNode": "librarian-escticket",
+      "label": "[critical security, data-loss, or boundary violation]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e29",
+      "fromNode": "librarian-dcrit_ex",
+      "toNode": "librarian-doctorex",
+      "label": "[mapped noncritical shortfall]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e30",
+      "fromNode": "librarian-doctorex",
+      "toNode": "librarian-reentryex",
+      "label": "[resolved]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e31",
+      "fromNode": "librarian-reentryex",
+      "toNode": "librarian-checkcatalog",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e32",
+      "fromNode": "librarian-doctorex",
+      "toNode": "librarian-queuepause",
+      "label": "[declined]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e33",
+      "fromNode": "librarian-doctorex",
+      "toNode": "librarian-escticket",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e34",
+      "fromNode": "librarian-escticket",
+      "toNode": "librarian-notifyesc",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e35",
+      "fromNode": "librarian-notifyesc",
+      "toNode": "librarian-useresc",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e36",
+      "fromNode": "librarian-useresc",
+      "toNode": "librarian-eescalated",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e37",
+      "fromNode": "librarian-extapply",
+      "toNode": "librarian-recordapp",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e38",
+      "fromNode": "librarian-recordapp",
+      "toNode": "librarian-userhandover",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e39",
+      "fromNode": "librarian-userhandover",
+      "toNode": "librarian-e1",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ]
+}

@@ -1,0 +1,397 @@
+{
+  "generated_on": "2026-11-25",
+  "revision": "next-graph-pass-current-and-tobe",
+  "baseline_commit": "d9435e1",
+  "scope": "Current activation paths (librarian-current-activation at d9435e1) plus aligned 8-model to-be architecture: Activation Contexts 1-3, Core vs agent vs Tier-0..3 ownership, specification ownership, UI/MCP authority reconciliation, OD-05 sensitivity/challenged-claim policy decision, immediate critical vs bounded Doctor Ticket routing, GLM-5.3 adapters & fail-closed ORACLE_ROUTE_COLLISION, Applications/, REC-17..REC-22, and OD-01..OD-08",
+  "proposal_qualification": "librarian-current-activation, batch-enrichment-current, and source-enrichment-current represent IMPLEMENTED_VERIFIED d9435e1 behaviour. All 8 *-tobe / context1..3 / process-composition specs and all new/modified MCP/UI/workflow_grant/record_application/Ticket/Oracle/Doctor behaviours remain PROPOSED_UNACCEPTED (NOT ACCEPTED / NOT IMPLEMENTED).",
+  "validation_limits": "Static verification (build_and_validate_diagrams.py, render_spec validate/cross_check/check_references, actor-lane & ownership checks, SHA-256 preservation of external baseline canvases, 2D card/edge geometry checks) validates diagram consistency and preservation only. It does NOT verify live Web UI behaviour, live MCP transport or timeouts, DeepInfra role routing, record_application disk writes, or Geo-Grapher indexing, and does NOT accept proposed policy or code changes.",
+  "records": [
+    {
+      "id": "CURR-ACT-01",
+      "category": "current_activation",
+      "summary": "IMPLEMENTED_VERIFIED (d9435e1): Present-day upstream activation paths across Context 3 Web UI (Staging -> Add source / Folders curate bypass, Chat Tool-by-Tool Ask, paperclip deep_read-only carveout & app.js:8472 _result drop), Context 1 MCP (contribute cap, zero folder MCP tools, process_approved TIER_REFUSED, 150s Ask timeout -> manual UI handover), and Context 2 MCP (contribute read delegate/dispatch_plan, consult write queue_source/record_application subject to Ask, empty sources_used TypeError); links directly into batch-enrichment-current and source-enrichment-current while preserving historical DataManagement ingestion.canvas unmodified.",
+      "epistemic_status": "IMPLEMENTED_VERIFIED",
+      "doc_refs": ["DOC-MAP-01", "DOC-MAP-08", "DOC-MAP-09", "DOC-UIR-01", "DOC-UIR-02", "DOC-UIR-03", "DOC-UIR-04", "DOC-UIR-05", "DOC-RPT-10"],
+      "code_anchors": ["src/resource_librarian/app.py:277,3036-3180,4185-4273,4859-5075", "src/resource_librarian/broker.py:70,165-238,297-322", "src/resource_librarian/read_access.py:90-160", "src/resource_librarian/tools/batch.py:9-40", "src/resource_librarian/tools/intake.py:39-150", "src/resource_librarian/tools/staging.py:126-175,545-770", "src/resource_librarian/staging.py:940-1010", "src/resource_librarian/tools/sessions.py:1940-2049", "src/resource_librarian/tools/delegate.py:37-136", "src/resource_librarian/tools/plan_dispatch.py:191-270", "src/resource_librarian/ui/app.js:6325-6449,6940-7037,8469-8955"],
+      "diagram_nodes": ["librarian-current-activation:s..e1", "librarian-current-activation:wf_source_ref", "librarian-current-activation:batch_ref"]
+    },
+    {
+      "id": "SPEC-OWN-01",
+      "category": "specification_ownership",
+      "summary": "PROPOSED: Explicit top-level spec_owner and narrowed Lead sub_spec_owner across contexts — Context 1: tier0_on_behalf_of_person (user instruction+scope = commission); Context 2: external_project_caller (no vault acceptance); Context 3: person directly (zero Tier 0); delegated L2/L1 sub-runs: lead_tier1 strictly <= parent_spec (never widens). Enforced across true actor swimlanes (zero layer-named lanes).",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-03", "DOC-MAP-25"],
+      "code_anchors": ["src/resource_librarian/workflows.py:395-673", "src/resource_librarian/tools/staging.py:126-137"],
+      "diagram_nodes": ["librarian-process-composition-tobe:init..dnarrow..ctx1..ctx3", "librarian-context1-tier0-delegated:commission,leaddispatch", "librarian-context2-external-project-mcp:mcpenv,parallelhelpers,ingestchild", "librarian-context3-human-platform-ui:uicapture,wgrant,leaddeleg,leadcoord", "librarian-ingestion-tobe:admit_mandate,leadbind", "librarian-batch-enrichment-tobe:activate,bind", "librarian-source-enrichment-tobe:bind"]
+    },
+    {
+      "id": "TKT-CRIT-01",
+      "category": "ticket_routing",
+      "summary": "PROPOSED: Separates immediate critical routing (security, data loss, authority-boundary violation -> escrec/escticket/uiesc/escout/haltescalate bypassing Doctor retry loops) from bounded noncritical mapped shortfalls (Doctor accepted YAML remedies <=3 steps, <=2 paid calls, distinct Oracle recheck) with structured extension IDs, tiered flags, hashes, repair_history, Rule-8 shown compensation, & user/agenda notice.",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-03", "DOC-MAP-06b", "DOC-MAP-28"],
+      "code_anchors": ["src/resource_librarian/workflows.py:593-605,1001"],
+      "diagram_nodes": ["librarian-context1-tier0-delegated:dcrit,dverdict,escrec", "librarian-context2-external-project-mcp:dcrit_ex,escticket", "librarian-context3-human-platform-ui:duicrit,dindex,uiesc", "librarian-ingestion-tobe:droot,dgeo,dbatchscreen,doracle,escout", "librarian-doctor-tobe:intake,dgrant,haltescalate"]
+    },
+    {
+      "id": "CTX-1",
+      "category": "activation_context",
+      "summary": "PROPOSED: User asks Tier 0 agent to work with Librarian; instruction + scope IS the commission (no 2nd approval prompt); Tier 0 approves Rule-15 mandate_id on user's behalf (commissioned_by=person, decided_by=agent); models full delegated in-scope permissions while flagging Rule-16 sensitivity/challenged-claim exceptions explicitly for Owner review (OD-05); distinct from Context 3 human UI.",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-03", "DOC-POL-17", "DOC-MAP-03", "DOC-MAP-27", "DOC-UIR-04"],
+      "code_anchors": ["src/resource_librarian/app.py:3088-3115", "src/resource_librarian/broker.py:175-229", "src/resource_librarian/tools/batch.py:9-23", "src/resource_librarian/tools/staging.py:126-137"],
+      "diagram_nodes": ["librarian-context1-tier0-delegated:request..commission..storeenv,policy_note", "librarian-context1-tier0-delegated:dcrit,oraclesprint..collisionrec", "librarian-context1-tier0-delegated:t0deliver..userack", "librarian-process-composition-tobe:t0_spec,ctx1"]
+    },
+    {
+      "id": "CTX-2A",
+      "category": "activation_context",
+      "summary": "External-project Tier 0 offloads parallel bounded reading via DeepInfra delegate / dispatch_plan DAGs over MCP without frontier subagent overhead (contribute effect=read today; proposed consult read-with-budget expansion).",
+      "epistemic_status": "IMPLEMENTED_PARTIAL",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-06", "DOC-POL-17", "DOC-RPT-09"],
+      "code_anchors": ["src/resource_librarian/tools/delegate.py:17-136", "src/resource_librarian/tools/plan_dispatch.py:191-270", "src/resource_librarian/app.py:2660-2678,3106"],
+      "diagram_nodes": ["librarian-current-activation:c2_helpers", "librarian-context2-external-project-mcp:parallelhelpers..checkcatalog"]
+    },
+    {
+      "id": "CTX-2B",
+      "category": "activation_context",
+      "summary": "External-project Tier 0 operates under explicit 5-domain authority bounds: S1-S6b source access, non-blocking async queued or narrowed stage_only intake, NO implicit library acceptance/promotion (Agenda handoff), agent-authored Applications/ prose (extapply) -> Core-validated storage & unresolved queuing (recordapp), immediate critical breach escalation (dcrit_ex), and dual handover.",
+      "epistemic_status": "IMPLEMENTED_PARTIAL",
+      "doc_refs": ["DOC-V1D-05", "DOC-V1D-31", "DOC-POL-06", "DOC-POL-08", "DOC-MAP-26", "DOC-RPT-04"],
+      "code_anchors": ["src/resource_librarian/tools/sessions.py:1940-2049", "src/resource_librarian/tools/intake.py:92-147", "src/resource_librarian/read_access.py:90-160"],
+      "diagram_nodes": ["librarian-current-activation:c2_call..c2_deliver_partial", "librarian-context2-external-project-mcp:mcpenv,dmissing..queuepause,dcrit_ex,extapply..recordapp..userhandover"]
+    },
+    {
+      "id": "CTX-3",
+      "category": "activation_context",
+      "summary": "Direct Human Platform UI flow (zero Tier 0 actor): Staging -> Add source / Folders, Chat+Lead, paperclip workflows, Staging Source/Summary/Lens/Topic/Search-Index review where high-level curation stays directly with the human (spec_owner=person); explicit user reuse/pause/critical exits.",
+      "epistemic_status": "IMPLEMENTED_PARTIAL",
+      "doc_refs": ["DOC-UIR-01", "DOC-UIR-02", "DOC-UIR-03", "DOC-UIR-04", "DOC-UIR-05", "DOC-MAP-28", "DOC-RPT-10"],
+      "code_anchors": ["src/resource_librarian/app.py:3036-3066,3131-3175,4185-4273", "src/resource_librarian/ui/app.js:6300-7320,8435-8485", "src/resource_librarian/tools/staging.py:25-99,183-310,545-760"],
+      "diagram_nodes": ["librarian-current-activation:ui_intake..user_done", "librarian-context3-human-platform-ui:ui_entry..userdone,duicrit,dindex..userpaused,userreuse", "librarian-process-composition-tobe:c3_spec,ctx3"]
+    },
+    {
+      "id": "COMP-01",
+      "category": "process_composition",
+      "summary": "Upward action -> workflow -> pipeline -> sprint composition across actor lanes (Human user, Tier 0/Ext, Clerk/Scribe, Oracle, Lead, Core), Rule-15 manifest, downward Rule-16 narrowing (Lead sub_spec_owner <= parent), Rule-17 Oracle scope checks (oracle_scope), explicit kind:ref calls, & Rule-12 receipt rollup.",
+      "epistemic_status": "ACCEPTED_UNIMPLEMENTED",
+      "doc_refs": ["DOC-POL-03", "DOC-POL-04", "DOC-PLN-03", "DOC-MAP-05", "DOC-MAP-25"],
+      "code_anchors": ["src/resource_librarian/workflows.py:395-673,892"],
+      "diagram_nodes": ["librarian-process-composition-tobe:init..compile_manifest..lead_subspec..dnarrow..oracle_scope..rollreceipt..e1", "librarian-ingestion-tobe:admit_mandate"]
+    },
+    {
+      "id": "OWN-CORE-AGENT",
+      "category": "ownership_boundary",
+      "summary": "PROPOSED alignment with DOC-POL-02:33-42: Core owns scripted AST/DIK static extraction (data), Bottom-Line grounding/counter check (reviewchk Step 16), readiness/validation (metadata, fdata, account), literal header/DOI capture (capture), & persistence (stage, recordapp). Agents own semantic chapter relations (relate on 2+ chapters), inferred field proposals retaining Unknowns (metapropose), W8 title & neutral description proposals (describe, clerkdraft), partial gap explanations (assess), and Applications/ authoring (extapply).",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-POL-02", "DOC-PLN-02"],
+      "code_anchors": ["src/resource_librarian/batch.py:377,475-566", "src/resource_librarian/intake.py:650-753", "src/resource_librarian/tools/sessions.py:1948-2049"],
+      "diagram_nodes": ["librarian-source-enrichment-tobe:data..drelate..relate..metapropose..metadata..review..reviewchk", "librarian-ingestion-tobe:capture..describe..stage", "librarian-batch-enrichment-tobe:freview..fdata..assess..account", "librarian-context2-external-project-mcp:extapply..recordapp"]
+    },
+    {
+      "id": "ORACLE-COLLISION-FALLBACK",
+      "category": "oracle_safety",
+      "summary": "PROPOSED: Doctor and Oracle assign GLM-5.3 via revisable routes.json adapters (assign, never bind). If oracle_route == worker_route (or doctor_route), Core seeks a distinct qualified Oracle route; if NONE exists, Core MUST fail closed: stamp review_status='unverified_route_collision', never label output/Ticket independently reviewed or resolved, and pause via Ticket ORACLE_ROUTE_COLLISION.",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-12", "DOC-GEO-03", "DOC-MAP-28"],
+      "code_anchors": ["src/resource_librarian/app.py:2687-2705", "src/resource_librarian/tools/staging.py:139-176"],
+      "diagram_nodes": ["librarian-context1-tier0-delegated:dverdict,collisionrec", "librarian-context3-human-platform-ui:dindex,uiagenda,userpaused", "librarian-ingestion-tobe:dbatchscreen,doracle,pauseout", "librarian-batch-enrichment-tobe:dverdict,pausehandoff", "librarian-source-enrichment-tobe:dverdict,retpause", "librarian-doctor-tobe:oracle,doracle,showcomp", "librarian-process-composition-tobe:dor_comp,outpause,userpaused"]
+    },
+    {
+      "id": "POL-CONF-01",
+      "category": "policy_conflict",
+      "summary": "Modes: Ask UI interaction loop blocks MCP calls (150s PERMISSION_UNANSWERED, formerly 600s F-03) instead of honoring Rule-15 single sprint envelope.",
+      "epistemic_status": "UNRESOLVED_CONFLICT",
+      "doc_refs": ["DOC-POL-03", "DOC-UIR-03", "DOC-UIR-04", "DOC-RPT-10"],
+      "code_anchors": ["src/resource_librarian/broker.py:175-229", "src/resource_librarian/app.py:277,3107"],
+      "diagram_nodes": ["librarian-current-activation:dc1_broker,dc2_outcome,c1_refusal", "librarian-context1-tier0-delegated:commission..storeenv", "librarian-context2-external-project-mcp:mcpenv..mcpblocked"]
+    },
+    {
+      "id": "POL-CONF-02",
+      "category": "policy_conflict",
+      "summary": "Static MCP_TIER_CEILING='contribute', zero MCP folder review tools, curate process_approved blocks, and earlier Rule-16 sensitivity/challenged-claim reserves conflict with user's Context-1 full-delegation instruction despite decided_by_of provenance attribution (reconciled via OD-05 for Owner ruling).",
+      "epistemic_status": "UNRESOLVED_CONFLICT",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-03", "DOC-MAP-28", "DOC-RPT-09"],
+      "code_anchors": ["src/resource_librarian/app.py:3050-3115,4185-4273,5024-5035", "src/resource_librarian/tools/batch.py:9-39", "src/resource_librarian/tools/staging.py:126-137", "src/resource_librarian/staging.py:957-962"],
+      "diagram_nodes": ["librarian-current-activation:c1_call,dc1_broker,dgate1_auth", "librarian-context1-tier0-delegated:storeenv,policy_note", "librarian-batch-enrichment-tobe:activate..t0admit..bind"]
+    },
+    {
+      "id": "POL-CONF-03",
+      "category": "policy_conflict",
+      "summary": "Person-started UI paperclip workflows execute at contribute tier; read_access.py only special-cases spec.name=='deep_read' rather than general manifest route clearance.",
+      "epistemic_status": "UNRESOLVED_CONFLICT",
+      "doc_refs": ["DOC-UIR-05", "DOC-POL-03"],
+      "code_anchors": ["src/resource_librarian/app.py:3131-3148", "src/resource_librarian/read_access.py:114-132"],
+      "diagram_nodes": ["librarian-current-activation:ui_wf_start..wf_refused", "librarian-context3-human-platform-ui:wgrant"]
+    },
+    {
+      "id": "POL-CONF-04",
+      "category": "policy_conflict",
+      "summary": "delegate & dispatch_plan require tier='contribute' (with effect='read'), allowing contribute MCP callers without Ask waits but blocking consult Reader MCP connections (TIER_REFUSED).",
+      "epistemic_status": "UNRESOLVED_CONFLICT",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-17"],
+      "code_anchors": ["src/resource_librarian/tools/delegate.py:37-117", "src/resource_librarian/tools/plan_dispatch.py:191-214"],
+      "diagram_nodes": ["librarian-current-activation:dc2_gate,c2_helpers", "librarian-context2-external-project-mcp:parallelhelpers"]
+    },
+    {
+      "id": "POL-CONF-05",
+      "category": "policy_conflict",
+      "summary": "open_session, queue_source, record_application, run_workflow, and run_pipeline declare tier='consult' with effect='write'/'vault_write' (_run_effect keeps routed steps 'write'), hitting 150s Ask timeouts or Plan denials over MCP.",
+      "epistemic_status": "UNRESOLVED_CONFLICT",
+      "doc_refs": ["DOC-UIR-05", "DOC-POL-03"],
+      "code_anchors": ["src/resource_librarian/tools/intake.py:92", "src/resource_librarian/tools/sessions.py:1940", "src/resource_librarian/tools/workflows.py:96-112", "src/resource_librarian/broker.py:297-322"],
+      "diagram_nodes": ["librarian-current-activation:dc2_outcome,c1_refusal", "librarian-context2-external-project-mcp:mcpenv"]
+    },
+    {
+      "id": "POL-CONF-06",
+      "category": "policy_conflict",
+      "summary": "Doctor and Oracle both currently share revisable GLM-5.3 assignment without a runtime worker-route collision lookup and fail-closed ORACLE_ROUTE_COLLISION guard.",
+      "epistemic_status": "UNRESOLVED_CONFLICT",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-12", "DOC-GEO-03", "DOC-MAP-28"],
+      "code_anchors": ["src/resource_librarian/app.py:2687-2705"],
+      "diagram_nodes": ["librarian-doctor-tobe:runremedy..oracle", "librarian-source-enrichment-tobe:oracle", "librarian-ingestion-tobe:oraclefinal"]
+    },
+    {
+      "id": "GAP-APP-01",
+      "category": "applications_gap",
+      "summary": "record_application rejects empty sources_used (TypeError at sessions.py:1961) and omits pinned source_refs snapshot/locators, external_constraints, and verification fields.",
+      "epistemic_status": "IMPLEMENTED_VERIFIED",
+      "doc_refs": ["DOC-V1D-05", "DOC-V1D-31", "DOC-MAP-26", "DOC-RPT-04"],
+      "code_anchors": ["src/resource_librarian/tools/sessions.py:1948-2049"],
+      "diagram_nodes": ["librarian-current-activation:c2_record_app..c2_queue_only", "librarian-context2-external-project-mcp:extapply..recordapp"]
+    },
+    {
+      "id": "POL-AMEND-01",
+      "category": "policy_amendment",
+      "summary": "PROPOSED: Context-1 user instruction + scope constitutes the commission (Tier 0 approves Rule-15 mandate_id with no 2nd prompt; commissioned_by=person, decided_by=agent), delegating in-scope execution cleanly while reserving out-of-scope/budget raises, uncommissioned global governance changes, ORACLE_ROUTE_COLLISION, and flagship OD-05 Owner ruling on sensitivity/challenged-claim exceptions; Context 2 stays bounded & acceptance-excluded; Context 3 UI retains direct human curation.",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-03", "DOC-MAP-28"],
+      "code_anchors": ["src/resource_librarian/app.py:3088-3115", "src/resource_librarian/tools/batch.py:9-23", "src/resource_librarian/tools/staging.py:126-137"],
+      "diagram_nodes": ["librarian-context1-tier0-delegated:request..commission..storeenv,policy_note", "librarian-ingestion-tobe:dfolderauth..leadfolder,dgate2..leadaccept", "librarian-batch-enrichment-tobe:t0admit..bind", "librarian-context2-external-project-mcp:queuepause", "librarian-context3-human-platform-ui:reviewgate1..reviewgate2"]
+    },
+    {
+      "id": "POL-AMEND-02",
+      "category": "policy_amendment",
+      "summary": "PROPOSED: Formally separate Modes (Ask/Auto/Plan) UI interaction preference from Broker/Registry access control; bypass per-write Ask waits inside verified Context 1/2/3 envelopes.",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-POL-03", "DOC-UIR-03", "DOC-UIR-04", "DOC-RPT-10"],
+      "code_anchors": ["src/resource_librarian/broker.py:1-188,205-238"],
+      "diagram_nodes": ["librarian-process-composition-tobe:compile_manifest", "librarian-context2-external-project-mcp:mcpenv"]
+    },
+    {
+      "id": "POL-AMEND-03",
+      "category": "policy_amendment",
+      "summary": "PROPOSED: Classify read-only DeepInfra delegate & dispatch_plan as consult read-with-budget so Context 2 consult MCP connections can offload parallel research safely.",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-17"],
+      "code_anchors": ["src/resource_librarian/tools/delegate.py:37-65", "src/resource_librarian/tools/plan_dispatch.py:191"],
+      "diagram_nodes": ["librarian-context2-external-project-mcp:parallelhelpers"]
+    },
+    {
+      "id": "POL-AMEND-04",
+      "category": "policy_amendment",
+      "summary": "PROPOSED: Derive bounded read_access chunk clearance from verified person-started UI workflow_grant manifests beyond single-tool deep_read carveout.",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-UIR-05", "DOC-POL-03"],
+      "code_anchors": ["src/resource_librarian/app.py:3142-3148", "src/resource_librarian/read_access.py:114-120"],
+      "diagram_nodes": ["librarian-context3-human-platform-ui:wgrant"]
+    },
+    {
+      "id": "POL-AMEND-05",
+      "category": "policy_amendment",
+      "summary": "PROPOSED: Keep Doctor/Oracle GLM-5.3 assignment revisable via adapter with isolated clean contexts and fail-closed ORACLE_ROUTE_COLLISION handling (stamp review_status='unverified_route_collision', never mark independently reviewed/resolved, pause cleanly).",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-12", "DOC-GEO-03", "DOC-MAP-28"],
+      "code_anchors": ["src/resource_librarian/tools/staging.py:139-176"],
+      "diagram_nodes": ["librarian-doctor-tobe:oracle,doracle", "librarian-context1-tier0-delegated:oraclesprint,dverdict,collisionrec", "librarian-ingestion-tobe:oraclebatch,dbatchscreen,oraclefinal,doracle,pauseout", "librarian-batch-enrichment-tobe:dverdict,pausehandoff", "librarian-source-enrichment-tobe:dverdict,retpause", "librarian-context3-human-platform-ui:dindex,uiagenda,userpaused", "librarian-process-composition-tobe:dor_comp,outpause,userpaused"]
+    },
+    {
+      "id": "POL-AMEND-06",
+      "category": "policy_amendment",
+      "summary": "PROPOSED: Enforce agent-authored extapply -> Core-validated/stored recordapp split and extend record_application to preserve source_refs snapshots/locators, external_constraints, verification, evaluation_status, and non-blocking empty sources_used with unresolved_sources.",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-V1D-05", "DOC-V1D-31", "DOC-MAP-26", "DOC-RPT-04", "DOC-POL-02"],
+      "code_anchors": ["src/resource_librarian/tools/sessions.py:1948-2049"],
+      "diagram_nodes": ["librarian-context2-external-project-mcp:extapply..recordapp"]
+    },
+    {
+      "id": "GAP-UI-01",
+      "category": "ui_defect_live",
+      "summary": "ui/app.js:8472 destructures result: _result out of action_done events, silently discarding workflow run results from paperclip menu.",
+      "epistemic_status": "IMPLEMENTED_VERIFIED",
+      "doc_refs": ["DOC-UIR-05"],
+      "code_anchors": ["src/resource_librarian/ui/app.js:8469-8479"],
+      "diagram_nodes": ["librarian-current-activation:ui_drop_result", "librarian-context3-human-platform-ui:uinotify"]
+    },
+    {
+      "id": "GAP-UI-02",
+      "category": "ui_defect_live",
+      "summary": "Staging Which-sources filter dropdown & sourceWaiting() omit processing and accepted despite backend staging_list support.",
+      "epistemic_status": "IMPLEMENTED_VERIFIED",
+      "doc_refs": ["DOC-UIR-01", "DOC-UIR-02"],
+      "code_anchors": ["src/resource_librarian/ui/app.js:6325-6335", "src/resource_librarian/tools/staging.py:185-186"],
+      "diagram_nodes": ["librarian-current-activation:gate1_ui", "librarian-context3-human-platform-ui:uiagenda"]
+    },
+    {
+      "id": "GAP-UI-03",
+      "category": "ui_defect_live",
+      "summary": "F-09 stale-revision error in Staging offers only Reload item (discards form edits), risking loss of human Bottom Line edits.",
+      "epistemic_status": "IMPLEMENTED_VERIFIED",
+      "doc_refs": ["DOC-UIR-04"],
+      "code_anchors": ["src/resource_librarian/ui/app.js:6940-6949,7008-7037"],
+      "diagram_nodes": ["librarian-current-activation:gate2_ui,ui_hold_notice", "librarian-context3-human-platform-ui:reviewgate2..promoteindex"]
+    },
+    {
+      "id": "GAP-UI-04",
+      "category": "ui_fix_verified_post_review",
+      "summary": "Already fixed in d9435e1 vs Nov 17-19 reviews: Add source in Staging, Show 50 more 50-row loop, deep-read-staged route carveout, Settings Clerk router fallback, 150s MCP wait cap, not_confident draft preservation.",
+      "epistemic_status": "IMPLEMENTED_VERIFIED",
+      "doc_refs": ["DOC-UIR-02", "DOC-UIR-03", "DOC-UIR-04", "DOC-UIR-05", "DOC-PLN-01"],
+      "code_anchors": ["src/resource_librarian/ui/app.js:6387-6449,6619-6625,6686-6698,7175-7177", "src/resource_librarian/read_access.py:114-120", "src/resource_librarian/tools/workflows.py:16-33", "src/resource_librarian/broker.py:300-322", "src/resource_librarian/app.py:277"],
+      "diagram_nodes": ["librarian-current-activation:ui_intake,ui_wf_start", "librarian-context3-human-platform-ui:ui_entry..clerkdraft"]
+    },
+    {
+      "id": "CONS-01..07",
+      "category": "tier0_consolidation",
+      "summary": "PROPOSED consolidation/splitting (05- Section 9 rows 1-7): single Context-1 instruction commission (no 2nd prompt), envelope Ask-stall removal, Context-1 mandate_id batch start (t0admit->bind->admit), downstream ordinary folder screening, Context-1 Gate-2 in-scope acceptance (OD-05 boundary flagged), Doctor R1-R6 bounded recovery (critical faults immediate), and clean Core-scripted (data, reviewchk Step 16, metadata) vs Clerk-semantic AST/metadata/W8 split.",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-03", "DOC-MAP-03", "DOC-MAP-19", "DOC-MAP-28"],
+      "code_anchors": ["src/resource_librarian/broker.py:175-229", "src/resource_librarian/tools/batch.py:9", "src/resource_librarian/tools/staging.py:545-760", "src/resource_librarian/batch.py:377,475-566", "src/resource_librarian/intake.py:650-753"],
+      "diagram_nodes": ["librarian-context1-tier0-delegated:request..commission..storeenv", "librarian-ingestion-tobe:doctorroot..doctorphase,capture..stage", "librarian-batch-enrichment-tobe:t0admit..bind", "librarian-source-enrichment-tobe:data..metadata..reviewchk", "librarian-doctor-tobe:intake..oracle"]
+    },
+    {
+      "id": "CONS-08..10",
+      "category": "tier0_human_retained",
+      "summary": "Decisions RETAINED strictly at Human User or External Tier 0 (05- Section 9 rows 8-10): out-of-scope roots, unapproved budget raises, uncommissioned global governance changes (promotion.mode, accept_workflow, capability_install), ORACLE_ROUTE_COLLISION, critical security/data-loss/boundary breaches, plus Owner-retained OD-05 exceptions; Context 2 project-P applicability & Applications/ authoring (acceptance excluded); Context 3 direct UI Gate 1/2, Bottom Line edits & taxonomy tabs.",
+      "epistemic_status": "ACCEPTED_NORMATIVE",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-03", "DOC-POL-06", "DOC-POL-08"],
+      "code_anchors": ["src/resource_librarian/broker.py:70", "src/resource_librarian/tools/workflows.py:76", "src/resource_librarian/tools/staging.py:762"],
+      "diagram_nodes": ["librarian-ingestion-tobe:dheldcaller..ownergate2", "librarian-context1-tier0-delegated:t0surface..userchoice,collisionrec,dcrit", "librarian-context2-external-project-mcp:extapply..queuepause,dcrit_ex", "librarian-context3-human-platform-ui:reviewgate1..reviewgate2,duicrit"]
+    },
+    {
+      "id": "REC-17",
+      "category": "recommendation_followup",
+      "summary": "PROPOSED: Single-commission Context-1 Delegated Commission Envelope (request -> commission -> storeenv, no 2nd prompt) & Ask-mode decoupling without impersonation, with explicit OD-05 sensitivity/challenged-claim Owner ruling (POL-AMEND-01/02).",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-03", "DOC-UIR-03", "DOC-UIR-04", "DOC-MAP-28"],
+      "code_anchors": ["src/resource_librarian/app.py:277,3088-3115", "src/resource_librarian/broker.py:175-229", "src/resource_librarian/tools/staging.py:126-137"],
+      "diagram_nodes": ["librarian-context1-tier0-delegated:request..commission..storeenv,policy_note", "librarian-batch-enrichment-tobe:t0admit..bind"]
+    },
+    {
+      "id": "REC-18",
+      "category": "recommendation_followup",
+      "summary": "PROPOSED: Context 2 5-domain authority bounds, consult-with-budget DeepInfra helper clearance (delegate/dispatch_plan), & extapply -> recordapp Applications/ schema (POL-AMEND-03/06).",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-V1D-05", "DOC-V1D-31", "DOC-POL-02", "DOC-POL-17"],
+      "code_anchors": ["src/resource_librarian/tools/delegate.py:37-136", "src/resource_librarian/tools/plan_dispatch.py:191", "src/resource_librarian/tools/sessions.py:1948-2049"],
+      "diagram_nodes": ["librarian-context2-external-project-mcp:parallelhelpers..recordapp"]
+    },
+    {
+      "id": "REC-19",
+      "category": "recommendation_followup",
+      "summary": "PROPOSED: Fix Context 3 UI workflow drawer (action_done.result), Staging processing/accepted status filters, F-09 non-destructive edit preservation, & generalized workflow_grant route clearance.",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-UIR-01", "DOC-UIR-04", "DOC-UIR-05"],
+      "code_anchors": ["src/resource_librarian/ui/app.js:6325-6335,6940-6949,8472", "src/resource_librarian/app.py:3142-3148", "src/resource_librarian/read_access.py:114-120"],
+      "diagram_nodes": ["librarian-current-activation:ui_drop_result,gate1_ui,gate2_ui", "librarian-context3-human-platform-ui:wgrant,reviewgate2,uinotify,uiagenda"]
+    },
+    {
+      "id": "REC-20",
+      "category": "recommendation_followup",
+      "summary": "PROPOSED: Formal Core-persisted Ticket record preserving extension IDs, tiered flags, evidence hashes, accountable actor, repair_history, Rule-8 display, immediate critical routing, & Oracle recheck.",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-POL-03", "DOC-MAP-06b", "DOC-MAP-28"],
+      "code_anchors": ["src/resource_librarian/workflows.py:593-605,1001"],
+      "diagram_nodes": ["librarian-doctor-tobe:intake..haltescalate", "librarian-ingestion-tobe:queueagenda,pauseout,escout", "librarian-context1-tier0-delegated:dcrit,escrec", "librarian-context2-external-project-mcp:dcrit_ex,escticket", "librarian-context3-human-platform-ui:duicrit,uiesc"]
+    },
+    {
+      "id": "REC-21",
+      "category": "recommendation_followup",
+      "summary": "PROPOSED: Revisable Doctor/Oracle role-adapter assignment (currently GLM-5.3) with isolated contexts, distinct-route lookup, & fail-closed ORACLE_ROUTE_COLLISION pause (unverified_route_collision).",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-12", "DOC-GEO-03", "DOC-MAP-28"],
+      "code_anchors": ["src/resource_librarian/app.py:2687-2705", "src/resource_librarian/tools/staging.py:139-176"],
+      "diagram_nodes": ["librarian-doctor-tobe:runremedy..oracle,doracle", "librarian-source-enrichment-tobe:oracle,dverdict,retpause", "librarian-context1-tier0-delegated:oraclesprint,dverdict,collisionrec", "librarian-ingestion-tobe:oraclebatch,dbatchscreen,oraclefinal,doracle,pauseout", "librarian-batch-enrichment-tobe:dverdict,pausehandoff", "librarian-context3-human-platform-ui:dindex,uiagenda,userpaused", "librarian-process-composition-tobe:dor_comp,outpause,userpaused"]
+    },
+    {
+      "id": "REC-22",
+      "category": "recommendation_followup",
+      "summary": "PROPOSED: Mandatory explicit user-facing notification receipts (with result evidence, spend, coverage, deferred work, & resume info) & Agenda synchronization on all 5 exits across Contexts 1, 2 & 3.",
+      "epistemic_status": "PROPOSED_UNACCEPTED",
+      "doc_refs": ["DOC-POL-04", "DOC-POL-05", "DOC-MAP-27"],
+      "code_anchors": ["src/resource_librarian/tools/staging.py:730-759", "src/resource_librarian/ui/app.js:7024-7036,8472"],
+      "diagram_nodes": ["librarian-context1-tier0-delegated:t0deliver,partnotify,t0notifyreuse,t0surface,failnotify,userack", "librarian-context2-external-project-mcp:userhandover,userpartial,userreuse,userpause,useresc", "librarian-context3-human-platform-ui:uinotify,userdone,userpartial,userreuse,userpaused,useresc", "librarian-process-composition-tobe:usernotify,userpartial,userreused,userpaused,useresc"]
+    },
+    {
+      "id": "OD-01",
+      "category": "owner_decision",
+      "summary": "OPEN OWNER DECISION: Should render_spec.py (DOC-MAP-05) adopt DOC-MAP-11's 695px double-width Lead sub-columns and 4-color edge palette?",
+      "epistemic_status": "UNRESOLVED_CONFLICT",
+      "doc_refs": ["DOC-MAP-05", "DOC-MAP-11", "DOC-PLN-03"],
+      "code_anchors": [],
+      "diagram_nodes": []
+    },
+    {
+      "id": "OD-02",
+      "category": "owner_decision",
+      "summary": "OPEN OWNER DECISION: Which UNIMPLEMENTED_UNDROPPED V1 parity features (find_components, repo SCC digest, OpenAlex discovery, strict **Not read:** checks) enter the V2 backlog vs retirement?",
+      "epistemic_status": "UNRESOLVED_CONFLICT",
+      "doc_refs": ["DOC-V1D-11", "DOC-V1D-30", "DOC-V1D-31", "DOC-V1D-32"],
+      "code_anchors": [],
+      "diagram_nodes": []
+    },
+    {
+      "id": "OD-03",
+      "category": "owner_decision",
+      "summary": "OPEN OWNER DECISION: Should unlicensed nested repositories auto-classify as third_party / withheld (DOC-POL-08 vs DOC-RPT-11 F15) or flag SENSITIVITY_REVIEW?",
+      "epistemic_status": "UNRESOLVED_CONFLICT",
+      "doc_refs": ["DOC-POL-08", "DOC-RPT-11"],
+      "code_anchors": [],
+      "diagram_nodes": ["librarian-ingestion-tobe:dfolderauth"]
+    },
+    {
+      "id": "OD-04",
+      "category": "owner_decision",
+      "summary": "OPEN OWNER DECISION: How should Watcher/Index contention (402 files scanning 14.96s/30s) be bounded in host.py/index.py (mtime+inode diffing vs polling interval tuning)?",
+      "epistemic_status": "UNRESOLVED_CONFLICT",
+      "doc_refs": ["DOC-RPT-10"],
+      "code_anchors": [],
+      "diagram_nodes": []
+    },
+    {
+      "id": "OD-05",
+      "category": "owner_decision",
+      "summary": "OPEN OWNER DECISION: Approve POL-AMEND-01/02 and reconcile Rule 16 (agent-roles-and-authority.md:62): confirm user instruction + scope as Context 1's single commission (mandate_id with commissioned_by=person, decided_by=agent), decouple Modes: Ask from MCP, and decide whether SENSITIVITY_REVIEW & REVIEW_CHALLENGED remain human-only inside Context 1 or run in-scope with preserved audit flags?",
+      "epistemic_status": "UNRESOLVED_CONFLICT",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-03", "DOC-UIR-03", "DOC-UIR-04"],
+      "code_anchors": ["src/resource_librarian/app.py:277,3088-3115", "src/resource_librarian/broker.py:175-229", "src/resource_librarian/tools/batch.py:9-39", "src/resource_librarian/staging.py:957-962"],
+      "diagram_nodes": ["librarian-context1-tier0-delegated:request..commission..storeenv,policy_note", "librarian-ingestion-tobe:dfolderauth,leadfolder,dgate2,leadaccept", "librarian-batch-enrichment-tobe:t0admit..bind"]
+    },
+    {
+      "id": "OD-06",
+      "category": "owner_decision",
+      "summary": "OPEN OWNER DECISION: Approve POL-AMEND-03/04 (classify delegate/dispatch_plan as bounded consult read-with-budget for Context 2, and generalize workflow_grant read clearance for Context 3 UI workflows)?",
+      "epistemic_status": "UNRESOLVED_CONFLICT",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-03", "DOC-POL-17", "DOC-UIR-05"],
+      "code_anchors": ["src/resource_librarian/tools/delegate.py:37-117", "src/resource_librarian/tools/plan_dispatch.py:191-214", "src/resource_librarian/read_access.py:114-120"],
+      "diagram_nodes": ["librarian-context2-external-project-mcp:parallelhelpers", "librarian-context3-human-platform-ui:wgrant"]
+    },
+    {
+      "id": "OD-07",
+      "category": "owner_decision",
+      "summary": "OPEN OWNER DECISION: Approve POL-AMEND-05 & collision fallback policy (mandatory pause on ORACLE_ROUTE_COLLISION unless secondary distinct qualified route exists vs optional person-attested unreviewed override in Context 3 UI only)?",
+      "epistemic_status": "UNRESOLVED_CONFLICT",
+      "doc_refs": ["DOC-POL-02", "DOC-POL-12", "DOC-GEO-03", "DOC-MAP-28"],
+      "code_anchors": ["src/resource_librarian/app.py:2687-2705"],
+      "diagram_nodes": ["librarian-context1-tier0-delegated:collisionrec", "librarian-context3-human-platform-ui:uiagenda,userpaused", "librarian-ingestion-tobe:pauseout", "librarian-batch-enrichment-tobe:pausehandoff", "librarian-source-enrichment-tobe:retpause", "librarian-doctor-tobe:showcomp", "librarian-process-composition-tobe:outpause,userpaused"]
+    },
+    {
+      "id": "OD-08",
+      "category": "owner_decision",
+      "summary": "OPEN OWNER DECISION: Approve POL-AMEND-06 (record_application repeatability fields + empty sources_used no_match_workaround logging) and Context 2 stage_only opt-in intake grant boundary?",
+      "epistemic_status": "UNRESOLVED_CONFLICT",
+      "doc_refs": ["DOC-V1D-05", "DOC-V1D-31", "DOC-MAP-26", "DOC-RPT-04"],
+      "code_anchors": ["src/resource_librarian/tools/sessions.py:1948-2049"],
+      "diagram_nodes": ["librarian-context2-external-project-mcp:dmissing..queuepause", "librarian-context2-external-project-mcp:extapply..recordapp"]
+    }
+  ]
+}

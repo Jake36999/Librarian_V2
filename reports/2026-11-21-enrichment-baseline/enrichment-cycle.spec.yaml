@@ -1,0 +1,559 @@
+# One behavioural model of the complete enrichment cycle. Analysis artifact, not executable process YAML.
+# Existing source operations are retained; run-wide delegation, tickets and general Oracle/Doctor integration
+# are target behaviour. See requirements-evidence.md and model-notes.md for that boundary.
+diagram: enrichment-cycle
+kind: activity
+title: Proposed comprehensive ingestion and enrichment integration
+target: {kind: use_case, ref: "model-notes.md"}
+lens: [the-root-cause-lens, the-guard-completeness-lens, the-real-concurrency-lens]
+perspective: Owner
+problem:
+  symptom: "Tier 0 repeatedly coordinates ingestion and resolves familiar failures while several enrichment stages and authority gates are absent from the earlier overview."
+  why:
+    - "The existing source lifecycle is implemented across intake, batch, staging, promotion and graph services rather than one Core-run pipeline."
+    - "Review foundations exist, but general run specifications, routed fault tickets and catalogued repair are not integrated."
+  root: "Complete requirements and hand-offs must be preserved when the existing operations become a delegated process."
+lanes: [Owner, Tier 0 agent, Oracle, Lead (tier 1), Doctor, Clerk (tier 2), Scribe (tier 3), Core, Model host, Geo-Grapher]
+nodes:
+  - {id: s, kind: start}
+  - {id: targetcontract, kind: note, lane: Lead (tier 1), label: "Target integration, not an execution trace. Existing stage scripts are preserved; semantic Data/metadata, tiered delegation and general Oracle/Doctor/tickets remain proposed."}
+  - {id: a1, kind: activity, lane: Owner, step: 1, label: "sets or has already delegated the goal, sources, exclusions, allowed spending and required outcomes"}
+  - {id: dentry, kind: decision, lane: Core, label: "who initiates this run?"}
+  - {id: a2, kind: activity, lane: Tier 0 agent, step: 2, label: "hands bounded enrichment work to a Lead for its current task, including another project, and sets the run specification"}
+  - {id: direct, kind: activity, lane: Owner, label: "hands the goal directly to the Lead and sets the run specification"}
+  - {id: a3, kind: activity, lane: Lead (tier 1), step: 3, label: "takes responsibility for the run; requests its Core-stored specification, recorded authority and qualified role assignments"}
+  - {id: callgate, kind: activity, lane: Core, label: "at every dispatch/commit checks tier, profile, grants, counters and critical flags; defers failed-route calls; scope judgement remains Oracle-owned"}
+  - {id: dspecready, kind: decision, lane: Core, label: "specification schema, pinned IDs, grants and recorded independent role qualifications valid?"}
+  - {id: dinput, kind: decision, lane: Core, label: "what input or continuation has been requested?"}
+  - {id: maintenanceinventory, kind: activity, lane: Core, label: "inventories specified existing publications, reading receipts, source/artifact hashes, projection versions and active registrations; changes nothing"}
+  - {id: maintenanceassess, kind: activity, lane: Clerk (tier 2), label: "assesses reading and projection gaps from evidence; zero concepts alone proves neither unread content nor a need to invent claims"}
+  - {id: maintenanceplan, kind: activity, lane: Lead (tier 1), label: "proposes bounded affected-source reading recovery or reprojection; preserves originals, true claim strength and the actual graph rebuild radius"}
+  - {id: maintenancegrant, kind: activity, lane: Core, label: "checks the proposed resource set, existing authority, accepted components, counters and current fingerprints before any maintenance write"}
+  - {id: dmaintenancegrant, kind: decision, lane: Core, label: "maintenance within actual grants and registered capability?"}
+  - {id: dmaintenancework, kind: decision, lane: Core, label: "Lead-requested maintenance continuation and current source state?"}
+  - {id: maintenanceproject, kind: activity, lane: Core, label: "reprojects compatible completed reading under current rules with guarded writes; preserves generated/source-stated/inferred labels and verification limits"}
+  - {id: dmaintenanceproject, kind: decision, lane: Core, label: "projection and fresh folder/artifact admission result?"}
+  - {id: maintenancegeo, kind: activity, lane: Geo-Grapher, label: "revalidates admission and imports only the authorized paper artifact; reports the new active publication receipt without deleting generations"}
+  - {id: dmaintenanceresult, kind: decision, lane: Core, label: "maintenance publication result?"}
+  - {id: drevisionreturn, kind: decision, lane: Core, label: "recorded post-revision continuation?"}
+  - {id: a4, kind: activity, lane: Core, step: 4, label: "scripts the folder inventory: stored purpose fields, fingerprints, credential filters, child ownership and optional Geo assignment records"}
+  - {id: dstale, kind: decision, lane: Core, label: "accepted roots and reviewed group members current?"}
+  - {id: a5, kind: activity, lane: Lead (tier 1), step: 5, label: "applies exclusions and proposes permitted purpose decisions without widening source access"}
+  - {id: a6, kind: activity, lane: Clerk (tier 2), step: 6, label: "assesses permitted folder metadata for sensitivity using the qualified description route"}
+  - {id: dfolderdraft, kind: decision, lane: Core, label: "qualified, approved folder draft available?"}
+  - {id: dsensitive, kind: decision, lane: Core, label: "agent-reported sensitivity or recorded policy reserves this folder decision for a person?"}
+  - {id: folderperson, kind: activity, lane: Owner, label: "reviews sensitive or otherwise reserved folder decisions"}
+  - {id: dfolderperson, kind: decision, lane: Owner, label: "folder decision approved?"}
+  - {id: a7, kind: activity, lane: Core, step: 7, label: "applies authorized folder decisions with current fingerprints, provenance and optional Geo group application"}
+  - {id: dfolderapplied, kind: decision, lane: Core, label: "folder application succeeded?"}
+  - {id: dpurpose, kind: decision, lane: Core, label: "accepted folder purpose?"}
+  - {id: ownindex, kind: activity, lane: Core, label: "indexes own code, data or logs as whole content under their purpose and access rules; creates no document Sources"}
+  - {id: ownverify, kind: activity, lane: Core, label: "checks requested own-content index receipts, graph IDs and original hashes; reports recorded exclusions and unchanged originals"}
+  - {id: folderapprove, kind: activity, lane: Owner, label: "authorizes FolderReview.approve_batch for waiting folder metadata cards; this does not accept purposes or read documents"}
+  - {id: a8, kind: activity, lane: Core, step: 8, label: "dry-counts and queues each accepted root's in-scope documents; default PDF scope and queue ledger remain explicit"}
+  - {id: a9, kind: activity, lane: Core, step: 9, label: "reconciles survey, per-root queue and withheld documents using deterministic counts"}
+  - {id: dcounts, kind: decision, lane: Core, label: "counts and ownership reconcile?"}
+  - {id: droots, kind: decision, lane: Core, label: "accepted-root worklist and required outputs?"}
+  - {id: native, kind: activity, lane: Lead (tier 1), label: "queues or captures permitted native file, URL, repository, paper, model or dataset references"}
+  - {id: a10, kind: activity, lane: Core, step: 10, label: "fetches and hashes immutable evidence; stores deterministic facts, quality flags and each reference's capture result for staged proposals"}
+  - {id: dcaptureguard, kind: decision, lane: Core, label: "capture raised a critical integrity or boundary flag?"}
+  - {id: capturedescribe, kind: activity, lane: Clerk (tier 2), label: "owns the capture proposal: drafts neutral evidence-based description, keeps optional fit separate and returns explicit queued, refused or failed draft outcomes"}
+  - {id: dcapture, kind: decision, lane: Core, label: "captured input accounting?"}
+  - {id: capturefailed, kind: activity, lane: Core, label: "retains failed queue entries or quarantine evidence with the failed stage and reason"}
+  - {id: accounted, kind: activity, lane: Core, label: "accounts for already-held, filtered or empty input; reports no new source rather than inventing enrichment"}
+  - {id: dnowork, kind: decision, lane: Oracle, label: "does the accounted no-new-work result satisfy the specification?"}
+  - {id: dsourceapprove, kind: decision, lane: Core, label: "source ingestion approval permitted for this actor?"}
+  - {id: dagentingestion, kind: decision, lane: Lead (tier 1), label: "approve the staged sources for processing under the granted agent authority?"}
+  - {id: approveperson, kind: activity, lane: Owner, label: "decides ingestion approval for person-mode or sensitive sources; approval still does not start processing or accept the Source"}
+  - {id: dapproveperson, kind: decision, lane: Owner, label: "ingestion approval granted?"}
+  - {id: a11, kind: activity, lane: Core, step: 11, label: "persists the Lead's or Owner's submitted ingestion approvals with true actor attribution; approved means queued, not read or accepted"}
+  - {id: dprocessscope, kind: decision, lane: Core, label: "coverage required by this specification?"}
+  - {id: a12, kind: activity, lane: Core, step: 12, label: "validates explicit authority to begin processing the approved set without repeating permission already granted for that run"}
+  - {id: startperson, kind: activity, lane: Owner, label: "explicitly starts the approved batch; this is the current curate-only start boundary, retained until delegated-start support exists"}
+  - {id: dstartperson, kind: decision, lane: Owner, label: "processing start approved?"}
+  - {id: dstart, kind: decision, lane: Core, label: "processing start authorized and approved work available?"}
+  - {id: a13, kind: activity, lane: Core, step: 13, label: "freezes the approved item set and run settings, logs the run and grants only its declared stage tools"}
+  - {id: a14, kind: activity, lane: Core, step: 14, label: "before each item checks the library spend ceiling; between stages honors cancellation and the active Core writer"}
+  - {id: dcontinue, kind: decision, lane: Core, label: "run may continue?"}
+  - {id: stopped, kind: activity, lane: Core, label: "records cancellation, ceiling stop or interruption; retains completed receipts and pending items for explicit resumption"}
+  - {id: a15, kind: activity, lane: Core, step: 15, label: "reuses only compatible source/representation/recipe/route receipts; publication still needs current artifact/projection and folder admission checks"}
+  - {id: dkind, kind: decision, lane: Core, label: "approved item is source or folder metadata card?"}
+  - {id: folderobserved, kind: note, lane: Clerk (tier 2), label: "Observed 22 November audit: 12 folder-item attempts in two batches failed at folder_describe; no folder_data success in that sample. The implemented chain remains metadata-only."}
+  - {id: fv, kind: activity, lane: Core, label: "folder_validate: checks current inventory and review fingerprints"}
+  - {id: dfv, kind: decision, lane: Core, label: "folder_validate failed?"}
+  - {id: fd, kind: activity, lane: Clerk (tier 2), label: "folder_describe: drafts from bounded inventory metadata; unavailable or disabled production drafting stays queued"}
+  - {id: dfd, kind: decision, lane: Core, label: "folder_describe failed?"}
+  - {id: fdata, kind: activity, lane: Core, label: "folder_data: stores the inventory Data record; each stage uses the same failure and resume rules"}
+  - {id: dfdata, kind: decision, lane: Core, label: "folder_data recorded outcome or critical finding?"}
+  - {id: fcoverage, kind: activity, lane: Core, label: "records folder coverage as metadata only, content not examined; never credits its documents as read"}
+  - {id: noteread, kind: activity, lane: Clerk (tier 2), label: "requests deep_read_note for an accepted Source; the existing reading mechanism stages a revision and leaves the accepted note unchanged"}
+  - {id: drevision, kind: decision, lane: Core, label: "accepted-note reading result?"}
+  - {id: revisionpartial, kind: activity, lane: Core, label: "persists partial reading receipts and checks the recorded partial-revision grant; does not create authority or credit full reading"}
+  - {id: revisionapprove, kind: activity, lane: Clerk (tier 2), label: "reviews the revision against evidence and actual coverage; submits an acceptance decision within granted agent authority or a proposal for Owner review"}
+  - {id: drevisionintent, kind: decision, lane: Core, label: "Clerk submitted affirmative acceptance or a reserved-review proposal?"}
+  - {id: drevisionactor, kind: decision, lane: Core, label: "revision acceptance needs the Owner?"}
+  - {id: revisionperson, kind: activity, lane: Owner, label: "reviews the staged Source revision and decides its acceptance"}
+  - {id: drevisionperson, kind: decision, lane: Owner, label: "revision approved?"}
+  - {id: revisionmerge, kind: activity, lane: Core, label: "merges only permitted revision sections into the existing Source with original snapshots and human-edit protection; creates no duplicate note"}
+  - {id: drevisionmerge, kind: decision, lane: Core, label: "revision merge committed?"}
+  - {id: a16, kind: activity, lane: Core, step: 16, label: "validate: checks source identity, captured evidence and unique library note name"}
+  - {id: dv, kind: decision, lane: Core, label: "validate failed?"}
+  - {id: a17, kind: activity, lane: Core, step: 17, label: "parse: runs scripted fetch, AST/text/PDF extraction and page mapping; preserves original text fallback; model conversion follows its agent path"}
+  - {id: dp, kind: decision, lane: Core, label: "scripted parse result or recorded model-conversion request?"}
+  - {id: conversionplan, kind: activity, lane: Clerk (tier 2), label: "plans bounded model transcription or cleanup from extraction gaps; retains originals, page scope and permitted conversion limits"}
+  - {id: conversionwork, kind: activity, lane: Scribe (tier 3), label: "performs assigned model transcription or text cleanup through the configured adapter; returns page-linked text and explicit gaps"}
+  - {id: conversionreview, kind: activity, lane: Clerk (tier 2), label: "proofreads model conversion against source evidence; judges fidelity and retains unreadable or uncertain pages as gaps"}
+  - {id: conversioncheck, kind: activity, lane: Core, label: "checks returned schemas, hashes and literal page locators; stores the Clerk's review verdict and actual conversion receipts"}
+  - {id: dconversion, kind: decision, lane: Core, label: "recorded conversion result and mechanical checks?"}
+  - {id: conversiongap, kind: activity, lane: Core, label: "retains returned cleanup-error partial or missing-material partial/queued status and usable raw extraction; missing content receives no reading credit"}
+  - {id: conversionfallback, kind: activity, lane: Core, label: "keeps unmapped cleanup unused; restores original page-mapped text; parse may complete only with usable text and no other remaining gap"}
+  - {id: conversionoutage, kind: activity, lane: Core, label: "records transport code, attempts, retry-after and known/unknown cost; defers equivalent calls on the failed route pending bounded direction"}
+  - {id: conversionroute, kind: decision, lane: Lead (tier 1), label: "retry affected conversion within the grant, retain fallback, or pause the affected work?"}
+  - {id: dconversionretry, kind: decision, lane: Core, label: "same-route retry within counters, backoff, current qualification and existing authority?"}
+  - {id: a18, kind: activity, lane: Clerk (tier 2), step: 18, label: "read: directs bounded part-reading tasks and proofreads their evidence without introducing the project's fit judgement"}
+  - {id: a19, kind: activity, lane: Scribe (tier 3), step: 19, label: "completes assigned small reading tasks: located points, limits, terms and grounded lens candidates"}
+  - {id: a20, kind: activity, lane: Model host, step: 20, label: "answers qualified bounded tasks through the configured adapters; unavailable or refused routes retain visible task outcomes"}
+  - {id: a21, kind: activity, lane: Core, step: 21, label: "checks schemas, hashes, literal quote locators and task counters; persists agent-submitted reading and lens results; queued tasks never count as read"}
+  - {id: dr, kind: decision, lane: Core, label: "read failed?"}
+  - {id: readoutage, kind: activity, lane: Core, label: "records 429/timeout/unavailable route and bounded attempts; defers equivalent failed-route calls; retains task gaps, receipts and unpriced cost"}
+  - {id: readroute, kind: decision, lane: Lead (tier 1), label: "retry only pending affected tasks within the grant, keep queued gaps, or pause?"}
+  - {id: dreadretry, kind: decision, lane: Core, label: "same-route pending-task retry within counters, backoff, qualification and existing authority?"}
+  - {id: a22, kind: activity, lane: Core, step: 22, label: "lenses: persists agent-selected candidates, challenges, citations and discard records from reading; each proposal stays separately staged"}
+  - {id: dl, kind: decision, lane: Core, label: "lenses stage failed?"}
+  - {id: a23, kind: activity, lane: Clerk (tier 2), step: 23, label: "data: owns kind-specific component or chapter organization from evidence and scripted inventories; proposes records with actual coverage and explicit inapplicability"}
+  - {id: dd, kind: decision, lane: Core, label: "data stage failed?"}
+  - {id: a24, kind: activity, lane: Clerk (tier 2), step: 24, label: "relate: synthesizes document chapter relations from fully read material; retains queued or partial outcomes and existing static relations"}
+  - {id: drel, kind: decision, lane: Core, label: "relate stage failed?"}
+  - {id: a25, kind: activity, lane: Clerk (tier 2), step: 25, label: "metadata: proposes evidence-based content-model fields, retains Unknown where appropriate and leaves confirmation to acceptance"}
+  - {id: dmeta, kind: decision, lane: Core, label: "metadata stage failed?"}
+  - {id: a26, kind: activity, lane: Clerk (tier 2), step: 26, label: "review: owns the source package and Bottom Line; reconciles reading, Data, relations and metadata against evidence; distinguishes low confidence, no answer and refusal"}
+  - {id: dreview, kind: decision, lane: Core, label: "review stage failed?"}
+  - {id: a27, kind: activity, lane: Core, step: 27, label: "publish: checks reading/conversion, artifact binding and projection compatibility; freshly checks enabled, accepted, current, trusted folder assignment"}
+  - {id: dpubkind, kind: decision, lane: Core, label: "paper publication applicability?"}
+  - {id: a28, kind: activity, lane: Geo-Grapher, step: 28, label: "revalidates folder/artifact admission and publishes eligible reading claims; returns actual result or late refusal; Source acceptance remains separate"}
+  - {id: pubna, kind: activity, lane: Core, label: "records publish as not applicable for a non-PDF or non-full-conversion artifact, with the conversion limitation retained"}
+  - {id: pubpartial, kind: activity, lane: Core, label: "preserves reading and exact publish gap: incomplete reading, FOLDER_STALE, awaiting_accepted_folder, disabled Geo, stale artifact or returned/caught failure"}
+  - {id: dpubresult, kind: decision, lane: Core, label: "eligible publication succeeded?"}
+  - {id: a29, kind: activity, lane: Core, step: 29, label: "records stage outcomes and keys; source changes make results stale; failed stops this item, other incomplete statuses remain partial"}
+  - {id: dstatus, kind: decision, lane: Core, label: "item result?"}
+  - {id: itemfailed, kind: activity, lane: Core, label: "records the failed item's stage, evidence and reported fault flags; other frozen items continue only after critical-flag routing"}
+  - {id: ditemcritical, kind: decision, lane: Core, label: "existing scripted violation code or agent finding carries a critical flag?"}
+  - {id: partial, kind: activity, lane: Core, label: "retains exact partial coverage and stage reasons, including publication gaps; never relabels the item enriched"}
+  - {id: partialticket, kind: activity, lane: Core, label: "records a repair-required partial item's ticket without blocking other frozen items; required repair remains a final-verdict obligation"}
+  - {id: dpartial, kind: decision, lane: Lead (tier 1), label: "does the specification permit retaining these declared gaps?"}
+  - {id: a30, kind: activity, lane: Core, step: 30, label: "accounts for the item and continues the frozen set; failures never undo another item's finished work"}
+  - {id: dmore, kind: decision, lane: Core, label: "more frozen items?"}
+  - {id: a31, kind: activity, lane: Core, step: 31, label: "exposes separate Source, folder and lens decision worklists with current states and owners; retains failed-item tickets and historical enqueue attribution"}
+  - {id: dreadyitems, kind: decision, lane: Core, label: "any unaccounted in-scope Source/folder/lens decisions in actually decidable states?"}
+  - {id: dacceptkind, kind: decision, lane: Core, label: "recorded decision item is Source, folder card or independent lens?"}
+  - {id: dlensauthor, kind: decision, lane: Core, label: "existing mode, sensitivity and declared actor permit an independent agent lens decision?"}
+  - {id: lensreview, kind: activity, lane: Clerk (tier 2), label: "makes a separately authorized accept/reject/defer decision for the staged reasoning instruction and its passage; Source acceptance confers none"}
+  - {id: lensperson, kind: activity, lane: Owner, label: "decides accept/reject/defer for a person-mode, sensitive or otherwise reserved lens; agent permission alone cannot decide it"}
+  - {id: lensrecord, kind: activity, lane: Core, label: "applies the recorded lens decision through existing gated staging; keeps passage immutable and decision actor explicit; no Source promotion"}
+  - {id: dlensrecord, kind: decision, lane: Core, label: "lens decision recorded, blocked or critical?"}
+  - {id: folderaccept, kind: activity, lane: Owner, label: "reviews the enriched folder card's purpose, authorship, sensitivity, description, graph and fresh fingerprint in Folders review"}
+  - {id: dfolderaccept, kind: decision, lane: Owner, label: "folder-card decision approved?"}
+  - {id: folderapply, kind: activity, lane: Core, label: "applies the folder decision through FolderReview, with its barriers and provenance; does not promote a Source note"}
+  - {id: dfoldernext, kind: decision, lane: Core, label: "folder decision succeeded and requires document ingestion?"}
+  - {id: a32, kind: activity, lane: Core, step: 32, label: "previews acceptance mechanically: recorded sensitivity/mode, agent review status, required-field schemas, coverage/attempt counters, leases and fingerprints"}
+  - {id: dacceptready, kind: decision, lane: Core, label: "acceptance schemas, recorded agent review and state guards ready?"}
+  - {id: acceptprose, kind: activity, lane: Clerk (tier 2), label: "supplies or revises grounded prose and metadata proposals; low-confidence drafts are not silently accepted as reviewed-ok"}
+  - {id: dprosebound, kind: decision, lane: Clerk (tier 2), label: "did the draft make meaningful progress within the Core-reported correction allowance?"}
+  - {id: dauthor, kind: decision, lane: Core, label: "who may accept this item under policy?"}
+  - {id: acceptperson, kind: activity, lane: Owner, label: "reviews sensitive items, person-mode promotion and interrupted promotion; decides whether to accept"}
+  - {id: dpersonaccept, kind: decision, lane: Owner, label: "acceptance approved?"}
+  - {id: a33, kind: activity, lane: Clerk (tier 2), step: 33, label: "submits the acceptance packet: makes the granted agent decision or carries the Owner's recorded decision; retains true actor, per-item origin and actual coverage"}
+  - {id: dacceptintent, kind: decision, lane: Core, label: "recorded agent or Owner acceptance affirmative?"}
+  - {id: a34, kind: activity, lane: Core, step: 34, label: "writes through the Core writer with leases and compare-and-swap checks; retains originals and records interrupted promotion visibly"}
+  - {id: dwrite, kind: decision, lane: Core, label: "promotion committed?"}
+  - {id: a35, kind: activity, lane: Core, step: 35, label: "checks write receipts, concepts, backlinks, topic and Master indexes, applicable vectors, provenance and title/Bottom Line/concept findability"}
+  - {id: dfind, kind: decision, lane: Core, label: "required note checks pass?"}
+  - {id: dacceptmore, kind: decision, lane: Core, label: "more unaccounted in-scope decisions? Deferred obligations stay visible for the final verdict"}
+  - {id: a36, kind: activity, lane: Oracle, step: 36, label: "judges outputs against the Core-stored specification and actual coverage: consumes scripted checks, then applies isolated model judgement"}
+  - {id: doracle, kind: decision, lane: Oracle, label: "run verdict?"}
+  - {id: a37, kind: activity, lane: Lead (tier 1), step: 37, label: "returns verdict, coverage, publication, tickets, known/unknown spending and authority exceptions; names separate owners for any remaining Source/lens decisions"}
+  - {id: drecipient, kind: decision, lane: Core, label: "specification owner?"}
+  - {id: a38, kind: activity, lane: Tier 0 agent, step: 38, label: "reviews the handback against its delegated goal for the current external task; does not repeat the workers' tasks"}
+  - {id: doverseer, kind: decision, lane: Tier 0 agent, label: "handback ready for the active task or Owner?"}
+  - {id: overseerreport, kind: activity, lane: Tier 0 agent, label: "returns the result to its active external task and reports to the Owner as directed"}
+  - {id: tidy, kind: activity, lane: Tier 0 agent, label: "requests bounded correction and independent recheck; workers repair and the Oracle judges"}
+  - {id: dtidybound, kind: decision, lane: Core, label: "within the accepted single tidy-up and final-pass allowance?"}
+  - {id: directreport, kind: activity, lane: Owner, label: "receives the Lead's result and Oracle verdict directly"}
+  - {id: mreport, kind: activity, lane: Core, label: "records delivery of the result to its specification owner"}
+  - {id: e1, kind: end, outcome: success, label: "required Source artifacts are accepted with true coverage; specified lens decisions, findability, folder access and applicable graph obligations are met"}
+  - {id: partialreport, kind: activity, lane: Lead (tier 1), label: "returns permitted partial coverage and verdict with gaps, tickets, known/unknown spend and separate Source/lens decision states and owners"}
+  - {id: epartial, kind: end, outcome: partial, label: "a partial result is reported with its actual coverage and unresolved obligations"}
+  - {id: enowork, kind: end, outcome: reused, label: "no new enrichment: existing, filtered, excluded or empty inputs are accounted for"}
+  - {id: ticket, kind: activity, lane: Core, label: "persists submitted fault tickets: run, use case, extension, existing refusal/flags, evidence, declared responsible actor and rejoin"}
+  - {id: dticket, kind: decision, lane: Core, label: "which recorded flag and existing responsibility route applies?"}
+  - {id: critical, kind: activity, lane: Owner, label: "receives critical security, data-loss, attestation or authority-boundary evidence immediately, with tier 0 when present"}
+  - {id: decisionowner, kind: activity, lane: Owner, label: "decides reserved spending, sensitivity, promotion or proposed compensation; the ticket waits for that decision"}
+  - {id: downer, kind: decision, lane: Owner, label: "reserved decision permits continuation?"}
+  - {id: compensation, kind: activity, lane: Owner, label: "carries out the specifically chosen compensation; preserves its receipt and unresolved original symptom for Lead diagnosis"}
+  - {id: decisionrecord, kind: activity, lane: Core, label: "records the completed reserved decision and any explicit revised authority before re-admitting the affected operation"}
+  - {id: scopejudge, kind: activity, lane: Oracle, label: "judges the outside-envelope request against the run specification; cannot expand its mandate or include reserved or always-ask decisions"}
+  - {id: dscope, kind: decision, lane: Core, label: "recorded Oracle verdict and existing grant/always-ask checks?"}
+  - {id: scoperecord, kind: activity, lane: Core, label: "records the evidence-bearing permitted allowance for final reporting; re-admits only the original affected operation"}
+  - {id: doctor, kind: activity, lane: Doctor, label: "diagnoses the mapped failure and judges catalogued remedy fit and actual affected scope; proposes the remedy under its isolated revisable role assignment"}
+  - {id: dremedy, kind: decision, lane: Core, label: "accepted remedy ID and declared resource set within recorded grants and attempt counters?"}
+  - {id: repair, kind: activity, lane: Doctor, label: "executes the permitted remedy through registered actions; records attempts and proposed compensation without automatic rollback"}
+  - {id: recheck, kind: activity, lane: Oracle, label: "independently rechecks the repaired symptom and affected requirements against evidence; the Doctor never declares closure"}
+  - {id: drecheck, kind: decision, lane: Oracle, label: "repair verified?"}
+  - {id: close, kind: activity, lane: Core, label: "records the verified ticket resolution, remedy history and exact authorized rejoin; new remedies still require Owner acceptance"}
+  - {id: drejoin, kind: decision, lane: Core, label: "ticket's recorded authorized rejoin?"}
+  - {id: scout, kind: activity, lane: Clerk (tier 2), label: "investigates an unmapped failure or misalignment read-only, directing bounded Scribe tasks where useful"}
+  - {id: realign, kind: activity, lane: Lead (tier 1), label: "owns the unmapped diagnosis and re-alignment; proposes a new remedy or escalates without widening the specification"}
+  - {id: drealign, kind: decision, lane: Lead (tier 1), label: "a permitted correction is available?"}
+  - {id: realigncheck, kind: activity, lane: Oracle, label: "independently checks the Lead's correction; a failed or uncertain recheck is escalated with retained evidence"}
+  - {id: drealigncheck, kind: decision, lane: Oracle, label: "Lead correction verified?"}
+  - {id: escalation, kind: activity, lane: Lead (tier 1), label: "explains the unresolved diagnosis and required intervention to tier 0 or the Owner; submits the evidence-bearing ticket through Core storage/dispatch"}
+  - {id: paused, kind: activity, lane: Lead (tier 1), label: "explains held work, the required decision and the permitted resume point to the specification owner using persisted receipts"}
+  - {id: epaused, kind: end, outcome: paused, label: "paused or interrupted with retained evidence and an explicit decision or resume requirement"}
+  - {id: eescalated, kind: end, outcome: escalated, label: "an unresolved or critical ticket is handed to its accountable tier 0 agent or Owner"}
+edges:
+  - {from: s, to: targetcontract}
+  - {from: targetcontract, to: a1}
+  - {from: a1, to: dentry}
+  - {from: dentry, to: a2, guard: "tier 0 delegates"}
+  - {from: dentry, to: direct, guard: "Owner uses Librarian directly", ext: "1a"}
+  - {from: direct, to: a3}
+  - {from: a2, to: a3}
+  - {from: a3, to: callgate}
+  - {from: callgate, to: dspecready}
+  - {from: dspecready, to: dinput, guard: "ready and no critical finding"}
+  - {from: dspecready, to: ticket, guard: "noncritical missing, refused or worker-review assignment collision", ext: "3a"}
+  - {from: dspecready, to: critical, guard: "critical integrity, false attestation or authority-boundary finding", ext: "3b"}
+  - {from: dinput, to: a4, guard: "folder"}
+  - {from: dinput, to: native, guard: "native references", ext: "4a"}
+  - {from: dinput, to: folderapprove, guard: "waiting folder metadata cards", ext: "4c"}
+  - {from: dinput, to: noteread, guard: "explicitly requested accepted-Source rereading", ext: "4d"}
+  - {from: dinput, to: maintenanceinventory, guard: "scoped existing-publication reconciliation requested", ext: "4e"}
+  - {from: maintenanceinventory, to: maintenanceassess}
+  - {from: maintenanceassess, to: maintenanceplan}
+  - {from: maintenanceplan, to: maintenancegrant}
+  - {from: maintenancegrant, to: dmaintenancegrant}
+  - {from: dmaintenancegrant, to: dmaintenancework, guard: "noncritical; actual scope and registered components already authorized"}
+  - {from: dmaintenancegrant, to: decisionowner, guard: "noncritical reserved decision or additional exact scope authority required"}
+  - {from: dmaintenancegrant, to: escalation, guard: "outside mandate, no accepted capability or code change required"}
+  - {from: dmaintenancegrant, to: critical, guard: "critical integrity or authority-boundary finding"}
+  - {from: dmaintenancework, to: noteread, guard: "accepted Source needs reading recovery; stage a revision, never new-source duplicate validation"}
+  - {from: dmaintenancework, to: dsourceapprove, guard: "unaccepted finished partial needs actual re-approval and a new authorized batch"}
+  - {from: dmaintenancework, to: a14, guard: "authorized unfinished pinned batch needs reading recovery"}
+  - {from: dmaintenancework, to: maintenanceproject, guard: "compatible full current reading exists; only declared projection/publication work needed"}
+  - {from: dmaintenancework, to: a36, guard: "no affected work remains; retain evidence and separate pending decisions for final verdict"}
+  - {from: dmaintenancework, to: scout, guard: "incompatible or insufficient evidence; no justified continuation"}
+  - {from: maintenanceproject, to: dmaintenanceproject}
+  - {from: dmaintenanceproject, to: maintenancegeo, guard: "noncritical compatible full reading/conversion and fresh enabled, accepted, current, trusted folder/artifact admission"}
+  - {from: dmaintenanceproject, to: ticket, guard: "noncritical projection/admission gap, stale artifact/folder or stage error; retain old state and actual reason"}
+  - {from: dmaintenanceproject, to: critical, guard: "critical integrity or authority-boundary finding"}
+  - {from: maintenancegeo, to: dmaintenanceresult}
+  - {from: dmaintenanceresult, to: a36, guard: "noncritical actual publication receipt; Oracle rechecks the scoped obligation"}
+  - {from: dmaintenanceresult, to: ticket, guard: "noncritical late refusal, returned/caught Geo failure or unknown result; original state retained"}
+  - {from: dmaintenanceresult, to: critical, guard: "critical integrity, false attestation or boundary finding"}
+  - {from: folderapprove, to: a12}
+  - {from: native, to: a10}
+  - {from: a4, to: dstale}
+  - {from: dstale, to: a5, guard: "current"}
+  - {from: dstale, to: ticket, guard: "stale root or group", ext: "4b", observed: "former to-be 4a / remedy R1"}
+  - {from: a5, to: a6}
+  - {from: a6, to: dfolderdraft}
+  - {from: dfolderdraft, to: dsensitive, guard: "available with no critical finding"}
+  - {from: dfolderdraft, to: ticket, guard: "noncritical unqualified, disabled, unavailable or failed draft", ext: "6b", observed: "former to-be 6a / remedy R2"}
+  - {from: dfolderdraft, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "6c"}
+  - {from: dsensitive, to: a7, guard: "permitted ordinary decision"}
+  - {from: dsensitive, to: folderperson, guard: "sensitive or reserved decision", ext: "6a", observed: "former to-be 6b"}
+  - {from: folderperson, to: dfolderperson}
+  - {from: dfolderperson, to: a7, guard: "approved"}
+  - {from: dfolderperson, to: paused, guard: "declined or waiting"}
+  - {from: a7, to: dfolderapplied}
+  - {from: dfolderapplied, to: dpurpose, guard: "applied with no critical finding"}
+  - {from: dfolderapplied, to: ticket, guard: "noncritical refused or failed", ext: "7a"}
+  - {from: dfolderapplied, to: critical, guard: "critical integrity or authority-boundary finding", ext: "7d"}
+  - {from: dpurpose, to: a8, guard: "third-party, research-docs or own-docs; retain own-docs graph role too"}
+  - {from: dpurpose, to: ownindex, guard: "own code, data or logs; no Source enumeration", ext: "7b"}
+  - {from: dpurpose, to: droots, guard: "this root excluded or withheld; retain its accounted outcome", ext: "7c"}
+  - {from: ownindex, to: ownverify}
+  - {from: ownverify, to: droots}
+  - {from: a8, to: a9}
+  - {from: a9, to: dcounts}
+  - {from: dcounts, to: droots, guard: "reconciled"}
+  - {from: dcounts, to: ticket, guard: "mismatch", ext: "9a", observed: "former to-be 9a / remedy R3"}
+  - {from: droots, to: a10, guard: "all roots accounted for and source references queued"}
+  - {from: droots, to: a5, guard: "another accepted root remains", ext: "9b"}
+  - {from: droots, to: a36, guard: "all roots accounted for; only own-content indexing or folder classification required", ext: "9c"}
+  - {from: droots, to: accounted, guard: "all roots accounted for; only excluded, held or empty outcomes", ext: "9d"}
+  - {from: a10, to: dcaptureguard}
+  - {from: dcaptureguard, to: capturedescribe, guard: "no critical finding; draft only successfully captured eligible evidence"}
+  - {from: dcaptureguard, to: critical, guard: "critical integrity or authority-boundary finding", ext: "10e"}
+  - {from: capturedescribe, to: dcapture}
+  - {from: dcapture, to: dsourceapprove, guard: "noncritical staged work with actual draft outcomes retained; account for failed, duplicate, filtered and queued siblings separately"}
+  - {from: dcapture, to: capturefailed, guard: "noncritical no staged work and at least one failed capture", ext: "10a"}
+  - {from: capturefailed, to: ticket}
+  - {from: dcapture, to: accounted, guard: "noncritical no staged work or failure; only held, filtered, excluded or empty inputs", ext: "10b"}
+  - {from: dcapture, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "10f"}
+  - {from: accounted, to: dnowork}
+  - {from: dnowork, to: enowork, guard: "required outcome already met or exclusions satisfy the specification"}
+  - {from: dnowork, to: ticket, guard: "required work missing or uncertain"}
+  - {from: dsourceapprove, to: dagentingestion, guard: "permitted declared agent in agent mode; ordinary sources"}
+  - {from: dagentingestion, to: a11, guard: "Lead approves the staged sources"}
+  - {from: dagentingestion, to: paused, guard: "declined or held with an explicit reason", ext: "10d"}
+  - {from: dsourceapprove, to: approveperson, guard: "person mode, sensitive or reserved ingestion decision", ext: "10c"}
+  - {from: approveperson, to: dapproveperson}
+  - {from: dapproveperson, to: a11, guard: "approved"}
+  - {from: dapproveperson, to: paused, guard: "declined or waiting"}
+  - {from: a11, to: dprocessscope}
+  - {from: dprocessscope, to: a12, guard: "source enrichment required"}
+  - {from: dprocessscope, to: a32, guard: "authorized captured-only coverage is sufficient; no reading is claimed", ext: "11a"}
+  - {from: a12, to: dstart}
+  - {from: dstart, to: a13, guard: "authorized approved set"}
+  - {from: dstart, to: startperson, guard: "approved work but no delegated start authority", ext: "12a"}
+  - {from: startperson, to: dstartperson}
+  - {from: dstartperson, to: a13, guard: "approved"}
+  - {from: dstartperson, to: paused, guard: "declined or waiting"}
+  - {from: dstart, to: accounted, guard: "no approved work", ext: "12b"}
+  - {from: a13, to: a14}
+  - {from: a14, to: dcontinue}
+  - {from: dcontinue, to: a15, guard: "active, not cancelled and below ceiling"}
+  - {from: dcontinue, to: stopped, guard: "cancelled, interrupted or ceiling reached", ext: "14a", observed: "former to-be 14a; current checks are not a hard per-call cost cap"}
+  - {from: stopped, to: paused}
+  - {from: a15, to: dkind}
+  - {from: dkind, to: a16, guard: "source"}
+  - {from: dkind, to: folderobserved, guard: "folder metadata card", ext: "15a"}
+  - {from: folderobserved, to: fv}
+  - {from: fv, to: dfv}
+  - {from: dfv, to: fd, guard: "noncritical and not failed"}
+  - {from: dfv, to: fcoverage, guard: "noncritical failed: skip remaining folder stages"}
+  - {from: dfv, to: critical, guard: "critical integrity or boundary finding"}
+  - {from: fd, to: dfd}
+  - {from: dfd, to: fdata, guard: "noncritical and not failed; keep queued or partial outcomes"}
+  - {from: dfd, to: fcoverage, guard: "noncritical failed: retain FOLDER_PROVENANCE/FOLDER_DRAFT_FAILED and skip remaining folder stages"}
+  - {from: dfd, to: critical, guard: "critical integrity, false attestation or boundary finding"}
+  - {from: fdata, to: dfdata}
+  - {from: dfdata, to: fcoverage, guard: "noncritical result; retain actual complete/partial/failed stage receipt"}
+  - {from: dfdata, to: critical, guard: "critical integrity or boundary finding"}
+  - {from: fcoverage, to: a29}
+  - {from: noteread, to: drevision}
+  - {from: drevision, to: revisionapprove, guard: "noncritical reading complete and revision ready with actual coverage"}
+  - {from: drevision, to: revisionpartial, guard: "noncritical partial reading retained and the specification explicitly permits accepting that partial revision"}
+  - {from: revisionpartial, to: revisionapprove}
+  - {from: drevision, to: a36, guard: "noncritical partial or queued rereading without authorized partial acceptance; preserve revision and obtain a real verdict"}
+  - {from: drevision, to: escalation, guard: "noncritical failed or stale reading; evidence retained"}
+  - {from: drevision, to: critical, guard: "critical integrity, false attestation or boundary finding"}
+  - {from: revisionapprove, to: drevisionintent}
+  - {from: drevisionintent, to: drevisionactor, guard: "Clerk affirmatively accepts within granted scope or submits the proposal for the reserved Owner decision"}
+  - {from: drevisionintent, to: paused, guard: "Clerk holds or declines with an explicit reason"}
+  - {from: drevisionactor, to: revisionmerge, guard: "permitted ordinary declared-agent acceptance"}
+  - {from: drevisionactor, to: revisionperson, guard: "person mode, sensitive or reserved decision"}
+  - {from: revisionperson, to: drevisionperson}
+  - {from: drevisionperson, to: revisionmerge, guard: "approved"}
+  - {from: drevisionperson, to: paused, guard: "declined or waiting"}
+  - {from: revisionmerge, to: drevisionmerge}
+  - {from: drevisionmerge, to: drevisionreturn, guard: "committed with no critical finding"}
+  - {from: drevisionreturn, to: a35, guard: "ordinary accepted-note revision; no publication maintenance requested"}
+  - {from: drevisionreturn, to: dinput, guard: "authorized publication maintenance requested; retain request and re-inventory current reading/projection eligibility through entry admission"}
+  - {from: drevisionmerge, to: escalation, guard: "noncritical human edit, stale input or merge conflict; original retained"}
+  - {from: drevisionmerge, to: critical, guard: "critical integrity or authority-boundary finding"}
+  - {from: a16, to: dv}
+  - {from: dv, to: a17, guard: "noncritical and not failed"}
+  - {from: dv, to: a29, guard: "noncritical failed: stop this item's remaining stages", ext: "16a"}
+  - {from: dv, to: critical, guard: "critical integrity or authority-boundary finding", ext: "16b"}
+  - {from: a17, to: dp}
+  - {from: dp, to: a18, guard: "noncritical, not failed and no model conversion requested; retain actual partial or queued extraction status"}
+  - {from: dp, to: a29, guard: "noncritical uncaught stage failure: stop this item's remaining stages", ext: "17a"}
+  - {from: dp, to: conversionplan, guard: "noncritical recorded request for permitted model transcription or cleanup", ext: "17b"}
+  - {from: dp, to: critical, guard: "critical integrity or authority-boundary finding", ext: "17c"}
+  - {from: conversionplan, to: conversionwork}
+  - {from: conversionwork, to: conversionreview}
+  - {from: conversionreview, to: conversioncheck}
+  - {from: conversioncheck, to: dconversion}
+  - {from: dconversion, to: a18, guard: "noncritical usable mapped representation and Clerk review; retain actual complete or partial coverage"}
+  - {from: dconversion, to: conversiongap, guard: "noncritical, no transport outage: returned task error/refusal, or unusable representation without usable-original anchor fallback; retain partial/queued gaps"}
+  - {from: dconversion, to: conversionfallback, guard: "noncritical successful cleanup loses anchors; usable original page-mapped text and no transport outage"}
+  - {from: conversionfallback, to: a18}
+  - {from: conversiongap, to: a18}
+  - {from: dconversion, to: a29, guard: "noncritical uncaught stage/writer failure: stop this item's remaining stages"}
+  - {from: dconversion, to: critical, guard: "critical integrity or authority-boundary finding"}
+  - {from: dconversion, to: conversionoutage, guard: "noncritical transport 429, timeout or unavailable route"}
+  - {from: conversionoutage, to: conversionroute}
+  - {from: conversionroute, to: dconversionretry, guard: "Lead requests bounded same-route retry"}
+  - {from: dconversionretry, to: a17, guard: "permitted bounded parse re-entry; reuse compatible extraction and retry only affected conversion work"}
+  - {from: dconversionretry, to: conversiongap, guard: "retry not currently permitted; retain returned-error partial or missing-material gaps"}
+  - {from: conversionroute, to: conversiongap, guard: "retain usable fallback and exact returned-error partial or missing-material gaps"}
+  - {from: conversionroute, to: paused, guard: "pause affected work; no silent model substitution"}
+  - {from: a18, to: a19}
+  - {from: a19, to: a20}
+  - {from: a20, to: a21}
+  - {from: a21, to: dr}
+  - {from: dr, to: a22, guard: "noncritical, not failed and no new transport incident; retain partial/queued/skipped tasks, including invalid JSON or grounding refusal"}
+  - {from: dr, to: a29, guard: "noncritical failed: stop this item's remaining stages", ext: "21a"}
+  - {from: dr, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "21b"}
+  - {from: dr, to: readoutage, guard: "noncritical 429, timeout or unavailable route", ext: "21c"}
+  - {from: readoutage, to: readroute}
+  - {from: readroute, to: dreadretry, guard: "Lead requests bounded retry of pending tasks only"}
+  - {from: dreadretry, to: a18, guard: "permitted same-route attempt; reuse matching completed tasks"}
+  - {from: dreadretry, to: a22, guard: "retry not currently permitted; retain queued task gaps and defer failed-route dispatch"}
+  - {from: readroute, to: a22, guard: "continue with actual queued gaps and completed evidence; failed route stays deferred"}
+  - {from: readroute, to: paused, guard: "pause affected work; reassignment requires fresh authorized qualification"}
+  - {from: a22, to: dl}
+  - {from: dl, to: a23, guard: "noncritical and not failed; record not applicable explicitly"}
+  - {from: dl, to: a29, guard: "noncritical failed: stop this item's remaining stages", ext: "22a"}
+  - {from: dl, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "22b"}
+  - {from: a23, to: dd}
+  - {from: dd, to: a24, guard: "noncritical and not failed; retain partial or not applicable status"}
+  - {from: dd, to: a29, guard: "noncritical failed: stop this item's remaining stages", ext: "23a"}
+  - {from: dd, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "23b"}
+  - {from: a24, to: drel}
+  - {from: drel, to: a25, guard: "noncritical and not failed; retain queued, partial or not applicable status"}
+  - {from: drel, to: a29, guard: "noncritical failed: stop this item's remaining stages", ext: "24a"}
+  - {from: drel, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "24b"}
+  - {from: a25, to: dmeta}
+  - {from: dmeta, to: a26, guard: "noncritical and not failed"}
+  - {from: dmeta, to: a29, guard: "noncritical failed: stop this item's remaining stages", ext: "25a"}
+  - {from: dmeta, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "25b"}
+  - {from: a26, to: dreview}
+  - {from: dreview, to: a27, guard: "noncritical and not failed; retain partial or queued review and any deferred-route reason"}
+  - {from: dreview, to: a29, guard: "noncritical failed or refused: stop this item's remaining stages", ext: "26a"}
+  - {from: dreview, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "26b"}
+  - {from: a27, to: dpubkind}
+  - {from: dpubkind, to: a28, guard: "noncritical fully read PDF, compatible full conversion/artifact and freshly enabled, accepted, current, trusted folder assignment"}
+  - {from: dpubkind, to: pubna, guard: "noncritical non-PDF, or fully read PDF without a full-conversion artifact", ext: "27a"}
+  - {from: dpubkind, to: pubpartial, guard: "noncritical reading incomplete, or full-reading/full-conversion artifact/folder admission blocked; preserve exact reason", ext: "27b"}
+  - {from: dpubkind, to: a29, guard: "noncritical preparation exception: failed stage; stop this item's remaining work", ext: "27c"}
+  - {from: dpubkind, to: critical, guard: "critical integrity or authority-boundary finding", ext: "27d"}
+  - {from: pubna, to: a29}
+  - {from: pubpartial, to: a29}
+  - {from: a28, to: dpubresult}
+  - {from: dpubresult, to: a29, guard: "published with no critical finding"}
+  - {from: dpubresult, to: pubpartial, guard: "noncritical returned disabled/refused, late FOLDER_STALE/awaiting_accepted_folder/artifact mismatch or caught publication error", ext: "28a"}
+  - {from: dpubresult, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "28b"}
+  - {from: dpubresult, to: a29, guard: "noncritical uncaught stage failure; preserve failed status", ext: "28c"}
+  - {from: a29, to: dstatus}
+  - {from: dstatus, to: a30, guard: "enriched; all required stages accounted for"}
+  - {from: dstatus, to: partial, guard: "partial, queued, skipped or stale work remains", ext: "29a", observed: "former to-be 13a/13b / remedy R4"}
+  - {from: dstatus, to: itemfailed, guard: "failed", ext: "29b"}
+  - {from: itemfailed, to: ditemcritical}
+  - {from: ditemcritical, to: a30, guard: "noncritical; retain ticket for repair and final accounting"}
+  - {from: ditemcritical, to: critical, guard: "critical; notify Owner and tier 0 immediately"}
+  - {from: partial, to: dpartial}
+  - {from: dpartial, to: a30, guard: "declared gaps permitted"}
+  - {from: dpartial, to: partialticket, guard: "repair required or uncertain"}
+  - {from: partialticket, to: ditemcritical}
+  - {from: a30, to: dmore}
+  - {from: dmore, to: a31, guard: "frozen set accounted for"}
+  - {from: dmore, to: a14, guard: "another frozen item", ext: "30a"}
+  - {from: a31, to: dreadyitems}
+  - {from: dreadyitems, to: dacceptkind, guard: "yes; choose an actually decidable item"}
+  - {from: dreadyitems, to: a36, guard: "none; retain failed or pending item tickets for final verdict", ext: "31b"}
+  - {from: dacceptkind, to: a32, guard: "source"}
+  - {from: dacceptkind, to: folderaccept, guard: "folder metadata card", ext: "31a"}
+  - {from: dacceptkind, to: dlensauthor, guard: "independent lens decision requested by the parent specification", ext: "31c"}
+  - {from: dlensauthor, to: lensreview, guard: "ordinary normal-sensitivity lens; declared agent and existing agent-mode authority permit the separate decision"}
+  - {from: dlensauthor, to: lensperson, guard: "person mode, sensitive lens or another reserved decision"}
+  - {from: lensreview, to: lensrecord}
+  - {from: lensperson, to: lensrecord}
+  - {from: lensrecord, to: dlensrecord}
+  - {from: dlensrecord, to: dacceptmore, guard: "noncritical recorded accept/reject/defer; preserve actual state and any remaining obligation"}
+  - {from: dlensrecord, to: ticket, guard: "noncritical refusal/conflict; do not claim a lens decision was applied"}
+  - {from: dlensrecord, to: critical, guard: "critical integrity, false attestation or authority-boundary finding"}
+  - {from: folderaccept, to: dfolderaccept}
+  - {from: dfolderaccept, to: folderapply, guard: "approved"}
+  - {from: dfolderaccept, to: paused, guard: "declined or waiting"}
+  - {from: folderapply, to: dfoldernext}
+  - {from: dfoldernext, to: dacceptmore, guard: "decision succeeded; metadata-only request"}
+  - {from: dfoldernext, to: a8, guard: "decision succeeded; source-eligible documents requested"}
+  - {from: dfoldernext, to: ownindex, guard: "decision succeeded; own content indexed whole"}
+  - {from: dfoldernext, to: ticket, guard: "folder application refused or failed"}
+  - {from: a32, to: dacceptready}
+  - {from: dacceptready, to: dauthor, guard: "ready"}
+  - {from: dacceptready, to: acceptprose, guard: "grounded prose or required metadata needs review", ext: "32a"}
+  - {from: dacceptready, to: ticket, guard: "state, name, input, lease or interrupted-promotion conflict", ext: "32b"}
+  - {from: acceptprose, to: dprosebound}
+  - {from: dprosebound, to: a32, guard: "within the run's declared allowance with progress"}
+  - {from: dprosebound, to: escalation, guard: "exhausted, no progress or uncertain"}
+  - {from: dauthor, to: a33, guard: "declared agent under agent mode; ordinary uninterrupted item"}
+  - {from: dauthor, to: acceptperson, guard: "person mode, sensitive or interrupted promotion", ext: "33a", observed: "former to-be 16a; OP1 is now exposed in current Core"}
+  - {from: acceptperson, to: dpersonaccept}
+  - {from: dpersonaccept, to: a33, guard: "approved"}
+  - {from: dpersonaccept, to: paused, guard: "declined or waiting"}
+  - {from: a33, to: dacceptintent}
+  - {from: dacceptintent, to: a34, guard: "affirmative recorded agent or Owner acceptance submitted"}
+  - {from: dacceptintent, to: paused, guard: "agent holds or declines acceptance with an explicit reason", ext: "33b"}
+  - {from: a34, to: dwrite}
+  - {from: dwrite, to: a35, guard: "committed with no critical finding"}
+  - {from: dwrite, to: ticket, guard: "noncritical conflict, interrupted or outcome unknown", ext: "34a"}
+  - {from: dwrite, to: critical, guard: "critical integrity, false attestation or boundary finding", ext: "34b"}
+  - {from: a35, to: dfind}
+  - {from: dfind, to: dacceptmore, guard: "findable with required fields and labels"}
+  - {from: dfind, to: ticket, guard: "missing or written but not findable; retain actual failed search", ext: "35a", observed: "former to-be 17a / candidate remedy R5; four cross-library failures reported 22 November, not proof that reindexing cures them"}
+  - {from: dacceptmore, to: a36, guard: "all requested decisions accounted for"}
+  - {from: dacceptmore, to: dacceptkind, guard: "another decision item", ext: "35b"}
+  - {from: a36, to: doracle}
+  - {from: doracle, to: a37, guard: "success guarantee met with no declared partial-result gaps"}
+  - {from: doracle, to: partialreport, guard: "success guarantee otherwise met with only explicitly permitted declared gaps", ext: "36a"}
+  - {from: doracle, to: ticket, guard: "mapped failure, unmapped misalignment, uncertainty or critical finding", ext: "36b", observed: "former to-be 18a/18b / remedy R6"}
+  - {from: partialreport, to: epartial}
+  - {from: a37, to: drecipient}
+  - {from: drecipient, to: a38, guard: "tier 0 set the specification"}
+  - {from: drecipient, to: directreport, guard: "Owner set the specification", ext: "37a"}
+  - {from: directreport, to: mreport}
+  - {from: a38, to: doverseer}
+  - {from: doverseer, to: overseerreport, guard: "ready"}
+  - {from: doverseer, to: tidy, guard: "correction or recheck required", ext: "38a", observed: "former to-be 20a"}
+  - {from: tidy, to: dtidybound}
+  - {from: dtidybound, to: ticket, guard: "one tidy-up remains; record the requested correction"}
+  - {from: dtidybound, to: escalation, guard: "final pass still fails or allowance exhausted"}
+  - {from: overseerreport, to: mreport}
+  - {from: mreport, to: e1}
+  - {from: ticket, to: dticket}
+  - {from: dticket, to: doctor, guard: "noncritical, not reserved or pending scope judgement; mapped catalogued failure"}
+  - {from: dticket, to: scout, guard: "noncritical, not reserved or pending scope judgement; unmapped failure or misalignment"}
+  - {from: dticket, to: decisionowner, guard: "noncritical reserved person decision or proposed compensation"}
+  - {from: dticket, to: critical, guard: "critical security, data loss, false attestation or boundary violation"}
+  - {from: dticket, to: scopejudge, guard: "noncritical, not reserved; outside-envelope scope question"}
+  - {from: critical, to: eescalated}
+  - {from: decisionowner, to: downer}
+  - {from: downer, to: repair, guard: "specific remedy execution approved within original or explicitly revised authority"}
+  - {from: downer, to: compensation, guard: "specific compensation chosen; do not assert the original failure resolved"}
+  - {from: compensation, to: realign}
+  - {from: downer, to: decisionrecord, guard: "reserved checkpoint decision completed; operation still requires normal admission"}
+  - {from: decisionrecord, to: drejoin}
+  - {from: downer, to: paused, guard: "declined, waiting or authority still insufficient"}
+  - {from: scopejudge, to: dscope}
+  - {from: dscope, to: scoperecord, guard: "in specification, within mandate and permitted by existing nonreserved authority"}
+  - {from: scoperecord, to: drejoin}
+  - {from: dscope, to: decisionowner, guard: "reserved or always-ask decision is needed"}
+  - {from: dscope, to: escalation, guard: "out of scope, uncertain or above mandate"}
+  - {from: doctor, to: dremedy}
+  - {from: dremedy, to: repair, guard: "accepted, bounded and permitted"}
+  - {from: dremedy, to: decisionowner, guard: "person decision or compensation required"}
+  - {from: dremedy, to: realign, guard: "no remedy, outside scope or attempt bound exhausted"}
+  - {from: repair, to: recheck}
+  - {from: recheck, to: drecheck}
+  - {from: drecheck, to: close, guard: "verified"}
+  - {from: drecheck, to: realign, guard: "not verified or uncertain; no automatic rollback"}
+  - {from: close, to: drejoin}
+  - {from: drejoin, to: a3, guard: "specification, start authority or role-assignment readiness"}
+  - {from: drejoin, to: a4, guard: "folder survey or stale group"}
+  - {from: drejoin, to: a8, guard: "per-root queue reconciliation"}
+  - {from: drejoin, to: a10, guard: "capture retry"}
+  - {from: drejoin, to: a14, guard: "authorized unfinished-batch resume; reuse only matching receipts"}
+  - {from: drejoin, to: dsourceapprove, guard: "finished partial source needs explicit re-approval and a new authorized batch"}
+  - {from: drejoin, to: a32, guard: "acceptance or promotion review"}
+  - {from: drejoin, to: a35, guard: "written note index check"}
+  - {from: drejoin, to: a36, guard: "final specification recheck"}
+  - {from: drejoin, to: dinput, guard: "authorized existing-publication maintenance request retained; re-enter inventory and fresh admission"}
+  - {from: scout, to: realign}
+  - {from: realign, to: drealign}
+  - {from: drealign, to: realigncheck, guard: "permitted correction made; independent recheck required"}
+  - {from: drealign, to: escalation, guard: "no permitted correction, no progress or a code change required"}
+  - {from: realigncheck, to: drealigncheck}
+  - {from: drealigncheck, to: close, guard: "verified"}
+  - {from: drealigncheck, to: escalation, guard: "failed or uncertain"}
+  - {from: escalation, to: eescalated}
+  - {from: paused, to: epaused}
+provenance:
+  drafted_by: "tier 0 (Codex), Owner direction 21 November 2026"
+  at: 2026-11-21
+  revised_at: 2026-11-22
+  based_on: "accepted 20 November ingestion model, current source contracts, Owner actor-ownership correction and observed batches 3b62fc/d297e0; see observed-enrichment.md"
+  status: "behavioural analysis for review; Core-owned runtime specification storage and general ticket/oracle/doctor integration remain implementation work"

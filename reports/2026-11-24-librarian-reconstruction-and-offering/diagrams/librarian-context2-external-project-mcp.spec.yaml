@@ -1,0 +1,200 @@
+diagram: librarian-context2-external-project-mcp
+title: "Context 2: External-Project Tier 0 Accesses Librarian via MCP (Proposed To-Be)"
+problem:
+  symptom: "External project agents hit delegate contribute-tier blocks, Chat-tab Ask timeouts on MCP writes, conflated Context-1/3 acceptance authority, and Applications logs missing authorship/repeatability provenance."
+  root: "Enforce explicit Context-2 authority boundaries (consult research delegation budget, S1-S6b source access, queue/stage_only intake, no vault acceptance, agent-authored & Core-stored Applications/) and dual project/Librarian notifications."
+lanes:
+  - Lead / Clerk / Scribe (tier 1-3)
+  - Doctor
+  - Core
+  - Tier 0 agent (external project)
+  - Human user (ext project)
+
+nodes:
+  - id: s
+    kind: start
+    label: start
+  - id: extgoal
+    kind: activity
+    lane: Human user (ext project)
+    step: 1
+    label: "tasks External Tier 0 with building or researching in an external project outside Librarian"
+  - id: identifyneed
+    kind: activity
+    lane: Tier 0 agent (external project)
+    step: 2
+    label: "frames external knowledge or parallel-read need; calls Librarian MCP (apply / explore / delegate)"
+  - id: mcpenv
+    kind: activity
+    lane: Core
+    step: 3
+    label: "records spec_owner=external_project_caller; enforces helper budget, S1-S6b, queue/stage_only, no vault accept"
+  - id: dmode
+    kind: decision
+    lane: Core
+    label: "external-project MCP mode valid?"
+  - id: mcpblocked
+    kind: activity
+    lane: Core
+    label: "returns fast structured PERMISSION_UNANSWERED/tier/scope Ticket instead of blind 150s UI hang"
+  - id: notifyblocked
+    kind: activity
+    lane: Tier 0 agent (external project)
+    label: "reports exact Context-2 MCP authority/route gap & resume choice to external-project user"
+  - id: userpause
+    kind: activity
+    lane: Human user (ext project)
+    label: "receives paused external notice, Ticket ID, & Librarian Agenda resume link"
+  - id: reusedapp
+    kind: activity
+    lane: Core
+    label: "confirms unchanged catalogued Sources & matching Applications/ precedent ($0 new spend)"
+  - id: reuseext
+    kind: activity
+    lane: Tier 0 agent (external project)
+    label: "reuses verified precedent directly in external project"
+  - id: parallelhelpers
+    kind: activity
+    lane: Lead / Clerk / Scribe (tier 1-3)
+    step: 4
+    label: "Lead sets narrowed helper sub-spec; Clerk/Scribe run DeepInfra delegate/dispatch_plan in budget"
+  - id: checkcatalog
+    kind: activity
+    lane: Core
+    step: 5
+    label: "returns verified catalogue citations, ref: handles, spend & checks unresolved external leads"
+  - id: dmissing
+    kind: decision
+    lane: Core
+    label: "catalogued Sources satisfy external need?"
+  - id: queueasync
+    kind: activity
+    lane: Core
+    label: "enqueues unresolved_sources into .librarian/staging/source without hijacking external build"
+  - id: ingestchild
+    kind: ref
+    lane: Core
+    use_case: librarian-ingestion-tobe
+    label: "Lead runs narrowed L2 stage_only intake child (sub_spec_owner=lead_tier1 <= Context 2; no accept)"
+  - id: dcrit_ex
+    kind: decision
+    lane: Core
+    label: "critical security/data-loss/boundary breach vs mapped shortfall?"
+  - id: reuseingest
+    kind: activity
+    lane: Core
+    label: "reconciles reused source note & links candidate to active apply session"
+  - id: applypartial
+    kind: activity
+    lane: Tier 0 agent (external project)
+    label: "applies held partial evidence in external project & records unresolved_sources leads + spend"
+  - id: userpartial
+    kind: activity
+    lane: Human user (ext project)
+    label: "receives external deliverable, coverage gaps, spend & queued Library Agenda leads"
+  - id: queuepause
+    kind: activity
+    lane: Core
+    label: "keeps staged/enriched Source on Librarian Agenda for human/Context-1 acceptance; returns resume ref"
+  - id: doctorex
+    kind: ref
+    lane: Doctor
+    use_case: librarian-doctor-tobe
+    label: "attempts bounded MCP/intake Ticket repair (GLM-5.3 isolated adapter)"
+  - id: reentryex
+    kind: activity
+    lane: Core
+    label: "confirms single-pass Doctor repair before retrying external lookup"
+  - id: escticket
+    kind: activity
+    lane: Core
+    label: "routes critical escalated Ticket immediately with flags, evidence & Rule-8 compensation"
+  - id: notifyesc
+    kind: activity
+    lane: Tier 0 agent (external project)
+    label: "alerts external-project user immediately with critical Ticket ID & retained evidence"
+  - id: useresc
+    kind: activity
+    lane: Human user (ext project)
+    label: "receives urgent external failure notice & Librarian Ticket link"
+  - id: extapply
+    kind: activity
+    lane: Tier 0 agent (external project)
+    step: 6
+    label: "applies verified findings in external project & submits authored Application proposal"
+  - id: recordapp
+    kind: activity
+    lane: Core
+    step: 7
+    label: "validates citations, stores append-only Applications/ + sidecar & auto-enqueues unresolved_sources"
+  - id: userhandover
+    kind: activity
+    lane: Human user (ext project)
+    step: 8
+    label: "receives ext deliverable + locators, spend, Applications/ link & Agenda queued-lead receipt"
+  - id: userreuse
+    kind: activity
+    lane: Human user (ext project)
+    label: "receives reused Library precedent & unchanged Application link"
+  - id: e1
+    kind: end
+    outcome: success
+    label: "external task completed with repeatable Applications/ precedent & queued leads"
+  - id: epartial
+    kind: end
+    outcome: partial
+    label: "external task completed with partial/async-queued Library leads; user notified"
+  - id: ereused
+    kind: end
+    outcome: reused
+    label: "existing Library precedent reused without re-ingestion"
+  - id: epaused
+    kind: end
+    outcome: paused
+    label: "Librarian MCP grant/gate paused cleanly on Agenda; external user notified"
+  - id: eescalated
+    kind: end
+    outcome: escalated
+    label: "critical Librarian MCP/intake Ticket escalated; user notified"
+
+edges:
+  - {from: s, to: extgoal}
+  - {from: extgoal, to: identifyneed}
+  - {from: identifyneed, to: mcpenv}
+  - {from: mcpenv, to: dmode}
+  - {from: dmode, to: parallelhelpers, guard: "authorized read/helper/apply MCP session"}
+  - {from: dmode, to: mcpblocked, guard: "ungranted write or missing MCP route", ext: "3a"}
+  - {from: dmode, to: reusedapp, guard: "unchanged Sources & Application precedent", ext: "3b"}
+  - {from: mcpblocked, to: notifyblocked}
+  - {from: notifyblocked, to: userpause}
+  - {from: userpause, to: epaused}
+  - {from: reusedapp, to: reuseext}
+  - {from: reuseext, to: userreuse}
+  - {from: userreuse, to: ereused}
+  - {from: parallelhelpers, to: checkcatalog}
+  - {from: checkcatalog, to: dmissing}
+  - {from: dmissing, to: extapply, guard: "held Sources satisfy external project"}
+  - {from: dmissing, to: queueasync, guard: "missing refs queued asynchronously (default Context-2 queue scope)", ext: "5a"}
+  - {from: dmissing, to: ingestchild, guard: "scoped stage_only intake within project-intake grant", ext: "5b"}
+  - {from: queueasync, to: applypartial}
+  - {from: applypartial, to: userpartial}
+  - {from: userpartial, to: epartial}
+  - {from: ingestchild, to: extapply, guard: "success"}
+  - {from: ingestchild, to: applypartial, guard: "partial"}
+  - {from: ingestchild, to: reuseingest, guard: "reused"}
+  - {from: reuseingest, to: extapply}
+  - {from: ingestchild, to: queuepause, guard: "paused"}
+  - {from: queuepause, to: userpause}
+  - {from: ingestchild, to: dcrit_ex, guard: "escalated"}
+  - {from: dcrit_ex, to: escticket, guard: "critical security, data-loss, or boundary violation"}
+  - {from: dcrit_ex, to: doctorex, guard: "mapped noncritical shortfall"}
+  - {from: doctorex, to: reentryex, guard: "resolved"}
+  - {from: reentryex, to: checkcatalog}
+  - {from: doctorex, to: queuepause, guard: "declined"}
+  - {from: doctorex, to: escticket, guard: "escalated"}
+  - {from: escticket, to: notifyesc}
+  - {from: notifyesc, to: useresc}
+  - {from: useresc, to: eescalated}
+  - {from: extapply, to: recordapp}
+  - {from: recordapp, to: userhandover}
+  - {from: userhandover, to: e1}

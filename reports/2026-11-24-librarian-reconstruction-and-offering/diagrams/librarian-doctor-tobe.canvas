@@ -1,0 +1,640 @@
+{
+  "nodes": [
+    {
+      "id": "librarian-title",
+      "type": "text",
+      "x": 20,
+      "y": -200,
+      "width": 3980,
+      "height": 220,
+      "text": "# Librarian Doctor Recovery & Ticket Workflow (Proposed To-Be, Rule-8 Compliant)\n**Symptom:** Prior UC-D auto-rolled back compensation (x4), used Helper (tier 2), omitted activation triggers/ticket routing, and blocked non-interactive runs on Owner escalation.\n**Root cause:** Enforce structured Ticket intake (extension ID, flags, owner, repair history), accepted-only YAML remedies + W3/DOC-GEO-03 bounds, revisable GLM-5.3 isolated adapters, non-blocking caller routing, shown compensation (Rule 8), and Oracle recheck.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `librarian-doctor-tobe.spec.yaml`."
+    },
+    {
+      "id": "librarian-s",
+      "type": "text",
+      "x": 40,
+      "y": 140,
+      "width": 360,
+      "height": 70,
+      "text": "● start",
+      "color": "4"
+    },
+    {
+      "id": "librarian-intake",
+      "type": "text",
+      "x": 3040,
+      "y": 340,
+      "width": 360,
+      "height": 150,
+      "text": "**1.** records Ticket (ext ID, tiered flags, evidence hash, accountable actor, repair_history=0, required Oracle, mandate)"
+    },
+    {
+      "id": "librarian-dtrigger",
+      "type": "text",
+      "x": 3040,
+      "y": 540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ activation context for Ticket?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-dremedy",
+      "type": "text",
+      "x": 3040,
+      "y": 1140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ accepted YAML remedy matches?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-userdoc",
+      "type": "text",
+      "x": 3040,
+      "y": 740,
+      "width": 360,
+      "height": 150,
+      "text": "binds Context 3 UI Owner repair request (spec_owner=person)"
+    },
+    {
+      "id": "librarian-t0doc",
+      "type": "text",
+      "x": 3040,
+      "y": 940,
+      "width": 360,
+      "height": 150,
+      "text": "binds Context 1 commissioned mandate or Context 2 scoped grant (in-scope remedies run; never widens)"
+    },
+    {
+      "id": "librarian-blast",
+      "type": "text",
+      "x": 3040,
+      "y": 1740,
+      "width": 360,
+      "height": 150,
+      "text": "**2.** computes W3 blast radius vs parent mandate, <=3 recovery steps, & <=2 paid-call budget"
+    },
+    {
+      "id": "librarian-scout",
+      "type": "text",
+      "x": 2440,
+      "y": 1340,
+      "width": 360,
+      "height": 150,
+      "text": "scouts unmapped defect scope read-only; attaches diagnostic findings to Ticket"
+    },
+    {
+      "id": "librarian-dgrant",
+      "type": "text",
+      "x": 3040,
+      "y": 1940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ within parent mandate and DOC-GEO-03 bounds?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-draftprop",
+      "type": "text",
+      "x": 1840,
+      "y": 1540,
+      "width": 360,
+      "height": 150,
+      "text": "proposes new YAML remedy draft on Ticket (GLM-5.3 isolated adapter); never installs or executes it"
+    },
+    {
+      "id": "librarian-runremedy",
+      "type": "text",
+      "x": 1840,
+      "y": 3340,
+      "width": 360,
+      "height": 150,
+      "text": "**3.** runs accepted YAML remedy via revisable adapter (currently GLM-5.3, isolated context; FP9 strip XML)"
+    },
+    {
+      "id": "librarian-downeravail",
+      "type": "text",
+      "x": 3040,
+      "y": 2140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ interactive Owner directly present?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-haltescalate",
+      "type": "text",
+      "x": 1240,
+      "y": 4940,
+      "width": 360,
+      "height": 150,
+      "text": "routes critical escalated Ticket immediately with flags, hashes & Rule-8 compensation"
+    },
+    {
+      "id": "librarian-haltdecline",
+      "type": "text",
+      "x": 1240,
+      "y": 4740,
+      "width": 360,
+      "height": 150,
+      "text": "keeps Ticket open (declined/deferred) with evidence, compensation & Agenda notification target"
+    },
+    {
+      "id": "librarian-checkrepair",
+      "type": "text",
+      "x": 3040,
+      "y": 3540,
+      "width": 360,
+      "height": 150,
+      "text": "**4.** reruns deterministic checks, records changed hashes/repair_history on Ticket, & checks worker route separation"
+    },
+    {
+      "id": "librarian-askowner",
+      "type": "text",
+      "x": 1240,
+      "y": 2340,
+      "width": 360,
+      "height": 150,
+      "text": "routes Ticket with exact blast radius & Rule-16 reserved scope request to Owner"
+    },
+    {
+      "id": "librarian-e3",
+      "type": "text",
+      "x": 3640,
+      "y": 5140,
+      "width": 360,
+      "height": 150,
+      "text": "◉ bounds exhausted or critical fault; escalated with displayed compensation\n*outcome: escalated*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-e2",
+      "type": "text",
+      "x": 3640,
+      "y": 4940,
+      "width": 360,
+      "height": 150,
+      "text": "◉ unmapped, deferred, or declined without auto-rollback; ticket retained\n*outcome: declined*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-drepaired",
+      "type": "text",
+      "x": 3040,
+      "y": 3740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ deterministic checks passed?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-downer",
+      "type": "text",
+      "x": 40,
+      "y": 2540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Owner grants expanded scope?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-oracle",
+      "type": "text",
+      "x": 640,
+      "y": 3940,
+      "width": 360,
+      "height": 150,
+      "text": "**5.** verifies cleared Ticket via distinct qualified Oracle route (GLM-5.3 current adapter; switches reviewer on collision)"
+    },
+    {
+      "id": "librarian-showcomp",
+      "type": "text",
+      "x": 3040,
+      "y": 4340,
+      "width": 360,
+      "height": 150,
+      "text": "attaches shown compensation plan & failed attempt to Ticket (Rule 8: never auto-runs)"
+    },
+    {
+      "id": "librarian-haltdecline_at_520553d523",
+      "type": "text",
+      "x": 1240,
+      "y": 2740,
+      "width": 360,
+      "height": 150,
+      "text": "keeps Ticket open (declined/deferred) with evidence, compensation & Agenda notification target"
+    },
+    {
+      "id": "librarian-haltescalate_at_3424f37de3",
+      "type": "text",
+      "x": 1240,
+      "y": 2940,
+      "width": 360,
+      "height": 150,
+      "text": "routes critical escalated Ticket immediately with flags, hashes & Rule-8 compensation"
+    },
+    {
+      "id": "librarian-doracle",
+      "type": "text",
+      "x": 640,
+      "y": 4140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Oracle confirms shortfall resolved?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-dcomp",
+      "type": "text",
+      "x": 1240,
+      "y": 4540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ noncritical hold vs critical escalation?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-e2_at_520553d523",
+      "type": "text",
+      "x": 3640,
+      "y": 2940,
+      "width": 360,
+      "height": 150,
+      "text": "◉ unmapped, deferred, or declined without auto-rollback; ticket retained\n*outcome: declined*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-e3_at_3424f37de3",
+      "type": "text",
+      "x": 3640,
+      "y": 3140,
+      "width": 360,
+      "height": 150,
+      "text": "◉ bounds exhausted or critical fault; escalated with displayed compensation\n*outcome: escalated*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-closeresolved",
+      "type": "text",
+      "x": 3040,
+      "y": 5340,
+      "width": 360,
+      "height": 150,
+      "text": "**6.** marks Ticket resolved with repair history, Oracle pass verdict & user/caller notification receipt"
+    },
+    {
+      "id": "librarian-e1",
+      "type": "text",
+      "x": 3640,
+      "y": 5540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ accepted remedy verified by Oracle; ticket closed\n*outcome: resolved*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-lane-Owner",
+      "type": "group",
+      "x": 20,
+      "y": 60,
+      "width": 400,
+      "height": 5730,
+      "label": "Owner"
+    },
+    {
+      "id": "librarian-lane-Oracle",
+      "type": "group",
+      "x": 620,
+      "y": 60,
+      "width": 400,
+      "height": 5730,
+      "label": "Oracle"
+    },
+    {
+      "id": "librarian-lane-Lead-tier-1-",
+      "type": "group",
+      "x": 1220,
+      "y": 60,
+      "width": 400,
+      "height": 5730,
+      "label": "Lead (tier 1)"
+    },
+    {
+      "id": "librarian-lane-Doctor",
+      "type": "group",
+      "x": 1820,
+      "y": 60,
+      "width": 400,
+      "height": 5730,
+      "label": "Doctor"
+    },
+    {
+      "id": "librarian-lane-Clerk-tier-2-",
+      "type": "group",
+      "x": 2420,
+      "y": 60,
+      "width": 400,
+      "height": 5730,
+      "label": "Clerk (tier 2)"
+    },
+    {
+      "id": "librarian-lane-Core",
+      "type": "group",
+      "x": 3020,
+      "y": 60,
+      "width": 400,
+      "height": 5730,
+      "label": "Core"
+    },
+    {
+      "id": "librarian-lane-Outcomes",
+      "type": "group",
+      "x": 3620,
+      "y": 60,
+      "width": 400,
+      "height": 5730,
+      "label": "Outcomes"
+    }
+  ],
+  "edges": [
+    {
+      "id": "librarian-e0",
+      "fromNode": "librarian-s",
+      "toNode": "librarian-intake",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e1",
+      "fromNode": "librarian-intake",
+      "toNode": "librarian-dtrigger",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e2",
+      "fromNode": "librarian-dtrigger",
+      "toNode": "librarian-dremedy",
+      "label": "[system triggered]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e3",
+      "fromNode": "librarian-dtrigger",
+      "toNode": "librarian-userdoc",
+      "label": "[user directed] 1a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e4",
+      "fromNode": "librarian-dtrigger",
+      "toNode": "librarian-t0doc",
+      "label": "[tier 0 directed] 1b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e5",
+      "fromNode": "librarian-userdoc",
+      "toNode": "librarian-dremedy",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e6",
+      "fromNode": "librarian-t0doc",
+      "toNode": "librarian-dremedy",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e7",
+      "fromNode": "librarian-dremedy",
+      "toNode": "librarian-blast",
+      "label": "[accepted YAML remedy matched]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e8",
+      "fromNode": "librarian-dremedy",
+      "toNode": "librarian-scout",
+      "label": "[unmapped or proposed-only] 1c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e9",
+      "fromNode": "librarian-scout",
+      "toNode": "librarian-draftprop",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e10",
+      "fromNode": "librarian-draftprop",
+      "toNode": "librarian-haltdecline",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e11",
+      "fromNode": "librarian-blast",
+      "toNode": "librarian-dgrant",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e12",
+      "fromNode": "librarian-dgrant",
+      "toNode": "librarian-runremedy",
+      "label": "[within W3 scope and DOC-GEO-03 bounds]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e13",
+      "fromNode": "librarian-dgrant",
+      "toNode": "librarian-downeravail",
+      "label": "[wider than narrowed mandate (never widens autonomously)] 2a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e14",
+      "fromNode": "librarian-downeravail",
+      "toNode": "librarian-askowner",
+      "label": "[user directed]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e15",
+      "fromNode": "librarian-downeravail",
+      "toNode": "librarian-haltdecline",
+      "label": "[tier 0 or system triggered (do not block)]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e16",
+      "fromNode": "librarian-askowner",
+      "toNode": "librarian-downer",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e17",
+      "fromNode": "librarian-downer",
+      "toNode": "librarian-runremedy",
+      "label": "[granted]",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-e18",
+      "fromNode": "librarian-downer",
+      "toNode": "librarian-haltdecline_at_520553d523",
+      "label": "[declined]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e19",
+      "fromNode": "librarian-downer",
+      "toNode": "librarian-haltescalate_at_3424f37de3",
+      "label": "[critical]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e20",
+      "fromNode": "librarian-dgrant",
+      "toNode": "librarian-haltescalate",
+      "label": "[critical security, data-loss, or boundary violation (immediate)] 2b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e21",
+      "fromNode": "librarian-runremedy",
+      "toNode": "librarian-checkrepair",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e22",
+      "fromNode": "librarian-checkrepair",
+      "toNode": "librarian-drepaired",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e23",
+      "fromNode": "librarian-drepaired",
+      "toNode": "librarian-oracle",
+      "label": "[checks passed]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e24",
+      "fromNode": "librarian-drepaired",
+      "toNode": "librarian-showcomp",
+      "label": "[checks failed or step/call cap hit] 4a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e25",
+      "fromNode": "librarian-showcomp",
+      "toNode": "librarian-dcomp",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e26",
+      "fromNode": "librarian-dcomp",
+      "toNode": "librarian-haltdecline",
+      "label": "[hold with shown compensation]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e27",
+      "fromNode": "librarian-dcomp",
+      "toNode": "librarian-haltescalate",
+      "label": "[escalate unresolved fault]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e28",
+      "fromNode": "librarian-oracle",
+      "toNode": "librarian-doracle",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e29",
+      "fromNode": "librarian-doracle",
+      "toNode": "librarian-closeresolved",
+      "label": "[resolved (distinct Oracle route pass)]",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e30",
+      "fromNode": "librarian-doracle",
+      "toNode": "librarian-showcomp",
+      "label": "[failed independent recheck or ORACLE_ROUTE_COLLISION (never marked resolved)] 5a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e31",
+      "fromNode": "librarian-closeresolved",
+      "toNode": "librarian-e1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e32",
+      "fromNode": "librarian-haltdecline",
+      "toNode": "librarian-e2",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e33",
+      "fromNode": "librarian-haltescalate",
+      "toNode": "librarian-e3",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e34",
+      "fromNode": "librarian-haltdecline_at_520553d523",
+      "toNode": "librarian-e2_at_520553d523",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e35",
+      "fromNode": "librarian-haltescalate_at_3424f37de3",
+      "toNode": "librarian-e3_at_3424f37de3",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ]
+}

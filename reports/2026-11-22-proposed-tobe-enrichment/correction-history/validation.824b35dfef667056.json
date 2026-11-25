@@ -1,0 +1,1437 @@
+{
+  "status": "proposal artifact validation, not runtime execution or Owner acceptance",
+  "model_sha256": "e92c19183e9f27718ebe51b07b1098c3b056cdb40992af05d9e9ea0c8b96b951",
+  "supplied_renderer_sha256": "b3253960a08ccfdc05d93719c1b841393ec6024a409e4a2638510a1f6b27a955",
+  "behavior_nodes": 88,
+  "canvas_nodes": 100,
+  "edges": 149,
+  "main_steps": 23,
+  "extension_scenarios": 73,
+  "main_tier0_turns_by_prototype": 2,
+  "structural_problems": [],
+  "cross_view_reference_flags": [],
+  "card_overlaps": [],
+  "actor_reassignments": [],
+  "generated_relayout": [
+    {
+      "node": "librarian-a2",
+      "before": {
+        "x": 460,
+        "y": 740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 460,
+        "y": 940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a3",
+      "before": {
+        "x": 1300,
+        "y": 940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1300,
+        "y": 1140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a4",
+      "before": {
+        "x": 2980,
+        "y": 1140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 1340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dadmit",
+      "before": {
+        "x": 2980,
+        "y": 1340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 1540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-stagecontract",
+      "before": {
+        "x": 2980,
+        "y": 1540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 2140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-ownerstart",
+      "before": {
+        "x": 40,
+        "y": 1540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 40,
+        "y": 1740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-radmit",
+      "before": {
+        "x": 1720,
+        "y": 1540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1720,
+        "y": 1740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-escalated",
+      "before": {
+        "x": 1300,
+        "y": 9340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1300,
+        "y": 14740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-critical",
+      "before": {
+        "x": 40,
+        "y": 7740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 40,
+        "y": 11540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-nowork",
+      "before": {
+        "x": 1300,
+        "y": 1540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1300,
+        "y": 1740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a5",
+      "before": {
+        "x": 2980,
+        "y": 1740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 2340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-downerstart",
+      "before": {
+        "x": 40,
+        "y": 1740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 40,
+        "y": 1940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-paused",
+      "before": {
+        "x": 1300,
+        "y": 9540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1300,
+        "y": 12940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-eescalated",
+      "before": {
+        "x": 4240,
+        "y": 9540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 4240,
+        "y": 14940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-enowork",
+      "before": {
+        "x": 4240,
+        "y": 1740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 4240,
+        "y": 1940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dvalidate",
+      "before": {
+        "x": 2980,
+        "y": 1940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 2540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-epaused",
+      "before": {
+        "x": 4240,
+        "y": 9740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 4240,
+        "y": 13140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a6",
+      "before": {
+        "x": 2980,
+        "y": 2140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 2740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-itemfailed",
+      "before": {
+        "x": 2980,
+        "y": 7740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 10540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dparse",
+      "before": {
+        "x": 2980,
+        "y": 2340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 2940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a19",
+      "before": {
+        "x": 2140,
+        "y": 6940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2140,
+        "y": 10740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a7",
+      "before": {
+        "x": 2140,
+        "y": 2540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2140,
+        "y": 5140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-conversionplan",
+      "before": {
+        "x": 2140,
+        "y": 2740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2140,
+        "y": 3140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dmore",
+      "before": {
+        "x": 2980,
+        "y": 7140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 10940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a8",
+      "before": {
+        "x": 2560,
+        "y": 2740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2560,
+        "y": 5340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-conversionwork",
+      "before": {
+        "x": 2560,
+        "y": 2940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2560,
+        "y": 3340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a20",
+      "before": {
+        "x": 880,
+        "y": 7340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 880,
+        "y": 11140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-host",
+      "before": {
+        "x": 3400,
+        "y": 2940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 3400,
+        "y": 5540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-conversionreview",
+      "before": {
+        "x": 2140,
+        "y": 3140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2140,
+        "y": 3540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dverdict",
+      "before": {
+        "x": 880,
+        "y": 7540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 880,
+        "y": 11340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a9",
+      "before": {
+        "x": 2980,
+        "y": 3140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 5740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-conversioncheck",
+      "before": {
+        "x": 2980,
+        "y": 3540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 3740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a21",
+      "before": {
+        "x": 1300,
+        "y": 7740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1300,
+        "y": 13340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-partialreport",
+      "before": {
+        "x": 1300,
+        "y": 7940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1300,
+        "y": 11540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-rwork",
+      "before": {
+        "x": 1720,
+        "y": 7740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1720,
+        "y": 11540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-scout",
+      "before": {
+        "x": 2140,
+        "y": 7740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2140,
+        "y": 11540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dreadtransport",
+      "before": {
+        "x": 2980,
+        "y": 3340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 5940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dconversion",
+      "before": {
+        "x": 2980,
+        "y": 3740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 3940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-drecipient",
+      "before": {
+        "x": 2980,
+        "y": 7940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 13540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-epartial",
+      "before": {
+        "x": 4240,
+        "y": 8140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 4240,
+        "y": 11740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-resume",
+      "before": {
+        "x": 2980,
+        "y": 8540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 12140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-realign",
+      "before": {
+        "x": 1300,
+        "y": 8140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1300,
+        "y": 11740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a10",
+      "before": {
+        "x": 2140,
+        "y": 3540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2140,
+        "y": 6140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-readoutage",
+      "before": {
+        "x": 2980,
+        "y": 6940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 6740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-conversiongap",
+      "before": {
+        "x": 2980,
+        "y": 5740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 4940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-conversionfallback",
+      "before": {
+        "x": 2980,
+        "y": 4540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 4140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-conversionoutage",
+      "before": {
+        "x": 2980,
+        "y": 4940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 4340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a22",
+      "before": {
+        "x": 460,
+        "y": 8140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 460,
+        "y": 13940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-directreport",
+      "before": {
+        "x": 40,
+        "y": 8140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 40,
+        "y": 13740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-parentreturn",
+      "before": {
+        "x": 2980,
+        "y": 8340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 13740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dresume",
+      "before": {
+        "x": 2980,
+        "y": 8940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 12340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-drealign",
+      "before": {
+        "x": 1300,
+        "y": 8340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1300,
+        "y": 11940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a11",
+      "before": {
+        "x": 2140,
+        "y": 3740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2140,
+        "y": 6340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-readroute",
+      "before": {
+        "x": 1300,
+        "y": 7140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1300,
+        "y": 6940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-conversionroute",
+      "before": {
+        "x": 1300,
+        "y": 5140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 1300,
+        "y": 4540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dhandback",
+      "before": {
+        "x": 460,
+        "y": 8340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 460,
+        "y": 14140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-delivered",
+      "before": {
+        "x": 2980,
+        "y": 8740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 15340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-repairperson",
+      "before": {
+        "x": 40,
+        "y": 9140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 40,
+        "y": 12540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dread",
+      "before": {
+        "x": 2980,
+        "y": 3940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 6540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dreadretry",
+      "before": {
+        "x": 2980,
+        "y": 7340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 7140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dconversionretry",
+      "before": {
+        "x": 2980,
+        "y": 5340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 4740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a23",
+      "before": {
+        "x": 460,
+        "y": 8540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 460,
+        "y": 15140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-tidy",
+      "before": {
+        "x": 460,
+        "y": 8740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 460,
+        "y": 14340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-e1",
+      "before": {
+        "x": 4240,
+        "y": 8940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 4240,
+        "y": 15540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-drepairperson",
+      "before": {
+        "x": 40,
+        "y": 9340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 40,
+        "y": 12740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a12",
+      "before": {
+        "x": 2980,
+        "y": 4140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 7340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-partialread",
+      "before": {
+        "x": 2980,
+        "y": 6540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 6940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dtidy",
+      "before": {
+        "x": 2980,
+        "y": 9140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 14540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dlenses",
+      "before": {
+        "x": 2980,
+        "y": 4340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 7540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a13",
+      "before": {
+        "x": 2140,
+        "y": 4540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2140,
+        "y": 7740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-ddata",
+      "before": {
+        "x": 2980,
+        "y": 4740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 7940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a14",
+      "before": {
+        "x": 2140,
+        "y": 4940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2140,
+        "y": 8140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-drelate",
+      "before": {
+        "x": 2980,
+        "y": 5140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 8340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a15",
+      "before": {
+        "x": 2140,
+        "y": 5340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2140,
+        "y": 8540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dmetadata",
+      "before": {
+        "x": 2980,
+        "y": 5540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 8740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a16",
+      "before": {
+        "x": 2140,
+        "y": 5740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2140,
+        "y": 8940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dreview",
+      "before": {
+        "x": 2980,
+        "y": 5940,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 9140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a17",
+      "before": {
+        "x": 2980,
+        "y": 6140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 9340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dpublication",
+      "before": {
+        "x": 2980,
+        "y": 6340,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 9540,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-a18",
+      "before": {
+        "x": 3820,
+        "y": 6540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 3820,
+        "y": 9940,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-pubna",
+      "before": {
+        "x": 2980,
+        "y": 7540,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 9740,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-pubgap",
+      "before": {
+        "x": 2980,
+        "y": 8140,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 10340,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-dpubresult",
+      "before": {
+        "x": 2980,
+        "y": 6740,
+        "width": 360,
+        "height": 150
+      },
+      "after": {
+        "x": 2980,
+        "y": 10140,
+        "width": 360,
+        "height": 150
+      }
+    },
+    {
+      "node": "librarian-lane-Owner",
+      "before": {
+        "x": 20,
+        "y": 60,
+        "width": 400,
+        "height": 9930
+      },
+      "after": {
+        "x": 20,
+        "y": 60,
+        "width": 400,
+        "height": 15730
+      }
+    },
+    {
+      "node": "librarian-lane-Tier-0-agent",
+      "before": {
+        "x": 440,
+        "y": 60,
+        "width": 400,
+        "height": 9930
+      },
+      "after": {
+        "x": 440,
+        "y": 60,
+        "width": 400,
+        "height": 15730
+      }
+    },
+    {
+      "node": "librarian-lane-Oracle",
+      "before": {
+        "x": 860,
+        "y": 60,
+        "width": 400,
+        "height": 9930
+      },
+      "after": {
+        "x": 860,
+        "y": 60,
+        "width": 400,
+        "height": 15730
+      }
+    },
+    {
+      "node": "librarian-lane-Lead-tier-1-",
+      "before": {
+        "x": 1280,
+        "y": 60,
+        "width": 400,
+        "height": 9930
+      },
+      "after": {
+        "x": 1280,
+        "y": 60,
+        "width": 400,
+        "height": 15730
+      }
+    },
+    {
+      "node": "librarian-lane-Doctor",
+      "before": {
+        "x": 1700,
+        "y": 60,
+        "width": 400,
+        "height": 9930
+      },
+      "after": {
+        "x": 1700,
+        "y": 60,
+        "width": 400,
+        "height": 15730
+      }
+    },
+    {
+      "node": "librarian-lane-Clerk-tier-2-",
+      "before": {
+        "x": 2120,
+        "y": 60,
+        "width": 400,
+        "height": 9930
+      },
+      "after": {
+        "x": 2120,
+        "y": 60,
+        "width": 400,
+        "height": 15730
+      }
+    },
+    {
+      "node": "librarian-lane-Scribe-tier-3-",
+      "before": {
+        "x": 2540,
+        "y": 60,
+        "width": 400,
+        "height": 9930
+      },
+      "after": {
+        "x": 2540,
+        "y": 60,
+        "width": 400,
+        "height": 15730
+      }
+    },
+    {
+      "node": "librarian-lane-Core",
+      "before": {
+        "x": 2960,
+        "y": 60,
+        "width": 400,
+        "height": 9930
+      },
+      "after": {
+        "x": 2960,
+        "y": 60,
+        "width": 400,
+        "height": 15730
+      }
+    },
+    {
+      "node": "librarian-lane-Model-host",
+      "before": {
+        "x": 3380,
+        "y": 60,
+        "width": 400,
+        "height": 9930
+      },
+      "after": {
+        "x": 3380,
+        "y": 60,
+        "width": 400,
+        "height": 15730
+      }
+    },
+    {
+      "node": "librarian-lane-Geo-Grapher",
+      "before": {
+        "x": 3800,
+        "y": 60,
+        "width": 400,
+        "height": 9930
+      },
+      "after": {
+        "x": 3800,
+        "y": 60,
+        "width": 400,
+        "height": 15730
+      }
+    },
+    {
+      "node": "librarian-lane-Outcomes",
+      "before": {
+        "x": 4220,
+        "y": 60,
+        "width": 400,
+        "height": 9930
+      },
+      "after": {
+        "x": 4220,
+        "y": 60,
+        "width": 400,
+        "height": 15730
+      }
+    }
+  ],
+  "ownership_rule": "agents own interpretation, proposals and semantic judgement; Core performs declared scripts and mechanical checks/storage/dispatch",
+  "canvas_revision": "66394ba2a64fd3724e06e160c8ea18b164867f2f094ba6ffc89c85c5fc0b377d",
+  "write": "existing canvas service preview then revision/hash-checked commit; profile=None",
+  "doctor_reference_contract": [
+    "declined",
+    "escalated",
+    "resolved"
+  ],
+  "reading_detail_text_overflow": [],
+  "preview": "deterministic raster reading aids, not an Obsidian application screenshot"
+}

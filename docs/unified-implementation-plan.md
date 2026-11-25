@@ -7448,3 +7448,27 @@ Owner direction: map the permissions each action needs, so that whatever is comp
 - **Plan forward.** W1b gains item 5, the permission envelope: one gate before the run, nothing asked again inside it, and the step budget sized from the manifest. W9 gains the oracle's scope judgments. A judgment of "in scope" is a reported verdict, and allows only what the mandate already permits.
 - **Policy.** `docs/policy/composition.md` gains rules 15–17, listed as not yet enforced. An envelope never holds a person's reserved decisions, a per-call always-ask tool, or anything above the parent's mandate.
 - **What exists.** `workflow_grant` already grants a person-started workflow (`granted_actions()`) or a source batch as a whole. A session's Lead still asks tool by tool; on 20 November it asked once per Geo-Grapher tool, and the always-ask `macro_run` waited 600 s each time.
+
+### Enrichment requirements baseline and comprehensive model (2026-11-22)
+
+The Owner authorised orientation steps 1 and 2 before implementation. The
+[requirements baseline and single enrichment model](../reports/2026-11-21-enrichment-baseline/README.md)
+map 34 requirements to current code, existing tests and explicit model nodes/extensions.
+The model retains all nine source stages, metadata-only folder processing, mixed root purposes,
+approval/start/acceptance boundaries, partial outcomes, resume identity, accepted-note revisions,
+guarded promotion and conditional graph publication.
+
+The clarified role order is Overseer, Lead, Clerk, Scribe. Tier 0 may delegate on the Owner's
+behalf within granted authority. Specifications are Core-owned; faults are routed tickets with
+existing flags and accountable actors. GLM-5.3 is the current revisable Doctor and Oracle
+assignment. Policy, terminology and the proposals record these decisions without remapping
+runtime configuration.
+
+The supplied activity-spec format and renderer generate the written views and scenario table;
+the existing canvas service writes the new report canvas. The Owner's accepted canvases are
+preserved. General specification/ticket/Oracle/Doctor execution and delegated run permissions
+remain target integration. **W1b runtime implementation has not started.**
+
+Focused regression checks completed with 72 passes. Core-related selections stalled in
+asyncio/MCP socket initialization and shutdown and were interrupted; no full-suite or live-Core
+acceptance is claimed. Details are in the report's [verification record](../reports/2026-11-21-enrichment-baseline/verification.md).

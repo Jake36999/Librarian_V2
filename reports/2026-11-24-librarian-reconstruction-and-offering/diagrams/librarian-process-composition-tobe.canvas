@@ -1,0 +1,788 @@
+{
+  "nodes": [
+    {
+      "id": "librarian-title",
+      "type": "text",
+      "x": 20,
+      "y": -200,
+      "width": 3980,
+      "height": 220,
+      "text": "# Librarian Process Composition & Mandate Narrowing (Proposed To-Be: L0 Action -> L3 Sprint)\n**Symptom:** Prior model used layer names as swimlanes and omitted per-context spec_owner, Rule-17 Oracle scope judgment, and direct Human user exit handovers.\n**Root cause:** Enforce strict action -> workflow -> pipeline -> sprint composition across true actor lanes, explicit spec_owner attribution, Rule-9/16 narrowing, Rule-17 Oracle scope checks, and user handovers.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `librarian-process-composition-tobe.spec.yaml`."
+    },
+    {
+      "id": "librarian-s",
+      "type": "text",
+      "x": 40,
+      "y": 140,
+      "width": 360,
+      "height": 70,
+      "text": "● start",
+      "color": "4"
+    },
+    {
+      "id": "librarian-init",
+      "type": "text",
+      "x": 40,
+      "y": 340,
+      "width": 360,
+      "height": 150,
+      "text": "**1.** initiates work via Context 1 (Tier 0 instruction), Context 2 (Ext project MCP), or Context 3 (Direct UI)"
+    },
+    {
+      "id": "librarian-dspec_owner",
+      "type": "text",
+      "x": 3040,
+      "y": 540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ which actor owns top-level L3 Sprint specification?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-t0_spec",
+      "type": "text",
+      "x": 640,
+      "y": 940,
+      "width": 360,
+      "height": 150,
+      "text": "**2.** authors Context-1 L3 spec on user behalf & approves Rule-15 envelope (spec_owner=tier0_on_behalf_of_person)"
+    },
+    {
+      "id": "librarian-c2_spec",
+      "type": "text",
+      "x": 640,
+      "y": 740,
+      "width": 360,
+      "height": 150,
+      "text": "sets Context-2 ext-project MCP spec within bounded read/apply grant (spec_owner=external_project_caller)"
+    },
+    {
+      "id": "librarian-c3_spec",
+      "type": "text",
+      "x": 40,
+      "y": 740,
+      "width": 360,
+      "height": 150,
+      "text": "sets direct UI curate/workflow_grant spec with zero Tier 0 (spec_owner=person)"
+    },
+    {
+      "id": "librarian-compile_manifest",
+      "type": "text",
+      "x": 3040,
+      "y": 1140,
+      "width": 360,
+      "height": 150,
+      "text": "**3.** verifies acyclic action -> workflow -> pipeline -> sprint order; compiles manifest & Rule-15 mandate_id"
+    },
+    {
+      "id": "librarian-lead_subspec",
+      "type": "text",
+      "x": 2440,
+      "y": 1340,
+      "width": 360,
+      "height": 150,
+      "text": "**4.** authors delegated L2/L1 sub-run specs only within parent mandate (sub_spec_owner=lead_tier1 <= parent)"
+    },
+    {
+      "id": "librarian-dnarrow",
+      "type": "text",
+      "x": 3040,
+      "y": 1540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ sub-run manifest fits parent mandate (Rules 9, 10, 16)?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-worker_roles",
+      "type": "text",
+      "x": 1240,
+      "y": 2340,
+      "width": 360,
+      "height": 150,
+      "text": "**5.** performs assigned semantic interpretation, review & bounded reading/writing over scripted Core actions"
+    },
+    {
+      "id": "librarian-oracle_scope",
+      "type": "text",
+      "x": 1840,
+      "y": 1740,
+      "width": 360,
+      "height": 150,
+      "text": "judges ungranted call against L3 spec obligations before asking (Rule 17)"
+    },
+    {
+      "id": "librarian-dctx",
+      "type": "text",
+      "x": 3040,
+      "y": 2540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ which L3 activation context executes?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-dscope",
+      "type": "text",
+      "x": 1840,
+      "y": 1940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ within spec & parent mandate?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-ctx1",
+      "type": "text",
+      "x": 2440,
+      "y": 3140,
+      "width": 360,
+      "height": 150,
+      "text": "**6.** ⇉ **librarian-context1-tier0-delegated**: Context 1 Sprint: Tier 0 commissioned run (Lead sub-run -> ingestion-tobe)",
+      "color": "2"
+    },
+    {
+      "id": "librarian-ctx2",
+      "type": "text",
+      "x": 2440,
+      "y": 2740,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **librarian-context2-external-project-mcp**: Context 2 Sprint: External MCP helpers/apply (optional stage_only ingestion)",
+      "color": "2"
+    },
+    {
+      "id": "librarian-ctx3",
+      "type": "text",
+      "x": 2440,
+      "y": 2940,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **librarian-context3-human-platform-ui**: Context 3 Sprint: Direct UI curation (no Tier 0 -> batch / ingestion-tobe)",
+      "color": "2"
+    },
+    {
+      "id": "librarian-log_allowance",
+      "type": "text",
+      "x": 3040,
+      "y": 2140,
+      "width": 360,
+      "height": 150,
+      "text": "records evidence-bearing Rule-17 allowance for end-of-run report"
+    },
+    {
+      "id": "librarian-outpause",
+      "type": "text",
+      "x": 3040,
+      "y": 4540,
+      "width": 360,
+      "height": 150,
+      "text": "persists paused Rule-16/OD-05 gate, MC-10 cap, or ORACLE_ROUTE_COLLISION Ticket with resume target"
+    },
+    {
+      "id": "librarian-outesc",
+      "type": "text",
+      "x": 3040,
+      "y": 4740,
+      "width": 360,
+      "height": 150,
+      "text": "routes critical escalated Ticket immediately with full trace & Rule-8 compensation"
+    },
+    {
+      "id": "librarian-oracle_rollup",
+      "type": "text",
+      "x": 1840,
+      "y": 4140,
+      "width": 360,
+      "height": 150,
+      "text": "**7.** verifies rolled-up L0-L3 obligations & Rule-17 allowances via distinct qualified route (GLM-5.3 current)"
+    },
+    {
+      "id": "librarian-outpartial",
+      "type": "text",
+      "x": 3040,
+      "y": 3340,
+      "width": 360,
+      "height": 150,
+      "text": "persists partial outputs, spend, coverage gaps & open Agenda Tickets"
+    },
+    {
+      "id": "librarian-outreused",
+      "type": "text",
+      "x": 3040,
+      "y": 3540,
+      "width": 360,
+      "height": 150,
+      "text": "persists zero-rework reuse receipt & existing precedent links"
+    },
+    {
+      "id": "librarian-userpaused",
+      "type": "text",
+      "x": 40,
+      "y": 4740,
+      "width": 360,
+      "height": 150,
+      "text": "receives paused Ticket, spend/state to date, & exact Agenda resume path"
+    },
+    {
+      "id": "librarian-useresc",
+      "type": "text",
+      "x": 40,
+      "y": 4940,
+      "width": 360,
+      "height": 150,
+      "text": "receives immediate critical failure alert, Ticket ID & Rule-8 compensation"
+    },
+    {
+      "id": "librarian-dor_comp",
+      "type": "text",
+      "x": 1840,
+      "y": 4340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ composed L3 obligations satisfied cleanly?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-userpartial",
+      "type": "text",
+      "x": 40,
+      "y": 3540,
+      "width": 360,
+      "height": 150,
+      "text": "receives permitted partial report, not_examined list, spend & open Tickets"
+    },
+    {
+      "id": "librarian-userreused",
+      "type": "text",
+      "x": 40,
+      "y": 3740,
+      "width": 360,
+      "height": 150,
+      "text": "receives confirmation of reused catalogue state or Applications/ precedent"
+    },
+    {
+      "id": "librarian-epaused",
+      "type": "text",
+      "x": 3640,
+      "y": 4940,
+      "width": 360,
+      "height": 150,
+      "text": "◉ composed run paused cleanly on Rule-16/OD-05, budget, or route-collision Ticket\n*outcome: paused*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-eescalated",
+      "type": "text",
+      "x": 3640,
+      "y": 5140,
+      "width": 360,
+      "height": 150,
+      "text": "◉ critical/unresolved Ticket escalated immediately to Human user & spec owner\n*outcome: escalated*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-rollreceipt",
+      "type": "text",
+      "x": 3040,
+      "y": 5340,
+      "width": 360,
+      "height": 150,
+      "text": "**8.** persists L0-L3 provenance, spend, coverage, deferrals, Ticket ledger & Agenda receipt (Rule 12)"
+    },
+    {
+      "id": "librarian-epartial",
+      "type": "text",
+      "x": 3640,
+      "y": 3740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ composed run finished with permitted partials & open Tickets notified\n*outcome: partial*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-ereused",
+      "type": "text",
+      "x": 3640,
+      "y": 3940,
+      "width": 360,
+      "height": 150,
+      "text": "◉ reused clean across L3-L0 without duplicate spend\n*outcome: reused*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-usernotify",
+      "type": "text",
+      "x": 40,
+      "y": 5540,
+      "width": 360,
+      "height": 150,
+      "text": "**9.** receives explicit context handover, result evidence, spend, coverage & deferred work"
+    },
+    {
+      "id": "librarian-e1",
+      "type": "text",
+      "x": 3640,
+      "y": 5740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ L3-L0 composition complete with verified narrowing & user-facing notification\n*outcome: success*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-lane-Human-user",
+      "type": "group",
+      "x": 20,
+      "y": 60,
+      "width": 400,
+      "height": 5930,
+      "label": "Human user"
+    },
+    {
+      "id": "librarian-lane-Tier-0-Ext-caller",
+      "type": "group",
+      "x": 620,
+      "y": 60,
+      "width": 400,
+      "height": 5930,
+      "label": "Tier 0 / Ext caller"
+    },
+    {
+      "id": "librarian-lane-Clerk-Scribe-tier-2-3-",
+      "type": "group",
+      "x": 1220,
+      "y": 60,
+      "width": 400,
+      "height": 5930,
+      "label": "Clerk / Scribe (tier 2-3)"
+    },
+    {
+      "id": "librarian-lane-Oracle",
+      "type": "group",
+      "x": 1820,
+      "y": 60,
+      "width": 400,
+      "height": 5930,
+      "label": "Oracle"
+    },
+    {
+      "id": "librarian-lane-Lead-tier-1-",
+      "type": "group",
+      "x": 2420,
+      "y": 60,
+      "width": 400,
+      "height": 5930,
+      "label": "Lead (tier 1)"
+    },
+    {
+      "id": "librarian-lane-Core",
+      "type": "group",
+      "x": 3020,
+      "y": 60,
+      "width": 400,
+      "height": 5930,
+      "label": "Core"
+    },
+    {
+      "id": "librarian-lane-Outcomes",
+      "type": "group",
+      "x": 3620,
+      "y": 60,
+      "width": 400,
+      "height": 5930,
+      "label": "Outcomes"
+    }
+  ],
+  "edges": [
+    {
+      "id": "librarian-e0",
+      "fromNode": "librarian-s",
+      "toNode": "librarian-init",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e1",
+      "fromNode": "librarian-init",
+      "toNode": "librarian-dspec_owner",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e2",
+      "fromNode": "librarian-dspec_owner",
+      "toNode": "librarian-t0_spec",
+      "label": "[Context 1: User-directed Tier 0 Librarian Sprint]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e3",
+      "fromNode": "librarian-dspec_owner",
+      "toNode": "librarian-c2_spec",
+      "label": "[Context 2: External-project Tier 0 MCP Sprint] 1a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e4",
+      "fromNode": "librarian-dspec_owner",
+      "toNode": "librarian-c3_spec",
+      "label": "[Context 3: Direct Human Platform UI Sprint] 1b",
+      "color": "1",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e5",
+      "fromNode": "librarian-t0_spec",
+      "toNode": "librarian-compile_manifest",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e6",
+      "fromNode": "librarian-c2_spec",
+      "toNode": "librarian-compile_manifest",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e7",
+      "fromNode": "librarian-c3_spec",
+      "toNode": "librarian-compile_manifest",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e8",
+      "fromNode": "librarian-compile_manifest",
+      "toNode": "librarian-lead_subspec",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e9",
+      "fromNode": "librarian-lead_subspec",
+      "toNode": "librarian-dnarrow",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e10",
+      "fromNode": "librarian-dnarrow",
+      "toNode": "librarian-worker_roles",
+      "label": "[within parent mandate]",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-e11",
+      "fromNode": "librarian-dnarrow",
+      "toNode": "librarian-oracle_scope",
+      "label": "[ungranted call needing Rule-17 scope judgment] 4a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e12",
+      "fromNode": "librarian-oracle_scope",
+      "toNode": "librarian-dscope",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e13",
+      "fromNode": "librarian-dscope",
+      "toNode": "librarian-log_allowance",
+      "label": "[within parent mandate & spec]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e14",
+      "fromNode": "librarian-dscope",
+      "toNode": "librarian-outpause",
+      "label": "[widens parent mandate or hits Rule-16/OD-05 boundary]",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e15",
+      "fromNode": "librarian-dscope",
+      "toNode": "librarian-outesc",
+      "label": "[critical security/data-loss boundary breach]",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e16",
+      "fromNode": "librarian-log_allowance",
+      "toNode": "librarian-worker_roles",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e17",
+      "fromNode": "librarian-worker_roles",
+      "toNode": "librarian-dctx",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e18",
+      "fromNode": "librarian-dctx",
+      "toNode": "librarian-ctx1",
+      "label": "[Context 1 commissioned Sprint]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e19",
+      "fromNode": "librarian-dctx",
+      "toNode": "librarian-ctx2",
+      "label": "[Context 2 External MCP Sprint] 6a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e20",
+      "fromNode": "librarian-dctx",
+      "toNode": "librarian-ctx3",
+      "label": "[Context 3 Direct UI Sprint] 6b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e21",
+      "fromNode": "librarian-ctx1",
+      "toNode": "librarian-oracle_rollup",
+      "label": "[success]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e22",
+      "fromNode": "librarian-ctx1",
+      "toNode": "librarian-outpartial",
+      "label": "[partial] 6c",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e23",
+      "fromNode": "librarian-ctx1",
+      "toNode": "librarian-outreused",
+      "label": "[reused] 6d",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e24",
+      "fromNode": "librarian-ctx1",
+      "toNode": "librarian-outpause",
+      "label": "[paused] 6e",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e25",
+      "fromNode": "librarian-ctx1",
+      "toNode": "librarian-outesc",
+      "label": "[escalated] 6f",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e26",
+      "fromNode": "librarian-ctx2",
+      "toNode": "librarian-oracle_rollup",
+      "label": "[success]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e27",
+      "fromNode": "librarian-ctx2",
+      "toNode": "librarian-outpartial",
+      "label": "[partial]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e28",
+      "fromNode": "librarian-ctx2",
+      "toNode": "librarian-outreused",
+      "label": "[reused]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e29",
+      "fromNode": "librarian-ctx2",
+      "toNode": "librarian-outpause",
+      "label": "[paused]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e30",
+      "fromNode": "librarian-ctx2",
+      "toNode": "librarian-outesc",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e31",
+      "fromNode": "librarian-ctx3",
+      "toNode": "librarian-oracle_rollup",
+      "label": "[success]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e32",
+      "fromNode": "librarian-ctx3",
+      "toNode": "librarian-outpartial",
+      "label": "[partial]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e33",
+      "fromNode": "librarian-ctx3",
+      "toNode": "librarian-outreused",
+      "label": "[reused]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e34",
+      "fromNode": "librarian-ctx3",
+      "toNode": "librarian-outpause",
+      "label": "[paused]",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e35",
+      "fromNode": "librarian-ctx3",
+      "toNode": "librarian-outesc",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e36",
+      "fromNode": "librarian-oracle_rollup",
+      "toNode": "librarian-dor_comp",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e37",
+      "fromNode": "librarian-dor_comp",
+      "toNode": "librarian-rollreceipt",
+      "label": "[obligations met (distinct Oracle route pass)]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e38",
+      "fromNode": "librarian-dor_comp",
+      "toNode": "librarian-outpause",
+      "label": "[ORACLE_ROUTE_COLLISION (unverified_route_collision; never marked independently reviewed)] 7a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e39",
+      "fromNode": "librarian-dor_comp",
+      "toNode": "librarian-outesc",
+      "label": "[critical L0-L3 integrity finding] 7b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e40",
+      "fromNode": "librarian-rollreceipt",
+      "toNode": "librarian-usernotify",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e41",
+      "fromNode": "librarian-usernotify",
+      "toNode": "librarian-e1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e42",
+      "fromNode": "librarian-outpartial",
+      "toNode": "librarian-userpartial",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e43",
+      "fromNode": "librarian-userpartial",
+      "toNode": "librarian-epartial",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e44",
+      "fromNode": "librarian-outreused",
+      "toNode": "librarian-userreused",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e45",
+      "fromNode": "librarian-userreused",
+      "toNode": "librarian-ereused",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e46",
+      "fromNode": "librarian-outpause",
+      "toNode": "librarian-userpaused",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e47",
+      "fromNode": "librarian-userpaused",
+      "toNode": "librarian-epaused",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e48",
+      "fromNode": "librarian-outesc",
+      "toNode": "librarian-useresc",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e49",
+      "fromNode": "librarian-useresc",
+      "toNode": "librarian-eescalated",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ]
+}

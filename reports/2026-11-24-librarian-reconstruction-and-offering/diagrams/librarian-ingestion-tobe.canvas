@@ -1,0 +1,1461 @@
+{
+  "nodes": [
+    {
+      "id": "librarian-title",
+      "type": "text",
+      "x": 20,
+      "y": -200,
+      "width": 4580,
+      "height": 220,
+      "text": "# Librarian Shared L2 Ingestion & Governance Pipeline (Proposed To-Be)\n**Symptom:** Prior draft hid distinct Context 1/2/3 entry callers inside one trigger switch, overloaded Owner with 7 main-path steps & 3 serial Gate-2 prompts, risked blocking external Tier 0 on curate, and skipped final Oracle on code-only roots.\n**Root cause:** Accept narrowed parent mandates from Context 1/2/3 or scheduler (never widening parent scope), delegate routine screening & acceptance via Lead + Oracle (GLM-5.3) + 4-point Doctor, consolidate Gate 2, and emit canonical 5-outcome receipts + tickets.\nLanes are actors; red arrows are extensions (numbered); red ends are ways the use case ends without success; orange cards call another use case. Generated from `librarian-ingestion-tobe.spec.yaml`."
+    },
+    {
+      "id": "librarian-s",
+      "type": "text",
+      "x": 40,
+      "y": 140,
+      "width": 360,
+      "height": 70,
+      "text": "● start",
+      "color": "4"
+    },
+    {
+      "id": "librarian-admit_mandate",
+      "type": "text",
+      "x": 3040,
+      "y": 340,
+      "width": 360,
+      "height": 150,
+      "text": "**1.** admits narrowed L2 mandate, parent spec_owner, budget & commissioned_by provenance (no widen)"
+    },
+    {
+      "id": "librarian-leadbind",
+      "type": "text",
+      "x": 640,
+      "y": 540,
+      "width": 360,
+      "height": 150,
+      "text": "**2.** owns L2 sub-run spec (sub_spec_owner=lead_tier1 <= parent) & narrowed grant envelope"
+    },
+    {
+      "id": "librarian-rootinv",
+      "type": "text",
+      "x": 3040,
+      "y": 740,
+      "width": 360,
+      "height": 150,
+      "text": "**3.** surveys roots, fingerprints, licences & exclusions ($0); reuses NAT-13 folder receipts"
+    },
+    {
+      "id": "librarian-droot",
+      "type": "text",
+      "x": 3040,
+      "y": 940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ roots & folder-route valid?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-folderscreen",
+      "type": "text",
+      "x": 1240,
+      "y": 1540,
+      "width": 360,
+      "height": 150,
+      "text": "**4.** screens only new/ambiguous folders for purpose, unlicensed third-party risk & sensitivity (docs unread)"
+    },
+    {
+      "id": "librarian-doctorroot",
+      "type": "text",
+      "x": 1840,
+      "y": 1140,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **librarian-doctor-tobe**: attempts scoped R1/R2 Ticket recovery (GLM-5.3 isolated adapter; single-pass)",
+      "color": "2"
+    },
+    {
+      "id": "librarian-escout",
+      "type": "text",
+      "x": 640,
+      "y": 9540,
+      "width": 360,
+      "height": 150,
+      "text": "routes critical/unresolved Ticket immediately with flags, hashes & Rule-8 compensation"
+    },
+    {
+      "id": "librarian-dfolderauth",
+      "type": "text",
+      "x": 3040,
+      "y": 1740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ folder decision covered by Context-1 commission or standing policy?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-reentryroot",
+      "type": "text",
+      "x": 3040,
+      "y": 1340,
+      "width": 360,
+      "height": 150,
+      "text": "verifies bounded R1/R2 repair progress (attempt <= 1)"
+    },
+    {
+      "id": "librarian-pauseout",
+      "type": "text",
+      "x": 640,
+      "y": 9740,
+      "width": 360,
+      "height": 150,
+      "text": "returns held gate/ORACLE_ROUTE_COLLISION Ticket, spend, F-02/F-03 refusal, or resume path"
+    },
+    {
+      "id": "librarian-eescalated",
+      "type": "text",
+      "x": 4240,
+      "y": 9740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ escalated unresolved critical integrity Ticket\n*outcome: escalated*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-leadfolder",
+      "type": "text",
+      "x": 640,
+      "y": 2540,
+      "width": 360,
+      "height": 150,
+      "text": "**5.** approves in-scope folders (Context 1 commission or standing policy); applies exclusions"
+    },
+    {
+      "id": "librarian-dheldcaller",
+      "type": "text",
+      "x": 3040,
+      "y": 1940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ interactive Specification owner available?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-epaused",
+      "type": "text",
+      "x": 4240,
+      "y": 9940,
+      "width": 360,
+      "height": 150,
+      "text": "◉ paused on Rule-16/OD-05 Ticket, staged-only gate, MC-10 cap, or ORACLE_ROUTE_COLLISION\n*outcome: paused*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-folderapply",
+      "type": "text",
+      "x": 3040,
+      "y": 2740,
+      "width": 360,
+      "height": 150,
+      "text": "**6.** submits only changed/selected accepted groups (OP2 single-group fix)"
+    },
+    {
+      "id": "librarian-ownerfolder",
+      "type": "text",
+      "x": 40,
+      "y": 2140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Owner reserved folder choice?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-queueagenda",
+      "type": "text",
+      "x": 3040,
+      "y": 8340,
+      "width": 360,
+      "height": 150,
+      "text": "logs Rule-16/OD-05 or Context-2 hold Ticket on vault Agenda without blocking caller"
+    },
+    {
+      "id": "librarian-geoapply",
+      "type": "text",
+      "x": 3640,
+      "y": 2940,
+      "width": 360,
+      "height": 150,
+      "text": "**7.** indexes changed folder group incrementally; returns parse/coverage receipt"
+    },
+    {
+      "id": "librarian-excl",
+      "type": "text",
+      "x": 3040,
+      "y": 2340,
+      "width": 360,
+      "height": 150,
+      "text": "records excluded subtree and read barrier"
+    },
+    {
+      "id": "librarian-dgeo",
+      "type": "text",
+      "x": 3040,
+      "y": 3140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ single-group Geo receipt?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-dinput",
+      "type": "text",
+      "x": 3040,
+      "y": 3740,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Source-eligible files or queued refs in scope?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-doctorgeo",
+      "type": "text",
+      "x": 1840,
+      "y": 3340,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **librarian-doctor-tobe**: runs bounded group/service Ticket recovery without global rebuild",
+      "color": "2"
+    },
+    {
+      "id": "librarian-oraclecov",
+      "type": "text",
+      "x": 2440,
+      "y": 3540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ degraded parse within caller tolerance?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-capture",
+      "type": "text",
+      "x": 3040,
+      "y": 3940,
+      "width": 360,
+      "height": 150,
+      "text": "**8.** fetches immutable Bronze .evidence/, extracts literal header/DOI metadata, quarantines poison siblings & restores _framing"
+    },
+    {
+      "id": "librarian-oraclefinal",
+      "type": "text",
+      "x": 2440,
+      "y": 8940,
+      "width": 360,
+      "height": 150,
+      "text": "**17.** verifies findability, DATA_IS_UNFRAMED neutrality & F-01..F-03 via distinct qualified Oracle route (GLM-5.3 current adapter)"
+    },
+    {
+      "id": "librarian-reuseout",
+      "type": "text",
+      "x": 3040,
+      "y": 6140,
+      "width": 360,
+      "height": 150,
+      "text": "reconciles reused/excluded inputs with zero duplicate batch dispatch ($0 spend)"
+    },
+    {
+      "id": "librarian-reentrygeo",
+      "type": "text",
+      "x": 3040,
+      "y": 3540,
+      "width": 360,
+      "height": 150,
+      "text": "confirms single-pass Geo recovery receipt"
+    },
+    {
+      "id": "librarian-dcap",
+      "type": "text",
+      "x": 3040,
+      "y": 4140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ capture & queue reconciliation?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-doracle",
+      "type": "text",
+      "x": 2440,
+      "y": 9140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ parent obligations & findability met?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-ereused",
+      "type": "text",
+      "x": 4240,
+      "y": 6340,
+      "width": 360,
+      "height": 150,
+      "text": "◉ existing/excluded scope reconciled cleanly\n*outcome: reused*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-describe",
+      "type": "text",
+      "x": 1240,
+      "y": 4740,
+      "width": 360,
+      "height": 150,
+      "text": "**9.** proposes W8 human-readable Source title (when literal header is slug/filename), neutral Silver description, semantic fields (Unknown if unsupported) & W8 topics"
+    },
+    {
+      "id": "librarian-pauseout_at_a74b357d36",
+      "type": "text",
+      "x": 640,
+      "y": 4340,
+      "width": 360,
+      "height": 150,
+      "text": "returns held gate/ORACLE_ROUTE_COLLISION Ticket, spend, F-02/F-03 refusal, or resume path"
+    },
+    {
+      "id": "librarian-deliver",
+      "type": "text",
+      "x": 640,
+      "y": 10140,
+      "width": 360,
+      "height": 150,
+      "text": "**18.** packages Oracle verdict, evidence hashes, spend, coverage, deferred tabs & Agenda Tickets"
+    },
+    {
+      "id": "librarian-doctorphase",
+      "type": "text",
+      "x": 1840,
+      "y": 9340,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **librarian-doctor-tobe**: repairs candidate index/findability (R5) or mapped parent Ticket",
+      "color": "2"
+    },
+    {
+      "id": "librarian-stage",
+      "type": "text",
+      "x": 3040,
+      "y": 4940,
+      "width": 360,
+      "height": 150,
+      "text": "**10.** validates & stores proposed title, Silver staging record & explicit Unknowns; queues W8 topic_propose if Unfiled-only"
+    },
+    {
+      "id": "librarian-epaused_at_a74b357d36",
+      "type": "text",
+      "x": 4240,
+      "y": 4540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ paused on Rule-16/OD-05 Ticket, staged-only gate, MC-10 cap, or ORACLE_ROUTE_COLLISION\n*outcome: paused*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-dfinalkind",
+      "type": "text",
+      "x": 3040,
+      "y": 10340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ full obligations clean vs permitted partial?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-reentryfinal",
+      "type": "text",
+      "x": 3040,
+      "y": 9540,
+      "width": 360,
+      "height": 150,
+      "text": "confirms single-pass post-promotion repair"
+    },
+    {
+      "id": "librarian-dgate1",
+      "type": "text",
+      "x": 3040,
+      "y": 5140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Gate 1 & batch-start authority in mandate?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-recorddelivery",
+      "type": "text",
+      "x": 3040,
+      "y": 11140,
+      "width": 360,
+      "height": 150,
+      "text": "**19.** persists final run receipt, MC-10 cost ledger, coverage, deferrals & handover record"
+    },
+    {
+      "id": "librarian-recordpartial",
+      "type": "text",
+      "x": 3040,
+      "y": 10540,
+      "width": 360,
+      "height": 150,
+      "text": "persists partial coverage, spend, deferred items & open Ticket ledger"
+    },
+    {
+      "id": "librarian-startrun",
+      "type": "text",
+      "x": 3040,
+      "y": 5740,
+      "width": 360,
+      "height": 150,
+      "text": "**11.** Lead approves within grant; Core validates F-02 checkpoint & freezes mixed batch"
+    },
+    {
+      "id": "librarian-dgate1caller",
+      "type": "text",
+      "x": 3040,
+      "y": 5340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ interactive Specification owner present?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-notifyowner",
+      "type": "text",
+      "x": 40,
+      "y": 11340,
+      "width": 360,
+      "height": 150,
+      "text": "**20.** receives verified catalogue result, spend, deferred work & notification payload"
+    },
+    {
+      "id": "librarian-notifypartial",
+      "type": "text",
+      "x": 40,
+      "y": 10740,
+      "width": 360,
+      "height": 150,
+      "text": "receives truthful partial result, not_examined list, spend & Agenda resume Tickets"
+    },
+    {
+      "id": "librarian-batch",
+      "type": "text",
+      "x": 3040,
+      "y": 5940,
+      "width": 360,
+      "height": 150,
+      "text": "**12.** ⇉ **librarian-batch-enrichment-tobe**: runs mixed source + folder enrichment child against frozen ledger",
+      "color": "2"
+    },
+    {
+      "id": "librarian-ownergate1",
+      "type": "text",
+      "x": 40,
+      "y": 5540,
+      "width": 360,
+      "height": 150,
+      "text": "◇ approve & start batch?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-e1",
+      "type": "text",
+      "x": 4240,
+      "y": 11540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ parent receives Oracle-verified full catalogue state; notification recorded\n*outcome: success*",
+      "color": "6"
+    },
+    {
+      "id": "librarian-epartial",
+      "type": "text",
+      "x": 4240,
+      "y": 10940,
+      "width": 360,
+      "height": 150,
+      "text": "◉ permitted partial or deferred worklist returned with explicit gaps & Tickets\n*outcome: partial*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-ledger",
+      "type": "text",
+      "x": 3040,
+      "y": 6940,
+      "width": 360,
+      "height": 150,
+      "text": "**13.** reconciles F-01 paginated ledger; separates Folder, Source, Lens, Topic & W5 Bridge lists"
+    },
+    {
+      "id": "librarian-pauseout_at_da5a535a02",
+      "type": "text",
+      "x": 640,
+      "y": 6140,
+      "width": 360,
+      "height": 150,
+      "text": "returns held gate/ORACLE_ROUTE_COLLISION Ticket, spend, F-02/F-03 refusal, or resume path"
+    },
+    {
+      "id": "librarian-escout_at_4a3900f295",
+      "type": "text",
+      "x": 640,
+      "y": 6340,
+      "width": 360,
+      "height": 150,
+      "text": "routes critical/unresolved Ticket immediately with flags, hashes & Rule-8 compensation"
+    },
+    {
+      "id": "librarian-oraclebatch",
+      "type": "text",
+      "x": 2440,
+      "y": 7140,
+      "width": 360,
+      "height": 150,
+      "text": "**14.** screens batch outputs, partial gaps & Geo receipts via distinct qualified Oracle route (GLM-5.3 current adapter)"
+    },
+    {
+      "id": "librarian-epaused_at_da5a535a02",
+      "type": "text",
+      "x": 4240,
+      "y": 6540,
+      "width": 360,
+      "height": 150,
+      "text": "◉ paused on Rule-16/OD-05 Ticket, staged-only gate, MC-10 cap, or ORACLE_ROUTE_COLLISION\n*outcome: paused*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-eescalated_at_4a3900f295",
+      "type": "text",
+      "x": 4240,
+      "y": 6740,
+      "width": 360,
+      "height": 150,
+      "text": "◉ escalated unresolved critical integrity Ticket\n*outcome: escalated*",
+      "color": "1"
+    },
+    {
+      "id": "librarian-dbatchscreen",
+      "type": "text",
+      "x": 2440,
+      "y": 7340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ pre-promotion batch quality?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-dgate2",
+      "type": "text",
+      "x": 3040,
+      "y": 7940,
+      "width": 360,
+      "height": 150,
+      "text": "◇ Gate 2 acceptance authority?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-doctorbatch",
+      "type": "text",
+      "x": 1840,
+      "y": 7540,
+      "width": 360,
+      "height": 150,
+      "text": "⇉ **librarian-doctor-tobe**: runs bounded R4 partial/publish Ticket repair on affected subset",
+      "color": "2"
+    },
+    {
+      "id": "librarian-leadaccept",
+      "type": "text",
+      "x": 640,
+      "y": 8540,
+      "width": 360,
+      "height": 150,
+      "text": "**15.** accepts in-scope Sources & cards (decided_by=agent; preserves flags); defers OD-05/reserved items"
+    },
+    {
+      "id": "librarian-dgate2caller",
+      "type": "text",
+      "x": 3040,
+      "y": 8140,
+      "width": 360,
+      "height": 150,
+      "text": "◇ interactive Specification owner present?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-reentrybatch",
+      "type": "text",
+      "x": 3040,
+      "y": 7740,
+      "width": 360,
+      "height": 150,
+      "text": "merges verified R4 repair into parent ledger (attempt <= 1)"
+    },
+    {
+      "id": "librarian-promote",
+      "type": "text",
+      "x": 3040,
+      "y": 8740,
+      "width": 360,
+      "height": 150,
+      "text": "**16.** commits approved Sources (PromotionGuard CAS, index.upsert, DA-3 handoff) & separate approved metadata"
+    },
+    {
+      "id": "librarian-ownergate2",
+      "type": "text",
+      "x": 40,
+      "y": 8340,
+      "width": 360,
+      "height": 150,
+      "text": "◇ consolidated independent Folder/Source/Lens/Topic choices?",
+      "color": "5"
+    },
+    {
+      "id": "librarian-lane-Specification-owner",
+      "type": "group",
+      "x": 20,
+      "y": 60,
+      "width": 400,
+      "height": 11730,
+      "label": "Specification owner"
+    },
+    {
+      "id": "librarian-lane-Lead-tier-1-",
+      "type": "group",
+      "x": 620,
+      "y": 60,
+      "width": 400,
+      "height": 11730,
+      "label": "Lead (tier 1)"
+    },
+    {
+      "id": "librarian-lane-Clerk-tier-2-",
+      "type": "group",
+      "x": 1220,
+      "y": 60,
+      "width": 400,
+      "height": 11730,
+      "label": "Clerk (tier 2)"
+    },
+    {
+      "id": "librarian-lane-Doctor",
+      "type": "group",
+      "x": 1820,
+      "y": 60,
+      "width": 400,
+      "height": 11730,
+      "label": "Doctor"
+    },
+    {
+      "id": "librarian-lane-Oracle",
+      "type": "group",
+      "x": 2420,
+      "y": 60,
+      "width": 400,
+      "height": 11730,
+      "label": "Oracle"
+    },
+    {
+      "id": "librarian-lane-Core",
+      "type": "group",
+      "x": 3020,
+      "y": 60,
+      "width": 400,
+      "height": 11730,
+      "label": "Core"
+    },
+    {
+      "id": "librarian-lane-Geo-Grapher",
+      "type": "group",
+      "x": 3620,
+      "y": 60,
+      "width": 400,
+      "height": 11730,
+      "label": "Geo-Grapher"
+    },
+    {
+      "id": "librarian-lane-Outcomes",
+      "type": "group",
+      "x": 4220,
+      "y": 60,
+      "width": 400,
+      "height": 11730,
+      "label": "Outcomes"
+    }
+  ],
+  "edges": [
+    {
+      "id": "librarian-e0",
+      "fromNode": "librarian-s",
+      "toNode": "librarian-admit_mandate",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e1",
+      "fromNode": "librarian-admit_mandate",
+      "toNode": "librarian-leadbind",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e2",
+      "fromNode": "librarian-leadbind",
+      "toNode": "librarian-rootinv",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e3",
+      "fromNode": "librarian-rootinv",
+      "toNode": "librarian-droot",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e4",
+      "fromNode": "librarian-droot",
+      "toNode": "librarian-folderscreen",
+      "label": "[current & route ready]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e5",
+      "fromNode": "librarian-droot",
+      "toNode": "librarian-doctorroot",
+      "label": "[stale root or lost route qualification (R1/R2)] 3a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e6",
+      "fromNode": "librarian-droot",
+      "toNode": "librarian-escout",
+      "label": "[critical security, data-loss, or authority breach] 3b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e7",
+      "fromNode": "librarian-doctorroot",
+      "toNode": "librarian-reentryroot",
+      "label": "[resolved]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e8",
+      "fromNode": "librarian-reentryroot",
+      "toNode": "librarian-folderscreen",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e9",
+      "fromNode": "librarian-doctorroot",
+      "toNode": "librarian-pauseout",
+      "label": "[declined]",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e10",
+      "fromNode": "librarian-doctorroot",
+      "toNode": "librarian-escout",
+      "label": "[escalated]",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e11",
+      "fromNode": "librarian-folderscreen",
+      "toNode": "librarian-dfolderauth",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e12",
+      "fromNode": "librarian-dfolderauth",
+      "toNode": "librarian-leadfolder",
+      "label": "[covered by Context-1 task commission (in-scope) or standing non-sensitive policy]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e13",
+      "fromNode": "librarian-dfolderauth",
+      "toNode": "librarian-dheldcaller",
+      "label": "[Context-3 direct UI, Context-2 out-of-scope folder, unlicensed/symlink/out-of-scope, or OD-05 policy hold] 4a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e14",
+      "fromNode": "librarian-dheldcaller",
+      "toNode": "librarian-ownerfolder",
+      "label": "[interactive UI/Owner present]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e15",
+      "fromNode": "librarian-dheldcaller",
+      "toNode": "librarian-queueagenda",
+      "label": "[MCP Tier 0 / Context-2 / scheduled run (log Agenda Ticket without blocking)]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e16",
+      "fromNode": "librarian-ownerfolder",
+      "toNode": "librarian-folderapply",
+      "label": "[approve]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e17",
+      "fromNode": "librarian-ownerfolder",
+      "toNode": "librarian-excl",
+      "label": "[exclude subtree]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e18",
+      "fromNode": "librarian-ownerfolder",
+      "toNode": "librarian-pauseout",
+      "label": "[hold or decline]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e19",
+      "fromNode": "librarian-excl",
+      "toNode": "librarian-folderapply",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e20",
+      "fromNode": "librarian-leadfolder",
+      "toNode": "librarian-folderapply",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e21",
+      "fromNode": "librarian-folderapply",
+      "toNode": "librarian-geoapply",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e22",
+      "fromNode": "librarian-geoapply",
+      "toNode": "librarian-dgeo",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e23",
+      "fromNode": "librarian-dgeo",
+      "toNode": "librarian-dinput",
+      "label": "[valid receipt]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e24",
+      "fromNode": "librarian-dgeo",
+      "toNode": "librarian-doctorgeo",
+      "label": "[FOLDER_STALE or mapped Geo service fault] 7a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e25",
+      "fromNode": "librarian-doctorgeo",
+      "toNode": "librarian-reentrygeo",
+      "label": "[resolved]",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e26",
+      "fromNode": "librarian-reentrygeo",
+      "toNode": "librarian-dinput",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e27",
+      "fromNode": "librarian-doctorgeo",
+      "toNode": "librarian-oraclecov",
+      "label": "[declined]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e28",
+      "fromNode": "librarian-doctorgeo",
+      "toNode": "librarian-escout",
+      "label": "[escalated]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e29",
+      "fromNode": "librarian-dgeo",
+      "toNode": "librarian-oraclecov",
+      "label": "[degraded parse coverage (e.g. tree_sitter skips)] 7b",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e30",
+      "fromNode": "librarian-dgeo",
+      "toNode": "librarian-escout",
+      "label": "[critical Geo DB or security violation] 7c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e31",
+      "fromNode": "librarian-oraclecov",
+      "toNode": "librarian-dinput",
+      "label": "[acceptable for scope (gap recorded)]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e32",
+      "fromNode": "librarian-oraclecov",
+      "toNode": "librarian-pauseout",
+      "label": "[below required quality]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e33",
+      "fromNode": "librarian-dinput",
+      "toNode": "librarian-capture",
+      "label": "[Source-eligible inputs present]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e34",
+      "fromNode": "librarian-dinput",
+      "toNode": "librarian-oraclefinal",
+      "label": "[code/graph folder scope only (no Source notes)] 8a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e35",
+      "fromNode": "librarian-dinput",
+      "toNode": "librarian-reuseout",
+      "label": "[all inputs already current or excluded] 8b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e36",
+      "fromNode": "librarian-capture",
+      "toNode": "librarian-dcap",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e37",
+      "fromNode": "librarian-dcap",
+      "toNode": "librarian-describe",
+      "label": "[usable Sources captured]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e38",
+      "fromNode": "librarian-dcap",
+      "toNode": "librarian-reuseout",
+      "label": "[duplicates only] 8c",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e39",
+      "fromNode": "librarian-dcap",
+      "toNode": "librarian-pauseout_at_a74b357d36",
+      "label": "[all targets quarantined/unreachable] 8d",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e40",
+      "fromNode": "librarian-describe",
+      "toNode": "librarian-stage",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e41",
+      "fromNode": "librarian-stage",
+      "toNode": "librarian-dgate1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e42",
+      "fromNode": "librarian-dgate1",
+      "toNode": "librarian-startrun",
+      "label": "[authorized by Context-1 task commission or Context-3 curate start]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e43",
+      "fromNode": "librarian-dgate1",
+      "toNode": "librarian-dgate1caller",
+      "label": "[Context-2 stage_only scope or Context-3 awaiting human batch start] 10a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e44",
+      "fromNode": "librarian-dgate1caller",
+      "toNode": "librarian-ownergate1",
+      "label": "[interactive UI/Owner present]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e45",
+      "fromNode": "librarian-dgate1caller",
+      "toNode": "librarian-queueagenda",
+      "label": "[Context-2 / scheduled (stage_only or awaiting curate)]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e46",
+      "fromNode": "librarian-ownergate1",
+      "toNode": "librarian-startrun",
+      "label": "[approve & start]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e47",
+      "fromNode": "librarian-ownergate1",
+      "toNode": "librarian-pauseout",
+      "label": "[stage only / defer]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e48",
+      "fromNode": "librarian-startrun",
+      "toNode": "librarian-batch",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e49",
+      "fromNode": "librarian-batch",
+      "toNode": "librarian-ledger",
+      "label": "[success]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e50",
+      "fromNode": "librarian-batch",
+      "toNode": "librarian-ledger",
+      "label": "[partial] 12a",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e51",
+      "fromNode": "librarian-batch",
+      "toNode": "librarian-reuseout",
+      "label": "[reused] 12b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e52",
+      "fromNode": "librarian-batch",
+      "toNode": "librarian-pauseout_at_da5a535a02",
+      "label": "[paused] 12c",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e53",
+      "fromNode": "librarian-batch",
+      "toNode": "librarian-escout_at_4a3900f295",
+      "label": "[escalated] 12d",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e54",
+      "fromNode": "librarian-ledger",
+      "toNode": "librarian-oraclebatch",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e55",
+      "fromNode": "librarian-oraclebatch",
+      "toNode": "librarian-dbatchscreen",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e56",
+      "fromNode": "librarian-dbatchscreen",
+      "toNode": "librarian-dgate2",
+      "label": "[ready for acceptance routing (distinct Oracle route pass)]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e57",
+      "fromNode": "librarian-dbatchscreen",
+      "toNode": "librarian-doctorbatch",
+      "label": "[repairable partial or publish gap (R4)] 14a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e58",
+      "fromNode": "librarian-doctorbatch",
+      "toNode": "librarian-reentrybatch",
+      "label": "[resolved]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e59",
+      "fromNode": "librarian-reentrybatch",
+      "toNode": "librarian-dgate2",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e60",
+      "fromNode": "librarian-doctorbatch",
+      "toNode": "librarian-dgate2",
+      "label": "[declined]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e61",
+      "fromNode": "librarian-doctorbatch",
+      "toNode": "librarian-escout",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e62",
+      "fromNode": "librarian-dbatchscreen",
+      "toNode": "librarian-pauseout",
+      "label": "[unmet required output blocks promotion] 14b",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e63",
+      "fromNode": "librarian-dbatchscreen",
+      "toNode": "librarian-pauseout",
+      "label": "[ORACLE_ROUTE_COLLISION (no distinct qualified route; never marked independently reviewed)] 14c",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e64",
+      "fromNode": "librarian-dbatchscreen",
+      "toNode": "librarian-escout",
+      "label": "[critical security, data-loss, or integrity violation in batch] 14d",
+      "color": "1",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e65",
+      "fromNode": "librarian-dgate2",
+      "toNode": "librarian-leadaccept",
+      "label": "[authorized by Context-1 task commission (decided_by=agent) or standing agent policy]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e66",
+      "fromNode": "librarian-dgate2",
+      "toNode": "librarian-dgate2caller",
+      "label": "[Context-2 no-accept, Context-3 human UI review, uncommissioned taxonomy change, or OD-05 policy hold] 15a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e67",
+      "fromNode": "librarian-dgate2caller",
+      "toNode": "librarian-ownergate2",
+      "label": "[interactive UI/Owner present]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e68",
+      "fromNode": "librarian-dgate2caller",
+      "toNode": "librarian-queueagenda",
+      "label": "[Context-2 / scheduled (queue for human or Context-1 curate)]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e69",
+      "fromNode": "librarian-ownergate2",
+      "toNode": "librarian-promote",
+      "label": "[accept selected items]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e70",
+      "fromNode": "librarian-ownergate2",
+      "toNode": "librarian-pauseout",
+      "label": "[hold or defer all]",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e71",
+      "fromNode": "librarian-leadaccept",
+      "toNode": "librarian-promote",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e72",
+      "fromNode": "librarian-promote",
+      "toNode": "librarian-oraclefinal",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e73",
+      "fromNode": "librarian-oraclefinal",
+      "toNode": "librarian-doracle",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e74",
+      "fromNode": "librarian-doracle",
+      "toNode": "librarian-deliver",
+      "label": "[met (distinct Oracle route pass)]",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e75",
+      "fromNode": "librarian-doracle",
+      "toNode": "librarian-doctorphase",
+      "label": "[index/findability miss or mapped shortfall (R5/R6)] 17a",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e76",
+      "fromNode": "librarian-doctorphase",
+      "toNode": "librarian-reentryfinal",
+      "label": "[resolved]",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e77",
+      "fromNode": "librarian-reentryfinal",
+      "toNode": "librarian-oraclefinal",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e78",
+      "fromNode": "librarian-doctorphase",
+      "toNode": "librarian-pauseout",
+      "label": "[declined]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e79",
+      "fromNode": "librarian-doctorphase",
+      "toNode": "librarian-escout",
+      "label": "[escalated]",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e80",
+      "fromNode": "librarian-doracle",
+      "toNode": "librarian-pauseout",
+      "label": "[unmapped gap requires Owner decision] 17b",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-e81",
+      "fromNode": "librarian-doracle",
+      "toNode": "librarian-pauseout",
+      "label": "[ORACLE_ROUTE_COLLISION (no distinct qualified route; never marked independently reviewed)] 17c",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "librarian-e82",
+      "fromNode": "librarian-doracle",
+      "toNode": "librarian-escout",
+      "label": "[critical integrity or authority-boundary finding] 17d",
+      "color": "1",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e83",
+      "fromNode": "librarian-deliver",
+      "toNode": "librarian-dfinalkind",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e84",
+      "fromNode": "librarian-dfinalkind",
+      "toNode": "librarian-recorddelivery",
+      "label": "[all required & optional clean]",
+      "fromSide": "right",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e85",
+      "fromNode": "librarian-dfinalkind",
+      "toNode": "librarian-recordpartial",
+      "label": "[permitted partial coverage or deferred lenses] 18a",
+      "color": "1",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "librarian-e86",
+      "fromNode": "librarian-recorddelivery",
+      "toNode": "librarian-notifyowner",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e87",
+      "fromNode": "librarian-notifyowner",
+      "toNode": "librarian-e1",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e88",
+      "fromNode": "librarian-recordpartial",
+      "toNode": "librarian-notifypartial",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e89",
+      "fromNode": "librarian-notifypartial",
+      "toNode": "librarian-epartial",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e90",
+      "fromNode": "librarian-queueagenda",
+      "toNode": "librarian-pauseout",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "librarian-e91",
+      "fromNode": "librarian-reuseout",
+      "toNode": "librarian-ereused",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e92",
+      "fromNode": "librarian-pauseout",
+      "toNode": "librarian-epaused",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e93",
+      "fromNode": "librarian-escout",
+      "toNode": "librarian-eescalated",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e94",
+      "fromNode": "librarian-pauseout_at_a74b357d36",
+      "toNode": "librarian-epaused_at_a74b357d36",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e95",
+      "fromNode": "librarian-pauseout_at_da5a535a02",
+      "toNode": "librarian-epaused_at_da5a535a02",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "librarian-e96",
+      "fromNode": "librarian-escout_at_4a3900f295",
+      "toNode": "librarian-eescalated_at_4a3900f295",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ]
+}

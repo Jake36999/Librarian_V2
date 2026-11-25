@@ -1,0 +1,341 @@
+diagram: librarian-source-enrichment-tobe
+title: "Librarian Source Enrichment L1 Workflow (Proposed To-Be)"
+problem:
+  symptom: "Part-count masked failed _document_pass/relate_chapters, before-item-only budget checks leaked inner calls, and 0-claim Geo paper DBs silently passed."
+  root: "Record activation trigger, enforce NAT-13 keys + MC-10 reserve, whole-source derivation checks, poison quarantine, Geo non-zero verification, and zero mid-loop Owner blocks."
+lanes:
+  - Oracle
+  - Lead (tier 1)
+  - Doctor
+  - Clerk (tier 2)
+  - Scribe (tier 3)
+  - Core
+  - Model host
+  - Geo-Grapher
+
+nodes:
+  - id: s
+    kind: start
+    label: start
+  - id: bind
+    kind: activity
+    lane: Core
+    step: 1
+    label: "binds Source, narrowed L1 sub-run mandate (sub_spec_owner=lead_tier1 <= parent), NAT-13 & MF-013/014"
+  - id: dwork
+    kind: decision
+    lane: Core
+    label: "L1 workflow admission source?"
+  - id: userread
+    kind: activity
+    lane: Core
+    label: "admits Context 3 UI reread/deep_read_note under person/workflow_grant route"
+  - id: t0read
+    kind: activity
+    lane: Core
+    label: "verifies Context 1/2 Delegated Commission Envelope for Source L1 workflow"
+  - id: controls
+    kind: activity
+    lane: Core
+    step: 2
+    label: "checks cancel/lease flags and runs MC-10 atomic pre-dispatch budget reserve"
+  - id: dcontrols
+    kind: decision
+    lane: Core
+    label: "controls permit dispatch?"
+  - id: validate
+    kind: activity
+    lane: Core
+    step: 3
+    label: "verifies evidence hash, NAT-13 route/recipe key, and fresh publish state"
+  - id: dvalidate
+    kind: decision
+    lane: Core
+    label: "validation result?"
+  - id: parse
+    kind: activity
+    lane: Core
+    step: 4
+    label: "runs scripted fetch, AST/PDF text extract, and page map; saves originals"
+  - id: dparse
+    kind: decision
+    lane: Core
+    label: "parse & conversion need?"
+  - id: convplan
+    kind: activity
+    lane: Clerk (tier 2)
+    label: "assigns bounded OCR or cleanup task under qualified role and MC-10 reserve"
+  - id: convert
+    kind: activity
+    lane: Scribe (tier 3)
+    label: "converts pages with [page N] anchors and explicit unread/error markers"
+  - id: convrev
+    kind: activity
+    lane: Clerk (tier 2)
+    label: "verifies conversion fidelity without attesting unread pages"
+  - id: convchk
+    kind: activity
+    lane: Core
+    label: "stores conversion with source_authorship metadata and reconciles spend"
+  - id: dconv
+    kind: decision
+    lane: Core
+    label: "conversion usable?"
+  - id: fallback
+    kind: activity
+    lane: Core
+    label: "restores original extracted text and keeps conversion gap explicit"
+  - id: dprov
+    kind: decision
+    lane: Core
+    label: "PDF needing provisional cache?"
+  - id: preproj
+    kind: activity
+    lane: Core
+    label: "marks provisional .nodes.json (text_layer=False); never counted published"
+  - id: parsegap
+    kind: activity
+    lane: Core
+    label: "records unread pages or missing units without granting read credit"
+  - id: readplan
+    kind: activity
+    lane: Clerk (tier 2)
+    step: 5
+    label: "assigns spread chunks, blind lens tasks, and required whole-source passes"
+  - id: read
+    kind: activity
+    lane: Scribe (tier 3)
+    step: 6
+    label: "executes bounded chunk and synthesis tasks with MC-10 spend reservation"
+  - id: host
+    kind: activity
+    lane: Model host
+    step: 7
+    label: "answers task requests via qualified route; settles reserved vs actual cost"
+  - id: readchk
+    kind: activity
+    lane: Core
+    step: 8
+    label: "verifies schemas/quotes (E4/E5) and separates chunk vs _document_pass state"
+  - id: readproof
+    kind: activity
+    lane: Clerk (tier 2)
+    step: 9
+    label: "reconciles whole-source _document_pass and relate_chapters synthesis (P1-L7)"
+  - id: dread
+    kind: decision
+    lane: Core
+    label: "chunk reads + whole derivations complete?"
+  - id: dpoison
+    kind: decision
+    lane: Core
+    label: "bounded retries exhausted on poison/ungrounded text?"
+  - id: quarantine
+    kind: activity
+    lane: Core
+    label: "quarantines poison item to .librarian/quarantine/ and drops provisional cache"
+  - id: partialread
+    kind: activity
+    lane: Core
+    label: "keeps item partial with unread chunks or missing _document_pass explicit"
+  - id: lenses
+    kind: activity
+    lane: Core
+    step: 10
+    label: "stores blind E4/E5 grounded lens candidates (parent acceptance separate)"
+  - id: data
+    kind: activity
+    lane: Core
+    step: 11
+    label: "extracts scripted DIK structural records & static AST code relations ($0; DATA_IS_UNFRAMED)"
+  - id: drelate
+    kind: decision
+    lane: Core
+    label: "multi-chapter document needing semantic relations?"
+  - id: relateskip
+    kind: activity
+    lane: Core
+    label: "retains Core static AST relations or marks chapter-relate N/A"
+  - id: relate
+    kind: activity
+    lane: Clerk (tier 2)
+    step: 12
+    label: "proposes semantic chapter relations across read chapters (Core persists)"
+  - id: metapropose
+    kind: activity
+    lane: Clerk (tier 2)
+    step: 13
+    label: "proposes semantic content-model metadata fields from evidence; retains Unknown where insufficient"
+  - id: metadata
+    kind: activity
+    lane: Core
+    step: 14
+    label: "derives deterministic facts/readiness, validates proposed fields against schema, & stores proposals + Unknowns"
+  - id: review
+    kind: activity
+    lane: Clerk (tier 2)
+    step: 15
+    label: "drafts neutral Bottom Line & sensitivity check with low_confidence rescue"
+  - id: reviewchk
+    kind: activity
+    lane: Core
+    step: 16
+    label: "checks Bottom Line schema, literal quote grounding, flags & reading counters (does not override incomplete reading)"
+  - id: dpub
+    kind: decision
+    lane: Core
+    step: 17
+    label: "eligible for Geo paper publication?"
+  - id: publish
+    kind: activity
+    lane: Geo-Grapher
+    step: 18
+    label: "imports full-conversion paper into catalog; returns claim/concept/error counts"
+  - id: pubreceipt
+    kind: activity
+    lane: Core
+    step: 19
+    label: "enforces non-zero claims on multi-page PDF and triggers W5 bridge check"
+  - id: dpubok
+    kind: decision
+    lane: Core
+    label: "publish receipt valid and non-empty?"
+  - id: pubna
+    kind: activity
+    lane: Core
+    label: "marks non-PDF or missing full conversion as publication N/A"
+  - id: pubgap
+    kind: activity
+    lane: Core
+    label: "records EMPTY_PAPER_GRAPH or Geo refusal without closing requirement"
+  - id: oracle
+    kind: activity
+    lane: Oracle
+    step: 20
+    label: "audits raw receipts, MC-10 ledger & Silver fidelity via distinct qualified Oracle route (GLM-5.3 current revisable adapter)"
+  - id: dverdict
+    kind: decision
+    lane: Oracle
+    label: "Source Oracle verdict?"
+  - id: doctor
+    kind: ref
+    lane: Doctor
+    use_case: librarian-doctor-tobe
+    label: "executes bounded YAML Ticket remedy via revisable adapter (GLM-5.3 current)"
+  - id: reentry
+    kind: activity
+    lane: Core
+    label: "confirms single-pass repair receipt (attempt <= 1) & re-admits check"
+  - id: handback
+    kind: activity
+    lane: Lead (tier 1)
+    step: 21
+    label: "returns verified Source package, costs, coverage & independent worklists to batch"
+  - id: retpartial
+    kind: activity
+    lane: Lead (tier 1)
+    label: "returns noncritical partial Source with unmet tasks/quarantine explicit"
+  - id: retpause
+    kind: activity
+    lane: Lead (tier 1)
+    label: "returns MC-10 ceiling, cancel, or ORACLE_ROUTE_COLLISION (unverified) pause Ticket"
+  - id: retesc
+    kind: activity
+    lane: Lead (tier 1)
+    label: "escalates critical integrity or authority-boundary fault to invoking parent"
+  - id: e1
+    kind: end
+    outcome: success
+    label: "Source meets full Silver & publish obligations"
+  - id: epartial
+    kind: end
+    outcome: partial
+    label: "partial or quarantined Source returned; gap explicit"
+  - id: enowork
+    kind: end
+    outcome: reused
+    label: "no new work admitted; compatible NAT-13 receipts reused"
+  - id: epaused
+    kind: end
+    outcome: paused
+    label: "paused on cancel, MC-10 budget cap, or ORACLE_ROUTE_COLLISION Ticket"
+  - id: eescalated
+    kind: end
+    outcome: escalated
+    label: "critical or unresolved integrity fault escalated"
+
+edges:
+  - {from: s, to: bind}
+  - {from: bind, to: dwork}
+  - {from: dwork, to: controls, guard: "system triggered (batch item admitted)"}
+  - {from: dwork, to: userread, guard: "user directed (targeted reread/revision)", ext: "1a"}
+  - {from: dwork, to: t0read, guard: "tier 0 directed (external grant verified)", ext: "1b"}
+  - {from: dwork, to: enowork, guard: "none admitted / reused", ext: "1c"}
+  - {from: userread, to: controls}
+  - {from: t0read, to: controls}
+  - {from: controls, to: dcontrols}
+  - {from: dcontrols, to: validate, guard: "controls and MC-10 reserve ok"}
+  - {from: dcontrols, to: retpause, guard: "paused or MC-10 cap hit", ext: "2a"}
+  - {from: dcontrols, to: retesc, guard: "critical writer or lease fault", ext: "2b"}
+  - {from: validate, to: dvalidate}
+  - {from: dvalidate, to: parse, guard: "stage work required"}
+  - {from: dvalidate, to: quarantine, guard: "unrecoverable poison or hash corruption", ext: "3a"}
+  - {from: parse, to: dparse}
+  - {from: dparse, to: dprov, guard: "native extraction usable"}
+  - {from: dparse, to: convplan, guard: "OCR or cleanup required", ext: "4a"}
+  - {from: dparse, to: parsegap, guard: "early fetch partial or missing units", ext: "4b"}
+  - {from: convplan, to: convert}
+  - {from: convert, to: convrev}
+  - {from: convrev, to: convchk}
+  - {from: convchk, to: dconv}
+  - {from: dconv, to: dprov, guard: "usable conversion"}
+  - {from: dconv, to: fallback, guard: "unusable output or outage"}
+  - {from: fallback, to: dprov}
+  - {from: dprov, to: preproj, guard: "PDF/paper"}
+  - {from: dprov, to: readplan, guard: "non-PDF", ext: "4c"}
+  - {from: preproj, to: readplan}
+  - {from: parsegap, to: readplan}
+  - {from: readplan, to: read}
+  - {from: read, to: host}
+  - {from: host, to: readchk}
+  - {from: readchk, to: readproof}
+  - {from: readproof, to: dread}
+  - {from: dread, to: lenses, guard: "chunks and _document_pass/relate complete"}
+  - {from: dread, to: dpoison, guard: "unread parts or missing synthesis pass", ext: "9a"}
+  - {from: dpoison, to: quarantine, guard: "exhausted ungrounded/poison"}
+  - {from: dpoison, to: partialread, guard: "noncritical partial retained"}
+  - {from: quarantine, to: retpartial}
+  - {from: partialread, to: lenses}
+  - {from: lenses, to: data}
+  - {from: data, to: drelate}
+  - {from: drelate, to: relate, guard: "2+ read chapters with claims"}
+  - {from: drelate, to: relateskip, guard: "code repo (AST in Core Data) or <2 chapters", ext: "11a"}
+  - {from: relate, to: metapropose}
+  - {from: relateskip, to: metapropose}
+  - {from: metapropose, to: metadata}
+  - {from: metadata, to: review}
+  - {from: review, to: reviewchk}
+  - {from: reviewchk, to: dpub}
+  - {from: dpub, to: publish, guard: "full conversion and trusted folder group"}
+  - {from: dpub, to: pubna, guard: "non-PDF or no conversion", ext: "17a"}
+  - {from: dpub, to: pubgap, guard: "missing folder or Geo disabled", ext: "17b"}
+  - {from: pubna, to: oracle}
+  - {from: pubgap, to: oracle}
+  - {from: publish, to: pubreceipt}
+  - {from: pubreceipt, to: dpubok}
+  - {from: dpubok, to: oracle, guard: "valid non-zero graph & bridge checked"}
+  - {from: dpubok, to: pubgap, guard: "EMPTY_PAPER_GRAPH or late refusal", ext: "19a"}
+  - {from: oracle, to: dverdict}
+  - {from: dverdict, to: handback, guard: "all obligations met (distinct Oracle route)"}
+  - {from: dverdict, to: doctor, guard: "mapped shortfall needs bounded repair", ext: "20a"}
+  - {from: dverdict, to: retpartial, guard: "permitted partial gap", ext: "20b"}
+  - {from: dverdict, to: retesc, guard: "critical finding", ext: "20c"}
+  - {from: dverdict, to: retpause, guard: "ORACLE_ROUTE_COLLISION (no distinct qualified route; never marked independently reviewed)", ext: "20d"}
+  - {from: doctor, to: reentry, guard: "resolved"}
+  - {from: reentry, to: validate}
+  - {from: doctor, to: retpartial, guard: "declined"}
+  - {from: doctor, to: retesc, guard: "escalated"}
+  - {from: handback, to: e1}
+  - {from: retpartial, to: epartial}
+  - {from: retpause, to: epaused}
+  - {from: retesc, to: eescalated}

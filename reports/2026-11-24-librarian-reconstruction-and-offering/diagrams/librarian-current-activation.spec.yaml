@@ -1,0 +1,225 @@
+# Current-state upstream activation map at commit d9435e1 (implemented/verified UI, folder review, workflow, MCP, Broker & Intake/Staging paths).
+# Folder survey/review/Geo apply is separate from Source intake; the only bridge is POST /api/folders/sources -> ingest(defer=true) -> queue -> intake.
+# deep-read-staged is a plain workflow (staging_list -> each deep_read), NOT a call of source-enrichment-current; it ends finished/paused/failed.
+# Batch work calls batch-enrichment-current via ref; historical DataManagement ingestion.canvas is untouched.
+diagram: librarian-current-activation
+kind: activity
+status: IMPLEMENTED_VERIFIED
+title: "Current Activation Paths: Present-Day UI, Folders, Workflows, MCP & Staging (d9435e1)"
+problem:
+  symptom: "MCP agents hit contribute caps, 0 folder MCP tools, curate process_approved refusals, 150s Ask waits, F-09 form wipes, and dropped workflow results (app.js:8472)."
+  root: "Document verified d9435e1 UI, separate Folder review/Geo apply, the /api/folders/sources queue bridge, the deep-read-staged workflow, MCP/Broker and batch paths without retrofitting the historical trace."
+lanes:
+  - Tier 0 agent (MCP / CLI-API)
+  - Geo-Grapher
+  - Core
+  - Librarian Web UI
+  - Human user
+  - In-app Lead / Model worker
+
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: hist_note, kind: note, lane: Core, label: "d9435e1 current-state map; separates Folder review/Geo apply from Source intake, connects them only via /api/folders/sources, and preserves historical ingestion.canvas."}
+  - {id: initiate, kind: activity, lane: Human user, step: 1, label: "initiates via Web UI (Add source, Folders, Chat, or paperclip workflow), instructs Tier 0 (Context 1), or runs ext build (Context 2)"}
+  - {id: dcontext, kind: decision, lane: Core, label: "which present-day activation surface enters Core?"}
+  - {id: ui_source_intake, kind: activity, lane: Librarian Web UI, step: 2, label: "submits Staging -> Sources -> Add source via person_call(ingest, defer=false) at curate tier (bypasses Broker)"}
+  - {id: c1_call, kind: activity, lane: Tier 0 agent (MCP / CLI-API), label: "calls MCP capped at contribute (0 folder MCP tools; process_approved refused) or declared actor=agent /api/tool CLI"}
+  - {id: dc1_broker, kind: decision, lane: Core, label: "Context 1 surface, tier & Broker Ask check?"}
+  - {id: c1_refusal, kind: activity, lane: Tier 0 agent (MCP / CLI-API), label: "stops at TIER_REFUSED / 0 MCP folder tools / Plan deny / 150s PERMISSION_UNANSWERED; reports manual UI step"}
+  - {id: c2_call, kind: activity, lane: Tier 0 agent (MCP / CLI-API), label: "calls search/read_source_section, delegate/dispatch_plan, queue_source, ingest, or record_application"}
+  - {id: dc2_gate, kind: decision, lane: Core, label: "Context 2 MCP tier & S1-S6b third-party check?"}
+  - {id: c2_helpers, kind: activity, lane: In-app Lead / Model worker, label: "runs contribute read-only DeepInfra delegate / dispatch_plan DAGs with zero Ask prompt"}
+  - {id: dc2_outcome, kind: decision, lane: Core, label: "Context 2 source readiness & Applications/ path?"}
+  - {id: c2_record_app, kind: activity, lane: Core, label: "writes append-only Applications/ note (attested_by=agent, [[note]]) + sidecar & auto-enqueues unresolved_sources"}
+  - {id: c2_deliver_reuse, kind: activity, lane: Tier 0 agent (MCP / CLI-API), label: "delivers ext-project result + Applications/ link (no snapshot hashes/locators/verification schema)"}
+  - {id: c2_queue_only, kind: activity, lane: Core, label: "refuses empty sources_used (TypeError) or leaves queued leads for later intake without blocking ext task"}
+  - {id: c2_deliver_partial, kind: activity, lane: Tier 0 agent (MCP / CLI-API), label: "returns external workaround/gap notice & queued unresolved lead IDs to user"}
+  - {id: c2_refusal, kind: activity, lane: Tier 0 agent (MCP / CLI-API), label: "stops on consult delegate TIER_REFUSED, raw 3rd-party THIRD_PARTY_ROUTE_REQUIRED, or 150s Ask timeout"}
+  - {id: ui_folder_survey, kind: activity, lane: Librarian Web UI, label: "POST /api/folders/survey walks directory metadata only (files unread, credential paths refused) & stages kind=folder cards"}
+  - {id: folder_stage_cards, kind: activity, lane: Core, label: "FolderReview.survey records fingerprints, suggested purpose & stratum graph on folder cards (0 Source items created)"}
+  - {id: dfolder_action, kind: decision, lane: Core, label: "folder action on /api/folders/*?"}
+  - {id: folder_draft_check, kind: decision, lane: Core, label: "POST /api/folders/draft: production_drafting & provenance arithmetic ok?"}
+  - {id: folder_clerk_draft, kind: activity, lane: In-app Lead / Model worker, label: "drafts 1-sentence folder brief & sensitivity from file counts/bytes only; stages draft on folder card"}
+  - {id: folder_draft_hold, kind: activity, lane: Core, label: "retains folder card in Folders awaiting person Accept folder decision (or records FOLDER_DRAFT_DISABLED / provenance refusal)"}
+  - {id: folder_batch_approve, kind: activity, lane: Core, label: "POST /api/folders/approve-batch (person=True) marks 1-100 non-sensitive folder cards approved (not accepted)"}
+  - {id: dfolder_batch_go, kind: decision, lane: Core, label: "person submits Process approved in Staging for approved folder cards?"}
+  - {id: folder_accept_prep, kind: activity, lane: Core, label: "accept (person=True) or accept-policy (promotion.mode=agent): checks all-groups FOLDER_STALE & writes content-roots.json barrier"}
+  - {id: dfolder_prep, kind: decision, lane: Core, label: "folder validation, policy & group check?"}
+  - {id: geo_folder_apply, kind: activity, lane: Geo-Grapher, label: "runs apply-folder-review CLI across all accepted non-excluded library groups & writes graph snapshots"}
+  - {id: dfolder_post, kind: decision, lane: Core, label: "Geo apply result & accepted folder purpose?"}
+  - {id: ui_folder_done, kind: activity, lane: Librarian Web UI, label: "shows Accepted folder & Geo graph status in Folders (own-code/data/logs/exclude never become Sources)"}
+  - {id: folder_queue_sources, kind: activity, lane: Core, label: "separate click POST /api/folders/sources: folder_sources.queue calls ingest(defer=true) per document (UI button: third-party/research-docs; API also own-docs); writes folder-sources.json, status=queued"}
+  - {id: dqueue_drain, kind: decision, lane: Core, label: "queued intake refs drained via intake_run / run-queue?"}
+  - {id: chat_lead, kind: activity, lane: In-app Lead / Model worker, label: "handles UI Chat+Attach; calls tools & asks person tool-by-tool in Modes: Ask (600s wait; no sprint envelope)"}
+  - {id: dchat_broker, kind: decision, lane: Core, label: "Chat tool target & Broker Ask/Plan check?"}
+  - {id: ui_wf_start, kind: activity, lane: Core, label: "App.start_action starts paperclip workflow at tier=contribute with workflow_grant (read_access exempts deep_read only)"}
+  - {id: dwf_route, kind: decision, lane: Core, label: "which paperclip workflow & grant check?"}
+  - {id: wf_deep_read, kind: activity, lane: In-app Lead / Model worker, label: "deep-read-staged.yaml: staging_list(source, staged, limit=10) -> each deep_read(max_chunks=12, on_error: continue) via clerk_endpoint; item status unchanged"}
+  - {id: dwf_outcome, kind: decision, lane: Core, label: "workflows.Runner status on action_done?"}
+  - {id: ui_drop_result, kind: activity, lane: Librarian Web UI, label: "app.js:8472 discards action_done.result (_result: {read, failed, errors}) & hides chip; reloads Staging where items stay staged"}
+  - {id: dwf_followup, kind: decision, lane: Core, label: "person submits Staging decision on still-staged items?"}
+  - {id: wf_paused_chip, kind: activity, lane: Librarian Web UI, label: "app.js:8472 drops result; renders static paused chip with no UI route-picker, resume, or dismiss control"}
+  - {id: wf_refused, kind: activity, lane: Core, label: "App._run_action catches Refusal/DefinitionError (TIER_REFUSED, PERSON_CONFIRMS, or non-deep_read THIRD_PARTY_ROUTE_REQUIRED) -> status=failed"}
+  - {id: capture_source, kind: activity, lane: Core, step: 3, label: "intake.ingest fetches immutable Bronze .evidence/, checks extraction quality & duplicates, and restores _framing on queued refs"}
+  - {id: dcap_curr, kind: decision, lane: Core, label: "Source capture outcome?"}
+  - {id: reuse_curr, kind: activity, lane: Core, label: "links already_held note or brief screened_out record without duplicate staging"}
+  - {id: quar_curr, kind: activity, lane: Core, label: "quarantines failed ref & settles queue entry for retry"}
+  - {id: clerk_draft, kind: activity, lane: In-app Lead / Model worker, step: 4, label: "intake.describe drafts neutral opening summary via clerk_endpoint (slug/filename titles & Unfiled if <=1 topic remain)"}
+  - {id: stage_source, kind: activity, lane: Core, step: 5, label: "writes kind=source (status=staged) in StagingStore (distinct from kind=folder cards)"}
+  - {id: dgate1_auth, kind: decision, lane: Core, label: "Source Gate 1 decision & curate process_approved start authority?"}
+  - {id: gate1_ui, kind: activity, lane: Human user, step: 6, label: "reviews Staging -> Sources (Which sources hides processing/accepted); approves Gate 1 & clicks Process approved"}
+  - {id: accept_captured, kind: activity, lane: Core, label: "promotes captured/partial Source note with explicit coverage & not_examined list"}
+  - {id: dmanual_handover, kind: decision, lane: Human user, label: "human takes over Gate 1 / Process approved in Web UI?"}
+  - {id: start_batch, kind: activity, lane: Core, step: 7, label: "validates curate person_call, single _LIVE lock & freezes approved Sources (+ any approved Folder cards)"}
+  - {id: batch_ref, kind: ref, lane: Core, step: 8, use_case: batch-enrichment-current, label: "dispatches frozen mixed batch via batch-enrichment-current (calls source-enrichment-current for Sources; FOLDER_STAGES for folders)"}
+  - {id: dpartial_accept, kind: decision, lane: Core, label: "partial/failed item disposition & promotion mode?"}
+  - {id: gate2_ui, kind: activity, lane: Human user, step: 9, label: "reviews enriched Source summary (F-09 conflict reload wipes edits) & clicks Accept; Folder accept & Lenses stay separate"}
+  - {id: dgate2_curr, kind: decision, lane: Core, label: "Source Gate 2 decision & PromotionGuard CAS check?"}
+  - {id: promote_curr, kind: activity, lane: Core, step: 10, label: "commits Sources/ note via PromotionGuard (200-file CAS), IndexGateway FTS, DA-3 handoff & post-write vectors"}
+  - {id: dfind_curr, kind: decision, lane: Core, label: "post-promotion catalogued & vector status?"}
+  - {id: ui_done, kind: activity, lane: Librarian Web UI, step: 11, label: "shows ok banner & Search/Staging updates (manual Rewrite indexes if needed; no Oracle/Doctor runtime)"}
+  - {id: user_done, kind: activity, lane: Human user, step: 12, label: "receives catalogued Source note in Search/Vault; Folders/Lenses/Topics remain separate"}
+  - {id: ui_hold_notice, kind: activity, lane: Librarian Web UI, label: "surfaces Ask prompt, refusal, FOLDER_STALE/policy hold, F-09 conflict, or waiting/queued Staging state"}
+  - {id: user_paused, kind: activity, lane: Human user, label: "receives refusal, Ask timeout, paused workflow chip, or manual Staging/Folders handover requirement"}
+  - {id: ui_partial_notice, kind: activity, lane: Librarian Web UI, label: "updates Staging/Search with partial/captured/warning state or finished workflow without result drawer"}
+  - {id: user_partial, kind: activity, lane: Human user, label: "receives partial/captured/queued/embedding_warnings result or unseen finished workflow state"}
+  - {id: user_reused, kind: activity, lane: Human user, label: "receives reused note, Applications/ precedent, or indexed-whole non-Source folder confirmation"}
+  - {id: ui_fail_notice, kind: activity, lane: Librarian Web UI, label: "surfaces error banner, failed Geo folder apply, or failed workflow chip (result.error dropped)"}
+  - {id: user_esc, kind: activity, lane: Human user, label: "receives failure alert & retained barrier/staging state"}
+  - {id: e1, kind: end, outcome: success, label: "Source catalogued & findable via current UI/batch path; Folder/Lens/Topic decisions separate"}
+  - {id: epartial, kind: end, outcome: partial, label: "completed with partial coverage, queued leads, or discarded finished workflow output (items still staged)"}
+  - {id: ereused, kind: end, outcome: reused, label: "reused existing note/precedent or applied non-Source folder graph without Source intake"}
+  - {id: epaused, kind: end, outcome: paused, label: "paused on Ask timeout, TIER_REFUSED, FOLDER_STALE/policy hold, queued refs, or paused workflow chip"}
+  - {id: eescalated, kind: end, outcome: escalated, label: "failed workflow, Geo apply, or uncaught batch/write error surfaced with retained state"}
+
+edges:
+  - {from: s, to: hist_note}
+  - {from: hist_note, to: initiate}
+  - {from: initiate, to: dcontext}
+  - {from: dcontext, to: ui_source_intake, guard: "Context 3: Web UI Staging -> Sources -> Add source (curate)"}
+  - {from: dcontext, to: c1_call, guard: "Context 1: user directs Tier 0 agent (MCP / actor=agent API)", ext: "1a"}
+  - {from: dcontext, to: c2_call, guard: "Context 2: external-project Tier 0 MCP during ext build", ext: "1b"}
+  - {from: dcontext, to: ui_folder_survey, guard: "Context 3: Web UI Folders tab (/api/folders/*)", ext: "1c"}
+  - {from: dcontext, to: chat_lead, guard: "Context 3: Web UI Chat + Attach with in-app Lead", ext: "1d"}
+  - {from: dcontext, to: ui_wf_start, guard: "Context 3: Web UI paperclip Run a workflow (App.start_action)", ext: "1e"}
+  - {from: ui_source_intake, to: capture_source}
+  - {from: c1_call, to: dc1_broker}
+  - {from: dc1_broker, to: capture_source, guard: "MCP/API ingest(defer=false) or intake_run permitted"}
+  - {from: dc1_broker, to: dqueue_drain, guard: "MCP queue_source or ingest(defer=true) permitted"}
+  - {from: dc1_broker, to: c1_refusal, guard: "0 MCP folder tools, curate TIER_REFUSED, Plan deny, or Ask 150s timeout"}
+  - {from: c1_refusal, to: user_paused}
+  - {from: c2_call, to: dc2_gate}
+  - {from: dc2_gate, to: c2_helpers, guard: "contribute delegate/dispatch_plan + S1-S6b reads"}
+  - {from: dc2_gate, to: c2_refusal, guard: "consult delegate TIER_REFUSED or raw 3rd-party THIRD_PARTY_ROUTE_REQUIRED"}
+  - {from: c2_helpers, to: dc2_outcome}
+  - {from: dc2_outcome, to: c2_record_app, guard: "sources_used >= 1 catalogued & Broker write allowed"}
+  - {from: dc2_outcome, to: c2_queue_only, guard: "sources_used=[] TypeError or async queue_source without waiting"}
+  - {from: dc2_outcome, to: capture_source, guard: "contribute ingest(defer=false) captures missing ref"}
+  - {from: dc2_outcome, to: c2_refusal, guard: "Ask 150s PERMISSION_UNANSWERED on session/queue/application"}
+  - {from: c2_record_app, to: c2_deliver_reuse}
+  - {from: c2_deliver_reuse, to: user_reused}
+  - {from: c2_queue_only, to: c2_deliver_partial}
+  - {from: c2_deliver_partial, to: user_partial}
+  - {from: c2_refusal, to: user_paused}
+  - {from: ui_folder_survey, to: folder_stage_cards}
+  - {from: folder_stage_cards, to: dfolder_action}
+  - {from: dfolder_action, to: folder_accept_prep, guard: "/api/folders/accept (person) or /accept-policy (agent mode)"}
+  - {from: dfolder_action, to: folder_batch_approve, guard: "/api/folders/approve-batch (person; 1-100 folder cards)"}
+  - {from: dfolder_action, to: folder_draft_check, guard: "/api/folders/draft (approve_spend=true; counts only)"}
+  - {from: folder_draft_check, to: folder_clerk_draft, guard: "production_drafting enabled & provenance ok"}
+  - {from: folder_draft_check, to: folder_draft_hold, guard: "FOLDER_DRAFT_DISABLED (default), CLERK_UNAVAILABLE, or provenance mismatch"}
+  - {from: folder_clerk_draft, to: folder_draft_hold}
+  - {from: folder_draft_hold, to: ui_hold_notice}
+  - {from: folder_batch_approve, to: dfolder_batch_go}
+  - {from: dfolder_batch_go, to: start_batch, guard: "person clicks Process approved in Staging (runs FOLDER_STAGES)"}
+  - {from: dfolder_batch_go, to: ui_hold_notice, guard: "leaves approved folder cards waiting"}
+  - {from: folder_accept_prep, to: dfolder_prep}
+  - {from: dfolder_prep, to: geo_folder_apply, guard: "valid & non-excluded accepted group(s)"}
+  - {from: dfolder_prep, to: ui_folder_done, guard: "exclude-only decision (never read or indexed)"}
+  - {from: dfolder_prep, to: ui_hold_notice, guard: "FOLDER_STALE (409), PROMOTION_MODE!=agent, or SENSITIVITY_REVIEW"}
+  - {from: geo_folder_apply, to: dfolder_post}
+  - {from: dfolder_post, to: folder_queue_sources, guard: "apply ok on reference folder & person clicks Queue documents as Sources"}
+  - {from: dfolder_post, to: ui_folder_done, guard: "apply ok: own-code/data/logs indexed whole (never Sources) or not queued"}
+  - {from: dfolder_post, to: ui_fail_notice, guard: "Geo apply-folder-review failed (barrier retained)"}
+  - {from: ui_folder_done, to: user_reused}
+  - {from: folder_queue_sources, to: dqueue_drain}
+  - {from: dqueue_drain, to: capture_source, guard: "intake_run / run-queue captures queued refs within budget"}
+  - {from: dqueue_drain, to: ui_hold_notice, guard: "stays status=queued or stops at [budget] ceiling_usd"}
+  - {from: chat_lead, to: dchat_broker}
+  - {from: dchat_broker, to: capture_source, guard: "ingest(defer=false) / intake_run allowed (Auto or UI Allow)"}
+  - {from: dchat_broker, to: dqueue_drain, guard: "queue_source / ingest(defer=true) allowed (status=queued)"}
+  - {from: dchat_broker, to: ui_hold_notice, guard: "Ask unanswered (600s park) or Plan PERMISSION_DENIED"}
+  - {from: ui_wf_start, to: dwf_route}
+  - {from: dwf_route, to: wf_deep_read, guard: "deep-read-staged (read_access deep_read carveout)"}
+  - {from: dwf_route, to: dwf_outcome, guard: "other QUEUED run (e.g. clear-enrichment-backlog: run-queue -> reasoned route)"}
+  - {from: dwf_route, to: wf_refused, guard: "curate step, unaccepted workflow, or non-deep_read 3rd-party raw read"}
+  - {from: wf_deep_read, to: dwf_outcome}
+  - {from: dwf_outcome, to: ui_drop_result, guard: "finished (outputs {read, failed, errors}; on_error: continue; items stay staged)"}
+  - {from: dwf_outcome, to: wf_paused_chip, guard: "paused (cancel_action, MF-018 outcome_unknown, or missing pipeline router)"}
+  - {from: dwf_outcome, to: ui_fail_notice, guard: "failed (RunFailed / step error outside on_error: continue)"}
+  - {from: ui_drop_result, to: dwf_followup}
+  - {from: dwf_followup, to: dgate1_auth, guard: "person decides still-staged items in Staging (Gate 1 / Accept as captured)"}
+  - {from: dwf_followup, to: ui_partial_notice, guard: "no follow-up (result unseen; items remain staged)"}
+  - {from: wf_paused_chip, to: user_paused}
+  - {from: wf_refused, to: ui_fail_notice}
+  - {from: capture_source, to: dcap_curr}
+  - {from: dcap_curr, to: clerk_draft, guard: "usable captured Source"}
+  - {from: dcap_curr, to: reuse_curr, guard: "already_held duplicate or screened_out", ext: "3a"}
+  - {from: dcap_curr, to: quar_curr, guard: "quarantined or capture error", ext: "3b"}
+  - {from: reuse_curr, to: user_reused}
+  - {from: quar_curr, to: ui_hold_notice}
+  - {from: clerk_draft, to: stage_source}
+  - {from: stage_source, to: dgate1_auth}
+  - {from: dgate1_auth, to: gate1_ui, guard: "Context 3 UI human approve + Process approved sources"}
+  - {from: dgate1_auth, to: accept_captured, guard: "Context 3 UI Accept as captured (skips batch)", ext: "5a"}
+  - {from: dgate1_auth, to: dmanual_handover, guard: "MCP TIER_REFUSED on process_approved / PERSON_CONFIRMS / SENSITIVITY_REVIEW", ext: "5b"}
+  - {from: dmanual_handover, to: start_batch, guard: "human completes Gate 1 & clicks Process approved in UI"}
+  - {from: dmanual_handover, to: ui_hold_notice, guard: "left waiting or deferred in Staging"}
+  - {from: gate1_ui, to: start_batch}
+  - {from: start_batch, to: batch_ref}
+  - {from: batch_ref, to: gate2_ui, guard: "success"}
+  - {from: batch_ref, to: dpartial_accept, guard: "partial", ext: "8a"}
+  - {from: batch_ref, to: reuse_curr, guard: "reused", ext: "8b"}
+  - {from: batch_ref, to: ui_hold_notice, guard: "paused", ext: "8c"}
+  - {from: batch_ref, to: ui_fail_notice, guard: "escalated", ext: "8d"}
+  - {from: dpartial_accept, to: accept_captured, guard: "person accepts partial in UI (coverage=partial explicit)"}
+  - {from: dpartial_accept, to: ui_hold_notice, guard: "PERSON_CONFIRMS / SENSITIVITY_REVIEW / OP1 left unaccepted"}
+  - {from: accept_captured, to: ui_partial_notice}
+  - {from: gate2_ui, to: dgate2_curr}
+  - {from: dgate2_curr, to: promote_curr, guard: "Accept confirmed (curate or declared agent under promotion.mode=agent)"}
+  - {from: dgate2_curr, to: ui_hold_notice, guard: "Defer or Reject in Staging", ext: "9a"}
+  - {from: dgate2_curr, to: ui_hold_notice, guard: "F-09 stale staged_revision or DOCUMENT_ACTIVE lease", ext: "9b"}
+  - {from: promote_curr, to: dfind_curr}
+  - {from: dfind_curr, to: ui_done, guard: "catalogued & vectors clean"}
+  - {from: dfind_curr, to: ui_partial_notice, guard: "not_findable or embedding_warnings (note kept; manual Rewrite indexes)", ext: "10a"}
+  - {from: dfind_curr, to: ui_fail_notice, guard: "uncaught write or index failure", ext: "10b"}
+  - {from: ui_partial_notice, to: user_partial}
+  - {from: ui_done, to: user_done}
+  - {from: user_done, to: e1}
+  - {from: ui_hold_notice, to: user_paused}
+  - {from: user_paused, to: epaused}
+  - {from: user_partial, to: epartial}
+  - {from: user_reused, to: ereused}
+  - {from: ui_fail_notice, to: user_esc}
+  - {from: user_esc, to: eescalated}
+
+provenance:
+  status: "IMPLEMENTED_VERIFIED"
+  baseline_commit: "d9435e1"
+  based_on:
+    - "src/resource_librarian/app.py:277,3036-3180,4185-4273,4859-5075"
+    - "src/resource_librarian/folder_review.py:469-488,539-611,616-749"
+    - "src/resource_librarian/folder_sources.py:24-30,69-116,123-161"
+    - "src/resource_librarian/standard/workflows/deep-read-staged.yaml:1-18"
+    - "src/resource_librarian/workflows.py:1009-1047"
+    - "src/resource_librarian/broker.py:70,165-238,297-322"
+    - "src/resource_librarian/read_access.py:90-160"
+    - "src/resource_librarian/tools/batch.py:9-40"
+    - "src/resource_librarian/tools/intake.py:39-150"
+    - "src/resource_librarian/tools/staging.py:126-175,313-327,545-770"
+    - "src/resource_librarian/staging.py:940-1010"
+    - "src/resource_librarian/tools/sessions.py:1940-2049"
+    - "src/resource_librarian/tools/delegate.py:37-136"
+    - "src/resource_librarian/tools/plan_dispatch.py:191-270"
+    - "src/resource_librarian/tools/workflows.py:96-112"
+    - "src/resource_librarian/ui/app.js:6030-6230,6325-6449,6940-7037,7175-7189,8469-8955"
