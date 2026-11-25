@@ -1,0 +1,60 @@
+# UC3 as-is: a drafted report's claims are checked before it is staged (tools/sessions.py draft_offering).
+diagram: verify-claims
+use_case: UC3
+status: IMPLEMENTED_OBSERVED
+supersedes: []
+kind: activity
+title: Verify a report's claims, as it runs today
+problem:
+  symptom: "With review off, a garbled claim was staged; with review on, three reviews of full-PDF quotes did not complete."
+  root: "Claim review is opt-in per library, and an incomplete review records the claim as unchecked rather than holding it."
+lanes: [Lead (tier 1), Core, Clerk (tier 2)]
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: submit, kind: activity, lane: Lead (tier 1), step: 1, label: "submits the draft (draft_offering), each claim citing a source and a quote"}
+  - {id: quote, kind: activity, lane: Core, step: 2, label: "looks for each quote verbatim: the note, its evidence, its document text, the original file"}
+  - {id: dquote, kind: decision, lane: Core, label: "is the quote found?"}
+  - {id: closest, kind: activity, lane: Core, label: "refuses the draft and names the closest passage to copy"}
+  - {id: resolve, kind: activity, lane: Core, label: "resolves a graph citation (<graph>/doc:N) to the paper's Source note and looks there"}
+  - {id: dnote, kind: decision, lane: Core, label: "does the cited paper have a Source note?"}
+  - {id: noref, kind: activity, lane: Core, label: "refuses the claim and says why"}
+  - {id: dreview, kind: decision, lane: Core, label: "is claim review on for this library (review_offerings, or the effort level)?"}
+  - {id: skip, kind: activity, lane: Core, label: "skips the review: the claim is staged checked for its quote only"}
+  - {id: send, kind: activity, lane: Core, step: 3, label: "sends each claim with the passage around its quote to the Clerk, on the library's review route"}
+  - {id: judge, kind: activity, lane: Clerk (tier 2), step: 4, label: "judges whether the passage supports the claim as written"}
+  - {id: dverdict, kind: decision, lane: Core, label: "the Clerk's verdict?"}
+  - {id: challenge, kind: activity, lane: Core, label: "returns the challenge to the Lead, with the words that show it"}
+  - {id: unchecked, kind: activity, lane: Core, label: "records the claim as unchecked, with the Clerk's own problem as the reason"}
+  - {id: record, kind: activity, lane: Core, step: 5, label: "records the verdicts on the report"}
+  - {id: stage, kind: activity, lane: Core, step: 6, label: "stages the report as an offering"}
+  - {id: e1, kind: end, outcome: success, label: "the report is staged with its verdicts"}
+  - {id: e_challenged, kind: end, outcome: challenged, label: "a claim goes beyond its passage, or is not a readable sentence"}
+  - {id: e_refused, kind: end, outcome: refused, label: "a quote or its source is missing"}
+edges:
+  - {from: s, to: submit}
+  - {from: submit, to: quote}
+  - {from: quote, to: dquote}
+  - {from: dquote, to: dreview, guard: found in the cited note}
+  - {from: dquote, to: closest, guard: not found, ext: 2a}
+  - {from: dquote, to: resolve, guard: the source is a graph citation, ext: 2b}
+  - {from: closest, to: e_refused}
+  - {from: resolve, to: dnote}
+  - {from: dnote, to: dreview, guard: "yes, and the quote is there"}
+  - {from: dnote, to: noref, guard: "no"}
+  - {from: noref, to: e_refused}
+  - {from: dreview, to: send, guard: "on"}
+  - {from: dreview, to: skip, guard: off (the default), ext: 3a}
+  - {from: skip, to: record}
+  - {from: send, to: judge}
+  - {from: judge, to: dverdict}
+  - {from: dverdict, to: record, guard: supported}
+  - {from: dverdict, to: challenge, guard: "goes beyond the passage, or not a readable sentence", ext: 4a}
+  - {from: dverdict, to: unchecked, guard: the reply did not complete, ext: 4b}
+  - {from: challenge, to: e_challenged}
+  - {from: unchecked, to: record}
+  - {from: record, to: stage}
+  - {from: stage, to: e1}
+evidence:
+  - "src/resource_librarian/tools/sessions.py: draft_offering; review opt-in at lines 1719-1723 (`review_offerings` under [clerk], or effort)."
+  - "Review route inside the Core: clerk_endpoint wraps the Clerk in the library's task routes (8489387)."
+  - "Unchecked with a reason: 81914de. Graph citations as evidence: 1064cf0. USE-CASES.md UC3."

@@ -4,6 +4,13 @@
 
 This document reviews every diagram made for the Librarian's systems analysis between 20 and 24 November, then plans the finished set: one pack for the current state (as-is), one for the proposed state (to-be). It is a plan, not a change. Nothing here has been built, moved or committed.
 
+**What the graphs are for** (Owner, 25 November). The Librarian and Geo-Grapher already do a lot of things; they don't yet do them well. Seen from a systems-analysis stance, the graphs should expose the exact weaknesses and logical gaps that have to close before the runtimes are clean and the parts work together. The order is:
+1. map everything as it is;
+2. find where it goes wrong;
+3. design a preferred version that handles every use case and edge case, and each identified failure mode.
+
+So each as-is graph records its weaknesses and gaps beside its paths, and each to-be graph names the failures it handles. The Librarian goes first, then Geo-Grapher.
+
 **Why now.** In hindsight, too much of the work went into large swim-lane canvases. The compact views generated beside them were the useful output. [`compose.views.md`](../2026-11-20-workflow-map/examples/ingestion/compose.views.md) is the reference: a Mermaid activity diagram of 35 nodes, a generated written use case, a lane load, a decision tree and a test table, all from one spec.
 
 ## 1. What exists
@@ -134,7 +141,7 @@ In priority order. "Keep" means an existing spec is canonical; "split" means it 
 
 ## 4. Decisions for the Owner
 
-1. **D1.** Stop producing swim-lane canvases, keep the existing ones as archived, and make the Mermaid views and one index canvas per pack the deliverable.
+1. **D1. Decided 25 November: yes.** Stop producing swim-lane canvases, keep the existing ones as archived, and make the Mermaid views and one index canvas per pack the deliverable.
 2. **D2.** Move superseded specs and their artifacts into an `archive/` folder per report, or mark them superseded in place and leave them. A move is reversible, but it changes paths other documents link to.
 3. **D3.** The size limit (~40 nodes per activity diagram), and splitting into parent and children by reference above it.
 4. **D4.** Which G5 sequence diagrams to draw, if any, beyond the two proposed.

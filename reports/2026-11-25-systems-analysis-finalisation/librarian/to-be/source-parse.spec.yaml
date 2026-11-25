@@ -1,0 +1,135 @@
+# Split from the S1 copy by tools/s4_split_to_be.py (S4, 2026-11-25); labels unchanged.
+diagram: source-parse
+use_case: UC1c.1
+status: PROPOSED_UNACCEPTED
+kind: activity
+title: Validate and parse one source (proposed)
+lanes:
+- Clerk (tier 2)
+- Scribe (tier 3)
+- Core
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: validate
+  kind: activity
+  lane: Core
+  label: verifies evidence hash, NAT-13 route/recipe key, and fresh publish state
+  step: 1
+- id: dvalidate
+  kind: decision
+  lane: Core
+  label: validation result?
+- id: parse
+  kind: activity
+  lane: Core
+  label: runs scripted fetch, AST/PDF text extract, and page map; saves originals
+  step: 2
+- id: dparse
+  kind: decision
+  lane: Core
+  label: parse & conversion need?
+- id: convplan
+  kind: activity
+  lane: Clerk (tier 2)
+  label: assigns bounded OCR or cleanup task under qualified role and MC-10 reserve
+- id: convert
+  kind: activity
+  lane: Scribe (tier 3)
+  label: converts pages with [page N] anchors and explicit unread/error markers
+- id: convrev
+  kind: activity
+  lane: Clerk (tier 2)
+  label: verifies conversion fidelity without attesting unread pages
+- id: convchk
+  kind: activity
+  lane: Core
+  label: stores conversion with source_authorship metadata and reconciles spend
+- id: dconv
+  kind: decision
+  lane: Core
+  label: conversion usable?
+- id: fallback
+  kind: activity
+  lane: Core
+  label: restores original extracted text and keeps conversion gap explicit
+- id: dprov
+  kind: decision
+  lane: Core
+  label: PDF needing provisional cache?
+- id: preproj
+  kind: activity
+  lane: Core
+  label: marks provisional .nodes.json (text_layer=False); never counted published
+  step: 3
+- id: parsegap
+  kind: activity
+  lane: Core
+  label: records unread pages or missing units without granting read credit
+- id: m_success
+  kind: merge
+  lane: Core
+  label: the ways to text is ready for reading, with its gaps recorded meet
+- id: e_success
+  kind: end
+  outcome: success
+  label: text is ready for reading, with its gaps recorded
+- id: e_failed
+  kind: end
+  outcome: failed
+  label: 'unrecoverable: the item is quarantined'
+edges:
+- from: s
+  to: validate
+- from: validate
+  to: dvalidate
+- from: dvalidate
+  to: parse
+  guard: stage work required
+- from: dvalidate
+  to: e_failed
+  guard: unrecoverable poison or hash corruption
+  ext: 2a
+- from: parse
+  to: dparse
+- from: dparse
+  to: dprov
+  guard: native extraction usable
+- from: dparse
+  to: convplan
+  guard: OCR or cleanup required
+  ext: 3a
+- from: dparse
+  to: parsegap
+  guard: early fetch partial or missing units
+  ext: 3b
+- from: convplan
+  to: convert
+- from: convert
+  to: convrev
+- from: convrev
+  to: convchk
+- from: convchk
+  to: dconv
+- from: dconv
+  to: dprov
+  guard: usable conversion
+- from: dconv
+  to: fallback
+  guard: unusable output or outage
+- from: fallback
+  to: dprov
+- from: dprov
+  to: preproj
+  guard: PDF/paper
+- from: dprov
+  to: m_success
+  guard: non-PDF
+  ext: 3c
+- from: preproj
+  to: m_success
+- from: parsegap
+  to: m_success
+- from: m_success
+  to: e_success

@@ -1,0 +1,277 @@
+# Copied from reports/2026-11-21-enrichment-baseline/batch-enrichment-current.spec.yaml by tools/s1_canonical.py (S1, 2026-11-25).
+diagram: batch-enrichment
+use_case: UC1b
+status: IMPLEMENTED_VERIFIED
+supersedes:
+- reports/2026-11-21-enrichment-baseline/batch-enrichment-current.spec.yaml
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/batch-enrichment.spec.yaml
+kind: activity
+title: 'Current approved batch: source and folder-metadata dispatch'
+target:
+  kind: use_case
+  ref: batch-enrichment-current.md#use-case-description
+lens:
+- the-guard-completeness-lens
+- the-real-concurrency-lens
+perspective: Owner
+problem:
+  symptom: A source-only child hides folder-metadata work present in the same approved batch.
+  why:
+  - The worker selects STAGES or FOLDER_STAGES per frozen item.
+  - Folder descriptions can fail without reading their documents or undoing successful source items.
+  root: The parent must expose the actual mixed dispatcher and metadata-only outcomes.
+lanes:
+- Overseer (tier 0)
+- Model worker
+- Core
+nodes:
+- id: s
+  kind: start
+- id: contract
+  kind: note
+  lane: Overseer (tier 0)
+  label: One existing process_approved worker. Child references describe its stage contracts; they do not start separate batches
+    or create new run stores.
+- id: bind
+  kind: activity
+  lane: Core
+  step: 1
+  label: uses the already admitted mixed source/folder selection, batch settings, grants and completion keys
+- id: dwork
+  kind: decision
+  lane: Core
+  label: frozen items available?
+- id: nextitem
+  kind: activity
+  lane: Core
+  step: 2
+  label: selects the next frozen item; completed and failed sibling records remain accounted for
+- id: dkind
+  kind: decision
+  lane: Core
+  label: recorded staged-item kind?
+- id: source
+  kind: ref
+  lane: Core
+  step: 3
+  use_case: source-enrichment
+  label: uses the current source-stage contract for this item, including its existing controls and in-item publication
+- id: foldercontrols
+  kind: activity
+  lane: Core
+  label: applies the same before-item ceiling, between-stage cancellation and active-writer controls to the folder card
+- id: dfoldercontrols
+  kind: decision
+  lane: Core
+  label: folder item controls permit continuation?
+- id: foldervalidate
+  kind: activity
+  lane: Core
+  label: 'folder_validate: checks current inventory evidence and review fingerprints'
+- id: dfoldervalidate
+  kind: decision
+  lane: Core
+  label: folder_validate result?
+- id: dfolderroute
+  kind: decision
+  lane: Core
+  label: production drafting enabled, or scripted endpoint?
+- id: folderdescribe
+  kind: activity
+  lane: Model worker
+  label: 'folder_describe: attempts description and sensitivity from inventory metadata; unavailable endpoint can fail without
+    a model call; documents stay unread'
+- id: foldercheck
+  kind: activity
+  lane: Core
+  label: checks returned structure/provenance and persists the draft under current item preconditions
+- id: dfolderdescribe
+  kind: decision
+  lane: Core
+  label: folder_describe result?
+- id: folderqueued
+  kind: activity
+  lane: Core
+  label: records folder_describe queued when production drafting is disabled; later applicable stages retain that status
+- id: folderdata
+  kind: activity
+  lane: Core
+  label: 'folder_data: saves the inventory Data record through the existing guarded writer'
+- id: dfolderdata
+  kind: decision
+  lane: Core
+  label: folder_data result?
+- id: folderfailed
+  kind: activity
+  lane: Core
+  label: records the failed folder stage and skips that card's remaining stages; completed siblings stay intact
+- id: foldercoverage
+  kind: activity
+  lane: Core
+  label: records folder coverage as metadata only, source content not examined; never credits its documents as read
+- id: observed
+  kind: note
+  lane: Model worker
+  label: 'Audited 12 folder-item attempts in two batches: validation completed; description failed; no folder_data success
+    observed in that sample.'
+- id: account
+  kind: activity
+  lane: Core
+  step: 4
+  label: retains the existing per-item stage/status reduction and updates the original mixed-batch accounting
+- id: dmore
+  kind: decision
+  lane: Core
+  label: another frozen item?
+- id: summary
+  kind: activity
+  lane: Core
+  step: 5
+  label: returns actual source/folder item outcomes and pending independent decisions; batch finished is not Source or lens
+    acceptance
+- id: dresult
+  kind: decision
+  lane: Core
+  label: recorded mixed-batch result?
+- id: stopped
+  kind: activity
+  lane: Core
+  label: retains completed receipts and remaining work with the actual cancellation, ceiling or interruption reason
+- id: e1
+  kind: end
+  outcome: success
+  label: recorded item stages complete or inapplicable; later Source/folder/lens decisions remain separate
+- id: epartial
+  kind: end
+  outcome: partial
+  label: batch accounted for with recorded partial/queued/failed items; no content coverage is invented
+- id: enowork
+  kind: end
+  outcome: reused
+  label: no admitted work; parent still reconciles any outstanding decisions
+- id: epaused
+  kind: end
+  outcome: paused
+  label: worker stopped with completed work retained and explicit continuation required
+- id: eescalated
+  kind: end
+  outcome: escalated
+  label: a run-wide state, writer or authority failure prevents a trustworthy handback
+edges:
+- from: s
+  to: contract
+- from: contract
+  to: bind
+- from: bind
+  to: dwork
+- from: dwork
+  to: nextitem
+  guard: nonempty admitted set
+- from: dwork
+  to: enowork
+  guard: no approved work
+  ext: 1a
+- from: nextitem
+  to: dkind
+- from: dkind
+  to: source
+  guard: source
+- from: dkind
+  to: foldercontrols
+  guard: folder metadata card
+  ext: 2a
+- from: source
+  to: account
+  guard: success
+- from: source
+  to: account
+  guard: partial
+  ext: 3a
+- from: source
+  to: account
+  guard: reused
+  ext: 3b
+- from: source
+  to: stopped
+  guard: paused
+  ext: 3c
+- from: source
+  to: eescalated
+  guard: escalated
+  ext: 3d
+- from: foldercontrols
+  to: dfoldercontrols
+- from: dfoldercontrols
+  to: foldervalidate
+  guard: active within recorded controls
+- from: dfoldercontrols
+  to: stopped
+  guard: cancelled, interrupted or ceiling reached
+- from: dfoldercontrols
+  to: eescalated
+  guard: run-wide state or writer failure
+- from: foldervalidate
+  to: dfoldervalidate
+- from: dfoldervalidate
+  to: dfolderroute
+  guard: not failed
+- from: dfoldervalidate
+  to: folderfailed
+  guard: failed
+- from: dfolderroute
+  to: folderdescribe
+  guard: production enabled or scripted fixture
+- from: dfolderroute
+  to: folderqueued
+  guard: production drafting disabled or deferred
+- from: folderdescribe
+  to: foldercheck
+- from: foldercheck
+  to: dfolderdescribe
+- from: dfolderdescribe
+  to: folderdata
+  guard: not failed
+- from: dfolderdescribe
+  to: folderfailed
+  guard: failed, including FOLDER_PROVENANCE or FOLDER_DRAFT_FAILED
+- from: folderqueued
+  to: folderdata
+- from: folderdata
+  to: dfolderdata
+- from: dfolderdata
+  to: foldercoverage
+  guard: not failed
+- from: dfolderdata
+  to: folderfailed
+  guard: failed
+- from: folderfailed
+  to: foldercoverage
+- from: foldercoverage
+  to: observed
+- from: observed
+  to: account
+- from: account
+  to: dmore
+- from: dmore
+  to: summary
+  guard: frozen set accounted for
+- from: dmore
+  to: nextitem
+  guard: another frozen item
+  ext: 4a
+- from: summary
+  to: dresult
+- from: dresult
+  to: e1
+  guard: all recorded item stages complete or inapplicable
+- from: dresult
+  to: epartial
+  guard: recorded partial, queued, skipped, stale or failed item remains
+  ext: 5a
+- from: stopped
+  to: epaused
+provenance:
+  drafted_by: tier 0 (Codex), Owner correction feedback
+  at: 2026-11-23
+  status: current-code descriptive dispatcher, not a new executable workflow
+  based_on: batch._begin, _run, _finish_item and FOLDER_STAGES; qualified retained-run audit

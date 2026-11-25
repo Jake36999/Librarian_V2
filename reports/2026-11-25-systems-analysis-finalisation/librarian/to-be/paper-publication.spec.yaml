@@ -1,0 +1,68 @@
+# Split from the S1 copy by tools/s4_split_to_be.py (S4, 2026-11-25); labels unchanged.
+diagram: paper-publication
+use_case: UC1c.3
+status: PROPOSED_UNACCEPTED
+kind: activity
+title: Publish a read paper to Geo-Grapher (proposed)
+lanes:
+- Core
+- Geo-Grapher
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: dpub
+  kind: decision
+  lane: Core
+  label: eligible for Geo paper publication?
+- id: publish
+  kind: activity
+  lane: Geo-Grapher
+  label: imports full-conversion paper into catalog; returns claim/concept/error counts
+  step: 1
+- id: pubreceipt
+  kind: activity
+  lane: Core
+  label: enforces non-zero claims on multi-page PDF and triggers W5 bridge check
+  step: 2
+- id: dpubok
+  kind: decision
+  lane: Core
+  label: publish receipt valid and non-empty?
+- id: e_success
+  kind: end
+  outcome: success
+  label: published, with a non-empty claim receipt
+- id: e_not_applicable
+  kind: end
+  outcome: not applicable
+  label: not a PDF, or no full conversion
+- id: e_gap
+  kind: end
+  outcome: gap
+  label: missing folder, refusal, or an empty paper graph
+edges:
+- from: s
+  to: dpub
+- from: dpub
+  to: publish
+  guard: full conversion and trusted folder group
+- from: dpub
+  to: e_not_applicable
+  guard: non-PDF or no conversion
+  ext: 1a
+- from: dpub
+  to: e_gap
+  guard: missing folder or Geo disabled
+  ext: 1b
+- from: publish
+  to: pubreceipt
+- from: pubreceipt
+  to: dpubok
+- from: dpubok
+  to: e_success
+  guard: valid non-zero graph & bridge checked
+- from: dpubok
+  to: e_gap
+  guard: EMPTY_PAPER_GRAPH or late refusal
+  ext: 2a

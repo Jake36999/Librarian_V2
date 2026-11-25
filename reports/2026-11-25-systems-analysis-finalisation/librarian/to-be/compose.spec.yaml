@@ -1,0 +1,311 @@
+# Copied from reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-process-composition-tobe.spec.yaml by tools/s1_canonical.py (S1, 2026-11-25).
+diagram: compose
+use_case: UC8
+status: PROPOSED_UNACCEPTED
+supersedes:
+- reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-process-composition-tobe.spec.yaml
+- reports/2026-11-20-workflow-map/examples/ingestion/compose.spec.yaml
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/compose.spec.yaml
+kind: activity
+title: 'Librarian Process Composition & Mandate Narrowing (Proposed To-Be: L0 Action -> L3 Sprint)'
+problem:
+  symptom: Prior model used layer names as swimlanes and omitted per-context spec_owner, Rule-17 Oracle scope judgment, and
+    direct Human user exit handovers.
+  root: Enforce strict action -> workflow -> pipeline -> sprint composition across true actor lanes, explicit spec_owner attribution,
+    Rule-9/16 narrowing, Rule-17 Oracle scope checks, and user handovers.
+lanes:
+- Owner
+- Overseer (tier 0)
+- Clerk (tier 2)
+- Oracle
+- Lead (tier 1)
+- Core
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: init
+  kind: activity
+  lane: Owner
+  step: 1
+  label: initiates work via Context 1 (Tier 0 instruction), Context 2 (Ext project MCP), or Context 3 (Direct UI)
+- id: dspec_owner
+  kind: decision
+  lane: Core
+  label: which actor owns top-level L3 Sprint specification?
+- id: t0_spec
+  kind: activity
+  lane: Overseer (tier 0)
+  step: 2
+  label: authors Context-1 L3 spec on user behalf & approves Rule-15 envelope (spec_owner=tier0_on_behalf_of_person)
+- id: c2_spec
+  kind: activity
+  lane: Overseer (tier 0)
+  label: sets Context-2 ext-project MCP spec within bounded read/apply grant (spec_owner=external_project_caller)
+- id: c3_spec
+  kind: activity
+  lane: Owner
+  label: sets direct UI curate/workflow_grant spec with zero Tier 0 (spec_owner=person)
+- id: compile_manifest
+  kind: activity
+  lane: Core
+  step: 3
+  label: verifies acyclic action -> workflow -> pipeline -> sprint order; compiles manifest & Rule-15 mandate_id
+- id: lead_subspec
+  kind: activity
+  lane: Lead (tier 1)
+  step: 4
+  label: authors delegated L2/L1 sub-run specs only within parent mandate (sub_spec_owner=lead_tier1 <= parent)
+- id: dnarrow
+  kind: decision
+  lane: Core
+  label: sub-run manifest fits parent mandate (Rules 9, 10, 16)?
+- id: oracle_scope
+  kind: activity
+  lane: Oracle
+  label: judges ungranted call against L3 spec obligations before asking (Rule 17)
+- id: dscope
+  kind: decision
+  lane: Oracle
+  label: within spec & parent mandate?
+- id: log_allowance
+  kind: activity
+  lane: Core
+  label: records evidence-bearing Rule-17 allowance for end-of-run report
+- id: worker_roles
+  kind: activity
+  lane: Clerk (tier 2)
+  step: 5
+  label: performs assigned semantic interpretation, review & bounded reading/writing over scripted Core actions
+- id: dctx
+  kind: decision
+  lane: Core
+  label: which L3 activation context executes?
+- id: ctx1
+  kind: ref
+  lane: Lead (tier 1)
+  step: 6
+  use_case: activation-overseer
+  label: 'Context 1 Sprint: Tier 0 commissioned run (Lead sub-run -> ingestion-tobe)'
+- id: ctx2
+  kind: ref
+  lane: Lead (tier 1)
+  use_case: activation-external-project
+  label: 'Context 2 Sprint: External MCP helpers/apply (optional stage_only ingestion)'
+- id: ctx3
+  kind: ref
+  lane: Lead (tier 1)
+  use_case: activation-web-ui
+  label: 'Context 3 Sprint: Direct UI curation (no Tier 0 -> batch / ingestion-tobe)'
+- id: oracle_rollup
+  kind: activity
+  lane: Oracle
+  step: 7
+  label: verifies rolled-up L0-L3 obligations & Rule-17 allowances via distinct qualified route (GLM-5.3 current)
+- id: dor_comp
+  kind: decision
+  lane: Oracle
+  label: composed L3 obligations satisfied cleanly?
+- id: rollreceipt
+  kind: activity
+  lane: Core
+  step: 8
+  label: persists L0-L3 provenance, spend, coverage, deferrals, Ticket ledger & Agenda receipt (Rule 12)
+- id: usernotify
+  kind: activity
+  lane: Owner
+  step: 9
+  label: receives explicit context handover, result evidence, spend, coverage & deferred work
+- id: outpartial
+  kind: activity
+  lane: Core
+  label: persists partial outputs, spend, coverage gaps & open Agenda Tickets
+- id: userpartial
+  kind: activity
+  lane: Owner
+  label: receives permitted partial report, not_examined list, spend & open Tickets
+- id: outreused
+  kind: activity
+  lane: Core
+  label: persists zero-rework reuse receipt & existing precedent links
+- id: userreused
+  kind: activity
+  lane: Owner
+  label: receives confirmation of reused catalogue state or Applications/ precedent
+- id: outpause
+  kind: activity
+  lane: Core
+  label: persists paused Rule-16/OD-05 gate, MC-10 cap, or ORACLE_ROUTE_COLLISION Ticket with resume target
+- id: userpaused
+  kind: activity
+  lane: Owner
+  label: receives paused Ticket, spend/state to date, & exact Agenda resume path
+- id: outesc
+  kind: activity
+  lane: Core
+  label: routes critical escalated Ticket immediately with full trace & Rule-8 compensation
+- id: useresc
+  kind: activity
+  lane: Owner
+  label: receives immediate critical failure alert, Ticket ID & Rule-8 compensation
+- id: e1
+  kind: end
+  outcome: success
+  label: L3-L0 composition complete with verified narrowing & user-facing notification
+- id: epartial
+  kind: end
+  outcome: partial
+  label: composed run finished with permitted partials & open Tickets notified
+- id: ereused
+  kind: end
+  outcome: reused
+  label: reused clean across L3-L0 without duplicate spend
+- id: epaused
+  kind: end
+  outcome: paused
+  label: composed run paused cleanly on Rule-16/OD-05, budget, or route-collision Ticket
+- id: eescalated
+  kind: end
+  outcome: escalated
+  label: critical/unresolved Ticket escalated immediately to Human user & spec owner
+edges:
+- from: s
+  to: init
+- from: init
+  to: dspec_owner
+- from: dspec_owner
+  to: t0_spec
+  guard: 'Context 1: User-directed Tier 0 Librarian Sprint'
+- from: dspec_owner
+  to: c2_spec
+  guard: 'Context 2: External-project Tier 0 MCP Sprint'
+  ext: 1a
+- from: dspec_owner
+  to: c3_spec
+  guard: 'Context 3: Direct Human Platform UI Sprint'
+  ext: 1b
+- from: t0_spec
+  to: compile_manifest
+- from: c2_spec
+  to: compile_manifest
+- from: c3_spec
+  to: compile_manifest
+- from: compile_manifest
+  to: lead_subspec
+- from: lead_subspec
+  to: dnarrow
+- from: dnarrow
+  to: worker_roles
+  guard: within parent mandate
+- from: dnarrow
+  to: oracle_scope
+  guard: ungranted call needing Rule-17 scope judgment
+  ext: 4a
+- from: oracle_scope
+  to: dscope
+- from: dscope
+  to: log_allowance
+  guard: within parent mandate & spec
+- from: dscope
+  to: outpause
+  guard: widens parent mandate or hits Rule-16/OD-05 boundary
+- from: dscope
+  to: outesc
+  guard: critical security/data-loss boundary breach
+- from: log_allowance
+  to: worker_roles
+- from: worker_roles
+  to: dctx
+- from: dctx
+  to: ctx1
+  guard: Context 1 commissioned Sprint
+- from: dctx
+  to: ctx2
+  guard: Context 2 External MCP Sprint
+  ext: 6a
+- from: dctx
+  to: ctx3
+  guard: Context 3 Direct UI Sprint
+  ext: 6b
+- from: ctx1
+  to: oracle_rollup
+  guard: success
+- from: ctx1
+  to: outpartial
+  guard: partial
+  ext: 6c
+- from: ctx1
+  to: outreused
+  guard: reused
+  ext: 6d
+- from: ctx1
+  to: outpause
+  guard: paused
+  ext: 6e
+- from: ctx1
+  to: outesc
+  guard: escalated
+  ext: 6f
+- from: ctx2
+  to: oracle_rollup
+  guard: success
+- from: ctx2
+  to: outpartial
+  guard: partial
+- from: ctx2
+  to: outreused
+  guard: reused
+- from: ctx2
+  to: outpause
+  guard: paused
+- from: ctx2
+  to: outesc
+  guard: escalated
+- from: ctx3
+  to: oracle_rollup
+  guard: success
+- from: ctx3
+  to: outpartial
+  guard: partial
+- from: ctx3
+  to: outreused
+  guard: reused
+- from: ctx3
+  to: outpause
+  guard: paused
+- from: ctx3
+  to: outesc
+  guard: escalated
+- from: oracle_rollup
+  to: dor_comp
+- from: dor_comp
+  to: rollreceipt
+  guard: obligations met (distinct Oracle route pass)
+- from: dor_comp
+  to: outpause
+  guard: ORACLE_ROUTE_COLLISION (unverified_route_collision; never marked independently reviewed)
+  ext: 7a
+- from: dor_comp
+  to: outesc
+  guard: critical L0-L3 integrity finding
+  ext: 7b
+- from: rollreceipt
+  to: usernotify
+- from: usernotify
+  to: e1
+- from: outpartial
+  to: userpartial
+- from: userpartial
+  to: epartial
+- from: outreused
+  to: userreused
+- from: userreused
+  to: ereused
+- from: outpause
+  to: userpaused
+- from: userpaused
+  to: epaused
+- from: outesc
+  to: useresc
+- from: useresc
+  to: eescalated

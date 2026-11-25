@@ -1,0 +1,27 @@
+{
+  "pack": "geo-grapher/as-is",
+  "receipts": [
+    {
+      "spec": "graph-building.spec.yaml",
+      "sha256": "6127b17d0542315b0efe1e7bcb7244ec0068085e90cdc34c08552e8614bbb626",
+      "status": "IMPLEMENTED_VERIFIED",
+      "nodes": 36,
+      "steps": 18,
+      "scenarios": 11,
+      "tier0_turns_mss": null,
+      "tier0_turns_worst": null,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+        "decision d2 ('strata, store ownership, and disk valid?') tests a quantity but declares no boundary values"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "graph-building: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "graph-building: decision d2 ('strata, store ownership, and disk valid?') tests a quantity but declares no boundary values"
+  ]
+}

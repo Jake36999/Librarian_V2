@@ -1,0 +1,52 @@
+# UC-O as-is: there is no general Oracle. The nearest thing is the `audited` purpose's rounds
+# (standard/phases.yaml: manage, preflight, execute, audit, reduce) and the closure re-check (closure_audit.py).
+diagram: oracle
+use_case: UC-O
+status: IMPLEMENTED_VERIFIED
+supersedes: []
+kind: activity
+title: Judge work against its requirements, as it runs today (the audited session only)
+problem:
+  symptom: "Ingestion and research runs are judged by the agent that ran them; only an audited session checks its work against stated requirements."
+  root: "Tier A checks and admitted contracts exist, but only inside one session purpose."
+lanes: [Owner, Lead (tier 1), Core]
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: open, kind: activity, lane: Owner, step: 1, label: "opens an audited session with its requirements"}
+  - {id: propose, kind: activity, lane: Lead (tier 1), step: 2, label: "proposes the next open requirement and one bounded step to serve it (manage)"}
+  - {id: admit, kind: activity, lane: Core, step: 3, label: "admits the proposal as a contract against the current state, or refuses it with a reason (preflight)"}
+  - {id: dadmit, kind: decision, lane: Core, label: "admitted?"}
+  - {id: execute, kind: activity, lane: Lead (tier 1), step: 4, label: "does only what the contract allows, through its tools (execute)"}
+  - {id: audit, kind: activity, lane: Core, step: 5, label: "runs Tier A checks on every predicate of the requirements, on the actual artifacts (audit)"}
+  - {id: dcheck, kind: decision, lane: Core, label: "does every check run?"}
+  - {id: missing, kind: activity, lane: Core, label: "records a missing or failed check; it is never skipped"}
+  - {id: reduce, kind: activity, lane: Core, step: 6, label: "turns the round's results into requirement statuses (reduce)"}
+  - {id: dall, kind: decision, lane: Core, label: "is every requirement accounted for?"}
+  - {id: close, kind: activity, lane: Lead (tier 1), step: 7, label: "closes the session"}
+  - {id: recheck, kind: activity, lane: Core, step: 8, label: "re-checks every Tier A closure at its current epoch, by a different route where it can"}
+  - {id: dheld, kind: decision, lane: Core, label: "do the closures still hold?"}
+  - {id: e1, kind: end, outcome: success, label: "every requirement is closed and re-checked"}
+  - {id: e_halted, kind: end, outcome: escalated, label: "a closure no longer holds: the session's result is halted"}
+edges:
+  - {from: s, to: open}
+  - {from: open, to: propose}
+  - {from: propose, to: admit}
+  - {from: admit, to: dadmit}
+  - {from: dadmit, to: execute, guard: admitted}
+  - {from: dadmit, to: propose, guard: refused, ext: 3a}
+  - {from: execute, to: audit}
+  - {from: audit, to: dcheck}
+  - {from: dcheck, to: reduce, guard: "yes"}
+  - {from: dcheck, to: missing, guard: a check is missing or fails, ext: 5a}
+  - {from: missing, to: reduce}
+  - {from: reduce, to: dall}
+  - {from: dall, to: close, guard: "yes"}
+  - {from: dall, to: propose, guard: no; next round, ext: 6a}
+  - {from: close, to: recheck}
+  - {from: recheck, to: dheld}
+  - {from: dheld, to: e1, guard: "yes"}
+  - {from: dheld, to: e_halted, guard: "no", ext: 8a}
+evidence:
+  - "src/resource_librarian/standard/phases.yaml: purposes.audited and the manage, preflight, execute, audit, reduce phases (HARNESS-03)."
+  - "src/resource_librarian/research_grains.py (Tier A checks for a round's grains, HARNESS-06); closure_audit.py (re-check every Tier A closure)."
+  - "session.py: `audit.halted` stops progress (lines 717, 907)."

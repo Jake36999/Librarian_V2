@@ -1,0 +1,76 @@
+# UC1 as-is, general: a folder of documents becomes Source notes by today's paths (code at d9435e1).
+# Built from the children split out of the verified activation map. The 19-20 November DataManagement run
+# is its observed trace: reports/2026-11-20-workflow-map/examples/ingestion/ingestion.spec.yaml.
+diagram: ingestion
+use_case: UC1
+status: IMPLEMENTED_VERIFIED
+supersedes: [reports/2026-11-20-workflow-map/examples/ingestion/ingestion.spec.yaml]
+kind: activity
+title: Make a folder of documents into Source notes, as it runs today
+problem:
+  symptom: "On 19-20 November a folder of 96 papers came back to tier 0 eight times on its main path (graded bad), and the 96 read papers then waited unaccepted with nothing saying so."
+  why: ["Folder review, queueing, intake, the batch and acceptance are separate surfaces joined by hand.",
+        "Each stage reports its own outcome; nothing reconciles them for the folder as a whole."]
+  root: "There is no parent process for a folder: the person or tier 0 is the parent."
+lanes: [Owner, Overseer (tier 0), Web UI, Core]
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: attach, kind: activity, lane: Owner, step: 1, label: "attaches the folder to the library and opens it in the Folders tab"}
+  - {id: ref_folder, kind: ref, lane: Web UI, step: 2, use_case: folder-review, label: "reviews the folder and applies its groups"}
+  - {id: dqueue, kind: decision, lane: Core, label: "is the queue drained (intake_run or run-queue)?"}
+  - {id: drain, kind: activity, lane: Core, step: 3, label: "drains the queue: one intake per queued document"}
+  - {id: ref_intake, kind: ref, lane: Core, step: 4, use_case: source-intake, label: "captures, describes and stages each document"}
+  - {id: dgate1, kind: decision, lane: Core, label: "who decides Gate 1 (approve and start)?"}
+  - {id: gate1, kind: activity, lane: Owner, step: 5, label: "approves the staged sources and clicks Process approved"}
+  - {id: t0_refused, kind: activity, lane: Overseer (tier 0), label: "is refused: process_approved needs the curate tier, which MCP never has"}
+  - {id: handover, kind: activity, lane: Owner, label: "takes the step over by hand in the Web UI"}
+  - {id: start, kind: activity, lane: Core, step: 6, label: "validates the person's start, takes the single run lock and freezes the approved selection"}
+  - {id: ref_batch, kind: ref, lane: Core, step: 7, use_case: batch-enrichment, label: "runs the frozen batch: each source's nine stages, each folder card's three"}
+  - {id: dpartial, kind: decision, lane: Owner, label: "accept the partial items as they are?"}
+  - {id: accept_partial, kind: activity, lane: Core, label: "promotes them with their coverage and not-examined list"}
+  - {id: ref_accept, kind: ref, lane: Owner, step: 8, use_case: acceptance, label: "accepts each enriched source (Gate 2)"}
+  - {id: report, kind: activity, lane: Web UI, step: 9, label: "shows the catalogued notes; folders, lenses and topics stay separate decisions"}
+  - {id: tell, kind: activity, lane: Owner, step: 10, label: "reconciles the folder's counts by hand: surveyed, queued, staged, accepted"}
+  - {id: e1, kind: end, outcome: success, label: "the folder's sources are catalogued and findable"}
+  - {id: e_partial, kind: end, outcome: partial, label: "some sources are partial, unfindable or left queued"}
+  - {id: e_reused, kind: end, outcome: reused, label: "nothing new: held already, or indexed whole as a non-Source folder"}
+  - {id: e_paused, kind: end, outcome: paused, label: "held: a refusal, a stale folder, a queue nobody drained, or a deferred decision"}
+  - {id: e_escalated, kind: end, outcome: escalated, label: "a failure surfaced with its state kept"}
+edges:
+  - {from: s, to: attach}
+  - {from: attach, to: ref_folder}
+  - {from: ref_folder, to: dqueue, guard: success}
+  - {from: ref_folder, to: start, guard: approved for processing, ext: 2a}
+  - {from: ref_folder, to: e_reused, guard: reused, ext: 2b}
+  - {from: ref_folder, to: e_paused, guard: paused, ext: 2c}
+  - {from: ref_folder, to: e_escalated, guard: escalated, ext: 2d}
+  - {from: dqueue, to: drain, guard: someone runs the queue}
+  - {from: dqueue, to: e_paused, guard: nobody runs it; the documents stay queued, ext: 3a}
+  - {from: drain, to: ref_intake}
+  - {from: ref_intake, to: dgate1, guard: success}
+  - {from: ref_intake, to: e_reused, guard: reused, ext: 4a}
+  - {from: ref_intake, to: e_paused, guard: paused, ext: 4b}
+  - {from: dgate1, to: gate1, guard: "the person, in the Web UI"}
+  - {from: dgate1, to: t0_refused, guard: "tier 0, through MCP", ext: 5a}
+  - {from: t0_refused, to: handover}
+  - {from: handover, to: start}
+  - {from: gate1, to: start}
+  - {from: start, to: ref_batch}
+  - {from: ref_batch, to: ref_accept, guard: success}
+  - {from: ref_batch, to: dpartial, guard: partial, ext: 7a}
+  - {from: ref_batch, to: e_reused, guard: reused, ext: 7b}
+  - {from: ref_batch, to: e_paused, guard: paused, ext: 7c}
+  - {from: ref_batch, to: e_escalated, guard: escalated, ext: 7d}
+  - {from: dpartial, to: accept_partial, guard: "yes"}
+  - {from: dpartial, to: e_paused, guard: not now}
+  - {from: accept_partial, to: e_partial}
+  - {from: ref_accept, to: report, guard: success}
+  - {from: ref_accept, to: e_paused, guard: paused, ext: 8a}
+  - {from: ref_accept, to: e_partial, guard: partial, ext: 8b}
+  - {from: ref_accept, to: e_escalated, guard: escalated, ext: 8c}
+  - {from: report, to: tell}
+  - {from: tell, to: e1}
+evidence:
+  - "Children split from reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-current-activation.spec.yaml (verified at d9435e1)."
+  - "Observed trace: examples/ingestion/ingestion.spec.yaml and its views: 8 tier-0 turns on the main path and 10 on the worst, both graded bad."
+  - "awaiting_acceptance() (W7, 8489387) now tells the agenda, batch_status and the Lead's context about read work waiting; it does not reconcile the folder's counts."

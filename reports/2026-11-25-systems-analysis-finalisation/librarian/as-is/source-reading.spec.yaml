@@ -1,0 +1,171 @@
+# Split from the S1 copy by tools/s3_split_as_is.py (S3, 2026-11-25); labels unchanged.
+diagram: source-reading
+use_case: UC1c.2
+status: IMPLEMENTED_VERIFIED
+kind: activity
+title: Read one source (stages 3–8), as it runs today
+lanes:
+- Model worker
+- Core
+- Model host
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: read
+  kind: activity
+  lane: Model worker
+  label: 'read: performs bounded points, limits, terms and grounded lens tasks; source-wide derivations retain their own outcomes'
+  step: 1
+- id: host
+  kind: activity
+  lane: Model host
+  label: answers bounded calls through configured legacy routes and their existing task pool; reports transport completion
+    or failure
+  step: 2
+- id: readcheck
+  kind: activity
+  lane: Core
+  label: checks schemas, literal support, keys and part counters; preserves task/derivation records, although batch read completion
+    currently follows remaining-part counts
+  step: 3
+- id: dread
+  kind: decision
+  lane: Core
+  label: read stage result?
+- id: lenses
+  kind: activity
+  lane: Core
+  label: 'lenses: records proposals already derived during reading; zero candidates or nothing read can be valid; no lens
+    is accepted here'
+  step: 4
+- id: dlenses
+  kind: decision
+  lane: Core
+  label: lenses stage result?
+- id: data
+  kind: activity
+  lane: Core
+  label: 'Data: assembles kind-specific records from scripted structure and existing current-text readings; preserves partial
+    or inapplicable coverage'
+  step: 5
+- id: ddata
+  kind: decision
+  lane: Core
+  label: Data stage result and document relation applicability?
+- id: relate
+  kind: activity
+  lane: Model worker
+  label: 'relate: proposes relations between eligible fully read document components; zero added relations can be valid'
+  step: 6
+- id: relatestatic
+  kind: activity
+  lane: Core
+  label: retains existing static relations or records relations as not applicable; does not invent a model call
+- id: drelate
+  kind: decision
+  lane: Core
+  label: relate stage result?
+- id: metadata
+  kind: activity
+  lane: Core
+  label: 'metadata: copies limited literal Data facts where available and lists required unknown fields; this script is not
+    a general semantic metadata model'
+  step: 7
+- id: dmetadata
+  kind: decision
+  lane: Core
+  label: metadata stage result?
+- id: review
+  kind: activity
+  lane: Model worker
+  label: 'review: drafts the kind-specific Bottom Line and sensitivity findings from source evidence, retaining no answer,
+    refusal and low confidence'
+  step: 8
+- id: reviewcheck
+  kind: activity
+  lane: Core
+  label: checks returned draft structure, literal grounding and reading counters; a usable draft does not override incomplete
+    reading
+  step: 9
+- id: dreview
+  kind: decision
+  lane: Core
+  label: review stage result?
+- id: e_success
+  kind: end
+  outcome: success
+  label: read, with each stage's status recorded
+- id: e_failed
+  kind: end
+  outcome: failed
+  label: a stage failed; the item stops
+edges:
+- from: s
+  to: read
+- from: read
+  to: host
+- from: host
+  to: readcheck
+- from: readcheck
+  to: dread
+- from: dread
+  to: lenses
+  guard: not failed; keep queued/partial tasks and derivations visible
+- from: dread
+  to: e_failed
+  guard: failed
+  ext: 4a
+- from: lenses
+  to: dlenses
+- from: dlenses
+  to: data
+  guard: not failed; none found or inapplicable is valid
+- from: dlenses
+  to: e_failed
+  guard: failed
+  ext: 5a
+- from: data
+  to: ddata
+- from: ddata
+  to: relate
+  guard: not failed; eligible document components for model relation work
+- from: ddata
+  to: relatestatic
+  guard: not failed; static or inapplicable relations
+  ext: 6a
+- from: ddata
+  to: e_failed
+  guard: failed
+  ext: 6b
+- from: relate
+  to: drelate
+- from: relatestatic
+  to: drelate
+- from: drelate
+  to: metadata
+  guard: not failed; retain queued, partial or inapplicable results
+- from: drelate
+  to: e_failed
+  guard: failed
+  ext: 7a
+- from: metadata
+  to: dmetadata
+- from: dmetadata
+  to: review
+  guard: not failed; Unknown is explicit
+- from: dmetadata
+  to: e_failed
+  guard: failed
+  ext: 8a
+- from: review
+  to: reviewcheck
+- from: reviewcheck
+  to: dreview
+- from: dreview
+  to: e_success
+  guard: not failed; keep queued/partial review and actual coverage
+- from: dreview
+  to: e_failed
+  guard: failed or refused stage
+  ext: 9a

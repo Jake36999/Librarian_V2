@@ -1,0 +1,94 @@
+# UC2 as-is: a research brief through an `explore` session (src/resource_librarian/standard/phases.yaml).
+# From USE-CASES.md UC2 (the 20 November run), brought up to the code at d9435e1.
+diagram: research
+use_case: UC2
+status: IMPLEMENTED_OBSERVED
+supersedes: []
+kind: activity
+title: Research a brief across a corpus, as it runs today
+problem:
+  symptom: "The 20 November run needed four budget extensions, decided 82 candidates that were the library's own notes, and shared one synthesis across every report."
+  why: ["Budgets are per phase visit; the candidate pool is the whole library; a session holds one synthesis."]
+  root: "The explore purpose was built for one question about the library itself, not a multi-question brief over an outside corpus."
+lanes: [Owner, Lead (tier 1), Core, Clerk (tier 2), Geo-Grapher]
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: ask, kind: activity, lane: Owner, step: 1, label: "asks the Lead to carry out the brief"}
+  - {id: open, kind: activity, lane: Lead (tier 1), step: 2, label: "opens an explore session for the project, each question a topic"}
+  - {id: frame, kind: activity, lane: Core, step: 3, label: "validates the project and records the session's question (frame, budget 24)"}
+  - {id: map, kind: activity, lane: Lead (tier 1), step: 4, label: "records its orientation in the library (map, budget 20)"}
+  - {id: ddisq, kind: decision, lane: Core, label: "does the project note give the brief's disqualifiers?"}
+  - {id: askdisq, kind: activity, lane: Lead (tier 1), label: "asks the Owner for them (ask_user)"}
+  - {id: danswer, kind: decision, lane: Owner, label: "answers within 10 minutes?"}
+  - {id: parked, kind: activity, lane: Core, label: "parks the session; a later message from the Owner resumes it"}
+  - {id: brief, kind: activity, lane: Lead (tier 1), step: 5, label: "opens one brief per question, with the disqualifiers (need, budget 18)"}
+  - {id: rounds, kind: activity, lane: Lead (tier 1), step: 6, label: "runs research rounds until the stopping rule fires (search, budget 40)"}
+  - {id: candidates, kind: activity, lane: Core, step: 7, label: "adds each round's new finds as candidates"}
+  - {id: dpool, kind: decision, lane: Core, label: "are the candidates from the brief's corpus?"}
+  - {id: ownnotes, kind: activity, lane: Core, label: "adds the library's own design notes and folder cards too, all to be decided"}
+  - {id: dpapers, kind: decision, lane: Core, label: "are the corpus's papers candidates?"}
+  - {id: bycitation, kind: activity, lane: Lead (tier 1), label: "puts papers forward by their graph citation (unaccepted papers are not candidates)"}
+  - {id: dbudget, kind: decision, lane: Core, label: "is the phase's budget enough to decide them all?"}
+  - {id: reqbudget, kind: activity, lane: Lead (tier 1), label: "requests more calls (request_budget)"}
+  - {id: dextend, kind: decision, lane: Owner, label: "extends the phase's budget?"}
+  - {id: judge, kind: activity, lane: Lead (tier 1), step: 8, label: "decides each candidate, a run at a time: kept with its role, context, rejected or deferred, each with a reason (judge, budget 40)"}
+  - {id: assume, kind: activity, lane: Lead (tier 1), step: 9, label: "records its assumptions and how each was settled"}
+  - {id: ref_cite, kind: ref, lane: Lead (tier 1), step: 10, use_case: cite-graph, label: "reads the kept papers in the graph"}
+  - {id: code, kind: activity, lane: Lead (tier 1), step: 11, label: "looks for each finding in the code graph"}
+  - {id: dcode, kind: decision, lane: Lead (tier 1), label: "is a code entity found and named?"}
+  - {id: prose, kind: activity, lane: Lead (tier 1), label: "leaves the code placement as prose in the summary; nothing checks it"}
+  - {id: synth, kind: activity, lane: Lead (tier 1), step: 12, label: "records one synthesis for the session (synthesise, budget 16)"}
+  - {id: dkept, kind: decision, lane: Core, label: "was anything kept?"}
+  - {id: draft, kind: activity, lane: Lead (tier 1), step: 13, label: "drafts one report per brief, each claim citing a source and a verbatim quote"}
+  - {id: ref_verify, kind: ref, lane: Core, step: 14, use_case: verify-claims, label: "verifies and reviews the report's claims, then stages it"}
+  - {id: close, kind: activity, lane: Lead (tier 1), step: 15, label: "closes each brief with its coverage verdict, then the session (check_out)"}
+  - {id: e1, kind: end, outcome: success, label: "one staged report per question"}
+  - {id: e_paused, kind: end, outcome: paused, label: "parked: a question unanswered, or a budget not extended"}
+  - {id: e_unreachable, kind: end, outcome: escalated, label: "the graph is unavailable: the papers cannot be read or cited"}
+edges:
+  - {from: s, to: ask}
+  - {from: ask, to: open}
+  - {from: open, to: frame}
+  - {from: frame, to: map}
+  - {from: map, to: ddisq}
+  - {from: ddisq, to: brief, guard: "yes"}
+  - {from: ddisq, to: askdisq, guard: "no", ext: 5a}
+  - {from: askdisq, to: danswer}
+  - {from: danswer, to: brief, guard: answered}
+  - {from: danswer, to: parked, guard: nobody answers}
+  - {from: parked, to: e_paused}
+  - {from: brief, to: rounds}
+  - {from: rounds, to: candidates}
+  - {from: candidates, to: dpool}
+  - {from: dpool, to: dpapers, guard: "yes"}
+  - {from: dpool, to: ownnotes, guard: they include the library's own notes, ext: 7a}
+  - {from: ownnotes, to: dpapers}
+  - {from: dpapers, to: dbudget, guard: "yes"}
+  - {from: dpapers, to: bycitation, guard: "no", ext: 7b}
+  - {from: bycitation, to: dbudget}
+  - {from: dbudget, to: judge, guard: enough}
+  - {from: dbudget, to: reqbudget, guard: not enough, ext: 8a}
+  - {from: reqbudget, to: dextend}
+  - {from: dextend, to: judge, guard: extended}
+  - {from: dextend, to: parked, guard: not extended}
+  - {from: judge, to: assume}
+  - {from: assume, to: ref_cite}
+  - {from: ref_cite, to: code, guard: success}
+  - {from: ref_cite, to: code, guard: uncitable, ext: 10a}
+  - {from: ref_cite, to: e_unreachable, guard: unavailable, ext: 10b}
+  - {from: code, to: dcode}
+  - {from: dcode, to: synth, guard: "yes"}
+  - {from: dcode, to: prose, guard: "no", ext: 11a}
+  - {from: prose, to: synth}
+  - {from: synth, to: dkept}
+  - {from: dkept, to: draft, guard: "yes"}
+  - {from: dkept, to: rounds, guard: nothing kept; the synthesis is refused, ext: 12a}
+  - {from: draft, to: ref_verify}
+  - {from: ref_verify, to: close, guard: success}
+  - {from: ref_verify, to: draft, guard: challenged, ext: 14a}
+  - {from: ref_verify, to: draft, guard: refused, ext: 14b}
+  - {from: close, to: e1}
+evidence:
+  - "src/resource_librarian/standard/phases.yaml: purposes.explore = frame, map, need, search, judge, synthesise, check_out; budgets as labelled."
+  - "USE-CASES.md UC2 and the 20 November run: extensions 2a, 6a (82 own-note candidates), 8a (ea6a30c), 8c (1064cf0), 11a (9fd2fe9), 12a, *c (four extensions)."
+  - "Fixed since: *a (0d6af41, refused at once); *b, a refusal naming a tool the phase does not offer (tail and refusal_remedies, tests/test_phase_declaration.py::test_every_phase_offers_what_its_gate_and_any_refusal_name)."

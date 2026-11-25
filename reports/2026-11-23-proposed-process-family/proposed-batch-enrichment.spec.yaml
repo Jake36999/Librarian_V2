@@ -1,5 +1,7 @@
 # Proposed report model with equivalent local report exits; no runtime implementation.
 diagram: proposed-batch-enrichment
+status: PROPOSED_UNACCEPTED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/batch-enrichment.spec.yaml
 kind: activity
 title: Proposed to-be mixed-batch enrichment
 target:

@@ -1,0 +1,398 @@
+# Split from the S1 copy by tools/s3_split_as_is.py (S3, 2026-11-25); labels unchanged.
+diagram: activation
+use_case: UC0
+status: IMPLEMENTED_VERIFIED
+supersedes:
+- reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-current-activation.spec.yaml
+kind: activity
+title: 'Current Activation Paths: Present-Day UI, Folders, Workflows, MCP & Staging (d9435e1)'
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/activation.spec.yaml
+problem:
+  symptom: MCP agents hit contribute caps, 0 folder MCP tools, curate process_approved refusals, 150s Ask waits, F-09 form
+    wipes, and dropped workflow results (app.js:8472).
+  root: Document verified d9435e1 UI, separate Folder review/Geo apply, the /api/folders/sources queue bridge, the deep-read-staged
+    workflow, MCP/Broker and batch paths without retrofitting the historical trace.
+lanes:
+- Overseer (tier 0)
+- Core
+- Web UI
+- Owner
+- Lead (tier 1)
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: hist_note
+  kind: note
+  lane: Core
+  label: d9435e1 current-state map; separates Folder review/Geo apply from Source intake, connects them only via /api/folders/sources,
+    and preserves historical ingestion.canvas.
+- id: initiate
+  kind: activity
+  lane: Owner
+  label: initiates via Web UI (Add source, Folders, Chat, or paperclip workflow), instructs Tier 0 (Context 1), or runs ext
+    build (Context 2)
+  step: 1
+- id: dcontext
+  kind: decision
+  lane: Core
+  label: which present-day activation surface enters Core?
+- id: ui_source_intake
+  kind: activity
+  lane: Web UI
+  label: submits Staging -> Sources -> Add source via person_call(ingest, defer=false) at curate tier (bypasses Broker)
+  step: 2
+- id: c1_call
+  kind: activity
+  lane: Overseer (tier 0)
+  label: calls MCP capped at contribute (0 folder MCP tools; process_approved refused) or declared actor=agent /api/tool CLI
+- id: dc1_broker
+  kind: decision
+  lane: Core
+  label: Context 1 surface, tier & Broker Ask check?
+- id: c1_refusal
+  kind: activity
+  lane: Overseer (tier 0)
+  label: stops at TIER_REFUSED / 0 MCP folder tools / Plan deny / 150s PERMISSION_UNANSWERED; reports manual UI step
+- id: ref_activation_external_project
+  kind: ref
+  lane: Overseer (tier 0)
+  use_case: activation-external-project
+  label: works for an external project through MCP
+- id: ref_folder_review
+  kind: ref
+  lane: Web UI
+  use_case: folder-review
+  label: reviews the folder in the Folders tab
+- id: dqueue_drain
+  kind: decision
+  lane: Core
+  label: queued intake refs drained via intake_run / run-queue?
+- id: chat_lead
+  kind: activity
+  lane: Lead (tier 1)
+  label: 'handles UI Chat+Attach; calls tools & asks person tool-by-tool in Modes: Ask (600s wait; no sprint envelope)'
+- id: dchat_broker
+  kind: decision
+  lane: Core
+  label: Chat tool target & Broker Ask/Plan check?
+- id: ref_workflow_run
+  kind: ref
+  lane: Web UI
+  use_case: workflow-run
+  label: runs a saved workflow (paperclip)
+- id: ref_source_intake
+  kind: ref
+  lane: Core
+  use_case: source-intake
+  label: captures, describes and stages the source
+  step: 3
+- id: reuse_curr
+  kind: activity
+  lane: Core
+  label: links already_held note or brief screened_out record without duplicate staging
+- id: dgate1_auth
+  kind: decision
+  lane: Core
+  label: Source Gate 1 decision & curate process_approved start authority?
+- id: gate1_ui
+  kind: activity
+  lane: Owner
+  label: reviews Staging -> Sources (Which sources hides processing/accepted); approves Gate 1 & clicks Process approved
+  step: 4
+- id: accept_captured
+  kind: activity
+  lane: Core
+  label: promotes captured/partial Source note with explicit coverage & not_examined list
+- id: dmanual_handover
+  kind: decision
+  lane: Owner
+  label: human takes over Gate 1 / Process approved in Web UI?
+- id: start_batch
+  kind: activity
+  lane: Core
+  label: validates curate person_call, single _LIVE lock & freezes approved Sources (+ any approved Folder cards)
+  step: 5
+- id: batch_ref
+  kind: ref
+  lane: Core
+  use_case: batch-enrichment
+  label: dispatches frozen mixed batch via batch-enrichment-current (calls source-enrichment-current for Sources; FOLDER_STAGES
+    for folders)
+  step: 6
+- id: dpartial_accept
+  kind: decision
+  lane: Core
+  label: partial/failed item disposition & promotion mode?
+- id: ref_acceptance
+  kind: ref
+  lane: Owner
+  use_case: acceptance
+  label: accepts the enriched source (Gate 2)
+  step: 7
+- id: user_done
+  kind: activity
+  lane: Owner
+  label: receives catalogued Source note in Search/Vault; Folders/Lenses/Topics remain separate
+  step: 8
+- id: ui_hold_notice
+  kind: activity
+  lane: Web UI
+  label: surfaces Ask prompt, refusal, FOLDER_STALE/policy hold, F-09 conflict, or waiting/queued Staging state
+- id: user_paused
+  kind: activity
+  lane: Owner
+  label: receives refusal, Ask timeout, paused workflow chip, or manual Staging/Folders handover requirement
+- id: ui_partial_notice
+  kind: activity
+  lane: Web UI
+  label: updates Staging/Search with partial/captured/warning state or finished workflow without result drawer
+- id: user_partial
+  kind: activity
+  lane: Owner
+  label: receives partial/captured/queued/embedding_warnings result or unseen finished workflow state
+- id: user_reused
+  kind: activity
+  lane: Owner
+  label: receives reused note, Applications/ precedent, or indexed-whole non-Source folder confirmation
+- id: ui_fail_notice
+  kind: activity
+  lane: Web UI
+  label: surfaces error banner, failed Geo folder apply, or failed workflow chip (result.error dropped)
+- id: user_esc
+  kind: activity
+  lane: Owner
+  label: receives failure alert & retained barrier/staging state
+- id: e1
+  kind: end
+  outcome: success
+  label: Source catalogued & findable via current UI/batch path; Folder/Lens/Topic decisions separate
+- id: epartial
+  kind: end
+  outcome: partial
+  label: completed with partial coverage, queued leads, or discarded finished workflow output (items still staged)
+- id: ereused
+  kind: end
+  outcome: reused
+  label: reused existing note/precedent or applied non-Source folder graph without Source intake
+- id: epaused
+  kind: end
+  outcome: paused
+  label: paused on Ask timeout, TIER_REFUSED, FOLDER_STALE/policy hold, queued refs, or paused workflow chip
+- id: eescalated
+  kind: end
+  outcome: escalated
+  label: failed workflow, Geo apply, or uncaught batch/write error surfaced with retained state
+edges:
+- from: s
+  to: hist_note
+- from: hist_note
+  to: initiate
+- from: initiate
+  to: dcontext
+- from: dcontext
+  to: ui_source_intake
+  guard: 'Context 3: Web UI Staging -> Sources -> Add source (curate)'
+- from: dcontext
+  to: c1_call
+  guard: 'Context 1: user directs Tier 0 agent (MCP / actor=agent API)'
+  ext: 2a
+- from: dcontext
+  to: ref_activation_external_project
+  guard: 'Context 2: external-project Tier 0 MCP during ext build'
+  ext: 2b
+- from: dcontext
+  to: ref_folder_review
+  guard: 'Context 3: Web UI Folders tab (/api/folders/*)'
+  ext: 2c
+- from: dcontext
+  to: chat_lead
+  guard: 'Context 3: Web UI Chat + Attach with in-app Lead'
+  ext: 2d
+- from: dcontext
+  to: ref_workflow_run
+  guard: 'Context 3: Web UI paperclip Run a workflow (App.start_action)'
+  ext: 2e
+- from: ui_source_intake
+  to: ref_source_intake
+- from: c1_call
+  to: dc1_broker
+- from: dc1_broker
+  to: ref_source_intake
+  guard: MCP/API ingest(defer=false) or intake_run permitted
+- from: dc1_broker
+  to: dqueue_drain
+  guard: MCP queue_source or ingest(defer=true) permitted
+- from: dc1_broker
+  to: c1_refusal
+  guard: 0 MCP folder tools, curate TIER_REFUSED, Plan deny, or Ask 150s timeout
+- from: c1_refusal
+  to: user_paused
+- from: dqueue_drain
+  to: ref_source_intake
+  guard: intake_run / run-queue captures queued refs within budget
+- from: dqueue_drain
+  to: ui_hold_notice
+  guard: stays status=queued or stops at [budget] ceiling_usd
+- from: chat_lead
+  to: dchat_broker
+- from: dchat_broker
+  to: ref_source_intake
+  guard: ingest(defer=false) / intake_run allowed (Auto or UI Allow)
+- from: dchat_broker
+  to: dqueue_drain
+  guard: queue_source / ingest(defer=true) allowed (status=queued)
+- from: dchat_broker
+  to: ui_hold_notice
+  guard: Ask unanswered (600s park) or Plan PERMISSION_DENIED
+- from: reuse_curr
+  to: user_reused
+- from: dgate1_auth
+  to: gate1_ui
+  guard: Context 3 UI human approve + Process approved sources
+- from: dgate1_auth
+  to: accept_captured
+  guard: Context 3 UI Accept as captured (skips batch)
+  ext: 4a
+- from: dgate1_auth
+  to: dmanual_handover
+  guard: MCP TIER_REFUSED on process_approved / PERSON_CONFIRMS / SENSITIVITY_REVIEW
+  ext: 4b
+- from: dmanual_handover
+  to: start_batch
+  guard: human completes Gate 1 & clicks Process approved in UI
+- from: dmanual_handover
+  to: ui_hold_notice
+  guard: left waiting or deferred in Staging
+- from: gate1_ui
+  to: start_batch
+- from: start_batch
+  to: batch_ref
+- from: batch_ref
+  to: ref_acceptance
+  guard: success
+- from: batch_ref
+  to: dpartial_accept
+  guard: partial
+  ext: 6a
+- from: batch_ref
+  to: reuse_curr
+  guard: reused
+  ext: 6b
+- from: batch_ref
+  to: ui_hold_notice
+  guard: paused
+  ext: 6c
+- from: batch_ref
+  to: ui_fail_notice
+  guard: escalated
+  ext: 6d
+- from: dpartial_accept
+  to: accept_captured
+  guard: person accepts partial in UI (coverage=partial explicit)
+- from: dpartial_accept
+  to: ui_hold_notice
+  guard: PERSON_CONFIRMS / SENSITIVITY_REVIEW / OP1 left unaccepted
+- from: accept_captured
+  to: ui_partial_notice
+- from: ui_partial_notice
+  to: user_partial
+- from: user_done
+  to: e1
+- from: ui_hold_notice
+  to: user_paused
+- from: user_paused
+  to: epaused
+- from: user_partial
+  to: epartial
+- from: user_reused
+  to: ereused
+- from: ui_fail_notice
+  to: user_esc
+- from: user_esc
+  to: eescalated
+- from: ref_activation_external_project
+  to: ref_source_intake
+  guard: success
+- from: ref_activation_external_project
+  to: user_reused
+  guard: reused
+- from: ref_activation_external_project
+  to: user_partial
+  guard: partial
+- from: ref_activation_external_project
+  to: user_paused
+  guard: paused
+- from: ref_folder_review
+  to: dqueue_drain
+  guard: success
+- from: ref_folder_review
+  to: start_batch
+  guard: approved for processing
+- from: ref_folder_review
+  to: user_reused
+  guard: reused
+- from: ref_folder_review
+  to: ui_hold_notice
+  guard: paused
+- from: ref_folder_review
+  to: ui_fail_notice
+  guard: escalated
+- from: ref_workflow_run
+  to: dgate1_auth
+  guard: success
+- from: ref_workflow_run
+  to: ui_partial_notice
+  guard: partial
+- from: ref_workflow_run
+  to: user_paused
+  guard: paused
+- from: ref_workflow_run
+  to: ui_fail_notice
+  guard: escalated
+- from: ref_source_intake
+  to: dgate1_auth
+  guard: success
+- from: ref_source_intake
+  to: reuse_curr
+  guard: reused
+  ext: 3a
+- from: ref_source_intake
+  to: ui_hold_notice
+  guard: paused
+  ext: 3b
+- from: ref_acceptance
+  to: user_done
+  guard: success
+- from: ref_acceptance
+  to: ui_hold_notice
+  guard: paused
+  ext: 7a
+- from: ref_acceptance
+  to: ui_partial_notice
+  guard: partial
+  ext: 7b
+- from: ref_acceptance
+  to: ui_fail_notice
+  guard: escalated
+  ext: 7c
+provenance:
+  status: IMPLEMENTED_VERIFIED
+  baseline_commit: d9435e1
+  based_on:
+  - src/resource_librarian/app.py:277,3036-3180,4185-4273,4859-5075
+  - src/resource_librarian/folder_review.py:469-488,539-611,616-749
+  - src/resource_librarian/folder_sources.py:24-30,69-116,123-161
+  - src/resource_librarian/standard/workflows/deep-read-staged.yaml:1-18
+  - src/resource_librarian/workflows.py:1009-1047
+  - src/resource_librarian/broker.py:70,165-238,297-322
+  - src/resource_librarian/read_access.py:90-160
+  - src/resource_librarian/tools/batch.py:9-40
+  - src/resource_librarian/tools/intake.py:39-150
+  - src/resource_librarian/tools/staging.py:126-175,313-327,545-770
+  - src/resource_librarian/staging.py:940-1010
+  - src/resource_librarian/tools/sessions.py:1940-2049
+  - src/resource_librarian/tools/delegate.py:37-136
+  - src/resource_librarian/tools/plan_dispatch.py:191-270
+  - src/resource_librarian/tools/workflows.py:96-112
+  - src/resource_librarian/ui/app.js:6030-6230,6325-6449,6940-7037,7175-7189,8469-8955

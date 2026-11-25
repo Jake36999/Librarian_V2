@@ -1,5 +1,7 @@
 # Corrected folder-application scope and observed/current/target boundary, 23 November 2026.
 diagram: ingest-papers-tier0
+status: IMPLEMENTED_OBSERVED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/ingestion.spec.yaml
 kind: activity
 title: 'DataManagement ingestion: observed path and current-code alternatives'
 target:

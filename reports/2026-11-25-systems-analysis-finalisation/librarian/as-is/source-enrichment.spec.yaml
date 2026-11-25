@@ -1,0 +1,218 @@
+# Split from the S1 copy by tools/s3_split_as_is.py (S3, 2026-11-25); labels unchanged.
+diagram: source-enrichment
+use_case: UC1c
+status: IMPLEMENTED_VERIFIED
+supersedes:
+- reports/2026-11-21-enrichment-baseline/source-enrichment-current.spec.yaml
+kind: activity
+title: 'Current source enrichment: scripted stages and legacy model tasks'
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/source-enrichment.spec.yaml
+target:
+  kind: use_case
+  ref: source-enrichment-current.md#use-case-description
+lens:
+- the-guard-completeness-lens
+- the-real-concurrency-lens
+perspective: Owner
+problem:
+  symptom: An ingestion summary can hide processing-start, per-item publication, partial outputs and later acceptance.
+  why:
+  - A finished batch can contain partial or failed items, and model-call completion does not mean a valid task answer.
+  - The current batch has scripted services and legacy model tasks, without the proposed autonomous Lead/Clerk/Scribe and
+    Oracle/Doctor loop.
+  root: The parent needs the actual nine-stage child contract and per-item outcomes, separate from proposed coordination.
+lanes:
+- Overseer (tier 0)
+- Core
+nodes:
+- id: s
+  kind: start
+- id: boundary
+  kind: note
+  lane: Overseer (tier 0)
+  label: Source-only detail of the current mixed-batch dispatcher. Folder metadata uses its separate three-stage chain there.
+    Approval/start and Source/lens decisions stay with the parent.
+- id: bind
+  kind: activity
+  lane: Core
+  label: binds the source subset to the admitted batch, frozen selection, settings, grants and exact completion keys
+  step: 1
+- id: dwork
+  kind: decision
+  lane: Core
+  label: source work in the admitted subset?
+- id: controls
+  kind: activity
+  lane: Core
+  label: checks the configured spend ceiling before each item and cancellation/active-writer state between stages; reuses
+    only matching complete receipts
+  step: 2
+- id: dcontrols
+  kind: decision
+  lane: Core
+  label: recorded run controls permit processing?
+- id: ref_source_parse
+  kind: ref
+  lane: Core
+  use_case: source-parse
+  label: validates and parses the source
+  step: 3
+- id: ref_source_reading
+  kind: ref
+  lane: Core
+  use_case: source-reading
+  label: 'reads the source: points, lenses, Data, relations, metadata, review'
+  step: 4
+- id: ref_paper_publication
+  kind: ref
+  lane: Core
+  use_case: paper-publication
+  label: publishes the paper to the paper graph
+  step: 5
+- id: pubna
+  kind: activity
+  lane: Core
+  label: records publish as not applicable for non-PDF or a fully read PDF without a full-conversion artifact; retains limitations
+- id: pubgap
+  kind: activity
+  lane: Core
+  label: records incomplete reading, disabled Geo, awaiting accepted folder, FOLDER_STALE or a caught publication refusal/error
+    as partial without erasing reading
+- id: itemfailed
+  kind: activity
+  lane: Core
+  label: records a failed stage and stops this item's remaining stages; another frozen item's completed work is retained
+- id: reduce
+  kind: activity
+  lane: Core
+  label: reduces declared stage statuses to enriched, partial or failed and persists each item's actual coverage and reasons
+  step: 6
+- id: dmore
+  kind: decision
+  lane: Core
+  label: more frozen source items?
+- id: summary
+  kind: activity
+  lane: Core
+  label: returns per-item stage/coverage/publication receipts and pending Source/lens decisions; reported spend retains unpriced-call
+    limitations
+  step: 7
+- id: dresult
+  kind: decision
+  lane: Core
+  label: source-subset result from recorded statuses?
+- id: stopped
+  kind: activity
+  lane: Core
+  label: persists cancellation, ceiling stop or interruption with completed receipts and pending work for explicit continuation
+- id: e1
+  kind: end
+  outcome: success
+  label: the batch marks source processing enriched from stage statuses; parent acceptance and independent judgment of any
+    derivation gaps remain separate
+- id: epartial
+  kind: end
+  outcome: partial
+  label: recorded partial/failed source items remain; other derivation gaps are reported separately and acceptance is not
+    implied
+- id: enowork
+  kind: end
+  outcome: reused
+  label: no source work in this admitted selection; the parent retains its authoritative item accounting
+- id: epaused
+  kind: end
+  outcome: paused
+  label: processing stopped with retained receipts and explicit continuation requirements
+- id: eescalated
+  kind: end
+  outcome: escalated
+  label: a run-wide writer, state or authority failure prevents a trustworthy completion handback
+edges:
+- from: s
+  to: boundary
+- from: boundary
+  to: bind
+- from: bind
+  to: dwork
+- from: dwork
+  to: controls
+  guard: nonempty source subset
+- from: dwork
+  to: enowork
+  guard: empty or already-settled selection
+  ext: 2a
+- from: controls
+  to: dcontrols
+- from: dcontrols
+  to: ref_source_parse
+  guard: active, within the configured ceiling and writer available
+- from: dcontrols
+  to: stopped
+  guard: cancelled, interrupted or ceiling reached
+  ext: 3a
+  observed: eight cancellations and no ceiling stop in the cross-library audit
+- from: dcontrols
+  to: eescalated
+  guard: run-wide writer, state or authority failure
+  ext: 3b
+- from: pubna
+  to: reduce
+- from: pubgap
+  to: reduce
+- from: itemfailed
+  to: reduce
+- from: reduce
+  to: dmore
+- from: dmore
+  to: summary
+  guard: frozen source subset accounted for
+- from: dmore
+  to: controls
+  guard: another frozen source
+  ext: 7a
+- from: summary
+  to: dresult
+- from: dresult
+  to: e1
+  guard: all recorded source-stage statuses complete or inapplicable; not an independent content verdict
+- from: dresult
+  to: epartial
+  guard: recorded partial/failed item or incomplete stage status remains; latent derivation gaps are handed back separately
+  ext: 7b
+- from: stopped
+  to: epaused
+- from: ref_source_parse
+  to: ref_source_reading
+  guard: success
+- from: ref_source_parse
+  to: itemfailed
+  guard: failed
+  ext: 3c
+- from: ref_source_reading
+  to: ref_paper_publication
+  guard: success
+- from: ref_source_reading
+  to: itemfailed
+  guard: failed
+  ext: 4a
+- from: ref_paper_publication
+  to: reduce
+  guard: success
+- from: ref_paper_publication
+  to: pubna
+  guard: not applicable
+  ext: 5a
+- from: ref_paper_publication
+  to: pubgap
+  guard: gap
+  ext: 5b
+- from: ref_paper_publication
+  to: itemfailed
+  guard: failed
+  ext: 5c
+provenance:
+  drafted_by: tier 0 (Codex), current-contract correction authorized by Owner
+  at: 2026-11-22
+  revised_at: 2026-11-23
+  status: descriptive current source-stage contract; analysis artifact, not a new executable workflow
+  based_on: batch.py, paper_graph.py, observed-run-evidence.json and the qualified cross-library audit

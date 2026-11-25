@@ -1,0 +1,197 @@
+# The as-is weakness register (PLAN.md: map, then find where it goes wrong). One entry per weakness:
+#   spec   the use case it is in (or state:<entity> in states.yaml)
+#   at     the node or extension where it shows, or "*" for the whole use case
+#   kind   gap (something missing), fault (does the wrong thing), risk (can go wrong), unverified
+#          (claimed, not checked), drift (names or records disagree), cost (works, but too dear)
+# The to-be pack answers each id with `handles:`; render_pack.py lists any that nothing handles.
+weaknesses:
+  # UC0 Start work
+  - {id: W-ACT-01, spec: activation, at: c1_call, kind: gap,
+     says: "Tier 0 through MCP is capped at contribute: it has no folder tools, and process_approved (curate) is refused, so each folder decision and batch start is handed back to the person.",
+     evidence: "librarian-current-activation c1_call, dc1_broker (verified at d9435e1)"}
+  - {id: W-ACT-02, spec: activation, at: dc1_broker, kind: cost,
+     says: "A Broker Ask waits 150 s, then fails with PERMISSION_UNANSWERED; an unattended run stalls on each one.",
+     evidence: "app.py line 277 (MCP_PERMISSION_WAIT = 150.0); broker.py lines 215-236"}
+  - {id: W-ACT-03, spec: activation, at: chat_lead, kind: cost,
+     says: "The in-app Lead asks tool by tool (Ask mode, 600 s wait); there is no permission envelope for a whole run.",
+     evidence: "broker.py line 76 (timeout 600.0; an unanswered request parks the session); on 20 November the Lead asked once per Geo-Grapher tool (plan entry 2026-11-21, permission envelope)"}
+  - {id: W-ACT-04, spec: activation, at: dcontext, kind: gap,
+     says: "Six surfaces enter the Core with different tiers and gates, and none reaches a common parent process for the work it starts.",
+     evidence: "dcontext's six ways out"}
+  - {id: W-ACT-05, spec: activation, at: ui_source_intake, kind: risk,
+     says: "Add source in the Web UI ingests at curate through person_call and bypasses the Broker; the same act through MCP is gated.",
+     evidence: "ui_source_intake label"}
+  - {id: W-EXT-01, spec: activation-external-project, at: c2_queue_only, kind: fault,
+     says: "Recording an application with no sources used raises a TypeError instead of a refusal.",
+     evidence: "dc2_outcome guard and c2_queue_only label"}
+  - {id: W-EXT-02, spec: activation-external-project, at: c2_record_app, kind: gap,
+     says: "An Applications/ note pins no snapshot hashes, locators or verification, so a later reader cannot tell exactly what was used.",
+     evidence: "c2_deliver_reuse label"}
+  - {id: W-EXT-03, spec: activation-external-project, at: c2_refusal, kind: cost,
+     says: "A consult-tier delegate is refused, and a session Ask times out at 150 s; either ends the external task's use of the library.",
+     evidence: "c2_refusal label"}
+  # UC1 Ingestion and its children
+  - {id: W-ING-01, spec: ingestion, at: tell, kind: gap,
+     says: "Nothing reconciles a folder's counts (surveyed, queued, staged, enriched, accepted); the person or tier 0 does it by hand.",
+     evidence: "remedy-catalogue R3 (queued 0, then 96 across 24 subfolders) and proposed R6"}
+  - {id: W-ING-02, spec: ingestion, at: dqueue, kind: gap,
+     says: "Queued documents wait until someone runs the queue, and a queue nobody drains says nothing.",
+     evidence: "dqueue_drain in the activation map: queued refs stay status=queued"}
+  - {id: W-ING-03, spec: ingestion, at: dgate1, kind: fault,
+     says: "Tier 0 cannot approve or start a batch, so an orchestrated ingestion always hands Gate 1 back to the person.",
+     evidence: "dmanual_handover in the activation map; the 19-20 November trace"}
+  - {id: W-ING-04, spec: ingestion, at: 7a, kind: gap,
+     says: "A partial item is re-run only by a fresh approval and start; resuming an unfinished run is a different path.",
+     evidence: "USE-CASES.md UC1 14a; remedy-catalogue R4 (3 of 6 stayed partial)"}
+  - {id: W-ING-05, spec: ingestion, at: "*", kind: cost,
+     says: "On 19-20 November control came back to tier 0 eight times on the main path, and ten on the worst (graded bad).",
+     evidence: "examples/ingestion/ingestion.views.md, tier-0 turns"}
+  - {id: W-FOL-01, spec: folder-review, at: geo_folder_apply, kind: risk,
+     says: "Every accept re-applies every accepted group in the library (OP2): one folder's decision has a whole-library radius.",
+     evidence: "geo_folder_apply label; remedy-catalogue R1 scope note"}
+  - {id: W-FOL-02, spec: folder-review, at: dfolder_prep, kind: fault,
+     says: "A stale card anywhere refuses this decision (FOLDER_STALE across all groups); R1 needed a re-survey of an unrelated root.",
+     evidence: "folder_review.py line 591; remedy-catalogue R1 history"}
+  - {id: W-FOL-03, spec: folder-review, at: folder_draft_check, kind: gap,
+     says: "The model's draft of a folder's purpose is off by default (FOLDER_DRAFT_DISABLED); when on, it sees only file counts and bytes.",
+     evidence: "folder_draft_check and folder_clerk_draft labels"}
+  - {id: W-FOL-04, spec: folder-review, at: folder_queue_sources, kind: gap,
+     says: "Accepting a folder does not start its intake: queueing its documents is a separate click or API call.",
+     evidence: "folder_queue_sources label (POST /api/folders/sources)"}
+  - {id: W-FOL-05, spec: folder-review, at: folder_batch_approve, kind: risk,
+     says: "A folder card can be approved (for the batch) or accepted (applied as a group): two states with different powers that the person can confuse.",
+     evidence: "folder_review.py approve_batch (status approved) and accept (status accepted)"}
+  - {id: W-INT-01, spec: source-intake, at: clerk_draft, kind: gap,
+     says: "Titles fall back to slugs or file names, and the topic to Unfiled; nothing schedules the fix.",
+     evidence: "clerk_draft label"}
+  - {id: W-INT-02, spec: source-intake, at: quar_curr, kind: gap,
+     says: "A quarantined capture waits for someone to retry it, and nobody is told.",
+     evidence: "quar_curr label"}
+  - {id: W-BAT-01, spec: batch-enrichment, at: folderdescribe, kind: fault,
+     says: "folder_describe failed in all 12 audited folder-item attempts, and no folder_data success was observed.",
+     evidence: "batch-enrichment `observed` note (two batches)"}
+  - {id: W-BAT-02, spec: batch-enrichment, at: summary, kind: gap,
+     says: "A finished batch is not acceptance, yet nothing assigns the decisions it leaves; W7 now counts them (awaiting_acceptance) but does not route them.",
+     evidence: "summary label; OP1; 8489387"}
+  - {id: W-SRC-01, spec: source-enrichment, at: summary, kind: unverified,
+     says: "A completed model call is counted as a stage done; nothing judges whether the answer is a valid answer to the task.",
+     evidence: "source-enrichment problem.why"}
+  - {id: W-PAR-01, spec: source-parse, at: preproject, kind: risk,
+     says: "A provisional paper projection is written before reading; if reading then fails, a catalogue-only projection remains.",
+     evidence: "preproject label (text_layer=False)"}
+  - {id: W-REA-01, spec: source-reading, at: readcheck, kind: fault,
+     says: "Read completion follows the remaining-part counts, not the validity of each part's answer.",
+     evidence: "readcheck label"}
+  - {id: W-REA-02, spec: source-reading, at: metadata, kind: gap,
+     says: "The metadata stage copies a few literal Data facts and lists the unknown fields; there is no semantic metadata step.",
+     evidence: "metadata label"}
+  - {id: W-PUB-01, spec: paper-publication, at: publishstorage, kind: cost,
+     says: "Old and failed candidate paper databases are never cleaned up.",
+     evidence: "publishstorage note"}
+  - {id: W-PUB-02, spec: paper-publication, at: pubcheck, kind: gap,
+     says: "Publication needs an accepted current folder, so a source added without folder review is never published.",
+     evidence: "pubgap label: awaiting accepted folder"}
+  - {id: W-ACC-01, spec: acceptance, at: gate2_ui, kind: fault,
+     says: "A stale-revision conflict reloads the form and wipes the person's edits (F-09).",
+     evidence: "gate2_ui label"}
+  - {id: W-ACC-02, spec: acceptance, at: dfind_curr, kind: gap,
+     says: "A note written but not findable needs a manual Rewrite indexes; nothing re-checks findability by itself.",
+     evidence: "ui_done label; remedy-catalogue R5 (proposed)"}
+  - {id: W-ACC-03, spec: acceptance, at: gate2_ui, kind: unverified,
+     says: "The only check of an enriched source is a person reading its summary; nothing compares the note with its evidence first.",
+     evidence: "ui_done label: no Oracle or Doctor at run time"}
+  - {id: W-ACC-04, spec: acceptance, at: promote_curr, kind: drift,
+     says: "The 96 notes an agent accepted on 20 November still record a person as the attester; correcting them is an Owner decision.",
+     evidence: "8489387 (F2: attestation names who accepted)"}
+  # UC8 Composition and running
+  - {id: W-CMP-01, spec: compose, at: "*", kind: gap,
+     says: "The batch's stages and the session's phases are not compositions: stages are code, and phases are declared data that no workflow can call (OP16).",
+     evidence: "batch.py stage chain; standard/phases.yaml"}
+  - {id: W-WFR-01, spec: workflow-run, at: ui_drop_result, kind: fault,
+     says: "The Web UI discards a run's result (app.js:8472): the person never sees what was read, what failed or why.",
+     evidence: "ui_drop_result label"}
+  - {id: W-WFR-02, spec: workflow-run, at: wf_paused_chip, kind: gap,
+     says: "A paused run shows a static chip, with no route picker, resume or dismiss.",
+     evidence: "wf_paused_chip label"}
+  - {id: W-WFR-03, spec: workflow-run, at: wf_deep_read, kind: fault,
+     says: "deep-read-staged reads each staged source but leaves its status unchanged, so nothing records that it was read.",
+     evidence: "wf_deep_read label; standard/workflows/deep-read-staged.yaml"}
+  # UC2-UC4 Research
+  - {id: W-RES-01, spec: research, at: 7a, kind: cost,
+     says: "The candidate pool is the whole library: 82 of its own notes and folder cards had to be decided in the 20 November run (OP4).",
+     evidence: "USE-CASES.md UC2 6a"}
+  - {id: W-RES-02, spec: research, at: 8a, kind: cost,
+     says: "A phase's budget is per visit and halves on every return (20, 10, 5, 2, 1, then nothing): the run needed four extensions, and Synthesise reopened with one call left (OP5).",
+     evidence: "session.py lines 490-499 (budget_left); USE-CASES.md UC2 *c; remedy-catalogue R8 history"}
+  - {id: W-RES-03, spec: research, at: synth, kind: gap,
+     says: "A session holds one synthesis, so every report shares one Together and one Unknowns, which go stale after a redraft (OP3).",
+     evidence: "USE-CASES.md UC2 12a"}
+  - {id: W-RES-04, spec: research, at: 11a, kind: gap,
+     says: "Where a finding lands in our code stays prose: it is not a claim, and nothing checks it (OP10).",
+     evidence: "USE-CASES.md UC2 11b"}
+  - {id: W-RES-05, spec: research, at: 7b, kind: gap,
+     says: "Read papers that were never accepted are not candidates; the Lead has to find them again by graph citation.",
+     evidence: "USE-CASES.md UC2 8c; 1064cf0"}
+  - {id: W-RES-06, spec: research, at: draft, kind: fault,
+     says: "A report quoting only a paper's card broke the project's disqualifier, and nothing caught it.",
+     evidence: "USE-CASES.md UC2 13a"}
+  - {id: W-VER-01, spec: verify-claims, at: 3a, kind: gap,
+     says: "Claim review is off by default, so a garbled claim was staged checked only for its quote (OP7).",
+     evidence: "tools/sessions.py lines 1719-1723"}
+  - {id: W-VER-02, spec: verify-claims, at: 4b, kind: fault,
+     says: "A review that does not complete marks the claim unchecked and stages it anyway; three full-PDF quotes went this way (OP9).",
+     evidence: "81914de; USE-CASES.md UC3 4c"}
+  - {id: W-CIT-01, spec: cite-graph, at: resolve, kind: risk,
+     says: "A graph paper is linked to its Source note by title, derived each time; a renamed note breaks the link.",
+     evidence: "USE-CASES.md UC4 assumption"}
+  - {id: W-CIT-02, spec: cite-graph, at: 6b, kind: gap,
+     says: "A read but unaccepted paper can be kept as a candidate but never quoted.",
+     evidence: "USE-CASES.md UC4 6a"}
+  # State
+  - {id: W-STI-01, spec: "state:staged-item", at: "staged -> accepted", kind: risk,
+     says: "A source can be accepted straight from staged ('accept as captured'), entering the library with only what intake fetched read; only its coverage label says so.",
+     evidence: "staging.py DECIDABLE['accept'] includes staged; CAPTURED"}
+  - {id: W-STI-02, spec: "state:staged-item", at: "enriched, partial", kind: gap,
+     says: "An enriched or partial item has no owner and no deadline: it waits until someone decides it.",
+     evidence: "OP1; 96 items waited 19-20 November; awaiting_acceptance() counts them (8489387)"}
+  # UC-D, UC-O
+  - {id: W-DOC-01, spec: doctor, at: notice, kind: cost,
+     says: "Every repair is tier-0 work: each failure of the 19-20 November run came back to tier 0.",
+     evidence: "remedy-catalogue history R1-R4, R7, R8"}
+  - {id: W-DOC-02, spec: doctor, at: fail, kind: gap,
+     says: "A failure is a refusal code in a call's result, not a ticket: there is no register of open failures, their owners or their repairs.",
+     evidence: "no fault store in src/resource_librarian; docs/terminology.md (fault register: proposed)"}
+  - {id: W-DOC-03, spec: doctor, at: repair, kind: risk,
+     says: "Nothing checks a repair's reach before it runs: R1's re-survey re-applied every group in the library.",
+     evidence: "remedy-catalogue R1 scope note"}
+  - {id: W-DOC-04, spec: doctor, at: dpass, kind: unverified,
+     says: "Whether a repair worked is judged by the agent that made it.",
+     evidence: "dpass"}
+  - {id: W-DOC-05, spec: doctor, at: "*", kind: drift,
+     says: "`doctor` already names the install capability check (doctor.py, the doctor tool); the repair role needs a distinct code name.",
+     evidence: "src/resource_librarian/doctor.py docstring"}
+  - {id: W-ORA-01, spec: oracle, at: open, kind: gap,
+     says: "Admitted contracts and Tier A checks exist only in audited sessions; ingestion, research and workflows are judged by whoever ran them.",
+     evidence: "standard/phases.yaml purposes; research_grains.py; closure_audit.py"}
+# Root causes: every weakness belongs to exactly one theme (checked by render_pack.py).
+themes:
+  - {id: T1, name: "No parent process", weaknesses: [W-ACT-04, W-ING-01, W-ING-02, W-ING-04, W-ING-05, W-FOL-04, W-CMP-01],
+     says: "Work is a chain of separate surfaces and stages, and the person or tier 0 is the parent that joins them."}
+  - {id: T2, name: "Authority does not fit the work", weaknesses: [W-ACT-01, W-ACT-02, W-ACT-03, W-ING-03, W-EXT-03],
+     says: "Tiers and asks are per call, so delegated work stalls on gates it cannot pass or asks it cannot get answered."}
+  - {id: T3, name: "Work is counted, not judged", weaknesses: [W-SRC-01, W-REA-01, W-ACC-03, W-VER-01, W-VER-02, W-RES-06, W-ORA-01, W-DOC-04],
+     says: "A finished call, a full count or the doer's own reading stands in for a check that the result is right."}
+  - {id: T4, name: "Failures have no ticket and no repair loop", weaknesses: [W-DOC-01, W-DOC-02, W-DOC-03, W-INT-02, W-WFR-02, W-BAT-01],
+     says: "A failure is a code in a result; nobody owns it, nothing records it, and repair is tier 0 by hand."}
+  - {id: T5, name: "Decisions wait with no owner", weaknesses: [W-BAT-02, W-STI-02, W-INT-01, W-FOL-03],
+     says: "Work that needs a decision is left in a state, with no one assigned and nothing drafted to decide from."}
+  - {id: T6, name: "Results do not reach the person", weaknesses: [W-WFR-01, W-WFR-03, W-ACC-01, W-ACC-02],
+     says: "What a run did is dropped, unrecorded or wiped before the person sees it."}
+  - {id: T7, name: "One decision reaches too far", weaknesses: [W-FOL-01, W-FOL-02],
+     says: "A folder decision re-applies, and can be blocked by, every group in the library."}
+  - {id: T8, name: "Links between records are derived or missing", weaknesses: [W-CIT-01, W-CIT-02, W-RES-05, W-PUB-02, W-EXT-02, W-PAR-01],
+     says: "Paper, note, folder and application records are joined by titles, timing or nothing at all."}
+  - {id: T9, name: "The research session does not fit a brief", weaknesses: [W-RES-01, W-RES-02, W-RES-03, W-RES-04],
+     says: "One session, one synthesis, the whole library as its pool and halving budgets: built for one question about the library."}
+  - {id: T10, name: "Integrity and naming", weaknesses: [W-EXT-01, W-ACT-05, W-FOL-05, W-ACC-04, W-STI-01, W-DOC-05, W-REA-02, W-PUB-01],
+     says: "Errors where refusals belong, a bypassed gate, states and names that mean two things, and leftovers."}

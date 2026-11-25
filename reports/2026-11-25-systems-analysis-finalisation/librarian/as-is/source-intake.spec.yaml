@@ -1,0 +1,71 @@
+# Split from the S1 copy by tools/s3_split_as_is.py (S3, 2026-11-25); labels unchanged.
+diagram: source-intake
+use_case: UC1.2
+status: IMPLEMENTED_VERIFIED
+kind: activity
+title: Capture, describe and stage a source, as it runs today
+lanes:
+- Core
+- Model worker
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: capture_source
+  kind: activity
+  lane: Core
+  label: intake.ingest fetches immutable Bronze .evidence/, checks extraction quality & duplicates, and restores _framing
+    on queued refs
+  step: 1
+- id: dcap_curr
+  kind: decision
+  lane: Core
+  label: Source capture outcome?
+- id: quar_curr
+  kind: activity
+  lane: Core
+  label: quarantines failed ref & settles queue entry for retry
+- id: clerk_draft
+  kind: activity
+  lane: Model worker
+  label: intake.describe drafts neutral opening summary via clerk_endpoint (slug/filename titles & Unfiled if <=1 topic remain)
+  step: 2
+- id: stage_source
+  kind: activity
+  lane: Core
+  label: writes kind=source (status=staged) in StagingStore (distinct from kind=folder cards)
+  step: 3
+- id: e_success
+  kind: end
+  outcome: success
+  label: the source is staged
+- id: e_reused
+  kind: end
+  outcome: reused
+  label: already held, or screened out
+- id: e_paused
+  kind: end
+  outcome: paused
+  label: quarantined for a retry
+edges:
+- from: s
+  to: capture_source
+- from: capture_source
+  to: dcap_curr
+- from: dcap_curr
+  to: clerk_draft
+  guard: usable captured Source
+- from: dcap_curr
+  to: e_reused
+  guard: already_held duplicate or screened_out
+  ext: 2a
+- from: dcap_curr
+  to: quar_curr
+  guard: quarantined or capture error
+  ext: 2b
+- from: quar_curr
+  to: e_paused
+- from: clerk_draft
+  to: stage_source
+- from: stage_source
+  to: e_success

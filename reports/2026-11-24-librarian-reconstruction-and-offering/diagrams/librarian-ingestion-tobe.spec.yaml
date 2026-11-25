@@ -1,4 +1,6 @@
 diagram: librarian-ingestion-tobe
+status: PROPOSED_UNACCEPTED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/ingestion.spec.yaml
 title: "Librarian Shared L2 Ingestion & Governance Pipeline (Proposed To-Be)"
 problem:
   symptom: "Prior draft hid distinct Context 1/2/3 entry callers inside one trigger switch, overloaded Owner with 7 main-path steps & 3 serial Gate-2 prompts, risked blocking external Tier 0 on curate, and skipped final Oracle on code-only roots."

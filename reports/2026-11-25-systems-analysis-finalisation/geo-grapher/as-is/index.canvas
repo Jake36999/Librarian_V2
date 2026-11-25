@@ -1,0 +1,77 @@
+{
+  "nodes": [
+    {
+      "id": "librarian-group-0",
+      "type": "group",
+      "label": "G1 Use case diagram",
+      "x": 0,
+      "y": 0,
+      "width": 520,
+      "height": 480
+    },
+    {
+      "id": "librarian-card-0-0",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/geo-grapher/as-is/use-case-diagram.md",
+      "x": 20,
+      "y": 40,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-group-1",
+      "type": "group",
+      "label": "G2 Composition",
+      "x": 580,
+      "y": 0,
+      "width": 520,
+      "height": 480
+    },
+    {
+      "id": "librarian-card-1-0",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/geo-grapher/as-is/composition.md",
+      "x": 600,
+      "y": 40,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-group-2",
+      "type": "group",
+      "label": "G3 Use cases",
+      "x": 1160,
+      "y": 0,
+      "width": 520,
+      "height": 480
+    },
+    {
+      "id": "librarian-card-2-0",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/geo-grapher/as-is/views/graph-building.views.md",
+      "x": 1180,
+      "y": 40,
+      "width": 480,
+      "height": 400
+    },
+    {
+      "id": "librarian-group-4",
+      "type": "group",
+      "label": "Index",
+      "x": 1740,
+      "y": 0,
+      "width": 520,
+      "height": 480
+    },
+    {
+      "id": "librarian-card-4-0",
+      "type": "file",
+      "file": "reports/2026-11-25-systems-analysis-finalisation/geo-grapher/as-is/INDEX.md",
+      "x": 1760,
+      "y": 40,
+      "width": 480,
+      "height": 400
+    }
+  ],
+  "edges": []
+}

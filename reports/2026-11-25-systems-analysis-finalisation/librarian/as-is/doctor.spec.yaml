@@ -1,0 +1,49 @@
+# UC-D as-is: there is no Doctor. Tier 0 notices, diagnoses and repairs failures by hand.
+# Drawn from the cases the to-be remedy catalogue records as history (examples/ingestion/remedy-catalogue.yaml).
+diagram: doctor
+use_case: UC-D
+status: IMPLEMENTED_OBSERVED
+supersedes: []
+kind: activity
+title: Repair a failed step, as it is done today (by tier 0, by hand)
+problem:
+  symptom: "Each failure of the 19-20 November run came back to tier 0, which read logs and code, repaired it and reran the step: R1-R4 and R7-R8."
+  root: "Failures carry a refusal code but no case record, no remedy is catalogued in code, and nothing checks a repair's reach before it runs."
+lanes: [Owner, Overseer (tier 0), Core]
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: fail, kind: activity, lane: Core, step: 1, label: "refuses a call or ends a run partial or failed, with a refusal code"}
+  - {id: notice, kind: activity, lane: Overseer (tier 0), step: 2, label: "notices it in the call's result, if it is watching"}
+  - {id: diagnose, kind: activity, lane: Overseer (tier 0), step: 3, label: "diagnoses by hand from the logs, the run records and the code"}
+  - {id: dkind, kind: decision, lane: Overseer (tier 0), label: "what does the repair need?"}
+  - {id: codefix, kind: activity, lane: Overseer (tier 0), label: "changes the code, commits it and restarts the Cores (R2 qualification records, R7 missing tools)"}
+  - {id: askowner, kind: activity, lane: Owner, label: "decides what only a person may: more budget (R8), a sensitive folder, a partial accepted"}
+  - {id: downer, kind: decision, lane: Owner, label: "allows it?"}
+  - {id: repair, kind: activity, lane: Overseer (tier 0), step: 4, label: "repairs with tool calls: re-survey (R1), queue per root (R3), re-approve partials (R4), re-index"}
+  - {id: rerun, kind: activity, lane: Overseer (tier 0), step: 5, label: "reruns the failed step"}
+  - {id: dpass, kind: decision, lane: Overseer (tier 0), label: "does the rerun pass, by tier 0's own reading?"}
+  - {id: record, kind: activity, lane: Overseer (tier 0), step: 6, label: "writes what it did into a report or the plan's progress log"}
+  - {id: e1, kind: end, outcome: resolved, label: "repaired, as far as tier 0 can tell"}
+  - {id: e_declined, kind: end, outcome: declined, label: "the Owner declined"}
+  - {id: e_escalated, kind: end, outcome: escalated, label: "still failing: the Owner is told"}
+edges:
+  - {from: s, to: fail}
+  - {from: fail, to: notice}
+  - {from: notice, to: diagnose}
+  - {from: diagnose, to: dkind}
+  - {from: dkind, to: repair, guard: a tool call}
+  - {from: dkind, to: codefix, guard: a code change, ext: 4a}
+  - {from: dkind, to: askowner, guard: a person's decision, ext: 4b}
+  - {from: codefix, to: rerun}
+  - {from: askowner, to: downer}
+  - {from: downer, to: repair, guard: "yes"}
+  - {from: downer, to: e_declined, guard: "no"}
+  - {from: repair, to: rerun}
+  - {from: rerun, to: dpass}
+  - {from: dpass, to: record, guard: passes}
+  - {from: dpass, to: e_escalated, guard: fails again, ext: 6a}
+  - {from: record, to: e1}
+evidence:
+  - "reports/2026-11-20-workflow-map/examples/ingestion/remedy-catalogue.yaml, `history` of R1-R4, R7, R8 (19-20 November): each `by: tier 0`."
+  - "R2's root cause was Cores overwriting each other's qualification records (cab623a); R7's three cases were fixed in 0d6af41, 8129b3b, 9fd2fe9."
+  - "src/resource_librarian/doctor.py is an install capability check (RUN_BEFORE_CLAIM), not a repair role."

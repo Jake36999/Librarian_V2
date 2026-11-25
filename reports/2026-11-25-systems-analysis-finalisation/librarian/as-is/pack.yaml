@@ -1,0 +1,274 @@
+# The Librarian as it runs today (code at d9435e1). PLAN.md section 2; rendered by ../../render_pack.py.
+pack: librarian-as-is
+system: Librarian
+state: as-is
+about: >-
+  How the Librarian works today, drawn from the code at d9435e1 and the runs of 19-21 November.
+  Each use case records its weaknesses and gaps in weaknesses.yaml, and the to-be pack names the
+  element that handles each one. Swim-lane canvases are no longer produced (D1).
+actors:
+  - {id: owner, name: Owner}
+  - {id: overseer, name: Overseer (tier 0)}
+  - {id: lead, name: Lead (tier 1)}
+  - {id: clerk, name: Clerk (tier 2)}
+  - {id: model, name: Model worker and model host}
+  - {id: geo, name: Geo-Grapher}
+  - {id: external, name: External project}
+use_cases:
+  - id: UC0
+    name: Start work in the library
+    spec: activation
+    actors: [owner, overseer]
+    includes: [UC0.2, UC1.1, UC1.2, UC8.1, UC1b, UC1.3]
+    fields:
+      brief: "Every surface that starts work today: the Web UI's Add source, Folders, Chat and workflows; tier 0 through MCP or the CLI; and tier 0 working for an external project."
+      primary_actor: "Owner; or tier 0 acting for the Owner"
+      supporting_actors: "Web UI, Core, Lead (in-app chat), model worker, Geo-Grapher"
+      preconditions: "A Core is running for the library; the caller holds a surface and a tier"
+      trigger: "The Owner, or tier 0, starts something"
+      success_guarantee: "A started source ends catalogued and findable, or its state is kept and shown"
+      minimal_guarantee: "A refusal names its rule; nothing is written past a gate the caller does not hold"
+      open_questions: "Should every surface reach the same parent process, rather than six partial paths?"
+    boundaries:
+      - {at: dchat_broker, values: ["answered at 599 s", "at 600 s", "unanswered at 601 s"], expect: "the Chat's Ask waits 600 s, then parks the thread"}
+      - {at: dc1_broker, values: ["answered at 149 s", "at 150 s", "unanswered at 151 s"], expect: "the Broker's Ask times out at 150 s with PERMISSION_UNANSWERED"}
+  - id: UC0.2
+    name: Work for an external project through MCP
+    spec: activation-external-project
+    actors: [overseer, external]
+    fields:
+      brief: "Tier 0, working in another project, searches and reads the library, delegates bounded reading, and records what it applied."
+      primary_actor: "Overseer (tier 0), in the external project"
+      supporting_actors: "Core, model worker (delegate, dispatch_plan)"
+      preconditions: "MCP connected at contribute; the third-party route is set for raw third-party reading"
+      trigger: "The external task needs the library"
+      success_guarantee: "An Applications/ note records what was used, attested by the agent"
+      minimal_guarantee: "Unresolved sources are queued as leads; nothing is ingested past the tier"
+      open_questions: "What should an Applications/ note pin: snapshot hashes, locators, the verification used?"
+    boundaries:
+      - {at: dc2_outcome, values: ["sources_used = 0", "1", "many"], expect: "0 raises TypeError today; 1 or more writes the note"}
+  - id: UC1
+    name: Make a folder of documents into Source notes
+    spec: ingestion
+    actors: [owner, overseer, geo, model]
+    includes: [UC1.1, UC1.2, UC1b, UC1.3]
+    fields:
+      brief: "A folder is reviewed, its documents queued, captured, staged, enriched in one approved batch, and accepted as Source notes."
+      primary_actor: "Owner; tier 0 may do the steps its tier allows"
+      supporting_actors: "Web UI, Core, model worker, model host, Geo-Grapher"
+      preconditions: "Core running; the folder readable; the Clerk's route qualified"
+      trigger: "The Owner wants the folder in the library"
+      success_guarantee: "Each document is a catalogued, findable Source note, with its coverage recorded"
+      minimal_guarantee: "Every item keeps its stage receipts; partial work is never credited as read"
+      open_questions: "OP1 who owns acceptance; OP2 the rebuild radius of a folder decision"
+  - id: UC1.1
+    name: Review a folder and apply its groups
+    spec: folder-review
+    actors: [owner, geo]
+    fields:
+      brief: "The Folders tab surveys a folder's metadata, stages folder cards, and on the person's acceptance has Geo-Grapher apply the groups."
+      primary_actor: Owner
+      supporting_actors: "Web UI, Core, model worker (draft, off by default), Geo-Grapher"
+      preconditions: "The folder is attached"
+      trigger: "The Owner opens the folder in the Folders tab"
+      success_guarantee: "Accepted folders are applied as graph groups, and Source documents queued"
+      minimal_guarantee: "Files are not read; credential paths are refused; a stale card is refused"
+      open_questions: "OP2: should an accept rebuild only its own group?"
+    boundaries:
+      - {at: folder_batch_approve, values: ["0 cards", "1", "100", "101", "a sensitive card among them"], expect: "1-100 non-sensitive cards are approved; others refused"}
+  - id: UC1.2
+    name: Capture, describe and stage a source
+    spec: source-intake
+    actors: [model]
+    fields:
+      brief: "Intake fetches immutable evidence, drafts a neutral description and stages the source."
+      primary_actor: Core
+      supporting_actors: "Model worker (describe)"
+      preconditions: "A reference was ingested or queued"
+      trigger: "ingest, intake_run or run-queue"
+      success_guarantee: "A staged source with its evidence and description"
+      minimal_guarantee: "A duplicate is linked, not staged; a failure is quarantined for retry"
+      open_questions: "Titles fall back to the file name, and topics to Unfiled: who fixes them, when?"
+  - id: UC1b
+    name: Run the approved batch
+    spec: batch-enrichment
+    actors: [owner]
+    includes: [UC1c]
+    fields:
+      brief: "One worker runs the frozen, approved selection: each source through its nine stages, each folder card through its three."
+      primary_actor: Core
+      supporting_actors: "Model worker, model host, Geo-Grapher"
+      preconditions: "A person approved and started the selection"
+      trigger: "process_approved"
+      success_guarantee: "Every item ends enriched, partial or failed, with its receipts"
+      minimal_guarantee: "Completed items are kept when the run stops"
+      open_questions: "A finished batch is not acceptance: who is told, and who decides?"
+  - id: UC1c
+    name: Enrich one source
+    spec: source-enrichment
+    actors: [model, geo]
+    includes: [UC1c.1, UC1c.2, UC1c.3]
+    fields:
+      brief: "For each frozen source: parse, read, publish, then reduce the stage statuses to the item's status."
+      primary_actor: Core
+      supporting_actors: "Model worker, model host, Geo-Grapher"
+      preconditions: "The source is in the frozen selection"
+      trigger: "The batch reaches the item"
+      success_guarantee: "enriched, with full coverage recorded"
+      minimal_guarantee: "partial or failed, with what was not examined"
+      open_questions: "Model-call completion is not a valid answer: who judges the answers?"
+    boundaries:
+      - {at: dcontrols, values: ["spend below the ceiling", "equal to it", "the next item would pass it", "cancelled between stages"], expect: "the run stops before the item that would pass the ceiling"}
+  - id: UC1c.1
+    name: Validate and parse a source
+    spec: source-parse
+    actors: [model]
+    fields:
+      brief: "Validate the evidence; extract text by script; convert or OCR where configured; write the provisional paper projection."
+      primary_actor: Core
+      supporting_actors: "Model worker (cleanup, OCR)"
+      preconditions: "Captured evidence"
+      trigger: "The item's first stage"
+      success_guarantee: "Text ready to read, with page anchors"
+      minimal_guarantee: "Missing text earns no reading credit"
+      open_questions: "The provisional projection is written before reading: what if reading never happens?"
+  - id: UC1c.2
+    name: Read a source
+    spec: source-reading
+    actors: [model]
+    fields:
+      brief: "Bounded model tasks read points, limits, terms and lenses; scripts assemble Data, relations and metadata; the review drafts the Bottom Line."
+      primary_actor: "Model worker"
+      supporting_actors: "Model host, Core"
+      preconditions: "Parsed text"
+      trigger: "Stage 3"
+      success_guarantee: "Each stage's status and its derivations recorded"
+      minimal_guarantee: "A usable draft does not override incomplete reading"
+      open_questions: "Read completion follows remaining-part counts, not whether the answers are valid"
+  - id: UC1c.3
+    name: Publish a paper to the paper graph
+    spec: paper-publication
+    actors: [geo]
+    fields:
+      brief: "A fully read PDF with a full conversion is imported into a new generation of the paper DB."
+      primary_actor: Core
+      supporting_actors: Geo-Grapher
+      preconditions: "Full reading, a full-conversion artifact, an accepted current folder"
+      trigger: "Stage 9"
+      success_guarantee: "The active catalogue points at the new generation"
+      minimal_guarantee: "A gap or refusal is recorded; the old generation stays active"
+      open_questions: "Old and failed candidate DBs are never cleaned up"
+  - id: UC1.3
+    name: Accept a source into the library
+    spec: acceptance
+    actors: [owner]
+    fields:
+      brief: "The person reviews the enriched summary and accepts it; the guarded writer commits the note and indexes it."
+      primary_actor: Owner
+      supporting_actors: "Web UI, Core"
+      preconditions: "An enriched or partial staged source"
+      trigger: "Accept in Staging"
+      success_guarantee: "The note is catalogued and findable by title, Bottom Line and concepts"
+      minimal_guarantee: "A stale revision is refused; nothing is half-written"
+      open_questions: "OP1: who is told that read work is waiting, and who decides?"
+  - id: UC2
+    name: Research a brief across a corpus
+    spec: research
+    actors: [owner, lead]
+    includes: [UC3, UC4]
+    fields:
+      brief: "The Lead works a multi-question brief through an explore session and stages one evidenced report per question."
+      primary_actor: "Owner (the Lead does the work)"
+      supporting_actors: "Lead, Clerk, Core, Geo-Grapher"
+      preconditions: "A project note with disqualifiers; the corpus accepted as Source notes; a qualified Lead"
+      trigger: "The Owner asks the Lead to carry out the brief"
+      success_guarantee: "One staged report per question; every claim's quote verified and its sentence reviewed"
+      minimal_guarantee: "Within budgets; a refusal names its rule and its remedy is offered"
+      open_questions: "OP3 one synthesis per session; OP4 own notes in the pool; OP5 budget per visit; OP10 code placement unchecked"
+    boundaries:
+      - {at: danswer, values: ["answered at 9 min 59 s", "at 10 min", "unanswered at 10 min 1 s"], expect: "the session parks at 10 minutes"}
+      - {at: dbudget, values: ["candidates = 0", "= calls left", "= calls left + 1"], expect: "judge's 40 calls per visit; a run of candidates sharing a reason is one call"}
+  - id: UC3
+    name: Verify a report's claims
+    spec: verify-claims
+    actors: [lead, clerk]
+    fields:
+      brief: "Each claim's quote is found verbatim in its source; with review on, the Clerk judges the claim against its passage."
+      primary_actor: "Core, on the Owner's behalf"
+      supporting_actors: "Clerk, Lead"
+      preconditions: "A synthesis is recorded"
+      trigger: "draft_offering"
+      success_guarantee: "Every staged claim's quote exists verbatim in a named source, with a verdict"
+      minimal_guarantee: "A missing quote refuses the draft and names the closest passage"
+      open_questions: "OP7 review on by default; OP9 why reviews did not complete"
+  - id: UC4
+    name: Read and cite a paper from the graph
+    spec: cite-graph
+    actors: [lead, geo]
+    fields:
+      brief: "The Lead searches the paper graph, reads a paper's sections, and cites it by its handle."
+      primary_actor: Lead
+      supporting_actors: "Geo-Grapher, Core"
+      preconditions: "The library's Geo-Grapher is running; the paper was published"
+      trigger: "A brief needs a paper's methods or results"
+      success_guarantee: "The paper is a kept candidate, cited with a quote from its Source note"
+      minimal_guarantee: "A paper without a note is kept with a warning"
+      open_questions: "Should the paper-to-note link be stored, not derived from the title?"
+  - id: UC8
+    name: Compose work from actions
+    spec: compose
+    actors: [owner, overseer]
+    includes: [UC8.1]
+    fields:
+      brief: "A workflow is a sequence of registered actions, validated before it is saved and pinned when it runs."
+      primary_actor: "Owner, or an orchestrating agent"
+      supporting_actors: "Core, model host (routing steps)"
+      preconditions: "Every action named is registered"
+      trigger: "A definition is saved, then run"
+      success_guarantee: "Validated before saving; pinned to its definitions; every step through the registry; resumable"
+      minimal_guarantee: "A changed definition refuses to resume"
+      open_questions: "OP16: the batch's stages are still code"
+  - id: UC8.1
+    name: Run a saved workflow from the Web UI
+    spec: workflow-run
+    actors: [owner]
+    fields:
+      brief: "The paperclip menu starts a workflow at contribute with a workflow grant; the result comes back on the run's chip."
+      primary_actor: Owner
+      supporting_actors: "Web UI, Core, model worker"
+      preconditions: "An accepted workflow"
+      trigger: "Run a workflow from the paperclip menu"
+      success_guarantee: "The result is shown and its items move on"
+      minimal_guarantee: "A refusal ends the run as failed"
+      open_questions: "The Web UI drops the result (app.js:8472): what should the person see?"
+    boundaries:
+      - {at: wf_deep_read, values: ["0 staged sources", "10", "11", "a source of 12 chunks", "of 13"], expect: "10 items per run, 12 chunks per item"}
+  - id: UC-D
+    name: Repair a failed step
+    spec: doctor
+    actors: [overseer, owner]
+    fields:
+      brief: "There is no Doctor today: tier 0 notices a failure, diagnoses it, repairs it and reruns the step."
+      primary_actor: "Overseer (tier 0)"
+      supporting_actors: "Owner, Core"
+      preconditions: "Tier 0 is watching the run"
+      trigger: "A refusal, or a run ending partial or failed"
+      success_guarantee: "The step passes on rerun"
+      minimal_guarantee: "The Owner is told what still fails"
+      open_questions: "Which failures should a catalogued remedy repair without tier 0?"
+  - id: UC-O
+    name: Judge work against its requirements
+    spec: oracle
+    actors: [owner, lead]
+    fields:
+      brief: "Only an audited session judges work against stated requirements, with Tier A checks and a closure re-check."
+      primary_actor: Owner
+      supporting_actors: "Lead, Core"
+      preconditions: "An audited session with requirements"
+      trigger: "The Owner opens an audited session"
+      success_guarantee: "Every requirement closed by a Tier A check, and re-checked"
+      minimal_guarantee: "A missing check is recorded, never skipped"
+      open_questions: "Why do ingestion and research have no judge?"
+  - {id: UC5, name: Trust a relation, actors: [owner], deferred: "to-be only; there is no as-is (USE-CASES.md UC5)"}
+  - {id: UC6, name: Reorganise a folder into groups, actors: [owner], deferred: "PLAN.md 2.2"}
+  - {id: UC7, name: See the data in another model, actors: [owner], deferred: "PLAN.md 2.2"}

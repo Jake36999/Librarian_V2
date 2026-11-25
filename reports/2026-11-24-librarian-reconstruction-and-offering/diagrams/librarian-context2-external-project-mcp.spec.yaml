@@ -1,4 +1,6 @@
 diagram: librarian-context2-external-project-mcp
+status: PROPOSED_UNACCEPTED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/activation-external-project.spec.yaml
 title: "Context 2: External-Project Tier 0 Accesses Librarian via MCP (Proposed To-Be)"
 problem:
   symptom: "External project agents hit delegate contribute-tier blocks, Chat-tab Ask timeouts on MCP writes, conflated Context-1/3 acceptance authority, and Applications logs missing authorship/repeatability provenance."

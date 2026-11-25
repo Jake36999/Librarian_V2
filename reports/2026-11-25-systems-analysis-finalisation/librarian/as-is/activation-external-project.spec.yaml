@@ -1,0 +1,109 @@
+# Split from the S1 copy by tools/s3_split_as_is.py (S3, 2026-11-25); labels unchanged.
+diagram: activation-external-project
+use_case: UC0.2
+status: IMPLEMENTED_VERIFIED
+kind: activity
+title: Work for an external project through MCP (Context 2), as it runs today
+lanes:
+- Overseer (tier 0)
+- Core
+- Model worker
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: c2_call
+  kind: activity
+  lane: Overseer (tier 0)
+  label: calls search/read_source_section, delegate/dispatch_plan, queue_source, ingest, or record_application
+  step: 1
+- id: dc2_gate
+  kind: decision
+  lane: Core
+  label: Context 2 MCP tier & S1-S6b third-party check?
+- id: c2_helpers
+  kind: activity
+  lane: Model worker
+  label: runs contribute read-only DeepInfra delegate / dispatch_plan DAGs with zero Ask prompt
+  step: 2
+- id: dc2_outcome
+  kind: decision
+  lane: Core
+  label: Context 2 source readiness & Applications/ path?
+- id: c2_record_app
+  kind: activity
+  lane: Core
+  label: writes append-only Applications/ note (attested_by=agent, [[note]]) + sidecar & auto-enqueues unresolved_sources
+  step: 3
+- id: c2_deliver_reuse
+  kind: activity
+  lane: Overseer (tier 0)
+  label: delivers ext-project result + Applications/ link (no snapshot hashes/locators/verification schema)
+  step: 4
+- id: c2_queue_only
+  kind: activity
+  lane: Core
+  label: refuses empty sources_used (TypeError) or leaves queued leads for later intake without blocking ext task
+- id: c2_deliver_partial
+  kind: activity
+  lane: Overseer (tier 0)
+  label: returns external workaround/gap notice & queued unresolved lead IDs to user
+- id: c2_refusal
+  kind: activity
+  lane: Overseer (tier 0)
+  label: stops on consult delegate TIER_REFUSED, raw 3rd-party THIRD_PARTY_ROUTE_REQUIRED, or 150s Ask timeout
+- id: e_success
+  kind: end
+  outcome: success
+  label: a source is captured for intake
+- id: e_reused
+  kind: end
+  outcome: reused
+  label: the result reuses an Applications/ note
+- id: e_partial
+  kind: end
+  outcome: partial
+  label: a workaround or gap notice, with queued leads
+- id: e_paused
+  kind: end
+  outcome: paused
+  label: refused or timed out
+edges:
+- from: s
+  to: c2_call
+- from: c2_call
+  to: dc2_gate
+- from: dc2_gate
+  to: c2_helpers
+  guard: contribute delegate/dispatch_plan + S1-S6b reads
+- from: dc2_gate
+  to: c2_refusal
+  guard: consult delegate TIER_REFUSED or raw 3rd-party THIRD_PARTY_ROUTE_REQUIRED
+  ext: 2a
+- from: c2_helpers
+  to: dc2_outcome
+- from: dc2_outcome
+  to: c2_record_app
+  guard: sources_used >= 1 catalogued & Broker write allowed
+- from: dc2_outcome
+  to: c2_queue_only
+  guard: sources_used=[] TypeError or async queue_source without waiting
+  ext: 3a
+- from: dc2_outcome
+  to: e_success
+  guard: contribute ingest(defer=false) captures missing ref
+  ext: 3b
+- from: dc2_outcome
+  to: c2_refusal
+  guard: Ask 150s PERMISSION_UNANSWERED on session/queue/application
+  ext: 3c
+- from: c2_record_app
+  to: c2_deliver_reuse
+- from: c2_deliver_reuse
+  to: e_reused
+- from: c2_queue_only
+  to: c2_deliver_partial
+- from: c2_deliver_partial
+  to: e_partial
+- from: c2_refusal
+  to: e_paused

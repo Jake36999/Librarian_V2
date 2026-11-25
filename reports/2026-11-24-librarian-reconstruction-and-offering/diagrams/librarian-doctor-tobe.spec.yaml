@@ -1,4 +1,6 @@
 diagram: librarian-doctor-tobe
+status: PROPOSED_UNACCEPTED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/doctor.spec.yaml
 title: "Librarian Doctor Recovery & Ticket Workflow (Proposed To-Be, Rule-8 Compliant)"
 problem:
   symptom: "Prior UC-D auto-rolled back compensation (x4), used Helper (tier 2), omitted activation triggers/ticket routing, and blocked non-interactive runs on Owner escalation."

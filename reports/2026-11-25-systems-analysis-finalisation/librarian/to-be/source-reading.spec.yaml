@@ -1,0 +1,154 @@
+# Split from the S1 copy by tools/s4_split_to_be.py (S4, 2026-11-25); labels unchanged.
+diagram: source-reading
+use_case: UC1c.2
+status: PROPOSED_UNACCEPTED
+kind: activity
+title: Read one source (proposed)
+lanes:
+- Clerk (tier 2)
+- Scribe (tier 3)
+- Core
+- Model host
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: readplan
+  kind: activity
+  lane: Clerk (tier 2)
+  label: assigns spread chunks, blind lens tasks, and required whole-source passes
+  step: 1
+- id: read
+  kind: activity
+  lane: Scribe (tier 3)
+  label: executes bounded chunk and synthesis tasks with MC-10 spend reservation
+  step: 2
+- id: host
+  kind: activity
+  lane: Model host
+  label: answers task requests via qualified route; settles reserved vs actual cost
+  step: 3
+- id: readchk
+  kind: activity
+  lane: Core
+  label: verifies schemas/quotes (E4/E5) and separates chunk vs _document_pass state
+  step: 4
+- id: readproof
+  kind: activity
+  lane: Clerk (tier 2)
+  label: reconciles whole-source _document_pass and relate_chapters synthesis (P1-L7)
+  step: 5
+- id: dread
+  kind: decision
+  lane: Core
+  label: chunk reads + whole derivations complete?
+- id: dpoison
+  kind: decision
+  lane: Core
+  label: bounded retries exhausted on poison/ungrounded text?
+- id: partialread
+  kind: activity
+  lane: Core
+  label: keeps item partial with unread chunks or missing _document_pass explicit
+- id: lenses
+  kind: activity
+  lane: Core
+  label: stores blind E4/E5 grounded lens candidates (parent acceptance separate)
+  step: 6
+- id: data
+  kind: activity
+  lane: Core
+  label: extracts scripted DIK structural records & static AST code relations ($0; DATA_IS_UNFRAMED)
+  step: 7
+- id: drelate
+  kind: decision
+  lane: Core
+  label: multi-chapter document needing semantic relations?
+- id: relateskip
+  kind: activity
+  lane: Core
+  label: retains Core static AST relations or marks chapter-relate N/A
+- id: relate
+  kind: activity
+  lane: Clerk (tier 2)
+  label: proposes semantic chapter relations across read chapters (Core persists)
+  step: 8
+- id: metapropose
+  kind: activity
+  lane: Clerk (tier 2)
+  label: proposes semantic content-model metadata fields from evidence; retains Unknown where insufficient
+  step: 9
+- id: metadata
+  kind: activity
+  lane: Core
+  label: derives deterministic facts/readiness, validates proposed fields against schema, & stores proposals + Unknowns
+  step: 10
+- id: review
+  kind: activity
+  lane: Clerk (tier 2)
+  label: drafts neutral Bottom Line & sensitivity check with low_confidence rescue
+  step: 11
+- id: reviewchk
+  kind: activity
+  lane: Core
+  label: checks Bottom Line schema, literal quote grounding, flags & reading counters (does not override incomplete reading)
+  step: 12
+- id: e_success
+  kind: end
+  outcome: success
+  label: read, each part checked
+- id: e_failed
+  kind: end
+  outcome: failed
+  label: poison or ungrounded text after bounded retries
+edges:
+- from: s
+  to: readplan
+- from: readplan
+  to: read
+- from: read
+  to: host
+- from: host
+  to: readchk
+- from: readchk
+  to: readproof
+- from: readproof
+  to: dread
+- from: dread
+  to: lenses
+  guard: chunks and _document_pass/relate complete
+- from: dread
+  to: dpoison
+  guard: unread parts or missing synthesis pass
+  ext: 6a
+- from: dpoison
+  to: e_failed
+  guard: exhausted ungrounded/poison
+- from: dpoison
+  to: partialread
+  guard: noncritical partial retained
+- from: partialread
+  to: lenses
+- from: lenses
+  to: data
+- from: data
+  to: drelate
+- from: drelate
+  to: relate
+  guard: 2+ read chapters with claims
+- from: drelate
+  to: relateskip
+  guard: code repo (AST in Core Data) or <2 chapters
+  ext: 8a
+- from: relate
+  to: metapropose
+- from: relateskip
+  to: metapropose
+- from: metapropose
+  to: metadata
+- from: metadata
+  to: review
+- from: review
+  to: reviewchk
+- from: reviewchk
+  to: e_success

@@ -1,0 +1,53 @@
+# UC8 as-is: a workflow is defined from registered actions, validated, saved and run (workflows.py).
+diagram: compose
+use_case: UC8
+status: IMPLEMENTED_VERIFIED
+supersedes: []
+kind: activity
+title: Compose work from actions, as it runs today
+problem:
+  symptom: "The largest flows, the batch's stages and the session's phases, cannot be composed: stages are coded, and phases are declared but not runnable as a workflow."
+  root: "Definitions cover agent macros and small jobs; the processes that matter most are still code."
+lanes: [Owner, Overseer (tier 0), Core, Model host]
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: save, kind: activity, lane: Owner, step: 1, label: "writes a workflow or pipeline definition and saves it (save_workflow)"}
+  - {id: validate, kind: activity, lane: Core, step: 2, label: "validates it: registered actions, arguments, references, routes, and each step's declared dependencies, effects, acceptance and undo"}
+  - {id: dvalid, kind: decision, lane: Core, label: "is the definition valid?"}
+  - {id: problems, kind: activity, lane: Core, label: "refuses to save it and names each problem"}
+  - {id: start, kind: activity, lane: Overseer (tier 0), step: 3, label: "starts a run with its inputs (run_workflow, run_pipeline or macro_run)"}
+  - {id: pin, kind: activity, lane: Core, step: 4, label: "pins the run to the exact definitions it can reach, by digest"}
+  - {id: run, kind: activity, lane: Core, step: 5, label: "runs each step through the registry and its gates, binding earlier outputs into later arguments"}
+  - {id: dstep, kind: decision, lane: Core, label: "how did the step end?"}
+  - {id: route, kind: activity, lane: Model host, label: "has no qualified route for a routing step; the Core pauses the run"}
+  - {id: unknown, kind: activity, lane: Core, label: "pauses as outcome unknown: a step that changes something stopped with no recorded result"}
+  - {id: dperson, kind: decision, lane: Owner, label: "resumes: picks the route, or says retry or applied?"}
+  - {id: changed, kind: activity, lane: Core, label: "refuses to resume: a definition changed after the run started"}
+  - {id: log, kind: activity, lane: Core, step: 6, label: "logs each step and returns the workflow's outputs"}
+  - {id: e1, kind: end, outcome: success, label: "the run finished with its outputs, resumable from its log"}
+  - {id: e_paused, kind: end, outcome: paused, label: "paused, waiting for a person"}
+  - {id: e_refused, kind: end, outcome: refused, label: "the definition changed; the run cannot resume"}
+edges:
+  - {from: s, to: save}
+  - {from: save, to: validate}
+  - {from: validate, to: dvalid}
+  - {from: dvalid, to: start, guard: valid}
+  - {from: dvalid, to: problems, guard: invalid, ext: 2a}
+  - {from: problems, to: save}
+  - {from: start, to: pin}
+  - {from: pin, to: run}
+  - {from: run, to: dstep}
+  - {from: dstep, to: log, guard: every step finished}
+  - {from: dstep, to: route, guard: no route for a routing step, ext: 5a}
+  - {from: dstep, to: unknown, guard: outcome unknown, ext: 5b}
+  - {from: dstep, to: changed, guard: resumed after a definition changed, ext: 5c}
+  - {from: route, to: dperson}
+  - {from: unknown, to: dperson}
+  - {from: dperson, to: run, guard: resumed}
+  - {from: dperson, to: e_paused, guard: not yet}
+  - {from: changed, to: e_refused}
+  - {from: log, to: e1}
+evidence:
+  - "src/resource_librarian/workflows.py and standard/workflows/, standard/pipelines/: 19 workflows and 2 pipelines."
+  - "Agent macros are YAML workflows (f61e30c); steps declare dependencies, side effects, acceptance and undo (af45e7c); session phases are declared as data (f6a85d6)."
+  - "USE-CASES.md UC8 extensions 2a, 5a, 5b, 5c; the Web UI's own start and result handling is workflow-run."

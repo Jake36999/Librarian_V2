@@ -1,0 +1,74 @@
+# Split from the S1 copy by tools/s4_split_to_be.py (S4, 2026-11-25); labels unchanged.
+diagram: acceptance
+use_case: UC1.3
+status: PROPOSED_UNACCEPTED
+kind: activity
+title: Accept the screened sources (proposed)
+lanes:
+- Owner
+- Lead (tier 1)
+- Core
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: dgate2
+  kind: decision
+  lane: Core
+  label: Gate 2 acceptance authority?
+- id: leadaccept
+  kind: activity
+  lane: Lead (tier 1)
+  label: accepts in-scope Sources & cards (decided_by=agent; preserves flags); defers OD-05/reserved items
+  step: 1
+- id: dgate2caller
+  kind: decision
+  lane: Core
+  label: interactive Specification owner present?
+- id: ownergate2
+  kind: decision
+  lane: Owner
+  label: consolidated independent Folder/Source/Lens/Topic choices?
+- id: promote
+  kind: activity
+  lane: Core
+  label: commits approved Sources (PromotionGuard CAS, index.upsert, DA-3 handoff) & separate approved metadata
+  step: 2
+- id: e_success
+  kind: end
+  outcome: success
+  label: the accepted sources are committed
+- id: e_held_for_the_Owner
+  kind: end
+  outcome: held for the Owner
+  label: the choice is on the Owner's agenda
+- id: e_paused
+  kind: end
+  outcome: paused
+  label: held or deferred
+edges:
+- from: s
+  to: dgate2
+- from: dgate2
+  to: leadaccept
+  guard: authorized by Context-1 task commission (decided_by=agent) or standing agent policy
+- from: dgate2
+  to: dgate2caller
+  guard: Context-2 no-accept, Context-3 human UI review, uncommissioned taxonomy change, or OD-05 policy hold
+  ext: 1a
+- from: dgate2caller
+  to: ownergate2
+  guard: interactive UI/Owner present
+- from: dgate2caller
+  to: e_held_for_the_Owner
+  guard: Context-2 / scheduled (queue for human or Context-1 curate)
+- from: ownergate2
+  to: promote
+  guard: accept selected items
+- from: ownergate2
+  to: e_paused
+  guard: hold or defer all
+- from: leadaccept
+  to: promote
+- from: promote
+  to: e_success

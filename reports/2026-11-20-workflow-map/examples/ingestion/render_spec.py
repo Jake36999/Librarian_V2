@@ -174,7 +174,8 @@ def mermaid(spec: dict) -> str:
     nodes = spec["nodes"]
     lines = ["flowchart TD"]
     shape = {"start": ('(("', '"))'), "end": ('((("', '")))'), "decision": ('{"', '"}'), "ref": ('[["', '"]]'),
-             "fork": ('[/"', '"\\]'), "join": ('[\\"', '"/]'), "activity": ('["', '"]'), "note": ('>"', '"]')}
+             "fork": ('[/"', '"\\]'), "join": ('[\\"', '"/]'), "activity": ('["', '"]'), "note": ('>"', '"]'),
+             "merge": ('{{"', '"}}')}
 
     def text(n):
         if n["kind"] == "start":
@@ -259,7 +260,8 @@ TIER0_GRADES = ((2, "ideal"), (3, "expected"), (4, "rusty"), (10, "bad"))
 
 
 def tier0_lane(spec: dict) -> str | None:
-    return next((lane for lane in spec["lanes"] if lane.lower().startswith("tier 0")), None)
+    # "Tier 0 agent" in the older specs; "Overseer (tier 0)" in the packs (docs/terminology.md).
+    return next((lane for lane in spec["lanes"] if "tier 0" in lane.lower()), None)
 
 
 def full_sequence(spec: dict, p: dict) -> list[str]:

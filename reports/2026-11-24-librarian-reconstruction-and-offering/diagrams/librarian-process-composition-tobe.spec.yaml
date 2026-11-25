@@ -1,4 +1,5 @@
 diagram: librarian-process-composition-tobe
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/compose.spec.yaml
 kind: activity
 status: PROPOSED_UNACCEPTED
 title: "Librarian Process Composition & Mandate Narrowing (Proposed To-Be: L0 Action -> L3 Sprint)"

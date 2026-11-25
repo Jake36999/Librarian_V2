@@ -3,6 +3,8 @@
 # can, in the shapes those extensions describe, by matching them to a catalogue of remedies
 # (remedy-catalogue.yaml). Its scope is the catalogue; anything else goes back to tier 0 and is counted.
 diagram: UC-D
+status: PROPOSED_UNACCEPTED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/doctor.spec.yaml
 kind: activity
 title: Diagnose and resolve a failure at a mapped extension point (the doctor)
 target: {kind: use_case, ref: "INGESTION-TOBE.md#3-the-doctor-uc-d"}

@@ -5,6 +5,8 @@
 # geographer/{workspace_init,folder_review,pipeline,treesitter,library_papers,graph_catalog}.py,
 # pipeline/stage3_build_db.py, and G:\Libraries logs.
 diagram: geographer-graph-building
+status: IMPLEMENTED_VERIFIED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/geo-grapher/as-is/graph-building.spec.yaml
 kind: activity
 title: Geo-Grapher graph building across folder review and Librarian enrichment (as-is)
 target: {kind: process, ref: "reports/2026-11-22-geographer-graph-building/README.md"}

@@ -1,0 +1,330 @@
+# Copied from reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-context3-human-platform-ui.spec.yaml by tools/s1_canonical.py (S1, 2026-11-25).
+diagram: activation-web-ui
+use_case: UC0
+status: PROPOSED_UNACCEPTED
+supersedes:
+- reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-context3-human-platform-ui.spec.yaml
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/activation-web-ui.spec.yaml
+title: 'Context 3: Human Uses Librarian Web UI Directly Without Tier 0 (Proposed To-Be)'
+problem:
+  symptom: Staging review suffers status-filter blind spots (accepted/processing hidden), F-09 Bottom-Line form loss on background
+    reload, silent action_done workflow result drops (app.js:8472), and unfindable/queued-Clerk visibility gaps.
+  root: Model UI initiation (Staging Add source, Chat + Lead, paperclip workflows with zero Tier 0), separate Source/Summary/Folder/Lens/Topic/Search-Index
+    review decisions, Clerk/Lead/Core division, and explicit UI/Agenda notifications.
+lanes:
+- Clerk (tier 2)
+- Doctor
+- Oracle
+- Core
+- Lead (tier 1)
+- Web UI
+- Owner
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: ui_entry
+  kind: activity
+  lane: Owner
+  step: 1
+  label: 'initiates in Web UI: Staging -> Add source/Folders, Chat + Attach, or Run a workflow'
+- id: dentry
+  kind: decision
+  lane: Web UI
+  label: which direct UI path selected?
+- id: leaddeleg
+  kind: ref
+  lane: Lead (tier 1)
+  use_case: ingestion
+  label: delegates multi-root Chat request (sub_spec_owner=lead_tier1 <= person; zero Tier 0)
+- id: wgrant
+  kind: activity
+  lane: Core
+  label: binds spec_owner=person workflow_grant + generalized read_access route for paperclip workflow
+- id: uicapture
+  kind: activity
+  lane: Core
+  step: 2
+  label: records spec_owner=person / curate; captures Bronze evidence & Staging/Folder records
+- id: leadcoord
+  kind: activity
+  lane: Lead (tier 1)
+  step: 3
+  label: oversees semi-automated UI queue routing (sub_spec_owner=lead_tier1 <= person) & queued Clerk notice
+- id: clerkdraft
+  kind: activity
+  lane: Clerk (tier 2)
+  step: 4
+  label: proposes W8 title, neutral Bottom Line, What it solves, semantic fields (Unknown if unsupported), topics & sensitivity
+- id: reviewgate1
+  kind: activity
+  lane: Owner
+  step: 5
+  label: 'retains high-level UI curation: inspects Staging -> Sources (beside/on-demand evidence) & ticks/edits Gate 1 items'
+- id: dgate1choice
+  kind: decision
+  lane: Owner
+  label: Gate 1 Source choice on Staging page?
+- id: uidispose
+  kind: activity
+  lane: Core
+  label: records status=deferred or quarantines rejected item with reason & retained originals
+- id: startbatch
+  kind: activity
+  lane: Core
+  step: 6
+  label: person clicks Process approved sources (curate process_approved); freezes selected batch
+- id: batchchild
+  kind: ref
+  lane: Core
+  step: 7
+  use_case: batch-enrichment
+  label: executes mixed-batch L2 enrichment child under UI curate / workflow_grant
+- id: duicrit
+  kind: decision
+  lane: Core
+  label: critical security/data-loss/boundary breach vs mapped shortfall?
+- id: uidoctor
+  kind: ref
+  lane: Doctor
+  use_case: doctor
+  label: attempts bounded YAML Ticket repair (e.g. R5 Rewrite indexes) on UI/batch fault
+- id: uireentry
+  kind: activity
+  lane: Core
+  label: confirms repaired Ticket receipt & refreshes Staging/Search UI state
+- id: reviewgate2
+  kind: activity
+  lane: Owner
+  step: 8
+  label: 'retains Gate-2 choices: reviews summary (Bottom Line, Redraft, Unknowns) + Folders/Lenses/Topics/Offerings'
+- id: dgate2choice
+  kind: decision
+  lane: Owner
+  label: Gate 2 Source acceptance choice?
+- id: promotepartial
+  kind: activity
+  lane: Core
+  label: writes Sources note with coverage=partial & not_examined explicit; updates FTS & vectors
+- id: promoteindex
+  kind: activity
+  lane: Core
+  step: 9
+  label: runs PromotionGuard CAS (staged_revision check), writes Sources note, IndexGateway FTS & post-write vectors
+- id: oracleverify
+  kind: activity
+  lane: Oracle
+  step: 10
+  label: verifies Staging/Summary integrity & findability via distinct qualified Oracle route (GLM-5.3 current adapter)
+- id: dindex
+  kind: decision
+  lane: Oracle
+  label: Source note findable & checks clean?
+- id: uinotify
+  kind: activity
+  lane: Web UI
+  step: 11
+  label: displays ok/warnings banner, action_done drawer (result, spend, coverage), & Agenda
+- id: userdone
+  kind: activity
+  lane: Owner
+  step: 12
+  label: receives promoted Source note, spend, Search-Index confirmation & deferred tabs (zero Tier 0)
+- id: uipartial
+  kind: activity
+  lane: Web UI
+  label: renders partial coverage banner, spend, unexamined list & remaining Agenda/Staging counts
+- id: userpartial
+  kind: activity
+  lane: Owner
+  label: receives accepted/partial note with coverage caveats, spend & deferred tabs
+- id: uireused
+  kind: activity
+  lane: Web UI
+  label: displays no-new-work / reused state & unchanged catalogue links ($0 new spend)
+- id: userreuse
+  kind: activity
+  lane: Owner
+  label: receives reused catalogue confirmation & unchanged links in UI
+- id: uiagenda
+  kind: activity
+  lane: Web UI
+  label: updates Agenda/Staging status filters & surfaces workflow/Ticket notice & resume path
+- id: userpaused
+  kind: activity
+  lane: Owner
+  label: receives paused Ticket, ORACLE_ROUTE_COLLISION flag, spend, & Agenda resume path
+- id: uiesc
+  kind: activity
+  lane: Web UI
+  label: routes critical error banner, Ticket ID, flags, evidence & Rule-8 compensation immediately
+- id: useresc
+  kind: activity
+  lane: Owner
+  label: receives urgent UI failure alert with Ticket ID & Rule-8 compensation
+- id: e1
+  kind: end
+  outcome: success
+  label: Source findable in Search & Catalogue; user notified in UI (zero Tier 0)
+- id: epartial
+  kind: end
+  outcome: partial
+  label: accepted with explicit partial coverage or pending UI worklists; user notified
+- id: ereused
+  kind: end
+  outcome: reused
+  label: existing catalogue items confirmed unchanged; UI updated
+- id: epaused
+  kind: end
+  outcome: paused
+  label: staged/deferred/paused item held visibly on Staging & Agenda; user notified
+- id: eescalated
+  kind: end
+  outcome: escalated
+  label: critical UI/index Ticket surfaced to human user with evidence
+edges:
+- from: s
+  to: ui_entry
+- from: ui_entry
+  to: dentry
+- from: dentry
+  to: uicapture
+  guard: Staging Add source or Chat + Attach
+- from: dentry
+  to: leaddeleg
+  guard: Chat Lead delegates multi-root ingestion
+  ext: 1a
+- from: dentry
+  to: wgrant
+  guard: paperclip Run a workflow (e.g. deep-read-staged)
+  ext: 1b
+- from: leaddeleg
+  to: uinotify
+  guard: success
+- from: leaddeleg
+  to: uipartial
+  guard: partial
+- from: leaddeleg
+  to: uireused
+  guard: reused
+- from: leaddeleg
+  to: uiagenda
+  guard: paused
+- from: leaddeleg
+  to: uiesc
+  guard: escalated
+- from: wgrant
+  to: leadcoord
+- from: uicapture
+  to: leadcoord
+- from: leadcoord
+  to: clerkdraft
+- from: clerkdraft
+  to: reviewgate1
+- from: reviewgate1
+  to: dgate1choice
+- from: dgate1choice
+  to: startbatch
+  guard: Approve for ingestion -> click Process approved sources
+- from: dgate1choice
+  to: promoteindex
+  guard: Accept as captured (skip batch)
+  ext: 5a
+- from: dgate1choice
+  to: uidispose
+  guard: Defer or Reject in Staging
+  ext: 5b
+- from: uidispose
+  to: uiagenda
+- from: startbatch
+  to: batchchild
+- from: batchchild
+  to: reviewgate2
+  guard: success
+- from: batchchild
+  to: reviewgate2
+  guard: partial
+  ext: 7a
+- from: batchchild
+  to: uireused
+  guard: reused
+  ext: 7b
+- from: batchchild
+  to: uiagenda
+  guard: paused
+  ext: 7c
+- from: batchchild
+  to: duicrit
+  guard: escalated
+  ext: 7d
+- from: duicrit
+  to: uiesc
+  guard: critical security, data-loss, or boundary violation
+- from: duicrit
+  to: uidoctor
+  guard: mapped noncritical shortfall
+- from: uidoctor
+  to: uireentry
+  guard: resolved
+- from: uireentry
+  to: reviewgate2
+- from: uidoctor
+  to: uiagenda
+  guard: declined
+- from: uidoctor
+  to: uiesc
+  guard: escalated
+- from: reviewgate2
+  to: dgate2choice
+- from: dgate2choice
+  to: promoteindex
+  guard: Accept into library (Summary + FTS/Vector)
+- from: dgate2choice
+  to: promotepartial
+  guard: Accept with partial coverage (not_examined recorded)
+  ext: 8a
+- from: dgate2choice
+  to: uidispose
+  guard: Defer or Reject
+  ext: 8b
+- from: promotepartial
+  to: uipartial
+- from: promoteindex
+  to: oracleverify
+- from: oracleverify
+  to: dindex
+- from: dindex
+  to: uinotify
+  guard: findable & checks clean (distinct Oracle route)
+- from: dindex
+  to: uidoctor
+  guard: not_findable or embedding_warnings (R5)
+  ext: 10a
+- from: dindex
+  to: uiesc
+  guard: critical Search-Index or data integrity fault
+  ext: 10b
+- from: dindex
+  to: uiagenda
+  guard: ORACLE_ROUTE_COLLISION (flags unverified_route_collision on Agenda; never claims independent review)
+  ext: 10c
+- from: uinotify
+  to: userdone
+- from: userdone
+  to: e1
+- from: uipartial
+  to: userpartial
+- from: userpartial
+  to: epartial
+- from: uireused
+  to: userreuse
+- from: userreuse
+  to: ereused
+- from: uiagenda
+  to: userpaused
+- from: userpaused
+  to: epaused
+- from: uiesc
+  to: useresc
+- from: useresc
+  to: eescalated

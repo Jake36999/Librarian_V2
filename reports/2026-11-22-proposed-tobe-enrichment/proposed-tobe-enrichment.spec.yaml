@@ -1,5 +1,7 @@
 # Equivalent local report exits and native route clearance, 23 November 2026.
 diagram: proposed-tobe-enrichment
+status: PROPOSED_UNACCEPTED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/source-enrichment.spec.yaml
 kind: activity
 title: Proposed to-be enrichment
 target:

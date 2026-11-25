@@ -1,0 +1,166 @@
+# Split from the S1 copy by tools/s3_split_as_is.py (S3, 2026-11-25); labels unchanged.
+diagram: folder-review
+use_case: UC1.1
+status: IMPLEMENTED_VERIFIED
+kind: activity
+title: Review a folder and apply its groups, as it runs today
+lanes:
+- Geo-Grapher
+- Core
+- Web UI
+- Model worker
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: ui_folder_survey
+  kind: activity
+  lane: Web UI
+  label: POST /api/folders/survey walks directory metadata only (files unread, credential paths refused) & stages kind=folder
+    cards
+  step: 1
+- id: folder_stage_cards
+  kind: activity
+  lane: Core
+  label: FolderReview.survey records fingerprints, suggested purpose & stratum graph on folder cards (0 Source items created)
+  step: 2
+- id: dfolder_action
+  kind: decision
+  lane: Core
+  label: folder action on /api/folders/*?
+- id: folder_draft_check
+  kind: decision
+  lane: Core
+  label: 'POST /api/folders/draft: production_drafting & provenance arithmetic ok?'
+- id: folder_clerk_draft
+  kind: activity
+  lane: Model worker
+  label: drafts 1-sentence folder brief & sensitivity from file counts/bytes only; stages draft on folder card
+- id: folder_draft_hold
+  kind: activity
+  lane: Core
+  label: retains folder card in Folders awaiting person Accept folder decision (or records FOLDER_DRAFT_DISABLED / provenance
+    refusal)
+- id: folder_batch_approve
+  kind: activity
+  lane: Core
+  label: POST /api/folders/approve-batch (person=True) marks 1-100 non-sensitive folder cards approved (not accepted)
+- id: dfolder_batch_go
+  kind: decision
+  lane: Core
+  label: person submits Process approved in Staging for approved folder cards?
+- id: folder_accept_prep
+  kind: activity
+  lane: Core
+  label: 'accept (person=True) or accept-policy (promotion.mode=agent): checks all-groups FOLDER_STALE & writes content-roots.json
+    barrier'
+  step: 3
+- id: dfolder_prep
+  kind: decision
+  lane: Core
+  label: folder validation, policy & group check?
+- id: geo_folder_apply
+  kind: activity
+  lane: Geo-Grapher
+  label: runs apply-folder-review CLI across all accepted non-excluded library groups & writes graph snapshots
+  step: 4
+- id: dfolder_post
+  kind: decision
+  lane: Core
+  label: Geo apply result & accepted folder purpose?
+- id: ui_folder_done
+  kind: activity
+  lane: Web UI
+  label: shows Accepted folder & Geo graph status in Folders (own-code/data/logs/exclude never become Sources)
+- id: folder_queue_sources
+  kind: activity
+  lane: Core
+  label: 'separate click POST /api/folders/sources: folder_sources.queue calls ingest(defer=true) per document (UI button:
+    third-party/research-docs; API also own-docs); writes folder-sources.json, status=queued'
+  step: 5
+- id: e_success
+  kind: end
+  outcome: success
+  label: the folder's documents are queued for intake
+- id: e_approved_for_processing
+  kind: end
+  outcome: approved for processing
+  label: approved folder cards go into the batch
+- id: e_reused
+  kind: end
+  outcome: reused
+  label: a non-Source folder is indexed whole, or excluded
+- id: e_paused
+  kind: end
+  outcome: paused
+  label: 'held: draft disabled, stale, policy, or waiting'
+- id: e_escalated
+  kind: end
+  outcome: escalated
+  label: the Geo-Grapher application failed
+edges:
+- from: s
+  to: ui_folder_survey
+- from: ui_folder_survey
+  to: folder_stage_cards
+- from: folder_stage_cards
+  to: dfolder_action
+- from: dfolder_action
+  to: folder_accept_prep
+  guard: /api/folders/accept (person) or /accept-policy (agent mode)
+- from: dfolder_action
+  to: folder_batch_approve
+  guard: /api/folders/approve-batch (person; 1-100 folder cards)
+  ext: 3a
+- from: dfolder_action
+  to: folder_draft_check
+  guard: /api/folders/draft (approve_spend=true; counts only)
+  ext: 3b
+- from: folder_draft_check
+  to: folder_clerk_draft
+  guard: production_drafting enabled & provenance ok
+- from: folder_draft_check
+  to: folder_draft_hold
+  guard: FOLDER_DRAFT_DISABLED (default), CLERK_UNAVAILABLE, or provenance mismatch
+- from: folder_clerk_draft
+  to: folder_draft_hold
+- from: folder_draft_hold
+  to: e_paused
+- from: folder_batch_approve
+  to: dfolder_batch_go
+- from: dfolder_batch_go
+  to: e_approved_for_processing
+  guard: person clicks Process approved in Staging (runs FOLDER_STAGES)
+- from: dfolder_batch_go
+  to: e_paused
+  guard: leaves approved folder cards waiting
+- from: folder_accept_prep
+  to: dfolder_prep
+- from: dfolder_prep
+  to: geo_folder_apply
+  guard: valid & non-excluded accepted group(s)
+- from: dfolder_prep
+  to: ui_folder_done
+  guard: exclude-only decision (never read or indexed)
+  ext: 4a
+- from: dfolder_prep
+  to: e_paused
+  guard: FOLDER_STALE (409), PROMOTION_MODE!=agent, or SENSITIVITY_REVIEW
+  ext: 4b
+- from: geo_folder_apply
+  to: dfolder_post
+- from: dfolder_post
+  to: folder_queue_sources
+  guard: apply ok on reference folder & person clicks Queue documents as Sources
+- from: dfolder_post
+  to: ui_folder_done
+  guard: 'apply ok: own-code/data/logs indexed whole (never Sources) or not queued'
+  ext: 5a
+- from: dfolder_post
+  to: e_escalated
+  guard: Geo apply-folder-review failed (barrier retained)
+  ext: 5b
+- from: ui_folder_done
+  to: e_reused
+- from: folder_queue_sources
+  to: e_success

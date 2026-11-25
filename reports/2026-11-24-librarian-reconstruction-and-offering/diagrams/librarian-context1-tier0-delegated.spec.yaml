@@ -1,4 +1,6 @@
 diagram: librarian-context1-tier0-delegated
+status: PROPOSED_UNACCEPTED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/activation-overseer.spec.yaml
 title: "Context 1: User Directs Tier 0 Agent to Operate Librarian (Proposed To-Be Sprint)"
 problem:
   symptom: "Tier 0 agents operating Librarian on a user's behalf face MCP curate refusals (process_approved), 150s/600s hidden Chat-tab Ask stalls (F-03), redundant approval prompts, and repeated low-value chunk/gate babysitting."

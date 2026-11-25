@@ -1,0 +1,89 @@
+# Split from the S1 copy by tools/s3_split_as_is.py (S3, 2026-11-25); labels unchanged.
+diagram: paper-publication
+use_case: UC1c.3
+status: IMPLEMENTED_VERIFIED
+kind: activity
+title: Publish a read paper to Geo-Grapher (stage 9), as it runs today
+lanes:
+- Core
+- Geo-Grapher
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: pubcheck
+  kind: activity
+  lane: Core
+  label: 'publish: checks PDF applicability, actual full reading, persistent conversion, artifact binding and current trusted
+    accepted folder assignment'
+  step: 1
+- id: dpublication
+  kind: decision
+  lane: Core
+  label: publication admission result?
+- id: publish
+  kind: activity
+  lane: Geo-Grapher
+  label: copies the prior paper DB into a new generation, imports the artifact and switches the active catalog pointer through
+    one CLI call
+  step: 2
+- id: publishstorage
+  kind: note
+  lane: Geo-Grapher
+  label: The call may fail during copy, import or registration. Old and failed-candidate DBs may remain; the candidate is
+    checkpointed and the catalog uses WAL.
+- id: dpubresult
+  kind: decision
+  lane: Core
+  label: publication call result?
+- id: e_success
+  kind: end
+  outcome: success
+  label: published; the active catalogue points at the new generation
+- id: e_not_applicable
+  kind: end
+  outcome: not applicable
+  label: not a PDF, or no full-conversion artifact
+- id: e_gap
+  kind: end
+  outcome: gap
+  label: reading incomplete, Geo-Grapher disabled, folder not accepted, or refused
+- id: e_failed
+  kind: end
+  outcome: failed
+  label: an uncaught failure
+edges:
+- from: s
+  to: pubcheck
+- from: pubcheck
+  to: dpublication
+- from: dpublication
+  to: publish
+  guard: fully read PDF, full conversion and enabled current trusted accepted folder assignment
+- from: dpublication
+  to: e_not_applicable
+  guard: non-PDF, or fully read PDF without a full-conversion artifact
+  ext: 2a
+- from: dpublication
+  to: e_gap
+  guard: reading incomplete, disabled Geo, missing/stale folder assignment or caught admission refusal
+  ext: 2b
+- from: dpublication
+  to: e_failed
+  guard: uncaught preparation exception
+  ext: 2c
+- from: publish
+  to: publishstorage
+- from: publishstorage
+  to: dpubresult
+- from: dpubresult
+  to: e_success
+  guard: published
+- from: dpubresult
+  to: e_gap
+  guard: returned refusal/disabled or caught publication error
+  ext: 2d
+- from: dpubresult
+  to: e_failed
+  guard: uncaught stage failure
+  ext: 2e

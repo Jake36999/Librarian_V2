@@ -1,0 +1,63 @@
+# G4, as-is: the entities that carry state, from the status values and transitions in the code at d9435e1.
+entities:
+  - id: staged-item
+    name: A staged item (a source)
+    about: "One source in staging, from capture to its decision. STATUSES and DECIDABLE in staging.py."
+    evidence: "src/resource_librarian/staging.py lines 80-87 (STATUSES, DECIDABLE); batch.py stage results"
+    initial: queued
+    final: [accepted, rejected]
+    transitions:
+      - {from: queued, to: staged, on: "intake runs (intake_run, run-queue)", by: Core}
+      - {from: staged, to: approved, on: "approve (Gate 1)", by: Owner}
+      - {from: deferred, to: approved, on: approve, by: Owner}
+      - {from: approved, to: processing, on: "process_approved (the person's start)", by: Owner}
+      - {from: processing, to: enriched, on: "every stage done", by: Core}
+      - {from: processing, to: partial, on: "a stage partial, or coverage short of full", by: Core}
+      - {from: processing, to: failed, on: "a stage failed", by: Core}
+      - {from: partial, to: approved, on: "approve again; finished stages are not repeated", by: Owner}
+      - {from: failed, to: approved, on: approve again, by: Owner}
+      - {from: enriched, to: approved, on: "approve again, for a stage added since", by: Owner}
+      - {from: enriched, to: accepted, on: "accept (Gate 2)", by: Owner, guard: "promotion.mode = person; or agent mode, attested as agent"}
+      - {from: partial, to: accepted, on: "accept, with coverage and not-examined", by: Owner}
+      - {from: staged, to: accepted, on: "accept as captured: only what intake fetched was read", by: Owner}
+      - {from: staged, to: deferred, on: defer, by: Owner}
+      - {from: enriched, to: deferred, on: defer, by: Owner}
+      - {from: staged, to: rejected, on: reject, by: Owner}
+      - {from: failed, to: rejected, on: reject, by: Owner}
+  - id: folder-card
+    name: A folder card
+    about: "One folder's decision in the Folders tab. folder_review.py."
+    evidence: "src/resource_librarian/folder_review.py: survey (342), approve_batch (469), accept (539), accept_by_policy (616); FOLDER_STALE at 496, 556, 560, 591, 631"
+    initial: staged
+    final: [accepted]
+    transitions:
+      - {from: staged, to: staged, on: "draft: a model drafts purpose and sensitivity (off by default)", by: Model worker}
+      - {from: staged, to: approved, on: "approve-batch: 1-100 non-sensitive cards, for the batch", by: Owner}
+      - {from: staged, to: accepted, on: "accept, with the card's fingerprint", by: Owner, guard: "the fingerprint matches; no accepted root is stale"}
+      - {from: approved, to: accepted, on: accept, by: Owner}
+      - {from: staged, to: accepted, on: "accept-policy, when promotion.mode = agent", by: Core}
+      - {from: accepted, to: accepted, on: "Geo-Grapher applies every accepted group again", by: Geo-Grapher}
+      - {from: accepted, to: staged, on: "re-survey after the folder changed (FOLDER_STALE)", by: Owner}
+  - id: session
+    name: A session
+    about: "A Lead's session and its phases. session.py Session; standard/phases.yaml."
+    evidence: "src/resource_librarian/session.py lines 694-707 (status events), 490-499 (budget_left), 836-839 (next_step); broker.py 228-236 (park on an unanswered permission)"
+    initial: open
+    final: [closed]
+    transitions:
+      - {from: open, to: open, on: "advance to the next phase, past its gate", by: Lead (tier 1)}
+      - {from: open, to: parked, on: "a question or permission unanswered; park_session; a dependent session parked", by: Core}
+      - {from: parked, to: open, on: "resume_session, or a message from the Owner", by: Owner}
+      - {from: open, to: closed, on: close_session, by: Lead (tier 1)}
+      - {from: closed, to: open, on: "resume_session reopens it to discuss what it made", by: Owner}
+  - id: offering
+    name: An offering (a drafted report)
+    about: "A report drafted in Synthesise, checked, staged and accepted by a person. tools/sessions.py."
+    evidence: "src/resource_librarian/tools/sessions.py lines 1665 (status draft) and 1702 (status staged); promote_offering"
+    initial: draft
+    final: [accepted, rejected]
+    transitions:
+      - {from: draft, to: staged, on: "every quote found; review verdicts recorded (when on)", by: Core}
+      - {from: draft, to: draft, on: "a quote missing, or a claim challenged: rewrite", by: Lead (tier 1)}
+      - {from: staged, to: accepted, on: "promote_offering", by: Owner}
+      - {from: staged, to: rejected, on: reject, by: Owner}

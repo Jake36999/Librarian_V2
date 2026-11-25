@@ -1,6 +1,8 @@
 # Current source-processing contract, checked against batch.py and retained November runs.
 # Model worker describes the legacy clerk/cleanup/ocr transports, not deployed tiered orchestration.
 diagram: source-enrichment-current
+status: IMPLEMENTED_VERIFIED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/source-enrichment.spec.yaml
 kind: activity
 title: "Current source enrichment: scripted stages and legacy model tasks"
 target: {kind: use_case, ref: "source-enrichment-current.md#use-case-description"}

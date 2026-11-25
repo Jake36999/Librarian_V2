@@ -1,5 +1,7 @@
 # Analytical decomposition of the existing mixed process_approved worker; not another runner.
 diagram: batch-enrichment-current
+status: IMPLEMENTED_VERIFIED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/batch-enrichment.spec.yaml
 kind: activity
 title: "Current approved batch: source and folder-metadata dispatch"
 target: {kind: use_case, ref: "batch-enrichment-current.md#use-case-description"}

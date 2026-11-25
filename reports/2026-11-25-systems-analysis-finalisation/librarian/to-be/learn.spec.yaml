@@ -1,0 +1,98 @@
+# Copied from reports/2026-11-20-workflow-map/examples/ingestion/learn.spec.yaml by tools/s1_canonical.py (S1, 2026-11-25).
+diagram: learn
+use_case: UC-L
+status: PROPOSED_UNACCEPTED
+supersedes:
+- reports/2026-11-20-workflow-map/examples/ingestion/learn.spec.yaml
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/learn.spec.yaml
+kind: activity
+title: Learn a remedy from an escalated case
+target:
+  kind: use_case
+  ref: INGESTION-TOBE.md#5-how-the-doctor-grows
+lens:
+- the-root-cause-lens
+perspective: Owner
+problem:
+  symptom: A failure the doctor could not match went back to tier 0.
+  why:
+  - The catalogue had no remedy for its shape.
+  root: The catalogue only grows when a resolved case is written back into it.
+lanes:
+- Overseer (tier 0)
+- Owner
+- Core
+nodes:
+- id: s
+  kind: start
+- id: a1
+  kind: activity
+  lane: Overseer (tier 0)
+  step: 1
+  label: resolves the escalated case
+- id: a2
+  kind: activity
+  lane: Overseer (tier 0)
+  step: 2
+  label: 'proposes a remedy entry: symptom shape, remedy workflow, scope, rejoin'
+- id: a3
+  kind: activity
+  lane: Core
+  step: 3
+  label: 'validates the entry: workflow exists, scope declared, blast radius bounded'
+- id: d1
+  kind: decision
+  lane: Core
+  label: entry valid?
+- id: a4
+  kind: activity
+  lane: Owner
+  step: 4
+  label: accepts the entry into the catalogue
+- id: d2
+  kind: decision
+  lane: Owner
+  label: accepted?
+- id: a5
+  kind: activity
+  lane: Core
+  step: 5
+  label: adds the entry, pinned to its digest
+- id: e1
+  kind: end
+  outcome: learned
+  label: the catalogue holds a remedy for this shape
+- id: e2
+  kind: end
+  outcome: not learned
+  label: resolved this once; nothing added to the catalogue
+edges:
+- from: s
+  to: a1
+- from: a1
+  to: a2
+- from: a2
+  to: a3
+- from: a3
+  to: d1
+- from: d1
+  to: a4
+  guard: valid
+- from: d1
+  to: e2
+  guard: invalid
+  ext: 3a
+- from: a4
+  to: d2
+- from: d2
+  to: a5
+  guard: accepted
+- from: d2
+  to: e2
+  guard: declined
+  ext: 4a
+- from: a5
+  to: e1
+provenance:
+  drafted_by: tier 0 (Claude Code), owner direction 2026-11-20
+  at: 2026-11-20

@@ -3,6 +3,8 @@
 # later in the order (an action of a workflow, pipeline or sprint), or of one at its own layer if no cycle results;
 # never of an earlier one (a pipeline is never a component of an action). Defined terms: docs/proposals/diagram-workflows.md, section 12.
 diagram: UC-C
+status: PROPOSED_UNACCEPTED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/compose.spec.yaml
 kind: activity
 title: Compose a process upward and promote it into the repertoire
 target: {kind: use_case, ref: "../../../../docs/proposals/diagram-workflows.md#11-upward-composition-actions-workflows-pipelines-sprints"}

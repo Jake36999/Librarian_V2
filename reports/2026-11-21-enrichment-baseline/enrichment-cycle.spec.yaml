@@ -2,6 +2,8 @@
 # Existing source operations are retained; run-wide delegation, tickets and general Oracle/Doctor integration
 # are target behaviour. See requirements-evidence.md and model-notes.md for that boundary.
 diagram: enrichment-cycle
+status: MIXED_AS_IS_AND_TO_BE
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/source-enrichment.spec.yaml
 kind: activity
 title: Proposed comprehensive ingestion and enrichment integration
 target: {kind: use_case, ref: "model-notes.md"}

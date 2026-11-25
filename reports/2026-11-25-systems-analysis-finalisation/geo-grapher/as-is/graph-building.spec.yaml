@@ -1,0 +1,360 @@
+# Copied from reports/2026-11-22-geographer-graph-building/geographer-graph-building.spec.yaml by tools/s1_canonical.py (S1, 2026-11-25).
+diagram: graph-building
+use_case: UC1d
+status: IMPLEMENTED_VERIFIED
+supersedes:
+- reports/2026-11-22-geographer-graph-building/geographer-graph-building.spec.yaml
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/geo-grapher/as-is/graph-building.spec.yaml
+kind: activity
+title: Geo-Grapher graph building across folder review and Librarian enrichment (as-is)
+target:
+  kind: process
+  ref: reports/2026-11-22-geographer-graph-building/README.md
+lens:
+- the-root-cause-lens
+- the-guard-completeness-lens
+- the-real-concurrency-lens
+perspective: Owner
+problem:
+  symptom: 30 graphs use 77.2 GB (up to 19.5 GB for a docs graph, 96 paper-DB copies = 873 MB for a 16 MB DB), 48 published
+    NFL papers lack Source notes, 12 unread RL papers have 0 claims, 72 NFL papers have 0 concepts, 0 bridges exist, and TypeScript
+    AST parsing fails silently.
+  why:
+  - Code/doc graph building runs upstream at folder acceptance (not during enrichment) and rebuilds every reviewed group non-incrementally
+    (OP2) without pruning snapshots.
+  - Paper graph building is bolted onto enrichment stage 9 via a per-paper CLI subprocess that clones the full prior paper
+    DB without pruning generations or checkpointing catalog.sqlite-wal.
+  - Geo-Grapher has zero involvement during enrichment stages 3-8, builds zero bridges, hides CLI errors behind opaque publish:partial,
+    and lacks post-publish verification or acceptance hand-off.
+  root: Graph building is split across two disconnected serial CLI subprocesses with whole-store copy/rebuild amplification,
+    no enrichment feedback loop, and no end-to-end verification or hand-off (mirroring OP1 and OP2).
+lanes:
+- Owner
+- Core
+- Model worker
+- Geo-Grapher CLI
+- Geo-Grapher store
+- Geo-Grapher service
+nodes:
+- id: s
+  kind: start
+- id: a1
+  kind: activity
+  lane: Owner
+  step: 1
+  label: accepts folder decisions (person UI or agent policy) to trigger graph build
+- id: a2
+  kind: activity
+  lane: Core
+  step: 2
+  label: re-surveys all accepted non-excluded roots (person accept) and writes read-only barriers
+- id: d1
+  kind: decision
+  lane: Core
+  label: all accepted library roots current?
+- id: x1
+  kind: activity
+  lane: Owner
+  label: re-surveys unrelated stale root and re-applies decisions (OP2)
+- id: a3
+  kind: activity
+  lane: Core
+  step: 3
+  label: spawns apply-folder-review CLI (14,400 s timeout) with all library groups and withheld paths
+- id: a4
+  kind: activity
+  lane: Geo-Grapher CLI
+  step: 4
+  label: checks single authorship/stratum per label, child excludes, and >= 5 GiB free disk
+- id: d2
+  kind: decision
+  lane: Geo-Grapher CLI
+  label: strata, store ownership, and disk valid?
+- id: a5
+  kind: activity
+  lane: Geo-Grapher CLI
+  step: 5
+  label: loops serially over every reviewed group (OP2); calls ingest(stage=3) without previous_snapshot_id
+- id: d3
+  kind: decision
+  lane: Geo-Grapher CLI
+  label: exact snapshot digest already complete?
+- id: d4
+  kind: decision
+  lane: Geo-Grapher CLI
+  label: Python AST and tree-sitter parsed cleanly?
+- id: x4
+  kind: activity
+  lane: Geo-Grapher CLI
+  label: logs parse_failures_json (missing tree_sitter / UTF-8) and still publishes status='complete'
+- id: a6
+  kind: activity
+  lane: Geo-Grapher store
+  step: 6
+  label: appends full unpruned snapshot to code.sqlite and upserts catalog.sqlite (no WAL checkpoint)
+- id: a7
+  kind: activity
+  lane: Core
+  step: 7
+  label: saves application receipt; code/doc graph building ends before enrichment starts
+- id: a8
+  kind: activity
+  lane: Owner
+  step: 8
+  label: queues/captures sources, approves staged items, and starts process_approved batch
+- id: a9
+  kind: activity
+  lane: Core
+  step: 9
+  label: runs Stages 1-2 (validate, parse/OCR); writes early pre-read .nodes.json (often catalogue_only)
+- id: a10
+  kind: activity
+  lane: Model worker
+  step: 10
+  label: runs Stages 3-8 (read, lenses, data, relate, metadata, review); Geo-Grapher is never consulted
+- id: a11
+  kind: activity
+  lane: Core
+  step: 11
+  label: 'runs Stage 9 (publish): checks PDF + full read; rebuilds .nodes.json with claims and terms'
+- id: d5
+  kind: decision
+  lane: Core
+  label: PDF fully read with full_conversion?
+- id: a12
+  kind: activity
+  lane: Core
+  step: 12
+  label: checks Geo enabled, deepest accepted folder card, fresh fingerprint, and artifact SHA-256
+- id: d6
+  kind: decision
+  lane: Core
+  label: Geo enabled, folder current, hash intact?
+- id: a13
+  kind: activity
+  lane: Core
+  step: 13
+  label: spawns cold-start import-library-paper CLI subprocess for this single PDF
+- id: a14
+  kind: activity
+  lane: Geo-Grapher CLI
+  step: 14
+  label: under import_lock, re-checks paths, SHA-256 hashes, graph scope, authorship, and >= 5 GiB disk
+- id: d7
+  kind: decision
+  lane: Geo-Grapher CLI
+  label: scope, provenance, and disk checks pass?
+- id: a15
+  kind: activity
+  lane: Geo-Grapher store
+  step: 15
+  label: clones full prior paper DB to new papers-native-<uuid>.sqlite, upserts 1 paper, keeps all old copies
+- id: a16
+  kind: activity
+  lane: Geo-Grapher store
+  step: 16
+  label: re-checks SHA-256 and CAS-updates graphs.paper_database in catalog.sqlite (no WAL checkpoint)
+- id: d8
+  kind: decision
+  lane: Geo-Grapher store
+  label: CAS matched unchanged graph row?
+- id: a17
+  kind: activity
+  lane: Core
+  step: 17
+  label: 'records publish: complete; no claim/concept check, 0 bridges built, Source note not accepted'
+- id: d9
+  kind: decision
+  lane: Geo-Grapher service
+  label: populated, checkpointed, and note accepted?
+- id: a18
+  kind: activity
+  lane: Geo-Grapher service
+  step: 18
+  label: serves current code and paper graphs on loopback /mcp and UI for research sessions
+- id: e1
+  kind: end
+  outcome: success
+  label: code and paper graphs current, populated with claims/concepts, aligned with Source notes
+- id: e2
+  kind: end
+  outcome: failure
+  label: folder build aborted (opaque GEOGRAPHER_CALL_FAILED); earlier loop groups may be committed
+- id: e3
+  kind: end
+  outcome: reused
+  label: 'publish: not_applicable (non-PDF or catalogue_only); source reading stands'
+- id: e4
+  kind: end
+  outcome: partial
+  label: 'publish: partial (unread PDF, Geo off, awaiting folder, or FOLDER_STALE); reading kept'
+- id: e5
+  kind: end
+  outcome: failure
+  label: 'paper import failed or CAS-conflicted; hidden as publish: partial or cloned DB orphaned'
+- id: e6
+  kind: end
+  outcome: failure
+  label: 'split-brain: published papers unaccepted (OP1), 0 claims/concepts, or uncheckpointed WAL'
+edges:
+- from: s
+  to: a1
+- from: a1
+  to: a2
+- from: a2
+  to: d1
+- from: d1
+  to: a3
+  guard: current
+- from: d1
+  to: x1
+  guard: unrelated accepted root stale (FOLDER_STALE)
+  ext: 2a
+  observed: D:\Librarian_V2 blocked unrelated folder accepts (3x in RL); OP2
+- from: x1
+  to: a2
+- from: a3
+  to: a4
+- from: a4
+  to: d2
+- from: d2
+  to: a5
+  guard: valid
+- from: d2
+  to: e2
+  guard: stratum conflict, read-only store, <5 GiB disk, or CLI crash
+  ext: 4a
+  observed: GROUP_STRATUM_CONFLICT in Parallax; 12x GEOGRAPHER_CALL_FAILED (5 NFL, 3 Parallax, 4 RL)
+- from: a5
+  to: d3
+- from: d3
+  to: d4
+  guard: 'new or changed group: full Stage 1-3 rebuild'
+- from: d3
+  to: a7
+  guard: 'exact digest already complete: reuse snapshot'
+  ext: 5a
+  observed: reuse_complete skips unchanged groups, but any 1-file edit rebuilds non-incrementally
+- from: d4
+  to: a6
+  guard: clean parse
+- from: d4
+  to: x4
+  guard: missing tree_sitter or UTF-8 decode error
+  ext: 5b
+  observed: 85 NFL, 730+ Parallax, 345+ RL files (incl. Librarian_V2 TS) failed FallbackUnavailable silently
+- from: x4
+  to: a6
+- from: a6
+  to: a7
+- from: a7
+  to: a8
+- from: a8
+  to: a9
+- from: a9
+  to: a10
+- from: a10
+  to: a11
+- from: a11
+  to: d5
+- from: d5
+  to: a12
+  guard: PDF fully read and full_conversion verified
+- from: d5
+  to: e3
+  guard: non-PDF or catalogue_only (blank/un-OCRed page)
+  ext: 11a
+  observed: 675 NFL / 54 Parallax / 325 RL non-PDFs; 12 NFL / 10 RL catalogue_only
+- from: d5
+  to: e4
+  guard: PDF reading incomplete
+  ext: 11b
+  observed: 3 DataManagement PDFs partial (terms JSON failure); 40 Librarian research PDFs read=queued
+- from: a12
+  to: d6
+- from: d6
+  to: a13
+  guard: admitted
+- from: d6
+  to: e4
+  guard: Geo disabled, awaiting_accepted_folder, FOLDER_STALE, or stale artifact
+  ext: 12a
+  observed: 41x FOLDER_STALE + 27x awaiting_accepted_folder during NFL batch publish stage
+- from: a13
+  to: a14
+- from: a14
+  to: d7
+- from: d7
+  to: a15
+  guard: passed
+- from: d7
+  to: e5
+  guard: PAPER_SCOPE, PAPER_ARTIFACT_STALE, DISK_RESERVE, or CLI error
+  ext: 14a
+  observed: 'batch._publish catches ValueError/OSError into opaque publish: partial'
+- from: a15
+  to: a16
+- from: a16
+  to: d8
+- from: d8
+  to: a17
+  guard: matched 1 row
+- from: d8
+  to: e5
+  guard: concurrent graph/snapshot change during import
+  ext: 16a
+- from: a17
+  to: d9
+- from: d9
+  to: a18
+  guard: populated, checkpointed, and Source note accepted
+- from: d9
+  to: e6
+  guard: unaccepted Source note, 0 claims/concepts, or uncheckpointed WAL
+  ext: 17a
+  observed: 48 published NFL PDFs unaccepted; 12 unread RL PDFs with 0 claims; 72 NFL papers with 0 concepts; 1.67 MB RL catalog
+    WAL
+- from: a18
+  to: e1
+evidence:
+  a2:
+  - src/resource_librarian/folder_review.py:579-597
+  a3:
+  - src/resource_librarian/folder_review.py:263-312
+  a4:
+  - geographer/folder_review.py:56-125
+  a5:
+  - geographer/folder_review.py:128-131
+  - geographer/pipeline.py:13-78
+  x4:
+  - geographer/treesitter.py:22-30
+  a6:
+  - geographer/folder_review.py:138-154
+  - geographer/graph_catalog.py:93-105
+  a9:
+  - src/resource_librarian/batch.py:235-293
+  a10:
+  - src/resource_librarian/batch.py:357-567
+  - src/resource_librarian/paper_graph.py:40-74
+  a11:
+  - src/resource_librarian/batch.py:569-597
+  - src/resource_librarian/paper_graph.py:18-160
+  a12:
+  - src/resource_librarian/paper_graph.py:163-197
+  a13:
+  - src/resource_librarian/paper_graph.py:195-197
+  - src/resource_librarian/folder_review.py:266-296
+  a14:
+  - geographer/library_papers.py:47-77
+  a15:
+  - geographer/library_papers.py:78-90
+  - pipeline/stage3_build_db.py:143-180
+  a16:
+  - geographer/library_papers.py:91-98
+  a18:
+  - src/resource_librarian/geo_service.py:103-168
+provenance:
+  drafted_by: Antigravity (code & log inspection)
+  at: 2026-11-22
+  based_on: Librarian_V2 source, geographer 0.2.0 installed wheel, and G:\Libraries audit (2026-11-22-libraries-ingest-enrichment-audit.md)
+  status: as-is analysis model for Owner review

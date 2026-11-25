@@ -1,6 +1,8 @@
 # UC-L. Learn a remedy from an escalated case (to-be). Called by the doctor (UC-D) when a failure arrives
 # in a shape the catalogue does not know. This is how the doctor's scope grows: one approved remedy at a time.
 diagram: UC-L
+status: PROPOSED_UNACCEPTED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/learn.spec.yaml
 kind: activity
 title: Learn a remedy from an escalated case
 target: {kind: use_case, ref: "INGESTION-TOBE.md#5-how-the-doctor-grows"}

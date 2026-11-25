@@ -1,0 +1,161 @@
+# Split from the S1 copy by tools/s3_split_as_is.py (S3, 2026-11-25); labels unchanged.
+diagram: source-parse
+use_case: UC1c.1
+status: IMPLEMENTED_VERIFIED
+kind: activity
+title: Validate and parse one source (stages 1–2), as it runs today
+lanes:
+- Model worker
+- Core
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: validate
+  kind: activity
+  lane: Core
+  label: 'validate: checks captured evidence, source identity and duplicate note constraints'
+  step: 1
+- id: dvalidate
+  kind: decision
+  lane: Core
+  label: validation result?
+- id: parse
+  kind: activity
+  lane: Core
+  label: 'parse: fetches and extracts text with scripts, maps pages and records extraction quality; dispatches model work
+    only where configured and needed'
+  step: 2
+- id: dparse
+  kind: decision
+  lane: Core
+  label: scripted extraction result and configured conversion request?
+- id: convert
+  kind: activity
+  lane: Model worker
+  label: performs configured PDF cleanup or OCR; returns text, page anchors, actual covered pages and explicit task errors
+- id: conversioncheck
+  kind: activity
+  lane: Core
+  label: checks returned structure and literal page mapping; retains original bytes and unused generated evidence
+- id: dconversion
+  kind: decision
+  lane: Core
+  label: conversion result and usable original text?
+- id: fallback
+  kind: activity
+  lane: Core
+  label: 'uses original page-mapped text: returned cleanup error retains partial status; unusable generated anchors may still
+    permit complete parse when original text is usable'
+- id: parsegap
+  kind: activity
+  lane: Core
+  label: retains partial/queued conversion or absent readable text and actual OCR gaps; missing material receives no reading
+    credit
+- id: dprojection
+  kind: decision
+  lane: Core
+  label: parse continued without an early partial return; PDF or paper projection applicable?
+- id: preproject
+  kind: activity
+  lane: Core
+  label: writes a free provisional paper-graph .nodes.json before reading, with text_layer=False; catalogue-only or zero-claim
+    output is possible
+  step: 3
+- id: dpreproject
+  kind: decision
+  lane: Core
+  label: provisional projection write result?
+- id: parsefinal
+  kind: decision
+  lane: Core
+  label: source units and quality verdict after provisional projection if applicable?
+- id: m_success
+  kind: merge
+  lane: Core
+  label: the ways to text is ready for reading, complete or with its gaps recorded meet
+- id: e_success
+  kind: end
+  outcome: success
+  label: text is ready for reading, complete or with its gaps recorded
+- id: e_failed
+  kind: end
+  outcome: failed
+  label: a stage failed; the item stops
+edges:
+- from: s
+  to: validate
+- from: validate
+  to: dvalidate
+- from: dvalidate
+  to: parse
+  guard: not failed
+- from: dvalidate
+  to: e_failed
+  guard: failed
+  ext: 2a
+- from: parse
+  to: dparse
+- from: dparse
+  to: dprojection
+  guard: scripted parse continued without requested model assistance
+- from: dparse
+  to: convert
+  guard: configured model cleanup or OCR needed
+  ext: 3a
+- from: dparse
+  to: parsegap
+  guard: fetch or OCR precondition returned partial before provisional projection
+  ext: 3b
+- from: dparse
+  to: e_failed
+  guard: uncaught stage failure
+  ext: 3c
+- from: convert
+  to: conversioncheck
+- from: conversioncheck
+  to: dconversion
+- from: dconversion
+  to: dprojection
+  guard: usable mapped cleanup, or completed OCR without an early partial return
+- from: dconversion
+  to: fallback
+  guard: returned cleanup error or unusable generated anchors, with usable original text
+- from: dconversion
+  to: dprojection
+  guard: returned cleanup error or unusable anchors without usable original text; projection and final chunk check still run
+- from: dconversion
+  to: parsegap
+  guard: OCR returned partial before provisional projection
+- from: dconversion
+  to: e_failed
+  guard: uncaught fatal stage failure
+- from: fallback
+  to: dprojection
+- from: dprojection
+  to: preproject
+  guard: PDF or paper; parse did not return early
+- from: dprojection
+  to: parsefinal
+  guard: other source kind; no paper projection
+  ext: 3d
+- from: preproject
+  to: dpreproject
+- from: dpreproject
+  to: parsefinal
+  guard: provisional artifact written; not published
+- from: dpreproject
+  to: e_failed
+  guard: uncaught projection write failure
+  ext: 3e
+- from: parsefinal
+  to: m_success
+  guard: usable units and no needs_ocr/js_shell verdict; preserve any recorded cleanup-error partial result
+- from: parsefinal
+  to: parsegap
+  guard: no readable units, or quality verdict still needs_ocr/js_shell
+  ext: 3f
+- from: parsegap
+  to: m_success
+- from: m_success
+  to: e_success

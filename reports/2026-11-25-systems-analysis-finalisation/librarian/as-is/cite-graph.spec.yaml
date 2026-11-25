@@ -1,0 +1,43 @@
+# UC4 as-is: the Lead reads a paper in the library's paper graph and cites it (the @graph_* tool groups).
+diagram: cite-graph
+use_case: UC4
+status: IMPLEMENTED_OBSERVED
+supersedes: []
+kind: activity
+title: Read and cite a paper from the graph, as it runs today
+problem:
+  symptom: "The Lead quoted only papers' cards, and a paper with no Source note could be kept but never quoted."
+  root: "The paper graph and the Source notes are two stores, joined by a title that is derived, not stored."
+lanes: [Lead (tier 1), Core, Geo-Grapher]
+nodes:
+  - {id: s, kind: start, label: start}
+  - {id: labels, kind: activity, lane: Lead (tier 1), step: 1, label: "reads the library's paper and code graph labels from the Core's context"}
+  - {id: search, kind: activity, lane: Geo-Grapher, step: 2, label: "answers a search of the paper graph for the brief's terms"}
+  - {id: outline, kind: activity, lane: Geo-Grapher, step: 3, label: "returns the paper's outline"}
+  - {id: sections, kind: activity, lane: Lead (tier 1), step: 4, label: "reads the sections that hold the methods and results"}
+  - {id: put, kind: activity, lane: Lead (tier 1), step: 5, label: "puts the paper forward as a candidate by its citation handle"}
+  - {id: dconnected, kind: decision, lane: Core, label: "is the library's Geo-Grapher connected?"}
+  - {id: resolve, kind: activity, lane: Core, step: 6, label: "resolves the handle to the paper and, by its title, to a Source note"}
+  - {id: dnote, kind: decision, lane: Core, label: "is there a Source note with that title?"}
+  - {id: warn, kind: activity, lane: Core, label: "records the candidate and warns that it cannot be quoted"}
+  - {id: cite, kind: activity, lane: Lead (tier 1), step: 7, label: "cites the paper in a claim, quoting its Source note"}
+  - {id: e1, kind: end, outcome: success, label: "the paper is a kept candidate and cited"}
+  - {id: e_uncitable, kind: end, outcome: uncitable, label: "kept, but it cannot be quoted"}
+  - {id: e_unavailable, kind: end, outcome: unavailable, label: "the handle is refused"}
+edges:
+  - {from: s, to: labels}
+  - {from: labels, to: search}
+  - {from: search, to: outline}
+  - {from: outline, to: sections}
+  - {from: sections, to: put}
+  - {from: put, to: dconnected}
+  - {from: dconnected, to: resolve, guard: "yes"}
+  - {from: dconnected, to: e_unavailable, guard: "no", ext: 6a}
+  - {from: resolve, to: dnote}
+  - {from: dnote, to: cite, guard: "yes"}
+  - {from: dnote, to: warn, guard: "no (the paper was never accepted, or the note was renamed)", ext: 6b}
+  - {from: warn, to: e_uncitable}
+  - {from: cite, to: e1}
+evidence:
+  - "Graph labels in the Lead's context and paper_get_outline offered: 9fd2fe9. Graph citations as candidates: 1064cf0."
+  - "USE-CASES.md UC4 and its assumption: the link from a graph paper to its Source note is its title, derived when needed."

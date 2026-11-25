@@ -1,0 +1,66 @@
+# Split from the S1 copy by tools/s4_split_to_be.py (S4, 2026-11-25); labels unchanged.
+diagram: source-intake
+use_case: UC1.2
+status: PROPOSED_UNACCEPTED
+kind: activity
+title: Capture, title and stage each source (proposed)
+lanes:
+- Clerk (tier 2)
+- Core
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: capture
+  kind: activity
+  lane: Core
+  label: fetches immutable Bronze .evidence/, extracts literal header/DOI metadata, quarantines poison siblings & restores
+    _framing
+  step: 1
+- id: dcap
+  kind: decision
+  lane: Core
+  label: capture & queue reconciliation?
+- id: describe
+  kind: activity
+  lane: Clerk (tier 2)
+  label: proposes W8 human-readable Source title (when literal header is slug/filename), neutral Silver description, semantic
+    fields (Unknown if unsupported) & W8 topics
+  step: 2
+- id: stage
+  kind: activity
+  lane: Core
+  label: validates & stores proposed title, Silver staging record & explicit Unknowns; queues W8 topic_propose if Unfiled-only
+  step: 3
+- id: e_success
+  kind: end
+  outcome: success
+  label: the sources are staged with proposed titles
+- id: e_reused
+  kind: end
+  outcome: reused
+  label: duplicates only
+- id: e_paused
+  kind: end
+  outcome: paused
+  label: every target quarantined
+edges:
+- from: s
+  to: capture
+- from: capture
+  to: dcap
+- from: dcap
+  to: describe
+  guard: usable Sources captured
+- from: dcap
+  to: e_reused
+  guard: duplicates only
+  ext: 2a
+- from: dcap
+  to: e_paused
+  guard: all targets quarantined/unreachable
+  ext: 2b
+- from: describe
+  to: stage
+- from: stage
+  to: e_success

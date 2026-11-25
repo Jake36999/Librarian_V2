@@ -7481,3 +7481,27 @@ The Owner approved S0 of the [systems-analysis finalisation plan](../reports/202
 - **Open:** S1–S6 and decisions D1–D4.
 
 Tests: the full suite in a clean clone (HEAD plus these files), 2823 passed, 2 skipped, 5 deselected in 964 s. This also covers the 22 November entry's work, which had no full-suite run.
+
+Hosted CI on `7efc245`: all nine jobs passed (core and wheel-smoke on Python 3.11, 3.12 and 3.13, and the rest).
+
+### The as-is Librarian mapped, with its weaknesses; one canonical spec per process (2026-11-25)
+
+Owner direction: stop producing swim-lane canvases (D1), start S1, build out the Librarian's graphs, then Geo-Grapher's. Owner's framing: the graphs should expose, from a systems-analysis stance, the weaknesses and logical gaps that stand between today's tooling and clean runtimes. So: map it as it is, find where it goes wrong, then design a preferred version that handles every use case, edge case and failure mode.
+- **S1.** Every one of the 22 active specs now has one canonical successor ([CANONICAL.md](../reports/2026-11-25-systems-analysis-finalisation/CANONICAL.md)). The originals carry `superseded_by`; the canonical ones are copied into packs under shared ids, so as-is and to-be pair by name. Lane names follow `docs/terminology.md`; nine drifted names were mapped.
+- **S2.** [`render_pack.py`](../reports/2026-11-25-systems-analysis-finalisation/render_pack.py) renders a pack. It checks:
+  - structure and references, with outcome parity;
+  - status per pack, actor names, the 40-node limit and boundary values;
+  - the weakness register and its themes, with how the to-be handles each weakness;
+  - freshness by hash (`--check`);
+  - quoted guards, unknown keys.
+
+  YAML had silently read `yes`/`no`/`on` as booleans and split unquoted commas. It writes G1 (use case diagram), G2 (composition), G3 (the four views per use case), G4 (state diagrams), the index canvas and INDEX.md. `tools/split_spec.py` splits an oversized spec into parent and children and renumbers steps and extensions.
+- **S3, the as-is pack** (`librarian/as-is`): 18 use cases, all passing.
+  - The 72-node activation map and the 51-node source enrichment are split into parents and children.
+  - New: a general ingestion, research, claim review, citing the graph, composition, and the as-is doctor (tier 0 by hand) and oracle (the audited session only).
+  - Four state diagrams: staged item, folder card, session, offering.
+  - 54 weaknesses with evidence, in ten root causes ([AS-IS-FINDINGS.md](../reports/2026-11-25-systems-analysis-finalisation/librarian/AS-IS-FINDINGS.md)), each ending in a rule the to-be must meet.
+  - Two corrections found on the way: a phase budget halves on every return (`session.py` `budget_left`), and the MCP permission wait is 150 s (`app.py` line 277) against the broker's 600 s.
+- **S4, started.** The 58-node to-be ingestion and the 57-node to-be source enrichment are split the same way (15 to-be specs, all passing). The to-be specs do not yet say which weaknesses they handle.
+
+Tests: no code changed. The full suite in a clean clone (HEAD plus S1 and S2), 2823 passed, 2 skipped, 5 deselected in 1010 s.

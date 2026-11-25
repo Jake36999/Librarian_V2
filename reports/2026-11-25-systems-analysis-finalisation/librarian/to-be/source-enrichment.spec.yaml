@@ -1,0 +1,245 @@
+# Split from the S1 copy by tools/s4_split_to_be.py (S4, 2026-11-25); labels unchanged.
+diagram: source-enrichment
+use_case: UC1c
+status: PROPOSED_UNACCEPTED
+supersedes:
+- reports/2026-11-24-librarian-reconstruction-and-offering/diagrams/librarian-source-enrichment-tobe.spec.yaml
+- reports/2026-11-21-enrichment-baseline/enrichment-cycle.spec.yaml
+- reports/2026-11-22-proposed-tobe-enrichment/proposed-tobe-enrichment.spec.yaml
+- reports/2026-11-23-proposed-process-family/proposed-source-enrichment.spec.yaml
+title: Librarian Source Enrichment L1 Workflow (Proposed To-Be)
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/source-enrichment.spec.yaml
+problem:
+  symptom: Part-count masked failed _document_pass/relate_chapters, before-item-only budget checks leaked inner calls, and
+    0-claim Geo paper DBs silently passed.
+  root: Record activation trigger, enforce NAT-13 keys + MC-10 reserve, whole-source derivation checks, poison quarantine,
+    Geo non-zero verification, and zero mid-loop Owner blocks.
+lanes:
+- Oracle
+- Lead (tier 1)
+- Doctor
+- Core
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: bind
+  kind: activity
+  lane: Core
+  label: binds Source, narrowed L1 sub-run mandate (sub_spec_owner=lead_tier1 <= parent), NAT-13 & MF-013/014
+  step: 1
+- id: dwork
+  kind: decision
+  lane: Core
+  label: L1 workflow admission source?
+- id: userread
+  kind: activity
+  lane: Core
+  label: admits Context 3 UI reread/deep_read_note under person/workflow_grant route
+- id: t0read
+  kind: activity
+  lane: Core
+  label: verifies Context 1/2 Delegated Commission Envelope for Source L1 workflow
+- id: controls
+  kind: activity
+  lane: Core
+  label: checks cancel/lease flags and runs MC-10 atomic pre-dispatch budget reserve
+  step: 2
+- id: dcontrols
+  kind: decision
+  lane: Core
+  label: controls permit dispatch?
+- id: ref_source_parse
+  kind: ref
+  lane: Core
+  use_case: source-parse
+  label: validates and parses the source
+  step: 3
+- id: ref_source_reading
+  kind: ref
+  lane: Core
+  use_case: source-reading
+  label: plans, reads and checks the source
+  step: 4
+- id: quarantine
+  kind: activity
+  lane: Core
+  label: quarantines poison item to .librarian/quarantine/ and drops provisional cache
+- id: ref_paper_publication
+  kind: ref
+  lane: Core
+  use_case: paper-publication
+  label: publishes the paper to the paper graph
+  step: 5
+- id: pubna
+  kind: activity
+  lane: Core
+  label: marks non-PDF or missing full conversion as publication N/A
+- id: pubgap
+  kind: activity
+  lane: Core
+  label: records EMPTY_PAPER_GRAPH or Geo refusal without closing requirement
+- id: oracle
+  kind: activity
+  lane: Oracle
+  label: audits raw receipts, MC-10 ledger & Silver fidelity via distinct qualified Oracle route (GLM-5.3 current revisable
+    adapter)
+  step: 6
+- id: dverdict
+  kind: decision
+  lane: Oracle
+  label: Source Oracle verdict?
+- id: doctor
+  kind: ref
+  lane: Doctor
+  use_case: doctor
+  label: executes bounded YAML Ticket remedy via revisable adapter (GLM-5.3 current)
+- id: reentry
+  kind: activity
+  lane: Core
+  label: confirms single-pass repair receipt (attempt <= 1) & re-admits check
+- id: handback
+  kind: activity
+  lane: Lead (tier 1)
+  label: returns verified Source package, costs, coverage & independent worklists to batch
+  step: 7
+- id: retpartial
+  kind: activity
+  lane: Lead (tier 1)
+  label: returns noncritical partial Source with unmet tasks/quarantine explicit
+- id: retpause
+  kind: activity
+  lane: Lead (tier 1)
+  label: returns MC-10 ceiling, cancel, or ORACLE_ROUTE_COLLISION (unverified) pause Ticket
+- id: retesc
+  kind: activity
+  lane: Lead (tier 1)
+  label: escalates critical integrity or authority-boundary fault to invoking parent
+- id: e1
+  kind: end
+  outcome: success
+  label: Source meets full Silver & publish obligations
+- id: epartial
+  kind: end
+  outcome: partial
+  label: partial or quarantined Source returned; gap explicit
+- id: enowork
+  kind: end
+  outcome: reused
+  label: no new work admitted; compatible NAT-13 receipts reused
+- id: epaused
+  kind: end
+  outcome: paused
+  label: paused on cancel, MC-10 budget cap, or ORACLE_ROUTE_COLLISION Ticket
+- id: eescalated
+  kind: end
+  outcome: escalated
+  label: critical or unresolved integrity fault escalated
+edges:
+- from: s
+  to: bind
+- from: bind
+  to: dwork
+- from: dwork
+  to: controls
+  guard: system triggered (batch item admitted)
+- from: dwork
+  to: userread
+  guard: user directed (targeted reread/revision)
+  ext: 2a
+- from: dwork
+  to: t0read
+  guard: tier 0 directed (external grant verified)
+  ext: 2b
+- from: dwork
+  to: enowork
+  guard: none admitted / reused
+  ext: 2c
+- from: userread
+  to: controls
+- from: t0read
+  to: controls
+- from: controls
+  to: dcontrols
+- from: dcontrols
+  to: ref_source_parse
+  guard: controls and MC-10 reserve ok
+- from: dcontrols
+  to: retpause
+  guard: paused or MC-10 cap hit
+  ext: 3a
+- from: dcontrols
+  to: retesc
+  guard: critical writer or lease fault
+  ext: 3b
+- from: quarantine
+  to: retpartial
+- from: pubna
+  to: oracle
+- from: pubgap
+  to: oracle
+- from: oracle
+  to: dverdict
+- from: dverdict
+  to: handback
+  guard: all obligations met (distinct Oracle route)
+- from: dverdict
+  to: doctor
+  guard: mapped shortfall needs bounded repair
+  ext: 7a
+- from: dverdict
+  to: retpartial
+  guard: permitted partial gap
+  ext: 7b
+- from: dverdict
+  to: retesc
+  guard: critical finding
+  ext: 7c
+- from: dverdict
+  to: retpause
+  guard: ORACLE_ROUTE_COLLISION (no distinct qualified route; never marked independently reviewed)
+  ext: 7d
+- from: doctor
+  to: reentry
+  guard: resolved
+- from: reentry
+  to: ref_source_parse
+- from: doctor
+  to: retpartial
+  guard: declined
+- from: doctor
+  to: retesc
+  guard: escalated
+- from: handback
+  to: e1
+- from: retpartial
+  to: epartial
+- from: retpause
+  to: epaused
+- from: retesc
+  to: eescalated
+- from: ref_source_parse
+  to: ref_source_reading
+  guard: success
+- from: ref_source_parse
+  to: quarantine
+  guard: failed
+  ext: 3c
+- from: ref_source_reading
+  to: ref_paper_publication
+  guard: success
+- from: ref_source_reading
+  to: quarantine
+  guard: failed
+  ext: 4a
+- from: ref_paper_publication
+  to: oracle
+  guard: success
+- from: ref_paper_publication
+  to: pubna
+  guard: not applicable
+  ext: 5a
+- from: ref_paper_publication
+  to: pubgap
+  guard: gap
+  ext: 5b

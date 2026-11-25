@@ -1,5 +1,7 @@
 # Equivalent local report exits and native route clearance, 23 November 2026.
 diagram: ingest-papers-tobe
+status: PROPOSED_UNACCEPTED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/ingestion.spec.yaml
 kind: activity
 title: 'Proposed ingestion: Owner or tier-0 commissioning, Lead ownership and independent Oracle review'
 target:

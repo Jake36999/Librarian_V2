@@ -1,0 +1,281 @@
+{
+  "pack": "librarian/to-be",
+  "receipts": [
+    {
+      "spec": "acceptance.spec.yaml",
+      "sha256": "584f84348ad20d457a00dca51a57be7199014a7913ef32c55adb11b1a5762cb8",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 9,
+      "steps": 2,
+      "scenarios": 4,
+      "tier0_turns_mss": null,
+      "tier0_turns_worst": null,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions"
+      ]
+    },
+    {
+      "spec": "activation-external-project.spec.yaml",
+      "sha256": "1cd2c81b315b64aa6140ecc6fb46b5f8a8823f38615f6ce93a6d5159b442f424",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 34,
+      "steps": 8,
+      "scenarios": 12,
+      "tier0_turns_mss": 2,
+      "tier0_turns_worst": 2,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+        "decision dmissing ('catalogued Sources satisfy external need?') tests a quantity but declares no boundary values"
+      ]
+    },
+    {
+      "spec": "activation-overseer.spec.yaml",
+      "sha256": "8ba0e93b7b25736e769c052ee1a9ab27532e4758cff9bbdefef792ecbd828d07",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 40,
+      "steps": 9,
+      "scenarios": 16,
+      "tier0_turns_mss": 2,
+      "tier0_turns_worst": 2,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+        "decision dpperm ('partials acceptable for sprint?') tests a quantity but declares no boundary values",
+        "decision dverdict ('L3 sprint obligations satisfied?') tests a quantity but declares no boundary values"
+      ]
+    },
+    {
+      "spec": "activation-web-ui.spec.yaml",
+      "sha256": "48f387292e101c44ec77355445426e92f032e1cb28a9632156e3285350406297",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 37,
+      "steps": 12,
+      "scenarios": 23,
+      "tier0_turns_mss": null,
+      "tier0_turns_worst": null,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+        "decision dgate1choice ('Gate 1 Source choice on Staging page?') tests a quantity but declares no boundary values"
+      ]
+    },
+    {
+      "spec": "batch-enrichment.spec.yaml",
+      "sha256": "1e93fc223b589da889a70528a10bdfee2618ea4cde7e16dbbf8b0f8789a034f4",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 37,
+      "steps": 10,
+      "scenarios": 21,
+      "tier0_turns_mss": null,
+      "tier0_turns_worst": null,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions"
+      ]
+    },
+    {
+      "spec": "compose.spec.yaml",
+      "sha256": "fef65fef900aafeafa2f9d77c0fef6d572eea9933e17e19de40744ac26b53582",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 34,
+      "steps": 9,
+      "scenarios": 22,
+      "tier0_turns_mss": 1,
+      "tier0_turns_worst": 1,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+        "decision dnarrow ('sub-run manifest fits parent mandate (Rules 9, 10, 16)?') tests a quantity but declares no boundary values",
+        "decision dscope ('within spec & parent mandate?') tests a quantity but declares no boundary values"
+      ]
+    },
+    {
+      "spec": "doctor.spec.yaml",
+      "sha256": "a734eebb70a9445bb1d77ae7b47d82a1bfbe1cf14c5ac983098aad249aabfed4",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 26,
+      "steps": 6,
+      "scenarios": 13,
+      "tier0_turns_mss": null,
+      "tier0_turns_worst": null,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+        "decision dgrant ('within parent mandate and DOC-GEO-03 bounds?') tests a quantity but declares no boundary values"
+      ]
+    },
+    {
+      "spec": "folder-review.spec.yaml",
+      "sha256": "b8879a88bc171aab64b1b228b44be19a7a1e36fb460822fd44db6d908b213e0e",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 22,
+      "steps": 5,
+      "scenarios": 16,
+      "tier0_turns_mss": null,
+      "tier0_turns_worst": null,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+        "decision oraclecov ('degraded parse within caller tolerance?') tests a quantity but declares no boundary values"
+      ]
+    },
+    {
+      "spec": "ingestion.spec.yaml",
+      "sha256": "7388329cc20cd7815897e7908429be10437ea5473a1047da5893fa15d5a427f4",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 36,
+      "steps": 13,
+      "scenarios": 30,
+      "tier0_turns_mss": null,
+      "tier0_turns_worst": null,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions"
+      ]
+    },
+    {
+      "spec": "learn.spec.yaml",
+      "sha256": "d986ebe40072fcb60356e4f468dea5fce06b5a862aea612ce6382a4f7f186fff",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 10,
+      "steps": 5,
+      "scenarios": 3,
+      "tier0_turns_mss": 1,
+      "tier0_turns_worst": 1,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions"
+      ]
+    },
+    {
+      "spec": "paper-publication.spec.yaml",
+      "sha256": "56075476fa492341b56d4c8b1c2f9084711b1aa9dd5af4d3c3c4afc71b9b4c29",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 8,
+      "steps": 2,
+      "scenarios": 4,
+      "tier0_turns_mss": null,
+      "tier0_turns_worst": null,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions"
+      ]
+    },
+    {
+      "spec": "source-enrichment.spec.yaml",
+      "sha256": "21ff8d435c2e4752dcff1ce2ab3775217a76f9e0660bedfbcf6cb9486d09088f",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 26,
+      "steps": 7,
+      "scenarios": 16,
+      "tier0_turns_mss": null,
+      "tier0_turns_worst": null,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions"
+      ]
+    },
+    {
+      "spec": "source-intake.spec.yaml",
+      "sha256": "429a3137cd60caf0dca74db0499225a126ac4cee029d95d4bab2e6d2d1ed8540",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 8,
+      "steps": 3,
+      "scenarios": 3,
+      "tier0_turns_mss": null,
+      "tier0_turns_worst": null,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions"
+      ]
+    },
+    {
+      "spec": "source-parse.spec.yaml",
+      "sha256": "22da98f660549b9ed639460c13bd1d2ef6bdcc2241de3da6bbc8c49da80070ed",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 17,
+      "steps": 3,
+      "scenarios": 6,
+      "tier0_turns_mss": null,
+      "tier0_turns_worst": null,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions"
+      ]
+    },
+    {
+      "spec": "source-reading.spec.yaml",
+      "sha256": "a7b1cc26e924d604e3e2e5a25977824aa00536cc7ddb4d313fddbcfe35123ec8",
+      "status": "PROPOSED_UNACCEPTED",
+      "nodes": 20,
+      "steps": 12,
+      "scenarios": 4,
+      "tier0_turns_mss": null,
+      "tier0_turns_worst": null,
+      "weaknesses": 0,
+      "handles": 0,
+      "errors": [],
+      "warnings": [
+        "written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+        "decision drelate ('multi-chapter document needing semantic relations?') tests a quantity but declares no boundary values"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "acceptance: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "activation-external-project: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "activation-external-project: decision dmissing ('catalogued Sources satisfy external need?') tests a quantity but declares no boundary values",
+    "activation-overseer: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "activation-overseer: decision dpperm ('partials acceptable for sprint?') tests a quantity but declares no boundary values",
+    "activation-overseer: decision dverdict ('L3 sprint obligations satisfied?') tests a quantity but declares no boundary values",
+    "activation-web-ui: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "activation-web-ui: decision dgate1choice ('Gate 1 Source choice on Staging page?') tests a quantity but declares no boundary values",
+    "batch-enrichment: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "compose: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "compose: decision dnarrow ('sub-run manifest fits parent mandate (Rules 9, 10, 16)?') tests a quantity but declares no boundary values",
+    "compose: decision dscope ('within spec & parent mandate?') tests a quantity but declares no boundary values",
+    "doctor: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "doctor: decision dgrant ('within parent mandate and DOC-GEO-03 bounds?') tests a quantity but declares no boundary values",
+    "folder-review: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "folder-review: decision oraclecov ('degraded parse within caller tolerance?') tests a quantity but declares no boundary values",
+    "ingestion: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "learn: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "paper-publication: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "source-enrichment: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "source-intake: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "source-parse: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "source-reading: written use case lacks: Use case name, Brief description, Primary actor, Supporting actors, Preconditions, Trigger, Success guarantee, Minimal guarantee, Open questions",
+    "source-reading: decision drelate ('multi-chapter document needing semantic relations?') tests a quantity but declares no boundary values"
+  ]
+}

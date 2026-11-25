@@ -1,0 +1,202 @@
+# Split from the S1 copy by tools/s4_split_to_be.py (S4, 2026-11-25); labels unchanged.
+diagram: folder-review
+use_case: UC1.1
+status: PROPOSED_UNACCEPTED
+kind: activity
+title: Review a folder and apply its group (proposed)
+lanes:
+- Owner
+- Lead (tier 1)
+- Clerk (tier 2)
+- Doctor
+- Oracle
+- Core
+- Geo-Grapher
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: rootinv
+  kind: activity
+  lane: Core
+  label: surveys roots, fingerprints, licences & exclusions ($0); reuses NAT-13 folder receipts
+  step: 1
+- id: droot
+  kind: decision
+  lane: Core
+  label: roots & folder-route valid?
+- id: doctorroot
+  kind: ref
+  lane: Doctor
+  use_case: doctor
+  label: attempts scoped R1/R2 Ticket recovery (GLM-5.3 isolated adapter; single-pass)
+- id: reentryroot
+  kind: activity
+  lane: Core
+  label: verifies bounded R1/R2 repair progress (attempt <= 1)
+- id: folderscreen
+  kind: activity
+  lane: Clerk (tier 2)
+  label: screens only new/ambiguous folders for purpose, unlicensed third-party risk & sensitivity (docs unread)
+  step: 2
+- id: dfolderauth
+  kind: decision
+  lane: Core
+  label: folder decision covered by Context-1 commission or standing policy?
+- id: leadfolder
+  kind: activity
+  lane: Lead (tier 1)
+  label: approves in-scope folders (Context 1 commission or standing policy); applies exclusions
+  step: 3
+- id: dheldcaller
+  kind: decision
+  lane: Core
+  label: interactive Specification owner available?
+- id: ownerfolder
+  kind: decision
+  lane: Owner
+  label: Owner reserved folder choice?
+- id: excl
+  kind: activity
+  lane: Core
+  label: records excluded subtree and read barrier
+- id: folderapply
+  kind: activity
+  lane: Core
+  label: submits only changed/selected accepted groups (OP2 single-group fix)
+  step: 4
+- id: geoapply
+  kind: activity
+  lane: Geo-Grapher
+  label: indexes changed folder group incrementally; returns parse/coverage receipt
+  step: 5
+- id: dgeo
+  kind: decision
+  lane: Core
+  label: single-group Geo receipt?
+- id: doctorgeo
+  kind: ref
+  lane: Doctor
+  use_case: doctor
+  label: runs bounded group/service Ticket recovery without global rebuild
+- id: reentrygeo
+  kind: activity
+  lane: Core
+  label: confirms single-pass Geo recovery receipt
+- id: oraclecov
+  kind: decision
+  lane: Oracle
+  label: degraded parse within caller tolerance?
+- id: m_success
+  kind: merge
+  lane: Core
+  label: the ways to the folder's group is applied, its inputs known meet
+- id: e_success
+  kind: end
+  outcome: success
+  label: the folder's group is applied, its inputs known
+- id: e_held_for_the_Owner
+  kind: end
+  outcome: held for the Owner
+  label: a reserved folder decision is on the Owner's agenda
+- id: e_paused
+  kind: end
+  outcome: paused
+  label: held or declined
+- id: e_escalated
+  kind: end
+  outcome: escalated
+  label: a critical security or data fault
+edges:
+- from: s
+  to: rootinv
+- from: rootinv
+  to: droot
+- from: droot
+  to: folderscreen
+  guard: current & route ready
+- from: droot
+  to: doctorroot
+  guard: stale root or lost route qualification (R1/R2)
+  ext: 2a
+- from: droot
+  to: e_escalated
+  guard: critical security, data-loss, or authority breach
+  ext: 2b
+- from: doctorroot
+  to: reentryroot
+  guard: resolved
+- from: reentryroot
+  to: folderscreen
+- from: doctorroot
+  to: e_paused
+  guard: declined
+- from: doctorroot
+  to: e_escalated
+  guard: escalated
+- from: folderscreen
+  to: dfolderauth
+- from: dfolderauth
+  to: leadfolder
+  guard: covered by Context-1 task commission (in-scope) or standing non-sensitive policy
+- from: dfolderauth
+  to: dheldcaller
+  guard: Context-3 direct UI, Context-2 out-of-scope folder, unlicensed/symlink/out-of-scope, or OD-05 policy hold
+  ext: 3a
+- from: dheldcaller
+  to: ownerfolder
+  guard: interactive UI/Owner present
+- from: dheldcaller
+  to: e_held_for_the_Owner
+  guard: MCP Tier 0 / Context-2 / scheduled run (log Agenda Ticket without blocking)
+- from: ownerfolder
+  to: folderapply
+  guard: approve
+- from: ownerfolder
+  to: excl
+  guard: exclude subtree
+- from: ownerfolder
+  to: e_paused
+  guard: hold or decline
+- from: excl
+  to: folderapply
+- from: leadfolder
+  to: folderapply
+- from: folderapply
+  to: geoapply
+- from: geoapply
+  to: dgeo
+- from: dgeo
+  to: m_success
+  guard: valid receipt
+- from: dgeo
+  to: doctorgeo
+  guard: FOLDER_STALE or mapped Geo service fault
+  ext: 5a
+- from: doctorgeo
+  to: reentrygeo
+  guard: resolved
+- from: reentrygeo
+  to: m_success
+- from: doctorgeo
+  to: oraclecov
+  guard: declined
+- from: doctorgeo
+  to: e_escalated
+  guard: escalated
+- from: dgeo
+  to: oraclecov
+  guard: degraded parse coverage (e.g. tree_sitter skips)
+  ext: 5b
+- from: dgeo
+  to: e_escalated
+  guard: critical Geo DB or security violation
+  ext: 5c
+- from: oraclecov
+  to: m_success
+  guard: acceptable for scope (gap recorded)
+- from: oraclecov
+  to: e_paused
+  guard: below required quality
+- from: m_success
+  to: e_success

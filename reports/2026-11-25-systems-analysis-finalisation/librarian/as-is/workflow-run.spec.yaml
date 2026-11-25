@@ -1,0 +1,111 @@
+# Split from the S1 copy by tools/s3_split_as_is.py (S3, 2026-11-25); labels unchanged.
+diagram: workflow-run
+use_case: UC8.1
+status: IMPLEMENTED_VERIFIED
+kind: activity
+title: Run a saved workflow from the Web UI, as it runs today
+lanes:
+- Core
+- Web UI
+- Model worker
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: ui_wf_start
+  kind: activity
+  lane: Core
+  label: App.start_action starts paperclip workflow at tier=contribute with workflow_grant (read_access exempts deep_read
+    only)
+  step: 1
+- id: dwf_route
+  kind: decision
+  lane: Core
+  label: which paperclip workflow & grant check?
+- id: wf_deep_read
+  kind: activity
+  lane: Model worker
+  label: 'deep-read-staged.yaml: staging_list(source, staged, limit=10) -> each deep_read(max_chunks=12, on_error: continue)
+    via clerk_endpoint; item status unchanged'
+  step: 2
+- id: dwf_outcome
+  kind: decision
+  lane: Core
+  label: workflows.Runner status on action_done?
+- id: ui_drop_result
+  kind: activity
+  lane: Web UI
+  label: 'app.js:8472 discards action_done.result (_result: {read, failed, errors}) & hides chip; reloads Staging where items
+    stay staged'
+  step: 3
+- id: dwf_followup
+  kind: decision
+  lane: Core
+  label: person submits Staging decision on still-staged items?
+- id: wf_paused_chip
+  kind: activity
+  lane: Web UI
+  label: app.js:8472 drops result; renders static paused chip with no UI route-picker, resume, or dismiss control
+- id: wf_refused
+  kind: activity
+  lane: Core
+  label: App._run_action catches Refusal/DefinitionError (TIER_REFUSED, PERSON_CONFIRMS, or non-deep_read THIRD_PARTY_ROUTE_REQUIRED)
+    -> status=failed
+- id: e_success
+  kind: end
+  outcome: success
+  label: the person decides the still-staged items
+- id: e_partial
+  kind: end
+  outcome: partial
+  label: finished, but the result is unseen
+- id: e_paused
+  kind: end
+  outcome: paused
+  label: paused, with no way to resume it
+- id: e_escalated
+  kind: end
+  outcome: escalated
+  label: refused or failed
+edges:
+- from: s
+  to: ui_wf_start
+- from: ui_wf_start
+  to: dwf_route
+- from: dwf_route
+  to: wf_deep_read
+  guard: deep-read-staged (read_access deep_read carveout)
+- from: dwf_route
+  to: dwf_outcome
+  guard: 'other QUEUED run (e.g. clear-enrichment-backlog: run-queue -> reasoned route)'
+  ext: 2a
+- from: dwf_route
+  to: wf_refused
+  guard: curate step, unaccepted workflow, or non-deep_read 3rd-party raw read
+  ext: 2b
+- from: wf_deep_read
+  to: dwf_outcome
+- from: dwf_outcome
+  to: ui_drop_result
+  guard: 'finished (outputs {read, failed, errors}; on_error: continue; items stay staged)'
+- from: dwf_outcome
+  to: wf_paused_chip
+  guard: paused (cancel_action, MF-018 outcome_unknown, or missing pipeline router)
+  ext: 3a
+- from: dwf_outcome
+  to: e_escalated
+  guard: 'failed (RunFailed / step error outside on_error: continue)'
+  ext: 3b
+- from: ui_drop_result
+  to: dwf_followup
+- from: dwf_followup
+  to: e_success
+  guard: person decides still-staged items in Staging (Gate 1 / Accept as captured)
+- from: dwf_followup
+  to: e_partial
+  guard: no follow-up (result unseen; items remain staged)
+  ext: 3c
+- from: wf_paused_chip
+  to: e_paused
+- from: wf_refused
+  to: e_escalated

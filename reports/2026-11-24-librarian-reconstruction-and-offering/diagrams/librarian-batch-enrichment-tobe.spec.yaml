@@ -1,4 +1,6 @@
 diagram: librarian-batch-enrichment-tobe
+status: PROPOSED_UNACCEPTED
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/to-be/batch-enrichment.spec.yaml
 title: "Librarian Mixed-Batch Enrichment L2 Pipeline (Proposed To-Be)"
 problem:
   symptom: "Batches ran sessionless with before-item-only budget checks, redundant folder drafting, and UC-D recovery without Oracle verification."

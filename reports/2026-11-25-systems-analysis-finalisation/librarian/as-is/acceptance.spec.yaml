@@ -1,0 +1,84 @@
+# Split from the S1 copy by tools/s3_split_as_is.py (S3, 2026-11-25); labels unchanged.
+diagram: acceptance
+use_case: UC1.3
+status: IMPLEMENTED_VERIFIED
+kind: activity
+title: Accept an enriched source into the library, as it runs today
+lanes:
+- Core
+- Web UI
+- Owner
+nodes:
+- id: s
+  kind: start
+  label: start
+- id: gate2_ui
+  kind: activity
+  lane: Owner
+  label: reviews enriched Source summary (F-09 conflict reload wipes edits) & clicks Accept; Folder accept & Lenses stay separate
+  step: 1
+- id: dgate2_curr
+  kind: decision
+  lane: Core
+  label: Source Gate 2 decision & PromotionGuard CAS check?
+- id: promote_curr
+  kind: activity
+  lane: Core
+  label: commits Sources/ note via PromotionGuard (200-file CAS), IndexGateway FTS, DA-3 handoff & post-write vectors
+  step: 2
+- id: dfind_curr
+  kind: decision
+  lane: Core
+  label: post-promotion catalogued & vector status?
+- id: ui_done
+  kind: activity
+  lane: Web UI
+  label: shows ok banner & Search/Staging updates (manual Rewrite indexes if needed; no Oracle/Doctor runtime)
+  step: 3
+- id: e_success
+  kind: end
+  outcome: success
+  label: the Source note is catalogued and findable
+- id: e_paused
+  kind: end
+  outcome: paused
+  label: deferred, rejected, or a stale-revision conflict
+- id: e_partial
+  kind: end
+  outcome: partial
+  label: written but not findable, or embedding warnings
+- id: e_escalated
+  kind: end
+  outcome: escalated
+  label: a write or index failure
+edges:
+- from: s
+  to: gate2_ui
+- from: gate2_ui
+  to: dgate2_curr
+- from: dgate2_curr
+  to: promote_curr
+  guard: Accept confirmed (curate or declared agent under promotion.mode=agent)
+- from: dgate2_curr
+  to: e_paused
+  guard: Defer or Reject in Staging
+  ext: 2a
+- from: dgate2_curr
+  to: e_paused
+  guard: F-09 stale staged_revision or DOCUMENT_ACTIVE lease
+  ext: 2b
+- from: promote_curr
+  to: dfind_curr
+- from: dfind_curr
+  to: ui_done
+  guard: catalogued & vectors clean
+- from: dfind_curr
+  to: e_partial
+  guard: not_findable or embedding_warnings (note kept; manual Rewrite indexes)
+  ext: 3a
+- from: dfind_curr
+  to: e_escalated
+  guard: uncaught write or index failure
+  ext: 3b
+- from: ui_done
+  to: e_success

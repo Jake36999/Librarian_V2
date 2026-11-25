@@ -3,6 +3,7 @@
 # deep-read-staged is a plain workflow (staging_list -> each deep_read), NOT a call of source-enrichment-current; it ends finished/paused/failed.
 # Batch work calls batch-enrichment-current via ref; historical DataManagement ingestion.canvas is untouched.
 diagram: librarian-current-activation
+superseded_by: reports/2026-11-25-systems-analysis-finalisation/librarian/as-is/activation.spec.yaml
 kind: activity
 status: IMPLEMENTED_VERIFIED
 title: "Current Activation Paths: Present-Day UI, Folders, Workflows, MCP & Staging (d9435e1)"
